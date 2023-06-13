@@ -1,0 +1,32 @@
+:root {
+  /* Dark theme */
+  --color-bg: #333333;
+  --color-text: #ffffff;
+  --color-primary: #375a7f;
+  --color-secondary: #444444;
+}
+
+[data-theme='light'] {
+  /* Light theme */
+  --color-bg: #ffffff;
+  --color-text: #333333;
+  --color-primary: #007bff;
+  --color-secondary: #6c757d;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+
+a {
+  color: var(--color-primary);
+}
+
+
+html,
+body {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
