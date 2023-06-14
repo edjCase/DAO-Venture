@@ -9,6 +9,9 @@
       <Link to="/" class="nav-link">Home</Link>
     </li>
     <li class="nav-item">
+      <Link to="/games" class="nav-link">Games</Link>
+    </li>
+    <li class="nav-item">
       <Link to="/about" class="nav-link">About</Link>
     </li>
     <li>     

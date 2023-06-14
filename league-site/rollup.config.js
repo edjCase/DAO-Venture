@@ -5,7 +5,8 @@ import terser from '@rollup/plugin-terser';
 import resolve from '@rollup/plugin-node-resolve';
 import livereload from 'rollup-plugin-livereload';
 import css from 'rollup-plugin-css-only';
-import preprocess from 'svelte-preprocess';
+import sveltePreprocess from 'svelte-preprocess';
+import typescript from '@rollup/plugin-typescript';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -31,7 +32,7 @@ function serve() {
 }
 
 export default {
-	input: 'main.js',
+	input: 'src/main.ts',
 	output: {
 		sourcemap: true,
 		format: 'iife',
@@ -40,11 +41,7 @@ export default {
 	},
 	plugins: [
 		svelte({
-			preprocess: preprocess({
-			  typescript: {
-				tsconfigFile: './tsconfig.json',
-			  },
-			}),
+			preprocess: sveltePreprocess(),
 			compilerOptions: {
 				// enable run-time checks when not in production
 				dev: !production
@@ -65,10 +62,22 @@ export default {
 			exportConditions: ['svelte']
 		}),
 		commonjs(),
+		typescript({
+			sourceMap: !production,
+			inlineSources: !production
+		}),
 
 		// In dev mode, call `npm run start` once
 		// the bundle has been generated
-		!production && serve(),
+		!production && serve({			
+      		// Custom middleware to handle client-side routing
+			middleware: [
+				// Enables client-side routing fallback
+				history({
+					index: '/index.html',
+				}),
+			],
+		}),
 
 		// Watch the `public` directory and refresh the
 		// browser on changes when not in production
