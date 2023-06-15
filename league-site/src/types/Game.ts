@@ -1,12 +1,54 @@
-
 export interface Game {
     id: number;
-    team1: string;
-    team2: string;
-    stadium: string;
+    team1: TeamGameSnapshot;
+    team2: TeamGameSnapshot;
+    stadium: {
+        id: number;
+        name: string;
+    };
+    start: Date;
+    end?: Date;
+    winningTeamId?: number;
+    scorings: InningScoreEntry[];
 };
 
-export interface CompletedGame extends Game {
-    team1Score: number;
-    team2Score: number;
+export interface Team {
+    id: number;
+    name: string;
+    logo: string;
+};
+
+
+export interface InningScoreEntry {
+    inning: number;
+    topHalf: boolean;
+    battingPlayerId: number;
+    scoringPlayerIds: number[];
+}; 
+
+
+export interface TeamGameSnapshot {
+    id : number;
+    name : string;
+    logo : string;
+    players: PlayerInfo[];
+    votes : number;
+    gameStats?: TeamGameStats;
+};
+
+export interface TeamGameStats {
+    score: number;
+};
+
+export interface PlayerInfo {
+    id: number;
+    name: string;
+    position: string;
+    gameStats?: PlayerGameStats;
+};
+
+export interface PlayerGameStats {
+    runs: number;
+    hits: number;
+    errors: number;
 };
