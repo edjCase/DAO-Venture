@@ -1,7 +1,6 @@
 module {
-    public let Player = {
+    public type Player = {
         id : Nat;
         name : Text;
-
     };
 };
