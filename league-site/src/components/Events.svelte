@@ -10,31 +10,51 @@
     let team1PlayerMap = game.team1.players.reduce(reducePlayerFunc, {});
     let team2PlayerMap = game.team2.players.reduce(reducePlayerFunc, {});
 
-    let compiledInningScorings = game.scorings.reduce(
-        (acc, s) => {
-            let playerMap = s.topHalf ? team1PlayerMap : team2PlayerMap;
-            let inning = (s.topHalf ? "Top" : "Bottom") + " " + s.inning;
-            let battingPlayer = playerMap[s.battingPlayerId];
-            let scoringPlayers = s.scoringPlayerIds.map((id) => playerMap[id]);
+    let compiledInnings = game.events.reduce(
+        (acc, e) => {
+            let playerMap = e.topHalf ? team1PlayerMap : team2PlayerMap;
+            let inning = (e.topHalf ? "Top" : "Bottom") + " " + e.inning;
 
-            let scoringList;
             if (acc.currentInning != inning || acc.innings.length == 0) {
                 acc.currentInning = inning;
-                scoringList = [];
                 acc.innings.push({
                     inning: inning,
-                    scorings: scoringList,
+                    events: [],
                 });
-            } else {
-                scoringList = acc.innings[acc.innings.length - 1].scorings;
             }
-            let currentScore = acc.currentScore;
-            currentScore[s.topHalf ? 0 : 1] += s.scoringPlayerIds.length;
-            scoringList.push({
-                battingPlayer: battingPlayer,
-                scoringPlayers: scoringPlayers,
-                score: [currentScore[0], currentScore[1]],
-            });
+
+            let inningObj = acc.innings[acc.innings.length - 1];
+
+            let eventMessage: string;
+            switch (e.info.type) {
+                case "score":
+                    let battingPlayer = playerMap[e.info.battingPlayerId];
+                    let scoringPlayers = e.info.scoringPlayerIds
+                        .map((id) => playerMap[id])
+                        .join(", ");
+
+                    let topBottomIndex = e.topHalf ? 0 : 1;
+                    acc.currentScore[topBottomIndex] +=
+                        e.info.scoringPlayerIds.length;
+                    eventMessage =
+                        battingPlayer +
+                        " was at bat and " +
+                        scoringPlayers +
+                        " scored " +
+                        acc.currentScore[0] +
+                        " - " +
+                        acc.currentScore[1];
+                    break;
+                case "injury":
+                    eventMessage =
+                        playerMap[e.info.playerId] +
+                        " was injured: " +
+                        e.info.injury;
+                    break;
+                default:
+                    eventMessage = "Unknown event";
+            }
+            inningObj.events.push(eventMessage);
             return acc;
         },
         {
@@ -46,19 +66,12 @@
 </script>
 
 <div class="inning-list">
-    {#each compiledInningScorings as inningScoring}
-        <div class="inning-name">{inningScoring.inning}</div>
+    {#each compiledInnings as inning}
+        <div class="inning-name">{inning.inning}</div>
         <div class="inning-item">
-            {#each inningScoring.scorings as scoring}
+            {#each inning.events as event}
                 <div class="scoring">
-                    <span class="scoring-message"
-                        >{scoring.battingPlayer} was at bat and {scoring.scoringPlayers.join(
-                            ", "
-                        )} scored</span
-                    >
-                    <span class="score"
-                        >{scoring.score[0]} - {scoring.score[1]}</span
-                    >
+                    {event}
                 </div>
             {/each}
         </div>
@@ -66,30 +79,21 @@
 </div>
 
 <style>
-    
-  .inning-list {
-    display: flex;
-    flex-direction: column;
-  }
-  .inning-name {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-  .inning-item {
-    margin-bottom: 20px;
-    padding-left: 20px;
-  }
-  .scoring {
-    border-bottom: 1px;
-    border-color: var(--text-color);
-  }
-  .scoring-message {
-    margin-right: 20px;
-  }
-  .score {
-    width: 30px;
-    font-size: 1.5em;
-    font-weight: bold;
-  }
+    .inning-list {
+        display: flex;
+        flex-direction: column;
+    }
+    .inning-name {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    .inning-item {
+        margin-bottom: 20px;
+        padding-left: 20px;
+    }
+    .scoring {
+        border-bottom: 1px;
+        border-color: var(--text-color);
+    }
 </style>

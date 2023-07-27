@@ -7,6 +7,8 @@
   import NotFound from "./routes/NotFound.svelte";
   import Header from "./components/Header.svelte";
   import News from "./routes/News.svelte";
+  import Governance from "./routes/Governance.svelte";
+  import Proposal from "./routes/Proposal.svelte";
 </script>
 
 <main>
@@ -14,8 +16,10 @@
     <Header />
     <Route path="/" component={Home} />
     <Route path="/about" component={About} />
-    <Route path="/game/:id" let:params component={Game} />
+    <Route path="/games/:id" let:params component={Game} />
     <Route path="/games" component={Games} />
+    <Route path="/governance" component={Governance} />
+    <Route path="/proposals/:id" component={Proposal} />
     <Route path="/news" component={News} />
     <Route path="*" component={NotFound} />
   </Router>

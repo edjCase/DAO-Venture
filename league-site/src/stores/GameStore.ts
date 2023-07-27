@@ -11,30 +11,51 @@ let games: Game[] = [
       name: "Stadium 1",
     },
     winningTeamId: 1,
-    scorings: [
+    events: [
       {
         inning: 1,
         topHalf: true,
-        battingPlayerId: 1,
-        scoringPlayerIds: [2, 1],
+        info: {
+          type: "score",
+          battingPlayerId: 1,
+          scoringPlayerIds: [2, 1],
+        }
       },
       {
         inning: 1,
         topHalf: true,
-        battingPlayerId: 2,
-        scoringPlayerIds: [1],
+        info: {
+          type: "score",
+          battingPlayerId: 2,
+          scoringPlayerIds: [1],
+        }
       },
       {
         inning: 1,
         topHalf: false,
-        battingPlayerId: 3,
-        scoringPlayerIds: [4],
+        info: {
+          type: "score",
+          battingPlayerId: 3,
+          scoringPlayerIds: [4],
+        }
+      },
+      {
+        inning: 2,
+        topHalf: true,
+        info: {
+          type: "injury",
+          playerId: 1,
+          injury: "Broken leg"
+        }
       },
       {
         inning: 7,
         topHalf: false,
-        battingPlayerId: 4,
-        scoringPlayerIds: [3],
+        info: {
+          type: "score",
+          battingPlayerId: 4,
+          scoringPlayerIds: [3],
+        }
       },
     ],
     team1: {
@@ -93,24 +114,33 @@ let games: Game[] = [
       name: "Stadium 2",
     },
     winningTeamId: 1,
-    scorings: [
+    events: [
       {
         inning: 1,
         topHalf: true,
-        battingPlayerId: 1,
-        scoringPlayerIds: [2, 1],
+        info: {
+          type: "score",
+          battingPlayerId: 1,
+          scoringPlayerIds: [2, 1]
+        }
       },
       {
         inning: 3,
         topHalf: true,
-        battingPlayerId: 2,
-        scoringPlayerIds: [1, 2],
+        info: {
+          type: "score",
+          battingPlayerId: 2,
+          scoringPlayerIds: [1, 2],
+        }
       },
       {
         inning: 4,
         topHalf: false,
-        battingPlayerId: 3,
-        scoringPlayerIds: [4]
+        info: {
+          type: "score",
+          battingPlayerId: 3,
+          scoringPlayerIds: [4]
+        }
       }
     ],
     team1: {
@@ -162,25 +192,31 @@ let games: Game[] = [
   },
   {
     id: 3,
-    start: new Date("2021-04-01T12:00:00Z"),
+    start: new Date("2021-08-01T12:00:00Z"),
     end: null,
     stadium: {
       id: 1,
       name: "Stadium 1",
     },
     winningTeamId: 4,
-    scorings: [
+    events: [
       {
         inning: 4,
         topHalf: false,
-        battingPlayerId: 5,
-        scoringPlayerIds: [6],
+        info: {
+          type: "score",
+          battingPlayerId: 5,
+          scoringPlayerIds: [6],
+        }
       },
       {
         inning: 7,
         topHalf: false,
-        battingPlayerId: 8,
-        scoringPlayerIds: [9],
+        info: {
+          type: "score",
+          battingPlayerId: 8,
+          scoringPlayerIds: [9],
+        }
       },
     ],
     team1: {
@@ -202,9 +238,7 @@ let games: Game[] = [
         },
       ],
       votes: 30,
-      gameStats: {
-        score: 1,
-      },
+      gameStats: null,
     },
     team2: {
       id: 4,
@@ -225,9 +259,7 @@ let games: Game[] = [
         },
       ],
       votes: 100,
-      gameStats: {
-        score: 1
-      },
+      gameStats: null,
     },
   }
 ];

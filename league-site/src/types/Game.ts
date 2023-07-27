@@ -9,7 +9,7 @@ export interface Game {
     start: Date;
     end?: Date;
     winningTeamId?: number;
-    scorings: InningScoreEntry[];
+    events: Event[];
 };
 
 export interface Team {
@@ -19,20 +19,31 @@ export interface Team {
 };
 
 
-export interface InningScoreEntry {
+export interface Event {
     inning: number;
     topHalf: boolean;
+    info: ScoreEventInfo | InjuryEventInfo;
+};
+
+export interface ScoreEventInfo {
+    type: "score";
     battingPlayerId: number;
     scoringPlayerIds: number[];
-}; 
+};
+
+export interface InjuryEventInfo {
+    type: "injury";
+    playerId: number;
+    injury: string;
+};
 
 
 export interface TeamGameSnapshot {
-    id : number;
-    name : string;
-    logo : string;
+    id: number;
+    name: string;
+    logo: string;
     players: PlayerInfo[];
-    votes : number;
+    votes: number;
     gameStats?: TeamGameStats;
 };
 

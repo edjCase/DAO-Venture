@@ -5,7 +5,7 @@
 </script>
 
 <div class="game-card">
-  <Link to={`/game/${game.id}`}>
+  <Link to={`/games/${game.id}`}>
     <div class="game-card-title">
       <div>
         <img src={game.team1.logo} alt="{game.team1.name} Logo" />
@@ -16,7 +16,6 @@
       </div>
     </div>
     <div class="game-card-content">
-      <span class="game-card-location">{game.stadium.name}</span>
       <span class="game-card-date">{game.start.toDateString()}</span>
       {#if game.team1.gameStats?.score && game.team2.gameStats?.score}
         <span class="game-card-score">
@@ -59,12 +58,6 @@
   }
 
   .game-card-date {
-    text-align: center;
-  }
-
-  .game-card-location {
-    margin: 0.5rem 0;
-    font-size: 1.2rem;
     text-align: center;
   }
 

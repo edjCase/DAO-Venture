@@ -3,7 +3,7 @@
   import type { Game, Team } from "../types/Game";
   import Events from "../components/Events.svelte";
   import ScoreHeader from "../components/ScoreHeader.svelte";
-  import { gamesStore } from "../stores/game-store";
+  import { gamesStore } from "../stores/GameStore";
   import { get } from "svelte/store";
 
   export let id;
@@ -27,37 +27,8 @@
     </div>
 
     <section class="game-events">
-      <h2>Scoring Events</h2>
+      <h2>Events</h2>
       <Events {game} />
-    </section>
-
-    <section id="projections">
-      <h2>Performance vs Projections</h2>
-      <div id="team1-projections">
-        <p><strong>Projected Runs:</strong> 4</p>
-        <p><strong>Actual Runs:</strong> 5</p>
-      </div>
-      <div id="team2-projections">
-        <p><strong>Projected Runs:</strong> 5</p>
-        <p><strong>Actual Runs:</strong> 3</p>
-      </div>
-    </section>
-
-    <section id="injuries">
-      <h2>Player Injuries</h2>
-      <ul id="injuries-list">
-        <li>Bob Johnson was injured in the 6th inning.</li>
-      </ul>
-    </section>
-
-    <section id="upcoming-games">
-      <h2>Upcoming Matchups</h2>
-      <div id="team1-next-game">
-        <p><strong>Stars vs Moonwalkers</strong> on June 15th at 7:00pm</p>
-      </div>
-      <div id="team2-next-game">
-        <p><strong>Comets vs Sunrisers</strong> on June 16th at 8:00pm</p>
-      </div>
     </section>
   </section>
 {/if}
@@ -81,16 +52,6 @@
 
   section {
     margin-bottom: 20px;
-  }
-
-  #projections {
-    display: flex;
-    justify-content: space-around;
-  }
-
-  #upcoming-games {
-    display: flex;
-    justify-content: space-around;
   }
 
   .game-events {

@@ -1,6 +1,6 @@
 <script lang="ts">
   import GameCardGrid from "../components/GameCardGrid.svelte";
-  import { gamesStore } from "../stores/game-store";
+  import { gamesStore } from "../stores/GameStore";
   import type { Game } from "../types/Game";
 
   let completedGamesStore: Game[];

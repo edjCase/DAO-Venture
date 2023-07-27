@@ -43,8 +43,7 @@
         justify-content: space-around;
         align-items: center;
         padding: 20px;
-        margin: 0 240px;
-        background-color: #333;
-        color: #fff;
+        margin: 20px 240px;
+        border: 1px solid var(--color-secondary);
     }
 </style>
