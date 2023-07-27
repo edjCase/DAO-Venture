@@ -10,14 +10,4 @@
   };
 </script>
 
-<div on:click={toggleTheme} on:keypress={toggleTheme} class="toggle">
-  {#if !isDarkMode} ☀️ {:else} 🌙 {/if}
-</div>
-
-<style>
-  .toggle {
-    cursor: pointer;
-    font-size: 18px;
-    padding-bottom: 3px;
-  }
-</style>
+<button on:click={toggleTheme}>Toggle theme</button>
