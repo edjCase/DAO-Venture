@@ -20,3 +20,4 @@ dist/
 # environment variables
 .env
 league-site/public/build/
+.mops
