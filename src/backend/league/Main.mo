@@ -22,6 +22,22 @@ actor League {
     var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
     stable var nextPlayerId : Nat = 0;
 
+    public type TeamInitializationConfig = {
+        name : Text;
+    };
+
+    public type LeageInitializationConfig = {
+        teams : [TeamInitializationConfig];
+    };
+
+    public shared func initialize(config : LeageInitializationConfig) : async {
+        #ok;
+        #alreadyInitialized;
+    } {
+        Cycles.add(10_000_000_000_000); // TODO
+        #ok;
+    };
+
     public shared func createTeam(name : Text) : async CreateTeamResult {
         Cycles.add(10_000_000_000_000); // TODO
 
