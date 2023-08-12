@@ -9,7 +9,7 @@
         "league"
       ],
       "frontend": {
-        "entrypoint": "src/static-site/public/pages/index.html"
+        "entrypoint": "src/static-site/public/index.html"
       },
       "source": [
         "src/static-site/public"
