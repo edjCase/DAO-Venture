@@ -9,10 +9,10 @@
         "league"
       ],
       "frontend": {
-        "entrypoint": "src/frontend/public/index.html"
+        "entrypoint": "src/static-site/public/pages/index.html"
       },
       "source": [
-        "src/frontend/public"
+        "src/static-site/public"
       ],
       "type": "assets"
     }
