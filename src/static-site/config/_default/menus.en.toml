@@ -24,11 +24,6 @@ url = "about/"
 weight = 1
 
 [[footer]]
-name = "Elements"
-url = "elements/"
+name = "Whitepaper"
+url = "whitepaper/"
 weight = 2
-
-[[footer]]
-name = "Privacy Policy"
-url = "privacy-policy/"
-weight = 3

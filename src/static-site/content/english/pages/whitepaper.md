@@ -1,5 +1,5 @@
 ---
-title: "Elements"
+title: "Whitepaper"
 # meta title
 meta_title: ""
 # meta description

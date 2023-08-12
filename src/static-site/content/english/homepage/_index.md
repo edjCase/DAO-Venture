@@ -35,6 +35,13 @@ features:
       label: "Play now"
       link: "#"
 
+  - title: "Who?"
+    image: "/images/logo.png"
+    content: "EdjCase"
+    bulletpoints:
+      - "daoball@edjcase.com"
+      - "edjcase.com"
+
   - title: "Whitepaper"
     image: "/images/logo.png"
     content: "Here it is: "
