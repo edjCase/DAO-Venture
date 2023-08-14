@@ -14,10 +14,16 @@
               </p>
               {{ with .button }}
                 {{ if .enable }}
+                  {{ if .coming_soon }}
+                  <a class="btn btn-primary mt-6">
+                    Coming Soon
+                  </a>
+                  {{ else }}
                   <a class="btn btn-primary" href="{{ .link | absURL }}">
                     {{ .label }}
                     <i class="fa fa-arrow-right pl-2"></i>
                   </a>
+                  {{ end }}
                 {{ end }}
               {{ end }}
             </div>
@@ -61,10 +67,16 @@
               </ul>
               {{ with .button }}
                 {{ if .enable }}
-                  <a class="btn btn-primary mt-6" href="{{ .link | absURL }}">
+                  {{ if .coming_soon }}
+                  <a class="btn btn-primary mt-6">
+                    Coming Soon
+                  </a>
+                  {{ else }}
+                  <a class="btn btn-primary" href="{{ .link | absURL }}">
                     {{ .label }}
                     <i class="fa fa-arrow-right pl-2"></i>
                   </a>
+                  {{ end }}
                 {{ end }}
               {{ end }}
             </div>
