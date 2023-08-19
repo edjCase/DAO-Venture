@@ -6,40 +6,65 @@ import Prelude "mo:base/Prelude";
 import Cycles "mo:base/ExperimentalCycles";
 import IterTools "mo:itertools/Iter";
 import Hash "mo:base/Hash";
-import TeamInstance "../team/Main";
 import Player "../Player";
 import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
+import Stadium "../Stadium";
+import TeamCanister "../team/Main";
+import StadiumCanister "../stadium/Main";
+import { ic } "mo:ic";
+import Time "mo:base/Time";
 
-actor League {
+actor LeagueActor {
 
     public type CreateTeamResult = {
         #ok : Principal;
         #nameTaken;
     };
+    public type CreateStadiumResult = {
+        #ok : Principal;
+    };
+    public type ScheduleMatchResult = Stadium.ScheduleMatchResult or {
+        #stadiumNotFound;
+    };
+    public type TeamInfo = {
+        id : Principal;
+        name : Text;
+    };
+    public type StadiumInfo = {
+        id : Principal;
+        name : Text;
+    };
 
-    var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
+    stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
+    stable var stadiums : Trie.Trie<Principal, Stadium.Stadium> = Trie.empty();
     stable var nextPlayerId : Nat = 0;
 
     public type TeamInitializationConfig = {
         name : Text;
     };
 
-    public type LeageInitializationConfig = {
-        teams : [TeamInitializationConfig];
+    public query func getTeams() : async [TeamInfo] {
+        Trie.toArray(
+            teams,
+            func(k : Principal, v : Team.Team) : TeamInfo = {
+                id = k;
+                name = v.name;
+            },
+        );
+    };
+    public query func getStadiums() : async [StadiumInfo] {
+        Trie.toArray(
+            stadiums,
+            func(k : Principal, v : Stadium.Stadium) : StadiumInfo = {
+                id = k;
+                name = v.name;
+            },
+        );
     };
 
-    public shared func initialize(config : LeageInitializationConfig) : async {
-        #ok;
-        #alreadyInitialized;
-    } {
-        Cycles.add(10_000_000_000_000); // TODO
-        #ok;
-    };
-
-    public shared func createTeam(name : Text) : async CreateTeamResult {
-        Cycles.add(10_000_000_000_000); // TODO
+    public shared ({ caller }) func createTeam(name : Text) : async CreateTeamResult {
 
         let nameAlreadyTaken = Trie.some(
             teams,
@@ -50,10 +75,11 @@ actor League {
         if (nameAlreadyTaken) {
             return #nameTaken;
         };
-        // TODO prevent name from being taken while we're creating the team
-        // TODO make a 'pending' list of teams that are being created
-        let players = generatePlayers(26);
-        let teamActor = await TeamInstance.TeamActor(Principal.fromActor(League), players);
+
+        let canisterCreationCost = 100_000_000_000;
+        let initialBalance = 3_000_000_000_000;
+        Cycles.add(canisterCreationCost + initialBalance);
+        let teamActor = await TeamCanister.TeamActor(Principal.fromActor(LeagueActor), caller);
         let team : Team.Team = {
             name = name;
             canister = teamActor;
@@ -69,26 +95,47 @@ actor League {
         };
     };
 
-    private func generatePlayers(count : Nat) : [Player.Player] {
-        let nextPlayerIds = IterTools.range(nextPlayerId, count);
-        nextPlayerId := nextPlayerId + count;
-        let playersIter = IterTools.mapEntries(
-            nextPlayerIds,
-            func(i : Nat, id : Nat) : Player.Player = generatePlayer(id),
-        );
-        Iter.toArray(playersIter);
-    };
+    public shared ({ caller }) func createStadium(name : Text) : async CreateStadiumResult {
+        // TODO validate name
 
-    private func generatePlayer(id : Nat) : Player.Player {
-        let name = generateName(id);
-        {
-            id = Nat32.fromNat(id); // TODO Nat vs Nat32
+        let canisterCreationCost = 100_000_000_000;
+        let initialBalance = 3_000_000_000_000;
+        Cycles.add(canisterCreationCost + initialBalance);
+        let stadiumCanister = await StadiumCanister.StadiumActor(Principal.fromActor(LeagueActor));
+        let stadium : Stadium.Stadium = {
             name = name;
+            canister = stadiumCanister;
+        };
+
+        let stadiumId = Principal.fromActor(stadiumCanister);
+        let stadiumKey = buildKey(stadiumId);
+        switch (Trie.put(stadiums, stadiumKey, Principal.equal, stadium)) {
+            case (_, ?previous) Prelude.unreachable(); // No way new id can conflict with existing one
+            case (newStadiums, null) {
+                stadiums := newStadiums;
+                return #ok(stadiumId);
+            };
         };
     };
 
-    private func generateName(id : Nat) : Text {
-        "Player " # Nat.toText(id);
+    public shared ({ caller }) func scheduleMatch(
+        stadiumId : Principal,
+        teamIds : [Principal],
+        time : Time.Time,
+    ) : async ScheduleMatchResult {
+        let ?stadium = Trie.get(stadiums, buildKey(stadiumId), Principal.equal) else return #stadiumNotFound;
+        await stadium.canister.scheduleMatch(teamIds, time);
+    };
+
+    public shared ({ caller }) func updateLeagueCanisters() : async () {
+        let leagueId = Principal.fromActor(LeagueActor);
+        for ((teamId, team) in Trie.iter(teams)) {
+            let ownerId = caller; // TODO - get owner from team
+            let _ = await (system TeamCanister.TeamActor)(#upgrade(team.canister))(leagueId, ownerId);
+        };
+        for ((stadiumId, stadium) in Trie.iter(stadiums)) {
+            let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadium.canister))(leagueId);
+        };
     };
 
     private func buildKey(id : Principal) : {

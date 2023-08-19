@@ -1,6 +1,9 @@
 module {
     public type Player = {
-        id : Nat32;
         name : Text;
+    };
+
+    public type PlayerWithId = Player and {
+        id : Nat32;
     };
 };

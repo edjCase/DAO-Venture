@@ -4,6 +4,13 @@
       "main": "src/backend/league/Main.mo",
       "type": "motoko"
     },
+    "playerLedger": {
+      "dependencies": [
+        "league"
+      ],
+      "main": "src/backend/league/PlayerLedger.mo",
+      "type": "motoko"
+    },
     "frontend": {
       "dependencies": [
         "league"

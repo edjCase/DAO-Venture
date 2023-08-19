@@ -6,72 +6,51 @@ import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Prelude "mo:base/Prelude";
+import TeamUtil "TeamUtil";
+import TrieSet "mo:base/TrieSet";
+import PlayerLedgerActor "canister:playerLedger";
+import Array "mo:base/Array";
+import { ic } "mo:ic";
+import Stadium "../Stadium";
 
-actor class TeamActor(leagueId : Principal, initialPlayers : [Player.Player]) : async Team.TeamActor {
+shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal) : async Team.TeamActor = this {
 
-  module Util {
+  var players : TrieSet.Set<Nat32> = TrieSet.empty();
 
-    public func buildKey(id : Nat32) : {
-      key : Nat32;
-      hash : Hash.Hash;
-    } {
-      { key = id; hash = id };
-    };
-
-    public func trieFromArray(players : [Player.Player]) : Trie.Trie<Nat32, Player.Player> {
-      var trie : Trie.Trie<Nat32, Player.Player> = Trie.empty();
-      for (player in players.vals()) {
-        let key = buildKey(player.id);
-        switch (Trie.put(trie, key, Nat32.equal, player)) {
-          case (_, ?previous) {
-            Debug.trap("Duplicate player id '" # Nat32.toText(player.id) # "'");
-          };
-          case (newTrie, null) {
-            trie := newTrie;
-          };
-        };
-      };
-      trie;
-    };
-
-    public func validateCallerIsLeague(caller : Principal) {
-      if (caller != leagueId) {
-        Debug.trap("Only the league has access to this function");
-      };
-    };
+  public func getPlayers() : async [Player.PlayerWithId] {
+    let teamId = Principal.fromActor(this);
+    let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?teamId);
+    return Array.map<PlayerLedgerActor.PlayerInfoWithId, Player.PlayerWithId>(
+      teamPlayers,
+      func(playerInfo) = {
+        playerInfo.player with
+        id = playerInfo.id;
+      },
+    );
   };
 
-  stable var players : Trie.Trie<Nat32, Player.Player> = Util.trieFromArray(initialPlayers);
-
-  public query func getPlayers() : async [Player.Player] {
-    return Trie.toArray(players, func(k : Nat32, p : Player.Player) : Player.Player = p);
+  public shared ({ caller }) func getCycles() : async Nat {
+    assertOwner(caller);
+    let canisterStatus = await ic.canister_status({
+      canister_id = Principal.fromActor(this);
+    });
+    return canisterStatus.cycles;
   };
 
-  public shared ({ caller }) func addOrUpdatePlayer(player : Player.Player) : async {
-    #ok;
-  } {
-    Util.validateCallerIsLeague(caller);
-    let playerKey = Util.buildKey(player.id);
-    let (newPlayers, _) = Trie.put(players, playerKey, Nat32.equal, player);
-
-    players := newPlayers;
-    #ok;
+  public shared ({ caller }) func registerForMatch(
+    stadiumId : Principal,
+    matchId : Nat32,
+    teamConfig : Stadium.TeamConfiguration,
+  ) : async Stadium.RegisterResult {
+    assertOwner(caller);
+    let teamId = Principal.fromActor(this);
+    let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+    await stadiumActor.registerForMatch(matchId, teamConfig);
   };
 
-  public shared ({ caller }) func removePlayer(id : Nat32) : async {
-    #ok : Player.Player;
-    #notFound;
-  } {
-    Util.validateCallerIsLeague(caller);
-    let playerKey = Util.buildKey(id);
-    switch (Trie.remove(players, playerKey, Nat32.equal)) {
-      case (newPlayers, ?previous) {
-        players := newPlayers;
-        #ok(previous);
-      };
-      case (_, null) {
-        #notFound;
-      };
+  private func assertOwner(caller : Principal) {
+    if (caller != ownerId) {
+      Debug.trap("Caller is not the owner of the team");
     };
   };
 
