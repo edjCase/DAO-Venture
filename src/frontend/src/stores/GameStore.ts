@@ -1,5 +1,7 @@
 import { readable } from "svelte/store";
 import type { Game } from "../types/Game";
+import {league} from "../declarations/league";
+
 
 let games: Game[] = [
   {
@@ -263,5 +265,13 @@ let games: Game[] = [
     },
   }
 ];
-export const gamesStore = readable(games);
+
+
+export const gamesStore = readable([], set => {
+  league.getStadiums().then(stadiums => {
+    set(games);
+    return () => {};
+  });
+
+});
 

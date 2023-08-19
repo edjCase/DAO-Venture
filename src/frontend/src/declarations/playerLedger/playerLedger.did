@@ -1,0 +1,30 @@
+type PlayerInfoWithId = 
+ record {
+   id: nat32;
+   player: Player;
+   teamId: opt principal;
+ };
+type PlayerInfo = 
+ record {
+   player: Player;
+   teamId: opt principal;
+ };
+type PlayerCreationOptions = 
+ record {
+   name: text;
+   teamId: opt principal;
+ };
+type Player = record {name: text;};
+service : {
+  create: (PlayerCreationOptions) -> (nat32);
+  getAllPlayers: () -> (vec PlayerInfoWithId) query;
+  getPlayer: (nat32) -> (variant {
+                           notFound;
+                           ok: PlayerInfo;
+                         }) query;
+  getTeamPlayers: (opt principal) -> (vec PlayerInfoWithId) query;
+  setPlayerTeam: (nat32, opt principal) -> (variant {
+                                              ok;
+                                              playerNotFound;
+                                            });
+}
