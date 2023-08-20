@@ -1,6 +1,6 @@
 <script>
   let message =
-    "Welcome to our sports site! We're all about teamwork, sweat, and the thrill of the game. Lace up your sneakers and join us!";
+    "Welcome to our sports site! We're all about teamwork, sweat, and the thrill of the match. Lace up your sneakers and join us!";
 </script>
 
 <div>

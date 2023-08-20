@@ -1,6 +1,6 @@
 <script>
   let message =
-    "Oops! It seems like you've wandered off the field. Let's get back to the game!";
+    "Oops! It seems like you've wandered off the field. Let's get back to the match!";
 </script>
 
 <div>

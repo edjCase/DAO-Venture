@@ -1,7 +1,7 @@
-export interface Game {
+export interface Match {
     id: number;
-    team1: TeamGameSnapshot;
-    team2: TeamGameSnapshot;
+    team1: TeamMatchSnapshot;
+    team2: TeamMatchSnapshot;
     stadium: {
         id: number;
         name: string;
@@ -38,16 +38,16 @@ export interface InjuryEventInfo {
 };
 
 
-export interface TeamGameSnapshot {
+export interface TeamMatchSnapshot {
     id: number;
     name: string;
     logo: string;
     players: PlayerInfo[];
     votes: number;
-    gameStats?: TeamGameStats;
+    matchStats?: TeamMatchStats;
 };
 
-export interface TeamGameStats {
+export interface TeamMatchStats {
     score: number;
 };
 
@@ -55,10 +55,10 @@ export interface PlayerInfo {
     id: number;
     name: string;
     position: string;
-    gameStats?: PlayerGameStats;
+    matchStats?: PlayerMatchStats;
 };
 
-export interface PlayerGameStats {
+export interface PlayerMatchStats {
     runs: number;
     hits: number;
     errors: number;

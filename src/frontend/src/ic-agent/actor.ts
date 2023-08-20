@@ -1,19 +1,35 @@
 import { Actor, HttpAgent } from "@dfinity/agent";
+import type {
+  ActorSubclass,
+  HttpAgentOptions,
+  ActorConfig,
+  Agent,
+} from "@dfinity/agent";
+import type { Principal } from "@dfinity/principal";
+import type { IDL } from "@dfinity/candid";
 
-// Imports and re-exports candid interface
-import { idlFactory } from "./league.did.js";
-export { idlFactory } from "./league.did.js";
+export declare interface CreateActorOptions {
+  /**
+   * @see {@link Agent}
+   */
+  agent?: Agent;
+  /**
+   * @see {@link HttpAgentOptions}
+   */
+  agentOptions?: HttpAgentOptions;
+  /**
+   * @see {@link ActorConfig}
+   */
+  actorOptions?: ActorConfig;
+}
 
-/* CANISTER_ID is replaced by webpack based on node environment
- * Note: canister environment variable will be standardized as
- * process.env.CANISTER_ID_<CANISTER_NAME_UPPERCASE>
- * beginning in dfx 0.15.0
- */
-export const canisterId =
-  process.env.CANISTER_ID_LEAGUE ||
-  process.env.LEAGUE_CANISTER_ID;
 
-export const createActor = (canisterId, options = {}) => {
+
+export const createActor = <T>(
+    canisterId: string | Principal,
+    idlFactory: IDL.InterfaceFactory,
+    options: CreateActorOptions = {}
+  ) : ActorSubclass<T> => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
 
   if (options.agent && options.agentOptions) {
@@ -33,11 +49,9 @@ export const createActor = (canisterId, options = {}) => {
   }
 
   // Creates an actor with using the candid interface and the HttpAgent
-  return Actor.createActor(idlFactory, {
+  return Actor.createActor<T>(idlFactory, {
     agent,
     canisterId,
     ...options.actorOptions,
   });
 };
-
-export const league = createActor(canisterId);

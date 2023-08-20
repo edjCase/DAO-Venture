@@ -1,37 +1,37 @@
 <script lang="ts">
-  import GameCardGrid from "../components/GameCardGrid.svelte";
-  import { gamesStore } from "../stores/GameStore";
-  import type { Game } from "../types/Game";
+  import MatchCardGrid from "../components/MatchCardGrid.svelte";
+  import { matchStore } from "../stores/MatchStore";
+  import type { Match } from "../types/Match";
 
-  let completedGamesStore: Game[];
-  let upcomingGamesStore: Game[];
+  let completedmatchStore: Match[];
+  let upcomingmatchStore: Match[];
 
   // Subscribe to the store
-  gamesStore.subscribe((games) => {
+  matchStore.subscribe((matches) => {
     // Find the item with the specific id
-    completedGamesStore = games.filter((item) => item.end != null);
-    upcomingGamesStore = games.filter((item) => item.end == null);
+    completedmatchStore = matches.filter((item) => item.end != null);
+    upcomingmatchStore = matches.filter((item) => item.end == null);
   });
 </script>
 
-<div class="latest-games">
-  <h1>Latest Games</h1>
-  <GameCardGrid games={completedGamesStore} />
+<div class="latest-matches">
+  <h1>Latest Matches</h1>
+  <MatchCardGrid matches={completedmatchStore} />
 </div>
 
-<div class="upcoming-games">
-  <h1>Upcoming Games</h1>
-  <GameCardGrid games={upcomingGamesStore} />
+<div class="upcoming-matches">
+  <h1>Upcoming Matches</h1>
+  <MatchCardGrid matches={upcomingmatchStore} />
 </div>
 
 <div />
 
 <style>
-  .latest-games {
+  .latest-matches {
     margin-bottom: 50px;
     text-align: center;
   }
-  .upcoming-games {
+  .upcoming-matches {
     margin-bottom: 50px;
     text-align: center;
   }

@@ -1,8 +1,7 @@
 <script lang="ts">
-    import type { TeamGameSnapshot } from "../types/Game";
-    export let teamInfo : TeamGameSnapshot;
+  import type { TeamMatchSnapshot } from "../types/Match";
+  export let teamInfo: TeamMatchSnapshot;
 </script>
-
 
 <div class="grid-container">
   <div class="grid-item header">Name</div>
@@ -14,14 +13,13 @@
   {#each teamInfo.players as player (player.name)}
     <div class="grid-item">{player.name}</div>
     <div class="grid-item">{player.position}</div>
-    <div class="grid-item">{player.gameStats?.runs}</div>
-    <div class="grid-item">{player.gameStats?.hits}</div>
-    <div class="grid-item">{player.gameStats?.errors}</div>
+    <div class="grid-item">{player.matchStats?.runs}</div>
+    <div class="grid-item">{player.matchStats?.hits}</div>
+    <div class="grid-item">{player.matchStats?.errors}</div>
   {/each}
 </div>
 
-
-<style >
+<style>
   .grid-container {
     display: grid;
     grid-template-columns: repeat(5, 1fr);

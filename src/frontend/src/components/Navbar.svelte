@@ -9,7 +9,7 @@
       <Link to="/" class="nav-link">Home</Link>
     </li>
     <li class="nav-item">
-      <Link to="/games" class="nav-link">Games</Link>
+      <Link to="/matches" class="nav-link">Matches</Link>
     </li>
     <li class="nav-item">
       <Link to="/news" class="nav-link">News</Link>

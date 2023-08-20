@@ -1,25 +1,25 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
-  import type { Game } from "../types/Game";
-  export let game: Game;
+  import type { Match } from "../types/Match";
+  export let match: Match;
 </script>
 
-<div class="game-card">
-  <Link to={`/games/${game.id}`}>
-    <div class="game-card-title">
+<div class="match-card">
+  <Link to={`/matches/${match.id}`}>
+    <div class="match-card-title">
       <div>
-        <img src={game.team1.logo} alt="{game.team1.name} Logo" />
+        <img src={match.team1.logo} alt="{match.team1.name} Logo" />
       </div>
       <div>vs</div>
       <div>
-        <img src={game.team2.logo} alt="{game.team2.name} Logo" />
+        <img src={match.team2.logo} alt="{match.team2.name} Logo" />
       </div>
     </div>
-    <div class="game-card-content">
-      <span class="game-card-date">{game.start.toDateString()}</span>
-      {#if game.team1.gameStats?.score && game.team2.gameStats?.score}
-        <span class="game-card-score">
-          {game.team1.gameStats?.score} - {game.team2.gameStats?.score}
+    <div class="match-card-content">
+      <span class="match-card-date">{match.start.toDateString()}</span>
+      {#if match.team1.matchStats?.score && match.team2.matchStats?.score}
+        <span class="match-card-score">
+          {match.team1.matchStats?.score} - {match.team2.matchStats?.score}
         </span>
       {:else}
         <span>TBD</span>
@@ -29,7 +29,7 @@
 </div>
 
 <style>
-  .game-card {
+  .match-card {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -40,28 +40,28 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     margin: 1rem;
   }
-  .game-card :global(a) {
+  .match-card :global(a) {
     text-decoration: none;
     color: inherit;
   }
 
-  .game-card-title {
+  .match-card-title {
     margin: 0;
     font-size: 1.5rem;
     display: flex;
     align-items: center;
   }
 
-  .game-card-content {
+  .match-card-content {
     display: flex;
     flex-direction: column;
   }
 
-  .game-card-date {
+  .match-card-date {
     text-align: center;
   }
 
-  .game-card-score {
+  .match-card-score {
     font-size: 2rem;
     font-weight: bold;
   }

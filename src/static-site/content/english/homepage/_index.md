@@ -41,7 +41,7 @@ features:
     content: ""
     bulletpoints:
       - "Teams are controlled by community collaboration, emphasizing collective decision-making"
-      - "Chaotic and random simulated gameplay, streamed live"
+      - "Chaotic and random simulated matchplay, streamed live"
       - "Open Source and composible design"
       - "Autonomous service, not relying on a business to run"
     button:
@@ -56,7 +56,7 @@ features:
       - "Teams will be controlled by community member DAOs"
       - "Teams will play weekly matches against each other 1v1"
       - "Teams will set lineups, strategies and trade players in between matches"
-      - "Games will be simulated and streamed live"
+      - "Matches will be simulated and streamed live"
       - "Social media will be utilized for sport-like community engagement"
     button:
       enable: false

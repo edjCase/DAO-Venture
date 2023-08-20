@@ -1,34 +1,34 @@
 <script lang="ts">
-  import PlayerGameStats from "../components/PlayerGameStats.svelte";
-  import type { Game, Team } from "../types/Game";
+  import PlayerMatchStats from "../components/PlayerMatchStats.svelte";
+  import type { Match, Team } from "../types/Match";
   import Events from "../components/Events.svelte";
   import ScoreHeader from "../components/ScoreHeader.svelte";
-  import { gamesStore } from "../stores/GameStore";
+  import { matchStore } from "../stores/MatchStore";
   import { get } from "svelte/store";
 
   export let id;
 
-  let game: Game = get(gamesStore).find((item) => item.id == id);
+  let match: Match = get(matchStore).find((item) => item.id == id);
 </script>
 
-{#if game}
-  <section id="game-details">
-    <ScoreHeader {game} />
+{#if match}
+  <section id="match-details">
+    <ScoreHeader {match} />
 
     <div class="team-stats-container">
       <div class="team-stats">
-        <h1>{game.team1.name}</h1>
-        <PlayerGameStats teamInfo={game.team1} />
+        <h1>{match.team1.name}</h1>
+        <PlayerMatchStats teamInfo={match.team1} />
       </div>
       <div class="team-stats">
-        <h1>{game.team2.name}</h1>
-        <PlayerGameStats teamInfo={game.team2} />
+        <h1>{match.team2.name}</h1>
+        <PlayerMatchStats teamInfo={match.team2} />
       </div>
     </div>
 
-    <section class="game-events">
+    <section class="match-events">
       <h2>Events</h2>
-      <Events {game} />
+      <Events {match} />
     </section>
   </section>
 {/if}
@@ -54,7 +54,7 @@
     margin-bottom: 20px;
   }
 
-  .game-events {
+  .match-events {
     display: flex;
     flex-direction: column;
     align-items: center;
