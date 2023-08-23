@@ -15,29 +15,34 @@ import Time "mo:base/Time";
 import Iter "mo:base/Iter";
 import TrieSet "mo:base/TrieSet";
 import PlayerLedgerActor "canister:playerLedger";
+import Order "mo:base/Order";
+import Int "mo:base/Int";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
-    public type MatchInfo = {
+    public type MatchInfo = Stadium.Match and {
         id : Nat32;
-        teams : [Stadium.MatchTeamInfo];
-        time : Time.Time;
     };
 
-    stable var completedMatches : Trie.Trie<Nat32, Stadium.CompletedMatch> = Trie.empty();
-
-    stable var incompleteMatches : Trie.Trie<Nat32, Stadium.Match> = Trie.empty();
+    stable var matches : Trie.Trie<Nat32, Stadium.Match> = Trie.empty();
 
     stable var nextMatchId : Nat32 = 1;
 
-    public query func getIncompleteMatches() : async [MatchInfo] {
-        Trie.toArray(
-            incompleteMatches,
-            func(k : Nat32, v : Stadium.Match) : MatchInfo = {
-                id = k;
-                teams = v.teams;
-                time = v.time;
-            },
+    public query func getMatches() : async [MatchInfo] {
+        let compare = func(a : MatchInfo, b : MatchInfo) : Order.Order = Int.compare(a.time, b.time);
+        let map = func(v : (Nat32, Stadium.Match)) : MatchInfo = {
+            v.1 with
+            id = v.0;
+        };
+        // matches |> Trie.iter _ |> Iter.map(_, map) |> Iter.sort(_, compare) |> Iter.toArray(_);
+        Iter.toArray(
+            Iter.sort(
+                Iter.map(
+                    Trie.iter(matches),
+                    map,
+                ),
+                compare,
+            )
         );
     };
 
@@ -49,7 +54,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             hash = matchId;
             key = matchId;
         };
-        let ?match = Trie.get(incompleteMatches, matchKey, Nat32.equal) else return #matchNotFound;
+        let ?match = Trie.get(matches, matchKey, Nat32.equal) else return #matchNotFound;
         if (match.time < Time.now()) {
             return #matchAlreadyStarted;
         };
@@ -61,8 +66,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
                     case (#ok(match)) match;
                     case (#teamNotInMatch) return #teamNotInMatch;
                 };
-                let (newIncompleteMatches, _) = Trie.replace(incompleteMatches, matchKey, Nat32.equal, ?newMatch);
-                incompleteMatches := newIncompleteMatches;
+                let (newMatches, _) = Trie.replace(matches, matchKey, Nat32.equal, ?newMatch);
+                matches := newMatches;
                 #ok;
             };
             case (#invalidTeamConfig(e)) return #invalidTeamConfig(e);
@@ -83,31 +88,33 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             func(teamId) = {
                 id = teamId;
                 config = null;
+                score = null;
             },
         );
         let match : Stadium.Match = {
             id = nextMatchId;
             time = time;
             teams = teamsInfo;
+            winner = null;
         };
         let nextMatchKey = {
             hash = nextMatchId;
             key = nextMatchId;
         };
-        switch (Trie.put(incompleteMatches, nextMatchKey, Nat32.equal, match)) {
+        switch (Trie.put(matches, nextMatchKey, Nat32.equal, match)) {
             case (_, ?previous) Prelude.unreachable(); // Cant duplicate ids
-            case (newIncompleteMatches, _) {
+            case (newMatches, _) {
                 nextMatchId += 1;
-                incompleteMatches := newIncompleteMatches;
+                matches := newMatches;
                 #ok;
             };
         };
     };
 
     private func isTimeAvailable(time : Time.Time) : Bool {
-        for ((matchId, incompleteMatch) in Trie.iter(incompleteMatches)) {
+        for ((matchId, match) in Trie.iter(matches)) {
             // TODO better time window detection
-            if (incompleteMatch.time == time) {
+            if (Time.now() >= time or match.time == time) {
                 return false;
             };
         };

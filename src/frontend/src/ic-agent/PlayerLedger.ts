@@ -1,6 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import { createActor } from './actor';
+import { createActor } from './Actor';
 
 export interface Player { 'name' : string }
 export interface PlayerCreationOptions {
@@ -66,4 +66,4 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 const canisterId = process.env.CANISTER_ID_PLAYERLEDGER;
-export const agent= createActor<_SERVICE>(canisterId, idlFactory, {});
+export const agent= createActor<_SERVICE>(canisterId, idlFactory);

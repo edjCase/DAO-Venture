@@ -1,34 +1,34 @@
-import { derived, writable, get } from "svelte/store";
-import {agentFactory as stadiumAgentFactory} from "../ic-agent/stadium";
+import { writable, get } from "svelte/store";
+import { agentFactory as stadiumAgentFactory } from "../ic-agent/Stadium";
 import { stadiumStore } from "./StadiumStore";
-
-
 
 
 export const matchStore = (() => {
   const { subscribe, set } = writable([]);
 
   const refetch = async () => {
-    const $stadiums = get(stadiumStore); // Get the current stadiums
+    const $stadiums = get(stadiumStore);
     const promises = $stadiums.map(async (stadium) => {
-      return stadiumAgentFactory(stadium.id).getIncompleteMatches()
-      .then((matches) => {
-        return matches;
-      });
+      return stadiumAgentFactory(stadium.id)
+        .getMatches()
+        .then((matches) => {
+          return matches;
+        });
     });
 
     const results = await Promise.all(promises);
     const allMatches = results.flat();
-    set(allMatches); // Set the new matches
+    set(allMatches);
   };
-
-  // Refetch when stadiums change
-  derived(stadiumStore, () => {
+  // Derived store to watch changes in stadiumStore and trigger refetch
+  stadiumStore.subscribe(() => {
     refetch();
   });
 
   return {
     subscribe,
-    refetch // Expose refetch method
+    refetch
   };
 })();
+
+

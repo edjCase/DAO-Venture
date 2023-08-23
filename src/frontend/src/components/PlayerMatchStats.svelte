@@ -1,6 +1,6 @@
 <script lang="ts">
-  import type { TeamMatchSnapshot } from "../types/Match";
-  export let teamInfo: TeamMatchSnapshot;
+  import type { MatchTeamInfo } from "../types/Match";
+  export let teamInfo: MatchTeamInfo;
 </script>
 
 <div class="grid-container">

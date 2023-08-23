@@ -31,6 +31,7 @@ actor LeagueActor {
     public type TeamInfo = {
         id : Principal;
         name : Text;
+        logoUrl : Text;
     };
     public type StadiumInfo = {
         id : Principal;
@@ -51,6 +52,7 @@ actor LeagueActor {
             func(k : Principal, v : Team.Team) : TeamInfo = {
                 id = k;
                 name = v.name;
+                logoUrl = v.logoUrl;
             },
         );
     };
@@ -64,7 +66,7 @@ actor LeagueActor {
         );
     };
 
-    public shared ({ caller }) func createTeam(name : Text) : async CreateTeamResult {
+    public shared ({ caller }) func createTeam(name : Text, logoUrl : Text) : async CreateTeamResult {
 
         let nameAlreadyTaken = Trie.some(
             teams,
@@ -83,6 +85,7 @@ actor LeagueActor {
         let team : Team.Team = {
             name = name;
             canister = teamActor;
+            logoUrl = logoUrl;
         };
         let teamId = Principal.fromActor(teamActor);
         let teamKey = buildKey(teamId);

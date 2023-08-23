@@ -28,7 +28,7 @@ export declare interface CreateActorOptions {
 export const createActor = <T>(
     canisterId: string | Principal,
     idlFactory: IDL.InterfaceFactory,
-    options: CreateActorOptions = {}
+    options: CreateActorOptions = {agentOptions: {host: "http://127.0.0.1:4943"}}
   ) : ActorSubclass<T> => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
 

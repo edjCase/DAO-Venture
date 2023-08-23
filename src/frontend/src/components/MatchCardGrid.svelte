@@ -1,19 +1,34 @@
 <script lang="ts">
+  import type { Match } from "../ic-agent/Stadium";
+  import { matchStore } from "../stores/MatchStore";
   import MatchCard from "./MatchCard.svelte";
-  import type { Match } from "../types/Match";
-  export let matches: Match[];
+  export let matchFilter: (match: Match) => boolean;
+
+  let matches: Match[];
+  matchStore.subscribe((newMatches) => {
+    // Order by date
+    matches = newMatches.filter(matchFilter).sort((a, b) => {
+      if (a.time < b.time) return -1;
+      if (a.time > b.time) return 1;
+      return 0;
+    });
+  });
 </script>
 
-<div class="match-card-grid">
-  {#each matches as match (match.id)}
-    <MatchCard {match} />
-  {/each}
-</div>
+{#if matches === undefined}
+  <div>Loading...</div>
+{:else}
+  <div class="match-card-grid">
+    {#each matches as match (match.id)}
+      <MatchCard {match} />
+    {/each}
+  </div>
 
-<style>
-  .match-card-grid {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-  }
-</style>
+  <style>
+    .match-card-grid {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+    }
+  </style>
+{/if}

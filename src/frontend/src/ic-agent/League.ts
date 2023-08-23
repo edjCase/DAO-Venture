@@ -1,6 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
-import { createActor } from './actor';
+import { createActor } from './Actor';
 
 export type CreateStadiumResult = { 'ok' : Principal };
 export type CreateTeamResult = { 'ok' : Principal } |
@@ -8,14 +8,14 @@ export type CreateTeamResult = { 'ok' : Principal } |
 export type ScheduleMatchResult = { 'ok' : null } |
   { 'stadiumNotFound' : null } |
   { 'timeNotAvailable' : null };
-export interface StadiumInfo { 'id' : Principal, 'name' : string }
-export interface TeamInfo { 'id' : Principal, 'name' : string }
+export interface Stadium { 'id' : Principal, 'name' : string }
+export interface Team { 'id' : Principal, 'name' : string, 'logoUrl': string }
 export type Time = bigint;
 export interface _SERVICE {
   'createStadium' : ActorMethod<[string], CreateStadiumResult>,
-  'createTeam' : ActorMethod<[string], CreateTeamResult>,
-  'getStadiums' : ActorMethod<[], Array<StadiumInfo>>,
-  'getTeams' : ActorMethod<[], Array<TeamInfo>>,
+  'createTeam' : ActorMethod<[string, string], CreateTeamResult>,
+  'getStadiums' : ActorMethod<[], Array<Stadium>>,
+  'getTeams' : ActorMethod<[], Array<Team>>,
   'scheduleMatch' : ActorMethod<
     [Principal, Array<Principal>, Time],
     ScheduleMatchResult
@@ -31,8 +31,8 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Principal,
     'nameTaken' : IDL.Null,
   });
-  const StadiumInfo = IDL.Record({ 'id' : IDL.Principal, 'name' : IDL.Text });
-  const TeamInfo = IDL.Record({ 'id' : IDL.Principal, 'name' : IDL.Text });
+  const Stadium = IDL.Record({ 'id' : IDL.Principal, 'name' : IDL.Text });
+  const Team = IDL.Record({ 'id' : IDL.Principal, 'name' : IDL.Text, 'logoUrl': IDL.Text });
   const Time = IDL.Int;
   const ScheduleMatchResult = IDL.Variant({
     'ok' : IDL.Null,
@@ -41,9 +41,9 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'createStadium' : IDL.Func([IDL.Text], [CreateStadiumResult], []),
-    'createTeam' : IDL.Func([IDL.Text], [CreateTeamResult], []),
-    'getStadiums' : IDL.Func([], [IDL.Vec(StadiumInfo)], ['query']),
-    'getTeams' : IDL.Func([], [IDL.Vec(TeamInfo)], ['query']),
+    'createTeam' : IDL.Func([IDL.Text, IDL.Text], [CreateTeamResult], []),
+    'getStadiums' : IDL.Func([], [IDL.Vec(Stadium)], ['query']),
+    'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
     'scheduleMatch' : IDL.Func(
         [IDL.Principal, IDL.Vec(IDL.Principal), Time],
         [ScheduleMatchResult],
@@ -55,4 +55,4 @@ export const idlFactory = ({ IDL }) => {
 
 
 const canisterId = process.env.CANISTER_ID_LEAGUE;
-export const agent = createActor<_SERVICE>(canisterId, idlFactory, {});
+export const agent = createActor<_SERVICE>(canisterId, idlFactory);

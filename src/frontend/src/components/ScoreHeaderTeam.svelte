@@ -1,5 +1,6 @@
 <script lang="ts">
-  import type { Team } from "../types/Match";
+  import type { Team } from "../ic-agent/League";
+
   export let team: Team;
 </script>
 
@@ -8,7 +9,7 @@
     <div>{team.name}</div>
     <div class="standing">14-20</div>
   </div>
-  <img src={team.logo} alt="{team.name} Logo" />
+  <img src={team.logoUrl} alt="{team.name} Logo" />
 </div>
 
 <style>

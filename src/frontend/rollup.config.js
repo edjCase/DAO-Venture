@@ -140,6 +140,7 @@ export default {
     replace(
       Object.assign(
         {
+          preventAssignment: true,
           "process.env.DFX_NETWORK": JSON.stringify(network),
           "process.env.NODE_ENV": JSON.stringify(
             production ? "production" : "development"
@@ -151,8 +152,8 @@ export default {
           .map((canisterName) => ({
             ["process.env." + canisterName.toUpperCase() + "_CANISTER_ID"]:
               JSON.stringify(canisterIds[canisterName][network]),
-              ["process.env.CANISTER_ID_" + canisterName.toUpperCase()]:
-                JSON.stringify(canisterIds[canisterName][network]),
+            ["process.env.CANISTER_ID_" + canisterName.toUpperCase()]:
+              JSON.stringify(canisterIds[canisterName][network]),
           }))
       )
     ),
@@ -171,5 +172,20 @@ export default {
   ],
   watch: {
     clearScreen: false,
+  },
+  onwarn: (warning, warn) => {
+    // Suppress known warnings from specific files
+    if (
+      warning.code === 'THIS_IS_UNDEFINED' && 
+      warning.loc.file.includes('node_modules/@dfinity/agent')
+    ) return;
+
+    if (
+      warning.code === 'EVAL' && 
+      warning.loc.file.includes('node_modules/js-sha256')
+    ) return;
+
+    // Let Rollup handle all other warnings normally
+    warn(warning);
   },
 };

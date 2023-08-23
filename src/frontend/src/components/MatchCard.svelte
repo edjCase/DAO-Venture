@@ -1,35 +1,53 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
-  import type { Match } from "../types/Match";
+  import type { Match } from "../ic-agent/Stadium";
+  import { teamStore } from "../stores/TeamStore";
+  import { nanosecondsToDate } from "../utils/DateUtils";
   export let match: Match;
+
+  let team1;
+  let team2;
+  let loading = true;
+  teamStore.subscribe((teams) => {
+    team1 = teams.find((team) => team.id.compareTo(match.teams[0].id) === "eq");
+    team2 = teams.find((team) => team.id.compareTo(match.teams[1].id) === "eq");
+    loading = !(!!team1 && !!team2);
+  });
+  let startDate = nanosecondsToDate(match.time);
 </script>
 
-<div class="match-card">
-  <Link to={`/matches/${match.id}`}>
-    <div class="match-card-title">
-      <div>
-        <img src={match.team1.logo} alt="{match.team1.name} Logo" />
+{#if loading}
+  <div>Loading...</div>
+{:else}
+  <div class="card">
+    <Link to={`/matches/${match.id}`}>
+      <div class="title">
+        <div class="team">
+          <div class="name">{team1.name}</div>
+          <img class="logo" src={team1.logoUrl} alt="{team1.name} Logo" />
+        </div>
+        <div>vs</div>
+        <div class="team">
+          <div class="name">{team2.name}</div>
+          <img class="logo" src={team2.logoUrl} alt="{team2.name} Logo" />
+        </div>
       </div>
-      <div>vs</div>
-      <div>
-        <img src={match.team2.logo} alt="{match.team2.name} Logo" />
+      <div class="content">
+        <span class="date">{startDate.toDateString()}</span>
+        {#if match.teams[0].score && match.teams[1].score}
+          <span class="score">
+            {match.teams[0].score} - {match.teams[1].score}
+          </span>
+        {:else}
+          <span>-</span>
+        {/if}
       </div>
-    </div>
-    <div class="match-card-content">
-      <span class="match-card-date">{match.start.toDateString()}</span>
-      {#if match.team1.matchStats?.score && match.team2.matchStats?.score}
-        <span class="match-card-score">
-          {match.team1.matchStats?.score} - {match.team2.matchStats?.score}
-        </span>
-      {:else}
-        <span>TBD</span>
-      {/if}
-    </div>
-  </Link>
-</div>
+    </Link>
+  </div>
+{/if}
 
 <style>
-  .match-card {
+  .card {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -40,28 +58,41 @@
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     margin: 1rem;
   }
-  .match-card :global(a) {
+  .card :global(a) {
     text-decoration: none;
     color: inherit;
   }
+  .team {
+    width: 150px;
+    height: 150px;
+    margin: 1rem;
+  }
+  .name {
+    font-size: 2rem;
+    font-weight: bold;
+  }
+  .logo {
+    width: 75px;
+    height: 75px;
+  }
 
-  .match-card-title {
+  .title {
     margin: 0;
     font-size: 1.5rem;
     display: flex;
     align-items: center;
   }
 
-  .match-card-content {
+  .content {
     display: flex;
     flex-direction: column;
   }
 
-  .match-card-date {
+  .date {
     text-align: center;
   }
 
-  .match-card-score {
+  .score {
     font-size: 2rem;
     font-weight: bold;
   }

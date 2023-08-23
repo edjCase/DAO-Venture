@@ -42,19 +42,15 @@ module {
     };
 
     public type Match = {
-        id : Nat32;
         teams : [MatchTeamInfo];
         time : Time.Time;
+        winner : ?Principal;
     };
 
     public type MatchTeamInfo = {
         id : Principal;
         config : ?TeamConfiguration;
-    };
-
-    public type CompletedMatch = Match and {
-        score1 : Int;
-        score2 : Int;
+        score : ?Nat32;
     };
 
     public type PlayerValidationError = {
