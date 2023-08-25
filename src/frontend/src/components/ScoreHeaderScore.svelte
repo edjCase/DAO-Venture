@@ -1,13 +1,12 @@
 <script lang="ts">
-  import type { Team } from "../types/Match";
   export let won: boolean;
   export let playerChoice: boolean;
-  export let score: number | null;
-  export let predictionPercent: number;
+  export let score: bigint | null;
+  export let predictionPercent: bigint;
 </script>
 
 <div class="score">
-  <div class="score-value">{score}</div>
+  <div class="score-value">{score || "-"}</div>
   {#if won}
     <div class="winner" title="Winner">👑</div>
   {/if}

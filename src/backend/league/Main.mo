@@ -123,7 +123,7 @@ actor LeagueActor {
 
     public shared ({ caller }) func scheduleMatch(
         stadiumId : Principal,
-        teamIds : [Principal],
+        teamIds : (Principal, Principal),
         time : Time.Time,
     ) : async ScheduleMatchResult {
         let ?stadium = Trie.get(stadiums, buildKey(stadiumId), Principal.equal) else return #stadiumNotFound;

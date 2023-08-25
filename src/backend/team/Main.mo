@@ -23,10 +23,14 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
     return Array.map<PlayerLedgerActor.PlayerInfoWithId, Player.PlayerWithId>(
       teamPlayers,
       func(playerInfo) = {
-        playerInfo.player with
+        playerInfo with
         id = playerInfo.id;
       },
     );
+  };
+
+  public shared ({ caller }) func getOwner() : async Principal {
+    return ownerId;
   };
 
   public shared ({ caller }) func getCycles() : async Nat {
@@ -43,7 +47,6 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
     teamConfig : Stadium.TeamConfiguration,
   ) : async Stadium.RegisterResult {
     assertOwner(caller);
-    let teamId = Principal.fromActor(this);
     let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
     await stadiumActor.registerForMatch(matchId, teamConfig);
   };

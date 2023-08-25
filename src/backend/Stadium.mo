@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import Player "Player";
 import DateTime "mo:datetime/DateTime";
 import Time "mo:base/Time";
+import MatchSimulator "stadium/MatchSimulator";
 
 module {
     public type RegisterResult = {
@@ -15,6 +16,7 @@ module {
     public type ScheduleMatchResult = {
         #ok;
         #timeNotAvailable;
+        #duplicateTeams;
     };
 
     public type TeamConfiguration = {
@@ -33,7 +35,7 @@ module {
 
     public type StadiumActor = actor {
         registerForMatch : (id : Nat32, teamConfig : TeamConfiguration) -> async RegisterResult;
-        scheduleMatch : (teamIds : [Principal], time : Time.Time) -> async ScheduleMatchResult;
+        scheduleMatch : (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
     };
 
     public type Stadium = {
@@ -42,15 +44,18 @@ module {
     };
 
     public type Match = {
-        teams : [MatchTeamInfo];
+        teams : (MatchTeamInfo, MatchTeamInfo);
         time : Time.Time;
         winner : ?Principal;
+        timerId : Nat;
+        state : MatchSimulator.MatchState;
     };
 
     public type MatchTeamInfo = {
         id : Principal;
         config : ?TeamConfiguration;
-        score : ?Nat32;
+        score : ?Nat;
+        predictionVotes : Nat;
     };
 
     public type PlayerValidationError = {

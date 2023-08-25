@@ -1,41 +1,65 @@
 <script lang="ts">
-  import type { Match, Team } from "../types/Match";
+  import type { Match } from "../ic-agent/Stadium";
   import ScoreHeaderScore from "./ScoreHeaderScore.svelte";
   import ScoreHeaderTeam from "./ScoreHeaderTeam.svelte";
 
   export let match: Match;
 
-  let playerChosenTeam = 1;
+  let team1 = match.teams[0];
+  let team2 = match.teams[1];
+  let winningTeam;
+  if (match.winner.length == 0) {
+    winningTeam = null;
+  } else if (match.winner[0] == team1.id) {
+    winningTeam = team1;
+  } else if (match.winner[0] == team2.id) {
+    winningTeam = team2;
+  } else {
+    throw new Error("Invalid winner");
+  }
+  let playerChosenTeamId;
+  if (team1.predictionVotes > team2.predictionVotes) {
+    playerChosenTeamId = team1.id;
+  } else if (team1.predictionVotes < team2.predictionVotes) {
+    playerChosenTeamId = team2.id;
+  }
 
-  let totalVotes = match.team1.votes + match.team2.votes;
+  let totalVotes = team1.predictionVotes + team2.predictionVotes;
+  let team1Percent;
+  let team2Percent;
+  if (totalVotes < 1) {
+    team1Percent = 0;
+    team2Percent = 0;
+  } else {
+    team1Percent = team1.predictionVotes / totalVotes;
+    team2Percent = team1.predictionVotes / totalVotes;
+  }
 </script>
 
 <div class="score-header">
-  <ScoreHeaderTeam team={match.team1} />
+  <ScoreHeaderTeam team={team1} />
   <ScoreHeaderScore
-    won={match.winningTeamId == match.team1.id}
-    playerChoice={match.team1.id == playerChosenTeam}
-    score={match.team1.matchStats?.score}
-    predictionPercent={match.team1.votes / totalVotes}
+    won={winningTeam?.id == team1.id}
+    playerChoice={team1.id == playerChosenTeamId}
+    score={team1.score.length > 0 ? team1.score[0] : null}
+    predictionPercent={team1Percent}
   />
   <div>
-    <div class="state">{match.end == null ? "Not Final" : "Final"}</div>
-    <div class="end-date">{match.end?.toDateString()}</div>
+    <div class="state">
+      {match.winner.length < 1 ? "Not Final" : "Winner :" + winningTeam?.name}
+    </div>
   </div>
   <ScoreHeaderScore
-    won={match.winningTeamId == match.team2.id}
-    playerChoice={match.team2.id == playerChosenTeam}
-    score={match.team2.matchStats?.score}
-    predictionPercent={match.team2.votes / totalVotes}
+    won={winningTeam?.id == team2.id}
+    playerChoice={team2.id == playerChosenTeamId}
+    score={team2.score.length > 0 ? team2.score[0] : null}
+    predictionPercent={team2Percent}
   />
-  <ScoreHeaderTeam team={match.team2} />
+  <ScoreHeaderTeam team={team2} />
 </div>
 
 <style>
   .state {
-    text-align: center;
-  }
-  .end-date {
     text-align: center;
   }
   .score-header {

@@ -2,7 +2,7 @@
   import type { Principal } from "@dfinity/principal";
   import { teamStore } from "../stores/TeamStore";
   import { stadiumStore } from "../stores/StadiumStore";
-  import { agent as leagueAgent } from "../ic-agent/League";
+  import { leagueAgent as leagueAgent } from "../ic-agent/League";
   import { dateToNanoseconds } from "../utils/DateUtils";
 
   $: teams = $teamStore;

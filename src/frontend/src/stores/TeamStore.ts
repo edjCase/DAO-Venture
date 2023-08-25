@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import {Team, agent as leagueAgent} from "../ic-agent/League"; 
+import { leagueAgent as leagueAgent, type Team } from "../ic-agent/League";
 
 
 
@@ -9,13 +9,13 @@ export const teamStore = (() => {
 
   const refetch = async () => {
     leagueAgent.getTeams().then((teams) => {
-        set(teams);
+      set(teams);
     });
   };
   refetch();
 
   return {
     subscribe,
-    refetch 
+    refetch
   };
 })();

@@ -4,7 +4,6 @@ import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 
 
-export type Time = bigint;
 export type TeamConfig = {
   'pitcher': number,
   'catcher': number,
@@ -18,15 +17,24 @@ export type TeamConfig = {
   'battingOrder': number[],
   'substitutes': number[]
 };
-export type MatchTeam = {
-  'id': Principal,
-  'config': [] | [TeamConfig],
-  'score': [] | [bigint],
-  'predictionVotes': bigint
+export type TeamConfigError = {
+  'notOnTeam': number
+} | {
+  'usedInMultiplePositions': number
 };
-export type Match = { 'id': number, teams: [MatchTeam, MatchTeam], 'time': Time, 'winner': [] | [Principal] };
+export type RegistrationResult = {
+  'ok': null
+} | {
+  'invalidTeamConfig': TeamConfigError[]
+} | {
+  'matchAlreadyStarted': null
+} | {
+  'matchNotFound': null
+} | {
+  'teamNotInMatch': null
+};
 export interface _SERVICE {
-  'getMatches': ActorMethod<[], Match[]>,
+  'registerForMatch': ActorMethod<[Principal, number, TeamConfig], RegistrationResult>,
 }
 
 
@@ -45,20 +53,19 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'battingOrder': IDL.Vec(IDL.Nat32),
     'substitutes': IDL.Vec(IDL.Nat32)
   });
-  const MatchTeamInfo = IDL.Record({
-    'id': IDL.Principal,
-    'config': IDL.Opt(TeamConfig),
-    'score': IDL.Opt(IDL.Nat),
-    'predictionVotes': IDL.Nat
+  const TeamConfigError = IDL.Variant({
+    'notOnTeam': IDL.Nat32,
+    'usedInMultiplePositions': IDL.Nat32
   });
-  const Match = IDL.Record({
-    'id': IDL.Nat32,
-    'teams': IDL.Tuple(MatchTeamInfo, MatchTeamInfo),
-    'time': IDL.Int,
-    'winner': IDL.Opt(IDL.Principal)
+  const RegistrationResult = IDL.Variant({
+    'ok': IDL.Null,
+    'invalidTeamConfig': IDL.Vec(TeamConfigError),
+    'matchAlreadyStarted': IDL.Null,
+    'matchNotFound': IDL.Null,
+    'teamNotInMatch': IDL.Null
   });
   return IDL.Service({
-    'getMatches': IDL.Func([], [IDL.Vec(Match)], ['query']),
+    'registerForMatch': IDL.Func([IDL.Principal, IDL.Nat32, TeamConfig], [RegistrationResult], []),
   });
 };
-export const stadiumAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);
+export const teamAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

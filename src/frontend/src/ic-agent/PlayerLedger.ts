@@ -2,68 +2,67 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 
-export interface Player { 'name' : string }
+export interface Player { 'name': string }
 export interface PlayerCreationOptions {
-  'name' : string,
-  'teamId' : [] | [Principal],
+  'name': string,
+  'teamId': [] | [Principal],
 }
-export interface PlayerInfo { 'player' : Player, 'teamId' : [] | [Principal] }
+export interface PlayerInfo { 'player': Player, 'teamId': [] | [Principal] }
 export interface PlayerInfoWithId {
-  'id' : number,
-  'player' : Player,
-  'teamId' : [] | [Principal],
+  'id': number,
+  'name': string,
+  'teamId': [] | [Principal],
 }
 export interface _SERVICE {
-  'create' : ActorMethod<[PlayerCreationOptions], number>,
-  'getAllPlayers' : ActorMethod<[], Array<PlayerInfoWithId>>,
-  'getPlayer' : ActorMethod<
+  'create': ActorMethod<[PlayerCreationOptions], number>,
+  'getAllPlayers': ActorMethod<[], Array<PlayerInfoWithId>>,
+  'getPlayer': ActorMethod<
     [number],
-    { 'ok' : PlayerInfo } |
-      { 'notFound' : null }
+    { 'ok': PlayerInfoWithId } |
+    { 'notFound': null }
   >,
-  'getTeamPlayers' : ActorMethod<[[] | [Principal]], Array<PlayerInfoWithId>>,
-  'setPlayerTeam' : ActorMethod<
+  'getTeamPlayers': ActorMethod<[[] | [Principal]], Array<PlayerInfoWithId>>,
+  'setPlayerTeam': ActorMethod<
     [number, [] | [Principal]],
-    { 'ok' : null } |
-      { 'playerNotFound' : null }
+    { 'ok': null } |
+    { 'playerNotFound': null }
   >,
 }
 
 
 export const idlFactory = ({ IDL }) => {
   const PlayerCreationOptions = IDL.Record({
-    'name' : IDL.Text,
-    'teamId' : IDL.Opt(IDL.Principal),
+    'name': IDL.Text,
+    'teamId': IDL.Opt(IDL.Principal),
   });
-  const Player = IDL.Record({ 'name' : IDL.Text });
   const PlayerInfoWithId = IDL.Record({
-    'id' : IDL.Nat32,
-    'player' : Player,
-    'teamId' : IDL.Opt(IDL.Principal),
+    'id': IDL.Nat32,
+    'name': IDL.Text,
+    'teamId': IDL.Opt(IDL.Principal),
   });
   const PlayerInfo = IDL.Record({
-    'player' : Player,
-    'teamId' : IDL.Opt(IDL.Principal),
+    'name': IDL.Text,
+    'teamId': IDL.Opt(IDL.Principal),
   });
   return IDL.Service({
-    'create' : IDL.Func([PlayerCreationOptions], [IDL.Nat32], []),
-    'getAllPlayers' : IDL.Func([], [IDL.Vec(PlayerInfoWithId)], ['query']),
-    'getPlayer' : IDL.Func(
-        [IDL.Nat32],
-        [IDL.Variant({ 'ok' : PlayerInfo, 'notFound' : IDL.Null })],
-        ['query'],
-      ),
-    'getTeamPlayers' : IDL.Func(
-        [IDL.Opt(IDL.Principal)],
-        [IDL.Vec(PlayerInfoWithId)],
-        ['query'],
-      ),
-    'setPlayerTeam' : IDL.Func(
-        [IDL.Nat32, IDL.Opt(IDL.Principal)],
-        [IDL.Variant({ 'ok' : IDL.Null, 'playerNotFound' : IDL.Null })],
-        [],
-      ),
+    'create': IDL.Func([PlayerCreationOptions], [IDL.Nat32], []),
+    'getAllPlayers': IDL.Func([], [IDL.Vec(PlayerInfoWithId)], ['query']),
+    'getPlayer': IDL.Func(
+      [IDL.Nat32],
+      [IDL.Variant({ 'ok': PlayerInfo, 'notFound': IDL.Null })],
+      ['query'],
+    ),
+    'getTeamPlayers': IDL.Func(
+      [IDL.Opt(IDL.Principal)],
+      [IDL.Vec(PlayerInfoWithId)],
+      ['query'],
+    ),
+    'setPlayerTeam': IDL.Func(
+      [IDL.Nat32, IDL.Opt(IDL.Principal)],
+      [IDL.Variant({ 'ok': IDL.Null, 'playerNotFound': IDL.Null })],
+      [],
+    ),
   });
 };
 const canisterId = process.env.CANISTER_ID_PLAYERLEDGER;
-export const agent= createActor<_SERVICE>(canisterId, idlFactory);
+export const playerLedgerAgent = createActor<_SERVICE>(canisterId, idlFactory);

@@ -1,10 +1,10 @@
 import { writable, get } from "svelte/store";
-import { agentFactory as stadiumAgentFactory } from "../ic-agent/Stadium";
+import { stadiumAgentFactory as stadiumAgentFactory, type Match } from "../ic-agent/Stadium";
 import { stadiumStore } from "./StadiumStore";
 
 
 export const matchStore = (() => {
-  const { subscribe, set } = writable([]);
+  const { subscribe, set } = writable<Match[]>([]);
 
   const refetch = async () => {
     const $stadiums = get(stadiumStore);

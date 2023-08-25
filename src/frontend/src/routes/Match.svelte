@@ -3,30 +3,44 @@
   import Events from "../components/Events.svelte";
   import ScoreHeader from "../components/ScoreHeader.svelte";
   import { matchStore } from "../stores/MatchStore";
-  import { get } from "svelte/store";
   import type { Match } from "../ic-agent/Stadium";
   import { teamStore } from "../stores/TeamStore";
+  import type { Team } from "../ic-agent/League";
 
-  export let id;
+  export let id: number;
 
-  let match: Match = get(matchStore).find((item) => item.id == id);
-  let teams = get(teamStore);
-  let team1 = teams.find((t) => t.id == match?.teams[0].id);
-  let team2 = teams.find((t) => t.id == match?.teams[1].id);
+  let match: Match;
+  let team1: Team;
+  let team2: Team;
+  let loadingTeams = true;
+  matchStore.subscribe((matches) => {
+    match = matches.find((item) => item.id == id);
+    if (match) {
+      teamStore.subscribe((teams) => {
+        team1 = teams.find(
+          (team) => team.id.compareTo(match.teams[0].id) === "eq"
+        );
+        team2 = teams.find(
+          (team) => team.id.compareTo(match.teams[1].id) === "eq"
+        );
+        loadingTeams = false;
+      });
+    }
+  });
 </script>
 
-{#if match}
+{#if !loadingTeams}
   <section id="match-details">
     <ScoreHeader {match} />
 
     <div class="team-stats-container">
       <div class="team-stats">
         <h1>{team1.name}</h1>
-        <PlayerMatchStats teamInfo={team1} />
+        <PlayerMatchStats teamInfo={match.teams[0]} />
       </div>
       <div class="team-stats">
         <h1>{team2.name}</h1>
-        <PlayerMatchStats teamInfo={team2} />
+        <PlayerMatchStats teamInfo={match.teams[1]} />
       </div>
     </div>
 
@@ -35,6 +49,8 @@
       <Events {match} />
     </section>
   </section>
+{:else}
+  Loading...
 {/if}
 
 <style>

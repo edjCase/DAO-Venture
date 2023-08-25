@@ -7,8 +7,7 @@ import Principal "mo:base/Principal";
 
 actor PlayerLedger {
 
-    type PlayerInfo = {
-        player : Player.Player;
+    type PlayerInfo = Player.Player and {
         teamId : ?Principal;
     };
 
@@ -30,8 +29,8 @@ actor PlayerLedger {
         let id = nextPlayerId;
         nextPlayerId += 1;
         let player = generatePlayer(id, options);
-        let playerInfo = {
-            player = player;
+        let playerInfo : PlayerInfo = {
+            player with
             teamId = options.teamId;
         };
         let key = {

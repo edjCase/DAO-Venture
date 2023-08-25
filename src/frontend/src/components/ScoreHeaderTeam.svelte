@@ -1,15 +1,20 @@
 <script lang="ts">
-  import type { Team } from "../ic-agent/League";
+  import { get } from "svelte/store";
+  import type { MatchTeam } from "../ic-agent/Stadium";
+  import { teamStore } from "../stores/TeamStore";
 
-  export let team: Team;
+  export let team: MatchTeam;
+  let teamDetails = get(teamStore).find(
+    (t) => t.id.toString() == team.id.toString()
+  );
 </script>
 
 <div class="team-info">
   <div>
-    <div>{team.name}</div>
+    <div>{teamDetails.name}</div>
     <div class="standing">14-20</div>
   </div>
-  <img src={team.logoUrl} alt="{team.name} Logo" />
+  <img src={teamDetails.logoUrl} alt="{teamDetails.name} Logo" />
 </div>
 
 <style>

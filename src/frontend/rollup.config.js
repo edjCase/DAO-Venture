@@ -81,7 +81,7 @@ function serve() {
       if (server) return;
       server = require("child_process").spawn(
         "npm",
-        ["run", "start", "--", "--dev"],
+        ["run", "start", "--", "--dev", "--single"],
         {
           stdio: ["ignore", "inherit", "inherit"],
           shell: true,

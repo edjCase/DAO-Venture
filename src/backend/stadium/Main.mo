@@ -17,11 +17,23 @@ import TrieSet "mo:base/TrieSet";
 import PlayerLedgerActor "canister:playerLedger";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
+import Timer "mo:base/Timer";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     public type MatchInfo = Stadium.Match and {
         id : Nat32;
+    };
+
+    public type StartMatchResult = {
+        #ok;
+        #matchNotFound;
+        #matchAlreadyStarted;
+    };
+    public type TickMatchResult = {
+        #ok;
+        #matchNotFound;
+        #matchOver;
     };
 
     stable var matches : Trie.Trie<Nat32, Stadium.Match> = Trie.empty();
@@ -46,6 +58,15 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         );
     };
 
+    public shared ({ caller }) func startMatch(matchId : Nat32) : async StartMatchResult {
+        ignore tickMatch(matchId);
+        #ok;
+    };
+
+    public shared ({ caller }) func tickMatch(matchId : Nat32) : async TickMatchResult {
+        #ok;
+    };
+
     public shared ({ caller }) func registerForMatch(
         matchId : Nat32,
         teamConfig : Stadium.TeamConfiguration,
@@ -63,7 +84,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         switch (validateTeamConfig(teamConfig, teamPlayerIds)) {
             case (#ok) {
                 let newMatch = switch (buildNewMatch(caller, match, teamConfig)) {
-                    case (#ok(match)) match;
+                    case (#ok(m)) m;
                     case (#teamNotInMatch) return #teamNotInMatch;
                 };
                 let (newMatches, _) = Trie.replace(matches, matchKey, Nat32.equal, ?newMatch);
@@ -77,25 +98,47 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
     };
 
-    public shared ({ caller }) func scheduleMatch(teamIds : [Principal], time : Time.Time) : async Stadium.ScheduleMatchResult {
+    public shared ({ caller }) func scheduleMatch(teamIds : (Principal, Principal), time : Time.Time) : async Stadium.ScheduleMatchResult {
         assertLeague(caller);
         if (not isTimeAvailable(time)) {
             return #timeNotAvailable;
         };
-        // TODO validate teams?
-        let teamsInfo = Array.map<Principal, Stadium.MatchTeamInfo>(
-            teamIds,
-            func(teamId) = {
-                id = teamId;
+        if (teamIds.0 == teamIds.1) {
+            return #duplicateTeams;
+        };
+        let correctedTeamIds = Util.sortTeamIds(teamIds);
+        let teamsInfo : (Stadium.MatchTeamInfo, Stadium.MatchTeamInfo) = (
+            {
+                id = correctedTeamIds.0;
                 config = null;
                 score = null;
+                predictionVotes = 0;
+            },
+            {
+                id = correctedTeamIds.1;
+                config = null;
+                score = null;
+                predictionVotes = 0;
             },
         );
+        let timeDiff : Time.Time = time - Time.now();
+        let natTimeDiff = if (timeDiff < 0) {
+            0;
+        } else {
+            Int.abs(timeDiff);
+        };
+        let timerDuration = #nanoseconds(natTimeDiff);
+        let callbackFunc = func() : async () {
+            let _ = await startMatch(nextMatchId);
+        };
+        let timerId = Timer.setTimer(timerDuration, callbackFunc);
         let match : Stadium.Match = {
             id = nextMatchId;
             time = time;
             teams = teamsInfo;
             winner = null;
+            timerId = timerId;
+            state = {};
         };
         let nextMatchKey = {
             hash = nextMatchId;
@@ -127,28 +170,26 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         teamConfig : Stadium.TeamConfiguration,
     ) : { #ok : Stadium.Match; #teamNotInMatch } {
 
-        let teamsBuffer = Buffer.fromArray<Stadium.MatchTeamInfo>(match.teams);
-        var teamIndex = 0;
-        label l for (team in teamsBuffer.vals()) {
-            if (team.id == teamId) {
-                break l;
-            };
-        };
-        if (teamIndex >= teamsBuffer.size()) {
-            // Couldn't find the team in the match
+        let teamInfo = if (match.teams.0.id == teamId) {
+            match.teams.0;
+        } else if (match.teams.1.id == teamId) {
+            match.teams.1;
+        } else {
             return #teamNotInMatch;
         };
-        let teamInfo = teamsBuffer.get(teamIndex);
-
-        let newTeam = {
+        let newTeam : Stadium.MatchTeamInfo = {
             teamInfo with
-            configuration = teamConfig;
+            config = ?teamConfig;
         };
-        teamsBuffer.put(teamIndex, newTeam);
+        let newTeams = if (match.teams.0.id == teamId) {
+            (newTeam, match.teams.1);
+        } else {
+            (match.teams.0, newTeam);
+        };
 
         #ok({
             match with
-            teams = Buffer.toArray(teamsBuffer)
+            teams = newTeams;
         });
     };
 

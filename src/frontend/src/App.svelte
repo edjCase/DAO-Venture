@@ -7,8 +7,6 @@
   import NotFound from "./routes/NotFound.svelte";
   import Header from "./components/Header.svelte";
   import News from "./routes/News.svelte";
-  import Governance from "./routes/Governance.svelte";
-  import Proposal from "./routes/Proposal.svelte";
 </script>
 
 <main>
@@ -18,8 +16,6 @@
     <Route path="/about" component={About} />
     <Route path="/matches/:id" let:params component={Match} />
     <Route path="/matches" component={Matches} />
-    <Route path="/governance" component={Governance} />
-    <Route path="/proposals/:id" component={Proposal} />
     <Route path="/news" component={News} />
     <Route path="*" component={NotFound} />
   </Router>
