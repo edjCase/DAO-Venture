@@ -18,6 +18,7 @@ import PlayerLedgerActor "canister:playerLedger";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
+import MatchSimulator "MatchSimulator";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
@@ -64,19 +65,32 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     };
 
     public shared ({ caller }) func tickMatch(matchId : Nat32) : async TickMatchResult {
+        let ?match = getMatchOrNull(matchId) else return #matchNotFound;
+        let newState = MatchSimulator.tick(match.state);
+        addOrUpdateMatch(
+            matchId,
+            {
+                match with
+                state = newState;
+            },
+        );
         #ok;
+    };
+
+    private func getMatchOrNull(matchId : Nat32) : ?Stadium.Match {
+        let matchKey = {
+            hash = matchId;
+            key = matchId;
+        };
+        Trie.get(matches, matchKey, Nat32.equal);
     };
 
     public shared ({ caller }) func registerForMatch(
         matchId : Nat32,
         teamConfig : Stadium.TeamConfiguration,
     ) : async Stadium.RegisterResult {
-        let matchKey = {
-            hash = matchId;
-            key = matchId;
-        };
-        let ?match = Trie.get(matches, matchKey, Nat32.equal) else return #matchNotFound;
-        if (match.time < Time.now()) {
+        let ?match = getMatchOrNull(matchId) else return #matchNotFound;
+        if (match.time <= Time.now()) {
             return #matchAlreadyStarted;
         };
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?caller);
@@ -87,8 +101,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
                     case (#ok(m)) m;
                     case (#teamNotInMatch) return #teamNotInMatch;
                 };
-                let (newMatches, _) = Trie.replace(matches, matchKey, Nat32.equal, ?newMatch);
-                matches := newMatches;
+                addOrUpdateMatch(matchId, newMatch);
                 #ok;
             };
             case (#invalidTeamConfig(e)) return #invalidTeamConfig(e);
@@ -96,6 +109,15 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             case (#matchNotFound) return #matchNotFound;
             case (#teamNotInMatch) return #teamNotInMatch;
         };
+    };
+
+    private func addOrUpdateMatch(matchId : Nat32, match : Stadium.Match) {
+        let matchKey = {
+            hash = matchId;
+            key = matchId;
+        };
+        let (newMatches, _) = Trie.replace(matches, matchKey, Nat32.equal, ?match);
+        matches := newMatches;
     };
 
     public shared ({ caller }) func scheduleMatch(teamIds : (Principal, Principal), time : Time.Time) : async Stadium.ScheduleMatchResult {
