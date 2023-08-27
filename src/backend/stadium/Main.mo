@@ -60,18 +60,26 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     };
 
     public shared ({ caller }) func startMatch(matchId : Nat32) : async StartMatchResult {
+        let ?match = getMatchOrNull(matchId) else return #matchNotFound;
+        let initState = MatchSimulator.initState(match.teams.0, match.teams.1);
+        let newMatch = {
+            match with
+            state = ?initState;
+        };
+        addOrUpdateMatch(matchId, newMatch);
         ignore tickMatch(matchId);
         #ok;
     };
 
     public shared ({ caller }) func tickMatch(matchId : Nat32) : async TickMatchResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        let newState = MatchSimulator.tick(match.state);
+        let ?state = match.state else return #noState;
+        let newState = MatchSimulator.tick(state);
         addOrUpdateMatch(
             matchId,
             {
                 match with
-                state = newState;
+                state = ?newState;
             },
         );
         #ok;
@@ -160,7 +168,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             teams = teamsInfo;
             winner = null;
             timerId = timerId;
-            state = {};
+            state = null;
         };
         let nextMatchKey = {
             hash = nextMatchId;
