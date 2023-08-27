@@ -9,7 +9,7 @@ module {
         #matchNotFound;
         #teamNotInMatch;
         #matchAlreadyStarted;
-        #invalidTeamConfig : [PlayerValidationError];
+        #invalidLineup : [PlayerValidationError];
     };
 
     public type ScheduleMatchResult = {
@@ -75,24 +75,11 @@ module {
         effect : EventEffect;
     };
 
-    public type Injury = {
-        #twistedAnkle;
-        #brokenLeg;
-        #brokenArm;
-        #concussion;
-    };
-
-    public type PlayerCondition = {
-        #ok;
-        #injured : Injury;
-        #dead;
-    };
-
     public type PlayerState = {
         id : Nat32;
         name : Text;
         energy : Nat;
-        condition : PlayerCondition;
+        condition : Player.PlayerCondition;
     };
 
     public type TeamState = {
@@ -152,7 +139,7 @@ module {
         time : Time.Time;
         winner : ?Principal;
         timerId : Nat;
-        state : ?MatchState;
+        state : MatchState;
     };
 
     public type MatchTeamInfo = {

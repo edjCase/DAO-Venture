@@ -4,6 +4,8 @@ import Trie "mo:base/Trie";
 import Nat32 "mo:base/Nat32";
 import Stadium "../Stadium";
 import Player "../Player";
+import Array "mo:base/Array";
+import Nat "mo:base/Nat";
 
 module {
     type PlayerState = Stadium.PlayerState;
@@ -13,6 +15,7 @@ module {
     type TeamState = Stadium.TeamState;
     type TeamLineup = Stadium.TeamLineup;
     type InProgressMatchState = Stadium.InProgressMatchState;
+    type PlayerWithId = Player.PlayerWithId;
 
     type MutableTeamState = {
         var score : Int;
@@ -36,10 +39,10 @@ module {
         var balls : Nat;
     };
 
-    type TeamInitData = {
+    public type TeamInitData = {
         id : Principal;
         lineup : ?TeamLineup;
-        players : [Player.Player];
+        players : [PlayerWithId];
     };
 
     public func initState(team1 : TeamInitData, team2 : TeamInitData) : MatchState {
@@ -50,18 +53,17 @@ module {
             case (?_, null) return #completed(#absentTeam(#team2));
             case (?team1Lineup, ?team2Lineup)(team1Lineup, team2Lineup);
         };
-        let mapPlayerState = func(player : Player.Player) : PlayerState {
+        let mapPlayerState = func(player : PlayerWithId) : PlayerState {
             {
                 id = player.id;
                 name = player.name;
-                position = player.position;
+                position = null;
                 energy = player.energy;
-                health = player.health;
-                isSub = player.isSub;
+                condition = player.condition;
             };
         };
         let team1Players : [PlayerState] = Array.map(team1.players, mapPlayerState);
-        let team2Players : [PlayerState] = team2.players;
+        let team2Players : [PlayerState] = Array.map(team2.players, mapPlayerState);
         #inProgress({
             team1StartOffense = true; // TODO randomize
             team1 = {
@@ -72,7 +74,7 @@ module {
             };
             team2 = {
                 score = 0;
-                battingOrder = team2Config.battingOrder;
+                battingOrder = team2Lineup.battingOrder;
                 players = team2Players;
                 currentBatterIndex = 0;
             };
@@ -147,7 +149,30 @@ module {
         var playerNameMapCache : ?Trie.Trie<Nat32, Text> = null;
 
         public func getState() : MatchState {
-            #inProgress(state);
+            #inProgress({
+                team1StartOffense = state.team1StartOffense;
+                team1 = {
+                    score = state.team1.score;
+                    battingOrder = Buffer.toArray(state.team1.battingOrder);
+                    players = Buffer.toArray(state.team1.players);
+                    currentBatterIndex = state.team1.currentBatterIndex;
+                };
+                team2 = {
+                    score = state.team2.score;
+                    battingOrder = Buffer.toArray(state.team2.battingOrder);
+                    players = Buffer.toArray(state.team2.players);
+                    currentBatterIndex = state.team2.currentBatterIndex;
+                };
+                events = Buffer.toArray(state.events);
+                firstBase = state.firstBase;
+                secondBase = state.secondBase;
+                thirdBase = state.thirdBase;
+                atBat = state.atBat;
+                round = state.round;
+                outs = state.outs;
+                strikes = state.strikes;
+                balls = state.balls;
+            });
         };
 
         public func incrementBattingOrder() : Nat32 {

@@ -44,11 +44,11 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
   public shared ({ caller }) func registerForMatch(
     stadiumId : Principal,
     matchId : Nat32,
-    teamConfig : Stadium.TeamConfiguration,
+    lineup : Stadium.TeamLineup,
   ) : async Stadium.RegisterResult {
     assertOwner(caller);
     let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
-    await stadiumActor.registerForMatch(matchId, teamConfig);
+    await stadiumActor.registerForMatch(matchId, lineup);
   };
 
   private func assertOwner(caller : Principal) {

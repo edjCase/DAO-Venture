@@ -21,8 +21,13 @@ import Timer "mo:base/Timer";
 import MatchSimulator "MatchSimulator";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
+    type Match = Stadium.Match;
+    type MatchTeamInfo = Stadium.MatchTeamInfo;
+    type Player = Player.Player;
+    type PlayerState = Stadium.PlayerState;
+    type PlayerInfoWithId = PlayerLedgerActor.PlayerInfoWithId;
 
-    public type MatchInfo = Stadium.Match and {
+    public type MatchInfo = Match and {
         id : Nat32;
     };
 
@@ -35,15 +40,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         #ok;
         #matchNotFound;
         #matchOver;
+        #notStarted;
     };
 
-    stable var matches : Trie.Trie<Nat32, Stadium.Match> = Trie.empty();
+    stable var matches : Trie.Trie<Nat32, Match> = Trie.empty();
 
     stable var nextMatchId : Nat32 = 1;
 
     public query func getMatches() : async [MatchInfo] {
         let compare = func(a : MatchInfo, b : MatchInfo) : Order.Order = Int.compare(a.time, b.time);
-        let map = func(v : (Nat32, Stadium.Match)) : MatchInfo = {
+        let map = func(v : (Nat32, Match)) : MatchInfo = {
             v.1 with
             id = v.0;
         };
@@ -61,10 +67,20 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     public shared ({ caller }) func startMatch(matchId : Nat32) : async StartMatchResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        let initState = MatchSimulator.initState(match.teams.0, match.teams.1);
-        let newMatch = {
+        let createTeamInit = func(team : Stadium.MatchTeamInfo) : async MatchSimulator.TeamInitData {
+            let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
+            {
+                id = team.id;
+                lineup = team.lineup;
+                players = teamPlayers;
+            };
+        };
+        let team1Init = await createTeamInit(match.teams.0);
+        let team2Init = await createTeamInit(match.teams.1);
+        let initState = MatchSimulator.initState(team1Init, team2Init);
+        let newMatch : Match = {
             match with
-            state = ?initState;
+            state = initState;
         };
         addOrUpdateMatch(matchId, newMatch);
         ignore tickMatch(matchId);
@@ -73,19 +89,23 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     public shared ({ caller }) func tickMatch(matchId : Nat32) : async TickMatchResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        let ?state = match.state else return #noState;
+        let state = switch (match.state) {
+            case (#completed(_)) return #matchOver;
+            case (#inProgress(s)) s;
+            case (#notStarted) return #notStarted;
+        };
         let newState = MatchSimulator.tick(state);
         addOrUpdateMatch(
             matchId,
             {
                 match with
-                state = ?newState;
+                state = newState;
             },
         );
         #ok;
     };
 
-    private func getMatchOrNull(matchId : Nat32) : ?Stadium.Match {
+    private func getMatchOrNull(matchId : Nat32) : ?Match {
         let matchKey = {
             hash = matchId;
             key = matchId;
@@ -95,7 +115,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     public shared ({ caller }) func registerForMatch(
         matchId : Nat32,
-        teamConfig : Stadium.TeamConfiguration,
+        lineup : Stadium.TeamLineup,
     ) : async Stadium.RegisterResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
         if (match.time <= Time.now()) {
@@ -103,23 +123,23 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?caller);
         let teamPlayerIds = Array.map<PlayerLedgerActor.PlayerInfoWithId, Nat32>(teamPlayers, func(p) = p.id);
-        switch (validateTeamConfig(teamConfig, teamPlayerIds)) {
+        switch (validatelineup(lineup, teamPlayerIds)) {
             case (#ok) {
-                let newMatch = switch (buildNewMatch(caller, match, teamConfig)) {
+                let newMatch = switch (buildNewMatch(caller, match, lineup)) {
                     case (#ok(m)) m;
                     case (#teamNotInMatch) return #teamNotInMatch;
                 };
                 addOrUpdateMatch(matchId, newMatch);
                 #ok;
             };
-            case (#invalidTeamConfig(e)) return #invalidTeamConfig(e);
+            case (#invalidLineup(e)) return #invalidLineup(e);
             case (#matchAlreadyStarted) return #matchAlreadyStarted;
             case (#matchNotFound) return #matchNotFound;
             case (#teamNotInMatch) return #teamNotInMatch;
         };
     };
 
-    private func addOrUpdateMatch(matchId : Nat32, match : Stadium.Match) {
+    private func addOrUpdateMatch(matchId : Nat32, match : Match) {
         let matchKey = {
             hash = matchId;
             key = matchId;
@@ -137,16 +157,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             return #duplicateTeams;
         };
         let correctedTeamIds = Util.sortTeamIds(teamIds);
-        let teamsInfo : (Stadium.MatchTeamInfo, Stadium.MatchTeamInfo) = (
+        let teamsInfo : (MatchTeamInfo, MatchTeamInfo) = (
             {
                 id = correctedTeamIds.0;
-                config = null;
+                lineup = null;
                 score = null;
                 predictionVotes = 0;
             },
             {
                 id = correctedTeamIds.1;
-                config = null;
+                lineup = null;
                 score = null;
                 predictionVotes = 0;
             },
@@ -162,13 +182,13 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             let _ = await startMatch(nextMatchId);
         };
         let timerId = Timer.setTimer(timerDuration, callbackFunc);
-        let match : Stadium.Match = {
+        let match : Match = {
             id = nextMatchId;
             time = time;
             teams = teamsInfo;
             winner = null;
             timerId = timerId;
-            state = null;
+            state = #notStarted;
         };
         let nextMatchKey = {
             hash = nextMatchId;
@@ -196,9 +216,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     private func buildNewMatch(
         teamId : Principal,
-        match : Stadium.Match,
-        teamConfig : Stadium.TeamConfiguration,
-    ) : { #ok : Stadium.Match; #teamNotInMatch } {
+        match : Match,
+        lineup : Stadium.TeamLineup,
+    ) : { #ok : Match; #teamNotInMatch } {
 
         let teamInfo = if (match.teams.0.id == teamId) {
             match.teams.0;
@@ -207,9 +227,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         } else {
             return #teamNotInMatch;
         };
-        let newTeam : Stadium.MatchTeamInfo = {
+        let newTeam : MatchTeamInfo = {
             teamInfo with
-            config = ?teamConfig;
+            config = ?lineup;
         };
         let newTeams = if (match.teams.0.id == teamId) {
             (newTeam, match.teams.1);
@@ -223,43 +243,43 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         });
     };
 
-    private func validateTeamConfig(
-        teamConfig : Stadium.TeamConfiguration,
+    private func validatelineup(
+        lineup : Stadium.TeamLineup,
         allPlayerIds : [Nat32],
     ) : Stadium.RegisterResult {
         let allPlayerIdsSet = TrieSet.fromArray(allPlayerIds, hashNat32, Nat32.equal);
 
         let fieldPlayers = [
-            teamConfig.pitcher,
-            teamConfig.catcher,
-            teamConfig.firstBase,
-            teamConfig.secondBase,
-            teamConfig.thirdBase,
-            teamConfig.shortStop,
-            teamConfig.leftField,
-            teamConfig.centerField,
-            teamConfig.rightField,
+            lineup.pitcher,
+            lineup.catcher,
+            lineup.firstBase,
+            lineup.secondBase,
+            lineup.thirdBase,
+            lineup.shortStop,
+            lineup.leftField,
+            lineup.centerField,
+            lineup.rightField,
         ];
 
         // Validate that all players are on the team
         switch (validatePlayers(Iter.fromArray(fieldPlayers), allPlayerIdsSet)) {
             case (#ok) {};
-            case (#invalid(e)) return #invalidTeamConfig(e);
+            case (#invalid(e)) return #invalidLineup(e);
         };
         let fieldPlayersSet = TrieSet.fromArray(fieldPlayers, hashNat32, Nat32.equal);
 
         // Validate all the field players are in the batting order
-        switch (validatePlayers(Iter.fromArray(teamConfig.battingOrder), fieldPlayersSet)) {
+        switch (validatePlayers(Iter.fromArray(lineup.battingOrder), fieldPlayersSet)) {
             case (#ok) {};
-            case (#invalid(e)) return #invalidTeamConfig(e);
+            case (#invalid(e)) return #invalidLineup(e);
         };
 
         let unusedPlayerSet = Trie.diff(allPlayerIdsSet, fieldPlayersSet, Nat32.equal);
 
         // Substitute players can not be the same as field players
-        switch (validatePlayers(Iter.fromArray(teamConfig.substitutes), unusedPlayerSet)) {
+        switch (validatePlayers(Iter.fromArray(lineup.substitutes), unusedPlayerSet)) {
             case (#ok) {};
-            case (#invalid(e)) return #invalidTeamConfig(e);
+            case (#invalid(e)) return #invalidLineup(e);
         };
 
         #ok;

@@ -99,6 +99,9 @@ actor PlayerLedger {
         {
             id = id;
             name = options.name;
+            condition = #ok;
+            energy = 100;
+            energyRecoveryRate = 10;
         };
     };
 };
