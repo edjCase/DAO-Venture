@@ -104,6 +104,9 @@ module {
             playerId : Nat32;
             position : ?PlayerPositionOffense;
         };
+        #addStrike;
+        #addOut;
+        #endRound;
     };
 
     public type Event = {
@@ -117,6 +120,7 @@ module {
         energy : Int;
         condition : Player.PlayerCondition;
         skills : Player.PlayerSkills;
+        preferredPosition : PlayerPositionDefense;
     };
 
     public type TeamState = {

@@ -28,7 +28,7 @@ actor PlayerLedger {
         assertLeague(caller);
         let id = nextPlayerId;
         nextPlayerId += 1;
-        let player = generatePlayer(id, options);
+        let player = generatePlayer(options);
         let playerInfo : PlayerInfo = {
             player with
             teamId = options.teamId;
@@ -95,13 +95,16 @@ actor PlayerLedger {
         // };
     };
 
-    private func generatePlayer(id : Nat32, options : PlayerCreationOptions) : Player.Player {
+    private func generatePlayer(options : PlayerCreationOptions) : Player.Player {
         {
-            id = id;
             name = options.name;
-            condition = #ok;
             energy = 100;
             energyRecoveryRate = 10;
+            condition = #ok;
+            skills = {
+                batting = 0;
+                throwing = 0;
+            };
         };
     };
 };

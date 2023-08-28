@@ -19,6 +19,7 @@ import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
 import MatchSimulator "MatchSimulator";
+import Random "mo:base/Random";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     type Match = Stadium.Match;
@@ -77,7 +78,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let team1Init = await createTeamInit(match.teams.0);
         let team2Init = await createTeamInit(match.teams.1);
-        let team1IsOffense = true; // TODO randomize
+        let random = Random.Finite(await Random.blob());
+        let ?team1IsOffense = random.coin() else Prelude.unreachable();
         let initState = MatchSimulator.initState(team1Init, team2Init, team1IsOffense);
         let newMatch : Match = {
             match with
@@ -95,7 +97,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             case (#inProgress(s)) s;
             case (#notStarted) return #notStarted;
         };
-        let newState = MatchSimulator.tick(state);
+        let random = Random.Finite(await Random.blob());
+        let newState = MatchSimulator.tick(state, random);
         addOrUpdateMatch(
             matchId,
             {
