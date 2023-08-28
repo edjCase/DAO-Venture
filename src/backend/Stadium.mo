@@ -2,6 +2,9 @@ import Principal "mo:base/Principal";
 import Player "Player";
 import DateTime "mo:datetime/DateTime";
 import Time "mo:base/Time";
+import Nat32 "mo:base/Nat32";
+import Trie "mo:base/Trie";
+import Hash "mo:base/Hash";
 
 module {
     public type RegisterResult = {
@@ -20,7 +23,7 @@ module {
 
     public type TeamLineup = {
         pitcher : Nat32;
-        catcher : Nat32;
+        catcher : Nat32; // TODO remove?
         firstBase : Nat32;
         secondBase : Nat32;
         thirdBase : Nat32;
@@ -32,11 +35,47 @@ module {
         substitutes : [Nat32];
     };
 
+    public type PlayerPositionDefense = {
+        #firstBase;
+        #secondBase;
+        #thirdBase;
+        #shortStop;
+        #leftField;
+        #centerField;
+        #rightField;
+        #pitcher;
+        #catcher;
+    };
+
     public type PlayerPositionOffense = {
+        #onFirstBase;
+        #onSecondBase;
+        #onThirdBase;
         #atBat;
-        #first;
-        #second;
-        #third;
+    };
+
+    public type PlayerPosition = PlayerPositionDefense or PlayerPositionOffense;
+
+    public func equalPlayerPosition(a : PlayerPosition, b : PlayerPosition) : Bool {
+        a == b;
+    };
+
+    public func hashPlayerPosition(position : PlayerPosition) : Hash.Hash {
+        switch (position) {
+            case (#firstBase) 0;
+            case (#secondBase) 1;
+            case (#thirdBase) 2;
+            case (#pitcher) 3;
+            case (#catcher) 4;
+            case (#shortStop) 5;
+            case (#leftField) 6;
+            case (#centerField) 7;
+            case (#rightField) 8;
+            case (#atBat) 9;
+            case (#onFirstBase) 10;
+            case (#onSecondBase) 11;
+            case (#onThirdBase) 12;
+        };
     };
 
     public type TeamId = {
@@ -45,28 +84,25 @@ module {
     };
 
     public type EventEffect = {
+        #none;
         #increaseScore : {
             teamId : TeamId;
             amount : Int;
         };
-        #changePlayer : {
-            teamId : TeamId;
-            playerInId : Nat32;
+        #subPlayer : {
             playerOutId : Nat32;
         };
-        #injurePlayer : {
+        #setPlayerCondition : {
             playerId : Nat32;
-        };
-        #killPlayer : {
-            playerId : Nat32;
+            condition : Player.PlayerCondition;
         };
         #increaseEnergy : {
             playerId : Nat32;
             amount : Int;
         };
-        #movePlayerOffsense : {
+        #movePlayerOffense : {
             playerId : Nat32;
-            position : PlayerPositionOffense;
+            position : ?PlayerPositionOffense;
         };
     };
 
@@ -76,16 +112,17 @@ module {
     };
 
     public type PlayerState = {
-        id : Nat32;
         name : Text;
-        energy : Nat;
+        teamId : TeamId;
+        energy : Int;
         condition : Player.PlayerCondition;
+        skills : Player.PlayerSkills;
     };
 
     public type TeamState = {
         score : Int;
         battingOrder : [Nat32];
-        players : [PlayerState];
+        substitutes : [Nat32];
         currentBatterIndex : Nat;
     };
 
@@ -100,18 +137,15 @@ module {
     };
 
     public type InProgressMatchState = {
-        team1StartOffense : Bool;
+        offenseTeam : TeamId;
         team1 : TeamState;
         team2 : TeamState;
+        players : Trie.Trie<Nat32, PlayerState>;
         events : [Event];
-        firstBase : BaseInfo;
-        secondBase : BaseInfo;
-        thirdBase : BaseInfo;
-        atBat : ?Nat;
+        positions : Trie.Trie<PlayerPosition, Nat32>;
         round : Nat;
         outs : Nat;
         strikes : Nat;
-        balls : Nat;
     };
 
     public type CompletedMatchState = {

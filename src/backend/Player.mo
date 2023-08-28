@@ -1,13 +1,19 @@
 module {
     public type Player = {
         name : Text;
-        energy : Nat;
+        energy : Int;
         energyRecoveryRate : Nat;
         condition : PlayerCondition;
+        skills : PlayerSkills;
     };
 
     public type PlayerWithId = Player and {
         id : Nat32;
+    };
+
+    public type PlayerSkills = {
+        batting : Int;
+        throwing : Int;
     };
 
     public type Injury = {

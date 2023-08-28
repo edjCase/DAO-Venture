@@ -77,7 +77,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let team1Init = await createTeamInit(match.teams.0);
         let team2Init = await createTeamInit(match.teams.1);
-        let initState = MatchSimulator.initState(team1Init, team2Init);
+        let team1IsOffense = true; // TODO randomize
+        let initState = MatchSimulator.initState(team1Init, team2Init, team1IsOffense);
         let newMatch : Match = {
             match with
             state = initState;
