@@ -7,16 +7,11 @@ import Principal "mo:base/Principal";
 
 actor PlayerLedger {
 
-    type PlayerInfo = Player.Player and {
-        teamId : ?Principal;
-    };
-
-    public type PlayerInfoWithId = PlayerInfo and {
-        id : Nat32;
-    };
+    type Player = Player.Player;
+    type PlayerWithId = Player.PlayerWithId;
 
     stable var nextPlayerId : Nat32 = 1;
-    stable var players = Trie.empty<Nat32, PlayerInfo>();
+    stable var players = Trie.empty<Nat32, Player>();
     var teamPlayers = Trie.empty<Principal, Nat32>();
 
     public type PlayerCreationOptions = {
@@ -30,7 +25,7 @@ actor PlayerLedger {
         let id = nextPlayerId;
         nextPlayerId += 1;
         let player = generatePlayer(options);
-        let playerInfo : PlayerInfo = {
+        let playerInfo : Player = {
             player with
             teamId = options.teamId;
         };
@@ -47,7 +42,7 @@ actor PlayerLedger {
     };
 
     public query ({ caller }) func getPlayer(id : Nat32) : async {
-        #ok : PlayerInfo;
+        #ok : Player;
         #notFound;
     } {
         let key = {
@@ -61,13 +56,13 @@ actor PlayerLedger {
         };
     };
 
-    public query func getTeamPlayers(teamId : ?Principal) : async [PlayerInfoWithId] {
-        let teamPlayers = Trie.filter(players, func(k : Nat32, p : PlayerInfo) : Bool = p.teamId == teamId);
-        Trie.toArray(teamPlayers, func(k : Nat32, p : PlayerInfo) : PlayerInfoWithId = { p with id = k });
+    public query func getTeamPlayers(teamId : ?Principal) : async [PlayerWithId] {
+        let teamPlayers = Trie.filter(players, func(k : Nat32, p : Player) : Bool = p.teamId == teamId);
+        Trie.toArray(teamPlayers, func(k : Nat32, p : Player) : PlayerWithId = { p with id = k });
     };
 
-    public query func getAllPlayers() : async [PlayerInfoWithId] {
-        Trie.toArray(players, func(k : Nat32, p : PlayerInfo) : PlayerInfoWithId = { p with id = k });
+    public query func getAllPlayers() : async [PlayerWithId] {
+        Trie.toArray(players, func(k : Nat32, p : Player) : PlayerWithId = { p with id = k });
     };
 
     public shared ({ caller }) func setPlayerTeam(playerId : Nat32, teamId : ?Principal) : async {
@@ -96,9 +91,10 @@ actor PlayerLedger {
         // };
     };
 
-    private func generatePlayer(options : PlayerCreationOptions) : Player.Player {
+    private func generatePlayer(options : PlayerCreationOptions) : Player {
         {
             name = options.name;
+            teamId = null;
             energy = 100;
             energyRecoveryRate = 10;
             condition = #ok;

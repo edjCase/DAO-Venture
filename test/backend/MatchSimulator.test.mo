@@ -25,9 +25,10 @@ func fromArray<TKey, TValue>(array : [(TKey, TValue)], hashKey : (TKey) -> Hash.
 };
 
 test(
-    "MatchSimulator",
+    "tick",
     func() {
-        let seed : Blob = "\14\C9\72\09\03\D4\D5\72\82\95\E5\43\AF\FA\A9\44\49\2F\25\56\13\F3\6E\C7\B0\87\DC\76\08\69\14\CF";
+        // let seed : Blob = "\14\C9\72\09\03\D4\D5\72\82\95\E5\43\AF\FA\A9\44\49\2F\25\56\13\F3\6E\C7\B0\87\DC\76\08\69\14\CF";
+        let seed : Blob = "\A1\B2\C3\D4\E5\F6\10\11\12\13\14\15\16\17\18\19\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27\1A\1B\1C\1D\1E\1F\20\21\22\23\24\25\26\27";
         let random = Random.Finite(seed);
         let state : Stadium.InProgressMatchState = {
             offenseTeamId = #team1;
@@ -360,7 +361,11 @@ test(
             outs = 0;
             strikes = 0;
         };
-        let #inProgress(newState) = MatchSimulator.tick(state, random) else Debug.trap("MatchSimulator.tick failed");
-        Debug.print(debug_show (newState.events));
+        var currentState = state;
+        loop {
+            let #inProgress(newState) = MatchSimulator.tick(currentState, random) else Debug.trap("MatchSimulator.tick failed");
+            Debug.print(debug_show (newState.events));
+            currentState := newState;
+        };
     },
 );

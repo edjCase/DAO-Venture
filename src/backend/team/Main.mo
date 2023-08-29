@@ -14,19 +14,13 @@ import { ic } "mo:ic";
 import Stadium "../Stadium";
 
 shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal) : async Team.TeamActor = this {
+  type PlayerWithId = Player.PlayerWithId;
 
   var players : TrieSet.Set<Nat32> = TrieSet.empty();
 
-  public func getPlayers() : async [Player.PlayerWithId] {
+  public func getPlayers() : async [PlayerWithId] {
     let teamId = Principal.fromActor(this);
-    let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?teamId);
-    return Array.map<PlayerLedgerActor.PlayerInfoWithId, Player.PlayerWithId>(
-      teamPlayers,
-      func(playerInfo) = {
-        playerInfo with
-        id = playerInfo.id;
-      },
-    );
+    await PlayerLedgerActor.getTeamPlayers(?teamId);
   };
 
   public shared ({ caller }) func getOwner() : async Principal {

@@ -12,6 +12,7 @@ import Int "mo:base/Int";
 import Int32 "mo:base/Int32";
 import Prelude "mo:base/Prelude";
 import Nat8 "mo:base/Nat8";
+import RandomUtil "../RandomUtil";
 
 module {
     type PlayerState = Stadium.PlayerState;
@@ -395,16 +396,8 @@ module {
         };
 
         public func randomInt(min : Int, max : Int) : Int {
-            let range : Nat = Int.abs(max - min) + 1;
-            // TODO do better?
-            var result : Nat = 0;
-            var log2 : Nat = range - 1;
-            while (log2 > 0) {
-                log2 := log2 / 2;
-                result += 1;
-            };
-            let ?randVal = random.range(Nat8.fromNat(log2)) else Debug.trap("No more entropy"); // TODO
-            min + randVal % range;
+            let ?v = RandomUtil.randomInt(random, min, max) else Debug.trap("Random ran out of entropy"); // TODO
+            v;
         };
 
         public func getPlayerAtPosition(position : FieldPosition) : ?Nat32 {

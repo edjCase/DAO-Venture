@@ -2,6 +2,7 @@ import Hash "mo:base/Hash";
 module {
     public type Player = {
         name : Text;
+        teamId : ?Principal;
         energy : Int;
         energyRecoveryRate : Nat;
         condition : PlayerCondition;

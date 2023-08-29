@@ -25,8 +25,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     type Match = Stadium.Match;
     type MatchTeamInfo = Stadium.MatchTeamInfo;
     type Player = Player.Player;
+    type PlayerWithId = Player.PlayerWithId;
     type PlayerState = Stadium.PlayerState;
-    type PlayerInfoWithId = PlayerLedgerActor.PlayerInfoWithId;
     type FieldPosition = Player.FieldPosition;
 
     public type MatchInfo = Match and {
@@ -127,7 +127,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             return #matchAlreadyStarted;
         };
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?caller);
-        let teamPlayerIds = Array.map<PlayerLedgerActor.PlayerInfoWithId, Nat32>(teamPlayers, func(p) = p.id);
+        let teamPlayerIds = Array.map<PlayerWithId, Nat32>(teamPlayers, func(p) = p.id);
         switch (validatelineup(lineup, teamPlayerIds)) {
             case (#ok) {
                 let newMatch = switch (buildNewMatch(caller, match, lineup)) {
