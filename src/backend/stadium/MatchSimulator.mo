@@ -240,6 +240,41 @@ module {
                 description = catchingPlayer.name # " misses the catch";
                 effect = #none;
             });
+            let canPickUpInTime = simulation.randomInt(0, 10) + catchingPlayer.skills.catching;
+            if (canPickUpInTime > 0) {
+                simulation.addEvent({
+                    description = catchingPlayer.name # " picks up the ball";
+                    effect = #none;
+                });
+                // TODO against dodge/speed skill of runner
+                let throwRoll = simulation.randomInt(-10, 10) + catchingPlayer.skills.throwing;
+                if (throwRoll <= 0) {
+                    simulation.addEvent({
+                        description = catchingPlayer.name # " misses the throw";
+                        effect = #none;
+                    });
+                    simulation.addEvent({
+                        description = "Runner is safe";
+                        effect = #movePlayerToBase({
+                            playerId = battingPlayerId;
+                            base = ? #firstBase;
+                        });
+                    });
+                } else {
+                    simulation.addEvent({
+                        description = catchingPlayer.name # " throws the ball and hits the player";
+                        // TODO damage player?
+                        effect = #addOut({
+                            playerId = battingPlayerId;
+                        });
+                    });
+                };
+            } else {
+                simulation.addEvent({
+                    description = catchingPlayer.name # " cannot pick up the ball in time";
+                    effect = #none;
+                });
+            };
         } else {
             simulation.addEvent({
                 description = catchingPlayer.name # " catches the ball";
