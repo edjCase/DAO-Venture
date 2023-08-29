@@ -1,3 +1,4 @@
+import Hash "mo:base/Hash";
 module {
     public type Player = {
         name : Text;
@@ -5,6 +6,7 @@ module {
         energyRecoveryRate : Nat;
         condition : PlayerCondition;
         skills : PlayerSkills;
+        position : FieldPosition;
     };
 
     public type PlayerWithId = Player and {
@@ -14,6 +16,7 @@ module {
     public type PlayerSkills = {
         batting : Int;
         throwing : Int;
+        catching : Int;
     };
 
     public type Injury = {
@@ -27,5 +30,56 @@ module {
         #ok;
         #injured : Injury;
         #dead;
+    };
+
+    public type FieldPosition = {
+        #firstBase;
+        #secondBase;
+        #thirdBase;
+        #shortStop;
+        #leftField;
+        #centerField;
+        #rightField;
+        #pitcher;
+        #catcher;
+    };
+
+    public type BaseLocation = {
+        #onFirstBase;
+        #onSecondBase;
+        #onThirdBase;
+        #atBat;
+    };
+
+    public func equalFieldPosition(a : FieldPosition, b : FieldPosition) : Bool {
+        a == b;
+    };
+
+    public func hashFieldPosition(position : FieldPosition) : Hash.Hash {
+        switch (position) {
+            case (#firstBase) 0;
+            case (#secondBase) 1;
+            case (#thirdBase) 2;
+            case (#pitcher) 3;
+            case (#catcher) 4;
+            case (#shortStop) 5;
+            case (#leftField) 6;
+            case (#centerField) 7;
+            case (#rightField) 8;
+        };
+    };
+
+    public func toTextFieldPosition(position : FieldPosition) : Text {
+        switch (position) {
+            case (#firstBase) "first base";
+            case (#secondBase) "second base";
+            case (#thirdBase) "third base";
+            case (#pitcher) "pitcher";
+            case (#catcher) "catcher";
+            case (#shortStop) "short stop";
+            case (#leftField) "left field";
+            case (#centerField) "center field";
+            case (#rightField) "right field";
+        };
     };
 };

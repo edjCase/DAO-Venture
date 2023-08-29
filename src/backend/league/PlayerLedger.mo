@@ -22,6 +22,7 @@ actor PlayerLedger {
     public type PlayerCreationOptions = {
         name : Text;
         teamId : ?Principal;
+        position : Player.FieldPosition;
     };
 
     public shared ({ caller }) func create(options : PlayerCreationOptions) : async Nat32 {
@@ -101,9 +102,11 @@ actor PlayerLedger {
             energy = 100;
             energyRecoveryRate = 10;
             condition = #ok;
+            position = options.position;
             skills = {
                 batting = 0;
                 throwing = 0;
+                catching = 0;
             };
         };
     };

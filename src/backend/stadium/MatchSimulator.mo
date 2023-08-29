@@ -22,25 +22,26 @@ module {
     type TeamLineup = Stadium.TeamLineup;
     type InProgressMatchState = Stadium.InProgressMatchState;
     type PlayerWithId = Player.PlayerWithId;
-    type PlayerPosition = Stadium.PlayerPosition;
-    type PlayerPositionDefense = Stadium.PlayerPositionDefense;
+    type FieldPosition = Player.FieldPosition;
+    type BaseLocation = Player.BaseLocation;
     type TeamId = Stadium.TeamId;
     type PlayerSkills = Player.PlayerSkills;
 
     type MutableTeamState = {
         var score : Int;
-        var battingOrder : Buffer.Buffer<Nat32>;
+        var battingOrder : Buffer.Buffer<FieldPosition>;
+        var positions : Trie.Trie<FieldPosition, Nat32>;
         var substitutes : Buffer.Buffer<Nat32>;
-        var currentBatterIndex : Nat;
+        var currentBatter : FieldPosition;
     };
 
     type MutableMatchState = {
-        var offenseTeam : TeamId;
+        var offenseTeamId : TeamId;
         var team1 : MutableTeamState;
         var team2 : MutableTeamState;
         var players : Trie.Trie<Nat32, MutablePlayerState>;
         var events : Buffer.Buffer<Event>;
-        var positions : Trie.Trie<PlayerPosition, Nat32>;
+        var bases : Trie.Trie<BaseLocation, Nat32>;
         var round : Nat;
         var outs : Nat;
         var strikes : Nat;
@@ -49,6 +50,7 @@ module {
     type MutablePlayerSkills = {
         var batting : Int;
         var throwing : Int;
+        var catching : Int;
     };
 
     type MutablePlayerState = {
@@ -57,7 +59,7 @@ module {
         var energy : Int;
         var condition : Player.PlayerCondition;
         var skills : MutablePlayerSkills;
-        var preferredPosition : PlayerPositionDefense;
+        var preferredPosition : FieldPosition;
     };
 
     type HitLocation = {
@@ -94,7 +96,7 @@ module {
                 energy = player.energy;
                 condition = player.condition;
                 skills = player.skills;
-                preferredPosition =;
+                preferredPosition = player.position;
             };
             let key = {
                 key = player.id;
@@ -103,65 +105,33 @@ module {
             let (newPlayers, _) = Trie.put<Nat32, PlayerState>(players, key, Nat32.equal, playerState);
             players := newPlayers;
         };
-        let team1Positions = getPositionMap(team1Lineup);
         for (player in team1.players.vals()) {
             addPlayer(player, #team1);
         };
-        let team2Positions = getPositionMap(team2Lineup);
         for (player in team2.players.vals()) {
             addPlayer(player, #team2);
         };
-        let (offenseLineup, defenseLineup) = if (team1StartOffense) {
-            (team1Lineup, team2Lineup);
-        } else {
-            (team2Lineup, team1Lineup);
+        let defenseLineup = if (team1StartOffense) team2Lineup else team1Lineup;
+        let initTeamState = func(lineup : TeamLineup) : TeamState {
+            {
+                score = 0;
+                battingOrder = lineup.battingOrder;
+                currentBatter = lineup.battingOrder.get(0);
+                substitutes = lineup.substitutes;
+                positions = lineup.starters;
+            };
         };
-        let positions = resetPositions(players);
         #inProgress({
-            offenseTeam = if (team1StartOffense) #team1 else #team2;
-            team1 = {
-                score = 0;
-                battingOrder = team1Lineup.battingOrder;
-                currentBatterIndex = 0;
-                substitutes = team2Lineup.substitutes;
-            };
-            team2 = {
-                score = 0;
-                battingOrder = team2Lineup.battingOrder;
-                currentBatterIndex = 0;
-                substitutes = team2Lineup.substitutes;
-            };
+            offenseTeamId = if (team1StartOffense) #team1 else #team2;
+            team1 = initTeamState(team1Lineup);
+            team2 = initTeamState(team2Lineup);
             events = [];
             players = players;
-            positions = positions;
+            bases = Trie.empty();
             round = 0;
             outs = 0;
             strikes = 0;
         });
-    };
-
-    private func resetPositions(defenseLineup : TeamLineup) : Trie.Trie<PlayerPosition, Nat32> {
-        var positions = Trie.empty<PlayerPosition, Nat32>();
-        let setPosition = func(position : PlayerPosition, playerId : Nat32) : () {
-            let key : Trie.Key<PlayerPosition> = {
-                key = position;
-                hash = Stadium.hashPlayerPosition(position);
-            };
-            let (newMap, _) = Trie.put<PlayerPosition, Nat32>(positions, key, Stadium.equalPlayerPosition, playerId);
-            positions := newMap;
-        };
-
-        setPosition(#pitcher, defenseLineup.pitcher);
-        setPosition(#catcher, defenseLineup.catcher);
-        setPosition(#firstBase, defenseLineup.firstBase);
-        setPosition(#secondBase, defenseLineup.secondBase);
-        setPosition(#thirdBase, defenseLineup.thirdBase);
-        setPosition(#shortStop, defenseLineup.shortStop);
-        setPosition(#leftField, defenseLineup.leftField);
-        setPosition(#centerField, defenseLineup.centerField);
-        setPosition(#rightField, defenseLineup.rightField);
-
-        positions;
     };
 
     public func tick(state : InProgressMatchState, random : Random.Finite) : MatchState {
@@ -189,7 +159,9 @@ module {
         if (batterNetScore < 0) {
             simulation.addEvent({
                 description = "Strike"; // TODO # Nat.toText(simulation.strike + 1);
-                effect = #addStrike;
+                effect = #addStrike({
+                    playerId = atBatPlayerId;
+                });
             });
         } else {
             hit(simulation, atBatPlayerId, batterNetScore);
@@ -234,7 +206,48 @@ module {
     };
 
     private func run(simulation : MatchSimulation, playerId : Nat32, hitLocation : HitLocation) {
-        dfasdf;
+        switch (hitLocation) {
+            case (#outOfPark) {
+                simulation.addEvent({
+                    description = "Home run!";
+                    effect = #none;
+                });
+            };
+            case (#firstBase) tryCatch(simulation, playerId, #firstBase);
+            case (#secondBase) tryCatch(simulation, playerId, #secondBase);
+            case (#thirdBase) tryCatch(simulation, playerId, #thirdBase);
+            case (#shortStop) tryCatch(simulation, playerId, #shortStop);
+            case (#pitcher) tryCatch(simulation, playerId, #pitcher);
+            case (#leftField) tryCatch(simulation, playerId, #leftField);
+            case (#centerField) tryCatch(simulation, playerId, #centerField);
+            case (#rightField) tryCatch(simulation, playerId, #rightField);
+        };
+
+    };
+
+    private func tryCatch(simulation : MatchSimulation, battingPlayerId : Nat32, catchLocation : FieldPosition) {
+        let catchingPlayerId = switch (simulation.getPlayerAtPosition(catchLocation)) {
+            case (null) {
+                // TODO handle someone from different location catching
+                Debug.trap("No player found at " # Player.toTextFieldPosition(catchLocation));
+            };
+            case (?playerId) playerId;
+        };
+        let catchingPlayer = simulation.getPlayer(catchingPlayerId);
+        let catchRoll = simulation.randomInt(-10, 10) + catchingPlayer.skills.catching;
+        if (catchRoll <= 0) {
+            simulation.addEvent({
+                description = catchingPlayer.name # " misses the catch";
+                effect = #none;
+            });
+        } else {
+            simulation.addEvent({
+                description = catchingPlayer.name # " catches the ball";
+                effect = #addOut({
+                    playerId = battingPlayerId;
+                });
+            });
+        };
     };
 
     private func sendNextPlayerToBat(simulation : MatchSimulation) : Nat32 {
@@ -256,6 +269,7 @@ module {
             {
                 var batting = skills.batting;
                 var throwing = skills.throwing;
+                var catching = skills.catching;
             };
         };
 
@@ -269,17 +283,17 @@ module {
                         var energy = player.energy;
                         var condition = player.condition;
                         var skills = toMutableSkills(player.skills);
-                        var prefferedPosition = player.prefferedPosition;
+                        var preferredPosition = player.preferredPosition;
                     };
                 },
             );
             {
-                var offenseTeam = state.offenseTeam;
+                var offenseTeamId = state.offenseTeamId;
                 var team1 = toMutableTeam(initialState.team1);
                 var team2 = toMutableTeam(initialState.team2);
                 var players = mutablePlayers;
                 var events = Buffer.fromArray(initialState.events);
-                var positions = initialState.positions;
+                var bases = initialState.bases;
                 var round = initialState.round;
                 var outs = initialState.outs;
                 var strikes = initialState.strikes;
@@ -289,9 +303,10 @@ module {
         private func toMutableTeam(team : TeamState) : MutableTeamState {
             {
                 var score = team.score;
-                var battingOrder = Buffer.fromArray<Nat32>(team.battingOrder);
-                var currentBatterIndex = team.currentBatterIndex;
-                var substitutes = Buffer.fromArray<Nat32>(team.substitutes);
+                var battingOrder = Buffer.fromArray(team.battingOrder);
+                var currentBatter = team.currentBatter;
+                var substitutes = Buffer.fromArray(team.substitutes);
+                var positions = team.positions;
             };
         };
 
@@ -306,30 +321,34 @@ module {
                         teamId = player.teamId;
                         energy = player.energy;
                         condition = player.condition;
+                        preferredPosition = player.preferredPosition;
                         skills = {
                             batting = player.skills.batting;
                             throwing = player.skills.throwing;
+                            catching = player.skills.catching;
                         };
                     };
                 },
             );
             #inProgress({
-                offenseTeam = state.offenseTeam;
+                offenseTeamId = state.offenseTeamId;
                 team1 = {
                     score = state.team1.score;
                     battingOrder = Buffer.toArray(state.team1.battingOrder);
-                    currentBatterIndex = state.team1.currentBatterIndex;
+                    currentBatter = state.team1.currentBatter;
                     substitutes = Buffer.toArray(state.team1.substitutes);
+                    positions = state.team1.positions;
                 };
                 team2 = {
                     score = state.team2.score;
                     battingOrder = Buffer.toArray(state.team2.battingOrder);
-                    currentBatterIndex = state.team2.currentBatterIndex;
+                    currentBatter = state.team2.currentBatter;
                     substitutes = Buffer.toArray(state.team2.substitutes);
+                    positions = state.team2.positions;
                 };
                 events = Buffer.toArray(state.events);
                 players = players;
-                positions = state.positions;
+                bases = state.bases;
                 round = state.round;
                 outs = state.outs;
                 strikes = state.strikes;
@@ -349,24 +368,25 @@ module {
             min + randVal % range;
         };
 
-        public func getPlayerAtPosition(position : PlayerPosition) : ?Nat32 {
-            let key : Trie.Key<PlayerPosition> = {
+        public func getPlayerAtPosition(position : FieldPosition) : ?Nat32 {
+            let key : Trie.Key<FieldPosition> = {
                 key = position;
-                hash = Stadium.hashPlayerPosition(position);
+                hash = Player.hashFieldPosition(position);
             };
-            Trie.get(state.positions, key, Stadium.equalPlayerPosition);
+            let defenseTeam = getTeam(state.offenseTeamId);
+            Trie.get(state.positions, key, Player.equalFieldPosition);
         };
 
         public func incrementBattingOrder() : Nat32 {
-            let team = switch (state.offenseTeam) {
+            let team = switch (state.offenseTeamId) {
                 case (#team1) state.team1;
                 case (#team2) state.team2;
             };
-            team.currentBatterIndex += 1;
-            if (team.currentBatterIndex >= team.battingOrder.size()) {
-                team.currentBatterIndex := 0;
+            team.currentBatter += 1;
+            if (team.currentBatter >= team.battingOrder.size()) {
+                team.currentBatter := 0;
             };
-            team.battingOrder.get(team.currentBatterIndex);
+            team.battingOrder.get(team.currentBatter);
         };
 
         public func getPlayer(playerId : Nat32) : MutablePlayerState {
@@ -387,37 +407,25 @@ module {
                         case (#team1) state.team1;
                         case (#team2) state.team2;
                     };
+                    let fieldPosition = playerOut.preferredPosition; // TODO not always true
 
                     // TODO improve sub logic such as dedicated field positions
                     // Swap sub for player, if any left
                     switch (team.substitutes.removeLast()) {
                         case (null) {
                             addEvent({
-                                description = playerOut.name # " has run out of energy but there is no substitute available";
+                                description = playerOut.name # " cannot be subbed out because there is no substitute available";
                                 effect = #none;
                             });
                         };
                         case (?subPlayerId) {
-                            var found = false;
                             // Swap the players in the batting order
-                            team.battingOrder := Buffer.map(
-                                team.battingOrder,
-                                func(playerId : Nat32) : Nat32 {
-                                    if (playerId == playerOutId) {
-                                        found := true;
-                                        // Change the player in the batting order from out to in
-                                        return subPlayerId;
-                                    };
-                                    playerId;
-                                },
-                            );
-                            if (not found) {
-                                Debug.trap("Player " # Nat32.toText(playerOutId) # " is not in the batting order");
+                            let key = {
+                                key = fieldPosition;
+                                hash = Player.hashFieldPosition(fieldPosition);
                             };
-
-                            // Physically swap the players
-                            let previousPosition = movePlayer(playerOutId, null);
-                            let _ = movePlayer(subPlayerId, previousPosition);
+                            let (newPositions, _) = Trie.put(team.positions, key, Player.equalFieldPosition, subPlayerId);
+                            team.positions := newPositions;
                         };
                     };
 
@@ -462,19 +470,26 @@ module {
                     // TODO what if other player is already at that position?
                     let _ = movePlayer(movePlayerOffense.playerId, movePlayerOffense.position);
                 };
-                case (#addStrike) {
+                case (#addStrike({ playerId })) {
                     state.strikes += 1;
                     if (state.strikes >= 3) {
-                        let ?playerId = getPlayerAtPosition(#atBat) else Debug.trap("No batter found");
-                        let _ = movePlayer(playerId, null);
                         addEvent({
                             description = "Strikeout";
-                            effect = #addOut;
+                            effect = #addOut({
+                                playerId = playerId;
+                            });
                         });
                     };
                 };
-                case (#addOut) {
+                case (#addOut({ playerId })) {
                     state.outs += 1;
+                    addEvent({
+                        description = "Out"; // TODO
+                        effect = #movePlayerOffense({
+                            playerId = playerId;
+                            position = null;
+                        });
+                    });
                     if (state.outs >= 3) {
                         addEvent({
                             description = "Round over";
@@ -485,15 +500,11 @@ module {
                 case (#endRound) {
                     state.outs := 0;
                     state.round += 1;
-                    state.offenseTeam := switch (state.offenseTeam) {
-                        case (#team1) #team2;
-                        case (#team2) #team1;
+                    let (newOffenseTeamId, newDefenseTeamId) = switch (state.offenseTeamId) {
+                        case (#team1)(#team2, #team1);
+                        case (#team2)(#team1, #team2);
                     };
-                    let defenseTeam = switch (state.offenseTeam) {
-                        case (#team1) state.team2;
-                        case (#team2) state.team1;
-                    };
-                    state.positions := resetPositions(defenseTeam);
+                    state.offenseTeamId := newOffenseTeamId;
                 };
                 case (#none) {
                     // Skip
@@ -501,40 +512,25 @@ module {
             };
         };
 
-        private func movePlayer(playerId : Nat32, newPosition : ?PlayerPosition) : ?PlayerPosition {
-            let team = switch (state.offenseTeam) {
+        private func getOffenseTeam() : MutableTeamState {
+            switch (state.offenseTeamId) {
                 case (#team1) state.team1;
                 case (#team2) state.team2;
             };
-            var previousPosition : ?PlayerPosition = null;
-            // Remove player from field
-            for ((position, id) in Trie.iter(state.positions)) {
-                if (id == playerId) {
-                    previousPosition := ?position;
-                    let key = {
-                        key = position;
-                        hash = Stadium.hashPlayerPosition(position);
-                    };
-                    let (newPositions, _) = Trie.remove(state.positions, key, Stadium.equalPlayerPosition);
-                    state.positions := newPositions;
-                };
-            };
+        };
 
-            switch (newPosition) {
-                case (null) {
-                    // Skip. Already removed from the field
-                };
-                case (?p) {
-                    // Add player to field in the new position
-                    let key = {
-                        key = p;
-                        hash = Stadium.hashPlayerPosition(p);
-                    };
-                    let (newPositions, _) = Trie.put(state.positions, key, Stadium.equalPlayerPosition, playerId);
-                    state.positions := newPositions;
-                };
+        private func getDefenseTeam() : MutableTeamState {
+            switch (state.offenseTeamId) {
+                case (#team1) state.team2;
+                case (#team2) state.team1;
             };
-            previousPosition;
+        };
+
+        private func getTeam(teamId : TeamId) : MutableTeamState {
+            switch (teamId) {
+                case (#team1) state.team1;
+                case (#team2) state.team2;
+            };
         };
 
     };

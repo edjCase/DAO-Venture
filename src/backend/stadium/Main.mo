@@ -116,6 +116,28 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         Trie.get(matches, matchKey, Nat32.equal);
     };
+    public func a() {
+
+        var positions = Trie.empty<PlayerPosition, Nat32>();
+        let setPosition = func(position : PlayerPosition, playerId : Nat32) : () {
+            let key : Trie.Key<PlayerPosition> = {
+                key = position;
+                hash = Stadium.hashPlayerPosition(position);
+            };
+            let (newMap, _) = Trie.put<PlayerPosition, Nat32>(positions, key, Stadium.equalPlayerPosition, playerId);
+            positions := newMap;
+        };
+
+        setPosition(#pitcher, lineup.pitcher);
+        setPosition(#catcher, lineup.catcher);
+        setPosition(#firstBase, lineup.firstBase);
+        setPosition(#secondBase, lineup.secondBase);
+        setPosition(#thirdBase, lineup.thirdBase);
+        setPosition(#shortStop, lineup.shortStop);
+        setPosition(#leftField, lineup.leftField);
+        setPosition(#centerField, lineup.centerField);
+        setPosition(#rightField, lineup.rightField);
+    };
 
     public shared ({ caller }) func registerForMatch(
         matchId : Nat32,
