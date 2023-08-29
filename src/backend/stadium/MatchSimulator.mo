@@ -23,7 +23,7 @@ module {
     type InProgressMatchState = Stadium.InProgressMatchState;
     type PlayerWithId = Player.PlayerWithId;
     type FieldPosition = Player.FieldPosition;
-    type BaseLocation = Player.BaseLocation;
+    type Base = Player.Base;
     type TeamId = Stadium.TeamId;
     type PlayerSkills = Player.PlayerSkills;
 
@@ -41,7 +41,7 @@ module {
         var team2 : MutableTeamState;
         var players : Trie.Trie<Nat32, MutablePlayerState>;
         var events : Buffer.Buffer<Event>;
-        var bases : Trie.Trie<BaseLocation, Nat32>;
+        var bases : Trie.Trie<Base, Nat32>;
         var round : Nat;
         var outs : Nat;
         var strikes : Nat;
@@ -143,7 +143,7 @@ module {
     };
 
     private func pitch(simulation : MatchSimulation) {
-        let atBatPlayerId = switch (simulation.getPlayerAtPosition(#atBat)) {
+        let atBatPlayerId = switch (simulation.getPlayerAtBase(#homeBase)) {
             case (null) sendNextPlayerToBat(simulation);
             case (?playerId) playerId;
         };
@@ -251,13 +251,17 @@ module {
     };
 
     private func sendNextPlayerToBat(simulation : MatchSimulation) : Nat32 {
-        let nextBatterId = simulation.incrementBattingOrder();
+        let nextBatterPosition = simulation.incrementBattingOrder();
+        let nextBatterId = switch (simulation.getPlayerAtPosition(nextBatterPosition)) {
+            case (null) Debug.trap("No player found at " # Player.toTextFieldPosition(nextBatterPosition));
+            case (?playerId) playerId;
+        };
         let nextBatter = simulation.getPlayer(nextBatterId);
         simulation.addEvent({
             description = "Player " # nextBatter.name # " is up to bat";
-            effect = #movePlayerOffense({
+            effect = #movePlayerToBase({
                 playerId = nextBatterId;
-                position = ? #atBat;
+                base = ? #homeBase;
             });
         });
         nextBatterId;
@@ -374,19 +378,37 @@ module {
                 hash = Player.hashFieldPosition(position);
             };
             let defenseTeam = getTeam(state.offenseTeamId);
-            Trie.get(state.positions, key, Player.equalFieldPosition);
+            Trie.get(defenseTeam.positions, key, Player.equalFieldPosition);
         };
 
-        public func incrementBattingOrder() : Nat32 {
+        public func getPlayerAtBase(base : Base) : ?Nat32 {
+            let key : Trie.Key<Base> = {
+                key = base;
+                hash = Player.hashBase(base);
+            };
+            Trie.get(state.bases, key, Player.equalBase);
+        };
+
+        public func incrementBattingOrder() : FieldPosition {
             let team = switch (state.offenseTeamId) {
                 case (#team1) state.team1;
                 case (#team2) state.team2;
             };
-            team.currentBatter += 1;
-            if (team.currentBatter >= team.battingOrder.size()) {
-                team.currentBatter := 0;
+            var i = 0;
+            label l loop {
+                let position = team.battingOrder.get(i);
+                if (position == team.currentBatter) {
+                    break l;
+                };
+                i += 1;
             };
-            team.battingOrder.get(team.currentBatter);
+            let nextBatterIndex = i + 1;
+            if (nextBatterIndex >= team.battingOrder.size()) {
+                // Loop back to first batter
+                team.battingOrder.get(0);
+            } else {
+                team.battingOrder.get(nextBatterIndex);
+            };
         };
 
         public func getPlayer(playerId : Nat32) : MutablePlayerState {
@@ -466,9 +488,42 @@ module {
                         });
                     };
                 };
-                case (#movePlayerOffense(movePlayerOffense)) {
+                case (#movePlayerToBase({ playerId; base })) {
                     // TODO what if other player is already at that position?
-                    let _ = movePlayer(movePlayerOffense.playerId, movePlayerOffense.position);
+
+                    // Remove player from previous base
+                    for ((base, playerIdOnBase) in Trie.iter(state.bases)) {
+                        if (playerIdOnBase == playerId) {
+                            let key = {
+                                key = base;
+                                hash = Player.hashBase(base);
+                            };
+                            let (newBases, _) = Trie.replace(state.bases, key, Player.equalBase, null);
+                            state.bases := newBases;
+                        };
+                    };
+
+                    switch (base) {
+                        case (null) {};
+                        case (?base) {
+                            let key = {
+                                key = base;
+                                hash = Player.hashBase(base);
+                            };
+                            let (newBases, playerIdOnBase) = Trie.put(state.bases, key, Player.equalBase, playerId);
+                            switch (playerIdOnBase) {
+                                case (null) {
+                                    // No one on destination base
+                                };
+                                case (?playerIdOnBase) {
+                                    // TODO
+                                    Debug.trap("Player " # Nat32.toText(playerIdOnBase) # " already on base " # Player.toTextBase(base));
+                                };
+                            };
+                            state.bases := newBases;
+                        };
+                    };
+
                 };
                 case (#addStrike({ playerId })) {
                     state.strikes += 1;
@@ -485,9 +540,9 @@ module {
                     state.outs += 1;
                     addEvent({
                         description = "Out"; // TODO
-                        effect = #movePlayerOffense({
+                        effect = #movePlayerToBase({
                             playerId = playerId;
-                            position = null;
+                            base = null;
                         });
                     });
                     if (state.outs >= 3) {

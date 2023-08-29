@@ -27,6 +27,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     type Player = Player.Player;
     type PlayerState = Stadium.PlayerState;
     type PlayerInfoWithId = PlayerLedgerActor.PlayerInfoWithId;
+    type FieldPosition = Player.FieldPosition;
 
     public type MatchInfo = Match and {
         id : Nat32;
@@ -115,28 +116,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             key = matchId;
         };
         Trie.get(matches, matchKey, Nat32.equal);
-    };
-    public func a() {
-
-        var positions = Trie.empty<PlayerPosition, Nat32>();
-        let setPosition = func(position : PlayerPosition, playerId : Nat32) : () {
-            let key : Trie.Key<PlayerPosition> = {
-                key = position;
-                hash = Stadium.hashPlayerPosition(position);
-            };
-            let (newMap, _) = Trie.put<PlayerPosition, Nat32>(positions, key, Stadium.equalPlayerPosition, playerId);
-            positions := newMap;
-        };
-
-        setPosition(#pitcher, lineup.pitcher);
-        setPosition(#catcher, lineup.catcher);
-        setPosition(#firstBase, lineup.firstBase);
-        setPosition(#secondBase, lineup.secondBase);
-        setPosition(#thirdBase, lineup.thirdBase);
-        setPosition(#shortStop, lineup.shortStop);
-        setPosition(#leftField, lineup.leftField);
-        setPosition(#centerField, lineup.centerField);
-        setPosition(#rightField, lineup.rightField);
     };
 
     public shared ({ caller }) func registerForMatch(
@@ -275,17 +254,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     ) : Stadium.RegisterResult {
         let allPlayerIdsSet = TrieSet.fromArray(allPlayerIds, hashNat32, Nat32.equal);
 
-        let fieldPlayers = [
-            lineup.pitcher,
-            lineup.catcher,
-            lineup.firstBase,
-            lineup.secondBase,
-            lineup.thirdBase,
-            lineup.shortStop,
-            lineup.leftField,
-            lineup.centerField,
-            lineup.rightField,
-        ];
+        let fieldPlayers = Trie.toArray(lineup.starters, func(p : FieldPosition, id : Nat32) : Nat32 = id);
 
         // Validate that all players are on the team
         switch (validatePlayers(Iter.fromArray(fieldPlayers), allPlayerIdsSet)) {
@@ -295,10 +264,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         let fieldPlayersSet = TrieSet.fromArray(fieldPlayers, hashNat32, Nat32.equal);
 
         // Validate all the field players are in the batting order
-        switch (validatePlayers(Iter.fromArray(lineup.battingOrder), fieldPlayersSet)) {
-            case (#ok) {};
-            case (#invalid(e)) return #invalidLineup(e);
-        };
+        // TODO fix
+        // switch (validatePlayers(Iter.fromArray(lineup.battingOrder), fieldPlayersSet)) {
+        //     case (#ok) {};
+        //     case (#invalid(e)) return #invalidLineup(e);
+        // };
 
         let unusedPlayerSet = Trie.diff(allPlayerIdsSet, fieldPlayersSet, Nat32.equal);
 

@@ -8,7 +8,7 @@ import Hash "mo:base/Hash";
 
 module {
     type FieldPosition = Player.FieldPosition;
-    type BaseLocation = Player.BaseLocation;
+    type Base = Player.Base;
 
     public type RegisterResult = {
         #ok;
@@ -52,9 +52,9 @@ module {
             playerId : Nat32;
             amount : Int;
         };
-        #movePlayerOffense : {
+        #movePlayerToBase : {
             playerId : Nat32;
-            position : ?BaseLocation;
+            base : ?Base;
         };
         #addStrike : {
             playerId : Nat32;
@@ -103,7 +103,7 @@ module {
         team2 : TeamState;
         players : Trie.Trie<Nat32, PlayerState>;
         events : [Event];
-        bases : Trie.Trie<BaseLocation, Nat32>;
+        bases : Trie.Trie<Base, Nat32>;
         round : Nat;
         outs : Nat;
         strikes : Nat;
