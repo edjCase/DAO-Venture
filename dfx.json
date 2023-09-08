@@ -12,9 +12,6 @@
       "type": "motoko"
     },
     "static_frontend": {
-      "dependencies": [
-        "league"
-      ],
       "frontend": {
         "entrypoint": "src/static-site/public/index.html"
       },
