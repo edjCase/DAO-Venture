@@ -50,7 +50,7 @@ features:
       link: "#"
 
   - title: "How will it work"
-    image: "/images/color_explosion.png"
+    image: "/images/portal_ball.png"
     content: ""
     bulletpoints:
       - "Teams will be controlled by community member DAOs"
