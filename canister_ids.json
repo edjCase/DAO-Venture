@@ -2,7 +2,7 @@
     "league": {
         "ic": "sctyd-5qaaa-aaaag-aa5lq-cai"
     },
-    "frontend": {
+    "static_frontend": {
         "ic": "dtwn5-4iaaa-aaaag-aa6da-cai"
     }
 }
