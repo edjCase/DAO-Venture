@@ -21,3 +21,4 @@ dist/
 .env
 league-site/public/build/
 .mops
+src/static-site/public/
