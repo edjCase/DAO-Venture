@@ -1,18 +1,23 @@
 <script lang="ts">
-  import { playerLedgerAgent } from "../ic-agent/PlayerLedger";
+  import { playerLedgerAgent, mapPosition } from "../ic-agent/PlayerLedger";
   import { Principal } from "@dfinity/principal";
   import { playerStore } from "../stores/PlayerStore";
   import { teamStore } from "../stores/TeamStore";
+  import PositionPicker from "./PositionPicker.svelte";
+  import type { FieldPosition } from "../models/FieldPosition";
 
   $: teams = $teamStore;
 
   let name: string;
   let teamId: string;
+  let position: FieldPosition;
   let createTeam = function () {
+    let mappedPosition = mapPosition(position);
     playerLedgerAgent
       .create({
         name: name,
         teamId: teamId ? [Principal.from(teamId)] : [],
+        position: mappedPosition,
       })
       .then((result) => {
         console.log("Created player: ", result);
@@ -35,5 +40,14 @@
       <option value={team.id}>{team.name}</option>
     {/each}
   </select>
+</div>
+<div>
+  <label for="position">Position</label>
+  <PositionPicker
+    takenPositions={[]}
+    onPositionChange={(p) => {
+      position = p;
+    }}
+  />
 </div>
 <button on:click={createTeam}>Create Player</button>

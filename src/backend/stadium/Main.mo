@@ -55,16 +55,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             v.1 with
             id = v.0;
         };
-        // matches |> Trie.iter _ |> Iter.map(_, map) |> Iter.sort(_, compare) |> Iter.toArray(_);
-        Iter.toArray(
-            Iter.sort(
-                Iter.map(
-                    Trie.iter(matches),
-                    map,
-                ),
-                compare,
-            )
-        );
+        matches |> Trie.iter _ |> Iter.map(_, map) |> Iter.sort(_, compare) |> Iter.toArray(_);
     };
 
     public shared ({ caller }) func startMatch(matchId : Nat32) : async StartMatchResult {

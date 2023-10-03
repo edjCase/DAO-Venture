@@ -1,13 +1,19 @@
 import { writable } from "svelte/store";
-import { type PlayerInfoWithId, playerLedgerAgent as playerLedgerAgent } from "../ic-agent/PlayerLedger";
+import { playerLedgerAgent as playerLedgerAgent, unMapPosition } from "../ic-agent/PlayerLedger";
+import type { Player } from "../models/Player";
 
 
 export const playerStore = (() => {
-    const { subscribe, set } = writable<PlayerInfoWithId[]>([]);
+    const { subscribe, set } = writable<Player[]>([]);
 
     const refetch = async () => {
         playerLedgerAgent.getAllPlayers().then((players) => {
-            set(players);
+            set(players.map(p => {
+                return {
+                    ...p,
+                    position: unMapPosition(p.position)
+                };
+            }));
         });
     };
     refetch();

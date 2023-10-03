@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { Principal } from "@dfinity/principal";
   import AssignPlayerToTeam from "../components/AssignPlayerToTeam.svelte";
   import CreatePlayer from "../components/CreatePlayer.svelte";
   import CreateStadium from "../components/CreateStadium.svelte";
@@ -78,6 +77,7 @@
     <thead>
       <th>Name</th>
       <th>Team</th>
+      <th>Position</th>
     </thead>
     <tbody>
       {#each players as player (player.id)}
@@ -86,6 +86,7 @@
           <td class="player-team"
             >{teamNameMap[player.teamId[0]?.toString()] || "-"}</td
           >
+          <td class="player-position">{player.position}</td>
         </tr>
       {/each}
     </tbody>
