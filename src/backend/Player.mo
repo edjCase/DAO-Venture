@@ -3,8 +3,6 @@ module {
     public type Player = {
         name : Text;
         teamId : ?Principal;
-        energy : Int;
-        energyRecoveryRate : Nat;
         condition : PlayerCondition;
         skills : PlayerSkills;
         position : FieldPosition;
@@ -15,9 +13,13 @@ module {
     };
 
     public type PlayerSkills = {
-        batting : Int;
-        throwing : Int;
-        catching : Int;
+        battingAccuracy : Nat;
+        battingPower : Nat;
+        throwingAccuracy : Nat;
+        throwingPower : Nat;
+        catching : Nat;
+        health : Nat;
+        defense : Nat;
     };
 
     public type Injury = {

@@ -100,9 +100,13 @@ actor PlayerLedger {
             condition = #ok;
             position = options.position;
             skills = {
-                batting = 0;
-                throwing = 0;
+                battingPower = 0;
+                battingAccuracy = 0;
+                throwingPower = 0;
+                throwingAccuracy = 0;
                 catching = 0;
+                health = 0;
+                defense = 0;
             };
         };
     };

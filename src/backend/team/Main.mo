@@ -18,7 +18,7 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
 
   var players : TrieSet.Set<Nat32> = TrieSet.empty();
 
-  public func getPlayers() : async [PlayerWithId] {
+  public composite query func getPlayers() : async [PlayerWithId] {
     let teamId = Principal.fromActor(this);
     await PlayerLedgerActor.getTeamPlayers(?teamId);
   };

@@ -48,10 +48,6 @@ module {
             playerId : Nat32;
             condition : Player.PlayerCondition;
         };
-        #increaseEnergy : {
-            playerId : Nat32;
-            amount : Int;
-        };
         #movePlayerToBase : {
             playerId : Nat32;
             base : ?Base;
@@ -73,10 +69,9 @@ module {
     public type PlayerState = {
         name : Text;
         teamId : TeamId;
-        energy : Int;
         condition : Player.PlayerCondition;
         skills : Player.PlayerSkills;
-        preferredPosition : FieldPosition;
+        position : FieldPosition;
     };
 
     public type TeamState = {

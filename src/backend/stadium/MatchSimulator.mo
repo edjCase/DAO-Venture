@@ -49,18 +49,21 @@ module {
     };
 
     type MutablePlayerSkills = {
-        var batting : Int;
-        var throwing : Int;
-        var catching : Int;
+        var battingPower : Nat;
+        var battingAccuracy : Nat;
+        var throwingAccuracy : Nat;
+        var throwingPower : Nat;
+        var catching : Nat;
+        var health : Nat;
+        var defense : Nat;
     };
 
     type MutablePlayerState = {
         var name : Text;
         var teamId : TeamId;
-        var energy : Int;
         var condition : Player.PlayerCondition;
         var skills : MutablePlayerSkills;
-        var preferredPosition : FieldPosition;
+        var position : FieldPosition;
     };
 
     type HitLocation = {
@@ -94,10 +97,9 @@ module {
             let playerState : PlayerState = {
                 name = player.name;
                 teamId = teamId;
-                energy = player.energy;
                 condition = player.condition;
                 skills = player.skills;
-                preferredPosition = player.position;
+                position = player.position;
             };
             let key = {
                 key = player.id;
@@ -154,8 +156,8 @@ module {
             case (?playerId) playerId;
         };
         let pitcher = simulation.getPlayer(pitcherId);
-        let pitchRoll = simulation.randomInt(0, 10) + pitcher.skills.throwing;
-        let batterRoll = simulation.randomInt(0, 10) + atBatPlayer.skills.batting;
+        let pitchRoll = simulation.randomInt(0, 10) + pitcher.skills.throwingAccuracy + pitcher.skills.throwingPower;
+        let batterRoll = simulation.randomInt(0, 10) + atBatPlayer.skills.battingAccuracy + atBatPlayer.skills.battingPower;
         let batterNetScore = batterRoll - pitchRoll;
         if (batterNetScore < 0) {
             simulation.addEvent({
@@ -248,7 +250,7 @@ module {
                     effect = #none;
                 });
                 // TODO against dodge/speed skill of runner
-                let throwRoll = simulation.randomInt(-10, 10) + catchingPlayer.skills.throwing;
+                let throwRoll = simulation.randomInt(-10, 10) + catchingPlayer.skills.throwingAccuracy;
                 if (throwRoll <= 0) {
                     simulation.addEvent({
                         description = catchingPlayer.name # " misses the throw";
@@ -307,9 +309,13 @@ module {
 
         private func toMutableSkills(skills : PlayerSkills) : MutablePlayerSkills {
             {
-                var batting = skills.batting;
-                var throwing = skills.throwing;
+                var battingPower = skills.battingPower;
+                var battingAccuracy = skills.battingAccuracy;
+                var throwingPower = skills.throwingPower;
+                var throwingAccuracy = skills.throwingAccuracy;
                 var catching = skills.catching;
+                var health = skills.health;
+                var defense = skills.defense;
             };
         };
 
@@ -320,10 +326,9 @@ module {
                     ?{
                         var name = player.name;
                         var teamId = player.teamId;
-                        var energy = player.energy;
                         var condition = player.condition;
                         var skills = toMutableSkills(player.skills);
-                        var preferredPosition = player.preferredPosition;
+                        var position = player.position;
                     };
                 },
             );
@@ -359,13 +364,16 @@ module {
                     ?{
                         name = player.name;
                         teamId = player.teamId;
-                        energy = player.energy;
                         condition = player.condition;
-                        preferredPosition = player.preferredPosition;
+                        position = player.position;
                         skills = {
-                            batting = player.skills.batting;
-                            throwing = player.skills.throwing;
+                            battingPower = player.skills.battingPower;
+                            battingAccuracy = player.skills.battingAccuracy;
+                            throwingPower = player.skills.throwingPower;
+                            throwingAccuracy = player.skills.throwingAccuracy;
                             catching = player.skills.catching;
+                            health = player.skills.health;
+                            defense = player.skills.defense;
                         };
                     };
                 },
@@ -457,7 +465,7 @@ module {
                         case (#team1) state.team1;
                         case (#team2) state.team2;
                     };
-                    let fieldPosition = playerOut.preferredPosition; // TODO not always true
+                    let fieldPosition = playerOut.position; // TODO not always true
 
                     // TODO improve sub logic such as dedicated field positions
                     // Swap sub for player, if any left
@@ -498,18 +506,6 @@ module {
                     if (substituteOut) {
                         addEvent({
                             description = player.name # " has been substituted out due to condition";
-                            effect = #subPlayer({
-                                playerOutId = playerId;
-                            });
-                        });
-                    };
-                };
-                case (#increaseEnergy({ playerId; amount })) {
-                    let player = getPlayer(playerId);
-                    player.energy := player.energy + amount;
-                    if (player.energy <= 0) {
-                        addEvent({
-                            description = player.name # " has run out of energy and needs to be substituted out";
                             effect = #subPlayer({
                                 playerOutId = playerId;
                             });

@@ -3,8 +3,7 @@ import Player "Player";
 
 module {
     public type TeamActor = actor {
-        // getPlayers : composite query () -> async [Player.Player]; TODO
-        getPlayers : () -> async [Player.Player];
+        getPlayers : composite query () -> async [Player.Player];
     };
 
     public type Team = {
