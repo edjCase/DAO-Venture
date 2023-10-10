@@ -64,7 +64,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
             {
                 id = team.id;
-                lineup = team.lineup;
+                registrationInfo = team.registrationInfo;
                 players = teamPlayers;
             };
         };
@@ -111,7 +111,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     public shared ({ caller }) func registerForMatch(
         matchId : Nat32,
-        lineup : Stadium.TeamLineup,
+        registrationInfo : Stadium.MatchRegistrationInfo,
     ) : async Stadium.RegisterResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
         if (match.time <= Time.now()) {
@@ -119,9 +119,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?caller);
         let teamPlayerIds = Array.map<PlayerWithId, Nat32>(teamPlayers, func(p) = p.id);
-        switch (validatelineup(lineup, teamPlayerIds)) {
+        switch (validateRegistration(registrationInfo, teamPlayerIds)) {
             case (#ok) {
-                let newMatch = switch (buildNewMatch(caller, match, lineup)) {
+                let newMatch = switch (buildNewMatch(caller, match, registrationInfo)) {
                     case (#ok(m)) m;
                     case (#teamNotInMatch) return #teamNotInMatch;
                 };
@@ -156,13 +156,13 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         let teamsInfo : (MatchTeamInfo, MatchTeamInfo) = (
             {
                 id = correctedTeamIds.0;
-                lineup = null;
+                registrationInfo = null;
                 score = null;
                 predictionVotes = 0;
             },
             {
                 id = correctedTeamIds.1;
-                lineup = null;
+                registrationInfo = null;
                 score = null;
                 predictionVotes = 0;
             },
@@ -213,7 +213,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     private func buildNewMatch(
         teamId : Principal,
         match : Match,
-        lineup : Stadium.TeamLineup,
+        registrationInfo : Stadium.MatchRegistrationInfo,
     ) : { #ok : Match; #teamNotInMatch } {
 
         let teamInfo = if (match.teams.0.id == teamId) {
@@ -225,7 +225,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let newTeam : MatchTeamInfo = {
             teamInfo with
-            config = ?lineup;
+            config = ?registrationInfo;
         };
         let newTeams = if (match.teams.0.id == teamId) {
             (newTeam, match.teams.1);
@@ -239,20 +239,21 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         });
     };
 
-    private func validatelineup(
-        lineup : Stadium.TeamLineup,
+    private func validateRegistration(
+        registrationInfo : Stadium.MatchRegistrationInfo,
         allPlayerIds : [Nat32],
     ) : Stadium.RegisterResult {
         let allPlayerIdsSet = TrieSet.fromArray(allPlayerIds, hashNat32, Nat32.equal);
 
-        let fieldPlayers = Trie.toArray(lineup.starters, func(p : FieldPosition, id : Nat32) : Nat32 = id);
+        // TODO
+        // let fieldPlayers = Trie.toArray(registrationInfo.starters, func(p : FieldPosition, id : Nat32) : Nat32 = id);
 
-        // Validate that all players are on the team
-        switch (validatePlayers(Iter.fromArray(fieldPlayers), allPlayerIdsSet)) {
-            case (#ok) {};
-            case (#invalid(e)) return #invalidLineup(e);
-        };
-        let fieldPlayersSet = TrieSet.fromArray(fieldPlayers, hashNat32, Nat32.equal);
+        // // Validate that all players are on the team
+        // switch (validatePlayers(Iter.fromArray(fieldPlayers), allPlayerIdsSet)) {
+        //     case (#ok) {};
+        //     case (#invalid(e)) return #invalidLineup(e);
+        // };
+        // let fieldPlayersSet = TrieSet.fromArray(fieldPlayers, hashNat32, Nat32.equal);
 
         // Validate all the field players are in the batting order
         // TODO fix
@@ -261,13 +262,13 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         //     case (#invalid(e)) return #invalidLineup(e);
         // };
 
-        let unusedPlayerSet = Trie.diff(allPlayerIdsSet, fieldPlayersSet, Nat32.equal);
+        // let unusedPlayerSet = Trie.diff(allPlayerIdsSet, fieldPlayersSet, Nat32.equal);
 
-        // Substitute players can not be the same as field players
-        switch (validatePlayers(Iter.fromArray(lineup.substitutes), unusedPlayerSet)) {
-            case (#ok) {};
-            case (#invalid(e)) return #invalidLineup(e);
-        };
+        // // Substitute players can not be the same as field players
+        // switch (validatePlayers(Iter.fromArray(lineup.substitutes), unusedPlayerSet)) {
+        //     case (#ok) {};
+        //     case (#invalid(e)) return #invalidLineup(e);
+        // };
 
         #ok;
     };

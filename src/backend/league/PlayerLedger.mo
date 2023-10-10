@@ -95,8 +95,6 @@ actor PlayerLedger {
         {
             name = options.name;
             teamId = null;
-            energy = 100;
-            energyRecoveryRate = 10;
             condition = #ok;
             position = options.position;
             skills = {
@@ -107,7 +105,9 @@ actor PlayerLedger {
                 catching = 0;
                 health = 0;
                 defense = 0;
+                piety = 0;
             };
+            deity = #mischief;
         };
     };
 };

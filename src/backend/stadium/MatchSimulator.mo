@@ -20,7 +20,7 @@ module {
     type BaseInfo = Stadium.BaseInfo;
     type MatchState = Stadium.MatchState;
     type TeamState = Stadium.TeamState;
-    type TeamLineup = Stadium.TeamLineup;
+    type MatchRegistrationInfo = Stadium.MatchRegistrationInfo;
     type InProgressMatchState = Stadium.InProgressMatchState;
     type PlayerWithId = Player.PlayerWithId;
     type FieldPosition = Player.FieldPosition;
@@ -56,6 +56,7 @@ module {
         var catching : Nat;
         var health : Nat;
         var defense : Nat;
+        var piety : Nat;
     };
 
     type MutablePlayerState = {
@@ -80,13 +81,13 @@ module {
 
     public type TeamInitData = {
         id : Principal;
-        lineup : ?TeamLineup;
+        registrationInfo : ?MatchRegistrationInfo;
         players : [PlayerWithId];
     };
 
     public func initState(team1 : TeamInitData, team2 : TeamInitData, team1StartOffense : Bool) : MatchState {
 
-        let (team1Lineup, team2Lineup) : (TeamLineup, TeamLineup) = switch (team1.lineup, team2.lineup) {
+        let (team1Lineup, team2Lineup) : (MatchRegistrationInfo, MatchRegistrationInfo) = switch (team1.registrationInfo, team2.registrationInfo) {
             case (null, null) return #completed(#allAbsent);
             case (null, ?_) return #completed(#absentTeam(#team1));
             case (?_, null) return #completed(#absentTeam(#team2));
@@ -115,13 +116,16 @@ module {
             addPlayer(player, #team2);
         };
         let defenseLineup = if (team1StartOffense) team2Lineup else team1Lineup;
-        let initTeamState = func(lineup : TeamLineup) : TeamState {
+        let initTeamState = func(info : MatchRegistrationInfo) : TeamState {
+            let battingOrder = []; // TODO
+            let substitutes = []; // TODO
+            let positions = Trie.empty<FieldPosition, Nat32>(); // TODO
             {
                 score = 0;
-                battingOrder = lineup.battingOrder;
-                currentBatter = lineup.battingOrder.get(0);
-                substitutes = lineup.substitutes;
-                positions = lineup.starters;
+                battingOrder = battingOrder;
+                currentBatter = battingOrder.get(0);
+                substitutes = substitutes;
+                positions = positions;
             };
         };
         #inProgress({
@@ -316,6 +320,7 @@ module {
                 var catching = skills.catching;
                 var health = skills.health;
                 var defense = skills.defense;
+                var piety = skills.piety;
             };
         };
 
@@ -374,6 +379,7 @@ module {
                             catching = player.skills.catching;
                             health = player.skills.health;
                             defense = player.skills.defense;
+                            piety = player.skills.piety;
                         };
                     };
                 },

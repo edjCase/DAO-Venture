@@ -24,10 +24,9 @@ module {
         #duplicateTeams;
     };
 
-    public type TeamLineup = {
-        starters : Trie.Trie<FieldPosition, Nat32>;
-        battingOrder : [FieldPosition];
-        substitutes : [Nat32];
+    public type MatchRegistrationInfo = {
+        players : [(Nat32, FieldPosition)];
+        offeringId : Nat;
     };
 
     public type TeamId = {
@@ -115,7 +114,7 @@ module {
     };
 
     public type StadiumActor = actor {
-        registerForMatch : (id : Nat32, teamConfig : TeamLineup) -> async RegisterResult;
+        registerForMatch : (id : Nat32, teamConfig : MatchRegistrationInfo) -> async RegisterResult;
         scheduleMatch : (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
     };
 
@@ -134,7 +133,7 @@ module {
 
     public type MatchTeamInfo = {
         id : Principal;
-        lineup : ?TeamLineup;
+        registrationInfo : ?MatchRegistrationInfo;
         score : ?Nat;
         predictionVotes : Nat;
     };

@@ -1,11 +1,19 @@
 import Hash "mo:base/Hash";
 module {
+    public type Deity = {
+        #mischief;
+        #war;
+        #pestilence;
+        #indulgence;
+    };
+
     public type Player = {
         name : Text;
         teamId : ?Principal;
         condition : PlayerCondition;
         skills : PlayerSkills;
         position : FieldPosition;
+        deity : Deity;
     };
 
     public type PlayerWithId = Player and {
@@ -20,6 +28,7 @@ module {
         catching : Nat;
         health : Nat;
         defense : Nat;
+        piety : Nat;
     };
 
     public type Injury = {
@@ -73,7 +82,6 @@ module {
         #centerField;
         #rightField;
         #pitcher;
-        #catcher;
     };
 
     public func equalFieldPosition(a : FieldPosition, b : FieldPosition) : Bool {
@@ -86,11 +94,10 @@ module {
             case (#secondBase) 1;
             case (#thirdBase) 2;
             case (#pitcher) 3;
-            case (#catcher) 4;
-            case (#shortStop) 5;
-            case (#leftField) 6;
-            case (#centerField) 7;
-            case (#rightField) 8;
+            case (#shortStop) 4;
+            case (#leftField) 5;
+            case (#centerField) 6;
+            case (#rightField) 7;
         };
     };
 
@@ -100,7 +107,6 @@ module {
             case (#secondBase) "second base";
             case (#thirdBase) "third base";
             case (#pitcher) "pitcher";
-            case (#catcher) "catcher";
             case (#shortStop) "short stop";
             case (#leftField) "left field";
             case (#centerField) "center field";
