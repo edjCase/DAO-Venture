@@ -31,11 +31,6 @@ module {
         #duplicateTeams;
     };
 
-    public type MatchRegistrationInfo = {
-        offeringId : Nat32;
-        specialRuleId : Nat32;
-    };
-
     public type TeamId = {
         #team1;
         #team2;
@@ -82,6 +77,7 @@ module {
 
     public type TeamState = {
         score : Int;
+        offeringId : Nat32;
     };
 
     public type MatchState = {
@@ -94,6 +90,7 @@ module {
         offenseTeamId : TeamId;
         team1 : TeamState;
         team2 : TeamState;
+        specialRuleId : ?Nat32;
         players : Trie.Trie<PlayerId, PlayerState>;
         batter : ?PlayerId;
         positions : Trie.Trie<FieldPosition, PlayerId>;
@@ -115,8 +112,8 @@ module {
     };
 
     public type StadiumActor = actor {
-        getMatch : shared query (id : Nat32) -> async ?MatchInfo;
-        getMatches : shared query () -> async [MatchInfo];
+        getMatch : shared query (id : Nat32) -> async ?MatchWithId;
+        getMatches : shared query () -> async [MatchWithId];
         scheduleMatch : shared (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
     };
 
@@ -145,14 +142,17 @@ module {
         state : MatchState;
     };
 
-    public type MatchInfo = Match and {
+    public type MatchWithId = Match and {
         id : Nat32;
+    };
+
+    public type MatchOptions = {
+        offeringId : Nat32;
+        specialRuleVotes : Trie.Trie<Nat32, Nat>;
     };
 
     public type MatchTeamInfo = {
         id : Principal;
-        registrationInfo : ?MatchRegistrationInfo;
-        score : ?Nat;
         predictionVotes : Nat;
     };
 };

@@ -127,6 +127,6 @@
         onSelect={(i) => (selectedSpecialRule = i)}
       />
     </div>
-    <button on:click={register}>Register</button>
+    <button on:click={register}>Submit Vote</button>
   {/if}
 {/if}

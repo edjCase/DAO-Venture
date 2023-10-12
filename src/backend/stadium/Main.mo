@@ -20,20 +20,23 @@ import Int "mo:base/Int";
 import Timer "mo:base/Timer";
 import MatchSimulator "MatchSimulator";
 import Random "mo:base/Random";
+import Error "mo:base/Error";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     type Match = Stadium.Match;
-    type MatchInfo = Stadium.MatchInfo;
+    type MatchWithId = Stadium.MatchWithId;
     type MatchTeamInfo = Stadium.MatchTeamInfo;
     type Player = Player.Player;
     type PlayerWithId = Player.PlayerWithId;
     type PlayerState = Stadium.PlayerState;
     type FieldPosition = Player.FieldPosition;
+    type MatchOptions = Stadium.MatchOptions;
 
     public type StartMatchResult = {
         #ok;
         #matchNotFound;
         #matchAlreadyStarted;
+        #completed : Stadium.CompletedMatchState;
     };
     public type TickMatchResult = {
         #ok;
@@ -46,7 +49,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     stable var nextMatchId : Nat32 = 1;
 
-    public query func getMatch(id : Nat32) : async ?MatchInfo {
+    public query func getMatch(id : Nat32) : async ?MatchWithId {
 
         switch (getMatchOrNull(id)) {
             case (null) return null;
@@ -56,9 +59,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
     };
 
-    public query func getMatches() : async [MatchInfo] {
-        let compare = func(a : MatchInfo, b : MatchInfo) : Order.Order = Int.compare(a.time, b.time);
-        let map = func(v : (Nat32, Match)) : MatchInfo = {
+    public query func getMatches() : async [MatchWithId] {
+        let compare = func(a : MatchWithId, b : MatchWithId) : Order.Order = Int.compare(a.time, b.time);
+        let map = func(v : (Nat32, Match)) : MatchWithId = {
             v.1 with
             id = v.0;
         };
@@ -67,19 +70,17 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
 
     public shared ({ caller }) func startMatch(matchId : Nat32) : async StartMatchResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        let createTeamInit = func(team : Stadium.MatchTeamInfo) : async MatchSimulator.TeamInitData {
-            let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
-            {
-                id = team.id;
-                registrationInfo = team.registrationInfo;
-                players = teamPlayers;
-            };
+        let team1InitOrNull = await createTeamInit(matchId, match.teams.0);
+        let team2InitOrNull = await createTeamInit(matchId, match.teams.1);
+        let (team1Init, team2Init) : (MatchSimulator.TeamInitData, MatchSimulator.TeamInitData) = switch (team1InitOrNull, team2InitOrNull) {
+            case (null, null) return #completed(#allAbsent);
+            case (null, ?_) return #completed(#absentTeam(#team1));
+            case (?_, null) return #completed(#absentTeam(#team2));
+            case (?t1, ?t2)(t1, t2);
         };
-        let team1Init = await createTeamInit(match.teams.0);
-        let team2Init = await createTeamInit(match.teams.1);
         let random = Random.Finite(await Random.blob());
         let ?team1IsOffense = random.coin() else Prelude.unreachable();
-        let initState = MatchSimulator.initState(team1Init, team2Init, team1IsOffense);
+        let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense);
         let newMatch : Match = {
             match with
             state = initState;
@@ -87,6 +88,29 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         addOrUpdateMatch(matchId, newMatch);
         ignore tickMatch(matchId);
         #ok;
+    };
+
+    private func createTeamInit(matchId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
+        let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
+        let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
+        let options : ?MatchOptions = try {
+            // Get match options from the team itself
+            await teamActor.getMatchOptions(matchId);
+        } catch (err : Error.Error) {
+            Debug.print("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
+            null;
+        };
+        switch (options) {
+            case (null) null;
+            case (?o) {
+                ?{
+                    id = team.id;
+                    players = teamPlayers;
+                    offeringId = o.offeringId;
+                    specialRuleVotes = o.specialRuleVotes;
+                };
+            };
+        };
     };
 
     public shared ({ caller }) func tickMatch(matchId : Nat32) : async TickMatchResult {
@@ -116,30 +140,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         Trie.get(matches, matchKey, Nat32.equal);
     };
 
-    // TODO this should change to a pull data from team at match start
-    public shared ({ caller }) func registerForMatch(
-        matchId : Nat32,
-        registrationInfo : Stadium.MatchRegistrationInfo,
-    ) : async Stadium.RegisterResult {
-        let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        if (match.time <= Time.now()) {
-            return #matchAlreadyStarted;
-        };
-        let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?caller);
-        let teamPlayerIds = Array.map<PlayerWithId, Nat32>(teamPlayers, func(p) = p.id);
-        let registrationErrors = Buffer.Buffer<Stadium.RegistrationInfoError>(0);
-        if (match.offerings.size() > Nat32.toNat(registrationInfo.offeringId) + 1) {
-            registrationErrors.add(#invalidOffering(registrationInfo.offeringId));
-        };
-        if (match.specialRules.size() > Nat32.toNat(registrationInfo.specialRuleId) + 1) {
-            registrationErrors.add(#invalidOffering(registrationInfo.specialRuleId));
-        };
-        if (registrationErrors.size() > 0) {
-            return #invalidInfo(Buffer.toArray(registrationErrors));
-        };
-        #ok;
-    };
-
     private func addOrUpdateMatch(matchId : Nat32, match : Match) {
         let matchKey = {
             hash = matchId;
@@ -161,13 +161,13 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         let teamsInfo : (MatchTeamInfo, MatchTeamInfo) = (
             {
                 id = correctedTeamIds.0;
-                registrationInfo = null;
+                options = null;
                 score = null;
                 predictionVotes = 0;
             },
             {
                 id = correctedTeamIds.1;
-                registrationInfo = null;
+                options = null;
                 score = null;
                 predictionVotes = 0;
             },
@@ -183,59 +183,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             let _ = await startMatch(nextMatchId);
         };
         let timerId = Timer.setTimer(timerDuration, callbackFunc);
+        let offerings = getRandomOfferings(4);
+        let specialRules = getRandomSpecialRules(4);
         let match : Match = {
             id = nextMatchId;
             time = time;
             teams = teamsInfo;
-            // TODO
-            offerings = [
-                {
-                    deities = ["War"];
-                    effects = [
-                        "+ batting power",
-                        "- speed",
-                        "Every 5 pitches is a guarenteed fast ball",
-                    ];
-                },
-                {
-                    deities = ["Mischief"];
-                    effects = [
-                        "+ batting accuracy",
-                        "- piety",
-                        "Batting has a higher chance of causing injury",
-                    ];
-                },
-                {
-                    deities = ["Pestilence", "Indulgence"];
-                    effects = ["+ piety", "- health", "Players dont rotate between rounds"];
-                },
-                {
-                    deities = ["Pestilence", "Mischief"];
-                    effects = [
-                        "+ throwing power",
-                        "- throwing accuracy",
-                        "Catching never fails",
-                    ];
-                },
-            ];
-            specialRules = [
-                {
-                    name = "The skill twist";
-                    description = "All players' batting power and throwing power are swapped";
-                },
-                {
-                    name = "Fasting";
-                    description = "All followers of Indulgence are benched for the match";
-                },
-                {
-                    name = "Light Ball";
-                    description = "Balls are lighter so they are thrown faster and but go less far";
-                },
-                {
-                    name = "Sunny day";
-                    description = "All followers of Pestilence and Miscief are more iritable";
-                },
-            ];
+            offerings = offerings;
+            specialRules = specialRules;
             winner = null;
             timerId = timerId;
             state = #notStarted;
@@ -254,6 +209,62 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
     };
 
+    private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
+        // TODO
+        [
+            {
+                deities = ["War"];
+                effects = [
+                    "+ batting power",
+                    "- speed",
+                    "Every 5 pitches is a guarenteed fast ball",
+                ];
+            },
+            {
+                deities = ["Mischief"];
+                effects = [
+                    "+ batting accuracy",
+                    "- piety",
+                    "Batting has a higher chance of causing injury",
+                ];
+            },
+            {
+                deities = ["Pestilence", "Indulgence"];
+                effects = ["+ piety", "- health", "Players dont rotate between rounds"];
+            },
+            {
+                deities = ["Pestilence", "Mischief"];
+                effects = [
+                    "+ throwing power",
+                    "- throwing accuracy",
+                    "Catching never fails",
+                ];
+            },
+        ];
+    };
+
+    private func getRandomSpecialRules(count : Nat) : [Stadium.SpecialRule] {
+        // TODO
+        [
+            {
+                name = "The skill twist";
+                description = "All players' batting power and throwing power are swapped";
+            },
+            {
+                name = "Fasting";
+                description = "All followers of Indulgence are benched for the match";
+            },
+            {
+                name = "Light Ball";
+                description = "Balls are lighter so they are thrown faster and but go less far";
+            },
+            {
+                name = "Sunny day";
+                description = "All followers of Pestilence and Miscief are more iritable";
+            },
+        ];
+    };
+
     private func isTimeAvailable(time : Time.Time) : Bool {
         for ((matchId, match) in Trie.iter(matches)) {
             // TODO better time window detection
@@ -267,7 +278,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     private func buildNewMatch(
         teamId : Principal,
         match : Match,
-        registrationInfo : Stadium.MatchRegistrationInfo,
+        options : Stadium.MatchOptions,
     ) : { #ok : Match; #teamNotInMatch } {
 
         let teamInfo = if (match.teams.0.id == teamId) {
@@ -279,7 +290,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let newTeam : MatchTeamInfo = {
             teamInfo with
-            config = ?registrationInfo;
+            options = ?options;
         };
         let newTeams = if (match.teams.0.id == teamId) {
             (newTeam, match.teams.1);

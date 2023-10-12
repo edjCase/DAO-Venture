@@ -41,6 +41,67 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
     await PlayerLedgerActor.getTeamPlayers(?teamId);
   };
 
+  public shared query ({ caller }) func getMatchOptions(matchId : Nat32) : async ?Stadium.MatchOptions {
+    let teamId = Principal.fromActor(this);
+    let stadiumKey = {
+      key = caller;
+      hash = Principal.hash(caller);
+    };
+    let ?stadiumVotes = Trie.get(votes, stadiumKey, Principal.equal) else return null;
+    let matchKey = {
+      key = matchId;
+      hash = matchId;
+    };
+    let ?matchVotes = Trie.get(stadiumVotes, matchKey, Nat32.equal) else return null;
+    let ?(offeringId, specialRuleVotes) = calculateVotes(matchVotes) else return null;
+    ?{
+      offeringId = offeringId;
+      specialRuleVotes = specialRuleVotes;
+    };
+  };
+
+  private func calculateVotes(matchVotes : Trie.Trie<Principal, MatchVote>) : ?(Nat32, Trie.Trie<Nat32, Nat>) {
+    var offeringVotes = Trie.empty<Nat32, Nat>();
+    var specialRuleVotes = Trie.empty<Nat32, Nat>();
+    for ((userId, vote) in Trie.iter(matchVotes)) {
+      // Offering
+      let userVotingPower = 1; // TODO
+      offeringVotes := addVotes(offeringVotes, vote.offeringId, userVotingPower);
+
+      specialRuleVotes := addVotes(offeringVotes, vote.specialRuleId, userVotingPower);
+    };
+    var winningOfferingId : ?(Nat32, Nat) = null;
+    for ((offeringId, votes) in Trie.iter(offeringVotes)) {
+      switch (winningOfferingId) {
+        case (null) winningOfferingId := ?(offeringId, votes);
+        case (?o) {
+          if (o.1 < votes) {
+            winningOfferingId := ?(offeringId, votes);
+          };
+          // TODO what to do if there is a tie?
+        };
+      };
+    };
+    switch (winningOfferingId) {
+      case (null) null;
+      case (?offeringId) ?(offeringId.0, specialRuleVotes);
+    };
+
+  };
+
+  private func addVotes(votes : Trie.Trie<Nat32, Nat>, choice : Nat32, value : Nat) : Trie.Trie<Nat32, Nat> {
+    let key = {
+      key = choice;
+      hash = choice;
+    };
+    let currentVotes = switch (Trie.get(votes, key, Nat32.equal)) {
+      case (?v) v;
+      case (null) 0;
+    };
+    let (newVotes, _) = Trie.put(votes, key, Nat32.equal, currentVotes + value);
+    newVotes;
+  };
+
   public shared ({ caller }) func getOwner() : async Principal {
     return ownerId;
   };
