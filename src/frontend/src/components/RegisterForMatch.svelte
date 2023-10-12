@@ -1,80 +1,86 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
   import { stadiumStore } from "../stores/StadiumStore";
-  import { teamAgentFactory, type TeamConfig } from "../ic-agent/Team";
-  import { playerStore } from "../stores/PlayerStore";
+  import CardList from "./CardList.svelte";
   import { Principal } from "@dfinity/principal";
-  import DragDropList from "svelte-dragdroplist";
-  import { FieldPosition } from "../models/FieldPosition";
-  import type { Player } from "../models/Player";
-  import PlayerPicker from "./PlayerPicker.svelte";
-
+  import { teamAgentFactory } from "../ic-agent/Team";
+  import { stadiumAgentFactory, type Match } from "../ic-agent/Stadium";
   $: teams = $teamStore;
   $: stadiums = $stadiumStore;
 
   let teamId: string;
   let stadiumId: string;
   let matchId: number;
-  let teamPlayers: Player[];
-  type StarterPlayer = { id: number; text: string; position: FieldPosition };
-  let startingPlayers: StarterPlayer[] = [];
-  let substitutes: number[] = [];
+  let previousMatchId: number;
+  let selectedOffering = -1;
+  let selectedSpecialRule = -1;
+  let offeringCards;
+  let specialRuleCards;
+  let match: Match;
 
-  $: {
-    playerStore.subscribe((players) => {
-      teamPlayers = players
-        .filter((p) => p.teamId[0]?.toString() === teamId)
-        .sort((a, b) => a.name.localeCompare(b.name));
-    });
+  $: if (matchId && matchId != previousMatchId) {
+    stadiumAgentFactory(stadiumId)
+      .getMatch(matchId)
+      .then((result) => {
+        if (!result[0]) {
+          console.log("No match found");
+          return;
+        }
+        match = result[0];
+
+        offeringCards = match.offerings.map((offering) => {
+          return {
+            title: offering.deities.join(", "),
+            description: offering.effects.join(", "),
+          };
+        });
+        specialRuleCards = match.specialRules.map((offering) => {
+          return {
+            title: offering.name,
+            description: offering.description,
+          };
+        });
+        previousMatchId = matchId;
+        console.log("Got match: ", result);
+      })
+      .catch((err) => {
+        console.log("Failed to get match: ", err);
+      });
   }
 
+  let validate = function () {
+    let errors = [];
+    if (!teamId) {
+      errors.push("Team is required");
+    }
+    if (!stadiumId) {
+      errors.push("Stadium is required");
+    }
+    if (!matchId) {
+      errors.push("Match Id is required");
+    }
+    if (selectedOffering === -1) {
+      errors.push("Offering is required");
+    }
+    if (selectedSpecialRule === -1) {
+      errors.push("Special Rule is required");
+    }
+    if (errors.length > 0) {
+      console.log(errors.join("\n"));
+      return false;
+    }
+    return true;
+  };
   let register = function () {
-    let config: TeamConfig = {
-      pitcher: 0,
-      catcher: 0,
-      firstBase: 0,
-      secondBase: 0,
-      thirdBase: 0,
-      shortStop: 0,
-      leftField: 0,
-      centerField: 0,
-      rightField: 0,
-      battingOrder: startingPlayers.map((p) => p.id),
-      substitutes: substitutes,
+    if (!validate()) {
+      return;
+    }
+    let options = {
+      offeringId: selectedOffering,
+      specialRuleId: selectedSpecialRule,
     };
-    startingPlayers.forEach((startingPlayer) => {
-      switch (FieldPosition[startingPlayer.position]) {
-        case FieldPosition.Pitcher:
-          config.pitcher = startingPlayer.id;
-          break;
-        case FieldPosition.Catcher:
-          config.catcher = startingPlayer.id;
-          break;
-        case FieldPosition.FirstBase:
-          config.firstBase = startingPlayer.id;
-          break;
-        case FieldPosition.SecondBase:
-          config.secondBase = startingPlayer.id;
-          break;
-        case FieldPosition.ThirdBase:
-          config.thirdBase = startingPlayer.id;
-          break;
-        case FieldPosition.ShortStop:
-          config.shortStop = startingPlayer.id;
-          break;
-        case FieldPosition.LeftField:
-          config.leftField = startingPlayer.id;
-          break;
-        case FieldPosition.CenterField:
-          config.centerField = startingPlayer.id;
-          break;
-        case FieldPosition.RightField:
-          config.rightField = startingPlayer.id;
-          break;
-      }
-    });
     teamAgentFactory(teamId)
-      .registerForMatch(Principal.from(stadiumId), matchId, config)
+      .voteForMatchOptions(Principal.from(stadiumId), matchId, options)
       .then((result) => {
         console.log("Registered for match: ", result);
         teamStore.refetch();
@@ -106,31 +112,21 @@
     <label for="matchId">Match Id</label>
     <input type="number" id="matchId" bind:value={matchId} />
   </div>
-  <div>
-    <h2>Team Lineup</h2>
-    {#each Object.keys(FieldPosition) as position}
-      <div>{FieldPosition[position]}</div>
-      <PlayerPicker
-        players={teamPlayers}
-        initialPlayerId={teamPlayers.find(
-          (p) => p.position == FieldPosition[position]
-        )?.id}
-      />
-    {/each}
+  {#if match}
     <div>
-      <h2>Batting Order</h2>
-      <DragDropList bind:data={startingPlayers} removesItems={false} />
+      <h2>Offerings</h2>
+      <CardList
+        cards={offeringCards}
+        onSelect={(i) => (selectedOffering = i)}
+      />
     </div>
-  </div>
-  <button on:click={register}>Register</button>
+    <div>
+      <h2>Special Rule</h2>
+      <CardList
+        cards={specialRuleCards}
+        onSelect={(i) => (selectedSpecialRule = i)}
+      />
+    </div>
+    <button on:click={register}>Register</button>
+  {/if}
 {/if}
-
-<style>
-  :global(.dragdroplist) {
-    width: 200px;
-  } /* entire component */
-  :global(.dragdroplist > .list > div.item) {
-    background-color: var(--color-bg);
-    color: var(--color-text);
-  } /* list item */
-</style>

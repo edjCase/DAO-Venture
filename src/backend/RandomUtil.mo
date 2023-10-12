@@ -23,4 +23,9 @@ module {
         let randInt = min + (randVal % range);
         ?randInt;
     };
+
+    public func randomNat(random : Random.Finite, min : Nat, max : Nat) : ?Nat {
+        let ?randInt = randomInt(random, min, max) else return null;
+        ?Int.abs(randInt);
+    };
 };

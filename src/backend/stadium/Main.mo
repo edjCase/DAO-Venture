@@ -23,15 +23,12 @@ import Random "mo:base/Random";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     type Match = Stadium.Match;
+    type MatchInfo = Stadium.MatchInfo;
     type MatchTeamInfo = Stadium.MatchTeamInfo;
     type Player = Player.Player;
     type PlayerWithId = Player.PlayerWithId;
     type PlayerState = Stadium.PlayerState;
     type FieldPosition = Player.FieldPosition;
-
-    public type MatchInfo = Match and {
-        id : Nat32;
-    };
 
     public type StartMatchResult = {
         #ok;
@@ -48,6 +45,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
     stable var matches : Trie.Trie<Nat32, Match> = Trie.empty();
 
     stable var nextMatchId : Nat32 = 1;
+
+    public query func getMatch(id : Nat32) : async ?MatchInfo {
+
+        switch (getMatchOrNull(id)) {
+            case (null) return null;
+            case (?m) {
+                ?{ m with id = id };
+            };
+        };
+    };
 
     public query func getMatches() : async [MatchInfo] {
         let compare = func(a : MatchInfo, b : MatchInfo) : Order.Order = Int.compare(a.time, b.time);
@@ -109,6 +116,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         Trie.get(matches, matchKey, Nat32.equal);
     };
 
+    // TODO this should change to a pull data from team at match start
     public shared ({ caller }) func registerForMatch(
         matchId : Nat32,
         registrationInfo : Stadium.MatchRegistrationInfo,
@@ -119,20 +127,17 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?caller);
         let teamPlayerIds = Array.map<PlayerWithId, Nat32>(teamPlayers, func(p) = p.id);
-        switch (validateRegistration(registrationInfo, teamPlayerIds)) {
-            case (#ok) {
-                let newMatch = switch (buildNewMatch(caller, match, registrationInfo)) {
-                    case (#ok(m)) m;
-                    case (#teamNotInMatch) return #teamNotInMatch;
-                };
-                addOrUpdateMatch(matchId, newMatch);
-                #ok;
-            };
-            case (#invalidLineup(e)) return #invalidLineup(e);
-            case (#matchAlreadyStarted) return #matchAlreadyStarted;
-            case (#matchNotFound) return #matchNotFound;
-            case (#teamNotInMatch) return #teamNotInMatch;
+        let registrationErrors = Buffer.Buffer<Stadium.RegistrationInfoError>(0);
+        if (match.offerings.size() > Nat32.toNat(registrationInfo.offeringId) + 1) {
+            registrationErrors.add(#invalidOffering(registrationInfo.offeringId));
         };
+        if (match.specialRules.size() > Nat32.toNat(registrationInfo.specialRuleId) + 1) {
+            registrationErrors.add(#invalidOffering(registrationInfo.specialRuleId));
+        };
+        if (registrationErrors.size() > 0) {
+            return #invalidInfo(Buffer.toArray(registrationErrors));
+        };
+        #ok;
     };
 
     private func addOrUpdateMatch(matchId : Nat32, match : Match) {
@@ -182,6 +187,55 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             id = nextMatchId;
             time = time;
             teams = teamsInfo;
+            // TODO
+            offerings = [
+                {
+                    deities = ["War"];
+                    effects = [
+                        "+ batting power",
+                        "- speed",
+                        "Every 5 pitches is a guarenteed fast ball",
+                    ];
+                },
+                {
+                    deities = ["Mischief"];
+                    effects = [
+                        "+ batting accuracy",
+                        "- piety",
+                        "Batting has a higher chance of causing injury",
+                    ];
+                },
+                {
+                    deities = ["Pestilence", "Indulgence"];
+                    effects = ["+ piety", "- health", "Players dont rotate between rounds"];
+                },
+                {
+                    deities = ["Pestilence", "Mischief"];
+                    effects = [
+                        "+ throwing power",
+                        "- throwing accuracy",
+                        "Catching never fails",
+                    ];
+                },
+            ];
+            specialRules = [
+                {
+                    name = "The skill twist";
+                    description = "All players' batting power and throwing power are swapped";
+                },
+                {
+                    name = "Fasting";
+                    description = "All followers of Indulgence are benched for the match";
+                },
+                {
+                    name = "Light Ball";
+                    description = "Balls are lighter so they are thrown faster and but go less far";
+                },
+                {
+                    name = "Sunny day";
+                    description = "All followers of Pestilence and Miscief are more iritable";
+                },
+            ];
             winner = null;
             timerId = timerId;
             state = #notStarted;
@@ -237,61 +291,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
             match with
             teams = newTeams;
         });
-    };
-
-    private func validateRegistration(
-        registrationInfo : Stadium.MatchRegistrationInfo,
-        allPlayerIds : [Nat32],
-    ) : Stadium.RegisterResult {
-        let allPlayerIdsSet = TrieSet.fromArray(allPlayerIds, hashNat32, Nat32.equal);
-
-        // TODO
-        // let fieldPlayers = Trie.toArray(registrationInfo.starters, func(p : FieldPosition, id : Nat32) : Nat32 = id);
-
-        // // Validate that all players are on the team
-        // switch (validatePlayers(Iter.fromArray(fieldPlayers), allPlayerIdsSet)) {
-        //     case (#ok) {};
-        //     case (#invalid(e)) return #invalidLineup(e);
-        // };
-        // let fieldPlayersSet = TrieSet.fromArray(fieldPlayers, hashNat32, Nat32.equal);
-
-        // Validate all the field players are in the batting order
-        // TODO fix
-        // switch (validatePlayers(Iter.fromArray(lineup.battingOrder), fieldPlayersSet)) {
-        //     case (#ok) {};
-        //     case (#invalid(e)) return #invalidLineup(e);
-        // };
-
-        // let unusedPlayerSet = Trie.diff(allPlayerIdsSet, fieldPlayersSet, Nat32.equal);
-
-        // // Substitute players can not be the same as field players
-        // switch (validatePlayers(Iter.fromArray(lineup.substitutes), unusedPlayerSet)) {
-        //     case (#ok) {};
-        //     case (#invalid(e)) return #invalidLineup(e);
-        // };
-
-        #ok;
-    };
-
-    private func validatePlayers(players : Iter.Iter<Nat32>, validPlayerIds : TrieSet.Set<Nat32>) : {
-        #ok;
-        #invalid : [Stadium.PlayerValidationError];
-    } {
-        var playersInUse = TrieSet.empty<Nat32>();
-        let errors = Buffer.Buffer<Stadium.PlayerValidationError>(0);
-        for (playerId in players) {
-            if (not TrieSet.mem(validPlayerIds, playerId, playerId, Nat32.equal)) {
-                errors.add(#notOnTeam(playerId));
-            };
-            if (TrieSet.mem(playersInUse, playerId, playerId, Nat32.equal)) {
-                errors.add(#usedInMultiplePositions(playerId));
-            };
-            playersInUse := TrieSet.put(playersInUse, playerId, playerId, Nat32.equal);
-        };
-        if (errors.size() > 0) {
-            return #invalid(Buffer.toArray(errors));
-        };
-        #ok;
     };
 
     private func hashNat32(n : Nat32) : Hash.Hash {

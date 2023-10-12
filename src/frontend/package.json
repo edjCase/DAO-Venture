@@ -36,8 +36,6 @@
     "@dfinity/candid": "^0.18.1",
     "@dfinity/identity": "^0.18.1",
     "@dfinity/principal": "^0.18.1",
-    "sirv-cli": "^2.0.0",
-    "svelte-dnd-action": "^0.9.26",
-    "svelte-dragdroplist": "^1.1.1"
+    "sirv-cli": "^2.0.0"
   }
 }

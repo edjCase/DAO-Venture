@@ -10,12 +10,19 @@ module {
     type FieldPosition = Player.FieldPosition;
     type Base = Player.Base;
 
+    type PlayerId = Nat32;
+
     public type RegisterResult = {
         #ok;
         #matchNotFound;
         #teamNotInMatch;
         #matchAlreadyStarted;
-        #invalidLineup : [PlayerValidationError];
+        #invalidInfo : [RegistrationInfoError];
+    };
+
+    public type RegistrationInfoError = {
+        #invalidOffering : Nat32;
+        #invalidSpecialRule : Nat32;
     };
 
     public type ScheduleMatchResult = {
@@ -25,8 +32,8 @@ module {
     };
 
     public type MatchRegistrationInfo = {
-        players : [(Nat32, FieldPosition)];
-        offeringId : Nat;
+        offeringId : Nat32;
+        specialRuleId : Nat32;
     };
 
     public type TeamId = {
@@ -41,21 +48,21 @@ module {
             amount : Int;
         };
         #subPlayer : {
-            playerOutId : Nat32;
+            playerOutId : PlayerId;
         };
         #setPlayerCondition : {
-            playerId : Nat32;
+            playerId : PlayerId;
             condition : Player.PlayerCondition;
         };
         #movePlayerToBase : {
-            playerId : Nat32;
+            playerId : PlayerId;
             base : ?Base;
         };
         #addStrike : {
-            playerId : Nat32;
+            playerId : PlayerId;
         };
         #addOut : {
-            playerId : Nat32;
+            playerId : PlayerId;
         };
         #endRound;
     };
@@ -75,14 +82,6 @@ module {
 
     public type TeamState = {
         score : Int;
-        positions : Trie.Trie<FieldPosition, Nat32>;
-        battingOrder : [FieldPosition];
-        substitutes : [Nat32];
-        currentBatter : FieldPosition;
-    };
-
-    public type BaseInfo = {
-        player : ?Nat;
     };
 
     public type MatchState = {
@@ -95,9 +94,11 @@ module {
         offenseTeamId : TeamId;
         team1 : TeamState;
         team2 : TeamState;
-        players : Trie.Trie<Nat32, PlayerState>;
+        players : Trie.Trie<PlayerId, PlayerState>;
+        batter : ?PlayerId;
+        positions : Trie.Trie<FieldPosition, PlayerId>;
         events : [Event];
-        bases : Trie.Trie<Base, Nat32>;
+        bases : Trie.Trie<Base, PlayerId>;
         round : Nat;
         outs : Nat;
         strikes : Nat;
@@ -114,8 +115,9 @@ module {
     };
 
     public type StadiumActor = actor {
-        registerForMatch : (id : Nat32, teamConfig : MatchRegistrationInfo) -> async RegisterResult;
-        scheduleMatch : (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
+        getMatch : shared query (id : Nat32) -> async ?MatchInfo;
+        getMatches : shared query () -> async [MatchInfo];
+        scheduleMatch : shared (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
     };
 
     public type Stadium = {
@@ -123,12 +125,28 @@ module {
         name : Text;
     };
 
+    public type Offering = {
+        deities : [Text];
+        effects : [Text];
+    };
+
+    public type SpecialRule = {
+        name : Text;
+        description : Text;
+    };
+
     public type Match = {
         teams : (MatchTeamInfo, MatchTeamInfo);
         time : Time.Time;
         winner : ?Principal;
+        offerings : [Offering];
+        specialRules : [SpecialRule];
         timerId : Nat;
         state : MatchState;
+    };
+
+    public type MatchInfo = Match and {
+        id : Nat32;
     };
 
     public type MatchTeamInfo = {
@@ -136,10 +154,5 @@ module {
         registrationInfo : ?MatchRegistrationInfo;
         score : ?Nat;
         predictionVotes : Nat;
-    };
-
-    public type PlayerValidationError = {
-        #notOnTeam : Nat32;
-        #usedInMultiplePositions : Nat32;
     };
 };
