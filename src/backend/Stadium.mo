@@ -5,6 +5,7 @@ import Time "mo:base/Time";
 import Nat32 "mo:base/Nat32";
 import Trie "mo:base/Trie";
 import Hash "mo:base/Hash";
+import Nat "mo:base/Nat";
 
 module {
     type FieldPosition = Player.FieldPosition;
@@ -75,7 +76,12 @@ module {
         position : FieldPosition;
     };
 
+    public type PlayerStateWithId = PlayerState and {
+        id : PlayerId;
+    };
+
     public type TeamState = {
+        id : Principal;
         score : Int;
         offeringId : Nat32;
     };
@@ -86,16 +92,38 @@ module {
         #completed : CompletedMatchState;
     };
 
+    public type DefenseFieldState = {
+        firstBase : PlayerId;
+        secondBase : PlayerId;
+        thirdBase : PlayerId;
+        shortStop : PlayerId;
+        pitcher : PlayerId;
+        leftField : PlayerId;
+        centerField : PlayerId;
+        rightField : PlayerId;
+    };
+
+    public type OffsenseFieldState = {
+        atBat : PlayerId;
+        firstBase : ?PlayerId;
+        secondBase : ?PlayerId;
+        thirdBase : ?PlayerId;
+    };
+
+    public type FieldState = {
+        defense : DefenseFieldState;
+        offense : OffsenseFieldState;
+    };
+
     public type InProgressMatchState = {
         offenseTeamId : TeamId;
         team1 : TeamState;
         team2 : TeamState;
         specialRuleId : ?Nat32;
-        players : Trie.Trie<PlayerId, PlayerState>;
+        players : [PlayerStateWithId];
         batter : ?PlayerId;
-        positions : Trie.Trie<FieldPosition, PlayerId>;
+        field : FieldState;
         events : [Event];
-        bases : Trie.Trie<Base, PlayerId>;
         round : Nat;
         outs : Nat;
         strikes : Nat;
@@ -104,16 +132,25 @@ module {
     public type CompletedMatchState = {
         #absentTeam : TeamId;
         #allAbsent;
-        #gameResult : {
-            team1 : TeamState;
-            team2 : TeamState;
-            winner : TeamId;
-        };
+        #played : CompletedMatchResult;
+    };
+
+    public type CompletedMatchResult = {
+        team1 : CompletedTeamState;
+        team2 : CompletedTeamState;
+        winner : TeamId;
+        events : [Event];
+    };
+
+    public type CompletedTeamState = {
+        id : Principal;
+        score : Int;
     };
 
     public type StadiumActor = actor {
         getMatch : shared query (id : Nat32) -> async ?MatchWithId;
         getMatches : shared query () -> async [MatchWithId];
+        tickMatch : shared (id : Nat32) -> async TickMatchResult;
         scheduleMatch : shared (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
     };
 
@@ -144,6 +181,13 @@ module {
 
     public type MatchWithId = Match and {
         id : Nat32;
+        stadiumId : Principal;
+    };
+    public type TickMatchResult = {
+        #ok : InProgressMatchState;
+        #matchNotFound;
+        #matchOver : CompletedMatchState;
+        #notStarted;
     };
 
     public type MatchOptions = {

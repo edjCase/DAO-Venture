@@ -1,93 +1,78 @@
 <script lang="ts">
-  import type { Match } from "../ic-agent/Stadium";
+  import {
+    stadiumAgentFactory,
+    type Match,
+    type InProgressMatchState,
+  } from "../ic-agent/Stadium";
 
   export let match: Match;
 
-  // let reducePlayerFunc = (map, player) => {
-  //   map[player.id] = player.name;
-  //   return map;
-  // };
-  // let team1PlayerMap = match.teams[0].players.reduce(reducePlayerFunc, {});
-  // let team2PlayerMap = match.teams[1].players.reduce(reducePlayerFunc, {});
+  let s = (key, value) =>
+    typeof value === "bigint" ? value.toString() : value; // return everything else unchanged;
+  let state: InProgressMatchState =
+    "inProgress" in match.state ? match.state.inProgress : null;
 
-  // let compiledInningScorings = match.scorings.reduce(
-  //   (acc, s) => {
-  //     let playerMap = s.topHalf ? team1PlayerMap : team2PlayerMap;
-  //     let inning = (s.topHalf ? "Top" : "Bottom") + " " + s.inning;
-  //     let battingPlayer = playerMap[s.battingPlayerId];
-  //     let scoringPlayers = s.scoringPlayerIds.map((id) => playerMap[id]);
+  $: if (state) {
+    // TODO make a store for the state
+  }
+  let stadiumAgent = stadiumAgentFactory(match.stadiumId);
+  let tick = async () => {
+    let result = await stadiumAgent.tickMatch(match.id);
+    if ("ok" in result) {
+      state = result.ok;
+    } else {
+      alert(JSON.stringify(result, s, 2));
+    }
+  };
 
-  //     let scoringList;
-  //     if (acc.currentInning != inning || acc.innings.length == 0) {
-  //       acc.currentInning = inning;
-  //       scoringList = [];
-  //       acc.innings.push({
-  //         inning: inning,
-  //         scorings: scoringList,
-  //       });
-  //     } else {
-  //       scoringList = acc.innings[acc.innings.length - 1].scorings;
-  //     }
-  //     let currentScore = acc.currentScore;
-  //     currentScore[s.topHalf ? 0 : 1] += s.scoringPlayerIds.length;
-  //     scoringList.push({
-  //       battingPlayer: battingPlayer,
-  //       scoringPlayers: scoringPlayers,
-  //       score: [currentScore[0], currentScore[1]],
-  //     });
-  //     return acc;
-  //   },
-  //   {
-  //     currentInning: null,
-  //     currentScore: [0, 0],
-  //     innings: [],
-  //   }
-  // ).innings;
+  let getPlayerName = (id: ([] | [number]) | number) => {
+    if (!state) return "";
+    let playerId;
+    if (id instanceof Array) {
+      if (id.length < 1) return "";
+      playerId = id[0];
+    } else {
+      playerId = id;
+    }
+    let player = state.players.find((player) => player.id == playerId);
+    return player ? player.name : "Unknown";
+  };
 </script>
 
-<div class="inning-list">
-  <!-- {#each compiledInningScorings as inningScoring}
-    <div class="inning-name">{inningScoring.inning}</div>
-    <div class="inning-item">
-      {#each inningScoring.scorings as scoring}
-        <div class="scoring">
-          <span class="scoring-message"
-            >{scoring.battingPlayer} was at bat and {scoring.scoringPlayers.join(
-              ", "
-            )} scored</span
-          >
-          <span class="score">{scoring.score[0]} - {scoring.score[1]}</span>
-        </div>
+<button on:click={tick}>Tick</button>
+
+{#if !!state}
+  <div>
+    <h2>Bases</h2>
+    <div>At Bat: {getPlayerName([state.field.offense.atBat])}</div>
+    <div>First: {getPlayerName(state.field.offense.firstBase)}</div>
+    <div>Second: {getPlayerName(state.field.offense.secondBase)}</div>
+    <div>Third: {getPlayerName(state.field.offense.thirdBase)}</div>
+  </div>
+  <div>
+    <h2>Field</h2>
+    <div>Pitcher: {getPlayerName(state.field.defense.pitcher)}</div>
+    <div>First Base: {getPlayerName(state.field.defense.firstBase)}</div>
+    <div>Second Base: {getPlayerName(state.field.defense.secondBase)}</div>
+    <div>Third Base: {getPlayerName(state.field.defense.thirdBase)}</div>
+    <div>Short Stop: {getPlayerName(state.field.defense.shortStop)}</div>
+    <div>Left Field: {getPlayerName(state.field.defense.leftField)}</div>
+    <div>Center Field: {getPlayerName(state.field.defense.centerField)}</div>
+    <div>Right Field: {getPlayerName(state.field.defense.rightField)}</div>
+  </div>
+  <div>
+    <ul>
+      {#each state.events as event}
+        <li>{event.description}</li>
       {/each}
-    </div>
-  {/each} -->
-  TODO
-</div>
+    </ul>
+  </div>
+{/if}
+
+<h2>JSON</h2>
+<pre>
+  {JSON.stringify(match, s, 2)}
+</pre>
 
 <style>
-  .inning-list {
-    display: flex;
-    flex-direction: column;
-  }
-  .inning-name {
-    font-size: 1.5em;
-    font-weight: bold;
-    margin-bottom: 10px;
-  }
-  .inning-item {
-    margin-bottom: 20px;
-    padding-left: 20px;
-  }
-  .scoring {
-    border-bottom: 1px;
-    border-color: var(--text-color);
-  }
-  .scoring-message {
-    margin-right: 20px;
-  }
-  .score {
-    width: 30px;
-    font-size: 1.5em;
-    font-weight: bold;
-  }
 </style>

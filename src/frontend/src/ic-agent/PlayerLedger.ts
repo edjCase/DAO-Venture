@@ -7,7 +7,6 @@ export type FieldPosition = { 'firstBase': null }
   | { 'secondBase': null }
   | { 'thirdBase': null }
   | { 'pitcher': null }
-  | { 'catcher': null }
   | { 'shortStop': null }
   | { 'leftField': null }
   | { 'centerField': null }
@@ -47,7 +46,6 @@ export const idlFactory = ({ IDL }) => {
     'secondBase': IDL.Null,
     'thirdBase': IDL.Null,
     'pitcher': IDL.Null,
-    'catcher': IDL.Null,
     'shortStop': IDL.Null,
     'leftField': IDL.Null,
     'centerField': IDL.Null,
@@ -96,8 +94,6 @@ export function mapPosition(position: FieldPositionModel): FieldPosition {
   switch (position) {
     case FieldPositionModel.Pitcher:
       return { pitcher: null };
-    case FieldPositionModel.Catcher:
-      return { catcher: null };
     case FieldPositionModel.FirstBase:
       return { firstBase: null };
     case FieldPositionModel.SecondBase:
@@ -119,9 +115,6 @@ export function mapPosition(position: FieldPositionModel): FieldPosition {
 export function unMapPosition(position: FieldPosition): FieldPositionModel {
   if ('pitcher' in position) {
     return FieldPositionModel.Pitcher;
-  }
-  if ('catcher' in position) {
-    return FieldPositionModel.Catcher;
   }
   if ('firstBase' in position) {
     return FieldPositionModel.FirstBase;

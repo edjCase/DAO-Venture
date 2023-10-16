@@ -1,6 +1,5 @@
 export enum FieldPosition {
     Pitcher = "Pitcher",
-    Catcher = "Catcher",
     FirstBase = "First Base",
     SecondBase = "Second Base",
     ThirdBase = "Third Base",

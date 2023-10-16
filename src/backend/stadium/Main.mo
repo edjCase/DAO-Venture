@@ -22,7 +22,7 @@ import MatchSimulator "MatchSimulator";
 import Random "mo:base/Random";
 import Error "mo:base/Error";
 
-actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
+actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
     type Match = Stadium.Match;
     type MatchWithId = Stadium.MatchWithId;
     type MatchTeamInfo = Stadium.MatchTeamInfo;
@@ -38,12 +38,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         #matchAlreadyStarted;
         #completed : Stadium.CompletedMatchState;
     };
-    public type TickMatchResult = {
-        #ok;
-        #matchNotFound;
-        #matchOver;
-        #notStarted;
-    };
 
     stable var matches : Trie.Trie<Nat32, Match> = Trie.empty();
 
@@ -54,7 +48,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         switch (getMatchOrNull(id)) {
             case (null) return null;
             case (?m) {
-                ?{ m with id = id };
+                ?{ m with id = id; stadiumId = Principal.fromActor(this) };
             };
         };
     };
@@ -64,12 +58,19 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         let map = func(v : (Nat32, Match)) : MatchWithId = {
             v.1 with
             id = v.0;
+            stadiumId = Principal.fromActor(this);
         };
         matches |> Trie.iter _ |> Iter.map(_, map) |> Iter.sort(_, compare) |> Iter.toArray(_);
     };
 
     public shared ({ caller }) func startMatch(matchId : Nat32) : async StartMatchResult {
+        // TODO: only can call itself after the designated time
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
+        switch (match.state) {
+            case (#completed(s)) return #completed(s);
+            case (#inProgress(_)) return #matchAlreadyStarted;
+            case (#notStarted) {};
+        };
         let team1InitOrNull = await createTeamInit(matchId, match.teams.0);
         let team2InitOrNull = await createTeamInit(matchId, match.teams.1);
         let (team1Init, team2Init) : (MatchSimulator.TeamInitData, MatchSimulator.TeamInitData) = switch (team1InitOrNull, team2InitOrNull) {
@@ -80,14 +81,19 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
         let random = Random.Finite(await Random.blob());
         let ?team1IsOffense = random.coin() else Prelude.unreachable();
-        let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense);
-        let newMatch : Match = {
-            match with
-            state = initState;
+        let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense, random);
+        switch (initState) {
+            case (null) return #completed(#allAbsent); // TODO
+            case (?s) {
+                let newMatch : Match = {
+                    match with
+                    state = s;
+                };
+                addOrUpdateMatch(matchId, newMatch);
+                ignore tickMatch(matchId);
+                #ok;
+            };
         };
-        addOrUpdateMatch(matchId, newMatch);
-        ignore tickMatch(matchId);
-        #ok;
     };
 
     private func createTeamInit(matchId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
@@ -113,10 +119,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
         };
     };
 
-    public shared ({ caller }) func tickMatch(matchId : Nat32) : async TickMatchResult {
+    public shared ({ caller }) func tickMatch(matchId : Nat32) : async Stadium.TickMatchResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
         let state = switch (match.state) {
-            case (#completed(_)) return #matchOver;
+            case (#completed(completedState)) return #matchOver(completedState);
             case (#inProgress(s)) s;
             case (#notStarted) return #notStarted;
         };
@@ -129,7 +135,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor {
                 state = newState;
             },
         );
-        #ok;
+        #ok(state);
     };
 
     private func getMatchOrNull(matchId : Nat32) : ?Match {

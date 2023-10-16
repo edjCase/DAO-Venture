@@ -41,7 +41,6 @@ test(
                     #thirdBase,
                     #secondBase,
                     #firstBase,
-                    #catcher,
                     #pitcher,
                 ];
                 currentBatter = #rightField;
@@ -54,8 +53,7 @@ test(
                         (#thirdBase, 4),
                         (#secondBase, 5),
                         (#firstBase, 6),
-                        (#catcher, 7),
-                        (#pitcher, 8),
+                        (#pitcher, 7),
                     ],
                     Player.hashFieldPosition,
                     Player.equalFieldPosition,

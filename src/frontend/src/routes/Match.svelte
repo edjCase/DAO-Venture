@@ -1,5 +1,4 @@
 <script lang="ts">
-  import PlayerMatchStats from "../components/PlayerMatchStats.svelte";
   import Events from "../components/Events.svelte";
   import ScoreHeader from "../components/ScoreHeader.svelte";
   import { matchStore } from "../stores/MatchStore";
@@ -33,17 +32,6 @@
   <section id="match-details">
     <ScoreHeader {match} />
 
-    <div class="team-stats-container">
-      <div class="team-stats">
-        <h1>{team1.name}</h1>
-        <PlayerMatchStats teamInfo={match.teams[0]} />
-      </div>
-      <div class="team-stats">
-        <h1>{team2.name}</h1>
-        <PlayerMatchStats teamInfo={match.teams[1]} />
-      </div>
-    </div>
-
     <section class="match-events">
       <h2>Events</h2>
       <Events {match} />
@@ -54,22 +42,6 @@
 {/if}
 
 <style>
-  .team-stats-container {
-    display: flex;
-    justify-content: space-around;
-  }
-  .team-stats {
-    width: 40%;
-  }
-  h1,
-  h2 {
-    color: var(--text-color);
-  }
-
-  h1 {
-    text-align: center;
-  }
-
   section {
     margin-bottom: 20px;
   }
