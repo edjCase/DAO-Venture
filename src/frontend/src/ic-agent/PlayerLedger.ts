@@ -22,16 +22,25 @@ export interface PlayerInfo {
   'teamId': [] | [Principal],
   'position': FieldPosition
 }
-export interface PlayerInfoWithId extends PlayerInfo { 'id': number }
+export interface PlayerWithId extends PlayerInfo { 'id': number }
+
+export type InvalidError = { 'nameTaken': null }
+  | { 'nameNotSpecified': null };
+
+
+export type CreateResult =
+  { 'created': number }
+  | { 'invalid': InvalidError[] }
+
 export interface _SERVICE {
-  'create': ActorMethod<[PlayerCreationOptions], number>,
-  'getAllPlayers': ActorMethod<[], Array<PlayerInfoWithId>>,
+  'create': ActorMethod<[PlayerCreationOptions], CreateResult>,
+  'getAllPlayers': ActorMethod<[], Array<PlayerWithId>>,
   'getPlayer': ActorMethod<
     [number],
-    { 'ok': PlayerInfoWithId } |
+    { 'ok': PlayerWithId } |
     { 'notFound': null }
   >,
-  'getTeamPlayers': ActorMethod<[[] | [Principal]], Array<PlayerInfoWithId>>,
+  'getTeamPlayers': ActorMethod<[[] | [Principal]], Array<PlayerWithId>>,
   'setPlayerTeam': ActorMethod<
     [number, [] | [Principal]],
     { 'ok': null } |
@@ -67,8 +76,16 @@ export const idlFactory = ({ IDL }) => {
     'teamId': IDL.Opt(IDL.Principal),
     'position': position
   });
+  const InvalidError = IDL.Variant({
+    'nameTaken': IDL.Null,
+    'nameNotSpecified': IDL.Null,
+  });
+  const CreateResult = IDL.Variant({
+    'created': IDL.Nat32,
+    'invalid': IDL.Vec(InvalidError)
+  });
   return IDL.Service({
-    'create': IDL.Func([PlayerCreationOptions], [IDL.Nat32], []),
+    'create': IDL.Func([PlayerCreationOptions], [CreateResult], []),
     'getAllPlayers': IDL.Func([], [IDL.Vec(PlayerInfoWithId)], ['query']),
     'getPlayer': IDL.Func(
       [IDL.Nat32],

@@ -33,14 +33,23 @@
         </div>
       </div>
       <div class="content">
-        <span class="date">{startDate.toDateString()}</span>
-        {#if match.teams[0].score && match.teams[1].score}
+        {#if "inProgress" in match.state}
           <span class="score">
-            {match.teams[0].score} - {match.teams[1].score}
+            <div>Live</div>
+            {match.state.inProgress.team1.score} - {match.state.inProgress.team2
+              .score}
           </span>
+        {:else if "completed" in match.state}
+          {#if "played" in match.state.completed}
+            <span class="score">
+              <div>Final</div>
+              {match.state.completed.played.team1.score} - {match.state
+                .completed.played.team2.score}
+            </span>
+          {/if}
         {:else}
-          <span>-</span>
-        {/if}
+          Upcoming
+          <span class="date">{startDate.toDateString()}</span>{/if}
       </div>
     </Link>
   </div>

@@ -2,17 +2,17 @@
   import { get } from "svelte/store";
   import type { MatchTeam } from "../ic-agent/Stadium";
   import { teamStore } from "../stores/TeamStore";
+  import type { Principal } from "@dfinity/principal";
 
-  export let team: MatchTeam;
+  export let teamId: Principal;
   let teamDetails = get(teamStore).find(
-    (t) => t.id.toString() == team.id.toString()
+    (t) => t.id.toString() == teamId.toString()
   );
 </script>
 
 <div class="team-info">
   <div>
     <div>{teamDetails.name}</div>
-    <div class="standing">14-20</div>
   </div>
   <img src={teamDetails.logoUrl} alt="{teamDetails.name} Logo" />
 </div>
@@ -26,8 +26,6 @@
     width: 50px;
     height: 50px;
     margin-right: 10px;
-  }
-  .team-info .standing {
-    font-size: 0.8em;
+    margin-left: 10px;
   }
 </style>

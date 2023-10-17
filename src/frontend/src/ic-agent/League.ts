@@ -5,7 +5,7 @@ import { createActor } from './Actor';
 export type CreateStadiumResult = { 'ok': Principal };
 export type CreateTeamResult = { 'ok': Principal } |
 { 'nameTaken': null };
-export type ScheduleMatchResult = { 'ok': null } |
+export type ScheduleMatchResult = { 'ok': number } |
 { 'stadiumNotFound': null } |
 { 'timeNotAvailable': null };
 export interface Stadium { 'id': Principal, 'name': string }
@@ -35,8 +35,8 @@ export const idlFactory = ({ IDL }) => {
   const Team = IDL.Record({ 'id': IDL.Principal, 'name': IDL.Text, 'logoUrl': IDL.Text });
   const Time = IDL.Int;
   const ScheduleMatchResult = IDL.Variant({
-    'ok': IDL.Null,
-    'stadiumNotFound': IDL.Null,
+    'ok': IDL.Nat32,
+    'duplicateTeams': IDL.Null,
     'timeNotAvailable': IDL.Null,
   });
   return IDL.Service({

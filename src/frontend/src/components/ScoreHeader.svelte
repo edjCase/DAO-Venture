@@ -1,21 +1,28 @@
 <script lang="ts">
-  import type { Match } from "../ic-agent/Stadium";
+  import type { Principal } from "@dfinity/principal";
   import ScoreHeaderScore from "./ScoreHeaderScore.svelte";
   import ScoreHeaderTeam from "./ScoreHeaderTeam.svelte";
 
-  export let match: Match;
+  type Team = {
+    id: Principal;
+    name: string;
+    predictionVotes: bigint;
+    score: bigint;
+  };
 
-  let team1 = match.teams[0];
-  let team2 = match.teams[1];
+  export let team1: Team;
+  export let team2: Team;
+  export let winner: undefined | Principal;
+
   let winningTeam;
-  if (match.winner.length == 0) {
+  if (!winner) {
     winningTeam = null;
-  } else if (match.winner[0] == team1.id) {
+  } else if (winner == team1.id) {
     winningTeam = team1;
-  } else if (match.winner[0] == team2.id) {
+  } else if (winner == team2.id) {
     winningTeam = team2;
   } else {
-    throw new Error("Invalid winner");
+    throw new Error("Invalid winner: " + winner);
   }
   let playerChosenTeamId;
   if (team1.predictionVotes > team2.predictionVotes) {
@@ -37,25 +44,25 @@
 </script>
 
 <div class="score-header">
-  <ScoreHeaderTeam team={team1} />
+  <ScoreHeaderTeam teamId={team1.id} />
   <ScoreHeaderScore
     won={winningTeam?.id == team1.id}
     playerChoice={team1.id == playerChosenTeamId}
-    score={team1.score.length > 0 ? team1.score[0] : null}
+    score={team1.score}
     predictionPercent={team1Percent}
   />
   <div>
     <div class="state">
-      {match.winner.length < 1 ? "Not Final" : "Winner :" + winningTeam?.name}
+      {!winner ? "Not Final" : "Winner :" + winningTeam?.name}
     </div>
   </div>
   <ScoreHeaderScore
     won={winningTeam?.id == team2.id}
     playerChoice={team2.id == playerChosenTeamId}
-    score={team2.score.length > 0 ? team2.score[0] : null}
+    score={team2.score}
     predictionPercent={team2Percent}
   />
-  <ScoreHeaderTeam team={team2} />
+  <ScoreHeaderTeam teamId={team2.id} />
 </div>
 
 <style>

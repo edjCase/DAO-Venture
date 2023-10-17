@@ -265,6 +265,7 @@ module {
         let simulation = MatchSimulation(state, random);
         simulation.tick();
     };
+
     // TODO handle limited entropy from random by refetching entropy from the chain
     class MatchSimulation(initialState : InProgressMatchState, random : Random.Finite) {
 
@@ -648,18 +649,19 @@ module {
             null;
         };
 
-        public func randomInt(min : Int, max : Int) : Int {
+        private func randomInt(min : Int, max : Int) : Int {
             let ?v = RandomUtil.randomInt(random, min, max) else trapWithEvents("Random ran out of entropy"); // TODO
             v;
         };
-        public func randomNat(min : Nat, max : Nat) : Nat {
+
+        private func randomNat(min : Nat, max : Nat) : Nat {
             let ?v = RandomUtil.randomNat(random, min, max) else trapWithEvents("Random ran out of entropy"); // TODO
             v;
         };
 
-        private func getRandomAvailablePlayer(teamId : ?TeamId, position : ?FieldPosition) : ?PlayerId {
+        private func getRandomAvailablePlayer(teamId : ?TeamId, position : ?FieldPosition, notOnField : Bool) : ?PlayerId {
             // get random player
-            let availablePlayers = getAvailablePlayers(teamId, position);
+            let availablePlayers = getAvailablePlayers(teamId, position, notOnField);
             if (availablePlayers.size() < 1) {
                 return null;
             };
@@ -668,18 +670,20 @@ module {
 
         };
 
-        public func getAvailablePlayers(teamId : ?TeamId, position : ?FieldPosition) : Buffer.Buffer<PlayerId> {
+        private func getAvailablePlayers(teamId : ?TeamId, position : ?FieldPosition, notOnField : Bool) : Buffer.Buffer<PlayerId> {
 
             var playersIter : Iter.Iter<(PlayerId, MutablePlayerState)> = state.players.entries()
             // Only good condition players
-            |> Iter.filter(_, func(p : (PlayerId, MutablePlayerState)) : Bool = p.1.condition == #ok)
-            // Only players not on the field
-            |> Iter.filter(
-                _,
-                func(p : (PlayerId, MutablePlayerState)) : Bool {
-                    getDefensePositionOfPlayer(p.0) == null and getOffensePositionOfPlayer(p.0) == null;
-                },
-            );
+            |> Iter.filter(_, func(p : (PlayerId, MutablePlayerState)) : Bool = p.1.condition == #ok);
+            if (notOnField) {
+                // Only players not on the field
+                playersIter := Iter.filter(
+                    playersIter,
+                    func(p : (PlayerId, MutablePlayerState)) : Bool {
+                        getDefensePositionOfPlayer(p.0) == null and getOffensePositionOfPlayer(p.0) == null;
+                    },
+                );
+            };
 
             switch (teamId) {
                 case (null) {};
@@ -700,10 +704,11 @@ module {
             |> Buffer.fromIter(_);
         };
 
-        public func getPlayer(playerId : PlayerId) : MutablePlayerState {
+        private func getPlayer(playerId : PlayerId) : MutablePlayerState {
             let ?player = state.players.get(playerId) else trapWithEvents("Player not found: " # Nat32.toText(playerId));
             player;
         };
+
         private func getDefensePositionOfPlayer(playerId : PlayerId) : ?FieldPosition {
             if (state.field.defense.firstBase == playerId) {
                 return ? #firstBase;
@@ -768,7 +773,7 @@ module {
                     };
                     let ?fieldPosition = getDefensePositionOfPlayer(playerOutId) else trapWithEvents("Player not on field, cannot sub out: " # Nat32.toText(playerOutId));
 
-                    var availablePlayers = getAvailablePlayers(?playerOut.teamId, ?fieldPosition);
+                    var availablePlayers = getAvailablePlayers(?playerOut.teamId, ?fieldPosition, true);
                     if (availablePlayers.size() < 1) {
                         addEvent({
                             description = playerOut.name # " cannot be subbed out because there is no substitute available";
@@ -858,7 +863,7 @@ module {
                         case (? #secondBase) state.field.offense.secondBase := null;
                         case (? #thirdBase) state.field.offense.thirdBase := null;
                         case (? #homeBase) {
-                            let ?nextBatterId = getRandomAvailablePlayer(?state.offenseTeamId, null) else {
+                            let ?nextBatterId = getRandomAvailablePlayer(?state.offenseTeamId, null, true) else {
                                 addEvent({
                                     description = "No more players available to bat";
                                     effect = #endRound; // TODO end match?
@@ -881,6 +886,7 @@ module {
                     };
                 };
                 case (#addOut({ playerId })) {
+                    state.strikes := 0;
                     state.outs += 1;
                     addEvent({
                         description = "Player " # getPlayer(playerId).name # " is out";
@@ -897,6 +903,7 @@ module {
                     };
                 };
                 case (#endRound) {
+                    state.strikes := 0;
                     state.outs := 0;
                     state.round += 1;
                     let (newOffenseTeamId, newDefenseTeamId) = switch (state.offenseTeamId) {
@@ -904,17 +911,40 @@ module {
                         case (#team2)(#team1, #team2);
                     };
                     state.offenseTeamId := newOffenseTeamId;
-                    let newDefense = buildStartingDefense(players, random);
+                    let ?newDefense = buildNewDefense(newDefenseTeamId) else trapWithEvents("Not enough players to continue match"); // TODO forfeit?
                     state.field.defense := newDefense;
-                    state.field.offense := {
-                        atBat = newAtBat;
-                        firstBase = null;
-                        secondBase = null;
-                        thirdBase = null;
-                    };
+                    let ?newOffense = buildNewOffense(newOffenseTeamId) else trapWithEvents("Not enough players to continue match"); // TODO forfeit?
+                    state.field.offense := newOffense;
                 };
                 case (#none) {
                     // Skip
+                };
+            };
+        };
+
+        private func buildNewDefense(teamId : TeamId) : ?MutableDefenseFieldState {
+            do ? {
+                {
+                    var pitcher = getRandomAvailablePlayer(?teamId, ? #pitcher, false)!;
+                    var firstBase = getRandomAvailablePlayer(?teamId, ? #firstBase, false)!;
+                    var secondBase = getRandomAvailablePlayer(?teamId, ? #secondBase, false)!;
+                    var thirdBase = getRandomAvailablePlayer(?teamId, ? #thirdBase, false)!;
+                    var shortStop = getRandomAvailablePlayer(?teamId, ? #shortStop, false)!;
+                    var leftField = getRandomAvailablePlayer(?teamId, ? #leftField, false)!;
+                    var centerField = getRandomAvailablePlayer(?teamId, ? #centerField, false)!;
+                    var rightField = getRandomAvailablePlayer(?teamId, ? #rightField, false)!;
+                };
+            };
+        };
+
+        private func buildNewOffense(teamId : TeamId) : ?MutableOffenseFieldState {
+
+            do ? {
+                {
+                    var atBat = getRandomAvailablePlayer(?teamId, null, false)!;
+                    var firstBase = null;
+                    var secondBase = null;
+                    var thirdBase = null;
                 };
             };
         };

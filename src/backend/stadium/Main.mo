@@ -24,6 +24,7 @@ import Error "mo:base/Error";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
     type Match = Stadium.Match;
+    type MatchWithTimer = Stadium.MatchWithTimer;
     type MatchWithId = Stadium.MatchWithId;
     type MatchTeamInfo = Stadium.MatchTeamInfo;
     type Player = Player.Player;
@@ -39,7 +40,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         #completed : Stadium.CompletedMatchState;
     };
 
-    stable var matches : Trie.Trie<Nat32, Match> = Trie.empty();
+    stable var matches : Trie.Trie<Nat32, MatchWithTimer> = Trie.empty();
 
     stable var nextMatchId : Nat32 = 1;
 
@@ -85,7 +86,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         switch (initState) {
             case (null) return #completed(#allAbsent); // TODO
             case (?s) {
-                let newMatch : Match = {
+                let newMatch : MatchWithTimer = {
                     match with
                     state = s;
                 };
@@ -138,7 +139,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         #ok(state);
     };
 
-    private func getMatchOrNull(matchId : Nat32) : ?Match {
+    private func getMatchOrNull(matchId : Nat32) : ?MatchWithTimer {
         let matchKey = {
             hash = matchId;
             key = matchId;
@@ -146,7 +147,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         Trie.get(matches, matchKey, Nat32.equal);
     };
 
-    private func addOrUpdateMatch(matchId : Nat32, match : Match) {
+    private func addOrUpdateMatch(matchId : Nat32, match : MatchWithTimer) {
         let matchKey = {
             hash = matchId;
             key = matchId;
@@ -191,13 +192,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let timerId = Timer.setTimer(timerDuration, callbackFunc);
         let offerings = getRandomOfferings(4);
         let specialRules = getRandomSpecialRules(4);
-        let match : Match = {
+        let match : Stadium.MatchWithTimer = {
             id = nextMatchId;
             time = time;
             teams = teamsInfo;
             offerings = offerings;
             specialRules = specialRules;
-            winner = null;
             timerId = timerId;
             state = #notStarted;
         };
@@ -210,7 +210,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (newMatches, _) {
                 nextMatchId += 1;
                 matches := newMatches;
-                #ok;
+                #ok(nextMatchKey.key);
             };
         };
     };

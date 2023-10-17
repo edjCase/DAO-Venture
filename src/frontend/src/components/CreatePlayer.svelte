@@ -4,7 +4,7 @@
   import { playerStore } from "../stores/PlayerStore";
   import { teamStore } from "../stores/TeamStore";
   import PositionPicker from "./PositionPicker.svelte";
-  import type { FieldPosition } from "../models/FieldPosition";
+  import { FieldPosition } from "../models/FieldPosition";
 
   $: teams = $teamStore;
 
@@ -16,7 +16,7 @@
     playerLedgerAgent
       .create({
         name: name,
-        teamId: teamId ? [Principal.from(teamId)] : [],
+        teamId: [Principal.from(teamId)],
         position: mappedPosition,
       })
       .then((result) => {
@@ -27,7 +27,46 @@
         console.log("Failed to create player: " + err);
       });
   };
+  let create2OfEach = async () => {
+    for (let _ in [1, 2]) {
+      let i = 1;
+      for (let positionKey in FieldPosition) {
+        if (!isNaN(Number(positionKey))) {
+          continue;
+        }
+        let position = FieldPosition[positionKey];
+        let mappedPosition = mapPosition(position);
+        let teamName = teams.find((team) => team.id.toString() == teamId).name;
+        let name = teamName + " " + i;
+        i++;
+        playerLedgerAgent
+          .create({
+            name: name,
+            teamId: [Principal.from(teamId)],
+            position: mappedPosition,
+          })
+          .then((result) => {
+            console.log("Created player: ", result);
+            playerStore.refetch();
+          })
+          .catch((err) => {
+            console.log("Failed to create player: " + err);
+          });
+      }
+    }
+  };
 </script>
+
+<div>
+  <select id="team" bind:value={teamId}>
+    {#each teams as team (team.id)}
+      <option value={team.id}>{team.name}</option>
+    {/each}
+  </select>
+  <button on:click={create2OfEach}>Create 2 of each position</button>
+</div>
+
+OR
 
 <div>
   <label for="name">Name</label>

@@ -7,7 +7,6 @@ import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 export type Time = bigint;
 export type MatchTeam = {
   'id': Principal,
-  'score': [] | [bigint],
   'predictionVotes': bigint
 };
 export type Offering = {
@@ -20,7 +19,7 @@ export type SpecialRule = {
 };
 export type TeamState = {
   'id': Principal;
-  'score': number;
+  'score': bigint;
   'offeringId': number;
 };
 export type OffenseFieldState = {
@@ -81,7 +80,8 @@ export type TeamId = {
   'team2': null;
 };
 export type CompletedTeamState = {
-
+  id: Principal;
+  score: bigint;
 };
 export type CompletedMatchResult = {
   team1: CompletedTeamState;
@@ -200,10 +200,25 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'specialRuleId': IDL.Opt(IDL.Nat32),
     'events': IDL.Vec(MatchEvent),
     'field': FieldState,
-    'players': IDL.Vec(PlayerState)
+    'players': IDL.Vec(PlayerState),
+    'strikes': IDL.Nat,
+    'outs': IDL.Nat,
+    'round': IDL.Nat,
   });
-  const CompletedState = IDL.Record({
-
+  const CompletedTeamState = IDL.Record({
+    'id': IDL.Principal,
+    'score': IDL.Int
+  });
+  const CompletedMatchResult = IDL.Record({
+    'team1': CompletedTeamState,
+    'team2': CompletedTeamState,
+    'winner': TeamId,
+    'events': IDL.Vec(MatchEvent)
+  });
+  const CompletedState = IDL.Variant({
+    'absentTeam': TeamId,
+    'allAbsent': IDL.Null,
+    'played': CompletedMatchResult
   });
   const MatchState = IDL.Variant({
     'notStarted': IDL.Null,

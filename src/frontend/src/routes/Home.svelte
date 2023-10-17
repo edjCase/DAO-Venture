@@ -23,14 +23,19 @@
   });
 </script>
 
+<div class="live-matches">
+  <h1>Live Matches</h1>
+  <MatchCardGrid matchFilter={(match) => "inProgress" in match.state} />
+</div>
+
 <div class="latest-matches">
   <h1>Latest Matches</h1>
-  <MatchCardGrid matchFilter={(match) => !!match.winner[0]} />
+  <MatchCardGrid matchFilter={(match) => "completed" in match.state} />
 </div>
 
 <div class="upcoming-matches">
   <h1>Upcoming Matches</h1>
-  <MatchCardGrid matchFilter={(match) => !match.winner[0]} />
+  <MatchCardGrid matchFilter={(match) => "notStarted" in match.state} />
 </div>
 
 <div>
@@ -102,11 +107,9 @@
 </div>
 
 <style>
-  .latest-matches {
-    margin-bottom: 50px;
-    text-align: center;
-  }
-  .upcoming-matches {
+  .latest-matches,
+  .upcoming-matches,
+  .live-matches {
     margin-bottom: 50px;
     text-align: center;
   }

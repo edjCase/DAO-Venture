@@ -1,6 +1,7 @@
 [dependencies]
 base = "0.9.6"
 itertools = "0.1.2"
-datetime = "0.1.0"
+datetime = "0.1.1"
 ic = "0.2.0"
 test = "1.0.1"
+xtended-text = "0.2.5"

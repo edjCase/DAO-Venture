@@ -27,7 +27,7 @@ module {
     };
 
     public type ScheduleMatchResult = {
-        #ok;
+        #ok : Nat32;
         #timeNotAvailable;
         #duplicateTeams;
     };
@@ -172,11 +172,13 @@ module {
     public type Match = {
         teams : (MatchTeamInfo, MatchTeamInfo);
         time : Time.Time;
-        winner : ?Principal;
         offerings : [Offering];
         specialRules : [SpecialRule];
-        timerId : Nat;
         state : MatchState;
+    };
+
+    public type MatchWithTimer = Match and {
+        timerId : Nat;
     };
 
     public type MatchWithId = Match and {
