@@ -26,7 +26,6 @@ module {
         throwingAccuracy : Nat;
         throwingPower : Nat;
         catching : Nat;
-        health : Nat;
         defense : Nat;
         piety : Nat;
     };

@@ -28,6 +28,7 @@
       });
   };
   let create2OfEach = async () => {
+    let j = 0;
     for (let _ in [1, 2]) {
       let i = 1;
       for (let positionKey in FieldPosition) {
@@ -37,7 +38,10 @@
         let position = FieldPosition[positionKey];
         let mappedPosition = mapPosition(position);
         let teamName = teams.find((team) => team.id.toString() == teamId).name;
-        let name = teamName + " " + i;
+        if (teamName.endsWith("s")) {
+          teamName = teamName.slice(0, -1);
+        }
+        let name = teamName + " " + (i + j * 8);
         i++;
         playerLedgerAgent
           .create({
@@ -53,6 +57,7 @@
             console.log("Failed to create player: " + err);
           });
       }
+      j++;
     }
   };
 </script>

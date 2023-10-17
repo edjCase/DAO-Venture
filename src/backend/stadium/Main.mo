@@ -33,13 +33,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     type FieldPosition = Player.FieldPosition;
     type MatchOptions = Stadium.MatchOptions;
 
-    public type StartMatchResult = {
-        #ok;
-        #matchNotFound;
-        #matchAlreadyStarted;
-        #completed : Stadium.CompletedMatchState;
-    };
-
     stable var matches : Trie.Trie<Nat32, MatchWithTimer> = Trie.empty();
 
     stable var nextMatchId : Nat32 = 1;
@@ -64,9 +57,33 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         matches |> Trie.iter _ |> Iter.map(_, map) |> Iter.sort(_, compare) |> Iter.toArray(_);
     };
 
-    public shared ({ caller }) func startMatch(matchId : Nat32) : async StartMatchResult {
+    public shared ({ caller }) func startMatch(matchId : Nat32) : async Stadium.StartMatchResult {
         // TODO: only can call itself after the designated time
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
+        let result = await startMatchInternal(matchId, match);
+        switch (result) {
+            case (#matchAlreadyStarted) return #matchAlreadyStarted;
+            case (#matchNotFound) return #matchNotFound;
+            case (#completed(s)) {
+                let newMatch : MatchWithTimer = {
+                    match with
+                    state = #completed(s);
+                };
+                addOrUpdateMatch(matchId, newMatch);
+                #completed(s);
+            };
+            case (#ok(s)) {
+                let newMatch : MatchWithTimer = {
+                    match with
+                    state = #inProgress(s);
+                };
+                addOrUpdateMatch(matchId, newMatch);
+                #ok(s);
+            };
+        };
+    };
+
+    private func startMatchInternal(matchId : Nat32, match : Match) : async Stadium.StartMatchResult {
         switch (match.state) {
             case (#completed(s)) return #completed(s);
             case (#inProgress(_)) return #matchAlreadyStarted;
@@ -86,13 +103,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         switch (initState) {
             case (null) return #completed(#allAbsent); // TODO
             case (?s) {
-                let newMatch : MatchWithTimer = {
-                    match with
-                    state = s;
-                };
-                addOrUpdateMatch(matchId, newMatch);
-                ignore tickMatch(matchId);
-                #ok;
+                #ok(s);
             };
         };
     };
@@ -129,10 +140,21 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
         let random = Random.Finite(await Random.blob());
         let newState = MatchSimulator.tick(state, random);
+        switch (newState) {
+            case (#completed(completedState)) {
+                switch (match.timerId) {
+                    case (null) {};
+                    // Cancel timer if set
+                    case (?timerId) Timer.cancelTimer(timerId);
+                };
+            };
+            case (_) {};
+        };
         addOrUpdateMatch(
             matchId,
             {
                 match with
+                timerId = null;
                 state = newState;
             },
         );
@@ -198,7 +220,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             teams = teamsInfo;
             offerings = offerings;
             specialRules = specialRules;
-            timerId = timerId;
+            timerId = ?timerId;
             state = #notStarted;
         };
         let nextMatchKey = {
@@ -236,7 +258,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             },
             {
                 deities = ["Pestilence", "Indulgence"];
-                effects = ["+ piety", "- health", "Players dont rotate between rounds"];
+                effects = ["+ piety", "- defense", "Players dont rotate between rounds"];
             },
             {
                 deities = ["Pestilence", "Mischief"];

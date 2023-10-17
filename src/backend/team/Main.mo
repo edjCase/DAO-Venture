@@ -42,7 +42,6 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
   };
 
   public shared query ({ caller }) func getMatchOptions(matchId : Nat32) : async ?Stadium.MatchOptions {
-    let teamId = Principal.fromActor(this);
     let stadiumKey = {
       key = caller;
       hash = Principal.hash(caller);
@@ -102,7 +101,7 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
     newVotes;
   };
 
-  public shared ({ caller }) func getOwner() : async Principal {
+  public shared query ({ caller }) func getOwner() : async Principal {
     return ownerId;
   };
 

@@ -117,15 +117,24 @@ export type Match = {
   'stadiumId': Principal,
   'teams': [MatchTeam, MatchTeam],
   'time': Time,
-  'winner': [] | [Principal],
   'offerings': Offering[],
   'specialRules': SpecialRule[],
   'state': MatchState
+};
+export type StartMatchResult = {
+  'ok': InProgressMatchState
+} | {
+  'matchNotFound': null
+} | {
+  'matchAlreadyStarted': null
+} | {
+  'completed': CompletedMatchState
 };
 export interface _SERVICE {
   'getMatches': ActorMethod<[], Match[]>,
   'getMatch': ActorMethod<[number], [] | [Match]>,
   'tickMatch': ActorMethod<[number], TickMatchResult>,
+  'startMatch': ActorMethod<[number], StartMatchResult>
 }
 
 
@@ -230,7 +239,6 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'stadiumId': IDL.Principal,
     'teams': IDL.Tuple(MatchTeamInfo, MatchTeamInfo),
     'time': IDL.Int,
-    'winner': IDL.Opt(IDL.Principal),
     'offerings': IDL.Vec(Offering),
     'specialRules': IDL.Vec(SpecialRule),
     'state': MatchState
@@ -241,10 +249,17 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'matchOver': CompletedState,
     'notStarted': IDL.Null
   });
+  const StartMatchResult = IDL.Variant({
+    'ok': InProgressState,
+    'matchNotFound': IDL.Null,
+    'matchAlreadyStarted': IDL.Null,
+    'completed': CompletedState
+  });
   return IDL.Service({
     'getMatches': IDL.Func([], [IDL.Vec(Match)], ['query']),
     'getMatch': IDL.Func([IDL.Nat32], [IDL.Opt(Match)], ['query']),
     'tickMatch': IDL.Func([IDL.Nat32], [TickMatchResult], []),
+    'startMatch': IDL.Func([IDL.Nat32], [StartMatchResult], [])
   });
 };
 export const stadiumAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

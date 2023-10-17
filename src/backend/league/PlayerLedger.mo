@@ -139,7 +139,6 @@ actor PlayerLedger {
                 throwingPower = 0;
                 throwingAccuracy = 0;
                 catching = 0;
-                health = 0;
                 defense = 0;
                 piety = 0;
             };

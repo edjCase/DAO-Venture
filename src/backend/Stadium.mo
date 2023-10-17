@@ -147,10 +147,18 @@ module {
         score : Int;
     };
 
+    public type StartMatchResult = {
+        #ok : InProgressMatchState;
+        #matchNotFound;
+        #matchAlreadyStarted;
+        #completed : CompletedMatchState;
+    };
+
     public type StadiumActor = actor {
         getMatch : shared query (id : Nat32) -> async ?MatchWithId;
         getMatches : shared query () -> async [MatchWithId];
         tickMatch : shared (id : Nat32) -> async TickMatchResult;
+        startMatch : shared (matchId : Nat32) -> async StartMatchResult;
         scheduleMatch : shared (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
     };
 
@@ -178,7 +186,7 @@ module {
     };
 
     public type MatchWithTimer = Match and {
-        timerId : Nat;
+        timerId : ?Nat;
     };
 
     public type MatchWithId = Match and {

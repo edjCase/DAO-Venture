@@ -83,7 +83,6 @@ module {
         var throwingAccuracy : Nat;
         var throwingPower : Nat;
         var catching : Nat;
-        var health : Nat;
         var defense : Nat;
         var piety : Nat;
     };
@@ -121,7 +120,7 @@ module {
         team2 : TeamInitData,
         team1StartOffense : Bool,
         rand : Random.Finite,
-    ) : ?MatchState {
+    ) : ?InProgressMatchState {
         var players = Buffer.Buffer<Stadium.PlayerStateWithId>(team1.players.size() + team2.players.size());
         let addPlayer = func(player : PlayerWithId, teamId : TeamId) {
             let playerState : Stadium.PlayerStateWithId = {
@@ -151,7 +150,7 @@ module {
         let atBatPlayer = offenseTeam.players.get(randomIndex);
         let ?defense = buildStartingDefense(defenseTeam.players, rand) else return null;
 
-        ? #inProgress({
+        ?{
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = {
                 id = team1.id;
@@ -179,7 +178,7 @@ module {
             round = 0;
             outs = 0;
             strikes = 0;
-        });
+        };
     };
 
     private func buildStartingDefense(players : [PlayerWithId], rand : Random.Finite) : ?Stadium.DefenseFieldState {
@@ -189,7 +188,7 @@ module {
                 return null;
             };
             let ?index = RandomUtil.randomNat(rand, 0, playersWithPosition.size() - 1) else return null;
-            ?players[index].id;
+            ?playersWithPosition[index].id;
         };
 
         do ? {
@@ -281,7 +280,6 @@ module {
                 var throwingPower = skills.throwingPower;
                 var throwingAccuracy = skills.throwingAccuracy;
                 var catching = skills.catching;
-                var health = skills.health;
                 var defense = skills.defense;
                 var piety = skills.piety;
             };
@@ -462,11 +460,29 @@ module {
                     } else {
                         addEvent({
                             description = catchingPlayer.name # " throws the ball and hits the player";
-                            // TODO damage player?
                             effect = #addOut({
                                 playerId = state.field.offense.atBat;
                             });
                         });
+
+                        let runningPlayer = getPlayer(state.field.offense.atBat);
+                        let defenseRoll = randomInt(-10, 10) + runningPlayer.skills.defense;
+                        let damageRoll = throwRoll - defenseRoll;
+                        if (damageRoll > 5) {
+                            let (newInjury, newInjuryText) = switch (damageRoll) {
+                                case (6)(#twistedAnkle, "Twisted ankle");
+                                case (7)(#brokenLeg, "Broken leg");
+                                case (8)(#brokenArm, "Broken arm");
+                                case (_)(#concussion, "Concussion");
+                            };
+                            addEvent({
+                                description = runningPlayer.name # " was injured by the throw. Injury: " # newInjuryText;
+                                effect = #setPlayerCondition({
+                                    playerId = state.field.offense.atBat;
+                                    condition = #injured(newInjury);
+                                });
+                            });
+                        };
                     };
                 } else {
                     addEvent({
@@ -550,7 +566,6 @@ module {
                                 throwingPower = player.1.skills.throwingPower;
                                 throwingAccuracy = player.1.skills.throwingAccuracy;
                                 catching = player.1.skills.catching;
-                                health = player.1.skills.health;
                                 defense = player.1.skills.defense;
                                 piety = player.1.skills.piety;
                             };
@@ -816,7 +831,7 @@ module {
                         case (#injured(i)) true;
                         case (#dead) true;
                     };
-                    if (substituteOut) {
+                    if (substituteOut and getDefensePositionOfPlayer(playerId) != null) {
                         addEvent({
                             description = player.name # " has been substituted out due to condition";
                             effect = #subPlayer({

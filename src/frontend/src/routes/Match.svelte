@@ -11,7 +11,7 @@
     type MatchEvent,
   } from "../ic-agent/Stadium";
   import FieldState from "../components/FieldState.svelte";
-  import type { Principal } from "@dfinity/principal";
+  import { Principal } from "@dfinity/principal";
 
   export let id: number;
 
@@ -53,17 +53,38 @@
       console.log("Error ticking: ", result);
     }
   };
-  let timerId;
-  let toggle = async () => {
-    if (timerId) {
-      clearInterval(timerId);
-      timerId = undefined;
-      return;
+  let start = async () => {
+    let stadiumAgent = stadiumAgentFactory(match.stadiumId);
+    let result = await stadiumAgent.startMatch(match.id);
+    if ("ok" in result) {
+      state = { inProgress: result.ok };
+      console.log("Started match");
+    } else if ("completed" in result) {
+      state = { completed: result.completed };
+      console.log("Match is complete");
+    } else {
+      console.log("Error starting: ", result);
     }
-    timerId = setInterval(tick, 500);
   };
-  let s = (key, value) =>
-    typeof value === "bigint" ? value.toString() : value; // return everything else unchanged;
+  let looping = false;
+  let tickLoop = async () => {
+    await tick();
+    if (looping) {
+      await tickLoop();
+    }
+  };
+  let toggle = async () => {
+    looping = !looping;
+    if (looping) {
+      tickLoop();
+    }
+  };
+  let s = (key, value) => {
+    if (typeof value === "bigint" || value instanceof Principal) {
+      return value.toString();
+    }
+    return value;
+  };
 
   $: {
     let team1Score: bigint;
@@ -74,14 +95,20 @@
         team1Score = state.inProgress.team1.score;
         team2Score = state.inProgress.team2.score;
         events = state.inProgress.events;
-      } else if ("completed" in state && "played" in state.completed) {
-        team1Score = state.completed.played.team1.score;
-        team2Score = state.completed.played.team2.score;
-        events = state.completed.played.events;
-        winner =
-          "team1" in state.completed.played.winner
-            ? match.teams[0].id
-            : match.teams[1].id;
+      } else if ("completed" in state) {
+        if ("played" in state.completed) {
+          team1Score = state.completed.played.team1.score;
+          team2Score = state.completed.played.team2.score;
+          events = state.completed.played.events;
+          winner =
+            "team1" in state.completed.played.winner
+              ? match.teams[0].id
+              : match.teams[1].id;
+        } else {
+          team1Score = BigInt(0);
+          team2Score = BigInt(0);
+          events = [];
+        }
       } else if ("notStarted" in state) {
         team1Score = BigInt(0);
         team2Score = BigInt(0);
@@ -110,33 +137,46 @@
 </script>
 
 {#if !loadingTeams}
-  <section id="match-details">
+  <section>
     <ScoreHeader {...matchDetails} />
-
-    {#if "inProgress" in state || "notStarted" in state}
-      <button on:click={tick}>Tick</button>
-      <button on:click={toggle}>{!timerId ? "Start" : "Stop"}</button>
-      {#if loading}
-        <span>Ticking...</span>
-      {/if}
+    <section class="match-details">
       {#if "inProgress" in state}
-        <FieldState state={state.inProgress} />
+        <div class="buttons">
+          <button on:click={tick}>Tick</button>
+          <button on:click={toggle}>{!looping ? "Start" : "Stop"}</button>
+          {#if loading}
+            <span>Ticking...</span>
+          {/if}
+        </div>
+        {#if "inProgress" in state}
+          <FieldState state={state.inProgress} />
+        {/if}
+      {:else if "notStarted" in state}
+        <h1>Upcoming</h1>
+        <button on:click={start}>Start</button>
+      {:else if "completed" in state}
+        <div>Completed</div>
+        {#if "played" in state.completed}
+          <div>Played</div>
+        {:else if "allAbsent" in state.completed}
+          <div>All absent</div>
+        {:else if "abstentTeam" in state.completed}
+          <div>Absent Team: {state.completed.absentTeam}</div>
+        {/if}
+      {:else}
+        <h1>Game hasnt started</h1>
       {/if}
-    {:else if "completed" in state}
-      <div />
-    {:else}
-      <h1>Game hasnt started</h1>
-    {/if}
 
-    <section class="match-events">
-      <h2>Events</h2>
-      <Events {events} />
-    </section>
+      <section class="match-events">
+        <h2>Events</h2>
+        <Events {events} />
+      </section>
 
-    <h2>JSON</h2>
-    <pre>
+      <h2>JSON</h2>
+      <pre>
     {JSON.stringify(match, s, 2)}
   </pre>
+    </section>
   </section>
 {:else}
   Loading...
@@ -145,6 +185,14 @@
 <style>
   section {
     margin-bottom: 20px;
+  }
+  .buttons {
+    width: 200px;
+  }
+  .match-details {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .match-events {

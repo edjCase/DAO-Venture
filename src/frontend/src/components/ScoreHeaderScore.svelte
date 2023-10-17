@@ -6,7 +6,7 @@
 </script>
 
 <div class="score">
-  <div class="score-value">{score || "-"}</div>
+  <div class="score-value">{score == null ? "-" : score}</div>
   {#if won}
     <div class="winner" title="Winner">👑</div>
   {/if}
