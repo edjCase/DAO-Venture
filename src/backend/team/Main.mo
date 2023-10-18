@@ -65,7 +65,7 @@ shared (install) actor class TeamActor(
     };
     for ((specialRuleId, votes) in Iter.fromArray(options.specialRuleVotes)) {
       let specialRuleExists = IterTools.any(match.specialRules.vals(), func(r : SpecialRuleWithId) : Bool = r.id == specialRuleId);
-      if (match.specialRules.size() <= Nat32.toNat(specialRuleId)) {
+      if (not specialRuleExists) {
         errors.add("Invalid special rule: " # Nat32.toText(specialRuleId));
       };
     };
