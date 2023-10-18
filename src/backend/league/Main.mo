@@ -66,7 +66,10 @@ actor LeagueActor {
         );
     };
 
-    public shared ({ caller }) func createTeam(name : Text, logoUrl : Text) : async CreateTeamResult {
+    public shared ({ caller }) func createTeam(
+        name : Text,
+        logoUrl : Text,
+    ) : async CreateTeamResult {
 
         let nameAlreadyTaken = Trie.some(
             teams,
@@ -81,7 +84,10 @@ actor LeagueActor {
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 3_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
-        let teamActor = await TeamCanister.TeamActor(Principal.fromActor(LeagueActor), caller);
+        let teamActor = await TeamCanister.TeamActor(
+            Principal.fromActor(LeagueActor),
+            caller,
+        );
         let team : Team.Team = {
             name = name;
             canister = teamActor;

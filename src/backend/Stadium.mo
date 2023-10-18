@@ -172,16 +172,24 @@ module {
         effects : [Text];
     };
 
+    public type OfferingWithId = Offering and {
+        id : Nat32;
+    };
+
     public type SpecialRule = {
         name : Text;
         description : Text;
     };
 
+    public type SpecialRuleWithId = SpecialRule and {
+        id : Nat32;
+    };
+
     public type Match = {
         teams : (MatchTeamInfo, MatchTeamInfo);
         time : Time.Time;
-        offerings : [Offering];
-        specialRules : [SpecialRule];
+        offerings : [OfferingWithId];
+        specialRules : [SpecialRuleWithId];
         state : MatchState;
     };
 
@@ -202,7 +210,7 @@ module {
 
     public type MatchOptions = {
         offeringId : Nat32;
-        specialRuleVotes : Trie.Trie<Nat32, Nat>;
+        specialRuleVotes : [(Nat32, Nat)];
     };
 
     public type MatchTeamInfo = {

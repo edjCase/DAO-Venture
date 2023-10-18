@@ -38,7 +38,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     stable var nextMatchId : Nat32 = 1;
 
     public query func getMatch(id : Nat32) : async ?MatchWithId {
-
         switch (getMatchOrNull(id)) {
             case (null) return null;
             case (?m) {
@@ -111,9 +110,15 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     private func createTeamInit(matchId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
         let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
+        let stadiumId = Principal.fromActor(this);
         let options : ?MatchOptions = try {
             // Get match options from the team itself
-            await teamActor.getMatchOptions(matchId);
+            let result = await teamActor.getMatchOptions(stadiumId, matchId);
+            switch (result) {
+                case (#noVotes) null;
+                case (#ok(o)) ?o;
+                case (#notAuthorized) null;
+            };
         } catch (err : Error.Error) {
             Debug.print("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
             null;
@@ -121,11 +126,20 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         switch (options) {
             case (null) null;
             case (?o) {
+                var specialRuleVotes = Trie.empty<Nat32, Nat>();
+                for ((id, vote) in Iter.fromArray(o.specialRuleVotes)) {
+                    let key = {
+                        hash = id;
+                        key = id;
+                    };
+                    let (newVotes, _) = Trie.put(specialRuleVotes, key, Nat32.equal, vote);
+                    specialRuleVotes := newVotes;
+                };
                 ?{
                     id = team.id;
                     players = teamPlayers;
                     offeringId = o.offeringId;
-                    specialRuleVotes = o.specialRuleVotes;
+                    specialRuleVotes = specialRuleVotes;
                 };
             };
         };
@@ -237,10 +251,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
+    private func getRandomOfferings(count : Nat) : [Stadium.OfferingWithId] {
         // TODO
         [
             {
+                id = 1;
                 deities = ["War"];
                 effects = [
                     "+ batting power",
@@ -249,6 +264,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 ];
             },
             {
+                id = 2;
                 deities = ["Mischief"];
                 effects = [
                     "+ batting accuracy",
@@ -257,10 +273,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 ];
             },
             {
+                id = 3;
                 deities = ["Pestilence", "Indulgence"];
                 effects = ["+ piety", "- defense", "Players dont rotate between rounds"];
             },
             {
+                id = 4;
                 deities = ["Pestilence", "Mischief"];
                 effects = [
                     "+ throwing power",
@@ -271,22 +289,26 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         ];
     };
 
-    private func getRandomSpecialRules(count : Nat) : [Stadium.SpecialRule] {
+    private func getRandomSpecialRules(count : Nat) : [Stadium.SpecialRuleWithId] {
         // TODO
         [
             {
+                id = 1;
                 name = "The skill twist";
                 description = "All players' batting power and throwing power are swapped";
             },
             {
+                id = 2;
                 name = "Fasting";
                 description = "All followers of Indulgence are benched for the match";
             },
             {
+                id = 3;
                 name = "Light Ball";
                 description = "Balls are lighter so they are thrown faster and but go less far";
             },
             {
+                id = 4;
                 name = "Sunny day";
                 description = "All followers of Pestilence and Miscief are more iritable";
             },

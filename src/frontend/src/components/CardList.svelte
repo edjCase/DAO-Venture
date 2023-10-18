@@ -1,17 +1,17 @@
 <script lang="ts">
-  export let cards: { title: string; description: string }[];
-  export let onSelect: (index: number) => void;
-  let selectedIndex = -1;
+  export let cards: { id: number; title: string; description: string }[];
+  export let onSelect: (id: number) => void;
+  let selectedId = -1;
 </script>
 
 <div class="card-container">
-  {#each cards as { title, description }, index}
+  {#each cards as { id, title, description }}
     <button
       class="card"
-      class:selected={selectedIndex === index}
+      class:selected={selectedId === id}
       on:click={() => {
-        selectedIndex = index;
-        onSelect(index);
+        selectedId = id;
+        onSelect(id);
       }}
     >
       <div class="title">{title}</div>
@@ -45,7 +45,5 @@
 
   .title {
     font-weight: bold;
-  }
-  .description {
   }
 </style>

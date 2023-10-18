@@ -9,11 +9,13 @@ export type MatchTeam = {
   'id': Principal,
   'predictionVotes': bigint
 };
-export type Offering = {
+export type OfferingWithId = {
+  'id': number,
   'deities': string[],
   'effects': string[],
 };
-export type SpecialRule = {
+export type SpecialRuleWithId = {
+  'id': number,
   'name': string,
   'description': string,
 };
@@ -117,8 +119,8 @@ export type Match = {
   'stadiumId': Principal,
   'teams': [MatchTeam, MatchTeam],
   'time': Time,
-  'offerings': Offering[],
-  'specialRules': SpecialRule[],
+  'offerings': OfferingWithId[],
+  'specialRules': SpecialRuleWithId[],
   'state': MatchState
 };
 export type StartMatchResult = {
@@ -145,11 +147,13 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'score': IDL.Opt(IDL.Int),
     'predictionVotes': IDL.Nat
   });
-  const Offering = IDL.Record({
+  const OfferingWithId = IDL.Record({
+    'id': IDL.Nat32,
     'deities': IDL.Vec(IDL.Text),
     'effects': IDL.Vec(IDL.Text),
   });
-  const SpecialRule = IDL.Record({
+  const SpecialRuleWithId = IDL.Record({
+    'id': IDL.Nat32,
     'name': IDL.Text,
     'description': IDL.Text,
   });
@@ -239,8 +243,8 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'stadiumId': IDL.Principal,
     'teams': IDL.Tuple(MatchTeamInfo, MatchTeamInfo),
     'time': IDL.Int,
-    'offerings': IDL.Vec(Offering),
-    'specialRules': IDL.Vec(SpecialRule),
+    'offerings': IDL.Vec(OfferingWithId),
+    'specialRules': IDL.Vec(SpecialRuleWithId),
     'state': MatchState
   });
   const TickMatchResult = IDL.Variant({

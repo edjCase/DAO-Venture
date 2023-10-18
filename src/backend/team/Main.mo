@@ -11,94 +11,95 @@ import TrieSet "mo:base/TrieSet";
 import PlayerLedgerActor "canister:playerLedger";
 import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
+import Nat "mo:base/Nat";
+import Error "mo:base/Error";
+import Text "mo:base/Text";
+import Iter "mo:base/Iter";
 import { ic } "mo:ic";
 import Stadium "../Stadium";
+import IterTools "mo:itertools/Iter";
 
-shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal) : async Team.TeamActor = this {
+shared (install) actor class TeamActor(
+  initLeagueId : Principal,
+  initOwnerId : Principal,
+) : async Team.TeamActor = this {
+
   type PlayerWithId = Player.PlayerWithId;
-  type MatchVote = {
-    offeringId : Nat32;
-    specialRuleId : Nat32;
-  };
-  public type MatchOptions = {
-    offeringId : Nat32;
-    specialRuleId : Nat32;
-  };
-  public type VoteResult = {
-    #stadiumNotFound;
-    #matchNotFound;
-    #teamNotInMatch;
-    #invalid : [Text];
-    #alreadyVoted;
-    #ok;
-  };
+  type MatchOptionsCallback = Team.MatchOptionsCallback;
+  type GetMatchOptionsResult = Team.GetMatchOptionsResult;
+  type MatchOptions = Team.MatchOptions;
+  type UpdateMatchOptionsResult = Team.UpdateMatchOptionsResult;
+  type OfferingWithId = Stadium.OfferingWithId;
+  type SpecialRuleWithId = Stadium.SpecialRuleWithId;
+  type StadiumMatchId = Text; // Stadium Principal Text # _ # Match Id Text
 
-  // Stadium => Match => User => Vote
-  stable var votes = Trie.empty<Principal, Trie.Trie<Nat32, Trie.Trie<Principal, MatchVote>>>();
+  stable var leagueId = initLeagueId;
+  stable var ownerId = initOwnerId;
+  var matchOptions : Trie.Trie<StadiumMatchId, MatchOptions> = Trie.empty<StadiumMatchId, MatchOptions>();
 
   public composite query func getPlayers() : async [PlayerWithId] {
     let teamId = Principal.fromActor(this);
     await PlayerLedgerActor.getTeamPlayers(?teamId);
   };
 
-  public shared query ({ caller }) func getMatchOptions(matchId : Nat32) : async ?Stadium.MatchOptions {
-    let stadiumKey = {
-      key = caller;
-      hash = Principal.hash(caller);
+  public shared ({ caller }) func updateMatchOptions(stadiumId : Principal, matchId : Nat32, options : MatchOptions) : async UpdateMatchOptionsResult {
+    // TODO
+    // assertOwner(caller);
+    let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+    let match = try {
+      let ?match = await stadiumActor.getMatch(matchId) else return #matchNotFound;
+      match;
+    } catch (err) {
+      return #stadiumNotFound;
     };
-    let ?stadiumVotes = Trie.get(votes, stadiumKey, Principal.equal) else return null;
-    let matchKey = {
-      key = matchId;
-      hash = matchId;
-    };
-    let ?matchVotes = Trie.get(stadiumVotes, matchKey, Nat32.equal) else return null;
-    let ?(offeringId, specialRuleVotes) = calculateVotes(matchVotes) else return null;
-    ?{
-      offeringId = offeringId;
-      specialRuleVotes = specialRuleVotes;
-    };
-  };
 
-  private func calculateVotes(matchVotes : Trie.Trie<Principal, MatchVote>) : ?(Nat32, Trie.Trie<Nat32, Nat>) {
-    var offeringVotes = Trie.empty<Nat32, Nat>();
-    var specialRuleVotes = Trie.empty<Nat32, Nat>();
-    for ((userId, vote) in Trie.iter(matchVotes)) {
-      // Offering
-      let userVotingPower = 1; // TODO
-      offeringVotes := addVotes(offeringVotes, vote.offeringId, userVotingPower);
-
-      specialRuleVotes := addVotes(offeringVotes, vote.specialRuleId, userVotingPower);
+    let teamId = Principal.fromActor(this);
+    if (match.teams.0.id != teamId and match.teams.1.id != teamId) {
+      return #teamNotInMatch;
     };
-    var winningOfferingId : ?(Nat32, Nat) = null;
-    for ((offeringId, votes) in Trie.iter(offeringVotes)) {
-      switch (winningOfferingId) {
-        case (null) winningOfferingId := ?(offeringId, votes);
-        case (?o) {
-          if (o.1 < votes) {
-            winningOfferingId := ?(offeringId, votes);
-          };
-          // TODO what to do if there is a tie?
-        };
+
+    let errors = Buffer.Buffer<Text>(0);
+    let offeringExists = IterTools.any(match.offerings.vals(), func(o : OfferingWithId) : Bool = o.id == options.offeringId);
+    if (not offeringExists) {
+      errors.add("Invalid offering: " # Nat32.toText(options.offeringId));
+    };
+    for ((specialRuleId, votes) in Iter.fromArray(options.specialRuleVotes)) {
+      let specialRuleExists = IterTools.any(match.specialRules.vals(), func(r : SpecialRuleWithId) : Bool = r.id == specialRuleId);
+      if (match.specialRules.size() <= Nat32.toNat(specialRuleId)) {
+        errors.add("Invalid special rule: " # Nat32.toText(specialRuleId));
       };
     };
-    switch (winningOfferingId) {
-      case (null) null;
-      case (?offeringId) ?(offeringId.0, specialRuleVotes);
+    if (errors.size() > 0) {
+      return #invalid(Buffer.toArray(errors));
     };
-
+    let stadiumMatchId = buildStadiumMatchId(stadiumId, matchId);
+    let matchKey = {
+      key = stadiumMatchId;
+      hash = Text.hash(stadiumMatchId);
+    };
+    let (newOptions, _) = Trie.put(
+      matchOptions,
+      matchKey,
+      Text.equal,
+      options,
+    );
+    matchOptions := newOptions;
+    #ok;
   };
 
-  private func addVotes(votes : Trie.Trie<Nat32, Nat>, choice : Nat32, value : Nat) : Trie.Trie<Nat32, Nat> {
-    let key = {
-      key = choice;
-      hash = choice;
+  public shared query ({ caller }) func getMatchOptions(stadiumId : Principal, matchId : Nat32) : async GetMatchOptionsResult {
+    if (caller != stadiumId or caller != ownerId) {
+      return #notAuthorized;
     };
-    let currentVotes = switch (Trie.get(votes, key, Nat32.equal)) {
-      case (?v) v;
-      case (null) 0;
+    let stadiumMatchId = buildStadiumMatchId(stadiumId, matchId);
+    let matchKey = {
+      key = stadiumMatchId;
+      hash = Text.hash(stadiumMatchId);
     };
-    let (newVotes, _) = Trie.put(votes, key, Nat32.equal, currentVotes + value);
-    newVotes;
+    switch (Trie.get(matchOptions, matchKey, Text.equal)) {
+      case (null) #noVotes;
+      case (?o) #ok(o);
+    };
   };
 
   public shared query ({ caller }) func getOwner() : async Principal {
@@ -113,63 +114,8 @@ shared (install) actor class TeamActor(leagueId : Principal, ownerId : Principal
     return canisterStatus.cycles;
   };
 
-  public shared ({ caller }) func voteForMatchOptions(
-    stadiumId : Principal,
-    matchId : Nat32,
-    options : MatchOptions,
-  ) : async VoteResult {
-    assertOwner(caller);
-    let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
-    let ?match = await stadiumActor.getMatch(matchId) else return #matchNotFound;
-
-    let teamId = Principal.fromActor(this);
-    if (match.teams.0.id != teamId and match.teams.1.id != teamId) {
-      return #teamNotInMatch;
-    };
-
-    let errors = Buffer.Buffer<Text>(0);
-    if (match.offerings.size() <= Nat32.toNat(options.offeringId)) {
-      errors.add("Invalid offering: " # Nat32.toText(options.offeringId));
-    };
-    if (match.specialRules.size() <= Nat32.toNat(options.specialRuleId)) {
-      errors.add("Invalid special rule: " # Nat32.toText(options.specialRuleId));
-    };
-    if (errors.size() > 0) {
-      return #invalid(Buffer.toArray(errors));
-    };
-
-    let stadiumKey = {
-      key = stadiumId;
-      hash = Principal.hash(stadiumId);
-    };
-    let stadiumVotes = switch (Trie.get(votes, stadiumKey, Principal.equal)) {
-      case (?s) s;
-      case (null) Trie.empty<Nat32, Trie.Trie<Principal, MatchVote>>();
-    };
-    let matchKey = {
-      key = matchId;
-      hash = matchId;
-    };
-    let matchVotes = switch (Trie.get(stadiumVotes, matchKey, Nat32.equal)) {
-      case (?m) m;
-      case (null) Trie.empty<Principal, MatchVote>();
-    };
-    let userKey = {
-      key = caller;
-      hash = Principal.hash(caller);
-    };
-    if (Trie.get(matchVotes, userKey, Principal.equal) != null) {
-      return #alreadyVoted;
-    };
-    let matchVote = {
-      offeringId = options.offeringId;
-      specialRuleId = options.specialRuleId;
-    };
-    let (newMatchVotes, _) = Trie.put(matchVotes, userKey, Principal.equal, matchVote);
-    let (newStadiumVotes, _) = Trie.put(stadiumVotes, matchKey, Nat32.equal, newMatchVotes);
-    let (newVotes, _) = Trie.put(votes, stadiumKey, Principal.equal, newStadiumVotes);
-    votes := newVotes;
-    #ok;
+  private func buildStadiumMatchId(stadiumId : Principal, matchId : Nat32) : Text {
+    Principal.toText(stadiumId) # "_" # Nat32.toText(matchId);
   };
 
   private func assertOwner(caller : Principal) {

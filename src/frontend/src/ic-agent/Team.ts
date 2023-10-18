@@ -6,14 +6,14 @@ import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 
 export type MatchOptions = {
   offeringId: number,
-  specialRuleId: number
+  specialRuleVotes: [number, bigint][] // [ruleId, votingPower]
 };
-export type VoteResult = {
+export type UpdateMatchOptionsResult = {
   'ok': null
 } | {
   'invalid': string[]
 } | {
-  'alreadyVoted': null
+  'notAuthorized': null
 } | {
   'matchNotFound': null
 } | {
@@ -21,8 +21,16 @@ export type VoteResult = {
 } | {
   'teamNotInMatch': null
 };
+export type GetMatchOptionsResult = {
+  'ok': null
+} | {
+  'notVotes': null
+} | {
+  'notAuthorized': null
+};
 export interface _SERVICE {
-  'voteForMatchOptions': ActorMethod<[Principal, number, MatchOptions], VoteResult>,
+  'getMatchOptions': ActorMethod<[Principal, number], GetMatchOptionsResult>,
+  'updateMatchOptions': ActorMethod<[Principal, number, MatchOptions], UpdateMatchOptionsResult>,
 }
 
 
@@ -30,18 +38,23 @@ export interface _SERVICE {
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
   const MatchOptions = IDL.Record({
     'offeringId': IDL.Nat32,
-    'specialRuleId': IDL.Nat32
+    'specialRuleVotes': IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat))
   });
-  const VoteResult = IDL.Variant({
+  const UpdateMatchOptionsResult = IDL.Variant({
     'ok': IDL.Null,
     'invalid': IDL.Vec(IDL.Text),
-    'alreadyVoted': IDL.Null,
-    'matchNotFound': IDL.Null,
     'stadiumNotFound': IDL.Null,
-    'teamNotInMatch': IDL.Null
+    'teamNotInMatch': IDL.Null,
+    'notAuthorized': IDL.Null
+  });
+  const GetMatchOptionsResult = IDL.Variant({
+    'ok': MatchOptions,
+    'noVotes': IDL.Null,
+    'notAuthorized': IDL.Null
   });
   return IDL.Service({
-    'voteForMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32, MatchOptions], [VoteResult], []),
+    'getMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32], [GetMatchOptionsResult], []),
+    'updateMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32, MatchOptions], [UpdateMatchOptionsResult], []),
   });
 };
 export const teamAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);
