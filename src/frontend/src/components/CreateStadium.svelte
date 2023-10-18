@@ -1,10 +1,10 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
-  import { leagueAgent as leagueAgent } from "../ic-agent/League";
+  import { leagueAgentFactory } from "../ic-agent/League";
 
   let name: string;
   let createTeam = function () {
-    leagueAgent
+    leagueAgentFactory()
       .createStadium(name)
       .then(() => {
         teamStore.refetch();

@@ -2,4 +2,4 @@
   import MatchCardGrid from "../components/MatchCardGrid.svelte";
 </script>
 
-<MatchCardGrid matchFilter={(m) => m.winner != null} />
+<MatchCardGrid matchFilter={(m) => "completed" in m.state} />

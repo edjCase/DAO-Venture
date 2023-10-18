@@ -7,6 +7,8 @@ import type {
 } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import type { IDL } from "@dfinity/candid";
+import { get } from "svelte/store";
+import { identityStore } from "../stores/IdentityStore";
 
 export declare interface CreateActorOptions {
   /**
@@ -26,17 +28,12 @@ export declare interface CreateActorOptions {
 
 
 export const createActor = <T>(
-    canisterId: string | Principal,
-    idlFactory: IDL.InterfaceFactory,
-    options: CreateActorOptions = {agentOptions: {host: "http://127.0.0.1:4943"}}
-  ) : ActorSubclass<T> => {
-  const agent = options.agent || new HttpAgent({ ...options.agentOptions });
-
-  if (options.agent && options.agentOptions) {
-    console.warn(
-      "Detected both agent and agentOptions passed to createActor. Ignoring agentOptions and proceeding with the provided agent."
-    );
-  }
+  canisterId: string | Principal,
+  idlFactory: IDL.InterfaceFactory
+): ActorSubclass<T> => {
+  const identity = get(identityStore);
+  const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:4943";
+  const agent = new HttpAgent({ identity, host });
 
   // Fetch root key for certificate validation during development
   if (process.env.DFX_NETWORK !== "ic") {
@@ -51,7 +48,6 @@ export const createActor = <T>(
   // Creates an actor with using the candid interface and the HttpAgent
   return Actor.createActor<T>(idlFactory, {
     agent,
-    canisterId,
-    ...options.actorOptions,
+    canisterId
   });
 };

@@ -1,6 +1,8 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
+import { identityStore } from '../stores/IdentityStore';
+import { get } from 'svelte/store';
 
 export type CreateStadiumResult = { 'ok': Principal };
 export type CreateTeamResult = { 'ok': Principal } |
@@ -55,4 +57,6 @@ export const idlFactory = ({ IDL }) => {
 
 
 const canisterId = process.env.CANISTER_ID_LEAGUE;
-export const leagueAgent = createActor<_SERVICE>(canisterId, idlFactory);
+// Keep factory due to changing identity
+export let leagueAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
+

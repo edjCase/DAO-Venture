@@ -2,6 +2,8 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import { FieldPosition as FieldPositionModel } from '../models/FieldPosition';
+import { get } from 'svelte/store';
+import { identityStore } from '../stores/IdentityStore';
 
 export type FieldPosition = { 'firstBase': null }
   | { 'secondBase': null }
@@ -105,7 +107,8 @@ export const idlFactory = ({ IDL }) => {
   });
 };
 const canisterId = process.env.CANISTER_ID_PLAYERLEDGER;
-export const playerLedgerAgent = createActor<_SERVICE>(canisterId, idlFactory);
+// Keep factory due to changing identity
+export const playerLedgerAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
 
 export function mapPosition(position: FieldPositionModel): FieldPosition {
   switch (position) {

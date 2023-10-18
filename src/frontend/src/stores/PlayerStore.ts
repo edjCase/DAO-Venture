@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { playerLedgerAgent as playerLedgerAgent, unMapPosition } from "../ic-agent/PlayerLedger";
+import { playerLedgerAgentFactory, unMapPosition } from "../ic-agent/PlayerLedger";
 import type { Player } from "../models/Player";
 
 
@@ -7,7 +7,7 @@ export const playerStore = (() => {
     const { subscribe, set } = writable<Player[]>([]);
 
     const refetch = async () => {
-        playerLedgerAgent.getAllPlayers().then((players) => {
+        playerLedgerAgentFactory().getAllPlayers().then((players) => {
             set(players.map(p => {
                 return {
                     ...p,

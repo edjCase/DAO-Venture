@@ -2,7 +2,7 @@
   import type { Principal } from "@dfinity/principal";
   import { teamStore } from "../stores/TeamStore";
   import { stadiumStore } from "../stores/StadiumStore";
-  import { leagueAgent as leagueAgent } from "../ic-agent/League";
+  import { leagueAgentFactory } from "../ic-agent/League";
   import { dateToNanoseconds } from "../utils/DateUtils";
 
   $: teams = $teamStore;
@@ -14,7 +14,7 @@
   let date: string;
   let scheduleMatch = function () {
     let time = dateToNanoseconds(new Date(date));
-    leagueAgent
+    leagueAgentFactory()
       .scheduleMatch(stadium, [team1, team2], time)
       .then((result) => {
         console.log("Scheduled match success: ", result);

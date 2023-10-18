@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { playerLedgerAgent } from "../ic-agent/PlayerLedger";
+  import { playerLedgerAgentFactory } from "../ic-agent/PlayerLedger";
   import { playerStore } from "../stores/PlayerStore";
   import { teamStore } from "../stores/TeamStore";
 
@@ -11,7 +11,7 @@
   $: players = $playerStore;
 
   let assign = function () {
-    playerLedgerAgent
+    playerLedgerAgentFactory()
       .setPlayerTeam(playerId, teamId ? [Principal.from(teamId)] : [])
       .then((result) => {
         console.log("Assigned player to team: ", result);

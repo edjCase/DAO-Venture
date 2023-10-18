@@ -1,6 +1,7 @@
 <script>
   import { Link } from "svelte-routing";
   import ThemeToggle from "./ThemeToggle.svelte";
+  import LoginButton from "./LoginButton.svelte";
 </script>
 
 <nav class="navbar">
@@ -12,13 +13,17 @@
       <Link to="/matches" class="nav-link">Matches</Link>
     </li>
     <li class="nav-item">
-      <Link to="/news" class="nav-link">News</Link>
-    </li>
-    <li class="nav-item">
-      <Link to="/about" class="nav-link">About</Link>
+      <a
+        class="nav-link"
+        target="_blank"
+        href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai">Blog</a
+      >
     </li>
     <li>
       <ThemeToggle />
+    </li>
+    <li>
+      <LoginButton />
     </li>
   </ul>
 </nav>

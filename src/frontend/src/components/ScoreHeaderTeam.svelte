@@ -1,6 +1,5 @@
 <script lang="ts">
   import { get } from "svelte/store";
-  import type { MatchTeam } from "../ic-agent/Stadium";
   import { teamStore } from "../stores/TeamStore";
   import type { Principal } from "@dfinity/principal";
 

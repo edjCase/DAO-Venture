@@ -1,11 +1,11 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
-  import { leagueAgent as leagueAgent } from "../ic-agent/League";
+  import { leagueAgentFactory } from "../ic-agent/League";
 
   let name: string;
   let logoUrl: string;
   let createTeam = function () {
-    leagueAgent
+    leagueAgentFactory()
       .createTeam(name, logoUrl)
       .then(() => {
         teamStore.refetch();

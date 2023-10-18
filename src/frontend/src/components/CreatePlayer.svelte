@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { playerLedgerAgent, mapPosition } from "../ic-agent/PlayerLedger";
+  import {
+    playerLedgerAgentFactory,
+    mapPosition,
+  } from "../ic-agent/PlayerLedger";
   import { Principal } from "@dfinity/principal";
   import { playerStore } from "../stores/PlayerStore";
   import { teamStore } from "../stores/TeamStore";
@@ -13,7 +16,7 @@
   let position: FieldPosition;
   let createTeam = function () {
     let mappedPosition = mapPosition(position);
-    playerLedgerAgent
+    playerLedgerAgentFactory()
       .create({
         name: name,
         teamId: [Principal.from(teamId)],
@@ -43,7 +46,7 @@
         }
         let name = teamName + " " + (i + j * 8);
         i++;
-        playerLedgerAgent
+        playerLedgerAgentFactory()
           .create({
             name: name,
             teamId: [Principal.from(teamId)],
