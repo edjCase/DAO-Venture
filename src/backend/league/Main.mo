@@ -15,6 +15,7 @@ import TeamCanister "../team/Main";
 import StadiumCanister "../stadium/Main";
 import { ic } "mo:ic";
 import Time "mo:base/Time";
+import DummyTeamDao "../team/DummyTeamDao";
 
 actor LeagueActor {
 
@@ -36,6 +37,11 @@ actor LeagueActor {
     public type StadiumInfo = {
         id : Principal;
         name : Text;
+    };
+    public type CreateTeamDaoResult = {
+        #ok : Principal;
+        #notAuthenticated;
+        #error : Text;
     };
 
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
@@ -66,9 +72,21 @@ actor LeagueActor {
         );
     };
 
+    public shared ({ caller }) func createTeamDao() : async CreateTeamDaoResult {
+        if (Principal.isAnonymous(caller)) {
+            return #notAuthenticated;
+        };
+        let canisterCreationCost = 100_000_000_000;
+        let initialBalance = 3_000_000_000_000;
+        Cycles.add(canisterCreationCost + initialBalance);
+        let teamDAOActor = await DummyTeamDao.DummyTeamDao([caller]);
+        #ok(Principal.fromActor(teamDAOActor));
+    };
+
     public shared ({ caller }) func createTeam(
         name : Text,
         logoUrl : Text,
+        ownerId : Principal,
     ) : async CreateTeamResult {
 
         let nameAlreadyTaken = Trie.some(
@@ -80,20 +98,23 @@ actor LeagueActor {
         if (nameAlreadyTaken) {
             return #nameTaken;
         };
-
+        let leagueId = Principal.fromActor(LeagueActor);
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 3_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
+        // TODO should exist before? also not dummy
+
+        Cycles.add(canisterCreationCost + initialBalance);
         let teamActor = await TeamCanister.TeamActor(
-            Principal.fromActor(LeagueActor),
-            caller,
+            leagueId,
+            ownerId,
         );
+        let teamId = Principal.fromActor(teamActor);
         let team : Team.Team = {
             name = name;
             canister = teamActor;
             logoUrl = logoUrl;
         };
-        let teamId = Principal.fromActor(teamActor);
         let teamKey = buildKey(teamId);
         switch (Trie.put(teams, teamKey, Principal.equal, team)) {
             case (_, ?previous) Prelude.unreachable(); // No way new id can conflict with existing one
