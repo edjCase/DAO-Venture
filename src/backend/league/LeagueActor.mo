@@ -11,11 +11,16 @@ import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import Stadium "../Stadium";
-import TeamCanister "../team/Main";
-import StadiumCanister "../stadium/Main";
+import TeamActor "../team/TeamActor";
+import StadiumCanister "../stadium/StadiumActor";
 import { ic } "mo:ic";
 import Time "mo:base/Time";
-import DummyTeamDao "../team/DummyTeamDao";
+import Nat8 "mo:base/Nat8";
+import Nat64 "mo:base/Nat64";
+import Int "mo:base/Int";
+import Buffer "mo:base/Buffer";
+import Token "mo:icrc1/ICRC1/Canisters/Token";
+import ICRC1 "mo:icrc1/ICRC1";
 
 actor LeagueActor {
 
@@ -33,6 +38,7 @@ actor LeagueActor {
         id : Principal;
         name : Text;
         logoUrl : Text;
+        ledgerId : Principal; // TODO this is duplicated in TeamActor
     };
     public type StadiumInfo = {
         id : Principal;
@@ -43,6 +49,8 @@ actor LeagueActor {
         #notAuthenticated;
         #error : Text;
     };
+
+    type LedgerActor = Token.Token;
 
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
     stable var stadiums : Trie.Trie<Principal, Stadium.Stadium> = Trie.empty();
@@ -59,6 +67,7 @@ actor LeagueActor {
                 id = k;
                 name = v.name;
                 logoUrl = v.logoUrl;
+                ledgerId = v.ledgerId;
             },
         );
     };
@@ -72,21 +81,11 @@ actor LeagueActor {
         );
     };
 
-    public shared ({ caller }) func createTeamDao() : async CreateTeamDaoResult {
-        if (Principal.isAnonymous(caller)) {
-            return #notAuthenticated;
-        };
-        let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 3_000_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
-        let teamDAOActor = await DummyTeamDao.DummyTeamDao([caller]);
-        #ok(Principal.fromActor(teamDAOActor));
-    };
-
     public shared ({ caller }) func createTeam(
         name : Text,
         logoUrl : Text,
-        ownerId : Principal,
+        tokenName : Text,
+        tokenSymbol : Text,
     ) : async CreateTeamResult {
 
         let nameAlreadyTaken = Trie.some(
@@ -99,21 +98,17 @@ actor LeagueActor {
             return #nameTaken;
         };
         let leagueId = Principal.fromActor(LeagueActor);
-        let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 3_000_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
-        // TODO should exist before? also not dummy
-
-        Cycles.add(canisterCreationCost + initialBalance);
-        let teamActor = await TeamCanister.TeamActor(
-            leagueId,
-            ownerId,
-        );
+        // Create canister for team ledger
+        let ledger : LedgerActor = await createTeamLedger(tokenName, tokenSymbol);
+        let ledgerId = Principal.fromActor(ledger);
+        // Create canister for team logic
+        let teamActor = await createTeamActor(ledgerId);
         let teamId = Principal.fromActor(teamActor);
         let team : Team.Team = {
             name = name;
             canister = teamActor;
             logoUrl = logoUrl;
+            ledgerId = ledgerId;
         };
         let teamKey = buildKey(teamId);
         switch (Trie.put(teams, teamKey, Principal.equal, team)) {
@@ -122,6 +117,38 @@ actor LeagueActor {
                 teams := newTeams;
                 return #ok(teamId);
             };
+        };
+    };
+
+    public shared ({ caller }) func mint(
+        amount : Nat,
+        teamId : Principal,
+        to : Principal,
+    ) : async {
+        #ok : ICRC1.TxIndex;
+        #teamNotFound;
+        #transferError : ICRC1.TransferError;
+    } {
+        let leagueId = Principal.fromActor(LeagueActor);
+        // TODO
+        // if (caller != leagueId) {
+        //   return #notAuthorized;
+        // }
+        let ?team = Trie.get(teams, buildKey(teamId), Principal.equal) else return #teamNotFound;
+        let ledger = actor (Principal.toText(team.ledgerId)) : Token.Token;
+
+        let transferResult = await ledger.mint({
+            amount = amount;
+            created_at_time = ?Nat64.fromNat(Int.abs(Time.now()));
+            memo = null;
+            to = {
+                owner = to;
+                subaccount = null;
+            };
+        });
+        switch (transferResult) {
+            case (#Ok(txIndex)) #ok(txIndex);
+            case (#Err(error)) #transferError(error);
         };
     };
 
@@ -161,11 +188,42 @@ actor LeagueActor {
         let leagueId = Principal.fromActor(LeagueActor);
         for ((teamId, team) in Trie.iter(teams)) {
             let ownerId = caller; // TODO - get owner from team
-            let _ = await (system TeamCanister.TeamActor)(#upgrade(team.canister))(leagueId, ownerId);
+            let _ = await (system TeamActor.TeamActor)(#upgrade(team.canister))(leagueId, ownerId);
         };
         for ((stadiumId, stadium) in Trie.iter(stadiums)) {
             let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadium.canister))(leagueId);
         };
+    };
+
+    private func createTeamActor(ledgerId : Principal) : async TeamActor.TeamActor {
+        let leagueId = Principal.fromActor(LeagueActor);
+        let canisterCreationCost = 100_000_000_000;
+        let initialBalance = 3_000_000_000_000;
+        Cycles.add(canisterCreationCost + initialBalance);
+        await TeamActor.TeamActor(
+            leagueId,
+            ledgerId,
+        );
+    };
+
+    private func createTeamLedger(tokenName : Text, tokenSymbol : Text) : async LedgerActor {
+        let canisterCreationCost = 100_000_000_000;
+        let initialBalance = 3_000_000_000_000;
+        Cycles.add(canisterCreationCost + initialBalance);
+
+        let leagueId = Principal.fromActor(LeagueActor);
+
+        await Token.Token({
+            name = tokenName;
+            symbol = tokenSymbol;
+            decimals = 0;
+            fee = 0;
+            max_supply = 1;
+            initial_balances = [];
+            min_burn_amount = 0;
+            minting_account = ?{ owner = leagueId; subaccount = null };
+            advanced_settings = null;
+        });
     };
 
     private func buildKey(id : Principal) : {

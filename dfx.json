@@ -1,13 +1,13 @@
 {
   "canisters": {
     "league": {
-      "main": "src/backend/league/Main.mo",
+      "dependencies": [
+        "playerLedger"
+      ],
+      "main": "src/backend/league/LeagueActor.mo",
       "type": "motoko"
     },
     "playerLedger": {
-      "dependencies": [
-        "league"
-      ],
       "main": "src/backend/league/PlayerLedger.mo",
       "type": "motoko"
     },

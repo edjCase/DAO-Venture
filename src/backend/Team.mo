@@ -4,9 +4,9 @@ import Player "Player";
 
 module {
     public type TeamActor = actor {
-        getPlayers : shared composite query () -> async [Player.PlayerWithId];
-        getMatchOptions : shared query (stadiumId : Principal, matchId : Nat32) -> async GetMatchOptionsResult;
-        updateMatchOptions : shared (stadiumId : Principal, matchId : Nat32, options : MatchOptions) -> async UpdateMatchOptionsResult;
+        getPlayers : composite query () -> async [Player.PlayerWithId];
+        getMatchOptions : query (stadiumId : Principal, matchId : Nat32) -> async GetMatchOptionsResult;
+        voteForMatchOptions : (stadiumId : Principal, matchId : Nat32, vote : MatchOptionsVote) -> async VoteForMatchOptionsResult;
     };
 
     public type MatchVoteResult = {
@@ -22,17 +22,28 @@ module {
         #notAuthorized;
     };
 
+    public type GetCyclesResult = {
+        #ok : Nat;
+        #notAuthorized;
+    };
+
+    public type MatchOptionsVote = {
+        offeringId : Nat32;
+        specialRuleId : Nat32;
+    };
+
     public type MatchOptions = {
         offeringId : Nat32;
         specialRuleVotes : [(Nat32, Nat)];
     };
 
-    public type UpdateMatchOptionsResult = {
+    public type VoteForMatchOptionsResult = {
         #ok;
         #notAuthorized;
         #matchNotFound;
         #stadiumNotFound;
         #teamNotInMatch;
+        #alreadyVoted;
         #invalid : [Text];
     };
 
@@ -40,5 +51,6 @@ module {
         canister : TeamActor;
         name : Text;
         logoUrl : Text;
+        ledgerId : Principal;
     };
 };

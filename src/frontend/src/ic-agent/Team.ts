@@ -4,11 +4,11 @@ import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 
 
-export type MatchOptions = {
+export type MatchOptionsVote = {
   offeringId: number,
-  specialRuleVotes: [number, bigint][] // [ruleId, votingPower]
+  specialRuleId: number
 };
-export type UpdateMatchOptionsResult = {
+export type VoteMatchOptionsResult = {
   'ok': null
 } | {
   'invalid': string[]
@@ -18,6 +18,8 @@ export type UpdateMatchOptionsResult = {
   'matchNotFound': null
 } | {
   'stadiumNotFound': null
+} | {
+  'alreadyVoted': null
 } | {
   'teamNotInMatch': null
 };
@@ -30,7 +32,7 @@ export type GetMatchOptionsResult = {
 };
 export interface _SERVICE {
   'getMatchOptions': ActorMethod<[Principal, number], GetMatchOptionsResult>,
-  'updateMatchOptions': ActorMethod<[Principal, number, MatchOptions], UpdateMatchOptionsResult>,
+  'voteForMatchOptions': ActorMethod<[Principal, number, MatchOptionsVote], VoteMatchOptionsResult>,
 }
 
 
@@ -40,12 +42,17 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'offeringId': IDL.Nat32,
     'specialRuleVotes': IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat))
   });
-  const UpdateMatchOptionsResult = IDL.Variant({
+  const MatchOptionsVote = IDL.Record({
+    'offeringId': IDL.Nat32,
+    'specialRuleVotes': IDL.Nat32
+  });
+  const VoteMatchOptionsResult = IDL.Variant({
     'ok': IDL.Null,
     'invalid': IDL.Vec(IDL.Text),
     'stadiumNotFound': IDL.Null,
     'teamNotInMatch': IDL.Null,
-    'notAuthorized': IDL.Null
+    'notAuthorized': IDL.Null,
+    'alreadyVoted': IDL.Null
   });
   const GetMatchOptionsResult = IDL.Variant({
     'ok': MatchOptions,
@@ -54,7 +61,7 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'getMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32], [GetMatchOptionsResult], []),
-    'updateMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32, MatchOptions], [UpdateMatchOptionsResult], []),
+    'updateMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32, MatchOptionsVote], [VoteMatchOptionsResult], []),
   });
 };
 export const teamAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);
