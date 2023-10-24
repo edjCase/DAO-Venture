@@ -52,5 +52,6 @@ module {
         name : Text;
         logoUrl : Text;
         ledgerId : Principal;
+        divisionId : Nat32;
     };
 };

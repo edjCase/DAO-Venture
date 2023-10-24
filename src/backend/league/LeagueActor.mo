@@ -19,46 +19,34 @@ import Nat8 "mo:base/Nat8";
 import Nat64 "mo:base/Nat64";
 import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
+import Random "mo:base/Random";
+import Debug "mo:base/Debug";
+import Error "mo:base/Error";
 import Token "mo:icrc1/ICRC1/Canisters/Token";
 import ICRC1 "mo:icrc1/ICRC1";
+import TimeZone "mo:datetime/TimeZone";
+import LocalDateTime "mo:datetime/LocalDateTime";
+import Components "mo:datetime/Components";
+import DateTime "mo:datetime/DateTime";
+import RandomX "mo:random/RandomX";
+import League "../League";
 
 actor LeagueActor {
-
-    public type CreateTeamResult = {
-        #ok : Principal;
-        #nameTaken;
-    };
-    public type CreateStadiumResult = {
-        #ok : Principal;
-    };
-    public type ScheduleMatchResult = Stadium.ScheduleMatchResult or {
-        #stadiumNotFound;
-    };
-    public type TeamInfo = {
-        id : Principal;
-        name : Text;
-        logoUrl : Text;
-        ledgerId : Principal; // TODO this is duplicated in TeamActor
-    };
-    public type StadiumInfo = {
-        id : Principal;
-        name : Text;
-    };
-    public type CreateTeamDaoResult = {
-        #ok : Principal;
-        #notAuthenticated;
-        #error : Text;
-    };
-
+    type MatchUp = League.MatchUp;
+    type Week = League.Week;
+    type ScheduleMatchResult = League.ScheduleMatchResult;
+    type CreateStadiumResult = League.CreateStadiumResult;
+    type CreateTeamResult = League.CreateTeamResult;
+    type TimeOfDay = League.TimeOfDay;
+    type DayOfWeek = League.DayOfWeek;
+    type StadiumInfo = League.StadiumInfo;
+    type TeamInfo = League.TeamInfo;
+    type Division = League.Division;
     type LedgerActor = Token.Token;
 
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
     stable var stadiums : Trie.Trie<Principal, Stadium.Stadium> = Trie.empty();
-    stable var nextPlayerId : Nat = 0;
-
-    public type TeamInitializationConfig = {
-        name : Text;
-    };
+    stable var divisions : Trie.Trie<Nat32, Division> = Trie.empty();
 
     public query func getTeams() : async [TeamInfo] {
         Trie.toArray(
@@ -68,6 +56,7 @@ actor LeagueActor {
                 name = v.name;
                 logoUrl = v.logoUrl;
                 ledgerId = v.ledgerId;
+                divisionId = v.divisionId;
             },
         );
     };
@@ -81,11 +70,152 @@ actor LeagueActor {
         );
     };
 
+    public shared ({ caller }) func createDivision(
+        name : Text,
+        dayOfWeek : DayOfWeek,
+        timeZone : TimeZone.FixedTimeZone,
+        timeOfDay : TimeOfDay,
+    ) : async {
+        #ok;
+    } {
+        let leagueId = Principal.fromActor(LeagueActor);
+        // TODO
+        // if (caller != leagueId) {
+        //   return #notAuthorized;
+        // }
+        let divisionId : Nat32 = Nat32.fromNat(Trie.size(divisions));
+        let division : Division = {
+            name = name;
+            dayOfWeek = dayOfWeek;
+            timeZone = timeZone;
+            timeOfDay = timeOfDay;
+            schedule = null;
+        };
+        let divisionKey = { key = divisionId; hash = divisionId };
+        let (newDivisions, _) = Trie.put(divisions, divisionKey, Nat32.equal, division);
+        divisions := newDivisions;
+        return #ok;
+    };
+
+    public shared ({ caller }) func setSchedule() : async {
+        #ok;
+        #oddNumberOfTeams;
+        #notEnoughStadiums;
+    } {
+        let random = RandomX.FiniteX(await Random.blob());
+        for ((divisionId, division) in Trie.iter(divisions)) {
+            let schedule = switch (await* generateSchedule(divisionId, division, random)) {
+                case (#ok(schedule)) schedule;
+                case (#oddNumberOfTeams) return #oddNumberOfTeams;
+                case (#notEnoughStadiums) return #notEnoughStadiums;
+            };
+
+            let divisionKey = { key = divisionId; hash = divisionId };
+            let (newDivisions, _) = Trie.put<Nat32, Division>(
+                divisions,
+                divisionKey,
+                Nat32.equal,
+                {
+                    division with
+                    schedule = ?schedule;
+                },
+            );
+            divisions := newDivisions;
+        };
+        #ok;
+    };
+
+    private func generateSchedule(
+        divisionId : Nat32,
+        division : Division,
+        random : RandomX.FiniteX,
+    ) : async* { #ok : [Week]; #oddNumberOfTeams; #notEnoughStadiums } {
+        let teamCount = Trie.size(teams);
+        if (teamCount % 2 == 1) {
+            return #oddNumberOfTeams;
+        };
+        let matchUpsPerWeek = teamCount / 2;
+        if (matchUpsPerWeek > Trie.size(stadiums)) {
+            return #notEnoughStadiums;
+        };
+        let ?randomizedTeams = Trie.iter(teams)
+        |> Iter.filter<(Principal, Team.Team)>(
+            _,
+            func(v) = v.1.divisionId == divisionId,
+        )
+        |> Iter.toArray(_)
+        |> random.shuffleElements(_) else Debug.trap("Not enough entropy");
+
+        let teamPairings = Buffer.Buffer<(Principal, Principal)>(teamCount * (teamCount - 1));
+        for (i in IterTools.range(0, teamCount - 2)) {
+            for (j in IterTools.range(i, teamCount - 1)) {
+                teamPairings.add((randomizedTeams.get(i).0, randomizedTeams.get(j).0));
+            };
+        };
+        let weekCount = if (teamPairings.size() % matchUpsPerWeek != 0) {
+            teamPairings.size() / matchUpsPerWeek + 1; // Round up weeks
+        } else {
+            teamPairings.size() / matchUpsPerWeek;
+        };
+        let today = LocalDateTime.now(#fixed(division.timeZone)).toComponents();
+        let nextMatchComponents = if (Components.dayOfWeek(today) == division.dayOfWeek) {
+            // If on the same day, put it a week out
+            Components.add(today, #days(7));
+        } else {
+            Components.advanceToDayOfWeek(today, division.dayOfWeek);
+        };
+        var nextMatchDate = LocalDateTime.LocalDateTime(
+            {
+                nextMatchComponents with
+                hour = division.timeOfDay.hour;
+                minute = division.timeOfDay.minute;
+                nanosecond = 0;
+            },
+            #fixed(division.timeZone),
+        );
+
+        let weeks = Buffer.Buffer<Week>(weekCount);
+        for (weekId in IterTools.range(0, weekCount)) {
+            let matchUps = Buffer.Buffer<MatchUp>(matchUpsPerWeek);
+
+            let ?randomizedStadiums = Trie.iter(stadiums)
+            |> Iter.toArray(_)
+            |> random.shuffleElements(_) else Debug.trap("Not enough entropy");
+            for (i in IterTools.range(0, matchUpsPerWeek)) {
+                let stadiumId = randomizedStadiums.get(i).0;
+                let teams = teamPairings.get(weekId * i);
+                let status = try {
+                    let stadium = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+                    let scheduleResult = await stadium.scheduleMatch(teams, nextMatchDate.toTime());
+                    switch (scheduleResult) {
+                        case (#ok(id)) #scheduled(id);
+                        case (#duplicateTeams) #failedToSchedule(#duplicateTeams);
+                        case (#timeNotAvailable) #failedToSchedule(#timeNotAvailable);
+                    };
+                } catch (err) {
+                    #failedToSchedule(#unknown(Error.message(err)));
+                };
+                matchUps.add({
+                    status = status;
+                    stadiumId = stadiumId;
+                    team1 = teams.0;
+                    team2 = teams.1;
+                });
+            };
+            weeks.add({
+                matchUps = Buffer.toArray(matchUps);
+            });
+            nextMatchDate := nextMatchDate.add(#weeks(1));
+        };
+        #ok(Buffer.toArray(weeks));
+    };
+
     public shared ({ caller }) func createTeam(
         name : Text,
         logoUrl : Text,
         tokenName : Text,
         tokenSymbol : Text,
+        divisionId : Nat32,
     ) : async CreateTeamResult {
 
         let nameAlreadyTaken = Trie.some(
@@ -96,6 +226,10 @@ actor LeagueActor {
         );
         if (nameAlreadyTaken) {
             return #nameTaken;
+        };
+        let divisionKey = { key = divisionId; hash = divisionId };
+        if (Trie.get(divisions, divisionKey, Nat32.equal) == null) {
+            return #divisionNotFound;
         };
         let leagueId = Principal.fromActor(LeagueActor);
         // Create canister for team ledger
@@ -109,21 +243,17 @@ actor LeagueActor {
             canister = teamActor;
             logoUrl = logoUrl;
             ledgerId = ledgerId;
+            divisionId = divisionId;
         };
         let teamKey = buildKey(teamId);
-        switch (Trie.put(teams, teamKey, Principal.equal, team)) {
-            case (_, ?previous) Prelude.unreachable(); // No way new id can conflict with existing one
-            case (newTeams, null) {
-                teams := newTeams;
-                return #ok(teamId);
-            };
-        };
+        let (newTeams, _) = Trie.put(teams, teamKey, Principal.equal, team);
+        teams := newTeams;
+        return #ok(teamId);
     };
 
     public shared ({ caller }) func mint(
         amount : Nat,
         teamId : Principal,
-        to : Principal,
     ) : async {
         #ok : ICRC1.TxIndex;
         #teamNotFound;
@@ -142,8 +272,8 @@ actor LeagueActor {
             created_at_time = ?Nat64.fromNat(Int.abs(Time.now()));
             memo = null;
             to = {
-                owner = to;
-                subaccount = null;
+                owner = teamId;
+                subaccount = ?Principal.toBlob(caller);
             };
         });
         switch (transferResult) {

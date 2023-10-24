@@ -1,15 +1,15 @@
 import { test } "mo:test";
-import RandomUtil "../../src/backend/RandomUtil";
 import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
+import RandomX "mo:random/RandomX";
 
 let randomIntTest = func(min : Int, max : Int, expectedCount : Nat, seed : Blob) {
     var i = 0;
-    let random = Random.Finite(seed);
+    let random = RandomX.FiniteX(seed);
     label l loop {
-        switch (RandomUtil.randomInt(random, min, max)) {
+        switch (random.int(min, max)) {
             case (null) {
                 break l;
             };

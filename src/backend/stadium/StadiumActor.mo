@@ -21,6 +21,7 @@ import Timer "mo:base/Timer";
 import MatchSimulator "MatchSimulator";
 import Random "mo:base/Random";
 import Error "mo:base/Error";
+import RandomX "mo:random/RandomX";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
     type Match = Stadium.Match;
@@ -96,8 +97,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (?_, null) return #completed(#absentTeam(#team2));
             case (?t1, ?t2)(t1, t2);
         };
-        let random = Random.Finite(await Random.blob());
-        let ?team1IsOffense = random.coin() else Prelude.unreachable();
+        let random = RandomX.FiniteX(await Random.blob());
+        let ?team1IsOffense = random.bool() else Prelude.unreachable();
         let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense, random);
         switch (initState) {
             case (null) return #completed(#allAbsent); // TODO
@@ -152,7 +153,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (#inProgress(s)) s;
             case (#notStarted) return #notStarted;
         };
-        let random = Random.Finite(await Random.blob());
+        let random = RandomX.FiniteX(await Random.blob());
         let newState = MatchSimulator.tick(state, random);
         switch (newState) {
             case (#completed(completedState)) {

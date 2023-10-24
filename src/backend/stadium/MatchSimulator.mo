@@ -16,7 +16,7 @@ import Iter "mo:base/Iter";
 import TrieMap "mo:base/TrieMap";
 import Float "mo:base/Float";
 import Text "mo:base/Text";
-import RandomUtil "../RandomUtil";
+import RandomX "mo:random/RandomX";
 import StadiumUtil "StadiumUtil";
 import IterTools "mo:itertools/Iter";
 
@@ -119,7 +119,7 @@ module {
         team1 : TeamInitData,
         team2 : TeamInitData,
         team1StartOffense : Bool,
-        rand : Random.Finite,
+        rand : RandomX.FiniteX,
     ) : ?InProgressMatchState {
         var players = Buffer.Buffer<Stadium.PlayerStateWithId>(team1.players.size() + team2.players.size());
         let addPlayer = func(player : PlayerWithId, teamId : TeamId) {
@@ -146,7 +146,7 @@ module {
         } else {
             (team2, team1);
         };
-        let ?randomIndex = RandomUtil.randomNat(rand, 0, offenseTeam.players.size() - 1) else return null;
+        let ?randomIndex = rand.nat(0, offenseTeam.players.size() - 1) else return null;
         let atBatPlayer = offenseTeam.players.get(randomIndex);
         let ?defense = buildStartingDefense(defenseTeam.players, rand) else return null;
 
@@ -181,13 +181,13 @@ module {
         };
     };
 
-    private func buildStartingDefense(players : [PlayerWithId], rand : Random.Finite) : ?Stadium.DefenseFieldState {
+    private func buildStartingDefense(players : [PlayerWithId], rand : RandomX.FiniteX) : ?Stadium.DefenseFieldState {
         let getRandomPlayer = func(position : FieldPosition) : ?PlayerId {
             let playersWithPosition = Array.filter(players, func(p : PlayerWithId) : Bool = p.position == position);
             if (playersWithPosition.size() < 1) {
                 return null;
             };
-            let ?index = RandomUtil.randomNat(rand, 0, playersWithPosition.size() - 1) else return null;
+            let ?index = rand.nat(0, playersWithPosition.size() - 1) else return null;
             ?playersWithPosition[index].id;
         };
 
@@ -260,13 +260,13 @@ module {
         );
     };
 
-    public func tick(state : InProgressMatchState, random : Random.Finite) : MatchState {
+    public func tick(state : InProgressMatchState, random : RandomX.FiniteX) : MatchState {
         let simulation = MatchSimulation(state, random);
         simulation.tick();
     };
 
     // TODO handle limited entropy from random by refetching entropy from the chain
-    class MatchSimulation(initialState : InProgressMatchState, random : Random.Finite) {
+    class MatchSimulation(initialState : InProgressMatchState, random : RandomX.FiniteX) {
 
         public func tick() : MatchState {
             pitch();
@@ -665,12 +665,12 @@ module {
         };
 
         private func randomInt(min : Int, max : Int) : Int {
-            let ?v = RandomUtil.randomInt(random, min, max) else trapWithEvents("Random ran out of entropy"); // TODO
+            let ?v = random.int(min, max) else trapWithEvents("Random ran out of entropy"); // TODO
             v;
         };
 
         private func randomNat(min : Nat, max : Nat) : Nat {
-            let ?v = RandomUtil.randomNat(random, min, max) else trapWithEvents("Random ran out of entropy"); // TODO
+            let ?v = random.nat(min, max) else trapWithEvents("Random ran out of entropy"); // TODO
             v;
         };
 

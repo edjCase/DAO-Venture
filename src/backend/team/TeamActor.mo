@@ -39,7 +39,7 @@ shared (install) actor class TeamActor(
 
   stable var leagueId = initLeagueId;
   var matchOptions : Trie.Trie<StadiumMatchId, Trie.Trie<Principal, MatchOptionsVote>> = Trie.empty();
-  var ledger : Types.TokenInterface = actor (Principal.toText(ledgerId));
+  let ledger : Types.TokenInterface = actor (Principal.toText(ledgerId));
 
   public composite query func getPlayers() : async [PlayerWithId] {
     let teamId = Principal.fromActor(this);
@@ -198,8 +198,8 @@ shared (install) actor class TeamActor(
   private func isTeamOwner(caller : Principal) : async Bool {
     // TODO change to staking
     let tokenCount = await ledger.icrc1_balance_of({
-      owner = caller;
-      subaccount = null;
+      owner = Principal.fromActor(this);
+      subaccount = ?Principal.toBlob(caller);
     });
     return tokenCount > 0;
   };

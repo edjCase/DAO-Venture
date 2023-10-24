@@ -1,8 +1,9 @@
 [dependencies]
 base = "0.9.6"
 itertools = "0.1.2"
-datetime = "0.1.1"
+datetime = "https://github.com/edjCase/motoko_datetime#28e765bf5bb6b9d75a9416713ab863bea0d4a61f"
 ic = "0.2.0"
 test = "1.0.1"
 xtended-text = "0.2.5"
 icrc1 = "0.0.1"
+random = "https://github.com/edjCase/motoko_random#fbddcad86c48325aaebdf40b3f24ee4fdea12590"
