@@ -48,7 +48,6 @@ module {
     };
 
     public type Team = {
-        canister : TeamActor;
         name : Text;
         logoUrl : Text;
         ledgerId : Principal;

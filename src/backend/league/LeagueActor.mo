@@ -35,12 +35,17 @@ actor LeagueActor {
     type MatchUp = League.MatchUp;
     type Week = League.Week;
     type ScheduleMatchResult = League.ScheduleMatchResult;
+    type CreateStadiumRequest = League.CreateStadiumRequest;
     type CreateStadiumResult = League.CreateStadiumResult;
     type CreateTeamResult = League.CreateTeamResult;
+    type CreateTeamRequest = League.CreateTeamRequest;
+    type CreateDivisionRequest = League.CreateDivisionRequest;
+    type CreateDivisionResult = League.CreateDivisionResult;
     type TimeOfDay = League.TimeOfDay;
     type DayOfWeek = League.DayOfWeek;
     type StadiumInfo = League.StadiumInfo;
     type TeamInfo = League.TeamInfo;
+    type DivisionInfo = League.DivisionInfo;
     type Division = League.Division;
     type LedgerActor = Token.Token;
 
@@ -69,32 +74,46 @@ actor LeagueActor {
             },
         );
     };
+    public query func getDivisions() : async [DivisionInfo] {
+        Trie.toArray(
+            divisions,
+            func(k : Nat32, v : Division) : DivisionInfo = {
+                id = k;
+                name = v.name;
+                dayOfWeek = v.dayOfWeek;
+                timeOfDay = v.timeOfDay;
+                timeZoneOffsetSeconds = v.timeZoneOffsetSeconds;
+                schedule = v.schedule;
+            },
+        );
+    };
 
-    public shared ({ caller }) func createDivision(
-        name : Text,
-        dayOfWeek : DayOfWeek,
-        timeZone : TimeZone.FixedTimeZone,
-        timeOfDay : TimeOfDay,
-    ) : async {
-        #ok;
-    } {
+    public shared ({ caller }) func createDivision(request : CreateDivisionRequest) : async CreateDivisionResult {
         let leagueId = Principal.fromActor(LeagueActor);
         // TODO
         // if (caller != leagueId) {
         //   return #notAuthorized;
         // }
+
+        let nameAlreadyTaken = Trie.some(
+            divisions,
+            func(k : Nat32, v : Division) : Bool = v.name == request.name,
+        );
+        if (nameAlreadyTaken) {
+            return #nameTaken;
+        };
         let divisionId : Nat32 = Nat32.fromNat(Trie.size(divisions));
         let division : Division = {
-            name = name;
-            dayOfWeek = dayOfWeek;
-            timeZone = timeZone;
-            timeOfDay = timeOfDay;
+            name = request.name;
+            dayOfWeek = request.dayOfWeek;
+            timeZoneOffsetSeconds = request.timeZoneOffsetSeconds;
+            timeOfDay = request.timeOfDay;
             schedule = null;
         };
         let divisionKey = { key = divisionId; hash = divisionId };
         let (newDivisions, _) = Trie.put(divisions, divisionKey, Nat32.equal, division);
         divisions := newDivisions;
-        return #ok;
+        return #ok(divisionId);
     };
 
     public shared ({ caller }) func setSchedule() : async {
@@ -157,22 +176,13 @@ actor LeagueActor {
         } else {
             teamPairings.size() / matchUpsPerWeek;
         };
-        let today = LocalDateTime.now(#fixed(division.timeZone)).toComponents();
-        let nextMatchComponents = if (Components.dayOfWeek(today) == division.dayOfWeek) {
+        let today = LocalDateTime.now(#fixed(#seconds(division.timeZoneOffsetSeconds)));
+        var nextMatchDate = if (today.dayOfWeek() == division.dayOfWeek) {
             // If on the same day, put it a week out
-            Components.add(today, #days(7));
+            today.add(#days(7));
         } else {
-            Components.advanceToDayOfWeek(today, division.dayOfWeek);
+            today.advanceToDayOfWeek(division.dayOfWeek, true);
         };
-        var nextMatchDate = LocalDateTime.LocalDateTime(
-            {
-                nextMatchComponents with
-                hour = division.timeOfDay.hour;
-                minute = division.timeOfDay.minute;
-                nanosecond = 0;
-            },
-            #fixed(division.timeZone),
-        );
 
         let weeks = Buffer.Buffer<Week>(weekCount);
         for (weekId in IterTools.range(0, weekCount)) {
@@ -210,40 +220,35 @@ actor LeagueActor {
         #ok(Buffer.toArray(weeks));
     };
 
-    public shared ({ caller }) func createTeam(
-        name : Text,
-        logoUrl : Text,
-        tokenName : Text,
-        tokenSymbol : Text,
-        divisionId : Nat32,
-    ) : async CreateTeamResult {
+    public shared ({ caller }) func createTeam(request : CreateTeamRequest) : async CreateTeamResult {
 
         let nameAlreadyTaken = Trie.some(
             teams,
-            func(k : Principal, v : Team.Team) : Bool {
-                v.name == name;
-            },
+            func(k : Principal, v : Team.Team) : Bool = v.name == request.name,
         );
         if (nameAlreadyTaken) {
             return #nameTaken;
         };
-        let divisionKey = { key = divisionId; hash = divisionId };
+        let divisionKey = {
+            key = request.divisionId;
+            hash = request.divisionId;
+        };
         if (Trie.get(divisions, divisionKey, Nat32.equal) == null) {
             return #divisionNotFound;
         };
         let leagueId = Principal.fromActor(LeagueActor);
         // Create canister for team ledger
-        let ledger : LedgerActor = await createTeamLedger(tokenName, tokenSymbol);
+        let ledger : LedgerActor = await createTeamLedger(request.tokenName, request.tokenSymbol);
         let ledgerId = Principal.fromActor(ledger);
         // Create canister for team logic
         let teamActor = await createTeamActor(ledgerId);
         let teamId = Principal.fromActor(teamActor);
         let team : Team.Team = {
-            name = name;
+            name = request.name;
             canister = teamActor;
-            logoUrl = logoUrl;
+            logoUrl = request.logoUrl;
             ledgerId = ledgerId;
-            divisionId = divisionId;
+            divisionId = request.divisionId;
         };
         let teamKey = buildKey(teamId);
         let (newTeams, _) = Trie.put(teams, teamKey, Principal.equal, team);
@@ -282,27 +287,32 @@ actor LeagueActor {
         };
     };
 
-    public shared ({ caller }) func createStadium(name : Text) : async CreateStadiumResult {
+    public shared ({ caller }) func createStadium(request : CreateStadiumRequest) : async CreateStadiumResult {
         // TODO validate name
+
+        let nameAlreadyTaken = Trie.some(
+            stadiums,
+            func(k : Principal, v : Stadium.Stadium) : Bool = v.name == request.name,
+        );
+        if (nameAlreadyTaken) {
+            return #nameTaken;
+        };
 
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 3_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
-        let stadiumCanister = await StadiumCanister.StadiumActor(Principal.fromActor(LeagueActor));
+        let leagueId = Principal.fromActor(LeagueActor);
+        let stadiumCanister = await StadiumCanister.StadiumActor(leagueId);
+        let stadiumId = Principal.fromActor(stadiumCanister);
         let stadium : Stadium.Stadium = {
-            name = name;
-            canister = stadiumCanister;
+            id = stadiumId;
+            name = request.name;
         };
 
-        let stadiumId = Principal.fromActor(stadiumCanister);
         let stadiumKey = buildKey(stadiumId);
-        switch (Trie.put(stadiums, stadiumKey, Principal.equal, stadium)) {
-            case (_, ?previous) Prelude.unreachable(); // No way new id can conflict with existing one
-            case (newStadiums, null) {
-                stadiums := newStadiums;
-                return #ok(stadiumId);
-            };
-        };
+        let (newStadiums, _) = Trie.put(stadiums, stadiumKey, Principal.equal, stadium);
+        stadiums := newStadiums;
+        return #ok(stadiumId);
     };
 
     public shared ({ caller }) func scheduleMatch(
@@ -311,17 +321,20 @@ actor LeagueActor {
         time : Time.Time,
     ) : async ScheduleMatchResult {
         let ?stadium = Trie.get(stadiums, buildKey(stadiumId), Principal.equal) else return #stadiumNotFound;
-        await stadium.canister.scheduleMatch(teamIds, time);
+        let stadiumActor = actor (Principal.toText(stadiumId)) : StadiumCanister.StadiumActor;
+        await stadiumActor.scheduleMatch(teamIds, time);
     };
 
     public shared ({ caller }) func updateLeagueCanisters() : async () {
         let leagueId = Principal.fromActor(LeagueActor);
         for ((teamId, team) in Trie.iter(teams)) {
             let ownerId = caller; // TODO - get owner from team
-            let _ = await (system TeamActor.TeamActor)(#upgrade(team.canister))(leagueId, ownerId);
+            let teamActor = actor (Principal.toText(teamId)) : TeamActor.TeamActor;
+            let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(leagueId, ownerId);
         };
         for ((stadiumId, stadium) in Trie.iter(stadiums)) {
-            let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadium.canister))(leagueId);
+            let stadiumActor = actor (Principal.toText(stadiumId)) : StadiumCanister.StadiumActor;
+            let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadiumActor))(leagueId);
         };
     };
 

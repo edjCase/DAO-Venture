@@ -163,7 +163,6 @@ module {
     };
 
     public type Stadium = {
-        canister : StadiumActor;
         name : Text;
     };
 

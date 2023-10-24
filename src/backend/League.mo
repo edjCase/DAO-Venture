@@ -4,14 +4,34 @@ import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 
 module {
-
+    public type CreateDivisionRequest = {
+        name : Text;
+        dayOfWeek : DayOfWeek;
+        timeZoneOffsetSeconds : Nat;
+        timeOfDay : TimeOfDay;
+    };
+    public type CreateDivisionResult = {
+        #ok : Nat32;
+        #nameTaken;
+    };
+    public type CreateTeamRequest = {
+        name : Text;
+        logoUrl : Text;
+        tokenName : Text;
+        tokenSymbol : Text;
+        divisionId : Nat32;
+    };
     public type CreateTeamResult = {
         #ok : Principal;
         #nameTaken;
         #divisionNotFound;
     };
+    public type CreateStadiumRequest = {
+        name : Text;
+    };
     public type CreateStadiumResult = {
         #ok : Principal;
+        #nameTaken;
     };
     public type ScheduleMatchResult = Stadium.ScheduleMatchResult or {
         #stadiumNotFound;
@@ -26,6 +46,14 @@ module {
     public type StadiumInfo = {
         id : Principal;
         name : Text;
+    };
+    public type DivisionInfo = {
+        id : Nat32;
+        name : Text;
+        dayOfWeek : DayOfWeek;
+        timeZoneOffsetSeconds : Nat;
+        timeOfDay : TimeOfDay;
+        schedule : ?[Week];
     };
     public type CreateTeamDaoResult = {
         #ok : Principal;
@@ -44,7 +72,7 @@ module {
     public type Division = {
         name : Text;
         dayOfWeek : DayOfWeek;
-        timeZone : TimeZone.FixedTimeZone;
+        timeZoneOffsetSeconds : Nat;
         timeOfDay : TimeOfDay;
         schedule : ?[Week];
     };
