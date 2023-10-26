@@ -11,7 +11,7 @@
   <Router>
     <Header />
     <Route path="/" component={Home} />
-    <Route path="/matches/:id" let:params component={Match} />
+    <Route path="/matches/:leagueMatchId" let:params component={Match} />
     <Route path="/matches" component={Matches} />
     <Route path="*" component={NotFound} />
   </Router>

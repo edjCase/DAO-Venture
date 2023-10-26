@@ -99,7 +99,7 @@ shared (install) actor class TeamActor(
           matchOptions,
           matchKey,
           Text.equal,
-          matchVotes,
+          newMatchVotes,
         );
         matchOptions := newOptions;
         #ok;
@@ -111,7 +111,7 @@ shared (install) actor class TeamActor(
     stadiumId : Principal,
     matchId : Nat32,
   ) : async GetMatchOptionsResult {
-    if (caller != stadiumId or caller != leagueId) {
+    if (caller != stadiumId and caller != leagueId) {
       return #notAuthorized;
     };
     let stadiumMatchId = buildStadiumMatchId(stadiumId, matchId);
@@ -194,11 +194,13 @@ shared (install) actor class TeamActor(
 
   private func isTeamOwner(caller : Principal) : async Bool {
     // TODO change to staking
-    let tokenCount = await ledger.icrc1_balance_of({
-      owner = Principal.fromActor(this);
-      subaccount = ?Principal.toBlob(caller);
-    });
-    return tokenCount > 0;
+    // TODO re-enable
+    // let tokenCount = await ledger.icrc1_balance_of({
+    //   owner = Principal.fromActor(this);
+    //   subaccount = ?Principal.toBlob(caller);
+    // });
+    // return tokenCount > 0;
+    return true;
   };
 
 };

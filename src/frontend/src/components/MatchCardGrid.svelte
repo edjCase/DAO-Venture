@@ -19,7 +19,7 @@
   <div>Loading...</div>
 {:else}
   <div class="match-card-grid">
-    {#each matches as match (match.id)}
+    {#each matches as match}
       <MatchCard {match} />
     {/each}
   </div>

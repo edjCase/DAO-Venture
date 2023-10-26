@@ -20,7 +20,7 @@
   <div>Loading...</div>
 {:else}
   <div class="card">
-    <Link to={`/matches/${match.id}`}>
+    <Link to={`/matches/${match.id}-${match.stadiumId.toString()}`}>
       <div class="title">
         <div class="team">
           <div class="name">{team1.name}</div>

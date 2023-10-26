@@ -120,7 +120,7 @@ module {
         team2 : TeamInitData,
         team1StartOffense : Bool,
         rand : RandomX.FiniteX,
-    ) : ?InProgressMatchState {
+    ) : InProgressMatchState {
         var players = Buffer.Buffer<Stadium.PlayerStateWithId>(team1.players.size() + team2.players.size());
         let addPlayer = func(player : PlayerWithId, teamId : TeamId) {
             let playerState : Stadium.PlayerStateWithId = {
@@ -146,11 +146,11 @@ module {
         } else {
             (team2, team1);
         };
-        let ?randomIndex = rand.nat(0, offenseTeam.players.size() - 1) else return null;
+        let ?randomIndex = rand.nat(0, offenseTeam.players.size() - 1) else Debug.trap("No more random entropy");
         let atBatPlayer = offenseTeam.players.get(randomIndex);
-        let ?defense = buildStartingDefense(defenseTeam.players, rand) else return null;
+        let ?defense = buildStartingDefense(defenseTeam.players, rand) else Debug.trap("No more random entropy");
 
-        ?{
+        {
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = {
                 id = team1.id;
@@ -665,12 +665,12 @@ module {
         };
 
         private func randomInt(min : Int, max : Int) : Int {
-            let ?v = random.int(min, max) else trapWithEvents("Random ran out of entropy"); // TODO
+            let ?v = random.int(min, max) else trapWithEvents("No more random entropy"); // TODO
             v;
         };
 
         private func randomNat(min : Nat, max : Nat) : Nat {
-            let ?v = random.nat(min, max) else trapWithEvents("Random ran out of entropy"); // TODO
+            let ?v = random.nat(min, max) else trapWithEvents("No more random entropy"); // TODO
             v;
         };
 

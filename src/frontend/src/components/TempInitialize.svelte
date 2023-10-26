@@ -44,9 +44,10 @@
       {
         name: "Division 1",
       },
-      {
-        name: "Division 2",
-      },
+      // TODO multiple divisions
+      // {
+      //   name: "Division 2",
+      // },
     ];
     let promises = [];
     for (let i in divisions) {
@@ -232,7 +233,7 @@
           "https://imgs.search.brave.com/4ZUlZt5Y_B7DSKkE3GO58ZVXlM2RxGkoOukG7U6Gqqk/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9pbWcu/ZnJlZXBpay5jb20v/ZnJlZS12ZWN0b3Iv/amVsbHlmaXNoLXNl/YS1hbmltYWwtY2Fy/dG9vbi1zdGlja2Vy/XzEzMDgtNzg1MzAu/anBnP3NpemU9NjI2/JmV4dD1qcGc",
         tokenName: "Jellyz",
         tokenSymbol: "JELZ",
-        divisionId: 1,
+        divisionId: 0,
         players: [
           {
             name: "Jellybean Jill",
@@ -307,7 +308,7 @@
           "https://imgs.search.brave.com/Rm7Nj0SD_nUMzAjs3we-upMoynWtEwkB2WacPgf9IAQ/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9tZWRp/YS5pc3RvY2twaG90/by5jb20vaWQvMTIw/OTE0MjI2Mi92ZWN0/b3IvZnJvZy1sb2dv/LmpwZz9zPTYxMng2/MTImdz0wJms9MjAm/Yz02YU4tSF83eUNH/bEwzQmZ1YVcwY3hl/cmo4bzNmd25WZkVP/TnZMOHVxVE80PQ",
         tokenName: "Toadz",
         tokenSymbol: "TOADZ",
-        divisionId: 1,
+        divisionId: 0,
         players: [
           {
             name: "Toadstool Todd",

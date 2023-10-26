@@ -149,9 +149,10 @@ actor LeagueActor {
             hash = divisionId;
         };
         let ?division = Trie.get(divisions, divisionKey, Nat32.equal) else return #error(#divisionNotFound);
-        if (division.schedule != null) {
-            return #error(#alreadyScheduled);
-        };
+        // TODO re-enable
+        // if (division.schedule != null) {
+        //     return #error(#alreadyScheduled);
+        // };
 
         let schedule = switch (await* generateSchedule(divisionId, start, random)) {
             case (#ok(schedule)) schedule;
@@ -204,19 +205,14 @@ actor LeagueActor {
             let matchUps = Buffer.Buffer<MatchUp>(matchUpCountPerWeek);
 
             // Round robin tournament algorithm
-            // Split teams into two halves, then rotate them each week
-            let (leftIter, rightIter) = IterTools.splitAt(teamOrderForWeek.vals(), teamOrderForWeek.size() / 2);
-            let firstHalf = Buffer.fromIter<Principal>(leftIter);
-            let secondHalf = Buffer.fromIter<Principal>(rightIter);
-            Buffer.reverse(secondHalf); // Reverse second half
 
             let ?randomizedStadiums = Trie.iter(stadiums)
             |> Iter.toArray(_)
             |> random.shuffleElements(_) else Debug.trap("Not enough entropy");
             for (matchUpIndex in IterTools.range(0, matchUpCountPerWeek)) {
 
-                let team1 = firstHalf.get(matchUpIndex);
-                let team2 = secondHalf.get(matchUpIndex);
+                let team1 = teamOrderForWeek.get(matchUpIndex);
+                let team2 = teamOrderForWeek.get(matchUpIndex + matchUpCountPerWeek); // Second half of teams
 
                 let stadiumId = randomizedStadiums.get(matchUpIndex).0;
                 let teams = (team1, team2);
@@ -243,9 +239,17 @@ actor LeagueActor {
             });
             nextMatchDate := nextMatchDate.add(#weeks(1));
             // Rotate order of teams
-            // Split off the first item, then append it to the end
-            let (firstItem, newOrder) = Buffer.split(teamOrderForWeek, 1);
-            newOrder.append(firstItem);
+            // 1) Freeze the first team
+            // 2) Bring the last team to the second position
+            // 3) Rotate the rest of the teams by one position
+            let firstTeam = teamOrderForWeek.get(0);
+            let lastTeam = teamOrderForWeek.get(teamOrderForWeek.size() - 1);
+            let newOrder = Buffer.Buffer<Principal>(teamCount);
+            newOrder.add(firstTeam);
+            newOrder.add(lastTeam);
+            for (i in IterTools.range(1, teamCount - 1)) {
+                newOrder.add(teamOrderForWeek.get(i));
+            };
             teamOrderForWeek := newOrder;
         };
         if (weeks.size() != weekCount) {

@@ -2,11 +2,64 @@
   import {
     leagueAgentFactory,
     type DivisionScheduleRequest,
+    type DivisionSchedule,
+    type Team,
+    type Stadium,
   } from "../ic-agent/League";
   import { divisionStore } from "../stores/DivisionStore";
+  import { matchStore } from "../stores/MatchStore";
+  import { stadiumStore } from "../stores/StadiumStore";
+  import { teamStore } from "../stores/TeamStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
 
-  $: divisions = $divisionStore;
+  let divisions;
+  let stadiums;
+
+  let mapSchedule = (
+    schedule: DivisionSchedule,
+    teams: Team[],
+    stadiums: Stadium[]
+  ) => {
+    let weeks = schedule.weeks.map((s) => ({
+      ...s,
+      matchUps: s.matchUps.map((m) => ({
+        ...m,
+        team1Name:
+          teams.find((t) => t.id.compareTo(m.team1) == "eq")?.name ?? "",
+        team2Name:
+          teams.find((t) => t.id.compareTo(m.team2) == "eq")?.name ?? "",
+        stadiumName:
+          stadiums.find((s) => s.id.compareTo(m.stadiumId) == "eq")?.name ?? "",
+      })),
+    }));
+    return {
+      ...schedule,
+      weeks: weeks,
+    };
+  };
+  let mapDivisions = (divisions, teams, stadiums) => {
+    return divisions.map((d) => ({
+      ...d,
+      schedule:
+        d.schedule.length == 0
+          ? null
+          : mapSchedule(d.schedule[0], teams, stadiums),
+    }));
+  };
+  // TODO is there a better way to have teams and division dependencies
+  teamStore.subscribe((teams) => {
+    if (!divisions) {
+      return;
+    }
+    divisions = mapDivisions($divisionStore, teams, $stadiumStore);
+  });
+
+  divisionStore.subscribe((newDivisions) => {
+    divisions = mapDivisions(newDivisions, $teamStore, $stadiumStore);
+  });
+  stadiumStore.subscribe((newStadiums) => {
+    divisions = mapDivisions($divisionStore, $teamStore, newStadiums);
+  });
 
   let startTimes: Record<string, string> = {};
   let schedule = async () => {
@@ -29,6 +82,7 @@
         if ("ok" in result) {
           console.log("Scheduled season");
           divisionStore.refetch();
+          matchStore.refetch();
         } else {
           console.log("Failed to schedule season", result);
         }
@@ -40,28 +94,32 @@
   {#each divisions as division}
     <span>
       <h2>Division: {division.name}</h2>
-      {#if division.schedule.length == 0}
+      {#if !division.schedule}
         <input
           type="datetime-local"
           on:change={(e) => (startTimes[division.id] = e.currentTarget.value)}
         />
       {:else}
         <p>Schedule:</p>
-        {#each division.schedule[0].weeks as week, index}
+        {#each division.schedule.weeks as week, index}
           <div>
             <div>Week {index + 1}</div>
             {#each week.matchUps as matchUp}
               <div>
-                {matchUp.team1} vs {matchUp.team2} at {matchUp.stadiumId}
+                {matchUp.team1Name}
+                vs
+                {matchUp.team2Name}
                 <div>
                   Status:
-                  {#if "scheduled" in matchUp.status}
-                    Scheduled. MatchId: {matchUp.status.scheduled}
-                  {:else}
-                    Failed to schedule. Error: {JSON.stringify(
-                      matchUp.status.failedToSchedule
-                    )}
-                  {/if}
+                  <div>
+                    {#if "scheduled" in matchUp.status}
+                      Scheduled - MatchId: {matchUp.status.scheduled} - {matchUp.stadiumName}
+                    {:else}
+                      Failed to schedule. Error: {JSON.stringify(
+                        matchUp.status.failedToSchedule
+                      )}
+                    {/if}
+                  </div>
                 </div>
               </div>
             {/each}

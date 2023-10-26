@@ -100,49 +100,39 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let random = RandomX.FiniteX(await Random.blob());
         let ?team1IsOffense = random.bool() else Prelude.unreachable();
         let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense, random);
-        switch (initState) {
-            case (null) return #completed(#allAbsent); // TODO
-            case (?s) {
-                #ok(s);
-            };
-        };
+        #ok(initState);
     };
 
     private func createTeamInit(matchId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
         let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
         let stadiumId = Principal.fromActor(this);
-        let options : ?MatchOptions = try {
+        let options : MatchOptions = try {
             // Get match options from the team itself
             let result = await teamActor.getMatchOptions(stadiumId, matchId);
             switch (result) {
-                case (#noVotes) null;
-                case (#ok(o)) ?o;
-                case (#notAuthorized) null;
+                case (#noVotes) return null;
+                case (#ok(o)) o;
+                case (#notAuthorized) Debug.trap("Stadium is not authorized to get match options from team: " # Principal.toText(team.id));
             };
         } catch (err : Error.Error) {
             Debug.print("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
-            null;
+            return null;
         };
-        switch (options) {
-            case (null) null;
-            case (?o) {
-                var specialRuleVotes = Trie.empty<Nat32, Nat>();
-                for ((id, vote) in Iter.fromArray(o.specialRuleVotes)) {
-                    let key = {
-                        hash = id;
-                        key = id;
-                    };
-                    let (newVotes, _) = Trie.put(specialRuleVotes, key, Nat32.equal, vote);
-                    specialRuleVotes := newVotes;
-                };
-                ?{
-                    id = team.id;
-                    players = teamPlayers;
-                    offeringId = o.offeringId;
-                    specialRuleVotes = specialRuleVotes;
-                };
+        var specialRuleVotes = Trie.empty<Nat32, Nat>();
+        for ((id, vote) in Iter.fromArray(options.specialRuleVotes)) {
+            let key = {
+                hash = id;
+                key = id;
             };
+            let (newVotes, _) = Trie.put(specialRuleVotes, key, Nat32.equal, vote);
+            specialRuleVotes := newVotes;
+        };
+        ?{
+            id = team.id;
+            players = teamPlayers;
+            offeringId = options.offeringId;
+            specialRuleVotes = specialRuleVotes;
         };
     };
 

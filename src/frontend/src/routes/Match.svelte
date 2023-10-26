@@ -12,8 +12,13 @@
   } from "../ic-agent/Stadium";
   import FieldState from "../components/FieldState.svelte";
   import { Principal } from "@dfinity/principal";
+  import VoteForMatch from "../components/VoteForMatch.svelte";
 
-  export let id: number;
+  export let leagueMatchId: string;
+  let id = parseInt(leagueMatchId.split("-", 1)[0]);
+  let stadiumId = Principal.fromText(
+    leagueMatchId.slice(id.toString().length + 1)
+  );
 
   let match: Match;
   let team1: Team;
@@ -23,7 +28,9 @@
   let state: MatchState;
   let events: MatchEvent[];
   matchStore.subscribe((matches) => {
-    match = matches.find((item) => item.id == id);
+    match = matches.find(
+      (item) => item.id == id && item.stadiumId.compareTo(stadiumId) == "eq"
+    );
     if (match) {
       state = match.state;
       teamStore.subscribe((teams) => {
@@ -154,6 +161,20 @@
       {:else if "notStarted" in state}
         <h1>Upcoming</h1>
         <button on:click={start}>Start</button>
+
+        <div>
+          <h1>Vote for Matches</h1>
+          <VoteForMatch
+            matchId={match.id}
+            stadiumId={match.stadiumId}
+            teamId={team1.id}
+          />
+          <VoteForMatch
+            matchId={match.id}
+            stadiumId={match.stadiumId}
+            teamId={team2.id}
+          />
+        </div>
       {:else if "completed" in state}
         <div>Completed</div>
         {#if "played" in state.completed}

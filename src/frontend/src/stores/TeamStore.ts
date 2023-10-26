@@ -1,4 +1,4 @@
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { leagueAgentFactory, type Team } from "../ic-agent/League";
 
 
@@ -13,6 +13,7 @@ export const teamStore = (() => {
     });
   };
   refetch();
+
 
   return {
     subscribe,

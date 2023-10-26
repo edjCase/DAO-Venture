@@ -71,11 +71,6 @@
   <ScheduleSeason />
 </div>
 
-<div>
-  <h1>Vote for Matches</h1>
-  <VoteForMatch />
-</div>
-
 <hr style="margin-top: 400px;" />
 
 <div>
