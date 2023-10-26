@@ -33,7 +33,7 @@ import League "../League";
 
 actor LeagueActor {
     type MatchUp = League.MatchUp;
-    type Week = League.Week;
+    type SeasonWeek = League.SeasonWeek;
     type ScheduleMatchResult = League.ScheduleMatchResult;
     type CreateStadiumRequest = League.CreateStadiumRequest;
     type CreateStadiumResult = League.CreateStadiumResult;
@@ -41,12 +41,14 @@ actor LeagueActor {
     type CreateTeamRequest = League.CreateTeamRequest;
     type CreateDivisionRequest = League.CreateDivisionRequest;
     type CreateDivisionResult = League.CreateDivisionResult;
-    type TimeOfDay = League.TimeOfDay;
-    type DayOfWeek = League.DayOfWeek;
+    type ScheduleSeasonRequest = League.ScheduleSeasonRequest;
+    type ScheduleSeasonResult = League.ScheduleSeasonResult;
     type StadiumInfo = League.StadiumInfo;
     type TeamInfo = League.TeamInfo;
-    type DivisionInfo = League.DivisionInfo;
+    type DivisionWithId = League.DivisionWithId;
     type Division = League.Division;
+    type DivisionSchedule = League.DivisionSchedule;
+    type DivisionScheduleError = League.DivisionScheduleError;
     type LedgerActor = Token.Token;
 
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
@@ -74,15 +76,12 @@ actor LeagueActor {
             },
         );
     };
-    public query func getDivisions() : async [DivisionInfo] {
+    public query func getDivisions() : async [DivisionWithId] {
         Trie.toArray(
             divisions,
-            func(k : Nat32, v : Division) : DivisionInfo = {
+            func(k : Nat32, v : Division) : DivisionWithId = {
                 id = k;
                 name = v.name;
-                dayOfWeek = v.dayOfWeek;
-                timeOfDay = v.timeOfDay;
-                timeZoneOffsetSeconds = v.timeZoneOffsetSeconds;
                 schedule = v.schedule;
             },
         );
@@ -105,9 +104,6 @@ actor LeagueActor {
         let divisionId : Nat32 = Nat32.fromNat(Trie.size(divisions));
         let division : Division = {
             name = request.name;
-            dayOfWeek = request.dayOfWeek;
-            timeZoneOffsetSeconds = request.timeZoneOffsetSeconds;
-            timeOfDay = request.timeOfDay;
             schedule = null;
         };
         let divisionKey = { key = divisionId; hash = divisionId };
@@ -116,84 +112,114 @@ actor LeagueActor {
         return #ok(divisionId);
     };
 
-    public shared ({ caller }) func setSchedule() : async {
-        #ok;
-        #oddNumberOfTeams;
-        #notEnoughStadiums;
-    } {
+    public shared ({ caller }) func scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult {
         let random = RandomX.FiniteX(await Random.blob());
-        for ((divisionId, division) in Trie.iter(divisions)) {
-            let schedule = switch (await* generateSchedule(divisionId, division, random)) {
-                case (#ok(schedule)) schedule;
-                case (#oddNumberOfTeams) return #oddNumberOfTeams;
-                case (#notEnoughStadiums) return #notEnoughStadiums;
+        let divisionErrors = Buffer.Buffer<(Nat32, DivisionScheduleError)>(0);
+        label f for (divisionRequest in Iter.fromArray(request.divisions)) {
+            switch (await* scheduleDivision(divisionRequest.id, divisionRequest.start, random)) {
+                case (#ok(newDivision)) {
+                    let divisionKey = {
+                        key = divisionRequest.id;
+                        hash = divisionRequest.id;
+                    };
+                    let (newDivisions, _) = Trie.put<Nat32, Division>(
+                        divisions,
+                        divisionKey,
+                        Nat32.equal,
+                        newDivision,
+                    );
+                    divisions := newDivisions;
+                };
+                case (#error(e)) divisionErrors.add((divisionRequest.id, e));
             };
 
-            let divisionKey = { key = divisionId; hash = divisionId };
-            let (newDivisions, _) = Trie.put<Nat32, Division>(
-                divisions,
-                divisionKey,
-                Nat32.equal,
-                {
-                    division with
-                    schedule = ?schedule;
-                },
-            );
-            divisions := newDivisions;
+        };
+        if (divisionErrors.size() > 0) {
+            return #divisionErrors(Buffer.toArray(divisionErrors));
         };
         #ok;
     };
 
+    private func scheduleDivision(divisionId : Nat32, start : Time.Time, random : RandomX.FiniteX) : async* {
+        #ok : Division;
+        #error : DivisionScheduleError;
+    } {
+        let divisionKey = {
+            key = divisionId;
+            hash = divisionId;
+        };
+        let ?division = Trie.get(divisions, divisionKey, Nat32.equal) else return #error(#divisionNotFound);
+        if (division.schedule != null) {
+            return #error(#alreadyScheduled);
+        };
+
+        let schedule = switch (await* generateSchedule(divisionId, start, random)) {
+            case (#ok(schedule)) schedule;
+            case (#oddNumberOfTeams) return #error(#oddNumberOfTeams);
+            case (#notEnoughStadiums) return #error(#notEnoughStadiums);
+            case (#noTeamsInDivision) return #error(#noTeamsInDivision);
+        };
+        #ok({
+            division with schedule = ?schedule;
+        });
+    };
+
     private func generateSchedule(
         divisionId : Nat32,
-        division : Division,
+        start : Time.Time,
         random : RandomX.FiniteX,
-    ) : async* { #ok : [Week]; #oddNumberOfTeams; #notEnoughStadiums } {
-        let teamCount = Trie.size(teams);
-        if (teamCount % 2 == 1) {
-            return #oddNumberOfTeams;
-        };
-        let matchUpsPerWeek = teamCount / 2;
-        if (matchUpsPerWeek > Trie.size(stadiums)) {
-            return #notEnoughStadiums;
-        };
+    ) : async* {
+        #ok : DivisionSchedule;
+        #oddNumberOfTeams;
+        #notEnoughStadiums;
+        #noTeamsInDivision;
+    } {
         let ?randomizedTeams = Trie.iter(teams)
-        |> Iter.filter<(Principal, Team.Team)>(
-            _,
-            func(v) = v.1.divisionId == divisionId,
-        )
+        // Only teams in this division
+        |> Iter.filter<(Principal, Team.Team)>(_, func(v) = v.1.divisionId == divisionId)
+        // Only have team ids
+        |> Iter.map(_, func(v : (Principal, Team.Team)) : Principal = v.0)
         |> Iter.toArray(_)
         |> random.shuffleElements(_) else Debug.trap("Not enough entropy");
 
-        let teamPairings = Buffer.Buffer<(Principal, Principal)>(teamCount * (teamCount - 1));
-        for (i in IterTools.range(0, teamCount - 2)) {
-            for (j in IterTools.range(i, teamCount - 1)) {
-                teamPairings.add((randomizedTeams.get(i).0, randomizedTeams.get(j).0));
-            };
+        let teamCount = randomizedTeams.size();
+        if (teamCount == 0) {
+            return #noTeamsInDivision;
         };
-        let weekCount = if (teamPairings.size() % matchUpsPerWeek != 0) {
-            teamPairings.size() / matchUpsPerWeek + 1; // Round up weeks
-        } else {
-            teamPairings.size() / matchUpsPerWeek;
+        if (teamCount % 2 == 1) {
+            return #oddNumberOfTeams;
         };
-        let today = LocalDateTime.now(#fixed(#seconds(division.timeZoneOffsetSeconds)));
-        var nextMatchDate = if (today.dayOfWeek() == division.dayOfWeek) {
-            // If on the same day, put it a week out
-            today.add(#days(7));
-        } else {
-            today.advanceToDayOfWeek(division.dayOfWeek, true);
+        let matchUpCountPerWeek = teamCount / 2;
+        if (matchUpCountPerWeek > Trie.size(stadiums)) {
+            // Need at least one stadium per matchup
+            return #notEnoughStadiums;
         };
+        let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
+        var nextMatchDate = DateTime.fromTime(start);
 
-        let weeks = Buffer.Buffer<Week>(weekCount);
-        for (weekId in IterTools.range(0, weekCount)) {
-            let matchUps = Buffer.Buffer<MatchUp>(matchUpsPerWeek);
+        var teamOrderForWeek = Buffer.fromArray<Principal>(randomizedTeams);
+        let weeks = Buffer.Buffer<SeasonWeek>(weekCount);
+        for (weekIndex in IterTools.range(0, weekCount)) {
+
+            let matchUps = Buffer.Buffer<MatchUp>(matchUpCountPerWeek);
+
+            // Round robin tournament algorithm
+            // Split teams into two halves, then rotate them each week
+            let (leftIter, rightIter) = IterTools.splitAt(teamOrderForWeek.vals(), teamOrderForWeek.size() / 2);
+            let firstHalf = Buffer.fromIter<Principal>(leftIter);
+            let secondHalf = Buffer.fromIter<Principal>(rightIter);
+            Buffer.reverse(secondHalf); // Reverse second half
 
             let ?randomizedStadiums = Trie.iter(stadiums)
             |> Iter.toArray(_)
             |> random.shuffleElements(_) else Debug.trap("Not enough entropy");
-            for (i in IterTools.range(0, matchUpsPerWeek)) {
-                let stadiumId = randomizedStadiums.get(i).0;
-                let teams = teamPairings.get(weekId * i);
+            for (matchUpIndex in IterTools.range(0, matchUpCountPerWeek)) {
+
+                let team1 = firstHalf.get(matchUpIndex);
+                let team2 = secondHalf.get(matchUpIndex);
+
+                let stadiumId = randomizedStadiums.get(matchUpIndex).0;
+                let teams = (team1, team2);
                 let status = try {
                     let stadium = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
                     let scheduleResult = await stadium.scheduleMatch(teams, nextMatchDate.toTime());
@@ -216,8 +242,18 @@ actor LeagueActor {
                 matchUps = Buffer.toArray(matchUps);
             });
             nextMatchDate := nextMatchDate.add(#weeks(1));
+            // Rotate order of teams
+            // Split off the first item, then append it to the end
+            let (firstItem, newOrder) = Buffer.split(teamOrderForWeek, 1);
+            newOrder.append(firstItem);
+            teamOrderForWeek := newOrder;
         };
-        #ok(Buffer.toArray(weeks));
+        if (weeks.size() != weekCount) {
+            Debug.trap("Only " # Nat.toText(weeks.size()) # " weeks were generated, but " # Nat.toText(weekCount) # " were expected");
+        };
+        #ok({
+            weeks = Buffer.toArray(weeks);
+        });
     };
 
     public shared ({ caller }) func createTeam(request : CreateTeamRequest) : async CreateTeamResult {

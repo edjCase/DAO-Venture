@@ -3,7 +3,7 @@
   import { stadiumStore } from "../stores/StadiumStore";
   import CardList from "./CardList.svelte";
   import { Principal } from "@dfinity/principal";
-  import { teamAgentFactory } from "../ic-agent/Team";
+  import { teamAgentFactory, type MatchOptionsVote } from "../ic-agent/Team";
   import { stadiumAgentFactory, type Match } from "../ic-agent/Stadium";
   $: teams = $teamStore;
   $: stadiums = $stadiumStore;
@@ -13,7 +13,7 @@
   let matchId: number;
   let previousMatchId: number;
   let selectedOffering = -1;
-  let specialRuleVotes: [number, bigint][] = [];
+  let selectedSpecialRule = -1;
   let offeringCards;
   let specialRuleCards;
   let match: Match;
@@ -64,7 +64,7 @@
     if (selectedOffering === -1) {
       errors.push("Offering is required");
     }
-    if (specialRuleVotes.length < 1) {
+    if (selectedSpecialRule === -1) {
       errors.push("Special Rule is required");
     }
     if (errors.length > 0) {
@@ -77,18 +77,23 @@
     if (!validate()) {
       return;
     }
-    let options = {
-      offeringId: selectedOffering,
-      specialRuleVotes: specialRuleVotes,
+    let request = {
+      stadiumId: Principal.from(stadiumId),
+      matchId: matchId,
+      vote: {
+        offeringId: selectedOffering,
+        specialRuleId: selectedOffering,
+      },
     };
+    console.log(`Voting for team ${teamId} and match ${matchId}`, request);
     teamAgentFactory(teamId)
-      .updateMatchOptions(Principal.from(stadiumId), matchId, options)
+      .voteForMatchOptions(request)
       .then((result) => {
-        console.log("Registered for match: ", result);
+        console.log("Voted for match: ", result);
         teamStore.refetch();
       })
       .catch((err) => {
-        console.log("Failed to make stadium: ", err);
+        console.log("Failed to vote for match: ", err);
       });
   };
 </script>
@@ -124,21 +129,10 @@
     </div>
     <div>
       <h2>Special Rule</h2>
-      <div class="special-rule-container">
-        {#each specialRuleCards as { id, title, description }, index}
-          <div class="title">{title}</div>
-          <div class="description">{description}</div>
-          <div>
-            <input
-              type="number"
-              value={specialRuleVotes[index] ? specialRuleVotes[index][1] : "0"}
-              on:change={(e) => {
-                specialRuleVotes[index] = [id, BigInt(e.currentTarget.value)];
-              }}
-            />
-          </div>
-        {/each}
-      </div>
+      <CardList
+        cards={specialRuleCards}
+        onSelect={(i) => (selectedSpecialRule = i)}
+      />
     </div>
     <button on:click={register}>Submit Vote</button>
   {/if}

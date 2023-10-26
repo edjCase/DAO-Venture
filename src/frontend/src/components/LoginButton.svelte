@@ -20,8 +20,11 @@
   };
   let logout = async () => {
     let authClient = await AuthClient.create();
-    await authClient.logout();
-    identityStore.set(null);
+    try {
+      await authClient.logout();
+    } finally {
+      identityStore.set(null);
+    }
   };
 </script>
 

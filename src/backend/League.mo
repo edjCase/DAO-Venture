@@ -4,11 +4,27 @@ import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 
 module {
+    public type ScheduleSeasonRequest = {
+        divisions : [DivisionScheduleRequest];
+    };
+    public type DivisionScheduleRequest = {
+        id : Nat32;
+        start : Time.Time;
+    };
+    public type ScheduleSeasonResult = {
+        #ok;
+        #divisionErrors : [(Nat32, DivisionScheduleError)];
+    };
+    public type DivisionScheduleError = {
+        #missingDivision;
+        #oddNumberOfTeams;
+        #notEnoughStadiums;
+        #divisionNotFound;
+        #alreadyScheduled;
+        #noTeamsInDivision;
+    };
     public type CreateDivisionRequest = {
         name : Text;
-        dayOfWeek : DayOfWeek;
-        timeZoneOffsetSeconds : Nat;
-        timeOfDay : TimeOfDay;
     };
     public type CreateDivisionResult = {
         #ok : Nat32;
@@ -47,36 +63,22 @@ module {
         id : Principal;
         name : Text;
     };
-    public type DivisionInfo = {
-        id : Nat32;
-        name : Text;
-        dayOfWeek : DayOfWeek;
-        timeZoneOffsetSeconds : Nat;
-        timeOfDay : TimeOfDay;
-        schedule : ?[Week];
-    };
     public type CreateTeamDaoResult = {
         #ok : Principal;
         #notAuthenticated;
         #error : Text;
     };
-    public type DayOfWeek = {
-        #sunday;
-        #monday;
-        #tuesday;
-        #wednesday;
-        #thursday;
-        #friday;
-        #saturday;
-    };
     public type Division = {
         name : Text;
-        dayOfWeek : DayOfWeek;
-        timeZoneOffsetSeconds : Nat;
-        timeOfDay : TimeOfDay;
-        schedule : ?[Week];
+        schedule : ?DivisionSchedule;
     };
-    public type Week = {
+    public type DivisionWithId = Division and {
+        id : Nat32;
+    };
+    public type DivisionSchedule = {
+        weeks : [SeasonWeek];
+    };
+    public type SeasonWeek = {
         matchUps : [MatchUp];
     };
     public type MatchUpStatus = {

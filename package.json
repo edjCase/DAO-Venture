@@ -1,0 +1,7 @@
+{
+    "scripts": {
+        "build": "dfx build",
+        "deploy": "dfx deploy",
+        "reset": "dfx stop && dfx start --clean --background && dfx deps deploy && dfx deploy --with-cycles 40000000000000"
+    }
+}

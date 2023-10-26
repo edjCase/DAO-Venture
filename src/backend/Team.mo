@@ -6,7 +6,7 @@ module {
     public type TeamActor = actor {
         getPlayers : composite query () -> async [Player.PlayerWithId];
         getMatchOptions : query (stadiumId : Principal, matchId : Nat32) -> async GetMatchOptionsResult;
-        voteForMatchOptions : (stadiumId : Principal, matchId : Nat32, vote : MatchOptionsVote) -> async VoteForMatchOptionsResult;
+        voteForMatchOptions : (request : VoteForMatchOptionsRequest) -> async VoteForMatchOptionsResult;
     };
 
     public type MatchVoteResult = {
@@ -35,6 +35,12 @@ module {
     public type MatchOptions = {
         offeringId : Nat32;
         specialRuleVotes : [(Nat32, Nat)];
+    };
+
+    public type VoteForMatchOptionsRequest = {
+        stadiumId : Principal;
+        matchId : Nat32;
+        vote : MatchOptionsVote;
     };
 
     public type VoteForMatchOptionsResult = {

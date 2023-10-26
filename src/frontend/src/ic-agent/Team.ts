@@ -23,6 +23,11 @@ export type VoteMatchOptionsResult = {
 } | {
   'teamNotInMatch': null
 };
+export type VoteMatchOptionsRequest = {
+  'stadiumId': Principal;
+  'matchId': number,
+  'vote': MatchOptionsVote
+};
 export type GetMatchOptionsResult = {
   'ok': null
 } | {
@@ -32,7 +37,7 @@ export type GetMatchOptionsResult = {
 };
 export interface _SERVICE {
   'getMatchOptions': ActorMethod<[Principal, number], GetMatchOptionsResult>,
-  'voteForMatchOptions': ActorMethod<[Principal, number, MatchOptionsVote], VoteMatchOptionsResult>,
+  'voteForMatchOptions': ActorMethod<[VoteMatchOptionsRequest], VoteMatchOptionsResult>,
 }
 
 
@@ -44,7 +49,12 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
   });
   const MatchOptionsVote = IDL.Record({
     'offeringId': IDL.Nat32,
-    'specialRuleVotes': IDL.Nat32
+    'specialRuleId': IDL.Nat32
+  });
+  const VoteMatchOptionsRequest = IDL.Record({
+    'stadiumId': IDL.Principal,
+    'matchId': IDL.Nat32,
+    'vote': MatchOptionsVote
   });
   const VoteMatchOptionsResult = IDL.Variant({
     'ok': IDL.Null,
@@ -61,7 +71,7 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'getMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32], [GetMatchOptionsResult], []),
-    'updateMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32, MatchOptionsVote], [VoteMatchOptionsResult], []),
+    'voteForMatchOptions': IDL.Func([VoteMatchOptionsRequest], [VoteMatchOptionsResult], []),
   });
 };
 export const teamAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

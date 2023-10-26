@@ -32,6 +32,7 @@ shared (install) actor class TeamActor(
   type MatchOptions = Team.MatchOptions;
   type MatchOptionsVote = Team.MatchOptionsVote;
   type VoteForMatchOptionsResult = Team.VoteForMatchOptionsResult;
+  type VoteForMatchOptionsRequest = Team.VoteForMatchOptionsRequest;
   type OfferingWithId = Stadium.OfferingWithId;
   type SpecialRuleWithId = Stadium.SpecialRuleWithId;
   type GetCyclesResult = Team.GetCyclesResult;
@@ -46,18 +47,14 @@ shared (install) actor class TeamActor(
     await PlayerLedgerActor.getTeamPlayers(?teamId);
   };
 
-  public shared ({ caller }) func voteForMatchOptions(
-    stadiumId : Principal,
-    matchId : Nat32,
-    vote : MatchOptionsVote,
-  ) : async VoteForMatchOptionsResult {
+  public shared ({ caller }) func voteForMatchOptions(request : VoteForMatchOptionsRequest) : async VoteForMatchOptionsResult {
     let isOwner = await isTeamOwner(caller);
     if (not isOwner) {
       return #notAuthorized;
     };
-    let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+    let stadiumActor = actor (Principal.toText(request.stadiumId)) : Stadium.StadiumActor;
     let match = try {
-      let ?match = await stadiumActor.getMatch(matchId) else return #matchNotFound;
+      let ?match = await stadiumActor.getMatch(request.matchId) else return #matchNotFound;
       match;
     } catch (err) {
       return #stadiumNotFound;
@@ -69,24 +66,24 @@ shared (install) actor class TeamActor(
     };
 
     let errors = Buffer.Buffer<Text>(0);
-    let offeringExists = IterTools.any(match.offerings.vals(), func(o : OfferingWithId) : Bool = o.id == vote.offeringId);
+    let offeringExists = IterTools.any(match.offerings.vals(), func(o : OfferingWithId) : Bool = o.id == request.vote.offeringId);
     if (not offeringExists) {
-      errors.add("Invalid offering: " # Nat32.toText(vote.offeringId));
+      errors.add("Invalid offering: " # Nat32.toText(request.vote.offeringId));
     };
-    let specialRuleExists = IterTools.any(match.specialRules.vals(), func(r : SpecialRuleWithId) : Bool = r.id == vote.specialRuleId);
+    let specialRuleExists = IterTools.any(match.specialRules.vals(), func(r : SpecialRuleWithId) : Bool = r.id == request.vote.specialRuleId);
     if (not specialRuleExists) {
-      errors.add("Invalid special rule: " # Nat32.toText(vote.specialRuleId));
+      errors.add("Invalid special rule: " # Nat32.toText(request.vote.specialRuleId));
     };
     if (errors.size() > 0) {
       return #invalid(Buffer.toArray(errors));
     };
 
-    let stadiumMatchId = buildStadiumMatchId(stadiumId, matchId);
+    let stadiumMatchId = buildStadiumMatchId(request.stadiumId, request.matchId);
     let matchKey = {
       key = stadiumMatchId;
       hash = Text.hash(stadiumMatchId);
     };
-    let matchVotes : Trie.Trie<Principal, MatchOptionsVote> = switch (Trie.get(matchOptions, matchKey, Text.equal)) {
+    let matchVotes = switch (Trie.get(matchOptions, matchKey, Text.equal)) {
       case (null) Trie.empty();
       case (?o) o;
     };
@@ -94,7 +91,7 @@ shared (install) actor class TeamActor(
       key = caller;
       hash = Principal.hash(caller);
     };
-    switch (Trie.put(matchVotes, voteKey, Principal.equal, vote)) {
+    switch (Trie.put(matchVotes, voteKey, Principal.equal, request.vote)) {
       case ((_, ?existingVote)) #alreadyVoted;
       case ((newMatchVotes, null)) {
         // Add vote

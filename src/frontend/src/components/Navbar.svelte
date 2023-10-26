@@ -2,6 +2,7 @@
   import { Link } from "svelte-routing";
   import ThemeToggle from "./ThemeToggle.svelte";
   import LoginButton from "./LoginButton.svelte";
+  import UpdateLeagueCanistersButton from "./UpdateLeagueCanistersButton.svelte";
 </script>
 
 <nav class="navbar">
@@ -24,6 +25,9 @@
     </li>
     <li>
       <LoginButton />
+    </li>
+    <li>
+      <UpdateLeagueCanistersButton />
     </li>
   </ul>
 </nav>
