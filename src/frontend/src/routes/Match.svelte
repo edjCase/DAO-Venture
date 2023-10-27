@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Events from "../components/Events.svelte";
+  import Turns from "../components/Turns.svelte";
   import ScoreHeader from "../components/ScoreHeader.svelte";
   import { matchStore } from "../stores/MatchStore";
   import { teamStore } from "../stores/TeamStore";
@@ -9,10 +9,12 @@
     type Match,
     type MatchState,
     type MatchEvent,
+    type MatchTurn,
   } from "../ic-agent/Stadium";
   import FieldState from "../components/FieldState.svelte";
   import { Principal } from "@dfinity/principal";
   import VoteForMatch from "../components/VoteForMatch.svelte";
+  import { toJsonString } from "../utils/JsonUtil";
 
   export let leagueMatchId: string;
   let id = parseInt(leagueMatchId.split("-", 1)[0]);
@@ -26,7 +28,7 @@
   let loadingTeams = true;
   let matchDetails;
   let state: MatchState;
-  let events: MatchEvent[];
+  let turns: MatchTurn[];
   matchStore.subscribe((matches) => {
     match = matches.find(
       (item) => item.id == id && item.stadiumId.compareTo(stadiumId) == "eq"
@@ -86,12 +88,6 @@
       tickLoop();
     }
   };
-  let s = (key, value) => {
-    if (typeof value === "bigint" || value instanceof Principal) {
-      return value.toString();
-    }
-    return value;
-  };
 
   $: {
     let team1Score: bigint;
@@ -101,12 +97,12 @@
       if ("inProgress" in state) {
         team1Score = state.inProgress.team1.score;
         team2Score = state.inProgress.team2.score;
-        events = state.inProgress.events;
+        turns = state.inProgress.turns;
       } else if ("completed" in state) {
         if ("played" in state.completed) {
           team1Score = state.completed.played.team1.score;
           team2Score = state.completed.played.team2.score;
-          events = state.completed.played.events;
+          turns = state.completed.played.turns;
           winner =
             "team1" in state.completed.played.winner
               ? match.teams[0].id
@@ -114,14 +110,14 @@
         } else {
           team1Score = BigInt(0);
           team2Score = BigInt(0);
-          events = [];
+          turns = [];
         }
       } else if ("notStarted" in state) {
         team1Score = BigInt(0);
         team2Score = BigInt(0);
-        events = [];
+        turns = [];
       } else {
-        throw "Invalid state: " + JSON.stringify(state, s, 2);
+        throw "Invalid state: " + toJsonString(state);
       }
 
       matchDetails = {
@@ -188,15 +184,15 @@
         <h1>Game hasnt started</h1>
       {/if}
 
-      <section class="match-events">
-        <h2>Events</h2>
-        <Events {events} />
+      <section class="match-turns">
+        <h2>Turns</h2>
+        <Turns {turns} />
       </section>
 
       <h2>JSON</h2>
       <pre>
-    {JSON.stringify(match, s, 2)}
-  </pre>
+        {toJsonString(match)}
+      </pre>
     </section>
   </section>
 {:else}
@@ -216,7 +212,7 @@
     align-items: center;
   }
 
-  .match-events {
+  .match-turns {
     display: flex;
     flex-direction: column;
     align-items: center;

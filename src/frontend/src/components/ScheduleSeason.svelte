@@ -11,6 +11,7 @@
   import { stadiumStore } from "../stores/StadiumStore";
   import { teamStore } from "../stores/TeamStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
+  import { toJsonString } from "../utils/JsonUtil";
 
   let divisions;
   let stadiums;
@@ -115,7 +116,7 @@
                     {#if "scheduled" in matchUp.status}
                       Scheduled - MatchId: {matchUp.status.scheduled} - {matchUp.stadiumName}
                     {:else}
-                      Failed to schedule. Error: {JSON.stringify(
+                      Failed to schedule. Error: {toJsonString(
                         matchUp.status.failedToSchedule
                       )}
                     {/if}

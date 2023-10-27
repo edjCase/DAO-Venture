@@ -37,35 +37,39 @@ module {
         #team2;
     };
 
-    public type EventEffect = {
-        #none;
-        #increaseScore : {
-            teamId : TeamId;
-            amount : Int;
-        };
-        #subPlayer : {
-            playerOutId : PlayerId;
-        };
-        #setPlayerCondition : {
-            playerId : PlayerId;
-            condition : Player.PlayerCondition;
-        };
-        #movePlayerToBase : {
-            playerId : PlayerId;
-            base : ?Base;
-        };
-        #addStrike : {
-            playerId : PlayerId;
-        };
-        #addOut : {
-            playerId : PlayerId;
-        };
-        #endRound;
+    public type Turn = {
+        events : [Event];
     };
 
     public type Event = {
-        description : Text;
-        effect : EventEffect;
+        #pitch : { pitchRoll : Nat };
+        #hit : { hitRoll : Nat };
+        #run : { base : Base; ballLocation : ?FieldPosition; runRoll : Nat };
+        #foul;
+        #strike;
+        #out : PlayerId;
+        #playerMovedBases : {
+            playerId : PlayerId;
+            base : Base;
+        };
+        #playerInjured : {
+            playerId : PlayerId;
+            injury : Player.Injury;
+        };
+        #playerSubstituted : {
+            playerId : PlayerId;
+        };
+        #score : {
+            teamId : TeamId;
+            amount : Int;
+        };
+        #endRound;
+        #endMatch : MatchEndReason;
+    };
+
+    public type MatchEndReason = {
+        #noMoreRounds;
+        #outOfPlayers : TeamId or { #bothTeams };
     };
 
     public type PlayerState = {
@@ -123,7 +127,7 @@ module {
         players : [PlayerStateWithId];
         batter : ?PlayerId;
         field : FieldState;
-        events : [Event];
+        turns : [Turn];
         round : Nat;
         outs : Nat;
         strikes : Nat;
@@ -139,7 +143,7 @@ module {
         team1 : CompletedTeamState;
         team2 : CompletedTeamState;
         winner : TeamId;
-        events : [Event];
+        turns : [Turn];
     };
 
     public type CompletedTeamState = {

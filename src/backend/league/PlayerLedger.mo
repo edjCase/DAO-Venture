@@ -141,6 +141,7 @@ actor PlayerLedger {
                 catching = 0;
                 defense = 0;
                 piety = 0;
+                speed = 0;
             };
             deity = #mischief;
         };

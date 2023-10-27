@@ -28,6 +28,7 @@ module {
         catching : Nat;
         defense : Nat;
         piety : Nat;
+        speed : Nat;
     };
 
     public type Injury = {

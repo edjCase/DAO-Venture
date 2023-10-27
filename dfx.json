@@ -11,27 +11,6 @@
       "main": "src/backend/league/PlayerLedger.mo",
       "type": "motoko"
     },
-    "static_frontend": {
-      "frontend": {
-        "entrypoint": "src/static-site/public/index.html"
-      },
-      "source": [
-        "src/static-site/public"
-      ],
-      "type": "assets"
-    },
-    "frontend": {
-      "dependencies": [
-        "league"
-      ],
-      "frontend": {
-        "entrypoint": "src/frontend/public/index.html"
-      },
-      "source": [
-        "src/frontend/public"
-      ],
-      "type": "assets"
-    },
     "internet_identity": {
       "type": "pull",
       "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"

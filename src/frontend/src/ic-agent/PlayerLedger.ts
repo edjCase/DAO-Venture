@@ -4,6 +4,7 @@ import { createActor } from './Actor';
 import { FieldPosition as FieldPositionModel } from '../models/FieldPosition';
 import { get } from 'svelte/store';
 import { identityStore } from '../stores/IdentityStore';
+import { toJsonString } from '../utils/JsonUtil';
 
 export type FieldPosition = { 'firstBase': null }
   | { 'secondBase': null }
@@ -158,5 +159,5 @@ export function unMapPosition(position: FieldPosition): FieldPositionModel {
     return FieldPositionModel.RightField;
   }
 
-  throw new Error("Invalid position: " + JSON.stringify(position));
+  throw new Error("Invalid position: " + toJsonString(position));
 }

@@ -44,8 +44,78 @@ export type FieldState = {
   'offense': OffenseFieldState,
   'defense': DefenseFieldState,
 }
+export type Base = {
+  'firstBase': null
+} | {
+  'secondBase': null
+} | {
+  'thirdBase': null
+} | {
+  'homeBase': null
+};
+export type PlayerInjury = {
+  'twistedAnkle': null
+} | {
+  'brokenLeg': null
+} | {
+  'brokenArm': null
+} | {
+  'concussion': null
+};
+export type MatchEndReason = {
+  'noMoreRounds': null
+} | {
+  'outOfPlayers': {
+    'team1': null
+  } | {
+    'team2': null
+  } | {
+    'bothTeams': null
+  }
+};
 export type MatchEvent = {
-  'description': string
+  'pitch': {
+    'pitchRoll': number,
+  }
+} | {
+  'hit': {
+    'hitRoll': number,
+  }
+} | {
+  'run': {
+    'base': Base,
+    'ballLocation': FieldPosition,
+    'runRoll': number,
+  }
+} | {
+  'foul': null
+} | {
+  'strike': null
+} | {
+  'out': number
+} | {
+  'playerMovedBases': {
+    'playerId': number,
+    'base': Base,
+  }
+} | {
+  'playerInjured': {
+    'playerId': number,
+    'injury': PlayerInjury,
+  }
+} | {
+  'playerSubstituted': {
+    'playerId': number,
+  }
+} | {
+  'score': {
+    'teamId': TeamId,
+    'amount': number,
+  }
+} | {
+  'endRound': null
+} | {
+  'endMatch': MatchEndReason
 };
 export type PlayerCondition = {
 
@@ -64,12 +134,15 @@ export type PlayerState = {
   // 'skills': PlayerSkills;
   // 'position': FieldPosition;
 };
+export type MatchTurn = {
+  'events': [MatchEvent],
+}
 export type InProgressMatchState = {
   'offenseTeamId': TeamId,
   'team1': TeamState,
   'team2': TeamState,
   'specialRuleId': [] | [number],
-  'events': [MatchEvent],
+  'turns': [MatchTurn],
   'field': FieldState,
   'round': bigint,
   'outs': bigint,
@@ -89,7 +162,7 @@ export type CompletedMatchResult = {
   team1: CompletedTeamState;
   team2: CompletedTeamState;
   winner: TeamId;
-  events: [MatchEvent];
+  turns: [MatchTurn];
 };
 export type CompletedMatchState = {
   'absentTeam': TeamId
@@ -177,12 +250,64 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'defense': DefenseFieldState,
     'offense': OffenseFieldState,
   });
-  const MatchEvent = IDL.Record({
-    'description': IDL.Text
+  const Base = IDL.Variant({
+    'firstBase': IDL.Null,
+    'secondBase': IDL.Null,
+    'thirdBase': IDL.Null,
+    'homeBase': IDL.Null
+  });
+  const FieldPosition = IDL.Variant({
+    'pitcher': IDL.Null,
+    'firstBase': IDL.Null,
+    'secondBase': IDL.Null,
+    'thirdBase': IDL.Null,
+    'shortStop': IDL.Null,
+    'leftField': IDL.Null,
+    'centerField': IDL.Null,
+    'rightField': IDL.Null
+  });
+  const PlayerInjury = IDL.Variant({
+    'twistedAnkle': IDL.Null,
+    'brokenLeg': IDL.Null,
+    'brokenArm': IDL.Null,
+    'concussion': IDL.Null
   });
   const TeamId = IDL.Variant({
     'team1': IDL.Null,
     'team2': IDL.Null
+  });
+  const MatchEndReason = IDL.Variant({
+    'noMoreRounds': IDL.Null,
+    'outOfPlayers': IDL.Variant({ 'team1': IDL.Null, 'team2': IDL.Null, 'bothTeams': IDL.Null }),
+  });
+  const MatchEvent = IDL.Variant({
+    'pitch': IDL.Record({ pitchRoll: IDL.Nat }),
+    'hit': IDL.Record({ hitRoll: IDL.Nat }),
+    'run': IDL.Record({
+      base: Base,
+      ballLocation: IDL.Opt(FieldPosition),
+      runRoll: IDL.Nat
+    }),
+    'foul': IDL.Null,
+    'strike': IDL.Null,
+    'out': IDL.Nat32,
+    'playerMovedBases': IDL.Record({
+      playerId: IDL.Nat32,
+      base: Base
+    }),
+    'playerInjured': IDL.Record({
+      playerId: IDL.Nat32,
+      injury: PlayerInjury
+    }),
+    'playerSubstituted': IDL.Record({
+      playerId: IDL.Nat32
+    }),
+    'score': IDL.Record({
+      teamId: TeamId,
+      amount: IDL.Int
+    }),
+    'endRound': IDL.Null,
+    'endMatch': MatchEndReason
   });
   const TeamState = IDL.Record({
     'id': IDL.Principal,
@@ -195,23 +320,23 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
   const PlayerSkills = IDL.Record({
 
   });
-  const FieldPosition = IDL.Variant({
-
-  });
   const PlayerState = IDL.Record({
     'id': IDL.Nat32,
     'name': IDL.Text,
     'teamId': TeamId,
     // 'condition': PlayerCondition,
     // 'skills': PlayerSkills,
-    // 'position': FieldPosition
+    'position': FieldPosition
+  });
+  const MatchTurn = IDL.Record({
+    'events': IDL.Vec(MatchEvent),
   });
   const InProgressState = IDL.Record({
     'offenseTeamId': TeamId,
     'team1': TeamState,
     'team2': TeamState,
     'specialRuleId': IDL.Opt(IDL.Nat32),
-    'events': IDL.Vec(MatchEvent),
+    'turns': IDL.Vec(MatchTurn),
     'field': FieldState,
     'players': IDL.Vec(PlayerState),
     'strikes': IDL.Nat,
@@ -226,7 +351,7 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'team1': CompletedTeamState,
     'team2': CompletedTeamState,
     'winner': TeamId,
-    'events': IDL.Vec(MatchEvent)
+    'turns': IDL.Vec(MatchTurn)
   });
   const CompletedState = IDL.Variant({
     'absentTeam': TeamId,
