@@ -143,6 +143,7 @@ module {
         team1 : CompletedTeamState;
         team2 : CompletedTeamState;
         winner : TeamId;
+        initialState : InProgressMatchState;
         turns : [Turn];
     };
 

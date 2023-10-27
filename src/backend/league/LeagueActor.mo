@@ -22,6 +22,7 @@ import Buffer "mo:base/Buffer";
 import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
+import Blob "mo:base/Blob";
 import Token "mo:icrc1/ICRC1/Canisters/Token";
 import ICRC1 "mo:icrc1/ICRC1";
 import TimeZone "mo:datetime/TimeZone";
@@ -29,7 +30,9 @@ import LocalDateTime "mo:datetime/LocalDateTime";
 import Components "mo:datetime/Components";
 import DateTime "mo:datetime/DateTime";
 import RandomX "mo:random/RandomX";
+import PsuedoRandomX "mo:random/PsuedoRandomX";
 import League "../League";
+import RandomUtil "../RandomUtil";
 
 actor LeagueActor {
     type MatchUp = League.MatchUp;
@@ -50,6 +53,7 @@ actor LeagueActor {
     type DivisionSchedule = League.DivisionSchedule;
     type DivisionScheduleError = League.DivisionScheduleError;
     type LedgerActor = Token.Token;
+    type Prng = PsuedoRandomX.PsuedoRandomGenerator;
 
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
     stable var stadiums : Trie.Trie<Principal, Stadium.Stadium> = Trie.empty();
@@ -113,7 +117,8 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult {
-        let random = RandomX.FiniteX(await Random.blob());
+        let seedBlob = await Random.blob();
+        let random = RandomUtil.buildPrng(seedBlob);
         let divisionErrors = Buffer.Buffer<(Nat32, DivisionScheduleError)>(0);
         label f for (divisionRequest in Iter.fromArray(request.divisions)) {
             switch (await* scheduleDivision(divisionRequest.id, divisionRequest.start, random)) {
@@ -140,7 +145,7 @@ actor LeagueActor {
         #ok;
     };
 
-    private func scheduleDivision(divisionId : Nat32, start : Time.Time, random : RandomX.FiniteX) : async* {
+    private func scheduleDivision(divisionId : Nat32, start : Time.Time, random : Prng) : async* {
         #ok : Division;
         #error : DivisionScheduleError;
     } {
@@ -168,22 +173,23 @@ actor LeagueActor {
     private func generateSchedule(
         divisionId : Nat32,
         start : Time.Time,
-        random : RandomX.FiniteX,
+        random : Prng,
     ) : async* {
         #ok : DivisionSchedule;
         #oddNumberOfTeams;
         #notEnoughStadiums;
         #noTeamsInDivision;
     } {
-        let ?randomizedTeams = Trie.iter(teams)
+        var teamOrderForWeek = Trie.iter(teams)
         // Only teams in this division
         |> Iter.filter<(Principal, Team.Team)>(_, func(v) = v.1.divisionId == divisionId)
         // Only have team ids
         |> Iter.map(_, func(v : (Principal, Team.Team)) : Principal = v.0)
-        |> Iter.toArray(_)
-        |> random.shuffleElements(_) else Debug.trap("Not enough entropy");
+        |> Buffer.fromIter<Principal>(_);
 
-        let teamCount = randomizedTeams.size();
+        random.shuffleBuffer(teamOrderForWeek);
+
+        let teamCount = teamOrderForWeek.size();
         if (teamCount == 0) {
             return #noTeamsInDivision;
         };
@@ -198,7 +204,6 @@ actor LeagueActor {
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
         var nextMatchDate = DateTime.fromTime(start);
 
-        var teamOrderForWeek = Buffer.fromArray<Principal>(randomizedTeams);
         let weeks = Buffer.Buffer<SeasonWeek>(weekCount);
         for (weekIndex in IterTools.range(0, weekCount)) {
 
@@ -206,15 +211,18 @@ actor LeagueActor {
 
             // Round robin tournament algorithm
 
-            let ?randomizedStadiums = Trie.iter(stadiums)
-            |> Iter.toArray(_)
-            |> random.shuffleElements(_) else Debug.trap("Not enough entropy");
+            let randomizedStadiums = Trie.iter(stadiums)
+            // Only have stadium ids
+            |> Iter.map(_, func(v : (Principal, Stadium.Stadium)) : Principal = v.0)
+            |> Buffer.fromIter<Principal>(_);
+            random.shuffleBuffer(randomizedStadiums);
+
             for (matchUpIndex in IterTools.range(0, matchUpCountPerWeek)) {
 
                 let team1 = teamOrderForWeek.get(matchUpIndex);
                 let team2 = teamOrderForWeek.get(matchUpIndex + matchUpCountPerWeek); // Second half of teams
 
-                let stadiumId = randomizedStadiums.get(matchUpIndex).0;
+                let stadiumId = randomizedStadiums.get(matchUpIndex);
                 let teams = (team1, team2);
                 let status = try {
                     let stadium = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
