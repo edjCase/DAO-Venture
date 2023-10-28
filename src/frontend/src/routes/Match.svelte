@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Turns from "../components/Turns.svelte";
+  import Log from "../components/Log.svelte";
   import ScoreHeader from "../components/ScoreHeader.svelte";
   import { matchStore } from "../stores/MatchStore";
   import { teamStore } from "../stores/TeamStore";
@@ -8,8 +8,7 @@
     stadiumAgentFactory,
     type Match,
     type MatchState,
-    type MatchEvent,
-    type MatchTurn,
+    type LogEntry,
   } from "../ic-agent/Stadium";
   import FieldState from "../components/FieldState.svelte";
   import { Principal } from "@dfinity/principal";
@@ -28,7 +27,7 @@
   let loadingTeams = true;
   let matchDetails;
   let state: MatchState;
-  let turns: MatchTurn[];
+  let log: LogEntry[];
   matchStore.subscribe((matches) => {
     match = matches.find(
       (item) => item.id == id && item.stadiumId.compareTo(stadiumId) == "eq"
@@ -37,10 +36,10 @@
       state = match.state;
       teamStore.subscribe((teams) => {
         team1 = teams.find(
-          (team) => team.id.compareTo(match.teams[0].id) === "eq"
+          (team) => team.id.compareTo(match.team1.id) === "eq"
         );
         team2 = teams.find(
-          (team) => team.id.compareTo(match.teams[1].id) === "eq"
+          (team) => team.id.compareTo(match.team2.id) === "eq"
         );
         loadingTeams = false;
       });
@@ -97,40 +96,40 @@
       if ("inProgress" in state) {
         team1Score = state.inProgress.team1.score;
         team2Score = state.inProgress.team2.score;
-        turns = state.inProgress.turns;
+        log = state.inProgress.log;
       } else if ("completed" in state) {
         if ("played" in state.completed) {
           team1Score = state.completed.played.team1.score;
           team2Score = state.completed.played.team2.score;
-          turns = state.completed.played.turns;
+          log = state.completed.played.log;
           winner =
             "team1" in state.completed.played.winner
-              ? match.teams[0].id
-              : match.teams[1].id;
+              ? match.team1.id
+              : match.team2.id;
         } else {
           team1Score = BigInt(0);
           team2Score = BigInt(0);
-          turns = [];
+          log = [];
         }
       } else if ("notStarted" in state) {
         team1Score = BigInt(0);
         team2Score = BigInt(0);
-        turns = [];
+        log = [];
       } else {
         throw "Invalid state: " + toJsonString(state);
       }
 
       matchDetails = {
         team1: {
-          id: match.teams[0].id,
+          id: match.team1.id,
           name: team1.name,
-          predictionVotes: match.teams[0].predictionVotes,
+          predictionVotes: match.team1.predictionVotes,
           score: team1Score,
         },
         team2: {
-          id: match.teams[1].id,
+          id: match.team2.id,
           name: team2.name,
-          predictionVotes: match.teams[1].predictionVotes,
+          predictionVotes: match.team2.predictionVotes,
           score: team2Score,
         },
         winner: winner,
@@ -184,9 +183,9 @@
         <h1>Game hasnt started</h1>
       {/if}
 
-      <section class="match-turns">
-        <h2>Turns</h2>
-        <Turns {turns} />
+      <section class="match-log">
+        <h2>Match Log</h2>
+        <Log {log} />
       </section>
 
       <h2>JSON</h2>
@@ -212,7 +211,7 @@
     align-items: center;
   }
 
-  .match-turns {
+  .match-log {
     display: flex;
     flex-direction: column;
     align-items: center;

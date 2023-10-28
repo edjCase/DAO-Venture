@@ -10,8 +10,15 @@ import Nat "mo:base/Nat";
 module {
     type FieldPosition = Player.FieldPosition;
     type Base = Player.Base;
-
     type PlayerId = Nat32;
+
+    public type StadiumActor = actor {
+        getMatch : query (id : Nat32) -> async ?MatchWithId;
+        getMatches : query () -> async [MatchWithId];
+        tickMatch : (id : Nat32) -> async TickMatchResult;
+        startMatch : (matchId : Nat32) -> async StartMatchResult;
+        scheduleMatch : (request : ScheduleMatchRequest) -> async ScheduleMatchResult;
+    };
 
     public type RegisterResult = {
         #ok;
@@ -26,10 +33,21 @@ module {
         #invalidSpecialRule : Nat32;
     };
 
-    public type ScheduleMatchResult = {
-        #ok : Nat32;
+    public type ScheduleMatchRequest = {
+        team1Id : Principal;
+        team2Id : Principal;
+        time : Time.Time;
+    };
+
+    public type ScheduleMatchError = {
         #timeNotAvailable;
         #duplicateTeams;
+        #teamFetchError : Text;
+        #teamNotFound : TeamIdOrBoth;
+    };
+
+    public type ScheduleMatchResult = ScheduleMatchError or {
+        #ok : Nat32;
     };
 
     public type TeamId = {
@@ -37,39 +55,11 @@ module {
         #team2;
     };
 
-    public type Turn = {
-        events : [Event];
-    };
-
-    public type Event = {
-        #pitch : { pitchRoll : Nat };
-        #hit : { hitRoll : Nat };
-        #run : { base : Base; ballLocation : ?FieldPosition; runRoll : Nat };
-        #foul;
-        #strike;
-        #out : PlayerId;
-        #playerMovedBases : {
-            playerId : PlayerId;
-            base : Base;
-        };
-        #playerInjured : {
-            playerId : PlayerId;
-            injury : Player.Injury;
-        };
-        #playerSubstituted : {
-            playerId : PlayerId;
-        };
-        #score : {
-            teamId : TeamId;
-            amount : Int;
-        };
-        #endRound;
-        #endMatch : MatchEndReason;
-    };
+    public type TeamIdOrBoth = TeamId or { #bothTeams };
 
     public type MatchEndReason = {
         #noMoreRounds;
-        #outOfPlayers : TeamId or { #bothTeams };
+        #outOfPlayers : TeamIdOrBoth;
     };
 
     public type PlayerState = {
@@ -86,6 +76,7 @@ module {
 
     public type TeamState = {
         id : Principal;
+        name : Text;
         score : Int;
         offeringId : Nat32;
     };
@@ -119,15 +110,19 @@ module {
         offense : OffsenseFieldState;
     };
 
+    public type LogEntry = {
+        description : Text;
+        isImportant : Bool;
+    };
+
     public type InProgressMatchState = {
         offenseTeamId : TeamId;
         team1 : TeamState;
         team2 : TeamState;
         specialRuleId : ?Nat32;
         players : [PlayerStateWithId];
-        batter : ?PlayerId;
         field : FieldState;
-        turns : [Turn];
+        log : [LogEntry];
         round : Nat;
         outs : Nat;
         strikes : Nat;
@@ -142,9 +137,8 @@ module {
     public type CompletedMatchResult = {
         team1 : CompletedTeamState;
         team2 : CompletedTeamState;
-        winner : TeamId;
-        initialState : InProgressMatchState;
-        turns : [Turn];
+        winner : TeamId or { #tie };
+        log : [LogEntry];
     };
 
     public type CompletedTeamState = {
@@ -157,14 +151,6 @@ module {
         #matchNotFound;
         #matchAlreadyStarted;
         #completed : CompletedMatchState;
-    };
-
-    public type StadiumActor = actor {
-        getMatch : shared query (id : Nat32) -> async ?MatchWithId;
-        getMatches : shared query () -> async [MatchWithId];
-        tickMatch : shared (id : Nat32) -> async TickMatchResult;
-        startMatch : shared (matchId : Nat32) -> async StartMatchResult;
-        scheduleMatch : shared (teamIds : (Principal, Principal), time : Time.Time) -> async ScheduleMatchResult;
     };
 
     public type Stadium = {
@@ -190,7 +176,8 @@ module {
     };
 
     public type Match = {
-        teams : (MatchTeamInfo, MatchTeamInfo);
+        team1 : MatchTeamInfo;
+        team2 : MatchTeamInfo;
         time : Time.Time;
         offerings : [OfferingWithId];
         specialRules : [SpecialRuleWithId];
@@ -219,6 +206,7 @@ module {
 
     public type MatchTeamInfo = {
         id : Principal;
+        name : Text;
         predictionVotes : Nat;
     };
 };

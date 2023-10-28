@@ -1,8 +1,8 @@
-import PsuedoRandomX "mo:random/PsuedoRandomX";
+import PseudoRandomX "mo:random/PseudoRandomX";
 import Blob "mo:base/Blob";
 module {
-    public func buildPrng(seedBlob : Blob) : PsuedoRandomX.PsuedoRandomGenerator {
+    public func buildPrng(seedBlob : Blob) : PseudoRandomX.PseudoRandomGenerator {
         let seed = Blob.hash(seedBlob); // TODO Is this ok to use the hash vs raw bytes?
-        PsuedoRandomX.LinearCongruentialGenerator(seed);
+        PseudoRandomX.LinearCongruentialGenerator(seed);
     };
 };

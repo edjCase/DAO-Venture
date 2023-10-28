@@ -2,11 +2,37 @@ import Stadium "Stadium";
 import TimeZone "mo:datetime/TimeZone";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
+import ICRC1 "mo:icrc1/ICRC1";
 
 module {
+    public type LeagueActor = actor {
+        getTeams() : async [TeamInfo];
+        getStadiums() : async [StadiumInfo];
+        getDivisions() : async [DivisionWithId];
+        createDivision(request : CreateDivisionRequest) : async CreateDivisionResult;
+        scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult;
+        createTeam(request : CreateTeamRequest) : async CreateTeamResult;
+        mint(request : MintRequest) : async MintResult;
+        createStadium(request : CreateStadiumRequest) : async CreateStadiumResult;
+        scheduleMatch(request : ScheduleMatchRequest) : async ScheduleMatchResult;
+        updateLeagueCanisters() : async ();
+    };
+
+    public type MintRequest = {
+        amount : Nat;
+        teamId : Principal;
+    };
+
+    public type MintResult = {
+        #ok : ICRC1.TxIndex;
+        #teamNotFound;
+        #transferError : ICRC1.TransferError;
+    };
+
     public type ScheduleSeasonRequest = {
         divisions : [DivisionScheduleRequest];
     };
+
     public type DivisionScheduleRequest = {
         id : Nat32;
         start : Time.Time;
@@ -49,6 +75,11 @@ module {
         #ok : Principal;
         #nameTaken;
     };
+
+    public type ScheduleMatchRequest = Stadium.ScheduleMatchRequest and {
+        stadiumId : Principal;
+    };
+
     public type ScheduleMatchResult = Stadium.ScheduleMatchResult or {
         #stadiumNotFound;
     };
@@ -83,10 +114,8 @@ module {
     };
     public type MatchUpStatus = {
         #scheduled : Nat32;
-        #failedToSchedule : {
-            #duplicateTeams;
-            #timeNotAvailable;
-            #unknown : Text;
+        #failedToSchedule : Stadium.ScheduleMatchError or {
+            #stadiumCallError : Text;
         };
     };
     public type MatchUp = {

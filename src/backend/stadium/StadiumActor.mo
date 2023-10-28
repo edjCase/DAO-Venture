@@ -23,8 +23,9 @@ import Random "mo:base/Random";
 import Error "mo:base/Error";
 import Blob "mo:base/Blob";
 import RandomX "mo:random/RandomX";
-import PsuedoRandomX "mo:random/PsuedoRandomX";
+import PseudoRandomX "mo:random/PseudoRandomX";
 import RandomUtil "../RandomUtil";
+import League "../League";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
     type Match = Stadium.Match;
@@ -86,14 +87,86 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
+    public shared ({ caller }) func scheduleMatch(request : Stadium.ScheduleMatchRequest) : async Stadium.ScheduleMatchResult {
+        assertLeague(caller);
+        if (not isTimeAvailable(request.time)) {
+            return #timeNotAvailable;
+        };
+        if (request.team1Id == request.team2Id) {
+            return #duplicateTeams;
+        };
+        let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
+        let teams = try {
+            await leagueActor.getTeams();
+        } catch (err) {
+            return #teamFetchError(Error.message(err));
+        };
+        let team1OrNull = Array.find(teams, func(t : League.TeamInfo) : Bool { t.id == request.team1Id }) else return #teamNotFound(#team1);
+        let team2OrNull = Array.find(teams, func(t : League.TeamInfo) : Bool { t.id == request.team2Id }) else return #teamNotFound(#team1);
+        let (team1, team2) = switch ((team1OrNull, team2OrNull)) {
+            case (null, null) return #teamNotFound(#bothTeams);
+            case (null, ?_) return #teamNotFound(#team1);
+            case (?_, null) return #teamNotFound(#team2);
+            case (?t1, ?t2)(t1, t2);
+        };
+        let correctedTeamIds = Util.sortTeamIds((request.team1Id, request.team2Id));
+        let timeDiff : Time.Time = request.time - Time.now();
+        let natTimeDiff = if (timeDiff < 0) {
+            0;
+        } else {
+            Int.abs(timeDiff);
+        };
+        let timerDuration = #nanoseconds(natTimeDiff);
+        let callbackFunc = func() : async () {
+            let _ = await startMatch(nextMatchId);
+        };
+        let timerId = Timer.setTimer(timerDuration, callbackFunc);
+        let offerings = getRandomOfferings(4);
+        let specialRules = getRandomSpecialRules(4);
+        let match : Stadium.MatchWithTimer = {
+            id = nextMatchId;
+            time = request.time;
+            team1 = {
+                id = correctedTeamIds.0;
+                name = team1.name;
+                options = null;
+                score = null;
+                predictionVotes = 0;
+            };
+            team2 = {
+                id = correctedTeamIds.1;
+                name = team2.name;
+                options = null;
+                score = null;
+                predictionVotes = 0;
+            };
+            offerings = offerings;
+            specialRules = specialRules;
+            timerId = ?timerId;
+            state = #notStarted;
+        };
+        let nextMatchKey = {
+            hash = nextMatchId;
+            key = nextMatchId;
+        };
+        switch (Trie.put(matches, nextMatchKey, Nat32.equal, match)) {
+            case (_, ?previous) Prelude.unreachable(); // Cant duplicate ids
+            case (newMatches, _) {
+                nextMatchId += 1;
+                matches := newMatches;
+                #ok(nextMatchKey.key);
+            };
+        };
+    };
+
     private func startMatchInternal(matchId : Nat32, match : Match) : async Stadium.StartMatchResult {
         switch (match.state) {
             case (#completed(s)) return #completed(s);
             case (#inProgress(_)) return #matchAlreadyStarted;
             case (#notStarted) {};
         };
-        let team1InitOrNull = await createTeamInit(matchId, match.teams.0);
-        let team2InitOrNull = await createTeamInit(matchId, match.teams.1);
+        let team1InitOrNull = await createTeamInit(matchId, match.team1);
+        let team2InitOrNull = await createTeamInit(matchId, match.team2);
         let (team1Init, team2Init) : (MatchSimulator.TeamInitData, MatchSimulator.TeamInitData) = switch (team1InitOrNull, team2InitOrNull) {
             case (null, null) return #completed(#allAbsent);
             case (null, ?_) return #completed(#absentTeam(#team1));
@@ -134,6 +207,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
         ?{
             id = team.id;
+            name = team.name;
             players = teamPlayers;
             offeringId = options.offeringId;
             specialRuleVotes = specialRuleVotes;
@@ -186,65 +260,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
         let (newMatches, _) = Trie.replace(matches, matchKey, Nat32.equal, ?match);
         matches := newMatches;
-    };
-
-    public shared ({ caller }) func scheduleMatch(teamIds : (Principal, Principal), time : Time.Time) : async Stadium.ScheduleMatchResult {
-        assertLeague(caller);
-        if (not isTimeAvailable(time)) {
-            return #timeNotAvailable;
-        };
-        if (teamIds.0 == teamIds.1) {
-            return #duplicateTeams;
-        };
-        let correctedTeamIds = Util.sortTeamIds(teamIds);
-        let teamsInfo : (MatchTeamInfo, MatchTeamInfo) = (
-            {
-                id = correctedTeamIds.0;
-                options = null;
-                score = null;
-                predictionVotes = 0;
-            },
-            {
-                id = correctedTeamIds.1;
-                options = null;
-                score = null;
-                predictionVotes = 0;
-            },
-        );
-        let timeDiff : Time.Time = time - Time.now();
-        let natTimeDiff = if (timeDiff < 0) {
-            0;
-        } else {
-            Int.abs(timeDiff);
-        };
-        let timerDuration = #nanoseconds(natTimeDiff);
-        let callbackFunc = func() : async () {
-            let _ = await startMatch(nextMatchId);
-        };
-        let timerId = Timer.setTimer(timerDuration, callbackFunc);
-        let offerings = getRandomOfferings(4);
-        let specialRules = getRandomSpecialRules(4);
-        let match : Stadium.MatchWithTimer = {
-            id = nextMatchId;
-            time = time;
-            teams = teamsInfo;
-            offerings = offerings;
-            specialRules = specialRules;
-            timerId = ?timerId;
-            state = #notStarted;
-        };
-        let nextMatchKey = {
-            hash = nextMatchId;
-            key = nextMatchId;
-        };
-        switch (Trie.put(matches, nextMatchKey, Nat32.equal, match)) {
-            case (_, ?previous) Prelude.unreachable(); // Cant duplicate ids
-            case (newMatches, _) {
-                nextMatchId += 1;
-                matches := newMatches;
-                #ok(nextMatchKey.key);
-            };
-        };
     };
 
     private func getRandomOfferings(count : Nat) : [Stadium.OfferingWithId] {
@@ -327,10 +342,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         options : Stadium.MatchOptions,
     ) : { #ok : Match; #teamNotInMatch } {
 
-        let teamInfo = if (match.teams.0.id == teamId) {
-            match.teams.0;
-        } else if (match.teams.1.id == teamId) {
-            match.teams.1;
+        let teamInfo = if (match.team1.id == teamId) {
+            match.team1;
+        } else if (match.team2.id == teamId) {
+            match.team2;
         } else {
             return #teamNotInMatch;
         };
@@ -338,10 +353,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             teamInfo with
             options = ?options;
         };
-        let newTeams = if (match.teams.0.id == teamId) {
-            (newTeam, match.teams.1);
+        let newTeams = if (match.team1.id == teamId) {
+            (newTeam, match.team2);
         } else {
-            (match.teams.0, newTeam);
+            (match.team1, newTeam);
         };
 
         #ok({

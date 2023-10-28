@@ -61,7 +61,7 @@ shared (install) actor class TeamActor(
     };
 
     let teamId = Principal.fromActor(this);
-    if (match.teams.0.id != teamId and match.teams.1.id != teamId) {
+    if (match.team1.id != teamId and match.team2.id != teamId) {
       return #teamNotInMatch;
     };
 

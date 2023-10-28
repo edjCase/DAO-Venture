@@ -7,7 +7,7 @@ import Player "../../src/backend/Player";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import RandomX "mo:random/RandomX";
-import PsuedoRandomX "mo:random/PsuedoRandomX";
+import PseudoRandomX "mo:random/PseudoRandomX";
 
 type FieldPosition = Player.FieldPosition;
 type PlayerState = Stadium.PlayerState;
@@ -28,7 +28,7 @@ func fromArray<TKey, TValue>(array : [(TKey, TValue)], hashKey : (TKey) -> Hash.
 test(
     "tick",
     func() {
-        let random = PsuedoRandomX.LinearCongruentialGenerator(1);
+        let random = PseudoRandomX.LinearCongruentialGenerator(1);
         let state : Stadium.InProgressMatchState = {
             offenseTeamId = #team1;
             team1 = {

@@ -9,8 +9,8 @@
   let team2;
   let loading = true;
   teamStore.subscribe((teams) => {
-    team1 = teams.find((team) => team.id.compareTo(match.teams[0].id) === "eq");
-    team2 = teams.find((team) => team.id.compareTo(match.teams[1].id) === "eq");
+    team1 = teams.find((team) => team.id.compareTo(match.team1.id) === "eq");
+    team2 = teams.find((team) => team.id.compareTo(match.team2.id) === "eq");
     loading = !(!!team1 && !!team2);
   });
   let startDate = nanosecondsToDate(match.time);
