@@ -134,10 +134,12 @@ module {
         #played : CompletedMatchResult;
     };
 
+    public type TeamIdOrTie = TeamId or { #tie };
+
     public type CompletedMatchResult = {
         team1 : CompletedTeamState;
         team2 : CompletedTeamState;
-        winner : TeamId or { #tie };
+        winner : TeamIdOrTie;
         log : [LogEntry];
     };
 

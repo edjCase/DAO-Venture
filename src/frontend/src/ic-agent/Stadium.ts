@@ -181,7 +181,7 @@ export type TeamId = {
 } | {
   'team2': null;
 };
-export type TeamIdOrBoth = TeamId | { 'bothTeams': null };
+export type TeamIdOrTie = TeamId | { 'tie': null };
 export type CompletedTeamState = {
   id: Principal;
   score: bigint;
@@ -189,7 +189,7 @@ export type CompletedTeamState = {
 export type CompletedMatchResult = {
   team1: CompletedTeamState;
   team2: CompletedTeamState;
-  winner: TeamIdOrBoth;
+  winner: TeamIdOrTie;
   log: [LogEntry];
 };
 export type CompletedMatchState = {
@@ -246,7 +246,7 @@ export interface _SERVICE {
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
   const MatchTeamInfo = IDL.Record({
     'id': IDL.Principal,
-    'score': IDL.Opt(IDL.Int),
+    'name': IDL.Text,
     'predictionVotes': IDL.Nat
   });
   const OfferingWithId = IDL.Record({
@@ -353,10 +353,15 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'id': IDL.Principal,
     'score': IDL.Int
   });
+  const TeamIdOrTie = IDL.Variant({
+    'team1': IDL.Null,
+    'team2': IDL.Null,
+    'tie': IDL.Null
+  });
   const CompletedMatchResult = IDL.Record({
     'team1': CompletedTeamState,
     'team2': CompletedTeamState,
-    'winner': TeamId,
+    'winner': TeamIdOrTie,
     'log': IDL.Vec(LogEntry),
   });
   const CompletedState = IDL.Variant({
