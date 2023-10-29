@@ -117,6 +117,7 @@ module {
         team2 : TeamInitData,
         team1StartOffense : Bool,
         rand : Prng,
+        seed : Nat32,
     ) : InProgressMatchState {
         var players = Buffer.Buffer<Stadium.PlayerStateWithId>(team1.players.size() + team2.players.size());
         let addPlayer = func(player : PlayerWithId, teamId : TeamId) {
@@ -145,9 +146,10 @@ module {
         };
         let randomIndex = rand.nextNat(0, offenseTeam.players.size() - 1);
         let atBatPlayer = offenseTeam.players.get(randomIndex);
-        let ?defense = buildStartingDefense(defenseTeam.players, rand) else Debug.trap("No more random entropy");
+        let ?defense = buildStartingDefense(defenseTeam.players, rand) else Debug.trap("Not enough players to start match");
 
         {
+            currentSeed = rand.getCurrentSeed();
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = {
                 id = team1.id;
@@ -422,6 +424,7 @@ module {
             };
             let log : [LogEntry] = Buffer.toArray(state.log);
             #inProgress({
+                currentSeed = random.getCurrentSeed();
                 offenseTeamId = state.offenseTeamId;
                 team1 = buildTeam(state.team1);
                 team2 = buildTeam(state.team2);

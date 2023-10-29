@@ -27,7 +27,8 @@ import PseudoRandomX "mo:random/PseudoRandomX";
 import RandomUtil "../RandomUtil";
 import League "../League";
 
-actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
+actor class StadiumActor(leagueId : Principal, initLiveStreamCanisterId : Principal) : async Stadium.StadiumActor = this {
+
     type Match = Stadium.Match;
     type MatchWithTimer = Stadium.MatchWithTimer;
     type MatchWithId = Stadium.MatchWithId;
@@ -41,6 +42,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     stable var matches : Trie.Trie<Nat32, MatchWithTimer> = Trie.empty();
 
     stable var nextMatchId : Nat32 = 1;
+    stable var liveStreamCanisterId : Principal = initLiveStreamCanisterId;
 
     public query func getMatch(id : Nat32) : async ?MatchWithId {
         switch (getMatchOrNull(id)) {
@@ -174,9 +176,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (?t1, ?t2)(t1, t2);
         };
         let seedBlob = await Random.blob();
-        let prng = RandomUtil.buildPrng(seedBlob);
+        let { prng; seed } = RandomUtil.buildPrng(seedBlob);
         let team1IsOffense = prng.nextCoin();
-        let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense, prng);
+        let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense, prng, seed);
         #ok(initState);
     };
 
@@ -221,9 +223,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (#inProgress(s)) s;
             case (#notStarted) return #notStarted;
         };
-        let seedBlob = await Random.blob();
-        let random = RandomUtil.buildPrng(seedBlob);
-        let newState = MatchSimulator.tick(state, random);
+        let prng = PseudoRandomX.LinearCongruentialGenerator(state.currentSeed);
+        let newState = MatchSimulator.tick(state, prng);
         switch (newState) {
             case (#completed(completedState)) {
                 switch (match.timerId) {

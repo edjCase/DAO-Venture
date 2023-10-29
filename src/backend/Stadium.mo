@@ -116,6 +116,7 @@ module {
     };
 
     public type InProgressMatchState = {
+        currentSeed : Nat32;
         offenseTeamId : TeamId;
         team1 : TeamState;
         team2 : TeamState;
@@ -199,6 +200,13 @@ module {
         #matchNotFound;
         #matchOver : CompletedMatchState;
         #notStarted;
+    };
+    public type LiveStreamMessage = {
+        matchId : Nat32;
+        state : {
+            #inProgress : InProgressMatchState;
+            #matchOver : CompletedMatchState;
+        };
     };
 
     public type MatchOptions = {

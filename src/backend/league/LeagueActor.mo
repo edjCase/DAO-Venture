@@ -33,6 +33,7 @@ import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import League "../League";
 import RandomUtil "../RandomUtil";
+import LiveStreamActor "../LiveStream/LiveStreamActor";
 
 actor LeagueActor {
     type MatchUp = League.MatchUp;
@@ -86,9 +87,8 @@ actor LeagueActor {
         Trie.toArray(
             divisions,
             func(k : Nat32, v : Division) : DivisionWithId = {
+                v with
                 id = k;
-                name = v.name;
-                schedule = v.schedule;
             },
         );
     };
@@ -99,6 +99,15 @@ actor LeagueActor {
         // if (caller != leagueId) {
         //   return #notAuthorized;
         // }
+        let liveStreamCanisterId = try {
+            let canisterCreationCost = 100_000_000_000;
+            let initialBalance = 3_000_000_000_000;
+            Cycles.add(canisterCreationCost + initialBalance);
+            let liveStreamCanister = await LiveStreamActor.LiveStreamActor(leagueId);
+            Principal.fromActor(liveStreamCanister);
+        } catch (err) {
+            return #liveStreamCanisterFailure(Error.message(err));
+        };
 
         let nameAlreadyTaken = Trie.some(
             divisions,
@@ -111,6 +120,7 @@ actor LeagueActor {
         let division : Division = {
             name = request.name;
             schedule = null;
+            liveStreamCanisterId = liveStreamCanisterId;
         };
         let divisionKey = { key = divisionId; hash = divisionId };
         let (newDivisions, _) = Trie.put(divisions, divisionKey, Nat32.equal, division);
@@ -120,10 +130,10 @@ actor LeagueActor {
 
     public shared ({ caller }) func scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult {
         let seedBlob = await Random.blob();
-        let random = RandomUtil.buildPrng(seedBlob);
+        let { prng; seed } = RandomUtil.buildPrng(seedBlob);
         let divisionErrors = Buffer.Buffer<(Nat32, DivisionScheduleError)>(0);
         label f for (divisionRequest in Iter.fromArray(request.divisions)) {
-            switch (await* scheduleDivision(divisionRequest.id, divisionRequest.start, random)) {
+            switch (await* scheduleDivision(divisionRequest.id, divisionRequest.start, prng)) {
                 case (#ok(newDivision)) {
                     let divisionKey = {
                         key = divisionRequest.id;
@@ -222,7 +232,7 @@ actor LeagueActor {
         let initialBalance = 3_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         let leagueId = Principal.fromActor(LeagueActor);
-        let stadiumCanister = await StadiumCanister.StadiumActor(leagueId);
+        let stadiumCanister = await StadiumCanister.StadiumActor(leagueId, divisionLiveStreamCanisterId);
         let stadiumId = Principal.fromActor(stadiumCanister);
         let stadium : Stadium.Stadium = {
             id = stadiumId;
@@ -248,9 +258,10 @@ actor LeagueActor {
             let teamActor = actor (Principal.toText(teamId)) : TeamActor.TeamActor;
             let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(leagueId, ownerId);
         };
+        let liveStreamCanisterId = Principal.fromText("2vxsx-fae"); // TODO?
         for ((stadiumId, stadium) in Trie.iter(stadiums)) {
             let stadiumActor = actor (Principal.toText(stadiumId)) : StadiumCanister.StadiumActor;
-            let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadiumActor))(leagueId);
+            let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadiumActor))(leagueId, liveStreamCanisterId);
         };
     };
 
