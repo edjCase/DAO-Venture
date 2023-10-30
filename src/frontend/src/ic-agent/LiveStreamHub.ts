@@ -1,31 +1,31 @@
-// import { IDL, } from "@dfinity/candid";
+import { IDL, } from "@dfinity/candid";
 // import IcWebSocket, { generateRandomIdentity } from "ic-websocket-js";
-// import type { Principal } from "@dfinity/principal";
-// import { type StartedMatchState, StartedMatchStateIdl } from "./Stadium";
+import type { Principal } from "@dfinity/principal";
+import { type StartedMatchState, StartedMatchStateIdl } from "./Stadium";
 
-// let gatewayUrl;
-// let icUrl;
-// if (process.env.DFX_NETWORK === "ic") {
-//     gatewayUrl = "wss://gateway.icws.io";
-//     icUrl = "https://icp0.io";
-// } else {
-//     gatewayUrl = "ws://127.0.0.1:8080";
-//     icUrl = "http://127.0.0.1:4943";
-// }
+let gatewayUrl;
+let icUrl;
+if (process.env.DFX_NETWORK === "ic") {
+    gatewayUrl = "wss://gateway.icws.io";
+    icUrl = "https://icp0.io";
+} else {
+    gatewayUrl = "ws://127.0.0.1:8080";
+    icUrl = "http://127.0.0.1:4943";
+}
 
-// const backendCanisterId = process.env.CANISTER_ID_LIVE_STREAM_HUB || "";
+const backendCanisterId = process.env.CANISTER_ID_LIVESTREAMHUB || "";
 
 
-// export type LiveStreamMessage = {
-//     matchId: number;
-//     stadiumId: Principal;
-//     state: StartedMatchState;
-// };
-// export const LiveStreamMessageIdl = IDL.Record({
-//     'matchId': IDL.Nat32,
-//     'stadiumId': IDL.Principal,
-//     'state': StartedMatchStateIdl
-// });
+export type LiveStreamMessage = {
+    matchId: number;
+    stadiumId: Principal;
+    state: StartedMatchState;
+};
+export const LiveStreamMessageIdl = IDL.Record({
+    'matchId': IDL.Nat32,
+    'stadiumId': IDL.Principal,
+    'state': StartedMatchStateIdl
+});
 
 
 // export function subscribe(callback: (LiveStreamMessage) => void): { close: () => void } {

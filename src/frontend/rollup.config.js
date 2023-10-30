@@ -188,8 +188,16 @@ export default {
     // Suppress known warnings from specific files
     if (
       warning.code === 'THIS_IS_UNDEFINED' && 
-      warning.loc.file.includes('node_modules/@dfinity/agent')
+      (warning.loc.file.includes('node_modules/@dfinity/agent')
+      || warning.loc.file.includes('node_modules/@dfinity/identity'))
     ) return;
+    
+    if (
+      warning.code === 'CIRCULAR_DEPENDENCY' && 
+      warning.importer.includes('node_modules/@dfinity/auth-client')
+    ) {
+      return;}
+
 
     if (
       warning.code === 'EVAL' && 
