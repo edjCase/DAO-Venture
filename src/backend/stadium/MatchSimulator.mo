@@ -25,6 +25,7 @@ module {
     type PlayerState = Stadium.PlayerState;
     type LogEntry = Stadium.LogEntry;
     type MatchState = Stadium.MatchState;
+    type StartedMatchState = Stadium.StartedMatchState;
     type TeamState = Stadium.TeamState;
     type MatchOptions = Stadium.MatchOptions;
     type InProgressMatchState = Stadium.InProgressMatchState;
@@ -261,7 +262,7 @@ module {
         );
     };
 
-    public func tick(state : InProgressMatchState, random : Prng) : MatchState {
+    public func tick(state : InProgressMatchState, random : Prng) : StartedMatchState {
         let simulation = MatchSimulation(state, random);
         simulation.tick();
     };
@@ -342,7 +343,7 @@ module {
 
         let state : MutableMatchState = toMutableState(initialState);
 
-        public func tick() : MatchState {
+        public func tick() : StartedMatchState {
             let divineInterventionRoll = random.nextNat(0, 999);
             if (divineInterventionRoll >= 991) {
                 // TODO divine intervention
@@ -364,7 +365,7 @@ module {
             };
         };
 
-        public func buildState(result : SimulationResult) : MatchState {
+        public func buildState(result : SimulationResult) : StartedMatchState {
             switch (result) {
                 case (#inProgress) {};
                 case (#endMatch(s)) return #completed(s);

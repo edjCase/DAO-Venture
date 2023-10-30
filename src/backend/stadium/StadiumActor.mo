@@ -15,6 +15,7 @@ import Time "mo:base/Time";
 import Iter "mo:base/Iter";
 import TrieSet "mo:base/TrieSet";
 import PlayerLedgerActor "canister:playerLedger";
+import LiveStreamHubActor "canister:liveStreamHub";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
@@ -27,7 +28,7 @@ import PseudoRandomX "mo:random/PseudoRandomX";
 import RandomUtil "../RandomUtil";
 import League "../League";
 
-actor class StadiumActor(leagueId : Principal, initLiveStreamCanisterId : Principal) : async Stadium.StadiumActor = this {
+actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
 
     type Match = Stadium.Match;
     type MatchWithTimer = Stadium.MatchWithTimer;
@@ -42,7 +43,6 @@ actor class StadiumActor(leagueId : Principal, initLiveStreamCanisterId : Princi
     stable var matches : Trie.Trie<Nat32, MatchWithTimer> = Trie.empty();
 
     stable var nextMatchId : Nat32 = 1;
-    stable var liveStreamCanisterId : Principal = initLiveStreamCanisterId;
 
     public query func getMatch(id : Nat32) : async ?MatchWithId {
         switch (getMatchOrNull(id)) {
@@ -219,7 +219,7 @@ actor class StadiumActor(leagueId : Principal, initLiveStreamCanisterId : Princi
     public shared ({ caller }) func tickMatch(matchId : Nat32) : async Stadium.TickMatchResult {
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
         let state = switch (match.state) {
-            case (#completed(completedState)) return #matchOver(completedState);
+            case (#completed(completedState)) return #completed(completedState);
             case (#inProgress(s)) s;
             case (#notStarted) return #notStarted;
         };
@@ -243,7 +243,11 @@ actor class StadiumActor(leagueId : Principal, initLiveStreamCanisterId : Princi
                 state = newState;
             },
         );
-        #ok(state);
+        await LiveStreamHubActor.broadcast({
+            matchId = matchId;
+            state = newState;
+        });
+        #inProgress(state);
     };
 
     private func getMatchOrNull(matchId : Nat32) : ?MatchWithTimer {

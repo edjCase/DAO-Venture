@@ -9,7 +9,7 @@ import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import LiveStream "LiveStream";
 
-actor class LiveStreamActor(leagueId : Principal) : async LiveStreamActor {
+actor {
     // Paste here the principal of the gateway obtained when running the gateway
     //  let gateway_principal : Text = "3656s-3kqlj-dkm5d-oputg-ymybu-4gnuq-7aojd-w2fzw-5lfp2-4zhx3-4ae";
 
@@ -22,9 +22,10 @@ actor class LiveStreamActor(leagueId : Principal) : async LiveStreamActor {
     var stadiumIds = Trie.empty<Principal, ()>();
 
     public shared ({ caller }) func add_stadium(stadiumId : Principal) : async LiveStream.AddStadiumResult {
-        if (caller != leagueId) {
-            return #notAuthorized;
-        };
+        // TODO
+        // if (caller != leagueId) {
+        //     return #notAuthorized;
+        // };
         let stadiumKey = {
             key = stadiumId;
             hash = Principal.hash(stadiumId);
@@ -108,7 +109,7 @@ actor class LiveStreamActor(leagueId : Principal) : async LiveStreamActor {
 
     // method called by the frontend SDK to send a message to the canister
     public shared ({ caller }) func ws_message(args : IcWebSocketCdk.CanisterWsMessageArguments) : async IcWebSocketCdk.CanisterWsMessageResult {
-        await ws.ws_message(caller, args, null);
+        await ws.ws_message(caller, args);
     };
 
     // method called by the WS Gateway to get messages for all the clients it serves

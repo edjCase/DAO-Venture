@@ -103,7 +103,6 @@ module {
     public type Division = {
         name : Text;
         schedule : ?DivisionSchedule;
-        liveStreamCanisterId : Principal;
     };
     public type DivisionWithId = Division and {
         id : Nat32;

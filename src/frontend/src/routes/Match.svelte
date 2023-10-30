@@ -4,16 +4,12 @@
   import { matchStore } from "../stores/MatchStore";
   import { teamStore } from "../stores/TeamStore";
   import type { Team } from "../ic-agent/League";
-  import {
-    stadiumAgentFactory,
-    type Match,
-    type MatchState,
-    type LogEntry,
-  } from "../ic-agent/Stadium";
+  import type { Match, MatchState, LogEntry } from "../ic-agent/Stadium";
   import FieldState from "../components/FieldState.svelte";
   import { Principal } from "@dfinity/principal";
   import VoteForMatch from "../components/VoteForMatch.svelte";
   import { toJsonString } from "../utils/JsonUtil";
+  import { subscribe, type LiveStreamMessage } from "../ic-agent/LiveStreamHub";
 
   export let leagueMatchId: string;
   let id = parseInt(leagueMatchId.split("-", 1)[0]);
@@ -45,48 +41,9 @@
       });
     }
   });
-
-  let loading = false;
-  let tick = async () => {
-    let stadiumAgent = stadiumAgentFactory(match.stadiumId);
-    loading = true;
-    let result = await stadiumAgent.tickMatch(match.id);
-    loading = false;
-    if ("ok" in result) {
-      state = { inProgress: result.ok };
-    } else if ("matchOver" in result) {
-      state = { completed: result.matchOver };
-    } else {
-      // TODO
-      console.log("Error ticking: ", result);
-    }
-  };
-  let start = async () => {
-    let stadiumAgent = stadiumAgentFactory(match.stadiumId);
-    let result = await stadiumAgent.startMatch(match.id);
-    if ("ok" in result) {
-      state = { inProgress: result.ok };
-      console.log("Started match");
-    } else if ("completed" in result) {
-      state = { completed: result.completed };
-      console.log("Match is complete");
-    } else {
-      console.log("Error starting: ", result);
-    }
-  };
-  let looping = false;
-  let tickLoop = async () => {
-    await tick();
-    if (looping) {
-      await tickLoop();
-    }
-  };
-  let toggle = async () => {
-    looping = !looping;
-    if (looping) {
-      tickLoop();
-    }
-  };
+  let webSocket = subscribe((msg: LiveStreamMessage) => {
+    state = msg.state;
+  });
 
   $: {
     let team1Score: bigint;
@@ -143,20 +100,9 @@
     <ScoreHeader {...matchDetails} />
     <section class="match-details">
       {#if "inProgress" in state}
-        <div class="buttons">
-          <button on:click={tick}>Tick</button>
-          <button on:click={toggle}>{!looping ? "Start" : "Stop"}</button>
-          {#if loading}
-            <span>Ticking...</span>
-          {/if}
-        </div>
-        {#if "inProgress" in state}
-          <FieldState state={state.inProgress} />
-        {/if}
+        <FieldState state={state.inProgress} />
       {:else if "notStarted" in state}
         <h1>Upcoming</h1>
-        <button on:click={start}>Start</button>
-
         <div>
           <h1>Vote for Matches</h1>
           <VoteForMatch
@@ -201,9 +147,6 @@
 <style>
   section {
     margin-bottom: 20px;
-  }
-  .buttons {
-    width: 200px;
   }
   .match-details {
     display: flex;

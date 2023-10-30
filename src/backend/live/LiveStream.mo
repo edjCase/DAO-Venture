@@ -7,7 +7,7 @@ import Iter "mo:base/Iter";
 import Stadium "../Stadium";
 
 module {
-    public type LiveStreamActor = actor {
+    public type LiveStreamHubActor = actor {
         broadcast : (LiveStreamMessage) -> ();
         add_stadium : (Principal) -> ();
         on_message : (IcWebSocketCdk.OnMessageCallbackArgs) -> ();

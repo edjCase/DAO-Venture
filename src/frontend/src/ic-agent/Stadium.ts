@@ -2,6 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import type { Actor, ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
+import { IDL } from '@dfinity/candid';
 
 
 export type Time = bigint;
@@ -206,12 +207,13 @@ export type MatchState = {
 } | {
   'completed': CompletedMatchState;
 };
-export type TickMatchResult = {
-  'ok': InProgressMatchState
+export type StartedMatchState = {
+  'inProgress': InProgressMatchState
 } | {
+  'completed': CompletedMatchState
+};
+export type TickMatchResult = StartedMatchState | {
   'matchNotFound': null
-} | {
-  'matchOver': CompletedMatchState
 } | {
   'notStarted': null
 };
@@ -234,173 +236,177 @@ export type StartMatchResult = {
 } | {
   'completed': CompletedMatchState
 };
+
+export const OffenseFieldStateIdl = IDL.Record({
+  'firstBase': IDL.Opt(IDL.Nat32),
+  'secondBase': IDL.Opt(IDL.Nat32),
+  'thirdBase': IDL.Opt(IDL.Nat32),
+  'atBat': IDL.Nat32,
+});
+export const DefenseFieldStateIdl = IDL.Record({
+  'firstBase': IDL.Nat32,
+  'secondBase': IDL.Nat32,
+  'thirdBase': IDL.Nat32,
+  'pitcher': IDL.Nat32,
+  'shortStop': IDL.Nat32,
+  'leftField': IDL.Nat32,
+  'centerField': IDL.Nat32,
+  'rightField': IDL.Nat32
+});
+export const FieldStateIdl = IDL.Record({
+  'defense': DefenseFieldStateIdl,
+  'offense': OffenseFieldStateIdl,
+});
+export const LogEntryIdl = IDL.Record({
+  'description': IDL.Text,
+  'isImportant': IDL.Bool
+});
+export const TeamIdIdl = IDL.Variant({
+  'team1': IDL.Null,
+  'team2': IDL.Null
+});
+export const TeamStateIdl = IDL.Record({
+  'id': IDL.Principal,
+  'score': IDL.Int,
+  'offeringId': IDL.Nat32,
+});
+export const PlayerInjuryIdl = IDL.Variant({
+  'twistedAnkle': IDL.Null,
+  'brokenLeg': IDL.Null,
+  'brokenArm': IDL.Null,
+  'concussion': IDL.Null
+});
+export const PlayerConditionIdl = IDL.Variant({
+  'ok': IDL.Null,
+  'injured': PlayerInjuryIdl,
+  'dead': IDL.Null
+});
+export const PlayerSkillsIdl = IDL.Record({
+  'battingAccuracy': IDL.Nat,
+  'battingPower': IDL.Nat,
+  'throwingAccuracy': IDL.Nat,
+  'throwingPower': IDL.Nat,
+  'catching': IDL.Nat,
+  'defense': IDL.Nat,
+  'piety': IDL.Nat,
+  'speed': IDL.Nat
+});
+export const FieldPositionIdl = IDL.Variant({
+  'pitcher': IDL.Null,
+  'firstBase': IDL.Null,
+  'secondBase': IDL.Null,
+  'thirdBase': IDL.Null,
+  'shortStop': IDL.Null,
+  'leftField': IDL.Null,
+  'centerField': IDL.Null,
+  'rightField': IDL.Null
+});
+export const PlayerStateIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'name': IDL.Text,
+  'teamId': TeamIdIdl,
+  'condition': PlayerConditionIdl,
+  'skills': PlayerSkillsIdl,
+  'position': FieldPositionIdl
+});
+export const InProgressStateIdl = IDL.Record({
+  'offenseTeamId': TeamIdIdl,
+  'team1': TeamStateIdl,
+  'team2': TeamStateIdl,
+  'specialRuleId': IDL.Opt(IDL.Nat32),
+  'log': IDL.Vec(LogEntryIdl),
+  'field': FieldStateIdl,
+  'players': IDL.Vec(PlayerStateIdl),
+  'strikes': IDL.Nat,
+  'outs': IDL.Nat,
+  'round': IDL.Nat,
+});
+export const CompletedTeamStateIdl = IDL.Record({
+  'id': IDL.Principal,
+  'score': IDL.Int
+});
+export const TeamIdOrTieIdl = IDL.Variant({
+  'team1': IDL.Null,
+  'team2': IDL.Null,
+  'tie': IDL.Null
+});
+export const CompletedMatchResultIdl = IDL.Record({
+  'team1': CompletedTeamStateIdl,
+  'team2': CompletedTeamStateIdl,
+  'winner': TeamIdOrTieIdl,
+  'log': IDL.Vec(LogEntryIdl),
+});
+export const CompletedStateIdl = IDL.Variant({
+  'absentTeam': TeamIdIdl,
+  'allAbsent': IDL.Null,
+  'played': CompletedMatchResultIdl
+});
+export const MatchTeamInfoIdl = IDL.Record({
+  'id': IDL.Principal,
+  'name': IDL.Text,
+  'predictionVotes': IDL.Nat
+});
+export const OfferingWithIdIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'deities': IDL.Vec(IDL.Text),
+  'effects': IDL.Vec(IDL.Text),
+});
+export const SpecialRuleWithIdIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'name': IDL.Text,
+  'description': IDL.Text,
+});
+export const BaseIdl = IDL.Variant({
+  'firstBase': IDL.Null,
+  'secondBase': IDL.Null,
+  'thirdBase': IDL.Null,
+  'homeBase': IDL.Null
+});
+export const StartedMatchStateIdl = IDL.Variant({
+  'ok': InProgressStateIdl,
+  'completed': CompletedStateIdl
+});
+export const MatchStateIdl = IDL.Variant({
+  'notStarted': IDL.Null,
+  'inProgress': InProgressStateIdl,
+  'completed': CompletedStateIdl
+});
+export const MatchIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'stadiumId': IDL.Principal,
+  'team1': MatchTeamInfoIdl,
+  'team2': MatchTeamInfoIdl,
+  'time': IDL.Int,
+  'offerings': IDL.Vec(OfferingWithIdIdl),
+  'specialRules': IDL.Vec(SpecialRuleWithIdIdl),
+  'state': MatchStateIdl
+});
+export const TickMatchResultIdl = IDL.Variant({
+  'ok': InProgressStateIdl,
+  'matchNotFound': IDL.Null,
+  'completed': CompletedStateIdl,
+  'notStarted': IDL.Null
+});
+export const StartMatchResultIdl = IDL.Variant({
+  'ok': InProgressStateIdl,
+  'matchNotFound': IDL.Null,
+  'matchAlreadyStarted': IDL.Null,
+  'completed': CompletedStateIdl
+});
+
+
 export interface _SERVICE {
   'getMatches': ActorMethod<[], Match[]>,
   'getMatch': ActorMethod<[number], [] | [Match]>,
   'tickMatch': ActorMethod<[number], TickMatchResult>,
   'startMatch': ActorMethod<[number], StartMatchResult>
 }
-
-
-
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
-  const MatchTeamInfo = IDL.Record({
-    'id': IDL.Principal,
-    'name': IDL.Text,
-    'predictionVotes': IDL.Nat
-  });
-  const OfferingWithId = IDL.Record({
-    'id': IDL.Nat32,
-    'deities': IDL.Vec(IDL.Text),
-    'effects': IDL.Vec(IDL.Text),
-  });
-  const SpecialRuleWithId = IDL.Record({
-    'id': IDL.Nat32,
-    'name': IDL.Text,
-    'description': IDL.Text,
-  });
-  const OffenseFieldState = IDL.Record({
-    'firstBase': IDL.Opt(IDL.Nat32),
-    'secondBase': IDL.Opt(IDL.Nat32),
-    'thirdBase': IDL.Opt(IDL.Nat32),
-    'atBat': IDL.Nat32,
-  });
-  const DefenseFieldState = IDL.Record({
-    'firstBase': IDL.Nat32,
-    'secondBase': IDL.Nat32,
-    'thirdBase': IDL.Nat32,
-    'pitcher': IDL.Nat32,
-    'shortStop': IDL.Nat32,
-    'leftField': IDL.Nat32,
-    'centerField': IDL.Nat32,
-    'rightField': IDL.Nat32
-  });
-  const FieldState = IDL.Record({
-    'defense': DefenseFieldState,
-    'offense': OffenseFieldState,
-  });
-  const Base = IDL.Variant({
-    'firstBase': IDL.Null,
-    'secondBase': IDL.Null,
-    'thirdBase': IDL.Null,
-    'homeBase': IDL.Null
-  });
-  const FieldPosition = IDL.Variant({
-    'pitcher': IDL.Null,
-    'firstBase': IDL.Null,
-    'secondBase': IDL.Null,
-    'thirdBase': IDL.Null,
-    'shortStop': IDL.Null,
-    'leftField': IDL.Null,
-    'centerField': IDL.Null,
-    'rightField': IDL.Null
-  });
-  const PlayerInjury = IDL.Variant({
-    'twistedAnkle': IDL.Null,
-    'brokenLeg': IDL.Null,
-    'brokenArm': IDL.Null,
-    'concussion': IDL.Null
-  });
-  const TeamId = IDL.Variant({
-    'team1': IDL.Null,
-    'team2': IDL.Null
-  });
-  const TeamState = IDL.Record({
-    'id': IDL.Principal,
-    'score': IDL.Int,
-    'offeringId': IDL.Nat32,
-  });
-  const PlayerCondition = IDL.Variant({
-    'ok': IDL.Null,
-    'injured': PlayerInjury,
-    'dead': IDL.Null
-  });
-  const PlayerSkills = IDL.Record({
-    'battingAccuracy': IDL.Nat,
-    'battingPower': IDL.Nat,
-    'throwingAccuracy': IDL.Nat,
-    'throwingPower': IDL.Nat,
-    'catching': IDL.Nat,
-    'defense': IDL.Nat,
-    'piety': IDL.Nat,
-    'speed': IDL.Nat
-  });
-  const PlayerState = IDL.Record({
-    'id': IDL.Nat32,
-    'name': IDL.Text,
-    'teamId': TeamId,
-    'condition': PlayerCondition,
-    'skills': PlayerSkills,
-    'position': FieldPosition
-  });
-  const LogEntry = IDL.Record({
-    'description': IDL.Text,
-    'isImportant': IDL.Bool
-  });
-  const InProgressState = IDL.Record({
-    'offenseTeamId': TeamId,
-    'team1': TeamState,
-    'team2': TeamState,
-    'specialRuleId': IDL.Opt(IDL.Nat32),
-    'log': IDL.Vec(LogEntry),
-    'field': FieldState,
-    'players': IDL.Vec(PlayerState),
-    'strikes': IDL.Nat,
-    'outs': IDL.Nat,
-    'round': IDL.Nat,
-  });
-  const CompletedTeamState = IDL.Record({
-    'id': IDL.Principal,
-    'score': IDL.Int
-  });
-  const TeamIdOrTie = IDL.Variant({
-    'team1': IDL.Null,
-    'team2': IDL.Null,
-    'tie': IDL.Null
-  });
-  const CompletedMatchResult = IDL.Record({
-    'team1': CompletedTeamState,
-    'team2': CompletedTeamState,
-    'winner': TeamIdOrTie,
-    'log': IDL.Vec(LogEntry),
-  });
-  const CompletedState = IDL.Variant({
-    'absentTeam': TeamId,
-    'allAbsent': IDL.Null,
-    'played': CompletedMatchResult
-  });
-  const MatchState = IDL.Variant({
-    'notStarted': IDL.Null,
-    'inProgress': InProgressState,
-    'completed': CompletedState
-  });
-  const Match = IDL.Record({
-    'id': IDL.Nat32,
-    'stadiumId': IDL.Principal,
-    'team1': MatchTeamInfo,
-    'team2': MatchTeamInfo,
-    'time': IDL.Int,
-    'offerings': IDL.Vec(OfferingWithId),
-    'specialRules': IDL.Vec(SpecialRuleWithId),
-    'state': MatchState
-  });
-  const TickMatchResult = IDL.Variant({
-    'ok': InProgressState,
-    'matchNotFound': IDL.Null,
-    'matchOver': CompletedState,
-    'notStarted': IDL.Null
-  });
-  const StartMatchResult = IDL.Variant({
-    'ok': InProgressState,
-    'matchNotFound': IDL.Null,
-    'matchAlreadyStarted': IDL.Null,
-    'completed': CompletedState
-  });
   return IDL.Service({
-    'getMatches': IDL.Func([], [IDL.Vec(Match)], ['query']),
-    'getMatch': IDL.Func([IDL.Nat32], [IDL.Opt(Match)], ['query']),
-    'tickMatch': IDL.Func([IDL.Nat32], [TickMatchResult], []),
-    'startMatch': IDL.Func([IDL.Nat32], [StartMatchResult], [])
+    'getMatches': IDL.Func([], [IDL.Vec(MatchIdl)], ['query']),
+    'getMatch': IDL.Func([IDL.Nat32], [IDL.Opt(MatchIdl)], ['query']),
+    'tickMatch': IDL.Func([IDL.Nat32], [TickMatchResultIdl], []),
+    'startMatch': IDL.Func([IDL.Nat32], [StartMatchResultIdl], [])
   });
 };
 export const stadiumAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

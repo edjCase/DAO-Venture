@@ -1,6 +1,6 @@
 import svelte from "rollup-plugin-svelte";
 import commonjs from "@rollup/plugin-commonjs";
-import resolve from "@rollup/plugin-node-resolve";
+import nodeResolve from "@rollup/plugin-node-resolve";
 import livereload from "rollup-plugin-livereload";
 import { terser } from "rollup-plugin-terser";
 import css from "rollup-plugin-css-only";
@@ -9,6 +9,7 @@ import inject from "rollup-plugin-inject";
 import json from "@rollup/plugin-json";
 import sveltePreprocess from "svelte-preprocess";
 import typescript from '@rollup/plugin-typescript';
+import nodePolyfill from 'rollup-plugin-polyfill-node';
 
 const production = !process.env.ROLLUP_WATCH;
 
@@ -122,12 +123,19 @@ export default {
     // some cases you'll need additional configuration -
     // consult the documentation for details:
     // https://github.com/rollup/plugins/tree/master/packages/commonjs
-    resolve({
+    nodeResolve({
       preferBuiltins: false,
       browser: true,
       dedupe: ["svelte"],
     }),
     commonjs(),
+    nodePolyfill({
+      sourceMap: true,
+      include: [
+        "./node_modules/readable-stream/**/*",
+        "./node_modules/ic-websocket/**/*"
+      ],
+    }),
     typescript({
         sourceMap: !production,
         inlineSources: !production
@@ -144,6 +152,9 @@ export default {
           "process.env.DFX_NETWORK": JSON.stringify(network),
           "process.env.NODE_ENV": JSON.stringify(
             production ? "production" : "development"
+          ),
+          "process.env.LOG_LEVEL": JSON.stringify(
+            production ? "info" : "debug"
           ),
           ...UNDEFINED_CANISTER_IDS,
         },

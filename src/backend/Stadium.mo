@@ -81,10 +81,13 @@ module {
         offeringId : Nat32;
     };
 
-    public type MatchState = {
-        #notStarted;
+    public type StartedMatchState = {
         #inProgress : InProgressMatchState;
         #completed : CompletedMatchState;
+    };
+
+    public type MatchState = StartedMatchState or {
+        #notStarted;
     };
 
     public type DefenseFieldState = {
@@ -195,18 +198,13 @@ module {
         id : Nat32;
         stadiumId : Principal;
     };
-    public type TickMatchResult = {
-        #ok : InProgressMatchState;
+    public type TickMatchResult = StartedMatchState or {
         #matchNotFound;
-        #matchOver : CompletedMatchState;
         #notStarted;
     };
     public type LiveStreamMessage = {
         matchId : Nat32;
-        state : {
-            #inProgress : InProgressMatchState;
-            #matchOver : CompletedMatchState;
-        };
+        state : StartedMatchState;
     };
 
     public type MatchOptions = {

@@ -33,7 +33,7 @@ import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import League "../League";
 import RandomUtil "../RandomUtil";
-import LiveStreamActor "../LiveStream/LiveStreamActor";
+import LiveStream "../live/LiveStream";
 
 actor LeagueActor {
     type MatchUp = League.MatchUp;
@@ -99,15 +99,6 @@ actor LeagueActor {
         // if (caller != leagueId) {
         //   return #notAuthorized;
         // }
-        let liveStreamCanisterId = try {
-            let canisterCreationCost = 100_000_000_000;
-            let initialBalance = 3_000_000_000_000;
-            Cycles.add(canisterCreationCost + initialBalance);
-            let liveStreamCanister = await LiveStreamActor.LiveStreamActor(leagueId);
-            Principal.fromActor(liveStreamCanister);
-        } catch (err) {
-            return #liveStreamCanisterFailure(Error.message(err));
-        };
 
         let nameAlreadyTaken = Trie.some(
             divisions,
@@ -120,7 +111,6 @@ actor LeagueActor {
         let division : Division = {
             name = request.name;
             schedule = null;
-            liveStreamCanisterId = liveStreamCanisterId;
         };
         let divisionKey = { key = divisionId; hash = divisionId };
         let (newDivisions, _) = Trie.put(divisions, divisionKey, Nat32.equal, division);
@@ -232,7 +222,7 @@ actor LeagueActor {
         let initialBalance = 3_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         let leagueId = Principal.fromActor(LeagueActor);
-        let stadiumCanister = await StadiumCanister.StadiumActor(leagueId, divisionLiveStreamCanisterId);
+        let stadiumCanister = await StadiumCanister.StadiumActor(leagueId);
         let stadiumId = Principal.fromActor(stadiumCanister);
         let stadium : Stadium.Stadium = {
             id = stadiumId;
@@ -258,10 +248,9 @@ actor LeagueActor {
             let teamActor = actor (Principal.toText(teamId)) : TeamActor.TeamActor;
             let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(leagueId, ownerId);
         };
-        let liveStreamCanisterId = Principal.fromText("2vxsx-fae"); // TODO?
         for ((stadiumId, stadium) in Trie.iter(stadiums)) {
             let stadiumActor = actor (Principal.toText(stadiumId)) : StadiumCanister.StadiumActor;
-            let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadiumActor))(leagueId, liveStreamCanisterId);
+            let _ = await (system StadiumCanister.StadiumActor)(#upgrade(stadiumActor))(leagueId);
         };
     };
 
