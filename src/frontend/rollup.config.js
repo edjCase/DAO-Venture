@@ -2,7 +2,6 @@ import svelte from "rollup-plugin-svelte";
 import commonjs from "@rollup/plugin-commonjs";
 import nodeResolve from "@rollup/plugin-node-resolve";
 import livereload from "rollup-plugin-livereload";
-import { terser } from "rollup-plugin-terser";
 import css from "rollup-plugin-css-only";
 import replace from "@rollup/plugin-replace";
 import inject from "rollup-plugin-inject";
@@ -10,44 +9,17 @@ import json from "@rollup/plugin-json";
 import sveltePreprocess from "svelte-preprocess";
 import typescript from '@rollup/plugin-typescript';
 import nodePolyfill from 'rollup-plugin-polyfill-node';
+import localCanisters from "../../.dfx/local/canister_ids.json" assert {
+  type: 'json'
+};
+import prodCanisters from "../../canister_ids.json" assert {
+  type: 'json'
+};
+import child_process from "child_process";
 
 const production = !process.env.ROLLUP_WATCH;
 
-const path = require("path");
-
 function initCanisterIds() {
-  let localCanisters, localIiCanister, prodCanisters, canisters;
-  try {
-    localCanisters = require(path.resolve(
-      "..",
-      "..",
-      ".dfx",
-      "local",
-      "canister_ids.json"
-    ));
-  } catch (error) {
-    console.log("No local canister_ids.json found. Continuing production");
-  }
-  try {
-    localIiCanister = require(path.resolve(
-      "..",
-      "..",
-      "internet-identity",
-      ".dfx",
-      "local",
-      "canister_ids.json"
-    ));
-  } catch (error) {
-    console.log(
-      "No local internet-identity canister_ids.json found. Continuing production"
-    );
-  }
-  try {
-    prodCanisters = require(path.resolve("..", "..", "canister_ids.json"));
-  } catch (error) {
-    console.log("No production canister_ids.json found. Continuing with local");
-  }
-
   const network =
     process.env.DFX_NETWORK ||
     (process.env.NODE_ENV === "production" ? "ic" : "local");
@@ -56,7 +28,7 @@ function initCanisterIds() {
 
   const canisterIds =
     network === "local"
-      ? { ...(localCanisters || {}), ...(localIiCanister || {}) }
+      ? { ...(localCanisters || {}) }
       : prodCanisters;
 
   return { canisterIds, network };
@@ -80,7 +52,7 @@ function serve() {
   return {
     writeBundle() {
       if (server) return;
-      server = require("child_process").spawn(
+      server = child_process.spawn(
         "npm",
         ["run", "start", "--", "--dev", "--single"],
         {
@@ -129,13 +101,7 @@ export default {
       dedupe: ["svelte"],
     }),
     commonjs(),
-    nodePolyfill({
-      sourceMap: true,
-      include: [
-        "./node_modules/readable-stream/**/*",
-        "./node_modules/ic-websocket/**/*"
-      ],
-    }),
+    nodePolyfill(),
     typescript({
         sourceMap: !production,
         inlineSources: !production
@@ -176,10 +142,6 @@ export default {
     // Watch the `public` directory and refresh the
     // browser on changes when not in production
     !production && livereload("public"),
-
-    // If we're building for production (npm run build
-    // instead of npm run dev), minify
-    production && terser(),
   ],
   watch: {
     clearScreen: false,
@@ -192,11 +154,11 @@ export default {
       || warning.loc.file.includes('node_modules/@dfinity/identity'))
     ) return;
     
-    if (
-      warning.code === 'CIRCULAR_DEPENDENCY' && 
-      warning.importer.includes('node_modules/@dfinity/auth-client')
-    ) {
-      return;}
+    // if (
+    //   warning.code === 'CIRCULAR_DEPENDENCY' && 
+    //   warning.importer.includes('node_modules/@dfinity/auth-client')
+    // ) {
+    //   return;}
 
 
     if (

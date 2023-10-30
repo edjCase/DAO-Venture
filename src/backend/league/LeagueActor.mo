@@ -219,7 +219,7 @@ actor LeagueActor {
         };
 
         let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 3_000_000_000_000;
+        let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         let leagueId = Principal.fromActor(LeagueActor);
         let stadiumCanister = await StadiumCanister.StadiumActor(leagueId);
@@ -385,7 +385,7 @@ actor LeagueActor {
     private func createTeamActor(ledgerId : Principal) : async TeamActor.TeamActor {
         let leagueId = Principal.fromActor(LeagueActor);
         let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 3_000_000_000_000;
+        let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         await TeamActor.TeamActor(
             leagueId,
@@ -395,7 +395,7 @@ actor LeagueActor {
 
     private func createTeamLedger(tokenName : Text, tokenSymbol : Text) : async LedgerActor {
         let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 3_000_000_000_000;
+        let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
 
         let leagueId = Principal.fromActor(LeagueActor);
