@@ -14,9 +14,9 @@
   export let team2: Team;
   export let winner: undefined | Principal;
 
-  let winningTeam;
+  let winningTeam: Team | undefined;
   if (!winner) {
-    winningTeam = null;
+    winningTeam = undefined;
   } else if (winner == team1.id) {
     winningTeam = team1;
   } else if (winner == team2.id) {
@@ -24,7 +24,7 @@
   } else {
     throw new Error("Invalid winner: " + winner);
   }
-  let playerChosenTeamId;
+  let playerChosenTeamId: Principal | undefined;
   if (team1.predictionVotes > team2.predictionVotes) {
     playerChosenTeamId = team1.id;
   } else if (team1.predictionVotes < team2.predictionVotes) {
@@ -32,11 +32,11 @@
   }
 
   let totalVotes = team1.predictionVotes + team2.predictionVotes;
-  let team1Percent;
-  let team2Percent;
+  let team1Percent: bigint;
+  let team2Percent: bigint;
   if (totalVotes < 1) {
-    team1Percent = 0;
-    team2Percent = 0;
+    team1Percent = BigInt(0);
+    team2Percent = BigInt(0);
   } else {
     team1Percent = team1.predictionVotes / totalVotes;
     team2Percent = team1.predictionVotes / totalVotes;

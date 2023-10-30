@@ -1,9 +1,11 @@
 import IcWebSocketCdk "mo:ic-websocket-cdk";
+import Logger "mo:ic-websocket-cdk/Logger";
 import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
+import Error "mo:base/Error";
 import Stadium "../Stadium";
 
 module {
@@ -25,7 +27,7 @@ module {
         ws_state : IcWebSocketCdk.IcWebSocketState;
         stadiumIds : Trie.Trie<StadiumId, ()>;
         caller : Principal;
-        var clientIds : Trie.Trie<Principal, ()>;
+        clientIds : Trie.Trie<Principal, ()>;
         msg : T;
     };
 
@@ -34,15 +36,20 @@ module {
         #unsubscribe;
     };
 
+    public type BroadcastResult = {
+        #ok : { failedClients : [Principal] };
+        #notAuthorized;
+    };
+
     public type LiveStreamMessage = Stadium.LiveStreamMessage;
 
-    public func broadcast(context : Context<LiveStreamMessage>) : async* () {
+    public func broadcast(context : Context<LiveStreamMessage>) : async* BroadcastResult {
         let key = {
             key = context.caller;
             hash = Principal.hash(context.caller);
         };
         let stadiumId = switch (Trie.get(context.stadiumIds, key, Principal.equal)) {
-            case (null) return (); // TODO not authorized
+            case (null) return #notAuthorized; // TODO not authorized
             case (?s) s;
         };
         let serializedMsg = to_candid ({
@@ -50,42 +57,34 @@ module {
             msg = context.msg;
         });
 
-        let clientIdIter : Iter.Iter<Principal> = Trie.iter(context.clientIds)
-        |> Iter.map(_, func(x : (Principal, ())) : Principal = x.0);
-        for (clientId in clientIdIter) {
+        let clientIds : [Principal] = Trie.iter(context.clientIds)
+        |> Iter.map(_, func(x : (Principal, ())) : Principal = x.0)
+        |> Iter.toArray(_);
+        let failedClients = Buffer.Buffer<Principal>(0);
+        Logger.custom_print("All ClientIds: " # debug_show (clientIds));
+        for (clientId in Iter.fromArray(clientIds)) {
             try {
-                ignore IcWebSocketCdk.ws_send(context.ws_state, clientId, serializedMsg);
-            } catch (err) {
-                // TODO error handling
-                let clientKey = {
-                    key = clientId;
-                    hash = Principal.hash(clientId);
+                let result = await IcWebSocketCdk.ws_send(context.ws_state, clientId, serializedMsg);
+                switch (result) {
+                    case (#Err(e)) {
+                        Logger.custom_print("Failed to send message to client: " # debug_show (clientId) # " with error: " # debug_show (e));
+                        failedClients.add(clientId);
+                    };
+                    case (#Ok) {
+                        Logger.custom_print("Sent message to client: " # debug_show (clientId));
+                    };
                 };
-                let (newClientIds, _) = Trie.remove(context.clientIds, clientKey, Principal.equal);
-                context.clientIds := newClientIds;
+            } catch (err) {
+                Logger.custom_print("Error sending message to client: " # Error.message(err));
+                failedClients.add(clientId);
             };
         };
-    };
-
-    public func on_message(context : Context<IcWebSocketCdk.OnMessageCallbackArgs>) : async* () {
-        let ?message : ?SubscribeRequest = from_candid (context.msg.message) else return (); // TODO error handling
-        let clientKey = {
-            key = context.msg.client_principal;
-            hash = Principal.hash(context.msg.client_principal);
+        let failedClientsArray = if (failedClients.size() == 0) {
+            [];
+        } else {
+            Buffer.toArray(failedClients);
         };
-        let (newClientIds, _) = switch (message) {
-            case (#subscribe) Trie.put(context.clientIds, clientKey, Principal.equal, ());
-            case (#unsubscribe) Trie.remove(context.clientIds, clientKey, Principal.equal);
-        };
-        context.clientIds := newClientIds;
-    };
-
-    public func on_open(context : Context<IcWebSocketCdk.OnOpenCallbackArgs>) : async* () {
-        Debug.print("Client connected: " # debug_show (context.msg.client_principal));
-    };
-
-    public func on_close(context : Context<IcWebSocketCdk.OnCloseCallbackArgs>) : async* () {
-        Debug.print("Client disconnected: " # debug_show (context.msg.client_principal));
+        #ok({ failedClients = failedClientsArray });
     };
 
 };

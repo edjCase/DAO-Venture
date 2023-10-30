@@ -10,6 +10,7 @@
   import VoteForMatch from "../components/VoteForMatch.svelte";
   import { toJsonString } from "../utils/JsonUtil";
   import { subscribe, type LiveStreamMessage } from "../ic-agent/LiveStreamHub";
+  import { onDestroy } from "svelte";
 
   export let leagueMatchId: string;
   let id = parseInt(leagueMatchId.split("-", 1)[0]);
@@ -17,11 +18,20 @@
     leagueMatchId.slice(id.toString().length + 1)
   );
 
-  let match: Match;
-  let team1: Team;
-  let team2: Team;
+  type TeamDetails = {
+    id: Principal;
+    name: string;
+    predictionVotes: bigint;
+    score: bigint;
+  };
+
+  let match: Match | undefined;
+  let team1: Team | undefined;
+  let team2: Team | undefined;
   let loadingTeams = true;
-  let matchDetails;
+  let matchDetails:
+    | { team1: TeamDetails; team2: TeamDetails; winner: Principal | undefined }
+    | undefined;
   let state: MatchState;
   let log: LogEntry[];
   matchStore.subscribe((matches) => {
@@ -32,24 +42,27 @@
       state = match.state;
       teamStore.subscribe((teams) => {
         team1 = teams.find(
-          (team) => team.id.compareTo(match.team1.id) === "eq"
+          (team) => team.id.compareTo(match!.team1.id) === "eq"
         );
         team2 = teams.find(
-          (team) => team.id.compareTo(match.team2.id) === "eq"
+          (team) => team.id.compareTo(match!.team2.id) === "eq"
         );
         loadingTeams = false;
       });
     }
   });
-  let webSocket = subscribe((msg: LiveStreamMessage) => {
+  let ws = subscribe((msg: LiveStreamMessage) => {
     state = msg.state;
+  });
+  onDestroy(() => {
+    ws.close();
   });
 
   $: {
     let team1Score: bigint;
     let team2Score: bigint;
     let winner: Principal | undefined;
-    if (!!state) {
+    if (!!state && !!match && !!team1 && !!team2) {
       if ("inProgress" in state) {
         team1Score = state.inProgress.team1.score;
         team2Score = state.inProgress.team2.score;
@@ -93,16 +106,35 @@
       };
     }
   }
+  let getRemainingTime = (startTime: bigint): string => {
+    let msDifference = Number(startTime / BigInt(1_000_000)) - Date.now();
+    if (msDifference < 1) {
+      return "ANY SECOND!";
+    }
+    let seconds = Math.floor(msDifference / 1000);
+    let minutes = Math.floor(seconds / 60);
+    let hours = Math.floor(minutes / 60);
+    let days = Math.floor(hours / 24);
+
+    // Adjust values so they reflect remaining time, not total time
+    seconds %= 60;
+    minutes %= 60;
+    hours %= 24;
+
+    return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
+  };
 </script>
 
-{#if !loadingTeams}
+{#if !loadingTeams && !!match && !!team1 && !!team2 && !!matchDetails}
   <section>
     <ScoreHeader {...matchDetails} />
     <section class="match-details">
       {#if "inProgress" in state}
         <FieldState state={state.inProgress} />
       {:else if "notStarted" in state}
-        <h1>Upcoming</h1>
+        <h1>
+          Upcoming in {getRemainingTime(match.time)}
+        </h1>
         <div>
           <h1>Vote for Matches</h1>
           <VoteForMatch

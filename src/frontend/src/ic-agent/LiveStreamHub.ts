@@ -9,7 +9,7 @@ if (process.env.DFX_NETWORK === "ic") {
     gatewayUrl = "wss://gateway.icws.io";
     icUrl = "https://icp0.io";
 } else {
-    gatewayUrl = "ws://127.0.0.1:8080";
+    gatewayUrl = "ws://127.0.0.1:8081";
     icUrl = "http://127.0.0.1:4943";
 }
 
@@ -34,8 +34,6 @@ export function subscribe(callback: (msg: LiveStreamMessage) => void): { close: 
         identity: generateRandomIdentity(),
         networkUrl: icUrl,
     });
-    let initMessageBytes = new Uint8Array(); // TODO? 
-    ws.send(initMessageBytes);
     ws.onopen = () => {
         console.log("WebSocket state:", ws.readyState, "is open:", ws.readyState === ws.OPEN);
 
@@ -54,7 +52,5 @@ export function subscribe(callback: (msg: LiveStreamMessage) => void): { close: 
     ws.onerror = (event: ErrorEvent) => {
         console.log("WebSocket error observed:", event);
     };
-    return {
-        close: ws.close
-    };
+    return ws;
 }

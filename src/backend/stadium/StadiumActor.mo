@@ -25,6 +25,7 @@ import Error "mo:base/Error";
 import Blob "mo:base/Blob";
 import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
+import Logger "mo:ic-websocket-cdk/Logger";
 import RandomUtil "../RandomUtil";
 import League "../League";
 
@@ -71,16 +72,28 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (#matchAlreadyStarted) return #matchAlreadyStarted;
             case (#matchNotFound) return #matchNotFound;
             case (#completed(s)) {
+                switch (match.timerId) {
+                    case (null)();
+                    case (?timerId) Timer.cancelTimer(timerId); // Cancel timer if set
+                };
                 let newMatch : MatchWithTimer = {
                     match with
+                    timer = null;
                     state = #completed(s);
                 };
                 addOrUpdateMatch(matchId, newMatch);
                 #completed(s);
             };
             case (#ok(s)) {
+                let timerId = Timer.recurringTimer(
+                    #seconds(5),
+                    func() : async () {
+                        let _ = await tickMatch(matchId);
+                    },
+                );
                 let newMatch : MatchWithTimer = {
                     match with
+                    timerId = ?timerId;
                     state = #inProgress(s);
                 };
                 addOrUpdateMatch(matchId, newMatch);
@@ -217,6 +230,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     public shared ({ caller }) func tickMatch(matchId : Nat32) : async Stadium.TickMatchResult {
+        Logger.custom_print("Tick match: " # debug_show (matchId));
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
         let state = switch (match.state) {
             case (#completed(completedState)) return #completed(completedState);
@@ -239,14 +253,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             matchId,
             {
                 match with
-                timerId = null;
                 state = newState;
             },
         );
-        await LiveStreamHubActor.broadcast({
+        let result = await LiveStreamHubActor.broadcast({
             matchId = matchId;
             state = newState;
         });
+        Logger.custom_print("Broadcast result: " # debug_show (result));
         #inProgress(state);
     };
 

@@ -34,6 +34,7 @@ import PseudoRandomX "mo:random/PseudoRandomX";
 import League "../League";
 import RandomUtil "../RandomUtil";
 import LiveStream "../live/LiveStream";
+import LiveStreamHubActor "canister:liveStreamHub";
 
 actor LeagueActor {
     type MatchUp = League.MatchUp;
@@ -228,10 +229,15 @@ actor LeagueActor {
             id = stadiumId;
             name = request.name;
         };
-
         let stadiumKey = buildKey(stadiumId);
         let (newStadiums, _) = Trie.put(stadiums, stadiumKey, Principal.equal, stadium);
         stadiums := newStadiums;
+
+        switch (await LiveStreamHubActor.add_stadium(stadiumId)) {
+            case (#ok) {};
+            case (#notAuthorized) {}; // TODO
+        };
+
         return #ok(stadiumId);
     };
 

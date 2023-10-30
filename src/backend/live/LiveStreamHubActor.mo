@@ -1,4 +1,5 @@
 import IcWebSocketCdk "mo:ic-websocket-cdk";
+import Logger "mo:ic-websocket-cdk/Logger";
 import Text "mo:base/Text";
 import Debug "mo:base/Debug";
 import HashMap "mo:base/HashMap";
@@ -19,7 +20,7 @@ actor {
     var ws_state = IcWebSocketCdk.IcWebSocketState(gateway_principal_text);
 
     var clientIds = Trie.empty<Principal, ()>();
-    var stadiumIds = Trie.empty<Principal, ()>();
+    stable var stadiumIds = Trie.empty<Principal, ()>();
 
     public shared ({ caller }) func add_stadium(stadiumId : Principal) : async LiveStream.AddStadiumResult {
         // TODO
@@ -35,10 +36,10 @@ actor {
         #ok;
     };
 
-    public shared ({ caller }) func broadcast(msg : LiveStream.LiveStreamMessage) : async () {
+    public shared ({ caller }) func broadcast(msg : LiveStream.LiveStreamMessage) : async LiveStream.BroadcastResult {
         await* LiveStream.broadcast({
             caller = caller;
-            var clientIds = clientIds;
+            clientIds = clientIds;
             stadiumIds;
             ws_state;
             msg = msg;
@@ -46,36 +47,33 @@ actor {
     };
 
     func on_open(args : IcWebSocketCdk.OnOpenCallbackArgs) : async () {
-        await* LiveStream.on_open({
-            caller = gateway_principal;
-            var clientIds = clientIds;
-            stadiumIds;
-            ws_state;
-            msg = args;
-        });
+        addClient(args.client_principal);
     };
 
-    /// The custom logic is just a ping-pong message exchange between frontend and canister.
-    /// Note that the message from the WebSocket is serialized in CBOR, so we have to deserialize it first
-
-    func on_message(args : IcWebSocketCdk.OnMessageCallbackArgs) : async () {
-        await* LiveStream.on_message({
-            caller = gateway_principal;
-            var clientIds = clientIds;
-            stadiumIds;
-            ws_state;
-            msg = args;
-        });
-    };
+    func on_message(args : IcWebSocketCdk.OnMessageCallbackArgs) : async () {};
 
     func on_close(args : IcWebSocketCdk.OnCloseCallbackArgs) : async () {
-        await* LiveStream.on_close({
-            caller = gateway_principal;
-            var clientIds = clientIds;
-            stadiumIds;
-            ws_state;
-            msg = args;
-        });
+        removeClient(args.client_principal);
+    };
+
+    private func addClient(clientId : Principal) : () {
+        Logger.custom_print("Client added: " # Principal.toText(clientId));
+        let clientKey = {
+            key = clientId;
+            hash = Principal.hash(clientId);
+        };
+        let (newClientIds, _) = Trie.put(clientIds, clientKey, Principal.equal, ());
+        clientIds := newClientIds;
+    };
+
+    private func removeClient(clientId : Principal) : () {
+        Logger.custom_print("Client removed: " # Principal.toText(clientId));
+        let clientKey = {
+            key = clientId;
+            hash = Principal.hash(clientId);
+        };
+        let (newClientIds, _) = Trie.remove(clientIds, clientKey, Principal.equal);
+        clientIds := newClientIds;
     };
 
     let handlers = IcWebSocketCdk.WsHandlers(
