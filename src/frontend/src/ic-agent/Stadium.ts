@@ -363,7 +363,7 @@ export const BaseIdl = IDL.Variant({
   'homeBase': IDL.Null
 });
 export const StartedMatchStateIdl = IDL.Variant({
-  'ok': InProgressStateIdl,
+  'inProgress': InProgressStateIdl,
   'completed': CompletedStateIdl
 });
 export const MatchStateIdl = IDL.Variant({

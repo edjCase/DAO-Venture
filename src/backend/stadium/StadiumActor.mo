@@ -256,11 +256,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 state = newState;
             },
         );
-        let result = await LiveStreamHubActor.broadcast({
+        ignore LiveStreamHubActor.broadcast({
             matchId = matchId;
             state = newState;
         });
-        Logger.custom_print("Broadcast result: " # debug_show (result));
         #inProgress(state);
     };
 

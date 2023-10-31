@@ -50,13 +50,13 @@ module {
         };
         let stadiumId = switch (Trie.get(context.stadiumIds, key, Principal.equal)) {
             case (null) return #notAuthorized; // TODO not authorized
-            case (?s) s;
+            case (?()) context.caller;
         };
         let serializedMsg = to_candid ({
+            matchId = context.msg.matchId;
             stadiumId = stadiumId;
-            msg = context.msg;
+            state = context.msg.state;
         });
-
         let clientIds : [Principal] = Trie.iter(context.clientIds)
         |> Iter.map(_, func(x : (Principal, ())) : Principal = x.0)
         |> Iter.toArray(_);

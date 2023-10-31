@@ -8,13 +8,12 @@ import Blob "mo:base/Blob";
 import Bool "mo:base/Bool";
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
+import Iter "mo:base/Iter";
 import LiveStream "LiveStream";
 
 actor {
     // Paste here the principal of the gateway obtained when running the gateway
-    //  let gateway_principal : Text = "3656s-3kqlj-dkm5d-oputg-ymybu-4gnuq-7aojd-w2fzw-5lfp2-4zhx3-4ae";
-
-    let gateway_principal_text : Text = "jkhgq-q7bza-ztzvn-swx6g-dgkdp-24g7z-54mt2-2edmj-7j4n7-x7qnj-oqe";
+    let gateway_principal_text : Text = "lguro-akdab-ztueq-gj5sg-3rx63-dmgdc-bi6f3-aai7k-bm6d5-m53eh-5qe";
     let gateway_principal = Principal.fromText(gateway_principal_text);
 
     var ws_state = IcWebSocketCdk.IcWebSocketState(gateway_principal_text);
@@ -36,14 +35,26 @@ actor {
         #ok;
     };
 
-    public shared ({ caller }) func broadcast(msg : LiveStream.LiveStreamMessage) : async LiveStream.BroadcastResult {
-        await* LiveStream.broadcast({
+    public shared ({ caller }) func broadcast(msg : LiveStream.LiveStreamMessage) : async {
+        #ok;
+        #notAuthorized;
+    } {
+        let result = await* LiveStream.broadcast({
             caller = caller;
             clientIds = clientIds;
             stadiumIds;
             ws_state;
             msg = msg;
         });
+        switch (result) {
+            case (#ok({ failedClients })) {
+                for (clientId in Iter.fromArray(failedClients)) {
+                    removeClient(clientId);
+                };
+                #ok;
+            };
+            case (#notAuthorized) #notAuthorized;
+        };
     };
 
     func on_open(args : IcWebSocketCdk.OnOpenCallbackArgs) : async () {
