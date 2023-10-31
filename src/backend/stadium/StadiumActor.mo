@@ -67,22 +67,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     public shared ({ caller }) func startMatch(matchId : Nat32) : async Stadium.StartMatchResult {
         // TODO: only can call itself after the designated time
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        let result = await startMatchInternal(matchId, match);
-        switch (result) {
+        let (result, newMatch) = switch (await startMatchInternal(matchId, match)) {
             case (#matchAlreadyStarted) return #matchAlreadyStarted;
             case (#matchNotFound) return #matchNotFound;
             case (#completed(s)) {
-                switch (match.timerId) {
-                    case (null)();
-                    case (?timerId) Timer.cancelTimer(timerId); // Cancel timer if set
-                };
                 let newMatch : MatchWithTimer = {
                     match with
                     timer = null;
                     state = #completed(s);
                 };
-                addOrUpdateMatch(matchId, newMatch);
-                #completed(s);
+                (#completed(s), newMatch);
             };
             case (#ok(s)) {
                 let timerId = Timer.recurringTimer(
@@ -96,10 +90,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                     timerId = ?timerId;
                     state = #inProgress(s);
                 };
-                addOrUpdateMatch(matchId, newMatch);
-                #ok(s);
+                (#ok(s), newMatch);
             };
         };
+        // Clear timer if set on original match
+        switch (match.timerId) {
+            case (null)();
+            case (?timerId) Timer.cancelTimer(timerId);
+        };
+        addOrUpdateMatch(matchId, newMatch);
+        result;
     };
 
     public shared ({ caller }) func scheduleMatch(request : Stadium.ScheduleMatchRequest) : async Stadium.ScheduleMatchResult {
@@ -127,13 +127,20 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let correctedTeamIds = Util.sortTeamIds((request.team1Id, request.team2Id));
         let timeDiff : Time.Time = request.time - Time.now();
         let natTimeDiff = if (timeDiff < 0) {
-            0;
+            1;
         } else {
             Int.abs(timeDiff);
         };
         let timerDuration = #nanoseconds(natTimeDiff);
+        let matchId = nextMatchId; // This needs to be here to preserve the matchId value for the callback
         let callbackFunc = func() : async () {
-            let _ = await startMatch(nextMatchId);
+            let message = switch (await startMatch(matchId)) {
+                case (#matchAlreadyStarted) "Failed to start match: Match already started";
+                case (#matchNotFound) "Failed to start match: Match not found";
+                case (#completed(_)) "Failed to start match: Match completed";
+                case (#ok(_)) "Started match: " # Nat32.toText(matchId);
+            };
+            Debug.print("Start Match Callback Result - " # message);
         };
         let timerId = Timer.setTimer(timerDuration, callbackFunc);
         let offerings = getRandomOfferings(4);
