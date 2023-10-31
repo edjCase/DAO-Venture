@@ -1,10 +1,10 @@
 <script lang="ts">
+  import { Record } from "@dfinity/candid/lib/cjs/idl";
   import AssignPlayerToTeam from "../components/AssignPlayerToTeam.svelte";
   import CreatePlayer from "../components/CreatePlayer.svelte";
   import CreateStadium from "../components/CreateStadium.svelte";
   import CreateTeam from "../components/CreateTeam.svelte";
   import MatchCardGrid from "../components/MatchCardGrid.svelte";
-  import VoteForMatch from "../components/VoteForMatch.svelte";
   import ScheduleMatch from "../components/ScheduleMatch.svelte";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
@@ -16,9 +16,9 @@
   $: stadiums = $stadiumStore;
   $: players = $playerStore;
 
-  let teamNameMap = {};
+  let teamNameMap: Record<string, string> = {};
   teamStore.subscribe((teams) => {
-    teamNameMap = teams.reduce((acc, team) => {
+    teamNameMap = teams.reduce<Record<string, string>>((acc, team) => {
       acc[team.id.toString()] = team.name;
       return acc;
     }, {});
@@ -98,7 +98,7 @@
         <tr>
           <td class="player-name">{player.name}</td>
           <td class="player-team"
-            >{teamNameMap[player.teamId[0]?.toString()] || "-"}</td
+            >{teamNameMap[player.teamId?.toString()] || "-"}</td
           >
           <td class="player-position">{player.position}</td>
         </tr>

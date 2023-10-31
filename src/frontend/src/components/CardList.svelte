@@ -1,7 +1,7 @@
 <script lang="ts">
-  export let cards: { id: number; title: string; description: string }[];
-  export let onSelect: (id: number) => void;
-  let selectedId = -1;
+  export let cards: { id: string; title: string; description: string }[];
+  export let onSelect: (id: string) => void;
+  let selectedId: string | undefined;
 </script>
 
 <div class="card-container">

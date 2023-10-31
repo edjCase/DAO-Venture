@@ -2,11 +2,12 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
+import { Offering, SpecialRule, OfferingIdl, SpecialRuleIdl } from './Stadium';
 
 
 export type MatchOptionsVote = {
-  offeringId: number,
-  specialRuleId: number
+  offering: Offering,
+  specialRule: SpecialRule
 };
 export type VoteMatchOptionsResult = {
   'ok': null
@@ -44,12 +45,12 @@ export interface _SERVICE {
 
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
   const MatchOptions = IDL.Record({
-    'offeringId': IDL.Nat32,
-    'specialRuleVotes': IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat))
+    'offering': OfferingIdl,
+    'specialRuleVotes': IDL.Vec(IDL.Tuple(SpecialRuleIdl, IDL.Nat))
   });
   const MatchOptionsVote = IDL.Record({
-    'offeringId': IDL.Nat32,
-    'specialRuleId': IDL.Nat32
+    'offering': OfferingIdl,
+    'specialRule': SpecialRuleIdl
   });
   const VoteMatchOptionsRequest = IDL.Record({
     'stadiumId': IDL.Principal,

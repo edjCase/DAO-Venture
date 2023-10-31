@@ -36,6 +36,8 @@ module {
     type PlayerSkills = Player.PlayerSkills;
     type PlayerId = Nat32;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
+    type SpecialRule = Stadium.SpecialRule;
+    type Offering = Stadium.Offering;
 
     type SimulationResult = {
         #endMatch : Stadium.CompletedMatchState;
@@ -46,7 +48,7 @@ module {
         id : Principal;
         name : Text;
         var score : Int;
-        offeringId : Nat32;
+        offering : Offering;
     };
 
     type MutableDefenseFieldState = {
@@ -76,7 +78,7 @@ module {
         var offenseTeamId : TeamId;
         var team1 : MutableTeamState;
         var team2 : MutableTeamState;
-        specialRuleId : ?Nat32;
+        specialRule : SpecialRule;
         var players : TrieMap.TrieMap<PlayerId, MutablePlayerState>;
         var log : Buffer.Buffer<LogEntry>;
         var field : MutableFieldState;
@@ -107,8 +109,8 @@ module {
     public type TeamInitData = {
         id : Principal;
         name : Text;
-        offeringId : Nat32;
-        specialRuleVotes : Trie.Trie<Nat32, Nat>;
+        offering : Offering;
+        specialRuleVotes : Trie.Trie<SpecialRule, Nat>;
         players : [PlayerWithId];
     };
 
@@ -117,7 +119,7 @@ module {
         team1 : TeamInitData,
         team2 : TeamInitData,
         team1StartOffense : Bool,
-        rand : Prng,
+        prng : Prng,
         seed : Nat32,
     ) : InProgressMatchState {
         var players = Buffer.Buffer<Stadium.PlayerStateWithId>(team1.players.size() + team2.players.size());
@@ -138,33 +140,33 @@ module {
         for (player in team2.players.vals()) {
             addPlayer(player, #team2);
         };
-        let specialRuleId = calculateSpecialRule(specialRules, team1.specialRuleVotes, team2.specialRuleVotes);
+        let specialRule = calculateSpecialRule(prng, specialRules, team1.specialRuleVotes, team2.specialRuleVotes);
 
         let (offenseTeam, defenseTeam) = if (team1StartOffense) {
             (team1, team2);
         } else {
             (team2, team1);
         };
-        let randomIndex = rand.nextNat(0, offenseTeam.players.size() - 1);
+        let randomIndex = prng.nextNat(0, offenseTeam.players.size() - 1);
         let atBatPlayer = offenseTeam.players.get(randomIndex);
-        let ?defense = buildStartingDefense(defenseTeam.players, rand) else Debug.trap("Not enough players to start match");
+        let ?defense = buildStartingDefense(defenseTeam.players, prng) else Debug.trap("Not enough players to start match");
 
         {
-            currentSeed = rand.getCurrentSeed();
+            currentSeed = prng.getCurrentSeed();
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = {
                 id = team1.id;
                 name = team1.name;
                 score = 0;
-                offeringId = team1.offeringId;
+                offering = team1.offering;
             };
             team2 = {
                 id = team2.id;
                 name = team2.name;
                 score = 0;
-                offeringId = team2.offeringId;
+                offering = team2.offering;
             };
-            specialRuleId = specialRuleId;
+            specialRule = specialRule;
             log = [];
             players = Buffer.toArray(players);
             batter = null;
@@ -208,47 +210,49 @@ module {
     };
 
     private func calculateSpecialRule(
-        specialRules : [Stadium.SpecialRule],
-        team1Votes : Trie.Trie<Nat32, Nat>,
-        team2Votes : Trie.Trie<Nat32, Nat>,
-    ) : ?Nat32 {
+        prng : Prng,
+        specialRules : [SpecialRule],
+        team1Votes : Trie.Trie<SpecialRule, Nat>,
+        team2Votes : Trie.Trie<SpecialRule, Nat>,
+    ) : SpecialRule {
         let team1NormalizedVotes = normalizeVotes(team1Votes);
         let team2NormalizedVotes = normalizeVotes(team2Votes);
-        var winningRule : ?(Nat32, Float) = null;
+        var winningRule : ?(SpecialRule, Float) = null;
         // TODO rule index vs id
-        var id : Nat32 = 0;
         for (rule in Array.vals(specialRules)) {
             let key = {
-                key = id;
-                hash = id;
+                key = rule;
+                hash = Stadium.hashSpecialRule(rule);
             };
-            let team1Vote : Float = switch (Trie.get(team1NormalizedVotes, key, Nat32.equal)) {
+            let team1Vote : Float = switch (Trie.get(team1NormalizedVotes, key, Stadium.equalSpecialRule)) {
                 case (null) 0;
                 case (?v) v;
             };
-            let team2Vote : Float = switch (Trie.get(team2NormalizedVotes, key, Nat32.equal)) {
+            let team2Vote : Float = switch (Trie.get(team2NormalizedVotes, key, Stadium.equalSpecialRule)) {
                 case (null) 0;
                 case (?v) v;
             };
             let voteCount = team1Vote + team2Vote;
             switch (winningRule) {
-                case (null) winningRule := ?(id, voteCount);
-                case (?(id, c)) {
+                case (null) winningRule := ?(rule, voteCount);
+                case (?(r, c)) {
                     if (voteCount > c) {
-                        winningRule := ?(id, voteCount);
+                        winningRule := ?(r, voteCount);
                     };
-                    // TODO what if tie?
                 };
             };
-            id += 1;
         };
         switch (winningRule) {
-            case (null) null;
-            case (?(id, voteCount)) ?id;
+            case (null) {
+                // Get random rule if no consensus
+                let randomRuleIndex = prng.nextNat(0, specialRules.size() - 1);
+                specialRules[randomRuleIndex];
+            };
+            case (?(r, voteCount)) r;
         };
     };
 
-    private func normalizeVotes(votes : Trie.Trie<Nat32, Nat>) : Trie.Trie<Nat32, Float> {
+    private func normalizeVotes(votes : Trie.Trie<SpecialRule, Nat>) : Trie.Trie<SpecialRule, Float> {
         var totalVotes = 0;
         for ((id, voteCount) in Trie.iter(votes)) {
             totalVotes += voteCount;
@@ -256,9 +260,9 @@ module {
         if (totalVotes == 0) {
             return Trie.empty();
         };
-        Trie.mapFilter<Nat32, Nat, Float>(
+        Trie.mapFilter<SpecialRule, Nat, Float>(
             votes,
-            func(voteCount : (Nat32, Nat)) : ?Float = ?(Float.fromInt(voteCount.1) / Float.fromInt(totalVotes)),
+            func(voteCount : (SpecialRule, Nat)) : ?Float = ?(Float.fromInt(voteCount.1) / Float.fromInt(totalVotes)),
         );
     };
 
@@ -321,7 +325,7 @@ module {
             var team1 = toMutableTeam(state.team1);
             var team2 = toMutableTeam(state.team2);
             var players = players;
-            specialRuleId = state.specialRuleId;
+            specialRule = state.specialRule;
             var field = field;
             var log = log;
             var round = state.round;
@@ -335,7 +339,7 @@ module {
             id = team.id;
             name = team.name;
             var score = team.score;
-            offeringId = team.offeringId;
+            offering = team.offering;
         };
     };
 
@@ -420,7 +424,7 @@ module {
                     id = team.id;
                     name = team.name;
                     score = team.score;
-                    offeringId = team.offeringId;
+                    offering = team.offering;
                 };
             };
             let log : [LogEntry] = Buffer.toArray(state.log);
@@ -429,7 +433,7 @@ module {
                 offenseTeamId = state.offenseTeamId;
                 team1 = buildTeam(state.team1);
                 team2 = buildTeam(state.team2);
-                specialRuleId = state.specialRuleId;
+                specialRule = state.specialRule;
                 log = log;
                 players = players;
                 field = field;

@@ -1,6 +1,7 @@
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import Player "Player";
+import Stadium "Stadium";
 
 module {
     public type TeamActor = actor {
@@ -10,14 +11,14 @@ module {
     };
 
     public type MatchVoteResult = {
-        offeringIdVotes : Trie.Trie<Nat32, Nat>;
-        specialRuleVotes : Trie.Trie<Nat32, Nat>;
+        offeringVotes : Trie.Trie<Stadium.Offering, Nat>;
+        specialRuleVotes : Trie.Trie<Stadium.SpecialRule, Nat>;
     };
 
     public type MatchOptionsCallback = shared query (stadiumId : Principal, matchId : Nat32) -> async ?MatchVoteResult;
 
     public type GetMatchOptionsResult = {
-        #ok : MatchOptions;
+        #ok : Stadium.MatchOptions;
         #noVotes;
         #notAuthorized;
     };
@@ -28,13 +29,8 @@ module {
     };
 
     public type MatchOptionsVote = {
-        offeringId : Nat32;
-        specialRuleId : Nat32;
-    };
-
-    public type MatchOptions = {
-        offeringId : Nat32;
-        specialRuleVotes : [(Nat32, Nat)];
+        offering : Stadium.Offering;
+        specialRule : Stadium.SpecialRule;
     };
 
     public type VoteForMatchOptionsRequest = {

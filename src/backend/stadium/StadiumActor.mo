@@ -40,6 +40,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     type PlayerState = Stadium.PlayerState;
     type FieldPosition = Player.FieldPosition;
     type MatchOptions = Stadium.MatchOptions;
+    type Offering = Stadium.Offering;
+    type SpecialRule = Stadium.SpecialRule;
 
     stable var matches : Trie.Trie<Nat32, MatchWithTimer> = Trie.empty();
 
@@ -218,20 +220,20 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             Debug.print("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
             return null;
         };
-        var specialRuleVotes = Trie.empty<Nat32, Nat>();
-        for ((id, vote) in Iter.fromArray(options.specialRuleVotes)) {
+        var specialRuleVotes = Trie.empty<SpecialRule, Nat>();
+        for ((rule, vote) in Iter.fromArray(options.specialRuleVotes)) {
             let key = {
-                hash = id;
-                key = id;
+                key = rule;
+                hash = Stadium.hashSpecialRule(rule);
             };
-            let (newVotes, _) = Trie.put(specialRuleVotes, key, Nat32.equal, vote);
+            let (newVotes, _) = Trie.put(specialRuleVotes, key, Stadium.equalSpecialRule, vote);
             specialRuleVotes := newVotes;
         };
         ?{
             id = team.id;
             name = team.name;
             players = teamPlayers;
-            offeringId = options.offeringId;
+            offering = options.offering;
             specialRuleVotes = specialRuleVotes;
         };
     };
@@ -287,67 +289,23 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         matches := newMatches;
     };
 
-    private func getRandomOfferings(count : Nat) : [Stadium.OfferingWithId] {
+    private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
         // TODO
         [
-            {
-                id = 1;
-                deities = ["War"];
-                effects = [
-                    "+ batting power",
-                    "- speed",
-                    "Every 5 pitches is a guarenteed fast ball",
-                ];
-            },
-            {
-                id = 2;
-                deities = ["Mischief"];
-                effects = [
-                    "+ batting accuracy",
-                    "- piety",
-                    "Batting has a higher chance of causing injury",
-                ];
-            },
-            {
-                id = 3;
-                deities = ["Pestilence", "Indulgence"];
-                effects = ["+ piety", "- defense", "Players dont rotate between rounds"];
-            },
-            {
-                id = 4;
-                deities = ["Pestilence", "Mischief"];
-                effects = [
-                    "+ throwing power",
-                    "- throwing accuracy",
-                    "Catching never fails",
-                ];
-            },
+            #mischief(#a),
+            #war(#b),
+            #indulgence(#c),
+            #pestilence(#d),
         ];
     };
 
-    private func getRandomSpecialRules(count : Nat) : [Stadium.SpecialRuleWithId] {
+    private func getRandomSpecialRules(count : Nat) : [Stadium.SpecialRule] {
         // TODO
         [
-            {
-                id = 1;
-                name = "The skill twist";
-                description = "All players' batting power and throwing power are swapped";
-            },
-            {
-                id = 2;
-                name = "Fasting";
-                description = "All followers of Indulgence are benched for the match";
-            },
-            {
-                id = 3;
-                name = "Light Ball";
-                description = "Balls are lighter so they are thrown faster and but go less far";
-            },
-            {
-                id = 4;
-                name = "Sunny day";
-                description = "All followers of Pestilence and Miscief are more iritable";
-            },
+            #playersAreFaster,
+            #explodingBalls,
+            #fastBallsHardHits,
+            #highBlessingAndCurses,
         ];
     };
 

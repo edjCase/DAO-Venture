@@ -1,5 +1,5 @@
 import type { Principal } from '@dfinity/principal';
-import type { Actor, ActorMethod } from '@dfinity/agent';
+import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from '@dfinity/candid';
@@ -10,20 +10,25 @@ export type MatchTeam = {
   'id': Principal,
   'predictionVotes': bigint
 };
-export type OfferingWithId = {
-  'id': number,
-  'deities': string[],
-  'effects': string[],
+export type Offering = {
+  'mischief': { 'a': null }
+} | {
+  'war': { 'b': null }
+} | {
+  'indulgence': { 'c': null }
+} | {
+  'pestilence': { 'd': null }
 };
-export type SpecialRuleWithId = {
-  'id': number,
-  'name': string,
-  'description': string,
-};
+export type SpecialRule =
+  | { 'playersAreFaster': null }
+  | { 'explodingBalls': null }
+  | { 'fastBallsHardHits': null }
+  | { 'highBlessingAndCurses': null };
+
 export type TeamState = {
   'id': Principal;
   'score': bigint;
-  'offeringId': number;
+  'offering': Offering;
 };
 export type OffenseFieldState = {
   'firstBase': [] | [number],
@@ -169,7 +174,7 @@ export type InProgressMatchState = {
   'offenseTeamId': TeamId,
   'team1': TeamState,
   'team2': TeamState,
-  'specialRuleId': [] | [number],
+  'specialRule': SpecialRule,
   'log': [LogEntry],
   'field': FieldState,
   'round': bigint,
@@ -223,8 +228,8 @@ export type Match = {
   'team1': MatchTeam,
   'team2': MatchTeam,
   'time': Time,
-  'offerings': OfferingWithId[],
-  'specialRules': SpecialRuleWithId[],
+  'offerings': Offering[],
+  'specialRules': SpecialRule[],
   'state': MatchState
 };
 export type StartMatchResult = {
@@ -265,10 +270,29 @@ export const TeamIdIdl = IDL.Variant({
   'team1': IDL.Null,
   'team2': IDL.Null
 });
+export const OfferingIdl = IDL.Variant({
+  'mischief': IDL.Variant({
+    'a': IDL.Null,
+  }),
+  'war': IDL.Variant({
+    'b': IDL.Null,
+  }),
+  'indulgence': IDL.Variant({
+    'c': IDL.Null,
+  }),
+  'pestilence': IDL.Variant({
+    'd': IDL.Null,
+  })
+}); export const SpecialRuleIdl = IDL.Variant({
+  'playersAreFaster': IDL.Null,
+  'explodingBalls': IDL.Null,
+  'fastBallsHardHits': IDL.Null,
+  'highBlessingAndCurses': IDL.Null,
+});
 export const TeamStateIdl = IDL.Record({
   'id': IDL.Principal,
   'score': IDL.Int,
-  'offeringId': IDL.Nat32,
+  'offering': OfferingIdl,
 });
 export const PlayerInjuryIdl = IDL.Variant({
   'twistedAnkle': IDL.Null,
@@ -313,7 +337,7 @@ export const InProgressStateIdl = IDL.Record({
   'offenseTeamId': TeamIdIdl,
   'team1': TeamStateIdl,
   'team2': TeamStateIdl,
-  'specialRuleId': IDL.Opt(IDL.Nat32),
+  'specialRule': SpecialRuleIdl,
   'log': IDL.Vec(LogEntryIdl),
   'field': FieldStateIdl,
   'players': IDL.Vec(PlayerStateIdl),
@@ -346,16 +370,6 @@ export const MatchTeamInfoIdl = IDL.Record({
   'name': IDL.Text,
   'predictionVotes': IDL.Nat
 });
-export const OfferingWithIdIdl = IDL.Record({
-  'id': IDL.Nat32,
-  'deities': IDL.Vec(IDL.Text),
-  'effects': IDL.Vec(IDL.Text),
-});
-export const SpecialRuleWithIdIdl = IDL.Record({
-  'id': IDL.Nat32,
-  'name': IDL.Text,
-  'description': IDL.Text,
-});
 export const BaseIdl = IDL.Variant({
   'firstBase': IDL.Null,
   'secondBase': IDL.Null,
@@ -377,8 +391,8 @@ export const MatchIdl = IDL.Record({
   'team1': MatchTeamInfoIdl,
   'team2': MatchTeamInfoIdl,
   'time': IDL.Int,
-  'offerings': IDL.Vec(OfferingWithIdIdl),
-  'specialRules': IDL.Vec(SpecialRuleWithIdIdl),
+  'offerings': IDL.Vec(OfferingIdl),
+  'specialRules': IDL.Vec(SpecialRuleIdl),
   'state': MatchStateIdl
 });
 export const TickMatchResultIdl = IDL.Variant({

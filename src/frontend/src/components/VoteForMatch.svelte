@@ -1,28 +1,71 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
-  import { stadiumStore } from "../stores/StadiumStore";
   import CardList from "./CardList.svelte";
   import type { Principal } from "@dfinity/principal";
-  import { teamAgentFactory } from "../ic-agent/Team";
-  import type { Match } from "../ic-agent/Stadium";
+  import { VoteMatchOptionsRequest, teamAgentFactory } from "../ic-agent/Team";
+  import type { Match, Offering, SpecialRule } from "../ic-agent/Stadium";
   import { matchStore } from "../stores/MatchStore";
 
   export let teamId: Principal;
   export let stadiumId: Principal;
   export let matchId: number;
-  let selectedOffering = -1;
-  let selectedSpecialRule = -1;
-  let offeringCards;
-  let specialRuleCards;
-  let match: Match;
+
+  type Card = {
+    id: string;
+    title: string;
+    description: string;
+  };
+
+  let selectedOffering: string | undefined;
+  let selectedSpecialRule: string | undefined;
+  let offeringCards: Card[] = [];
+  let specialRuleCards: Card[] = [];
+  let match: Match | undefined;
 
   let register = function () {
-    let request = {
+    if (!selectedOffering || !selectedSpecialRule) {
+      return;
+    }
+    let offering: Offering;
+    switch (selectedOffering) {
+      case "mischief":
+        offering = { mischief: { a: null } };
+        break;
+      case "war":
+        offering = { war: { b: null } };
+        break;
+      case "indulgence":
+        offering = { indulgence: { c: null } };
+        break;
+      case "pestilence":
+        offering = { pestilence: { d: null } };
+        break;
+      default:
+        throw new Error("Invalid offering: " + selectedOffering);
+    }
+    let specialRule: SpecialRule;
+    switch (selectedSpecialRule) {
+      case "playersAreFaster":
+        specialRule = { playersAreFaster: null };
+        break;
+      case "explodingBalls":
+        specialRule = { explodingBalls: null };
+        break;
+      case "fastBallsHardHits":
+        specialRule = { fastBallsHardHits: null };
+        break;
+      case "highBlessingAndCurses":
+        specialRule = { highBlessingAndCurses: null };
+        break;
+      default:
+        throw new Error("Invalid special rule: " + selectedSpecialRule);
+    }
+    let request: VoteMatchOptionsRequest = {
       stadiumId: stadiumId,
       matchId: matchId,
       vote: {
-        offeringId: selectedOffering,
-        specialRuleId: selectedOffering,
+        offering: offering,
+        specialRule: specialRule,
       },
     };
     console.log(
@@ -42,21 +85,24 @@
 
   matchStore.subscribe((matches) => {
     match = matches.find((item) => item.id == matchId);
-
-    offeringCards = match.offerings.map((offering) => {
-      return {
-        id: offering.id,
-        title: offering.deities.join(", "),
-        description: offering.effects.join(", "),
-      };
-    });
-    specialRuleCards = match.specialRules.map((r) => {
-      return {
-        id: r.id,
-        title: r.name,
-        description: r.description,
-      };
-    });
+    if (match) {
+      offeringCards = match.offerings.map((o) => {
+        let a = Object.keys(o)[0]; // TODO
+        return {
+          id: a,
+          title: a,
+          description: a,
+        };
+      });
+      specialRuleCards = match.specialRules.map((r) => {
+        let a = Object.keys(r)[0]; // TODO
+        return {
+          id: a,
+          title: a,
+          description: a,
+        };
+      });
+    }
   });
 </script>
 
