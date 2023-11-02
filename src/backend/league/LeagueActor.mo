@@ -12,7 +12,6 @@ import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import Stadium "../Stadium";
 import TeamActor "../team/TeamActor";
-import StadiumCanister "../stadium/StadiumActor";
 import { ic } "mo:ic";
 import Time "mo:base/Time";
 import Nat8 "mo:base/Nat8";
@@ -33,8 +32,6 @@ import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import League "../League";
 import RandomUtil "../RandomUtil";
-import LiveStream "../live/LiveStream";
-import LiveStreamHubActor "canister:liveStreamHub";
 
 actor LeagueActor {
     type MatchUp = League.MatchUp;
@@ -58,10 +55,10 @@ actor LeagueActor {
     type DivisionScheduleError = League.DivisionScheduleError;
     type LedgerActor = Token.Token;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
+    type CloseSeasonResult = League.CloseSeasonResult;
 
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
-    stable var stadiums : Trie.Trie<Principal, Stadium.Stadium> = Trie.empty();
-    stable var divisions : Trie.Trie<Nat32, Division> = Trie.empty();
+    stable var divisions : Trie.Trie<Principal, Division> = Trie.empty();
 
     public query func getTeams() : async [TeamInfo] {
         Trie.toArray(
@@ -75,19 +72,11 @@ actor LeagueActor {
             },
         );
     };
-    public query func getStadiums() : async [StadiumInfo] {
-        Trie.toArray(
-            stadiums,
-            func(k : Principal, v : Stadium.Stadium) : StadiumInfo = {
-                id = k;
-                name = v.name;
-            },
-        );
-    };
+
     public query func getDivisions() : async [DivisionWithId] {
         Trie.toArray(
             divisions,
-            func(k : Nat32, v : Division) : DivisionWithId = {
+            func(k : Principal, v : Division) : DivisionWithId = {
                 v with
                 id = k;
             },
@@ -146,6 +135,10 @@ actor LeagueActor {
             return #divisionErrors(Buffer.toArray(divisionErrors));
         };
         #ok;
+    };
+
+    public shared ({ caller }) func closeSeason() : async CloseSeasonResult {
+
     };
 
     public shared ({ caller }) func createTeam(request : CreateTeamRequest) : async CreateTeamResult {
@@ -232,11 +225,6 @@ actor LeagueActor {
         let stadiumKey = buildKey(stadiumId);
         let (newStadiums, _) = Trie.put(stadiums, stadiumKey, Principal.equal, stadium);
         stadiums := newStadiums;
-
-        switch (await LiveStreamHubActor.add_stadium(stadiumId)) {
-            case (#ok) {};
-            case (#notAuthorized) {}; // TODO
-        };
 
         return #ok(stadiumId);
     };

@@ -8,15 +8,15 @@
       "main": "src/backend/league/LeagueActor.mo",
       "type": "motoko"
     },
-    "playerLedger": {
-      "main": "src/backend/league/PlayerLedger.mo",
-      "type": "motoko"
-    },
-    "liveStreamHub": {
+    "stadium": {
       "dependencies": [
         "league"
       ],
-      "main": "src/backend/live/LiveStreamHubActor.mo",
+      "main": "src/backend/stadium/StadiumActor.mo",
+      "type": "motoko"
+    },
+    "playerLedger": {
+      "main": "src/backend/league/PlayerLedger.mo",
       "type": "motoko"
     },
     "internet_identity": {

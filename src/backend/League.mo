@@ -55,7 +55,6 @@ module {
     public type CreateDivisionResult = {
         #ok : Nat32;
         #nameTaken;
-        #liveStreamCanisterFailure : Text;
     };
     public type CreateTeamRequest = {
         name : Text;
@@ -105,7 +104,7 @@ module {
         schedule : ?DivisionSchedule;
     };
     public type DivisionWithId = Division and {
-        id : Nat32;
+        id : Principal;
     };
     public type DivisionSchedule = {
         weeks : [SeasonWeek];
@@ -128,5 +127,9 @@ module {
     public type TimeOfDay = {
         hour : Nat;
         minute : Nat;
+    };
+    public type CloseSeasonResult = {
+        #ok;
+        #seasonNotOver;
     };
 };

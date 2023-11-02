@@ -15,7 +15,6 @@ import Time "mo:base/Time";
 import Iter "mo:base/Iter";
 import TrieSet "mo:base/TrieSet";
 import PlayerLedgerActor "canister:playerLedger";
-import LiveStreamHubActor "canister:liveStreamHub";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
@@ -28,7 +27,7 @@ import PseudoRandomX "mo:random/PseudoRandomX";
 import RandomUtil "../RandomUtil";
 import League "../League";
 
-actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
+actor StadiumActor {
 
     type Match = Stadium.Match;
     type MatchWithTimer = Stadium.MatchWithTimer;
@@ -51,7 +50,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         switch (getMatchOrNull(id)) {
             case (null) return null;
             case (?m) {
-                ?{ m with id = id; stadiumId = Principal.fromActor(this) };
+                ?{
+                    m with id = id;
+                    stadiumId = Principal.fromActor(StadiumActor);
+                };
             };
         };
     };
@@ -61,7 +63,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let map = func(v : (Nat32, Match)) : MatchWithId = {
             v.1 with
             id = v.0;
-            stadiumId = Principal.fromActor(this);
+            stadiumId = Principal.fromActor(StadiumActor);
         };
         matches |> Trie.iter _ |> Iter.map(_, map) |> Iter.sort(_, compare) |> Iter.toArray(_);
     };
@@ -136,7 +138,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             Int.abs(timeDiff);
         };
         let timerDuration = #nanoseconds(natTimeDiff);
-        let matchId = nextMatchId; // This needs to be here to preserve the matchId value for the callback
+        let matchId = nextMatchId; // StadiumActor needs to be here to preserve the matchId value for the callback
         let callbackFunc = func() : async () {
             let message = switch (await startMatch(matchId)) {
                 case (#matchAlreadyStarted) "Failed to start match: Match already started";
@@ -209,7 +211,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     private func createTeamInit(matchId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
         let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
-        let stadiumId = Principal.fromActor(this);
+        let stadiumId = Principal.fromActor(StadiumActor);
         let options : MatchOptions = try {
             // Get match options from the team itself
             let result = await teamActor.getMatchOptions(stadiumId, matchId);
@@ -257,10 +259,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 state = newState;
             },
         );
-        ignore LiveStreamHubActor.broadcast({
-            matchId = matchId;
-            state = newState;
-        });
         #inProgress(state);
     };
 

@@ -233,10 +233,6 @@ module {
         #matchNotFound;
         #notStarted;
     };
-    public type LiveStreamMessage = {
-        matchId : Nat32;
-        state : StartedMatchState;
-    };
 
     public type MatchOptions = {
         offering : Offering;

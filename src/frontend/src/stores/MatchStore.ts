@@ -52,7 +52,7 @@ export const matchStore = (() => {
         } else {
           let nowNanoseconds = BigInt(now.getTime()) * BigInt(1000000);
           let nextMatches = stadiumMatches
-            .filter(m => m.time > nowNanoseconds)
+            .filter(m => 'notStarted' in m.state && m.time > nowNanoseconds)
             .map(m => m.time);
           if (nextMatches.length > 0) {
             nextMatchDate = new Date(Math.min(...nextMatches.map(t => Number(t / BigInt(1000000)))));

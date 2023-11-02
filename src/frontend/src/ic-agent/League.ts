@@ -21,6 +21,12 @@ export type CreateTeamRequest = {
 };
 export type CreateTeamResult = { 'ok': Principal } |
 { 'nameTaken': null };
+export type ScheduleMatchRequest = {
+  'stadiumId': Principal,
+  'team1': Principal,
+  'team2': Principal,
+  'time': Time,
+};
 export type ScheduleMatchResult = { 'ok': number } |
 { 'stadiumNotFound': null } |
 { 'timeNotAvailable': null };
@@ -59,6 +65,11 @@ export type DivisionScheduleError = { 'missingDivision': null } |
 { 'alreadyScheduled': null };
 export type DivisionScheduleRequest = { 'id': number, 'start': Time };
 export type ScheduleSeasonRequest = { 'divisions': DivisionScheduleRequest[] };
+export type CloseSeasonResult = {
+  'ok': null
+} | {
+  'seasonNotOver': null
+};
 export interface _SERVICE {
   'createStadium': ActorMethod<[CreateStadiumRequest], CreateStadiumResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
@@ -66,12 +77,10 @@ export interface _SERVICE {
   'getStadiums': ActorMethod<[], Array<Stadium>>,
   'getTeams': ActorMethod<[], Array<Team>>,
   'getDivisions': ActorMethod<[], Array<Division>>,
-  'scheduleMatch': ActorMethod<
-    [Principal, [Principal, Principal], Time],
-    ScheduleMatchResult
-  >,
+  'scheduleMatch': ActorMethod<[ScheduleMatchRequest], ScheduleMatchResult>,
   'updateLeagueCanisters': ActorMethod<[], undefined>,
   'scheduleSeason': ActorMethod<[ScheduleSeasonRequest], ScheduleSeasonResult>,
+  'closeSeason': ActorMethod<[], CloseSeasonResult>,
 }
 
 
@@ -139,6 +148,12 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'schedule': IDL.Opt(DivisionSchedule)
   });
   const Time = IDL.Int;
+  const ScheduleMatchRequest = IDL.Record({
+    'stadiumId': IDL.Principal,
+    'team1': IDL.Principal,
+    'team2': IDL.Principal,
+    'time': Time
+  });
   const ScheduleMatchResult = IDL.Variant({
     'ok': IDL.Nat32,
     'duplicateTeams': IDL.Null,
@@ -163,6 +178,10 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'ok': IDL.Null,
     'divisionErrors': IDL.Vec(IDL.Tuple(IDL.Nat32, DivisionScheduleError))
   });
+  const CloseSeasonResult = IDL.Variant({
+    'ok': IDL.Null,
+    'seasonNotOver': IDL.Null
+  });
   return IDL.Service({
     'createStadium': IDL.Func([CreateStadiumRequest], [CreateStadiumResult], []),
     'createTeam': IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
@@ -170,13 +189,10 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'getStadiums': IDL.Func([], [IDL.Vec(Stadium)], ['query']),
     'getTeams': IDL.Func([], [IDL.Vec(Team)], ['query']),
     'getDivisions': IDL.Func([], [IDL.Vec(Division)], ['query']),
-    'scheduleMatch': IDL.Func(
-      [IDL.Principal, IDL.Tuple(IDL.Principal, IDL.Principal), Time],
-      [ScheduleMatchResult],
-      [],
-    ),
+    'scheduleMatch': IDL.Func([ScheduleMatchRequest], [ScheduleMatchResult], []),
     'updateLeagueCanisters': IDL.Func([], [], []),
     'scheduleSeason': IDL.Func([ScheduleSeasonRequest], [ScheduleSeasonResult], []),
+    'closeSeason': IDL.Func([], [CloseSeasonResult], []),
   });
 };
 

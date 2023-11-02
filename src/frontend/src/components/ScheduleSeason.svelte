@@ -5,6 +5,9 @@
     type DivisionSchedule,
     type Team,
     type Stadium,
+    type Division,
+    type SeasonWeek,
+    type MatchUp,
   } from "../ic-agent/League";
   import { divisionStore } from "../stores/DivisionStore";
   import { matchStore } from "../stores/MatchStore";
@@ -13,14 +16,28 @@
   import { dateToNanoseconds } from "../utils/DateUtils";
   import { toJsonString } from "../utils/JsonUtil";
 
-  let divisions;
-  let stadiums;
+  type DivisionDetails = Omit<Division, "schedule"> & {
+    schedule: ScheduleWithWeeks | null;
+  };
+  type MatchUpDetails = MatchUp & {
+    team1Name: string;
+    team2Name: string;
+    stadiumName: string;
+  };
+  type SeasonWeekDetails = Omit<SeasonWeek, "matchUps"> & {
+    matchUps: MatchUpDetails[];
+  };
+  type ScheduleWithWeeks = Omit<DivisionSchedule, "weeks"> & {
+    weeks: SeasonWeekDetails[];
+  };
+
+  let divisions: DivisionDetails[] | undefined;
 
   let mapSchedule = (
     schedule: DivisionSchedule,
     teams: Team[],
     stadiums: Stadium[]
-  ) => {
+  ): ScheduleWithWeeks => {
     let weeks = schedule.weeks.map((s) => ({
       ...s,
       matchUps: s.matchUps.map((m) => ({
@@ -38,7 +55,11 @@
       weeks: weeks,
     };
   };
-  let mapDivisions = (divisions, teams, stadiums) => {
+  let mapDivisions = (
+    divisions: Division[],
+    teams: Team[],
+    stadiums: Stadium[]
+  ): DivisionDetails[] => {
     return divisions.map((d) => ({
       ...d,
       schedule:
@@ -89,6 +110,19 @@
         }
       });
   };
+  let closeSeason = async () => {
+    leagueAgentFactory()
+      .closeSeason()
+      .then((result) => {
+        if ("ok" in result) {
+          console.log("Closed season");
+          divisionStore.refetch();
+          matchStore.refetch();
+        } else {
+          console.log("Failed to close season", result);
+        }
+      });
+  };
 </script>
 
 {#if divisions && divisions.length > 0}
@@ -100,6 +134,7 @@
           type="datetime-local"
           on:change={(e) => (startTimes[division.id] = e.currentTarget.value)}
         />
+        <button on:click={schedule}>Schedule</button>
       {:else}
         <p>Schedule:</p>
         {#each division.schedule.weeks as week, index}
@@ -126,8 +161,8 @@
             {/each}
           </div>
         {/each}
+        <button on:click={closeSeason}>Close Season</button>
       {/if}
     </span>
   {/each}
-  <button on:click={schedule}>Schedule</button>
 {/if}
