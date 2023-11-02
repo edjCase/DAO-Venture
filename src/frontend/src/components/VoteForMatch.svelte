@@ -7,6 +7,7 @@
   import { matchStore } from "../stores/MatchStore";
   import PlayerPicker from "./PlayerPicker.svelte";
   import { Player } from "../models/Player";
+  import { playerStore } from "../stores/PlayerStore";
 
   export let teamId: Principal;
   export let stadiumId: Principal;
@@ -26,12 +27,13 @@
 
   let register = function () {
     if (!selectedOffering || !selectedChampion) {
+      console.log("No offering or champion selected");
       return;
     }
     let offering: Offering;
     switch (selectedOffering) {
       case "mischief":
-        offering = { mischief: { a: null } };
+        offering = { mischief: { shuffleAndBoost: null } };
         break;
       case "war":
         offering = { war: { b: null } };
@@ -68,6 +70,12 @@
       });
   };
 
+  playerStore.subscribe((players) => {
+    championChoices = players.filter((p) =>
+      p.teamId.length == 0 ? false : p.teamId[0].compareTo(teamId) == "eq"
+    );
+  });
+
   matchStore.subscribe((matches) => {
     match = matches.find((item) => item.id == matchId);
     if (match) {
@@ -90,7 +98,12 @@
   </div>
   <div>
     <h2>Champion</h2>
-    <PlayerPicker players={championChoices || []} initialPlayerId={undefined} />
+    {#if championChoices}
+      <PlayerPicker
+        players={championChoices}
+        onPlayerSelected={(pId) => (selectedChampion = pId)}
+      />
+    {/if}
   </div>
   <button on:click={register}>Submit Vote</button>
 {/if}

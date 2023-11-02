@@ -2,12 +2,15 @@
   import type { Player } from "../models/Player";
 
   export let players: Player[];
-  export let initialPlayerId: number | undefined;
-
-  let playerId: number | undefined = initialPlayerId;
+  export let onPlayerSelected: (playerId: number) => void;
 </script>
 
-<select id="player" bind:value={playerId}>
+<select
+  id="player"
+  on:change={(e) => {
+    onPlayerSelected(Number(e.currentTarget.value));
+  }}
+>
   {#each players as player (player.id)}
     <option value={player.id}>{player.name}</option>
   {/each}
