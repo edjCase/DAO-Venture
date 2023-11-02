@@ -1,6 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
+import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 
 
 export type CreateDivisionRequest = {
@@ -75,7 +76,7 @@ export interface _SERVICE {
 
 
 
-export const idlFactory = ({ IDL }) => {
+export const idlFactory: InterfaceFactory = ({ IDL }) => {
   const CreateDivisionRequest = IDL.Record({
     name: IDL.Text
   });
@@ -180,7 +181,7 @@ export const idlFactory = ({ IDL }) => {
 };
 
 
-const canisterId = process.env.CANISTER_ID_LEAGUE;
+const canisterId = process.env.CANISTER_ID_LEAGUE || "";
 // Keep factory due to changing identity
 export let leagueAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
 

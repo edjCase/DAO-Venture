@@ -9,8 +9,7 @@
   import { Principal } from "@dfinity/principal";
   import VoteForMatch from "../components/VoteForMatch.svelte";
   import { toJsonString } from "../utils/JsonUtil";
-  import { subscribe, type LiveStreamMessage } from "../ic-agent/LiveStreamHub";
-  import { onDestroy } from "svelte";
+  import { onMount } from "svelte";
 
   export let leagueMatchId: string;
   let id = parseInt(leagueMatchId.split("-", 1)[0]);
@@ -51,12 +50,6 @@
       });
     }
   });
-  let ws = subscribe((msg: LiveStreamMessage) => {
-    state = msg.state;
-  });
-  onDestroy(() => {
-    ws.close();
-  });
 
   $: {
     let team1Score: bigint;
@@ -67,6 +60,7 @@
         team1Score = state.inProgress.team1.score;
         team2Score = state.inProgress.team2.score;
         log = state.inProgress.log;
+        remainingMillis = undefined;
       } else if ("completed" in state) {
         if ("played" in state.completed) {
           team1Score = state.completed.played.team1.score;
@@ -76,15 +70,18 @@
             "team1" in state.completed.played.winner
               ? match.team1.id
               : match.team2.id;
+          remainingMillis = undefined;
         } else {
           team1Score = BigInt(0);
           team2Score = BigInt(0);
           log = [];
+          remainingMillis = undefined;
         }
       } else if ("notStarted" in state) {
         team1Score = BigInt(0);
         team2Score = BigInt(0);
         log = [];
+        remainingMillis = Number(match.time / BigInt(1_000_000)) - Date.now();
       } else {
         throw "Invalid state: " + toJsonString(state);
       }
@@ -106,12 +103,24 @@
       };
     }
   }
-  let getRemainingTime = (startTime: bigint): string => {
-    let msDifference = Number(startTime / BigInt(1_000_000)) - Date.now();
-    if (msDifference < 1) {
+  let remainingMillis: number | undefined;
+  onMount(() => {
+    const intervalId = setInterval(() => {
+      if (match) {
+        remainingMillis = Number(match.time / BigInt(1_000_000)) - Date.now();
+        if (remainingMillis <= 0) {
+          clearInterval(intervalId);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(intervalId); // Cleanup interval on component destroy
+  });
+  let printTime = (remainingMillis: number): string => {
+    if (remainingMillis < 1) {
       return "ANY SECOND!";
     }
-    let seconds = Math.floor(msDifference / 1000);
+    let seconds = Math.floor(remainingMillis / 1000);
     let minutes = Math.floor(seconds / 60);
     let hours = Math.floor(minutes / 60);
     let days = Math.floor(hours / 24);
@@ -132,9 +141,11 @@
       {#if "inProgress" in state}
         <FieldState state={state.inProgress} />
       {:else if "notStarted" in state}
-        <h1>
-          Upcoming in {getRemainingTime(match.time)}
-        </h1>
+        {#if remainingMillis}
+          <h1>
+            Upcoming in {printTime(remainingMillis)}
+          </h1>
+        {/if}
         <div>
           <h1>Vote for Matches</h1>
           <VoteForMatch

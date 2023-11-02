@@ -1,6 +1,5 @@
 import type { Identity } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
-import { onMount } from 'svelte';
 import { writable } from 'svelte/store';
 
 
@@ -11,7 +10,7 @@ async function fetchIdentity() {
 }
 
 function createIdentityStore() {
-    const { subscribe, set } = writable<Identity>(null);
+    const { subscribe, set } = writable<Identity>();
 
     fetchIdentity().then(identity => {
         set(identity);

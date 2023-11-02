@@ -1,5 +1,7 @@
 import Hash "mo:base/Hash";
 module {
+    public type PlayerId = Nat32;
+
     public type Deity = {
         #mischief;
         #war;
@@ -21,14 +23,25 @@ module {
     };
 
     public type PlayerSkills = {
-        battingAccuracy : Nat;
-        battingPower : Nat;
-        throwingAccuracy : Nat;
-        throwingPower : Nat;
-        catching : Nat;
-        defense : Nat;
-        piety : Nat;
-        speed : Nat;
+        battingAccuracy : Int;
+        battingPower : Int;
+        throwingAccuracy : Int;
+        throwingPower : Int;
+        catching : Int;
+        defense : Int;
+        piety : Int;
+        speed : Int;
+    };
+
+    public type Skill = {
+        #battingAccuracy;
+        #battingPower;
+        #throwingAccuracy;
+        #throwingPower;
+        #catching;
+        #defense;
+        #piety;
+        #speed;
     };
 
     public type Injury = {

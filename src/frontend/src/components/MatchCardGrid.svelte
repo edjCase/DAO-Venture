@@ -26,8 +26,8 @@
 
   <style>
     .match-card-grid {
-      display: flex;
-      flex-direction: row;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, 400px);
       justify-content: center;
     }
   </style>

@@ -2,9 +2,8 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import { FieldPosition as FieldPositionModel } from '../models/FieldPosition';
-import { get } from 'svelte/store';
-import { identityStore } from '../stores/IdentityStore';
 import { toJsonString } from '../utils/JsonUtil';
+import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 
 export type FieldPosition = { 'firstBase': null }
   | { 'secondBase': null }
@@ -52,7 +51,7 @@ export interface _SERVICE {
 }
 
 
-export const idlFactory = ({ IDL }) => {
+export const idlFactory: InterfaceFactory = ({ IDL }) => {
   const position = IDL.Variant({
     'firstBase': IDL.Null,
     'secondBase': IDL.Null,
@@ -107,7 +106,7 @@ export const idlFactory = ({ IDL }) => {
     ),
   });
 };
-const canisterId = process.env.CANISTER_ID_PLAYERLEDGER;
+const canisterId = process.env.CANISTER_ID_PLAYERLEDGER || "";
 // Keep factory due to changing identity
 export const playerLedgerAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
 

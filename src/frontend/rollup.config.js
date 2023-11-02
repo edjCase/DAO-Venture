@@ -100,12 +100,12 @@ export default {
       browser: true,
       dedupe: ["svelte"],
     }),
-    commonjs(),
-    nodePolyfill(),
     typescript({
         sourceMap: !production,
         inlineSources: !production
     }),
+    commonjs(),
+    nodePolyfill(),
     inject({
       Buffer: ["buffer", "Buffer"],
     }),

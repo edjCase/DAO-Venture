@@ -6,12 +6,17 @@
 
 <ul class="log">
   {#each [...log].reverse() as entry}
-    <li><pre>{entry.description}</pre></li>
+    <li class={entry.isImportant ? "important" : undefined}>
+      <pre>{entry.description}</pre>
+    </li>
   {/each}
 </ul>
 
 <style>
   .log {
     max-width: 300px;
+  }
+  .important {
+    text-decoration: underline;
   }
 </style>

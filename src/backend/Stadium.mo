@@ -10,7 +10,7 @@ import Nat "mo:base/Nat";
 module {
     type FieldPosition = Player.FieldPosition;
     type Base = Player.Base;
-    type PlayerId = Nat32;
+    type PlayerId = Player.PlayerId;
 
     public type StadiumActor = actor {
         getMatch : query (id : Nat32) -> async ?MatchWithId;
@@ -30,7 +30,7 @@ module {
 
     public type RegistrationInfoError = {
         #invalidOffering : Offering;
-        #invalidSpecialRule : SpecialRule;
+        #invalidChampion : PlayerId;
     };
 
     public type ScheduleMatchRequest = {
@@ -79,6 +79,7 @@ module {
         name : Text;
         score : Int;
         offering : Offering;
+        champion : PlayerId;
     };
 
     public type StartedMatchState = {
@@ -123,7 +124,7 @@ module {
         offenseTeamId : TeamId;
         team1 : TeamState;
         team2 : TeamState;
-        specialRule : SpecialRule;
+        aura : MatchAura;
         players : [PlayerStateWithId];
         field : FieldState;
         log : [LogEntry];
@@ -165,7 +166,7 @@ module {
 
     public type Offering = {
         #mischief : {
-            #a;
+            #shuffleAndBoost;
         };
         #war : {
             #b;
@@ -180,7 +181,7 @@ module {
 
     public func hashOffering(offering : Offering) : Nat32 = switch (offering) {
         case (#mischief(m)) switch (m) {
-            case (#a) 0;
+            case (#shuffleAndBoost) 0;
         };
         case (#war(w)) switch (w) {
             case (#b) 1;
@@ -195,28 +196,28 @@ module {
 
     public func equalOffering(a : Offering, b : Offering) : Bool = a == b;
 
-    public type SpecialRule = {
-        #playersAreFaster;
+    public type MatchAura = {
+        #lowGravity;
         #explodingBalls;
         #fastBallsHardHits;
-        #highBlessingAndCurses;
+        #highBlessingsAndCurses;
     };
 
-    public func hashSpecialRule(rule : SpecialRule) : Nat32 = switch (rule) {
-        case (#playersAreFaster) 0;
+    public func hashMatchAura(aura : MatchAura) : Nat32 = switch (aura) {
+        case (#lowGravity) 0;
         case (#explodingBalls) 1;
         case (#fastBallsHardHits) 2;
-        case (#highBlessingAndCurses) 3;
+        case (#highBlessingsAndCurses) 3;
     };
 
-    public func equalSpecialRule(a : SpecialRule, b : SpecialRule) : Bool = a == b;
+    public func equalMatchAura(a : MatchAura, b : MatchAura) : Bool = a == b;
 
     public type Match = {
         team1 : MatchTeamInfo;
         team2 : MatchTeamInfo;
         time : Time.Time;
         offerings : [Offering];
-        specialRules : [SpecialRule];
+        aura : MatchAura;
         state : MatchState;
     };
 
@@ -239,12 +240,21 @@ module {
 
     public type MatchOptions = {
         offering : Offering;
-        specialRuleVotes : [(SpecialRule, Nat)];
+        champion : PlayerId;
     };
 
     public type MatchTeamInfo = {
         id : Principal;
         name : Text;
         predictionVotes : Nat;
+    };
+
+    public type Blessing = {
+        #skill : Player.Skill;
+    };
+
+    public type Curse = {
+        #skill : Player.Skill;
+        #injury : Player.Injury;
     };
 };

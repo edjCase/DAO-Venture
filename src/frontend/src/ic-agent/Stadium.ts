@@ -11,7 +11,7 @@ export type MatchTeam = {
   'predictionVotes': bigint
 };
 export type Offering = {
-  'mischief': { 'a': null }
+  'mischief': { 'shuffleAndBoost': null }
 } | {
   'war': { 'b': null }
 } | {
@@ -19,11 +19,11 @@ export type Offering = {
 } | {
   'pestilence': { 'd': null }
 };
-export type SpecialRule =
-  | { 'playersAreFaster': null }
+export type MatchAura =
+  | { 'lowGravity': null }
   | { 'explodingBalls': null }
   | { 'fastBallsHardHits': null }
-  | { 'highBlessingAndCurses': null };
+  | { 'highBlessingsAndCurses': null };
 
 export type TeamState = {
   'id': Principal;
@@ -174,7 +174,7 @@ export type InProgressMatchState = {
   'offenseTeamId': TeamId,
   'team1': TeamState,
   'team2': TeamState,
-  'specialRule': SpecialRule,
+  'aura': MatchAura,
   'log': [LogEntry],
   'field': FieldState,
   'round': bigint,
@@ -229,7 +229,7 @@ export type Match = {
   'team2': MatchTeam,
   'time': Time,
   'offerings': Offering[],
-  'specialRules': SpecialRule[],
+  'aura': MatchAura,
   'state': MatchState
 };
 export type StartMatchResult = {
@@ -272,7 +272,7 @@ export const TeamIdIdl = IDL.Variant({
 });
 export const OfferingIdl = IDL.Variant({
   'mischief': IDL.Variant({
-    'a': IDL.Null,
+    'shuffleAndBoost': IDL.Null,
   }),
   'war': IDL.Variant({
     'b': IDL.Null,
@@ -283,11 +283,11 @@ export const OfferingIdl = IDL.Variant({
   'pestilence': IDL.Variant({
     'd': IDL.Null,
   })
-}); export const SpecialRuleIdl = IDL.Variant({
-  'playersAreFaster': IDL.Null,
+}); export const MatchAuraIdl = IDL.Variant({
+  'lowGravity': IDL.Null,
   'explodingBalls': IDL.Null,
   'fastBallsHardHits': IDL.Null,
-  'highBlessingAndCurses': IDL.Null,
+  'highBlessingsAndCurses': IDL.Null,
 });
 export const TeamStateIdl = IDL.Record({
   'id': IDL.Principal,
@@ -306,14 +306,14 @@ export const PlayerConditionIdl = IDL.Variant({
   'dead': IDL.Null
 });
 export const PlayerSkillsIdl = IDL.Record({
-  'battingAccuracy': IDL.Nat,
-  'battingPower': IDL.Nat,
-  'throwingAccuracy': IDL.Nat,
-  'throwingPower': IDL.Nat,
-  'catching': IDL.Nat,
-  'defense': IDL.Nat,
-  'piety': IDL.Nat,
-  'speed': IDL.Nat
+  'battingAccuracy': IDL.Int,
+  'battingPower': IDL.Int,
+  'throwingAccuracy': IDL.Int,
+  'throwingPower': IDL.Int,
+  'catching': IDL.Int,
+  'defense': IDL.Int,
+  'piety': IDL.Int,
+  'speed': IDL.Int
 });
 export const FieldPositionIdl = IDL.Variant({
   'pitcher': IDL.Null,
@@ -337,7 +337,7 @@ export const InProgressStateIdl = IDL.Record({
   'offenseTeamId': TeamIdIdl,
   'team1': TeamStateIdl,
   'team2': TeamStateIdl,
-  'specialRule': SpecialRuleIdl,
+  'aura': MatchAuraIdl,
   'log': IDL.Vec(LogEntryIdl),
   'field': FieldStateIdl,
   'players': IDL.Vec(PlayerStateIdl),
@@ -392,7 +392,7 @@ export const MatchIdl = IDL.Record({
   'team2': MatchTeamInfoIdl,
   'time': IDL.Int,
   'offerings': IDL.Vec(OfferingIdl),
-  'specialRules': IDL.Vec(SpecialRuleIdl),
+  'aura': MatchAuraIdl,
   'state': MatchStateIdl
 });
 export const TickMatchResultIdl = IDL.Variant({

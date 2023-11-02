@@ -61,21 +61,18 @@ module {
         |> Iter.map(_, func(x : (Principal, ())) : Principal = x.0)
         |> Iter.toArray(_);
         let failedClients = Buffer.Buffer<Principal>(0);
-        Logger.custom_print("All ClientIds: " # debug_show (clientIds));
         for (clientId in Iter.fromArray(clientIds)) {
             try {
                 let result = await IcWebSocketCdk.ws_send(context.ws_state, clientId, serializedMsg);
                 switch (result) {
                     case (#Err(e)) {
-                        Logger.custom_print("Failed to send message to client: " # debug_show (clientId) # " with error: " # debug_show (e));
+                        Debug.print("Failed to send message to client: " # debug_show (clientId) # " with error: " # debug_show (e));
                         failedClients.add(clientId);
                     };
-                    case (#Ok) {
-                        Logger.custom_print("Sent message to client: " # debug_show (clientId));
-                    };
+                    case (#Ok) {};
                 };
             } catch (err) {
-                Logger.custom_print("Error sending message to client: " # Error.message(err));
+                Debug.print("Error sending message to client: " # Error.message(err));
                 failedClients.add(clientId);
             };
         };

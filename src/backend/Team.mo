@@ -12,7 +12,7 @@ module {
 
     public type MatchVoteResult = {
         offeringVotes : Trie.Trie<Stadium.Offering, Nat>;
-        specialRuleVotes : Trie.Trie<Stadium.SpecialRule, Nat>;
+        championVotes : Trie.Trie<Player.PlayerId, Nat>;
     };
 
     public type MatchOptionsCallback = shared query (stadiumId : Principal, matchId : Nat32) -> async ?MatchVoteResult;
@@ -30,7 +30,7 @@ module {
 
     public type MatchOptionsVote = {
         offering : Stadium.Offering;
-        specialRule : Stadium.SpecialRule;
+        champion : Player.PlayerId;
     };
 
     public type VoteForMatchOptionsRequest = {

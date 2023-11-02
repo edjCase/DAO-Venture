@@ -3,8 +3,10 @@
   import CardList from "./CardList.svelte";
   import type { Principal } from "@dfinity/principal";
   import { VoteMatchOptionsRequest, teamAgentFactory } from "../ic-agent/Team";
-  import type { Match, Offering, SpecialRule } from "../ic-agent/Stadium";
+  import type { Match, Offering } from "../ic-agent/Stadium";
   import { matchStore } from "../stores/MatchStore";
+  import PlayerPicker from "./PlayerPicker.svelte";
+  import { Player } from "../models/Player";
 
   export let teamId: Principal;
   export let stadiumId: Principal;
@@ -17,13 +19,13 @@
   };
 
   let selectedOffering: string | undefined;
-  let selectedSpecialRule: string | undefined;
+  let selectedChampion: number | undefined;
   let offeringCards: Card[] = [];
-  let specialRuleCards: Card[] = [];
+  let championChoices: Player[] | undefined;
   let match: Match | undefined;
 
   let register = function () {
-    if (!selectedOffering || !selectedSpecialRule) {
+    if (!selectedOffering || !selectedChampion) {
       return;
     }
     let offering: Offering;
@@ -43,29 +45,12 @@
       default:
         throw new Error("Invalid offering: " + selectedOffering);
     }
-    let specialRule: SpecialRule;
-    switch (selectedSpecialRule) {
-      case "playersAreFaster":
-        specialRule = { playersAreFaster: null };
-        break;
-      case "explodingBalls":
-        specialRule = { explodingBalls: null };
-        break;
-      case "fastBallsHardHits":
-        specialRule = { fastBallsHardHits: null };
-        break;
-      case "highBlessingAndCurses":
-        specialRule = { highBlessingAndCurses: null };
-        break;
-      default:
-        throw new Error("Invalid special rule: " + selectedSpecialRule);
-    }
     let request: VoteMatchOptionsRequest = {
       stadiumId: stadiumId,
       matchId: matchId,
       vote: {
         offering: offering,
-        specialRule: specialRule,
+        champion: selectedChampion,
       },
     };
     console.log(
@@ -94,14 +79,6 @@
           description: a,
         };
       });
-      specialRuleCards = match.specialRules.map((r) => {
-        let a = Object.keys(r)[0]; // TODO
-        return {
-          id: a,
-          title: a,
-          description: a,
-        };
-      });
     }
   });
 </script>
@@ -112,11 +89,8 @@
     <CardList cards={offeringCards} onSelect={(i) => (selectedOffering = i)} />
   </div>
   <div>
-    <h2>Special Rule</h2>
-    <CardList
-      cards={specialRuleCards}
-      onSelect={(i) => (selectedSpecialRule = i)}
-    />
+    <h2>Champion</h2>
+    <PlayerPicker players={championChoices || []} initialPlayerId={undefined} />
   </div>
   <button on:click={register}>Submit Vote</button>
 {/if}

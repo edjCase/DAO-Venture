@@ -4,7 +4,7 @@
   export let players: Player[];
   export let initialPlayerId: number | undefined;
 
-  let playerId: number = initialPlayerId;
+  let playerId: number | undefined = initialPlayerId;
 </script>
 
 <select id="player" bind:value={playerId}>

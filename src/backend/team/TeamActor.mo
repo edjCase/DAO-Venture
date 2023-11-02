@@ -34,9 +34,10 @@ shared (install) actor class TeamActor(
   type VoteForMatchOptionsResult = Team.VoteForMatchOptionsResult;
   type VoteForMatchOptionsRequest = Team.VoteForMatchOptionsRequest;
   type Offering = Stadium.Offering;
-  type SpecialRule = Stadium.SpecialRule;
+  type MatchAura = Stadium.MatchAura;
   type GetCyclesResult = Team.GetCyclesResult;
   type StadiumMatchId = Text; // Stadium Principal Text # _ # Match Id Text
+  type PlayerId = Player.PlayerId;
 
   stable var leagueId = initLeagueId;
   var matchOptions : Trie.Trie<StadiumMatchId, Trie.Trie<Principal, MatchOptionsVote>> = Trie.empty();
@@ -70,10 +71,11 @@ shared (install) actor class TeamActor(
     if (not offeringExists) {
       errors.add("Invalid offering: " # debug_show (request.vote.offering));
     };
-    let specialRuleExists = IterTools.any(match.specialRules.vals(), func(r : SpecialRule) : Bool = r == request.vote.specialRule);
-    if (not specialRuleExists) {
-      errors.add("Invalid special rule: " # debug_show (request.vote.specialRule));
-    };
+    // TODO?
+    // let championExists = IterTools.any(match.players.vals(), func(r : MatchAura) : Bool = r == request.vote.champion);
+    // if (not championExists) {
+    //   errors.add("Invalid champion: " # debug_show (request.vote.champion));
+    // };
     if (errors.size() > 0) {
       return #invalid(Buffer.toArray(errors));
     };
@@ -122,10 +124,10 @@ shared (install) actor class TeamActor(
     switch (Trie.get(matchOptions, matchKey, Text.equal)) {
       case (null) #noVotes;
       case (?o) {
-        let ?(offering, specialRuleVotes) = calculateVotes(o) else return #noVotes;
+        let ?{ offering; champion } = calculateVotes(o) else return #noVotes;
         #ok({
           offering = offering;
-          specialRuleVotes = specialRuleVotes;
+          champion = champion;
         });
       };
     };
@@ -145,9 +147,12 @@ shared (install) actor class TeamActor(
     return ledgerId;
   };
 
-  private func calculateVotes(matchVotes : Trie.Trie<Principal, MatchOptionsVote>) : ?(Offering, [(SpecialRule, Nat)]) {
+  private func calculateVotes(matchVotes : Trie.Trie<Principal, MatchOptionsVote>) : ?{
+    offering : Offering;
+    champion : PlayerId;
+  } {
     var offeringVotes = Trie.empty<Offering, Nat>();
-    var specialRuleVotes = Trie.empty<SpecialRule, Nat>();
+    var championVotes = Trie.empty<PlayerId, Nat>();
     for ((userId, vote) in Trie.iter(matchVotes)) {
       // Offering
       let userVotingPower = 1; // TODO
@@ -156,29 +161,36 @@ shared (install) actor class TeamActor(
         hash = Stadium.hashOffering(vote.offering);
       };
       offeringVotes := addVotes(offeringVotes, offeringKey, Stadium.equalOffering, userVotingPower);
-      let specialRuleKey = {
-        key = vote.specialRule;
-        hash = Stadium.hashSpecialRule(vote.specialRule);
+      let championKey = {
+        key = vote.champion;
+        hash = vote.champion;
       };
-      specialRuleVotes := addVotes(specialRuleVotes, specialRuleKey, Stadium.equalSpecialRule, userVotingPower);
+      championVotes := addVotes(championVotes, championKey, Nat32.equal, userVotingPower);
     };
-    var winningOffering : ?(Offering, Nat) = null;
-    for ((offering, votes) in Trie.iter(offeringVotes)) {
-      switch (winningOffering) {
-        case (null) winningOffering := ?(offering, votes);
+    let ?winningOffering = calculateVote(offeringVotes) else return null;
+    let ?winningChampion = calculateVote(championVotes) else return null;
+    ?{
+      offering = winningOffering;
+      champion = winningChampion;
+    };
+  };
+
+  private func calculateVote<T>(votes : Trie.Trie<T, Nat>) : ?T {
+    var winningVote : ?(T, Nat) = null;
+    for ((choice, votes) in Trie.iter(votes)) {
+      switch (winningVote) {
+        case (null) winningVote := ?(choice, votes);
         case (?o) {
           if (o.1 < votes) {
-            winningOffering := ?(offering, votes);
+            winningVote := ?(choice, votes);
           };
           // TODO what to do if there is a tie?
         };
       };
     };
-    let specialRuleVoteArray = Trie.iter(specialRuleVotes)
-    |> Iter.toArray(_);
-    switch (winningOffering) {
+    switch (winningVote) {
       case (null) null;
-      case (?offering) ?(offering.0, specialRuleVoteArray);
+      case (?offering) ?offering.0;
     };
   };
 

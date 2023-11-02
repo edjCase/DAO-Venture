@@ -36,7 +36,7 @@ module {
     type PlayerSkills = Player.PlayerSkills;
     type PlayerId = Nat32;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
-    type SpecialRule = Stadium.SpecialRule;
+    type MatchAura = Stadium.MatchAura;
     type Offering = Stadium.Offering;
 
     type SimulationResult = {
@@ -49,6 +49,7 @@ module {
         name : Text;
         var score : Int;
         offering : Offering;
+        champion : PlayerId;
     };
 
     type MutableDefenseFieldState = {
@@ -78,7 +79,7 @@ module {
         var offenseTeamId : TeamId;
         var team1 : MutableTeamState;
         var team2 : MutableTeamState;
-        specialRule : SpecialRule;
+        aura : MatchAura;
         var players : TrieMap.TrieMap<PlayerId, MutablePlayerState>;
         var log : Buffer.Buffer<LogEntry>;
         var field : MutableFieldState;
@@ -88,14 +89,14 @@ module {
     };
 
     type MutablePlayerSkills = {
-        var battingPower : Nat;
-        var battingAccuracy : Nat;
-        var throwingAccuracy : Nat;
-        var throwingPower : Nat;
-        var catching : Nat;
-        var defense : Nat;
-        var piety : Nat;
-        var speed : Nat;
+        var battingPower : Int;
+        var battingAccuracy : Int;
+        var throwingAccuracy : Int;
+        var throwingPower : Int;
+        var catching : Int;
+        var defense : Int;
+        var piety : Int;
+        var speed : Int;
     };
 
     type MutablePlayerState = {
@@ -110,12 +111,12 @@ module {
         id : Principal;
         name : Text;
         offering : Offering;
-        specialRuleVotes : Trie.Trie<SpecialRule, Nat>;
+        champion : PlayerId;
         players : [PlayerWithId];
     };
 
     public func initState(
-        specialRules : [Stadium.SpecialRule],
+        aura : MatchAura,
         team1 : TeamInitData,
         team2 : TeamInitData,
         team1StartOffense : Bool,
@@ -140,8 +141,6 @@ module {
         for (player in team2.players.vals()) {
             addPlayer(player, #team2);
         };
-        let specialRule = calculateSpecialRule(prng, specialRules, team1.specialRuleVotes, team2.specialRuleVotes);
-
         let (offenseTeam, defenseTeam) = if (team1StartOffense) {
             (team1, team2);
         } else {
@@ -159,14 +158,16 @@ module {
                 name = team1.name;
                 score = 0;
                 offering = team1.offering;
+                champion = team1.champion;
             };
             team2 = {
                 id = team2.id;
                 name = team2.name;
                 score = 0;
                 offering = team2.offering;
+                champion = team2.champion;
             };
-            specialRule = specialRule;
+            aura = aura;
             log = [];
             players = Buffer.toArray(players);
             batter = null;
@@ -209,50 +210,7 @@ module {
         };
     };
 
-    private func calculateSpecialRule(
-        prng : Prng,
-        specialRules : [SpecialRule],
-        team1Votes : Trie.Trie<SpecialRule, Nat>,
-        team2Votes : Trie.Trie<SpecialRule, Nat>,
-    ) : SpecialRule {
-        let team1NormalizedVotes = normalizeVotes(team1Votes);
-        let team2NormalizedVotes = normalizeVotes(team2Votes);
-        var winningRule : ?(SpecialRule, Float) = null;
-        // TODO rule index vs id
-        for (rule in Array.vals(specialRules)) {
-            let key = {
-                key = rule;
-                hash = Stadium.hashSpecialRule(rule);
-            };
-            let team1Vote : Float = switch (Trie.get(team1NormalizedVotes, key, Stadium.equalSpecialRule)) {
-                case (null) 0;
-                case (?v) v;
-            };
-            let team2Vote : Float = switch (Trie.get(team2NormalizedVotes, key, Stadium.equalSpecialRule)) {
-                case (null) 0;
-                case (?v) v;
-            };
-            let voteCount = team1Vote + team2Vote;
-            switch (winningRule) {
-                case (null) winningRule := ?(rule, voteCount);
-                case (?(r, c)) {
-                    if (voteCount > c) {
-                        winningRule := ?(r, voteCount);
-                    };
-                };
-            };
-        };
-        switch (winningRule) {
-            case (null) {
-                // Get random rule if no consensus
-                let randomRuleIndex = prng.nextNat(0, specialRules.size() - 1);
-                specialRules[randomRuleIndex];
-            };
-            case (?(r, voteCount)) r;
-        };
-    };
-
-    private func normalizeVotes(votes : Trie.Trie<SpecialRule, Nat>) : Trie.Trie<SpecialRule, Float> {
+    private func normalizeVotes(votes : Trie.Trie<MatchAura, Nat>) : Trie.Trie<MatchAura, Float> {
         var totalVotes = 0;
         for ((id, voteCount) in Trie.iter(votes)) {
             totalVotes += voteCount;
@@ -260,9 +218,9 @@ module {
         if (totalVotes == 0) {
             return Trie.empty();
         };
-        Trie.mapFilter<SpecialRule, Nat, Float>(
+        Trie.mapFilter<MatchAura, Nat, Float>(
             votes,
-            func(voteCount : (SpecialRule, Nat)) : ?Float = ?(Float.fromInt(voteCount.1) / Float.fromInt(totalVotes)),
+            func(voteCount : (MatchAura, Nat)) : ?Float = ?(Float.fromInt(voteCount.1) / Float.fromInt(totalVotes)),
         );
     };
 
@@ -325,7 +283,7 @@ module {
             var team1 = toMutableTeam(state.team1);
             var team2 = toMutableTeam(state.team2);
             var players = players;
-            specialRule = state.specialRule;
+            aura = state.aura;
             var field = field;
             var log = log;
             var round = state.round;
@@ -340,19 +298,30 @@ module {
             name = team.name;
             var score = team.score;
             offering = team.offering;
+            champion = team.champion;
         };
     };
 
-    class MatchSimulation(initialState : InProgressMatchState, random : Prng) {
+    class MatchSimulation(initialState : InProgressMatchState, prng : Prng) {
 
         let state : MutableMatchState = toMutableState(initialState);
 
         public func tick() : StartedMatchState {
-            let divineInterventionRoll = random.nextNat(0, 999);
-            if (divineInterventionRoll >= 991) {
-                // TODO divine intervention
+            let divineInterventionRoll = if (state.aura == #highBlessingsAndCurses) {
+                prng.nextNat(0, 99);
+            } else {
+                prng.nextNat(0, 999);
             };
-            let result = pitch();
+            let result = if (divineInterventionRoll <= 9) {
+                state.log.add({
+                    description = "Divine intervention!";
+                    isImportant = true;
+                });
+                let ?randomPlayerId = getRandomAvailablePlayer(null, null, false) else Prelude.unreachable();
+                blessOrCursePlayer(randomPlayerId);
+            } else {
+                pitch();
+            };
             buildState(result);
         };
 
@@ -425,15 +394,16 @@ module {
                     name = team.name;
                     score = team.score;
                     offering = team.offering;
+                    champion = team.champion;
                 };
             };
             let log : [LogEntry] = Buffer.toArray(state.log);
             #inProgress({
-                currentSeed = random.getCurrentSeed();
+                currentSeed = prng.getCurrentSeed();
                 offenseTeamId = state.offenseTeamId;
                 team1 = buildTeam(state.team1);
                 team2 = buildTeam(state.team2);
-                specialRule = state.specialRule;
+                aura = state.aura;
                 log = log;
                 players = players;
                 field = field;
@@ -449,7 +419,7 @@ module {
             if (availablePlayers.size() < 1) {
                 return null;
             };
-            let randomIndex = random.nextNat(0, availablePlayers.size() - 1);
+            let randomIndex = prng.nextNat(0, availablePlayers.size() - 1);
             ?availablePlayers.get(randomIndex);
 
         };
@@ -464,7 +434,7 @@ module {
                 playersIter := Iter.filter(
                     playersIter,
                     func(p : (PlayerId, MutablePlayerState)) : Bool {
-                        getDefensePositionOfPlayer(p.0) == null and getOffensePositionOfPlayer(p.0) == null;
+                        getDefensePositionOfPlayer(p.0) == null and getBaseOfPlayer(p.0) == null;
                     },
                 );
             };
@@ -521,7 +491,7 @@ module {
             null;
         };
 
-        private func getOffensePositionOfPlayer(playerId : PlayerId) : ?Base {
+        private func getBaseOfPlayer(playerId : PlayerId) : ?Base {
             if (state.field.offense.firstBase == ?playerId) {
                 return ? #firstBase;
             };
@@ -552,14 +522,14 @@ module {
 
         private func pitch() : SimulationResult {
             let pitcher = getPlayer(state.field.defense.pitcher);
-            let pitchRoll = random.nextNat(0, 10) + pitcher.skills.throwingAccuracy + pitcher.skills.throwingPower;
+            let pitchRoll = prng.nextNat(0, 10) + pitcher.skills.throwingAccuracy + pitcher.skills.throwingPower;
 
             state.log.add({
                 description = "Pitch";
                 isImportant = false;
             });
             let atBatPlayer = getPlayer(state.field.offense.atBat);
-            let batterRoll = random.nextInt(0, 10) + atBatPlayer.skills.battingAccuracy + atBatPlayer.skills.battingPower;
+            let batterRoll = prng.nextInt(0, 20) + atBatPlayer.skills.battingAccuracy + atBatPlayer.skills.battingPower;
             let batterNetScore = batterRoll - pitchRoll;
             if (batterNetScore <= 0) {
                 strike();
@@ -581,7 +551,7 @@ module {
                 description = "Its a hit! ";
                 isImportant = true;
             });
-            let precisionRoll = random.nextInt(-2, 2) + hitRoll;
+            let precisionRoll = prng.nextInt(-2, 2) + hitRoll;
             if (precisionRoll < 0) {
                 return foul();
             };
@@ -594,7 +564,7 @@ module {
                 // hit it out of the park
                 return batterRun({ fromBase = #homeBase; ballLocation = null });
             };
-            let location = switch (random.nextInt(0, 7)) {
+            let location = switch (prng.nextInt(0, 7)) {
                 case (0) #firstBase;
                 case (1) #secondBase;
                 case (2) #thirdBase;
@@ -607,7 +577,7 @@ module {
             };
             let catchingPlayerId = getPlayerAtPosition(location);
             let catchingPlayer = getPlayer(catchingPlayerId);
-            let catchRoll = random.nextInt(-10, 10) + catchingPlayer.skills.catching;
+            let catchRoll = prng.nextInt(-10, 10) + catchingPlayer.skills.catching;
             if (catchRoll <= 0) {
                 batterRun({
                     fromBase = #homeBase;
@@ -639,58 +609,58 @@ module {
         }) : SimulationResult {
             let battingPlayer = getPlayer(state.field.offense.atBat);
 
-            let runRoll : Nat = random.nextNat(0, 10) + battingPlayer.skills.speed;
-            let runPlayerToBase = func(playerId : ?PlayerId, base : Base) : SimulationResult {
+            let runRoll : Int = prng.nextNat(0, 10) + battingPlayer.skills.speed;
+            let runPlayerToBase = func(playerId : ?PlayerId, fromBase : Base, toBase : Base) : SimulationResult {
                 switch (playerId) {
                     case (null) {
                         #inProgress;
                     };
                     case (?pId) {
                         let player = getPlayer(pId);
-                        playerMovedBases({ playerId = pId; base = base });
+                        playerMovedBases({ playerId = pId; fromBase; toBase });
                     };
                 };
             };
             switch (ballLocation) {
                 case (null) {
                     // Home run
-                    switch (runPlayerToBase(state.field.offense.thirdBase, #homeBase)) {
+                    switch (runPlayerToBase(state.field.offense.thirdBase, #thirdBase, #homeBase)) {
                         case (#endMatch(m)) return #endMatch(m);
                         case (#inProgress) {};
                     };
-                    switch (runPlayerToBase(state.field.offense.secondBase, #homeBase)) {
+                    switch (runPlayerToBase(state.field.offense.secondBase, #secondBase, #homeBase)) {
                         case (#endMatch(m)) return #endMatch(m);
                         case (#inProgress) {};
                     };
-                    switch (runPlayerToBase(state.field.offense.firstBase, #homeBase)) {
+                    switch (runPlayerToBase(state.field.offense.firstBase, #firstBase, #homeBase)) {
                         case (#endMatch(m)) return #endMatch(m);
                         case (#inProgress) {};
                     };
-                    runPlayerToBase(?state.field.offense.atBat, #homeBase);
+                    runPlayerToBase(?state.field.offense.atBat, #homeBase, #homeBase);
                 };
                 case (?l) {
                     // TODO the other bases should be able to get out, but they just run free right now
-                    switch (runPlayerToBase(state.field.offense.thirdBase, #homeBase)) {
+                    switch (runPlayerToBase(state.field.offense.thirdBase, #thirdBase, #homeBase)) {
                         case (#endMatch(m)) return #endMatch(m);
                         case (#inProgress) {};
                     };
-                    switch (runPlayerToBase(state.field.offense.secondBase, #thirdBase)) {
+                    switch (runPlayerToBase(state.field.offense.secondBase, #secondBase, #thirdBase)) {
                         case (#endMatch(m)) return #endMatch(m);
                         case (#inProgress) {};
                     };
-                    switch (runPlayerToBase(state.field.offense.firstBase, #secondBase)) {
+                    switch (runPlayerToBase(state.field.offense.firstBase, #firstBase, #secondBase)) {
                         case (#endMatch(m)) return #endMatch(m);
                         case (#inProgress) {};
                     };
 
                     let catchingPlayerId = getPlayerAtPosition(l);
                     let catchingPlayer = getPlayer(catchingPlayerId);
-                    let canPickUpInTime = random.nextInt(0, 10) + catchingPlayer.skills.speed;
+                    let canPickUpInTime = prng.nextInt(0, 10) + catchingPlayer.skills.speed;
                     if (canPickUpInTime <= 0) {
                         return #inProgress;
                     };
                     // TODO against dodge/speed skill of runner
-                    let throwRoll = random.nextInt(-10, 10) + catchingPlayer.skills.throwingAccuracy;
+                    let throwRoll = prng.nextInt(-10, 10) + catchingPlayer.skills.throwingAccuracy;
                     if (throwRoll <= 0) {
                         state.log.add({
                             description = "SAFE!";
@@ -698,18 +668,15 @@ module {
                         });
                         playerMovedBases({
                             playerId = state.field.offense.atBat;
-                            base = #firstBase;
+                            fromBase = #homeBase;
+                            toBase = #firstBase;
                         });
                     } else {
                         state.log.add({
                             description = "Player " # catchingPlayer.name # " hit " # battingPlayer.name # "!";
                             isImportant = true;
                         });
-                        switch (out(state.field.offense.atBat)) {
-                            case (#endMatch(m)) return #endMatch(m);
-                            case (#inProgress) {};
-                        };
-                        let defenseRoll = random.nextInt(-10, 10) + battingPlayer.skills.defense;
+                        let defenseRoll = prng.nextInt(-10, 10) + battingPlayer.skills.defense;
                         let damageRoll = throwRoll - defenseRoll;
                         if (damageRoll > 5) {
                             let newInjury = switch (damageRoll) {
@@ -718,12 +685,14 @@ module {
                                 case (8) #brokenArm;
                                 case (_) #concussion;
                             };
-                            injurePlayer({
-                                playerId = state.field.offense.atBat;
-                                injury = newInjury;
-                            });
-                        } else {
-                            #inProgress;
+                            switch (injurePlayer({ playerId = state.field.offense.atBat; injury = newInjury })) {
+                                case (#endMatch(m)) return #endMatch(m);
+                                case (#inProgress) {};
+                            };
+                        };
+                        switch (out(state.field.offense.atBat)) {
+                            case (#endMatch(m)) #endMatch(m);
+                            case (#inProgress) #inProgress;
                         };
 
                     };
@@ -756,11 +725,15 @@ module {
             if (state.outs >= 3) {
                 return endRound();
             };
-            removePlayerFromField(playerId);
+            removePlayerFromBase(playerId);
         };
 
-        private func playerMovedBases({ base : Base; playerId : PlayerId }) : SimulationResult {
-            switch (base) {
+        private func playerMovedBases({
+            fromBase : Base;
+            toBase : Base;
+            playerId : PlayerId;
+        }) : SimulationResult {
+            switch (toBase) {
                 case (#firstBase) state.field.offense.firstBase := ?playerId;
                 case (#secondBase) state.field.offense.secondBase := ?playerId;
                 case (#thirdBase) state.field.offense.thirdBase := ?playerId;
@@ -769,7 +742,7 @@ module {
                     score({ teamId = state.offenseTeamId; amount = 1 });
                 };
             };
-            removePlayerFromField(playerId);
+            clearBase(fromBase);
         };
 
         private func endRound() : SimulationResult {
@@ -823,6 +796,14 @@ module {
             #inProgress;
         };
 
+        private func blessOrCursePlayer(playerId : PlayerId) : SimulationResult {
+            if (prng.nextCoin()) {
+                cursePlayer(playerId, null);
+            } else {
+                blessPlayer(playerId, null);
+            };
+        };
+
         private func injurePlayer({ playerId : Nat32; injury : Player.Injury }) : SimulationResult {
             let player = getPlayer(playerId);
             player.condition := #injured(injury);
@@ -844,6 +825,95 @@ module {
             };
         };
 
+        private func cursePlayer(playerId : Nat32, curseOrRandom : ?Stadium.Curse) : SimulationResult {
+            let player = getPlayer(playerId);
+            let curse = switch (curseOrRandom) {
+                case (null) {
+                    let curseRoll = prng.nextNat(0, 11);
+                    switch (curseRoll) {
+                        case (0) #skill(#battingPower);
+                        case (1) #skill(#battingAccuracy);
+                        case (2) #skill(#throwingPower);
+                        case (3) #skill(#throwingAccuracy);
+                        case (4) #skill(#catching);
+                        case (5) #skill(#defense);
+                        case (6) #skill(#piety);
+                        case (7) #skill(#speed);
+                        case (8) #injury(#twistedAnkle);
+                        case (9) #injury(#brokenLeg);
+                        case (10) #injury(#brokenArm);
+                        case (11) #injury(#concussion);
+                        case (_) Prelude.unreachable();
+                    };
+                };
+                case (?c) c;
+            };
+            let (curseText, result) = switch (curse) {
+                case (#skill(s)) {
+                    modifyPlayerSkill(player.skills, s, -1); // TODO value
+                    ("Decreased skill: " # debug_show (s), #inProgress);
+                };
+                case (#injury(i)) {
+                    let result = injurePlayer({
+                        playerId = playerId;
+                        injury = i;
+                    });
+                    ("Injury: " # debug_show (i), result);
+                };
+            };
+            state.log.add({
+                description = "Player " # player.name # " is cursed with : " # curseText;
+                isImportant = true;
+            });
+            result;
+        };
+
+        private func blessPlayer(playerId : Nat32, blessingOrRandom : ?Stadium.Blessing) : SimulationResult {
+            let player = getPlayer(playerId);
+            let blessing = switch (blessingOrRandom) {
+                case (null) {
+                    let blessingRoll = prng.nextNat(0, 7);
+                    switch (blessingRoll) {
+                        case (0) #skill(#battingPower);
+                        case (1) #skill(#battingAccuracy);
+                        case (2) #skill(#throwingPower);
+                        case (3) #skill(#throwingAccuracy);
+                        case (4) #skill(#catching);
+                        case (5) #skill(#defense);
+                        case (6) #skill(#piety);
+                        case (7) #skill(#speed);
+                        case (_) Prelude.unreachable();
+                    };
+                };
+                case (?c) c;
+            };
+            let blessingText = switch (blessing) {
+                case (#skill(s)) {
+                    modifyPlayerSkill(player.skills, s, 1); // TODO value
+                    "Increased skill: " # debug_show (s);
+                };
+            };
+            state.log.add({
+                description = "Player " # player.name # " is blessed with : " # blessingText;
+                isImportant = true;
+            });
+            #inProgress;
+        };
+
+        private func modifyPlayerSkill(skills : MutablePlayerSkills, skill : Player.Skill, value : Int) {
+
+            switch (skill) {
+                case (#battingPower) skills.battingPower += value;
+                case (#battingAccuracy) skills.battingAccuracy += value;
+                case (#throwingPower) skills.throwingPower += value;
+                case (#throwingAccuracy) skills.throwingAccuracy += value;
+                case (#catching) skills.catching += value;
+                case (#defense) skills.defense += value;
+                case (#piety) skills.piety += value;
+                case (#speed) skills.speed += value;
+            };
+        };
+
         private func substitutePlayer({ playerId : Nat32 }) : SimulationResult {
             let playerOut = getPlayer(playerId);
             let team = switch (playerOut.teamId) {
@@ -857,7 +927,7 @@ module {
                 return endMatch(#outOfPlayers(playerOut.teamId));
             };
             // Get random from available players
-            let randomIndex = random.nextNat(0, availablePlayers.size() - 1);
+            let randomIndex = prng.nextNat(0, availablePlayers.size() - 1);
             let subPlayerId = availablePlayers.get(randomIndex);
             let subPlayer = getPlayer(subPlayerId);
 
@@ -953,10 +1023,13 @@ module {
             #endMatch(#played(completedState));
         };
 
-        private func removePlayerFromField(playerId : PlayerId) : SimulationResult {
-            let ?position = getOffensePositionOfPlayer(playerId) else trapWithEvents("Player not on field, cannot remove: " # Nat32.toText(playerId));
+        private func removePlayerFromBase(playerId : PlayerId) : SimulationResult {
+            let ?position = getBaseOfPlayer(playerId) else trapWithEvents("Player not on field, cannot remove: " # Nat32.toText(playerId));
+            clearBase(position);
+        };
 
-            switch (position) {
+        private func clearBase(base : Base) : SimulationResult {
+            switch (base) {
                 case (#firstBase) state.field.offense.firstBase := null;
                 case (#secondBase) state.field.offense.secondBase := null;
                 case (#thirdBase) state.field.offense.thirdBase := null;

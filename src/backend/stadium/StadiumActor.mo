@@ -25,7 +25,6 @@ import Error "mo:base/Error";
 import Blob "mo:base/Blob";
 import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
-import Logger "mo:ic-websocket-cdk/Logger";
 import RandomUtil "../RandomUtil";
 import League "../League";
 
@@ -41,7 +40,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     type FieldPosition = Player.FieldPosition;
     type MatchOptions = Stadium.MatchOptions;
     type Offering = Stadium.Offering;
-    type SpecialRule = Stadium.SpecialRule;
+    type MatchAura = Stadium.MatchAura;
+    type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var matches : Trie.Trie<Nat32, MatchWithTimer> = Trie.empty();
 
@@ -112,6 +112,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         if (request.team1Id == request.team2Id) {
             return #duplicateTeams;
         };
+        let seedBlob = await Random.blob();
+        let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
         let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
         let teams = try {
             await leagueActor.getTeams();
@@ -146,7 +148,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
         let timerId = Timer.setTimer(timerDuration, callbackFunc);
         let offerings = getRandomOfferings(4);
-        let specialRules = getRandomSpecialRules(4);
+        let aura = getRandomMatchAura(prng);
         let match : Stadium.MatchWithTimer = {
             id = nextMatchId;
             time = request.time;
@@ -165,7 +167,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 predictionVotes = 0;
             };
             offerings = offerings;
-            specialRules = specialRules;
+            aura = aura;
             timerId = ?timerId;
             state = #notStarted;
         };
@@ -200,7 +202,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let seedBlob = await Random.blob();
         let { prng; seed } = RandomUtil.buildPrng(seedBlob);
         let team1IsOffense = prng.nextCoin();
-        let initState = MatchSimulator.initState(match.specialRules, team1Init, team2Init, team1IsOffense, prng, seed);
+        let initState = MatchSimulator.initState(match.aura, team1Init, team2Init, team1IsOffense, prng, seed);
         #ok(initState);
     };
 
@@ -220,26 +222,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             Debug.print("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
             return null;
         };
-        var specialRuleVotes = Trie.empty<SpecialRule, Nat>();
-        for ((rule, vote) in Iter.fromArray(options.specialRuleVotes)) {
-            let key = {
-                key = rule;
-                hash = Stadium.hashSpecialRule(rule);
-            };
-            let (newVotes, _) = Trie.put(specialRuleVotes, key, Stadium.equalSpecialRule, vote);
-            specialRuleVotes := newVotes;
-        };
         ?{
             id = team.id;
             name = team.name;
             players = teamPlayers;
             offering = options.offering;
-            specialRuleVotes = specialRuleVotes;
+            champion = options.champion;
         };
     };
 
     public shared ({ caller }) func tickMatch(matchId : Nat32) : async Stadium.TickMatchResult {
-        Logger.custom_print("Tick match: " # debug_show (matchId));
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
         let state = switch (match.state) {
             case (#completed(completedState)) return #completed(completedState);
@@ -292,21 +284,23 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
         // TODO
         [
-            #mischief(#a),
+            #mischief(#shuffleAndBoost),
             #war(#b),
             #indulgence(#c),
             #pestilence(#d),
         ];
     };
 
-    private func getRandomSpecialRules(count : Nat) : [Stadium.SpecialRule] {
+    private func getRandomMatchAura(prng : Prng) : Stadium.MatchAura {
         // TODO
-        [
-            #playersAreFaster,
+        let auras = Buffer.fromArray<Stadium.MatchAura>([
+            #lowGravity,
             #explodingBalls,
             #fastBallsHardHits,
-            #highBlessingAndCurses,
-        ];
+            #highBlessingsAndCurses,
+        ]);
+        prng.shuffleBuffer(auras);
+        auras.get(0);
     };
 
     private func isTimeAvailable(time : Time.Time) : Bool {
