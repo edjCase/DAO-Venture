@@ -24,7 +24,6 @@ import IterTools "mo:itertools/Iter";
 module {
     type PlayerState = Stadium.PlayerState;
     type LogEntry = Stadium.LogEntry;
-    type MatchState = Stadium.MatchState;
     type StartedMatchState = Stadium.StartedMatchState;
     type TeamState = Stadium.TeamState;
     type MatchOptions = Stadium.MatchOptions;
@@ -121,7 +120,6 @@ module {
         team2 : TeamInitData,
         team1StartOffense : Bool,
         prng : Prng,
-        seed : Nat32,
     ) : InProgressMatchState {
         var players = Buffer.Buffer<Stadium.PlayerStateWithId>(team1.players.size() + team2.players.size());
         let addPlayer = func(player : PlayerWithId, teamId : TeamId) {
@@ -151,7 +149,6 @@ module {
         let ?defense = buildStartingDefense(defenseTeam.players, prng) else Debug.trap("Not enough players to start match");
 
         {
-            currentSeed = prng.getCurrentSeed();
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = {
                 id = team1.id;

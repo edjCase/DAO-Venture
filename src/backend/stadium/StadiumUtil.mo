@@ -5,14 +5,6 @@ import Hash "mo:base/Hash";
 import Iter "mo:base/Iter";
 module {
 
-    public func sortTeamIds(teamIds : (Principal, Principal)) : (Principal, Principal) {
-        if (teamIds.0 < teamIds.1) {
-            return teamIds;
-        } else {
-            return (teamIds.1, teamIds.0);
-        };
-    };
-
     public func trieToMap<T, K, N>(t : Trie.Trie<T, K>, equal : (T, T) -> Bool, hash : (T) -> Hash.Hash, mapFunc : (K) -> N) : TrieMap.TrieMap<T, N> {
         let entries = Trie.iter(t) |> Iter.map<(T, K), (T, N)>(_, func(x) { (x.0, mapFunc(x.1)) });
         TrieMap.fromEntries<T, N>(entries, equal, hash);

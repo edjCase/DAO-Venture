@@ -29,9 +29,7 @@ import League "../League";
 import IterTools "mo:itertools/Iter";
 
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
-
-    type Match = Stadium.Match;
-    type MatchGroupWithTimer = Stadium.MatchGroupWithTimer;
+    type MatchGroup = Stadium.MatchGroup;
     type MatchWithId = Stadium.MatchWithId;
     type MatchTeamInfo = Stadium.MatchTeamInfo;
     type Player = Player.Player;
@@ -43,8 +41,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     type MatchAura = Stadium.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
     type TeamWithId = Team.TeamWithId;
+    type StartMatchResult = {
+        #inProgress : Stadium.InProgressMatchState;
+        #completed : Stadium.CompletedMatchState;
+    };
 
-    stable var matchGroups : Trie.Trie<Nat32, MatchGroupWithTimer> = Trie.empty();
+    stable var matchGroups : Trie.Trie<Nat32, MatchGroup> = Trie.empty();
 
     stable var nextMatchGroupId : Nat32 = 1;
 
@@ -65,57 +67,15 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         |> Trie.iter _
         |> Iter.map(
             _,
-            func(v : (Nat32, MatchGroupWithTimer)) : Stadium.MatchGroupWithId = {
+            func(v : (Nat32, MatchGroup)) : Stadium.MatchGroupWithId = {
                 v.1 with
                 id = v.0;
-                stadiumId = Principal.fromActor(this);
             },
         )
         |> Iter.sort(_, func(a : Stadium.MatchGroupWithId, b : Stadium.MatchGroupWithId) : Order.Order = Int.compare(a.time, b.time))
         |> Iter.toArray(_);
     };
 
-    public shared ({ caller }) func startMatchGroup(matchGroupId : Nat32) : async Stadium.StartMatchResult {
-        // TODO: only can call itself after the designated time
-        let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        let (result, newMatch) = switch (await startMatchInternal(matchId, match)) {
-            case (#matchAlreadyStarted) return #matchAlreadyStarted;
-            case (#matchNotFound) return #matchNotFound;
-            case (#completed(s)) {
-                let newMatch : MatchWithTimer = {
-                    match with
-                    timer = null;
-                    state = #completed(s);
-                };
-                (#completed(s), newMatch);
-            };
-            case (#ok(s)) {
-                let timerId = Timer.recurringTimer(
-                    #seconds(5),
-                    func() : async () {
-                        let _ = await tickMatch(matchId);
-                    },
-                );
-                let newMatch : MatchWithTimer = {
-                    match with
-                    timerId = ?timerId;
-                    state = #inProgress(s);
-                };
-                (#ok(s), newMatch);
-            };
-        };
-        // Clear timer if set on original match
-        switch (match.timerId) {
-            case (null)();
-            case (?timerId) Timer.cancelTimer(timerId);
-        };
-        addOrUpdateMatch(matchId, newMatch);
-        result;
-    };
-
-    type MatchResult = Stadium.ScheduleMatchFailure or {
-        #ok : Match;
-    };
     public shared ({ caller }) func scheduleMatchGroup(request : Stadium.ScheduleMatchGroupRequest) : async Stadium.ScheduleMatchGroupResult {
         assertLeague(caller);
         let seedBlob = await Random.blob();
@@ -134,32 +94,28 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
         let timerDuration = #nanoseconds(natTimeDiff);
         let matchGroupId = nextMatchGroupId; // StadiumActor needs to be here to preserve the matchId value for the callback
-        let callbackFunc = func() : async () {
-            let message = switch (await startMatchGroup(matchGroupId)) {
-                case (#matchAlreadyStarted) "Failed to start match: Match already started";
-                case (#matchNotFound) "Failed to start match: Match not found";
-                case (#completed(_)) "Failed to start match: Match completed";
-                case (#ok(_)) "Started match: " # Nat32.toText(matchGroupId);
-            };
-            Debug.print("Start Match Callback Result - " # message);
-        };
-        let timerId = Timer.setTimer(timerDuration, callbackFunc);
 
-        let matches = Buffer.Buffer<Match>(request.matches.size());
+        let matches = Buffer.Buffer<Stadium.Match>(request.matches.size());
         let failedMatches = Buffer.Buffer<Stadium.ScheduleMatchFailure>(0);
         for (m in Iter.fromArray(request.matches)) {
-            switch (scheduleMatch(m, teams, prng)) {
-                case (#ok(m)) matches.add(m);
-                case (#teamNotFound(t)) failedMatches.add(#teamNotFound(t));
+            let team1OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == m.team1Id);
+            let team2OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == m.team2Id);
+            switch ((team1OrNull, team2OrNull)) {
+                case (null, null) failedMatches.add(#teamNotFound(#bothTeams));
+                case (null, ?_) failedMatches.add(#teamNotFound(#team1));
+                case (?_, null) failedMatches.add(#teamNotFound(#team2));
+                case (?t1, ?t2) matches.add(buildMatch(m, t1, t2, prng));
             };
         };
         if (failedMatches.size() > 0) {
             return #matchErrors(Buffer.toArray(failedMatches));
         };
-
         let matchGroup : Stadium.MatchGroup = {
             time = request.time;
-            matches = Buffer.toArray(matches);
+            state = #notStarted({
+                matches = Buffer.toArray(matches);
+                startTimerId = startTimerId;
+            });
         };
         let nextMatchGroupKey = {
             hash = nextMatchGroupId;
@@ -177,65 +133,117 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
 
     public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat32) : async Stadium.TickMatchGroupResult {
         let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
-        let newMatches = matchGroup.matches
-        |> Buffer.fromArray<Match>(_)
-        |> Buffer.map<Match, Match>(
-            _,
-            func(m : Match) : Match {
-                let newState = tickMatchState(m.state);
-                {
-                    m with
-                    state = newState;
+        let matchGroupState : Stadium.InProgressMatchGroupState = switch (matchGroup.state) {
+            case (#notStarted(notStartedState)) {
+                let seedBlob = await Random.blob();
+                let { prng; seed } = RandomUtil.buildPrng(seedBlob);
+                Timer.cancelTimer(notStartedState.startTimerId); // Cancel timer before disposing of timer id
+                let tickTimerId = Timer.recurringTimer(
+                    #seconds(5000),
+                    func() : async () {
+                        await tickMatchGroupCallback(matchGroupId);
+                    },
+                );
+                let startedMatches = Buffer.Buffer<Stadium.StartedMatchState>(notStartedState.matches.size());
+                for (match in Iter.fromArray(notStartedState.matches)) {
+                    try {
+                        let startedMatch = await startMatchInternal(matchGroupId, match, prng);
+                        startedMatches.add(startedMatch);
+                    } catch (err) {
+                        // TODO handle single match failing or make not async
+                        Debug.print("Failed to start match: " # Error.message(err));
+                    };
                 };
-            },
-        );
-        let allComplete = IterTools.all(
-            newMatches.vals(),
-            func(m : Match) : Bool = switch (m.state) {
-                case (#completed(_)) true;
-                case (_) false;
-            },
-        );
-        let timerId = if (allComplete) {
-            switch (matchGroup.timerId) {
-                case (null) {};
-                // Cancel timer if set
-                case (?timerId) Timer.cancelTimer(timerId);
+                {
+                    notStartedState with
+                    matches = Buffer.toArray(startedMatches);
+                    tickTimerId = tickTimerId;
+                    seed = seed;
+                };
             };
-
-            null;
-        } else {
-            matchGroup.timerId;
+            case (#completed(_)) return #completed;
+            case (#inProgress(g)) g;
         };
-        #inProgress({
+        let newState = switch (tickMatches(matchGroupState.matches)) {
+            case (#completed(completedMatches)) {
+                // Cancel tick timer before disposing of timer id
+                Timer.cancelTimer(matchGroupState.tickTimerId);
+
+                #completed({
+                    matchGroupState with
+                    matches = completedMatches;
+                });
+            };
+            case (#inProgress(newMatches)) {
+                #inProgress({
+                    matchGroupState with
+                    matches = newMatches;
+                });
+            };
+        };
+        let newMatchGroup = {
             matchGroup with
-            matches = Buffer.toArray(newMatches);
-            timerId = timerId;
-        });
+            state = newState;
+        };
+        addOrUpdateMatchGroup(matchGroupId, newMatchGroup);
+        switch (newState) {
+            case (#completed(_)) #completed;
+            case (#inProgress(_)) #ok;
+        };
     };
 
-    private func scheduleMatch(m : Stadium.ScheduleMatchRequest, teams : [TeamWithId], prng : Prng) : MatchResult {
-        let correctedTeamIds = Util.sortTeamIds((m.team1Id, m.team2Id));
-        let team1OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == correctedTeamIds.0);
-        let team2OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == correctedTeamIds.1);
-        let (team1, team2) = switch ((team1OrNull, team2OrNull)) {
-            case (null, null) return #teamNotFound(#bothTeams);
-            case (null, ?_) return #teamNotFound(#team1);
-            case (?_, null) return #teamNotFound(#team2);
-            case (?t1, ?t2)(t1, t2);
+    private func tickMatchGroupCallback(matchGroupId : Nat32) : async () {
+        let message = switch (await tickMatchGroup(matchGroupId)) {
+            case (#matchGroupNotFound) "Failed to start match group: Match Group not found";
+            case (#completed(_)) "Failed to start match group: Match Group completed";
+            case (#inProgress(_)) "Started match group: " # Nat32.toText(matchGroupId);
         };
+        Debug.print("Start Match Group Callback Result - " # message);
+    };
+
+    private func tickMatches(matches : [Stadium.StartedMatchState]) : {
+        #completed : [Stadium.CompletedMatchState];
+        #inProgress : [Stadium.StartedMatchState];
+    } {
+
+        let completedMatchStates = Buffer.Buffer<Stadium.CompletedMatchState>(0);
+        let newMatchStates = Buffer.Buffer<Stadium.StartedMatchState>(0);
+        for (matchState in Iter.fromArray(matches)) {
+
+            let newMatchState = tickMatchState(matchState);
+            newMatchStates.add(newMatchState);
+            switch (newMatchState) {
+                case (#completed(completedState)) completedMatchStates.add(completedState);
+                case (#inProgress(_)) newMatchStates.add(newMatchState);
+            };
+        };
+        if (completedMatchStates.size() == newMatchStates.size()) {
+            // If all matches are complete, then complete the group
+            #completed(Buffer.toArray(completedMatchStates));
+        } else {
+            #inProgress(Buffer.toArray(newMatchStates));
+        };
+    };
+
+    private func buildMatch(
+        m : Stadium.ScheduleMatchRequest,
+        team1 : TeamWithId,
+        team2 : TeamWithId,
+        prng : Prng,
+    ) : Stadium.Match {
+
         let offerings = getRandomOfferings(4);
         let aura = getRandomMatchAura(prng);
-        #ok({
+        {
             team1 = {
-                id = correctedTeamIds.0;
+                id = team1.id;
                 name = team1.name;
                 options = null;
                 score = null;
                 predictionVotes = 0;
             };
             team2 = {
-                id = correctedTeamIds.1;
+                id = team2.id;
                 name = team2.name;
                 options = null;
                 score = null;
@@ -244,12 +252,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             offerings = offerings;
             aura = aura;
             state = #notStarted;
-        });
+        };
     };
 
-    private func tickMatchState(state : Stadium.MatchState) : Stadium.MatchState {
+    private func tickMatchState(state : Stadium.StartedMatchState) : Stadium.StartedMatchState {
         switch (state) {
-            case (#notStarted) #notStarted;
             case (#completed(completedState)) #completed(completedState);
             case (#inProgress(s)) {
                 let prng = PseudoRandomX.LinearCongruentialGenerator(s.currentSeed);
@@ -258,25 +265,18 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    private func startMatchInternal(matchId : Nat32, match : Match) : async Stadium.StartMatchResult {
-        switch (match.state) {
-            case (#completed(s)) return #completed(s);
-            case (#inProgress(_)) return #matchAlreadyStarted;
-            case (#notStarted) {};
-        };
-        let team1InitOrNull = await createTeamInit(matchId, match.team1);
-        let team2InitOrNull = await createTeamInit(matchId, match.team2);
+    private func startMatchInternal(matchGroupId : Nat32, match : Stadium.Match, prng : Prng) : async StartMatchResult {
+        let team1InitOrNull = await createTeamInit(matchGroupId, match.team1);
+        let team2InitOrNull = await createTeamInit(matchGroupId, match.team2);
         let (team1Init, team2Init) : (MatchSimulator.TeamInitData, MatchSimulator.TeamInitData) = switch (team1InitOrNull, team2InitOrNull) {
             case (null, null) return #completed(#allAbsent);
             case (null, ?_) return #completed(#absentTeam(#team1));
             case (?_, null) return #completed(#absentTeam(#team2));
             case (?t1, ?t2)(t1, t2);
         };
-        let seedBlob = await Random.blob();
-        let { prng; seed } = RandomUtil.buildPrng(seedBlob);
         let team1IsOffense = prng.nextCoin();
         let initState = MatchSimulator.initState(match.aura, team1Init, team2Init, team1IsOffense, prng, seed);
-        #ok(initState);
+        #inProgress(initState);
     };
 
     private func createTeamInit(matchGroupId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
@@ -304,7 +304,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    private func getMatchGroupOrNull(matchGroupId : Nat32) : ?MatchGroupWithTimer {
+    private func getMatchGroupOrNull(matchGroupId : Nat32) : ?MatchGroup {
         let matchGroupKey = {
             hash = matchGroupId;
             key = matchGroupId;
@@ -312,7 +312,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         Trie.get(matchGroups, matchGroupKey, Nat32.equal);
     };
 
-    private func addOrUpdateMatchGroup(matchGroupId : Nat32, matchGroup : MatchGroupWithTimer) {
+    private func addOrUpdateMatchGroup(matchGroupId : Nat32, matchGroup : MatchGroup) {
         let matchGroupKey = {
             hash = matchGroupId;
             key = matchGroupId;
@@ -345,9 +345,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
 
     private func buildNewMatch(
         teamId : Principal,
-        match : Match,
+        match : Stadium.Match,
         options : Stadium.MatchOptions,
-    ) : { #ok : Match; #teamNotInMatch } {
+    ) : { #ok : Stadium.Match; #teamNotInMatch } {
 
         let teamInfo = if (match.team1.id == teamId) {
             match.team1;

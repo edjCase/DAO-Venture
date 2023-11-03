@@ -179,7 +179,7 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
                 });
                 switch (scheduleResult) {
                     case (#ok(id)) #scheduled(id);
-                    case (#matchErrors(e)) #failedToSchedule(#teamNotFound(t));
+                    case (#matchErrors(e)) #failedToSchedule(#matchErrors(t));
                     case (#teamFetchError(e)) #failedToSchedule(#teamFetchError(e));
                 };
             } catch (err) {

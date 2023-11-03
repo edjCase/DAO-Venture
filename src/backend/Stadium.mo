@@ -16,7 +16,6 @@ module {
         getMatchGroup : query (id : Nat32) -> async ?MatchGroupWithId;
         getMatchGroups : query () -> async [MatchGroupWithId];
         tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
-        startMatchGroup : (id : Nat32) -> async StartMatchResult;
         scheduleMatchGroup : (request : ScheduleMatchGroupRequest) -> async ScheduleMatchGroupResult;
     };
 
@@ -91,15 +90,6 @@ module {
         champion : PlayerId;
     };
 
-    public type StartedMatchState = {
-        #inProgress : InProgressMatchState;
-        #completed : CompletedMatchState;
-    };
-
-    public type MatchState = StartedMatchState or {
-        #notStarted;
-    };
-
     public type DefenseFieldState = {
         firstBase : PlayerId;
         secondBase : PlayerId;
@@ -129,7 +119,6 @@ module {
     };
 
     public type InProgressMatchState = {
-        currentSeed : Nat32;
         offenseTeamId : TeamId;
         team1 : TeamState;
         team2 : TeamState;
@@ -162,11 +151,11 @@ module {
         score : Int;
     };
 
-    public type StartMatchResult = {
-        #ok : InProgressMatchState;
-        #matchNotFound;
-        #matchAlreadyStarted;
-        #completed : CompletedMatchState;
+    public type StartMatchGroupResult = {
+        #inProgress : InProgressMatchGroupState;
+        #matchGroupNotFound;
+        #matchGroupAlreadyStarted;
+        #completed : CompletedMatchGroupState;
     };
 
     public type Stadium = {
@@ -225,48 +214,61 @@ module {
 
     public func equalMatchAura(a : MatchAura, b : MatchAura) : Bool = a == b;
 
-    type MatchWithoutState = {
+    public type Match = {
         team1 : MatchTeamInfo;
         team2 : MatchTeamInfo;
         offerings : [Offering];
         aura : MatchAura;
-    };
-
-    public type Match = MatchWithoutState and {
         state : MatchState;
     };
 
+    public type StartedMatchState = {
+        #inProgress : InProgressMatchState;
+        #completed : CompletedMatchState;
+    };
+
+    public type MatchState = StartedMatchState or {
+        #notStarted;
+    };
     public type MatchWithId = Match and {
         id : Nat32;
         stadiumId : Principal;
     };
 
-    public type CompletedMatch = MatchWithoutState and {
-        state : CompletedMatchState;
-    };
-
     public type MatchGroup = {
         time : Time.Time;
-        matches : [Match];
+        state : MatchGroupState;
     };
 
     public type MatchGroupWithId = MatchGroup and {
         id : Nat32;
     };
-    public type MatchGroupWithTimer = MatchGroup and {
-        timerId : ?Nat;
+
+    public type MatchGroupState = {
+        #notStarted : NotStartedMatchGroupState;
+        #inProgress : InProgressMatchGroupState;
+        #completed : CompletedMatchGroupState;
     };
 
-    public type CompletedMatchGroup = {
-        time : Time.Time;
-        matches : [CompletedMatch];
+    public type NotStartedMatchGroupState = {
+        startTimerId : Nat;
+        matches : [Match];
+    };
+
+    public type InProgressMatchGroupState = {
+        tickTimerId : Nat;
+        currentSeed : Nat32;
+        matches : [StartedMatchState];
+    };
+
+    public type CompletedMatchGroupState = {
+        matches : [CompletedMatchState];
     };
 
     public type TickMatchGroupResult = {
-        #notStarted;
-        #inProgress : MatchGroup;
-        #completed : CompletedMatchGroup;
+        #inProgress;
         #matchGroupNotFound;
+        #completed;
     };
 
     public type MatchOptions = {
