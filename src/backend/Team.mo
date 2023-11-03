@@ -6,8 +6,8 @@ import Stadium "Stadium";
 module {
     public type TeamActor = actor {
         getPlayers : composite query () -> async [Player.PlayerWithId];
-        getMatchOptions : query (stadiumId : Principal, matchId : Nat32) -> async GetMatchOptionsResult;
-        voteForMatchOptions : (request : VoteForMatchOptionsRequest) -> async VoteForMatchOptionsResult;
+        getMatchGroupVote : query (matchGroupId : Nat32) -> async GetMatchGroupVoteResult;
+        voteOnMatchGroup : (request : VoteOnMatchGroupRequest) -> async VoteOnMatchGroupResult;
     };
 
     public type MatchVoteResult = {
@@ -17,7 +17,7 @@ module {
 
     public type MatchOptionsCallback = shared query (stadiumId : Principal, matchId : Nat32) -> async ?MatchVoteResult;
 
-    public type GetMatchOptionsResult = {
+    public type GetMatchGroupVoteResult = {
         #ok : Stadium.MatchOptions;
         #noVotes;
         #notAuthorized;
@@ -28,31 +28,36 @@ module {
         #notAuthorized;
     };
 
-    public type MatchOptionsVote = {
+    public type MatchGroupVote = {
         offering : Stadium.Offering;
         champion : Player.PlayerId;
     };
 
-    public type VoteForMatchOptionsRequest = {
-        stadiumId : Principal;
-        matchId : Nat32;
-        vote : MatchOptionsVote;
+    public type VoteOnMatchGroupRequest = MatchGroupVote and {
+        matchGroupId : Nat32;
     };
 
-    public type VoteForMatchOptionsResult = {
+    public type VoteOnMatchGroupResult = {
         #ok;
         #notAuthorized;
-        #matchNotFound;
-        #stadiumNotFound;
-        #teamNotInMatch;
+        #matchGroupNotFound;
+        #teamNotInMatchGroup;
         #alreadyVoted;
+        #matchGroupFetchError : Text;
         #invalid : [Text];
     };
 
-    public type Team = {
+    public type TeamWithoutDivision = {
         name : Text;
         logoUrl : Text;
         ledgerId : Principal;
-        divisionId : Nat32;
+    };
+
+    public type Team = TeamWithoutDivision and {
+        divisionId : Principal;
+    };
+
+    public type TeamWithId = Team and {
+        id : Principal;
     };
 };

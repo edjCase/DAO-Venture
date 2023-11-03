@@ -22,25 +22,22 @@ import IterTools "mo:itertools/Iter";
 import Types "mo:icrc1/ICRC1/Types";
 
 shared (install) actor class TeamActor(
-  initLeagueId : Principal,
+  leagueId : Principal,
+  stadiumId : Principal,
+  divisionId : Principal,
   ledgerId : Principal,
 ) : async Team.TeamActor = this {
 
   type PlayerWithId = Player.PlayerWithId;
   type MatchOptionsCallback = Team.MatchOptionsCallback;
-  type GetMatchOptionsResult = Team.GetMatchOptionsResult;
   type MatchOptions = Stadium.MatchOptions;
-  type MatchOptionsVote = Team.MatchOptionsVote;
-  type VoteForMatchOptionsResult = Team.VoteForMatchOptionsResult;
-  type VoteForMatchOptionsRequest = Team.VoteForMatchOptionsRequest;
   type Offering = Stadium.Offering;
   type MatchAura = Stadium.MatchAura;
   type GetCyclesResult = Team.GetCyclesResult;
   type StadiumMatchId = Text; // Stadium Principal Text # _ # Match Id Text
   type PlayerId = Player.PlayerId;
 
-  stable var leagueId = initLeagueId;
-  var matchOptions : Trie.Trie<StadiumMatchId, Trie.Trie<Principal, MatchOptionsVote>> = Trie.empty();
+  stable var matchGroupVotes : Trie.Trie<Nat32, Trie.Trie<Principal, Team.MatchGroupVote>> = Trie.empty();
   let ledger : Types.TokenInterface = actor (Principal.toText(ledgerId));
 
   public composite query func getPlayers() : async [PlayerWithId] {
@@ -48,28 +45,29 @@ shared (install) actor class TeamActor(
     await PlayerLedgerActor.getTeamPlayers(?teamId);
   };
 
-  public shared ({ caller }) func voteForMatchOptions(request : VoteForMatchOptionsRequest) : async VoteForMatchOptionsResult {
+  public shared ({ caller }) func voteOnMatchGroup(request : Team.VoteOnMatchGroupRequest) : async Team.VoteOnMatchGroupResult {
     let isOwner = await isTeamOwner(caller);
     if (not isOwner) {
       return #notAuthorized;
     };
-    let stadiumActor = actor (Principal.toText(request.stadiumId)) : Stadium.StadiumActor;
-    let match = try {
-      let ?match = await stadiumActor.getMatch(request.matchId) else return #matchNotFound;
-      match;
+    let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+    let matchGroup = try {
+      let ?matchGroup = await stadiumActor.getMatchGroup(request.matchGroupId) else return #matchGroupNotFound;
+      matchGroup;
     } catch (err) {
-      return #stadiumNotFound;
+      return #matchGroupFetchError(Error.message(err));
     };
-
     let teamId = Principal.fromActor(this);
-    if (match.team1.id != teamId and match.team2.id != teamId) {
-      return #teamNotInMatch;
-    };
+    let ?match = matchGroup.matches
+    |> Array.find(
+      _,
+      func(m : Stadium.Match) : Bool = m.team1.id == teamId or m.team2.id == teamId,
+    ) else return #teamNotInMatchGroup;
 
     let errors = Buffer.Buffer<Text>(0);
-    let offeringExists = IterTools.any(match.offerings.vals(), func(o : Offering) : Bool = o == request.vote.offering);
+    let offeringExists = IterTools.any(match.offerings.vals(), func(o : Offering) : Bool = o == request.offering);
     if (not offeringExists) {
-      errors.add("Invalid offering: " # debug_show (request.vote.offering));
+      errors.add("Invalid offering: " # debug_show (request.offering));
     };
     // TODO?
     // let championExists = IterTools.any(match.players.vals(), func(r : MatchAura) : Bool = r == request.vote.champion);
@@ -80,12 +78,11 @@ shared (install) actor class TeamActor(
       return #invalid(Buffer.toArray(errors));
     };
 
-    let stadiumMatchId = buildStadiumMatchId(request.stadiumId, request.matchId);
-    let matchKey = {
-      key = stadiumMatchId;
-      hash = Text.hash(stadiumMatchId);
+    let matchGroupKey = {
+      key = request.matchGroupId;
+      hash = request.matchGroupId;
     };
-    let matchVotes = switch (Trie.get(matchOptions, matchKey, Text.equal)) {
+    let matchGroupVoteData = switch (Trie.get(matchGroupVotes, matchGroupKey, Nat32.equal)) {
       case (null) Trie.empty();
       case (?o) o;
     };
@@ -93,35 +90,31 @@ shared (install) actor class TeamActor(
       key = caller;
       hash = Principal.hash(caller);
     };
-    switch (Trie.put(matchVotes, voteKey, Principal.equal, request.vote)) {
+    switch (Trie.put(matchGroupVoteData, voteKey, Principal.equal, request)) {
       case ((_, ?existingVote)) #alreadyVoted;
       case ((newMatchVotes, null)) {
         // Add vote
-        let (newOptions, _) = Trie.put(
-          matchOptions,
-          matchKey,
-          Text.equal,
+        let (newMatchGroupVotes, _) = Trie.put(
+          matchGroupVotes,
+          matchGroupKey,
+          Nat32.equal,
           newMatchVotes,
         );
-        matchOptions := newOptions;
+        matchGroupVotes := newMatchGroupVotes;
         #ok;
       };
     };
   };
 
-  public shared query ({ caller }) func getMatchOptions(
-    stadiumId : Principal,
-    matchId : Nat32,
-  ) : async GetMatchOptionsResult {
-    if (caller != stadiumId and caller != leagueId) {
+  public shared query ({ caller }) func getMatchGroupVote(matchGroupId : Nat32) : async Team.GetMatchGroupVoteResult {
+    if (caller != stadiumId) {
       return #notAuthorized;
     };
-    let stadiumMatchId = buildStadiumMatchId(stadiumId, matchId);
-    let matchKey = {
-      key = stadiumMatchId;
-      hash = Text.hash(stadiumMatchId);
+    let matchGroupKey = {
+      key = matchGroupId;
+      hash = matchGroupId;
     };
-    switch (Trie.get(matchOptions, matchKey, Text.equal)) {
+    switch (Trie.get(matchGroupVotes, matchGroupKey, Nat32.equal)) {
       case (null) #noVotes;
       case (?o) {
         let ?{ offering; champion } = calculateVotes(o) else return #noVotes;
@@ -147,7 +140,7 @@ shared (install) actor class TeamActor(
     return ledgerId;
   };
 
-  private func calculateVotes(matchVotes : Trie.Trie<Principal, MatchOptionsVote>) : ?{
+  private func calculateVotes(matchVotes : Trie.Trie<Principal, Team.MatchGroupVote>) : ?{
     offering : Offering;
     champion : PlayerId;
   } {
@@ -203,11 +196,6 @@ shared (install) actor class TeamActor(
     let (newVotes, _) = Trie.put(votes, key, equal, currentVotes + value);
     newVotes;
   };
-
-  private func buildStadiumMatchId(stadiumId : Principal, matchId : Nat32) : Text {
-    Principal.toText(stadiumId) # "_" # Nat32.toText(matchId);
-  };
-
   private func isTeamOwner(caller : Principal) : async Bool {
     // TODO change to staking
     // TODO re-enable

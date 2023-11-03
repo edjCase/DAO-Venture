@@ -26,11 +26,12 @@ import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import RandomUtil "../RandomUtil";
 import League "../League";
+import IterTools "mo:itertools/Iter";
 
-actor StadiumActor {
+actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
 
     type Match = Stadium.Match;
-    type MatchWithTimer = Stadium.MatchWithTimer;
+    type MatchGroupWithTimer = Stadium.MatchGroupWithTimer;
     type MatchWithId = Stadium.MatchWithId;
     type MatchTeamInfo = Stadium.MatchTeamInfo;
     type Player = Player.Player;
@@ -41,34 +42,40 @@ actor StadiumActor {
     type Offering = Stadium.Offering;
     type MatchAura = Stadium.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
+    type TeamWithId = Team.TeamWithId;
 
-    stable var matches : Trie.Trie<Nat32, MatchWithTimer> = Trie.empty();
+    stable var matchGroups : Trie.Trie<Nat32, MatchGroupWithTimer> = Trie.empty();
 
-    stable var nextMatchId : Nat32 = 1;
+    stable var nextMatchGroupId : Nat32 = 1;
 
-    public query func getMatch(id : Nat32) : async ?MatchWithId {
-        switch (getMatchOrNull(id)) {
+    public query func getMatchGroup(id : Nat32) : async ?Stadium.MatchGroupWithId {
+        switch (getMatchGroupOrNull(id)) {
             case (null) return null;
             case (?m) {
                 ?{
                     m with id = id;
-                    stadiumId = Principal.fromActor(StadiumActor);
+                    stadiumId = Principal.fromActor(this);
                 };
             };
         };
     };
 
-    public query func getMatches() : async [MatchWithId] {
-        let compare = func(a : MatchWithId, b : MatchWithId) : Order.Order = Int.compare(a.time, b.time);
-        let map = func(v : (Nat32, Match)) : MatchWithId = {
-            v.1 with
-            id = v.0;
-            stadiumId = Principal.fromActor(StadiumActor);
-        };
-        matches |> Trie.iter _ |> Iter.map(_, map) |> Iter.sort(_, compare) |> Iter.toArray(_);
+    public query func getMatchGroups() : async [Stadium.MatchGroupWithId] {
+        matchGroups
+        |> Trie.iter _
+        |> Iter.map(
+            _,
+            func(v : (Nat32, MatchGroupWithTimer)) : Stadium.MatchGroupWithId = {
+                v.1 with
+                id = v.0;
+                stadiumId = Principal.fromActor(this);
+            },
+        )
+        |> Iter.sort(_, func(a : Stadium.MatchGroupWithId, b : Stadium.MatchGroupWithId) : Order.Order = Int.compare(a.time, b.time))
+        |> Iter.toArray(_);
     };
 
-    public shared ({ caller }) func startMatch(matchId : Nat32) : async Stadium.StartMatchResult {
+    public shared ({ caller }) func startMatchGroup(matchGroupId : Nat32) : async Stadium.StartMatchResult {
         // TODO: only can call itself after the designated time
         let ?match = getMatchOrNull(matchId) else return #matchNotFound;
         let (result, newMatch) = switch (await startMatchInternal(matchId, match)) {
@@ -106,31 +113,19 @@ actor StadiumActor {
         result;
     };
 
-    public shared ({ caller }) func scheduleMatch(request : Stadium.ScheduleMatchRequest) : async Stadium.ScheduleMatchResult {
+    type MatchResult = Stadium.ScheduleMatchFailure or {
+        #ok : Match;
+    };
+    public shared ({ caller }) func scheduleMatchGroup(request : Stadium.ScheduleMatchGroupRequest) : async Stadium.ScheduleMatchGroupResult {
         assertLeague(caller);
-        if (not isTimeAvailable(request.time)) {
-            return #timeNotAvailable;
-        };
-        if (request.team1Id == request.team2Id) {
-            return #duplicateTeams;
-        };
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
-        let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
+        let divisionActor = actor (Principal.toText(request.divisionId)) : League.LeagueActor;
         let teams = try {
-            await leagueActor.getTeams();
+            await divisionActor.getTeams();
         } catch (err) {
             return #teamFetchError(Error.message(err));
         };
-        let team1OrNull = Array.find(teams, func(t : League.TeamInfo) : Bool { t.id == request.team1Id }) else return #teamNotFound(#team1);
-        let team2OrNull = Array.find(teams, func(t : League.TeamInfo) : Bool { t.id == request.team2Id }) else return #teamNotFound(#team1);
-        let (team1, team2) = switch ((team1OrNull, team2OrNull)) {
-            case (null, null) return #teamNotFound(#bothTeams);
-            case (null, ?_) return #teamNotFound(#team1);
-            case (?_, null) return #teamNotFound(#team2);
-            case (?t1, ?t2)(t1, t2);
-        };
-        let correctedTeamIds = Util.sortTeamIds((request.team1Id, request.team2Id));
         let timeDiff : Time.Time = request.time - Time.now();
         let natTimeDiff = if (timeDiff < 0) {
             1;
@@ -138,22 +133,100 @@ actor StadiumActor {
             Int.abs(timeDiff);
         };
         let timerDuration = #nanoseconds(natTimeDiff);
-        let matchId = nextMatchId; // StadiumActor needs to be here to preserve the matchId value for the callback
+        let matchGroupId = nextMatchGroupId; // StadiumActor needs to be here to preserve the matchId value for the callback
         let callbackFunc = func() : async () {
-            let message = switch (await startMatch(matchId)) {
+            let message = switch (await startMatchGroup(matchGroupId)) {
                 case (#matchAlreadyStarted) "Failed to start match: Match already started";
                 case (#matchNotFound) "Failed to start match: Match not found";
                 case (#completed(_)) "Failed to start match: Match completed";
-                case (#ok(_)) "Started match: " # Nat32.toText(matchId);
+                case (#ok(_)) "Started match: " # Nat32.toText(matchGroupId);
             };
             Debug.print("Start Match Callback Result - " # message);
         };
         let timerId = Timer.setTimer(timerDuration, callbackFunc);
+
+        let matches = Buffer.Buffer<Match>(request.matches.size());
+        let failedMatches = Buffer.Buffer<Stadium.ScheduleMatchFailure>(0);
+        for (m in Iter.fromArray(request.matches)) {
+            switch (scheduleMatch(m, teams, prng)) {
+                case (#ok(m)) matches.add(m);
+                case (#teamNotFound(t)) failedMatches.add(#teamNotFound(t));
+            };
+        };
+        if (failedMatches.size() > 0) {
+            return #matchErrors(Buffer.toArray(failedMatches));
+        };
+
+        let matchGroup : Stadium.MatchGroup = {
+            time = request.time;
+            matches = Buffer.toArray(matches);
+        };
+        let nextMatchGroupKey = {
+            hash = nextMatchGroupId;
+            key = nextMatchGroupId;
+        };
+        switch (Trie.put(matchGroups, nextMatchGroupKey, Nat32.equal, matchGroup)) {
+            case (_, ?previous) Prelude.unreachable(); // Cant duplicate ids
+            case (newMatchGroups, _) {
+                nextMatchGroupId += 1;
+                matchGroups := newMatchGroups;
+                #ok(nextMatchGroupKey.key);
+            };
+        };
+    };
+
+    public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat32) : async Stadium.TickMatchGroupResult {
+        let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
+        let newMatches = matchGroup.matches
+        |> Buffer.fromArray<Match>(_)
+        |> Buffer.map<Match, Match>(
+            _,
+            func(m : Match) : Match {
+                let newState = tickMatchState(m.state);
+                {
+                    m with
+                    state = newState;
+                };
+            },
+        );
+        let allComplete = IterTools.all(
+            newMatches.vals(),
+            func(m : Match) : Bool = switch (m.state) {
+                case (#completed(_)) true;
+                case (_) false;
+            },
+        );
+        let timerId = if (allComplete) {
+            switch (matchGroup.timerId) {
+                case (null) {};
+                // Cancel timer if set
+                case (?timerId) Timer.cancelTimer(timerId);
+            };
+
+            null;
+        } else {
+            matchGroup.timerId;
+        };
+        #inProgress({
+            matchGroup with
+            matches = Buffer.toArray(newMatches);
+            timerId = timerId;
+        });
+    };
+
+    private func scheduleMatch(m : Stadium.ScheduleMatchRequest, teams : [TeamWithId], prng : Prng) : MatchResult {
+        let correctedTeamIds = Util.sortTeamIds((m.team1Id, m.team2Id));
+        let team1OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == correctedTeamIds.0);
+        let team2OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == correctedTeamIds.1);
+        let (team1, team2) = switch ((team1OrNull, team2OrNull)) {
+            case (null, null) return #teamNotFound(#bothTeams);
+            case (null, ?_) return #teamNotFound(#team1);
+            case (?_, null) return #teamNotFound(#team2);
+            case (?t1, ?t2)(t1, t2);
+        };
         let offerings = getRandomOfferings(4);
         let aura = getRandomMatchAura(prng);
-        let match : Stadium.MatchWithTimer = {
-            id = nextMatchId;
-            time = request.time;
+        #ok({
             team1 = {
                 id = correctedTeamIds.0;
                 name = team1.name;
@@ -170,19 +243,17 @@ actor StadiumActor {
             };
             offerings = offerings;
             aura = aura;
-            timerId = ?timerId;
             state = #notStarted;
-        };
-        let nextMatchKey = {
-            hash = nextMatchId;
-            key = nextMatchId;
-        };
-        switch (Trie.put(matches, nextMatchKey, Nat32.equal, match)) {
-            case (_, ?previous) Prelude.unreachable(); // Cant duplicate ids
-            case (newMatches, _) {
-                nextMatchId += 1;
-                matches := newMatches;
-                #ok(nextMatchKey.key);
+        });
+    };
+
+    private func tickMatchState(state : Stadium.MatchState) : Stadium.MatchState {
+        switch (state) {
+            case (#notStarted) #notStarted;
+            case (#completed(completedState)) #completed(completedState);
+            case (#inProgress(s)) {
+                let prng = PseudoRandomX.LinearCongruentialGenerator(s.currentSeed);
+                MatchSimulator.tick(s, prng);
             };
         };
     };
@@ -208,13 +279,13 @@ actor StadiumActor {
         #ok(initState);
     };
 
-    private func createTeamInit(matchId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
+    private func createTeamInit(matchGroupId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
         let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
-        let stadiumId = Principal.fromActor(StadiumActor);
+        let stadiumId = Principal.fromActor(this);
         let options : MatchOptions = try {
             // Get match options from the team itself
-            let result = await teamActor.getMatchOptions(stadiumId, matchId);
+            let result = await teamActor.getMatchGroupVote(matchGroupId);
             switch (result) {
                 case (#noVotes) return null;
                 case (#ok(o)) o;
@@ -233,50 +304,21 @@ actor StadiumActor {
         };
     };
 
-    public shared ({ caller }) func tickMatch(matchId : Nat32) : async Stadium.TickMatchResult {
-        let ?match = getMatchOrNull(matchId) else return #matchNotFound;
-        let state = switch (match.state) {
-            case (#completed(completedState)) return #completed(completedState);
-            case (#inProgress(s)) s;
-            case (#notStarted) return #notStarted;
+    private func getMatchGroupOrNull(matchGroupId : Nat32) : ?MatchGroupWithTimer {
+        let matchGroupKey = {
+            hash = matchGroupId;
+            key = matchGroupId;
         };
-        let prng = PseudoRandomX.LinearCongruentialGenerator(state.currentSeed);
-        let newState = MatchSimulator.tick(state, prng);
-        switch (newState) {
-            case (#completed(completedState)) {
-                switch (match.timerId) {
-                    case (null) {};
-                    // Cancel timer if set
-                    case (?timerId) Timer.cancelTimer(timerId);
-                };
-            };
-            case (_) {};
-        };
-        addOrUpdateMatch(
-            matchId,
-            {
-                match with
-                state = newState;
-            },
-        );
-        #inProgress(state);
+        Trie.get(matchGroups, matchGroupKey, Nat32.equal);
     };
 
-    private func getMatchOrNull(matchId : Nat32) : ?MatchWithTimer {
-        let matchKey = {
-            hash = matchId;
-            key = matchId;
+    private func addOrUpdateMatchGroup(matchGroupId : Nat32, matchGroup : MatchGroupWithTimer) {
+        let matchGroupKey = {
+            hash = matchGroupId;
+            key = matchGroupId;
         };
-        Trie.get(matches, matchKey, Nat32.equal);
-    };
-
-    private func addOrUpdateMatch(matchId : Nat32, match : MatchWithTimer) {
-        let matchKey = {
-            hash = matchId;
-            key = matchId;
-        };
-        let (newMatches, _) = Trie.replace(matches, matchKey, Nat32.equal, ?match);
-        matches := newMatches;
+        let (newMatchGroups, _) = Trie.replace(matchGroups, matchGroupKey, Nat32.equal, ?matchGroup);
+        matchGroups := newMatchGroups;
     };
 
     private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
@@ -299,16 +341,6 @@ actor StadiumActor {
         ]);
         prng.shuffleBuffer(auras);
         auras.get(0);
-    };
-
-    private func isTimeAvailable(time : Time.Time) : Bool {
-        for ((matchId, match) in Trie.iter(matches)) {
-            // TODO better time window detection
-            if (Time.now() >= time or match.time == time) {
-                return false;
-            };
-        };
-        true;
     };
 
     private func buildNewMatch(

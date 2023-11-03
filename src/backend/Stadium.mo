@@ -13,11 +13,11 @@ module {
     type PlayerId = Player.PlayerId;
 
     public type StadiumActor = actor {
-        getMatch : query (id : Nat32) -> async ?MatchWithId;
-        getMatches : query () -> async [MatchWithId];
-        tickMatch : (id : Nat32) -> async TickMatchResult;
-        startMatch : (matchId : Nat32) -> async StartMatchResult;
-        scheduleMatch : (request : ScheduleMatchRequest) -> async ScheduleMatchResult;
+        getMatchGroup : query (id : Nat32) -> async ?MatchGroupWithId;
+        getMatchGroups : query () -> async [MatchGroupWithId];
+        tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
+        startMatchGroup : (id : Nat32) -> async StartMatchResult;
+        scheduleMatchGroup : (request : ScheduleMatchGroupRequest) -> async ScheduleMatchGroupResult;
     };
 
     public type RegisterResult = {
@@ -33,20 +33,29 @@ module {
         #invalidChampion : PlayerId;
     };
 
+    public type ScheduleMatchGroupRequest = {
+        time : Time.Time;
+        divisionId : Principal;
+        matches : [ScheduleMatchRequest];
+    };
+
     public type ScheduleMatchRequest = {
         team1Id : Principal;
         team2Id : Principal;
-        time : Time.Time;
+        offerings : [Offering];
+        aura : MatchAura;
     };
 
-    public type ScheduleMatchError = {
-        #timeNotAvailable;
-        #duplicateTeams;
+    public type ScheduleMatchGroupError = {
         #teamFetchError : Text;
+        #matchErrors : [ScheduleMatchFailure];
+    };
+
+    public type ScheduleMatchFailure = {
         #teamNotFound : TeamIdOrBoth;
     };
 
-    public type ScheduleMatchResult = ScheduleMatchError or {
+    public type ScheduleMatchGroupResult = ScheduleMatchGroupError or {
         #ok : Nat32;
     };
 
@@ -164,6 +173,10 @@ module {
         name : Text;
     };
 
+    public type StadiumWithId = Stadium and {
+        id : Principal;
+    };
+
     public type Offering = {
         #mischief : {
             #shuffleAndBoost;
@@ -212,26 +225,48 @@ module {
 
     public func equalMatchAura(a : MatchAura, b : MatchAura) : Bool = a == b;
 
-    public type Match = {
+    type MatchWithoutState = {
         team1 : MatchTeamInfo;
         team2 : MatchTeamInfo;
-        time : Time.Time;
         offerings : [Offering];
         aura : MatchAura;
-        state : MatchState;
     };
 
-    public type MatchWithTimer = Match and {
-        timerId : ?Nat;
+    public type Match = MatchWithoutState and {
+        state : MatchState;
     };
 
     public type MatchWithId = Match and {
         id : Nat32;
         stadiumId : Principal;
     };
-    public type TickMatchResult = StartedMatchState or {
-        #matchNotFound;
+
+    public type CompletedMatch = MatchWithoutState and {
+        state : CompletedMatchState;
+    };
+
+    public type MatchGroup = {
+        time : Time.Time;
+        matches : [Match];
+    };
+
+    public type MatchGroupWithId = MatchGroup and {
+        id : Nat32;
+    };
+    public type MatchGroupWithTimer = MatchGroup and {
+        timerId : ?Nat;
+    };
+
+    public type CompletedMatchGroup = {
+        time : Time.Time;
+        matches : [CompletedMatch];
+    };
+
+    public type TickMatchGroupResult = {
         #notStarted;
+        #inProgress : MatchGroup;
+        #completed : CompletedMatchGroup;
+        #matchGroupNotFound;
     };
 
     public type MatchOptions = {
