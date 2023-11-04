@@ -15,7 +15,7 @@ actor PlayerLedger {
     stable var nextPlayerId : Nat32 = 1;
     stable var players = Trie.empty<Nat32, Player>();
 
-    public type PlayerCreationOptions = {
+    public type CreatePlayerRequest = {
         name : Text;
         teamId : ?Principal;
         position : Player.FieldPosition;
@@ -26,12 +26,12 @@ actor PlayerLedger {
         #nameNotSpecified;
     };
 
-    public type CreateResult = {
+    public type CreatePlayerResult = {
         #created : Nat32;
         #invalid : [InvalidError];
     };
 
-    public shared ({ caller }) func create(options : PlayerCreationOptions) : async CreateResult {
+    public shared ({ caller }) func create(options : CreatePlayerRequest) : async CreatePlayerResult {
         assertLeague(caller);
 
         switch (validateOptions(options)) {
@@ -103,7 +103,7 @@ actor PlayerLedger {
         #ok;
     };
 
-    private func validateOptions(options : PlayerCreationOptions) : ?[InvalidError] {
+    private func validateOptions(options : CreatePlayerRequest) : ?[InvalidError] {
         let errors = Buffer.Buffer<InvalidError>(0);
         if (TextX.isEmptyOrWhitespace(options.name)) {
             errors.add(#nameNotSpecified);
@@ -127,7 +127,7 @@ actor PlayerLedger {
         // };
     };
 
-    private func generatePlayer(options : PlayerCreationOptions) : Player {
+    private func generatePlayer(options : CreatePlayerRequest) : Player {
         {
             name = options.name;
             teamId = null;

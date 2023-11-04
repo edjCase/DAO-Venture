@@ -31,7 +31,7 @@ import IterTools "mo:itertools/Iter";
 actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
     type MatchGroup = Stadium.MatchGroup;
     type MatchWithId = Stadium.MatchWithId;
-    type MatchTeamInfo = Stadium.MatchTeamInfo;
+    type MatchTeam = Stadium.MatchTeam;
     type Player = Player.Player;
     type PlayerWithId = Player.PlayerWithId;
     type PlayerState = Stadium.PlayerState;
@@ -282,7 +282,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         #inProgress(initState);
     };
 
-    private func createTeamInit(matchGroupId : Nat32, team : Stadium.MatchTeamInfo) : async ?MatchSimulator.TeamInitData {
+    private func createTeamInit(matchGroupId : Nat32, team : Stadium.MatchTeam) : async ?MatchSimulator.TeamInitData {
         let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
         let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
         let stadiumId = Principal.fromActor(this);
@@ -337,7 +337,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         } else {
             return #teamNotInMatch;
         };
-        let newTeam : MatchTeamInfo = {
+        let newTeam : MatchTeam = {
             teamInfo with
             options = ?options;
         };

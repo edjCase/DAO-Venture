@@ -21,7 +21,7 @@ module {
         updateDivisionCanisters() : async ();
     };
     public type ScheduleSeasonRequest = {
-        start : Time.Time;
+        startTime : Time.Time;
     };
 
     public type ScheduleSeasonResult = {

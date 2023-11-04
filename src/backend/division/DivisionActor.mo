@@ -115,7 +115,7 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
         // };
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
-        let schedule = switch (await* generateSchedule(request.start, prng)) {
+        let schedule = switch (await* generateSchedule(request.startTime, prng)) {
             case (#ok(schedule)) schedule;
             case (#oddNumberOfTeams) return #error(#oddNumberOfTeams);
             case (#noTeamsInDivision) return #error(#noTeamsInDivision);

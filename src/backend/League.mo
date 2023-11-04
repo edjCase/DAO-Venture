@@ -8,12 +8,16 @@ import Division "Division";
 module {
     public type LeagueActor = actor {
         getTeams() : async [Team.TeamWithId];
-        getStadiums() : async [Stadium.StadiumWithId];
+        getStadiums() : async [Stadium];
         getDivisions() : async [DivisionWithId];
         createDivision(request : CreateDivisionRequest) : async CreateDivisionResult;
         scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult;
         createStadium() : async CreateStadiumResult;
         updateLeagueCanisters() : async ();
+    };
+
+    public type Stadium = {
+        id : Principal;
     };
 
     public type ScheduleSeasonRequest = {
@@ -22,11 +26,14 @@ module {
 
     public type DivisionScheduleRequest = {
         id : Principal;
-        start : Time.Time;
+        startTime : Time.Time;
     };
     public type ScheduleSeasonResult = {
         #ok;
-        #divisionErrors : [(Principal, Division.ScheduleError)];
+        #divisionErrors : [{
+            divisionId : Principal;
+            error : Division.ScheduleError;
+        }];
     };
     public type CreateDivisionRequest = {
         name : Text;
@@ -50,9 +57,5 @@ module {
     };
     public type DivisionWithId = Division and {
         id : Principal;
-    };
-    public type CloseSeasonResult = {
-        #ok;
-        #seasonNotOver;
     };
 };

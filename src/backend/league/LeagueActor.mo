@@ -41,7 +41,6 @@ actor LeagueActor {
     type DivisionWithId = League.DivisionWithId;
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
-    type CloseSeasonResult = League.CloseSeasonResult;
     type CreateDivisionRequest = League.CreateDivisionRequest;
     type CreateDivisionResult = League.CreateDivisionResult;
     type ScheduleSeasonRequest = League.ScheduleSeasonRequest;
@@ -68,6 +67,13 @@ actor LeagueActor {
                 id = k;
             },
         );
+    };
+
+    public shared ({ caller }) func getStadium() : async ?{ id : Principal } {
+        return switch (stadiumIdOrNull) {
+            case (null) null;
+            case (?id) { ?{ id = id } };
+        };
     };
 
     public shared ({ caller }) func createStadium() : async () {
@@ -101,7 +107,7 @@ actor LeagueActor {
             case (?id) id;
         };
         let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 1_000_000_000_000;
+        let initialBalance = 10_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         let divisionActor = await DivisionActor.DivisionActor(leagueId, stadiumId);
         let divisionId : Principal = Principal.fromActor(divisionActor);
@@ -118,13 +124,16 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult {
-        let divisionErrors = Buffer.Buffer<(Principal, Division.ScheduleError)>(0);
+        let divisionErrors = Buffer.Buffer<{ divisionId : Principal; error : Division.ScheduleError }>(0);
         label f for (divisionRequest in Iter.fromArray(request.divisions)) {
             let divisionActor = actor (Principal.toText(divisionRequest.id)) : Division.DivisionActor;
 
             switch (await divisionActor.scheduleSeason(divisionRequest)) {
                 case (#ok)();
-                case (#error(e)) divisionErrors.add((divisionRequest.id, e));
+                case (#error(e)) divisionErrors.add({
+                    divisionId = divisionRequest.id;
+                    error = e;
+                });
             };
 
         };

@@ -12,7 +12,6 @@ module {
     public type Player = {
         name : Text;
         teamId : ?Principal;
-        condition : PlayerCondition;
         skills : PlayerSkills;
         position : FieldPosition;
         deity : Deity;

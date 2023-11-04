@@ -47,10 +47,10 @@ module {
 
     public type ScheduleMatchGroupError = {
         #teamFetchError : Text;
-        #matchErrors : [ScheduleMatchFailure];
+        #matchErrors : [ScheduleMatchError];
     };
 
-    public type ScheduleMatchFailure = {
+    public type ScheduleMatchError = {
         #teamNotFound : TeamIdOrBoth;
     };
 
@@ -167,33 +167,11 @@ module {
     };
 
     public type Offering = {
-        #mischief : {
-            #shuffleAndBoost;
-        };
-        #war : {
-            #b;
-        };
-        #indulgence : {
-            #c;
-        };
-        #pestilence : {
-            #d;
-        };
+        #shuffleAndBoost;
     };
 
     public func hashOffering(offering : Offering) : Nat32 = switch (offering) {
-        case (#mischief(m)) switch (m) {
-            case (#shuffleAndBoost) 0;
-        };
-        case (#war(w)) switch (w) {
-            case (#b) 1;
-        };
-        case (#indulgence(i)) switch (i) {
-            case (#c) 2;
-        };
-        case (#pestilence(p)) switch (p) {
-            case (#d) 3;
-        };
+        case (#shuffleAndBoost) 0;
     };
 
     public func equalOffering(a : Offering, b : Offering) : Bool = a == b;
@@ -215,8 +193,8 @@ module {
     public func equalMatchAura(a : MatchAura, b : MatchAura) : Bool = a == b;
 
     public type Match = {
-        team1 : MatchTeamInfo;
-        team2 : MatchTeamInfo;
+        team1 : MatchTeam;
+        team2 : MatchTeam;
         offerings : [Offering];
         aura : MatchAura;
         state : MatchState;
@@ -276,7 +254,7 @@ module {
         champion : PlayerId;
     };
 
-    public type MatchTeamInfo = {
+    public type MatchTeam = {
         id : Principal;
         name : Text;
         predictionVotes : Nat;

@@ -127,7 +127,7 @@ module {
                 id = player.id;
                 name = player.name;
                 teamId = teamId;
-                condition = player.condition;
+                condition = #ok;
                 skills = player.skills;
                 position = player.position;
             };

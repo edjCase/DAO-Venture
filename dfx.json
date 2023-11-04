@@ -8,13 +8,6 @@
       "main": "src/backend/league/LeagueActor.mo",
       "type": "motoko"
     },
-    "stadium": {
-      "dependencies": [
-        "league"
-      ],
-      "main": "src/backend/stadium/StadiumActor.mo",
-      "type": "motoko"
-    },
     "playerLedger": {
       "main": "src/backend/league/PlayerLedger.mo",
       "type": "motoko"
