@@ -86,13 +86,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         } catch (err) {
             return #teamFetchError(Error.message(err));
         };
-        let timeDiff : Time.Time = request.time - Time.now();
-        let natTimeDiff = if (timeDiff < 0) {
-            1;
-        } else {
-            Int.abs(timeDiff);
-        };
-        let timerDuration = #nanoseconds(natTimeDiff);
         let matchGroupId = nextMatchGroupId; // StadiumActor needs to be here to preserve the matchId value for the callback
 
         let matches = Buffer.Buffer<Stadium.Match>(request.matches.size());
@@ -110,6 +103,19 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         if (failedMatches.size() > 0) {
             return #matchErrors(Buffer.toArray(failedMatches));
         };
+
+        let timeDiff : Time.Time = request.time - Time.now();
+        let natTimeDiff = if (timeDiff < 0) {
+            1;
+        } else {
+            Int.abs(timeDiff);
+        };
+        let startTimerId = Timer.setTimer(
+            #nanoseconds(natTimeDiff),
+            func() : async () {
+                await tickMatchGroupCallback(matchGroupId);
+            },
+        );
         let matchGroup : Stadium.MatchGroup = {
             time = request.time;
             state = #notStarted({
@@ -136,7 +142,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let matchGroupState : Stadium.InProgressMatchGroupState = switch (matchGroup.state) {
             case (#notStarted(notStartedState)) {
                 let seedBlob = await Random.blob();
-                let { prng; seed } = RandomUtil.buildPrng(seedBlob);
+                let prng = RandomUtil.buildPrng(seedBlob);
                 Timer.cancelTimer(notStartedState.startTimerId); // Cancel timer before disposing of timer id
                 let tickTimerId = Timer.recurringTimer(
                     #seconds(5000),
@@ -158,13 +164,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                     notStartedState with
                     matches = Buffer.toArray(startedMatches);
                     tickTimerId = tickTimerId;
-                    seed = seed;
+                    currentSeed = prng.getCurrentSeed();
                 };
             };
             case (#completed(_)) return #completed;
             case (#inProgress(g)) g;
         };
-        let newState = switch (tickMatches(matchGroupState.matches)) {
+        let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroupState.currentSeed);
+        let newState = switch (tickMatches(prng, matchGroupState.matches)) {
             case (#completed(completedMatches)) {
                 // Cancel tick timer before disposing of timer id
                 Timer.cancelTimer(matchGroupState.tickTimerId);
@@ -172,12 +179,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 #completed({
                     matchGroupState with
                     matches = completedMatches;
+                    currentSeed = prng.getCurrentSeed();
                 });
             };
             case (#inProgress(newMatches)) {
                 #inProgress({
                     matchGroupState with
                     matches = newMatches;
+                    currentSeed = prng.getCurrentSeed();
                 });
             };
         };
@@ -188,7 +197,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         addOrUpdateMatchGroup(matchGroupId, newMatchGroup);
         switch (newState) {
             case (#completed(_)) #completed;
-            case (#inProgress(_)) #ok;
+            case (#inProgress(_)) #inProgress;
         };
     };
 
@@ -201,16 +210,15 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         Debug.print("Start Match Group Callback Result - " # message);
     };
 
-    private func tickMatches(matches : [Stadium.StartedMatchState]) : {
+    private func tickMatches(prng : Prng, matches : [Stadium.StartedMatchState]) : {
         #completed : [Stadium.CompletedMatchState];
         #inProgress : [Stadium.StartedMatchState];
     } {
-
         let completedMatchStates = Buffer.Buffer<Stadium.CompletedMatchState>(0);
         let newMatchStates = Buffer.Buffer<Stadium.StartedMatchState>(0);
         for (matchState in Iter.fromArray(matches)) {
 
-            let newMatchState = tickMatchState(matchState);
+            let newMatchState = tickMatchState(prng, matchState);
             newMatchStates.add(newMatchState);
             switch (newMatchState) {
                 case (#completed(completedState)) completedMatchStates.add(completedState);
@@ -232,34 +240,29 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         prng : Prng,
     ) : Stadium.Match {
 
-        let offerings = getRandomOfferings(4);
-        let aura = getRandomMatchAura(prng);
         {
             team1 = {
                 id = team1.id;
                 name = team1.name;
-                options = null;
                 score = null;
                 predictionVotes = 0;
             };
             team2 = {
                 id = team2.id;
                 name = team2.name;
-                options = null;
                 score = null;
                 predictionVotes = 0;
             };
-            offerings = offerings;
-            aura = aura;
+            offerings = m.offerings;
+            aura = m.aura;
             state = #notStarted;
         };
     };
 
-    private func tickMatchState(state : Stadium.StartedMatchState) : Stadium.StartedMatchState {
+    private func tickMatchState(prng : Prng, state : Stadium.StartedMatchState) : Stadium.StartedMatchState {
         switch (state) {
             case (#completed(completedState)) #completed(completedState);
             case (#inProgress(s)) {
-                let prng = PseudoRandomX.LinearCongruentialGenerator(s.currentSeed);
                 MatchSimulator.tick(s, prng);
             };
         };
@@ -275,7 +278,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (?t1, ?t2)(t1, t2);
         };
         let team1IsOffense = prng.nextCoin();
-        let initState = MatchSimulator.initState(match.aura, team1Init, team2Init, team1IsOffense, prng, seed);
+        let initState = MatchSimulator.initState(match.aura, team1Init, team2Init, team1IsOffense, prng);
         #inProgress(initState);
     };
 
@@ -319,28 +322,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
         let (newMatchGroups, _) = Trie.replace(matchGroups, matchGroupKey, Nat32.equal, ?matchGroup);
         matchGroups := newMatchGroups;
-    };
-
-    private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
-        // TODO
-        [
-            #mischief(#shuffleAndBoost),
-            #war(#b),
-            #indulgence(#c),
-            #pestilence(#d),
-        ];
-    };
-
-    private func getRandomMatchAura(prng : Prng) : Stadium.MatchAura {
-        // TODO
-        let auras = Buffer.fromArray<Stadium.MatchAura>([
-            #lowGravity,
-            #explodingBalls,
-            #fastBallsHardHits,
-            #highBlessingsAndCurses,
-        ]);
-        prng.shuffleBuffer(auras);
-        auras.get(0);
     };
 
     private func buildNewMatch(

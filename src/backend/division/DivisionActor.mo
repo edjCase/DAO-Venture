@@ -15,6 +15,7 @@ import Blob "mo:base/Blob";
 import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Error "mo:base/Error";
+import Array "mo:base/Array";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import DateTime "mo:datetime/DateTime";
 import IterTools "mo:itertools/Iter";
@@ -28,8 +29,8 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
     type LedgerActor = Token.Token;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
     type SeasonSchedule = Division.SeasonSchedule;
-    type SeasonWeek = Division.SeasonWeek;
-    type MatchUp = Division.MatchUp;
+    type WeekSchedule = Division.WeekSchedule;
+    type MatchSchedule = Division.MatchSchedule;
 
     stable var teams : Trie.Trie<Principal, Team> = Trie.empty();
     stable var schedule : ?SeasonSchedule = null;
@@ -107,17 +108,14 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
         };
     };
 
-    public shared ({ caller }) func scheduleSeason(start : Time.Time) : async {
-        #ok;
-        #error : Division.ScheduleError;
-    } {
+    public shared ({ caller }) func scheduleSeason(request : Division.ScheduleSeasonRequest) : async Division.ScheduleSeasonResult {
         // TODO re-enable
         // if (division.schedule != null) {
         //     return #error(#alreadyScheduled);
         // };
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
-        let schedule = switch (await* generateSchedule(start, prng)) {
+        let schedule = switch (await* generateSchedule(request.start, prng)) {
             case (#ok(schedule)) schedule;
             case (#oddNumberOfTeams) return #error(#oddNumberOfTeams);
             case (#noTeamsInDivision) return #error(#noTeamsInDivision);
@@ -151,44 +149,52 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
         var nextMatchDate = DateTime.fromTime(start);
 
-        let weeks = Buffer.Buffer<SeasonWeek>(weekCount);
+        let weeks = Buffer.Buffer<WeekSchedule>(weekCount);
         for (weekIndex in IterTools.range(0, weekCount)) {
 
             let matches : [Stadium.ScheduleMatchRequest] = IterTools.range(0, matchUpCountPerWeek)
             |> Iter.map(
                 _,
                 func(i : Nat) : Stadium.ScheduleMatchRequest {
+                    let offerings = getRandomOfferings(4);
+                    let aura = getRandomMatchAura(prng);
                     let team1Id = teamOrderForWeek.get(i);
                     let team2Id = teamOrderForWeek.get(i + matchUpCountPerWeek); // Second half of teams
                     {
                         team1Id = team1Id;
                         team2Id = team2Id;
                         aura = aura;
-                        offering = offering;
+                        offerings = offerings;
                     };
                 },
             )
             |> Iter.toArray(_);
 
             // Round robin tournament algorithm
-            let status = try {
-                let scheduleResult = await stadium.scheduleMatchGroup({
+            let status : Division.MatchScheduleStatus = try {
+                let result = await stadium.scheduleMatchGroup({
                     time = nextMatchDate.toTime();
                     divisionId = Principal.fromActor(this);
                     matches = matches;
                 });
-                switch (scheduleResult) {
+                switch (result) {
                     case (#ok(id)) #scheduled(id);
-                    case (#matchErrors(e)) #failedToSchedule(#matchErrors(t));
-                    case (#teamFetchError(e)) #failedToSchedule(#teamFetchError(e));
+                    case (#matchErrors(errors)) #failedToSchedule(#matchErrors(errors));
+                    case (#teamFetchError(error)) #failedToSchedule(#teamFetchError(error));
                 };
             } catch (err) {
-                #failedToSchedule(#scheduleMatchError(Error.message(err)));
+                #failedToSchedule(#scheduleMatchGroupError(Error.message(err)));
             };
-
-            let matchUps = Buffer.Buffer<MatchUp>(matchUpCountPerWeek);
             weeks.add({
-                matchUps = matchUps;
+                matches = Array.map(
+                    matches,
+                    func(m : Stadium.ScheduleMatchRequest) : MatchSchedule = {
+                        team1Id = m.team1Id;
+                        team2Id = m.team2Id;
+                        status = status;
+                        stadiumId = stadiumId;
+                    },
+                );
             });
             nextMatchDate := nextMatchDate.add(#weeks(1));
             // Rotate order of teams
@@ -208,6 +214,28 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
         #ok({
             weeks = Buffer.toArray(weeks);
         });
+    };
+
+    private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
+        // TODO
+        [
+            #mischief(#shuffleAndBoost),
+            #war(#b),
+            #indulgence(#c),
+            #pestilence(#d),
+        ];
+    };
+
+    private func getRandomMatchAura(prng : Prng) : Stadium.MatchAura {
+        // TODO
+        let auras = Buffer.fromArray<Stadium.MatchAura>([
+            #lowGravity,
+            #explodingBalls,
+            #fastBallsHardHits,
+            #highBlessingsAndCurses,
+        ]);
+        prng.shuffleBuffer(auras);
+        auras.get(0);
     };
 
     private func createTeamActor(ledgerId : Principal) : async TeamActor.TeamActor {

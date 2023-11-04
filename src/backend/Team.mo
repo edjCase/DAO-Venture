@@ -43,6 +43,7 @@ module {
         #matchGroupNotFound;
         #teamNotInMatchGroup;
         #alreadyVoted;
+        #alreadyStarted;
         #matchGroupFetchError : Text;
         #invalid : [Text];
     };

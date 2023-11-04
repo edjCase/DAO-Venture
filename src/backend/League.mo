@@ -34,6 +34,7 @@ module {
     public type CreateDivisionResult = {
         #ok : Principal;
         #nameTaken;
+        #noStadium;
     };
     public type CreateStadiumResult = {
         #ok : Principal;

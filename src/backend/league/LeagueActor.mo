@@ -37,8 +37,6 @@ import DivisionActor "../division/DivisionActor";
 import StadiumActor "../stadium/StadiumActor";
 
 actor LeagueActor {
-    type MatchUp = League.MatchUp;
-    type SeasonWeek = League.SeasonWeek;
     type Division = League.Division;
     type DivisionWithId = League.DivisionWithId;
     type TeamWithId = Team.TeamWithId;
@@ -48,11 +46,9 @@ actor LeagueActor {
     type CreateDivisionResult = League.CreateDivisionResult;
     type ScheduleSeasonRequest = League.ScheduleSeasonRequest;
     type ScheduleSeasonResult = League.ScheduleSeasonResult;
-    type DivisionScheduleError = League.DivisionScheduleError;
-    type DivisionSchedule = League.DivisionSchedule;
 
     stable var divisions : Trie.Trie<Principal, Division> = Trie.empty();
-    stable var stadiumId : ?Principal = null;
+    stable var stadiumIdOrNull : ?Principal = null;
 
     public composite query func getTeams() : async [TeamWithId] {
         let allTeams = Buffer.Buffer<TeamWithId>(12);
@@ -75,11 +71,15 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func createStadium() : async () {
+        await* createStadiumInternal();
+    };
+
+    private func createStadiumInternal() : async* () {
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         let stadium = await StadiumActor.StadiumActor(Principal.fromActor(LeagueActor));
-        stadiumId := ?Principal.fromActor(stadium);
+        stadiumIdOrNull := ?Principal.fromActor(stadium);
     };
 
     public shared ({ caller }) func createDivision(request : CreateDivisionRequest) : async CreateDivisionResult {
@@ -96,10 +96,14 @@ actor LeagueActor {
         if (nameAlreadyTaken) {
             return #nameTaken;
         };
+        let stadiumId = switch (stadiumIdOrNull) {
+            case (null) return #noStadium;
+            case (?id) id;
+        };
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
-        let divisionActor = await DivisionActor.DivisionActor(leagueId);
+        let divisionActor = await DivisionActor.DivisionActor(leagueId, stadiumId);
         let divisionId : Principal = Principal.fromActor(divisionActor);
         let division : Division = {
             name = request.name;
@@ -114,24 +118,12 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult {
-        let seedBlob = await Random.blob();
-        let { prng; seed } = RandomUtil.buildPrng(seedBlob);
-        let divisionErrors = Buffer.Buffer<(Principal, DivisionScheduleError)>(0);
+        let divisionErrors = Buffer.Buffer<(Principal, Division.ScheduleError)>(0);
         label f for (divisionRequest in Iter.fromArray(request.divisions)) {
-            switch (await* scheduleDivision(divisionRequest.id, divisionRequest.start, prng)) {
-                case (#ok(newDivision)) {
-                    let divisionKey = {
-                        key = divisionRequest.id;
-                        hash = Principal.hash(divisionRequest.id);
-                    };
-                    let (newDivisions, _) = Trie.put<Principal, Division>(
-                        divisions,
-                        divisionKey,
-                        Principal.equal,
-                        newDivision,
-                    );
-                    divisions := newDivisions;
-                };
+            let divisionActor = actor (Principal.toText(divisionRequest.id)) : Division.DivisionActor;
+
+            switch (await divisionActor.scheduleSeason(divisionRequest)) {
+                case (#ok)();
                 case (#error(e)) divisionErrors.add((divisionRequest.id, e));
             };
 
@@ -141,19 +133,15 @@ actor LeagueActor {
         };
         #ok;
     };
-
-    public shared ({ caller }) func closeSeason() : async CloseSeasonResult {
-
-    };
-
     public shared ({ caller }) func updateLeagueCanisters() : async () {
         let leagueId = Principal.fromActor(LeagueActor);
         for ((divisionId, division) in Trie.iter(divisions)) {
             let divisionActor = actor (Principal.toText(divisionId)) : Division.DivisionActor;
             await divisionActor.updateDivisionCanisters();
-            let _ = await (system DivisionActor.DivisionActor)(#upgrade(divisionActor))(leagueId);
+            let ?stadiumId = stadiumIdOrNull else Prelude.unreachable(); // Cant create a division without a stadium, so it will exist
+            let _ = await (system DivisionActor.DivisionActor)(#upgrade(divisionActor))(leagueId, stadiumId);
         };
-        switch (stadiumId) {
+        switch (stadiumIdOrNull) {
             case (null)();
             case (?id) {
                 let stadiumActor = actor (Principal.toText(id)) : Stadium.StadiumActor;

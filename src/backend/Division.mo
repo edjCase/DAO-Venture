@@ -16,9 +16,19 @@ module {
     public type DivisionActor = actor {
         getTeams : query () -> async [TeamWithId];
         createTeam(request : CreateTeamRequest) : async CreateTeamResult;
+        scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult;
         mint(request : MintRequest) : async MintResult;
         updateDivisionCanisters() : async ();
     };
+    public type ScheduleSeasonRequest = {
+        start : Time.Time;
+    };
+
+    public type ScheduleSeasonResult = {
+        #ok;
+        #error : ScheduleError;
+    };
+
     public type MintRequest = {
         amount : Nat;
         teamId : Principal;
@@ -48,21 +58,21 @@ module {
         #noTeamsInDivision;
     };
     public type SeasonSchedule = {
-        weeks : [SeasonWeek];
+        weeks : [WeekSchedule];
     };
-    public type SeasonWeek = {
-        matchUps : [MatchUp];
+    public type WeekSchedule = {
+        matches : [MatchSchedule];
     };
-    public type MatchUpStatus = {
+    public type MatchScheduleStatus = {
         #scheduled : Nat32;
         #failedToSchedule : Stadium.ScheduleMatchGroupError or {
-            #matchGroupFetchError : Text;
+            #scheduleMatchGroupError : Text;
         };
     };
-    public type MatchUp = {
-        status : MatchUpStatus;
+    public type MatchSchedule = {
+        status : MatchScheduleStatus;
         stadiumId : Principal;
-        team1 : Principal;
-        team2 : Principal;
+        team1Id : Principal;
+        team2Id : Principal;
     };
 };
