@@ -2,16 +2,20 @@
   import { teamStore } from "../stores/TeamStore";
   import CardList from "./CardList.svelte";
   import type { Principal } from "@dfinity/principal";
-  import { VoteMatchOptionsRequest, teamAgentFactory } from "../ic-agent/Team";
-  import type { Match, Offering } from "../ic-agent/Stadium";
-  import { matchStore } from "../stores/MatchGroupStore";
+  import { VoteOnMatchGroupRequest, teamAgentFactory } from "../ic-agent/Team";
+  import type { Offering } from "../ic-agent/Stadium";
   import PlayerPicker from "./PlayerPicker.svelte";
   import { Player } from "../models/Player";
   import { playerStore } from "../stores/PlayerStore";
+  import {
+    getOfferingDetails,
+    matchGroupStore,
+  } from "../stores/MatchGroupStore";
+  import { get } from "svelte/store";
 
   export let teamId: Principal;
   export let stadiumId: Principal;
-  export let matchId: number;
+  export let matchGroupId: number;
 
   type Card = {
     id: string;
@@ -19,48 +23,48 @@
     description: string;
   };
 
-  let selectedOffering: string | undefined;
-  let selectedChampion: number | undefined;
-  let offeringCards: Card[] = [];
-  let championChoices: Player[] | undefined;
-  let match: Match | undefined;
+  type Match = {
+    offeringCards: Card[];
+    selectedOffering: string | undefined;
+    championChoices: Player[];
+    selectedChampion: number | undefined;
+  };
 
-  let register = function () {
-    if (!selectedOffering || !selectedChampion) {
+  let matches: Match[] | undefined;
+
+  let register = function (match: Match) {
+    if (!match.selectedOffering || !match.selectedChampion) {
       console.log("No offering or champion selected");
       return;
     }
     let offering: Offering;
-    switch (selectedOffering) {
+    switch (match.selectedOffering) {
       case "mischief":
-        offering = { mischief: { shuffleAndBoost: null } };
+        offering = { shuffleAndBoost: null };
         break;
-      case "war":
-        offering = { war: { b: null } };
-        break;
-      case "indulgence":
-        offering = { indulgence: { c: null } };
-        break;
-      case "pestilence":
-        offering = { pestilence: { d: null } };
-        break;
+      // case "war":
+      //   offering = { war: { b: null } };
+      //   break;
+      // case "indulgence":
+      //   offering = { indulgence: { c: null } };
+      //   break;
+      // case "pestilence":
+      //   offering = { pestilence: { d: null } };
+      //   break;
       default:
-        throw new Error("Invalid offering: " + selectedOffering);
+        throw new Error("Invalid offering: " + match.selectedOffering);
     }
-    let request: VoteMatchOptionsRequest = {
-      stadiumId: stadiumId,
-      matchId: matchId,
-      vote: {
-        offering: offering,
-        champion: selectedChampion,
-      },
+    let request: VoteOnMatchGroupRequest = {
+      matchGroupId: matchGroupId,
+      offering: offering,
+      champion: match.selectedChampion,
     };
     console.log(
-      `Voting for team ${teamId.toString()} and match ${matchId}`,
+      `Voting for team ${teamId.toString()} and match group ${matchGroupId}`,
       request
     );
     teamAgentFactory(teamId)
-      .voteForMatchOptions(request)
+      .voteOnMatchGroup(request)
       .then((result) => {
         console.log("Voted for match: ", result);
         teamStore.refetch();
@@ -70,40 +74,49 @@
       });
   };
 
-  playerStore.subscribe((players) => {
-    championChoices = players.filter((p) =>
-      p.teamId.length == 0 ? false : p.teamId[0].compareTo(teamId) == "eq"
-    );
-  });
-
-  matchStore.subscribe((matches) => {
-    match = matches.find((item) => item.id == matchId);
-    if (match) {
-      offeringCards = match.offerings.map((o) => {
-        let a = Object.keys(o)[0]; // TODO
+  matchGroupStore.subscribe((matchGroups) => {
+    let matchGroup = matchGroups.find((g) => g.id == matchGroupId);
+    if (matchGroup) {
+      matches = matchGroup.matches.map((m, i) => {
+        let offeringCards = m.offerings.map((o) => {
+          let offeringDetails = getOfferingDetails(o);
+          return {
+            id: i.toString(),
+            title: offeringDetails.name,
+            description: offeringDetails.description,
+          };
+        });
+        let players = get(playerStore);
+        let championChoices = players || [];
         return {
-          id: a,
-          title: a,
-          description: a,
+          offeringCards: offeringCards,
+          selectedOffering: undefined,
+          championChoices: championChoices,
+          selectedChampion: undefined,
         };
       });
     }
   });
 </script>
 
-{#if match}
-  <div>
-    <h2>Offerings</h2>
-    <CardList cards={offeringCards} onSelect={(i) => (selectedOffering = i)} />
-  </div>
-  <div>
-    <h2>Champion</h2>
-    {#if championChoices}
-      <PlayerPicker
-        players={championChoices}
-        onPlayerSelected={(pId) => (selectedChampion = pId)}
+{#if matches}
+  {#each matches as match}
+    <div>
+      <h2>Offerings</h2>
+      <CardList
+        cards={match.offeringCards}
+        onSelect={(i) => (match.selectedOffering = i)}
       />
-    {/if}
-  </div>
-  <button on:click={register}>Submit Vote</button>
+    </div>
+    <div>
+      <h2>Champion</h2>
+      {#if match.championChoices}
+        <PlayerPicker
+          players={match.championChoices}
+          onPlayerSelected={(pId) => (match.selectedChampion = pId)}
+        />
+      {/if}
+    </div>
+    <button on:click={() => register(match)}>Submit Vote</button>
+  {/each}
 {/if}

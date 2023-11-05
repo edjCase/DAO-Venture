@@ -3,8 +3,8 @@
     CompletedMatchState,
     InProgressMatchState,
     MatchGroup,
+    MatchPlayer,
     MatchTeam,
-    PlayerState,
     StartedMatchState,
   } from "../ic-agent/Stadium";
   import { matchGroupStore } from "../stores/MatchGroupStore";
@@ -19,7 +19,7 @@
 
   let matchDetails: MatchDetail[] | undefined;
 
-  let getPlayerName = (players: PlayerState[], playerId: number): string => {
+  let getPlayerName = (players: MatchPlayer[], playerId: number): string => {
     let player = players.find((p) => p.id == playerId);
     if (player) {
       return player.name;
@@ -46,19 +46,19 @@
       team2LeadId = matchState.field.offense.atBat;
     }
     let team1Lead =
-      team1LeadEmoji + " " + getPlayerName(matchState.players, team1LeadId);
+      team1LeadEmoji + " " + getPlayerName(team1.players, team1LeadId);
     let team2Lead =
-      getPlayerName(matchState.players, team2LeadId) + " " + team2LeadEmoji;
+      getPlayerName(team2.players, team2LeadId) + " " + team2LeadEmoji;
     return {
       team1: {
         name: team1.name,
-        logoUrl: team1.logoUrl,
+        logoUrl: "", // TODO
         score: matchState.team1.score,
         activePlayerName: team1Lead,
       },
       team2: {
         name: team2.name,
-        logoUrl: team2.logoUrl,
+        logoUrl: "", // TODO
         score: matchState.team2.score,
         activePlayerName: team2Lead,
       },
@@ -104,12 +104,12 @@
       title: title,
       team1: {
         name: team1.name,
-        logoUrl: team1.logoUrl,
+        logoUrl: "", // TODO
         score: team1Score,
       },
       team2: {
         name: team2.name,
-        logoUrl: team2.logoUrl,
+        logoUrl: "", // TODO
         score: team2Score,
       },
     };

@@ -12,23 +12,11 @@
     | { allAbsent: null }
     | { absentTeam: { name: string } }
     | { played: PlayedMatchStateDetails };
-  type InProgressMatchStateDetails = {
-    offenseTeamId: TeamId;
-    team1: TeamState;
-    team2: TeamState;
-    aura: MatchAura;
-    players: [PlayerState];
-    field: FieldState;
-    log: [LogEntry];
-    round: bigint;
-    outs: bigint;
-    strikes: bigint;
-  };
   type NotStartedMatchStateDetails = {};
 
   type StartedMatchStateDetails =
-    | CompletedMatchStateDetails
-    | InProgressMatchStateDetails;
+    | { completed: CompletedMatchStateDetails }
+    | { inProgress: InProgressMatchState };
 
   type CompletedMatchGroupStateDetails = {
     matches: CompletedMatchStateDetails[];
@@ -40,9 +28,9 @@
     matches: NotStartedMatchStateDetails[];
   };
   type MatchGroupStateDetails =
-    | NotStartedMatchGroupStateDetails
-    | CompletedMatchGroupStateDetails
-    | InProgressMatchGroupStateDetails;
+    | { notStarted: NotStartedMatchGroupStateDetails }
+    | { completed: CompletedMatchGroupStateDetails }
+    | { inProgress: InProgressMatchGroupStateDetails };
 
   type OfferingDetails = {
     name: string;
@@ -55,7 +43,7 @@
     name: string;
     predictionVotes: bigint;
   };
-  type MatchDetails = {
+  type MatchDetail = {
     team1: TeamDetails;
     team2: TeamDetails;
     offerings: OfferingDetails[];
@@ -64,15 +52,16 @@
   type MatchGroupDetails = {
     id: number;
     time: bigint;
-    matches: MatchDetails[];
+    matches: MatchDetail[];
     state: MatchGroupStateDetails;
   };
 </script>
 
 <script lang="ts">
-  import ScoreHeader from "../components/ScoreHeader.svelte";
-  import { matchGroupStore } from "../stores/MatchGroupStore";
-  import FieldState from "../components/FieldState.svelte";
+  import {
+    getOfferingDetails,
+    matchGroupStore,
+  } from "../stores/MatchGroupStore";
   import { Principal } from "@dfinity/principal";
   import VoteForMatch from "../components/VoteForMatch.svelte";
   import { toJsonString } from "../utils/JsonUtil";
@@ -85,7 +74,6 @@
     MatchGroup,
     MatchGroupState,
     MatchTeam,
-    Offering,
     StartedMatchState,
     NotStartedMatchGroupState,
     CompletedMatchState,
@@ -93,10 +81,8 @@
     LogEntry,
     TeamIdOrTie,
     TeamIdOrBoth,
-    TeamId,
-    TeamState,
-    PlayerState,
   } from "../ic-agent/Stadium";
+  import MatchCard from "../components/MatchCard.svelte";
 
   export let matchGroupId: number;
 
@@ -133,23 +119,10 @@
   };
   let mapTeam = (team: MatchTeam): TeamDetails => {
     return {
+      id: team.id,
       name: team.name,
       predictionVotes: team.predictionVotes,
     };
-  };
-  let mapOfferings = (offering: Offering): MatchAuraDetails => {
-    if ("shuffleAndBoost" in offering) {
-      return {
-        name: "Shuffle And Boost",
-        description:
-          "Shuffle your team's field positions and boost your team with a random blessing.",
-      };
-    } else {
-      return {
-        name: "Unknown",
-        description: "Unknown",
-      };
-    }
   };
 
   let mapAura = (aura: MatchAura): MatchAuraDetails => {
@@ -181,21 +154,22 @@
       };
     }
   };
-  let mapMatch = (match: Match): MatchDetails => {
+  let mapMatch = (match: Match): MatchDetail => {
     return {
       team1: mapTeam(match.team1),
       team2: mapTeam(match.team2),
-      offerings: match.offerings.map(mapOfferings),
+      offerings: match.offerings.map(getOfferingDetails),
       aura: mapAura(match.aura),
     };
   };
   let mapInProgressMatchState = (
     state: InProgressMatchState
-  ): InProgressMatchStateDetails => {
-    return {};
+  ): InProgressMatchState => {
+    return state;
   };
   let mapCompletedMatchState = (
-    state: CompletedMatchState
+    state: CompletedMatchState,
+    matchIndex: number
   ): CompletedMatchStateDetails => {
     if ("played" in state) {
       return {
@@ -212,17 +186,20 @@
       };
     } else {
       return {
-        absentTeam: getTeamName(state.absentTeam),
+        absentTeam: {
+          name: getTeamName(state.absentTeam, matchIndex),
+        },
       };
     }
   };
   let mapStartedMatchState = (
-    state: StartedMatchState
+    state: StartedMatchState,
+    matchIndex: number
   ): StartedMatchStateDetails => {
     if ("inProgress" in state) {
-      return mapInProgressMatchState(state.inProgress);
+      return { inProgress: mapInProgressMatchState(state.inProgress) };
     } else {
-      return mapCompletedMatchState(state.completed);
+      return { completed: mapCompletedMatchState(state.completed, matchIndex) };
     }
   };
   let mapNotStartedState = (
@@ -248,11 +225,11 @@
   };
   let mapState = (state: MatchGroupState): MatchGroupStateDetails => {
     if ("inProgress" in state) {
-      return mapInProgressState(state.inProgress);
+      return { inProgress: mapInProgressState(state.inProgress) };
     } else if ("completed" in state) {
-      return mapCompletedState(state.completed);
+      return { completed: mapCompletedState(state.completed) };
     } else {
-      return mapNotStartedState(state.notStarted);
+      return { notStarted: mapNotStartedState(state.notStarted) };
     }
   };
   let mapMatchGroup = (matchGroup: MatchGroup): MatchGroupDetails => {
@@ -266,66 +243,19 @@
 
   matchGroupStore.subscribe((matchGroups) => {
     let g = matchGroups.find((item) => item.id == matchGroupId);
-    matchGroup = mapMatchGroup(g);
+    if (g) {
+      matchGroup = mapMatchGroup(g);
+    } else {
+      matchGroup = undefined;
+    }
   });
 
-  $: {
-    let team1Score: bigint;
-    let team2Score: bigint;
-    let winner: Principal | undefined;
-    if (!!state && !!match && !!team1 && !!team2) {
-      if ("inProgress" in state) {
-        team1Score = state.inProgress.team1.score;
-        team2Score = state.inProgress.team2.score;
-        log = state.inProgress.log;
-        remainingMillis = undefined;
-      } else if ("completed" in state) {
-        if ("played" in state.completed) {
-          team1Score = state.completed.played.team1.score;
-          team2Score = state.completed.played.team2.score;
-          log = state.completed.played.log;
-          winner =
-            "team1" in state.completed.played.winner
-              ? match.team1.id
-              : match.team2.id;
-          remainingMillis = undefined;
-        } else {
-          team1Score = BigInt(0);
-          team2Score = BigInt(0);
-          log = [];
-          remainingMillis = undefined;
-        }
-      } else if ("notStarted" in state) {
-        team1Score = BigInt(0);
-        team2Score = BigInt(0);
-        log = [];
-        remainingMillis = Number(match.time / BigInt(1_000_000)) - Date.now();
-      } else {
-        throw "Invalid state: " + toJsonString(state);
-      }
-
-      matchDetails = {
-        team1: {
-          id: match.team1.id,
-          name: team1.name,
-          predictionVotes: match.team1.predictionVotes,
-          score: team1Score,
-        },
-        team2: {
-          id: match.team2.id,
-          name: team2.name,
-          predictionVotes: match.team2.predictionVotes,
-          score: team2Score,
-        },
-        winner: winner,
-      };
-    }
-  }
   let remainingMillis: number | undefined;
   onMount(() => {
     const intervalId = setInterval(() => {
-      if (match) {
-        remainingMillis = Number(match.time / BigInt(1_000_000)) - Date.now();
+      if (matchGroup) {
+        remainingMillis =
+          Number(matchGroup.time / BigInt(1_000_000)) - Date.now();
         if (remainingMillis <= 0) {
           clearInterval(intervalId);
         }
@@ -352,39 +282,41 @@
   };
 </script>
 
-{#if !loadingTeams && !!match && !!team1 && !!team2 && !!matchDetails}
+{#if !!matchGroup}
   <section>
-    <ScoreHeader {...matchDetails} />
     <section class="match-details">
-      {#if "inProgress" in state}
-        <FieldState state={state.inProgress} />
-      {:else if "notStarted" in state}
-        {#if remainingMillis}
-          <h1>
-            Upcoming in {printTime(remainingMillis)}
-          </h1>
-        {/if}
+      {#if remainingMillis}
+        <h1>
+          Upcoming in {printTime(remainingMillis)}
+        </h1>
+      {/if}
+
+      {#if "inProgress" in matchGroup.state}
+        {#each matchGroup.matches as match}
+          <MatchCard {match} />
+        {/each}
+      {:else if "notStarted" in matchGroup.state}
         <div>
-          <h1>Vote for Matches</h1>
+          <h1>Vote for Matche</h1>
           <VoteForMatch
-            matchId={match.id}
-            stadiumId={match.stadiumId}
-            teamId={team1.id}
+            matchId={index}
+            stadiumId={matchGroup.stadiumId}
+            teamId={match.team1.id}
           />
           <VoteForMatch
-            matchId={match.id}
-            stadiumId={match.stadiumId}
-            teamId={team2.id}
+            matchId={index}
+            stadiumId={matchGroup.stadiumId}
+            teamId={match.team2.id}
           />
         </div>
-      {:else if "completed" in state}
+      {:else if "completed" in matchGroup.state}
         <div>Completed</div>
-        {#if "played" in state.completed}
+        {#if "played" in matchGroup.state.completed}
           <div>Played</div>
-        {:else if "allAbsent" in state.completed}
+        {:else if "allAbsent" in matchGroup.state.completed}
           <div>All absent</div>
-        {:else if "abstentTeam" in state.completed}
-          <div>Absent Team: {state.completed.absentTeam}</div>
+        {:else if "absentTeam" in matchGroup.state.completed}
+          <div>Absent Team: {matchGroup.state.completed.absentTeam}</div>
         {/if}
       {:else}
         <h1>Game hasnt started</h1>
@@ -396,7 +328,7 @@
 
       <h2>JSON</h2>
       <pre>
-        {toJsonString(match)}
+        {toJsonString(matchGroup)}
       </pre>
     </section>
   </section>

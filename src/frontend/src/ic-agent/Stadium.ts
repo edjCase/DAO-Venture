@@ -30,6 +30,7 @@ export type MatchTeam = {
 };
 export const MatchTeamIdl = IDL.Record({
   'id': IDL.Principal,
+  'name': IDL.Text,
   'predictionVotes': IDL.Nat,
   'players': IDL.Vec(MatchPlayerIdl)
 });

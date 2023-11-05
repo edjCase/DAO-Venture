@@ -1,8 +1,27 @@
 import { writable, get } from "svelte/store";
-import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup } from "../ic-agent/Stadium";
+import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup, Offering } from "../ic-agent/Stadium";
 import { stadiumStore } from "./StadiumStore";
 import { Principal } from "@dfinity/principal";
 
+export type OfferingDetails = {
+  name: string;
+  description: string;
+};
+
+export let getOfferingDetails = (offering: Offering): OfferingDetails => {
+  if ("shuffleAndBoost" in offering) {
+    return {
+      name: "Shuffle And Boost",
+      description:
+        "Shuffle your team's field positions and boost your team with a random blessing.",
+    };
+  } else {
+    return {
+      name: "Unknown",
+      description: "Unknown",
+    };
+  }
+};
 
 export const matchGroupStore = (() => {
   const { subscribe, set, update } = writable<MatchGroup[]>([]);
@@ -53,7 +72,7 @@ export const matchGroupStore = (() => {
         return matchGroupOrNull;
       });
   };
-  const refetch = async () => {
+  const refetchById = async (matchGroupId: number) => {
     const $stadiums = get(stadiumStore);
     const promises = $stadiums.map(s => refetchMatchGroup(s.id, matchGroupId));
 
@@ -64,14 +83,15 @@ export const matchGroupStore = (() => {
 
 
   // Derived store to watch changes in stadiumStore and trigger refetch
-  stadiumStore.subscribe(() => {
-    refetch();
-  });
+  // TODO
+  // stadiumStore.subscribe(() => {
+  //   refetchAll();
+  // });
 
 
   return {
     subscribe,
-    refetch
+    refetchById
   };
 })();
 
