@@ -13,15 +13,25 @@ import {
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
 
+export type MatchPlayer = {
+  'id': number;
+  'name': string;
+};
+export const MatchPlayerIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'name': IDL.Text,
+});
+
 export type MatchTeam = {
   'id': Principal;
-  'name': Text;
+  'name': string;
   'predictionVotes': bigint;
+  'players': MatchPlayer[]
 };
 export const MatchTeamIdl = IDL.Record({
   'id': IDL.Principal,
-  'name': IDL.Text,
-  'predictionVotes': IDL.Nat
+  'predictionVotes': IDL.Nat,
+  'players': IDL.Vec(MatchPlayerIdl)
 });
 
 export type Offering =
@@ -34,12 +44,12 @@ export type MatchAura =
   | { 'lowGravity': null }
   | { 'explodingBalls': null }
   | { 'fastBallsHardHits': null }
-  | { 'highBlessingsAndCurses': null };
+  | { 'moreBlessingsAndCurses': null };
 export const MatchAuraIdl = IDL.Variant({
   'lowGravity': IDL.Null,
   'explodingBalls': IDL.Null,
   'fastBallsHardHits': IDL.Null,
-  'highBlessingsAndCurses': IDL.Null
+  'moreBlessingsAndCurses': IDL.Null
 });
 
 export type TeamId =
@@ -51,15 +61,11 @@ export const TeamIdIdl = IDL.Variant({
 });
 
 export type TeamState = {
-  'id': Principal;
-  'name': string;
   'score': bigint;
   'offering': Offering;
   'champion': number;
 };
 export const TeamStateIdl = IDL.Record({
-  'id': IDL.Principal,
-  'name': IDL.Text,
   'score': IDL.Int,
   'offering': OfferingIdl,
   'champion': IDL.Nat32
@@ -89,13 +95,14 @@ export const PlayerConditionIdl = IDL.Variant({
 });
 
 export type PlayerState = {
-  name: Text;
-  teamId: TeamId;
-  condition: PlayerCondition;
-  skills: PlayerSkills;
-  position: FieldPosition;
+  'id': number;
+  'teamId': TeamId;
+  'condition': PlayerCondition;
+  'skills': PlayerSkills;
+  'position': FieldPosition;
 };
 export const PlayerStateIdl = IDL.Record({
+  'id': IDL.Nat32,
   'name': IDL.Text,
   'teamId': TeamIdIdl,
   'condition': PlayerConditionIdl,
@@ -137,10 +144,11 @@ export const OffenseFieldStateIdl = IDL.Record({
   'thirdBase': IDL.Opt(IDL.Nat32)
 });
 
-export type FieldState =
-  | { 'defense': DefenseFieldState }
-  | { 'offense': OffenseFieldState };
-export const FieldStateIdl = IDL.Variant({
+export type FieldState = {
+  'defense': DefenseFieldState,
+  'offense': OffenseFieldState
+}
+export const FieldStateIdl = IDL.Record({
   'defense': DefenseFieldStateIdl,
   'offense': OffenseFieldStateIdl
 });
@@ -179,12 +187,10 @@ export const InProgressMatchStateIdl = IDL.Record({
   'strikes': IDL.Nat
 });
 
-export type CompletedTeamState = {
-  'id': Principal;
+export type PlayedTeamState = {
   'score': bigint;
 };
-export const CompletedTeamStateIdl = IDL.Record({
-  'id': IDL.Principal,
+export const PlayedTeamStateIdl = IDL.Record({
   'score': IDL.Int
 });
 
@@ -197,15 +203,15 @@ export const TeamIdOrTieIdl = IDL.Variant({
   'tie': IDL.Null
 });
 
-export type CompletedMatchResult = {
-  'team1': CompletedTeamState,
-  'team2': CompletedTeamState,
+export type PlayedMatchState = {
+  'team1': PlayedTeamState,
+  'team2': PlayedTeamState,
   'winner': TeamIdOrTie,
   'log': LogEntry[]
 };
-export const CompletedMatchResultIdl = IDL.Record({
-  'team1': CompletedTeamStateIdl,
-  'team2': CompletedTeamStateIdl,
+export const PlayedMatchStateIdl = IDL.Record({
+  'team1': PlayedTeamStateIdl,
+  'team2': PlayedTeamStateIdl,
   'winner': TeamIdOrTieIdl,
   'log': IDL.Vec(LogEntryIdl)
 });
@@ -213,11 +219,11 @@ export const CompletedMatchResultIdl = IDL.Record({
 export type CompletedMatchState =
   | { 'absentTeam': TeamId }
   | { 'allAbsent': null }
-  | { 'played': CompletedMatchResult };
+  | { 'played': PlayedMatchState };
 export const CompletedMatchStateIdl = IDL.Variant({
   'absentTeam': TeamIdIdl,
   'allAbsent': IDL.Null,
-  'played': CompletedMatchResultIdl
+  'played': PlayedMatchStateIdl
 });
 
 export type StartedMatchState =
@@ -240,25 +246,21 @@ export const MatchStateIdl = IDL.Variant({
 
 
 export type Match = {
-  'id': number,
   'team1': MatchTeam,
   'team2': MatchTeam,
   'offerings': Offering[],
-  'aura': MatchAura,
-  'state': MatchState
+  'aura': MatchAura
 };
 export const MatchIdl = IDL.Record({
-  'id': IDL.Nat32,
   'team1': MatchTeamIdl,
   'team2': MatchTeamIdl,
   'offerings': IDL.Vec(OfferingIdl),
-  'aura': MatchAuraIdl,
-  'state': MatchStateIdl
+  'aura': MatchAuraIdl
 });
 
 export type NotStartedMatchGroupState = {
   'startTimerId': bigint;
-  'matches': [Match];
+  'matches': Match[];
 };
 export const NotStartedMatchGroupStateIdl = IDL.Record({
   'startTimerId': IDL.Nat,
@@ -297,8 +299,10 @@ export const MatchGroupStateIdl = IDL.Variant({
 });
 
 export type MatchGroup = {
-  time: Time,
-  state: MatchGroupState,
+  'id': number,
+  'time': Time,
+  'matches': [Match],
+  'state': MatchGroupState,
 };
 export const MatchGroupIdl = IDL.Record({
   'time': TimeIdl,

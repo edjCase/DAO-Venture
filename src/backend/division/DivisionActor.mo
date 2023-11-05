@@ -219,10 +219,7 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
     private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
         // TODO
         [
-            #mischief(#shuffleAndBoost),
-            #war(#b),
-            #indulgence(#c),
-            #pestilence(#d),
+            #shuffleAndBoost
         ];
     };
 
@@ -232,7 +229,7 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
             #lowGravity,
             #explodingBalls,
             #fastBallsHardHits,
-            #highBlessingsAndCurses,
+            #moreBlessingsAndCurses,
         ]);
         prng.shuffleBuffer(auras);
         auras.get(0);

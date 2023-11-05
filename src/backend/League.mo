@@ -45,7 +45,6 @@ module {
     };
     public type CreateStadiumResult = {
         #ok : Principal;
-        #nameTaken;
     };
     public type CreateTeamDaoResult = {
         #ok : Principal;

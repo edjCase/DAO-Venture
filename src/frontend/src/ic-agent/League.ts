@@ -111,8 +111,16 @@ const Stadium = IDL.Record({
   'id': IDL.Principal
 });
 
+export type CreateStadiumResult = {
+  'ok': Principal
+};
+export const CreateStadiumResultIdl = IDL.Variant({
+  'ok': IDL.Principal
+});
+
 export interface _SERVICE {
-  'createStadium': ActorMethod<[], undefined>,
+  'createStadium': ActorMethod<[], CreateStadiumResult>,
+  'getStadiums': ActorMethod<[], Array<Stadium>>,
   'createDivision': ActorMethod<[CreateDivisionRequest], CreateDivisionResult>,
   'getTeams': ActorMethod<[], Array<Team>>,
   'getDivisions': ActorMethod<[], Array<Division>>,
@@ -125,7 +133,8 @@ export interface _SERVICE {
 export const idlFactory: InterfaceFactory = ({ }) => {
 
   return IDL.Service({
-    'createStadium': IDL.Func([], [], []),
+    'createStadium': IDL.Func([], [CreateStadiumResultIdl], []),
+    'getStadiums': IDL.Func([], [IDL.Vec(Stadium)], ['query']),
     'createDivision': IDL.Func([CreateDivisionRequestIdl], [CreateDivisionResultIdl], []),
     'getTeams': IDL.Func([], [IDL.Vec(TeamIdl)], ['query']),
     'getDivisions': IDL.Func([], [IDL.Vec(DivisionIdl)], ['query']),

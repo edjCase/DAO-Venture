@@ -58,17 +58,18 @@ shared (install) actor class TeamActor(
       return #matchGroupFetchError(Error.message(err));
     };
     let teamId = Principal.fromActor(this);
-    let ?match = switch (matchGroup.state) {
+    let match = switch (matchGroup.state) {
       case (#notStarted(ns)) {
-        ns.matches
+        let ?match = matchGroup.matches
         |> Array.find(
           _,
           func(m : Stadium.Match) : Bool = m.team1.id == teamId or m.team2.id == teamId,
-        );
+        ) else return #teamNotInMatchGroup;
+        match;
       };
       case (#inProgress(ip)) return #alreadyStarted;
       case (#completed(c)) return #alreadyStarted;
-    } else return #teamNotInMatchGroup;
+    };
 
     let errors = Buffer.Buffer<Text>(0);
     let offeringExists = IterTools.any(match.offerings.vals(), func(o : Offering) : Bool = o == request.offering);

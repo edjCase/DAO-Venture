@@ -78,8 +78,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
 
     public shared ({ caller }) func scheduleMatchGroup(request : Stadium.ScheduleMatchGroupRequest) : async Stadium.ScheduleMatchGroupResult {
         assertLeague(caller);
-        let seedBlob = await Random.blob();
-        let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
         let divisionActor = actor (Principal.toText(request.divisionId)) : League.LeagueActor;
         let teams = try {
             await divisionActor.getTeams();
@@ -89,7 +87,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let matchGroupId = nextMatchGroupId; // StadiumActor needs to be here to preserve the matchId value for the callback
 
         let matches = Buffer.Buffer<Stadium.Match>(request.matches.size());
-        let failedMatches = Buffer.Buffer<Stadium.ScheduleMatchFailure>(0);
+        let failedMatches = Buffer.Buffer<Stadium.ScheduleMatchError>(0);
+        let allPlayers = await PlayerLedgerActor.getAllPlayers();
         for (m in Iter.fromArray(request.matches)) {
             let team1OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == m.team1Id);
             let team2OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == m.team2Id);
@@ -97,7 +96,39 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 case (null, null) failedMatches.add(#teamNotFound(#bothTeams));
                 case (null, ?_) failedMatches.add(#teamNotFound(#team1));
                 case (?_, null) failedMatches.add(#teamNotFound(#team2));
-                case (?t1, ?t2) matches.add(buildMatch(m, t1, t2, prng));
+                case (?t1, ?t2) {
+                    let getPlayers = func(teamId : Principal) : [Stadium.MatchPlayer] {
+                        return allPlayers
+                        |> Array.filter(_, func(p : PlayerWithId) : Bool = p.teamId == ?teamId)
+                        |> Array.map(
+                            _,
+                            func(p : PlayerWithId) : Stadium.MatchPlayer {
+                                return {
+                                    id = p.id;
+                                    name = p.name;
+                                };
+                            },
+                        );
+                    };
+                    let team1 = {
+                        t1 with
+                        predictionVotes = 0;
+                        players = getPlayers(t1.id);
+                    };
+                    let team2 = {
+                        t2 with
+                        predictionVotes = 0;
+                        players = getPlayers(t1.id);
+                    };
+                    let match = {
+                        team1 = team1;
+                        team2 = team2;
+                        offerings = m.offerings;
+                        aura = m.aura;
+                        state = #notStarted;
+                    };
+                    matches.add(match);
+                };
             };
         };
         if (failedMatches.size() > 0) {
@@ -118,8 +149,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         );
         let matchGroup : Stadium.MatchGroup = {
             time = request.time;
+            matches = Buffer.toArray(matches);
             state = #notStarted({
-                matches = Buffer.toArray(matches);
                 startTimerId = startTimerId;
             });
         };
@@ -150,8 +181,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                         await tickMatchGroupCallback(matchGroupId);
                     },
                 );
-                let startedMatches = Buffer.Buffer<Stadium.StartedMatchState>(notStartedState.matches.size());
-                for (match in Iter.fromArray(notStartedState.matches)) {
+                let startedMatches = Buffer.Buffer<Stadium.StartedMatchState>(matchGroup.matches.size());
+                for (match in Iter.fromArray(matchGroup.matches)) {
                     try {
                         let startedMatch = await startMatchInternal(matchGroupId, match, prng);
                         startedMatches.add(startedMatch);
@@ -162,7 +193,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 };
                 {
                     notStartedState with
-                    matches = Buffer.toArray(startedMatches);
+                    matchStates = Buffer.toArray(startedMatches);
                     tickTimerId = tickTimerId;
                     currentSeed = prng.getCurrentSeed();
                 };
@@ -171,21 +202,21 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (#inProgress(g)) g;
         };
         let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroupState.currentSeed);
-        let newState = switch (tickMatches(prng, matchGroupState.matches)) {
+        let newState : Stadium.StartedMatchGroupState = switch (tickMatches(prng, matchGroup.matches, matchGroupState.matchStates)) {
             case (#completed(completedMatches)) {
                 // Cancel tick timer before disposing of timer id
                 Timer.cancelTimer(matchGroupState.tickTimerId);
 
                 #completed({
                     matchGroupState with
-                    matches = completedMatches;
+                    matchStates = completedMatches;
                     currentSeed = prng.getCurrentSeed();
                 });
             };
             case (#inProgress(newMatches)) {
                 #inProgress({
                     matchGroupState with
-                    matches = newMatches;
+                    matchStates = newMatches;
                     currentSeed = prng.getCurrentSeed();
                 });
             };
@@ -210,15 +241,17 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         Debug.print("Start Match Group Callback Result - " # message);
     };
 
-    private func tickMatches(prng : Prng, matches : [Stadium.StartedMatchState]) : {
+    private func tickMatches(prng : Prng, matches : [Stadium.Match], matchStates : [Stadium.StartedMatchState]) : {
         #completed : [Stadium.CompletedMatchState];
         #inProgress : [Stadium.StartedMatchState];
     } {
         let completedMatchStates = Buffer.Buffer<Stadium.CompletedMatchState>(0);
         let newMatchStates = Buffer.Buffer<Stadium.StartedMatchState>(0);
-        for (matchState in Iter.fromArray(matches)) {
-
-            let newMatchState = tickMatchState(prng, matchState);
+        var matchIndex = 0;
+        for (matchState in Iter.fromArray(matchStates)) {
+            let match = matches[matchIndex]; // TODO safe indexing
+            matchIndex += 1;
+            let newMatchState = tickMatchState(match.team1, match.team2, prng, matchState);
             newMatchStates.add(newMatchState);
             switch (newMatchState) {
                 case (#completed(completedState)) completedMatchStates.add(completedState);
@@ -233,37 +266,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    private func buildMatch(
-        m : Stadium.ScheduleMatchRequest,
-        team1 : TeamWithId,
-        team2 : TeamWithId,
-        prng : Prng,
-    ) : Stadium.Match {
-
-        {
-            team1 = {
-                id = team1.id;
-                name = team1.name;
-                score = null;
-                predictionVotes = 0;
-            };
-            team2 = {
-                id = team2.id;
-                name = team2.name;
-                score = null;
-                predictionVotes = 0;
-            };
-            offerings = m.offerings;
-            aura = m.aura;
-            state = #notStarted;
-        };
-    };
-
-    private func tickMatchState(prng : Prng, state : Stadium.StartedMatchState) : Stadium.StartedMatchState {
+    private func tickMatchState(team1 : MatchSimulator.TeamInfo, team2 : MatchSimulator.TeamInfo, prng : Prng, state : Stadium.StartedMatchState) : Stadium.StartedMatchState {
         switch (state) {
             case (#completed(completedState)) #completed(completedState);
             case (#inProgress(s)) {
-                MatchSimulator.tick(s, prng);
+                MatchSimulator.tick(team1, team2, s, prng);
             };
         };
     };

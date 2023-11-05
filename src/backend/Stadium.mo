@@ -71,7 +71,6 @@ module {
     };
 
     public type PlayerState = {
-        name : Text;
         teamId : TeamId;
         condition : Player.PlayerCondition;
         skills : Player.PlayerSkills;
@@ -83,8 +82,6 @@ module {
     };
 
     public type TeamState = {
-        id : Principal;
-        name : Text;
         score : Int;
         offering : Offering;
         champion : PlayerId;
@@ -134,20 +131,19 @@ module {
     public type CompletedMatchState = {
         #absentTeam : TeamId;
         #allAbsent;
-        #played : CompletedMatchResult;
+        #played : PlayedMatchState;
     };
 
     public type TeamIdOrTie = TeamId or { #tie };
 
-    public type CompletedMatchResult = {
-        team1 : CompletedTeamState;
-        team2 : CompletedTeamState;
+    public type PlayedMatchState = {
+        team1 : PlayedTeamState;
+        team2 : PlayedTeamState;
         winner : TeamIdOrTie;
         log : [LogEntry];
     };
 
-    public type CompletedTeamState = {
-        id : Principal;
+    public type PlayedTeamState = {
         score : Int;
     };
 
@@ -158,9 +154,7 @@ module {
         #completed : CompletedMatchGroupState;
     };
 
-    public type Stadium = {
-        name : Text;
-    };
+    public type Stadium = {};
 
     public type StadiumWithId = Stadium and {
         id : Principal;
@@ -180,14 +174,14 @@ module {
         #lowGravity;
         #explodingBalls;
         #fastBallsHardHits;
-        #highBlessingsAndCurses;
+        #moreBlessingsAndCurses;
     };
 
     public func hashMatchAura(aura : MatchAura) : Nat32 = switch (aura) {
         case (#lowGravity) 0;
         case (#explodingBalls) 1;
         case (#fastBallsHardHits) 2;
-        case (#highBlessingsAndCurses) 3;
+        case (#moreBlessingsAndCurses) 3;
     };
 
     public func equalMatchAura(a : MatchAura, b : MatchAura) : Bool = a == b;
@@ -215,6 +209,7 @@ module {
 
     public type MatchGroup = {
         time : Time.Time;
+        matches : [Match];
         state : MatchGroupState;
     };
 
@@ -222,25 +217,27 @@ module {
         id : Nat32;
     };
 
-    public type MatchGroupState = {
-        #notStarted : NotStartedMatchGroupState;
+    public type StartedMatchGroupState = {
         #inProgress : InProgressMatchGroupState;
         #completed : CompletedMatchGroupState;
     };
 
+    public type MatchGroupState = StartedMatchGroupState or {
+        #notStarted : NotStartedMatchGroupState;
+    };
+
     public type NotStartedMatchGroupState = {
         startTimerId : Nat;
-        matches : [Match];
     };
 
     public type InProgressMatchGroupState = {
         tickTimerId : Nat;
         currentSeed : Nat32;
-        matches : [StartedMatchState];
+        matchStates : [StartedMatchState];
     };
 
     public type CompletedMatchGroupState = {
-        matches : [CompletedMatchState];
+        matchStates : [CompletedMatchState];
     };
 
     public type TickMatchGroupResult = {
@@ -254,10 +251,16 @@ module {
         champion : PlayerId;
     };
 
+    public type MatchPlayer = {
+        id : PlayerId;
+        name : Text;
+    };
+
     public type MatchTeam = {
         id : Principal;
         name : Text;
         predictionVotes : Nat;
+        players : [MatchPlayer];
     };
 
     public type Blessing = {

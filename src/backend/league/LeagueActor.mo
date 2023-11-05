@@ -69,10 +69,10 @@ actor LeagueActor {
         );
     };
 
-    public shared ({ caller }) func getStadium() : async ?{ id : Principal } {
+    public shared query ({ caller }) func getStadiums() : async [Stadium.StadiumWithId] {
         return switch (stadiumIdOrNull) {
-            case (null) null;
-            case (?id) { ?{ id = id } };
+            case (null)[];
+            case (?id) { [{ id = id }] };
         };
     };
 

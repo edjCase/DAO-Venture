@@ -4,7 +4,7 @@
   import type { Principal } from "@dfinity/principal";
   import { VoteMatchOptionsRequest, teamAgentFactory } from "../ic-agent/Team";
   import type { Match, Offering } from "../ic-agent/Stadium";
-  import { matchStore } from "../stores/MatchStore";
+  import { matchStore } from "../stores/MatchGroupStore";
   import PlayerPicker from "./PlayerPicker.svelte";
   import { Player } from "../models/Player";
   import { playerStore } from "../stores/PlayerStore";

@@ -3,76 +3,71 @@ import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { Offering, OfferingIdl } from './Stadium';
+import { Player, PlayerIdl } from './PlayerLedger';
+import { IDL } from "@dfinity/candid";
 
 
-export type MatchOptionsVote = {
-  offering: Offering,
-  champion: number
+export type MatchGroupVote = {
+  'offering': Offering;
+  'champion': number;
 };
-export type VoteMatchOptionsResult = {
-  'ok': null
-} | {
-  'invalid': string[]
-} | {
-  'notAuthorized': null
-} | {
-  'matchNotFound': null
-} | {
-  'stadiumNotFound': null
-} | {
-  'alreadyVoted': null
-} | {
-  'teamNotInMatch': null
+export const MatchGroupVoteIdl = IDL.Record({
+  'offering': OfferingIdl,
+  'champion': IDL.Nat32
+});
+
+export type GetMatchGroupVoteResult =
+  | { 'ok': MatchGroupVote }
+  | { 'noVotes': null }
+  | { 'notAuthorized': null };
+export const GetMatchGroupVoteResultIdl = IDL.Variant({
+  'ok': MatchGroupVoteIdl,
+  'noVotes': IDL.Null,
+  'notAuthorized': IDL.Null
+});
+
+export type VoteOnMatchGroupRequest = MatchGroupVote & {
+  'matchGroupId': number;
 };
-export type VoteMatchOptionsRequest = {
-  'stadiumId': Principal;
-  'matchId': number,
-  'vote': MatchOptionsVote
-};
-export type GetMatchOptionsResult = {
-  'ok': null
-} | {
-  'notVotes': null
-} | {
-  'notAuthorized': null
-};
+export const VoteOnMatchGroupRequestIdl = IDL.Record({
+  'offering': OfferingIdl,
+  'champion': IDL.Nat32,
+  'matchGroupId': IDL.Nat32
+});
+
+export type VoteOnMatchGroupResult =
+  | { 'ok': null }
+  | { 'notAuthorized': null }
+  | { 'matchGroupNotFound': null }
+  | { 'teamNotInMatchGroup': null }
+  | { 'alreadyVoted': null }
+  | { 'alreadyStarted': null }
+  | { 'matchGroupFetchError': string }
+  | { 'invalid': [string] };
+export const VoteOnMatchGroupResultIdl = IDL.Variant({
+  'ok': IDL.Null,
+  'notAuthorized': IDL.Null,
+  'matchGroupNotFound': IDL.Null,
+  'teamNotInMatchGroup': IDL.Null,
+  'alreadyVoted': IDL.Null,
+  'alreadyStarted': IDL.Null,
+  'matchGroupFetchError': IDL.Text,
+  'invalid': IDL.Vec(IDL.Text)
+});
+
+
 export interface _SERVICE {
-  'getMatchOptions': ActorMethod<[Principal, number], GetMatchOptionsResult>,
-  'voteForMatchOptions': ActorMethod<[VoteMatchOptionsRequest], VoteMatchOptionsResult>,
+  'getPlayers': ActorMethod<[], Player[]>,
+  'getMatchGroupVote': ActorMethod<[number], GetMatchGroupVoteResult>,
+  'voteOnMatchGroup': ActorMethod<[VoteOnMatchGroupRequest], VoteOnMatchGroupResult>,
 }
 
 
-
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
-  const MatchOptions = IDL.Record({
-    'offering': OfferingIdl,
-    'champion': IDL.Nat32
-  });
-  const MatchOptionsVote = IDL.Record({
-    'offering': OfferingIdl,
-    'champion': IDL.Nat32
-  });
-  const VoteMatchOptionsRequest = IDL.Record({
-    'stadiumId': IDL.Principal,
-    'matchId': IDL.Nat32,
-    'vote': MatchOptionsVote
-  });
-  const VoteMatchOptionsResult = IDL.Variant({
-    'ok': IDL.Null,
-    'invalid': IDL.Vec(IDL.Text),
-    'stadiumNotFound': IDL.Null,
-    'teamNotInMatch': IDL.Null,
-    'notAuthorized': IDL.Null,
-    'alreadyVoted': IDL.Null
-  });
-  const GetMatchOptionsResult = IDL.Variant({
-    'ok': MatchOptions,
-    'noVotes': IDL.Null,
-    'notAuthorized': IDL.Null
-  });
   return IDL.Service({
-    'getMatchOptions': IDL.Func([IDL.Principal, IDL.Nat32], [GetMatchOptionsResult], []),
-    'voteForMatchOptions': IDL.Func([VoteMatchOptionsRequest], [VoteMatchOptionsResult], []),
+    'getPlayers': IDL.Func([], [IDL.Vec(PlayerIdl)], ['query']),
+    'getMatchGroupVote': IDL.Func([IDL.Nat32], [GetMatchGroupVoteResultIdl], ['query']),
+    'voteOnMatchGroup': IDL.Func([VoteOnMatchGroupRequestIdl], [VoteOnMatchGroupResultIdl], []),
   });
 };
 export const teamAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

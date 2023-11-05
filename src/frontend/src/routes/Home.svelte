@@ -4,13 +4,14 @@
   import CreatePlayer from "../components/CreatePlayer.svelte";
   import CreateStadium from "../components/CreateStadium.svelte";
   import CreateTeam from "../components/CreateTeam.svelte";
-  import MatchCardGrid from "../components/MatchCardGrid.svelte";
+  import MatchGroupCard from "../components/MatchGroupCard.svelte";
   import ScheduleMatch from "../components/ScheduleMatch.svelte";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
   import { playerStore } from "../stores/PlayerStore";
   import { stadiumStore } from "../stores/StadiumStore";
   import { teamStore } from "../stores/TeamStore";
+  import { matchGroupStore } from "../stores/MatchGroupStore";
 
   $: teams = $teamStore;
   $: stadiums = $stadiumStore;
@@ -23,26 +24,52 @@
       return acc;
     }, {});
   });
+
+  let liveMatchGroupIds: number[] = [];
+  let historicalMatchGroupIds: number[] = [];
+  let upcomingMatchGroupIds: number[] = [];
+  matchGroupStore.subscribe((matchGroups) => {
+    for (let matchGroup of matchGroups) {
+      if ("inProgress" in matchGroup.state) {
+        liveMatchGroupIds.push(matchGroup.id);
+      } else if ("completed" in matchGroup.state) {
+        historicalMatchGroupIds.push(matchGroup.id);
+      } else if ("notStarted" in matchGroup.state) {
+        upcomingMatchGroupIds.push(matchGroup.id);
+      }
+    }
+  });
 </script>
 
 {#if teams.length === 0}
   <TempInitialize />
 {/if}
+{#if liveMatchGroupIds.length > 0}
+  <div class="live-matches">
+    <h1>Live</h1>
+    {#each liveMatchGroupIds as liveMatchGroupId (liveMatchGroupId)}
+      <MatchGroupCard matchGroupId={liveMatchGroupId} />
+    {/each}
+  </div>
+{/if}
 
-<div class="live-matches">
-  <h1>Live Matches</h1>
-  <MatchCardGrid matchFilter={(match) => "inProgress" in match.state} />
-</div>
+{#if historicalMatchGroupIds.length > 0}
+  <div class="latest-matches">
+    <h1>Latest</h1>
+    {#each historicalMatchGroupIds as historicalMatchGroupId (historicalMatchGroupId)}
+      <MatchGroupCard matchGroupId={historicalMatchGroupId} />
+    {/each}
+  </div>
+{/if}
 
-<div class="latest-matches">
-  <h1>Latest Matches</h1>
-  <MatchCardGrid matchFilter={(match) => "completed" in match.state} />
-</div>
-
-<div class="upcoming-matches">
-  <h1>Upcoming Matches</h1>
-  <MatchCardGrid matchFilter={(match) => "notStarted" in match.state} />
-</div>
+{#if upcomingMatchGroupIds.length > 0}
+  <div class="upcoming-matches">
+    <h1>Upcoming</h1>
+    {#each upcomingMatchGroupIds as upcomingMatchGroupId (upcomingMatchGroupId)}
+      <MatchGroupCard matchGroupId={upcomingMatchGroupId} />
+    {/each}
+  </div>
+{/if}
 
 <div>
   <h1>Teams</h1>
@@ -61,7 +88,7 @@
 
   {#each stadiums as stadium (stadium.id)}
     <ul>
-      <li>{stadium.name}</li>
+      <li>{stadium.id}</li>
     </ul>
   {/each}
 </div>

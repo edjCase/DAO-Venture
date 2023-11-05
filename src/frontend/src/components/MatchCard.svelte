@@ -1,205 +1,109 @@
-<script lang="ts">
-  import { Link } from "svelte-routing";
-  import type { Match, PlayerState } from "../ic-agent/Stadium";
-  import { teamStore } from "../stores/TeamStore";
-  import { nanosecondsToDate } from "../utils/DateUtils";
-  import { Team } from "../ic-agent/League";
-  import { getOptValueOrUndefined } from "../utils/CandidUtil";
-  import Bases from "./Bases.svelte";
-  import { matchStore } from "../stores/MatchStore";
-  import Tooltip from "./Tooltip.svelte";
+<script context="module" lang="ts">
+  export type InProgressTeamDetails = {
+    name: string;
+    logoUrl: string;
+    score: bigint;
+    activePlayerName: string;
+  };
+  export type CompletedTeamDetails = {
+    name: string;
+    logoUrl: string;
+    score: bigint | undefined;
+  };
+  export type TeamDetails = InProgressTeamDetails | CompletedTeamDetails;
 
-  export let match: Match;
-
-  let team1: Team | undefined;
-  let team2: Team | undefined;
-  let team1Score: bigint | undefined;
-  let team2Score: bigint | undefined;
-  let title: string | undefined;
-  let round: bigint | undefined;
-  let team1Lead: string | undefined;
-  let team2Lead: string | undefined;
-  let baseState:
-    | {
-        firstBase: number | undefined;
-        secondBase: number | undefined;
-        thirdBase: number | undefined;
-      }
-    | undefined;
-
-  let startDate = nanosecondsToDate(match.time);
-
-  let getPlayerName = (players: PlayerState[], playerId: number): string => {
-    let player = players.find((p) => p.id == playerId);
-    if (player) {
-      return player.name;
-    }
-    return "Unknown";
+  export type BaseState = {
+    firstBase: number | undefined;
+    secondBase: number | undefined;
+    thirdBase: number | undefined;
   };
 
-  teamStore.subscribe((teams) => {
-    team1 = teams.find((team) => team.id.compareTo(match.team1.id) === "eq");
-    team2 = teams.find((team) => team.id.compareTo(match.team2.id) === "eq");
-  });
-  matchStore.subscribe((matches) => {
-    let newMatch = matches.find(
-      (m) => m.id == match.id && m.stadiumId == match.stadiumId
-    )!;
-    if (newMatch) {
-      match = newMatch;
-    }
+  export type InProgressMatchDetail = {
+    team1: TeamDetails;
+    team2: TeamDetails;
+    baseState: BaseState;
+    round: bigint | undefined;
+  };
+  export type CompletedMatchDetail = {
+    title: string;
+    team1: CompletedTeamDetails;
+    team2: CompletedTeamDetails;
+  };
 
-    if (match) {
-      if ("inProgress" in match.state) {
-        let offense = match.state.inProgress.field.offense;
-        baseState = {
-          firstBase: getOptValueOrUndefined(offense.firstBase),
-          secondBase: getOptValueOrUndefined(offense.secondBase),
-          thirdBase: getOptValueOrUndefined(offense.thirdBase),
-        };
-        team1Score = match.state.inProgress.team1.score;
-        team2Score = match.state.inProgress.team2.score;
-        title = undefined;
-        round = match.state.inProgress.round;
-        let team1LeadId, team2LeadId: number;
-        let team1LeadEmoji, team2LeadEmoji: string;
-        if ("team1" in match.state.inProgress.offenseTeamId) {
-          team1LeadEmoji = "🏹";
-          team1LeadId = match.state.inProgress.field.offense.atBat;
-          team2LeadEmoji = "⚾";
-          team2LeadId = match.state.inProgress.field.defense.pitcher;
-        } else {
-          team1LeadEmoji = "⚾";
-          team1LeadId = match.state.inProgress.field.defense.pitcher;
-          team2LeadEmoji = "🏹";
-          team2LeadId = match.state.inProgress.field.offense.atBat;
-        }
-        team1Lead =
-          team1LeadEmoji +
-          " " +
-          getPlayerName(match.state.inProgress.players, team1LeadId);
-        team2Lead =
-          getPlayerName(match.state.inProgress.players, team2LeadId) +
-          " " +
-          team2LeadEmoji;
-      } else if ("completed" in match.state) {
-        baseState = undefined;
-        round = undefined;
-        team1Lead = undefined;
-        team2Lead = undefined;
-        if ("played" in match.state.completed) {
-          let played = match.state.completed.played;
-          team1Score = played.team1.score;
-          team2Score = played.team2.score;
-          let winner;
-          if ("team1" in played.winner) {
-            winner = team1;
-          } else if ("team2" in played.winner) {
-            winner = team2;
-          } else {
-            winner = undefined;
-          }
-          title = winner ? `${winner.name} Wins!` : "Tie Game";
-        } else if ("absentTeam" in match.state.completed) {
-          let absentTeam = match.state.completed.absentTeam;
-          if (team1 && team2) {
-            let team = "team1" in absentTeam ? team1 : team2;
-            title = `${team.name} Absent`;
-          }
-        } else if ("allAbsent" in match.state.completed) {
-          title = "All Absent";
-        } else {
-          team1Score = undefined;
-          team2Score = undefined;
-        }
-      } else {
-        baseState = undefined;
-        team1Score = undefined;
-        team2Score = undefined;
-        round = undefined;
-        team1Lead = undefined;
-        team2Lead = undefined;
-        title = startDate.toLocaleString("en-US", {
-          month: "short",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit",
-        });
-      }
-    }
-  });
+  export type MatchDetail = InProgressMatchDetail | CompletedMatchDetail;
 </script>
 
-{#if !team1 || !team2}
-  <div>Loading...</div>
-{:else}
-  <div class="card">
-    <Link to={`/matches/${match.id}-${match.stadiumId.toString()}`}>
-      <div class="header">
-        <div class="team">
-          <div class="top">
-            <Tooltip>
-              <img
-                class="logo"
-                src={team1.logoUrl}
-                alt="{team1.name} Logo"
-                slot="content"
-              />
-              <div slot="tooltip" class="name">{team1.name}</div>
-            </Tooltip>
-            {#if team1Score !== undefined}
-              <div class="score">{team1Score}</div>
-            {/if}
-          </div>
-          <div class="mid">
-            {#if team1Lead}
-              <div class="team-lead">{team1Lead}</div>
-            {/if}
-          </div>
-          <div class="bottom" />
-        </div>
-        <div class="center">
-          <div class="top">
-            {#if baseState}
-              <Bases state={baseState} />
-            {:else if title !== undefined}
-              <div class="title">{title}</div>
-            {/if}
-          </div>
+<script lang="ts">
+  import Bases from "./Bases.svelte";
+  import Tooltip from "./Tooltip.svelte";
 
-          <div class="mid">
-            {#if round}
-              <div>Round {round}</div>
-            {/if}
-          </div>
-          <div class="bottom" />
-        </div>
-        <div class="team">
-          <div class="top">
-            {#if team2Score !== undefined}
-              <div class="score">{team2Score}</div>
-            {/if}
-            <Tooltip>
-              <img
-                class="logo"
-                src={team2.logoUrl}
-                alt="{team2.name} Logo"
-                slot="content"
-              />
-              <div slot="tooltip" class="name">{team2.name}</div>
-            </Tooltip>
-          </div>
-          <div class="mid">
-            {#if team2Lead}
-              <div class="team-lead">{team2Lead}</div>
-            {/if}
-          </div>
-          <div class="bottom" />
-        </div>
+  export let match: MatchDetail;
+</script>
+
+<div class="card">
+  <div class="header">
+    <div class="team">
+      <div class="top">
+        <Tooltip>
+          <img
+            class="logo"
+            src={match.team1.logoUrl}
+            alt="{match.team1.name} Logo"
+            slot="content"
+          />
+          <div slot="tooltip" class="name">{match.team1.name}</div>
+        </Tooltip>
+        {#if match.team1.score !== undefined}
+          <div class="score">{match.team1.score}</div>
+        {/if}
       </div>
-    </Link>
+      <div class="mid">
+        {#if "activePlayerName" in match.team1}
+          <div class="team-lead">{match.team1.activePlayerName}</div>
+        {/if}
+      </div>
+      <div class="bottom" />
+    </div>
+    <div class="center">
+      <div class="top">
+        {#if "baseState" in match}
+          <Bases state={match.baseState} />
+        {:else if "title" in match}
+          <div class="title">{match.title}</div>
+        {/if}
+      </div>
+
+      <div class="mid">
+        {#if "round" in match}
+          <div>Round {match.round}</div>
+        {/if}
+      </div>
+      <div class="bottom" />
+    </div>
+    <div class="team">
+      <div class="top">
+        {#if match.team2.score !== undefined}
+          <div class="score">{match.team2.score}</div>
+        {/if}
+        <Tooltip>
+          <img
+            class="logo"
+            src={match.team2.logoUrl}
+            alt="{match.team2.name} Logo"
+            slot="content"
+          />
+          <div slot="tooltip" class="name">{match.team2.name}</div>
+        </Tooltip>
+      </div>
+      <div class="mid">
+        {#if "activePlayerName" in match.team2}
+          <div class="team-lead">{match.team2.activePlayerName}</div>
+        {/if}
+      </div>
+      <div class="bottom" />
+    </div>
   </div>
-{/if}
+</div>
 
 <style>
   .card {
