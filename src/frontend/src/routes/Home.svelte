@@ -5,13 +5,13 @@
   import CreateStadium from "../components/CreateStadium.svelte";
   import CreateTeam from "../components/CreateTeam.svelte";
   import MatchGroupCard from "../components/MatchGroupCard.svelte";
-  import ScheduleMatch from "../components/ScheduleMatch.svelte";
-  import ScheduleSeason from "../components/ScheduleSeason.svelte";
+  import ScheduleMatch from "../components/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
   import { playerStore } from "../stores/PlayerStore";
   import { stadiumStore } from "../stores/StadiumStore";
   import { teamStore } from "../stores/TeamStore";
   import { matchGroupStore } from "../stores/MatchGroupStore";
+  import ScheduleSeason from "../components/ScheduleSeason.svelte";
 
   $: teams = $teamStore;
   $: stadiums = $stadiumStore;

@@ -14,7 +14,6 @@
   import { get } from "svelte/store";
 
   export let teamId: Principal;
-  export let stadiumId: Principal;
   export let matchGroupId: number;
 
   type Card = {

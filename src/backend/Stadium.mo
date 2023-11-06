@@ -14,9 +14,16 @@ module {
 
     public type StadiumActor = actor {
         getMatchGroup : query (id : Nat32) -> async ?MatchGroupWithId;
-        getMatchGroups : query () -> async [MatchGroupWithId];
+        getSeasonSchedule : query () -> async ?SeasonSchedule;
         tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
-        scheduleMatchGroup : (request : ScheduleMatchGroupRequest) -> async ScheduleMatchGroupResult;
+        scheduleSeason : (request : ScheduleSeasonRequest) -> async ScheduleSeasonResult;
+    };
+    public type SeasonSchedule = {
+        divisions : [DivisionSchedule];
+    };
+    public type DivisionSchedule = {
+        id : Principal;
+        matchGroups : [MatchGroup];
     };
 
     public type RegisterResult = {
@@ -32,9 +39,36 @@ module {
         #invalidChampion : PlayerId;
     };
 
+    public type ScheduleSeasonRequest = {
+        divisions : [ScheduleDivisionRequest];
+    };
+
+    public type ScheduleSeasonResultGeneric<T> = {
+        #ok;
+        #divisionErrors : [T];
+        #noDivisionSpecified;
+        #alreadyScheduled;
+    };
+    public type ScheduleSeasonResult = ScheduleSeasonResultGeneric<ScheduleDivisionErrorResult>;
+    public type ScheduleDivisionErrorResult = {
+        id : Principal;
+        error : ScheduleDivisionError;
+    };
+
+    public type ScheduleDivisionError = {
+        #divisionNotFound;
+        #teamFetchError : Text;
+        #playerFetchError : Text;
+        #matchGroupErrors : [ScheduleMatchGroupError];
+    };
+
+    public type ScheduleDivisionRequest = {
+        id : Principal;
+        matchGroups : [ScheduleMatchGroupRequest];
+    };
+
     public type ScheduleMatchGroupRequest = {
-        time : Time.Time;
-        divisionId : Principal;
+        startTime : Time.Time;
         matches : [ScheduleMatchRequest];
     };
 
@@ -52,10 +86,6 @@ module {
 
     public type ScheduleMatchError = {
         #teamNotFound : TeamIdOrBoth;
-    };
-
-    public type ScheduleMatchGroupResult = ScheduleMatchGroupError or {
-        #ok : Nat32;
     };
 
     public type TeamId = {
@@ -201,10 +231,6 @@ module {
 
     public type MatchState = StartedMatchState or {
         #notStarted;
-    };
-    public type MatchWithId = Match and {
-        id : Nat32;
-        stadiumId : Principal;
     };
 
     public type MatchGroup = {

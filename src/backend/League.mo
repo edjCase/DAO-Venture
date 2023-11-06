@@ -21,19 +21,25 @@ module {
     };
 
     public type ScheduleSeasonRequest = {
-        divisions : [DivisionScheduleRequest];
+        divisions : [ScheduleDivisionRequest];
     };
 
-    public type DivisionScheduleRequest = {
+    public type ScheduleDivisionRequest = {
         id : Principal;
         startTime : Time.Time;
     };
-    public type ScheduleSeasonResult = {
-        #ok;
-        #divisionErrors : [{
-            divisionId : Principal;
-            error : Division.ScheduleError;
-        }];
+    public type ScheduleSeasonResult = Stadium.ScheduleSeasonResultGeneric<ScheduleDivisionErrorResult> or {
+        #noStadium;
+        #stadiumScheduleError : Text;
+        #teamFetchError : Text;
+    };
+    public type ScheduleDivisionError = Stadium.ScheduleDivisionError or {
+        #oddNumberOfTeams;
+        #noTeamsInDivision;
+    };
+    public type ScheduleDivisionErrorResult = {
+        id : Principal;
+        error : ScheduleDivisionError;
     };
     public type CreateDivisionRequest = {
         name : Text;

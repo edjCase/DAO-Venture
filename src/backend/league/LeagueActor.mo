@@ -31,7 +31,7 @@ import DateTime "mo:datetime/DateTime";
 import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import League "../League";
-import RandomUtil "../RandomUtil";
+import Util "../Util";
 import Division "../Division";
 import DivisionActor "../division/DivisionActor";
 import StadiumActor "../stadium/StadiumActor";
@@ -41,10 +41,14 @@ actor LeagueActor {
     type DivisionWithId = League.DivisionWithId;
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
-    type CreateDivisionRequest = League.CreateDivisionRequest;
-    type CreateDivisionResult = League.CreateDivisionResult;
-    type ScheduleSeasonRequest = League.ScheduleSeasonRequest;
-    type ScheduleSeasonResult = League.ScheduleSeasonResult;
+    type BuildDivisionRequestResult = {
+        #ok : [Stadium.ScheduleMatchGroupRequest];
+        #error : League.ScheduleDivisionError;
+    };
+    type BuildDivisionRequestResultWithId = {
+        #ok : Stadium.ScheduleDivisionRequest;
+        #error : League.ScheduleDivisionErrorResult;
+    };
 
     stable var divisions : Trie.Trie<Principal, Division> = Trie.empty();
     stable var stadiumIdOrNull : ?Principal = null;
@@ -88,7 +92,7 @@ actor LeagueActor {
         stadiumIdOrNull := ?Principal.fromActor(stadium);
     };
 
-    public shared ({ caller }) func createDivision(request : CreateDivisionRequest) : async CreateDivisionResult {
+    public shared ({ caller }) func createDivision(request : League.CreateDivisionRequest) : async League.CreateDivisionResult {
         let leagueId = Principal.fromActor(LeagueActor);
         // TODO
         // if (caller != leagueId) {
@@ -123,24 +127,127 @@ actor LeagueActor {
         return #ok(divisionId);
     };
 
-    public shared ({ caller }) func scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult {
-        let divisionErrors = Buffer.Buffer<{ divisionId : Principal; error : Division.ScheduleError }>(0);
-        label f for (divisionRequest in Iter.fromArray(request.divisions)) {
-            let divisionActor = actor (Principal.toText(divisionRequest.id)) : Division.DivisionActor;
+    public shared ({ caller }) func scheduleSeason(request : League.ScheduleSeasonRequest) : async League.ScheduleSeasonResult {
 
-            switch (await divisionActor.scheduleSeason(divisionRequest)) {
-                case (#ok)();
-                case (#error(e)) divisionErrors.add({
-                    divisionId = divisionRequest.id;
-                    error = e;
+        let ?stadiumId = stadiumIdOrNull else return #noStadium;
+        let seedBlob = await Random.blob();
+        let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
+
+        let divisionRequestResults = Buffer.Buffer<BuildDivisionRequestResultWithId>(request.divisions.size());
+        for (division in Iter.fromArray(request.divisions)) {
+            let divisionActor = actor (Principal.toText(division.id)) : Division.DivisionActor;
+            let result = try {
+                let teams = await divisionActor.getTeams();
+                let teamIds = Array.map(teams, func(team : Team.TeamWithId) : Principal = team.id);
+                await* buildDivisionRequest(teamIds, division.startTime, prng);
+            } catch (err) {
+                #error(#teamFetchError(Error.message(err)));
+            };
+            let resultWithId = switch (result) {
+                case (#ok(divisionRequest)) #ok({
+                    id = division.id;
+                    matchGroups = divisionRequest;
+                });
+                case (#error(error)) #error({
+                    id = division.id;
+                    error = error;
                 });
             };
+            divisionRequestResults.add(resultWithId);
+        };
 
+        let divisionRequests : [Stadium.ScheduleDivisionRequest] = switch (Util.allOkOrError(divisionRequestResults.vals())) {
+            case (#ok(schedules)) schedules;
+            case (#error(errors)) return #divisionErrors(errors);
         };
-        if (divisionErrors.size() > 0) {
-            return #divisionErrors(Buffer.toArray(divisionErrors));
+        let stadiumRequest : Stadium.ScheduleSeasonRequest = {
+            divisions = divisionRequests;
         };
-        #ok;
+        let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+        try {
+            await stadiumActor.scheduleSeason(stadiumRequest);
+        } catch (err) {
+            #stadiumScheduleError(Error.message(err));
+        };
+    };
+
+    private func buildDivisionRequest(
+        teamIds : [Principal],
+        start : Time.Time,
+        prng : Prng,
+    ) : async* BuildDivisionRequestResult {
+        // Round robin tournament algorithm
+        var teamOrderForWeek = Buffer.fromArray<Principal>(teamIds);
+
+        prng.shuffleBuffer(teamOrderForWeek);
+
+        let teamCount = teamOrderForWeek.size();
+        if (teamCount == 0) {
+            return #error(#noTeamsInDivision);
+        };
+        if (teamCount % 2 == 1) {
+            return #error(#oddNumberOfTeams);
+        };
+        let matchUpCountPerWeek = teamCount / 2;
+        let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
+        var nextMatchDate = DateTime.fromTime(start);
+
+        let matchGroupRequests = Buffer.Buffer<Stadium.ScheduleMatchGroupRequest>(weekCount);
+        for (weekIndex in IterTools.range(0, weekCount)) {
+
+            let matches : [Stadium.ScheduleMatchRequest] = IterTools.range(0, matchUpCountPerWeek)
+            |> Iter.map(
+                _,
+                func(i : Nat) : Stadium.ScheduleMatchRequest {
+                    let offerings = getRandomOfferings(4);
+                    let aura = getRandomMatchAura(prng);
+                    let team1Id = teamOrderForWeek.get(i);
+                    let team2Id = teamOrderForWeek.get(i + matchUpCountPerWeek); // Second half of teams
+                    {
+                        team1Id = team1Id;
+                        team2Id = team2Id;
+                        aura = aura;
+                        offerings = offerings;
+                    };
+                },
+            )
+            |> Iter.toArray(_);
+            nextMatchDate := nextMatchDate.add(#weeks(1));
+            // Rotate order of teams
+            // 1) Freeze the first team
+            // 2) Bring the last team to the second position
+            // 3) Rotate the rest of the teams by one position
+            let firstTeamId = teamOrderForWeek.get(0);
+            let lastTeamId = teamOrderForWeek.get(teamOrderForWeek.size() - 1);
+            let newOrder = Buffer.Buffer<Principal>(teamCount);
+            newOrder.add(firstTeamId);
+            newOrder.add(lastTeamId);
+            for (i in IterTools.range(1, teamCount - 1)) {
+                newOrder.add(teamOrderForWeek.get(i));
+            };
+            teamOrderForWeek := newOrder;
+        };
+
+        #ok(Buffer.toArray(matchGroupRequests));
+    };
+
+    private func getRandomOfferings(count : Nat) : [Stadium.Offering] {
+        // TODO
+        [
+            #shuffleAndBoost
+        ];
+    };
+
+    private func getRandomMatchAura(prng : Prng) : Stadium.MatchAura {
+        // TODO
+        let auras = Buffer.fromArray<Stadium.MatchAura>([
+            #lowGravity,
+            #explodingBalls,
+            #fastBallsHardHits,
+            #moreBlessingsAndCurses,
+        ]);
+        prng.shuffleBuffer(auras);
+        auras.get(0);
     };
     public shared ({ caller }) func updateLeagueCanisters() : async () {
         let leagueId = Principal.fromActor(LeagueActor);
