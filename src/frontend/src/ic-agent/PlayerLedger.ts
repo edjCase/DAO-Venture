@@ -129,7 +129,7 @@ export const CreatePlayerResultIdl = IDL.Variant({
 
 
 export interface _SERVICE {
-  'createPlayer': ActorMethod<[CreatePlayerRequest], CreatePlayerResult>,
+  'create': ActorMethod<[CreatePlayerRequest], CreatePlayerResult>,
   'getAllPlayers': ActorMethod<[], Array<Player>>,
   'getPlayer': ActorMethod<[number], GetPlayerResult>,
   'getTeamPlayers': ActorMethod<[[] | [Principal]], Array<Player>>,

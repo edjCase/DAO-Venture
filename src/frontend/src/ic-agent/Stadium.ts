@@ -369,17 +369,75 @@ export const ScheduleMatchGroupResultIdl = IDL.Variant({
   'matchErrors': IDL.Vec(ScheduleMatchErrorIdl)
 });
 
+export type DivisionSchedule = {
+  'id': Principal;
+  'matchGroups': MatchGroup[];
+};
+export const DivisionScheduleIdl = IDL.Record({
+  'id': IDL.Principal,
+  'matchGroups': IDL.Vec(MatchGroupIdl)
+});
+
+export type SeasonSchedule = {
+  'divisions': DivisionSchedule[];
+};
+export const SeasonScheduleIdl = IDL.Record({
+  'divisions': IDL.Vec(DivisionScheduleIdl)
+});
+
+export type ScheduleMatchGroupError =
+  | { 'teamFetchError': string }
+  | { 'matchErrors': [ScheduleMatchError] };
+export const ScheduleMatchGroupErrorIdl = IDL.Variant({
+  'teamFetchError': IDL.Text,
+  'matchErrors': IDL.Vec(ScheduleMatchErrorIdl)
+});
+
+export type ScheduleDivisionError =
+  | { 'divisionNotFound': null }
+  | { 'teamFetchError': string }
+  | { 'playerFetchError': string }
+  | { 'matchGroupErrors': [ScheduleMatchGroupError] };
+export const ScheduleDivisionErrorIdl = IDL.Variant({
+  'divisionNotFound': IDL.Null,
+  'teamFetchError': IDL.Text,
+  'playerFetchError': IDL.Text,
+  'matchGroupErrors': IDL.Vec(ScheduleMatchGroupErrorIdl)
+});
+
+export type ScheduleDivisionErrorResult = {
+  id: Principal;
+  error: ScheduleDivisionError;
+};
+export const ScheduleDivisionErrorResultIdl = IDL.Record({
+  'id': IDL.Principal,
+  'error': ScheduleDivisionErrorIdl
+});
+
+export type ScheduleSeasonResult =
+  | { 'ok': null }
+  | { 'divisionErrors': [] }
+  | { 'noDivisionSpecified': null }
+  | { 'alreadyScheduled': null };
+export const ScheduleSeasonResultIdl = IDL.Variant({
+  'ok': IDL.Null,
+  'divisionErrors': IDL.Vec(ScheduleDivisionErrorResultIdl),
+  'noDivisionSpecified': IDL.Null,
+  'alreadyScheduled': IDL.Null
+});
+
+
 
 export interface _SERVICE {
   'getMatchGroup': ActorMethod<[number], [] | [MatchGroup]>,
-  'getMatchGroups': ActorMethod<[], MatchGroup[]>,
+  'getSeasonSchedule': ActorMethod<[], [] | [SeasonSchedule]>,
   'tickMatchGroup': ActorMethod<[number], TickMatchGroupResult>,
   'scheduleMatchGroup': ActorMethod<[ScheduleMatchGroupRequest], ScheduleMatchGroupResult>
 }
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
   return IDL.Service({
     'getMatchGroup': IDL.Func([IDL.Nat32], [IDL.Opt(MatchGroupIdl)], ['query']),
-    'getMatchGroups': IDL.Func([], [IDL.Vec(MatchGroupIdl)], ['query']),
+    'getSeasonSchedule': IDL.Func([], [IDL.Opt(SeasonScheduleIdl)], ['query']),
     'tickMatchGroup': IDL.Func([IDL.Nat32], [TickMatchGroupResultIdl], []),
     'scheduleMatchGroup': IDL.Func([ScheduleMatchGroupRequestIdl], [ScheduleMatchGroupResultIdl], [])
   });

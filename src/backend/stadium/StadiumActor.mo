@@ -117,7 +117,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
 
     public shared ({ caller }) func scheduleSeason(request : Stadium.ScheduleSeasonRequest) : async Stadium.ScheduleSeasonResult {
         assertLeague(caller);
-        let ?seasonSchedule = seasonScheduleOrNull else return #alreadyScheduled;
+        switch (seasonScheduleOrNull) {
+            case (null)();
+            case (?_) return #alreadyScheduled;
+        };
         if (request.divisions.size() < 1) {
             return #noDivisionSpecified;
         };

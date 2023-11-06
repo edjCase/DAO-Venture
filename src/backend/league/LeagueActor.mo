@@ -80,16 +80,26 @@ actor LeagueActor {
         };
     };
 
-    public shared ({ caller }) func createStadium() : async () {
+    public shared ({ caller }) func createStadium() : async League.CreateStadiumResult {
+        switch (stadiumIdOrNull) {
+            case (null)();
+            case (?id) return #alreadyCreated;
+        };
         await* createStadiumInternal();
     };
 
-    private func createStadiumInternal() : async* () {
+    private func createStadiumInternal() : async* League.CreateStadiumResult {
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
-        let stadium = await StadiumActor.StadiumActor(Principal.fromActor(LeagueActor));
-        stadiumIdOrNull := ?Principal.fromActor(stadium);
+        let stadium = try {
+            await StadiumActor.StadiumActor(Principal.fromActor(LeagueActor));
+        } catch (err) {
+            return #stadiumCreationError(Error.message(err));
+        };
+        let stadiumId = Principal.fromActor(stadium);
+        stadiumIdOrNull := ?stadiumId;
+        #ok(stadiumId);
     };
 
     public shared ({ caller }) func createDivision(request : League.CreateDivisionRequest) : async League.CreateDivisionResult {

@@ -51,6 +51,8 @@ module {
     };
     public type CreateStadiumResult = {
         #ok : Principal;
+        #alreadyCreated;
+        #stadiumCreationError : Text;
     };
     public type CreateTeamDaoResult = {
         #ok : Principal;

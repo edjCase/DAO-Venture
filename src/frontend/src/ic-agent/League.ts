@@ -28,7 +28,7 @@ export type DivisionScheduleRequest = {
   'startTime': Time;
 };
 export const DivisionScheduleRequestIdl = IDL.Record({
-  'id': IDL.Nat32,
+  'id': IDL.Principal,
   'startTime': TimeIdl
 });
 
@@ -39,7 +39,7 @@ export const ScheduleSeasonRequestIdl = IDL.Record({
   'divisions': IDL.Vec(DivisionScheduleRequestIdl)
 });
 
-export type DivisionScheduleError = {
+export type ScheduleDivisionError = {
   'alreadyScheduled': null
 } | {
   'divisionNotFound': null
@@ -50,7 +50,7 @@ export type DivisionScheduleError = {
 } | {
   'oddNumberOfTeams': null
 };
-export const DivisionScheduleErrorIdl = IDL.Variant({
+export const ScheduleDivisionErrorIdl = IDL.Variant({
   'alreadyScheduled': IDL.Null,
   'divisionNotFound': IDL.Null,
   'missingDivision': IDL.Null,
@@ -58,21 +58,34 @@ export const DivisionScheduleErrorIdl = IDL.Variant({
   'oddNumberOfTeams': IDL.Null
 });
 
-export type ScheduleSeasonResult = {
-  'ok': null
-} | {
-  'divisionErrors': {
-    'divisionId': Principal;
-    'error': DivisionScheduleError;
-  }[]
+export type ScheduleDivisionErrorResult = {
+  id: Principal;
+  error: ScheduleDivisionError;
 };
+export const ScheduleDivisionErrorResultIdl = IDL.Record({
+  'id': IDL.Principal,
+  'error': ScheduleDivisionErrorIdl
+});
+
+
+export type ScheduleSeasonResult =
+  | { 'ok': null }
+  | { 'divisionErrors': [] }
+  | { 'noDivisionSpecified': null }
+  | { 'alreadyScheduled': null }
+  | { 'noStadium': null }
+  | { 'stadiumScheduleError': string }
+  | { 'teamFetchError': string };
 export const ScheduleSeasonResultIdl = IDL.Variant({
   'ok': IDL.Null,
-  'divisionErrors': IDL.Vec(IDL.Record({
-    'divisionId': IDL.Principal,
-    'error': DivisionScheduleErrorIdl
-  }))
+  'divisionErrors': IDL.Vec(ScheduleDivisionErrorResultIdl),
+  'noDivisionSpecified': IDL.Null,
+  'alreadyScheduled': IDL.Null,
+  'noStadium': IDL.Null,
+  'stadiumScheduleError': IDL.Text,
+  'teamFetchError': IDL.Text
 });
+
 
 export type Division = {
   'id': Principal;
@@ -111,12 +124,17 @@ const Stadium = IDL.Record({
   'id': IDL.Principal
 });
 
-export type CreateStadiumResult = {
-  'ok': Principal
-};
+export type CreateStadiumResult =
+  | { 'ok': Principal }
+  | { 'alreadyCreated': null }
+  | { 'stadiumCreationError': string; };
 export const CreateStadiumResultIdl = IDL.Variant({
-  'ok': IDL.Principal
+  'ok': IDL.Principal,
+  'alreadyCreated': IDL.Null,
+  'stadiumCreationError': IDL.Text
 });
+
+
 
 export interface _SERVICE {
   'createStadium': ActorMethod<[], CreateStadiumResult>,

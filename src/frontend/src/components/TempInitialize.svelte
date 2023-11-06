@@ -389,7 +389,7 @@
     for (let j in players) {
       let player = players[j];
       let promise = playerLedgerAgent
-        .createPlayer({
+        .create({
           name: player.name,
           position: player.position,
           teamId: [teamId],
