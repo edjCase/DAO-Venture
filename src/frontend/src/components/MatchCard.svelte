@@ -39,9 +39,10 @@
         {/if}
       </div>
       <div class="mid">
-        {#if "activePlayerName" in match.team1}
+        <!-- TODO -->
+        <!-- {#if 'inProgress' in matchState && "activePlayerName" in matchState.inProgress.}
           <div class="team-lead">{match.team1.activePlayerName}</div>
-        {/if}
+        {/if} -->
       </div>
       <div class="bottom" />
     </div>
@@ -55,8 +56,8 @@
       </div>
 
       <div class="mid">
-        {#if "round" in match}
-          <div>Round {match.round}</div>
+        {#if "inProgress" in matchState}
+          <div>Round {matchState.inProgress.round}</div>
         {/if}
       </div>
       <div class="bottom" />
@@ -77,9 +78,10 @@
         </Tooltip>
       </div>
       <div class="mid">
-        {#if "activePlayerName" in match.team2}
+        <!-- TODO -->
+        <!-- {#if "activePlayerName" in match.team2}
           <div class="team-lead">{match.team2.activePlayerName}</div>
-        {/if}
+        {/if} -->
       </div>
       <div class="bottom" />
     </div>

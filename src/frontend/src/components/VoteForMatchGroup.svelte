@@ -78,7 +78,9 @@
     if (!matchGroup) {
       return;
     }
-    let unmappedMatch = matchGroup.matches.find((m) => m.team1.id == teamId);
+    let unmappedMatch = matchGroup.matches.find(
+      (m) => m.team1.id == teamId || m.team2.id == teamId
+    );
     if (!unmappedMatch) {
       return;
     }

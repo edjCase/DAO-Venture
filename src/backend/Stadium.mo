@@ -261,11 +261,11 @@ module {
     public type InProgressMatchGroupState = {
         tickTimerId : Nat;
         currentSeed : Nat32;
-        matchStates : [StartedMatchState];
+        matches : [StartedMatchState];
     };
 
     public type CompletedMatchGroupState = {
-        matchStates : [CompletedMatchState];
+        matches : [CompletedMatchState];
     };
 
     public type TickMatchGroupResult = {

@@ -106,7 +106,6 @@ export type PlayerState = {
 };
 export const PlayerStateIdl = IDL.Record({
   'id': IDL.Nat32,
-  'name': IDL.Text,
   'teamId': TeamIdIdl,
   'condition': PlayerConditionIdl,
   'skills': PlayerSkillsIdl,

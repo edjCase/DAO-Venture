@@ -206,7 +206,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 let prng = CommonUtil.buildPrng(seedBlob);
                 Timer.cancelTimer(notStartedState.startTimerId); // Cancel timer before disposing of timer id
                 let tickTimerId = Timer.recurringTimer(
-                    #seconds(5000),
+                    #seconds(5),
                     func() : async () {
                         await tickMatchGroupCallback(matchGroupId);
                     },
@@ -223,7 +223,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 };
                 {
                     notStartedState with
-                    matchStates = Buffer.toArray(startedMatches);
+                    matches = Buffer.toArray(startedMatches);
                     tickTimerId = tickTimerId;
                     currentSeed = prng.getCurrentSeed();
                 };
@@ -232,21 +232,21 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (#inProgress(g)) g;
         };
         let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroupState.currentSeed);
-        let newState : Stadium.StartedMatchGroupState = switch (tickMatches(prng, matchGroup.matches, matchGroupState.matchStates)) {
+        let newState : Stadium.StartedMatchGroupState = switch (tickMatches(prng, matchGroup.matches, matchGroupState.matches)) {
             case (#completed(completedMatches)) {
                 // Cancel tick timer before disposing of timer id
                 Timer.cancelTimer(matchGroupState.tickTimerId);
 
                 #completed({
                     matchGroupState with
-                    matchStates = completedMatches;
+                    matches = completedMatches;
                     currentSeed = prng.getCurrentSeed();
                 });
             };
             case (#inProgress(newMatches)) {
                 #inProgress({
                     matchGroupState with
-                    matchStates = newMatches;
+                    matches = newMatches;
                     currentSeed = prng.getCurrentSeed();
                 });
             };
@@ -355,7 +355,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 let team2 = {
                     t2 with
                     predictionVotes = 0;
-                    players = getPlayers(t1.id);
+                    players = getPlayers(t2.id);
                 };
                 #ok({
                     team1 = team1;
@@ -372,9 +372,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let message = switch (await tickMatchGroup(matchGroupId)) {
             case (#matchGroupNotFound) "Failed to start match group: Match Group not found";
             case (#completed(_)) "Failed to start match group: Match Group completed";
-            case (#inProgress(_)) "Started match group: " # Nat32.toText(matchGroupId);
+            case (#inProgress(_)) "Ticked match group: " # Nat32.toText(matchGroupId);
         };
-        Debug.print("Start Match Group Callback Result - " # message);
+        Debug.print("Tick Match Group Callback Result - " # message);
     };
 
     private func tickMatches(prng : Prng, matches : [Stadium.Match], matchStates : [Stadium.StartedMatchState]) : {
@@ -388,7 +388,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             let match = matches[matchIndex]; // TODO safe indexing
             matchIndex += 1;
             let newMatchState = tickMatchState(match.team1, match.team2, prng, matchState);
-            newMatchStates.add(newMatchState);
             switch (newMatchState) {
                 case (#completed(completedState)) completedMatchStates.add(completedState);
                 case (#inProgress(_)) newMatchStates.add(newMatchState);
