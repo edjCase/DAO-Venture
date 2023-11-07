@@ -80,15 +80,17 @@ actor LeagueActor {
         };
     };
 
+    public composite query func getSeasonSchedule() : async ?Stadium.SeasonSchedule {
+        let ?stadiumId = stadiumIdOrNull else return null;
+        let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+        await stadiumActor.getSeasonSchedule();
+    };
+
     public shared ({ caller }) func createStadium() : async League.CreateStadiumResult {
         switch (stadiumIdOrNull) {
             case (null)();
             case (?id) return #alreadyCreated;
         };
-        await* createStadiumInternal();
-    };
-
-    private func createStadiumInternal() : async* League.CreateStadiumResult {
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
@@ -222,6 +224,11 @@ actor LeagueActor {
                 },
             )
             |> Iter.toArray(_);
+
+            matchGroupRequests.add({
+                startTime = nextMatchDate.toTime();
+                matches = matches;
+            });
             nextMatchDate := nextMatchDate.add(#weeks(1));
             // Rotate order of teams
             // 1) Freeze the first team

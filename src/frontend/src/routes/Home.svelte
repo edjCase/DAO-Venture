@@ -29,12 +29,15 @@
   let historicalMatchGroupIds: number[] = [];
   let upcomingMatchGroupIds: number[] = [];
   matchGroupStore.subscribe((matchGroups) => {
+    liveMatchGroupIds = [];
+    historicalMatchGroupIds = [];
+    upcomingMatchGroupIds = [];
     for (let matchGroup of matchGroups) {
       if ("inProgress" in matchGroup.state) {
         liveMatchGroupIds.push(matchGroup.id);
       } else if ("completed" in matchGroup.state) {
         historicalMatchGroupIds.push(matchGroup.id);
-      } else if ("notStarted" in matchGroup.state) {
+      } else {
         upcomingMatchGroupIds.push(matchGroup.id);
       }
     }

@@ -3,6 +3,7 @@ import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
+import { ScheduleDivisionErrorResult, ScheduleDivisionErrorResultIdl, ScheduleMatchGroupErrorIdl, SeasonSchedule, SeasonScheduleIdl, ScheduleDivisionError as StadiumScheduleDivisionError } from './Stadium';
 
 
 export type Time = bigint;
@@ -39,38 +40,24 @@ export const ScheduleSeasonRequestIdl = IDL.Record({
   'divisions': IDL.Vec(DivisionScheduleRequestIdl)
 });
 
-export type ScheduleDivisionError = {
-  'alreadyScheduled': null
-} | {
-  'divisionNotFound': null
-} | {
-  'missingDivision': null
-} | {
-  'noTeamsInDivision': null
-} | {
-  'oddNumberOfTeams': null
-};
+export type ScheduleDivisionError =
+  | StadiumScheduleDivisionError
+  | { 'noTeamsInDivision': null }
+  | { 'oddNumberOfTeams': null }
 export const ScheduleDivisionErrorIdl = IDL.Variant({
-  'alreadyScheduled': IDL.Null,
   'divisionNotFound': IDL.Null,
-  'missingDivision': IDL.Null,
+  'teamFetchError': IDL.Text,
+  'playerFetchError': IDL.Text,
+  'matchGroupErrors': IDL.Vec(ScheduleMatchGroupErrorIdl),
+  'noMatchGroupsSpecified': IDL.Null,
   'noTeamsInDivision': IDL.Null,
   'oddNumberOfTeams': IDL.Null
-});
-
-export type ScheduleDivisionErrorResult = {
-  id: Principal;
-  error: ScheduleDivisionError;
-};
-export const ScheduleDivisionErrorResultIdl = IDL.Record({
-  'id': IDL.Principal,
-  'error': ScheduleDivisionErrorIdl
 });
 
 
 export type ScheduleSeasonResult =
   | { 'ok': null }
-  | { 'divisionErrors': [] }
+  | { 'divisionErrors': ScheduleDivisionErrorResult[] }
   | { 'noDivisionSpecified': null }
   | { 'alreadyScheduled': null }
   | { 'noStadium': null }
@@ -142,6 +129,7 @@ export interface _SERVICE {
   'createDivision': ActorMethod<[CreateDivisionRequest], CreateDivisionResult>,
   'getTeams': ActorMethod<[], Array<Team>>,
   'getDivisions': ActorMethod<[], Array<Division>>,
+  'getSeasonSchedule': ActorMethod<[], [] | [SeasonSchedule]>,
   'updateLeagueCanisters': ActorMethod<[], undefined>,
   'scheduleSeason': ActorMethod<[ScheduleSeasonRequest], ScheduleSeasonResult>
 }
@@ -156,6 +144,7 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'createDivision': IDL.Func([CreateDivisionRequestIdl], [CreateDivisionResultIdl], []),
     'getTeams': IDL.Func([], [IDL.Vec(TeamIdl)], ['query']),
     'getDivisions': IDL.Func([], [IDL.Vec(DivisionIdl)], ['query']),
+    'getSeasonSchedule': IDL.Func([], [IDL.Opt(SeasonScheduleIdl)], ['query']),
     'updateLeagueCanisters': IDL.Func([], [], []),
     'scheduleSeason': IDL.Func([ScheduleSeasonRequestIdl], [ScheduleSeasonResultIdl], [])
   });

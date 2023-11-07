@@ -29,7 +29,7 @@
     selectedChampion: number | undefined;
   };
 
-  let matches: Match[] | undefined;
+  let match: Match | undefined;
 
   let register = function (match: Match) {
     if (!match.selectedOffering || !match.selectedChampion) {
@@ -38,7 +38,7 @@
     }
     let offering: Offering;
     switch (match.selectedOffering) {
-      case "mischief":
+      case "shuffleAndBoost":
         offering = { shuffleAndBoost: null };
         break;
       // case "war":
@@ -75,47 +75,48 @@
 
   matchGroupStore.subscribe((matchGroups) => {
     let matchGroup = matchGroups.find((g) => g.id == matchGroupId);
-    if (matchGroup) {
-      matches = matchGroup.matches.map((m, i) => {
-        let offeringCards = m.offerings.map((o) => {
-          let offeringDetails = getOfferingDetails(o);
-          return {
-            id: i.toString(),
-            title: offeringDetails.name,
-            description: offeringDetails.description,
-          };
-        });
-        let players = get(playerStore);
-        let championChoices = players || [];
-        return {
-          offeringCards: offeringCards,
-          selectedOffering: undefined,
-          championChoices: championChoices,
-          selectedChampion: undefined,
-        };
-      });
+    if (!matchGroup) {
+      return;
     }
+    let unmappedMatch = matchGroup.matches.find((m) => m.team1.id == teamId);
+    if (!unmappedMatch) {
+      return;
+    }
+    let offeringCards = unmappedMatch.offerings.map((o) => {
+      let offeringDetails = getOfferingDetails(o);
+      return {
+        id: "shuffleAndBoost", // TODO
+        title: offeringDetails.name,
+        description: offeringDetails.description,
+      };
+    });
+    let players = get(playerStore);
+    let championChoices = players || [];
+    match = {
+      offeringCards: offeringCards,
+      selectedOffering: undefined,
+      championChoices: championChoices,
+      selectedChampion: undefined,
+    };
   });
 </script>
 
-{#if matches}
-  {#each matches as match}
-    <div>
-      <h2>Offerings</h2>
-      <CardList
-        cards={match.offeringCards}
-        onSelect={(i) => (match.selectedOffering = i)}
+{#if match}
+  <div>
+    <h2>Offerings</h2>
+    <CardList
+      cards={match.offeringCards}
+      onSelect={(i) => (match.selectedOffering = i)}
+    />
+  </div>
+  <div>
+    <h2>Champion</h2>
+    {#if match.championChoices}
+      <PlayerPicker
+        players={match.championChoices}
+        onPlayerSelected={(pId) => (match.selectedChampion = pId)}
       />
-    </div>
-    <div>
-      <h2>Champion</h2>
-      {#if match.championChoices}
-        <PlayerPicker
-          players={match.championChoices}
-          onPlayerSelected={(pId) => (match.selectedChampion = pId)}
-        />
-      {/if}
-    </div>
-    <button on:click={() => register(match)}>Submit Vote</button>
-  {/each}
+    {/if}
+  </div>
+  <button on:click={() => register(match)}>Submit Vote</button>
 {/if}

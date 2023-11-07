@@ -1,43 +1,24 @@
 <script context="module" lang="ts">
-  export type InProgressTeamDetails = {
-    name: string;
-    logoUrl: string;
-    score: bigint;
-    activePlayerName: string;
-  };
-  export type CompletedTeamDetails = {
-    name: string;
-    logoUrl: string;
-    score: bigint | undefined;
-  };
-  export type TeamDetails = InProgressTeamDetails | CompletedTeamDetails;
-
-  export type BaseState = {
-    firstBase: number | undefined;
-    secondBase: number | undefined;
-    thirdBase: number | undefined;
-  };
-
-  export type InProgressMatchDetail = {
-    team1: TeamDetails;
-    team2: TeamDetails;
-    baseState: BaseState;
-    round: bigint | undefined;
-  };
-  export type CompletedMatchDetail = {
-    title: string;
-    team1: CompletedTeamDetails;
-    team2: CompletedTeamDetails;
-  };
-
-  export type MatchDetail = InProgressMatchDetail | CompletedMatchDetail;
 </script>
 
 <script lang="ts">
+  import { MatchDetail, StartedMatchStateDetails } from "../models/Match";
+
   import Bases from "./Bases.svelte";
   import Tooltip from "./Tooltip.svelte";
 
   export let match: MatchDetail;
+  export let matchState: StartedMatchStateDetails;
+
+  let team1Score: bigint | undefined;
+  let team2Score: bigint | undefined;
+  if ("inProgress" in matchState) {
+    team1Score = matchState.inProgress.team1.score;
+    team2Score = matchState.inProgress.team2.score;
+  } else if ("completed" in matchState && "played" in matchState.completed) {
+    team1Score = matchState.completed.played.team1.score;
+    team2Score = matchState.completed.played.team2.score;
+  }
 </script>
 
 <div class="card">
@@ -53,8 +34,8 @@
           />
           <div slot="tooltip" class="name">{match.team1.name}</div>
         </Tooltip>
-        {#if match.team1.score !== undefined}
-          <div class="score">{match.team1.score}</div>
+        {#if team1Score !== undefined}
+          <div class="score">{team1Score}</div>
         {/if}
       </div>
       <div class="mid">
@@ -66,8 +47,8 @@
     </div>
     <div class="center">
       <div class="top">
-        {#if "baseState" in match}
-          <Bases state={match.baseState} />
+        {#if "inProgress" in matchState}
+          <Bases state={matchState.inProgress.field.offense} />
         {:else if "title" in match}
           <div class="title">{match.title}</div>
         {/if}
@@ -82,8 +63,8 @@
     </div>
     <div class="team">
       <div class="top">
-        {#if match.team2.score !== undefined}
-          <div class="score">{match.team2.score}</div>
+        {#if team2Score !== undefined}
+          <div class="score">{team2Score}</div>
         {/if}
         <Tooltip>
           <img

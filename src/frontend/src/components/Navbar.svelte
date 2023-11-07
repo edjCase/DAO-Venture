@@ -11,9 +11,6 @@
       <Link to="/" class="nav-link">Home</Link>
     </li>
     <li class="nav-item">
-      <Link to="/matches" class="nav-link">Matches</Link>
-    </li>
-    <li class="nav-item">
       <a
         class="nav-link"
         target="_blank"

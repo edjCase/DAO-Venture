@@ -10,6 +10,7 @@ module {
         getTeams() : async [Team.TeamWithId];
         getStadiums() : async [Stadium];
         getDivisions() : async [DivisionWithId];
+        getSeasonSchedule : composite query () -> async ?Stadium.SeasonSchedule;
         createDivision(request : CreateDivisionRequest) : async CreateDivisionResult;
         scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult;
         createStadium() : async CreateStadiumResult;

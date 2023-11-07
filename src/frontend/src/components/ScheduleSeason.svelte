@@ -6,14 +6,14 @@
   } from "../ic-agent/League";
   import { divisionStore } from "../stores/DivisionStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
-  import { SeasonSchedule, stadiumAgentFactory } from "../ic-agent/Stadium";
+  import { SeasonSchedule } from "../ic-agent/Stadium";
   import { onMount } from "svelte";
 
   let schedule: SeasonSchedule | undefined;
   $: divisions = $divisionStore;
 
   onMount(() => {
-    stadiumAgentFactory("br5f7-7uaaa-aaaaa-qaaca-cai")
+    leagueAgentFactory()
       .getSeasonSchedule()
       .then((result) => {
         if (result.length > 0) {

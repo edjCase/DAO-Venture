@@ -2,22 +2,25 @@
   import type {
     CompletedMatchState,
     InProgressMatchState,
+    Match,
     MatchGroup,
     MatchPlayer,
     MatchTeam,
     StartedMatchState,
   } from "../ic-agent/Stadium";
+  import { MatchDetail } from "../models/Match";
   import { matchGroupStore } from "../stores/MatchGroupStore";
-  import MatchCard, {
-    CompletedMatchDetail,
-    InProgressMatchDetail,
-    MatchDetail,
-  } from "./MatchCard.svelte";
   import { getOptValueOrUndefined } from "../utils/CandidUtil";
+  import { nanosecondsToDate } from "../utils/DateUtils";
+  import { Link } from "svelte-routing";
+  import MatchCard from "./MatchCard.svelte";
 
   export let matchGroupId: number;
 
-  let matchDetails: MatchDetail[] | undefined;
+  let matchDetails:
+    | MatchDetail[]
+    | undefined
+    | { notStarted: { id: number; startTime: Date; matches: Match[] } };
 
   let getPlayerName = (players: MatchPlayer[], playerId: number): string => {
     let player = players.find((p) => p.id == playerId);
@@ -134,6 +137,13 @@
       return;
     }
     if ("notStarted" in matchGroup.state) {
+      matchDetails = {
+        notStarted: {
+          id: matchGroup.id,
+          startTime: nanosecondsToDate(matchGroup.time),
+          matches: matchGroup.matches,
+        },
+      };
       return;
     }
     if ("inProgress" in matchGroup.state) {
@@ -152,6 +162,15 @@
 
 {#if matchDetails === undefined}
   <div>Loading...</div>
+{:else if "notStarted" in matchDetails}
+  <Link to={"/session/" + matchDetails.notStarted.id}>
+    <div>Session starts at {new Date(matchDetails.notStarted.startTime)}</div>
+    {#each matchDetails.notStarted.matches as match}
+      <div>
+        {match.team1.name} vs {match.team2.name}
+      </div>
+    {/each}
+  </Link>
 {:else}
   <div class="match-card-grid">
     {#each matchDetails as match}

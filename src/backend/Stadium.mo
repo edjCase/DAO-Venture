@@ -23,7 +23,7 @@ module {
     };
     public type DivisionSchedule = {
         id : Principal;
-        matchGroups : [MatchGroup];
+        matchGroups : [MatchGroupWithId];
     };
 
     public type RegisterResult = {
@@ -60,6 +60,7 @@ module {
         #teamFetchError : Text;
         #playerFetchError : Text;
         #matchGroupErrors : [ScheduleMatchGroupError];
+        #noMatchGroupsSpecified;
     };
 
     public type ScheduleDivisionRequest = {
@@ -82,6 +83,7 @@ module {
     public type ScheduleMatchGroupError = {
         #teamFetchError : Text;
         #matchErrors : [ScheduleMatchError];
+        #noMatchesSpecified;
     };
 
     public type ScheduleMatchError = {
@@ -285,6 +287,7 @@ module {
     public type MatchTeam = {
         id : Principal;
         name : Text;
+        logoUrl : Text;
         predictionVotes : Nat;
         players : [MatchPlayer];
     };

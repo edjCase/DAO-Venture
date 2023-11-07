@@ -1,245 +1,17 @@
 <script context="module" lang="ts">
-  type PlayedTeamDetails = {
-    score: bigint;
-  };
-  type PlayedMatchStateDetails = {
-    team1: PlayedTeamDetails;
-    team2: PlayedTeamDetails;
-    winner: TeamIdOrTie;
-    log: LogEntry[];
-  };
-  type CompletedMatchStateDetails =
-    | { allAbsent: null }
-    | { absentTeam: { name: string } }
-    | { played: PlayedMatchStateDetails };
-  type NotStartedMatchStateDetails = {};
-
-  type StartedMatchStateDetails =
-    | { completed: CompletedMatchStateDetails }
-    | { inProgress: InProgressMatchState };
-
-  type CompletedMatchGroupStateDetails = {
-    matches: CompletedMatchStateDetails[];
-  };
-  type InProgressMatchGroupStateDetails = {
-    matches: StartedMatchStateDetails[];
-  };
-  type NotStartedMatchGroupStateDetails = {
-    matches: NotStartedMatchStateDetails[];
-  };
-  type MatchGroupStateDetails =
-    | { notStarted: NotStartedMatchGroupStateDetails }
-    | { completed: CompletedMatchGroupStateDetails }
-    | { inProgress: InProgressMatchGroupStateDetails };
-
-  type OfferingDetails = {
-    name: string;
-    description: string;
-  };
-  type MatchAuraDetails = OfferingDetails;
-
-  type TeamDetails = {
-    id: Principal;
-    name: string;
-    predictionVotes: bigint;
-  };
-  type MatchDetail = {
-    team1: TeamDetails;
-    team2: TeamDetails;
-    offerings: OfferingDetails[];
-    aura: MatchAuraDetails;
-  };
-  type MatchGroupDetails = {
-    id: number;
-    time: bigint;
-    matches: MatchDetail[];
-    state: MatchGroupStateDetails;
-  };
 </script>
 
 <script lang="ts">
-  import {
-    getOfferingDetails,
-    matchGroupStore,
-  } from "../stores/MatchGroupStore";
-  import { Principal } from "@dfinity/principal";
-  import VoteForMatch from "../components/VoteForMatch.svelte";
+  import { matchGroupStore } from "../stores/MatchGroupStore";
+  import VoteForMatchGroup from "../components/VoteForMatchGroup.svelte";
   import { toJsonString } from "../utils/JsonUtil";
   import { onMount } from "svelte";
-  import {
-    InProgressMatchGroupState,
-    CompletedMatchGroupState,
-    Match,
-    MatchAura,
-    MatchGroup,
-    MatchGroupState,
-    MatchTeam,
-    StartedMatchState,
-    NotStartedMatchGroupState,
-    CompletedMatchState,
-    InProgressMatchState,
-    LogEntry,
-    TeamIdOrTie,
-    TeamIdOrBoth,
-  } from "../ic-agent/Stadium";
   import MatchCard from "../components/MatchCard.svelte";
+  import { MatchGroupDetails, mapMatchGroup } from "../models/Match";
 
   export let matchGroupId: number;
 
   let matchGroup: MatchGroupDetails | undefined;
-
-  let getTeamName = (
-    teamId: TeamIdOrBoth | TeamIdOrTie,
-    matchIndex: number
-  ): string => {
-    if (!matchGroup) {
-      return "Unknown";
-    }
-    if ("both" in teamId) {
-      return "Both Teams";
-    } else if ("tie" in teamId) {
-      return "Tie";
-    } else if ("team1" in teamId) {
-      return matchGroup.matches[matchIndex].team1.name;
-    } else {
-      return matchGroup.matches[matchIndex].team2.name;
-    }
-  };
-  let getTeamNameById = (teamId: Principal): string => {
-    if (!!matchGroup) {
-      let team = matchGroup.matches
-        .map((match) => [match.team1, match.team2])
-        .flat()
-        .find((team) => team.id.compareTo(teamId) == "eq");
-      if (!!team) {
-        return team.name;
-      }
-    }
-    return "Unknown";
-  };
-  let mapTeam = (team: MatchTeam): TeamDetails => {
-    return {
-      id: team.id,
-      name: team.name,
-      predictionVotes: team.predictionVotes,
-    };
-  };
-
-  let mapAura = (aura: MatchAura): MatchAuraDetails => {
-    if ("lowGravity" in aura) {
-      return {
-        name: "Shuffle And Boost",
-        description:
-          "Shuffle your team's field positions and boost your team with a random blessing",
-      };
-    } else if ("explodingBalls" in aura) {
-      return {
-        name: "Exploding Balls",
-        description: "Balls have a chance to explode on contact with the bat",
-      };
-    } else if ("fastBallsHardHits" in aura) {
-      return {
-        name: "Fast Balls, Hard Hits",
-        description: "Balls are faster and fly farther when hit by the bat",
-      };
-    } else if ("moreBlessingsAndCurses" in aura) {
-      return {
-        name: "More Blessings And Curses",
-        description: "Blessings and curses are more common",
-      };
-    } else {
-      return {
-        name: "Unknown",
-        description: "Unknown",
-      };
-    }
-  };
-  let mapMatch = (match: Match): MatchDetail => {
-    return {
-      team1: mapTeam(match.team1),
-      team2: mapTeam(match.team2),
-      offerings: match.offerings.map(getOfferingDetails),
-      aura: mapAura(match.aura),
-    };
-  };
-  let mapInProgressMatchState = (
-    state: InProgressMatchState
-  ): InProgressMatchState => {
-    return state;
-  };
-  let mapCompletedMatchState = (
-    state: CompletedMatchState,
-    matchIndex: number
-  ): CompletedMatchStateDetails => {
-    if ("played" in state) {
-      return {
-        played: {
-          team1: state.played.team1,
-          team2: state.played.team2,
-          winner: state.played.winner,
-          log: state.played.log,
-        },
-      };
-    } else if ("allAbsent" in state) {
-      return {
-        allAbsent: null,
-      };
-    } else {
-      return {
-        absentTeam: {
-          name: getTeamName(state.absentTeam, matchIndex),
-        },
-      };
-    }
-  };
-  let mapStartedMatchState = (
-    state: StartedMatchState,
-    matchIndex: number
-  ): StartedMatchStateDetails => {
-    if ("inProgress" in state) {
-      return { inProgress: mapInProgressMatchState(state.inProgress) };
-    } else {
-      return { completed: mapCompletedMatchState(state.completed, matchIndex) };
-    }
-  };
-  let mapNotStartedState = (
-    state: NotStartedMatchGroupState
-  ): NotStartedMatchGroupStateDetails => {
-    return {
-      matches: state.matches.map(mapMatch),
-    };
-  };
-  let mapInProgressState = (
-    state: InProgressMatchGroupState
-  ): InProgressMatchGroupStateDetails => {
-    return {
-      matches: state.matches.map(mapStartedMatchState),
-    };
-  };
-  let mapCompletedState = (
-    state: CompletedMatchGroupState
-  ): CompletedMatchGroupStateDetails => {
-    return {
-      matches: state.matches.map(mapCompletedMatchState),
-    };
-  };
-  let mapState = (state: MatchGroupState): MatchGroupStateDetails => {
-    if ("inProgress" in state) {
-      return { inProgress: mapInProgressState(state.inProgress) };
-    } else if ("completed" in state) {
-      return { completed: mapCompletedState(state.completed) };
-    } else {
-      return { notStarted: mapNotStartedState(state.notStarted) };
-    }
-  };
-  let mapMatchGroup = (matchGroup: MatchGroup): MatchGroupDetails => {
-    return {
-      id: matchGroup.id,
-      time: matchGroup.time,
-      matches: matchGroup.matches.map(mapMatch),
-      state: mapState(matchGroup.state),
-    };
-  };
 
   matchGroupStore.subscribe((matchGroups) => {
     let g = matchGroups.find((item) => item.id == matchGroupId);
@@ -292,23 +64,25 @@
       {/if}
 
       {#if "inProgress" in matchGroup.state}
-        {#each matchGroup.matches as match}
-          <MatchCard {match} />
+        {#each matchGroup.state.inProgress.matches as matchState, index}
+          <MatchCard {matchState} match={matchGroup.matches[index]} />
         {/each}
       {:else if "notStarted" in matchGroup.state}
-        <div>
-          <h1>Vote for Matche</h1>
-          <VoteForMatch
-            matchId={index}
-            stadiumId={matchGroup.stadiumId}
-            teamId={match.team1.id}
-          />
-          <VoteForMatch
-            matchId={index}
-            stadiumId={matchGroup.stadiumId}
-            teamId={match.team2.id}
-          />
-        </div>
+        {#each matchGroup.matches as match}
+          <div>
+            <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
+            <h1>{match.team1.name}</h1>
+            <VoteForMatchGroup
+              matchGroupId={matchGroup.id}
+              teamId={match.team1.id}
+            />
+            <h1>{match.team2.name}</h1>
+            <VoteForMatchGroup
+              matchGroupId={matchGroup.id}
+              teamId={match.team2.id}
+            />
+          </div>
+        {/each}
       {:else if "completed" in matchGroup.state}
         <div>Completed</div>
         {#if "played" in matchGroup.state.completed}

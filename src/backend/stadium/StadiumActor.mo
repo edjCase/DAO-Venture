@@ -48,16 +48,21 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         #matchGroupErrors : [Stadium.ScheduleMatchGroupError];
         #teamFetchError : Text;
         #playerFetchError : Text;
+        #noMatchGroupsSpecified;
     };
     type BuildDivisionResult = CommonUtil.Result<[MatchGroupToBeScheduled], BuildDivisionError>;
 
     type BuildMatchGroupError = {
         #matchErrors : [Stadium.ScheduleMatchError];
+        #noMatchesSpecified;
     };
     type BuildMatchGroupResult = CommonUtil.Result<MatchGroupToBeScheduled, BuildMatchGroupError>;
+    type BuildMatchError = {
+        #teamNotFound : Stadium.TeamIdOrBoth;
+    };
     type BuildMatchResult = {
         #ok : Stadium.Match;
-        #teamNotFound : Stadium.TeamIdOrBoth;
+        #error : BuildMatchError;
     };
     type MatchGroupId = Nat32;
     type StableSeasonSchedule = {
@@ -256,7 +261,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             hash = matchGroupId;
             key = matchGroupId;
         };
-        let (newMatchGroups, _) = Trie.replace(schedule.matchGroups, matchGroupKey, Nat32.equal, ?matchGroup);
+        let (newMatchGroups, _) = Trie.replace(schedule.matchGroups, matchGroupKey, Nat32.equal, ?newMatchGroup);
         schedule.matchGroups := newMatchGroups;
         switch (newState) {
             case (#completed(_)) #completed;
@@ -265,6 +270,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func buildDivisionMatchGroups(request : Stadium.ScheduleDivisionRequest) : async* BuildDivisionResult {
+        if (request.matchGroups.size() < 1) {
+            return #error(#noMatchGroupsSpecified);
+        };
         let divisionActor = actor (Principal.toText(request.id)) : League.LeagueActor;
         let teams = try {
             await divisionActor.getTeams();
@@ -294,18 +302,24 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         players : [PlayerWithId],
         teams : [TeamWithId],
     ) : BuildMatchGroupResult {
-        let matches = Buffer.Buffer<Stadium.Match>(request.matches.size());
-        let failedMatches = Buffer.Buffer<Stadium.ScheduleMatchError>(0);
-        for (m in Iter.fromArray(request.matches)) {
-            let result = buildMatch(m, players, teams);
+        if (request.matches.size() < 1) {
+            return #error(#noMatchesSpecified);
         };
-        if (failedMatches.size() > 0) {
-            return #error(#matchErrors(Buffer.toArray(failedMatches)));
+        let results = request.matches
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(m : Stadium.ScheduleMatchRequest) : BuildMatchResult {
+                buildMatch(m, players, teams);
+            },
+        );
+        switch (CommonUtil.allOkOrError(results)) {
+            case (#ok(matches)) #ok({
+                time = request.startTime;
+                matches = matches;
+            });
+            case (#error(errors)) return #error(#matchErrors(errors));
         };
-        #ok({
-            time = request.startTime;
-            matches = Buffer.toArray(matches);
-        });
     };
 
     private func buildMatch(
@@ -316,9 +330,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let team1OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == request.team1Id);
         let team2OrNull = Array.find(teams, func(t : TeamWithId) : Bool = t.id == request.team2Id);
         switch ((team1OrNull, team2OrNull)) {
-            case (null, null) return #teamNotFound(#bothTeams);
-            case (null, ?_) return #teamNotFound(#team1);
-            case (?_, null) return #teamNotFound(#team2);
+            case (null, null) return #error(#teamNotFound(#bothTeams));
+            case (null, ?_) return #error(#teamNotFound(#team1));
+            case (?_, null) return #error(#teamNotFound(#team2));
             case (?t1, ?t2) {
                 let getPlayers = func(teamId : Principal) : [Stadium.MatchPlayer] {
                     return players

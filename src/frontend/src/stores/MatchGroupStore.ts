@@ -1,5 +1,5 @@
 import { writable, get } from "svelte/store";
-import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup, Offering } from "../ic-agent/Stadium";
+import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup, Offering, SeasonSchedule } from "../ic-agent/Stadium";
 import { stadiumStore } from "./StadiumStore";
 import { Principal } from "@dfinity/principal";
 
@@ -41,11 +41,11 @@ export const matchGroupStore = (() => {
     stadiumLivePolls[stadiumIdString] = setTimeout(() => refetchMatchGroup(stadiumId, matchGroupId), waitMillis);
   };
   const refetchMatchGroup = async (stadiumId: Principal, matchGroupId: number) => {
-    return stadiumAgentFactory(stadiumId)
+    stadiumAgentFactory(stadiumId)
       .getMatchGroup(matchGroupId)
       .then((matchGroupOrNull: [MatchGroup] | []) => {
         if (matchGroupOrNull.length === 0) {
-          return matchGroupOrNull;
+          return;
         }
         let matchGroup = matchGroupOrNull[0];
         update((matchGroupsToUpdate: MatchGroup[]) => {
@@ -72,26 +72,42 @@ export const matchGroupStore = (() => {
         return matchGroupOrNull;
       });
   };
+  const refetchScheduledMatches = async (stadiumId: Principal) => {
+    return stadiumAgentFactory(stadiumId)
+      .getSeasonSchedule()
+      .then((scheduleOrNull: [SeasonSchedule] | []) => {
+        if (scheduleOrNull.length === 0) {
+          return;
+        }
+        set(scheduleOrNull[0].divisions.flatMap(d => d.matchGroups));
+        return;
+      });
+  };
   const refetchById = async (matchGroupId: number) => {
     const $stadiums = get(stadiumStore);
     const promises = $stadiums.map(s => refetchMatchGroup(s.id, matchGroupId));
 
-    const results = await Promise.all(promises);
-    const allMatches = results.flat();
-    set(allMatches);
+    await Promise.all(promises);
+  };
+  const refetchAll = async () => {
+    const $stadiums = get(stadiumStore);
+    const promises = $stadiums.map(s => refetchScheduledMatches(s.id));
+
+    await Promise.all(promises);
   };
 
 
   // Derived store to watch changes in stadiumStore and trigger refetch
   // TODO
-  // stadiumStore.subscribe(() => {
-  //   refetchAll();
-  // });
+  stadiumStore.subscribe(() => {
+    refetchAll();
+  });
 
 
   return {
     subscribe,
-    refetchById
+    refetchById,
+    refetchAll
   };
 })();
 
