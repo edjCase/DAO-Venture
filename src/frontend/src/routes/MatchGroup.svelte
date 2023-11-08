@@ -4,10 +4,9 @@
 <script lang="ts">
   import { matchGroupStore } from "../stores/MatchGroupStore";
   import VoteForMatchGroup from "../components/VoteForMatchGroup.svelte";
-  import { toJsonString } from "../utils/JsonUtil";
   import { onMount } from "svelte";
-  import MatchCard from "../components/MatchCard.svelte";
   import { MatchGroupDetails, mapMatchGroup } from "../models/Match";
+  import MatchGroupCardGrid from "../components/MatchGroupCardGrid.svelte";
 
   export let matchGroupId: number;
 
@@ -64,11 +63,9 @@
         </h1>
       {/if}
 
-      {#if "inProgress" in matchGroup.state}
-        {#each matchGroup.state.inProgress.matches as matchState, index}
-          <MatchCard {matchState} match={matchGroup.matches[index]} />
-        {/each}
-      {:else if "notStarted" in matchGroup.state}
+      <MatchGroupCardGrid {matchGroup} />
+
+      {#if "notStarted" in matchGroup.state}
         {#each matchGroup.matches as match}
           <div>
             <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
@@ -86,25 +83,9 @@
         {/each}
       {:else if "completed" in matchGroup.state}
         <div>Completed</div>
-        {#if "played" in matchGroup.state.completed}
-          <div>Played</div>
-        {:else if "allAbsent" in matchGroup.state.completed}
-          <div>All absent</div>
-        {:else if "absentTeam" in matchGroup.state.completed}
-          <div>Absent Team: {matchGroup.state.completed.absentTeam}</div>
-        {/if}
       {:else}
         <h1>Game hasnt started</h1>
       {/if}
-
-      <section class="match-log">
-        <h2>Match Log</h2>
-      </section>
-
-      <h2>JSON</h2>
-      <pre class="json">
-        {toJsonString(matchGroup)}
-      </pre>
     </section>
   </section>
 {:else}
@@ -119,14 +100,5 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-  }
-
-  .match-log {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .json {
-    max-width: 600px;
   }
 </style>

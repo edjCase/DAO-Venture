@@ -10,7 +10,11 @@
   <Router>
     <Header />
     <Route path="/" component={Home} />
-    <Route path="/session/:matchGroupId" let:params component={MatchGroup} />
+    <Route
+      path="/match-groups/:matchGroupId"
+      let:params
+      component={MatchGroup}
+    />
     <Route path="*" component={NotFound} />
   </Router>
 </main>

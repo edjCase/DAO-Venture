@@ -318,12 +318,605 @@
               },
             ],
           },
+          {
+            id: null,
+            name: "Squidz",
+            logoUrl:
+              "https://imgs.search.brave.com/ejjzShq4jh4B2_l43F-or_BchEQdx9DwRic6SIV5T9A/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudGhlbm91bnBy/b2plY3QuY29tL3Bu/Zy81ODM5NTYxLTIw/MC5wbmc",
+            tokenName: "Squidz",
+            tokenSymbol: "SQUIDZ",
+            players: [
+              {
+                name: "Inky Ian",
+                position: { pitcher: null },
+              },
+              {
+                name: "Squiggly Steve",
+                position: { firstBase: null },
+              },
+              {
+                name: "Darting Dan",
+                position: { secondBase: null },
+              },
+              {
+                name: "Tentacle Tom",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Jetty Jerry",
+                position: { shortStop: null },
+              },
+              {
+                name: "Kraken Kevin",
+                position: { leftField: null },
+              },
+              {
+                name: "Salty Sam",
+                position: { centerField: null },
+              },
+              {
+                name: "Ocean Owen",
+                position: { rightField: null },
+              },
+              {
+                name: "Coral Carl",
+                position: { pitcher: null },
+              },
+              {
+                name: "Sinker Scott",
+                position: { firstBase: null },
+              },
+              {
+                name: "Reef Randy",
+                position: { secondBase: null },
+              },
+              {
+                name: "Mantle Mason",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Deepsea Dean",
+                position: { shortStop: null },
+              },
+              {
+                name: "Barnacle Brad",
+                position: { leftField: null },
+              },
+              {
+                name: "Wave Walter",
+                position: { centerField: null },
+              },
+              {
+                name: "Gill Gary",
+                position: { rightField: null },
+              },
+            ],
+          },
+          {
+            id: null,
+            name: "Salamanderz",
+            logoUrl:
+              "https://imgs.search.brave.com/0WHTTsaSLs4aqG8P9vON1KcL6ID84ARAEfEhdk_LJUc/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9jZG4u/dmVjdG9yc3RvY2su/Y29tL2kvcHJldmll/dy0xeC81OS84NS9z/YWxhbWFuZGVyLWhh/bmQtZHJhd24tc2tl/dGNoLWljb24tdmVj/dG9yLTE5Mzk1OTg1/LmpwZw",
+            tokenName: "Salamanderz",
+            tokenSymbol: "SALMZ",
+            players: [
+              {
+                name: "Sunny Sal",
+                position: { pitcher: null },
+              },
+              {
+                name: "Newt Nate",
+                position: { firstBase: null },
+              },
+              {
+                name: "Gilly Gil",
+                position: { secondBase: null },
+              },
+              {
+                name: "Axolotl Alex",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Crested Cory",
+                position: { shortStop: null },
+              },
+              {
+                name: "Mudskipper Max",
+                position: { leftField: null },
+              },
+              {
+                name: "Lava Lance",
+                position: { centerField: null },
+              },
+              {
+                name: "Skink Steve",
+                position: { rightField: null },
+              },
+              {
+                name: "Siren Sam",
+                position: { pitcher: null },
+              },
+              {
+                name: "Triton Troy",
+                position: { firstBase: null },
+              },
+              {
+                name: "Firefly Finn",
+                position: { secondBase: null },
+              },
+              {
+                name: "Slimy Sean",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Camo Kyle",
+                position: { shortStop: null },
+              },
+              {
+                name: "Gecko Gary",
+                position: { leftField: null },
+              },
+              {
+                name: "Hydra Harry",
+                position: { centerField: null },
+              },
+              {
+                name: "Mossy Marty",
+                position: { rightField: null },
+              },
+            ],
+          },
         ],
       },
-      // TODO multiple divisions
-      // {
-      //   name: "Division 2",
-      // },
+      {
+        name: "Division 2",
+        teams: [
+          {
+            id: null,
+            name: "Barnaclez",
+            logoUrl:
+              "https://imgs.search.brave.com/ir4LXuCwuUxldHx7W4mSZzUOIifEzo6bSmjoAsOVvlc/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9kb2Rv/LmFjL25wL2ltYWdl/cy9hL2E0L0Fjb3Ju/X0Jhcm5hY2xlX05I/X0ljb24ucG5n",
+            tokenName: "Barnaclez",
+            tokenSymbol: "BARNZ",
+            players: [
+              {
+                name: "Buoyant Barry",
+                position: { pitcher: null },
+              },
+              {
+                name: "Marine Mark",
+                position: { firstBase: null },
+              },
+              {
+                name: "Salty Steve",
+                position: { secondBase: null },
+              },
+              {
+                name: "Ocean Owen",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Coral Carl",
+                position: { shortStop: null },
+              },
+              {
+                name: "Tidepool Tom",
+                position: { leftField: null },
+              },
+              {
+                name: "Harbor Harry",
+                position: { centerField: null },
+              },
+              {
+                name: "Anchor Andy",
+                position: { rightField: null },
+              },
+              {
+                name: "Seaweed Simon",
+                position: { pitcher: null },
+              },
+              {
+                name: "Barny Bernard",
+                position: { firstBase: null },
+              },
+              {
+                name: "Deckhand Dan",
+                position: { secondBase: null },
+              },
+              {
+                name: "Reef Randy",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Manta Ray",
+                position: { shortStop: null },
+              },
+              {
+                name: "Nautical Nate",
+                position: { leftField: null },
+              },
+              {
+                name: "Mollusk Mike",
+                position: { centerField: null },
+              },
+              {
+                name: "Guppy Gary",
+                position: { rightField: null },
+              },
+            ],
+          },
+          {
+            id: null,
+            name: "Newtz",
+            logoUrl:
+              "https://imgs.search.brave.com/yOFowXI6oh5bfO45qXKdqFMR9I2J0pFMD1n9WNWz0f8/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudGhlbm91bnBy/b2plY3QuY29tL3Bu/Zy8yNTM1NzI2LTIw/MC5wbmc",
+            tokenName: "Newtz",
+            tokenSymbol: "NEWTZ",
+            players: [
+              {
+                name: "Newt Nolan",
+                position: { pitcher: null },
+              },
+              {
+                name: "Salamander Sam",
+                position: { firstBase: null },
+              },
+              {
+                name: "Gilly Gary",
+                position: { secondBase: null },
+              },
+              {
+                name: "Triton Travis",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Eft Eddie",
+                position: { shortStop: null },
+              },
+              {
+                name: "Sticky Stuart",
+                position: { leftField: null },
+              },
+              {
+                name: "Aquatic Alex",
+                position: { centerField: null },
+              },
+              {
+                name: "Mudskipper Mark",
+                position: { rightField: null },
+              },
+              {
+                name: "Wetland Walt",
+                position: { pitcher: null },
+              },
+              {
+                name: "Slick Steve",
+                position: { firstBase: null },
+              },
+              {
+                name: "Paddle Paul",
+                position: { secondBase: null },
+              },
+              {
+                name: "Swimmy Scott",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Lagoon Leo",
+                position: { shortStop: null },
+              },
+              {
+                name: "Boggy Blake",
+                position: { leftField: null },
+              },
+              {
+                name: "Pond Peter",
+                position: { centerField: null },
+              },
+              {
+                name: "Marshland Mike",
+                position: { rightField: null },
+              },
+            ],
+          },
+          {
+            id: null,
+            name: "Cuttlefizh",
+            logoUrl:
+              "https://imgs.search.brave.com/hiYh3mpfyCj0U3lggVQ5Zj8mwN7HqHZqtYPNPjjk7lo/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9zdGF0/aWMudGhlbm91bnBy/b2plY3QuY29tL3Bu/Zy8yMDQyMTcyLTIw/MC5wbmc",
+            tokenName: "Cuttlefizh",
+            tokenSymbol: "CTLFZ",
+            players: [
+              {
+                name: "Cephalo Carlos",
+                position: { pitcher: null },
+              },
+              {
+                name: "Ink Ian",
+                position: { firstBase: null },
+              },
+              {
+                name: "Squiddy Steve",
+                position: { secondBase: null },
+              },
+              {
+                name: "Tentacle Tom",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Jet Jack",
+                position: { shortStop: null },
+              },
+              {
+                name: "Siphon Sam",
+                position: { leftField: null },
+              },
+              {
+                name: "Mantle Max",
+                position: { centerField: null },
+              },
+              {
+                name: "Beak Ben",
+                position: { rightField: null },
+              },
+              {
+                name: "Kraken Keith",
+                position: { pitcher: null },
+              },
+              {
+                name: "Armstrong Arthur",
+                position: { firstBase: null },
+              },
+              {
+                name: "Camo Kevin",
+                position: { secondBase: null },
+              },
+              {
+                name: "Nauti Nick",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Reef Ralph",
+                position: { shortStop: null },
+              },
+              {
+                name: "Deepsea Dave",
+                position: { leftField: null },
+              },
+              {
+                name: "Floaty Phil",
+                position: { centerField: null },
+              },
+              {
+                name: "Ocean Oliver",
+                position: { rightField: null },
+              },
+            ],
+          },
+          {
+            id: null,
+            name: "Turtlez",
+            logoUrl:
+              "https://imgs.search.brave.com/ZZao2qgmU4PNC-m1GIzgXrZuYKSdZ_wLJMXZgjpZzP0/rs:fit:860:0:0/g:ce/aHR0cHM6Ly90My5m/dGNkbi5uZXQvanBn/LzAxLzczLzk3Lzg4/LzM2MF9GXzE3Mzk3/ODgyMl8yM0FSVEJX/Q3MwMHhiRmRkckU0/SndBUmxVcWRpZWlP/WC5qcGc",
+            tokenName: "Turtlez",
+            tokenSymbol: "TRLZ",
+            players: [
+              {
+                name: "Shelly Shane",
+                position: { pitcher: null },
+              },
+              {
+                name: "Hardshell Hank",
+                position: { firstBase: null },
+              },
+              {
+                name: "Slider Sid",
+                position: { secondBase: null },
+              },
+              {
+                name: "Terrapin Tim",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Basker Barry",
+                position: { shortStop: null },
+              },
+              {
+                name: "Snapper Sam",
+                position: { leftField: null },
+              },
+              {
+                name: "Reef Ralph",
+                position: { centerField: null },
+              },
+              {
+                name: "Coral Carl",
+                position: { rightField: null },
+              },
+              {
+                name: "Digger Doug",
+                position: { pitcher: null },
+              },
+              {
+                name: "Mossback Max",
+                position: { firstBase: null },
+              },
+              {
+                name: "Sunny Steve",
+                position: { secondBase: null },
+              },
+              {
+                name: "Loggerhead Larry",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Ripple Rick",
+                position: { shortStop: null },
+              },
+              {
+                name: "Scooter Scott",
+                position: { leftField: null },
+              },
+              {
+                name: "Splasher Sean",
+                position: { centerField: null },
+              },
+              {
+                name: "Chomper Chad",
+                position: { rightField: null },
+              },
+            ],
+          },
+          {
+            id: null,
+            name: "Snailz",
+            logoUrl:
+              "https://imgs.search.brave.com/ZOR-_-9QRxAHdLyD5QoIp34xv516vZGTolrDc1z-aC4/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9kMjlm/aHB3MDY5Y3R0Mi5j/bG91ZGZyb250Lm5l/dC9pY29uL2ltYWdl/LzEyMDE4MC9wcmV2/aWV3LnN2Zw.svg",
+            tokenName: "Snailz",
+            tokenSymbol: "SNLZ",
+            players: [
+              {
+                name: "Shelly Sam",
+                position: { pitcher: null },
+              },
+              {
+                name: "Slimy Steve",
+                position: { firstBase: null },
+              },
+              {
+                name: "Spiral Sid",
+                position: { secondBase: null },
+              },
+              {
+                name: "Slugger Seth",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Slick Scott",
+                position: { shortStop: null },
+              },
+              {
+                name: "Shellback Sean",
+                position: { leftField: null },
+              },
+              {
+                name: "Silky Sandra",
+                position: { centerField: null },
+              },
+              {
+                name: "Salty Sara",
+                position: { rightField: null },
+              },
+              {
+                name: "Snail Pace Pat",
+                position: { pitcher: null },
+              },
+              {
+                name: "Snaily Sally",
+                position: { firstBase: null },
+              },
+              {
+                name: "Sandy Simon",
+                position: { secondBase: null },
+              },
+              {
+                name: "Slimeball Stan",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Slithering Sophie",
+                position: { shortStop: null },
+              },
+              {
+                name: "Speedy Stu",
+                position: { leftField: null },
+              },
+              {
+                name: "Silent Sue",
+                position: { centerField: null },
+              },
+              {
+                name: "Scaly Steve",
+                position: { rightField: null },
+              },
+            ],
+          },
+          {
+            id: null,
+            name: "Anemonez",
+            logoUrl:
+              "https://imgs.search.brave.com/YpB2meSALUOhh1k8Xuwwt7wJcULL7EFXvaRZzqNHMP4/rs:fit:860:0:0/g:ce/aHR0cHM6Ly9jZG4t/aWNvbnMtcG5nLmZs/YXRpY29uLmNvbS8x/MjgvNzU5MS83NTkx/MDAyLnBuZw",
+            tokenName: "Anemonez",
+            tokenSymbol: "ANEMZ",
+            players: [
+              {
+                name: "Coral Carl",
+                position: { pitcher: null },
+              },
+              {
+                name: "Reef Rick",
+                position: { pitcher: null },
+              },
+              {
+                name: "Barnacle Ben",
+                position: { firstBase: null },
+              },
+              {
+                name: "Tidepool Tom",
+                position: { firstBase: null },
+              },
+              {
+                name: "Surfing Sam",
+                position: { secondBase: null },
+              },
+              {
+                name: "Waverider Will",
+                position: { secondBase: null },
+              },
+              {
+                name: "Kelpie Kyle",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Anemone Andy",
+                position: { thirdBase: null },
+              },
+              {
+                name: "Sandy Steve",
+                position: { shortStop: null },
+              },
+              {
+                name: "Diver Dan",
+                position: { shortStop: null },
+              },
+              {
+                name: "Marine Marcy",
+                position: { leftField: null },
+              },
+              {
+                name: "Seashell Sally",
+                position: { leftField: null },
+              },
+              {
+                name: "Ocean Oliver",
+                position: { centerField: null },
+              },
+              {
+                name: "Current Chris",
+                position: { centerField: null },
+              },
+              {
+                name: "Manta Ray Ray",
+                position: { rightField: null },
+              },
+              {
+                name: "Nautical Nate",
+                position: { rightField: null },
+              },
+            ],
+          },
+        ],
+      },
     ];
     let promises = [];
     for (let i in divisions) {

@@ -418,9 +418,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             let match = matches[matchIndex]; // TODO safe indexing
             matchIndex += 1;
             let newMatchState = tickMatchState(match.team1, match.team2, prng, matchState);
+            newMatchStates.add(newMatchState);
             switch (newMatchState) {
                 case (#completed(completedState)) completedMatchStates.add(completedState);
-                case (#inProgress(_)) newMatchStates.add(newMatchState);
+                case (#inProgress(_)) {};
             };
         };
         if (completedMatchStates.size() == newMatchStates.size()) {

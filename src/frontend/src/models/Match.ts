@@ -18,7 +18,6 @@ import {
     TeamIdOrTie,
 } from "../ic-agent/Stadium";
 import { getOfferingDetails } from "../stores/MatchGroupStore";
-import { toJsonString } from "../utils/JsonUtil";
 
 export type PlayedTeamDetails = {
     score: bigint;
@@ -187,8 +186,14 @@ export const mapCompletedMatchState = (
         };
     }
     else {
+        let reason: string;
+        if ('playerNotFound' in state.stateBroken.error) {
+            reason = "Player not found: " + state.stateBroken.error.playerNotFound.id + " TeamId: " + (state.stateBroken.error.playerNotFound.teamId.length == 0 ? "Either" : ('team1' in state.stateBroken.error.playerNotFound.teamId[0] ? "Team 1" : "Team 2"));
+        } else {
+            reason = "Player expected on the field: " + state.stateBroken.error.playerExpectedOnField.id + " OnOffense: " + state.stateBroken.error.playerExpectedOnField.onOffense + " Description: " + state.stateBroken.error.playerExpectedOnField.description;
+        }
         return {
-            stateBroken: "State is broken: " + toJsonString(state.stateBroken)
+            stateBroken: reason
         }
     }
 };

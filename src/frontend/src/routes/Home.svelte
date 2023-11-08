@@ -4,7 +4,6 @@
   import CreatePlayer from "../components/CreatePlayer.svelte";
   import CreateStadium from "../components/CreateStadium.svelte";
   import CreateTeam from "../components/CreateTeam.svelte";
-  import MatchGroupCard from "../components/MatchGroupCard.svelte";
   import ScheduleMatch from "../components/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
   import { playerStore } from "../stores/PlayerStore";
@@ -12,6 +11,8 @@
   import { teamStore } from "../stores/TeamStore";
   import { matchGroupStore } from "../stores/MatchGroupStore";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
+  import { MatchGroupDetails, mapMatchGroup } from "../models/Match";
+  import MatchGroupSummaryCard from "../components/MatchGroupSummaryCard.svelte";
 
   $: teams = $teamStore;
   $: stadiums = $stadiumStore;
@@ -25,20 +26,21 @@
     }, {});
   });
 
-  let liveMatchGroupIds: number[] = [];
-  let historicalMatchGroupIds: number[] = [];
-  let upcomingMatchGroupIds: number[] = [];
+  let liveMatchGroups: MatchGroupDetails[] = [];
+  let historicalMatchGroups: MatchGroupDetails[] = [];
+  let upcomingMatchGroups: MatchGroupDetails[] = [];
   matchGroupStore.subscribe((matchGroups) => {
-    liveMatchGroupIds = [];
-    historicalMatchGroupIds = [];
-    upcomingMatchGroupIds = [];
+    liveMatchGroups = [];
+    historicalMatchGroups = [];
+    upcomingMatchGroups = [];
     for (let matchGroup of matchGroups) {
+      let matchGroupDetails = mapMatchGroup(matchGroup);
       if ("inProgress" in matchGroup.state) {
-        liveMatchGroupIds.push(matchGroup.id);
+        liveMatchGroups.push(matchGroupDetails);
       } else if ("completed" in matchGroup.state) {
-        historicalMatchGroupIds.push(matchGroup.id);
+        historicalMatchGroups.push(matchGroupDetails);
       } else {
-        upcomingMatchGroupIds.push(matchGroup.id);
+        upcomingMatchGroups.push(matchGroupDetails);
       }
     }
   });
@@ -47,29 +49,29 @@
 {#if teams.length === 0}
   <TempInitialize />
 {/if}
-{#if liveMatchGroupIds.length > 0}
+{#if liveMatchGroups.length > 0}
   <div class="live-matches">
     <h1>Live</h1>
-    {#each liveMatchGroupIds as liveMatchGroupId (liveMatchGroupId)}
-      <MatchGroupCard matchGroupId={liveMatchGroupId} />
+    {#each liveMatchGroups as liveMatchGroup (liveMatchGroup)}
+      <MatchGroupSummaryCard matchGroup={liveMatchGroup} />
     {/each}
   </div>
 {/if}
 
-{#if historicalMatchGroupIds.length > 0}
+{#if historicalMatchGroups.length > 0}
   <div class="latest-matches">
     <h1>Latest</h1>
-    {#each historicalMatchGroupIds as historicalMatchGroupId (historicalMatchGroupId)}
-      <MatchGroupCard matchGroupId={historicalMatchGroupId} />
+    {#each historicalMatchGroups as historicalMatchGroup (historicalMatchGroup)}
+      <MatchGroupSummaryCard matchGroup={historicalMatchGroup} />
     {/each}
   </div>
 {/if}
 
-{#if upcomingMatchGroupIds.length > 0}
+{#if upcomingMatchGroups.length > 0}
   <div class="upcoming-matches">
     <h1>Upcoming</h1>
-    {#each upcomingMatchGroupIds as upcomingMatchGroupId (upcomingMatchGroupId)}
-      <MatchGroupCard matchGroupId={upcomingMatchGroupId} />
+    {#each upcomingMatchGroups as upcomingMatchGroup (upcomingMatchGroup)}
+      <MatchGroupSummaryCard matchGroup={upcomingMatchGroup} />
     {/each}
   </div>
 {/if}

@@ -108,7 +108,7 @@ actor class DivisionActor(leagueId : Principal, stadiumId : Principal) : async D
 
     private func createTeamActor(ledgerId : Principal) : async TeamActor.TeamActor {
         let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 1_000_000_000_000;
+        let initialBalance = 100_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         let divisionId = Principal.fromActor(this);
         await TeamActor.TeamActor(
