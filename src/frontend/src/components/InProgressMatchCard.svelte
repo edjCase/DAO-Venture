@@ -5,6 +5,7 @@
   import { InProgressMatchState } from "../ic-agent/Stadium";
 
   import { MatchDetail } from "../models/Match";
+  import Bases from "./Bases.svelte";
 
   import MatchCardHeader from "./MatchCardHeader.svelte";
 
@@ -55,7 +56,9 @@
     team1Score={matchState.team1.score}
     team2Score={matchState.team2.score}
     winner={undefined}
-  />
+  >
+    <Bases state={matchState.field.offense} />
+  </MatchCardHeader>
   <div class="mid">
     <div class="team-lead">
       {getActivePlayerName("team1", matchState)}

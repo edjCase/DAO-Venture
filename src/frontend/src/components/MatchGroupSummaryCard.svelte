@@ -1,34 +1,31 @@
 <script lang="ts">
-  import { MatchGroupDetails, PlayedMatchStateDetails } from "../models/Match";
+  import { MatchGroupDetails } from "../models/Match";
   import { Link, navigate } from "svelte-routing";
   import { nanosecondsToDate } from "../utils/DateUtils";
+  import MatchCardHeader from "./MatchCardHeader.svelte";
 
   export let matchGroup: MatchGroupDetails;
-
-  let crownEmojiOrEmpty = (
-    teamId: "team1" | "team2",
-    played: PlayedMatchStateDetails
-  ) => {
-    return teamId in played.winner ? "👑" : "";
-  };
 </script>
 
 <div
   class="match-group"
   on:click={() => navigate("/match-groups/" + matchGroup.id)}
+  on:keydown={() => {}}
+  on:keyup={() => {}}
 >
   {#if "notStarted" in matchGroup.state}
     <div class="not-started">
-      <Link to={"/match-groups/" + matchGroup.id}>
-        <div>
-          Session starts at {nanosecondsToDate(matchGroup.time)}
-        </div>
-        {#each matchGroup.matches as match}
-          <div>
-            {match.team1.name} vs {match.team2.name}
-          </div>
-        {/each}
-      </Link>
+      <div>
+        {nanosecondsToDate(matchGroup.time).toLocaleString()}
+      </div>
+      {#each matchGroup.matches as match}
+        <MatchCardHeader
+          {match}
+          team1Score={undefined}
+          team2Score={undefined}
+          winner={undefined}
+        />
+      {/each}
     </div>
   {:else if "completed" in matchGroup.state}
     <div>Completed Match Group</div>
@@ -36,29 +33,12 @@
       <div class="completed">
         {#if "played" in match}
           <div class="teams">
-            <div class="team team1">
-              <img
-                class="logo"
-                alt={matchGroup.matches[index].team1.name + "Logo"}
-                src={matchGroup.matches[index].team1.logoUrl}
-              />
-              <div class="score">
-                ({match.played.team1.score})
-                {crownEmojiOrEmpty("team1", match.played)}
-              </div>
-            </div>
-            <div class="vs">vs</div>
-            <div class="team team2">
-              <div class="score">
-                ({match.played.team2.score})
-                {crownEmojiOrEmpty("team2", match.played)}
-              </div>
-              <img
-                class="logo"
-                alt={matchGroup.matches[index].team2.name + "Logo"}
-                src={matchGroup.matches[index].team2.logoUrl}
-              />
-            </div>
+            <MatchCardHeader
+              match={matchGroup.matches[index]}
+              team1Score={match.played.team1.score}
+              team2Score={match.played.team2.score}
+              winner={match.played.winner}
+            />
           </div>
         {:else if "allAbsent" in match}
           <div class="all-absent">All teams were absent</div>
@@ -100,7 +80,7 @@
     text-wrap: pretty;
   }
   .match-group {
-    width: 250px;
+    width: 300px;
     background-color: rgb(28, 26, 26);
     border: 1px solid white;
     border-radius: 5px;
@@ -129,19 +109,5 @@
     align-items: center;
     justify-content: space-between;
     padding-top: 10px;
-  }
-  .vs {
-    width: 50px;
-  }
-  .team {
-    width: 100px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .logo {
-    width: 50px;
-    height: 50px;
   }
 </style>

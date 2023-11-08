@@ -6,5 +6,10 @@
 </script>
 
 <div>
-  <MatchCardHeader {match} team1Score={undefined} team2Score={undefined} />
+  <MatchCardHeader
+    {match}
+    team1Score={undefined}
+    team2Score={undefined}
+    winner={undefined}
+  />
 </div>

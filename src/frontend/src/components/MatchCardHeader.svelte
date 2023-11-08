@@ -29,13 +29,15 @@
     </Tooltip>
 
     <div class="score">
-      {team1Score ?? "-"}{crownEmojiOrEmpty("team1")}
+      {team1Score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team1")}</span>
     </div>
   </div>
-  <div class="header-center" />
+  <div class="header-center">
+    <slot />
+  </div>
   <div class="header-team team2">
     <div class="score">
-      {team2Score ?? "-"}{crownEmojiOrEmpty("team2")}
+      {team2Score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
     <Tooltip>
       <img
@@ -65,14 +67,12 @@
     height: 50px;
     border-radius: 5px;
   }
-
   .header {
     display: flex;
     justify-content: space-between;
   }
 
   .header-center {
-    width: 100px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -94,5 +94,10 @@
     font-size: 2rem;
     font-weight: bold;
     margin: 0 1rem;
+    display: flex;
+    align-items: center;
+  }
+  .emoji {
+    font-size: 1rem;
   }
 </style>

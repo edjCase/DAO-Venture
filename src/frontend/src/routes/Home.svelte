@@ -26,6 +26,7 @@
     }, {});
   });
 
+  // TODO divisions
   let liveMatchGroups: MatchGroupDetails[] = [];
   let historicalMatchGroups: MatchGroupDetails[] = [];
   let upcomingMatchGroups: MatchGroupDetails[] = [];
@@ -46,113 +47,130 @@
   });
 </script>
 
-{#if teams.length === 0}
-  <TempInitialize />
-{/if}
-{#if liveMatchGroups.length > 0}
-  <div class="live-matches">
+<div class="content">
+  {#if teams.length === 0}
+    <TempInitialize />
+  {/if}
+  {#if liveMatchGroups.length > 0}
     <h1>Live</h1>
-    {#each liveMatchGroups as liveMatchGroup (liveMatchGroup)}
-      <MatchGroupSummaryCard matchGroup={liveMatchGroup} />
-    {/each}
-  </div>
-{/if}
-
-{#if historicalMatchGroups.length > 0}
-  <div class="latest-matches">
-    <h1>Latest</h1>
-    {#each historicalMatchGroups as historicalMatchGroup (historicalMatchGroup)}
-      <MatchGroupSummaryCard matchGroup={historicalMatchGroup} />
-    {/each}
-  </div>
-{/if}
-
-{#if upcomingMatchGroups.length > 0}
-  <div class="upcoming-matches">
-    <h1>Upcoming</h1>
-    {#each upcomingMatchGroups as upcomingMatchGroup (upcomingMatchGroup)}
-      <MatchGroupSummaryCard matchGroup={upcomingMatchGroup} />
-    {/each}
-  </div>
-{/if}
-
-<div>
-  <h1>Teams</h1>
-  {#each teams as team (team.id)}
-    <div class="team-card">
-      <div class="team-name">{team.name}</div>
-      <div>
-        <img class="team-logo" src={team.logoUrl} alt={team.name + " Logo"} />
-      </div>
-    </div>
-  {/each}
-</div>
-
-<div>
-  <h1>Stadiums</h1>
-
-  {#each stadiums as stadium (stadium.id)}
-    <ul>
-      <li>{stadium.id}</li>
-    </ul>
-  {/each}
-</div>
-
-<div>
-  <h1>Schedule Season</h1>
-  <ScheduleSeason />
-</div>
-
-<hr style="margin-top: 400px;" />
-
-<div>
-  <h1>Schedule Match</h1>
-  <ScheduleMatch />
-</div>
-<div>
-  <h1>Create Team</h1>
-  <CreateTeam />
-</div>
-<div>
-  <h1>Create Stadium</h1>
-  <CreateStadium />
-</div>
-<div>
-  <h1>Players</h1>
-  <table>
-    <thead>
-      <th>Name</th>
-      <th>Team</th>
-      <th>Position</th>
-    </thead>
-    <tbody>
-      {#each players as player (player.id)}
-        <tr>
-          <td class="player-name">{player.name}</td>
-          <td class="player-team"
-            >{teamNameMap[player.teamId?.toString()] || "-"}</td
-          >
-          <td class="player-position">{player.position}</td>
-        </tr>
+    <div class="live-matches">
+      {#each liveMatchGroups as liveMatchGroup (liveMatchGroup)}
+        <div class="match-group">
+          <MatchGroupSummaryCard matchGroup={liveMatchGroup} />
+        </div>
       {/each}
-    </tbody>
-  </table>
-</div>
-<div>
-  <h1>Create Player</h1>
-  <CreatePlayer />
-</div>
-<div>
-  <h1>Assign Player to Team</h1>
-  <AssignPlayerToTeam />
+    </div>
+  {/if}
+
+  {#if historicalMatchGroups.length > 0}
+    <h1>Latest</h1>
+    <div class="latest-matches">
+      {#each historicalMatchGroups as historicalMatchGroup (historicalMatchGroup)}
+        <div class="match-group">
+          <MatchGroupSummaryCard matchGroup={historicalMatchGroup} />
+        </div>
+      {/each}
+    </div>
+  {/if}
+
+  {#if upcomingMatchGroups.length > 0}
+    <h1>Upcoming</h1>
+    <div class="upcoming-matches">
+      {#each upcomingMatchGroups as upcomingMatchGroup (upcomingMatchGroup)}
+        <div class="match-group">
+          <MatchGroupSummaryCard matchGroup={upcomingMatchGroup} />
+        </div>
+      {/each}
+    </div>
+  {/if}
+
+  <div>
+    <h1>Teams</h1>
+    {#each teams as team (team.id)}
+      <div class="team-card">
+        <div class="team-name">{team.name}</div>
+        <div>
+          <img class="team-logo" src={team.logoUrl} alt={team.name + " Logo"} />
+        </div>
+      </div>
+    {/each}
+  </div>
+
+  <div>
+    <h1>Stadiums</h1>
+
+    {#each stadiums as stadium (stadium.id)}
+      <ul>
+        <li>{stadium.id}</li>
+      </ul>
+    {/each}
+  </div>
+
+  <div>
+    <h1>Schedule Season</h1>
+    <ScheduleSeason />
+  </div>
+
+  <hr style="margin-top: 400px;" />
+
+  <div>
+    <h1>Schedule Match</h1>
+    <ScheduleMatch />
+  </div>
+  <div>
+    <h1>Create Team</h1>
+    <CreateTeam />
+  </div>
+  <div>
+    <h1>Create Stadium</h1>
+    <CreateStadium />
+  </div>
+  <div>
+    <h1>Players</h1>
+    <table>
+      <thead>
+        <th>Name</th>
+        <th>Team</th>
+        <th>Position</th>
+      </thead>
+      <tbody>
+        {#each players as player (player.id)}
+          <tr>
+            <td class="player-name">{player.name}</td>
+            <td class="player-team"
+              >{teamNameMap[player.teamId?.toString()] || "-"}</td
+            >
+            <td class="player-position">{player.position}</td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
+  <div>
+    <h1>Create Player</h1>
+    <CreatePlayer />
+  </div>
+  <div>
+    <h1>Assign Player to Team</h1>
+    <AssignPlayerToTeam />
+  </div>
 </div>
 
 <style>
+  .content {
+    max-width: 1fr;
+  }
   .latest-matches,
   .upcoming-matches,
   .live-matches {
     margin-bottom: 50px;
     text-align: center;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  .match-group {
+    padding: 20px;
   }
   .team-card {
     display: inline-block;
