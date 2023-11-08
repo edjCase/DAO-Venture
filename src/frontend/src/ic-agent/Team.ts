@@ -9,11 +9,11 @@ import { IDL } from "@dfinity/candid";
 
 export type MatchGroupVote = {
   'offering': Offering;
-  'champion': number;
+  'championId': number;
 };
 export const MatchGroupVoteIdl = IDL.Record({
   'offering': OfferingIdl,
-  'champion': IDL.Nat32
+  'championId': IDL.Nat32
 });
 
 export type GetMatchGroupVoteResult =
@@ -31,8 +31,16 @@ export type VoteOnMatchGroupRequest = MatchGroupVote & {
 };
 export const VoteOnMatchGroupRequestIdl = IDL.Record({
   'offering': OfferingIdl,
-  'champion': IDL.Nat32,
+  'championId': IDL.Nat32,
   'matchGroupId': IDL.Nat32
+});
+
+export type InvalidVoteError =
+  | { 'invalidChampionId': number }
+  | { 'invalidOffering': Offering };
+export const InvalidVoteErrorIdl = IDL.Variant({
+  'invalidChampionId': IDL.Nat32,
+  'invalidOffering': OfferingIdl
 });
 
 export type VoteOnMatchGroupResult =
@@ -43,7 +51,7 @@ export type VoteOnMatchGroupResult =
   | { 'alreadyVoted': null }
   | { 'alreadyStarted': null }
   | { 'matchGroupFetchError': string }
-  | { 'invalid': [string] };
+  | { 'invalid': [InvalidVoteError] };
 export const VoteOnMatchGroupResultIdl = IDL.Variant({
   'ok': IDL.Null,
   'notAuthorized': IDL.Null,
@@ -52,7 +60,7 @@ export const VoteOnMatchGroupResultIdl = IDL.Variant({
   'alreadyVoted': IDL.Null,
   'alreadyStarted': IDL.Null,
   'matchGroupFetchError': IDL.Text,
-  'invalid': IDL.Vec(IDL.Text)
+  'invalid': IDL.Vec(InvalidVoteErrorIdl)
 });
 
 

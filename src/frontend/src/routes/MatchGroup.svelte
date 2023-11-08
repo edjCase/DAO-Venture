@@ -38,6 +38,7 @@
   });
   let printTime = (remainingMillis: number): string => {
     if (remainingMillis < 1) {
+      matchGroupStore.refetchById(matchGroupId);
       return "ANY SECOND!";
     }
     let seconds = Math.floor(remainingMillis / 1000);
@@ -57,7 +58,7 @@
 {#if !!matchGroup}
   <section>
     <section class="match-details">
-      {#if remainingMillis}
+      {#if remainingMillis && "notStarted" in matchGroup.state}
         <h1>
           Upcoming in {printTime(remainingMillis)}
         </h1>
@@ -101,7 +102,7 @@
       </section>
 
       <h2>JSON</h2>
-      <pre>
+      <pre class="json">
         {toJsonString(matchGroup)}
       </pre>
     </section>
@@ -124,5 +125,8 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+  .json {
+    max-width: 600px;
   }
 </style>

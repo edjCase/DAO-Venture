@@ -204,13 +204,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (#notStarted(notStartedState)) {
                 let seedBlob = await Random.blob();
                 let prng = CommonUtil.buildPrng(seedBlob);
-                Timer.cancelTimer(notStartedState.startTimerId); // Cancel timer before disposing of timer id
-                let tickTimerId = Timer.recurringTimer(
-                    #seconds(5),
-                    func() : async () {
-                        await tickMatchGroupCallback(matchGroupId);
-                    },
-                );
+                Timer.cancelTimer(notStartedState.startTimerId); // Cancel timer before making new one
+                let tickTimerId = startTickTimer(matchGroupId);
                 let startedMatches = Buffer.Buffer<Stadium.StartedMatchState>(matchGroup.matches.size());
                 for (match in Iter.fromArray(matchGroup.matches)) {
                     try {
@@ -251,6 +246,41 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 });
             };
         };
+        updateMatchGroupState({ matchGroup with id = matchGroupId }, newState);
+        switch (newState) {
+            case (#completed(_)) #completed;
+            case (#inProgress(_)) #inProgress;
+        };
+    };
+
+    public shared ({ caller }) func resetTickTimer(matchGroupId : Nat32) : async Stadium.ResetTickTimerResult {
+        let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
+        switch (matchGroup.state) {
+            case (#notStarted(notStartedState)) #matchGroupNotStarted;
+            case (#completed(_)) return #matchGroupComplete;
+            case (#inProgress(inProgressState)) {
+                Timer.cancelTimer(inProgressState.tickTimerId);
+                let newTickTimerId = startTickTimer(matchGroupId);
+                let newState = #inProgress({
+                    inProgressState with
+                    tickTimerId = newTickTimerId;
+                });
+                updateMatchGroupState({ matchGroup with id = matchGroupId }, newState);
+                #ok;
+            };
+        };
+    };
+
+    private func startTickTimer(matchGroupId : Nat32) : Timer.TimerId {
+        Timer.recurringTimer(
+            #seconds(5),
+            func() : async () {
+                await tickMatchGroupCallback(matchGroupId);
+            },
+        );
+    };
+
+    private func updateMatchGroupState(matchGroup : Stadium.MatchGroupWithId, newState : Stadium.MatchGroupState) : () {
         let newMatchGroup = {
             matchGroup with
             state = newState;
@@ -258,15 +288,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
 
         let ?schedule = seasonScheduleOrNull else Prelude.unreachable();
         let matchGroupKey = {
-            hash = matchGroupId;
-            key = matchGroupId;
+            hash = matchGroup.id;
+            key = matchGroup.id;
         };
         let (newMatchGroups, _) = Trie.replace(schedule.matchGroups, matchGroupKey, Nat32.equal, ?newMatchGroup);
         schedule.matchGroups := newMatchGroups;
-        switch (newState) {
-            case (#completed(_)) #completed;
-            case (#inProgress(_)) #inProgress;
-        };
     };
 
     private func buildDivisionMatchGroups(request : Stadium.ScheduleDivisionRequest) : async* BuildDivisionResult {
@@ -369,10 +395,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func tickMatchGroupCallback(matchGroupId : Nat32) : async () {
-        let message = switch (await tickMatchGroup(matchGroupId)) {
-            case (#matchGroupNotFound) "Failed to start match group: Match Group not found";
-            case (#completed(_)) "Failed to start match group: Match Group completed";
-            case (#inProgress(_)) "Ticked match group: " # Nat32.toText(matchGroupId);
+        let message = try {
+            switch (await tickMatchGroup(matchGroupId)) {
+                case (#matchGroupNotFound) "Failed to tick match group: Match Group not found";
+                case (#completed(_)) "Failed to tick match group: Match Group completed";
+                case (#inProgress(_)) "Ticked match group: " # Nat32.toText(matchGroupId);
+            };
+        } catch (err) {
+            "Failed to tick match group: " # Error.message(err);
         };
         Debug.print("Tick Match Group Callback Result - " # message);
     };
@@ -401,7 +431,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    private func tickMatchState(team1 : MatchSimulator.TeamInfo, team2 : MatchSimulator.TeamInfo, prng : Prng, state : Stadium.StartedMatchState) : Stadium.StartedMatchState {
+    private func tickMatchState(
+        team1 : MatchSimulator.TeamInfo,
+        team2 : MatchSimulator.TeamInfo,
+        prng : Prng,
+        state : Stadium.StartedMatchState,
+    ) : Stadium.StartedMatchState {
         switch (state) {
             case (#completed(completedState)) #completed(completedState);
             case (#inProgress(s)) {
@@ -445,7 +480,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             name = team.name;
             players = teamPlayers;
             offering = options.offering;
-            champion = options.champion;
+            championId = options.championId;
         };
     };
 

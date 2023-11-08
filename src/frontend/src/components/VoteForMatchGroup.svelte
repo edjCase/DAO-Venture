@@ -56,7 +56,7 @@
     let request: VoteOnMatchGroupRequest = {
       matchGroupId: matchGroupId,
       offering: offering,
-      champion: match.selectedChampion,
+      championId: match.selectedChampion,
     };
     console.log(
       `Voting for team ${teamId.toString()} and match group ${matchGroupId}`,
@@ -93,7 +93,10 @@
       };
     });
     let players = get(playerStore);
-    let championChoices = players || [];
+    let championChoices =
+      players.filter(
+        (p) => p.teamId.length > 0 && p.teamId[0]?.compareTo(teamId) == "eq"
+      ) || [];
     match = {
       offeringCards: offeringCards,
       selectedOffering: undefined,
@@ -108,7 +111,11 @@
     <h2>Offerings</h2>
     <CardList
       cards={match.offeringCards}
-      onSelect={(i) => (match.selectedOffering = i)}
+      onSelect={(i) => {
+        if (match) {
+          match.selectedOffering = i;
+        }
+      }}
     />
   </div>
   <div>
@@ -116,9 +123,19 @@
     {#if match.championChoices}
       <PlayerPicker
         players={match.championChoices}
-        onPlayerSelected={(pId) => (match.selectedChampion = pId)}
+        onPlayerSelected={(pId) => {
+          if (match) {
+            match.selectedChampion = pId;
+          }
+        }}
       />
     {/if}
   </div>
-  <button on:click={() => register(match)}>Submit Vote</button>
+  <button
+    on:click={() => {
+      if (match) {
+        register(match);
+      }
+    }}>Submit Vote</button
+  >
 {/if}

@@ -17,7 +17,16 @@ module {
         getSeasonSchedule : query () -> async ?SeasonSchedule;
         tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
         scheduleSeason : (request : ScheduleSeasonRequest) -> async ScheduleSeasonResult;
+        resetTickTimer(matchGroupId : Nat32) : async ResetTickTimerResult;
     };
+
+    public type ResetTickTimerResult = {
+        #ok;
+        #matchGroupNotFound;
+        #matchGroupNotStarted;
+        #matchGroupComplete;
+    };
+
     public type SeasonSchedule = {
         divisions : [DivisionSchedule];
     };
@@ -100,6 +109,7 @@ module {
     public type MatchEndReason = {
         #noMoreRounds;
         #outOfPlayers : TeamIdOrBoth;
+        #stateBroken : BrokenStateError;
     };
 
     public type PlayerState = {
@@ -116,7 +126,7 @@ module {
     public type TeamState = {
         score : Int;
         offering : Offering;
-        champion : PlayerId;
+        championId : PlayerId;
     };
 
     public type DefenseFieldState = {
@@ -160,10 +170,31 @@ module {
         strikes : Nat;
     };
 
+    public type PlayerNotFoundError = {
+        id : PlayerId;
+        teamId : ?TeamId;
+    };
+    public type PlayerExpectedOnFieldError = {
+        id : PlayerId;
+        onOffense : Bool;
+        description : Text;
+    };
+
+    public type BrokenStateError = {
+        #playerNotFound : PlayerNotFoundError;
+        #playerExpectedOnField : PlayerExpectedOnFieldError;
+    };
+
+    public type BrokenState = {
+        log : [LogEntry];
+        error : BrokenStateError;
+    };
+
     public type CompletedMatchState = {
         #absentTeam : TeamId;
         #allAbsent;
         #played : PlayedMatchState;
+        #stateBroken : BrokenState;
     };
 
     public type TeamIdOrTie = TeamId or { #tie };
@@ -276,7 +307,7 @@ module {
 
     public type MatchOptions = {
         offering : Offering;
-        champion : PlayerId;
+        championId : PlayerId;
     };
 
     public type MatchPlayer = {

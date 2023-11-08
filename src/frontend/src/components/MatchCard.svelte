@@ -2,6 +2,8 @@
 </script>
 
 <script lang="ts">
+  import { InProgressMatchState } from "../ic-agent/Stadium";
+
   import { MatchDetail, StartedMatchStateDetails } from "../models/Match";
 
   import Bases from "./Bases.svelte";
@@ -19,72 +21,108 @@
     team1Score = matchState.completed.played.team1.score;
     team2Score = matchState.completed.played.team2.score;
   }
+  let getPlayerName = (playerId: number): string => {
+    let player = match.team1.players.find((p) => p.id == playerId);
+    if (!player) {
+      player = match.team2.players.find((p) => p.id == playerId);
+      if (!player) {
+        return "Unknown Player";
+      }
+    }
+    return player.name;
+  };
+  let getActivePlayerName = (
+    team: "team1" | "team2",
+    matchState: InProgressMatchState
+  ): string => {
+    let playerId: number;
+    let emoji: string;
+    if (team in matchState.offenseTeamId) {
+      playerId = matchState.field.offense.atBat;
+      // Batter emoji
+      emoji = "🏏";
+    } else {
+      playerId = matchState.field.defense.pitcher;
+      // Pitcher emoji
+      emoji = "⚾";
+    }
+    let playerName = getPlayerName(playerId);
+    if (team in matchState.offenseTeamId) {
+      playerName = `${emoji} ${playerName}`;
+    } else {
+      playerName += ` ${emoji}`;
+    }
+    return playerName;
+  };
+  $: log =
+    "inProgress" in matchState
+      ? matchState.inProgress.log
+          .reverse() // Reverse the filtered array
+          .slice(0, 5) // Take only the first 5 entries
+      : [];
 </script>
 
 <div class="card">
   <div class="header">
-    <div class="team">
-      <div class="top">
-        <Tooltip>
-          <img
-            class="logo"
-            src={match.team1.logoUrl}
-            alt="{match.team1.name} Logo"
-            slot="content"
-          />
-          <div slot="tooltip" class="name">{match.team1.name}</div>
-        </Tooltip>
-        {#if team1Score !== undefined}
-          <div class="score">{team1Score}</div>
-        {/if}
-      </div>
-      <div class="mid">
-        <!-- TODO -->
-        <!-- {#if 'inProgress' in matchState && "activePlayerName" in matchState.inProgress.}
-          <div class="team-lead">{match.team1.activePlayerName}</div>
-        {/if} -->
-      </div>
-      <div class="bottom" />
+    <div class="header-team team1">
+      <Tooltip>
+        <img
+          class="logo"
+          src={match.team1.logoUrl}
+          alt="{match.team1.name} Logo"
+          slot="content"
+        />
+        <div slot="tooltip" class="name">{match.team1.name}</div>
+      </Tooltip>
+      {#if team1Score !== undefined}
+        <div class="score">{team1Score}</div>
+      {/if}
     </div>
-    <div class="center">
-      <div class="top">
-        {#if "inProgress" in matchState}
-          <Bases state={matchState.inProgress.field.offense} />
-        {:else if "title" in match}
-          <div class="title">{match.title}</div>
-        {/if}
-      </div>
-
-      <div class="mid">
-        {#if "inProgress" in matchState}
-          <div>Round {matchState.inProgress.round}</div>
-        {/if}
-      </div>
-      <div class="bottom" />
+    <div class="header-center">
+      {#if "inProgress" in matchState}
+        <Bases state={matchState.inProgress.field.offense} />
+      {:else if "title" in match}
+        <div class="title">{match.title}</div>
+      {/if}
     </div>
-    <div class="team">
-      <div class="top">
-        {#if team2Score !== undefined}
-          <div class="score">{team2Score}</div>
-        {/if}
-        <Tooltip>
-          <img
-            class="logo"
-            src={match.team2.logoUrl}
-            alt="{match.team2.name} Logo"
-            slot="content"
-          />
-          <div slot="tooltip" class="name">{match.team2.name}</div>
-        </Tooltip>
-      </div>
-      <div class="mid">
-        <!-- TODO -->
-        <!-- {#if "activePlayerName" in match.team2}
-          <div class="team-lead">{match.team2.activePlayerName}</div>
-        {/if} -->
-      </div>
-      <div class="bottom" />
+    <div class="header-team team2">
+      {#if team2Score !== undefined}
+        <div class="score">{team2Score}</div>
+      {/if}
+      <Tooltip>
+        <img
+          class="logo"
+          src={match.team2.logoUrl}
+          alt="{match.team2.name} Logo"
+          slot="content"
+        />
+        <div slot="tooltip" class="name">{match.team2.name}</div>
+      </Tooltip>
     </div>
+  </div>
+  <div class="mid">
+    {#if "inProgress" in matchState}
+      <div class="team-lead">
+        {getActivePlayerName("team1", matchState.inProgress)}
+      </div>
+    {/if}
+    <div>
+      {#if "inProgress" in matchState}
+        <div>Round {matchState.inProgress.round}</div>
+      {/if}
+    </div>
+    {#if "inProgress" in matchState}
+      <div class="team-lead">
+        {getActivePlayerName("team2", matchState.inProgress)}
+      </div>
+    {/if}
+  </div>
+  <div class="footer">
+    <ul>
+      {#each log as logEntry}
+        <li>{logEntry.description}</li>
+      {/each}
+    </ul>
   </div>
 </div>
 
@@ -94,14 +132,17 @@
     border-radius: 5px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
     margin: 1rem;
+    width: 350px;
   }
   .card :global(a) {
     text-decoration: none;
     color: inherit;
   }
-  .team {
+  .header-team {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    width: 140px;
+    align-items: center;
   }
   .name {
     font-size: 2rem;
@@ -110,27 +151,34 @@
   .logo {
     width: 50px;
     height: 50px;
+    border-radius: 5px;
   }
 
   .header {
     display: flex;
     justify-content: space-between;
   }
-  .top {
+
+  .header-center {
+    width: 100px;
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     align-items: center;
-    height: 50px;
+    justify-content: space-around;
   }
-  .top,
-  .mid,
-  .bottom {
-    max-width: 120px;
+
+  .team2 {
+    justify-content: right;
   }
 
   .team-lead {
     font-size: 0.9rem;
-    text-align: center;
+  }
+  .header-team.team1 .name {
+    text-align: left;
+  }
+  .header-team.team2 .name {
+    text-align: right;
   }
 
   .title {
@@ -142,5 +190,11 @@
     font-size: 2rem;
     font-weight: bold;
     margin: 0 1rem;
+  }
+
+  .mid {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
   }
 </style>

@@ -66,12 +66,12 @@ export const TeamIdIdl = IDL.Variant({
 export type TeamState = {
   'score': bigint;
   'offering': Offering;
-  'champion': number;
+  'championId': number;
 };
 export const TeamStateIdl = IDL.Record({
   'score': IDL.Int,
   'offering': OfferingIdl,
-  'champion': IDL.Nat32
+  'championId': IDL.Nat32
 });
 
 export type Injury =
@@ -218,14 +218,53 @@ export const PlayedMatchStateIdl = IDL.Record({
   'log': IDL.Vec(LogEntryIdl)
 });
 
+export type PlayerNotFoundError = {
+  'id': number;
+  'teamId': [TeamId] | [];
+};
+export const PlayerNotFoundErrorIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'teamId': IDL.Opt(TeamIdIdl)
+});
+
+export type PlayerExpectedOnFieldError = {
+  'id': number;
+  'onOffense': boolean;
+  'description': string;
+};
+export const PlayerExpectedOnFieldErrorIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'onOffense': IDL.Bool,
+  'description': IDL.Text
+});
+
+export type BrokenStateError =
+  | { 'playerNotFound': PlayerNotFoundError }
+  | { 'playerExpectedOnField': PlayerExpectedOnFieldError };
+export const BrokenStateErrorIdl = IDL.Variant({
+  'playerNotFound': PlayerNotFoundErrorIdl,
+  'playerExpectedOnField': PlayerExpectedOnFieldErrorIdl
+});
+
+export type BrokenState = {
+  'log': LogEntry[],
+  'error': BrokenStateError
+};
+export const BrokenStateIdl = IDL.Record({
+  'log': IDL.Vec(LogEntryIdl),
+  'error': BrokenStateErrorIdl
+});
+
 export type CompletedMatchState =
   | { 'absentTeam': TeamId }
   | { 'allAbsent': null }
-  | { 'played': PlayedMatchState };
+  | { 'played': PlayedMatchState }
+  | { 'stateBroken': BrokenState };
 export const CompletedMatchStateIdl = IDL.Variant({
   'absentTeam': TeamIdIdl,
   'allAbsent': IDL.Null,
-  'played': PlayedMatchStateIdl
+  'played': PlayedMatchStateIdl,
+  'stateBroken': BrokenStateIdl
 });
 
 export type StartedMatchState =
@@ -456,7 +495,7 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     'getMatchGroup': IDL.Func([IDL.Nat32], [IDL.Opt(MatchGroupIdl)], ['query']),
     'getSeasonSchedule': IDL.Func([], [IDL.Opt(SeasonScheduleIdl)], ['query']),
     'tickMatchGroup': IDL.Func([IDL.Nat32], [TickMatchGroupResultIdl], []),
-    'scheduleSeason': IDL.Func([ScheduleMatchGroupRequestIdl], [ScheduleMatchGroupResultIdl], [])
+    'scheduleSeason': IDL.Func([ScheduleSeasonRequestIdl], [ScheduleSeasonResultIdl], [])
   });
 };
 export const stadiumAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

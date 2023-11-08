@@ -40,6 +40,18 @@ export const matchGroupStore = (() => {
     console.log("Polling stadium", stadiumIdString, "matches in", waitMillis, "ms");
     stadiumLivePolls[stadiumIdString] = setTimeout(() => refetchMatchGroup(stadiumId, matchGroupId), waitMillis);
   };
+  const setMatchGroupPoll = (stadiumId: Principal, matchGroup: MatchGroup) => {
+    const now = new Date();
+    let nextMatchDate;
+    if ('inProgress' in matchGroup.state) {
+      nextMatchDate = new Date(now.getTime() + 5000); // five seconds from now
+    } else {
+      nextMatchDate = undefined; // TODO?
+    }
+    if (nextMatchDate) {
+      resetStadiumLivePoll(stadiumId, matchGroup.id, nextMatchDate); // TODO how to handle failure
+    }
+  };
   const refetchMatchGroup = async (stadiumId: Principal, matchGroupId: number) => {
     stadiumAgentFactory(stadiumId)
       .getMatchGroup(matchGroupId)
@@ -58,17 +70,7 @@ export const matchGroupStore = (() => {
           }
           return matchGroupsToUpdate;
         });
-        const now = new Date();
-        let nextMatchDate;
-        if ('inProgress' in matchGroup.state) {
-          nextMatchDate = new Date(now.getTime() + 5000); // five seconds from now
-        } else {
-          nextMatchDate = undefined; // TODO?
-        }
-        if (nextMatchDate) {
-          resetStadiumLivePoll(stadiumId, matchGroupId, nextMatchDate); // TODO how to handle failure
-
-        }
+        setMatchGroupPoll(stadiumId, matchGroup);
         return matchGroupOrNull;
       });
   };
@@ -79,7 +81,11 @@ export const matchGroupStore = (() => {
         if (scheduleOrNull.length === 0) {
           return;
         }
-        set(scheduleOrNull[0].divisions.flatMap(d => d.matchGroups));
+        let matchGroups = scheduleOrNull[0].divisions.flatMap(d => d.matchGroups);
+        set(matchGroups);
+        for (let matchGroup of matchGroups) {
+          setMatchGroupPoll(stadiumId, matchGroup);
+        }
         return;
       });
   };

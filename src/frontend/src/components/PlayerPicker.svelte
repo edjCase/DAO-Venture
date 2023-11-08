@@ -1,8 +1,13 @@
 <script lang="ts">
+  import { onMount } from "svelte";
   import type { Player } from "../models/Player";
 
   export let players: Player[];
   export let onPlayerSelected: (playerId: number) => void;
+
+  onMount(() => {
+    onPlayerSelected(players[0].id);
+  });
 </script>
 
 <select

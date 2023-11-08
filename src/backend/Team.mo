@@ -30,7 +30,7 @@ module {
 
     public type MatchGroupVote = {
         offering : Stadium.Offering;
-        champion : Player.PlayerId;
+        championId : Player.PlayerId;
     };
 
     public type VoteOnMatchGroupRequest = MatchGroupVote and {
@@ -45,7 +45,12 @@ module {
         #alreadyVoted;
         #alreadyStarted;
         #matchGroupFetchError : Text;
-        #invalid : [Text];
+        #invalid : [InvalidVoteError];
+    };
+
+    public type InvalidVoteError = {
+        #invalidChampionId : Player.PlayerId;
+        #invalidOffering : Stadium.Offering;
     };
 
     public type TeamWithoutDivision = {

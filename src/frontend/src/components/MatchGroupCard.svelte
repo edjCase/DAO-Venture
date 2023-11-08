@@ -44,6 +44,30 @@
       </div>
     {/each}
   </Link>
+{:else if "completed" in matchGroup.state}
+  <div>Match Group Completed</div>
+  <div>Matches:</div>
+  {#each matchGroup.state.completed.matches as match, index}
+    <div>
+      {matchGroup.matches[index].team1.name} vs {matchGroup.matches[index].team2
+        .name}
+    </div>
+    {#if "played" in match}
+      <div>
+        Winner: {"team1" in match.played.winner
+          ? matchGroup.matches[index].team1.name
+          : matchGroup.matches[index].team2.name}
+      </div>
+      <div>Score: {match.played.team1.score} - {match.played.team2.score}</div>
+    {:else if "allAbsent" in match}
+      <div>All teams were absent</div>
+    {:else if "absentTeam" in match}
+      <div>Team {match.absentTeam.name} was absent and thus forfeit</div>
+    {:else if "stateBroken" in match}
+      <div>Match in broken state:</div>
+      <pre>{match.stateBroken}</pre>
+    {/if}
+  {/each}
 {:else}
   <div class="match-card-grid">
     {#if "inProgress" in matchGroup.state}

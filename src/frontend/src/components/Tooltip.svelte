@@ -22,6 +22,7 @@
   .container {
     position: relative;
     display: inline-block;
+    height: inherit;
   }
 
   .tooltip {

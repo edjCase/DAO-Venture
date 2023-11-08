@@ -71,16 +71,22 @@ shared (install) actor class TeamActor(
       case (#completed(c)) return #alreadyStarted;
     };
 
-    let errors = Buffer.Buffer<Text>(0);
+    let errors = Buffer.Buffer<Team.InvalidVoteError>(0);
     let offeringExists = IterTools.any(match.offerings.vals(), func(o : Offering) : Bool = o == request.offering);
     if (not offeringExists) {
-      errors.add("Invalid offering: " # debug_show (request.offering));
+      errors.add(#invalidOffering(request.offering));
     };
-    // TODO?
-    // let championExists = IterTools.any(match.players.vals(), func(r : MatchAura) : Bool = r == request.vote.champion);
-    // if (not championExists) {
-    //   errors.add("Invalid champion: " # debug_show (request.vote.champion));
-    // };
+    let teamPlayers : [Stadium.MatchPlayer] = if (match.team1.id == teamId) {
+      match.team1.players;
+    } else if (match.team2.id == teamId) {
+      match.team2.players;
+    } else {
+      return #teamNotInMatchGroup;
+    };
+    let championExists = IterTools.any(teamPlayers.vals(), func(p : Stadium.MatchPlayer) : Bool = p.id == request.championId);
+    if (not championExists) {
+      errors.add(#invalidChampionId(request.championId));
+    };
     if (errors.size() > 0) {
       return #invalid(Buffer.toArray(errors));
     };
@@ -124,10 +130,10 @@ shared (install) actor class TeamActor(
     switch (Trie.get(matchGroupVotes, matchGroupKey, Nat32.equal)) {
       case (null) #noVotes;
       case (?o) {
-        let ?{ offering; champion } = calculateVotes(o) else return #noVotes;
+        let ?{ offering; championId } = calculateVotes(o) else return #noVotes;
         #ok({
           offering = offering;
-          champion = champion;
+          championId = championId;
         });
       };
     };
@@ -149,7 +155,7 @@ shared (install) actor class TeamActor(
 
   private func calculateVotes(matchVotes : Trie.Trie<Principal, Team.MatchGroupVote>) : ?{
     offering : Offering;
-    champion : PlayerId;
+    championId : PlayerId;
   } {
     var offeringVotes = Trie.empty<Offering, Nat>();
     var championVotes = Trie.empty<PlayerId, Nat>();
@@ -162,16 +168,16 @@ shared (install) actor class TeamActor(
       };
       offeringVotes := addVotes(offeringVotes, offeringKey, Stadium.equalOffering, userVotingPower);
       let championKey = {
-        key = vote.champion;
-        hash = vote.champion;
+        key = vote.championId;
+        hash = vote.championId;
       };
       championVotes := addVotes(championVotes, championKey, Nat32.equal, userVotingPower);
     };
     let ?winningOffering = calculateVote(offeringVotes) else return null;
-    let ?winningChampion = calculateVote(championVotes) else return null;
+    let ?winningChampionId = calculateVote(championVotes) else return null;
     ?{
       offering = winningOffering;
-      champion = winningChampion;
+      championId = winningChampionId;
     };
   };
 

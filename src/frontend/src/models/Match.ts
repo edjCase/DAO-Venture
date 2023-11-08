@@ -10,13 +10,15 @@ import {
     MatchAura,
     MatchGroup,
     MatchGroupState,
+    MatchPlayer,
     MatchTeam,
     NotStartedMatchGroupState,
     StartedMatchState,
-    TeamIdOrBoth,
+    TeamId,
     TeamIdOrTie,
 } from "../ic-agent/Stadium";
 import { getOfferingDetails } from "../stores/MatchGroupStore";
+import { toJsonString } from "../utils/JsonUtil";
 
 export type PlayedTeamDetails = {
     score: bigint;
@@ -30,7 +32,8 @@ export type PlayedMatchStateDetails = {
 export type CompletedMatchStateDetails =
     | { allAbsent: null }
     | { absentTeam: { name: string } }
-    | { played: PlayedMatchStateDetails };
+    | { played: PlayedMatchStateDetails }
+    | { stateBroken: string };
 
 export type StartedMatchStateDetails =
     | { completed: CompletedMatchStateDetails }
@@ -54,11 +57,17 @@ export type OfferingDetails = {
 };
 export type MatchAuraDetails = OfferingDetails;
 
+export type MatchPlayerDetails = {
+    id: number;
+    name: string;
+};
+
 export type TeamDetails = {
     id: Principal;
     name: string;
     logoUrl: string;
     predictionVotes: bigint;
+    players: MatchPlayerDetails[];
 };
 export type MatchDetail = {
     team1: TeamDetails;
@@ -76,7 +85,7 @@ export type MatchGroupDetails = {
 
 let getTeamName = (
     matchGroup: MatchGroup,
-    teamId: TeamIdOrBoth | TeamIdOrTie,
+    teamId: TeamId | { tie: null } | { both: null } | { team1: null } | { team2: null },
     matchIndex: number
 ): string => {
     if (!matchGroup) {
@@ -93,12 +102,20 @@ let getTeamName = (
     }
 };
 
+export const mapMatchPlayer = (player: MatchPlayer): MatchPlayerDetails => {
+    return {
+        id: player.id,
+        name: player.name,
+    };
+}
+
 export const mapTeam = (team: MatchTeam): TeamDetails => {
     return {
         id: team.id,
         name: team.name,
         logoUrl: team.logoUrl,
         predictionVotes: team.predictionVotes,
+        players: team.players.map(mapMatchPlayer)
     };
 };
 
@@ -162,12 +179,17 @@ export const mapCompletedMatchState = (
         return {
             allAbsent: null,
         };
-    } else {
+    } else if ("absentTeam" in state) {
         return {
             absentTeam: {
                 name: getTeamName(matchGroup, state.absentTeam, matchIndex),
             },
         };
+    }
+    else {
+        return {
+            stateBroken: "State is broken: " + toJsonString(state.stateBroken)
+        }
     }
 };
 export const mapStartedMatchState = (
