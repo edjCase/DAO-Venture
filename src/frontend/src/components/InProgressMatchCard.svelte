@@ -11,6 +11,7 @@
 
   export let match: MatchDetail;
   export let matchState: InProgressMatchState;
+  export let compact: boolean = false;
 
   let getPlayerName = (playerId: number): string => {
     let player = match.team1.players.find((p) => p.id == playerId);
@@ -59,33 +60,34 @@
   >
     <Bases state={matchState.field.offense} />
   </MatchCardHeader>
-  <div class="mid">
-    <div class="team-lead">
-      {getActivePlayerName("team1", matchState)}
+
+  {#if !compact}
+    <div class="mid">
+      <div class="team-lead">
+        {getActivePlayerName("team1", matchState)}
+      </div>
+      <div>
+        <div>Round {matchState.round}</div>
+      </div>
+      <div class="team-lead">
+        {getActivePlayerName("team2", matchState)}
+      </div>
     </div>
-    <div>
-      <div>Round {matchState.round}</div>
+    <div class="footer">
+      <ul>
+        {#each log as logEntry}
+          <li>{logEntry.description}</li>
+        {/each}
+      </ul>
     </div>
-    <div class="team-lead">
-      {getActivePlayerName("team2", matchState)}
-    </div>
-  </div>
-  <div class="footer">
-    <ul>
-      {#each log as logEntry}
-        <li>{logEntry.description}</li>
-      {/each}
-    </ul>
-  </div>
+  {/if}
 </div>
 
 <style>
   .card {
-    background: black;
     border-radius: 5px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    margin: 1rem;
-    width: 350px;
+    width: 100%;
   }
   .card :global(a) {
     text-decoration: none;

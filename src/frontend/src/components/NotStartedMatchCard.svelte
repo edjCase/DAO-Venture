@@ -3,6 +3,7 @@
   import MatchCardHeader from "./MatchCardHeader.svelte";
 
   export let match: MatchDetail;
+  export let compact: boolean = false;
 </script>
 
 <div>
@@ -12,4 +13,7 @@
     team2Score={undefined}
     winner={undefined}
   />
+  {#if !compact}
+    More info
+  {/if}
 </div>

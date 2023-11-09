@@ -5,6 +5,7 @@
 
   export let match: MatchDetail;
   export let matchState: CompletedMatchStateDetails;
+  export let compact: boolean = false;
 
   let team1Score: bigint | undefined;
   let team2Score: bigint | undefined;
@@ -17,18 +18,34 @@
 </script>
 
 <div class="card">
-  <MatchCardHeader {match} {team1Score} {team2Score} {winner} />
-  <div class="mid" />
-  <div class="footer" />
+  <MatchCardHeader {match} {team1Score} {team2Score} {winner}>
+    {#if "played" in matchState}
+      {#if "team1" in matchState.played.winner}
+        {match.team1.name} Win!
+      {:else if "team2" in matchState.played.winner}
+        {match.team2.name} Win!
+      {:else}
+        Its a tie!
+      {/if}
+    {:else if "allAbsent" in matchState}
+      No one showed up
+    {:else if "absentTeam" in matchState}
+      Team {matchState.absentTeam.name} didn't show up, thus forfeit
+    {:else if "stateBroken" in matchState}
+      Broken: {matchState.stateBroken}
+    {/if}
+  </MatchCardHeader>
+  {#if !compact}
+    <div class="mid" />
+    <div class="footer" />
+  {/if}
 </div>
 
 <style>
   .card {
-    background: black;
     border-radius: 5px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    margin: 1rem;
-    width: 350px;
+    width: 100%;
   }
   .card :global(a) {
     text-decoration: none;

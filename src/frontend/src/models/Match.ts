@@ -83,11 +83,11 @@ export type MatchGroupDetails = {
 
 
 let getTeamName = (
-    matchGroup: MatchGroup,
+    matchDetails: MatchDetail[],
     teamId: TeamId | { tie: null } | { both: null } | { team1: null } | { team2: null },
     matchIndex: number
 ): string => {
-    if (!matchGroup) {
+    if (!matchDetails) {
         return "Unknown";
     }
     if ("both" in teamId) {
@@ -95,9 +95,9 @@ let getTeamName = (
     } else if ("tie" in teamId) {
         return "Tie";
     } else if ("team1" in teamId) {
-        return matchGroup.matches[matchIndex].team1.name;
+        return matchDetails[matchIndex].team1.name;
     } else {
-        return matchGroup.matches[matchIndex].team2.name;
+        return matchDetails[matchIndex].team2.name;
     }
 };
 
@@ -161,7 +161,7 @@ export const mapInProgressMatchState = (
     return state;
 };
 export const mapCompletedMatchState = (
-    matchGroup: MatchGroup,
+    matches: MatchDetail[],
     state: CompletedMatchState,
     matchIndex: number
 ): CompletedMatchStateDetails => {
@@ -181,7 +181,7 @@ export const mapCompletedMatchState = (
     } else if ("absentTeam" in state) {
         return {
             absentTeam: {
-                name: getTeamName(matchGroup, state.absentTeam, matchIndex),
+                name: getTeamName(matches, state.absentTeam, matchIndex),
             },
         };
     }
@@ -198,14 +198,14 @@ export const mapCompletedMatchState = (
     }
 };
 export const mapStartedMatchState = (
-    matchGroup: MatchGroup,
+    matches: MatchDetail[],
     state: StartedMatchState,
     matchIndex: number
 ): StartedMatchStateDetails => {
     if ("inProgress" in state) {
         return { inProgress: mapInProgressMatchState(state.inProgress) };
     } else {
-        return { completed: mapCompletedMatchState(matchGroup, state.completed, matchIndex) };
+        return { completed: mapCompletedMatchState(matches, state.completed, matchIndex) };
     }
 };
 export const mapNotStartedState = (
@@ -214,35 +214,36 @@ export const mapNotStartedState = (
     return state;
 };
 export const mapInProgressState = (
-    matchGroup: MatchGroup,
+    matches: MatchDetail[],
     state: InProgressMatchGroupState
 ): InProgressMatchGroupStateDetails => {
     return {
-        matches: state.matches.map((m, i) => mapStartedMatchState(matchGroup, m, i)),
+        matches: state.matches.map((m, i) => mapStartedMatchState(matches, m, i)),
     };
 };
 export const mapCompletedState = (
-    matchGroup: MatchGroup,
+    matches: MatchDetail[],
     state: CompletedMatchGroupState
 ): CompletedMatchGroupStateDetails => {
     return {
-        matches: state.matches.map((m, i) => mapCompletedMatchState(matchGroup, m, i)),
+        matches: state.matches.map((m, i) => mapCompletedMatchState(matches, m, i)),
     };
 };
-export const mapState = (matchGroup: MatchGroup, state: MatchGroupState): MatchGroupStateDetails => {
+export const mapState = (matches: MatchDetail[], state: MatchGroupState): MatchGroupStateDetails => {
     if ("inProgress" in state) {
-        return { inProgress: mapInProgressState(matchGroup, state.inProgress) };
+        return { inProgress: mapInProgressState(matches, state.inProgress) };
     } else if ("completed" in state) {
-        return { completed: mapCompletedState(matchGroup, state.completed) };
+        return { completed: mapCompletedState(matches, state.completed) };
     } else {
         return { notStarted: mapNotStartedState(state.notStarted) };
     }
 };
 export const mapMatchGroup = (matchGroup: MatchGroup): MatchGroupDetails => {
+    let matches = matchGroup.matches.map(mapMatch);
     return {
         id: matchGroup.id,
         time: matchGroup.time,
-        matches: matchGroup.matches.map(mapMatch),
-        state: mapState(matchGroup, matchGroup.state),
+        matches: matches,
+        state: mapState(matches, matchGroup.state),
     };
 };

@@ -57,10 +57,16 @@
 {#if !!matchGroup}
   <section>
     <section class="match-details">
-      {#if remainingMillis && "notStarted" in matchGroup.state}
-        <h1>
-          Upcoming in {printTime(remainingMillis)}
-        </h1>
+      {#if "notStarted" in matchGroup.state}
+        {#if remainingMillis}
+          <h1>
+            Upcoming in {printTime(remainingMillis)}
+          </h1>
+        {/if}
+      {:else if "completed" in matchGroup.state}
+        <div>Match Group is over</div>
+      {:else if "inProgress" in matchGroup.state}
+        <div>Match Group is LIVE!</div>
       {/if}
 
       <MatchGroupCardGrid {matchGroup} />
@@ -81,10 +87,6 @@
             />
           </div>
         {/each}
-      {:else if "completed" in matchGroup.state}
-        <div>Completed</div>
-      {:else}
-        <h1>Game hasnt started</h1>
       {/if}
     </section>
   </section>

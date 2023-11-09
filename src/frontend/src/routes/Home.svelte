@@ -51,6 +51,10 @@
   {#if teams.length === 0}
     <TempInitialize />
   {/if}
+  <div>
+    <h1>Schedule Season</h1>
+    <ScheduleSeason />
+  </div>
   {#if liveMatchGroups.length > 0}
     <h1>Live</h1>
     <div class="live-matches">
@@ -104,11 +108,6 @@
         <li>{stadium.id}</li>
       </ul>
     {/each}
-  </div>
-
-  <div>
-    <h1>Schedule Season</h1>
-    <ScheduleSeason />
   </div>
 
   <hr style="margin-top: 400px;" />

@@ -164,6 +164,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 let startTimerId = Timer.setTimer(
                     #nanoseconds(natTimeDiff),
                     func() : async () {
+                        Debug.print("Starting match group " # Nat32.toText(matchGroupId));
                         await tickMatchGroupCallback(matchGroupId);
                     },
                 );
@@ -397,9 +398,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     private func tickMatchGroupCallback(matchGroupId : Nat32) : async () {
         let message = try {
             switch (await tickMatchGroup(matchGroupId)) {
-                case (#matchGroupNotFound) "Failed to tick match group: Match Group not found";
-                case (#completed(_)) "Failed to tick match group: Match Group completed";
-                case (#inProgress(_)) "Ticked match group: " # Nat32.toText(matchGroupId);
+                case (#matchGroupNotFound) "Match Group not found";
+                case (#completed(_)) "Match Group completed";
+                case (#inProgress(_)) return (); // Dont log normal tick
             };
         } catch (err) {
             "Failed to tick match group: " # Error.message(err);

@@ -5,9 +5,10 @@
     type DivisionScheduleRequest,
   } from "../ic-agent/League";
   import { divisionStore } from "../stores/DivisionStore";
-  import { dateToNanoseconds } from "../utils/DateUtils";
+  import { dateToNanoseconds, nanosecondsToDate } from "../utils/DateUtils";
   import { SeasonSchedule } from "../ic-agent/Stadium";
   import { onMount } from "svelte";
+  import { matchGroupStore } from "../stores/MatchGroupStore";
 
   let schedule: SeasonSchedule | undefined;
   $: divisions = $divisionStore;
@@ -45,7 +46,7 @@
         if ("ok" in result) {
           console.log("Scheduled season");
           divisionStore.refetch();
-          // matchGroupStore.refetchById(result.ok); TODO
+          matchGroupStore.refetchAll();
         } else {
           console.log("Failed to schedule season", result);
         }
@@ -70,29 +71,34 @@
   <p>Schedule:</p>
   {#each schedule.divisions as divisionSchedule}
     <div>
-      {#each divisionSchedule.matchGroups as matchGroup, index}
-        <div>Week {index + 1}</div>
-        {#each matchGroup.matches as match}
-          <div>
-            {match.team1.name}
-            vs
-            {match.team2.name}
-          </div>
-        {/each}
-      {/each}
+      Division {divisionSchedule.id} starts on {nanosecondsToDate(
+        divisionSchedule.matchGroups[0].time
+      ).toLocaleString()}
     </div>
   {/each}
   <!-- <button on:click={closeSeason}>Close Season</button> -->
 {:else if divisions}
-  {#each divisions as division}
-    <span>
-      <h2>Division: {division.name}</h2>
-      <input
-        type="datetime-local"
-        on:change={(e) =>
-          (startTimes[division.id.toString()] = e.currentTarget.value)}
-      />
-    </span>
-  {/each}
+  <div class="divisions">
+    {#each divisions as division}
+      <span class="division">
+        <h2>Division: {division.name}</h2>
+        <input
+          type="datetime-local"
+          on:change={(e) =>
+            (startTimes[division.id.toString()] = e.currentTarget.value)}
+        />
+      </span>
+    {/each}
+  </div>
   <button on:click={scheduleSeason}>Schedule</button>
 {/if}
+
+<style>
+  .divisions {
+    display: flex;
+    flex-direction: row;
+  }
+  .division {
+    margin: 20px;
+  }
+</style>
