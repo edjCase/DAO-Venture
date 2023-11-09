@@ -3,18 +3,43 @@ import TimeZone "mo:datetime/TimeZone";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Team "Team";
-import Division "Division";
+import ICRC1 "mo:icrc1/ICRC1";
 
 module {
     public type LeagueActor = actor {
-        getTeams() : async [Team.TeamWithId];
-        getStadiums() : async [Stadium];
-        getDivisions() : async [DivisionWithId];
+        getTeams : query () -> async [Team.TeamWithId];
+        getStadiums : query () -> async [Stadium];
+        getDivisions : query () -> async [DivisionWithId];
         getSeasonSchedule : composite query () -> async ?Stadium.SeasonSchedule;
-        createDivision(request : CreateDivisionRequest) : async CreateDivisionResult;
-        scheduleSeason(request : ScheduleSeasonRequest) : async ScheduleSeasonResult;
-        createStadium() : async CreateStadiumResult;
-        updateLeagueCanisters() : async ();
+        createDivision : (request : CreateDivisionRequest) -> async CreateDivisionResult;
+        scheduleSeason : (request : ScheduleSeasonRequest) -> async ScheduleSeasonResult;
+        createStadium : () -> async CreateStadiumResult;
+        createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
+        mint : (request : MintRequest) -> async MintResult;
+        updateLeagueCanisters : () -> async ();
+    };
+    public type CreateTeamRequest = {
+        name : Text;
+        logoUrl : Text;
+        tokenName : Text;
+        tokenSymbol : Text;
+        divisionId : Nat32;
+    };
+    public type MintRequest = {
+        amount : Nat;
+        teamId : Principal;
+    };
+
+    public type MintResult = {
+        #ok : ICRC1.TxIndex;
+        #teamNotFound;
+        #transferError : ICRC1.TransferError;
+    };
+
+    public type CreateTeamResult = {
+        #ok : Principal;
+        #nameTaken;
+        #noStadiumsExist;
     };
 
     public type Stadium = {
@@ -30,7 +55,7 @@ module {
         startTime : Time.Time;
     };
     public type ScheduleSeasonResult = Stadium.ScheduleSeasonResultGeneric<ScheduleDivisionErrorResult> or {
-        #noStadium;
+        #noStadiumsExist;
         #stadiumScheduleError : Text;
         #teamFetchError : Text;
     };
@@ -46,9 +71,9 @@ module {
         name : Text;
     };
     public type CreateDivisionResult = {
-        #ok : Principal;
+        #ok : Nat32;
         #nameTaken;
-        #noStadium;
+        #noStadiumsExist;
     };
     public type CreateStadiumResult = {
         #ok : Principal;
@@ -64,6 +89,6 @@ module {
         name : Text;
     };
     public type DivisionWithId = Division and {
-        id : Principal;
+        id : Nat32;
     };
 };

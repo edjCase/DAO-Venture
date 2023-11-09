@@ -60,7 +60,7 @@ export type ScheduleSeasonResult =
   | { 'divisionErrors': ScheduleDivisionErrorResult[] }
   | { 'noDivisionSpecified': null }
   | { 'alreadyScheduled': null }
-  | { 'noStadium': null }
+  | { 'noStadiumsExist': null }
   | { 'stadiumScheduleError': string }
   | { 'teamFetchError': string };
 export const ScheduleSeasonResultIdl = IDL.Variant({
@@ -68,7 +68,7 @@ export const ScheduleSeasonResultIdl = IDL.Variant({
   'divisionErrors': IDL.Vec(ScheduleDivisionErrorResultIdl),
   'noDivisionSpecified': IDL.Null,
   'alreadyScheduled': IDL.Null,
-  'noStadium': IDL.Null,
+  'noStadiumsExist': IDL.Null,
   'stadiumScheduleError': IDL.Text,
   'teamFetchError': IDL.Text
 });
@@ -89,12 +89,12 @@ export type CreateDivisionResult = {
 } | {
   'nameTake': null
 } | {
-  'noStadium': null
+  'noStadiumsExist': null
 };
 export const CreateDivisionResultIdl = IDL.Variant({
   'ok': IDL.Principal,
   'nameTaken': IDL.Null,
-  'noStadium': IDL.Null,
+  'noStadiumsExist': IDL.Null,
 });
 
 export type CreateDivisionRequest = {

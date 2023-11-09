@@ -24,7 +24,6 @@ import Types "mo:icrc1/ICRC1/Types";
 shared (install) actor class TeamActor(
   leagueId : Principal,
   stadiumId : Principal,
-  divisionId : Principal,
   ledgerId : Principal,
 ) : async Team.TeamActor = this {
 

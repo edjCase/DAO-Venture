@@ -60,7 +60,7 @@ module {
     };
 
     public type Team = TeamWithoutDivision and {
-        divisionId : Principal;
+        divisionId : Nat32;
     };
 
     public type TeamWithId = Team and {
