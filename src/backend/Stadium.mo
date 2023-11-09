@@ -31,7 +31,7 @@ module {
         divisions : [DivisionSchedule];
     };
     public type DivisionSchedule = {
-        id : Principal;
+        id : Nat32;
         matchGroups : [MatchGroupWithId];
     };
 
@@ -45,7 +45,7 @@ module {
 
     public type RegistrationInfoError = {
         #invalidOffering : Offering;
-        #invalidChampion : PlayerId;
+        #invalidChampionId : PlayerId;
     };
 
     public type ScheduleSeasonRequest = {
@@ -60,7 +60,7 @@ module {
     };
     public type ScheduleSeasonResult = ScheduleSeasonResultGeneric<ScheduleDivisionErrorResult>;
     public type ScheduleDivisionErrorResult = {
-        id : Principal;
+        id : Nat32;
         error : ScheduleDivisionError;
     };
 
@@ -73,7 +73,7 @@ module {
     };
 
     public type ScheduleDivisionRequest = {
-        id : Principal;
+        id : Nat32;
         matchGroups : [ScheduleMatchGroupRequest];
     };
 
@@ -226,6 +226,14 @@ module {
     public type Offering = {
         #shuffleAndBoost;
     };
+    public type OfferingMetaData = {
+        name : Text;
+        description : Text;
+    };
+
+    public type OfferingWithMetaData = OfferingMetaData and {
+        offering : Offering;
+    };
 
     public func hashOffering(offering : Offering) : Nat32 = switch (offering) {
         case (#shuffleAndBoost) 0;
@@ -240,6 +248,15 @@ module {
         #moreBlessingsAndCurses;
     };
 
+    public type MatchAuraMetaData = {
+        name : Text;
+        description : Text;
+    };
+
+    public type MatchAuraWithMetaData = MatchAuraMetaData and {
+        aura : MatchAura;
+    };
+
     public func hashMatchAura(aura : MatchAura) : Nat32 = switch (aura) {
         case (#lowGravity) 0;
         case (#explodingBalls) 1;
@@ -252,8 +269,8 @@ module {
     public type Match = {
         team1 : MatchTeam;
         team2 : MatchTeam;
-        offerings : [Offering];
-        aura : MatchAura;
+        offerings : [OfferingWithMetaData];
+        aura : MatchAuraWithMetaData;
         state : MatchState;
     };
 

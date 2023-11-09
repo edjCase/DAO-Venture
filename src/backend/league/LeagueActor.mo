@@ -145,9 +145,19 @@ actor LeagueActor {
         let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
 
         let divisionRequestResults = Buffer.Buffer<BuildDivisionRequestResultWithId>(request.divisions.size());
-        for (division in Iter.fromArray(request.divisions)) {
+        label f for (division in Iter.fromArray(request.divisions)) {
+
+            let divisionExists = Trie.some(
+                divisions,
+                func(k : Nat32, v : Division) : Bool = k == division.id,
+            );
+            if (not divisionExists) {
+                divisionRequestResults.add(#error({ id = division.id; error = #divisionNotFound }));
+                continue f;
+            };
             let teamIds = teams
             |> Trie.iter(_)
+            |> Iter.filter(_, func(team : (Principal, Team.Team)) : Bool = team.1.divisionId == division.id)
             |> Iter.map(_, func(team : (Principal, Team.Team)) : Principal = team.0)
             |> Iter.toArray(_);
             let result = await* buildDivisionRequest(teamIds, division.startTime, prng);
@@ -188,6 +198,13 @@ actor LeagueActor {
         );
         if (nameAlreadyTaken) {
             return #nameTaken;
+        };
+        let divisionExists = Trie.some(
+            divisions,
+            func(k : Nat32, v : Division) : Bool = k == request.divisionId,
+        );
+        if (not divisionExists) {
+            return #divisionNotFound;
         };
         // TODO handle states where ledger exists but the team actor doesn't
         // Create canister for team ledger

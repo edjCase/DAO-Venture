@@ -34,7 +34,9 @@
     liveMatchGroups = [];
     historicalMatchGroups = [];
     upcomingMatchGroups = [];
-    for (let matchGroup of matchGroups) {
+    for (let matchGroup of matchGroups.sort((a, b) =>
+      Number(a.time - b.time)
+    )) {
       let matchGroupDetails = mapMatchGroup(matchGroup);
       if ("inProgress" in matchGroup.state) {
         liveMatchGroups.push(matchGroupDetails);

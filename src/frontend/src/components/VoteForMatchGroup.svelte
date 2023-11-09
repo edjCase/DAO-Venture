@@ -7,10 +7,7 @@
   import PlayerPicker from "./PlayerPicker.svelte";
   import { Player } from "../models/Player";
   import { playerStore } from "../stores/PlayerStore";
-  import {
-    getOfferingDetails,
-    matchGroupStore,
-  } from "../stores/MatchGroupStore";
+  import { matchGroupStore } from "../stores/MatchGroupStore";
   import { get } from "svelte/store";
 
   export let teamId: Principal;
@@ -36,23 +33,7 @@
       console.log("No offering or champion selected");
       return;
     }
-    let offering: Offering;
-    switch (match.selectedOffering) {
-      case "shuffleAndBoost":
-        offering = { shuffleAndBoost: null };
-        break;
-      // case "war":
-      //   offering = { war: { b: null } };
-      //   break;
-      // case "indulgence":
-      //   offering = { indulgence: { c: null } };
-      //   break;
-      // case "pestilence":
-      //   offering = { pestilence: { d: null } };
-      //   break;
-      default:
-        throw new Error("Invalid offering: " + match.selectedOffering);
-    }
+    let offering: Offering = { [match.selectedOffering]: null } as Offering;
     let request: VoteOnMatchGroupRequest = {
       matchGroupId: matchGroupId,
       offering: offering,
@@ -85,11 +66,10 @@
       return;
     }
     let offeringCards = unmappedMatch.offerings.map((o) => {
-      let offeringDetails = getOfferingDetails(o);
       return {
-        id: "shuffleAndBoost", // TODO
-        title: offeringDetails.name,
-        description: offeringDetails.description,
+        id: Object.keys(o.offering)[0],
+        title: o.name,
+        description: o.description,
       };
     });
     let players = get(playerStore);

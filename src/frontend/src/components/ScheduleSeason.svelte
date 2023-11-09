@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Principal } from "@dfinity/principal";
   import {
     leagueAgentFactory,
     type DivisionScheduleRequest,
@@ -30,7 +29,7 @@
     let divisionSchedules: DivisionScheduleRequest[] = Object.keys(
       startTimes
     ).map((id) => ({
-      id: Principal.fromText(id),
+      id: Number(id),
       startTime: dateToNanoseconds(new Date(startTimes[id])),
     }));
     if (divisionSchedules.length < 1) {

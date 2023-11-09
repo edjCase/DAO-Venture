@@ -1,31 +1,13 @@
 import { writable, get } from "svelte/store";
-import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup, Offering, SeasonSchedule } from "../ic-agent/Stadium";
+import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup, SeasonSchedule } from "../ic-agent/Stadium";
 import { stadiumStore } from "./StadiumStore";
 import { Principal } from "@dfinity/principal";
+import { nanosecondsToDate } from "../utils/DateUtils";
 
-export type OfferingDetails = {
-  name: string;
-  description: string;
-};
-
-export let getOfferingDetails = (offering: Offering): OfferingDetails => {
-  if ("shuffleAndBoost" in offering) {
-    return {
-      name: "Shuffle And Boost",
-      description:
-        "Shuffle your team's field positions and boost your team with a random blessing.",
-    };
-  } else {
-    return {
-      name: "Unknown",
-      description: "Unknown",
-    };
-  }
-};
 
 export const matchGroupStore = (() => {
   const { subscribe, set, update } = writable<MatchGroup[]>([]);
-  const stadiumLivePolls: { [key: string]: NodeJS.Timeout } = {};
+  const matchGroupLivePolls: { [key: number]: NodeJS.Timeout } = {};
 
 
   const resetStadiumLivePoll = (stadiumId: Principal, matchGroupId: number, date: Date) => {
@@ -33,20 +15,19 @@ export const matchGroupStore = (() => {
     if (waitMillis < 1000) {
       waitMillis = 1000; // Safety
     }
-    let stadiumIdString = stadiumId.toText();
-    if (stadiumLivePolls[stadiumIdString]) {
-      clearTimeout(stadiumLivePolls[stadiumIdString]);
+    if (matchGroupLivePolls[matchGroupId]) {
+      clearTimeout(matchGroupLivePolls[matchGroupId]);
     }
-    console.log("Polling stadium", stadiumIdString, "matches in", waitMillis, "ms");
-    stadiumLivePolls[stadiumIdString] = setTimeout(() => refetchMatchGroup(stadiumId, matchGroupId), waitMillis);
+    console.log("Polling match group", matchGroupId, "matches in", waitMillis, "ms");
+    matchGroupLivePolls[matchGroupId] = setTimeout(() => refetchMatchGroup(stadiumId, matchGroupId), waitMillis);
   };
   const setMatchGroupPoll = (stadiumId: Principal, matchGroup: MatchGroup) => {
     const now = new Date();
     let nextMatchDate;
     if ('inProgress' in matchGroup.state) {
       nextMatchDate = new Date(now.getTime() + 5000); // five seconds from now
-    } else {
-      nextMatchDate = undefined; // TODO?
+    } else if ('notStarted' in matchGroup.state) {
+      nextMatchDate = nanosecondsToDate(matchGroup.time);
     }
     if (nextMatchDate) {
       resetStadiumLivePoll(stadiumId, matchGroup.id, nextMatchDate); // TODO how to handle failure

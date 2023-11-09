@@ -5,7 +5,6 @@
   import { stadiumStore } from "../stores/StadiumStore";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
-  import { divisionAgentFactory } from "../ic-agent/Division";
 
   let createStadium = async function () {
     let result = await leagueAgentFactory().createStadium();
@@ -87,7 +86,7 @@
                 position: { leftField: null },
               },
               {
-                name: "Harbor Harry",
+                name: "Harbor Harriot",
                 position: { centerField: null },
               },
               {
@@ -157,7 +156,7 @@
                 position: { shortStop: null },
               },
               {
-                name: "Surfing Sam",
+                name: "Surfing Samantha",
                 position: { leftField: null },
               },
               {
@@ -355,11 +354,11 @@
                 position: { centerField: null },
               },
               {
-                name: "Ocean Owen",
+                name: "Ocean Olaf",
                 position: { rightField: null },
               },
               {
-                name: "Coral Carl",
+                name: "Coral Carly",
                 position: { pitcher: null },
               },
               {
@@ -367,7 +366,7 @@
                 position: { firstBase: null },
               },
               {
-                name: "Reef Randy",
+                name: "Reef Randalf",
                 position: { secondBase: null },
               },
               {
@@ -496,7 +495,7 @@
                 position: { thirdBase: null },
               },
               {
-                name: "Coral Carl",
+                name: "Coral Cooper",
                 position: { shortStop: null },
               },
               {
@@ -640,7 +639,7 @@
                 position: { secondBase: null },
               },
               {
-                name: "Tentacle Tom",
+                name: "Tentacle Timmy",
                 position: { thirdBase: null },
               },
               {
@@ -676,7 +675,7 @@
                 position: { thirdBase: null },
               },
               {
-                name: "Reef Ralph",
+                name: "Reef Rudy",
                 position: { shortStop: null },
               },
               {
@@ -688,7 +687,7 @@
                 position: { centerField: null },
               },
               {
-                name: "Ocean Oliver",
+                name: "Ocean Olive",
                 position: { rightField: null },
               },
             ],
@@ -730,7 +729,7 @@
                 position: { centerField: null },
               },
               {
-                name: "Coral Carl",
+                name: "Coral Cecil",
                 position: { rightField: null },
               },
               {
@@ -862,7 +861,7 @@
                 position: { firstBase: null },
               },
               {
-                name: "Tidepool Tom",
+                name: "Tidepool Tammy",
                 position: { firstBase: null },
               },
               {
@@ -878,7 +877,7 @@
                 position: { thirdBase: null },
               },
               {
-                name: "Anemone Andy",
+                name: "Anemone Albert",
                 position: { thirdBase: null },
               },
               {
@@ -898,11 +897,11 @@
                 position: { leftField: null },
               },
               {
-                name: "Ocean Oliver",
+                name: "Ocean Octavia",
                 position: { centerField: null },
               },
               {
-                name: "Current Chris",
+                name: "Current Christy",
                 position: { centerField: null },
               },
               {
@@ -910,7 +909,7 @@
                 position: { rightField: null },
               },
               {
-                name: "Nautical Nate",
+                name: "Nautical Naomi",
                 position: { rightField: null },
               },
             ],
@@ -926,7 +925,10 @@
         .then(async (result) => {
           if ("ok" in result) {
             console.log("Created division: ", result.ok);
-            await createTeams(result.ok, division.teams);
+            let teamsWithDivisionId = division.teams.map((t) => {
+              return { ...t, divisionId: result.ok };
+            });
+            await createTeams(teamsWithDivisionId);
           } else if ("nameTaken" in result) {
             console.log("Division name taken: ", division);
           } else {
@@ -938,20 +940,17 @@
     await Promise.all(promises);
   };
 
-  let createTeams = async function (
-    divisionId: Principal,
-    teams: any[]
-  ): Promise<
+  let createTeams = async function (teams: any[]): Promise<
     {
       id: Principal;
       players: any[];
     }[]
   > {
-    let divisionAgent = divisionAgentFactory(divisionId);
+    let leagueAgent = leagueAgentFactory();
     let promises = [];
     for (let i in teams) {
       let team = teams[i];
-      let promise = divisionAgent.createTeam(team).then(async (result) => {
+      let promise = leagueAgent.createTeam(team).then(async (result) => {
         if ("ok" in result) {
           let teamId = result.ok;
           team.id = teamId;

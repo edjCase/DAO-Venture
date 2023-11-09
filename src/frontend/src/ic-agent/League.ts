@@ -10,14 +10,14 @@ export type Time = bigint;
 export const TimeIdl = IDL.Int;
 
 export type Team = {
-  'divisionId': Principal;
+  'divisionId': number;
   'id': Principal;
   'ledgerId': Principal;
   'logoUrl': string;
   'name': string;
 };
 export const TeamIdl = IDL.Record({
-  'divisionId': IDL.Principal,
+  'divisionId': IDL.Nat32,
   'id': IDL.Principal,
   'ledgerId': IDL.Principal,
   'logoUrl': IDL.Text,
@@ -25,11 +25,11 @@ export const TeamIdl = IDL.Record({
 });
 
 export type DivisionScheduleRequest = {
-  'id': Principal;
+  'id': number;
   'startTime': Time;
 };
 export const DivisionScheduleRequestIdl = IDL.Record({
-  'id': IDL.Principal,
+  'id': IDL.Nat32,
   'startTime': TimeIdl
 });
 
@@ -75,24 +75,24 @@ export const ScheduleSeasonResultIdl = IDL.Variant({
 
 
 export type Division = {
-  'id': Principal;
+  'id': number;
   'name': string;
 };
 export const DivisionIdl = IDL.Record({
-  'id': IDL.Principal,
+  'id': IDL.Nat32,
   'name': IDL.Text
 });
 
 
 export type CreateDivisionResult = {
-  'ok': Principal
+  'ok': number
 } | {
   'nameTake': null
 } | {
   'noStadiumsExist': null
 };
 export const CreateDivisionResultIdl = IDL.Variant({
-  'ok': IDL.Principal,
+  'ok': IDL.Nat32,
   'nameTaken': IDL.Null,
   'noStadiumsExist': IDL.Null,
 });
@@ -122,6 +122,59 @@ export const CreateStadiumResultIdl = IDL.Variant({
 });
 
 
+export type CreateTeamRequest = {
+  'name': string,
+  'logoUrl': string,
+  'tokenName': string,
+  'tokenSymbol': string,
+  'divisionId': number,
+};
+export const CreateTeamRequestIdl = IDL.Record({
+  'name': IDL.Text,
+  'logoUrl': IDL.Text,
+  'tokenName': IDL.Text,
+  'tokenSymbol': IDL.Text,
+  'divisionId': IDL.Nat32,
+});
+
+export type CreateTeamResult =
+  | { 'ok': Principal }
+  | { 'nameTaken': null }
+  | { 'divisionNotFound': null };
+export const CreateTeamResultIdl = IDL.Variant({
+  'ok': IDL.Principal,
+  'nameTaken': IDL.Null,
+  'divisionNotFound': IDL.Null,
+});
+
+export type MintRequest = {
+  'amount': bigint,
+  'teamId': Principal,
+};
+export const MintRequestIdl = IDL.Record({
+  'amount': IDL.Nat,
+  'teamId': IDL.Principal,
+});
+
+export type TransferError =
+  | { 'insufficientBalance': null }
+  | { 'transferFailed': null };
+export const TransferErrorIdl = IDL.Variant({
+  'insufficientBalance': IDL.Null,
+  'transferFailed': IDL.Null,
+});
+
+export type MintResult =
+  | { 'ok': bigint }
+  | { 'teamNotFound': null }
+  | { 'transferError': TransferError };
+export const MintResultIdl = IDL.Variant({
+  'ok': IDL.Nat,
+  'teamNotFound': IDL.Null,
+  'transferError': TransferErrorIdl,
+});
+
+
 
 export interface _SERVICE {
   'createStadium': ActorMethod<[], CreateStadiumResult>,
@@ -131,7 +184,9 @@ export interface _SERVICE {
   'getDivisions': ActorMethod<[], Array<Division>>,
   'getSeasonSchedule': ActorMethod<[], [] | [SeasonSchedule]>,
   'updateLeagueCanisters': ActorMethod<[], undefined>,
-  'scheduleSeason': ActorMethod<[ScheduleSeasonRequest], ScheduleSeasonResult>
+  'scheduleSeason': ActorMethod<[ScheduleSeasonRequest], ScheduleSeasonResult>,
+  'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
+  'mint': ActorMethod<[MintRequest], MintResult>,
 }
 
 
@@ -146,7 +201,9 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'getDivisions': IDL.Func([], [IDL.Vec(DivisionIdl)], ['query']),
     'getSeasonSchedule': IDL.Func([], [IDL.Opt(SeasonScheduleIdl)], ['query']),
     'updateLeagueCanisters': IDL.Func([], [], []),
-    'scheduleSeason': IDL.Func([ScheduleSeasonRequestIdl], [ScheduleSeasonResultIdl], [])
+    'scheduleSeason': IDL.Func([ScheduleSeasonRequestIdl], [ScheduleSeasonResultIdl], []),
+    'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
+    'mint': IDL.Func([MintRequestIdl], [MintResultIdl], []),
   });
 };
 

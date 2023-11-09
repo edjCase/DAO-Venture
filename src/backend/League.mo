@@ -40,6 +40,7 @@ module {
         #ok : Principal;
         #nameTaken;
         #noStadiumsExist;
+        #divisionNotFound;
     };
 
     public type Stadium = {
@@ -51,7 +52,7 @@ module {
     };
 
     public type ScheduleDivisionRequest = {
-        id : Principal;
+        id : Nat32;
         startTime : Time.Time;
     };
     public type ScheduleSeasonResult = Stadium.ScheduleSeasonResultGeneric<ScheduleDivisionErrorResult> or {
@@ -64,7 +65,7 @@ module {
         #noTeamsInDivision;
     };
     public type ScheduleDivisionErrorResult = {
-        id : Principal;
+        id : Nat32;
         error : ScheduleDivisionError;
     };
     public type CreateDivisionRequest = {

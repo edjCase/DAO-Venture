@@ -7,17 +7,17 @@ import {
     InProgressMatchState,
     LogEntry,
     Match,
-    MatchAura,
+    MatchAuraWithMetaData,
     MatchGroup,
     MatchGroupState,
     MatchPlayer,
     MatchTeam,
     NotStartedMatchGroupState,
+    OfferingWithMetaData,
     StartedMatchState,
     TeamId,
     TeamIdOrTie,
 } from "../ic-agent/Stadium";
-import { getOfferingDetails } from "../stores/MatchGroupStore";
 
 export type PlayedTeamDetails = {
     score: bigint;
@@ -50,11 +50,6 @@ export type MatchGroupStateDetails =
     | { completed: CompletedMatchGroupStateDetails }
     | { inProgress: InProgressMatchGroupStateDetails };
 
-export type OfferingDetails = {
-    name: string;
-    description: string;
-};
-export type MatchAuraDetails = OfferingDetails;
 
 export type MatchPlayerDetails = {
     id: number;
@@ -71,8 +66,8 @@ export type TeamDetails = {
 export type MatchDetail = {
     team1: TeamDetails;
     team2: TeamDetails;
-    offerings: OfferingDetails[];
-    aura: MatchAuraDetails;
+    offerings: OfferingWithMetaData[];
+    aura: MatchAuraWithMetaData;
 };
 export type MatchGroupDetails = {
     id: number;
@@ -118,41 +113,12 @@ export const mapTeam = (team: MatchTeam): TeamDetails => {
     };
 };
 
-export const mapAura = (aura: MatchAura): MatchAuraDetails => {
-    if ("lowGravity" in aura) {
-        return {
-            name: "Shuffle And Boost",
-            description:
-                "Shuffle your team's field positions and boost your team with a random blessing",
-        };
-    } else if ("explodingBalls" in aura) {
-        return {
-            name: "Exploding Balls",
-            description: "Balls have a chance to explode on contact with the bat",
-        };
-    } else if ("fastBallsHardHits" in aura) {
-        return {
-            name: "Fast Balls, Hard Hits",
-            description: "Balls are faster and fly farther when hit by the bat",
-        };
-    } else if ("moreBlessingsAndCurses" in aura) {
-        return {
-            name: "More Blessings And Curses",
-            description: "Blessings and curses are more common",
-        };
-    } else {
-        return {
-            name: "Unknown",
-            description: "Unknown",
-        };
-    }
-};
 export const mapMatch = (match: Match): MatchDetail => {
     return {
         team1: mapTeam(match.team1),
         team2: mapTeam(match.team2),
-        offerings: match.offerings.map(getOfferingDetails),
-        aura: mapAura(match.aura),
+        offerings: match.offerings,
+        aura: match.aura,
     };
 };
 export const mapInProgressMatchState = (

@@ -43,6 +43,17 @@ export const OfferingIdl = IDL.Variant({
   'shuffleAndBoost': IDL.Null
 });
 
+export type OfferingWithMetaData = {
+  offering: Offering;
+  name: string;
+  description: string;
+};
+export const OfferingWithMetaDataIdl = IDL.Record({
+  'offering': OfferingIdl,
+  'name': IDL.Text,
+  'description': IDL.Text
+});
+
 export type MatchAura =
   | { 'lowGravity': null }
   | { 'explodingBalls': null }
@@ -53,6 +64,17 @@ export const MatchAuraIdl = IDL.Variant({
   'explodingBalls': IDL.Null,
   'fastBallsHardHits': IDL.Null,
   'moreBlessingsAndCurses': IDL.Null
+});
+
+export type MatchAuraWithMetaData = {
+  aura: MatchAura;
+  name: string;
+  description: string;
+};
+export const MatchAuraWithMetaDataIdl = IDL.Record({
+  'aura': MatchAuraIdl,
+  'name': IDL.Text,
+  'description': IDL.Text
 });
 
 export type TeamId =
@@ -289,14 +311,14 @@ export const MatchStateIdl = IDL.Variant({
 export type Match = {
   'team1': MatchTeam,
   'team2': MatchTeam,
-  'offerings': Offering[],
-  'aura': MatchAura
+  'offerings': OfferingWithMetaData[],
+  'aura': MatchAuraWithMetaData
 };
 export const MatchIdl = IDL.Record({
   'team1': MatchTeamIdl,
   'team2': MatchTeamIdl,
-  'offerings': IDL.Vec(OfferingIdl),
-  'aura': MatchAuraIdl
+  'offerings': IDL.Vec(OfferingWithMetaDataIdl),
+  'aura': MatchAuraWithMetaDataIdl
 });
 
 export type NotStartedMatchGroupState = {
@@ -375,22 +397,22 @@ export const ScheduleMatchRequestIdl = IDL.Record({
 
 export type ScheduleMatchGroupRequest = {
   'time': Time;
-  'divisionId': Principal;
+  'divisionId': number;
   'matches': [ScheduleMatchRequest];
 };
 export const ScheduleMatchGroupRequestIdl = IDL.Record({
   'time': TimeIdl,
-  'divisionId': IDL.Principal,
+  'divisionId': IDL.Nat32,
   'matches': IDL.Vec(ScheduleMatchRequestIdl)
 });
 
 export type TeamIdOrBoth =
   | TeamId
-  | { 'both': null };
+  | { 'bothTeams': null };
 export const TeamIdOrBothIdl = IDL.Variant({
   'team1': IDL.Null,
   'team2': IDL.Null,
-  'both': IDL.Null
+  'bothTeams': IDL.Null
 });
 
 export type ScheduleMatchError =
@@ -410,11 +432,11 @@ export const ScheduleMatchGroupResultIdl = IDL.Variant({
 });
 
 export type DivisionSchedule = {
-  'id': Principal;
+  'id': number;
   'matchGroups': MatchGroup[];
 };
 export const DivisionScheduleIdl = IDL.Record({
-  'id': IDL.Principal,
+  'id': IDL.Nat32,
   'matchGroups': IDL.Vec(MatchGroupIdl)
 });
 
@@ -440,21 +462,25 @@ export type ScheduleDivisionError =
   | { 'teamFetchError': string }
   | { 'playerFetchError': string }
   | { 'matchGroupErrors': ScheduleMatchGroupError[] }
-  | { 'noMatchGroupsSpecified': null };
+  | { 'noMatchGroupsSpecified': null }
+  | { 'noTeamsInDivision': null }
+  | { 'oddNumberOfTeams': null };
 export const ScheduleDivisionErrorIdl = IDL.Variant({
   'divisionNotFound': IDL.Null,
   'teamFetchError': IDL.Text,
   'playerFetchError': IDL.Text,
   'matchGroupErrors': IDL.Vec(ScheduleMatchGroupErrorIdl),
-  'noMatchGroupsSpecified': IDL.Null
+  'noMatchGroupsSpecified': IDL.Null,
+  'noTeamsInDivision': IDL.Null,
+  'oddNumberOfTeams': IDL.Null
 });
 
 export type ScheduleDivisionErrorResult = {
-  id: Principal;
+  id: number;
   error: ScheduleDivisionError;
 };
 export const ScheduleDivisionErrorResultIdl = IDL.Record({
-  'id': IDL.Principal,
+  'id': IDL.Nat32,
   'error': ScheduleDivisionErrorIdl
 });
 

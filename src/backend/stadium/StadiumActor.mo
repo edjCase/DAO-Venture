@@ -66,7 +66,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
     type MatchGroupId = Nat32;
     type StableSeasonSchedule = {
-        var divisions : Trie.Trie<Principal, [MatchGroupId]>;
+        var divisions : Trie.Trie<Nat32, [MatchGroupId]>;
         var matchGroups : Trie.Trie<Nat32, MatchGroup>;
     };
     type MatchGroupToBeScheduled = {
@@ -129,7 +129,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         if (request.divisions.size() < 1) {
             return #noDivisionSpecified;
         };
-        let results = Buffer.Buffer<CommonUtil.Result<(Principal, [MatchGroupToBeScheduled]), Stadium.ScheduleDivisionErrorResult>>(request.divisions.size());
+        let results = Buffer.Buffer<CommonUtil.Result<(Nat32, [MatchGroupToBeScheduled]), Stadium.ScheduleDivisionErrorResult>>(request.divisions.size());
         for (division in Iter.fromArray(request.divisions)) {
             let result = await* buildDivisionMatchGroups(division);
             switch (result) {
@@ -142,14 +142,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             };
         };
 
-        let divisionsToBeScheduled = switch (CommonUtil.allOkOrError<(Principal, [MatchGroupToBeScheduled]), Stadium.ScheduleDivisionErrorResult>(results.vals())) {
+        let divisionsToBeScheduled = switch (CommonUtil.allOkOrError<(Nat32, [MatchGroupToBeScheduled]), Stadium.ScheduleDivisionErrorResult>(results.vals())) {
             case (#ok(matchGroupsToBeScheduled)) matchGroupsToBeScheduled;
             case (#error(errors)) return #divisionErrors(errors);
         };
 
         // Only schedule if all divisions were successful
         var matchGroups = Trie.empty<Nat32, MatchGroup>();
-        var divisionMatchGroupMap = Trie.empty<Principal, [MatchGroupId]>();
+        var divisionMatchGroupMap = Trie.empty<Nat32, [MatchGroupId]>();
         for ((divisionId, matchesToBeScheduled) in divisionsToBeScheduled.vals()) {
             let divisionMatchGroupIds = Buffer.Buffer<MatchGroupId>(matchesToBeScheduled.size());
             for (matchGroupToBeScheduled in Iter.fromArray(matchesToBeScheduled)) {
@@ -186,9 +186,9 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
 
             let divisionKey = {
                 key = divisionId;
-                hash = Principal.hash(divisionId);
+                hash = divisionId;
             };
-            let (newDivisionMatchGroupMap, _) = Trie.put(divisionMatchGroupMap, divisionKey, Principal.equal, Buffer.toArray(divisionMatchGroupIds));
+            let (newDivisionMatchGroupMap, _) = Trie.put(divisionMatchGroupMap, divisionKey, Nat32.equal, Buffer.toArray(divisionMatchGroupIds));
             divisionMatchGroupMap := newDivisionMatchGroupMap;
 
         };
@@ -300,14 +300,24 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         if (request.matchGroups.size() < 1) {
             return #error(#noMatchGroupsSpecified);
         };
-        let divisionActor = actor (Principal.toText(request.id)) : League.LeagueActor;
+        let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
         let teams = try {
-            await divisionActor.getTeams();
+            let leagueTeams = await leagueActor.getTeams();
+            Array.filter(leagueTeams, func(t : TeamWithId) : Bool = t.divisionId == request.id);
         } catch (err) {
             return #error(#teamFetchError(Error.message(err)));
         };
-        let allPlayers = try {
-            await PlayerLedgerActor.getAllPlayers();
+        let divisionPlayers = try {
+            let leaguePlayers = await PlayerLedgerActor.getAllPlayers();
+            Array.filter(
+                leaguePlayers,
+                func(p : PlayerWithId) : Bool {
+                    switch (Array.find(teams, func(t : TeamWithId) : Bool = ?t.id == p.teamId)) {
+                        case (null) false;
+                        case (?_) true;
+                    };
+                },
+            );
         } catch (err) {
             return #error(#playerFetchError(Error.message(err)));
         };
@@ -315,7 +325,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         |> Array.map<Stadium.ScheduleMatchGroupRequest, BuildMatchGroupResult>(
             _,
             func(matchGroupRequest : Stadium.ScheduleMatchGroupRequest) : BuildMatchGroupResult {
-                buildMatchGroup(matchGroupRequest, allPlayers, teams);
+                buildMatchGroup(matchGroupRequest, divisionPlayers, teams);
             },
         );
         switch (CommonUtil.allOkOrError(buildMatchGroupResults.vals())) {
@@ -384,13 +394,73 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                     predictionVotes = 0;
                     players = getPlayers(t2.id);
                 };
+                let offerings = request.offerings
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(o : Offering) : Stadium.OfferingWithMetaData {
+                        let metaData = getOfferingMetaData(o);
+                        {
+                            offering = o;
+                            name = metaData.name;
+                            description = metaData.description;
+                        };
+                    },
+                )
+                |> Iter.toArray(_);
+                let metaData = getMatchAuraMetaData(request.aura);
+                let aura = {
+                    aura = request.aura;
+                    name = metaData.name;
+                    description = metaData.description;
+                };
                 #ok({
                     team1 = team1;
                     team2 = team2;
-                    offerings = request.offerings;
-                    aura = request.aura;
+                    offerings = offerings;
+                    aura = aura;
                     state = #notStarted;
                 });
+            };
+        };
+    };
+
+    private func getOfferingMetaData(offering : Offering) : Stadium.OfferingMetaData {
+        switch (offering) {
+            case (#shuffleAndBoost) {
+                {
+                    name = "Shuffle And Boost";
+                    description = "Shuffle your team's field positions and boost your team with a random blessing.";
+                };
+            };
+        };
+    };
+
+    private func getMatchAuraMetaData(aura : Stadium.MatchAura) : Stadium.MatchAuraMetaData {
+        switch (aura) {
+            case (#lowGravity) {
+                {
+                    name = "Low Gravity";
+                    description = "Balls fly farther and players jump higher.";
+                };
+            };
+            case (#explodingBalls) {
+                {
+                    name = "Exploding Balls";
+                    description = "Balls have a chance to explode on contact with the bat.";
+                };
+            };
+            case (#fastBallsHardHits) {
+                {
+                    name = "Fast Balls, Hard Hits";
+                    description = "Balls are faster and fly farther when hit by the bat.";
+                };
+            };
+            case (#moreBlessingsAndCurses) {
+                {
+                    name = "More Blessings And Curses";
+                    description = "Blessings and curses are more common.";
+                };
             };
         };
     };
@@ -457,7 +527,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (?t1, ?t2)(t1, t2);
         };
         let team1IsOffense = prng.nextCoin();
-        let initState = MatchSimulator.initState(match.aura, team1Init, team2Init, team1IsOffense, prng);
+        let initState = MatchSimulator.initState(match.aura.aura, team1Init, team2Init, team1IsOffense, prng);
         #inProgress(initState);
     };
 
