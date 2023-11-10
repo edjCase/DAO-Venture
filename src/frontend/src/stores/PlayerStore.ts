@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { playerLedgerAgentFactory, unMapPosition } from "../ic-agent/PlayerLedger";
+import { playerLedgerAgentFactory, unMapPosition, unMapDeity } from "../ic-agent/PlayerLedger";
 import type { Player } from "../models/Player";
 
 
@@ -11,6 +11,7 @@ export const playerStore = (() => {
             set(players.map(p => {
                 return {
                     ...p,
+                    deity: unMapDeity(p.deity),
                     position: unMapPosition(p.position)
                 };
             }));

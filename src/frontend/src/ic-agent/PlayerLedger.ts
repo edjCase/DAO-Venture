@@ -2,6 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import { FieldPosition as FieldPositionModel } from '../models/FieldPosition';
+import { Deity as DeityModel } from '../models/Deity';
 import { toJsonString } from '../utils/JsonUtil';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
@@ -25,23 +26,11 @@ export const FieldPositionIdl = IDL.Variant({
   'rightField': IDL.Null,
 });
 
-export interface CreatePlayerRequest {
-  'name': string,
-  'teamId': [] | [Principal],
-  'position': FieldPosition
-};
-export const CreatePlayerRequestIdl = IDL.Record({
-  'name': IDL.Text,
-  'teamId': IDL.Opt(IDL.Principal),
-  'position': FieldPositionIdl
-});
-
-export type Deity = {
-  'indulgence': null
-  'mischief': null,
-  'pestilence': null,
-  'war': null
-};
+export type Deity =
+  | { 'indulgence': null }
+  | { 'mischief': null }
+  | { 'pestilence': null }
+  | { 'war': null };
 export const DeityIdl = IDL.Variant({
   'indulgence': IDL.Null,
   'mischief': IDL.Null,
@@ -68,6 +57,22 @@ export const PlayerSkillsIdl = IDL.Record({
   'speed': IDL.Int,
   'throwingAccuracy': IDL.Int,
   'throwingPower': IDL.Int
+});
+
+
+export interface CreatePlayerRequest {
+  'name': string,
+  'teamId': [] | [Principal],
+  'position': FieldPosition,
+  'deity': Deity,
+  'skills': PlayerSkills
+};
+export const CreatePlayerRequestIdl = IDL.Record({
+  'name': IDL.Text,
+  'teamId': IDL.Opt(IDL.Principal),
+  'position': FieldPositionIdl,
+  'deity': DeityIdl,
+  'skills': PlayerSkillsIdl
 });
 
 export interface Player {
@@ -206,4 +211,34 @@ export function unMapPosition(position: FieldPosition): FieldPositionModel {
   }
 
   throw new Error("Invalid position: " + toJsonString(position));
+}
+export function mapDeity(deity: DeityModel): Deity {
+  switch (deity) {
+    case DeityModel.War:
+      return { war: null };
+    case DeityModel.Pestilence:
+      return { pestilence: null };
+    case DeityModel.Mischief:
+      return { mischief: null };
+    case DeityModel.Indulgence:
+      return { indulgence: null };
+    default:
+      throw "Invalid deity: " + deity;
+  }
+};
+export function unMapDeity(deity: Deity): DeityModel {
+  if ('war' in deity) {
+    return DeityModel.War;
+  }
+  if ('pestilence' in deity) {
+    return DeityModel.Pestilence;
+  }
+  if ('mischief' in deity) {
+    return DeityModel.Mischief;
+  }
+  if ('indulgence' in deity) {
+    return DeityModel.Indulgence;
+  }
+
+  throw new Error("Invalid deity: " + toJsonString(deity));
 }

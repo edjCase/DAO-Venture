@@ -140,7 +140,7 @@ module {
         rightField : PlayerId;
     };
 
-    public type OffsenseFieldState = {
+    public type OffenseFieldState = {
         atBat : PlayerId;
         firstBase : ?PlayerId;
         secondBase : ?PlayerId;
@@ -149,7 +149,7 @@ module {
 
     public type FieldState = {
         defense : DefenseFieldState;
-        offense : OffsenseFieldState;
+        offense : OffenseFieldState;
     };
 
     public type LogEntry = {
@@ -240,6 +240,46 @@ module {
     };
 
     public func equalOffering(a : Offering, b : Offering) : Bool = a == b;
+
+    public func getOfferingMetaData(offering : Offering) : OfferingMetaData {
+        switch (offering) {
+            case (#shuffleAndBoost) {
+                {
+                    name = "Shuffle And Boost";
+                    description = "Shuffle your team's field positions and boost your team with a random blessing.";
+                };
+            };
+        };
+    };
+
+    public func getMatchAuraMetaData(aura : MatchAura) : MatchAuraMetaData {
+        switch (aura) {
+            case (#lowGravity) {
+                {
+                    name = "Low Gravity";
+                    description = "Balls fly farther and players jump higher.";
+                };
+            };
+            case (#explodingBalls) {
+                {
+                    name = "Exploding Balls";
+                    description = "Balls have a chance to explode on contact with the bat.";
+                };
+            };
+            case (#fastBallsHardHits) {
+                {
+                    name = "Fast Balls, Hard Hits";
+                    description = "Balls are faster and fly farther when hit by the bat.";
+                };
+            };
+            case (#moreBlessingsAndCurses) {
+                {
+                    name = "More Blessings And Curses";
+                    description = "Blessings and curses are more common.";
+                };
+            };
+        };
+    };
 
     public type MatchAura = {
         #lowGravity;

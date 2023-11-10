@@ -1,22 +1,27 @@
 <script lang="ts">
   import { FieldPosition } from "../models/FieldPosition";
 
-  export let takenPositions: FieldPosition[];
   export let onPositionChange: (position: FieldPosition) => void;
 
-  $: availablePositions = () =>
-    Object.keys(FieldPosition).filter(
-      (p) => !takenPositions.includes(FieldPosition[p])
-    );
+  let onPositionChangeInternal = (event: Event) => {
+    let target = event.currentTarget as HTMLSelectElement;
+    let position = FieldPosition[target.value as keyof typeof FieldPosition];
+    onPositionChange(position);
+  };
+
+  let positionOptions = Object.keys(FieldPosition).map((position) => {
+    return {
+      value: position,
+      label: FieldPosition[position as keyof typeof FieldPosition],
+    };
+  });
 </script>
 
-<select
-  on:change={(e) => onPositionChange(FieldPosition[e.currentTarget.value])}
->
+<select on:change={onPositionChangeInternal}>
   <option value="">-</option>
-  {#each availablePositions() as position}
-    <option value={position}>
-      {FieldPosition[position]}
+  {#each positionOptions as position}
+    <option value={position.value}>
+      {position.label}
     </option>
   {/each}
 </select>

@@ -19,6 +19,8 @@ actor PlayerLedger {
         name : Text;
         teamId : ?Principal;
         position : Player.FieldPosition;
+        deity : Player.Deity;
+        skills : Player.PlayerSkills;
     };
 
     public type InvalidError = {
@@ -44,15 +46,11 @@ actor PlayerLedger {
         let id = nextPlayerId;
         nextPlayerId += 1;
         let player = generatePlayer(options);
-        let playerInfo : Player = {
-            player with
-            teamId = options.teamId;
-        };
         let key = {
             key = id;
             hash = id;
         };
-        let (newPlayers, oldPlayer) = Trie.put(players, key, Nat32.equal, playerInfo);
+        let (newPlayers, oldPlayer) = Trie.put(players, key, Nat32.equal, player);
         if (oldPlayer != null) {
             Debug.trap("Player id '" # Nat32.toText(id) # "' already exists");
         };
@@ -130,20 +128,11 @@ actor PlayerLedger {
     private func generatePlayer(options : CreatePlayerRequest) : Player {
         {
             name = options.name;
-            teamId = null;
+            teamId = options.teamId;
             condition = #ok;
             position = options.position;
-            skills = {
-                battingPower = 0;
-                battingAccuracy = 0;
-                throwingPower = 0;
-                throwingAccuracy = 0;
-                catching = 0;
-                defense = 0;
-                piety = 0;
-                speed = 0;
-            };
-            deity = #mischief;
+            skills = options.skills;
+            deity = options.deity;
         };
     };
 };

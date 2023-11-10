@@ -6,17 +6,14 @@
   import CreateTeam from "../components/CreateTeam.svelte";
   import ScheduleMatch from "../components/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
-  import { playerStore } from "../stores/PlayerStore";
-  import { stadiumStore } from "../stores/StadiumStore";
   import { teamStore } from "../stores/TeamStore";
   import { matchGroupStore } from "../stores/MatchGroupStore";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
   import { MatchGroupDetails, mapMatchGroup } from "../models/Match";
   import MatchGroupSummaryCard from "../components/MatchGroupSummaryCard.svelte";
+  import { Link } from "svelte-routing";
 
   $: teams = $teamStore;
-  $: stadiums = $stadiumStore;
-  $: players = $playerStore;
 
   let teamNameMap: Record<string, string> = {};
   teamStore.subscribe((teams) => {
@@ -53,6 +50,27 @@
   {#if teams.length === 0}
     <TempInitialize />
   {/if}
+
+  <div>
+    <h1>Teams</h1>
+    <div class="team-container">
+      {#each teams as team (team.id)}
+        <Link to={`/teams/${team.id.toString()}`} class="button-style">
+          <div class="team-card">
+            <div class="team-name">{team.name}</div>
+            <div>
+              <img
+                class="team-logo"
+                src={team.logoUrl}
+                alt={team.name + " Logo"}
+              />
+            </div>
+          </div>
+        </Link>
+      {/each}
+    </div>
+  </div>
+
   <div>
     <h1>Schedule Season</h1>
     <ScheduleSeason />
@@ -90,28 +108,6 @@
     </div>
   {/if}
 
-  <div>
-    <h1>Teams</h1>
-    {#each teams as team (team.id)}
-      <div class="team-card">
-        <div class="team-name">{team.name}</div>
-        <div>
-          <img class="team-logo" src={team.logoUrl} alt={team.name + " Logo"} />
-        </div>
-      </div>
-    {/each}
-  </div>
-
-  <div>
-    <h1>Stadiums</h1>
-
-    {#each stadiums as stadium (stadium.id)}
-      <ul>
-        <li>{stadium.id}</li>
-      </ul>
-    {/each}
-  </div>
-
   <hr style="margin-top: 400px;" />
 
   <div>
@@ -125,27 +121,6 @@
   <div>
     <h1>Create Stadium</h1>
     <CreateStadium />
-  </div>
-  <div>
-    <h1>Players</h1>
-    <table>
-      <thead>
-        <th>Name</th>
-        <th>Team</th>
-        <th>Position</th>
-      </thead>
-      <tbody>
-        {#each players as player (player.id)}
-          <tr>
-            <td class="player-name">{player.name}</td>
-            <td class="player-team"
-              >{teamNameMap[player.teamId?.toString()] || "-"}</td
-            >
-            <td class="player-position">{player.position}</td>
-          </tr>
-        {/each}
-      </tbody>
-    </table>
   </div>
   <div>
     <h1>Create Player</h1>
@@ -173,36 +148,25 @@
   .match-group {
     padding: 20px;
   }
+  .team-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
   .team-card {
-    display: inline-block;
-    border: 1px solid #ccc;
-    padding: 10px;
-    margin: 10px;
-    width: 200px;
-    height: 200px;
-    text-align: center;
-    box-sizing: border-box;
-    overflow: hidden;
+    width: 100px;
+    height: 100px;
   }
 
   .team-logo {
-    width: 100px;
-    height: 100px;
-    margin: 10px 0;
+    width: 75px;
+    height: 75px;
   }
 
   .team-name {
-    font-size: 30px;
+    font-size: 20px;
     font-weight: bold;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
     max-width: 100%;
-  }
-  .player-name {
-    font-weight: bold;
-  }
-  .player-team {
-    font-weight: bolder;
   }
 </style>

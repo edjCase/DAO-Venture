@@ -126,6 +126,10 @@ module {
         team1StartOffense : Bool,
         prng : Prng,
     ) : InProgressMatchState {
+        let eventLog = Buffer.Buffer<LogEntry>(0);
+        logTeamOffering(team1, eventLog);
+        logTeamOffering(team2, eventLog);
+        logMatchAura(aura, eventLog);
         let (team1State, team1Players) = buildTeamState(team1, #team1, prng);
         let (team2State, team2Players) = buildTeamState(team2, #team2, prng);
         let (offensePlayers, defensePlayers) = if (team1StartOffense) {
@@ -133,32 +137,49 @@ module {
         } else {
             (team2Players, team1Players);
         };
-        let randomIndex = prng.nextNat(0, offensePlayers.size() - 1);
-        let atBatPlayer = offensePlayers.get(randomIndex);
-        let ?defense = buildStartingDefense(defensePlayers, prng) else Debug.trap("Not enough players to start match");
+        let ?offense = buildStartingOffense(offensePlayers, prng) else Debug.trap("Not enough offense players to start match"); // TODO trap?
+        let ?defense = buildStartingDefense(defensePlayers, prng) else Debug.trap("Not enough defense players to start match"); // TODO trap?
 
-        let players = Buffer.merge(team1Players, team2Players, func(p1 : Stadium.PlayerStateWithId, p2 : Stadium.PlayerStateWithId) : Order.Order = Nat32.compare(p1.id, p2.id));
+        let players = Buffer.merge(
+            team1Players,
+            team2Players,
+            func(
+                p1 : Stadium.PlayerStateWithId,
+                p2 : Stadium.PlayerStateWithId,
+            ) : Order.Order = Nat32.compare(p1.id, p2.id),
+        );
         {
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = team1State;
             team2 = team2State;
             aura = aura;
-            log = [];
+            log = Buffer.toArray(eventLog);
             players = Buffer.toArray(players);
             batter = null;
             field = {
-                offense = {
-                    atBat = atBatPlayer.id;
-                    firstBase = null;
-                    secondBase = null;
-                    thirdBase = null;
-                };
+                offense = offense;
                 defense = defense;
             };
             round = 0;
             outs = 0;
             strikes = 0;
         };
+    };
+
+    private func logTeamOffering(team : TeamInitData, eventLog : Buffer.Buffer<LogEntry>) {
+        let offeringMetaData = Stadium.getOfferingMetaData(team.offering);
+        eventLog.add({
+            description = "Team " # team.name # " Offering: " # offeringMetaData.description;
+            isImportant = true;
+        });
+    };
+
+    private func logMatchAura(aura : MatchAura, eventLog : Buffer.Buffer<LogEntry>) {
+        let auraMetaData = Stadium.getMatchAuraMetaData(aura);
+        eventLog.add({
+            description = "Match Aura: " # auraMetaData.description;
+            isImportant = true;
+        });
     };
 
     private func buildTeamState(
@@ -235,7 +256,21 @@ module {
         };
     };
 
-    private func buildStartingDefense(players : Buffer.Buffer<Stadium.PlayerStateWithId>, rand : Prng) : ?Stadium.DefenseFieldState {
+    private func buildStartingOffense(players : Buffer.Buffer<Stadium.PlayerStateWithId>, prng : Prng) : ?Stadium.OffenseFieldState {
+        if (players.size() < 1) {
+            return null;
+        };
+        let randomIndex = prng.nextNat(0, players.size() - 1);
+        let atBatPlayer = players.get(randomIndex);
+        ?{
+            atBat = atBatPlayer.id;
+            firstBase = null;
+            secondBase = null;
+            thirdBase = null;
+        };
+    };
+
+    private func buildStartingDefense(players : Buffer.Buffer<Stadium.PlayerStateWithId>, prng : Prng) : ?Stadium.DefenseFieldState {
         let getRandomPlayer = func(position : FieldPosition) : ?PlayerId {
             let playersWithPosition = Buffer.mapFilter<Stadium.PlayerStateWithId, Stadium.PlayerStateWithId>(
                 players,
@@ -246,7 +281,7 @@ module {
             if (playersWithPosition.size() < 1) {
                 return null;
             };
-            let index = rand.nextNat(0, playersWithPosition.size() - 1);
+            let index = prng.nextNat(0, playersWithPosition.size() - 1);
             ?playersWithPosition.get(index).id;
         };
 

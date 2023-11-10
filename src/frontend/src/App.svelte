@@ -4,17 +4,15 @@
   import NotFound from "./routes/NotFound.svelte";
   import Header from "./components/Header.svelte";
   import MatchGroup from "./routes/MatchGroup.svelte";
+  import Team from "./routes/Team.svelte";
 </script>
 
 <main>
   <Router>
     <Header />
     <Route path="/" component={Home} />
-    <Route
-      path="/match-groups/:matchGroupIdString"
-      let:params
-      component={MatchGroup}
-    />
+    <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
+    <Route path="/teams/:teamIdString" component={Team} />
     <Route path="*" component={NotFound} />
   </Router>
 </main>

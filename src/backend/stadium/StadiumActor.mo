@@ -399,7 +399,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 |> Iter.map(
                     _,
                     func(o : Offering) : Stadium.OfferingWithMetaData {
-                        let metaData = getOfferingMetaData(o);
+                        let metaData = Stadium.getOfferingMetaData(o);
                         {
                             offering = o;
                             name = metaData.name;
@@ -408,7 +408,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                     },
                 )
                 |> Iter.toArray(_);
-                let metaData = getMatchAuraMetaData(request.aura);
+                let metaData = Stadium.getMatchAuraMetaData(request.aura);
                 let aura = {
                     aura = request.aura;
                     name = metaData.name;
@@ -421,46 +421,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                     aura = aura;
                     state = #notStarted;
                 });
-            };
-        };
-    };
-
-    private func getOfferingMetaData(offering : Offering) : Stadium.OfferingMetaData {
-        switch (offering) {
-            case (#shuffleAndBoost) {
-                {
-                    name = "Shuffle And Boost";
-                    description = "Shuffle your team's field positions and boost your team with a random blessing.";
-                };
-            };
-        };
-    };
-
-    private func getMatchAuraMetaData(aura : Stadium.MatchAura) : Stadium.MatchAuraMetaData {
-        switch (aura) {
-            case (#lowGravity) {
-                {
-                    name = "Low Gravity";
-                    description = "Balls fly farther and players jump higher.";
-                };
-            };
-            case (#explodingBalls) {
-                {
-                    name = "Exploding Balls";
-                    description = "Balls have a chance to explode on contact with the bat.";
-                };
-            };
-            case (#fastBallsHardHits) {
-                {
-                    name = "Fast Balls, Hard Hits";
-                    description = "Balls are faster and fly farther when hit by the bat.";
-                };
-            };
-            case (#moreBlessingsAndCurses) {
-                {
-                    name = "More Blessings And Curses";
-                    description = "Blessings and curses are more common.";
-                };
             };
         };
     };
