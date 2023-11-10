@@ -34,10 +34,10 @@
       </a>
     </li>
     <li>
-      <ThemeToggle />
+      <LoginButton />
     </li>
     <li>
-      <LoginButton />
+      <ThemeToggle />
     </li>
     <li>
       <UpdateLeagueCanistersButton />

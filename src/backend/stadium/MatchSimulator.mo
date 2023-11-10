@@ -16,6 +16,7 @@ import Iter "mo:base/Iter";
 import TrieMap "mo:base/TrieMap";
 import Float "mo:base/Float";
 import Text "mo:base/Text";
+import Order "mo:base/Order";
 import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import StadiumUtil "StadiumUtil";
@@ -125,49 +126,22 @@ module {
         team1StartOffense : Bool,
         prng : Prng,
     ) : InProgressMatchState {
-        var players = Buffer.Buffer<Stadium.PlayerStateWithId>(team1.players.size() + team2.players.size());
-        let addPlayer = func(player : PlayerWithId, teamId : TeamId) {
-            let playerState : Stadium.PlayerStateWithId = {
-                id = player.id;
-                name = player.name;
-                teamId = teamId;
-                condition = #ok;
-                skills = player.skills;
-                position = player.position;
-            };
-            players.add(playerState);
-        };
-        for (player in team1.players.vals()) {
-            addPlayer(player, #team1);
-        };
-        for (player in team2.players.vals()) {
-            addPlayer(player, #team2);
-        };
-        let (offenseTeam, defenseTeam) = if (team1StartOffense) {
-            (team1, team2);
+        let (team1State, team1Players) = buildTeamState(team1, #team1, prng);
+        let (team2State, team2Players) = buildTeamState(team2, #team2, prng);
+        let (offensePlayers, defensePlayers) = if (team1StartOffense) {
+            (team1Players, team2Players);
         } else {
-            (team2, team1);
+            (team2Players, team1Players);
         };
-        let randomIndex = prng.nextNat(0, offenseTeam.players.size() - 1);
-        let atBatPlayer = offenseTeam.players.get(randomIndex);
-        let ?defense = buildStartingDefense(defenseTeam.players, prng) else Debug.trap("Not enough players to start match");
+        let randomIndex = prng.nextNat(0, offensePlayers.size() - 1);
+        let atBatPlayer = offensePlayers.get(randomIndex);
+        let ?defense = buildStartingDefense(defensePlayers, prng) else Debug.trap("Not enough players to start match");
 
+        let players = Buffer.merge(team1Players, team2Players, func(p1 : Stadium.PlayerStateWithId, p2 : Stadium.PlayerStateWithId) : Order.Order = Nat32.compare(p1.id, p2.id));
         {
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
-            team1 = {
-                id = team1.id;
-                name = team1.name;
-                score = 0;
-                offering = team1.offering;
-                championId = team1.championId;
-            };
-            team2 = {
-                id = team2.id;
-                name = team2.name;
-                score = 0;
-                offering = team2.offering;
-                championId = team2.championId;
-            };
+            team1 = team1State;
+            team2 = team2State;
             aura = aura;
             log = [];
             players = Buffer.toArray(players);
@@ -187,14 +161,93 @@ module {
         };
     };
 
-    private func buildStartingDefense(players : [PlayerWithId], rand : Prng) : ?Stadium.DefenseFieldState {
+    private func buildTeamState(
+        team : TeamInitData,
+        teamId : TeamId,
+        prng : Prng,
+    ) : (TeamState, Buffer.Buffer<Stadium.PlayerStateWithId>) {
+
+        var playerStates = team.players
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(player : PlayerWithId) : Stadium.PlayerStateWithId = {
+                id = player.id;
+                name = player.name;
+                teamId = teamId;
+                condition = #ok;
+                skills = player.skills;
+                position = player.position;
+            },
+        )
+        |> Buffer.fromIter<Stadium.PlayerStateWithId>(_);
+
+        let teamState = {
+            id = team.id;
+            name = team.name;
+            score = 0;
+            offering = team.offering;
+            championId = team.championId;
+        };
+
+        switch (team.offering) {
+            case (#shuffleAndBoost) {
+                // Shuffle all the players' positions but boost their stats
+                let currentPositions : Buffer.Buffer<FieldPosition> = playerStates
+                |> Buffer.map(
+                    _,
+                    func(p : Stadium.PlayerStateWithId) : FieldPosition = p.position,
+                );
+                prng.shuffleBuffer(currentPositions);
+                for (i in IterTools.range(0, playerStates.size())) {
+                    let currentPlayerState = playerStates.get(i);
+                    let updatedPlayerState = {
+                        currentPlayerState with
+                        position = currentPositions.get(i);
+                        skills = {
+                            // TODO how much to boost skills
+                            battingPower = currentPlayerState.skills.battingPower + 1;
+                            battingAccuracy = currentPlayerState.skills.battingAccuracy + 1;
+                            throwingPower = currentPlayerState.skills.throwingPower + 1;
+                            throwingAccuracy = currentPlayerState.skills.throwingAccuracy + 1;
+                            catching = currentPlayerState.skills.catching + 1;
+                            defense = currentPlayerState.skills.defense + 1;
+                            piety = currentPlayerState.skills.piety + 1;
+                            speed = currentPlayerState.skills.speed + 1;
+                        };
+                    };
+                    playerStates.put(i, updatedPlayerState);
+                };
+            };
+        };
+
+        (teamState, playerStates);
+    };
+
+    private func buildPlayerState(player : PlayerWithId, teamId : TeamId) : Stadium.PlayerStateWithId {
+        {
+            id = player.id;
+            name = player.name;
+            teamId = teamId;
+            condition = #ok;
+            skills = player.skills;
+            position = player.position;
+        };
+    };
+
+    private func buildStartingDefense(players : Buffer.Buffer<Stadium.PlayerStateWithId>, rand : Prng) : ?Stadium.DefenseFieldState {
         let getRandomPlayer = func(position : FieldPosition) : ?PlayerId {
-            let playersWithPosition = Array.filter(players, func(p : PlayerWithId) : Bool = p.position == position);
+            let playersWithPosition = Buffer.mapFilter<Stadium.PlayerStateWithId, Stadium.PlayerStateWithId>(
+                players,
+                func(p : Stadium.PlayerStateWithId) : ?Stadium.PlayerStateWithId {
+                    if (p.position != position) null else ?p;
+                },
+            );
             if (playersWithPosition.size() < 1) {
                 return null;
             };
             let index = rand.nextNat(0, playersWithPosition.size() - 1);
-            ?playersWithPosition[index].id;
+            ?playersWithPosition.get(index).id;
         };
 
         do ? {
