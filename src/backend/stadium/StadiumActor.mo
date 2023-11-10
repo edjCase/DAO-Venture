@@ -518,8 +518,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func startMatchInternal(matchGroupId : Nat32, match : Stadium.Match, prng : Prng) : async StartMatchResult {
-        let team1InitOrNull = await createTeamInit(matchGroupId, match.team1);
-        let team2InitOrNull = await createTeamInit(matchGroupId, match.team2);
+        let team1InitOrNull = await createTeamInit(matchGroupId, match.team1, prng);
+        let team2InitOrNull = await createTeamInit(matchGroupId, match.team2, prng);
         let (team1Init, team2Init) : (MatchSimulator.TeamInitData, MatchSimulator.TeamInitData) = switch (team1InitOrNull, team2InitOrNull) {
             case (null, null) return #completed(#allAbsent);
             case (null, ?_) return #completed(#absentTeam(#team1));
@@ -531,8 +531,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         #inProgress(initState);
     };
 
-    private func createTeamInit(matchGroupId : Nat32, team : Stadium.MatchTeam) : async ?MatchSimulator.TeamInitData {
-        let teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
+    private func createTeamInit(
+        matchGroupId : Nat32,
+        team : Stadium.MatchTeam,
+        prng : Prng,
+    ) : async ?MatchSimulator.TeamInitData {
+        var teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
         let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
         let stadiumId = Principal.fromActor(this);
         let options : MatchOptions = try {
@@ -546,6 +550,25 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         } catch (err : Error.Error) {
             Debug.print("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
             return null;
+        };
+        switch (options.offering) {
+            case (#shuffleAndBoost) {
+                let players = Buffer.fromArray<Player>(teamPlayers);
+                let currentPositions : Buffer.Buffer<FieldPosition> = players
+                |> Buffer.map(
+                    _,
+                    func(p : Player) : FieldPosition = p.position,
+                );
+                prng.shuffleBuffer(currentPositions);
+                for (i in IterTools.range(0, players.size())) {
+                    // TODO skills
+                    let updatedPlayer = {
+                        players.get(i) with
+                        position = currentPositions.get(i)
+                    };
+                    players.put(i, updatedPlayer);
+                };
+            };
         };
         ?{
             id = team.id;

@@ -11,24 +11,10 @@
     <Header />
     <Route path="/" component={Home} />
     <Route
-      path="/match-groups/:matchGroupId"
+      path="/match-groups/:matchGroupIdString"
       let:params
       component={MatchGroup}
     />
     <Route path="*" component={NotFound} />
   </Router>
 </main>
-
-<style>
-  main {
-    padding: 1em;
-    max-width: 240px;
-    margin: 0 auto;
-  }
-
-  @media (min-width: 640px) {
-    main {
-      max-width: none;
-    }
-  }
-</style>

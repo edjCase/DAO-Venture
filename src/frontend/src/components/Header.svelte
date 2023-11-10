@@ -1,44 +1,27 @@
-
 <script>
-    import Navbar from "./Navbar.svelte";
-  </script>
-  
-  <div class="header-container">
-    <div class="spacer"></div>
-    <div class="name-header">DAOBall</div>
-  
-    <div class="spacer"></div>
-  
-    <div class="social-links">
-      <a class="social-link" target="_blank" href="https://dscvr.one">DSCVR</a>
-      <a class="social-link" target="_blank" href="https://github.com/edjcase/daoball">Github</a>
-    </div>
-  </div>
-  
-  <Navbar />
-  <style>
-    .header-container {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      align-items: center;
-    }
-  
-    .name-header {
-      color: #ff3e00;
-      text-transform: uppercase;
-      font-size: 4em;
-      font-weight: 100;
-    }
-  
-    .spacer {
-      flex-grow: 1;
-    }
-  
-    .social-links {
-        padding-right: 50px;
-    }
-    .social-link {
-        display: block;
-    }
-  </style>
+  import Navbar from "./Navbar.svelte";
+</script>
+
+<div class="header">
+  <div class="header-logo">DAOBall</div>
+</div>
+
+<Navbar />
+
+<style>
+  .header {
+    background-color: var(--color-bg); /* Use the background color variable */
+    text-align: center;
+    padding: 1rem 0 1rem 0; /* Top and bottom padding */
+  }
+  .header-logo {
+    font-family: "Exo 2", sans-serif;
+    color: var(--color-accent); /* Subdued teal color */
+    font-size: 4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    margin: 0;
+    padding: 0.5rem;
+  }
+</style>

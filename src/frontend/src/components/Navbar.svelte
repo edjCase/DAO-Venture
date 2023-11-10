@@ -8,14 +8,30 @@
 <nav class="navbar">
   <ul class="navbar-nav">
     <li class="nav-item">
-      <Link to="/" class="nav-link">Home</Link>
+      <Link to="/" class="nav-link button-style">Home</Link>
     </li>
     <li class="nav-item">
       <a
-        class="nav-link"
+        class="nav-link button-style"
         target="_blank"
-        href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai">Blog</a
+        href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
       >
+        Blog
+      </a>
+    </li>
+    <li>
+      <a class="nav-link button-style" target="_blank" href="https://dscvr.one">
+        DSCVR
+      </a>
+    </li>
+    <li>
+      <a
+        class="nav-link button-style"
+        target="_blank"
+        href="https://github.com/edjcase/daoball"
+      >
+        Github
+      </a>
     </li>
     <li>
       <ThemeToggle />
@@ -37,6 +53,7 @@
     background-color: var(--color-primary);
     color: var(--color-text);
     padding: 10px;
+    border-top: solid 4px var(--color-accent);
   }
 
   .navbar-nav {

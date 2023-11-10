@@ -42,14 +42,21 @@
 </div>
 
 <style>
+  /* Card styles for matches */
   .card {
-    border-radius: 5px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+    background-color: var(--color-bg-light);
+    color: var(--color-text-light);
+    padding: 0.5em;
+    margin: 0.5em;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 1em;
+    margin: 1em;
     width: 100%;
   }
-  .card :global(a) {
-    text-decoration: none;
-    color: inherit;
+
+  .card:hover {
+    border-color: var(--color-primary);
   }
 
   .mid {

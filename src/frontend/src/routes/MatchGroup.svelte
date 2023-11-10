@@ -1,15 +1,18 @@
-<script context="module" lang="ts">
-</script>
-
 <script lang="ts">
   import { matchGroupStore } from "../stores/MatchGroupStore";
   import VoteForMatchGroup from "../components/VoteForMatchGroup.svelte";
   import { onMount } from "svelte";
   import { MatchGroupDetails, mapMatchGroup } from "../models/Match";
   import MatchGroupCardGrid from "../components/MatchGroupCardGrid.svelte";
+  import { navigate } from "svelte-routing";
 
-  export let matchGroupId: number;
+  export let matchGroupIdString: string;
 
+  let matchGroupId = Number(matchGroupIdString);
+  if (isNaN(matchGroupId)) {
+    // Handle the error, such as redirecting to an error page or showing a message
+    navigate("/404", { replace: true });
+  }
   let matchGroup: MatchGroupDetails | undefined;
 
   matchGroupStore.subscribe((matchGroups) => {

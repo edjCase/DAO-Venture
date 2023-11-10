@@ -62,8 +62,10 @@
 <style>
   .match-group {
     width: 400px;
-    background-color: rgb(28, 26, 26);
-    border: 1px solid white;
+    background-color: var(--color-bg-dark);
+    border: 1px solid var(--color-border);
+    padding: 1em;
+    margin-bottom: 1em;
     border-radius: 5px;
   }
   .match-group:hover {
