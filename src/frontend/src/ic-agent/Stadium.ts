@@ -24,6 +24,7 @@ export const MatchPlayerIdl = IDL.Record({
 
 export type MatchTeam = {
   'id': Principal;
+  'divisionId': number,
   'name': string;
   'logoUrl': string;
   'predictionVotes': bigint;
@@ -31,6 +32,7 @@ export type MatchTeam = {
 };
 export const MatchTeamIdl = IDL.Record({
   'id': IDL.Principal,
+  'divisionId': IDL.Nat32,
   'name': IDL.Text,
   'logoUrl': IDL.Text,
   'predictionVotes': IDL.Nat,
@@ -431,20 +433,12 @@ export const ScheduleMatchGroupResultIdl = IDL.Variant({
   'matchErrors': IDL.Vec(ScheduleMatchErrorIdl)
 });
 
-export type DivisionSchedule = {
-  'id': number;
-  'matchGroups': MatchGroup[];
-};
-export const DivisionScheduleIdl = IDL.Record({
-  'id': IDL.Nat32,
-  'matchGroups': IDL.Vec(MatchGroupIdl)
-});
 
 export type SeasonSchedule = {
-  'divisions': DivisionSchedule[];
+  'matchGroups': MatchGroup[];
 };
 export const SeasonScheduleIdl = IDL.Record({
-  'divisions': IDL.Vec(DivisionScheduleIdl)
+  'matchGroups': IDL.Vec(MatchGroupIdl)
 });
 
 export type ScheduleMatchGroupError =

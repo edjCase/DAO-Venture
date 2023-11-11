@@ -28,10 +28,6 @@ module {
     };
 
     public type SeasonSchedule = {
-        divisions : [DivisionSchedule];
-    };
-    public type DivisionSchedule = {
-        id : Nat32;
         matchGroups : [MatchGroupWithId];
     };
 
@@ -374,6 +370,7 @@ module {
 
     public type MatchTeam = {
         id : Principal;
+        divisionId : Nat32;
         name : Text;
         logoUrl : Text;
         predictionVotes : Nat;

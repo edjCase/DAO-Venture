@@ -9,32 +9,48 @@
   import { teamStore } from "../stores/TeamStore";
   import { matchGroupStore } from "../stores/MatchGroupStore";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
-  import { MatchGroupDetails, mapMatchGroup } from "../models/Match";
-  import MatchGroupSummaryCard from "../components/MatchGroupSummaryCard.svelte";
+  import { DivisionDetails, mapMatchGroup } from "../models/Match";
   import TeamGrid from "../components/TeamGrid.svelte";
+  import { TabItem, Tabs } from "flowbite-svelte";
+  import DivisionSummaryCard from "../components/DivisionSummaryCard.svelte";
+  import { divisionStore } from "../stores/DivisionStore";
+  import { get } from "svelte/store";
+  import { Division } from "../ic-agent/League";
+  import { MatchGroup } from "../ic-agent/Stadium";
 
   $: teams = $teamStore;
 
-  // TODO divisions
-  let liveMatchGroups: MatchGroupDetails[] = [];
-  let historicalMatchGroups: MatchGroupDetails[] = [];
-  let upcomingMatchGroups: MatchGroupDetails[] = [];
-  matchGroupStore.subscribe((matchGroups) => {
-    liveMatchGroups = [];
-    historicalMatchGroups = [];
-    upcomingMatchGroups = [];
-    for (let matchGroup of matchGroups.sort((a, b) =>
-      Number(a.time - b.time)
-    )) {
-      let matchGroupDetails = mapMatchGroup(matchGroup);
-      if ("inProgress" in matchGroup.state) {
-        liveMatchGroups.push(matchGroupDetails);
-      } else if ("completed" in matchGroup.state) {
-        historicalMatchGroups.push(matchGroupDetails);
-      } else {
-        upcomingMatchGroups.push(matchGroupDetails);
-      }
+  let divisions: DivisionDetails[] = [];
+
+  let updateDivisions = (
+    allDivisions: Division[],
+    allMatchGroups: MatchGroup[]
+  ) => {
+    if (allDivisions.length == 0 || allMatchGroups.length == 0) {
+      return;
     }
+    divisions = allDivisions.map((d) => {
+      let matchGroups = allMatchGroups
+        .filter((mg) =>
+          mg.matches.some(
+            (m) => m.team1.divisionId === d.id || m.team2.divisionId === d.id
+          )
+        )
+        .map((mg) => mapMatchGroup(mg));
+      return {
+        id: d.id,
+        name: d.name,
+        matchGroups: matchGroups,
+      };
+    });
+  };
+
+  divisionStore.subscribe((d) => {
+    updateDivisions(d, get(matchGroupStore));
+  });
+
+  matchGroupStore.subscribe((matchGroups) => {
+    updateDivisions(get(divisionStore), matchGroups);
   });
 </script>
 
@@ -52,38 +68,15 @@
     <h1>Schedule Season</h1>
     <ScheduleSeason />
   </div>
-  {#if liveMatchGroups.length > 0}
-    <h1>Live</h1>
-    <div class="live-matches">
-      {#each liveMatchGroups as liveMatchGroup (liveMatchGroup)}
-        <div class="match-group">
-          <MatchGroupSummaryCard matchGroup={liveMatchGroup} />
-        </div>
-      {/each}
-    </div>
-  {/if}
 
-  {#if historicalMatchGroups.length > 0}
-    <h1>Latest</h1>
-    <div class="latest-matches">
-      {#each historicalMatchGroups as historicalMatchGroup (historicalMatchGroup)}
-        <div class="match-group">
-          <MatchGroupSummaryCard matchGroup={historicalMatchGroup} />
-        </div>
-      {/each}
-    </div>
-  {/if}
-
-  {#if upcomingMatchGroups.length > 0}
-    <h1>Upcoming</h1>
-    <div class="upcoming-matches">
-      {#each upcomingMatchGroups as upcomingMatchGroup (upcomingMatchGroup)}
-        <div class="match-group">
-          <MatchGroupSummaryCard matchGroup={upcomingMatchGroup} />
-        </div>
-      {/each}
-    </div>
-  {/if}
+  <Tabs style="pill">
+    {#each divisions as division}
+      <TabItem>
+        <div slot="title">{division.name}</div>
+        <DivisionSummaryCard {division} />
+      </TabItem>
+    {/each}
+  </Tabs>
 
   <hr style="margin-top: 400px;" />
 
@@ -108,21 +101,3 @@
     <AssignPlayerToTeam />
   </div>
 </div>
-
-<style>
-  .content {
-    max-width: 1fr;
-  }
-  .latest-matches,
-  .upcoming-matches,
-  .live-matches {
-    margin-bottom: 50px;
-    text-align: center;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-  .match-group {
-    padding: 20px;
-  }
-</style>

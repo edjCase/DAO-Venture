@@ -45,5 +45,5 @@
       {/each}
     </select>
   </div>
-  <button on:click={createTeam}>Create Team</button>
+  <button class="button-style" on:click={createTeam}>Create Team</button>
 {/if}

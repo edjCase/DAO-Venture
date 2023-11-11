@@ -4,7 +4,7 @@
     type DivisionScheduleRequest,
   } from "../ic-agent/League";
   import { divisionStore } from "../stores/DivisionStore";
-  import { dateToNanoseconds, nanosecondsToDate } from "../utils/DateUtils";
+  import { dateToNanoseconds } from "../utils/DateUtils";
   import { SeasonSchedule } from "../ic-agent/Stadium";
   import { onMount } from "svelte";
   import { matchGroupStore } from "../stores/MatchGroupStore";
@@ -67,15 +67,7 @@
 </script>
 
 {#if schedule}
-  <p>Schedule:</p>
-  {#each schedule.divisions as divisionSchedule}
-    <div>
-      Division {divisionSchedule.id} starts on {nanosecondsToDate(
-        divisionSchedule.matchGroups[0].time
-      ).toLocaleString()}
-    </div>
-  {/each}
-  <!-- <button on:click={closeSeason}>Close Season</button> -->
+  <!-- <button  class="button-style" on:click={closeSeason}>Close Season</button> -->
 {:else if divisions}
   <div class="divisions">
     {#each divisions as division}
@@ -89,7 +81,7 @@
       </span>
     {/each}
   </div>
-  <button on:click={scheduleSeason}>Schedule</button>
+  <button class="button-style" on:click={scheduleSeason}>Schedule</button>
 {/if}
 
 <style>

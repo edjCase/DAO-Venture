@@ -65,7 +65,7 @@ nav li a:hover {
 
 /* Apply button styles to links */
 a.button-style,
-button {
+button.button-style {
   /* Button and link styles */
   background-color: var(--color-primary);
   color: var(--color-text);
@@ -80,7 +80,7 @@ button {
 }
 
 a.button-style:hover,
-button:hover {
+button.button-style:hover {
   /* Hover styles for buttons and links */
   background-color: var(--button-hover);
 }

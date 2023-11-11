@@ -29,7 +29,7 @@
 </script>
 
 {#if identity}
-  <button on:click={logout}>Logout</button>
+  <button class="button-style" on:click={logout}>Logout</button>
 {:else}
-  <button on:click={login}>Login</button>
+  <button class="button-style" on:click={login}>Login</button>
 {/if}

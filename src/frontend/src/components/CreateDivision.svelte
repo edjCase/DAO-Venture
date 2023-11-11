@@ -19,4 +19,4 @@
   <label for="team-name">Name</label>
   <input type="text" id="team-name" bind:value={name} />
 </div>
-<button on:click={createDivision}>Create Division</button>
+<button class="button-style" on:click={createDivision}>Create Division</button>

@@ -86,36 +86,46 @@
   });
 </script>
 
-{#if match}
-  <div>
-    <h2>Offerings</h2>
-    <CardList
-      cards={match.offeringCards}
-      onSelect={(i) => {
-        if (match) {
-          match.selectedOffering = i;
-        }
-      }}
-    />
-  </div>
-  <div>
-    <h2>Champion</h2>
-    {#if match.championChoices}
-      <PlayerPicker
-        players={match.championChoices}
-        onPlayerSelected={(pId) => {
+<div class="container">
+  {#if match}
+    <div>
+      <h2>Offerings</h2>
+      <CardList
+        cards={match.offeringCards}
+        onSelect={(i) => {
           if (match) {
-            match.selectedChampion = pId;
+            match.selectedOffering = i;
           }
         }}
       />
-    {/if}
-  </div>
-  <button
-    on:click={() => {
-      if (match) {
-        register(match);
-      }
-    }}>Submit Vote</button
-  >
-{/if}
+    </div>
+    <div>
+      <h2>Champion</h2>
+      {#if match.championChoices}
+        <PlayerPicker
+          players={match.championChoices}
+          onPlayerSelected={(pId) => {
+            if (match) {
+              match.selectedChampion = pId;
+            }
+          }}
+        />
+      {/if}
+    </div>
+    <button
+      class="button-style"
+      on:click={() => {
+        if (match) {
+          register(match);
+        }
+      }}>Submit Vote</button
+    >
+  {/if}
+</div>
+
+<style>
+  .container {
+    display: flex;
+    flex-direction: column;
+  }
+</style>

@@ -10,4 +10,4 @@
   };
 </script>
 
-<button on:click={toggleTheme}>Toggle theme</button>
+<button class="button-style" on:click={toggleTheme}>Toggle theme</button>

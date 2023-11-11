@@ -76,18 +76,22 @@
 
       {#if "notStarted" in matchGroup.state}
         {#each matchGroup.matches as match}
-          <div>
-            <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
-            <h1>{match.team1.name}</h1>
-            <VoteForMatchGroup
-              matchGroupId={matchGroup.id}
-              teamId={match.team1.id}
-            />
-            <h1>{match.team2.name}</h1>
-            <VoteForMatchGroup
-              matchGroupId={matchGroup.id}
-              teamId={match.team2.id}
-            />
+          <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
+          <div class="match-vote">
+            <div class="team-vote">
+              <h1>{match.team1.name}</h1>
+              <VoteForMatchGroup
+                matchGroupId={matchGroup.id}
+                teamId={match.team1.id}
+              />
+            </div>
+            <div class="team-vote">
+              <h1>{match.team2.name}</h1>
+              <VoteForMatchGroup
+                matchGroupId={matchGroup.id}
+                teamId={match.team2.id}
+              />
+            </div>
           </div>
         {/each}
       {/if}
@@ -105,5 +109,13 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+  }
+  .match-vote {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+  .team-vote {
+    margin: 20px;
   }
 </style>

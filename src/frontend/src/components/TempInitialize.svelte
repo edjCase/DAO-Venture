@@ -107,4 +107,6 @@
   };
 </script>
 
-<button on:click={initialize}>Initialize With Default Data</button>
+<button class="button-style" on:click={initialize}
+  >Initialize With Default Data</button
+>

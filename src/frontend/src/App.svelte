@@ -10,9 +10,20 @@
 <main>
   <Router>
     <Header />
-    <Route path="/" component={Home} />
-    <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
-    <Route path="/teams/:teamIdString" component={Team} />
-    <Route path="*" component={NotFound} />
+    <div class="body">
+      <Route path="/" component={Home} />
+      <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
+      <Route path="/teams/:teamIdString" component={Team} />
+      <Route path="*" component={NotFound} />
+    </div>
   </Router>
 </main>
+
+<style global lang="postcss">
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+  .body {
+    padding: 0 10rem;
+  }
+</style>

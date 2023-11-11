@@ -14,4 +14,4 @@
   };
 </script>
 
-<button on:click={createTeam}>Create Stadium</button>
+<button class="button-style" on:click={createTeam}>Create Stadium</button>

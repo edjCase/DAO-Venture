@@ -66,7 +66,6 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
     type MatchGroupId = Nat32;
     type StableSeasonSchedule = {
-        var divisions : Trie.Trie<Nat32, [MatchGroupId]>;
         var matchGroups : Trie.Trie<Nat32, MatchGroup>;
     };
     type MatchGroupToBeScheduled = {
@@ -77,11 +76,13 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     stable var seasonScheduleOrNull : ?StableSeasonSchedule = null;
 
     public query func getMatchGroup(id : Nat32) : async ?Stadium.MatchGroupWithId {
+        let ?schedule = seasonScheduleOrNull else return null;
         switch (getMatchGroupOrNull(id)) {
             case (null) return null;
             case (?m) {
                 ?{
-                    m with id = id;
+                    m with
+                    id = id;
                 };
             };
         };
@@ -91,30 +92,27 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         switch (seasonScheduleOrNull) {
             case (null) return null;
             case (?s) {
-                let divisions = Buffer.Buffer<Stadium.DivisionSchedule>(Trie.size(s.divisions));
-                for ((divisionId, matchGroupIds) in Trie.iter(s.divisions)) {
-                    let matchGroups = matchGroupIds
-                    |> Array.map(
-                        _,
-                        func(matchGroupId : Nat32) : Stadium.MatchGroupWithId {
-                            switch (getMatchGroupOrNull(matchGroupId)) {
-                                case (null) Debug.trap("Match group " # Nat32.toText(matchGroupId) # " not found");
-                                case (?m) {
-                                    {
-                                        m with
-                                        id = matchGroupId;
-                                    };
-                                };
-                            };
-                        },
-                    );
-                    divisions.add({
-                        id = divisionId;
-                        matchGroups = matchGroups;
-                    });
-                };
+                let matchGroups = s.matchGroups
+                |> Trie.iter(_)
+                |> Iter.map(
+                    _,
+                    func((matchGroupId, matchGroup) : (MatchGroupId, MatchGroup)) : Stadium.MatchGroupWithId {
+                        {
+                            matchGroup with
+                            id = matchGroupId;
+                        };
+                    },
+                )
+                |> Iter.sort(
+                    _,
+                    func(a : Stadium.MatchGroupWithId, b : Stadium.MatchGroupWithId) : Order.Order {
+                        Int.compare(a.time, b.time);
+                    },
+                )
+                |> Iter.toArray(_);
+
                 ?{
-                    divisions = Buffer.toArray(divisions);
+                    matchGroups = matchGroups;
                 };
             };
         };

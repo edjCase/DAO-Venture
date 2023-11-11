@@ -41,5 +41,5 @@
   </select>
 </div>
 <div>
-  <button on:click={assign}>Assign</button>
+  <button class="button-style" on:click={assign}>Assign</button>
 </div>

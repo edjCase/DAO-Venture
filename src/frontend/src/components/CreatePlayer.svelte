@@ -115,4 +115,4 @@
   <label for="piety">Piety</label>
   <input type="number" id="piety" bind:value={piety} />
 </div>
-<button on:click={createPlayer}>Create Player</button>
+<button class="button-style" on:click={createPlayer}>Create Player</button>

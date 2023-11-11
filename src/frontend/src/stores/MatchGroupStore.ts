@@ -62,7 +62,7 @@ export const matchGroupStore = (() => {
         if (scheduleOrNull.length === 0) {
           return;
         }
-        let matchGroups = scheduleOrNull[0].divisions.flatMap(d => d.matchGroups);
+        let matchGroups = scheduleOrNull[0].matchGroups;
         set(matchGroups);
         for (let matchGroup of matchGroups) {
           setMatchGroupPoll(stadiumId, matchGroup);

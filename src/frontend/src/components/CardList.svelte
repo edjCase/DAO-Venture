@@ -7,7 +7,7 @@
 <div class="card-container">
   {#each cards as { id, title, description }}
     <button
-      class="card"
+      class="card button-style"
       class:selected={selectedId === id}
       on:click={() => {
         selectedId = id;
