@@ -5,7 +5,7 @@
   import { stadiumStore } from "../stores/StadiumStore";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
-  import { divisions } from "../Data/Players";
+  import { divisions } from "../data/InitData";
   let createStadium = async function () {
     let result = await leagueAgentFactory().createStadium();
     if ("ok" in result) {

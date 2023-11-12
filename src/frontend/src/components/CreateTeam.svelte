@@ -1,13 +1,17 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
-  import { leagueAgentFactory } from "../ic-agent/League";
+  import { Division, leagueAgentFactory } from "../ic-agent/League";
+  import { divisionStore } from "../stores/DivisionStore";
 
   let name: string;
   let logoUrl: string;
   let tokenName: string;
   let tokenSymbol: string;
   let divisionId: number;
-  let divisions;
+  let divisions: Division[] | undefined;
+  divisionStore.subscribe((d) => {
+    divisions = d;
+  });
   let createTeam = function () {
     leagueAgentFactory()
       .createTeam({ name, logoUrl, tokenName, tokenSymbol, divisionId })

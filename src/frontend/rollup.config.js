@@ -7,6 +7,8 @@ import replace from "@rollup/plugin-replace";
 import inject from "rollup-plugin-inject";
 import json from "@rollup/plugin-json";
 import sveltePreprocess from "svelte-preprocess";
+import tailWindCssPlugin from "tailwindcss";
+import autoprefixerPlugin from "autoprefixer";
 import typescript from '@rollup/plugin-typescript';
 import nodePolyfill from 'rollup-plugin-polyfill-node';
 import localCanisters from "../../.dfx/local/canister_ids.json" assert {
@@ -80,6 +82,13 @@ export default {
     svelte({
       preprocess: sveltePreprocess({
         sourceMap: !production,
+        tsconfig: "./tsconfig.json",
+        postcss: {
+          plugins: [
+            tailWindCssPlugin,
+            autoprefixerPlugin
+          ],
+        }
       }),
       compilerOptions: {
         // enable run-time checks when not in production

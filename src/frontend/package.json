@@ -15,7 +15,6 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-replace": "^5.0.5",
     "@rollup/plugin-typescript": "^11.1.5",
-    "@sveltejs/vite-plugin-svelte": "^2.5.2",
     "@tsconfig/svelte": "^5.0.2",
     "autoprefixer": "^10.4.14",
     "flowbite": "^2.1.1",

@@ -1,7 +1,9 @@
+import flowbitePlugin from 'flowbite/plugin';
+
 export const config = {
   content: ['./src/**/*.{html,svelte,ts}', './node_modules/flowbite-svelte/**/*.{html,js,svelte,ts}'],
 
-  plugins: [require('flowbite/plugin')],
+  plugins: [flowbitePlugin],
 
   darkMode: 'class',
 

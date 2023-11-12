@@ -10,7 +10,7 @@ async function fetchIdentity() {
 }
 
 function createIdentityStore() {
-    const { subscribe, set } = writable<Identity>();
+    const { subscribe, set } = writable<Identity | undefined>();
 
     fetchIdentity().then(identity => {
         set(identity);

@@ -23,7 +23,7 @@
     try {
       await authClient.logout();
     } finally {
-      identityStore.set(null);
+      identityStore.set(undefined);
     }
   };
 </script>

@@ -1,5 +1,5 @@
 {  
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "tailwind.config.js"],
   "exclude": ["node_modules/*", "public/*"],
   "compilerOptions": {
     "target": "ES2020",
