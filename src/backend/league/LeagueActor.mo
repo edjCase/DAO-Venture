@@ -22,6 +22,7 @@ import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import Blob "mo:base/Blob";
+import Order "mo:base/Order";
 import Token "mo:icrc1/ICRC1/Canisters/Token";
 import ICRC1 "mo:icrc1/ICRC1";
 import TimeZone "mo:datetime/TimeZone";
@@ -33,6 +34,7 @@ import PseudoRandomX "mo:random/PseudoRandomX";
 import League "../League";
 import Util "../Util";
 import StadiumActor "../stadium/StadiumActor";
+import ScheduleBuilder "ScheduleBuilder";
 
 actor LeagueActor {
     type LedgerActor = Token.Token;
@@ -40,17 +42,18 @@ actor LeagueActor {
     type DivisionWithId = League.DivisionWithId;
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
-    type BuildDivisionRequestResult = {
-        #ok : [Stadium.ScheduleMatchGroupRequest];
-        #error : League.ScheduleDivisionError;
-    };
-    type BuildDivisionRequestResultWithId = {
-        #ok : Stadium.ScheduleDivisionRequest;
-        #error : League.ScheduleDivisionErrorResult;
+    type SeasonStatus = {
+        #closed;
+        #starting;
+        #open : {
+            var matchGroups : Trie.Trie<Nat32, League.MatchGroupSchedule>;
+            var divisions : Trie.Trie<Nat32, League.DivisionSchedule>;
+        };
     };
 
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
     stable var divisions : Trie.Trie<Nat32, Division> = Trie.empty();
+    stable var seasonStatus : SeasonStatus = #closed;
     stable var stadiumIdOrNull : ?Principal = null;
 
     public query func getDivisions() : async [DivisionWithId] {
@@ -83,10 +86,51 @@ actor LeagueActor {
         );
     };
 
-    public composite query func getSeasonSchedule() : async ?Stadium.SeasonSchedule {
-        let ?stadiumId = stadiumIdOrNull else return null;
-        let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
-        await stadiumActor.getSeasonSchedule();
+    public composite query func getSeasonSchedule() : async ?League.SeasonSchedule {
+        let #open(season) = seasonStatus else return null;
+        let matchGroups = season.matchGroups
+        |> Trie.iter(_)
+        // Add id
+        |> Iter.map(
+            _,
+            func(mg : (Nat32, League.MatchGroupSchedule)) : League.MatchGroupScheduleWithId = {
+                mg.1 with
+                id = mg.0;
+            },
+        )
+        // Order by start time
+        |> IterTools.sort(
+            _,
+            func(
+                a : League.MatchGroupScheduleWithId,
+                b : League.MatchGroupScheduleWithId,
+            ) : Order.Order = Int.compare(a.time, b.time),
+        )
+        |> Iter.toArray(_);
+
+        let divisions = season.divisions
+        |> Trie.iter(_)
+        // Add id
+        |> Iter.map(
+            _,
+            func(d : (Nat32, League.DivisionSchedule)) : League.DivisionScheduleWithId = {
+                d.1 with
+                id = d.0;
+            },
+        )
+        // Order by id
+        |> IterTools.sort(
+            _,
+            func(
+                a : League.DivisionScheduleWithId,
+                b : League.DivisionScheduleWithId,
+            ) : Order.Order = Nat32.compare(a.id, b.id),
+        )
+        |> Iter.toArray(_);
+        ?{
+            matchGroups = matchGroups;
+            divisions = divisions;
+        };
     };
 
     public shared ({ caller }) func createStadium() : async League.CreateStadiumResult {
@@ -138,54 +182,86 @@ actor LeagueActor {
         return #ok(divisionId);
     };
 
-    public shared ({ caller }) func scheduleSeason(request : League.ScheduleSeasonRequest) : async League.ScheduleSeasonResult {
+    public shared ({ caller }) func startSeason(request : League.StartSeasonRequest) : async League.StartSeasonResult {
+        let #closed = seasonStatus else return #alreadyStarted;
+        seasonStatus := #starting;
 
         let ?stadiumId = stadiumIdOrNull else return #noStadiumsExist;
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
 
-        let divisionRequestResults = Buffer.Buffer<BuildDivisionRequestResultWithId>(request.divisions.size());
-        label f for (division in Iter.fromArray(request.divisions)) {
+        let divisionsArray = Trie.toArray(
+            divisions,
+            func(k : Nat32, v : Division) : DivisionWithId = {
+                v with
+                id = k;
+            },
+        );
+        let teamsArray = Trie.toArray(
+            teams,
+            func(k : Principal, v : Team.Team) : TeamWithId = {
+                id = k;
+                name = v.name;
+                logoUrl = v.logoUrl;
+                ledgerId = v.ledgerId;
+                divisionId = v.divisionId;
+            },
+        );
+        let buildResult = ScheduleBuilder.build(request, divisionsArray, teamsArray, prng);
 
-            let divisionExists = Trie.some(
-                divisions,
-                func(k : Nat32, v : Division) : Bool = k == division.id,
-            );
-            if (not divisionExists) {
-                divisionRequestResults.add(#error({ id = division.id; error = #divisionNotFound }));
-                continue f;
-            };
-            let teamIds = teams
-            |> Trie.iter(_)
-            |> Iter.filter(_, func(team : (Principal, Team.Team)) : Bool = team.1.divisionId == division.id)
-            |> Iter.map(_, func(team : (Principal, Team.Team)) : Principal = team.0)
-            |> Iter.toArray(_);
-            let result = await* buildDivisionRequest(teamIds, division.startTime, prng);
-            let resultWithId = switch (result) {
-                case (#ok(divisionRequest)) #ok({
-                    id = division.id;
-                    matchGroups = divisionRequest;
-                });
-                case (#error(error)) #error({
-                    id = division.id;
-                    error = error;
-                });
-            };
-            divisionRequestResults.add(resultWithId);
-        };
-
-        let divisionRequests : [Stadium.ScheduleDivisionRequest] = switch (Util.allOkOrError(divisionRequestResults.vals())) {
-            case (#ok(schedules)) schedules;
+        let schedule : League.SeasonSchedule = switch (buildResult) {
+            case (#ok(schedule)) schedule;
             case (#error(errors)) return #divisionErrors(errors);
         };
-        let stadiumRequest : Stadium.ScheduleSeasonRequest = {
-            divisions = divisionRequests;
+
+        // Save full schedule, then try to start the first match groups
+
+        // Get first match group from each division to open
+        let firstMatchGroups : [League.MatchGroupSchedule] = schedule.divisions
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(d : League.DivisionSchedule) : League.MatchGroupSchedule {
+                let idMatchesFunc = func(mg : League.MatchGroupSchedule) : Bool = mg.id == d.matchGroupIds[0];
+                let ?firstMatchGroup = Array.find(schedule.matchGroups, idMatchesFunc) else Debug.trap("Cannot find match group with id: " # Nat32.toText(d.matchGroupIds[0]));
+                firstMatchGroup;
+            },
+        )
+        |> Iter.toArray(_);
+
+        let matchGroupRequests = firstMatchGroups
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(mg : League.MatchGroupSchedule) : Stadium.ScheduleMatchGroupRequest = buildRequestFromMatchGroupSchedule(mg, prng),
+        )
+        |> Iter.toArray(_);
+        let stadiumRequest : Stadium.ScheduleMatchGroupsRequest = {
+            matchGroups = matchGroupRequests;
         };
         let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
         try {
-            await stadiumActor.scheduleSeason(stadiumRequest);
+            let stadiumResult = await stadiumActor.scheduleMatchGroups(stadiumRequest);
+            switch (stadiumResult) {
+                case (#ok(openedMatchGroups)) {
+                    var matchGroupSchedules = arrayToIdTrie(schedule.matchGroups, func(mg : League.MatchGroupScheduleWithId) : Nat32 = mg.id);
+                    var divisionSchedules = arrayToIdTrie(schedule.divisions, func(d : League.DivisionScheduleWithId) : Nat32 = d.id);
+                    seasonStatus := #open({
+                        var matchGroups = matchGroupSchedules;
+                        var divisions = divisionSchedules;
+                    });
+                    for (openedMatchGroup in Iter.fromArray(openedMatchGroups)) {
+                        openMatchGroupStatus(openedMatchGroup);
+                    };
+                    #ok;
+                };
+                case (#matchGroupErrors(errors)) #stadiumScheduleError(#matchGroupErrors(errors));
+                case (#noMatchGroupSpecified) #stadiumScheduleError(#noMatchGroupSpecified);
+                case (#playerFetchError(error)) #stadiumScheduleError(#playerFetchError(error));
+                case (#teamFetchError(error)) #stadiumScheduleError(#teamFetchError(error));
+            };
         } catch (err) {
-            #stadiumScheduleError(Error.message(err));
+            #stadiumScheduleError(#unknown(Error.message(err)));
         };
     };
 
@@ -308,70 +384,91 @@ actor LeagueActor {
         { key = id; hash = Principal.hash(id) };
     };
 
-    private func buildDivisionRequest(
-        teamIds : [Principal],
-        start : Time.Time,
-        prng : Prng,
-    ) : async* BuildDivisionRequestResult {
-        // Round robin tournament algorithm
-        var teamOrderForWeek = Buffer.fromArray<Principal>(teamIds);
+    private func openMatchGroupStatus(matchGroup : Stadium.MatchGroupWithId) : () {
+        let #open(season) = seasonStatus else Debug.trap("Cannot open match group when season is not open");
 
-        prng.shuffleBuffer(teamOrderForWeek);
-
-        let teamCount = teamOrderForWeek.size();
-        if (teamCount == 0) {
-            return #error(#noTeamsInDivision);
+        let key = {
+            key = matchGroup.id;
+            hash = matchGroup.id;
         };
-        if (teamCount % 2 == 1) {
-            return #error(#oddNumberOfTeams);
-        };
-        let matchUpCountPerWeek = teamCount / 2;
-        let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
-        var nextMatchDate = DateTime.fromTime(start);
 
-        let matchGroupRequests = Buffer.Buffer<Stadium.ScheduleMatchGroupRequest>(weekCount);
-        for (weekIndex in IterTools.range(0, weekCount)) {
+        // Get current match group
+        let ?matchGroupSchedule = Trie.get(season.matchGroups, key, Nat32.equal) else Debug.trap("Cannot find match group with id: " # Nat32.toText(matchGroup.id));
 
-            let matches : [Stadium.ScheduleMatchRequest] = IterTools.range(0, matchUpCountPerWeek)
-            |> Iter.map(
-                _,
-                func(i : Nat) : Stadium.ScheduleMatchRequest {
-                    let offerings = getRandomOfferings(4);
-                    let aura = getRandomMatchAura(prng);
-                    let team1Id = teamOrderForWeek.get(i);
-                    let team2Id = teamOrderForWeek.get(i + matchUpCountPerWeek); // Second half of teams
-                    {
-                        team1Id = team1Id;
-                        team2Id = team2Id;
-                        aura = aura;
-                        offerings = offerings;
-                    };
-                },
-            )
-            |> Iter.toArray(_);
+        let matches = matchGroupSchedule.matches
+        |> Iter.fromArray(_)
+        |> IterTools.zip(_, Iter.fromArray(matchGroup.matches))
+        |> Iter.map(
+            _,
+            func(m : (League.MatchSchedule, Stadium.Match)) : League.OpenMatchScheduleStatus {
+                let offerings = m.1.offerings
+                |> Iter.fromArray(_)
+                |> Iter.map(_, func(o : Stadium.OfferingWithMetaData) : Stadium.Offering = o.offering)
+                |> Iter.toArray(_);
+                {
+                    offerings = offerings;
+                    matchAura = m.1.aura.aura;
+                };
+            },
+        )
+        |> Iter.toArray(_);
 
-            matchGroupRequests.add({
-                startTime = nextMatchDate.toTime();
+        let newMatchGroupSchedule : League.MatchGroupSchedule = {
+            matchGroupSchedule with
+            status = #open({
                 matches = matches;
             });
-            // nextMatchDate := nextMatchDate.add(#weeks(1)); // TODO revert
-            nextMatchDate := nextMatchDate.add(#minutes(5));
-            // Rotate order of teams
-            // 1) Freeze the first team
-            // 2) Bring the last team to the second position
-            // 3) Rotate the rest of the teams by one position
-            let firstTeamId = teamOrderForWeek.get(0);
-            let lastTeamId = teamOrderForWeek.get(teamOrderForWeek.size() - 1);
-            let newOrder = Buffer.Buffer<Principal>(teamCount);
-            newOrder.add(firstTeamId);
-            newOrder.add(lastTeamId);
-            for (i in IterTools.range(1, teamCount - 1)) {
-                newOrder.add(teamOrderForWeek.get(i));
-            };
-            teamOrderForWeek := newOrder;
         };
 
-        #ok(Buffer.toArray(matchGroupRequests));
+        // TODO should the stadium generate the ids?
+        let (newMatchGroupSchedules, _) = Trie.put(
+            season.matchGroups,
+            key,
+            Nat32.equal,
+            newMatchGroupSchedule,
+        );
+        season.matchGroups := newMatchGroupSchedules;
+    };
+
+    private func arrayToIdTrie<T>(items : [T], getId : (T) -> Nat32) : Trie.Trie<Nat32, T> {
+        var trie = Trie.empty<Nat32, T>();
+        for (item in Iter.fromArray(items)) {
+            let id = getId(item);
+            let key = {
+                key = id;
+                hash = id;
+            };
+            let (newTrie, _) = Trie.put(trie, key, Nat32.equal, item);
+            trie := newTrie;
+        };
+        trie;
+    };
+
+    private func buildRequestFromMatchGroupSchedule(
+        mg : League.MatchGroupSchedule,
+        prng : Prng,
+    ) : Stadium.ScheduleMatchGroupRequest {
+        let offerings = getRandomOfferings(4);
+        let aura = getRandomMatchAura(prng);
+        let matches = mg.matches
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(m : League.MatchSchedule) : Stadium.ScheduleMatchRequest {
+                {
+                    team1Id = m.team1Id;
+                    team2Id = m.team2Id;
+                    offerings = offerings;
+                    aura = aura;
+                };
+            },
+        )
+        |> Iter.toArray(_);
+        {
+            id = mg.id;
+            startTime = mg.time;
+            matches = matches;
+        };
     };
 
     private func getRandomOfferings(count : Nat) : [Stadium.Offering] {

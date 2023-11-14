@@ -44,13 +44,15 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         #inProgress : Stadium.InProgressMatchState;
         #completed : Stadium.CompletedMatchState;
     };
-    type BuildDivisionError = {
+    type BuildMatchGroupsError = {
         #matchGroupErrors : [Stadium.ScheduleMatchGroupError];
         #teamFetchError : Text;
         #playerFetchError : Text;
-        #noMatchGroupsSpecified;
+        #noMatchGroupSpecified;
     };
-    type BuildDivisionResult = CommonUtil.Result<[MatchGroupToBeScheduled], BuildDivisionError>;
+    type BuildMatchGroupsResult = BuildMatchGroupsError or {
+        #ok : [MatchGroupToBeScheduled];
+    };
 
     type BuildMatchGroupError = {
         #matchErrors : [Stadium.ScheduleMatchError];
@@ -69,14 +71,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         var matchGroups : Trie.Trie<Nat32, MatchGroup>;
     };
     type MatchGroupToBeScheduled = {
+        id : Nat32;
         time : Time.Time;
         matches : [Stadium.Match];
     };
 
-    stable var seasonScheduleOrNull : ?StableSeasonSchedule = null;
+    stable var matchGroups = Trie.empty<Nat32, MatchGroup>();
 
     public query func getMatchGroup(id : Nat32) : async ?Stadium.MatchGroupWithId {
-        let ?schedule = seasonScheduleOrNull else return null;
         switch (getMatchGroupOrNull(id)) {
             case (null) return null;
             case (?m) {
@@ -88,113 +90,60 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    public query func getSeasonSchedule() : async ?Stadium.SeasonSchedule {
-        switch (seasonScheduleOrNull) {
-            case (null) return null;
-            case (?s) {
-                let matchGroups = s.matchGroups
-                |> Trie.iter(_)
-                |> Iter.map(
-                    _,
-                    func((matchGroupId, matchGroup) : (MatchGroupId, MatchGroup)) : Stadium.MatchGroupWithId {
-                        {
-                            matchGroup with
-                            id = matchGroupId;
-                        };
-                    },
-                )
-                |> Iter.sort(
-                    _,
-                    func(a : Stadium.MatchGroupWithId, b : Stadium.MatchGroupWithId) : Order.Order {
-                        Int.compare(a.time, b.time);
-                    },
-                )
-                |> Iter.toArray(_);
-
-                ?{
-                    matchGroups = matchGroups;
-                };
-            };
-        };
+    public query func getMatchGroups() : async [Stadium.MatchGroupWithId] {
+        matchGroups
+        |> Trie.iter(_)
+        |> Iter.map(
+            _,
+            func(m : (Nat32, Stadium.MatchGroup)) : Stadium.MatchGroupWithId = {
+                m.1 with
+                id = m.0;
+            },
+        )
+        |> Iter.toArray(_);
     };
 
-    public shared ({ caller }) func scheduleSeason(request : Stadium.ScheduleSeasonRequest) : async Stadium.ScheduleSeasonResult {
+    public shared ({ caller }) func scheduleMatchGroups(request : Stadium.ScheduleMatchGroupsRequest) : async Stadium.ScheduleMatchGroupsResult {
         assertLeague(caller);
-        switch (seasonScheduleOrNull) {
-            case (null)();
-            case (?_) return #alreadyScheduled;
-        };
-        if (request.divisions.size() < 1) {
-            return #noDivisionSpecified;
-        };
-        let results = Buffer.Buffer<CommonUtil.Result<(Nat32, [MatchGroupToBeScheduled]), Stadium.ScheduleDivisionErrorResult>>(request.divisions.size());
-        for (division in Iter.fromArray(request.divisions)) {
-            let result = await* buildDivisionMatchGroups(division);
-            switch (result) {
-                case (#ok(matchGroups)) {
-                    results.add(#ok((division.id, matchGroups)));
-                };
-                case (#error(error)) {
-                    results.add(#error({ id = division.id; error }));
-                };
-            };
-        };
-
-        let divisionsToBeScheduled = switch (CommonUtil.allOkOrError<(Nat32, [MatchGroupToBeScheduled]), Stadium.ScheduleDivisionErrorResult>(results.vals())) {
-            case (#ok(matchGroupsToBeScheduled)) matchGroupsToBeScheduled;
-            case (#error(errors)) return #divisionErrors(errors);
+        let result = await* buildMatchGroups(request.matchGroups);
+        let matchGroupsToBeSchedule = switch (result) {
+            case (#ok(matchGroups)) matchGroups;
+            case (#matchGroupErrors(errors)) return #matchGroupErrors(errors);
+            case (#teamFetchError(err)) return #teamFetchError(err);
+            case (#playerFetchError(err)) return #playerFetchError(err);
+            case (#noMatchGroupSpecified) return #noMatchGroupSpecified;
         };
 
         // Only schedule if all divisions were successful
-        var matchGroups = Trie.empty<Nat32, MatchGroup>();
-        var divisionMatchGroupMap = Trie.empty<Nat32, [MatchGroupId]>();
-        for ((divisionId, matchesToBeScheduled) in divisionsToBeScheduled.vals()) {
-            let divisionMatchGroupIds = Buffer.Buffer<MatchGroupId>(matchesToBeScheduled.size());
-            for (matchGroupToBeScheduled in Iter.fromArray(matchesToBeScheduled)) {
-                let matchGroupId = Nat32.fromNat(Trie.size(matchGroups) + 1);
-                divisionMatchGroupIds.add(matchGroupId);
-                let timeDiff : Time.Time = matchGroupToBeScheduled.time - Time.now();
-                let natTimeDiff = if (timeDiff < 0) {
-                    1;
-                } else {
-                    Int.abs(timeDiff);
-                };
-                let startTimerId = Timer.setTimer(
-                    #nanoseconds(natTimeDiff),
-                    func() : async () {
-                        Debug.print("Starting match group " # Nat32.toText(matchGroupId));
-                        await tickMatchGroupCallback(matchGroupId);
-                    },
-                );
-
-                let matchGroup : Stadium.MatchGroup = {
-                    time = matchGroupToBeScheduled.time;
-                    matches = matchGroupToBeScheduled.matches;
-                    state = #notStarted({
-                        startTimerId = startTimerId;
-                    });
-                };
-                let matchGroupKey = {
-                    key = matchGroupId;
-                    hash = matchGroupId;
-                };
-                let (newMatchGroups, _) = Trie.put(matchGroups, matchGroupKey, Nat32.equal, matchGroup);
-                matchGroups := newMatchGroups;
+        let matchGroups = Buffer.Buffer<Stadium.MatchGroupWithId>(matchGroupsToBeSchedule.size());
+        for (matchGroupToBeScheduled in Iter.fromArray(matchGroupsToBeSchedule)) {
+            let timeDiff : Time.Time = matchGroupToBeScheduled.time - Time.now();
+            let natTimeDiff = if (timeDiff < 0) {
+                1;
+            } else {
+                Int.abs(timeDiff);
             };
+            let startTimerId = Timer.setTimer(
+                #nanoseconds(natTimeDiff),
+                func() : async () {
+                    Debug.print("Starting match group " # Nat32.toText(matchGroupToBeScheduled.id));
+                    await tickMatchGroupCallback(matchGroupToBeScheduled.id);
+                },
+            );
 
-            let divisionKey = {
-                key = divisionId;
-                hash = divisionId;
+            let matchGroup : Stadium.MatchGroupWithId = {
+                id = matchGroupToBeScheduled.id;
+                time = matchGroupToBeScheduled.time;
+                matches = matchGroupToBeScheduled.matches;
+                state = #notStarted({
+                    startTimerId = startTimerId;
+                });
             };
-            let (newDivisionMatchGroupMap, _) = Trie.put(divisionMatchGroupMap, divisionKey, Nat32.equal, Buffer.toArray(divisionMatchGroupIds));
-            divisionMatchGroupMap := newDivisionMatchGroupMap;
+            addOrUpdateMatchGroup(matchGroup);
+            matchGroups.add(matchGroup);
+        };
 
-        };
-        seasonScheduleOrNull := ?{
-            var divisions = divisionMatchGroupMap;
-            var matchGroups = matchGroups;
-        };
-        #ok;
+        #ok(Buffer.toArray(matchGroups));
     };
 
     public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat32) : async Stadium.TickMatchGroupResult {
@@ -245,7 +194,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 });
             };
         };
-        updateMatchGroupState({ matchGroup with id = matchGroupId }, newState);
+        addOrUpdateMatchGroup({
+            matchGroup with
+            id = matchGroupId;
+            state = newState;
+        });
         switch (newState) {
             case (#completed(_)) #completed;
             case (#inProgress(_)) #inProgress;
@@ -264,7 +217,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                     inProgressState with
                     tickTimerId = newTickTimerId;
                 });
-                updateMatchGroupState({ matchGroup with id = matchGroupId }, newState);
+                addOrUpdateMatchGroup({
+                    matchGroup with
+                    id = matchGroupId;
+                    state = newState;
+                });
                 #ok;
             };
         };
@@ -279,56 +236,40 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         );
     };
 
-    private func updateMatchGroupState(matchGroup : Stadium.MatchGroupWithId, newState : Stadium.MatchGroupState) : () {
-        let newMatchGroup = {
-            matchGroup with
-            state = newState;
-        };
-
-        let ?schedule = seasonScheduleOrNull else Prelude.unreachable();
+    private func addOrUpdateMatchGroup(newMatchGroup : Stadium.MatchGroupWithId) : () {
         let matchGroupKey = {
-            hash = matchGroup.id;
-            key = matchGroup.id;
+            hash = newMatchGroup.id;
+            key = newMatchGroup.id;
         };
-        let (newMatchGroups, _) = Trie.replace(schedule.matchGroups, matchGroupKey, Nat32.equal, ?newMatchGroup);
-        schedule.matchGroups := newMatchGroups;
+        let (newMatchGroups, _) = Trie.replace(matchGroups, matchGroupKey, Nat32.equal, ?newMatchGroup);
+        matchGroups := newMatchGroups;
     };
 
-    private func buildDivisionMatchGroups(request : Stadium.ScheduleDivisionRequest) : async* BuildDivisionResult {
-        if (request.matchGroups.size() < 1) {
-            return #error(#noMatchGroupsSpecified);
+    private func buildMatchGroups(matchGroups : [Stadium.ScheduleMatchGroupRequest]) : async* BuildMatchGroupsResult {
+        if (matchGroups.size() < 1) {
+            return #noMatchGroupSpecified;
         };
         let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
         let teams = try {
-            let leagueTeams = await leagueActor.getTeams();
-            Array.filter(leagueTeams, func(t : TeamWithId) : Bool = t.divisionId == request.id);
+            await leagueActor.getTeams();
         } catch (err) {
-            return #error(#teamFetchError(Error.message(err)));
+            return #teamFetchError(Error.message(err));
         };
-        let divisionPlayers = try {
-            let leaguePlayers = await PlayerLedgerActor.getAllPlayers();
-            Array.filter(
-                leaguePlayers,
-                func(p : PlayerWithId) : Bool {
-                    switch (Array.find(teams, func(t : TeamWithId) : Bool = ?t.id == p.teamId)) {
-                        case (null) false;
-                        case (?_) true;
-                    };
-                },
-            );
+        let players = try {
+            await PlayerLedgerActor.getAllPlayers();
         } catch (err) {
-            return #error(#playerFetchError(Error.message(err)));
+            return #playerFetchError(Error.message(err));
         };
-        let buildMatchGroupResults = request.matchGroups
+        let buildMatchGroupResults = matchGroups
         |> Array.map<Stadium.ScheduleMatchGroupRequest, BuildMatchGroupResult>(
             _,
             func(matchGroupRequest : Stadium.ScheduleMatchGroupRequest) : BuildMatchGroupResult {
-                buildMatchGroup(matchGroupRequest, divisionPlayers, teams);
+                buildMatchGroup(matchGroupRequest, players, teams);
             },
         );
         switch (CommonUtil.allOkOrError(buildMatchGroupResults.vals())) {
-            case (#ok(matchGroups)) #ok(matchGroups);
-            case (#error(errors)) #error(#matchGroupErrors(errors));
+            case (#ok(m)) #ok(m);
+            case (#error(errors)) #matchGroupErrors(errors);
         };
     };
 
@@ -350,6 +291,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         );
         switch (CommonUtil.allOkOrError(results)) {
             case (#ok(matches)) #ok({
+                id = request.id;
                 time = request.startTime;
                 matches = matches;
             });
@@ -538,12 +480,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func getMatchGroupOrNull(matchGroupId : Nat32) : ?MatchGroup {
-        let ?schedule = seasonScheduleOrNull else return null;
         let matchGroupKey = {
             hash = matchGroupId;
             key = matchGroupId;
         };
-        Trie.get(schedule.matchGroups, matchGroupKey, Nat32.equal);
+        Trie.get(matchGroups, matchGroupKey, Nat32.equal);
     };
 
     private func assertLeague(caller : Principal) {

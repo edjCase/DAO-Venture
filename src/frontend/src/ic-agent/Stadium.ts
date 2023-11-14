@@ -433,14 +433,6 @@ export const ScheduleMatchGroupResultIdl = IDL.Variant({
   'matchErrors': IDL.Vec(ScheduleMatchErrorIdl)
 });
 
-
-export type SeasonSchedule = {
-  'matchGroups': MatchGroup[];
-};
-export const SeasonScheduleIdl = IDL.Record({
-  'matchGroups': IDL.Vec(MatchGroupIdl)
-});
-
 export type ScheduleMatchGroupError =
   | { 'teamFetchError': string }
   | { 'matchErrors': ScheduleMatchError[] }
@@ -451,71 +443,39 @@ export const ScheduleMatchGroupErrorIdl = IDL.Variant({
   'noMatchesSpecified': IDL.Null
 });
 
-export type ScheduleDivisionError =
-  | { 'divisionNotFound': null }
+export type ScheduleMatchGroupsRequest = {
+  'matchGroups': ScheduleMatchGroupRequest[];
+};
+export const ScheduleMatchGroupsRequestIdl = IDL.Record({
+  'matchGroups': IDL.Vec(ScheduleMatchGroupRequestIdl)
+});
+
+export type ScheduleMatchGroupsResult =
+  | { 'matchGroupErrors': ScheduleMatchGroupError[] }
   | { 'teamFetchError': string }
   | { 'playerFetchError': string }
-  | { 'matchGroupErrors': ScheduleMatchGroupError[] }
-  | { 'noMatchGroupsSpecified': null }
-  | { 'noTeamsInDivision': null }
-  | { 'oddNumberOfTeams': null };
-export const ScheduleDivisionErrorIdl = IDL.Variant({
-  'divisionNotFound': IDL.Null,
+  | { 'noMatchGroupSpecified': null }
+  | { 'ok': number[] };
+export const ScheduleMatchGroupsResultIdl = IDL.Variant({
+  'matchGroupErrors': IDL.Vec(ScheduleMatchGroupErrorIdl),
   'teamFetchError': IDL.Text,
   'playerFetchError': IDL.Text,
-  'matchGroupErrors': IDL.Vec(ScheduleMatchGroupErrorIdl),
-  'noMatchGroupsSpecified': IDL.Null,
-  'noTeamsInDivision': IDL.Null,
-  'oddNumberOfTeams': IDL.Null
-});
-
-export type ScheduleDivisionErrorResult = {
-  id: number;
-  error: ScheduleDivisionError;
-};
-export const ScheduleDivisionErrorResultIdl = IDL.Record({
-  'id': IDL.Nat32,
-  'error': ScheduleDivisionErrorIdl
-});
-
-export type ScheduleSeasonResult =
-  | { 'ok': null }
-  | { 'divisionErrors': ScheduleDivisionErrorResult[] }
-  | { 'noDivisionSpecified': null }
-  | { 'alreadyScheduled': null };
-export const ScheduleSeasonResultIdl = IDL.Variant({
-  'ok': IDL.Null,
-  'divisionErrors': IDL.Vec(ScheduleDivisionErrorResultIdl),
-  'noDivisionSpecified': IDL.Null,
-  'alreadyScheduled': IDL.Null
-});
-
-export type DivisionScheduleRequest = {
-  // TODO
-};
-export const DivisionScheduleRequestIdl = IDL.Record({
-  // TODO
-});
-
-export type ScheduleSeasonRequest = {
-  'divisions': DivisionScheduleRequest[];
-};
-export const ScheduleSeasonRequestIdl = IDL.Record({
-  'divisions': IDL.Vec(DivisionScheduleRequestIdl)
+  'noMatchGroupSpecified': IDL.Null,
+  'ok': IDL.Vec(IDL.Nat32)
 });
 
 export interface _SERVICE {
   'getMatchGroup': ActorMethod<[number], [] | [MatchGroup]>,
-  'getSeasonSchedule': ActorMethod<[], [] | [SeasonSchedule]>,
   'tickMatchGroup': ActorMethod<[number], TickMatchGroupResult>,
-  'scheduleSeason': ActorMethod<[ScheduleSeasonRequest], ScheduleSeasonResult>
+  'scheduleMatchGroups': ActorMethod<[ScheduleMatchGroupsRequest], ScheduleMatchGroupsResult>
+  'getMatchGroups': ActorMethod<[], MatchGroup[]>,
 }
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
   return IDL.Service({
     'getMatchGroup': IDL.Func([IDL.Nat32], [IDL.Opt(MatchGroupIdl)], ['query']),
-    'getSeasonSchedule': IDL.Func([], [IDL.Opt(SeasonScheduleIdl)], ['query']),
     'tickMatchGroup': IDL.Func([IDL.Nat32], [TickMatchGroupResultIdl], []),
-    'scheduleSeason': IDL.Func([ScheduleSeasonRequestIdl], [ScheduleSeasonResultIdl], [])
+    'scheduleMatchGroups': IDL.Func([ScheduleMatchGroupsRequestIdl], [ScheduleMatchGroupsResultIdl], []),
+    'getMatchGroups': IDL.Func([], [IDL.Vec(MatchGroupIdl)], ['query']),
   });
 };
 export const stadiumAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

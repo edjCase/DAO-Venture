@@ -5,7 +5,7 @@
   } from "../ic-agent/League";
   import { divisionStore } from "../stores/DivisionStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
-  import { SeasonSchedule } from "../ic-agent/Stadium";
+  import { SeasonSchedule } from "../ic-agent/League";
   import { onMount } from "svelte";
   import { matchGroupStore } from "../stores/MatchGroupStore";
 
@@ -38,7 +38,7 @@
     }
     console.log("Scheduling season", divisionSchedules);
     leagueAgentFactory()
-      .scheduleSeason({
+      .startSeason({
         divisions: divisionSchedules,
       })
       .then((result) => {

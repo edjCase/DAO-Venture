@@ -1,5 +1,5 @@
 import { writable, get } from "svelte/store";
-import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup, SeasonSchedule } from "../ic-agent/Stadium";
+import { stadiumAgentFactory as stadiumAgentFactory, MatchGroup } from "../ic-agent/Stadium";
 import { stadiumStore } from "./StadiumStore";
 import { Principal } from "@dfinity/principal";
 import { nanosecondsToDate } from "../utils/DateUtils";
@@ -57,12 +57,8 @@ export const matchGroupStore = (() => {
   };
   const refetchScheduledMatches = async (stadiumId: Principal) => {
     return stadiumAgentFactory(stadiumId)
-      .getSeasonSchedule()
-      .then((scheduleOrNull: [SeasonSchedule] | []) => {
-        if (scheduleOrNull.length === 0) {
-          return;
-        }
-        let matchGroups = scheduleOrNull[0].matchGroups;
+      .getMatchGroups()
+      .then((matchGroups: MatchGroup[]) => {
         set(matchGroups);
         for (let matchGroup of matchGroups) {
           setMatchGroupPoll(stadiumId, matchGroup);

@@ -3,7 +3,7 @@ import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
-import { ScheduleDivisionErrorResult, ScheduleDivisionErrorResultIdl, ScheduleMatchGroupErrorIdl, SeasonSchedule, SeasonScheduleIdl, ScheduleDivisionError as StadiumScheduleDivisionError } from './Stadium';
+import { CompletedMatchGroupState, CompletedMatchGroupStateIdl, MatchAura, MatchAuraIdl, Offering, OfferingIdl } from './Stadium';
 
 
 export type Time = bigint;
@@ -33,45 +33,53 @@ export const DivisionScheduleRequestIdl = IDL.Record({
   'startTime': TimeIdl
 });
 
-export type ScheduleSeasonRequest = {
+export type StartSeasonRequest = {
   'divisions': DivisionScheduleRequest[];
 };
-export const ScheduleSeasonRequestIdl = IDL.Record({
+export const StartSeasonRequestIdl = IDL.Record({
   'divisions': IDL.Vec(DivisionScheduleRequestIdl)
 });
 
-export type ScheduleDivisionError =
-  | StadiumScheduleDivisionError
+export type StartDivisionSeasonError =
+  | { 'divisionNotFound': null }
+  | { 'noMatchGroupSpecified': null }
   | { 'noTeamsInDivision': null }
   | { 'oddNumberOfTeams': null }
 export const ScheduleDivisionErrorIdl = IDL.Variant({
   'divisionNotFound': IDL.Null,
-  'teamFetchError': IDL.Text,
-  'playerFetchError': IDL.Text,
-  'matchGroupErrors': IDL.Vec(ScheduleMatchGroupErrorIdl),
   'noMatchGroupsSpecified': IDL.Null,
   'noTeamsInDivision': IDL.Null,
   'oddNumberOfTeams': IDL.Null
 });
 
+export type StartDivisionSeasonErrorResult = {
+  id: number;
+  error: StartDivisionSeasonError;
+};
+export const StartDivisionErrorResultIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'error': ScheduleDivisionErrorIdl
+});
 
-export type ScheduleSeasonResult =
+
+export type StartSeasonResult =
   | { 'ok': null }
-  | { 'divisionErrors': ScheduleDivisionErrorResult[] }
+  | { 'divisionErrors': StartDivisionSeasonErrorResult[] }
   | { 'noDivisionSpecified': null }
-  | { 'alreadyScheduled': null }
+  | { 'alreadyStarted': null }
   | { 'noStadiumsExist': null }
   | { 'stadiumScheduleError': string }
   | { 'teamFetchError': string };
-export const ScheduleSeasonResultIdl = IDL.Variant({
+export const StartSeasonResultIdl = IDL.Variant({
   'ok': IDL.Null,
-  'divisionErrors': IDL.Vec(ScheduleDivisionErrorResultIdl),
+  'divisionErrors': IDL.Vec(StartDivisionErrorResultIdl),
   'noDivisionSpecified': IDL.Null,
-  'alreadyScheduled': IDL.Null,
+  'alreadyStarted': IDL.Null,
   'noStadiumsExist': IDL.Null,
   'stadiumScheduleError': IDL.Text,
   'teamFetchError': IDL.Text
 });
+
 
 
 export type Division = {
@@ -174,6 +182,140 @@ export const MintResultIdl = IDL.Variant({
   'transferError': TransferErrorIdl,
 });
 
+export type DivisionSchedule = {
+  'id': number;
+  'matchGroupIds': number[];
+};
+export const DivisionScheduleIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'matchGroupIds': IDL.Vec(IDL.Nat32)
+});
+
+export type MatchSchedule = {
+  'team1Id': Principal;
+  'team2Id': Principal;
+};
+export const MatchScheduleIdl = IDL.Record({
+  'team1Id': IDL.Principal,
+  'team2Id': IDL.Principal
+});
+
+export type OpenMatchScheduleStatus = {
+  'offerings': Offering[];
+  'matchAura': MatchAura;
+};
+export const OpenMatchScheduleStatusIdl = IDL.Record({
+  'offerings': IDL.Vec(OfferingIdl),
+  'matchAura': MatchAuraIdl
+});
+
+export type OpenMatchGroupScheduleStatus = {
+  'matches': OpenMatchScheduleStatus[];
+};
+export const OpenMatchGroupScheduleStatusIdl = IDL.Record({
+  'matches': IDL.Vec(OpenMatchScheduleStatusIdl)
+});
+
+
+export type MatchGroupScheduleStatus = {
+  'notOpen': null;
+  'open': OpenMatchGroupScheduleStatus;
+  'completed': CompletedMatchGroupState;
+};
+export const MatchGroupScheduleStatusIdl = IDL.Variant({
+  'notOpen': IDL.Null,
+  'open': OpenMatchGroupScheduleStatusIdl,
+  'completed': CompletedMatchGroupStateIdl,
+});
+
+export type MatchGroupSchedule = {
+  'id': number;
+  'time': Time;
+  'matches': MatchSchedule[];
+  'status': MatchGroupScheduleStatus;
+};
+export const MatchGroupScheduleIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'time': TimeIdl,
+  'matches': IDL.Vec(MatchScheduleIdl),
+  'status': MatchGroupScheduleStatusIdl
+});
+
+export type SeasonSchedule = {
+  'divisions': DivisionSchedule[];
+  'matchGroups': MatchGroupSchedule[];
+};
+export const SeasonScheduleIdl = IDL.Record({
+  'divisions': IDL.Vec(DivisionScheduleIdl),
+  'matchGroups': IDL.Vec(MatchGroupScheduleIdl),
+});
+
+// public type MatchGroupSchedule = {
+//   id : Nat32;
+//   time : Time.Time;
+//   matches : [MatchSchedule];
+//   status : MatchGroupScheduleStatus;
+// };
+// public type MatchGroupScheduleWithId = MatchGroupSchedule and {
+//   id : Nat32;
+// };
+
+// public type MatchGroupScheduleStatus = {
+//   #notOpen;
+//   #open : OpenMatchGroupScheduleStatus;
+//   #completed : Stadium.CompletedMatchGroupState;
+// };
+
+// public type OpenMatchGroupScheduleStatus = {
+//   matches : [OpenMatchScheduleStatus];
+// };
+
+// public type OpenMatchScheduleStatus = {
+//   offerings : [Stadium.Offering];
+//   matchAura : Stadium.MatchAura;
+// };
+
+// public type MatchSchedule = {
+//   team1Id : Principal;
+//   team2Id : Principal;
+// };
+
+// public type StartDivisionSeasonRequest = {
+//   id : Nat32;
+//   startTime : Time.Time;
+// };
+
+// public type StartSeasonRequest = {
+//   divisions : [StartDivisionSeasonRequest];
+// };
+
+// public type StartDivisionSeasionErrorResult = {
+//   id : Nat32;
+//   error : StartDivisionSeasonError;
+// };
+
+// public type StartSeasonResult = {
+//   #ok;
+//   #divisionErrors : [StartDivisionSeasonErrorResult];
+//   #noDivisionSpecified;
+//   #alreadyStarted;
+//   #noStadiumsExist;
+//   #stadiumScheduleError : Stadium.ScheduleMatchGroupsError or {
+//       #unknown : Text;
+//   };
+// };
+
+// public type StartDivisionSeasonError = {
+//   #divisionNotFound;
+//   #noMatchGroupSpecified;
+//   #oddNumberOfTeams;
+//   #noTeamsInDivision;
+// };
+// public type StartDivisionSeasonErrorResult = {
+//   id : Nat32;
+//   error : StartDivisionSeasonError;
+// };
+
 
 
 export interface _SERVICE {
@@ -184,7 +326,7 @@ export interface _SERVICE {
   'getDivisions': ActorMethod<[], Array<Division>>,
   'getSeasonSchedule': ActorMethod<[], [] | [SeasonSchedule]>,
   'updateLeagueCanisters': ActorMethod<[], undefined>,
-  'scheduleSeason': ActorMethod<[ScheduleSeasonRequest], ScheduleSeasonResult>,
+  'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'mint': ActorMethod<[MintRequest], MintResult>,
 }
@@ -201,7 +343,7 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'getDivisions': IDL.Func([], [IDL.Vec(DivisionIdl)], ['query']),
     'getSeasonSchedule': IDL.Func([], [IDL.Opt(SeasonScheduleIdl)], ['query']),
     'updateLeagueCanisters': IDL.Func([], [], []),
-    'scheduleSeason': IDL.Func([ScheduleSeasonRequestIdl], [ScheduleSeasonResultIdl], []),
+    'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
     'mint': IDL.Func([MintRequestIdl], [MintResultIdl], []),
   });

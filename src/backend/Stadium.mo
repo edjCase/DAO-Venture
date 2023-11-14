@@ -14,10 +14,23 @@ module {
 
     public type StadiumActor = actor {
         getMatchGroup : query (id : Nat32) -> async ?MatchGroupWithId;
-        getSeasonSchedule : query () -> async ?SeasonSchedule;
+        getMatchGroups : query () -> async [MatchGroupWithId];
         tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
-        scheduleSeason : (request : ScheduleSeasonRequest) -> async ScheduleSeasonResult;
+        scheduleMatchGroups : (matchGroups : ScheduleMatchGroupsRequest) -> async ScheduleMatchGroupsResult;
         resetTickTimer(matchGroupId : Nat32) : async ResetTickTimerResult;
+    };
+
+    public type ScheduleMatchGroupsRequest = {
+        matchGroups : [ScheduleMatchGroupRequest];
+    };
+    public type ScheduleMatchGroupsError = {
+        #matchGroupErrors : [ScheduleMatchGroupError];
+        #teamFetchError : Text;
+        #playerFetchError : Text;
+        #noMatchGroupSpecified;
+    };
+    public type ScheduleMatchGroupsResult = ScheduleMatchGroupsError or {
+        #ok : [MatchGroupWithId];
     };
 
     public type ResetTickTimerResult = {
@@ -25,10 +38,6 @@ module {
         #matchGroupNotFound;
         #matchGroupNotStarted;
         #matchGroupComplete;
-    };
-
-    public type SeasonSchedule = {
-        matchGroups : [MatchGroupWithId];
     };
 
     public type RegisterResult = {
@@ -44,36 +53,8 @@ module {
         #invalidChampionId : PlayerId;
     };
 
-    public type ScheduleSeasonRequest = {
-        divisions : [ScheduleDivisionRequest];
-    };
-
-    public type ScheduleSeasonResultGeneric<T> = {
-        #ok;
-        #divisionErrors : [T];
-        #noDivisionSpecified;
-        #alreadyScheduled;
-    };
-    public type ScheduleSeasonResult = ScheduleSeasonResultGeneric<ScheduleDivisionErrorResult>;
-    public type ScheduleDivisionErrorResult = {
-        id : Nat32;
-        error : ScheduleDivisionError;
-    };
-
-    public type ScheduleDivisionError = {
-        #divisionNotFound;
-        #teamFetchError : Text;
-        #playerFetchError : Text;
-        #matchGroupErrors : [ScheduleMatchGroupError];
-        #noMatchGroupsSpecified;
-    };
-
-    public type ScheduleDivisionRequest = {
-        id : Nat32;
-        matchGroups : [ScheduleMatchGroupRequest];
-    };
-
     public type ScheduleMatchGroupRequest = {
+        id : Nat32;
         startTime : Time.Time;
         matches : [ScheduleMatchRequest];
     };

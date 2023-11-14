@@ -2,6 +2,7 @@ import Stadium "Stadium";
 import TimeZone "mo:datetime/TimeZone";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
+import Nat "mo:base/Nat";
 import Team "Team";
 import ICRC1 "mo:icrc1/ICRC1";
 
@@ -10,9 +11,9 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getStadiums : query () -> async [Stadium];
         getDivisions : query () -> async [DivisionWithId];
-        getSeasonSchedule : composite query () -> async ?Stadium.SeasonSchedule;
+        getSeasonSchedule : composite query () -> async ?SeasonSchedule;
         createDivision : (request : CreateDivisionRequest) -> async CreateDivisionResult;
-        scheduleSeason : (request : ScheduleSeasonRequest) -> async ScheduleSeasonResult;
+        startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         createStadium : () -> async CreateStadiumResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         mint : (request : MintRequest) -> async MintResult;
@@ -47,26 +48,83 @@ module {
         id : Principal;
     };
 
-    public type ScheduleSeasonRequest = {
-        divisions : [ScheduleDivisionRequest];
+    public type SeasonSchedule = {
+        divisions : [DivisionScheduleWithId];
+        matchGroups : [MatchGroupScheduleWithId];
     };
 
-    public type ScheduleDivisionRequest = {
+    public type DivisionSchedule = {
+        matchGroupIds : [Nat32];
+    };
+
+    public type DivisionScheduleWithId = DivisionSchedule and {
+        id : Nat32;
+    };
+
+    public type MatchGroupSchedule = {
+        id : Nat32;
+        time : Time.Time;
+        matches : [MatchSchedule];
+        status : MatchGroupScheduleStatus;
+    };
+    public type MatchGroupScheduleWithId = MatchGroupSchedule and {
+        id : Nat32;
+    };
+
+    public type MatchGroupScheduleStatus = {
+        #notOpen;
+        #open : OpenMatchGroupScheduleStatus;
+        #completed : Stadium.CompletedMatchGroupState;
+    };
+
+    public type OpenMatchGroupScheduleStatus = {
+        matches : [OpenMatchScheduleStatus];
+    };
+
+    public type OpenMatchScheduleStatus = {
+        offerings : [Stadium.Offering];
+        matchAura : Stadium.MatchAura;
+    };
+
+    public type MatchSchedule = {
+        team1Id : Principal;
+        team2Id : Principal;
+    };
+
+    public type StartDivisionSeasonRequest = {
         id : Nat32;
         startTime : Time.Time;
     };
-    public type ScheduleSeasonResult = Stadium.ScheduleSeasonResultGeneric<ScheduleDivisionErrorResult> or {
-        #noStadiumsExist;
-        #stadiumScheduleError : Text;
-        #teamFetchError : Text;
+
+    public type StartSeasonRequest = {
+        divisions : [StartDivisionSeasonRequest];
     };
-    public type ScheduleDivisionError = Stadium.ScheduleDivisionError or {
+
+    public type StartDivisionSeasionErrorResult = {
+        id : Nat32;
+        error : StartDivisionSeasonError;
+    };
+
+    public type StartSeasonResult = {
+        #ok;
+        #divisionErrors : [StartDivisionSeasonErrorResult];
+        #noDivisionSpecified;
+        #alreadyStarted;
+        #noStadiumsExist;
+        #stadiumScheduleError : Stadium.ScheduleMatchGroupsError or {
+            #unknown : Text;
+        };
+    };
+
+    public type StartDivisionSeasonError = {
+        #divisionNotFound;
+        #noMatchGroupSpecified;
         #oddNumberOfTeams;
         #noTeamsInDivision;
     };
-    public type ScheduleDivisionErrorResult = {
+    public type StartDivisionSeasonErrorResult = {
         id : Nat32;
-        error : ScheduleDivisionError;
+        error : StartDivisionSeasonError;
     };
     public type CreateDivisionRequest = {
         name : Text;
