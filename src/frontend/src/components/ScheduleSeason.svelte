@@ -6,22 +6,13 @@
   import { divisionStore } from "../stores/DivisionStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
   import { SeasonSchedule } from "../ic-agent/League";
-  import { onMount } from "svelte";
-  import { matchGroupStore } from "../stores/MatchGroupStore";
+  import { seasonScheduleStore } from "../stores/ScheduleStore";
 
   let schedule: SeasonSchedule | undefined;
   $: divisions = $divisionStore;
 
-  onMount(() => {
-    leagueAgentFactory()
-      .getSeasonSchedule()
-      .then((result) => {
-        if (result.length > 0) {
-          schedule = result[0];
-        } else {
-          schedule = undefined;
-        }
-      });
+  seasonScheduleStore.subscribe((s) => {
+    schedule = s;
   });
 
   let startTimes: Record<string, string> = {};
@@ -44,8 +35,7 @@
       .then((result) => {
         if ("ok" in result) {
           console.log("Scheduled season");
-          divisionStore.refetch();
-          matchGroupStore.refetchAll();
+          seasonScheduleStore.refetch();
         } else {
           console.log("Failed to schedule season", result);
         }

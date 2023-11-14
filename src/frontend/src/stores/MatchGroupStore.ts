@@ -86,6 +86,8 @@ export const matchGroupStore = (() => {
     refetchAll();
   });
 
+  refetchAll();
+
 
   return {
     subscribe,

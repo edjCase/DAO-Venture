@@ -7,77 +7,58 @@
   import ScheduleMatch from "../components/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
   import { teamStore } from "../stores/TeamStore";
-  import { matchGroupStore } from "../stores/MatchGroupStore";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
-  import { DivisionDetails, mapMatchGroup } from "../models/Match";
   import TeamGrid from "../components/TeamGrid.svelte";
   import { TabItem, Tabs } from "flowbite-svelte";
   import DivisionSummaryCard from "../components/DivisionSummaryCard.svelte";
   import { divisionStore } from "../stores/DivisionStore";
-  import { get } from "svelte/store";
   import { Division } from "../ic-agent/League";
-  import { MatchGroup } from "../ic-agent/Stadium";
+  import { seasonScheduleStore } from "../stores/ScheduleStore";
 
   $: teams = $teamStore;
+  $: seasonSchedule = $seasonScheduleStore;
 
-  let divisions: DivisionDetails[] = [];
-
-  let updateDivisions = (
-    allDivisions: Division[],
-    allMatchGroups: MatchGroup[]
-  ) => {
-    if (allDivisions.length == 0 || allMatchGroups.length == 0) {
-      return;
-    }
-    divisions = allDivisions.map((d) => {
-      let matchGroups = allMatchGroups
-        .filter((mg) =>
-          mg.matches.some(
-            (m) => m.team1.divisionId === d.id || m.team2.divisionId === d.id
-          )
-        )
-        .map((mg) => mapMatchGroup(mg));
-      return {
-        id: d.id,
-        name: d.name,
-        matchGroups: matchGroups,
-      };
-    });
-  };
+  let divisions: Division[] = [];
 
   divisionStore.subscribe((d) => {
-    updateDivisions(d, get(matchGroupStore));
+    divisions = d;
   });
-
-  matchGroupStore.subscribe((matchGroups) => {
-    updateDivisions(get(divisionStore), matchGroups);
-  });
+  let getDivisionName = (id: number) => {
+    let division = divisions.find((d) => d.id === id);
+    if (!division) {
+      return "Unknown";
+    }
+    return division.name;
+  };
 </script>
 
 <div class="content">
   {#if teams.length === 0}
     <TempInitialize />
+  {:else}
+    <div>
+      <h1>Teams</h1>
+      <TeamGrid />
+    </div>
+
+    {#if !seasonSchedule}
+      {#if divisions.length > 0}
+        <div>
+          <h1>Schedule Season</h1>
+          <ScheduleSeason />
+        </div>
+      {/if}
+    {:else}
+      <Tabs style="pill">
+        {#each seasonSchedule.divisions as division}
+          <TabItem>
+            <div slot="title">{getDivisionName(division.id)}</div>
+            <DivisionSummaryCard {division} />
+          </TabItem>
+        {/each}
+      </Tabs>
+    {/if}
   {/if}
-
-  <div>
-    <h1>Teams</h1>
-    <TeamGrid />
-  </div>
-
-  <div>
-    <h1>Schedule Season</h1>
-    <ScheduleSeason />
-  </div>
-
-  <Tabs style="pill">
-    {#each divisions as division}
-      <TabItem>
-        <div slot="title">{division.name}</div>
-        <DivisionSummaryCard {division} />
-      </TabItem>
-    {/each}
-  </Tabs>
-
   <hr style="margin-top: 400px;" />
 
   <div>
