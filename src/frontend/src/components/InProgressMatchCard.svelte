@@ -85,9 +85,10 @@
 
 <style>
   .card {
+    background-color: var(--color-bg-dark);
     border-radius: 5px;
     box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
-    width: 100%;
+    width: 400px;
   }
   .card :global(a) {
     text-decoration: none;

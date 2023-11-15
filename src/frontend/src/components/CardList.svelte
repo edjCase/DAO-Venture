@@ -28,12 +28,12 @@
   .card {
     border: 1px solid #ddd;
     padding: 16px;
-    background-color: var(--color-bg);
+    background-color: var(--color-bg-dark);
     border-radius: 8px;
     flex: 1;
     cursor: pointer;
     text-align: left;
-    width: 100%;
+    width: 400px;
     font-size: 1em;
     color: var(--color-text);
   }

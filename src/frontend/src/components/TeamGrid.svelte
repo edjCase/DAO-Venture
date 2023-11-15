@@ -9,7 +9,7 @@
     <Link to={`/teams/${team.id.toString()}`} class="button-style">
       <div class="team-card">
         <div class="team-name">{team.name}</div>
-        <div>
+        <div class="team-logo-container">
           <img class="team-logo" src={team.logoUrl} alt={team.name + " Logo"} />
         </div>
       </div>
@@ -29,6 +29,11 @@
     height: 100px;
   }
 
+  .team-logo-container {
+    display: flex;
+    justify-content: center;
+  }
+
   .team-logo {
     width: 75px;
     height: 75px;
@@ -37,6 +42,8 @@
   .team-name {
     font-size: 20px;
     font-weight: bold;
-    max-width: 100%;
+    width: 100px;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 </style>

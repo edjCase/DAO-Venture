@@ -10,21 +10,33 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getStadiums : query () -> async [Stadium];
-        getDivisions : query () -> async [DivisionWithId];
         getSeasonSchedule : composite query () -> async ?SeasonSchedule;
-        createDivision : (request : CreateDivisionRequest) -> async CreateDivisionResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         createStadium : () -> async CreateStadiumResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         mint : (request : MintRequest) -> async MintResult;
         updateLeagueCanisters : () -> async ();
+        onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
     };
+
+    public type OnMatchGroupCompleteRequest = {
+        id : Nat32;
+        state : Stadium.CompletedMatchGroupState;
+    };
+
+    public type OnMatchGroupCompleteResult = {
+        #ok;
+        #seasonNotOpen;
+        #matchGroupNotFound;
+        #seedGenerationError : Text;
+        #notAuthorized;
+    };
+
     public type CreateTeamRequest = {
         name : Text;
         logoUrl : Text;
         tokenName : Text;
         tokenSymbol : Text;
-        divisionId : Nat32;
     };
     public type MintRequest = {
         amount : Nat;
@@ -41,7 +53,6 @@ module {
         #ok : Principal;
         #nameTaken;
         #noStadiumsExist;
-        #divisionNotFound;
     };
 
     public type Stadium = {
@@ -49,20 +60,10 @@ module {
     };
 
     public type SeasonSchedule = {
-        divisions : [DivisionScheduleWithId];
         matchGroups : [MatchGroupScheduleWithId];
     };
 
-    public type DivisionSchedule = {
-        matchGroupIds : [Nat32];
-    };
-
-    public type DivisionScheduleWithId = DivisionSchedule and {
-        id : Nat32;
-    };
-
     public type MatchGroupSchedule = {
-        id : Nat32;
         time : Time.Time;
         matches : [MatchSchedule];
         status : MatchGroupScheduleStatus;
@@ -71,8 +72,13 @@ module {
         id : Nat32;
     };
 
+    public type ErrorMatchGroupScheduleStatus = Stadium.ScheduleMatchGroupError or {
+        #scheduleError : Text;
+    };
+
     public type MatchGroupScheduleStatus = {
         #notOpen;
+        #error : ErrorMatchGroupScheduleStatus;
         #open : OpenMatchGroupScheduleStatus;
         #completed : Stadium.CompletedMatchGroupState;
     };
@@ -90,50 +96,19 @@ module {
         team1Id : Principal;
         team2Id : Principal;
     };
-
-    public type StartDivisionSeasonRequest = {
-        id : Nat32;
-        startTime : Time.Time;
-    };
-
     public type StartSeasonRequest = {
-        divisions : [StartDivisionSeasonRequest];
-    };
-
-    public type StartDivisionSeasionErrorResult = {
-        id : Nat32;
-        error : StartDivisionSeasonError;
+        startTime : Time.Time;
     };
 
     public type StartSeasonResult = {
         #ok;
-        #divisionErrors : [StartDivisionSeasonErrorResult];
-        #noDivisionSpecified;
         #alreadyStarted;
         #noStadiumsExist;
-        #stadiumScheduleError : Stadium.ScheduleMatchGroupsError or {
-            #unknown : Text;
-        };
+        #seedGenerationError : Text;
+        #noTeams;
+        #oddNumberOfTeams;
     };
 
-    public type StartDivisionSeasonError = {
-        #divisionNotFound;
-        #noMatchGroupSpecified;
-        #oddNumberOfTeams;
-        #noTeamsInDivision;
-    };
-    public type StartDivisionSeasonErrorResult = {
-        id : Nat32;
-        error : StartDivisionSeasonError;
-    };
-    public type CreateDivisionRequest = {
-        name : Text;
-    };
-    public type CreateDivisionResult = {
-        #ok : Nat32;
-        #nameTaken;
-        #noStadiumsExist;
-    };
     public type CreateStadiumResult = {
         #ok : Principal;
         #alreadyCreated;
@@ -143,11 +118,5 @@ module {
         #ok : Principal;
         #notAuthenticated;
         #error : Text;
-    };
-    public type Division = {
-        name : Text;
-    };
-    public type DivisionWithId = Division and {
-        id : Nat32;
     };
 };

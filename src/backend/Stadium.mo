@@ -16,21 +16,8 @@ module {
         getMatchGroup : query (id : Nat32) -> async ?MatchGroupWithId;
         getMatchGroups : query () -> async [MatchGroupWithId];
         tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
-        scheduleMatchGroups : (matchGroups : ScheduleMatchGroupsRequest) -> async ScheduleMatchGroupsResult;
+        scheduleMatchGroup : (request : ScheduleMatchGroupRequest) -> async ScheduleMatchGroupResult;
         resetTickTimer(matchGroupId : Nat32) : async ResetTickTimerResult;
-    };
-
-    public type ScheduleMatchGroupsRequest = {
-        matchGroups : [ScheduleMatchGroupRequest];
-    };
-    public type ScheduleMatchGroupsError = {
-        #matchGroupErrors : [ScheduleMatchGroupError];
-        #teamFetchError : Text;
-        #playerFetchError : Text;
-        #noMatchGroupSpecified;
-    };
-    public type ScheduleMatchGroupsResult = ScheduleMatchGroupsError or {
-        #ok : [MatchGroupWithId];
     };
 
     public type ResetTickTimerResult = {
@@ -70,6 +57,10 @@ module {
         #teamFetchError : Text;
         #matchErrors : [ScheduleMatchError];
         #noMatchesSpecified;
+        #playerFetchError : Text;
+    };
+    public type ScheduleMatchGroupResult = ScheduleMatchGroupError or {
+        #ok : MatchGroupWithId;
     };
 
     public type ScheduleMatchError = {
@@ -351,7 +342,6 @@ module {
 
     public type MatchTeam = {
         id : Principal;
-        divisionId : Nat32;
         name : Text;
         logoUrl : Text;
         predictionVotes : Nat;

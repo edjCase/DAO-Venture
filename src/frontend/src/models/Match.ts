@@ -20,12 +20,6 @@ import {
 } from "../ic-agent/Stadium";
 
 
-export type DivisionDetails = {
-    id: number;
-    name: string;
-    matchGroups: MatchGroupDetails[];
-};
-
 export type PlayedTeamDetails = {
     score: bigint;
 };
@@ -65,7 +59,6 @@ export type MatchPlayerDetails = {
 
 export type TeamDetails = {
     id: Principal;
-    divisionId: number,
     name: string;
     logoUrl: string;
     predictionVotes: bigint;
@@ -114,7 +107,6 @@ export const mapMatchPlayer = (player: MatchPlayer): MatchPlayerDetails => {
 export const mapTeam = (team: MatchTeam): TeamDetails => {
     return {
         id: team.id,
-        divisionId: team.divisionId,
         name: team.name,
         logoUrl: team.logoUrl,
         predictionVotes: team.predictionVotes,

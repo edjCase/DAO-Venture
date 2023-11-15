@@ -24,7 +24,6 @@ export const MatchPlayerIdl = IDL.Record({
 
 export type MatchTeam = {
   'id': Principal;
-  'divisionId': number,
   'name': string;
   'logoUrl': string;
   'predictionVotes': bigint;
@@ -32,7 +31,6 @@ export type MatchTeam = {
 };
 export const MatchTeamIdl = IDL.Record({
   'id': IDL.Principal,
-  'divisionId': IDL.Nat32,
   'name': IDL.Text,
   'logoUrl': IDL.Text,
   'predictionVotes': IDL.Nat,
@@ -399,12 +397,10 @@ export const ScheduleMatchRequestIdl = IDL.Record({
 
 export type ScheduleMatchGroupRequest = {
   'time': Time;
-  'divisionId': number;
   'matches': [ScheduleMatchRequest];
 };
 export const ScheduleMatchGroupRequestIdl = IDL.Record({
   'time': TimeIdl,
-  'divisionId': IDL.Nat32,
   'matches': IDL.Vec(ScheduleMatchRequestIdl)
 });
 
@@ -436,11 +432,13 @@ export const ScheduleMatchGroupResultIdl = IDL.Variant({
 export type ScheduleMatchGroupError =
   | { 'teamFetchError': string }
   | { 'matchErrors': ScheduleMatchError[] }
-  | { 'noMatchesSpecified': null };
+  | { 'noMatchesSpecified': null }
+  | { 'playerFetchError': string };
 export const ScheduleMatchGroupErrorIdl = IDL.Variant({
   'teamFetchError': IDL.Text,
   'matchErrors': IDL.Vec(ScheduleMatchErrorIdl),
-  'noMatchesSpecified': IDL.Null
+  'noMatchesSpecified': IDL.Null,
+  'playerFetchError': IDL.Text
 });
 
 export type ScheduleMatchGroupsRequest = {

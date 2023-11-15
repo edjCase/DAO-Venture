@@ -53,14 +53,10 @@ module {
         #invalidOffering : Stadium.Offering;
     };
 
-    public type TeamWithoutDivision = {
+    public type Team = {
         name : Text;
         logoUrl : Text;
         ledgerId : Principal;
-    };
-
-    public type Team = TeamWithoutDivision and {
-        divisionId : Nat32;
     };
 
     public type TeamWithId = Team and {

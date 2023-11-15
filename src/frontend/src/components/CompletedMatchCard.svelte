@@ -44,7 +44,7 @@
 <style>
   /* Card styles for matches */
   .card {
-    background-color: var(--color-bg-light);
+    background-color: var(--color-bg-dark);
     color: var(--color-text-light);
     padding: 0.5em;
     margin: 0.5em;
@@ -52,7 +52,7 @@
     border-radius: 8px;
     padding: 1em;
     margin: 1em;
-    width: 100%;
+    width: 400px;
   }
 
   .card:hover {

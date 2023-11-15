@@ -16,7 +16,6 @@
   <div class="team-container">
     <img class="team-logo" src={team.logoUrl} alt={`Logo of ${team.name}`} />
     <h1>{team.name}</h1>
-    <h2>Division {team.divisionId}</h2>
     <div class="roster-history">
       <PlayerRoster teamId={team.id} />
       <div>
@@ -53,11 +52,5 @@
     font-size: 2.5rem;
     color: var(--color-text-light);
     margin-bottom: 0.5rem;
-  }
-
-  h2 {
-    font-size: 1.25rem;
-    color: var(--color-accent);
-    margin-bottom: 1rem;
   }
 </style>
