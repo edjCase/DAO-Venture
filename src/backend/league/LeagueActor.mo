@@ -299,12 +299,21 @@ actor LeagueActor {
         ) else Debug.trap("Cannot find order of match group with id: " # Nat32.toText(request.id));
         let nextMatchGroupIndex = currentMatchGroupIndex + 1;
         if (nextMatchGroupIndex >= season.order.size()) {
-            Debug.print("Season is over: " # debug_show (season));
             // Season is over season.order
             let completedMatchGroups = buildCompletedMatchGroups(season);
+            let completedTeams = Trie.toArray(
+                teams,
+                func(k : Principal, v : Team.Team) : League.CompletedSeasonTeam = {
+                    id = k;
+                    name = v.name;
+                    logoUrl = v.logoUrl;
+                    ledgerId = v.ledgerId;
+                },
+            );
             let teamStandings = calculateTeamStandings(completedMatchGroups);
             seasonStatus := #completed({
                 teamStandings = teamStandings;
+                teams = completedTeams;
                 matchGroups = completedMatchGroups;
             });
             return #ok;
@@ -317,8 +326,7 @@ actor LeagueActor {
     };
 
     private func buildCompletedMatchGroups(
-        season : SeasonSchedule,
-
+        season : SeasonSchedule
     ) : [League.CompletedMatchGroup] {
         season.order
         |> Iter.fromArray(_)
@@ -351,12 +359,45 @@ actor LeagueActor {
 
     private func calculateTeamStandings(matchGroups : [League.CompletedMatchGroup]) : [Principal] {
         var teamScores = Trie.empty<Principal, Nat>();
+        let updateTeamScore = func(
+            teamId : Principal,
+            score : { #set : Nat; #add : Nat },
+        ) : () {
+
+            let teamKey = {
+                key = teamId;
+                hash = Principal.hash(teamId);
+            };
+            let teamScore : Nat = switch (score) {
+                case (#set(value)) value;
+                case (#add(value)) {
+                    switch (Trie.get(teamScores, teamKey, Principal.equal)) {
+                        case (null) value; // Set if no entries for team yet
+                        case (?score) score + value;
+                    };
+                };
+            };
+            // Update with +1
+            let (newTeamScores, _) = Trie.put(
+                teamScores,
+                teamKey,
+                Principal.equal,
+                teamScore,
+            );
+            teamScores := newTeamScores;
+        };
+
+        // Initialize team scores with 0
+        for ((teamId, team) in Trie.iter(teams)) {
+            updateTeamScore(teamId, #set(0));
+        };
+        // Populate scores
         label f1 for (matchGroup in Iter.fromArray(matchGroups)) {
             switch (matchGroup.state) {
                 case (#unplayed(_)) continue f1;
                 case (#played(matches)) {
                     label f2 for (match in Iter.fromArray(matches)) {
-                        let winningTeamIdOrNull : ?Principal = switch (match.state) {
+                        let winningTeamIdOrTie : ?Principal = switch (match.state) {
                             case (#allAbsent) continue f2;
                             case (#absentTeam(#team1)) ?match.team2.id;
                             case (#absentTeam(#team2)) ?match.team1.id;
@@ -369,24 +410,16 @@ actor LeagueActor {
                                 };
                             };
                         };
-                        let ?winningTeamId = winningTeamIdOrNull else continue f2; // TODO 0 points each or 1 for tie?
-
-                        let teamKey = {
-                            key = winningTeamId;
-                            hash = Principal.hash(winningTeamId);
+                        switch (winningTeamIdOrTie) {
+                            case (null) {
+                                // Tie, both teams get a point
+                                updateTeamScore(match.team1.id, #add(1));
+                                updateTeamScore(match.team2.id, #add(1));
+                            };
+                            case (?winningTeamId) {
+                                updateTeamScore(winningTeamId, #add(1));
+                            };
                         };
-                        let teamScore = switch (Trie.get(teamScores, teamKey, Principal.equal)) {
-                            case (null) 0; // 0 if no entries for team yet
-                            case (?score) score;
-                        };
-                        // Update with +1
-                        let (newTeamScores, _) = Trie.put(
-                            teamScores,
-                            teamKey,
-                            Principal.equal,
-                            teamScore + 1,
-                        );
-                        teamScores := newTeamScores;
                     };
                 };
             };

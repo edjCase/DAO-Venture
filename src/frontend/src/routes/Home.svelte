@@ -10,9 +10,15 @@
   import TeamGrid from "../components/TeamGrid.svelte";
   import LastAndCurrentMatchGroups from "../components/LastAndCurrentMatchGroups.svelte";
   import { seasonStatusStore } from "../stores/ScheduleStore";
+  import { Principal } from "@dfinity/principal";
 
   $: teams = $teamStore;
   $: seasonStatus = $seasonStatusStore;
+
+  let getTeamName = (teamId: Principal) => {
+    let team = teams.find((team) => team.id.toText() === teamId.toText());
+    return team ? team.name : "Unknown";
+  };
 </script>
 
 <div class="content">
@@ -32,9 +38,9 @@
         </div>
       {:else if "completed" in seasonStatus}
         Season Complete
-        {#each seasonStatus.completed.teamStandings as team, index}
+        {#each seasonStatus.completed.teamStandings as teamId, index}
           <div>
-            {index + 1}: {team}
+            {index + 1}: {getTeamName(teamId)}
           </div>
         {/each}
       {:else}

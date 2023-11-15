@@ -72,7 +72,14 @@ module {
 
     public type CompletedSeasonSchedule = {
         teamStandings : [Principal]; // 1st to last place
+        teams : [CompletedSeasonTeam];
         matchGroups : [CompletedMatchGroup];
+    };
+
+    public type CompletedSeasonTeam = {
+        id : Principal;
+        name : Text;
+        logoUrl : Text;
     };
 
     public type CompletedMatchGroup = {

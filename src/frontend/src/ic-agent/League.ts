@@ -231,13 +231,26 @@ export const MatchGroupScheduleIdl = IDL.Record({
   'status': MatchGroupScheduleStatusIdl
 });
 
+export type CompletedTeam = {
+  'id': Principal;
+  'name': string;
+  'logoUrl': string;
+};
+export const CompletedTeamIdl = IDL.Record({
+  'id': IDL.Principal,
+  'name': IDL.Text,
+  'logoUrl': IDL.Text,
+});
+
 
 export type CompletedSeasonSchedule = {
   'teamStandings': Principal[]; // 1st to last place
+  'teams': CompletedTeam[];
   'matchGroups': CompletedMatchGroup[];
 };
 export const CompletedSeasonScheduleIdl = IDL.Record({
   'teamStandings': IDL.Vec(IDL.Principal),
+  'teams': IDL.Vec(CompletedTeamIdl),
   'matchGroups': IDL.Vec(CompletedMatchGroupIdl)
 });
 
