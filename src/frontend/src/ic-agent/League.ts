@@ -4,12 +4,18 @@ import { createActor } from './Actor';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
 import {
-  CompletedMatchGroupState,
-  CompletedMatchGroupStateIdl,
+  CompletedMatchState,
+  CompletedMatchStateIdl,
   MatchAura,
   MatchAuraIdl,
+  MatchAuraWithMetaData,
+  MatchAuraWithMetaDataIdl,
+  MatchTeam,
+  MatchTeamIdl,
   Offering,
   OfferingIdl,
+  OfferingWithMetaData,
+  OfferingWithMetaDataIdl,
   ScheduleMatchError,
   ScheduleMatchErrorIdl,
 } from './Stadium';
@@ -130,46 +136,85 @@ export const MatchScheduleIdl = IDL.Record({
   'team2Id': IDL.Principal
 });
 
-export type OpenMatchScheduleStatus = {
+export type OpenMatchState = {
   'offerings': Offering[];
   'matchAura': MatchAura;
 };
-export const OpenMatchScheduleStatusIdl = IDL.Record({
+export const OpenMatchStateIdl = IDL.Record({
   'offerings': IDL.Vec(OfferingIdl),
   'matchAura': MatchAuraIdl
 });
 
-export type OpenMatchGroupScheduleStatus = {
-  'matches': OpenMatchScheduleStatus[];
+export type OpenMatchGroupState = {
+  'matches': OpenMatchState[];
 };
-export const OpenMatchGroupScheduleStatusIdl = IDL.Record({
-  'matches': IDL.Vec(OpenMatchScheduleStatusIdl)
+export const OpenMatchGroupStateIdl = IDL.Record({
+  'matches': IDL.Vec(OpenMatchStateIdl)
 });
 
-export type ErrorMatchGroupScheduleStatus =
+export type ScheduleMatchGroupError =
   | { 'teamFetchError': string }
   | { 'matchErrors': ScheduleMatchError[] }
   | { 'noMatchesSpecified': null }
   | { 'playerFetchError': string }
-  | { 'scheduleError': string };
-export const ErrorMatchGroupScheduleStatusIdl = IDL.Variant({
+  | { 'stadiumScheduleCallError': string };
+export const ScheduleMatchGroupErrorIdl = IDL.Variant({
   'teamFetchError': IDL.Text,
   'matchErrors': IDL.Vec(ScheduleMatchErrorIdl),
   'noMatchesSpecified': IDL.Null,
   'playerFetchError': IDL.Text,
-  'scheduleError': IDL.Text,
+  'stadiumScheduleCallError': IDL.Text,
+});
+
+export type CompletedMatch = {
+  'team1': MatchTeam;
+  'team2': MatchTeam;
+  'offerings': [OfferingWithMetaData];
+  'aura': MatchAuraWithMetaData;
+  'state': CompletedMatchState;
+};
+export const CompletedMatchIdl = IDL.Record({
+  'team1': MatchTeamIdl,
+  'team2': MatchTeamIdl,
+  'offerings': IDL.Vec(OfferingWithMetaDataIdl),
+  'aura': MatchAuraWithMetaDataIdl,
+  'state': CompletedMatchStateIdl,
+});
+
+export type CompletedMatchGroupState = {
+  'played': CompletedMatch[];
+  'unplayed': {
+    'notStarted': null;
+    'scheduleError': ScheduleMatchGroupError;
+  };
+};
+export const CompletedMatchGroupStateIdl = IDL.Variant({
+  'played': IDL.Vec(CompletedMatchIdl),
+  'unplayed': IDL.Variant({
+    'notStarted': IDL.Null,
+    'scheduleError': ScheduleMatchGroupErrorIdl,
+  }),
+});
+
+export type CompletedMatchGroup = {
+  'id': number;
+  'state': CompletedMatchGroupState
+};
+export const CompletedMatchGroupIdl = IDL.Record({
+  'id': IDL.Nat32,
+  'state': CompletedMatchGroupStateIdl
 });
 
 export type MatchGroupScheduleStatus = {
   'notOpen': null;
-  'error': ErrorMatchGroupScheduleStatus;
-  'open': OpenMatchGroupScheduleStatus;
+  'error': ScheduleMatchGroupError;
+  'open': OpenMatchGroupState;
   'completed': CompletedMatchGroupState;
 };
 export const MatchGroupScheduleStatusIdl = IDL.Variant({
   'notOpen': IDL.Null,
-  'error': ErrorMatchGroupScheduleStatusIdl,
-  'open': OpenMatchGroupScheduleStatusIdl,
+  'error': ScheduleMatchGroupErrorIdl,
+  'open': OpenMatchGroupStateIdl,
   'completed': CompletedMatchGroupStateIdl,
 });
 
@@ -186,6 +231,20 @@ export const MatchGroupScheduleIdl = IDL.Record({
   'status': MatchGroupScheduleStatusIdl
 });
 
+
+export type CompletedSeasonSchedule = {
+  'teamStandings': Principal[]; // 1st to last place
+  'matchGroups': CompletedMatchGroup[];
+};
+export const CompletedSeasonScheduleIdl = IDL.Record({
+  'teamStandings': IDL.Vec(IDL.Principal),
+  'matchGroups': IDL.Vec(CompletedMatchGroupIdl)
+});
+
+
+
+
+
 export type SeasonSchedule = {
   'matchGroups': MatchGroupSchedule[];
 };
@@ -193,12 +252,24 @@ export const SeasonScheduleIdl = IDL.Record({
   'matchGroups': IDL.Vec(MatchGroupScheduleIdl),
 });
 
+export type SeasonStatus =
+  | { 'notStarted': null }
+  | { 'starting': null }
+  | { 'inProgress': SeasonSchedule }
+  | { 'completed': CompletedSeasonSchedule };
+export const SeasonStatusIdl = IDL.Variant({
+  'notStarted': IDL.Null,
+  'starting': IDL.Null,
+  'inProgress': SeasonScheduleIdl,
+  'completed': CompletedSeasonScheduleIdl,
+});
+
 
 export interface _SERVICE {
   'createStadium': ActorMethod<[], CreateStadiumResult>,
   'getStadiums': ActorMethod<[], Array<Stadium>>,
   'getTeams': ActorMethod<[], Array<Team>>,
-  'getSeasonSchedule': ActorMethod<[], [] | [SeasonSchedule]>,
+  'getSeasonStatus': ActorMethod<[], SeasonStatus>,
   'updateLeagueCanisters': ActorMethod<[], undefined>,
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
@@ -213,7 +284,7 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'createStadium': IDL.Func([], [CreateStadiumResultIdl], []),
     'getStadiums': IDL.Func([], [IDL.Vec(Stadium)], ['query']),
     'getTeams': IDL.Func([], [IDL.Vec(TeamIdl)], ['query']),
-    'getSeasonSchedule': IDL.Func([], [IDL.Opt(SeasonScheduleIdl)], ['query']),
+    'getSeasonStatus': IDL.Func([], [SeasonStatusIdl], ['query']),
     'updateLeagueCanisters': IDL.Func([], [], []),
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),

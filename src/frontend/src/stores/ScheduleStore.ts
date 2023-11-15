@@ -1,14 +1,14 @@
 import { writable } from "svelte/store";
-import { SeasonSchedule, leagueAgentFactory } from "../ic-agent/League";
+import { SeasonStatus, leagueAgentFactory } from "../ic-agent/League";
 
 
-export const seasonScheduleStore = (() => {
-  const { subscribe, set } = writable<SeasonSchedule | undefined>();
+export const seasonStatusStore = (() => {
+  const { subscribe, set } = writable<SeasonStatus>({ 'notStarted': null });
 
   const refetch = async () => {
-    let seasonScheduleOrNull = await leagueAgentFactory()
-      .getSeasonSchedule();
-    set(seasonScheduleOrNull.length > 0 ? seasonScheduleOrNull[0] : undefined);
+    let seasonStatus = await leagueAgentFactory()
+      .getSeasonStatus();
+    set(seasonStatus);
   };
 
   refetch();

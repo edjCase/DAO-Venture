@@ -186,10 +186,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
                 let onCompleteRequest : League.OnMatchGroupCompleteRequest = {
                     id = matchGroupId;
-                    state = {
-                        matchGroupState with
-                        matches = completedMatches;
-                    };
+                    state = #played(completedMatches);
                 };
                 let result = try {
                     await leagueActor.onMatchGroupComplete(onCompleteRequest);
@@ -380,10 +377,10 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func tickMatches(prng : Prng, matches : [Stadium.Match], matchStates : [Stadium.StartedMatchState]) : {
-        #completed : [Stadium.CompletedMatchState];
+        #completed : [League.CompletedMatch];
         #inProgress : [Stadium.StartedMatchState];
     } {
-        let completedMatchStates = Buffer.Buffer<Stadium.CompletedMatchState>(0);
+        let completedMatchStates = Buffer.Buffer<League.CompletedMatch>(0);
         let newMatchStates = Buffer.Buffer<Stadium.StartedMatchState>(0);
         var matchIndex = 0;
         for (matchState in Iter.fromArray(matchStates)) {
@@ -392,7 +389,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             let newMatchState = tickMatchState(match.team1, match.team2, prng, matchState);
             newMatchStates.add(newMatchState);
             switch (newMatchState) {
-                case (#completed(completedState)) completedMatchStates.add(completedState);
+                case (#completed(completedState)) {
+                    let completedMatch : League.CompletedMatch = {
+                        team1 = match.team1;
+                        team2 = match.team2;
+                        offerings = match.offerings;
+                        aura = match.aura;
+                        state = completedState;
+                    };
+                    completedMatchStates.add(completedMatch);
+                };
                 case (#inProgress(_)) {};
             };
         };

@@ -274,11 +274,14 @@ module {
 
     public func equalMatchAura(a : MatchAura, b : MatchAura) : Bool = a == b;
 
-    public type Match = {
+    public type MatchWithoutState = {
         team1 : MatchTeam;
         team2 : MatchTeam;
         offerings : [OfferingWithMetaData];
         aura : MatchAuraWithMetaData;
+    };
+
+    public type Match = MatchWithoutState and {
         state : MatchState;
     };
 

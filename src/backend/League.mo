@@ -10,7 +10,7 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getStadiums : query () -> async [Stadium];
-        getSeasonSchedule : composite query () -> async ?SeasonSchedule;
+        getSeasonStatus : composite query () -> async SeasonStatus;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         createStadium : () -> async CreateStadiumResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
@@ -21,7 +21,7 @@ module {
 
     public type OnMatchGroupCompleteRequest = {
         id : Nat32;
-        state : Stadium.CompletedMatchGroupState;
+        state : CompletedMatchGroupState;
     };
 
     public type OnMatchGroupCompleteResult = {
@@ -59,8 +59,37 @@ module {
         id : Principal;
     };
 
+    public type SeasonStatus = {
+        #notStarted;
+        #starting;
+        #inProgress : SeasonSchedule;
+        #completed : CompletedSeasonSchedule;
+    };
+
     public type SeasonSchedule = {
         matchGroups : [MatchGroupScheduleWithId];
+    };
+
+    public type CompletedSeasonSchedule = {
+        teamStandings : [Principal]; // 1st to last place
+        matchGroups : [CompletedMatchGroup];
+    };
+
+    public type CompletedMatchGroup = {
+        id : Nat32;
+        state : CompletedMatchGroupState;
+    };
+
+    public type CompletedMatchGroupState = {
+        #played : [CompletedMatch];
+        #unplayed : {
+            #notStarted;
+            #scheduleError : ScheduleMatchGroupError;
+        };
+    };
+
+    public type CompletedMatch = Stadium.MatchWithoutState and {
+        state : Stadium.CompletedMatchState;
     };
 
     public type MatchGroupSchedule = {
@@ -72,22 +101,22 @@ module {
         id : Nat32;
     };
 
-    public type ErrorMatchGroupScheduleStatus = Stadium.ScheduleMatchGroupError or {
-        #scheduleError : Text;
+    public type ScheduleMatchGroupError = Stadium.ScheduleMatchGroupError or {
+        #stadiumScheduleCallError : Text;
     };
 
     public type MatchGroupScheduleStatus = {
         #notOpen;
-        #error : ErrorMatchGroupScheduleStatus;
-        #open : OpenMatchGroupScheduleStatus;
-        #completed : Stadium.CompletedMatchGroupState;
+        #scheduleError : ScheduleMatchGroupError;
+        #open : OpenMatchGroupState;
+        #completed : CompletedMatchGroupState;
     };
 
-    public type OpenMatchGroupScheduleStatus = {
-        matches : [OpenMatchScheduleStatus];
+    public type OpenMatchGroupState = {
+        matches : [OpenMatchState];
     };
 
-    public type OpenMatchScheduleStatus = {
+    public type OpenMatchState = {
         offerings : [Stadium.Offering];
         matchAura : Stadium.MatchAura;
     };

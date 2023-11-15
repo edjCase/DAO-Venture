@@ -9,10 +9,10 @@
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
   import TeamGrid from "../components/TeamGrid.svelte";
   import LastAndCurrentMatchGroups from "../components/LastAndCurrentMatchGroups.svelte";
-  import { seasonScheduleStore } from "../stores/ScheduleStore";
+  import { seasonStatusStore } from "../stores/ScheduleStore";
 
   $: teams = $teamStore;
-  $: seasonSchedule = $seasonScheduleStore;
+  $: seasonStatus = $seasonStatusStore;
 </script>
 
 <div class="content">
@@ -24,13 +24,22 @@
       <TeamGrid />
     </div>
 
-    {#if !seasonSchedule}
-      <div>
-        <h1>Schedule Season</h1>
-        <ScheduleSeason />
-      </div>
-    {:else}
-      <LastAndCurrentMatchGroups />
+    {#if seasonStatus}
+      {#if "notStarted" in seasonStatus}
+        <div>
+          <h1>Schedule Season</h1>
+          <ScheduleSeason />
+        </div>
+      {:else if "completed" in seasonStatus}
+        Season Complete
+        {#each seasonStatus.completed.teamStandings as team, index}
+          <div>
+            {index + 1}: {team}
+          </div>
+        {/each}
+      {:else}
+        <LastAndCurrentMatchGroups />
+      {/if}
     {/if}
   {/if}
   <hr style="margin-top: 400px;" />
