@@ -48,6 +48,7 @@ export type VoteOnMatchGroupResult =
   | { 'notAuthorized': null }
   | { 'matchGroupNotFound': null }
   | { 'teamNotInMatchGroup': null }
+  | { 'votingNotOpen': null }
   | { 'alreadyVoted': null }
   | { 'alreadyStarted': null }
   | { 'matchGroupFetchError': string }
@@ -57,6 +58,7 @@ export const VoteOnMatchGroupResultIdl = IDL.Variant({
   'notAuthorized': IDL.Null,
   'matchGroupNotFound': IDL.Null,
   'teamNotInMatchGroup': IDL.Null,
+  'votingNotOpen': IDL.Null,
   'alreadyVoted': IDL.Null,
   'alreadyStarted': IDL.Null,
   'matchGroupFetchError': IDL.Text,

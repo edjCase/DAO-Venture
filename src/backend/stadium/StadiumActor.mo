@@ -151,23 +151,57 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
         let matchGroupState : Stadium.InProgressMatchGroupState = switch (matchGroup.state) {
             case (#notStarted(notStartedState)) {
+                let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
+                let onStartResult = try {
+                    await leagueActor.onMatchGroupStart({
+                        id = matchGroupId;
+                    });
+                } catch (err) {
+                    return #onStartCallbackError(#unknown(Error.message(err)));
+                };
+                let onStartData = switch (onStartResult) {
+                    case (#ok(onStartData)) onStartData;
+                    case (#notAuthorized) return #onStartCallbackError(#notAuthorized);
+                    case (#matchGroupNotFound) return #onStartCallbackError(#matchGroupNotFound);
+                    case (#notScheduledYet) return #onStartCallbackError(#notScheduledYet);
+                    case (#alreadyStarted) return #onStartCallbackError(#alreadyStarted);
+                };
+
                 let seedBlob = await Random.blob();
                 let prng = CommonUtil.buildPrng(seedBlob);
                 Timer.cancelTimer(notStartedState.startTimerId); // Cancel timer before making new one
                 let tickTimerId = startTickTimer(matchGroupId);
-                let startedMatches = Buffer.Buffer<Stadium.StartedMatchState>(matchGroup.matches.size());
-                for (match in Iter.fromArray(matchGroup.matches)) {
-                    try {
-                        let startedMatch = await startMatchInternal(matchGroupId, match, prng);
-                        startedMatches.add(startedMatch);
-                    } catch (err) {
-                        // TODO handle single match failing or make not async
-                        Debug.print("Failed to start match: " # Error.message(err));
-                    };
-                };
+
+                let startedMatches : [Stadium.StartedMatchState] = onStartData.matches
+                |> Iter.fromArray(_)
+                |> IterTools.zip(_, Iter.fromArray(matchGroup.matches))
+                |> Iter.map(
+                    _,
+                    func((startOrSkip, match) : (League.MatchStartOrSkip, Stadium.Match)) : Stadium.StartedMatchState {
+                        let startData = switch (startOrSkip) {
+                            case (#absentTeam(absentTeam)) return #completed(#absentTeam(absentTeam));
+                            case (#allAbsent) return #completed(#allAbsent);
+                            case (#start(data)) data;
+                        };
+
+                        let team1Init = createTeamInit(match.team1, startData.team1, prng);
+                        let team2Init = createTeamInit(match.team2, startData.team2, prng);
+                        let team1IsOffense = prng.nextCoin();
+                        let initState = MatchSimulator.initState(
+                            startData.aura,
+                            team1Init,
+                            team2Init,
+                            team1IsOffense,
+                            prng,
+                        );
+
+                        #inProgress(initState);
+                    },
+                )
+                |> Iter.toArray(_);
                 {
                     notStartedState with
-                    matches = Buffer.toArray(startedMatches);
+                    matches = startedMatches;
                     tickTimerId = tickTimerId;
                     currentSeed = prng.getCurrentSeed();
                 };
@@ -367,6 +401,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         let message = try {
             switch (await tickMatchGroup(matchGroupId)) {
                 case (#matchGroupNotFound) "Match Group not found";
+                case (#onStartCallbackError(err)) "On start callback error: " # debug_show (err);
                 case (#completed(_)) "Match Group completed";
                 case (#inProgress(_)) return (); // Dont log normal tick
             };
@@ -424,43 +459,14 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    private func startMatchInternal(matchGroupId : Nat32, match : Stadium.Match, prng : Prng) : async StartMatchResult {
-        let team1InitOrNull = await createTeamInit(matchGroupId, match.team1, prng);
-        let team2InitOrNull = await createTeamInit(matchGroupId, match.team2, prng);
-        let (team1Init, team2Init) : (MatchSimulator.TeamInitData, MatchSimulator.TeamInitData) = switch (team1InitOrNull, team2InitOrNull) {
-            case (null, null) return #completed(#allAbsent);
-            case (null, ?_) return #completed(#absentTeam(#team1));
-            case (?_, null) return #completed(#absentTeam(#team2));
-            case (?t1, ?t2)(t1, t2);
-        };
-        let team1IsOffense = prng.nextCoin();
-        let initState = MatchSimulator.initState(match.aura.aura, team1Init, team2Init, team1IsOffense, prng);
-        #inProgress(initState);
-    };
-
     private func createTeamInit(
-        matchGroupId : Nat32,
         team : Stadium.MatchTeam,
+        startData : League.TeamStartData,
         prng : Prng,
-    ) : async ?MatchSimulator.TeamInitData {
-        var teamPlayers = await PlayerLedgerActor.getTeamPlayers(?team.id);
-        let teamActor = actor (Principal.toText(team.id)) : Team.TeamActor;
-        let stadiumId = Principal.fromActor(this);
-        let options : MatchOptions = try {
-            // Get match options from the team itself
-            let result = await teamActor.getMatchGroupVote(matchGroupId);
-            switch (result) {
-                case (#noVotes) return null;
-                case (#ok(o)) o;
-                case (#notAuthorized) Debug.trap("Stadium is not authorized to get match options from team: " # Principal.toText(team.id));
-            };
-        } catch (err : Error.Error) {
-            Debug.print("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
-            return null;
-        };
-        switch (options.offering) {
+    ) : MatchSimulator.TeamInitData {
+        let players = Buffer.fromArray<PlayerWithId>(startData.players);
+        switch (startData.offering) {
             case (#shuffleAndBoost) {
-                let players = Buffer.fromArray<Player>(teamPlayers);
                 let currentPositions : Buffer.Buffer<FieldPosition> = players
                 |> Buffer.map(
                     _,
@@ -477,12 +483,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 };
             };
         };
-        ?{
-            id = team.id;
-            name = team.name;
-            players = teamPlayers;
-            offering = options.offering;
-            championId = options.championId;
+        {
+            team with
+            players = Buffer.toArray(players);
+            offering = startData.offering;
+            championId = startData.championId;
         };
     };
 

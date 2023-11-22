@@ -1,6 +1,5 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { matchGroupStore } from "../stores/MatchGroupStore";
   import CompletedMatchCard from "./CompletedMatchCard.svelte";
   import { CompletedMatchState, Match, MatchGroup } from "../ic-agent/Stadium";
   import {

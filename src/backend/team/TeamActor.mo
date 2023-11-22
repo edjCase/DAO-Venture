@@ -20,10 +20,10 @@ import { ic } "mo:ic";
 import Stadium "../Stadium";
 import IterTools "mo:itertools/Iter";
 import Types "mo:icrc1/ICRC1/Types";
+import League "../League";
 
 shared (install) actor class TeamActor(
   leagueId : Principal,
-  stadiumId : Principal,
   ledgerId : Principal,
 ) : async Team.TeamActor = this {
 
@@ -49,43 +49,47 @@ shared (install) actor class TeamActor(
     if (not isOwner) {
       return #notAuthorized;
     };
-    let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
+    let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
     let matchGroup = try {
-      let ?matchGroup = await stadiumActor.getMatchGroup(request.matchGroupId) else return #matchGroupNotFound;
+      let ?matchGroup = await leagueActor.getMatchGroup(request.matchGroupId) else return #matchGroupNotFound;
       matchGroup;
     } catch (err) {
       return #matchGroupFetchError(Error.message(err));
     };
     let teamId = Principal.fromActor(this);
-    let match = switch (matchGroup.state) {
-      case (#notStarted(ns)) {
-        let ?match = matchGroup.matches
-        |> Array.find(
+    let (match, matchState) : (League.MatchSchedule, League.ScheduledMatchState) = switch (matchGroup.status) {
+      case (#notScheduled(ns)) return #votingNotOpen;
+      case (#scheduleError(err)) return #votingNotOpen;
+      case (#scheduled(scheduledData)) {
+        let ?matchIndex = matchGroup.matches
+        |> Iter.fromArray(_)
+        |> IterTools.findIndex(
           _,
-          func(m : Stadium.Match) : Bool = m.team1.id == teamId or m.team2.id == teamId,
+          func(m : League.MatchSchedule) : Bool = m.team1Id == teamId or m.team2Id == teamId,
         ) else return #teamNotInMatchGroup;
-        match;
+        (matchGroup.matches[matchIndex], scheduledData.matches[matchIndex]);
       };
       case (#inProgress(ip)) return #alreadyStarted;
       case (#completed(c)) return #alreadyStarted;
     };
 
     let errors = Buffer.Buffer<Team.InvalidVoteError>(0);
-    let offeringExists = IterTools.any(match.offerings.vals(), func(o : Stadium.OfferingWithMetaData) : Bool = o.offering == request.offering);
+    let offeringExists = IterTools.any(matchState.offerings.vals(), func(o : Stadium.Offering) : Bool = o == request.offering);
     if (not offeringExists) {
       errors.add(#invalidOffering(request.offering));
     };
-    let teamPlayers : [Stadium.MatchPlayer] = if (match.team1.id == teamId) {
-      match.team1.players;
-    } else if (match.team2.id == teamId) {
-      match.team2.players;
-    } else {
-      return #teamNotInMatchGroup;
-    };
-    let championExists = IterTools.any(teamPlayers.vals(), func(p : Stadium.MatchPlayer) : Bool = p.id == request.championId);
-    if (not championExists) {
-      errors.add(#invalidChampionId(request.championId));
-    };
+    // TODO check for valid champion here vs when calculating votes?
+    // let teamPlayers : [Stadium.MatchPlayer] = if (match.team1Id == teamId) {
+    //   match.team1.players;
+    // } else if (match.team2.id == teamId) {
+    //   match.team2.players;
+    // } else {
+    //   return #teamNotInMatchGroup;
+    // };
+    // let championExists = IterTools.any(teamPlayers.vals(), func(p : Stadium.MatchPlayer) : Bool = p.id == request.championId);
+    // if (not championExists) {
+    //   errors.add(#invalidChampionId(request.championId));
+    // };
     if (errors.size() > 0) {
       return #invalid(Buffer.toArray(errors));
     };
@@ -119,7 +123,7 @@ shared (install) actor class TeamActor(
   };
 
   public shared query ({ caller }) func getMatchGroupVote(matchGroupId : Nat32) : async Team.GetMatchGroupVoteResult {
-    if (caller != stadiumId) {
+    if (caller != leagueId) {
       return #notAuthorized;
     };
     let matchGroupKey = {

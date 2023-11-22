@@ -14,4 +14,6 @@
   };
 </script>
 
-<button on:click={updateLeagueCanisters}>Update League Canisters</button>
+<button on:click={updateLeagueCanisters} class="button-style">
+  Update League Canisters
+</button>

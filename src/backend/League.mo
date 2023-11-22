@@ -5,18 +5,56 @@ import Time "mo:base/Time";
 import Nat "mo:base/Nat";
 import Team "Team";
 import ICRC1 "mo:icrc1/ICRC1";
+import Player "Player";
 
 module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
-        getStadiums : query () -> async [Stadium];
-        getSeasonStatus : composite query () -> async SeasonStatus;
+        getSeasonStatus : query () -> async SeasonStatus;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
-        createStadium : () -> async CreateStadiumResult;
+        getMatchGroup : query (id : Nat32) -> async ?MatchGroupScheduleWithId;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         mint : (request : MintRequest) -> async MintResult;
         updateLeagueCanisters : () -> async ();
+        onMatchGroupStart(request : OnMatchGroupStartRequest) : async OnMatchGroupStartResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
+    };
+
+    public type OnMatchGroupStartRequest = {
+        id : Nat32;
+    };
+
+    public type OnMatchGroupStartError = {
+        #notAuthorized;
+        #matchGroupNotFound;
+        #notScheduledYet;
+        #alreadyStarted;
+    };
+
+    public type OnMatchGroupStartResult = OnMatchGroupStartError or {
+        #ok : MatchGroupStartData;
+    };
+
+    public type MatchGroupStartData = {
+        matches : [MatchStartOrSkip];
+    };
+
+    public type MatchStartOrSkip = {
+        #start : MatchStartData;
+        #absentTeam : Stadium.TeamId;
+        #allAbsent;
+    };
+
+    public type MatchStartData = {
+        team1 : TeamStartData;
+        team2 : TeamStartData;
+        aura : Stadium.MatchAura;
+    };
+
+    public type TeamStartData = {
+        offering : Stadium.Offering;
+        championId : Nat32;
+        players : [Player.PlayerWithId];
     };
 
     public type OnMatchGroupCompleteRequest = {
@@ -88,11 +126,12 @@ module {
     };
 
     public type CompletedMatchGroupState = {
-        #played : [CompletedMatch];
-        #unplayed : {
-            #notStarted;
-            #scheduleError : ScheduleMatchGroupError;
-        };
+        #played : PlayedMatchGroupState;
+        #canceled;
+        #scheduleError : ScheduleMatchGroupError;
+    };
+    public type PlayedMatchGroupState = {
+        matches : [CompletedMatch];
     };
 
     public type CompletedMatch = Stadium.MatchWithoutState and {
@@ -104,6 +143,7 @@ module {
         matches : [MatchSchedule];
         status : MatchGroupScheduleStatus;
     };
+
     public type MatchGroupScheduleWithId = MatchGroupSchedule and {
         id : Nat32;
     };
@@ -113,17 +153,23 @@ module {
     };
 
     public type MatchGroupScheduleStatus = {
-        #notOpen;
+        #notScheduled;
         #scheduleError : ScheduleMatchGroupError;
-        #open : OpenMatchGroupState;
+        #scheduled : ScheduledMatchGroupState;
+        #inProgress : InProgressMatchGroupState;
         #completed : CompletedMatchGroupState;
     };
 
-    public type OpenMatchGroupState = {
-        matches : [OpenMatchState];
+    public type InProgressMatchGroupState = {
+        stadiumId : Principal;
+        matches : [MatchStartOrSkip];
     };
 
-    public type OpenMatchState = {
+    public type ScheduledMatchGroupState = {
+        matches : [ScheduledMatchState];
+    };
+
+    public type ScheduledMatchState = {
         offerings : [Stadium.Offering];
         matchAura : Stadium.MatchAura;
     };
@@ -143,16 +189,5 @@ module {
         #seedGenerationError : Text;
         #noTeams;
         #oddNumberOfTeams;
-    };
-
-    public type CreateStadiumResult = {
-        #ok : Principal;
-        #alreadyCreated;
-        #stadiumCreationError : Text;
-    };
-    public type CreateTeamDaoResult = {
-        #ok : Principal;
-        #notAuthenticated;
-        #error : Text;
     };
 };

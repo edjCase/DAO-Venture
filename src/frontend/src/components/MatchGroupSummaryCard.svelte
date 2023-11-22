@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { MatchGroupDetails } from "../models/Match";
   import { navigate } from "svelte-routing";
   import { nanosecondsToDate } from "../utils/DateUtils";
   import CompletedMatchCard from "./CompletedMatchCard.svelte";
   import NotStartedMatchCard from "./NotStartedMatchCard.svelte";
   import InProgressMatchCard from "./InProgressMatchCard.svelte";
+  import { MatchGroupSchedule } from "../ic-agent/League";
 
-  export let matchGroup: MatchGroupDetails;
+  export let matchGroup: MatchGroupSchedule;
 </script>
 
 <div
@@ -14,6 +14,8 @@
   on:click={() => navigate("/match-groups/" + matchGroup.id)}
   on:keydown={() => {}}
   on:keyup={() => {}}
+  role="link"
+  tabindex="0"
 >
   {#if "notStarted" in matchGroup.state}
     <div class="not-started">

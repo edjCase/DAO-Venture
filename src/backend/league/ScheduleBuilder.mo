@@ -67,7 +67,7 @@ module {
                 id = nextMatchGroupId;
                 time = nextMatchDate.toTime();
                 matches = matches;
-                status = #notOpen;
+                status = #notScheduled;
             });
             // nextMatchDate := nextMatchDate.add(#weeks(1)); // TODO revert
             nextMatchDate := nextMatchDate.add(#seconds(1));

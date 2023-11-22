@@ -2,19 +2,9 @@
   import { leagueAgentFactory } from "../ic-agent/League";
   import { playerLedgerAgentFactory } from "../ic-agent/PlayerLedger";
   import type { Principal } from "@dfinity/principal";
-  import { stadiumStore } from "../stores/StadiumStore";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
   import { Team, teams, Player } from "../data/InitData";
-  let createStadium = async function () {
-    let result = await leagueAgentFactory().createStadium();
-    if ("ok" in result) {
-      console.log("Created stadium: ", result.ok);
-    } else {
-      console.log("Failed to make stadium");
-    }
-    stadiumStore.refetch();
-  };
 
   let createTeams = async function (teams: Team[]): Promise<void> {
     let leagueAgent = leagueAgentFactory();
@@ -68,7 +58,6 @@
   };
 
   let initialize = async function () {
-    await createStadium();
     await createTeams(teams);
     playerStore.refetch();
   };

@@ -14,7 +14,6 @@ module {
 
     public type StadiumActor = actor {
         getMatchGroup : query (id : Nat32) -> async ?MatchGroupWithId;
-        getMatchGroups : query () -> async [MatchGroupWithId];
         tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
         scheduleMatchGroup : (request : ScheduleMatchGroupRequest) -> async ScheduleMatchGroupResult;
         resetTickTimer(matchGroupId : Nat32) : async ResetTickTimerResult;
@@ -330,6 +329,13 @@ module {
     public type TickMatchGroupResult = {
         #inProgress;
         #matchGroupNotFound;
+        #onStartCallbackError : {
+            #unknown : Text;
+            #notScheduledYet;
+            #alreadyStarted;
+            #notAuthorized;
+            #matchGroupNotFound;
+        };
         #completed;
     };
 

@@ -8,6 +8,7 @@
   on:focus={() => {}}
   on:mouseout={() => (showTooltip = false)}
   on:blur={() => {}}
+  role="tooltip"
 >
   <slot name="content" />
 

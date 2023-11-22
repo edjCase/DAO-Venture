@@ -1,10 +1,12 @@
 <script lang="ts">
-  import { matchGroupStore } from "../stores/MatchGroupStore";
   import VoteForMatchGroup from "../components/VoteForMatchGroup.svelte";
-  import { onMount } from "svelte";
-  import { MatchGroupDetails, mapMatchGroup } from "../models/Match";
   import MatchGroupCardGrid from "../components/MatchGroupCardGrid.svelte";
   import { navigate } from "svelte-routing";
+  import {
+    SeasonMatchGroups,
+    seasonStatusStore,
+    MatchGroupVariant,
+  } from "../stores/ScheduleStore";
 
   export let matchGroupIdString: string;
 
@@ -13,62 +15,51 @@
     // Handle the error, such as redirecting to an error page or showing a message
     navigate("/404", { replace: true });
   }
-  let matchGroup: MatchGroupDetails | undefined;
+  let matchGroup: MatchGroupVariant | undefined;
 
-  matchGroupStore.subscribe((matchGroups) => {
-    let g = matchGroups.find((item) => item.id == matchGroupId);
-    if (g) {
-      matchGroup = mapMatchGroup(g);
-    } else {
-      matchGroup = undefined;
-    }
-  });
-
-  let remainingMillis: number | undefined;
-  onMount(() => {
-    const intervalId = setInterval(() => {
-      if (matchGroup) {
-        remainingMillis =
-          Number(matchGroup.time / BigInt(1_000_000)) - Date.now();
-        if (remainingMillis <= 0) {
-          clearInterval(intervalId);
+  seasonStatusStore.subscribeMatchGroups(
+    (seasonMatchGroups: SeasonMatchGroups | undefined) => {
+      if (seasonMatchGroups) {
+        let completedMatchGroup = seasonMatchGroups.completed.find(
+          (mg) => mg.id == matchGroupId
+        );
+        if (completedMatchGroup) {
+          matchGroup = { completed: completedMatchGroup };
+          return;
+        }
+        let liveMatchGroup =
+          seasonMatchGroups.live?.id == matchGroupId
+            ? seasonMatchGroups.live
+            : undefined;
+        if (liveMatchGroup) {
+          matchGroup = { live: liveMatchGroup };
+          return;
+        }
+        let upcomingMatchGroup = seasonMatchGroups.upcoming.find(
+          (mg) => mg.id == matchGroupId
+        );
+        if (upcomingMatchGroup) {
+          matchGroup = { upcoming: upcomingMatchGroup };
+          return;
         }
       }
-    }, 1000);
-
-    return () => clearInterval(intervalId); // Cleanup interval on component destroy
-  });
-  let printTime = (remainingMillis: number): string => {
-    if (remainingMillis < 1) {
-      matchGroupStore.refetchById(matchGroupId);
-      return "ANY SECOND!";
+      throw new Error(
+        `Match group ${matchGroupId} not found in season schedule`
+      );
     }
-    let seconds = Math.floor(remainingMillis / 1000);
-    let minutes = Math.floor(seconds / 60);
-    let hours = Math.floor(minutes / 60);
-    let days = Math.floor(hours / 24);
-
-    // Adjust values so they reflect remaining time, not total time
-    seconds %= 60;
-    minutes %= 60;
-    hours %= 24;
-
-    return `${days} days, ${hours} hours, ${minutes} minutes, ${seconds} seconds`;
-  };
+  );
 </script>
 
 {#if !!matchGroup}
   <section>
     <section class="match-details">
-      {#if "notStarted" in matchGroup.state}
-        {#if remainingMillis}
-          <h1>
-            Upcoming in {printTime(remainingMillis)}
-          </h1>
-        {/if}
-      {:else if "completed" in matchGroup.state}
+      {#if "upcoming" in matchGroup}
+        <h1>
+          Start Time: {matchGroup.upcoming.time.toLocaleString()}
+        </h1>
+      {:else if "completed" in matchGroup}
         <div>Match Group is over</div>
-      {:else if "inProgress" in matchGroup.state}
+      {:else if "live" in matchGroup}
         <div>Match Group is LIVE!</div>
       {/if}
 

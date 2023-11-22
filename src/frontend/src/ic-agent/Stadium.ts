@@ -466,14 +466,12 @@ export interface _SERVICE {
   'getMatchGroup': ActorMethod<[number], [] | [MatchGroup]>,
   'tickMatchGroup': ActorMethod<[number], TickMatchGroupResult>,
   'scheduleMatchGroups': ActorMethod<[ScheduleMatchGroupsRequest], ScheduleMatchGroupsResult>
-  'getMatchGroups': ActorMethod<[], MatchGroup[]>,
 }
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
   return IDL.Service({
     'getMatchGroup': IDL.Func([IDL.Nat32], [IDL.Opt(MatchGroupIdl)], ['query']),
     'tickMatchGroup': IDL.Func([IDL.Nat32], [TickMatchGroupResultIdl], []),
     'scheduleMatchGroups': IDL.Func([ScheduleMatchGroupsRequestIdl], [ScheduleMatchGroupsResultIdl], []),
-    'getMatchGroups': IDL.Func([], [IDL.Vec(MatchGroupIdl)], ['query']),
   });
 };
 export const stadiumAgentFactory = (canisterId: string | Principal) => createActor<_SERVICE>(canisterId, idlFactory);

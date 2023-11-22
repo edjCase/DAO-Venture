@@ -35,6 +35,7 @@ import League "../League";
 import Util "../Util";
 import StadiumActor "../stadium/StadiumActor";
 import ScheduleBuilder "ScheduleBuilder";
+import PlayerLedgerActor "canister:playerLedger";
 
 actor LeagueActor {
     type LedgerActor = Token.Token;
@@ -57,13 +58,6 @@ actor LeagueActor {
     stable var seasonStatus : SeasonStatus = #notStarted;
     stable var stadiumIdOrNull : ?Principal = null;
 
-    public shared query ({ caller }) func getStadiums() : async [Stadium.StadiumWithId] {
-        return switch (stadiumIdOrNull) {
-            case (null)[];
-            case (?id) { [{ id = id }] };
-        };
-    };
-
     public query func getTeams() : async [TeamWithId] {
         Trie.toArray(
             teams,
@@ -76,7 +70,7 @@ actor LeagueActor {
         );
     };
 
-    public composite query func getSeasonStatus() : async League.SeasonStatus {
+    public query func getSeasonStatus() : async League.SeasonStatus {
         switch (seasonStatus) {
             case (#notStarted) #notStarted;
             case (#starting) #starting;
@@ -99,24 +93,6 @@ actor LeagueActor {
         };
     };
 
-    public shared ({ caller }) func createStadium() : async League.CreateStadiumResult {
-        switch (stadiumIdOrNull) {
-            case (null)();
-            case (?id) return #alreadyCreated;
-        };
-        let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 1_000_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
-        let stadium = try {
-            await StadiumActor.StadiumActor(Principal.fromActor(LeagueActor));
-        } catch (err) {
-            return #stadiumCreationError(Error.message(err));
-        };
-        let stadiumId = Principal.fromActor(stadium);
-        stadiumIdOrNull := ?stadiumId;
-        #ok(stadiumId);
-    };
-
     public shared ({ caller }) func startSeason(request : League.StartSeasonRequest) : async League.StartSeasonResult {
         switch (seasonStatus) {
             case (#notStarted) {};
@@ -124,7 +100,10 @@ actor LeagueActor {
             case (#inProgress(_)) return #alreadyStarted;
             case (#completed(_)) return #alreadyStarted;
         };
-        let ?stadiumId = stadiumIdOrNull else return #noStadiumsExist;
+        let stadiumId = switch (await* getOrCreateStadium()) {
+            case (#ok(id)) id;
+            case (#stadiumCreationError(error)) return Debug.trap("Failed to create stadium: " # error);
+        };
         seasonStatus := #starting;
 
         let seedBlob = try {
@@ -179,7 +158,6 @@ actor LeagueActor {
 
     public shared ({ caller }) func createTeam(request : League.CreateTeamRequest) : async League.CreateTeamResult {
 
-        let ?stadiumId = stadiumIdOrNull else return #noStadiumsExist;
         let nameAlreadyTaken = Trie.some(
             teams,
             func(k : Principal, v : Team.Team) : Bool = v.name == request.name,
@@ -192,7 +170,7 @@ actor LeagueActor {
         let ledger : LedgerActor = await createTeamLedger(request.tokenName, request.tokenSymbol);
         let ledgerId = Principal.fromActor(ledger);
         // Create canister for team logic
-        let teamActor = await createTeamActor(ledgerId, stadiumId);
+        let teamActor = await createTeamActor(ledgerId);
         let teamId = Principal.fromActor(teamActor);
         let team : Team.Team = {
             name = request.name;
@@ -238,7 +216,6 @@ actor LeagueActor {
 
             let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(
                 leagueId,
-                stadiumId,
                 ledgerId,
             );
         };
@@ -251,9 +228,63 @@ actor LeagueActor {
         };
     };
 
+    public shared ({ caller }) func onMatchGroupStart(request : League.OnMatchGroupStartRequest) : async League.OnMatchGroupStartResult {
+        let #inProgress(season) = seasonStatus else return #matchGroupNotFound;
+        let ?stadiumId = stadiumIdOrNull else return #notAuthorized;
+        if (caller != stadiumId) {
+            return #notAuthorized;
+        };
+
+        let key = {
+            key = request.id;
+            hash = request.id;
+        };
+
+        // Get current match group
+        let ?matchGroupSchedule = Trie.get(
+            season.matchGroups,
+            key,
+            Nat32.equal,
+        ) else return #matchGroupNotFound;
+
+        let matchGroupScheduledData = switch (matchGroupSchedule.status) {
+            case (#notScheduled) return #notScheduledYet;
+            case (#scheduleError(error)) return #notScheduledYet;
+            case (#inProgress(_)) return #alreadyStarted;
+            case (#completed(_)) return #alreadyStarted;
+            case (#scheduled(d)) d;
+        };
+
+        let allPlayers = await PlayerLedgerActor.getTeamPlayers(null);
+        let matchStartDataBuffer = Buffer.Buffer<League.MatchStartOrSkip>(matchGroupSchedule.matches.size());
+
+        let matches = matchGroupSchedule.matches
+        |> Iter.fromArray(_)
+        |> IterTools.zip(_, Iter.fromArray(matchGroupScheduledData.matches));
+
+        for ((matchSchedule, state) in matches) {
+            let data = await* buildMatchStartData(request.id, matchSchedule, state, allPlayers);
+            matchStartDataBuffer.add(data);
+        };
+        let matchStartDataArray = Buffer.toArray(matchStartDataBuffer);
+
+        let newStatus = #inProgress({
+            stadiumId = stadiumId;
+            matches = matchStartDataArray;
+        });
+        // Update status to inProgress
+        setMatchGroupStatus(request.id, newStatus);
+
+        let data : League.MatchGroupStartData = {
+            matches = matchStartDataArray;
+        };
+
+        #ok(data);
+    };
+
     public shared ({ caller }) func onMatchGroupComplete(request : League.OnMatchGroupCompleteRequest) : async League.OnMatchGroupCompleteResult {
         let #inProgress(season) = seasonStatus else return #seasonNotOpen;
-        let ?stadiumId = stadiumIdOrNull else Debug.trap("No stadium exists"); // TODO?
+        let ?stadiumId = stadiumIdOrNull else return #notAuthorized;
         if (caller != stadiumId) {
             return #notAuthorized;
         };
@@ -277,19 +308,8 @@ actor LeagueActor {
             Nat32.equal,
         ) else return #matchGroupNotFound;
 
-        let newMatchGroupSchedule : League.MatchGroupSchedule = {
-            matchGroupSchedule with
-            // Update status
-            status = #completed(request.state);
-        };
-
-        let (newMatchGroupSchedules, _) = Trie.put(
-            season.matchGroups,
-            key,
-            Nat32.equal,
-            newMatchGroupSchedule,
-        );
-        season.matchGroups := newMatchGroupSchedules;
+        // Update status to completed
+        setMatchGroupStatus(request.id, #completed(request.state));
 
         // Get next match group to schedule
         let ?currentMatchGroupIndex = Array.indexOf(
@@ -325,6 +345,80 @@ actor LeagueActor {
         #ok;
     };
 
+    private func buildMatchStartData(
+        matchGroupId : Nat32,
+        match : League.MatchSchedule,
+        state : League.ScheduledMatchState,
+        allPlayers : [Player.PlayerWithId],
+    ) : async* League.MatchStartOrSkip {
+        let team1InitOrNull = await* buildTeamInitData(matchGroupId, match.team1Id, allPlayers);
+        let team2InitOrNull = await* buildTeamInitData(matchGroupId, match.team2Id, allPlayers);
+        switch (team1InitOrNull, team2InitOrNull) {
+            case (#ok(t1), #ok(t2)) {
+                #start({
+                    team1 = t1;
+                    team2 = t2;
+                    aura = state.matchAura;
+                });
+            };
+            case (#ok(_), #noVotes) #absentTeam(#team2);
+            case (#noVotes, #ok(_)) #absentTeam(#team1);
+            case (#noVotes, #noVotes) #allAbsent;
+        };
+    };
+
+    private func buildTeamInitData(
+        matchGroupId : Nat32,
+        teamId : Principal,
+        allPlayers : [Player.PlayerWithId],
+    ) : async* {
+        #ok : League.TeamStartData;
+        #noVotes;
+    } {
+        let teamActor = actor (Principal.toText(teamId)) : Team.TeamActor;
+        let options = try {
+            // Get match options from the team itself
+            let result : Team.GetMatchGroupVoteResult = await teamActor.getMatchGroupVote(matchGroupId);
+            switch (result) {
+                case (#noVotes) return #noVotes;
+                case (#ok(o)) o;
+                case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(teamId));
+            };
+        } catch (err : Error.Error) {
+            return Debug.trap("Failed to get team '" # Principal.toText(teamId) # "': " # Error.message(err));
+        };
+        let teamPlayers = allPlayers
+        |> Iter.fromArray(_)
+        |> Iter.filter(_, func(p : Player.PlayerWithId) : Bool = p.teamId == ?teamId)
+        |> Iter.toArray(_);
+        #ok({
+            offering = options.offering;
+            championId = options.championId;
+            players = teamPlayers;
+        });
+    };
+
+    private func getOrCreateStadium() : async* {
+        #ok : Principal;
+        #stadiumCreationError : Text;
+    } {
+        switch (stadiumIdOrNull) {
+            case (null)();
+            case (?id) return #ok(id);
+        };
+        let canisterCreationCost = 100_000_000_000;
+        let initialBalance = 1_000_000_000_000;
+        Cycles.add(canisterCreationCost + initialBalance);
+        let stadium = try {
+            await StadiumActor.StadiumActor(Principal.fromActor(LeagueActor));
+        } catch (err) {
+            return #stadiumCreationError(Error.message(err));
+        };
+        let stadiumId = Principal.fromActor(stadium);
+        stadiumIdOrNull := ?stadiumId;
+        #ok(stadiumId);
+    };
+
     private func buildCompletedMatchGroups(
         season : SeasonSchedule
     ) : [League.CompletedMatchGroup] {
@@ -342,9 +436,10 @@ actor LeagueActor {
                     Nat32.equal,
                 ) else Debug.trap("Cannot find match group with id: " # Nat32.toText(id));
                 let completedState : League.CompletedMatchGroupState = switch (matchGroupSchedule.status) {
-                    case (#notOpen) #unplayed(#notStarted);
-                    case (#open(state)) #unplayed(#notStarted); // TODO notStarted?
+                    case (#notScheduled) #unplayed(#notStarted);
+                    case (#scheduled(state)) #unplayed(#notStarted); // TODO notStarted?
                     case (#completed(state)) state;
+                    case (#inProgress(state)) #unplayed(#inProgress);
                     case (#scheduleError(error)) #unplayed(#scheduleError(error));
                 };
 
@@ -471,13 +566,13 @@ actor LeagueActor {
         let matchGroupStatus : League.MatchGroupScheduleStatus = try {
             let stadiumResult = await stadiumActor.scheduleMatchGroup(matchGroupRequest);
             switch (stadiumResult) {
-                case (#ok(openedMatchGroup)) {
+                case (#ok(scheduledMatchGroup)) {
                     let matches = matchGroupSchedule.matches
                     |> Iter.fromArray(_)
-                    |> IterTools.zip(_, Iter.fromArray(openedMatchGroup.matches))
+                    |> IterTools.zip(_, Iter.fromArray(scheduledMatchGroup.matches))
                     |> Iter.map(
                         _,
-                        func(m : (League.MatchSchedule, Stadium.Match)) : League.OpenMatchState {
+                        func(m : (League.MatchSchedule, Stadium.Match)) : League.ScheduledMatchState {
                             let offerings = m.1.offerings
                             |> Iter.fromArray(_)
                             |> Iter.map(_, func(o : Stadium.OfferingWithMetaData) : Stadium.Offering = o.offering)
@@ -489,7 +584,7 @@ actor LeagueActor {
                         },
                     )
                     |> Iter.toArray(_);
-                    #open({ matches = matches });
+                    #scheduled({ matches = matches });
                 };
                 case (#matchErrors(errors)) #scheduleError(#matchErrors(errors));
                 case (#noMatchesSpecified) #scheduleError(#noMatchesSpecified);
@@ -502,14 +597,13 @@ actor LeagueActor {
         setMatchGroupStatus(matchGroupSchedule.id, matchGroupStatus);
     };
 
-    private func createTeamActor(ledgerId : Principal, stadiumId : Principal) : async TeamActor.TeamActor {
+    private func createTeamActor(ledgerId : Principal) : async TeamActor.TeamActor {
         let leagueId = Principal.fromActor(LeagueActor);
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 100_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         await TeamActor.TeamActor(
             leagueId,
-            stadiumId,
             ledgerId,
         );
     };

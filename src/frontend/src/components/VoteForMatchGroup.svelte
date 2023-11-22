@@ -7,7 +7,6 @@
   import PlayerPicker from "./PlayerPicker.svelte";
   import { Player } from "../models/Player";
   import { playerStore } from "../stores/PlayerStore";
-  import { matchGroupStore } from "../stores/MatchGroupStore";
   import { get } from "svelte/store";
 
   export let teamId: Principal;

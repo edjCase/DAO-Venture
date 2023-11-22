@@ -41,6 +41,7 @@ module {
         #ok;
         #notAuthorized;
         #matchGroupNotFound;
+        #votingNotOpen;
         #teamNotInMatchGroup;
         #alreadyVoted;
         #alreadyStarted;
