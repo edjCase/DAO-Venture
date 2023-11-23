@@ -50,8 +50,7 @@ export type VoteOnMatchGroupResult =
   | { 'teamNotInMatchGroup': null }
   | { 'votingNotOpen': null }
   | { 'alreadyVoted': null }
-  | { 'alreadyStarted': null }
-  | { 'matchGroupFetchError': string }
+  | { 'seasonStatusFetchError': string }
   | { 'invalid': [InvalidVoteError] };
 export const VoteOnMatchGroupResultIdl = IDL.Variant({
   'ok': IDL.Null,
@@ -60,8 +59,7 @@ export const VoteOnMatchGroupResultIdl = IDL.Variant({
   'teamNotInMatchGroup': IDL.Null,
   'votingNotOpen': IDL.Null,
   'alreadyVoted': IDL.Null,
-  'alreadyStarted': IDL.Null,
-  'matchGroupFetchError': IDL.Text,
+  'seasonStatusFetchError': IDL.Text,
   'invalid': IDL.Vec(InvalidVoteErrorIdl)
 });
 

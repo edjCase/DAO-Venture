@@ -2,8 +2,8 @@ import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
 import Trie "mo:base/Trie";
 import Nat32 "mo:base/Nat32";
-import Stadium "../Stadium";
-import Player "../Player";
+import StadiumTypes "../stadium/Types";
+import Player "../models/Player";
 import Array "mo:base/Array";
 import Nat "mo:base/Nat";
 import Debug "mo:base/Debug";
@@ -21,33 +21,37 @@ import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import StadiumUtil "StadiumUtil";
 import IterTools "mo:itertools/Iter";
-import Team "../Team";
+import MatchAura "../models/MatchAura";
+import Offering "../models/Offering";
+import Base "../models/Base";
+import Curse "../models/Curse";
+import Blessing "../models/Blessing";
+import Team "../models/Team";
 
 module {
-    type PlayerState = Stadium.PlayerState;
-    type LogEntry = Stadium.LogEntry;
-    type StartedMatchState = Stadium.StartedMatchState;
-    type TeamState = Stadium.TeamState;
-    type MatchOptions = Stadium.MatchOptions;
-    type InProgressMatchState = Stadium.InProgressMatchState;
+    type PlayerState = StadiumTypes.PlayerState;
+    type LogEntry = StadiumTypes.LogEntry;
+    type StartedMatchState = StadiumTypes.StartedMatchState;
+    type TeamState = StadiumTypes.TeamState;
+    type InProgressMatchState = StadiumTypes.InProgressMatchState;
     type PlayerWithId = Player.PlayerWithId;
     type FieldPosition = Player.FieldPosition;
-    type Base = Player.Base;
-    type TeamId = Stadium.TeamId;
+    type Base = Base.Base;
+    type TeamId = Team.TeamId;
     type PlayerSkills = Player.PlayerSkills;
     type PlayerId = Nat32;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
-    type MatchAura = Stadium.MatchAura;
-    type Offering = Stadium.Offering;
+    type MatchAura = MatchAura.MatchAura;
+    type Offering = Offering.Offering;
 
     public type TeamInfo = {
         id : Principal;
         name : Text;
-        players : [Stadium.MatchPlayer];
+        players : [StadiumTypes.MatchPlayer];
     };
 
     type SimulationResult = {
-        #endMatch : Stadium.CompletedMatchState;
+        #endMatch : StadiumTypes.CompletedMatchState;
         #inProgress;
     };
 
@@ -111,6 +115,12 @@ module {
         var position : FieldPosition;
     };
 
+    type MatchEndReason = {
+        #noMoreRounds;
+        #outOfPlayers : Team.TeamIdOrBoth;
+        #stateBroken : StadiumTypes.BrokenStateError;
+    };
+
     public type TeamInitData = {
         id : Principal;
         name : Text;
@@ -144,8 +154,8 @@ module {
             team1Players,
             team2Players,
             func(
-                p1 : Stadium.PlayerStateWithId,
-                p2 : Stadium.PlayerStateWithId,
+                p1 : StadiumTypes.PlayerStateWithId,
+                p2 : StadiumTypes.PlayerStateWithId,
             ) : Order.Order = Nat32.compare(p1.id, p2.id),
         );
         {
@@ -167,7 +177,7 @@ module {
     };
 
     private func logTeamOffering(team : TeamInitData, eventLog : Buffer.Buffer<LogEntry>) {
-        let offeringMetaData = Stadium.getOfferingMetaData(team.offering);
+        let offeringMetaData = Offering.getMetaData(team.offering);
         eventLog.add({
             description = "Team " # team.name # " Offering: " # offeringMetaData.description;
             isImportant = true;
@@ -175,7 +185,7 @@ module {
     };
 
     private func logMatchAura(aura : MatchAura, eventLog : Buffer.Buffer<LogEntry>) {
-        let auraMetaData = Stadium.getMatchAuraMetaData(aura);
+        let auraMetaData = MatchAura.getMetaData(aura);
         eventLog.add({
             description = "Match Aura: " # auraMetaData.description;
             isImportant = true;
@@ -186,13 +196,13 @@ module {
         team : TeamInitData,
         teamId : TeamId,
         prng : Prng,
-    ) : (TeamState, Buffer.Buffer<Stadium.PlayerStateWithId>) {
+    ) : (TeamState, Buffer.Buffer<StadiumTypes.PlayerStateWithId>) {
 
         var playerStates = team.players
         |> Iter.fromArray(_)
         |> Iter.map(
             _,
-            func(player : PlayerWithId) : Stadium.PlayerStateWithId = {
+            func(player : PlayerWithId) : StadiumTypes.PlayerStateWithId = {
                 id = player.id;
                 name = player.name;
                 teamId = teamId;
@@ -201,7 +211,7 @@ module {
                 position = player.position;
             },
         )
-        |> Buffer.fromIter<Stadium.PlayerStateWithId>(_);
+        |> Buffer.fromIter<StadiumTypes.PlayerStateWithId>(_);
 
         let teamState = {
             id = team.id;
@@ -217,7 +227,7 @@ module {
                 let currentPositions : Buffer.Buffer<FieldPosition> = playerStates
                 |> Buffer.map(
                     _,
-                    func(p : Stadium.PlayerStateWithId) : FieldPosition = p.position,
+                    func(p : StadiumTypes.PlayerStateWithId) : FieldPosition = p.position,
                 );
                 prng.shuffleBuffer(currentPositions);
                 for (i in IterTools.range(0, playerStates.size())) {
@@ -245,7 +255,7 @@ module {
         (teamState, playerStates);
     };
 
-    private func buildPlayerState(player : PlayerWithId, teamId : TeamId) : Stadium.PlayerStateWithId {
+    private func buildPlayerState(player : PlayerWithId, teamId : TeamId) : StadiumTypes.PlayerStateWithId {
         {
             id = player.id;
             name = player.name;
@@ -256,7 +266,7 @@ module {
         };
     };
 
-    private func buildStartingOffense(players : Buffer.Buffer<Stadium.PlayerStateWithId>, prng : Prng) : ?Stadium.OffenseFieldState {
+    private func buildStartingOffense(players : Buffer.Buffer<StadiumTypes.PlayerStateWithId>, prng : Prng) : ?StadiumTypes.OffenseFieldState {
         if (players.size() < 1) {
             return null;
         };
@@ -270,11 +280,11 @@ module {
         };
     };
 
-    private func buildStartingDefense(players : Buffer.Buffer<Stadium.PlayerStateWithId>, prng : Prng) : ?Stadium.DefenseFieldState {
+    private func buildStartingDefense(players : Buffer.Buffer<StadiumTypes.PlayerStateWithId>, prng : Prng) : ?StadiumTypes.DefenseFieldState {
         let getRandomPlayer = func(position : FieldPosition) : ?PlayerId {
-            let playersWithPosition = Buffer.mapFilter<Stadium.PlayerStateWithId, Stadium.PlayerStateWithId>(
+            let playersWithPosition = Buffer.mapFilter<StadiumTypes.PlayerStateWithId, StadiumTypes.PlayerStateWithId>(
                 players,
-                func(p : Stadium.PlayerStateWithId) : ?Stadium.PlayerStateWithId {
+                func(p : StadiumTypes.PlayerStateWithId) : ?StadiumTypes.PlayerStateWithId {
                     if (p.position != position) null else ?p;
                 },
             );
@@ -313,7 +323,7 @@ module {
         );
     };
 
-    public func tick(team1 : TeamInfo, team2 : TeamInfo, state : InProgressMatchState, random : Prng) : Stadium.StartedMatchState {
+    public func tick(team1 : TeamInfo, team2 : TeamInfo, state : InProgressMatchState, random : Prng) : StadiumTypes.StartedMatchState {
         let simulation = MatchSimulation(team1, team2, state, random);
         simulation.tick();
     };
@@ -333,9 +343,9 @@ module {
 
     private func toMutableState(state : InProgressMatchState) : MutableMatchState {
         let players = state.players.vals()
-        |> Iter.map<Stadium.PlayerStateWithId, (Nat32, MutablePlayerState)>(
+        |> Iter.map<StadiumTypes.PlayerStateWithId, (Nat32, MutablePlayerState)>(
             _,
-            func(player : Stadium.PlayerStateWithId) : (Nat32, MutablePlayerState) {
+            func(player : StadiumTypes.PlayerStateWithId) : (Nat32, MutablePlayerState) {
                 let state = {
                     var teamId = player.teamId;
                     var condition = player.condition;
@@ -392,7 +402,7 @@ module {
 
         let state : MutableMatchState = toMutableState(initialState);
 
-        public func tick() : Stadium.StartedMatchState {
+        public func tick() : StadiumTypes.StartedMatchState {
             let divineInterventionRoll = if (state.aura == #moreBlessingsAndCurses) {
                 prng.nextNat(0, 99);
             } else {
@@ -424,7 +434,7 @@ module {
             };
         };
 
-        public func buildState(result : SimulationResult) : Stadium.StartedMatchState {
+        public func buildState(result : SimulationResult) : StadiumTypes.StartedMatchState {
             switch (result) {
                 case (#inProgress) {};
                 case (#endMatch(s)) return #completed(s);
@@ -433,7 +443,7 @@ module {
             let players = Iter.toArray(
                 Iter.map(
                     state.players.entries(),
-                    func(player : (Nat32, MutablePlayerState)) : Stadium.PlayerStateWithId {
+                    func(player : (Nat32, MutablePlayerState)) : StadiumTypes.PlayerStateWithId {
                         {
                             id = player.0;
                             teamId = player.1.teamId;
@@ -542,13 +552,13 @@ module {
         };
 
         private func getPlayer(teamId : TeamId, playerId : PlayerId) : {
-            #ok : Stadium.MatchPlayer;
-            #playerNotFound : Stadium.PlayerNotFoundError;
+            #ok : StadiumTypes.MatchPlayer;
+            #playerNotFound : StadiumTypes.PlayerNotFoundError;
         } {
             let team = getTeamInfo(teamId);
             let ?player = Array.find(
                 team.players,
-                func(p : Stadium.MatchPlayer) : Bool = p.id == playerId,
+                func(p : StadiumTypes.MatchPlayer) : Bool = p.id == playerId,
             ) else return #playerNotFound({
                 id = playerId;
                 teamId = ?teamId;
@@ -558,7 +568,7 @@ module {
 
         private func getPlayerState(playerId : PlayerId) : {
             #ok : MutablePlayerState;
-            #playerNotFound : Stadium.PlayerNotFoundError;
+            #playerNotFound : StadiumTypes.PlayerNotFoundError;
         } {
             let ?player = state.players.get(playerId) else return #playerNotFound({
                 id = playerId;
@@ -613,7 +623,7 @@ module {
 
         private func getPlayerAtBase(base : Base) : {
             #ok : ?MutablePlayerState;
-            #playerNotFound : Stadium.PlayerNotFoundError;
+            #playerNotFound : StadiumTypes.PlayerNotFoundError;
         } {
             let playerId = switch (base) {
                 case (#firstBase) state.field.offense.firstBase;
@@ -979,7 +989,7 @@ module {
             };
         };
 
-        private func cursePlayer(playerId : Nat32, curseOrRandom : ?Stadium.Curse) : SimulationResult {
+        private func cursePlayer(playerId : Nat32, curseOrRandom : ?Curse.Curse) : SimulationResult {
             let playerState = switch (getPlayerState(playerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
@@ -1029,7 +1039,7 @@ module {
             result;
         };
 
-        private func blessPlayer(playerId : Nat32, blessingOrRandom : ?Stadium.Blessing) : SimulationResult {
+        private func blessPlayer(playerId : Nat32, blessingOrRandom : ?Blessing.Blessing) : SimulationResult {
             let playerState = switch (getPlayerState(playerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
@@ -1134,7 +1144,7 @@ module {
             });
         };
 
-        private func endMatch(reason : Stadium.MatchEndReason) : SimulationResult {
+        private func endMatch(reason : MatchEndReason) : SimulationResult {
             let (winner, message) = switch (reason) {
                 case (#noMoreRounds) {
                     let winner = if (state.team1.score > state.team2.score) {

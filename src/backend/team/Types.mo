@@ -1,7 +1,8 @@
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
-import Player "Player";
-import Stadium "Stadium";
+import Player "../models/Player";
+import StadiumTypes "../stadium/Types";
+import Offering "../models/Offering";
 
 module {
     public type TeamActor = actor {
@@ -11,14 +12,19 @@ module {
     };
 
     public type MatchVoteResult = {
-        offeringVotes : Trie.Trie<Stadium.Offering, Nat>;
+        offeringVotes : Trie.Trie<Offering.Offering, Nat>;
         championVotes : Trie.Trie<Player.PlayerId, Nat>;
     };
 
     public type MatchOptionsCallback = shared query (stadiumId : Principal, matchId : Nat32) -> async ?MatchVoteResult;
 
+    public type MatchGroupVoteResult = {
+        offering : Offering.Offering;
+        championId : Player.PlayerId;
+    };
+
     public type GetMatchGroupVoteResult = {
-        #ok : Stadium.MatchOptions;
+        #ok : MatchGroupVoteResult;
         #noVotes;
         #notAuthorized;
     };
@@ -29,7 +35,7 @@ module {
     };
 
     public type MatchGroupVote = {
-        offering : Stadium.Offering;
+        offering : Offering.Offering;
         championId : Player.PlayerId;
     };
 
@@ -44,23 +50,12 @@ module {
         #votingNotOpen;
         #teamNotInMatchGroup;
         #alreadyVoted;
-        #alreadyStarted;
-        #matchGroupFetchError : Text;
+        #seasonStatusFetchError : Text;
         #invalid : [InvalidVoteError];
     };
 
     public type InvalidVoteError = {
         #invalidChampionId : Player.PlayerId;
-        #invalidOffering : Stadium.Offering;
-    };
-
-    public type Team = {
-        name : Text;
-        logoUrl : Text;
-        ledgerId : Principal;
-    };
-
-    public type TeamWithId = Team and {
-        id : Principal;
+        #invalidOffering : Offering.Offering;
     };
 };

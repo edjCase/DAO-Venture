@@ -56,35 +56,6 @@ module {
         #dead;
     };
 
-    public type Base = {
-        #firstBase;
-        #secondBase;
-        #thirdBase;
-        #homeBase;
-    };
-
-    public func equalBase(a : Base, b : Base) : Bool {
-        a == b;
-    };
-
-    public func hashBase(location : Base) : Hash.Hash {
-        switch (location) {
-            case (#homeBase) 0;
-            case (#firstBase) 1;
-            case (#secondBase) 2;
-            case (#thirdBase) 3;
-        };
-    };
-
-    public func toTextBase(location : Base) : Text {
-        switch (location) {
-            case (#homeBase) "at bat";
-            case (#firstBase) "on first base";
-            case (#secondBase) "on second base";
-            case (#thirdBase) "on third base";
-        };
-    };
-
     public type FieldPosition = {
         #firstBase;
         #secondBase;

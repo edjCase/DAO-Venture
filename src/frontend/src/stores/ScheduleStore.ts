@@ -80,11 +80,17 @@ export const scheduleStore = (() => {
                     let upcoming: UpcomingMatchGroup[] = [];
                     for (let matchGroup of status.inProgress.matchGroups) {
                         if ('completed' in matchGroup.status) {
-                            completed.push(mapCompletedMatchGroup(matchGroup, matchGroup.status.completed));
+                            completed.push(mapCompletedMatchGroup(
+                                matchGroup,
+                                matchGroup.status.completed
+                            ));
                         } else if ('inProgress' in matchGroup.status) {
                             live = mapInProgressMatchGroup(matchGroup, matchGroup.status.inProgress);
                         } else if ('notStarted' in matchGroup.status) {
-                            upcoming.push(mapNotStartedMatchGroup(matchGroup, matchGroup.status.notStarted));
+                            upcoming.push(mapNotStartedMatchGroup(
+                                matchGroup,
+                                matchGroup.status.notStarted
+                            ));
                         }
                     }
                     setMatchGroups({
@@ -93,9 +99,13 @@ export const scheduleStore = (() => {
                         upcoming: upcoming
                     });
                 } else if ('completed' in status) {
-                    let completed: CompletedMatchGroupVariant[] = status.completed.matchGroups.map((matchGroup) => {
-                        return mapCompletedMatchGroup(matchGroup, matchGroup);
-                    });
+                    let completed: CompletedMatchGroupVariant[] = status.completed.matchGroups
+                        .map((matchGroup) => {
+                            return mapCompletedMatchGroup(
+                                matchGroup,
+                                matchGroup.status
+                            );
+                        });
                     setMatchGroups({
                         completed: completed,
                         live: undefined,
@@ -123,7 +133,7 @@ function mapCompletedMatchGroup(
     state: CompletedMatchGroupState
 ): CompletedMatchGroupVariant {
     if ('played' in state) {
-        let matches = matchGroup.matches
+        let mappedMatches = matchGroup.matches
             .map((matchSchedule: MatchSchedule, i: number): CompletedMatchVariant => {
                 let completedMatch = state.played.matches[i];
                 if ('played' in completedMatch.state) {
@@ -151,7 +161,7 @@ function mapCompletedMatchGroup(
             'played': {
                 id: matchGroup.id,
                 time: nanosecondsToDate(matchGroup.time),
-                matches: matches
+                matches: mappedMatches
             }
         };
     } else if ('canceled' in state) {
@@ -166,8 +176,43 @@ function mapCompletedMatchGroup(
 };
 
 
-function mapInProgressMatchGroup(matchGroup: MatchGroupSchedule, inProgress: InProgressMatchGroupState): LiveMatchGroup {
-
+function mapInProgressMatchGroup(
+    matchGroup: MatchGroupSchedule,
+    inProgress: InProgressMatchGroupState
+): LiveMatchGroup {
+    let mappedMatches: StartedMatchVariant[] = matchGroup.matches
+        .map((matchSchedule: MatchSchedule, i: number): StartedMatchVariant => {
+            let inProgressMatch = inProgress.matches[i];
+            if ('live' in startedMatch.state) {
+                return {
+                    live: {
+                        index: i,
+                        team1Id: matchSchedule.team1Id,
+                        team2Id: matchSchedule.team2Id
+                    }
+                };
+            } else if ('completed' in startedMatch.state) {
+                return {
+                    completed: {
+                        played: {
+                            index: i,
+                            team1Id: matchSchedule.team1Id,
+                            team2Id: matchSchedule.team2Id,
+                            team1Score: startedMatch.state.completed.team1.score,
+                            team2Score: startedMatch.state.completed.team2.score,
+                            winner: startedMatch.state.completed.winner
+                        }
+                    }
+                };
+            } else {
+                throw new Error('Unexpected match state');
+            }
+        });
+    return {
+        id: matchGroup.id,
+        time: nanosecondsToDate(matchGroup.time),
+        matches: mappedMatches
+    };
 }
 
 function mapNotStartedMatchGroup(matchGroup: MatchGroupSchedule, notStarted: unknown): UpcomingMatchGroup {

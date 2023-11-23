@@ -1,5 +1,5 @@
 import Hash "mo:base/Hash";
-import Player "../Player";
+import Player "../models/Player";
 import Trie "mo:base/Trie";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";

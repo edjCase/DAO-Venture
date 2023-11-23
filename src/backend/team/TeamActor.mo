@@ -1,6 +1,6 @@
-import Player "../Player";
+import Player "../models/Player";
 import Principal "mo:base/Principal";
-import Team "../Team";
+import Team "../models/Team";
 import Trie "mo:base/Trie";
 import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
@@ -17,64 +17,72 @@ import Text "mo:base/Text";
 import Iter "mo:base/Iter";
 import None "mo:base/None";
 import { ic } "mo:ic";
-import Stadium "../Stadium";
+import StadiumTypes "../stadium/Types";
 import IterTools "mo:itertools/Iter";
-import Types "mo:icrc1/ICRC1/Types";
-import League "../League";
+import ICRC1Types "mo:icrc1/ICRC1/Types";
+import LeagueTypes "../league/Types";
+import Types "Types";
+import Offering "../models/Offering";
+import MatchAura "../models/MatchAura";
+import Season "../models/Season";
 
 shared (install) actor class TeamActor(
   leagueId : Principal,
   ledgerId : Principal,
-) : async Team.TeamActor = this {
+) : async Types.TeamActor = this {
 
   type PlayerWithId = Player.PlayerWithId;
-  type MatchOptionsCallback = Team.MatchOptionsCallback;
-  type MatchOptions = Stadium.MatchOptions;
-  type Offering = Stadium.Offering;
-  type MatchAura = Stadium.MatchAura;
-  type GetCyclesResult = Team.GetCyclesResult;
+  type MatchOptionsCallback = Types.MatchOptionsCallback;
+  type Offering = Offering.Offering;
+  type MatchAura = MatchAura.MatchAura;
+  type GetCyclesResult = Types.GetCyclesResult;
   type StadiumMatchId = Text; // Stadium Principal Text # _ # Match Id Text
   type PlayerId = Player.PlayerId;
 
-  stable var matchGroupVotes : Trie.Trie<Nat32, Trie.Trie<Principal, Team.MatchGroupVote>> = Trie.empty();
-  let ledger : Types.TokenInterface = actor (Principal.toText(ledgerId));
+  stable var matchGroupVotes : Trie.Trie<Nat32, Trie.Trie<Principal, Types.MatchGroupVote>> = Trie.empty();
+  let ledger : ICRC1Types.TokenInterface = actor (Principal.toText(ledgerId));
 
   public composite query func getPlayers() : async [PlayerWithId] {
     let teamId = Principal.fromActor(this);
     await PlayerLedgerActor.getTeamPlayers(?teamId);
   };
 
-  public shared ({ caller }) func voteOnMatchGroup(request : Team.VoteOnMatchGroupRequest) : async Team.VoteOnMatchGroupResult {
+  public shared ({ caller }) func voteOnMatchGroup(request : Types.VoteOnMatchGroupRequest) : async Types.VoteOnMatchGroupResult {
     let isOwner = await isTeamOwner(caller);
     if (not isOwner) {
       return #notAuthorized;
     };
-    let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
-    let matchGroup = try {
-      let ?matchGroup = await leagueActor.getMatchGroup(request.matchGroupId) else return #matchGroupNotFound;
-      matchGroup;
+    let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+    let seasonStatus = try {
+      await leagueActor.getSeasonStatus();
     } catch (err) {
-      return #matchGroupFetchError(Error.message(err));
+      return #seasonStatusFetchError(Error.message(err));
     };
     let teamId = Principal.fromActor(this);
-    let (match, matchState) : (League.MatchSchedule, League.ScheduledMatchState) = switch (matchGroup.status) {
-      case (#notScheduled(ns)) return #votingNotOpen;
-      case (#scheduleError(err)) return #votingNotOpen;
-      case (#scheduled(scheduledData)) {
-        let ?matchIndex = matchGroup.matches
-        |> Iter.fromArray(_)
-        |> IterTools.findIndex(
-          _,
-          func(m : League.MatchSchedule) : Bool = m.team1Id == teamId or m.team2Id == teamId,
-        ) else return #teamNotInMatchGroup;
-        (matchGroup.matches[matchIndex], scheduledData.matches[matchIndex]);
+    let matchGroupData : { offerings : [Offering.Offering] } = switch (seasonStatus) {
+      case (#notStarted or #starting) return #votingNotOpen;
+      case (#completed(c)) return #votingNotOpen;
+      case (#inProgress(ip)) {
+        let ?matchGroup = Array.find(
+          ip.matchGroups,
+          func(mg : Season.InProgressMatchGroup) : Bool = mg.id == request.matchGroupId,
+        ) else return #matchGroupNotFound;
+
+        switch (matchGroup.state) {
+          case (#scheduled(scheduledMatchGroup)) {
+            let ?match = Array.find(
+              scheduledMatchGroup.matches,
+              func(m : { offerings : [Offering.Offering]; team1 : { id : Principal }; team2 : { id : Principal } }) : Bool = m.team1.id == teamId or m.team2.id == teamId,
+            ) else return #teamNotInMatchGroup;
+            match;
+          };
+          case (_) return #votingNotOpen;
+        };
       };
-      case (#inProgress(ip)) return #alreadyStarted;
-      case (#completed(c)) return #alreadyStarted;
     };
 
-    let errors = Buffer.Buffer<Team.InvalidVoteError>(0);
-    let offeringExists = IterTools.any(matchState.offerings.vals(), func(o : Stadium.Offering) : Bool = o == request.offering);
+    let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
+    let offeringExists = IterTools.any(matchGroupData.offerings.vals(), func(o : Offering.Offering) : Bool = o == request.offering);
     if (not offeringExists) {
       errors.add(#invalidOffering(request.offering));
     };
@@ -122,7 +130,7 @@ shared (install) actor class TeamActor(
     };
   };
 
-  public shared query ({ caller }) func getMatchGroupVote(matchGroupId : Nat32) : async Team.GetMatchGroupVoteResult {
+  public shared query ({ caller }) func getMatchGroupVote(matchGroupId : Nat32) : async Types.GetMatchGroupVoteResult {
     if (caller != leagueId) {
       return #notAuthorized;
     };
@@ -156,7 +164,7 @@ shared (install) actor class TeamActor(
     return ledgerId;
   };
 
-  private func calculateVotes(matchVotes : Trie.Trie<Principal, Team.MatchGroupVote>) : ?{
+  private func calculateVotes(matchVotes : Trie.Trie<Principal, Types.MatchGroupVote>) : ?{
     offering : Offering;
     championId : PlayerId;
   } {
@@ -167,9 +175,9 @@ shared (install) actor class TeamActor(
       let userVotingPower = 1; // TODO
       let offeringKey = {
         key = vote.offering;
-        hash = Stadium.hashOffering(vote.offering);
+        hash = Offering.hash(vote.offering);
       };
-      offeringVotes := addVotes(offeringVotes, offeringKey, Stadium.equalOffering, userVotingPower);
+      offeringVotes := addVotes(offeringVotes, offeringKey, Offering.equal, userVotingPower);
       let championKey = {
         key = vote.championId;
         hash = vote.championId;

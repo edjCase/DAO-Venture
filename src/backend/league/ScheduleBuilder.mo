@@ -4,22 +4,35 @@ import Trie "mo:base/Trie";
 import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Nat32 "mo:base/Nat32";
-import League "../League";
+import LeagueTypes "Types";
 import Util "../Util";
-import Team "../Team";
 import IterTools "mo:itertools/Iter";
 import DateTime "mo:datetime/DateTime";
+import Team "../models/Team";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
+    type Match = {
+        team1Id : Principal;
+        team2Id : Principal;
+    };
+
+    type MatchGroup = {
+        id : Nat32;
+        time : Time.Time;
+        matches : [Match];
+    };
+
     public type BuildScheduleResult = {
-        #ok : League.SeasonSchedule;
+        #ok : {
+            matchGroups : [MatchGroup];
+        };
         #noTeams;
         #oddNumberOfTeams;
     };
 
     public func build(
-        request : League.StartSeasonRequest,
+        request : LeagueTypes.StartSeasonRequest,
         teams : [Team.TeamWithId],
         prng : Prng,
     ) : BuildScheduleResult {
@@ -46,13 +59,13 @@ module {
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
         var nextMatchDate = DateTime.fromTime(request.startTime);
 
-        let matchGroupSchedules = Buffer.Buffer<League.MatchGroupScheduleWithId>(weekCount);
+        let matchGroupSchedules = Buffer.Buffer<MatchGroup>(weekCount);
         for (weekIndex in IterTools.range(0, weekCount)) {
 
-            let matches : [League.MatchSchedule] = IterTools.range(0, matchUpCountPerWeek)
+            let matches : [Match] = IterTools.range(0, matchUpCountPerWeek)
             |> Iter.map(
                 _,
-                func(i : Nat) : League.MatchSchedule {
+                func(i : Nat) : Match {
                     let team1Id = teamOrderForWeek.get(i);
                     let team2Id = teamOrderForWeek.get(i + matchUpCountPerWeek); // Second half of teams
                     {
@@ -67,7 +80,6 @@ module {
                 id = nextMatchGroupId;
                 time = nextMatchDate.toTime();
                 matches = matches;
-                status = #notScheduled;
             });
             // nextMatchDate := nextMatchDate.add(#weeks(1)); // TODO revert
             nextMatchDate := nextMatchDate.add(#seconds(1));

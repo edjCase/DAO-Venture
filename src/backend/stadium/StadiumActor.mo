@@ -1,12 +1,11 @@
-import Player "../Player";
+import Player "../models/Player";
 import Principal "mo:base/Principal";
-import Team "../Team";
 import Trie "mo:base/Trie";
 import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Prelude "mo:base/Prelude";
-import Stadium "../Stadium";
+import StadiumTypes "../stadium/Types";
 import Nat "mo:base/Nat";
 import Util "./StadiumUtil";
 import Array "mo:base/Array";
@@ -25,38 +24,40 @@ import Blob "mo:base/Blob";
 import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import CommonUtil "../Util";
-import League "../League";
+import LeagueTypes "../league/Types";
 import IterTools "mo:itertools/Iter";
+import Offering "../models/Offering";
+import MatchAura "../models/MatchAura";
+import Team "../models/Team";
 
-actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = this {
-    type MatchGroup = Stadium.MatchGroup;
-    type MatchTeam = Stadium.MatchTeam;
+actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor = this {
+    type MatchGroup = StadiumTypes.MatchGroup;
+    type MatchTeam = StadiumTypes.MatchTeam;
     type Player = Player.Player;
     type PlayerWithId = Player.PlayerWithId;
-    type PlayerState = Stadium.PlayerState;
+    type PlayerState = StadiumTypes.PlayerState;
     type FieldPosition = Player.FieldPosition;
-    type MatchOptions = Stadium.MatchOptions;
-    type Offering = Stadium.Offering;
-    type MatchAura = Stadium.MatchAura;
+    type Offering = Offering.Offering;
+    type MatchAura = MatchAura.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
     type TeamWithId = Team.TeamWithId;
     type StartMatchResult = {
-        #inProgress : Stadium.InProgressMatchState;
-        #completed : Stadium.CompletedMatchState;
+        #inProgress : StadiumTypes.InProgressMatchState;
+        #completed : StadiumTypes.CompletedMatchState;
     };
 
     type BuildMatchGroupError = {
-        #matchErrors : [Stadium.ScheduleMatchError];
+        #matchErrors : [StadiumTypes.ScheduleMatchError];
         #noMatchesSpecified;
     };
     type BuildMatchGroupResult = BuildMatchGroupError or {
         #ok : MatchGroupToBeScheduled;
     };
     type BuildMatchError = {
-        #teamNotFound : Stadium.TeamIdOrBoth;
+        #teamNotFound : Team.TeamIdOrBoth;
     };
     type BuildMatchResult = {
-        #ok : Stadium.Match;
+        #ok : StadiumTypes.Match;
         #error : BuildMatchError;
     };
     type MatchGroupId = Nat32;
@@ -66,12 +67,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     type MatchGroupToBeScheduled = {
         id : Nat32;
         time : Time.Time;
-        matches : [Stadium.Match];
+        matches : [StadiumTypes.Match];
     };
 
     stable var matchGroups = Trie.empty<Nat32, MatchGroup>();
 
-    public query func getMatchGroup(id : Nat32) : async ?Stadium.MatchGroupWithId {
+    public query func getMatchGroup(id : Nat32) : async ?StadiumTypes.MatchGroupWithId {
         switch (getMatchGroupOrNull(id)) {
             case (null) return null;
             case (?m) {
@@ -83,12 +84,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
-    public query func getMatchGroups() : async [Stadium.MatchGroupWithId] {
+    public query func getMatchGroups() : async [StadiumTypes.MatchGroupWithId] {
         matchGroups
         |> Trie.iter(_)
         |> Iter.map(
             _,
-            func(m : (Nat32, Stadium.MatchGroup)) : Stadium.MatchGroupWithId = {
+            func(m : (Nat32, StadiumTypes.MatchGroup)) : StadiumTypes.MatchGroupWithId = {
                 m.1 with
                 id = m.0;
             },
@@ -97,11 +98,11 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     public shared ({ caller }) func scheduleMatchGroup(
-        request : Stadium.ScheduleMatchGroupRequest
-    ) : async Stadium.ScheduleMatchGroupResult {
+        request : StadiumTypes.ScheduleMatchGroupRequest
+    ) : async StadiumTypes.ScheduleMatchGroupResult {
         assertLeague(caller);
 
-        let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
+        let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
         let teams = try {
             await leagueActor.getTeams();
         } catch (err) {
@@ -134,7 +135,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             },
         );
 
-        let newMatchGroup : Stadium.MatchGroupWithId = {
+        let newMatchGroup : StadiumTypes.MatchGroupWithId = {
             id = matchGroup.id;
             time = matchGroup.time;
             matches = matchGroup.matches;
@@ -147,125 +148,16 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         #ok(newMatchGroup);
     };
 
-    public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat32) : async Stadium.TickMatchGroupResult {
+    public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat32) : async StadiumTypes.TickMatchGroupResult {
         let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
-        let matchGroupState : Stadium.InProgressMatchGroupState = switch (matchGroup.state) {
-            case (#notStarted(notStartedState)) {
-                let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
-                let onStartResult = try {
-                    await leagueActor.onMatchGroupStart({
-                        id = matchGroupId;
-                    });
-                } catch (err) {
-                    return #onStartCallbackError(#unknown(Error.message(err)));
-                };
-                let onStartData = switch (onStartResult) {
-                    case (#ok(onStartData)) onStartData;
-                    case (#notAuthorized) return #onStartCallbackError(#notAuthorized);
-                    case (#matchGroupNotFound) return #onStartCallbackError(#matchGroupNotFound);
-                    case (#notScheduledYet) return #onStartCallbackError(#notScheduledYet);
-                    case (#alreadyStarted) return #onStartCallbackError(#alreadyStarted);
-                };
-
-                let seedBlob = await Random.blob();
-                let prng = CommonUtil.buildPrng(seedBlob);
-                Timer.cancelTimer(notStartedState.startTimerId); // Cancel timer before making new one
-                let tickTimerId = startTickTimer(matchGroupId);
-
-                let startedMatches : [Stadium.StartedMatchState] = onStartData.matches
-                |> Iter.fromArray(_)
-                |> IterTools.zip(_, Iter.fromArray(matchGroup.matches))
-                |> Iter.map(
-                    _,
-                    func((startOrSkip, match) : (League.MatchStartOrSkip, Stadium.Match)) : Stadium.StartedMatchState {
-                        let startData = switch (startOrSkip) {
-                            case (#absentTeam(absentTeam)) return #completed(#absentTeam(absentTeam));
-                            case (#allAbsent) return #completed(#allAbsent);
-                            case (#start(data)) data;
-                        };
-
-                        let team1Init = createTeamInit(match.team1, startData.team1, prng);
-                        let team2Init = createTeamInit(match.team2, startData.team2, prng);
-                        let team1IsOffense = prng.nextCoin();
-                        let initState = MatchSimulator.initState(
-                            startData.aura,
-                            team1Init,
-                            team2Init,
-                            team1IsOffense,
-                            prng,
-                        );
-
-                        #inProgress(initState);
-                    },
-                )
-                |> Iter.toArray(_);
-                {
-                    notStartedState with
-                    matches = startedMatches;
-                    tickTimerId = tickTimerId;
-                    currentSeed = prng.getCurrentSeed();
-                };
-            };
-            case (#completed(_)) return #completed;
-            case (#inProgress(g)) g;
-        };
-        let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroupState.currentSeed);
-        switch (tickMatches(prng, matchGroup.matches, matchGroupState.matches)) {
-            case (#completed(completedMatches)) {
-                // Cancel tick timer before disposing of match group
-                // NOTE: Should be canceled even if the onMatchGroupComplete fails, so it doesnt
-                // just keep ticking. Can retrigger manually if needed after fixing the
-                // issue
-                Timer.cancelTimer(matchGroupState.tickTimerId);
-                let leagueActor = actor (Principal.toText(leagueId)) : League.LeagueActor;
-                let onCompleteRequest : League.OnMatchGroupCompleteRequest = {
-                    id = matchGroupId;
-                    state = #played(completedMatches);
-                };
-                let result = try {
-                    await leagueActor.onMatchGroupComplete(onCompleteRequest);
-                } catch (err) {
-                    #onCompleteCallbackError(Error.message(err));
-                };
-
-                let errorMessage = switch (result) {
-                    case (#ok) {
-                        // Remove match group if successfully passed info to the league
-                        let matchGroupKey = {
-                            hash = matchGroupId;
-                            key = matchGroupId;
-                        };
-                        let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat32.equal);
-                        matchGroups := newMatchGroups;
-                        return #completed;
-                    };
-                    case (#notAuthorized) "Failed: Not authorized to complete match group";
-                    case (#matchGroupNotFound) "Failed: Match group not found - " # Nat32.toText(matchGroupId);
-                    case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
-                    case (#seasonNotOpen) "Failed: Season not open";
-                    case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
-                };
-                Debug.print("On Match Group Complete Result - " # errorMessage);
-                // Stuck in a bad state. Can retry by a manual tick call
-                #completed;
-            };
-            case (#inProgress(newMatches)) {
-                addOrUpdateMatchGroup({
-                    matchGroup with
-                    id = matchGroupId;
-                    state = #inProgress({
-                        matchGroupState with
-                        matches = newMatches;
-                        currentSeed = prng.getCurrentSeed();
-                    });
-                });
-
-                #inProgress;
-            };
+        switch (matchGroup.state) {
+            case (#notStarted(state)) await* tickNotStartedMatchGroup({ matchGroup with id = matchGroupId }, state);
+            case (#completed(_)) #completed;
+            case (#inProgress(state)) await* tickInProgressMatchGroup({ matchGroup with id = matchGroupId }, state);
         };
     };
 
-    public shared ({ caller }) func resetTickTimer(matchGroupId : Nat32) : async Stadium.ResetTickTimerResult {
+    public shared ({ caller }) func resetTickTimer(matchGroupId : Nat32) : async StadiumTypes.ResetTickTimerResult {
         let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
         switch (matchGroup.state) {
             case (#notStarted(notStartedState)) #matchGroupNotStarted;
@@ -287,6 +179,127 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         };
     };
 
+    private func tickInProgressMatchGroup(
+        matchGroup : StadiumTypes.MatchGroupWithId,
+        state : StadiumTypes.InProgressMatchGroupState,
+    ) : async* StadiumTypes.TickMatchGroupResult {
+        let prng = PseudoRandomX.LinearCongruentialGenerator(state.currentSeed);
+        switch (tickMatches(prng, matchGroup.matches, state.matches)) {
+            case (#completed(completedMatches)) {
+                // Cancel tick timer before disposing of match group
+                // NOTE: Should be canceled even if the onMatchGroupComplete fails, so it doesnt
+                // just keep ticking. Can retrigger manually if needed after fixing the
+                // issue
+                Timer.cancelTimer(state.tickTimerId);
+                let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+                let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
+                    id = matchGroup.id;
+                    state = { matches = completedMatches };
+                };
+                let result = try {
+                    await leagueActor.onMatchGroupComplete(onCompleteRequest);
+                } catch (err) {
+                    #onCompleteCallbackError(Error.message(err));
+                };
+
+                let errorMessage = switch (result) {
+                    case (#ok) {
+                        // Remove match group if successfully passed info to the league
+                        let matchGroupKey = {
+                            hash = matchGroup.id;
+                            key = matchGroup.id;
+                        };
+                        let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat32.equal);
+                        matchGroups := newMatchGroups;
+                        return #completed;
+                    };
+                    case (#notAuthorized) "Failed: Not authorized to complete match group";
+                    case (#matchGroupNotFound) "Failed: Match group not found - " # Nat32.toText(matchGroup.id);
+                    case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
+                    case (#seasonNotOpen) "Failed: Season not open";
+                    case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
+                };
+                Debug.print("On Match Group Complete Result - " # errorMessage);
+                // Stuck in a bad state. Can retry by a manual tick call
+                #completed;
+            };
+            case (#inProgress(newMatches)) {
+                addOrUpdateMatchGroup({
+                    matchGroup with
+                    id = matchGroup.id;
+                    state = #inProgress({
+                        state with
+                        matches = newMatches;
+                        currentSeed = prng.getCurrentSeed();
+                    });
+                });
+
+                #inProgress;
+            };
+        };
+    };
+
+    private func tickNotStartedMatchGroup(
+        matchGroup : StadiumTypes.MatchGroupWithId,
+        state : StadiumTypes.NotStartedMatchGroupState,
+    ) : async* StadiumTypes.TickMatchGroupResult {
+        let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+        let onStartResult = try {
+            await leagueActor.onMatchGroupStart({
+                id = matchGroup.id;
+            });
+        } catch (err) {
+            return #onStartCallbackError(#unknown(Error.message(err)));
+        };
+        let onStartData = switch (onStartResult) {
+            case (#ok(onStartData)) onStartData;
+            case (#notAuthorized) return #onStartCallbackError(#notAuthorized);
+            case (#matchGroupNotFound) return #onStartCallbackError(#matchGroupNotFound);
+            case (#notScheduledYet) return #onStartCallbackError(#notScheduledYet);
+            case (#alreadyStarted) return #onStartCallbackError(#alreadyStarted);
+        };
+
+        let seedBlob = await Random.blob();
+        let prng = CommonUtil.buildPrng(seedBlob);
+        Timer.cancelTimer(state.startTimerId); // Cancel timer before making new one
+        let tickTimerId = startTickTimer(matchGroup.id);
+
+        let startedMatches : [StadiumTypes.StartedMatchState] = onStartData.matches
+        |> Iter.fromArray(_)
+        |> IterTools.zip(_, Iter.fromArray(matchGroup.matches))
+        |> Iter.map(
+            _,
+            func((startOrSkip, match) : (LeagueTypes.MatchStartOrSkipData, StadiumTypes.Match)) : StadiumTypes.StartedMatchState {
+                let startData = switch (startOrSkip) {
+                    case (#absentTeam(absentTeam)) return #completed(#absentTeam(absentTeam));
+                    case (#allAbsent) return #completed(#allAbsent);
+                    case (#start(data)) data;
+                };
+
+                let team1Init = createTeamInit(match.team1, startData.team1, prng);
+                let team2Init = createTeamInit(match.team2, startData.team2, prng);
+                let team1IsOffense = prng.nextCoin();
+                let initState = MatchSimulator.initState(
+                    startData.aura,
+                    team1Init,
+                    team2Init,
+                    team1IsOffense,
+                    prng,
+                );
+
+                #inProgress(initState);
+            },
+        )
+        |> Iter.toArray(_);
+        let inProgressState = {
+            matches = startedMatches;
+            tickTimerId = tickTimerId;
+            currentSeed = prng.getCurrentSeed();
+        };
+        // Tick once to start the match
+        await* tickInProgressMatchGroup(matchGroup, inProgressState);
+    };
+
     private func startTickTimer(matchGroupId : Nat32) : Timer.TimerId {
         Timer.recurringTimer(
             #seconds(5),
@@ -296,7 +309,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         );
     };
 
-    private func addOrUpdateMatchGroup(newMatchGroup : Stadium.MatchGroupWithId) : () {
+    private func addOrUpdateMatchGroup(newMatchGroup : StadiumTypes.MatchGroupWithId) : () {
         let matchGroupKey = {
             hash = newMatchGroup.id;
             key = newMatchGroup.id;
@@ -306,7 +319,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func buildMatchGroup(
-        request : Stadium.ScheduleMatchGroupRequest,
+        request : StadiumTypes.ScheduleMatchGroupRequest,
         players : [PlayerWithId],
         teams : [TeamWithId],
     ) : BuildMatchGroupResult {
@@ -317,7 +330,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         |> Iter.fromArray(_)
         |> Iter.map(
             _,
-            func(m : Stadium.ScheduleMatchRequest) : BuildMatchResult {
+            func(m : StadiumTypes.ScheduleMatchRequest) : BuildMatchResult {
                 buildMatch(m, players, teams);
             },
         );
@@ -332,7 +345,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func buildMatch(
-        request : Stadium.ScheduleMatchRequest,
+        request : StadiumTypes.ScheduleMatchRequest,
         players : [PlayerWithId],
         teams : [TeamWithId],
     ) : BuildMatchResult {
@@ -343,12 +356,12 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
             case (null, ?_) return #error(#teamNotFound(#team1));
             case (?_, null) return #error(#teamNotFound(#team2));
             case (?t1, ?t2) {
-                let getPlayers = func(teamId : Principal) : [Stadium.MatchPlayer] {
+                let getPlayers = func(teamId : Principal) : [StadiumTypes.MatchPlayer] {
                     return players
                     |> Array.filter(_, func(p : PlayerWithId) : Bool = p.teamId == ?teamId)
                     |> Array.map(
                         _,
-                        func(p : PlayerWithId) : Stadium.MatchPlayer {
+                        func(p : PlayerWithId) : StadiumTypes.MatchPlayer {
                             return {
                                 id = p.id;
                                 name = p.name;
@@ -370,8 +383,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(o : Offering) : Stadium.OfferingWithMetaData {
-                        let metaData = Stadium.getOfferingMetaData(o);
+                    func(o : Offering) : Offering.OfferingWithMetaData {
+                        let metaData = Offering.getMetaData(o);
                         {
                             offering = o;
                             name = metaData.name;
@@ -380,7 +393,7 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
                     },
                 )
                 |> Iter.toArray(_);
-                let metaData = Stadium.getMatchAuraMetaData(request.aura);
+                let metaData = MatchAura.getMetaData(request.aura);
                 let aura = {
                     aura = request.aura;
                     name = metaData.name;
@@ -411,21 +424,21 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         Debug.print("Tick Match Group Callback Result - " # message);
     };
 
-    private func tickMatches(prng : Prng, matches : [Stadium.Match], matchStates : [Stadium.StartedMatchState]) : {
-        #completed : [League.CompletedMatch];
-        #inProgress : [Stadium.StartedMatchState];
+    private func tickMatches(prng : Prng, matches : [StadiumTypes.Match], matchStates : [StadiumTypes.StartedMatchState]) : {
+        #completed : [{}];
+        #inProgress : [StadiumTypes.StartedMatchState];
     } {
-        let completedMatchStates = Buffer.Buffer<League.CompletedMatch>(0);
-        let newMatchStates = Buffer.Buffer<Stadium.StartedMatchState>(0);
+        let completedMatchStates = Buffer.Buffer<{}>(0);
+        let newMatchStates = Buffer.Buffer<StadiumTypes.StartedMatchState>(0);
         var matchIndex = 0;
         for (matchState in Iter.fromArray(matchStates)) {
-            let match = matches[matchIndex]; // TODO safe indexing
+            let match = matches[matchIndex]; // TODO safe indexing?
             matchIndex += 1;
             let newMatchState = tickMatchState(match.team1, match.team2, prng, matchState);
             newMatchStates.add(newMatchState);
             switch (newMatchState) {
                 case (#completed(completedState)) {
-                    let completedMatch : League.CompletedMatch = {
+                    let completedMatch = {
                         team1 = match.team1;
                         team2 = match.team2;
                         offerings = match.offerings;
@@ -449,8 +462,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
         team1 : MatchSimulator.TeamInfo,
         team2 : MatchSimulator.TeamInfo,
         prng : Prng,
-        state : Stadium.StartedMatchState,
-    ) : Stadium.StartedMatchState {
+        state : StadiumTypes.StartedMatchState,
+    ) : StadiumTypes.StartedMatchState {
         switch (state) {
             case (#completed(completedState)) #completed(completedState);
             case (#inProgress(s)) {
@@ -460,8 +473,8 @@ actor class StadiumActor(leagueId : Principal) : async Stadium.StadiumActor = th
     };
 
     private func createTeamInit(
-        team : Stadium.MatchTeam,
-        startData : League.TeamStartData,
+        team : StadiumTypes.MatchTeam,
+        startData : LeagueTypes.TeamStartData,
         prng : Prng,
     ) : MatchSimulator.TeamInitData {
         let players = Buffer.fromArray<PlayerWithId>(startData.players);
