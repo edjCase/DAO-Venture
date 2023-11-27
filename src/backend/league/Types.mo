@@ -26,7 +26,7 @@ module {
     // On start
 
     public type OnMatchGroupStartRequest = {
-        id : Nat32;
+        id : Nat;
     };
 
     public type OnMatchGroupStartError = {
@@ -79,7 +79,7 @@ module {
     // On complete
 
     public type OnMatchGroupCompleteRequest = {
-        id : Nat32;
+        id : Nat;
         state : {
 
         };

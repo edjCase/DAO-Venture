@@ -63,16 +63,13 @@ shared (install) actor class TeamActor(
       case (#notStarted or #starting) return #votingNotOpen;
       case (#completed(c)) return #votingNotOpen;
       case (#inProgress(ip)) {
-        let ?matchGroup = Array.find(
-          ip.matchGroups,
-          func(mg : Season.InProgressMatchGroup) : Bool = mg.id == request.matchGroupId,
-        ) else return #matchGroupNotFound;
+        let matchGroup = ip.matchGroups[Nat32.toNat(request.matchGroupId)] else return #matchGroupNotFound;
 
-        switch (matchGroup.state) {
+        switch (matchGroup) {
           case (#scheduled(scheduledMatchGroup)) {
             let ?match = Array.find(
               scheduledMatchGroup.matches,
-              func(m : { offerings : [Offering.Offering]; team1 : { id : Principal }; team2 : { id : Principal } }) : Bool = m.team1.id == teamId or m.team2.id == teamId,
+              func(m : Season.ScheduledMatch) : Bool = m.team1.id == teamId or m.team2.id == teamId,
             ) else return #teamNotInMatchGroup;
             match;
           };

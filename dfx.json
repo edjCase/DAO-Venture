@@ -9,7 +9,7 @@
       "type": "motoko"
     },
     "playerLedger": {
-      "main": "src/backend/league/PlayerLedger.mo",
+      "main": "src/backend/playerLedger/PlayerLedger.mo",
       "type": "motoko"
     },
     "internet_identity": {

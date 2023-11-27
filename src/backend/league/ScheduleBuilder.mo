@@ -12,21 +12,23 @@ import Team "../models/Team";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    type Match = {
+    public type Match = {
         team1Id : Principal;
         team2Id : Principal;
     };
 
-    type MatchGroup = {
+    public type MatchGroup = {
         id : Nat32;
         time : Time.Time;
         matches : [Match];
     };
 
+    public type SeasonSchedule = {
+        matchGroups : [MatchGroup];
+    };
+
     public type BuildScheduleResult = {
-        #ok : {
-            matchGroups : [MatchGroup];
-        };
+        #ok : SeasonSchedule;
         #noTeams;
         #oddNumberOfTeams;
     };

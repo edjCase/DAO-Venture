@@ -2,7 +2,6 @@ import Principal "mo:base/Principal";
 import Player "../models/Player";
 import DateTime "mo:datetime/DateTime";
 import Time "mo:base/Time";
-import Nat32 "mo:base/Nat32";
 import Trie "mo:base/Trie";
 import Hash "mo:base/Hash";
 import Nat "mo:base/Nat";
@@ -17,10 +16,10 @@ module {
     type PlayerId = Player.PlayerId;
 
     public type StadiumActor = actor {
-        getMatchGroup : query (id : Nat32) -> async ?MatchGroupWithId;
-        tickMatchGroup : (id : Nat32) -> async TickMatchGroupResult;
+        getMatchGroup : query (id : Nat) -> async ?MatchGroupWithId;
+        tickMatchGroup : (id : Nat) -> async TickMatchGroupResult;
         scheduleMatchGroup : (request : ScheduleMatchGroupRequest) -> async ScheduleMatchGroupResult;
-        resetTickTimer(matchGroupId : Nat32) : async ResetTickTimerResult;
+        resetTickTimer(matchGroupId : Nat) : async ResetTickTimerResult;
     };
 
     public type ResetTickTimerResult = {
@@ -31,7 +30,7 @@ module {
     };
 
     public type ScheduleMatchGroupRequest = {
-        id : Nat32;
+        id : Nat;
         startTime : Time.Time;
         matches : [ScheduleMatchRequest];
     };
@@ -181,7 +180,7 @@ module {
     };
 
     public type MatchGroupWithId = MatchGroup and {
-        id : Nat32;
+        id : Nat;
     };
 
     public type StartedMatchGroupState = {

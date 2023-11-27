@@ -38,6 +38,7 @@ import PlayerLedgerActor "canister:playerLedger";
 import Team "../models/Team";
 import Season "../models/Season";
 import MatchAura "../models/MatchAura";
+import Offering "../models/Offering";
 
 actor LeagueActor {
     type LedgerActor = Token.Token;
@@ -96,7 +97,7 @@ actor LeagueActor {
         );
         let buildResult = ScheduleBuilder.build(request, teamsArray, prng);
 
-        let schedule : Types.SeasonSchedule = switch (buildResult) {
+        let schedule : ScheduleBuilder.SeasonSchedule = switch (buildResult) {
             case (#ok(schedule)) schedule;
             case (#noTeams) {
                 seasonStatus := #notStarted;
@@ -109,20 +110,26 @@ actor LeagueActor {
         };
 
         // Save full schedule, then try to start the first match groups
-        let matchGroupSchedules = arrayToIdTrie(schedule.matchGroups, func(mg : Types.MatchGroupScheduleWithId) : Nat32 = mg.id);
-        let order = schedule.matchGroups
+        let inProgressMatchGroups = schedule.matchGroups
         |> Iter.fromArray(_)
-        |> Iter.map(_, func(mg : Types.MatchGroupScheduleWithId) : Nat32 = mg.id)
+        |> Iter.map(
+            _,
+            func(mg : ScheduleBuilder.MatchGroup) : Season.InProgressSeasonMatchGroup {
+                {
+                    time = mg.time;
+                    state = #notScheduled();
+                };
+            },
+        )
         |> Iter.toArray(_);
         seasonStatus := #inProgress({
-            var matchGroups = matchGroupSchedules;
-            var order = order;
+            matchGroups = inProgressMatchGroups;
         });
 
         // Get first match group to open
-        let matchGroupSchedule = schedule.matchGroups[0];
+        let #notScheduled(firstMatchGroup) = inProgressMatchGroups[0].state else Prelude.unreachable();
 
-        await* scheduleMatchGroup(matchGroupSchedule, stadiumId, prng);
+        await* scheduleMatchGroup(firstMatchGroup, stadiumId, prng);
 
         #ok;
     };
@@ -220,7 +227,7 @@ actor LeagueActor {
 
         let matchGroupScheduledData = switch (matchGroupSchedule.status) {
             case (#notScheduled) return #notScheduledYet;
-            case (#scheduleError(error)) return #notScheduledYet;
+            case (#failedToSchedule(error)) return #notScheduledYet;
             case (#inProgress(_)) return #alreadyStarted;
             case (#completed(_)) return #alreadyStarted;
             case (#scheduled(d)) d;
@@ -267,49 +274,44 @@ actor LeagueActor {
         };
         let prng = PseudoRandomX.fromSeed(Blob.hash(seed));
 
-        let key = {
-            key = request.id;
-            hash = request.id;
-        };
-
         // Get current match group
-        let ?matchGroupSchedule = Trie.get(
+        let ?matchGroup = Util.arrayGetOpt<Season.InProgressSeasonMatchGroup>(
             season.matchGroups,
-            key,
-            Nat32.equal,
+            request.id,
         ) else return #matchGroupNotFound;
 
         // Update status to completed
-        setMatchGroupStatus(request.id, #completed(request.state));
+        let updatedMatchGroup = {
+            matchGroup with
+            state = #completed(request.state);
+        };
 
         // Get next match group to schedule
-        let ?currentMatchGroupIndex = Array.indexOf(
-            request.id,
-            season.order,
-            Nat32.equal,
-        ) else Debug.trap("Cannot find order of match group with id: " # Nat32.toText(request.id));
-        let nextMatchGroupIndex = currentMatchGroupIndex + 1;
-        if (nextMatchGroupIndex >= season.order.size()) {
+        let nextMatchGroupId = request.id + 1;
+        if (nextMatchGroupId >= season.matchGroups.size()) {
             // Season is over season.order
             let completedMatchGroups = buildCompletedMatchGroups(season);
+            let teamStandings = calculateTeamStandings(completedMatchGroups);
             let completedTeams = Trie.toArray(
                 teams,
-                func(k : Principal, v : Team.Team) : Types.CompletedSeasonTeam = {
-                    id = k;
-                    name = v.name;
-                    logoUrl = v.logoUrl;
-                    ledgerId = v.ledgerId;
+                func(k : Principal, v : Team.Team) : Season.CompletedSeasonTeam {
+                    let standingInfo = Trie.get(teamStandings, buildPrincipalKey(k), Principal.equal);
+                    {
+                        id = k;
+                        name = v.name;
+                        logoUrl = v.logoUrl;
+                        standing = standingInfo.standing;
+                        wins = standingInfo.wins;
+                        losses = standingInfo.losses;
+                    };
                 },
             );
-            let teamStandings = calculateTeamStandings(completedMatchGroups);
             seasonStatus := #completed({
-                teamStandings = teamStandings;
                 teams = completedTeams;
                 matchGroups = completedMatchGroups;
             });
             return #ok;
         };
-        let nextMatchGroupId = season.order[nextMatchGroupIndex];
 
         // Schedule next match group
         await* scheduleMatchGroup({ matchGroupSchedule with id = nextMatchGroupId }, stadiumId, prng);
@@ -323,14 +325,14 @@ actor LeagueActor {
         matchAura : MatchAura.MatchAura,
         allPlayers : [Player.PlayerWithId],
     ) : async* Types.MatchStartOrSkipData {
-        let team1InitOrNull = await* buildTeamInitData(matchGroupId, match.team1Id, allPlayers);
-        let team2InitOrNull = await* buildTeamInitData(matchGroupId, match.team2Id, allPlayers);
+        let team1InitOrNull = await* buildTeamInitData(matchGroupId, team1Id, allPlayers);
+        let team2InitOrNull = await* buildTeamInitData(matchGroupId, team2Id, allPlayers);
         switch (team1InitOrNull, team2InitOrNull) {
             case (#ok(t1), #ok(t2)) {
                 #start({
                     team1 = t1;
                     team2 = t2;
-                    aura = state.matchAura;
+                    aura = matchAura;
                 });
             };
             case (#ok(_), #noVotes) #absentTeam(#team2);
@@ -393,158 +395,168 @@ actor LeagueActor {
 
     private func buildCompletedMatchGroups(
         season : Season.InProgressSeason
-    ) : [Types.CompletedMatchGroup] {
-        season.order
+    ) : [Season.CompletedSeasonMatchGroupVariant] {
+        season.matchGroups
         |> Iter.fromArray(_)
         |> Iter.map(
             _,
-            func(id : Nat32) : Types.CompletedMatchGroup {
-                let ?matchGroupSchedule = Trie.get(
-                    season.matchGroups,
-                    {
-                        key = id;
-                        hash = id;
-                    },
-                    Nat32.equal,
-                ) else Debug.trap("Cannot find match group with id: " # Nat32.toText(id));
-                let completedState : Types.CompletedMatchGroupState = switch (matchGroupSchedule.status) {
-                    case (#notScheduled) #unplayed(#notStarted);
-                    case (#scheduled(state)) #unplayed(#notStarted); // TODO notStarted?
-                    case (#completed(state)) state;
-                    case (#inProgress(state)) #unplayed(#inProgress);
-                    case (#scheduleError(error)) #unplayed(#scheduleError(error));
-                };
-
-                {
-                    id = id;
-                    state = completedState;
+            func(matchGroupVariant : Season.InProgressSeasonMatchGroupVariant) : Season.CompletedSeasonMatchGroupVariant {
+                switch (matchGroupVariant) {
+                    case (#completed(completedMatchGroup)) #ok(completedMatchGroup);
+                    case (#notScheduled(notScheduledMatchGroup)) #canceled({
+                        time = notScheduledMatchGroup.time;
+                        reason = "Match group was never scheduled";
+                        matches = notScheduledMatchGroup.matches;
+                    });
+                    case (#scheduled(scheduledMatchGroup)) #canceled({
+                        time = scheduledMatchGroup.time;
+                        reason = "Match group was scheduled, but never started";
+                        matches = scheduledMatchGroup.matches;
+                    });
+                    case (#failedToSchedule(errorMatchGroup)) #canceled({
+                        time = errorMatchGroup.time;
+                        reason = "Scheduling Error: " # debug_show (errorMatchGroup.error); // TODO debug_show?
+                        matches = errorMatchGroup.matches;
+                    });
+                    case (#inProgress(inProgressMatchGroup)) #canceled({
+                        time = inProgressMatchGroup.time;
+                        reason = "Match group was started, but never completed";
+                        matches = inProgressMatchGroup.matches
+                        |> Iter.fromArray(_)
+                        |> Iter.map(
+                            _,
+                            func(m : Season.InProgressMatchGroupMatchVariant) : Season.CanceledMatch {
+                                switch (m) {
+                                    case (#allAbsent(allAbsentMatch)) allAbsentMatch;
+                                    case (#absentTeam(absentTeamMatch)) #absentTeam(#team1);
+                                    case (#played(playedMatch)) #played({
+                                        team1 = playedMatch.team1;
+                                        team2 = playedMatch.team2;
+                                        team1Score = playedMatch.team1Score;
+                                        team2Score = playedMatch.team2Score;
+                                        winner = playedMatch.winner;
+                                    });
+                                    case (#stateBroken(error)) #stateBroken(error);
+                                };
+                            },
+                        )
+                        |> Iter.toArray(_);
+                    });
                 };
             },
         )
         |> Iter.toArray(_);
     };
 
-    private func calculateTeamStandings(matchGroups : [Types.CompletedMatchGroup]) : [Principal] {
-        var teamScores = Trie.empty<Principal, Nat>();
+    type TeamSeasonStanding = { wins : Nat; losses : Nat; totalScore : Nat };
+
+    private func calculateTeamStandings(
+        matchGroups : [Season.CompletedMatchGroup]
+    ) : Trie.Trie<Principal, TeamSeasonStanding> {
+        var teamScores = Trie.empty<Principal, TeamSeasonStanding>();
         let updateTeamScore = func(
             teamId : Principal,
-            score : { #set : Nat; #add : Nat },
+            score : Nat,
+            won : Bool,
         ) : () {
 
             let teamKey = {
                 key = teamId;
                 hash = Principal.hash(teamId);
             };
-            let teamScore : Nat = switch (score) {
-                case (#set(value)) value;
-                case (#add(value)) {
-                    switch (Trie.get(teamScores, teamKey, Principal.equal)) {
-                        case (null) value; // Set if no entries for team yet
-                        case (?score) score + value;
+            let currentScore = switch (Trie.get(teamScores, teamKey, Principal.equal)) {
+                case (null) {
+                    {
+                        wins = 0;
+                        losses = 0;
+                        totalScore = 0;
                     };
                 };
+                case (?score) score;
             };
             // Update with +1
             let (newTeamScores, _) = Trie.put(
                 teamScores,
                 teamKey,
                 Principal.equal,
-                teamScore,
+                {
+                    wins = if (won) currentScore.wins + 1 else currentScore.wins;
+                    losses = if (won) currentScore.losses else currentScore.losses + 1;
+                    totalScore = currentScore.totalScore + score;
+                },
             );
             teamScores := newTeamScores;
         };
 
-        // Initialize team scores with 0
-        for ((teamId, team) in Trie.iter(teams)) {
-            updateTeamScore(teamId, #set(0));
-        };
         // Populate scores
         label f1 for (matchGroup in Iter.fromArray(matchGroups)) {
             switch (matchGroup.state) {
-                case (#unplayed(_)) continue f1;
-                case (#played(matches)) {
-                    label f2 for (match in Iter.fromArray(matches)) {
-                        let winningTeamIdOrTie : ?Principal = switch (match.state) {
-                            case (#allAbsent) continue f2;
-                            case (#absentTeam(#team1)) ?match.team2.id;
-                            case (#absentTeam(#team2)) ?match.team1.id;
-                            case (#stateBroken(error)) continue f2;
+                case (#canceled(_)) continue f1;
+                case (#ok(state)) {
+                    label f2 for (match in Iter.fromArray(state.matches)) {
+                        switch (match.state) {
+                            case (#allAbsent or #stateBroken(_)) {
+                                updateTeamScore(match.team1, 0, false);
+                                updateTeamScore(match.team2, 0, false);
+                            };
+                            case (#absentTeam(#team1)) {
+                                updateTeamScore(match.team1, 0, false);
+                                updateTeamScore(match.team2, 0, true);
+                            };
+                            case (#absentTeam(#team2)) {
+                                updateTeamScore(match.team1, 0, true);
+                                updateTeamScore(match.team2, 0, false);
+                            };
                             case (#played(state)) {
-                                switch (state.winner) {
-                                    case (#team1) ?match.team1.id;
-                                    case (#team2) ?match.team2.id;
-                                    case (#tie) null;
-                                };
-                            };
-                        };
-                        switch (winningTeamIdOrTie) {
-                            case (null) {
-                                // Tie, both teams get a point
-                                updateTeamScore(match.team1.id, #add(1));
-                                updateTeamScore(match.team2.id, #add(1));
-                            };
-                            case (?winningTeamId) {
-                                updateTeamScore(winningTeamId, #add(1));
+                                updateTeamScore(match.team1, state.team1Score, itate.winner == #team1);
+                                updateTeamScore(match.team2, state.team2Score, state.winner == #team2);
                             };
                         };
                     };
                 };
             };
         };
-        teamScores
-        |> Trie.iter(_)
-        // Sort by highest score first
-        // TODO other sorting criteria for tie breakers
-        |> Iter.sort(
-            _,
-            func(
-                a : (Principal, Nat),
-                b : (Principal, Nat),
-            ) : Order.Order = Nat.compare(a.1, b.1),
-        )
-        // Get team ids
-        |> Iter.map(_, func(t : (Principal, Nat)) : Principal = t.0)
-        |> Iter.toArray(_);
+        teamScores;
     };
 
     private func scheduleMatchGroup(
-        matchGroupSchedule : Types.MatchGroupScheduleWithId,
+        matchGroup : Season.InProgressMatchGroup,
         stadiumId : Principal,
         prng : Prng,
     ) : async* () {
 
-        let matchRequests : [Stadium.ScheduleMatchRequest] = matchGroupSchedule.matches
+        let matchRequests = matchGroupState.matches
         |> Iter.fromArray(_)
         |> Iter.map(
             _,
-            func(m : Types.MatchSchedule) : Stadium.ScheduleMatchRequest {
+            func(m : Season.InProgressSeasonMatchGroupInProgressStateMatch) : StadiumTypes.ScheduleMatchRequest {
                 let offerings = getRandomOfferings(4);
                 let aura = getRandomMatchAura(prng);
                 {
-                    team1Id = m.team1Id;
-                    team2Id = m.team2Id;
+                    team1Id = m.team1.id;
+                    team2Id = m.team2.id;
                     offerings = offerings;
                     aura = aura;
                 };
             },
         )
         |> Iter.toArray(_);
-        let matchGroupRequest : Stadium.ScheduleMatchGroupRequest = {
-            id = matchGroupSchedule.id;
-            startTime = matchGroupSchedule.time;
+        let matchGroupRequest : StadiumTypes.ScheduleMatchGroupRequest = {
+            id = matchGroupId;
+            startTime = time;
             matches = matchRequests;
         };
-        let stadiumActor = actor (Principal.toText(stadiumId)) : Stadium.StadiumActor;
-        let matchGroupStatus : Types.MatchGroupScheduleStatus = try {
+        let stadiumActor = actor (Principal.toText(stadiumId)) : StadiumTypes.StadiumActor;
+        let matchGroupStatus : Season.InProgressSeasonMatchGroupStateVariant = try {
             let stadiumResult = await stadiumActor.scheduleMatchGroup(matchGroupRequest);
             switch (stadiumResult) {
                 case (#ok(scheduledMatchGroup)) {
-                    let matches = matchGroupSchedule.matches
+                    let matches = matchGroupState.matches
                     |> Iter.fromArray(_)
                     |> IterTools.zip(_, Iter.fromArray(scheduledMatchGroup.matches))
                     |> Iter.map(
                         _,
-                        func(m : (Types.MatchSchedule, Stadium.Match)) : Types.ScheduledMatchState {
+                        func(m : (Season.InProgressSeasonMatchGroupInProgressStateMatch, StadiumTypes.Match)) : Types.ScheduledMatchState {
                             let offerings = m.1.offerings
                             |> Iter.fromArray(_)
                             |> Iter.map(_, func(o : Offering.OfferingWithMetaData) : Offering.Offering = o.offering)
@@ -558,13 +570,13 @@ actor LeagueActor {
                     |> Iter.toArray(_);
                     #scheduled({ matches = matches });
                 };
-                case (#matchErrors(errors)) #scheduleError(#matchErrors(errors));
-                case (#noMatchesSpecified) #scheduleError(#noMatchesSpecified);
-                case (#playerFetchError(error)) #scheduleError(#playerFetchError(error));
-                case (#teamFetchError(error)) #scheduleError(#teamFetchError(error));
+                case (#matchErrors(errors)) #failedToSchedule(#matchErrors(errors));
+                case (#noMatchesSpecified) #failedToSchedule(#noMatchesSpecified);
+                case (#playerFetchError(error)) #failedToSchedule(#playerFetchError(error));
+                case (#teamFetchError(error)) #failedToSchedule(#teamFetchError(error));
             };
         } catch (err) {
-            #scheduleError(#stadiumScheduleCallError(Error.message(err)));
+            #failedToSchedule(#stadiumScheduleCallError(Error.message(err)));
         };
         setMatchGroupStatus(matchGroupSchedule.id, matchGroupStatus);
     };
@@ -605,39 +617,6 @@ actor LeagueActor {
         { key = id; hash = Principal.hash(id) };
     };
 
-    private func setMatchGroupStatus(
-        matchGroupId : Nat32,
-        newStatus : Types.MatchGroupScheduleStatus,
-    ) : () {
-        let #inProgress(season) = seasonStatus else Debug.trap("Cannot open match group when season is not open");
-
-        let key = {
-            key = matchGroupId;
-            hash = matchGroupId;
-        };
-
-        // Get current match group
-        let ?matchGroupSchedule : ?Types.MatchGroupSchedule = Trie.get(
-            season.matchGroups,
-            key,
-            Nat32.equal,
-        ) else Debug.trap("Cannot find match group with id: " # Nat32.toText(matchGroupId));
-
-        let newMatchGroupSchedule : Types.MatchGroupSchedule = {
-            matchGroupSchedule with
-            status = newStatus;
-        };
-
-        // TODO should the stadium generate the ids?
-        let (newMatchGroupSchedules, _) = Trie.put(
-            season.matchGroups,
-            key,
-            Nat32.equal,
-            newMatchGroupSchedule,
-        );
-        season.matchGroups := newMatchGroupSchedules;
-    };
-
     private func arrayToIdTrie<T>(items : [T], getId : (T) -> Nat32) : Trie.Trie<Nat32, T> {
         var trie = Trie.empty<Nat32, T>();
         for (item in Iter.fromArray(items)) {
@@ -650,33 +629,6 @@ actor LeagueActor {
             trie := newTrie;
         };
         trie;
-    };
-
-    private func buildRequestFromMatchGroupSchedule(
-        mg : Types.MatchGroupScheduleWithId,
-        prng : Prng,
-    ) : Stadium.ScheduleMatchGroupRequest {
-        let offerings = getRandomOfferings(4);
-        let aura = getRandomMatchAura(prng);
-        let matches = mg.matches
-        |> Iter.fromArray(_)
-        |> Iter.map(
-            _,
-            func(m : Types.MatchSchedule) : Stadium.ScheduleMatchRequest {
-                {
-                    team1Id = m.team1Id;
-                    team2Id = m.team2Id;
-                    offerings = offerings;
-                    aura = aura;
-                };
-            },
-        )
-        |> Iter.toArray(_);
-        {
-            id = mg.id;
-            startTime = mg.time;
-            matches = matches;
-        };
     };
 
     private func getRandomOfferings(count : Nat) : [Offering.Offering] {

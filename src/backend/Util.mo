@@ -8,31 +8,11 @@ module {
         PseudoRandomX.LinearCongruentialGenerator(seed);
     };
 
-    public type ContextWithResult<T, TResult> = {
-        context : T;
-        result : TResult;
-    };
-    public type Result<TOk, TError> = { #ok : TOk; #error : TError };
-    public type AllResult<TOk, TError> = {
-        #ok : [TOk];
-        #error : [TError];
-    };
-
-    public func allOkOrError<TOk, TError>(
-        results : Iter.Iter<Result<TOk, TError>>
-    ) : AllResult<TOk, TError> {
-        let okItems = Buffer.Buffer<TOk>(10);
-        let errorItems = Buffer.Buffer<TError>(0);
-        for (result in results) {
-            switch (result) {
-                case (#ok(ok)) okItems.add(ok);
-                case (#error(error)) errorItems.add(error);
-            };
-        };
-        if (errorItems.size() > 0) {
-            #error(Buffer.toArray(errorItems));
+    public func arrayGetOpt<T>(array : [T], index : Nat) : ?T {
+        if (index >= array.size()) {
+            null;
         } else {
-            #ok(Buffer.toArray(okItems));
+            ?array[index];
         };
     };
 
