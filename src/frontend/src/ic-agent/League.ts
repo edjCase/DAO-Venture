@@ -119,11 +119,11 @@ export const MatchScheduleIdl = IDL.Record({
 
 export type ScheduledMatch = {
   'offerings': Offering[];
-  'matchAura': MatchAura;
+  'aura': MatchAura;
 };
 export const ScheduledMatchIdl = IDL.Record({
   'offerings': IDL.Vec(OfferingIdl),
-  'matchAura': MatchAuraIdl
+  'aura': MatchAuraIdl
 });
 
 export type ScheduledMatchGroupStatus = {

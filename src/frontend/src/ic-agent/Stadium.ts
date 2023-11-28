@@ -178,11 +178,11 @@ export const FieldStateIdl = IDL.Record({
 });
 
 export type LogEntry = {
-  description: Text;
+  message: Text;
   isImportant: boolean;
 };
 export const LogEntryIdl = IDL.Record({
-  'description': IDL.Text,
+  'message': IDL.Text,
   'isImportant': IDL.Bool
 });
 

@@ -16,6 +16,7 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
+        closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         mint : (request : MintRequest) -> async MintResult;
         updateLeagueCanisters : () -> async ();
@@ -76,19 +77,49 @@ module {
         #oddNumberOfTeams;
     };
 
+    public type CloseSeasonResult = {
+        #ok;
+        #seasonInProgress;
+        #notAuthorized;
+        #seasonNotOpen;
+    };
+
     // On complete
 
     public type OnMatchGroupCompleteRequest = {
         id : Nat;
-        state : {
+        matches : [CompletedMatch];
+    };
 
-        };
+    public type CompletedMatch = {
+        #absentTeam : Team.TeamId;
+        #allAbsent;
+        #played : PlayedMatchState;
+        #failed : FailedMatchState;
+    };
+
+    public type PlayedMatchState = {
+        team1Score : Int;
+        team2Score : Int;
+        winner : Team.TeamIdOrTie;
+        log : [LogEntry];
+    };
+
+    public type FailedMatchState = {
+        message : Text;
+        log : [LogEntry];
+    };
+
+    public type LogEntry = {
+        message : Text;
+        isImportant : Bool;
     };
 
     public type OnMatchGroupCompleteResult = {
         #ok;
         #seasonNotOpen;
         #matchGroupNotFound;
+        #matchGroupNotInProgress;
         #seedGenerationError : Text;
         #notAuthorized;
     };

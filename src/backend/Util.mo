@@ -8,11 +8,21 @@ module {
         PseudoRandomX.LinearCongruentialGenerator(seed);
     };
 
-    public func arrayGetOpt<T>(array : [T], index : Nat) : ?T {
+    public func arrayGetSafe<T>(array : [T], index : Nat) : ?T {
         if (index >= array.size()) {
             null;
         } else {
             ?array[index];
+        };
+    };
+
+    public func arrayUpdateElementSafe<T>(array : [T], index : Nat, value : T) : ?[T] {
+        if (index >= array.size()) {
+            null;
+        } else {
+            let newArray = Buffer.fromArray<T>(array);
+            newArray.put(index, value);
+            ?Buffer.toArray(newArray);
         };
     };
 

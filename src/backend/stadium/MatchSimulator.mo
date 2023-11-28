@@ -179,7 +179,7 @@ module {
     private func logTeamOffering(team : TeamInitData, eventLog : Buffer.Buffer<LogEntry>) {
         let offeringMetaData = Offering.getMetaData(team.offering);
         eventLog.add({
-            description = "Team " # team.name # " Offering: " # offeringMetaData.description;
+            message = "Team " # team.name # " Offering: " # offeringMetaData.description;
             isImportant = true;
         });
     };
@@ -187,7 +187,7 @@ module {
     private func logMatchAura(aura : MatchAura, eventLog : Buffer.Buffer<LogEntry>) {
         let auraMetaData = MatchAura.getMetaData(aura);
         eventLog.add({
-            description = "Match Aura: " # auraMetaData.description;
+            message = "Match Aura: " # auraMetaData.description;
             isImportant = true;
         });
     };
@@ -410,7 +410,7 @@ module {
             };
             let result = if (divineInterventionRoll <= 9) {
                 state.log.add({
-                    description = "Divine intervention!";
+                    message = "Divine intervention!";
                     isImportant = true;
                 });
                 let ?randomPlayerId = getRandomAvailablePlayer(null, null, false) else Prelude.unreachable();
@@ -648,7 +648,7 @@ module {
             let pitchRoll = prng.nextNat(0, 10) + pitcherState.skills.throwingAccuracy + pitcherState.skills.throwingPower;
 
             state.log.add({
-                description = "Pitch";
+                message = "Pitch";
                 isImportant = false;
             });
             let atBatPlayerState = switch (getPlayerState(state.field.offense.atBat)) {
@@ -666,7 +666,7 @@ module {
 
         private func foul() : SimulationResult {
             state.log.add({
-                description = "Foul ball";
+                message = "Foul ball";
                 isImportant = true;
             });
             #inProgress;
@@ -674,7 +674,7 @@ module {
 
         private func hit({ hitRoll : Nat }) : SimulationResult {
             state.log.add({
-                description = "Its a hit!";
+                message = "Its a hit!";
                 isImportant = true;
             });
             let precisionRoll = prng.nextInt(-2, 2) + hitRoll;
@@ -684,7 +684,7 @@ module {
             let player = getPlayer(state.offenseTeamId, state.field.offense.atBat);
             if (precisionRoll > 10) {
                 state.log.add({
-                    description = "Homerun!";
+                    message = "Homerun!";
                     isImportant = true;
                 });
                 // hit it out of the park
@@ -729,7 +729,7 @@ module {
                     case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
                 };
                 state.log.add({
-                    description = catchingPlayer.name # " caught the ball " # locationText # "!";
+                    message = catchingPlayer.name # " caught the ball " # locationText # "!";
                     isImportant = true;
                 });
                 // Ball caught, batter is out
@@ -802,7 +802,7 @@ module {
                     let throwRoll = prng.nextInt(-10, 10) + playerStateWithBall.skills.throwingAccuracy;
                     if (throwRoll <= 0) {
                         state.log.add({
-                            description = "SAFE!";
+                            message = "SAFE!";
                             isImportant = true;
                         });
                         playerMovedBases({
@@ -820,7 +820,7 @@ module {
                             case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
                         };
                         state.log.add({
-                            description = "Player " # catchingPlayer.name # " hit " # battingPlayer.name # "!";
+                            message = "Player " # catchingPlayer.name # " hit " # battingPlayer.name # "!";
                             isImportant = true;
                         });
                         let battingPlayerState = switch (getPlayerState(state.field.offense.atBat)) {
@@ -856,7 +856,7 @@ module {
         private func strike() : SimulationResult {
             state.strikes += 1;
             state.log.add({
-                description = "Strike " # Nat.toText(state.strikes);
+                message = "Strike " # Nat.toText(state.strikes);
                 isImportant = false;
             });
             if (state.strikes >= 3) {
@@ -874,7 +874,7 @@ module {
                 case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
             };
             state.log.add({
-                description = "Player " # outPlayer.name # " is out";
+                message = "Player " # outPlayer.name # " is out";
                 isImportant = true;
             });
             if (state.outs >= 3) {
@@ -905,7 +905,7 @@ module {
             state.outs := 0;
             state.round += 1;
             state.log.add({
-                description = "Round is over";
+                message = "Round is over";
                 isImportant = true;
             });
             if (state.round > 9) {
@@ -947,7 +947,7 @@ module {
                 newPositionText := newPositionText # "\n" # name # ": " # player.name;
             };
             state.log.add({
-                description = newPositionText;
+                message = newPositionText;
                 isImportant = false;
             });
             #inProgress;
@@ -978,7 +978,7 @@ module {
                 case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
             };
             state.log.add({
-                description = "Player " # player.name # " is injured: " # injuryText;
+                message = "Player " # player.name # " is injured: " # injuryText;
                 isImportant = true;
             });
             if (getDefensePositionOfPlayer(playerId) != null) {
@@ -1033,7 +1033,7 @@ module {
                 case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
             };
             state.log.add({
-                description = "Player " # player.name # " is cursed with : " # curseText;
+                message = "Player " # player.name # " is cursed with : " # curseText;
                 isImportant = true;
             });
             result;
@@ -1072,7 +1072,7 @@ module {
                 case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
             };
             state.log.add({
-                description = "Player " # player.name # " is blessed with : " # blessingText;
+                message = "Player " # player.name # " is blessed with : " # blessingText;
                 isImportant = true;
             });
             #inProgress;
@@ -1119,7 +1119,7 @@ module {
                 case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
             };
             state.log.add({
-                description = "Player " # playerOut.name # " is being substituted by " # subPlayer.name;
+                message = "Player " # playerOut.name # " is being substituted by " # subPlayer.name;
                 isImportant = true;
             });
             switch (fieldPosition) {
@@ -1139,7 +1139,7 @@ module {
             let team = getTeamState(teamId);
             team.score += amount;
             state.log.add({
-                description = "Team " # getTeamInfo(teamId).name # " scored " # Int.toText(amount) # " points!";
+                message = "Team " # getTeamInfo(teamId).name # " scored " # Int.toText(amount) # " points!";
                 isImportant = true;
             });
         };
@@ -1174,20 +1174,20 @@ module {
                 };
             };
             state.log.add({
-                description = message;
+                message = message;
                 isImportant = true;
             });
             switch (winner) {
                 case (#tie) state.log.add({
-                    description = "The match ended in a tie!";
+                    message = "The match ended in a tie!";
                     isImportant = true;
                 });
                 case (#team1) state.log.add({
-                    description = "Team " # getTeamInfo(#team1).name # " wins!";
+                    message = "Team " # getTeamInfo(#team1).name # " wins!";
                     isImportant = true;
                 });
                 case (#team2) state.log.add({
-                    description = "Team " # getTeamInfo(#team2).name # " wins!";
+                    message = "Team " # getTeamInfo(#team2).name # " wins!";
                     isImportant = true;
                 });
             };
@@ -1219,7 +1219,7 @@ module {
                         case (#playerNotFound(e)) return endMatch(#stateBroken(#playerNotFound(e)));
                     };
                     state.log.add({
-                        description = "Player " # nextBatter.name # " is up to bat";
+                        message = "Player " # nextBatter.name # " is up to bat";
                         isImportant = true;
                     });
                 };

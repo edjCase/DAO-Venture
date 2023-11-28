@@ -6,8 +6,8 @@
 
 <ul class="log">
   {#each [...log].reverse() as entry}
-    <li class={entry.isImportant ? "important" : undefined}>
-      <pre>{entry.description}</pre>
+    <li>
+      <pre>{entry.message}</pre>
     </li>
   {/each}
 </ul>

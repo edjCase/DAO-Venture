@@ -193,7 +193,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
                 let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
                 let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
                     id = matchGroup.id;
-                    state = { matches = completedMatches };
+                    matches = completedMatches;
                 };
                 let result = try {
                     await leagueActor.onMatchGroupComplete(onCompleteRequest);
@@ -419,10 +419,10 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
     };
 
     private func tickMatches(prng : Prng, matches : [StadiumTypes.Match], matchStates : [StadiumTypes.StartedMatchState]) : {
-        #completed : [{}];
+        #completed : [LeagueTypes.CompletedMatch];
         #inProgress : [StadiumTypes.StartedMatchState];
     } {
-        let completedMatchStates = Buffer.Buffer<{}>(0);
+        let completedMatchStates = Buffer.Buffer<LeagueTypes.CompletedMatch>(matches.size());
         let newMatchStates = Buffer.Buffer<StadiumTypes.StartedMatchState>(0);
         var matchIndex = 0;
         for (matchState in Iter.fromArray(matchStates)) {
@@ -432,12 +432,19 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
             newMatchStates.add(newMatchState);
             switch (newMatchState) {
                 case (#completed(completedState)) {
-                    let completedMatch = {
-                        team1 = match.team1;
-                        team2 = match.team2;
-                        offerings = match.offerings;
-                        aura = match.aura;
-                        state = completedState;
+                    let completedMatch : LeagueTypes.CompletedMatch = switch (completedState) {
+                        case (#absentTeam(absentTeam)) #absentTeam(absentTeam);
+                        case (#allAbsent) #allAbsent;
+                        case (#played(playedState)) #played({
+                            team1Score = playedState.team1.score;
+                            team2Score = playedState.team2.score;
+                            winner = playedState.winner;
+                            log = playedState.log;
+                        });
+                        case (#stateBroken(brokenState)) #failed({
+                            message = "Match in bad state: " # debug_show (brokenState);
+                            log = brokenState.log;
+                        });
                     };
                     completedMatchStates.add(completedMatch);
                 };

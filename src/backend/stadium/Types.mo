@@ -97,7 +97,7 @@ module {
     };
 
     public type LogEntry = {
-        description : Text;
+        message : Text;
         isImportant : Bool;
     };
 

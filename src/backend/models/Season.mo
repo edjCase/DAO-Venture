@@ -57,20 +57,20 @@ module {
         team1 : TeamInfo;
         team2 : TeamInfo;
         offerings : [Offering.Offering];
-        matchAura : MatchAura.MatchAura;
+        aura : MatchAura.MatchAura;
     };
 
     public type InProgressMatchGroup = {
         time : Time.Time;
         stadiumId : Principal;
-        matches : [InProgressMatchGroupMatchVariant];
+        matches : [InProgressMatchGroupMatch];
     };
 
-    public type InProgressMatchGroupMatchVariant = {
-        #inProgress : InProgressMatch;
-        #absentTeam : AbsentTeamMatch;
-        #allAbsent : AllAbsentMatch;
-        #completed : CompletedMatch;
+    public type InProgressMatchGroupMatch = {
+        team1 : TeamInfo;
+        team2 : TeamInfo;
+        aura : MatchAura.MatchAura;
+        offering : Offering.Offering;
     };
 
     public type InProgressMatch = {
@@ -78,36 +78,35 @@ module {
         team2 : TeamInfo;
     };
 
-    public type AbsentTeamMatch = {
-        team1 : TeamInfo;
-        team2 : TeamInfo;
-        absentTeam : Team.TeamId;
-    };
-
-    public type AllAbsentMatch = {
-        team1 : TeamInfo;
-        team2 : TeamInfo;
-    };
-
     public type CompletedMatch = {
-        team1 : TeamInfo and {
-            score : Nat;
+        team1 : TeamInfo;
+        team2 : TeamInfo;
+        result : CompletedMatchResult;
+    };
+
+    public type CompletedMatchResult = {
+        #played : {
+            team1Score : Int;
+            team2Score : Int;
+            winner : Team.TeamIdOrTie;
+            log : [LogEntry];
         };
-        team2 : TeamInfo and {
-            score : Nat;
+        #absentTeam : Team.TeamId;
+        #allAbsent;
+        #failed : {
+            message : Text;
+            log : [LogEntry];
         };
-        winner : Team.TeamId;
+    };
+
+    public type LogEntry = {
+        message : Text;
+        isImportant : Bool;
     };
 
     public type CompletedMatchGroup = {
         time : Time.Time;
-        matches : [CompletedMatchGroupMatchVariant];
-    };
-
-    public type CompletedMatchGroupMatchVariant = {
-        #completed : CompletedMatch;
-        #absentTeam : AbsentTeamMatch;
-        #allAbsent : AllAbsentMatch;
+        matches : [CompletedMatch];
     };
 
     // Completed Season
