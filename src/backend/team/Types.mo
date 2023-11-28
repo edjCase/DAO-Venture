@@ -7,7 +7,7 @@ import Offering "../models/Offering";
 module {
     public type TeamActor = actor {
         getPlayers : composite query () -> async [Player.PlayerWithId];
-        getMatchGroupVote : query (matchGroupId : Nat32) -> async GetMatchGroupVoteResult;
+        getMatchGroupVote : query (matchGroupId : Nat) -> async GetMatchGroupVoteResult;
         voteOnMatchGroup : (request : VoteOnMatchGroupRequest) -> async VoteOnMatchGroupResult;
     };
 
@@ -15,8 +15,6 @@ module {
         offeringVotes : Trie.Trie<Offering.Offering, Nat>;
         championVotes : Trie.Trie<Player.PlayerId, Nat>;
     };
-
-    public type MatchOptionsCallback = shared query (stadiumId : Principal, matchId : Nat32) -> async ?MatchVoteResult;
 
     public type MatchGroupVoteResult = {
         offering : Offering.Offering;
@@ -40,7 +38,7 @@ module {
     };
 
     public type VoteOnMatchGroupRequest = MatchGroupVote and {
-        matchGroupId : Nat32;
+        matchGroupId : Nat;
     };
 
     public type VoteOnMatchGroupResult = {

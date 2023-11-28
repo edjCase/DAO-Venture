@@ -214,6 +214,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
                     case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
                     case (#seasonNotOpen) "Failed: Season not open";
                     case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
+                    case (#matchGroupNotInProgress) "Failed: Match group not in progress";
                 };
                 Debug.print("On Match Group Complete Result - " # errorMessage);
                 // Stuck in a bad state. Can retry by a manual tick call

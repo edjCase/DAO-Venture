@@ -39,7 +39,7 @@ module {
 
     public type FailedToScheduleMatchGroup = {
         time : Time.Time;
-        matches : [NotScheduledMatch];
+        matches : [ScheduledMatch];
         error : ScheduleMatchGroupError;
     };
 
@@ -63,19 +63,23 @@ module {
     public type InProgressMatchGroup = {
         time : Time.Time;
         stadiumId : Principal;
-        matches : [InProgressMatchGroupMatch];
-    };
-
-    public type InProgressMatchGroupMatch = {
-        team1 : TeamInfo;
-        team2 : TeamInfo;
-        aura : MatchAura.MatchAura;
-        offering : Offering.Offering;
+        matches : [InProgressMatch];
     };
 
     public type InProgressMatch = {
         team1 : TeamInfo;
         team2 : TeamInfo;
+        aura : MatchAura.MatchAura;
+        result : {
+            #started : {
+                team1Offering : Offering.Offering;
+                team1ChampionId : Nat32;
+                team2Offering : Offering.Offering;
+                team2ChampionId : Nat32;
+            };
+            #absentTeam : Team.TeamId;
+            #allAbsent;
+        };
     };
 
     public type CompletedMatch = {

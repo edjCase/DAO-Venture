@@ -25,6 +25,7 @@ import Types "Types";
 import Offering "../models/Offering";
 import MatchAura "../models/MatchAura";
 import Season "../models/Season";
+import Util "../Util";
 
 shared (install) actor class TeamActor(
   leagueId : Principal,
@@ -32,14 +33,13 @@ shared (install) actor class TeamActor(
 ) : async Types.TeamActor = this {
 
   type PlayerWithId = Player.PlayerWithId;
-  type MatchOptionsCallback = Types.MatchOptionsCallback;
   type Offering = Offering.Offering;
   type MatchAura = MatchAura.MatchAura;
   type GetCyclesResult = Types.GetCyclesResult;
   type StadiumMatchId = Text; // Stadium Principal Text # _ # Match Id Text
   type PlayerId = Player.PlayerId;
 
-  stable var matchGroupVotes : Trie.Trie<Nat32, Trie.Trie<Principal, Types.MatchGroupVote>> = Trie.empty();
+  stable var matchGroupVotes : Trie.Trie<Nat, Trie.Trie<Principal, Types.MatchGroupVote>> = Trie.empty();
   let ledger : ICRC1Types.TokenInterface = actor (Principal.toText(ledgerId));
 
   public composite query func getPlayers() : async [PlayerWithId] {
@@ -63,7 +63,7 @@ shared (install) actor class TeamActor(
       case (#notStarted or #starting) return #votingNotOpen;
       case (#completed(c)) return #votingNotOpen;
       case (#inProgress(ip)) {
-        let matchGroup = ip.matchGroups[Nat32.toNat(request.matchGroupId)] else return #matchGroupNotFound;
+        let ?matchGroup = Util.arrayGetSafe(ip.matchGroups, request.matchGroupId) else return #matchGroupNotFound;
 
         switch (matchGroup) {
           case (#scheduled(scheduledMatchGroup)) {
@@ -99,11 +99,8 @@ shared (install) actor class TeamActor(
       return #invalid(Buffer.toArray(errors));
     };
 
-    let matchGroupKey = {
-      key = request.matchGroupId;
-      hash = request.matchGroupId;
-    };
-    let matchGroupVoteData = switch (Trie.get(matchGroupVotes, matchGroupKey, Nat32.equal)) {
+    let matchGroupKey = buildMatchGroupKey(request.matchGroupId);
+    let matchGroupVoteData = switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
       case (null) Trie.empty();
       case (?o) o;
     };
@@ -118,7 +115,7 @@ shared (install) actor class TeamActor(
         let (newMatchGroupVotes, _) = Trie.put(
           matchGroupVotes,
           matchGroupKey,
-          Nat32.equal,
+          Nat.equal,
           newMatchVotes,
         );
         matchGroupVotes := newMatchGroupVotes;
@@ -127,15 +124,12 @@ shared (install) actor class TeamActor(
     };
   };
 
-  public shared query ({ caller }) func getMatchGroupVote(matchGroupId : Nat32) : async Types.GetMatchGroupVoteResult {
+  public shared query ({ caller }) func getMatchGroupVote(matchGroupId : Nat) : async Types.GetMatchGroupVoteResult {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let matchGroupKey = {
-      key = matchGroupId;
-      hash = matchGroupId;
-    };
-    switch (Trie.get(matchGroupVotes, matchGroupKey, Nat32.equal)) {
+    let matchGroupKey = buildMatchGroupKey(matchGroupId);
+    switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
       case (null) #noVotes;
       case (?o) {
         let ?{ offering; championId } = calculateVotes(o) else return #noVotes;
@@ -159,6 +153,13 @@ shared (install) actor class TeamActor(
 
   public shared ({ caller }) func getLedgerId() : async Principal {
     return ledgerId;
+  };
+
+  private func buildMatchGroupKey(matchGroupId : Nat) : Trie.Key<Nat> {
+    {
+      key = matchGroupId;
+      hash = Nat32.fromNat(matchGroupId); // TODO is this ok? numbers should be in the range of 0-2^32-1
+    };
   };
 
   private func calculateVotes(matchVotes : Trie.Trie<Principal, Types.MatchGroupVote>) : ?{
