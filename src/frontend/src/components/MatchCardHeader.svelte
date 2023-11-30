@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { TeamIdOrTie } from "../ic-agent/Stadium";
-  import { MatchDetail } from "../models/Match";
+  import { TeamDetails } from "../models/Match";
+  import { TeamIdOrTie } from "../models/Team";
   import Tooltip from "./Tooltip.svelte";
 
-  export let match: MatchDetail;
-  export let team1Score: bigint | undefined;
-  export let team2Score: bigint | undefined;
+  export let team1: TeamDetails;
+  export let team2: TeamDetails;
   export let winner: TeamIdOrTie | undefined;
 
   let crownEmojiOrEmpty = (teamId: "team1" | "team2") => {
@@ -21,15 +20,16 @@
     <Tooltip>
       <img
         class="logo"
-        src={match.team1.logoUrl}
-        alt="{match.team1.name} Logo"
+        src={team1.logoUrl}
+        alt="{team1.name} Logo"
         slot="content"
       />
-      <div slot="tooltip" class="name">{match.team1.name}</div>
+      <div slot="tooltip" class="name">{team1.name}</div>
     </Tooltip>
 
     <div class="score">
-      {team1Score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team1")}</span>
+      {team1.score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team1")}</span
+      >
     </div>
   </div>
   <div class="header-center">
@@ -37,16 +37,17 @@
   </div>
   <div class="header-team team2">
     <div class="score">
-      {team2Score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team2")}</span>
+      {team2.score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team2")}</span
+      >
     </div>
     <Tooltip>
       <img
         class="logo"
-        src={match.team2.logoUrl}
-        alt="{match.team2.name} Logo"
+        src={team2.logoUrl}
+        alt="{team2.name} Logo"
         slot="content"
       />
-      <div slot="tooltip" class="name">{match.team2.name}</div>
+      <div slot="tooltip" class="name">{team2.name}</div>
     </Tooltip>
   </div>
 </div>

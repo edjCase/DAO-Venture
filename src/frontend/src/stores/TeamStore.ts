@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
-import { leagueAgentFactory, type Team } from "../ic-agent/League";
+import { leagueAgentFactory } from "../ic-agent/League";
+import { Team } from "../models/Team";
 
 
 

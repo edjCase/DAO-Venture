@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { LiveMatchGroup, stadiumAgentFactory } from "../ic-agent/Stadium";
+import { MatchGroup as LiveMatchGroup, stadiumAgentFactory } from "../ic-agent/Stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { Principal } from "@dfinity/principal";
 import { SeasonStatus } from "../models/Season";
@@ -7,7 +7,7 @@ import { scheduleStore } from "./ScheduleStore";
 
 
 export const liveMatchGroupStore = (() => {
-  const { subscribe, set } = writable<LiveMatchGroup>();
+  const { subscribe, set } = writable<LiveMatchGroup | undefined>();
   let nextMatchTimeout: NodeJS.Timeout;
   let liveMatchInterval: NodeJS.Timeout;
 
@@ -25,7 +25,10 @@ export const liveMatchGroupStore = (() => {
   };
 
 
-  scheduleStore.subscribeStatus((status: SeasonStatus) => {
+  scheduleStore.subscribeStatus((status: SeasonStatus | undefined) => {
+    if (!status) {
+      return;
+    }
     if ('notStarted' in status || 'starting' in status || 'completed' in status) {
       if (liveMatchInterval) {
         clearInterval(liveMatchInterval);
@@ -62,7 +65,6 @@ export const liveMatchGroupStore = (() => {
         continue;
       }
     }
-    throw "No match groups are next but the season is in progress";
   });
 
 

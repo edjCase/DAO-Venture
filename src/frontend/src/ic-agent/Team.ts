@@ -2,9 +2,9 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
-import { Offering, OfferingIdl } from './Stadium';
 import { Player, PlayerIdl } from './PlayerLedger';
 import { IDL } from "@dfinity/candid";
+import { Offering, OfferingIdl } from '../models/Offering';
 
 
 export type MatchGroupVote = {

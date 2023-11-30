@@ -1,135 +1,111 @@
-<script lang="ts" context="module">
-  export type MatchVariant =
-    | { completed: CompletedMatch }
-    | { live: InProgressMatch }
-    | { next: ScheduledMatch }
-    | { upcoming: NotScheduledMatch };
-</script>
-
 <script lang="ts">
-  import { LiveMatchGroup } from "../ic-agent/Stadium";
-
   import {
-    CompletedMatch,
-    InProgressMatch,
-    NotScheduledMatch,
-    ScheduledMatch,
-  } from "../models/Season";
-  import { TeamIdOrTie } from "../models/Team";
+    MatchGroup as LiveMatchGroup,
+    InProgressMatch as LiveMatch,
+  } from "../ic-agent/Stadium";
+  import { MatchDetails } from "../models/Match";
+
   import { liveMatchGroupStore } from "../stores/LiveMatchGroupStore";
+  import Bases from "./Bases.svelte";
   import MatchCardHeader from "./MatchCardHeader.svelte";
 
-  export let matchId: bigint;
-  export let match: MatchVariant;
-  export let liveMatch: LiveMatchGroup | undefined;
+  export let match: MatchDetails;
   export let compact: boolean = false;
 
-  liveMatchGroupStore.subscribe((liveMatchGroup) => {
-    if (liveMatchGroup.id == matchId) {
-      liveMatch = liveMatchGroup;
-    }
-  });
+  let liveMatch: LiveMatch | undefined;
 
-  let team1Score: bigint | undefined;
-  let team2Score: bigint | undefined;
-  let winner: TeamIdOrTie | undefined;
-  if ("completed" in match && "played" in match.completed.result) {
-    team1Score = match.completed.result.played.team1Score;
-    team2Score = match.completed.result.played.team2Score;
-    winner = match.completed.result.played.winner;
-  } else {
-    team1Score = undefined;
-    team2Score = undefined;
-    winner = undefined;
-  }
-
-  let getPlayerName = (playerId: number): string => {
-    let players: { name: string }[];
-    if ("completed" in match) {
-      players = match.completed.players;
-    } else if ("live" in match) {
-      players = match.live.result.a;
-    } else if ("next" in match) {
-      players = match.next.players;
-    } else {
-      players = match.upcoming.players;
-    }
-    let player = match.team1.players.find((p) => p.id == playerId);
-    if (!player) {
-      player = match.team2.players.find((p) => p.id == playerId);
-      if (!player) {
-        return "Unknown Player";
+  liveMatchGroupStore.subscribe(
+    (liveMatchGroup: LiveMatchGroup | undefined) => {
+      if (liveMatchGroup && liveMatchGroup.id == match.matchGroupId) {
+        let matchVariant = liveMatchGroup.matches[Number(match.id)];
+        if (matchVariant && "inProgress" in matchVariant) {
+          liveMatch = matchVariant.inProgress;
+        }
       }
+    }
+  );
+
+  let getPlayerName = (playerId: number, liveMatch: LiveMatch): string => {
+    let player = liveMatch.players.find((p) => p.id == playerId);
+    if (!player) {
+      return "Unknown Player";
     }
     return player.name;
   };
   let getActivePlayerName = (
     team: "team1" | "team2",
-    liveMatch: LiveMatchGroup
+    liveMatch: LiveMatch
   ): string => {
     let playerId: number;
     let emoji: string;
-    if (team in matchState.offenseTeamId) {
-      playerId = matchState.field.offense.atBat;
+    if (team in liveMatch.offenseTeamId) {
+      playerId = liveMatch.field.offense.atBat;
       // Batter emoji
       emoji = "🏏";
     } else {
-      playerId = matchState.field.defense.pitcher;
+      playerId = liveMatch.field.defense.pitcher;
       // Pitcher emoji
       emoji = "⚾";
     }
-    let playerName = getPlayerName(playerId);
-    if (team in matchState.offenseTeamId) {
+    let playerName = getPlayerName(playerId, liveMatch);
+    if (team in liveMatch.offenseTeamId) {
       playerName = `${emoji} ${playerName}`;
     } else {
       playerName += ` ${emoji}`;
     }
     return playerName;
   };
-  $: log = matchState.log
-    .reverse() // Reverse the filtered array
-    .slice(0, 5); // Take only the first 5 entries
+  $: log =
+    liveMatch?.log
+      .reverse() // Reverse the filtered array
+      .slice(0, 5) || []; // Take only the first 5 entries
 </script>
 
 <div class="card">
-  <MatchCardHeader {match} {team1Score} {team2Score} {winner}>
-    {#if "live" in match}
-      <Bases state={matchState.field.offense} />
-    {:else if "completed" in match}
-      {#if !match.completed.winner}
-        No Winner
-      {:else if "team1" in match.completed.winner}
+  <MatchCardHeader
+    team1={match.team1}
+    team2={match.team2}
+    winner={match.winner}
+  >
+    {#if liveMatch}
+      <Bases state={liveMatch.field.offense} />
+    {:else if match.state == "Played"}
+      {#if !match.winner}
+        <div>Bad state</div>
+      {:else if "team1" in match.winner}
         {match.team1.name} Win!
-      {:else if "team2" in match.completed.winner}
+      {:else if "team2" in match.winner}
         {match.team2.name} Win!
       {:else}
         Its a tie!
       {/if}
-    {:else if "allAbsent" in matchState}
+    {:else if match.state == "AllAbsent"}
       No one showed up
-    {:else if "absentTeam" in matchState}
-      Team {matchState.absentTeam.name} didn't show up, thus forfeit
-    {:else if "stateBroken" in matchState}
-      Broken: {matchState.stateBroken}
+    {:else if match.state == "Team1Absent"}
+      Team {match.team1.name} didn't show up, thus forfeit
+    {:else if match.state == "Team2Absent"}
+      Team {match.team2.name} didn't show up, thus forfeit
+    {:else if match.state == "Error"}
+      Error
     {/if}
   </MatchCardHeader>
   {#if !compact}
-    {#if "live" in match}
+    {#if liveMatch}
       <div class="mid">
         <div class="team-lead">
-          {getActivePlayerName("team1", matchState)}
+          {getActivePlayerName("team1", liveMatch)}
         </div>
         <div>
-          <div>Round {matchState.round}</div>
+          <div>Round {liveMatch.round}</div>
         </div>
         <div class="team-lead">
-          {getActivePlayerName("team2", matchState)}
+          {getActivePlayerName("team2", liveMatch)}
         </div>
       </div>
       <div class="footer">
         <ul>
           {#each log as logEntry}
-            <li>{logEntry.description}</li>
+            <li>{logEntry.message}</li>
           {/each}
         </ul>
       </div>

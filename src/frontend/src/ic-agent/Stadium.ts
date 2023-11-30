@@ -10,7 +10,7 @@ import { FieldPosition, FieldPositionIdl, PlayerSkills, PlayerSkillsIdl } from '
 import { PlayerCondition, PlayerConditionIdl } from '../models/Player';
 
 export type Nat = bigint;
-export type Int = number;
+export type Int = bigint;
 export type Bool = boolean;
 export type Text = string;
 export type PlayerId = number;
@@ -70,9 +70,9 @@ export const DefenseFieldStateIdl = IDL.Record({
 
 export type OffenseFieldState = {
   atBat: PlayerId;
-  firstBase: PlayerId | null;
-  secondBase: PlayerId | null;
-  thirdBase: PlayerId | null;
+  firstBase: [PlayerId] | [];
+  secondBase: [PlayerId] | [];
+  thirdBase: [PlayerId] | [];
 };
 export const OffenseFieldStateIdl = IDL.Record({
   atBat: PlayerIdIdl,
@@ -157,7 +157,7 @@ export const PlayedMatchIdl = IDL.Record({
 
 export type PlayerNotFoundError = {
   id: PlayerId;
-  teamId: TeamId | null;
+  teamId: [TeamId] | [];
 };
 export const PlayerNotFoundErrorIdl = IDL.Record({
   id: PlayerIdIdl,

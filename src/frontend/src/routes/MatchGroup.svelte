@@ -1,10 +1,9 @@
 <script lang="ts">
   import VoteForMatchGroup from "../components/VoteForMatchGroup.svelte";
-  import MatchGroupCardGrid, {
-    MatchGroupVariant,
-  } from "../components/MatchGroupCardGrid.svelte";
+  import MatchGroupCardGrid from "../components/MatchGroupCardGrid.svelte";
   import { navigate } from "svelte-routing";
-  import { SeasonMatchGroups, scheduleStore } from "../stores/ScheduleStore";
+  import { scheduleStore } from "../stores/ScheduleStore";
+  import { MatchGroupDetails } from "../models/Match";
 
   export let matchGroupIdString: string;
 
@@ -14,41 +13,11 @@
     navigate("/404", { replace: true });
   }
 
-  let matchGroup: MatchGroupVariant | undefined;
+  let matchGroup: MatchGroupDetails | undefined;
 
   scheduleStore.subscribeMatchGroups(
-    (seasonMatchGroups: SeasonMatchGroups | undefined) => {
-      if (seasonMatchGroups) {
-        let completedMatchGroup = seasonMatchGroups.completed.find(
-          (mg) => mg.id == matchGroupId
-        );
-        if (completedMatchGroup) {
-          matchGroup = { completed: completedMatchGroup };
-          return;
-        }
-        let nextMatchGroup =
-          seasonMatchGroups.next?.id == matchGroupId
-            ? seasonMatchGroups.next
-            : undefined;
-        if (nextMatchGroup) {
-          if ("inProgress" in nextMatchGroup.type) {
-            matchGroup = { live: nextMatchGroup.type.inProgress };
-          } else {
-            matchGroup = { next: nextMatchGroup.type.scheduled };
-          }
-          return;
-        }
-        let upcomingMatchGroup = seasonMatchGroups.upcoming.find(
-          (mg) => mg.id == matchGroupId
-        );
-        if (upcomingMatchGroup) {
-          matchGroup = { upcoming: upcomingMatchGroup };
-          return;
-        }
-      }
-      throw new Error(
-        `Match group ${matchGroupId} not found in season schedule`
-      );
+    (seasonMatchGroups: MatchGroupDetails[]) => {
+      matchGroup = seasonMatchGroups[matchGroupId];
     }
   );
 </script>
@@ -56,29 +25,29 @@
 {#if !!matchGroup}
   <section>
     <section class="match-details">
-      {#if "upcoming" in matchGroup}
+      {#if matchGroup.state == "Scheduled" || matchGroup.state == "NotScheduled"}
         <h1>
-          Start Time: {matchGroup.upcoming.time.toLocaleString()}
+          Start Time: {matchGroup.time.toLocaleString()}
         </h1>
-      {:else if "completed" in matchGroup}
+      {:else if matchGroup.state == "Completed"}
         <div>Match Group is over</div>
-      {:else if "live" in matchGroup}
+      {:else if matchGroup.state == "InProgress"}
         <div>Match Group is LIVE!</div>
       {/if}
 
       <MatchGroupCardGrid {matchGroup} />
 
       {#if "next" in matchGroup}
-        {#each matchGroup.next.matches as match, index}
+        {#each matchGroup.matches as match}
           <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
           <div class="match-vote">
             <div class="team-vote">
               <h1>{match.team1.name}</h1>
-              <VoteForMatchGroup matchGroupId={index} teamId={match.team1.id} />
+              <VoteForMatchGroup {matchGroupId} teamId={match.team1.id} />
             </div>
             <div class="team-vote">
               <h1>{match.team2.name}</h1>
-              <VoteForMatchGroup matchGroupId={index} teamId={match.team2.id} />
+              <VoteForMatchGroup {matchGroupId} teamId={match.team2.id} />
             </div>
           </div>
         {/each}

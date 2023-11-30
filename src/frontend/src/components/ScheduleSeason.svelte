@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { SeasonStatus, leagueAgentFactory } from "../ic-agent/League";
+  import { leagueAgentFactory } from "../ic-agent/League";
+  import { SeasonStatus } from "../models/Season";
+  import { scheduleStore } from "../stores/ScheduleStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
-  import { seasonStatusStore } from "../stores/ScheduleStore";
 
   let seasonStatus: SeasonStatus | undefined;
 
-  seasonStatusStore.subscribe((s) => {
+  scheduleStore.subscribeStatus((s) => {
     seasonStatus = s;
   });
 
@@ -21,7 +22,7 @@
       .then((result) => {
         if ("ok" in result) {
           console.log("Scheduled season");
-          seasonStatusStore.refetch();
+          scheduleStore.refetch();
         } else {
           console.log("Failed to schedule season", result);
         }

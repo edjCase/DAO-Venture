@@ -61,24 +61,14 @@ export const FieldPositionIdl = IDL.Variant({
 });
 
 export type Player = {
+    id: Nat32;
     name: Text;
-    teamId: Principal | null;
+    teamId: [Principal] | [];
     skills: PlayerSkills;
     position: FieldPosition;
     deity: Deity;
 };
 export const PlayerIdl = IDL.Record({
-    name: IDL.Text,
-    teamId: IDL.Opt(IDL.Principal),
-    skills: PlayerSkillsIdl,
-    position: FieldPositionIdl,
-    deity: DeityIdl,
-});
-
-export type PlayerWithId = Player & {
-    id: Nat32;
-};
-export const PlayerWithIdIdl = IDL.Record({
     id: IDL.Nat32,
     name: IDL.Text,
     teamId: IDL.Opt(IDL.Principal),

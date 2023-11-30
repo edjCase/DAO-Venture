@@ -7,7 +7,7 @@ import { LogEntry, LogEntryIdl, SeasonStatus, SeasonStatusIdl } from '../models/
 import { Offering, OfferingIdl } from '../models/Offering';
 import { MatchAura, MatchAuraIdl } from '../models/MatchAura';
 import { Player, PlayerIdl } from './PlayerLedger';
-import { Team, TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl, TeamIdl } from '../models/Team';
+import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl, Team, TeamIdl } from '../models/Team';
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
 export type Nat = bigint;

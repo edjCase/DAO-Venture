@@ -1,6 +1,8 @@
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 
+type Text = string;
+
 export type TeamId =
     | { team1: null }
     | { team2: null };
@@ -24,22 +26,14 @@ export const TeamIdOrTieIdl = IDL.Variant({
 });
 
 export type Team = {
+    id: Principal;
     name: Text;
     logoUrl: Text;
     ledgerId: Principal;
 };
 export const TeamIdl = IDL.Record({
-    name: IDL.Text,
-    logoUrl: IDL.Text,
-    ledgerId: IDL.Principal,
-});
-
-export type TeamWithId = Team & {
-    id: Principal;
-};
-export const TeamWithIdIdl = IDL.Record({
-    name: IDL.Text,
-    logoUrl: IDL.Text,
-    ledgerId: IDL.Principal,
     id: IDL.Principal,
+    name: IDL.Text,
+    logoUrl: IDL.Text,
+    ledgerId: IDL.Principal,
 });

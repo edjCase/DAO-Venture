@@ -27,10 +27,10 @@
   };
 
   let createPlayers = async function (
-    teamId: Principal | null,
+    teamId: Principal | undefined,
     players: Player[]
   ) {
-    if (teamId === null) {
+    if (!teamId) {
       return;
     }
     let playerLedgerAgent = playerLedgerAgentFactory();
