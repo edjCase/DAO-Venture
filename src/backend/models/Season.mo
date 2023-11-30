@@ -20,7 +20,6 @@ module {
 
     public type InProgressSeasonMatchGroupVariant = {
         #notScheduled : NotScheduledMatchGroup;
-        #failedToSchedule : FailedToScheduleMatchGroup;
         #scheduled : ScheduledMatchGroup;
         #inProgress : InProgressMatchGroup;
         #completed : CompletedMatchGroup;
@@ -37,12 +36,6 @@ module {
         matches : [NotScheduledMatch];
     };
 
-    public type FailedToScheduleMatchGroup = {
-        time : Time.Time;
-        matches : [ScheduledMatch];
-        error : ScheduleMatchGroupError;
-    };
-
     public type NotScheduledMatch = {
         team1 : TeamInfo;
         team2 : TeamInfo;
@@ -50,6 +43,7 @@ module {
 
     public type ScheduledMatchGroup = {
         time : Time.Time;
+        timerId : Nat;
         matches : [ScheduledMatch];
     };
 
@@ -125,7 +119,7 @@ module {
         losses : Nat;
     };
 
-    public type ScheduleMatchGroupError = StadiumTypes.ScheduleMatchGroupError or {
-        #stadiumScheduleCallError : Text;
+    public type StartMatchGroupError = StadiumTypes.StartMatchGroupError or {
+        #stadiumStartCallError : Text;
     };
 };

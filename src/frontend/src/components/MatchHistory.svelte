@@ -1,7 +1,11 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
   import CompletedMatchCard from "./CompletedMatchCard.svelte";
-  import { CompletedMatchState, Match, MatchGroup } from "../ic-agent/Stadium";
+  import {
+    CompletedMatchState,
+    Match,
+    LiveMatchGroup,
+  } from "../ic-agent/Stadium";
   import {
     CompletedMatchStateDetails,
     mapCompletedMatchState,
@@ -11,7 +15,7 @@
   export let teamId: Principal;
 
   type MatchDetails = {
-    matchGroup: MatchGroup;
+    matchGroup: LiveMatchGroup;
     match: Match;
     state: CompletedMatchStateDetails;
   };

@@ -1,32 +1,59 @@
+<script lang="ts" context="module">
+  export type MatchVariant =
+    | { completed: CompletedMatch }
+    | { live: InProgressMatch }
+    | { next: ScheduledMatch }
+    | { upcoming: NotScheduledMatch };
+</script>
+
 <script lang="ts">
-  import { TeamIdOrTie } from "../ic-agent/Stadium";
-  import { MatchDetail } from "../models/Match";
-  import { liveMatchGroupStore } from "../stores/LiveMatchGroupStore";
+  import { LiveMatchGroup } from "../ic-agent/Stadium";
+
   import {
-    MatchVariant,
-    seasonStatusStore as scheduleStore,
-  } from "../stores/ScheduleStore";
+    CompletedMatch,
+    InProgressMatch,
+    NotScheduledMatch,
+    ScheduledMatch,
+  } from "../models/Season";
+  import { TeamIdOrTie } from "../models/Team";
+  import { liveMatchGroupStore } from "../stores/LiveMatchGroupStore";
   import MatchCardHeader from "./MatchCardHeader.svelte";
 
+  export let matchId: bigint;
   export let match: MatchVariant;
+  export let liveMatch: LiveMatchGroup | undefined;
   export let compact: boolean = false;
 
-  let matchDetails: MatchDetail | undefined;
-
-  scheduleStore.subscribe((matchGroup) => {
-    matchDetails = matchGroup.matches[match.live.index];
+  liveMatchGroupStore.subscribe((liveMatchGroup) => {
+    if (liveMatchGroup.id == matchId) {
+      liveMatch = liveMatchGroup;
+    }
   });
 
   let team1Score: bigint | undefined;
   let team2Score: bigint | undefined;
   let winner: TeamIdOrTie | undefined;
-  if ("completed" in match) {
-    team1Score = match.completed.team1Score;
-    team2Score = match.completed.team2Score;
-    winner = match.completed.winner;
+  if ("completed" in match && "played" in match.completed.result) {
+    team1Score = match.completed.result.played.team1Score;
+    team2Score = match.completed.result.played.team2Score;
+    winner = match.completed.result.played.winner;
+  } else {
+    team1Score = undefined;
+    team2Score = undefined;
+    winner = undefined;
   }
 
   let getPlayerName = (playerId: number): string => {
+    let players: { name: string }[];
+    if ("completed" in match) {
+      players = match.completed.players;
+    } else if ("live" in match) {
+      players = match.live.result.a;
+    } else if ("next" in match) {
+      players = match.next.players;
+    } else {
+      players = match.upcoming.players;
+    }
     let player = match.team1.players.find((p) => p.id == playerId);
     if (!player) {
       player = match.team2.players.find((p) => p.id == playerId);
@@ -38,7 +65,7 @@
   };
   let getActivePlayerName = (
     team: "team1" | "team2",
-    matchState: InProgressMatchState
+    liveMatch: LiveMatchGroup
   ): string => {
     let playerId: number;
     let emoji: string;

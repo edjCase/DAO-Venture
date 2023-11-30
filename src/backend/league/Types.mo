@@ -20,47 +20,17 @@ module {
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         mint : (request : MintRequest) -> async MintResult;
         updateLeagueCanisters : () -> async ();
-        onMatchGroupStart(request : OnMatchGroupStartRequest) : async OnMatchGroupStartResult;
+        startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
     };
 
     // On start
-
-    public type OnMatchGroupStartRequest = {
-        id : Nat;
-    };
-
-    public type OnMatchGroupStartError = {
-        #notAuthorized;
+    public type StartMatchGroupResult = {
+        #ok;
         #matchGroupNotFound;
+        #notAuthorized;
         #notScheduledYet;
         #alreadyStarted;
-    };
-
-    public type OnMatchGroupStartResult = OnMatchGroupStartError or {
-        #ok : MatchGroupStartData;
-    };
-
-    public type MatchGroupStartData = {
-        matches : [MatchStartOrSkipData];
-    };
-
-    public type MatchStartOrSkipData = {
-        #start : MatchStartData;
-        #absentTeam : Team.TeamId;
-        #allAbsent;
-    };
-
-    public type MatchStartData = {
-        team1 : TeamStartData;
-        team2 : TeamStartData;
-        aura : MatchAura.MatchAura;
-    };
-
-    public type TeamStartData = {
-        offering : Offering.Offering;
-        championId : Nat32;
-        players : [Player.PlayerWithId];
     };
 
     // Start season

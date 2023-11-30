@@ -1,12 +1,10 @@
 <script lang="ts">
   import VoteForMatchGroup from "../components/VoteForMatchGroup.svelte";
-  import MatchGroupCardGrid from "../components/MatchGroupCardGrid.svelte";
-  import { navigate } from "svelte-routing";
-  import {
-    SeasonMatchGroups,
-    seasonStatusStore,
+  import MatchGroupCardGrid, {
     MatchGroupVariant,
-  } from "../stores/ScheduleStore";
+  } from "../components/MatchGroupCardGrid.svelte";
+  import { navigate } from "svelte-routing";
+  import { SeasonMatchGroups, scheduleStore } from "../stores/ScheduleStore";
 
   export let matchGroupIdString: string;
 
@@ -15,9 +13,10 @@
     // Handle the error, such as redirecting to an error page or showing a message
     navigate("/404", { replace: true });
   }
+
   let matchGroup: MatchGroupVariant | undefined;
 
-  seasonStatusStore.subscribeMatchGroups(
+  scheduleStore.subscribeMatchGroups(
     (seasonMatchGroups: SeasonMatchGroups | undefined) => {
       if (seasonMatchGroups) {
         let completedMatchGroup = seasonMatchGroups.completed.find(
@@ -27,12 +26,16 @@
           matchGroup = { completed: completedMatchGroup };
           return;
         }
-        let liveMatchGroup =
-          seasonMatchGroups.live?.id == matchGroupId
-            ? seasonMatchGroups.live
+        let nextMatchGroup =
+          seasonMatchGroups.next?.id == matchGroupId
+            ? seasonMatchGroups.next
             : undefined;
-        if (liveMatchGroup) {
-          matchGroup = { live: liveMatchGroup };
+        if (nextMatchGroup) {
+          if ("inProgress" in nextMatchGroup.type) {
+            matchGroup = { live: nextMatchGroup.type.inProgress };
+          } else {
+            matchGroup = { next: nextMatchGroup.type.scheduled };
+          }
           return;
         }
         let upcomingMatchGroup = seasonMatchGroups.upcoming.find(
@@ -65,23 +68,17 @@
 
       <MatchGroupCardGrid {matchGroup} />
 
-      {#if "notStarted" in matchGroup.state}
-        {#each matchGroup.matches as match}
+      {#if "next" in matchGroup}
+        {#each matchGroup.next.matches as match, index}
           <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
           <div class="match-vote">
             <div class="team-vote">
               <h1>{match.team1.name}</h1>
-              <VoteForMatchGroup
-                matchGroupId={matchGroup.id}
-                teamId={match.team1.id}
-              />
+              <VoteForMatchGroup matchGroupId={index} teamId={match.team1.id} />
             </div>
             <div class="team-vote">
               <h1>{match.team2.name}</h1>
-              <VoteForMatchGroup
-                matchGroupId={matchGroup.id}
-                teamId={match.team2.id}
-              />
+              <VoteForMatchGroup matchGroupId={index} teamId={match.team2.id} />
             </div>
           </div>
         {/each}

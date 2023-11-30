@@ -2,23 +2,21 @@
   import { Record } from "@dfinity/candid/lib/cjs/idl";
   import AssignPlayerToTeam from "../components/AssignPlayerToTeam.svelte";
   import CreatePlayer from "../components/CreatePlayer.svelte";
-  import CreateStadium from "../components/CreateStadium.svelte";
   import CreateTeam from "../components/CreateTeam.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
   import { teamStore } from "../stores/TeamStore";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
   import TeamGrid from "../components/TeamGrid.svelte";
   import LastAndCurrentMatchGroups from "../components/LastAndCurrentMatchGroups.svelte";
-  import { seasonStatusStore } from "../stores/ScheduleStore";
-  import { Principal } from "@dfinity/principal";
+  import { scheduleStore } from "../stores/ScheduleStore";
+  import { SeasonStatus } from "../models/Season";
 
   $: teams = $teamStore;
-  $: seasonStatus = $seasonStatusStore;
+  let seasonStatus: SeasonStatus;
 
-  let getTeamName = (teamId: Principal) => {
-    let team = teams.find((team) => team.id.toText() === teamId.toText());
-    return team ? team.name : "Unknown";
-  };
+  scheduleStore.subscribeStatus((status) => {
+    seasonStatus = status;
+  });
 </script>
 
 <div class="content">
@@ -38,11 +36,6 @@
         </div>
       {:else if "completed" in seasonStatus}
         Season Complete
-        {#each seasonStatus.completed.teamStandings as teamId, index}
-          <div>
-            {index + 1}: {getTeamName(teamId)}
-          </div>
-        {/each}
       {:else}
         <LastAndCurrentMatchGroups />
       {/if}
@@ -53,10 +46,6 @@
   <div>
     <h1>Create Team</h1>
     <CreateTeam />
-  </div>
-  <div>
-    <h1>Create Stadium</h1>
-    <CreateStadium />
   </div>
   <div>
     <h1>Create Player</h1>

@@ -1,16 +1,27 @@
+<script lang="ts" context="module">
+  export type MatchGroupVariant =
+    | { completed: CompletedMatchGroup }
+    | { live: InProgressMatchGroup }
+    | { next: ScheduledMatchGroup }
+    | { upcoming: NotScheduledMatchGroup };
+</script>
+
 <script lang="ts">
   import {
-    LiveMatch,
-    MatchGroupVariant,
-    MatchVariant,
-  } from "../stores/ScheduleStore";
-  import MatchCard from "./MatchCard.svelte";
+    CompletedMatchGroup,
+    InProgressMatchGroup,
+    NotScheduledMatchGroup,
+    ScheduledMatchGroup,
+  } from "../models/Season";
+  import MatchCard, { MatchVariant } from "./MatchCard.svelte";
 
   export let matchGroup: MatchGroupVariant;
 
   let matches: MatchVariant[];
   if ("live" in matchGroup) {
     matches = matchGroup.live.matches.map((m) => ({ live: m }));
+  } else if ("next" in matchGroup) {
+    matches = matchGroup.next.matches.map((m) => ({ next: m }));
   } else if ("completed" in matchGroup) {
     matches = matchGroup.completed.matches.map((m) => ({ completed: m }));
   } else {

@@ -2,7 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from "../models/Offering";
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from "../models/MatchAura";
-import { TeamId, TeamIdIdl, TeamIdOrBoth, TeamIdOrBothIdl, TeamIdOrTie, TeamIdOrTieIdl } from "../models/Team";
+import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from "../models/Team";
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
@@ -10,7 +10,6 @@ import { FieldPosition, FieldPositionIdl, PlayerSkills, PlayerSkillsIdl } from '
 import { PlayerCondition, PlayerConditionIdl } from '../models/Player';
 
 export type Nat = bigint;
-export const NatIdl = IDL.Nat;
 export type Int = number;
 export type Bool = boolean;
 export type Text = string;
@@ -30,76 +29,23 @@ export const ResetTickTimerResultIdl = IDL.Variant({
   matchGroupComplete: IDL.Null,
 });
 
-export type ScheduleMatchRequest = {
-  team1Id: Principal;
-  team2Id: Principal;
-  offerings: Offering[];
-  aura: MatchAura;
-};
-export const ScheduleMatchRequestIdl = IDL.Record({
-  team1Id: IDL.Principal,
-  team2Id: IDL.Principal,
-  offerings: IDL.Vec(OfferingIdl),
-  aura: MatchAuraIdl,
-});
-
-export type ScheduleMatchGroupRequest = {
-  id: Nat;
-  startTime: bigint;
-  matches: ScheduleMatchRequest[];
-};
-export const ScheduleMatchGroupRequestIdl = IDL.Record({
-  id: NatIdl,
-  startTime: IDL.Int,
-  matches: IDL.Vec(ScheduleMatchRequestIdl),
-});
-
-export type ScheduleMatchError =
-  | { teamNotFound: TeamIdOrBoth };
-export const ScheduleMatchErrorIdl = IDL.Variant({
-  teamNotFound: TeamIdOrBothIdl,
-});
-
-export type ScheduleMatchGroupError =
-  | { teamFetchError: Text }
-  | { matchErrors: ScheduleMatchError[] }
-  | { noMatchesSpecified: null }
-  | { playerFetchError: Text };
-export const ScheduleMatchGroupErrorIdl = IDL.Variant({
-  teamFetchError: IDL.Text,
-  matchErrors: IDL.Vec(ScheduleMatchErrorIdl),
-  noMatchesSpecified: IDL.Null,
-  playerFetchError: IDL.Text,
-});
-
-export type NotStartedMatchGroupState = {
-  startTimerId: Nat;
-};
-export const NotStartedMatchGroupStateIdl = IDL.Record({
-  startTimerId: NatIdl,
-});
-
-export type TeamState = {
+export type Team = {
+  id: Principal;
+  name: Text;
+  logoUrl: Text;
   score: Int;
   offering: Offering;
   championId: PlayerId;
 };
-export const TeamStateIdl = IDL.Record({
+export const TeamIdl = IDL.Record({
+  id: IDL.Principal,
+  name: IDL.Text,
+  logoUrl: IDL.Text,
   score: IDL.Int,
   offering: OfferingIdl,
   championId: PlayerIdIdl,
 });
 
-export type PlayerStateWithId = PlayerState & {
-  id: PlayerId;
-};
-export const PlayerStateWithIdIdl = IDL.Record({
-  teamId: TeamIdIdl,
-  condition: PlayerConditionIdl,
-  skills: PlayerSkillsIdl,
-  position: FieldPositionIdl,
-  id: PlayerIdIdl,
-});
 
 export type DefenseFieldState = {
   firstBase: PlayerId;
@@ -153,47 +99,58 @@ export const LogEntryIdl = IDL.Record({
   isImportant: IDL.Bool,
 });
 
-export type InProgressMatchState = {
+export type PlayerState = {
+  id: PlayerId;
+  name: Text;
+  teamId: TeamId;
+  condition: PlayerCondition;
+  skills: PlayerSkills;
+  position: FieldPosition;
+};
+export const PlayerStateIdl = IDL.Record({
+  id: PlayerIdIdl,
+  name: IDL.Text,
+  teamId: TeamIdIdl,
+  condition: PlayerConditionIdl,
+  skills: PlayerSkillsIdl,
+  position: FieldPositionIdl,
+});
+
+export type InProgressMatch = {
+  team1: Team;
+  team2: Team;
   offenseTeamId: TeamId;
-  team1: TeamState;
-  team2: TeamState;
   aura: MatchAura;
-  players: PlayerStateWithId[];
+  players: PlayerState[];
   field: FieldState;
   log: LogEntry[];
   round: Nat;
   outs: Nat;
   strikes: Nat;
 };
-export const InProgressMatchStateIdl = IDL.Record({
+export const InProgressMatchIdl = IDL.Record({
   offenseTeamId: TeamIdIdl,
-  team1: TeamStateIdl,
-  team2: TeamStateIdl,
+  team1: TeamIdl,
+  team2: TeamIdl,
   aura: MatchAuraIdl,
-  players: IDL.Vec(PlayerStateWithIdIdl),
+  players: IDL.Vec(PlayerStateIdl),
   field: FieldStateIdl,
   log: IDL.Vec(LogEntryIdl),
-  round: NatIdl,
-  outs: NatIdl,
-  strikes: NatIdl,
+  round: IDL.Nat,
+  outs: IDL.Nat,
+  strikes: IDL.Nat,
 });
 
-export type PlayedTeamState = {
-  score: Int;
-};
-export const PlayedTeamStateIdl = IDL.Record({
-  score: IDL.Int,
-});
 
-export type PlayedMatchState = {
-  team1: PlayedTeamState;
-  team2: PlayedTeamState;
+export type PlayedMatch = {
+  team1: Team;
+  team2: Team;
   winner: TeamIdOrTie;
   log: LogEntry[];
 };
-export const PlayedMatchStateIdl = IDL.Record({
-  team1: PlayedTeamStateIdl,
-  team2: PlayedTeamStateIdl,
+export const PlayedMatchIdl = IDL.Record({
+  team1: TeamIdl,
+  team2: TeamIdl,
   winner: TeamIdOrTieIdl,
   log: IDL.Vec(LogEntryIdl),
 });
@@ -244,51 +201,45 @@ export const BrokenStateIdl = IDL.Record({
   error: BrokenStateErrorIdl,
 });
 
-export type CompletedMatchState =
+export type CompletedMatch =
   | { absentTeam: TeamId }
   | { allAbsent: null }
-  | { played: PlayedMatchState }
+  | { played: PlayedMatch }
   | { stateBroken: BrokenState };
-export const CompletedMatchStateIdl = IDL.Variant({
+export const CompletedMatchIdl = IDL.Variant({
   absentTeam: TeamIdIdl,
   allAbsent: IDL.Null,
-  played: PlayedMatchStateIdl,
+  played: PlayedMatchIdl,
   stateBroken: BrokenStateIdl,
 });
 
-export type StartedMatchState =
-  | { inProgress: InProgressMatchState }
-  | { completed: CompletedMatchState };
-export const StartedMatchStateIdl = IDL.Variant({
-  inProgress: InProgressMatchStateIdl,
-  completed: CompletedMatchStateIdl,
+export type CompletedMatchGroup = {
+  matches: CompletedMatch[];
+};
+export const CompletedMatchGroupIdl = IDL.Record({
+  matches: IDL.Vec(CompletedMatchIdl),
 });
 
-export type InProgressMatchGroupState = {
+export type MatchVariant =
+  | { inProgress: InProgressMatch }
+  | { completed: CompletedMatch };
+export const MatchVariantIdl = IDL.Variant({
+  inProgress: InProgressMatchIdl,
+  completed: CompletedMatchIdl,
+});
+
+
+export type MatchGroup = {
+  id: Nat;
   tickTimerId: Nat;
   currentSeed: number;
-  matches: StartedMatchState[];
-};
-export const InProgressMatchGroupStateIdl = IDL.Record({
-  tickTimerId: NatIdl,
-  currentSeed: IDL.Nat32,
-  matches: IDL.Vec(StartedMatchStateIdl),
-});
-
-export type CompletedMatchGroupState = {
-  matches: CompletedMatchState[];
-};
-export const CompletedMatchGroupStateIdl = IDL.Record({
-  matches: IDL.Vec(CompletedMatchStateIdl),
-});
-
-export type MatchGroupState =
-  | StartedMatchGroupState
-  | { notStarted: NotStartedMatchGroupState };
-export const MatchGroupStateIdl = IDL.Variant({
-  inProgress: InProgressMatchGroupStateIdl,
-  completed: CompletedMatchGroupStateIdl,
-  notStarted: NotStartedMatchGroupStateIdl,
+  matches: MatchVariant[];
+}
+export const MatchGroupIdl = IDL.Record({
+  id: IDL.Nat,
+  tickTimerId: IDL.Nat,
+  currentSeed: IDL.Int,
+  matches: IDL.Vec(MatchVariantIdl),
 });
 
 export type MatchTeam = {
@@ -302,65 +253,9 @@ export const MatchTeamIdl = IDL.Record({
   id: IDL.Principal,
   name: IDL.Text,
   logoUrl: IDL.Text,
-  predictionVotes: NatIdl,
+  predictionVotes: IDL.Nat,
   players: IDL.Vec(MatchPlayerIdl),
 });
-
-export type MatchState =
-  | StartedMatchState
-  | { notStarted: null };
-export const MatchStateIdl = IDL.Variant({
-  inProgress: InProgressMatchStateIdl,
-  completed: CompletedMatchStateIdl,
-  notStarted: IDL.Null,
-});
-
-export type Match = MatchWithoutState & {
-  state: MatchState;
-};
-export const MatchIdl = IDL.Record({
-  team1: MatchTeamIdl,
-  team2: MatchTeamIdl,
-  offerings: IDL.Vec(OfferingWithMetaDataIdl),
-  aura: MatchAuraWithMetaDataIdl,
-  state: MatchStateIdl,
-});
-
-export type MatchGroupWithId = MatchGroup & {
-  id: Nat;
-};
-export const MatchGroupWithIdIdl = IDL.Record({
-  time: IDL.Int,
-  matches: IDL.Vec(MatchIdl),
-  state: MatchGroupStateIdl,
-  id: NatIdl,
-});
-
-export type ScheduleMatchGroupResult =
-  | ScheduleMatchGroupError
-  | { ok: MatchGroupWithId };
-export const ScheduleMatchGroupResultIdl = IDL.Variant({
-  teamFetchError: IDL.Text,
-  matchErrors: IDL.Vec(ScheduleMatchErrorIdl),
-  noMatchesSpecified: IDL.Null,
-  playerFetchError: IDL.Text,
-  ok: MatchGroupWithIdIdl,
-});
-
-export type PlayerState = {
-  teamId: TeamId;
-  condition: PlayerCondition;
-  skills: PlayerSkills;
-  position: FieldPosition;
-};
-export const PlayerStateIdl = IDL.Record({
-  teamId: TeamIdIdl,
-  condition: PlayerConditionIdl,
-  skills: PlayerSkillsIdl,
-  position: FieldPositionIdl,
-});
-
-
 
 
 export type MatchWithoutState = {
@@ -376,26 +271,6 @@ export const MatchWithoutStateIdl = IDL.Record({
   aura: MatchAuraWithMetaDataIdl,
 });
 
-
-
-export type MatchGroup = {
-  time: bigint;
-  matches: Match[];
-  state: MatchGroupState;
-};
-export const MatchGroupIdl = IDL.Record({
-  time: IDL.Int,
-  matches: IDL.Vec(MatchIdl),
-  state: MatchGroupStateIdl,
-});
-
-export type StartedMatchGroupState =
-  | { inProgress: InProgressMatchGroupState }
-  | { completed: CompletedMatchGroupState };
-export const StartedMatchGroupStateIdl = IDL.Variant({
-  inProgress: InProgressMatchGroupStateIdl,
-  completed: CompletedMatchGroupStateIdl,
-});
 
 export type TickMatchGroupResult =
   | { inProgress: null }
@@ -424,9 +299,8 @@ export const TickMatchGroupResultIdl = IDL.Variant({
 
 
 export interface _SERVICE {
-  'getMatchGroup': ActorMethod<[Nat], MatchGroupWithId | null>;
+  'getMatchGroup': ActorMethod<[Nat], [MatchGroup] | []>;
   'tickMatchGroup': ActorMethod<[Nat], TickMatchGroupResult>;
-  'scheduleMatchGroup': ActorMethod<[ScheduleMatchGroupRequest], ScheduleMatchGroupResult>;
   'resetTickTimer': ActorMethod<[Nat], ResetTickTimerResult>;
 };
 
@@ -435,15 +309,11 @@ export interface _SERVICE {
 export const idlFactory: InterfaceFactory = ({ }) => {
 
   return IDL.Service({
-    'getMatchGroup': IDL.Func([IDL.Nat], [IDL.Opt(MatchGroupWithIdIdl)], []),
+    'getMatchGroup': IDL.Func([IDL.Nat], [IDL.Opt(MatchGroupIdl)], []),
     'tickMatchGroup': IDL.Func([IDL.Nat], [TickMatchGroupResultIdl], []),
-    'scheduleMatchGroup': IDL.Func([ScheduleMatchGroupRequestIdl], [ScheduleMatchGroupResultIdl], []),
     'resetTickTimer': IDL.Func([IDL.Nat], [ResetTickTimerResultIdl], []),
   });
 };
 
-
-const canisterId = process.env.CANISTER_ID_STADIUM || "";
-// Keep factory due to changing identity
-export let leagueAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
+export let stadiumAgentFactory = (stadiumId: Principal) => createActor<_SERVICE>(stadiumId, idlFactory);
 

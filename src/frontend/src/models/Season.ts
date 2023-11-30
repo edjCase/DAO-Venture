@@ -2,13 +2,13 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl } from './Offering';
 import { MatchAura, MatchAuraIdl } from './MatchAura';
-import { ScheduleMatchGroupError, ScheduleMatchGroupErrorIdl, TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from '../ic-agent/Stadium';
+import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
 export type Nat = bigint;
 export type Nat32 = number;
-export type Int = number;
+export type Int = bigint;
 export type Bool = boolean;
 export type Text = string;
 
@@ -138,16 +138,6 @@ export const NotScheduledMatchGroupIdl = IDL.Record({
     matches: IDL.Vec(NotScheduledMatchIdl),
 });
 
-export type FailedToScheduleMatchGroup = {
-    time: Time;
-    matches: ScheduledMatch[];
-    error: ScheduleMatchGroupError;
-};
-export const FailedToScheduleMatchGroupIdl = IDL.Record({
-    time: TimeIdl,
-    matches: IDL.Vec(ScheduledMatchIdl),
-    error: ScheduleMatchGroupErrorIdl,
-});
 
 export type ScheduledMatchGroup = {
     time: Time;
@@ -189,13 +179,11 @@ export const CompletedSeasonIdl = IDL.Record({
 
 export type InProgressSeasonMatchGroupVariant =
     | { notScheduled: NotScheduledMatchGroup }
-    | { failedToSchedule: FailedToScheduleMatchGroup }
     | { scheduled: ScheduledMatchGroup }
     | { inProgress: InProgressMatchGroup }
     | { completed: CompletedMatchGroup };
 export const InProgressSeasonMatchGroupVariantIdl = IDL.Variant({
     notScheduled: NotScheduledMatchGroupIdl,
-    failedToSchedule: FailedToScheduleMatchGroupIdl,
     scheduled: ScheduledMatchGroupIdl,
     inProgress: InProgressMatchGroupIdl,
     completed: CompletedMatchGroupIdl,

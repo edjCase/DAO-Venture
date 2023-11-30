@@ -8,7 +8,7 @@ import {
     LogEntry,
     Match,
     MatchAuraWithMetaData,
-    MatchGroup,
+    LiveMatchGroup,
     MatchGroupState,
     MatchPlayer,
     MatchTeam,
@@ -205,7 +205,7 @@ export const mapState = (matches: MatchDetail[], state: MatchGroupState): MatchG
         return { notStarted: mapNotStartedState(state.notStarted) };
     }
 };
-export const mapMatchGroup = (matchGroup: MatchGroup): MatchGroupDetails => {
+export const mapMatchGroup = (matchGroup: LiveMatchGroup): MatchGroupDetails => {
     let matches = matchGroup.matches.map(mapMatch);
     return {
         id: matchGroup.id,

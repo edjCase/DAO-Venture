@@ -18,93 +18,51 @@ module {
     public type StadiumActor = actor {
         getMatchGroup : query (id : Nat) -> async ?MatchGroupWithId;
         tickMatchGroup : (id : Nat) -> async TickMatchGroupResult;
-        scheduleMatchGroup : (request : ScheduleMatchGroupRequest) -> async ScheduleMatchGroupResult;
-        resetTickTimer(matchGroupId : Nat) : async ResetTickTimerResult;
+        resetTickTimer : (matchGroupId : Nat) -> async ResetTickTimerResult;
+        startMatchGroup : (request : StartMatchGroupRequest) -> async StartMatchGroupResult;
     };
 
-    public type ResetTickTimerResult = {
-        #ok;
-        #matchGroupNotFound;
-        #matchGroupNotStarted;
-        #matchGroupComplete;
-    };
-
-    public type ScheduleMatchGroupRequest = {
+    public type StartMatchGroupRequest = {
         id : Nat;
-        startTime : Time.Time;
-        matches : [ScheduleMatchRequest];
+        matches : [StartMatchRequest];
     };
 
-    public type ScheduleMatchRequest = {
-        team1Id : Principal;
-        team2Id : Principal;
-        offerings : [Offering.Offering];
-        aura : MatchAura.MatchAura;
+    public type StartMatchRequest = {
+        #start : {
+            team1 : TeamStartData;
+            team2 : TeamStartData;
+            aura : MatchAura.MatchAura;
+        };
+        #allAbsent;
+        #absentTeam : Team.TeamId;
     };
 
-    public type ScheduleMatchGroupError = {
-        #teamFetchError : Text;
-        #matchErrors : [ScheduleMatchError];
-        #noMatchesSpecified;
-        #playerFetchError : Text;
-    };
-    public type ScheduleMatchGroupResult = ScheduleMatchGroupError or {
-        #ok : MatchGroupWithId;
-    };
-
-    public type ScheduleMatchError = {
-        #teamNotFound : Team.TeamIdOrBoth;
-    };
-
-    public type PlayerState = {
-        teamId : Team.TeamId;
-        condition : Player.PlayerCondition;
-        skills : Player.PlayerSkills;
-        position : FieldPosition;
-    };
-
-    public type PlayerStateWithId = PlayerState and {
-        id : PlayerId;
-    };
-
-    public type TeamState = {
-        score : Int;
+    public type TeamStartData = {
+        id : Principal;
+        name : Text;
+        logoUrl : Text;
         offering : Offering.Offering;
         championId : PlayerId;
+        players : [Player.PlayerWithId];
     };
 
-    public type DefenseFieldState = {
-        firstBase : PlayerId;
-        secondBase : PlayerId;
-        thirdBase : PlayerId;
-        shortStop : PlayerId;
-        pitcher : PlayerId;
-        leftField : PlayerId;
-        centerField : PlayerId;
-        rightField : PlayerId;
+    public type StartMatchGroupError = {
+        #noMatchesSpecified;
     };
 
-    public type OffenseFieldState = {
-        atBat : PlayerId;
-        firstBase : ?PlayerId;
-        secondBase : ?PlayerId;
-        thirdBase : ?PlayerId;
+    public type StartMatchGroupResult = StartMatchGroupError or {
+        #ok;
     };
 
-    public type FieldState = {
-        defense : DefenseFieldState;
-        offense : OffenseFieldState;
+    public type MatchVariant = {
+        #inProgress : InProgressMatch;
+        #completed : CompletedMatch;
     };
 
-    public type LogEntry = {
-        message : Text;
-        isImportant : Bool;
-    };
-
-    public type InProgressMatchState = {
+    public type InProgressMatch = {
+        team1 : Team;
+        team2 : Team;
         offenseTeamId : Team.TeamId;
-        team1 : TeamState;
-        team2 : TeamState;
         aura : MatchAura.MatchAura;
         players : [PlayerStateWithId];
         field : FieldState;
@@ -135,75 +93,73 @@ module {
         error : BrokenStateError;
     };
 
-    public type CompletedMatchState = {
+    public type CompletedMatch = {
         #absentTeam : Team.TeamId;
         #allAbsent;
-        #played : PlayedMatchState;
+        #played : PlayedMatch;
         #stateBroken : BrokenState;
     };
 
-    public type PlayedMatchState = {
-        team1 : PlayedTeamState;
-        team2 : PlayedTeamState;
+    public type PlayedMatch = {
+        team1 : Team;
+        team2 : Team;
         winner : Team.TeamIdOrTie;
         log : [LogEntry];
     };
 
-    public type PlayedTeamState = {
-        score : Int;
-    };
-
-    public type MatchWithoutState = {
-        team1 : MatchTeam;
-        team2 : MatchTeam;
-        offerings : [Offering.OfferingWithMetaData];
-        aura : MatchAura.MatchAuraWithMetaData;
-    };
-
-    public type Match = MatchWithoutState and {
-        state : MatchState;
-    };
-
-    public type StartedMatchState = {
-        #inProgress : InProgressMatchState;
-        #completed : CompletedMatchState;
-    };
-
-    public type MatchState = StartedMatchState or {
-        #notStarted;
-    };
-
     public type MatchGroup = {
-        time : Time.Time;
-        matches : [Match];
-        state : MatchGroupState;
+        matches : [MatchVariant];
+        tickTimerId : Nat;
+        currentSeed : Nat32;
     };
 
     public type MatchGroupWithId = MatchGroup and {
         id : Nat;
     };
 
-    public type StartedMatchGroupState = {
-        #inProgress : InProgressMatchGroupState;
-        #completed : CompletedMatchGroupState;
+    public type ResetTickTimerResult = {
+        #ok;
+        #matchGroupNotFound;
     };
 
-    public type MatchGroupState = StartedMatchGroupState or {
-        #notStarted : NotStartedMatchGroupState;
+    public type PlayerState = {
+        name : Text;
+        teamId : Team.TeamId;
+        condition : Player.PlayerCondition;
+        skills : Player.PlayerSkills;
+        position : FieldPosition;
     };
 
-    public type NotStartedMatchGroupState = {
-        startTimerId : Nat;
+    public type PlayerStateWithId = PlayerState and {
+        id : PlayerId;
     };
 
-    public type InProgressMatchGroupState = {
-        tickTimerId : Nat;
-        currentSeed : Nat32;
-        matches : [StartedMatchState];
+    public type DefenseFieldState = {
+        firstBase : PlayerId;
+        secondBase : PlayerId;
+        thirdBase : PlayerId;
+        shortStop : PlayerId;
+        pitcher : PlayerId;
+        leftField : PlayerId;
+        centerField : PlayerId;
+        rightField : PlayerId;
     };
 
-    public type CompletedMatchGroupState = {
-        matches : [CompletedMatchState];
+    public type OffenseFieldState = {
+        atBat : PlayerId;
+        firstBase : ?PlayerId;
+        secondBase : ?PlayerId;
+        thirdBase : ?PlayerId;
+    };
+
+    public type FieldState = {
+        defense : DefenseFieldState;
+        offense : OffenseFieldState;
+    };
+
+    public type LogEntry = {
+        message : Text;
+        isImportant : Bool;
     };
 
     public type TickMatchGroupResult = {
@@ -219,16 +175,18 @@ module {
         #completed;
     };
 
-    public type MatchPlayer = {
+    public type Player = {
         id : PlayerId;
         name : Text;
     };
 
-    public type MatchTeam = {
+    public type Team = {
         id : Principal;
         name : Text;
         logoUrl : Text;
-        predictionVotes : Nat;
-        players : [MatchPlayer];
+        score : Int;
+        offering : Offering.Offering;
+        championId : PlayerId;
     };
+
 };
