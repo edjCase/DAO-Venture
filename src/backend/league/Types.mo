@@ -31,6 +31,14 @@ module {
         #notAuthorized;
         #notScheduledYet;
         #alreadyStarted;
+        #matchErrors : [{
+            matchId : Nat;
+            error : StartMatchError;
+        }];
+    };
+
+    public type StartMatchError = {
+        #notEnoughPlayers : Team.TeamIdOrBoth;
     };
 
     // Start season
@@ -62,22 +70,33 @@ module {
     };
 
     public type CompletedMatch = {
+        team1 : Team.TeamWithId;
+        team2 : Team.TeamWithId;
+        log : [LogEntry];
+        result : CompletedMatchResult;
+    };
+
+    public type CompletedMatchResult = {
         #absentTeam : Team.TeamId;
         #allAbsent;
-        #played : PlayedMatchState;
-        #failed : FailedMatchState;
+        #played : PlayedMatchResult;
+        #failed : FailedMatchResult;
     };
 
-    public type PlayedMatchState = {
-        team1Score : Int;
-        team2Score : Int;
+    public type PlayedMatchResult = {
+        team1 : PlayedMatchTeamData;
+        team2 : PlayedMatchTeamData;
         winner : Team.TeamIdOrTie;
-        log : [LogEntry];
     };
 
-    public type FailedMatchState = {
+    public type PlayedMatchTeamData = {
+        score : Int;
+        offering : Offering.Offering;
+        championId : Player.PlayerId;
+    };
+
+    public type FailedMatchResult = {
         message : Text;
-        log : [LogEntry];
     };
 
     public type LogEntry = {

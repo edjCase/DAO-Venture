@@ -110,39 +110,53 @@ export const CloseSeasonResultIdl = IDL.Variant({
   seasonNotOpen: IDL.Null,
 });
 
-
-export type PlayedMatchState = {
-  team1Score: Int;
-  team2Score: Int;
-  winner: TeamIdOrTie;
-  log: LogEntry[];
+export type PlayedMatchTeamData = {
+  score: Int;
+  offering: Offering;
+  championId: Nat32;
 };
-export const PlayedMatchStateIdl = IDL.Record({
+export const PlayedMatchTeamDataIdl = IDL.Record({
+  score: IDL.Int,
+  offering: OfferingIdl,
+  championId: IDL.Nat32,
+});
+
+export type PlayedMatchResult = {
+  team1: PlayedMatchTeamData;
+  team2: PlayedMatchTeamData;
+  winner: TeamIdOrTie;
+};
+export const PlayedMatchResultIdl = IDL.Record({
   team1Score: IDL.Int,
   team2Score: IDL.Int,
   winner: TeamIdOrTieIdl,
   log: IDL.Vec(LogEntryIdl),
 });
 
-export type FailedMatchState = {
-  message: Text;
-  log: LogEntry[];
-};
-export const FailedMatchStateIdl = IDL.Record({
-  message: IDL.Text,
-  log: IDL.Vec(LogEntryIdl),
-});
-
-export type CompletedMatch =
+export type CompletedMatchResult =
   | { absentTeam: TeamId }
   | { allAbsent: null }
-  | { played: PlayedMatchState }
-  | { failed: FailedMatchState };
-export const CompletedMatchIdl = IDL.Variant({
+  | { played: PlayedMatchResult }
+  | { failed: string };
+
+export const CompletedMatchResultIdl = IDL.Variant({
   absentTeam: TeamIdIdl,
   allAbsent: IDL.Null,
-  played: PlayedMatchStateIdl,
-  failed: FailedMatchStateIdl,
+  played: PlayedMatchResultIdl,
+  failed: IDL.Text,
+});
+
+export type CompletedMatch = {
+  team1: Team;
+  team2: Team;
+  log: LogEntry[];
+  result: CompletedMatchResult;
+}
+export const CompletedMatchIdl = IDL.Record({
+  team1: TeamIdl,
+  team2: TeamIdl,
+  log: IDL.Vec(LogEntryIdl),
+  result: CompletedMatchResultIdl,
 });
 
 export type OnMatchGroupCompleteRequest = {

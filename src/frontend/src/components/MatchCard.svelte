@@ -1,11 +1,11 @@
 <script lang="ts">
-  import {
-    MatchGroup as LiveMatchGroup,
-    InProgressMatch as LiveMatch,
-  } from "../ic-agent/Stadium";
   import { MatchDetails } from "../models/Match";
 
-  import { liveMatchGroupStore } from "../stores/LiveMatchGroupStore";
+  import {
+    LiveMatch,
+    LiveMatchGroup,
+    liveMatchGroupStore,
+  } from "../stores/LiveMatchGroupStore";
   import Bases from "./Bases.svelte";
   import MatchCardHeader from "./MatchCardHeader.svelte";
 
@@ -16,10 +16,19 @@
 
   liveMatchGroupStore.subscribe(
     (liveMatchGroup: LiveMatchGroup | undefined) => {
-      if (liveMatchGroup && liveMatchGroup.id == match.matchGroupId) {
-        let matchVariant = liveMatchGroup.matches[Number(match.id)];
-        if (matchVariant && "inProgress" in matchVariant) {
-          liveMatch = matchVariant.inProgress;
+      if (liveMatchGroup && liveMatchGroup.id == Number(match.matchGroupId)) {
+        liveMatch = liveMatchGroup.matches[Number(match.id)];
+        if (liveMatch) {
+          if ("inProgress" in liveMatch) {
+            match.team1.score = liveMatch.inProgress.team1.score;
+            match.team2.score = liveMatch.inProgress.team2.score;
+          } else {
+            if ("played" in liveMatch.completed) {
+              match.team1.score = liveMatch.completed.played.team1.score;
+              match.team2.score = liveMatch.completed.played.team2.score;
+              match.winner = liveMatch.completed.played.winner;
+            }
+          }
         }
       }
     }
@@ -67,8 +76,12 @@
     team2={match.team2}
     winner={match.winner}
   >
-    {#if liveMatch}
-      <Bases state={liveMatch.field.offense} />
+    {#if match.state == "InProgress"}
+      {#if liveMatch}
+        <Bases state={liveMatch.field.offense} />
+      {:else}
+        Loading...
+      {/if}
     {:else if match.state == "Played"}
       {#if !match.winner}
         <div>Bad state</div>

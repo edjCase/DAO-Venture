@@ -1,6 +1,7 @@
 
 import { Principal } from "@dfinity/principal";
 import { TeamIdOrTie } from "./Team";
+import { OfferingWithMetaData } from "./Offering";
 
 
 export type MatchGroupDetails = {
@@ -16,6 +17,7 @@ export type MatchDetails = {
     matchGroupId: bigint;
     team1: TeamDetails;
     team2: TeamDetails;
+    offerings: OfferingWithMetaData[] | undefined;
     winner: TeamIdOrTie | undefined;
     state: MatchState;
 };

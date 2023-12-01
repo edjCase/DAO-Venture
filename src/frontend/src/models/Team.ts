@@ -29,11 +29,9 @@ export type Team = {
     id: Principal;
     name: Text;
     logoUrl: Text;
-    ledgerId: Principal;
 };
 export const TeamIdl = IDL.Record({
     id: IDL.Principal,
     name: IDL.Text,
     logoUrl: IDL.Text,
-    ledgerId: IDL.Principal,
 });

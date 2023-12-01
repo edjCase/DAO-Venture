@@ -11,7 +11,9 @@
       .reverse()
       .find((mg) => mg.state == "Completed");
     nextOrCurrentMatchGroup = matchGroups.find(
-      (mg) => mg.state == "InProgress" || mg.state == "Scheduled"
+      (mg) =>
+        mg.id > (lastMatchGroup?.id || -1) &&
+        (mg.state == "InProgress" || mg.state == "Scheduled")
     );
   });
 </script>

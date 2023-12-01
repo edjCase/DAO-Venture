@@ -12,10 +12,13 @@ module {
     public type Team = {
         name : Text;
         logoUrl : Text;
-        ledgerId : Principal;
     };
 
     public type TeamWithId = Team and {
         id : Principal;
+    };
+
+    public type TeamWithLedgerId = Team and {
+        ledgerId : Principal;
     };
 };

@@ -27,12 +27,12 @@ export const GetMatchGroupVoteResultIdl = IDL.Variant({
 });
 
 export type VoteOnMatchGroupRequest = MatchGroupVote & {
-  'matchGroupId': number;
+  'matchGroupId': bigint;
 };
 export const VoteOnMatchGroupRequestIdl = IDL.Record({
   'offering': OfferingIdl,
   'championId': IDL.Nat32,
-  'matchGroupId': IDL.Nat32
+  'matchGroupId': IDL.Nat
 });
 
 export type InvalidVoteError =

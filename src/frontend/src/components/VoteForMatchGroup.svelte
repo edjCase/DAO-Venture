@@ -3,11 +3,12 @@
   import CardList from "./CardList.svelte";
   import type { Principal } from "@dfinity/principal";
   import { VoteOnMatchGroupRequest, teamAgentFactory } from "../ic-agent/Team";
-  import type { Offering } from "../ic-agent/Stadium";
   import PlayerPicker from "./PlayerPicker.svelte";
   import { Player } from "../models/Player";
   import { playerStore } from "../stores/PlayerStore";
   import { get } from "svelte/store";
+  import { scheduleStore } from "../stores/ScheduleStore";
+  import { Offering } from "../models/Offering";
 
   export let teamId: Principal;
   export let matchGroupId: number;
@@ -34,7 +35,7 @@
     }
     let offering: Offering = { [match.selectedOffering]: null } as Offering;
     let request: VoteOnMatchGroupRequest = {
-      matchGroupId: matchGroupId,
+      matchGroupId: BigInt(matchGroupId),
       offering: offering,
       championId: match.selectedChampion,
     };
@@ -53,15 +54,15 @@
       });
   };
 
-  matchGroupStore.subscribe((matchGroups) => {
-    let matchGroup = matchGroups.find((g) => g.id == matchGroupId);
+  scheduleStore.subscribeMatchGroups((matchGroups) => {
+    let matchGroup = matchGroups.find((g) => g.id == BigInt(matchGroupId));
     if (!matchGroup) {
       return;
     }
     let unmappedMatch = matchGroup.matches.find(
       (m) => m.team1.id == teamId || m.team2.id == teamId
     );
-    if (!unmappedMatch) {
+    if (!unmappedMatch || !unmappedMatch.offerings) {
       return;
     }
     let offeringCards = unmappedMatch.offerings.map((o) => {

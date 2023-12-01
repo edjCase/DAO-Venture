@@ -130,7 +130,10 @@ module {
         team2 : TeamInitData,
         team1StartOffense : Bool,
         prng : Prng,
-    ) : StadiumTypes.InProgressMatch {
+    ) : {
+        #ok : StadiumTypes.InProgressMatch;
+        #notEnoughPlayers : Team.TeamIdOrBoth;
+    } {
         let eventLog = Buffer.Buffer<LogEntry>(0);
         logTeamOffering(team1, eventLog);
         logTeamOffering(team2, eventLog);
@@ -142,8 +145,8 @@ module {
         } else {
             (team2Players, team1Players);
         };
-        let ?offense = buildStartingOffense(offensePlayers, prng) else Debug.trap("Not enough offense players to start match"); // TODO trap?
-        let ?defense = buildStartingDefense(defensePlayers, prng) else Debug.trap("Not enough defense players to start match"); // TODO trap?
+        let ?offense = buildStartingOffense(offensePlayers, prng) else return #notEnoughPlayers(#team1);
+        let ?defense = buildStartingDefense(defensePlayers, prng) else return #notEnoughPlayers(#team2);
 
         let players = Buffer.merge(
             team1Players,
@@ -153,7 +156,7 @@ module {
                 p2 : StadiumTypes.PlayerStateWithId,
             ) : Order.Order = Nat32.compare(p1.id, p2.id),
         );
-        {
+        #ok({
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = team1State;
             team2 = team2State;
@@ -168,7 +171,7 @@ module {
             round = 0;
             outs = 0;
             strikes = 0;
-        };
+        });
     };
 
     private func logTeamOffering(team : TeamInitData, eventLog : Buffer.Buffer<LogEntry>) {
@@ -191,7 +194,7 @@ module {
         team : TeamInitData,
         teamId : Team.TeamId,
         prng : Prng,
-    ) : (StadiumTypes.Team, Buffer.Buffer<StadiumTypes.PlayerStateWithId>) {
+    ) : (StadiumTypes.TeamState, Buffer.Buffer<StadiumTypes.PlayerStateWithId>) {
 
         var playerStates = team.players
         |> Iter.fromArray(_)
@@ -208,7 +211,7 @@ module {
         )
         |> Buffer.fromIter<StadiumTypes.PlayerStateWithId>(_);
 
-        let teamState : StadiumTypes.Team = {
+        let teamState : StadiumTypes.TeamState = {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
@@ -387,7 +390,7 @@ module {
         };
     };
 
-    private func toMutableTeam(team : StadiumTypes.Team) : MutableTeamState {
+    private func toMutableTeam(team : StadiumTypes.TeamState) : MutableTeamState {
         {
             id = team.id;
             name = team.name;
@@ -442,7 +445,7 @@ module {
             };
         };
 
-        private func mapMutableTeam(team : MutableTeamState) : StadiumTypes.Team {
+        private func mapMutableTeam(team : MutableTeamState) : StadiumTypes.TeamState {
             {
                 id = team.id;
                 name = team.name;
@@ -562,21 +565,29 @@ module {
                 });
             };
             let log : [LogEntry] = Buffer.toArray(state.log);
-            switch (reason) {
+            let result : StadiumTypes.CompletedMatchResult = switch (reason) {
                 case (#noMoreRounds or #outOfPlayers(_)) {
                     #played({
-                        team1 = mapMutableTeam(state.team1);
-                        team2 = mapMutableTeam(state.team2);
-                        log = log;
+                        team1 = {
+                            score = state.team1.score;
+                            offering = state.team1.offering;
+                            championId = state.team1.championId;
+                        };
+                        team2 = {
+                            score = state.team2.score;
+                            offering = state.team2.offering;
+                            championId = state.team2.championId;
+                        };
                         winner = winner;
                     });
                 };
-                case (#stateBroken(error)) {
-                    #stateBroken({
-                        error = error;
-                        log = log;
-                    });
-                };
+                case (#stateBroken(error)) #stateBroken(error);
+            };
+            {
+                team1 = mapMutableTeam(state.team1);
+                team2 = mapMutableTeam(state.team2);
+                log = log;
+                result = result;
             };
         };
 

@@ -50,8 +50,8 @@ module {
     public type ScheduledMatch = {
         team1 : TeamInfo;
         team2 : TeamInfo;
-        offerings : [Offering.Offering];
-        aura : MatchAura.MatchAura;
+        offerings : [Offering.OfferingWithMetaData];
+        aura : MatchAura.MatchAuraWithMetaData;
     };
 
     public type InProgressMatchGroup = {
@@ -79,22 +79,25 @@ module {
     public type CompletedMatch = {
         team1 : TeamInfo;
         team2 : TeamInfo;
+        log : [LogEntry];
         result : CompletedMatchResult;
     };
 
     public type CompletedMatchResult = {
         #played : {
-            team1Score : Int;
-            team2Score : Int;
+            team1 : PlayedMatchTeamData;
+            team2 : PlayedMatchTeamData;
             winner : Team.TeamIdOrTie;
-            log : [LogEntry];
         };
         #absentTeam : Team.TeamId;
         #allAbsent;
-        #failed : {
-            message : Text;
-            log : [LogEntry];
-        };
+        #failed : Text;
+    };
+
+    public type PlayedMatchTeamData = {
+        offering : Offering.Offering;
+        championId : Nat32;
+        score : Int;
     };
 
     public type LogEntry = {

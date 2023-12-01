@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
-import { Offering, OfferingIdl } from './Offering';
-import { MatchAura, MatchAuraIdl } from './MatchAura';
+import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from './Offering';
+import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
 import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
 
 export type Time = bigint;
@@ -46,14 +46,14 @@ export const NotScheduledMatchIdl = IDL.Record({
 export type ScheduledMatch = {
     team1: TeamInfo;
     team2: TeamInfo;
-    offerings: Offering[];
-    aura: MatchAura;
+    offerings: OfferingWithMetaData[];
+    aura: MatchAuraWithMetaData;
 };
 export const ScheduledMatchIdl = IDL.Record({
     team1: TeamInfoIdl,
     team2: TeamInfoIdl,
-    offerings: IDL.Vec(OfferingIdl),
-    aura: MatchAuraIdl,
+    offerings: IDL.Vec(OfferingWithMetaDataIdl),
+    aura: MatchAuraWithMetaDataIdl,
 });
 
 export type InProgressMatchResult =
@@ -84,29 +84,37 @@ export const InProgressMatchIdl = IDL.Record({
     result: InProgressMatchResultIdl,
 });
 
+export type PlayedMatchTeamData = {
+    offering: Offering;
+    championId: Nat32;
+    score: Int;
+};
+export const PlayedMatchTeamDataIdl = IDL.Record({
+    offering: OfferingIdl,
+    championId: IDL.Nat32,
+    score: IDL.Int,
+});
+
 export type CompletedMatchResult =
-    | { played: { team1Score: Int; team2Score: Int; winner: TeamIdOrTie; log: LogEntry[]; } }
+    | { played: { team1: PlayedMatchTeamData; team2: PlayedMatchTeamData; winner: TeamIdOrTie; } }
     | { absentTeam: TeamId }
     | { allAbsent: null }
-    | { failed: { message: Text; log: LogEntry[]; } };
+    | { failed: Text };
 export const CompletedMatchResultIdl = IDL.Variant({
     played: IDL.Record({
-        team1Score: IDL.Int,
-        team2Score: IDL.Int,
+        team1: PlayedMatchTeamDataIdl,
+        team2: PlayedMatchTeamDataIdl,
         winner: TeamIdOrTieIdl,
-        log: IDL.Vec(LogEntryIdl),
     }),
     absentTeam: TeamIdIdl,
     allAbsent: IDL.Null,
-    failed: IDL.Record({
-        message: IDL.Text,
-        log: IDL.Vec(LogEntryIdl),
-    }),
+    failed: IDL.Text,
 });
 
 export type CompletedMatch = {
     team1: TeamInfo;
     team2: TeamInfo;
+    log: LogEntry[];
     result: CompletedMatchResult;
 };
 export const CompletedMatchIdl = IDL.Record({

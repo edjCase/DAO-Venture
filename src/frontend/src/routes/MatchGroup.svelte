@@ -4,6 +4,7 @@
   import { navigate } from "svelte-routing";
   import { scheduleStore } from "../stores/ScheduleStore";
   import { MatchGroupDetails } from "../models/Match";
+  import { nanosecondsToDate } from "../utils/DateUtils";
 
   export let matchGroupIdString: string;
 
@@ -27,7 +28,7 @@
     <section class="match-details">
       {#if matchGroup.state == "Scheduled" || matchGroup.state == "NotScheduled"}
         <h1>
-          Start Time: {matchGroup.time.toLocaleString()}
+          Start Time: {nanosecondsToDate(matchGroup.time).toLocaleString()}
         </h1>
       {:else if matchGroup.state == "Completed"}
         <div>Match Group is over</div>
@@ -37,7 +38,7 @@
 
       <MatchGroupCardGrid {matchGroup} />
 
-      {#if "next" in matchGroup}
+      {#if matchGroup.state == "Scheduled"}
         {#each matchGroup.matches as match}
           <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
           <div class="match-vote">

@@ -59,7 +59,7 @@ shared (install) actor class TeamActor(
       return #seasonStatusFetchError(Error.message(err));
     };
     let teamId = Principal.fromActor(this);
-    let matchGroupData : { offerings : [Offering.Offering] } = switch (seasonStatus) {
+    let matchGroupData : Season.ScheduledMatch = switch (seasonStatus) {
       case (#notStarted or #starting) return #votingNotOpen;
       case (#completed(c)) return #votingNotOpen;
       case (#inProgress(ip)) {
@@ -79,7 +79,7 @@ shared (install) actor class TeamActor(
     };
 
     let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let offeringExists = IterTools.any(matchGroupData.offerings.vals(), func(o : Offering.Offering) : Bool = o == request.offering);
+    let offeringExists = IterTools.any(matchGroupData.offerings.vals(), func(o : Offering.OfferingWithMetaData) : Bool = o.offering == request.offering);
     if (not offeringExists) {
       errors.add(#invalidOffering(request.offering));
     };

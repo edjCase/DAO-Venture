@@ -64,6 +64,7 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: state,
+                offerings: undefined,
                 team1: mapTeam(match.completed.team1, team1Score),
                 team2: mapTeam(match.completed.team2, team2Score),
                 winner: winner
@@ -74,6 +75,7 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'InProgress',
+                offerings: undefined,
                 team1: mapTeam(match.inProgress.team1, undefined),
                 team2: mapTeam(match.inProgress.team2, undefined),
                 winner: undefined
@@ -85,6 +87,7 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'Scheduled',
+                offerings: match.scheduled.offerings,
                 team1: mapTeam(match.scheduled.team1, undefined),
                 team2: mapTeam(match.scheduled.team2, undefined),
                 winner: undefined
@@ -96,6 +99,7 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'NotScheduled',
+                offerings: undefined,
                 team1: mapTeam(match.notScheduled.team1, undefined),
                 team2: mapTeam(match.notScheduled.team2, undefined),
                 winner: undefined

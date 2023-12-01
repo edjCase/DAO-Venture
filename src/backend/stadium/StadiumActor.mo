@@ -78,37 +78,59 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         let prng = CommonUtil.buildPrng(seedBlob);
         let tickTimerId = startTickTimer(request.id);
 
-        let startedMatches : [StadiumTypes.MatchVariant] = request.matches
-        |> Iter.fromArray(_)
-        |> Iter.map(
-            _,
-            func(
-                matchRequest : StadiumTypes.StartMatchRequest
-            ) : StadiumTypes.MatchVariant {
-                let startData = switch (matchRequest) {
-                    case (#absentTeam(absentTeam)) return #completed(#absentTeam(absentTeam));
-                    case (#allAbsent) return #completed(#allAbsent);
-                    case (#start(data)) data;
+        let matches = Buffer.Buffer<StadiumTypes.MatchVariant>(request.matches.size());
+        let matchErrors = Buffer.Buffer<{ matchId : Nat; error : StadiumTypes.StartMatchError }>(request.matches.size());
+
+        label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
+            let startData = switch (match.data) {
+                case (#absentTeam(absentTeam)) {
+                    let completedMatch = #completed({
+                        team1 = match.team1;
+                        team2 = match.team2;
+                        log = [];
+                        result = #absentTeam(absentTeam);
+                    });
+                    matches.add(completedMatch);
+                    continue f;
                 };
+                case (#allAbsent) {
+                    let completedMatch = #completed({
+                        team1 = match.team1;
+                        team2 = match.team2;
+                        log = [];
+                        result = #allAbsent;
+                    });
+                    matches.add(completedMatch);
+                    continue f;
+                };
+                case (#start(data)) data;
+            };
 
-                let team1Init = createTeamInit(startData.team1, prng);
-                let team2Init = createTeamInit(startData.team2, prng);
-                let team1IsOffense = prng.nextCoin();
-                let initState = MatchSimulator.initState(
-                    startData.aura,
-                    team1Init,
-                    team2Init,
-                    team1IsOffense,
-                    prng,
-                );
+            let team1Init = createTeamInit(match.team1, startData.team1, prng);
+            let team2Init = createTeamInit(match.team2, startData.team2, prng);
+            let team1IsOffense = prng.nextCoin();
+            let initState = MatchSimulator.initState(
+                startData.aura,
+                team1Init,
+                team2Init,
+                team1IsOffense,
+                prng,
+            );
+            switch (initState) {
+                case (#ok(state)) matches.add(#inProgress(state));
+                case (#notEnoughPlayers(teamOrBoth)) matchErrors.add({
+                    matchId = matchId;
+                    error = #notEnoughPlayers(teamOrBoth);
+                });
+            };
+        };
+        if (matchErrors.size() > 0) {
+            return #matchErrors(Buffer.toArray(matchErrors));
+        };
 
-                #inProgress(initState);
-            },
-        )
-        |> Iter.toArray(_);
         let matchGroup : StadiumTypes.MatchGroupWithId = {
             id = request.id;
-            matches = startedMatches;
+            matches = Buffer.toArray(matches);
             tickTimerId = tickTimerId;
             currentSeed = prng.getCurrentSeed();
         };
@@ -239,19 +261,25 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
             let compiledCompletedMatches = Buffer.toArray(completedMatches)
             |> Array.map(
                 _,
-                func(m : StadiumTypes.CompletedMatch) : LeagueTypes.CompletedMatch = switch (m) {
-                    case (#absentTeam(absentTeam)) #absentTeam(absentTeam);
-                    case (#allAbsent) #allAbsent;
-                    case (#played(playedState)) #played({
-                        team1Score = playedState.team1.score;
-                        team2Score = playedState.team2.score;
-                        winner = playedState.winner;
-                        log = playedState.log;
-                    });
-                    case (#stateBroken(failedState)) #failed({
-                        message = "Match in bad state: " # debug_show (failedState);
-                        log = failedState.log;
-                    });
+                func(m : StadiumTypes.CompletedMatch) : LeagueTypes.CompletedMatch {
+                    let result = switch (m.result) {
+                        case (#absentTeam(absentTeam)) #absentTeam(absentTeam);
+                        case (#allAbsent) #allAbsent;
+                        case (#played(playedState)) #played({
+                            team1 = playedState.team1;
+                            team2 = playedState.team2;
+                            winner = playedState.winner;
+                        });
+                        case (#stateBroken(failedState)) #failed({
+                            message = "Match in bad state: " # debug_show (failedState);
+                        });
+                    };
+                    {
+                        team1 = m.team1;
+                        team2 = m.team2;
+                        result = result;
+                        log = m.log;
+                    };
                 },
             );
             #completed(compiledCompletedMatches);
@@ -261,11 +289,12 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
     };
 
     private func createTeamInit(
-        team : StadiumTypes.TeamStartData,
+        team : Team.TeamWithId,
+        teamData : StadiumTypes.TeamStartData,
         prng : Prng,
     ) : MatchSimulator.TeamInitData {
-        let players = Buffer.fromArray<PlayerWithId>(team.players);
-        switch (team.offering) {
+        let players = Buffer.fromArray<PlayerWithId>(teamData.players);
+        switch (teamData.offering) {
             case (#shuffleAndBoost) {
                 let currentPositions : Buffer.Buffer<FieldPosition> = players
                 |> Buffer.map(
@@ -288,8 +317,8 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
             name = team.name;
             logoUrl = team.logoUrl;
             players = Buffer.toArray(players);
-            offering = team.offering;
-            championId = team.championId;
+            offering = teamData.offering;
+            championId = teamData.championId;
         };
     };
 

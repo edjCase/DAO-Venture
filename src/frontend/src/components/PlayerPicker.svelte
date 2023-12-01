@@ -6,7 +6,9 @@
   export let onPlayerSelected: (playerId: number) => void;
 
   onMount(() => {
-    onPlayerSelected(players[0].id);
+    if (players.length > 0) {
+      onPlayerSelected(players[0].id);
+    }
   });
 </script>
 

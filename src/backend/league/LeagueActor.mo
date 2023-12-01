@@ -47,14 +47,14 @@ actor LeagueActor {
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
+    stable var teams : Trie.Trie<Principal, Team.TeamWithLedgerId> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
     stable var stadiumIdOrNull : ?Principal = null;
 
     public query func getTeams() : async [TeamWithId] {
         Trie.toArray(
             teams,
-            func(k : Principal, v : Team.Team) : TeamWithId = {
+            func(k : Principal, v : Team.TeamWithLedgerId) : TeamWithId = {
                 id = k;
                 name = v.name;
                 logoUrl = v.logoUrl;
@@ -86,7 +86,7 @@ actor LeagueActor {
 
         let teamsArray = Trie.toArray(
             teams,
-            func(k : Principal, v : Team.Team) : TeamWithId = {
+            func(k : Principal, v : Team.TeamWithLedgerId) : TeamWithId = {
                 id = k;
                 name = v.name;
                 logoUrl = v.logoUrl;
@@ -129,7 +129,7 @@ actor LeagueActor {
                     _,
                     func(m : ScheduleBuilder.Match) : Season.NotScheduledMatch = {
                         team1 = getTeamInfo(m.team1Id);
-                        team2 = getTeamInfo(m.team1Id);
+                        team2 = getTeamInfo(m.team2Id);
                     },
                 )
                 |> Iter.toArray(_);
@@ -165,7 +165,7 @@ actor LeagueActor {
         // Create canister for team logic
         let teamActor = await createTeamActor(ledgerId);
         let teamId = Principal.fromActor(teamActor);
-        let team : Team.Team = {
+        let team : Team.TeamWithLedgerId = {
             name = request.name;
             canister = teamActor;
             logoUrl = request.logoUrl;
@@ -241,7 +241,7 @@ actor LeagueActor {
             case (#scheduled(d)) d;
         };
 
-        let allPlayers = await PlayerLedgerActor.getTeamPlayers(null);
+        let allPlayers = await PlayerLedgerActor.getAllPlayers();
         let matchStartRequestBuffer = Buffer.Buffer<StadiumTypes.StartMatchRequest>(scheduledMatchGroup.matches.size());
 
         for (match in Iter.fromArray(scheduledMatchGroup.matches)) {
@@ -258,6 +258,7 @@ actor LeagueActor {
 
         switch (startResult) {
             case (#noMatchesSpecified) Debug.trap("No matches specified for match group " # Nat.toText(id));
+            case (#matchErrors(errors)) return #matchErrors(errors);
             case (#ok) {
                 let inProgressMatches = scheduledMatchGroup.matches
                 |> Iter.fromArray(_)
@@ -268,8 +269,8 @@ actor LeagueActor {
                         {
                             team1 = match.0.team1;
                             team2 = match.0.team2;
-                            aura = match.0.aura;
-                            result = switch (match.1) {
+                            aura = match.0.aura.aura;
+                            result = switch (match.1.data) {
                                 case (#start(startData)) {
                                     #started({
                                         team1Offering = startData.team1.offering;
@@ -306,6 +307,7 @@ actor LeagueActor {
     public shared ({ caller }) func onMatchGroupComplete(
         request : Types.OnMatchGroupCompleteRequest
     ) : async Types.OnMatchGroupCompleteResult {
+        Debug.print("On Match group complete called for: " # Nat.toText(request.id));
         let #inProgress(season) = seasonStatus else return #seasonNotOpen;
         let ?stadiumId = stadiumIdOrNull else return #notAuthorized;
         if (caller != stadiumId) {
@@ -339,22 +341,17 @@ actor LeagueActor {
                 {
                     team1 = inProgressMatch.team1;
                     team2 = inProgressMatch.team2;
-                    result = switch (completedMatch) {
+                    log = completedMatch.log;
+                    result = switch (completedMatch.result) {
                         case (#allAbsent) #allAbsent;
                         case (#absentTeam(#team1)) #absentTeam(#team1);
                         case (#absentTeam(#team2)) #absentTeam(#team2);
                         case (#played(state)) #played({
-                            team1Score = state.team1Score;
-                            team2Score = state.team2Score;
+                            team1 = state.team1;
+                            team2 = state.team2;
                             winner = state.winner;
-                            log = state.log;
                         });
-                        case (#failed(failedState)) {
-                            #failed({
-                                message = failedState.message;
-                                log = failedState.log;
-                            });
-                        };
+                        case (#failed(failedState)) #failed(failedState.message);
                     };
                 };
             },
@@ -431,16 +428,30 @@ actor LeagueActor {
         inProgressSeason : Season.InProgressSeason,
         prng : Prng,
     ) : () {
-        let duration = #seconds(1); // TODO
+        let timeDiff = matchGroup.time - Time.now();
+        Debug.print("Scheduling match group " # Nat.toText(matchGroupId) # " in " # Int.toText(timeDiff) # " nanoseconds");
+        let duration = if (timeDiff <= 0) {
+            // Schedule immediately
+            #nanoseconds(0);
+        } else {
+            #nanoseconds(Int.abs(timeDiff));
+        };
         let timerId = Timer.setTimer(
             duration,
             func() : async () {
-                let message = switch (await startMatchGroup(matchGroupId)) {
+                let result = try {
+                    await startMatchGroup(matchGroupId);
+                } catch (err) {
+                    Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback failed: " # Error.message(err));
+                    return;
+                };
+                let message = switch (result) {
                     case (#ok) "Match group started";
                     case (#matchGroupNotFound) "Match group not found";
                     case (#notAuthorized) "Not authorized";
                     case (#notScheduledYet) "Match group not scheduled yet";
                     case (#alreadyStarted) "Match group already started";
+                    case (#matchErrors(errors)) "Match group errors: " # debug_show (errors);
                 };
                 Debug.print("Match group '" #Nat.toText(matchGroupId) # "' start callback: " # message);
             },
@@ -496,17 +507,22 @@ actor LeagueActor {
     ) : async* StadiumTypes.StartMatchRequest {
         let team1InitOrNull = await* buildTeamInitData(matchGroupId, match.team1, allPlayers);
         let team2InitOrNull = await* buildTeamInitData(matchGroupId, match.team2, allPlayers);
-        switch (team1InitOrNull, team2InitOrNull) {
+        let data = switch (team1InitOrNull, team2InitOrNull) {
             case (#ok(t1), #ok(t2)) {
                 #start({
                     team1 = t1;
                     team2 = t2;
-                    aura = match.aura;
+                    aura = match.aura.aura;
                 });
             };
             case (#ok(_), #noVotes) #absentTeam(#team2);
             case (#noVotes, #ok(_)) #absentTeam(#team1);
             case (#noVotes, #noVotes) #allAbsent;
+        };
+        {
+            team1 = match.team1;
+            team2 = match.team2;
+            data = data;
         };
     };
 
@@ -644,8 +660,8 @@ actor LeagueActor {
                         updateTeamScore(match.team2.id, 0, false);
                     };
                     case (#played(state)) {
-                        updateTeamScore(match.team1.id, state.team1Score, state.winner == #team1);
-                        updateTeamScore(match.team2.id, state.team2Score, state.winner == #team2);
+                        updateTeamScore(match.team1.id, state.team1.score, state.winner == #team1);
+                        updateTeamScore(match.team2.id, state.team2.score, state.winner == #team2);
                     };
                 };
             };
@@ -703,14 +719,22 @@ actor LeagueActor {
         trie;
     };
 
-    private func getRandomOfferings(count : Nat) : [Offering.Offering] {
+    private func getRandomOfferings(count : Nat) : [Offering.OfferingWithMetaData] {
         // TODO
         [
             #shuffleAndBoost
-        ];
+        ]
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(o : Offering.Offering) : Offering.OfferingWithMetaData {
+                { Offering.getMetaData(o) with offering = o };
+            },
+        )
+        |> Iter.toArray(_);
     };
 
-    private func getRandomMatchAura(prng : Prng) : MatchAura.MatchAura {
+    private func getRandomMatchAura(prng : Prng) : MatchAura.MatchAuraWithMetaData {
         // TODO
         let auras = Buffer.fromArray<MatchAura.MatchAura>([
             #lowGravity,
@@ -719,7 +743,11 @@ actor LeagueActor {
             #moreBlessingsAndCurses,
         ]);
         prng.shuffleBuffer(auras);
-        auras.get(0);
+        let aura = auras.get(0);
+        {
+            MatchAura.getMetaData(aura) with
+            aura = aura;
+        };
     };
 
 };
