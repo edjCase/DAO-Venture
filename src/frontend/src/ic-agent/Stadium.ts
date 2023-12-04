@@ -42,11 +42,17 @@ export const TeamIdl = IDL.Record({
 });
 
 export type TeamState = {
+  id: Principal;
+  name: Text;
+  logoUrl: Text;
   score: Int;
   offering: Offering;
   championId: PlayerId;
 };
 export const TeamStateIdl = IDL.Record({
+  id: IDL.Principal,
+  name: IDL.Text,
+  logoUrl: IDL.Text,
   score: IDL.Int,
   offering: OfferingIdl,
   championId: PlayerIdIdl,

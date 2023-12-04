@@ -2,6 +2,7 @@
   import { MatchDetails } from "../models/Match";
 
   import {
+    InProgressMatchState,
     LiveMatch,
     LiveMatchGroup,
     liveMatchGroupStore,
@@ -18,23 +19,14 @@
     (liveMatchGroup: LiveMatchGroup | undefined) => {
       if (liveMatchGroup && liveMatchGroup.id == Number(match.matchGroupId)) {
         liveMatch = liveMatchGroup.matches[Number(match.id)];
-        if (liveMatch) {
-          if ("inProgress" in liveMatch) {
-            match.team1.score = liveMatch.inProgress.team1.score;
-            match.team2.score = liveMatch.inProgress.team2.score;
-          } else {
-            if ("played" in liveMatch.completed) {
-              match.team1.score = liveMatch.completed.played.team1.score;
-              match.team2.score = liveMatch.completed.played.team2.score;
-              match.winner = liveMatch.completed.played.winner;
-            }
-          }
-        }
       }
     }
   );
 
-  let getPlayerName = (playerId: number, liveMatch: LiveMatch): string => {
+  let getPlayerName = (
+    playerId: number,
+    liveMatch: InProgressMatchState
+  ): string => {
     let player = liveMatch.players.find((p) => p.id == playerId);
     if (!player) {
       return "Unknown Player";
@@ -43,7 +35,7 @@
   };
   let getActivePlayerName = (
     team: "team1" | "team2",
-    liveMatch: LiveMatch
+    liveMatch: InProgressMatchState
   ): string => {
     let playerId: number;
     let emoji: string;
@@ -78,7 +70,9 @@
   >
     {#if match.state == "InProgress"}
       {#if liveMatch}
-        <Bases state={liveMatch.field.offense} />
+        {#if "inProgress" in liveMatch.state}
+          <Bases state={liveMatch.state.inProgress.field.offense} />
+        {/if}
       {:else}
         Loading...
       {/if}
@@ -103,16 +97,16 @@
     {/if}
   </MatchCardHeader>
   {#if !compact}
-    {#if liveMatch}
+    {#if liveMatch && "inProgress" in liveMatch.state}
       <div class="mid">
         <div class="team-lead">
-          {getActivePlayerName("team1", liveMatch)}
+          {getActivePlayerName("team1", liveMatch.state.inProgress)}
         </div>
         <div>
-          <div>Round {liveMatch.round}</div>
+          <div>Round {liveMatch.state.inProgress.round}</div>
         </div>
         <div class="team-lead">
-          {getActivePlayerName("team2", liveMatch)}
+          {getActivePlayerName("team2", liveMatch.state.inProgress)}
         </div>
       </div>
       <div class="footer">

@@ -1,5 +1,3 @@
-import TimeZone "mo:datetime/TimeZone";
-import Components "mo:datetime/Components";
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Nat "mo:base/Nat";

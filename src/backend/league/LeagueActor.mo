@@ -11,7 +11,6 @@ import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import StadiumTypes "../stadium/Types";
 import TeamActor "../team/TeamActor";
-import { ic } "mo:ic";
 import Time "mo:base/Time";
 import Nat8 "mo:base/Nat8";
 import Nat64 "mo:base/Nat64";
@@ -24,12 +23,6 @@ import Blob "mo:base/Blob";
 import Order "mo:base/Order";
 import Timer "mo:base/Timer";
 import Token "mo:icrc1/ICRC1/Canisters/Token";
-import ICRC1 "mo:icrc1/ICRC1";
-import TimeZone "mo:datetime/TimeZone";
-import LocalDateTime "mo:datetime/LocalDateTime";
-import Components "mo:datetime/Components";
-import DateTime "mo:datetime/DateTime";
-import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "../league/Types";
 import Util "../Util";
@@ -43,7 +36,7 @@ import MatchAura "../models/MatchAura";
 import Offering "../models/Offering";
 
 actor LeagueActor {
-    type LedgerActor = Token.Token;
+    type TeamLedgerActor = Token.Token;
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
@@ -160,7 +153,7 @@ actor LeagueActor {
         };
         // TODO handle states where ledger exists but the team actor doesn't
         // Create canister for team ledger
-        let ledger : LedgerActor = await createTeamLedger(request.tokenName, request.tokenSymbol);
+        let ledger : TeamLedgerActor = await createTeamLedger(request.tokenName, request.tokenSymbol);
         let ledgerId = Principal.fromActor(ledger);
         // Create canister for team logic
         let teamActor = await createTeamActor(ledgerId);
@@ -680,7 +673,7 @@ actor LeagueActor {
         );
     };
 
-    private func createTeamLedger(tokenName : Text, tokenSymbol : Text) : async LedgerActor {
+    private func createTeamLedger(tokenName : Text, tokenSymbol : Text) : async TeamLedgerActor {
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
