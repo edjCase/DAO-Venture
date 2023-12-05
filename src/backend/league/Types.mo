@@ -124,6 +124,7 @@ module {
         #ok : Principal;
         #nameTaken;
         #noStadiumsExist;
+        #teamFactoryCallError : Text;
     };
 
     // Mint

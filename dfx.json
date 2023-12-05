@@ -3,13 +3,25 @@
   "canisters": {
     "league": {
       "dependencies": [
-        "playerLedger"
+        "playerLedger",
+        "teamFactory"
       ],
       "main": "src/backend/league/LeagueActor.mo",
       "type": "motoko"
     },
     "playerLedger": {
       "main": "src/backend/playerLedger/PlayerLedger.mo",
+      "type": "motoko"
+    },
+    "teamFactory": {
+      "dependencies": [
+        "playerLedger"
+      ],
+      "main": "src/backend/team/TeamFactoryActor.mo",
+      "type": "motoko"
+    },
+    "stadiumFactory": {
+      "main": "src/backend/stadium/StadiumFactoryActor.mo",
       "type": "motoko"
     },
     "internet_identity": {

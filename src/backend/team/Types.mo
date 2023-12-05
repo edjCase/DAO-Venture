@@ -5,10 +5,33 @@ import StadiumTypes "../stadium/Types";
 import Offering "../models/Offering";
 
 module {
+
     public type TeamActor = actor {
         getPlayers : composite query () -> async [Player.PlayerWithId];
         getMatchGroupVote : query (matchGroupId : Nat) -> async GetMatchGroupVoteResult;
         voteOnMatchGroup : (request : VoteOnMatchGroupRequest) -> async VoteOnMatchGroupResult;
+    };
+
+    public type TeamFactoryActor = actor {
+        createTeamActor : (request : CreateTeamRequest) -> async CreateTeamResult;
+        getTeamActors : () -> async [TeamActorInfoWithId];
+        updateCanisters : () -> async ();
+    };
+
+    public type TeamActorInfo = { ledgerId : Principal };
+
+    public type TeamActorInfoWithId = TeamActorInfo and { id : Principal };
+
+    public type CreateTeamRequest = {
+        tokenName : Text;
+        tokenSymbol : Text;
+    };
+
+    public type CreateTeamResult = {
+        #ok : {
+            id : Principal;
+            ledgerId : Principal;
+        };
     };
 
     public type MatchVoteResult = {

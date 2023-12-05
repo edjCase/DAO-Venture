@@ -21,6 +21,23 @@ module {
         startMatchGroup : (request : StartMatchGroupRequest) -> async StartMatchGroupResult;
     };
 
+    public type StadiumFactoryActor = actor {
+        createStadiumActor : () -> async CreateStadiumResult;
+        getStadiumActors : () -> async [StadiumActorInfoWithId];
+        updateCanisters : () -> async ();
+    };
+
+    public type StadiumActorInfo = {};
+
+    public type StadiumActorInfoWithId = StadiumActorInfo and {
+        id : Principal;
+    };
+
+    public type CreateStadiumResult = {
+        #ok : Principal;
+        #stadiumCreationError : Text;
+    };
+
     public type StartMatchGroupRequest = {
         id : Nat;
         matches : [StartMatchRequest];

@@ -10,7 +10,6 @@ import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import StadiumTypes "../stadium/Types";
-import TeamActor "../team/TeamActor";
 import Time "mo:base/Time";
 import Nat8 "mo:base/Nat8";
 import Nat64 "mo:base/Nat64";
@@ -26,7 +25,6 @@ import Token "mo:icrc1/ICRC1/Canisters/Token";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "../league/Types";
 import Util "../Util";
-import StadiumActor "../stadium/StadiumActor";
 import ScheduleBuilder "ScheduleBuilder";
 import PlayerLedgerActor "canister:playerLedger";
 import Team "../models/Team";
@@ -34,6 +32,8 @@ import TeamTypes "../team/Types";
 import Season "../models/Season";
 import MatchAura "../models/MatchAura";
 import Offering "../models/Offering";
+import TeamFactoryActor "canister:teamFactory";
+import StadiumFactoryActor "canister:stadiumFactory";
 
 actor LeagueActor {
     type TeamLedgerActor = Token.Token;
@@ -151,23 +151,23 @@ actor LeagueActor {
         if (nameAlreadyTaken) {
             return #nameTaken;
         };
-        // TODO handle states where ledger exists but the team actor doesn't
-        // Create canister for team ledger
-        let ledger : TeamLedgerActor = await createTeamLedger(request.tokenName, request.tokenSymbol);
-        let ledgerId = Principal.fromActor(ledger);
-        // Create canister for team logic
-        let teamActor = await createTeamActor(ledgerId);
-        let teamId = Principal.fromActor(teamActor);
+        let createTeamResult = try {
+            await TeamFactoryActor.createTeamActor(request);
+        } catch (err) {
+            return #teamFactoryCallError(Error.message(err));
+        };
+        let teamInfo = switch (createTeamResult) {
+            case (#ok(teamInfo)) teamInfo;
+        };
         let team : Team.TeamWithLedgerId = {
             name = request.name;
-            canister = teamActor;
             logoUrl = request.logoUrl;
-            ledgerId = ledgerId;
+            ledgerId = teamInfo.ledgerId;
         };
-        let teamKey = buildPrincipalKey(teamId);
+        let teamKey = buildPrincipalKey(teamInfo.id);
         let (newTeams, _) = Trie.put(teams, teamKey, Principal.equal, team);
         teams := newTeams;
-        return #ok(teamId);
+        return #ok(teamInfo.id);
     };
 
     public shared ({ caller }) func mint(request : Types.MintRequest) : async Types.MintResult {
@@ -194,24 +194,8 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func updateLeagueCanisters() : async () {
-        let leagueId = Principal.fromActor(LeagueActor);
-        let stadiumId = leagueId; // TODO
-        for ((teamId, team) in Trie.iter(teams)) {
-            let teamActor = actor (Principal.toText(teamId)) : TeamTypes.TeamActor;
-            let ledgerId = team.ledgerId;
-
-            let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(
-                leagueId,
-                ledgerId,
-            );
-        };
-        switch (stadiumIdOrNull) {
-            case (null)();
-            case (?id) {
-                let stadiumActor = actor (Principal.toText(id)) : StadiumTypes.StadiumActor;
-                let _ = await (system StadiumActor.StadiumActor)(#upgrade(stadiumActor))(leagueId);
-            };
-        };
+        await TeamFactoryActor.updateCanisters();
+        await StadiumFactoryActor.updateCanisters();
     };
 
     public shared ({ caller }) func startMatchGroup(id : Nat) : async Types.StartMatchGroupResult {
@@ -561,17 +545,18 @@ actor LeagueActor {
             case (null)();
             case (?id) return #ok(id);
         };
-        let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 1_000_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
-        let stadium = try {
-            await StadiumActor.StadiumActor(Principal.fromActor(LeagueActor));
+        let createStadiumResult = try {
+            await StadiumFactoryActor.createStadiumActor();
         } catch (err) {
             return #stadiumCreationError(Error.message(err));
         };
-        let stadiumId = Principal.fromActor(stadium);
-        stadiumIdOrNull := ?stadiumId;
-        #ok(stadiumId);
+        switch (createStadiumResult) {
+            case (#ok(id)) {
+                stadiumIdOrNull := ?id;
+                #ok(id);
+            };
+            case (#stadiumCreationError(error)) return #stadiumCreationError(error);
+        };
     };
 
     private func buildCompletedMatchGroups(
@@ -662,35 +647,6 @@ actor LeagueActor {
         teamScores;
     };
 
-    private func createTeamActor(ledgerId : Principal) : async TeamActor.TeamActor {
-        let leagueId = Principal.fromActor(LeagueActor);
-        let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 100_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
-        await TeamActor.TeamActor(
-            leagueId,
-            ledgerId,
-        );
-    };
-
-    private func createTeamLedger(tokenName : Text, tokenSymbol : Text) : async TeamLedgerActor {
-        let canisterCreationCost = 100_000_000_000;
-        let initialBalance = 1_000_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
-
-        let leagueId = Principal.fromActor(LeagueActor);
-        await Token.Token({
-            name = tokenName;
-            symbol = tokenSymbol;
-            decimals = 0;
-            fee = 0;
-            max_supply = 1;
-            initial_balances = [];
-            min_burn_amount = 0;
-            minting_account = ?{ owner = leagueId; subaccount = null };
-            advanced_settings = null;
-        });
-    };
     private func buildPrincipalKey(id : Principal) : {
         key : Principal;
         hash : Hash.Hash;
