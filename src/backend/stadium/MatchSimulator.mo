@@ -27,6 +27,7 @@ import Base "../models/Base";
 import Curse "../models/Curse";
 import Blessing "../models/Blessing";
 import Team "../models/Team";
+import FieldPosition "../models/FieldPosition";
 
 module {
 
@@ -106,7 +107,7 @@ module {
         var teamId : Team.TeamId;
         var condition : Player.PlayerCondition;
         var skills : MutablePlayerSkills;
-        var position : Player.FieldPosition;
+        var position : FieldPosition.FieldPosition;
     };
 
     type MatchEndReason = {
@@ -223,10 +224,10 @@ module {
         switch (team.offering) {
             case (#shuffleAndBoost) {
                 // Shuffle all the players' positions but boost their stats
-                let currentPositions : Buffer.Buffer<Player.FieldPosition> = playerStates
+                let currentPositions : Buffer.Buffer<FieldPosition.FieldPosition> = playerStates
                 |> Buffer.map(
                     _,
-                    func(p : StadiumTypes.PlayerStateWithId) : Player.FieldPosition = p.position,
+                    func(p : StadiumTypes.PlayerStateWithId) : FieldPosition.FieldPosition = p.position,
                 );
                 prng.shuffleBuffer(currentPositions);
                 for (i in IterTools.range(0, playerStates.size())) {
@@ -280,7 +281,7 @@ module {
     };
 
     private func buildStartingDefense(players : Buffer.Buffer<StadiumTypes.PlayerStateWithId>, prng : Prng) : ?StadiumTypes.DefenseFieldState {
-        let getRandomPlayer = func(position : Player.FieldPosition) : ?PlayerId {
+        let getRandomPlayer = func(position : FieldPosition.FieldPosition) : ?PlayerId {
             let playersWithPosition = Buffer.mapFilter<StadiumTypes.PlayerStateWithId, StadiumTypes.PlayerStateWithId>(
                 players,
                 func(p : StadiumTypes.PlayerStateWithId) : ?StadiumTypes.PlayerStateWithId {
@@ -424,7 +425,7 @@ module {
             buildTickResult(result);
         };
 
-        private func getPlayerAtPosition(catchLocation : Player.FieldPosition) : PlayerId {
+        private func getPlayerAtPosition(catchLocation : FieldPosition.FieldPosition) : PlayerId {
             switch (catchLocation) {
                 case (#firstBase) state.field.defense.firstBase;
                 case (#secondBase) state.field.defense.secondBase;
@@ -591,7 +592,7 @@ module {
             };
         };
 
-        private func getRandomAvailablePlayer(teamId : ?Team.TeamId, position : ?Player.FieldPosition, notOnField : Bool) : ?PlayerId {
+        private func getRandomAvailablePlayer(teamId : ?Team.TeamId, position : ?FieldPosition.FieldPosition, notOnField : Bool) : ?PlayerId {
             // get random player
             let availablePlayers = getAvailablePlayers(teamId, position, notOnField);
             if (availablePlayers.size() < 1) {
@@ -604,7 +605,7 @@ module {
 
         private func getAvailablePlayers(
             teamId : ?Team.TeamId,
-            position : ?Player.FieldPosition,
+            position : ?FieldPosition.FieldPosition,
             notOnField : Bool,
         ) : Buffer.Buffer<PlayerId> {
 
@@ -662,7 +663,7 @@ module {
             #ok(player);
         };
 
-        private func getDefensePositionOfPlayer(playerId : PlayerId) : ?Player.FieldPosition {
+        private func getDefensePositionOfPlayer(playerId : PlayerId) : ?FieldPosition.FieldPosition {
             if (state.field.defense.firstBase == playerId) {
                 return ? #firstBase;
             };
@@ -824,7 +825,7 @@ module {
         };
 
         private func batterRun({
-            ballLocation : ?Player.FieldPosition;
+            ballLocation : ?FieldPosition.FieldPosition;
         }) : SimulationResult {
             let battingPlayerState = switch (getPlayerState(state.field.offense.atBat)) {
                 case (#ok(p)) p;

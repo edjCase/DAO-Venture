@@ -29,12 +29,13 @@ import IterTools "mo:itertools/Iter";
 import Offering "../models/Offering";
 import MatchAura "../models/MatchAura";
 import Team "../models/Team";
+import FieldPosition "../models/FieldPosition";
 
 actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor = this {
     type Player = Player.Player;
     type PlayerWithId = Player.PlayerWithId;
     type PlayerState = StadiumTypes.PlayerState;
-    type FieldPosition = Player.FieldPosition;
+    type FieldPosition = FieldPosition.FieldPosition;
     type Offering = Offering.Offering;
     type MatchAura = MatchAura.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;

@@ -5,6 +5,8 @@ module {
         #explodingBalls;
         #fastBallsHardHits;
         #moreBlessingsAndCurses;
+        #moveBasesIn;
+        #doubleOrNothing;
     };
 
     public type MatchAuraMetaData = {
@@ -21,6 +23,8 @@ module {
         case (#explodingBalls) 1;
         case (#fastBallsHardHits) 2;
         case (#moreBlessingsAndCurses) 3;
+        case (#moveBasesIn) 4;
+        case (#doubleOrNothing) 5;
     };
 
     public func equal(a : MatchAura, b : MatchAura) : Bool = a == b;
@@ -49,6 +53,18 @@ module {
                 {
                     name = "More Blessings And Curses";
                     description = "Blessings and curses are more common.";
+                };
+            };
+            case (#moveBasesIn) {
+                {
+                    name = "Move Bases In";
+                    description = "Bases are closer together.";
+                };
+            };
+            case (#doubleOrNothing) {
+                {
+                    name = "Double Or Nothing";
+                    description = "Hits count for double points, but strikeouts lose points.";
                 };
             };
         };

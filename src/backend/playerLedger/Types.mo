@@ -1,10 +1,11 @@
 import Player "../models/Player";
+import FieldPosition "../models/FieldPosition";
 module {
 
     public type CreatePlayerRequest = {
         name : Text;
         teamId : ?Principal;
-        position : Player.FieldPosition;
+        position : FieldPosition.FieldPosition;
         deity : Player.Deity;
         skills : Player.PlayerSkills;
     };

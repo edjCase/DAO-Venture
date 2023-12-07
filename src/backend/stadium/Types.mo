@@ -8,9 +8,10 @@ import Offering "../models/Offering";
 import MatchAura "../models/MatchAura";
 import Base "../models/Base";
 import Team "../models/Team";
+import FieldPosition "../models/FieldPosition";
 
 module {
-    type FieldPosition = Player.FieldPosition;
+    type FieldPosition = FieldPosition.FieldPosition;
     type Base = Base.Base;
     type PlayerId = Player.PlayerId;
 
