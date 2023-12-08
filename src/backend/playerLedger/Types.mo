@@ -7,7 +7,7 @@ module {
         teamId : ?Principal;
         position : FieldPosition.FieldPosition;
         deity : Player.Deity;
-        skills : Player.PlayerSkills;
+        skills : Player.Skills;
     };
 
     public type InvalidError = {

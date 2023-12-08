@@ -13,7 +13,7 @@ module {
     public type Player = {
         name : Text;
         teamId : ?Principal;
-        skills : PlayerSkills;
+        skills : Skills;
         position : FieldPosition.FieldPosition;
         deity : Deity;
     };
@@ -22,7 +22,7 @@ module {
         id : Nat32;
     };
 
-    public type PlayerSkills = {
+    public type Skills = {
         battingAccuracy : Int;
         battingPower : Int;
         throwingAccuracy : Int;
@@ -31,17 +31,6 @@ module {
         defense : Int;
         piety : Int;
         speed : Int;
-    };
-
-    public type Skill = {
-        #battingAccuracy;
-        #battingPower;
-        #throwingAccuracy;
-        #throwingPower;
-        #catching;
-        #defense;
-        #piety;
-        #speed;
     };
 
     public type Injury = {

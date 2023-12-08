@@ -158,7 +158,7 @@ module {
         name : Text;
         teamId : Team.TeamId;
         condition : Player.PlayerCondition;
-        skills : Player.PlayerSkills;
+        skills : Player.Skills;
         position : FieldPosition;
     };
 

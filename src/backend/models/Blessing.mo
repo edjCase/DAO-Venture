@@ -1,7 +1,7 @@
-import Player "Player";
+import Skill "Skill";
 
 module {
     public type Blessing = {
-        #skill : Player.Skill;
+        #skill : Skill.Skill;
     };
 };

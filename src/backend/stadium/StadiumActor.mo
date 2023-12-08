@@ -295,24 +295,6 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         prng : Prng,
     ) : MatchSimulator.TeamInitData {
         let players = Buffer.fromArray<PlayerWithId>(teamData.players);
-        switch (teamData.offering) {
-            case (#shuffleAndBoost) {
-                let currentPositions : Buffer.Buffer<FieldPosition> = players
-                |> Buffer.map(
-                    _,
-                    func(p : Player) : FieldPosition = p.position,
-                );
-                prng.shuffleBuffer(currentPositions);
-                for (i in IterTools.range(0, players.size())) {
-                    // TODO skills
-                    let updatedPlayer = {
-                        players.get(i) with
-                        position = currentPositions.get(i)
-                    };
-                    players.put(i, updatedPlayer);
-                };
-            };
-        };
         {
             id = team.id;
             name = team.name;

@@ -1,7 +1,9 @@
 import Player "Player";
+import Skill "Skill";
+
 module {
     public type Curse = {
-        #skill : Player.Skill;
+        #skill : Skill.Skill;
         #injury : Player.Injury;
     };
 };

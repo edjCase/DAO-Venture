@@ -28,6 +28,7 @@ import Curse "../models/Curse";
 import Blessing "../models/Blessing";
 import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
+import Skill "../models/Skill";
 
 module {
 
@@ -135,10 +136,10 @@ module {
         #ok : StadiumTypes.InProgressMatch;
         #notEnoughPlayers : Team.TeamIdOrBoth;
     } {
-        let eventLog = Buffer.Buffer<LogEntry>(0);
-        logTeamOffering(team1, eventLog);
-        logTeamOffering(team2, eventLog);
-        logMatchAura(aura, eventLog);
+        let log = Buffer.Buffer<LogEntry>(10);
+        logTeamOffering(team1, log);
+        logTeamOffering(team2, log);
+        logMatchAura(aura, log);
         let (team1State, team1Players) = buildTeamState(team1, #team1, prng);
         let (team2State, team2Players) = buildTeamState(team2, #team2, prng);
         let (offensePlayers, defensePlayers) = if (team1StartOffense) {
@@ -162,7 +163,7 @@ module {
             team1 = team1State;
             team2 = team2State;
             aura = aura;
-            log = Buffer.toArray(eventLog);
+            log = Buffer.toArray(log);
             players = Buffer.toArray(players);
             batter = null;
             field = {
@@ -212,15 +213,7 @@ module {
         )
         |> Buffer.fromIter<StadiumTypes.PlayerStateWithId>(_);
 
-        let teamState : StadiumTypes.TeamState = {
-            id = team.id;
-            name = team.name;
-            logoUrl = team.logoUrl;
-            score = 0;
-            offering = team.offering;
-            championId = team.championId;
-        };
-
+        var score = 0;
         switch (team.offering) {
             case (#shuffleAndBoost) {
                 // Shuffle all the players' positions but boost their stats
@@ -231,28 +224,72 @@ module {
                 );
                 prng.shuffleBuffer(currentPositions);
                 for (i in IterTools.range(0, playerStates.size())) {
-                    let currentPlayerState = playerStates.get(i);
-                    let updatedPlayerState = {
-                        currentPlayerState with
-                        position = currentPositions.get(i);
-                        skills = {
-                            // TODO how much to boost skills
-                            battingPower = currentPlayerState.skills.battingPower + 1;
-                            battingAccuracy = currentPlayerState.skills.battingAccuracy + 1;
-                            throwingPower = currentPlayerState.skills.throwingPower + 1;
-                            throwingAccuracy = currentPlayerState.skills.throwingAccuracy + 1;
-                            catching = currentPlayerState.skills.catching + 1;
-                            defense = currentPlayerState.skills.defense + 1;
-                            piety = currentPlayerState.skills.piety + 1;
-                            speed = currentPlayerState.skills.speed + 1;
-                        };
+                    let randomSkill = Skill.getRandom(prng);
+                    let updatedPlayerState = playerStates.get(i)
+                    |> modifyPlayerSkill(_, randomSkill, 1)
+                    |> {
+                        _ with
+                        position = currentPositions.get(i)
                     };
                     playerStates.put(i, updatedPlayerState);
                 };
             };
+            case (#offensive) {
+                // Increase batting power and lower catching
+                for (i in IterTools.range(0, playerStates.size())) {
+                    let updatedPlayerState = playerStates.get(i)
+                    |> modifyPlayerSkill(_, #battingPower, 1)
+                    |> modifyPlayerSkill(_, #catching, -1);
+                    playerStates.put(i, updatedPlayerState);
+                };
+            };
+            case (#defensive) {
+                // Increase catching and lower batting power
+                for (i in IterTools.range(0, playerStates.size())) {
+                    let updatedPlayerState = playerStates.get(i)
+                    |> modifyPlayerSkill(_, #battingPower, -1)
+                    |> modifyPlayerSkill(_, #catching, 1);
+                    playerStates.put(i, updatedPlayerState);
+                };
+            };
+            case (#hittersDebt) {
+                score -= 1;
+            };
+            case (#ragePitch) {
+                // Increase throwing power and lower throwing accuracy for pitchers
+                label f for (i in IterTools.range(0, playerStates.size())) {
+                    let playerState = playerStates.get(i);
+                    if (playerState.position != #pitcher) {
+                        continue f;
+                    };
+                    let updatedPlayerState = playerState
+                    |> modifyPlayerSkill(_, #throwingPower, 1)
+                    |> modifyPlayerSkill(_, #throwingAccuracy, -1);
+                    playerStates.put(i, updatedPlayerState);
+                };
+            };
+            case (_) {
+                // Skip
+            };
+        };
+        let teamState : StadiumTypes.TeamState = {
+            id = team.id;
+            name = team.name;
+            logoUrl = team.logoUrl;
+            score = score;
+            offering = team.offering;
+            championId = team.championId;
         };
 
         (teamState, playerStates);
+    };
+
+    private func modifyPlayerSkill(playerState : StadiumTypes.PlayerStateWithId, skill : Skill.Skill, amount : Int) : StadiumTypes.PlayerStateWithId {
+        let updatedSkills = Skill.modifySkill(playerState.skills, skill, amount);
+        {
+            playerState with
+            skills = updatedSkills
+        };
     };
 
     private func buildPlayerState(player : Player.PlayerWithId, teamId : Team.TeamId) : StadiumTypes.PlayerStateWithId {
@@ -328,7 +365,7 @@ module {
         simulation.tick();
     };
 
-    private func toMutableSkills(skills : Player.PlayerSkills) : MutablePlayerSkills {
+    private func toMutableSkills(skills : Player.Skills) : MutablePlayerSkills {
         {
             var battingPower = skills.battingPower;
             var battingAccuracy = skills.battingAccuracy;
@@ -1164,8 +1201,7 @@ module {
             #inProgress;
         };
 
-        private func modifyPlayerSkill(skills : MutablePlayerSkills, skill : Player.Skill, value : Int) {
-
+        private func modifyPlayerSkill(skills : MutablePlayerSkills, skill : Skill.Skill, value : Int) {
             switch (skill) {
                 case (#battingPower) skills.battingPower += value;
                 case (#battingAccuracy) skills.battingAccuracy += value;
