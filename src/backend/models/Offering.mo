@@ -37,28 +37,28 @@ module {
 
     public func getMetaData(offering : Offering) : OfferingMetaData {
         switch (offering) {
-            // Initial team change - skills, positions
+            // Initial config
             case (#shuffleAndBoost) {
                 {
                     name = "Shuffle And Boost";
                     description = "Shuffle your team's field positions and boost your team with a random blessing.";
                 };
             };
-            // Initial team change - skills
+            // Initial config
             case (#offensive) {
                 {
                     name = "Offensive";
                     description = "Your team's players will hit harder, don't catch very well.";
                 };
             };
-            // Initial team change - skills
+            // Initial config
             case (#defensive) {
                 {
                     name = "Defensive";
                     description = "Your team's players will catch better, don't hit very hard.";
                 };
             };
-            // Initial config change
+            // Initial config
             // On swing event
             case (#hittersDebt) {
                 {
@@ -66,7 +66,7 @@ module {
                     description = "Every X swings is a guarenteed hit, but the team starts with a -Y score";
                 };
             };
-            // On throw/hit event
+            // On dodge event
             case (#bubble) {
                 {
                     name = "Bubble";
@@ -80,7 +80,7 @@ module {
                     description = "Boost team performance when behind, but reduce it when leading.";
                 };
             };
-            // Initial team change - skills
+            // Initial config
             case (#ragePitch) {
                 {
                     name = "Rage Pitch";
@@ -101,13 +101,14 @@ module {
                     description = "Will have bonus rewards for winning";
                 };
             };
-            // On run event but reset at end of round
+            // On score event
             case (#moraleFlywheel) {
                 {
                     name = "Morale Flywheel";
-                    description = "If your team has made 2+ runs in a round, batting power is increased for the round for your team.";
+                    description = "If your team has made scored 3 times in a round, the team gets a boost for the rest of the game.";
                 };
             };
         };
     };
+
 };

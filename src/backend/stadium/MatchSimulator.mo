@@ -29,6 +29,9 @@ import Blessing "../models/Blessing";
 import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
 import Skill "../models/Skill";
+import Hook "../models/Hook";
+import MutableState "../models/MutableState";
+import HookCompiler "HookCompiler";
 
 module {
 
@@ -45,70 +48,6 @@ module {
     type SimulationResult = {
         #endMatch : MatchEndReason;
         #inProgress;
-    };
-
-    type MutableTeamState = {
-        id : Principal;
-        name : Text;
-        logoUrl : Text;
-        var score : Int;
-        offering : Offering.Offering;
-        championId : PlayerId;
-    };
-
-    type MutableDefenseFieldState = {
-        var firstBase : PlayerId;
-        var secondBase : PlayerId;
-        var thirdBase : PlayerId;
-        var shortStop : PlayerId;
-        var pitcher : PlayerId;
-        var leftField : PlayerId;
-        var centerField : PlayerId;
-        var rightField : PlayerId;
-    };
-
-    type MutableOffenseFieldState = {
-        var atBat : PlayerId;
-        var firstBase : ?PlayerId;
-        var secondBase : ?PlayerId;
-        var thirdBase : ?PlayerId;
-    };
-
-    type MutableFieldState = {
-        var offense : MutableOffenseFieldState;
-        var defense : MutableDefenseFieldState;
-    };
-
-    type MutableMatchState = {
-        var offenseTeamId : Team.TeamId;
-        var team1 : MutableTeamState;
-        var team2 : MutableTeamState;
-        aura : MatchAura.MatchAura;
-        var players : TrieMap.TrieMap<PlayerId, MutablePlayerState>;
-        var log : Buffer.Buffer<StadiumTypes.LogEntry>;
-        var field : MutableFieldState;
-        var round : Nat;
-        var outs : Nat;
-        var strikes : Nat;
-    };
-
-    type MutablePlayerSkills = {
-        var battingPower : Int;
-        var battingAccuracy : Int;
-        var throwingAccuracy : Int;
-        var throwingPower : Int;
-        var catching : Int;
-        var defense : Int;
-        var piety : Int;
-        var speed : Int;
-    };
-
-    type MutablePlayerState = {
-        name : Text;
-        var teamId : Team.TeamId;
-        var condition : Player.PlayerCondition;
-        var skills : MutablePlayerSkills;
-        var position : FieldPosition.FieldPosition;
     };
 
     type MatchEndReason = {
@@ -214,64 +153,6 @@ module {
         |> Buffer.fromIter<StadiumTypes.PlayerStateWithId>(_);
 
         var score = 0;
-        switch (team.offering) {
-            case (#shuffleAndBoost) {
-                // Shuffle all the players' positions but boost their stats
-                let currentPositions : Buffer.Buffer<FieldPosition.FieldPosition> = playerStates
-                |> Buffer.map(
-                    _,
-                    func(p : StadiumTypes.PlayerStateWithId) : FieldPosition.FieldPosition = p.position,
-                );
-                prng.shuffleBuffer(currentPositions);
-                for (i in IterTools.range(0, playerStates.size())) {
-                    let randomSkill = Skill.getRandom(prng);
-                    let updatedPlayerState = playerStates.get(i)
-                    |> modifyPlayerSkill(_, randomSkill, 1)
-                    |> {
-                        _ with
-                        position = currentPositions.get(i)
-                    };
-                    playerStates.put(i, updatedPlayerState);
-                };
-            };
-            case (#offensive) {
-                // Increase batting power and lower catching
-                for (i in IterTools.range(0, playerStates.size())) {
-                    let updatedPlayerState = playerStates.get(i)
-                    |> modifyPlayerSkill(_, #battingPower, 1)
-                    |> modifyPlayerSkill(_, #catching, -1);
-                    playerStates.put(i, updatedPlayerState);
-                };
-            };
-            case (#defensive) {
-                // Increase catching and lower batting power
-                for (i in IterTools.range(0, playerStates.size())) {
-                    let updatedPlayerState = playerStates.get(i)
-                    |> modifyPlayerSkill(_, #battingPower, -1)
-                    |> modifyPlayerSkill(_, #catching, 1);
-                    playerStates.put(i, updatedPlayerState);
-                };
-            };
-            case (#hittersDebt) {
-                score -= 1;
-            };
-            case (#ragePitch) {
-                // Increase throwing power and lower throwing accuracy for pitchers
-                label f for (i in IterTools.range(0, playerStates.size())) {
-                    let playerState = playerStates.get(i);
-                    if (playerState.position != #pitcher) {
-                        continue f;
-                    };
-                    let updatedPlayerState = playerState
-                    |> modifyPlayerSkill(_, #throwingPower, 1)
-                    |> modifyPlayerSkill(_, #throwingAccuracy, -1);
-                    playerStates.put(i, updatedPlayerState);
-                };
-            };
-            case (_) {
-                // Skip
-            };
-        };
         let teamState : StadiumTypes.TeamState = {
             id = team.id;
             name = team.name;
@@ -280,16 +161,7 @@ module {
             offering = team.offering;
             championId = team.championId;
         };
-
         (teamState, playerStates);
-    };
-
-    private func modifyPlayerSkill(playerState : StadiumTypes.PlayerStateWithId, skill : Skill.Skill, amount : Int) : StadiumTypes.PlayerStateWithId {
-        let updatedSkills = Skill.modifySkill(playerState.skills, skill, amount);
-        {
-            playerState with
-            skills = updatedSkills
-        };
     };
 
     private func buildPlayerState(player : Player.PlayerWithId, teamId : Team.TeamId) : StadiumTypes.PlayerStateWithId {
@@ -361,94 +233,24 @@ module {
     };
 
     public func tick(match : StadiumTypes.InProgressMatch, random : Prng) : TickResult {
-        let simulation = MatchSimulation(match, random);
+        let compiledHooks = HookCompiler.compile(match);
+        let simulation = MatchSimulation(match, random, compiledHooks);
         simulation.tick();
     };
 
-    private func toMutableSkills(skills : Player.Skills) : MutablePlayerSkills {
-        {
-            var battingPower = skills.battingPower;
-            var battingAccuracy = skills.battingAccuracy;
-            var throwingPower = skills.throwingPower;
-            var throwingAccuracy = skills.throwingAccuracy;
-            var catching = skills.catching;
-            var defense = skills.defense;
-            var piety = skills.piety;
-            var speed = skills.speed;
-        };
-    };
+    class MatchSimulation(initialState : StadiumTypes.InProgressMatch, prng : Prng, compiledHooks : Hook.CompiledHooks) {
 
-    private func toMutableState(state : StadiumTypes.InProgressMatch) : MutableMatchState {
-        let players = state.players.vals()
-        |> Iter.map<StadiumTypes.PlayerStateWithId, (Nat32, MutablePlayerState)>(
-            _,
-            func(player : StadiumTypes.PlayerStateWithId) : (Nat32, MutablePlayerState) {
-                let state = {
-                    name = player.name;
-                    var teamId = player.teamId;
-                    var condition = player.condition;
-                    var skills = toMutableSkills(player.skills);
-                    var position = player.position;
-                };
-                (player.id, state);
-            },
-        )
-        |> TrieMap.fromEntries<Nat32, MutablePlayerState>(_, Nat32.equal, func(h : Nat32) : Nat32 = h);
-
-        let field = {
-            var offense = {
-                var atBat = state.field.offense.atBat;
-                var firstBase = state.field.offense.firstBase;
-                var secondBase = state.field.offense.secondBase;
-                var thirdBase = state.field.offense.thirdBase;
-            };
-            var defense = {
-                var firstBase = state.field.defense.firstBase;
-                var secondBase = state.field.defense.secondBase;
-                var thirdBase = state.field.defense.thirdBase;
-                var shortStop = state.field.defense.shortStop;
-                var pitcher = state.field.defense.pitcher;
-                var leftField = state.field.defense.leftField;
-                var centerField = state.field.defense.centerField;
-                var rightField = state.field.defense.rightField;
-            };
-        };
-        let log = Buffer.fromArray<LogEntry>(state.log);
-        {
-            var offenseTeamId = state.offenseTeamId;
-            var team1 = toMutableTeam(state.team1);
-            var team2 = toMutableTeam(state.team2);
-            var players = players;
-            aura = state.aura;
-            var field = field;
-            var log = log;
-            var round = state.round;
-            var outs = state.outs;
-            var strikes = state.strikes;
-        };
-    };
-
-    private func toMutableTeam(team : StadiumTypes.TeamState) : MutableTeamState {
-        {
-            id = team.id;
-            name = team.name;
-            logoUrl = team.logoUrl;
-            var score = team.score;
-            offering = team.offering;
-            championId = team.championId;
-        };
-    };
-
-    class MatchSimulation(initialState : StadiumTypes.InProgressMatch, prng : Prng) {
-
-        let state : MutableMatchState = toMutableState(initialState);
+        let state : MutableState.MutableMatchState = MutableState.toMutableState(initialState);
 
         public func tick() : TickResult {
-            let divineInterventionRoll = if (state.aura == #moreBlessingsAndCurses) {
-                prng.nextNat(0, 99);
-            } else {
-                prng.nextNat(0, 999);
+            if (state.round == 0) {
+                Hook.trigger(state, #matchStart);
+                state.round := 1;
             };
+            Hook.trigger(state, #roundStart);
+            let roll = Hook.trigger(state, #divineInterventionRoll);
+            let divineInterventionRoll = prng.nextNat(0, 999);
+
             let result = if (divineInterventionRoll <= 9) {
                 state.log.add({
                     message = "Divine intervention!";
@@ -459,6 +261,7 @@ module {
             } else {
                 pitch();
             };
+            Hook.trigger(state, #roundEnd);
             buildTickResult(result);
         };
 
@@ -483,7 +286,7 @@ module {
             };
         };
 
-        private func mapMutableTeam(team : MutableTeamState) : StadiumTypes.TeamState {
+        private func mapMutableTeam(team : MutableState.MutableTeamState) : StadiumTypes.TeamState {
             {
                 id = team.id;
                 name = team.name;
@@ -499,7 +302,7 @@ module {
             let players = Iter.toArray(
                 Iter.map(
                     state.players.entries(),
-                    func(player : (Nat32, MutablePlayerState)) : StadiumTypes.PlayerStateWithId {
+                    func(player : (Nat32, MutableState.MutablePlayerState)) : StadiumTypes.PlayerStateWithId {
                         {
                             id = player.0;
                             name = player.1.name;
@@ -646,14 +449,14 @@ module {
             notOnField : Bool,
         ) : Buffer.Buffer<PlayerId> {
 
-            var playersIter : Iter.Iter<(PlayerId, MutablePlayerState)> = state.players.entries()
+            var playersIter : Iter.Iter<(PlayerId, MutableState.MutablePlayerState)> = state.players.entries()
             // Only good condition players
-            |> Iter.filter(_, func(p : (PlayerId, MutablePlayerState)) : Bool = p.1.condition == #ok);
+            |> Iter.filter(_, func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool = p.1.condition == #ok);
             if (notOnField) {
                 // Only players not on the field
                 playersIter := Iter.filter(
                     playersIter,
-                    func(p : (PlayerId, MutablePlayerState)) : Bool {
+                    func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool {
                         getDefensePositionOfPlayer(p.0) == null and getBaseOfPlayer(p.0) == null;
                     },
                 );
@@ -663,34 +466,23 @@ module {
                 case (null) {};
                 case (?t) {
                     // Only players on the specified team
-                    playersIter := Iter.filter(playersIter, func(p : (PlayerId, MutablePlayerState)) : Bool = p.1.teamId == t);
+                    playersIter := Iter.filter(playersIter, func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool = p.1.teamId == t);
                 };
             };
             switch (position) {
                 case (null) {};
                 case (?po) {
                     // Only players assigned to a certain position
-                    playersIter := Iter.filter(playersIter, func(p : (PlayerId, MutablePlayerState)) : Bool = p.1.position == po);
+                    playersIter := Iter.filter(playersIter, func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool = p.1.position == po);
                 };
             };
             playersIter
-            |> Iter.map(_, func(p : (PlayerId, MutablePlayerState)) : PlayerId = p.0)
+            |> Iter.map(_, func(p : (PlayerId, MutableState.MutablePlayerState)) : PlayerId = p.0)
             |> Buffer.fromIter(_);
         };
 
-        private func getPlayer(teamId : Team.TeamId, playerId : PlayerId) : {
-            #ok : MutablePlayerState;
-            #playerNotFound : StadiumTypes.PlayerNotFoundError;
-        } {
-            let ?player = state.players.get(playerId) else return #playerNotFound({
-                id = playerId;
-                teamId = ?teamId;
-            });
-            #ok(player);
-        };
-
         private func getPlayerState(playerId : PlayerId) : {
-            #ok : MutablePlayerState;
+            #ok : MutableState.MutablePlayerState;
             #playerNotFound : StadiumTypes.PlayerNotFoundError;
         } {
             let ?player = state.players.get(playerId) else return #playerNotFound({
@@ -745,7 +537,7 @@ module {
         };
 
         private func getPlayerAtBase(base : Base.Base) : {
-            #ok : ?MutablePlayerState;
+            #ok : ?MutableState.MutablePlayerState;
             #playerNotFound : StadiumTypes.PlayerNotFoundError;
         } {
             let playerId = switch (base) {
@@ -763,12 +555,39 @@ module {
             };
         };
 
+        private func roll(
+            min : Nat,
+            max : Nat,
+            modifier : Int,
+            playerId : Player.PlayerId,
+            skill : Skill.Skill,
+            hook : ?Hook.Hook<Hook.SkillTestContext>,
+        ) : Hook.SkillTestResult {
+            let roll = prng.nextNat(min, max);
+            let modifiedRoll = roll + modifier;
+            switch (hook) {
+                case (null) #value(modifiedRoll);
+                case (?h) {
+                    let result = h({
+                        prng = prng;
+                        state = state;
+                        context = {
+                            state = #value(modifiedRoll);
+                            playerId = playerId;
+                            skill = skill;
+                        };
+                    });
+                    result.updatedContext.state;
+                };
+            };
+        };
+
         private func pitch() : SimulationResult {
             let pitcherState = switch (getPlayerState(state.field.defense.pitcher)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
-            let pitchRoll = prng.nextNat(0, 10) + pitcherState.skills.throwingAccuracy + pitcherState.skills.throwingPower;
+            let pitchRoll = roll(0, 10, pitcherState.skills.throwingAccuracy, pitcherState.id, compiledHooks.onPitch);
 
             state.log.add({
                 message = "Pitch";
@@ -863,7 +682,7 @@ module {
 
         private func batterRun({
             ballLocation : ?FieldPosition.FieldPosition;
-        }) : SimulationResult {
+        }) : { #endMatch : MatchEndReason } {
             let battingPlayerState = switch (getPlayerState(state.field.offense.atBat)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
@@ -883,34 +702,28 @@ module {
             switch (ballLocation) {
                 case (null) {
                     // Home run
-                    switch (runPlayerToBase(state.field.offense.thirdBase, #thirdBase, #homeBase)) {
-                        case (#endMatch(m)) return #endMatch(m);
-                        case (#inProgress) {};
-                    };
-                    switch (runPlayerToBase(state.field.offense.secondBase, #secondBase, #homeBase)) {
-                        case (#endMatch(m)) return #endMatch(m);
-                        case (#inProgress) {};
-                    };
-                    switch (runPlayerToBase(state.field.offense.firstBase, #firstBase, #homeBase)) {
-                        case (#endMatch(m)) return #endMatch(m);
-                        case (#inProgress) {};
-                    };
+                    let thirdBaseRun = runPlayerToBase(state.field.offense.secondBase, #thirdBase, #homeBase);
+                    let #inProgress = thirdBaseRun else return thirdBaseRun;
+
+                    let secondBaseRun = runPlayerToBase(state.field.offense.firstBase, #secondBase, #homeBase);
+                    let #inProgress = secondBaseRun else return secondBaseRun;
+
+                    let firstBaseRun = runPlayerToBase(state.field.offense.firstBase, #firstBase, #homeBase);
+                    let #inProgress = firstBaseRun else return firstBaseRun;
+
                     runPlayerToBase(?state.field.offense.atBat, #homeBase, #homeBase);
                 };
                 case (?l) {
                     // TODO the other bases should be able to get out, but they just run free right now
-                    switch (runPlayerToBase(state.field.offense.thirdBase, #thirdBase, #homeBase)) {
-                        case (#endMatch(m)) return #endMatch(m);
-                        case (#inProgress) {};
-                    };
-                    switch (runPlayerToBase(state.field.offense.secondBase, #secondBase, #thirdBase)) {
-                        case (#endMatch(m)) return #endMatch(m);
-                        case (#inProgress) {};
-                    };
-                    switch (runPlayerToBase(state.field.offense.firstBase, #firstBase, #secondBase)) {
-                        case (#endMatch(m)) return #endMatch(m);
-                        case (#inProgress) {};
-                    };
+
+                    let thirdBaseRun = runPlayerToBase(state.field.offense.secondBase, #thirdBase, #homeBase);
+                    let #inProgress = thirdBaseRun else return thirdBaseRun;
+
+                    let secondBaseRun = runPlayerToBase(state.field.offense.firstBase, #secondBase, #thirdBase);
+                    let #inProgress = secondBaseRun else return secondBaseRun;
+
+                    let firstBaseRun = runPlayerToBase(state.field.offense.firstBase, #firstBase, #secondBase);
+                    let #inProgress = firstBaseRun else return firstBaseRun;
 
                     let playerIdWithBall = getPlayerAtPosition(l);
                     let playerStateWithBall = switch (getPlayerState(playerIdWithBall)) {
@@ -1140,7 +953,7 @@ module {
             };
             let (curseText, result) = switch (curse) {
                 case (#skill(s)) {
-                    modifyPlayerSkill(playerState.skills, s, -1); // TODO value
+                    MutableState.modifyPlayerSkill(playerState.skills, s, -1); // TODO value
                     ("Decreased skill: " # debug_show (s), #inProgress);
                 };
                 case (#injury(i)) {
@@ -1186,7 +999,7 @@ module {
             };
             let blessingText = switch (blessing) {
                 case (#skill(s)) {
-                    modifyPlayerSkill(playerState.skills, s, 1); // TODO value
+                    MutableState.modifyPlayerSkill(playerState.skills, s, 1); // TODO value
                     "Increased skill: " # debug_show (s);
                 };
             };
@@ -1199,19 +1012,6 @@ module {
                 isImportant = true;
             });
             #inProgress;
-        };
-
-        private func modifyPlayerSkill(skills : MutablePlayerSkills, skill : Skill.Skill, value : Int) {
-            switch (skill) {
-                case (#battingPower) skills.battingPower += value;
-                case (#battingAccuracy) skills.battingAccuracy += value;
-                case (#throwingPower) skills.throwingPower += value;
-                case (#throwingAccuracy) skills.throwingAccuracy += value;
-                case (#catching) skills.catching += value;
-                case (#defense) skills.defense += value;
-                case (#piety) skills.piety += value;
-                case (#speed) skills.speed += value;
-            };
         };
 
         private func substitutePlayer({ playerId : Nat32 }) : SimulationResult {
@@ -1294,7 +1094,7 @@ module {
             #inProgress;
         };
 
-        private func buildNewDefense(teamId : Team.TeamId) : ?MutableDefenseFieldState {
+        private func buildNewDefense(teamId : Team.TeamId) : ?MutableState.MutableDefenseFieldState {
             do ? {
                 {
                     var pitcher = getRandomAvailablePlayer(?teamId, ? #pitcher, false)!;
@@ -1309,7 +1109,7 @@ module {
             };
         };
 
-        private func buildNewOffense(teamId : Team.TeamId) : ?MutableOffenseFieldState {
+        private func buildNewOffense(teamId : Team.TeamId) : ?MutableState.MutableOffenseFieldState {
 
             do ? {
                 {
@@ -1321,14 +1121,14 @@ module {
             };
         };
 
-        private func getOffenseTeamState() : MutableTeamState {
+        private func getOffenseTeamState() : MutableState.MutableTeamState {
             switch (state.offenseTeamId) {
                 case (#team1) state.team1;
                 case (#team2) state.team2;
             };
         };
 
-        private func getDefenseTeamState() : MutableTeamState {
+        private func getDefenseTeamState() : MutableState.MutableTeamState {
             switch (state.offenseTeamId) {
                 case (#team1) state.team2;
                 case (#team2) state.team1;
@@ -1342,7 +1142,7 @@ module {
             };
         };
 
-        private func getTeamState(teamId : Team.TeamId) : MutableTeamState {
+        private func getTeamState(teamId : Team.TeamId) : MutableState.MutableTeamState {
             switch (teamId) {
                 case (#team1) state.team1;
                 case (#team2) state.team2;
