@@ -27,23 +27,25 @@ module {
     };
 
     public type CompiledHooks = {
-        matchStart : ?Hook<()>;
-        roundStart : ?Hook<()>;
-        onDodge : ?Hook<SkillTestContext>;
+        matchStart : Hook<()>;
+        matchEnd : Hook<()>;
+        roundStart : Hook<()>;
+        roundEnd : Hook<()>;
+        onDodge : Hook<SkillTestContext>;
+        onPitch : Hook<SkillTestContext>;
     };
 
     public type Hook<T> = (HookRequest<T>) -> HookResult<T>;
 
     public type SkillTestContext = {
-        state : SkillTestResult;
+        result : SkillTestResult;
         playerId : Player.PlayerId;
         skill : Skill.Skill;
     };
 
     public type SkillTestResult = {
-        #value : Int;
-        #success;
-        #fail;
+        value : Int;
+        crit : Bool;
     };
 
 };

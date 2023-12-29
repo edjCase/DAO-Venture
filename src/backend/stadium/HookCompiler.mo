@@ -8,12 +8,22 @@ import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import TrieSet "mo:base/TrieSet";
 import Nat32 "mo:base/Nat32";
+import Option "mo:base/Option";
 import FieldPosition "../models/FieldPosition";
 import Player "../models/Player";
 import Skill "../models/Skill";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
+
+    public type PreCompiledHooks = {
+        matchStart : ?Hook.Hook<()>;
+        matchEnd : ?Hook.Hook<()>;
+        roundStart : ?Hook.Hook<()>;
+        roundEnd : ?Hook.Hook<()>;
+        onDodge : ?Hook.Hook<Hook.SkillTestContext>;
+        onPitch : ?Hook.Hook<Hook.SkillTestContext>;
+    };
 
     public func compile(state : StadiumTypes.InProgressMatch) : Hook.CompiledHooks {
         let allHooks = [
@@ -23,17 +33,37 @@ module {
         ];
 
         var matchStart : ?Hook.Hook<()> = null;
+        var matchEnd : ?Hook.Hook<()> = null;
         var roundStart : ?Hook.Hook<()> = null;
+        var roundEnd : ?Hook.Hook<()> = null;
         var onDodge : ?Hook.Hook<Hook.SkillTestContext> = null;
+        var onPitch : ?Hook.Hook<Hook.SkillTestContext> = null;
         for (hook in Iter.fromArray(allHooks)) {
             matchStart := mergeHook(matchStart, hook.matchStart);
+            matchEnd := mergeHook(matchEnd, hook.matchEnd);
             roundStart := mergeHook(roundStart, hook.roundStart);
+            roundEnd := mergeHook(roundEnd, hook.roundEnd);
             onDodge := mergeHook(onDodge, hook.onDodge);
+            onPitch := mergeHook(onPitch, hook.onPitch);
+        };
+        // If there's no hook, then just return an empty hook
+        let hookOrEmpty = func<T>(hook : ?Hook.Hook<T>) : Hook.Hook<T> {
+            switch (hook) {
+                case (null) func(request : Hook.HookRequest<T>) : Hook.HookResult<T> {
+                    {
+                        updatedContext = request.context;
+                    };
+                };
+                case (?h) h;
+            };
         };
         {
-            matchStart = matchStart;
-            roundStart = roundStart;
-            onDodge = onDodge;
+            matchStart = hookOrEmpty(matchStart);
+            matchEnd = hookOrEmpty(matchEnd);
+            roundStart = hookOrEmpty(roundStart);
+            roundEnd = hookOrEmpty(roundEnd);
+            onDodge = hookOrEmpty(onDodge);
+            onPitch = hookOrEmpty(onPitch);
         };
     };
 
@@ -61,7 +91,7 @@ module {
         };
     };
 
-    public func fromOffering(offering : Offering.Offering, teamId : Team.TeamId) : Hook.CompiledHooks {
+    public func fromOffering(offering : Offering.Offering, teamId : Team.TeamId) : PreCompiledHooks {
         switch (offering) {
             case (#shuffleAndBoost) shuffleAndBoostHook(teamId);
             case (#offensive) offensiveHook(teamId);
@@ -76,17 +106,7 @@ module {
         };
     };
 
-    public func trigger<T>(state : MutableState.MutableMatchState, prng : Prng, actionOrNull : ?Hook.Hook<T>, context : T) : T {
-        let ?action = actionOrNull else return context; // If there's no action, just return the context unchanged
-        let result = action({
-            context = context;
-            prng = prng;
-            state = state;
-        });
-        return result.updatedContext;
-    };
-
-    private func shuffleAndBoostHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    private func shuffleAndBoostHook(teamId : Team.TeamId) : PreCompiledHooks {
         let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
             // Shuffle all the players' positions but boost their stats
             var teamPlayers : Buffer.Buffer<(Player.PlayerId, MutableState.MutablePlayerState)> = Buffer.fromIter(request.state.getTeamPlayers(teamId));
@@ -110,12 +130,15 @@ module {
         };
         {
             matchStart = ?matchStartHook;
+            matchEnd = null;
             roundStart = null;
+            roundEnd = null;
             onDodge = null;
+            onPitch = null;
         };
     };
 
-    private func offensiveHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    private func offensiveHook(teamId : Team.TeamId) : PreCompiledHooks {
         let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
             // Increase batting power and lower catching
             for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
@@ -128,12 +151,15 @@ module {
         };
         {
             matchStart = ?matchStartHook;
+            matchEnd = null;
             roundStart = null;
+            roundEnd = null;
             onDodge = null;
+            onPitch = null;
         };
     };
 
-    private func defensiveHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    private func defensiveHook(teamId : Team.TeamId) : PreCompiledHooks {
         let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
             // Increase catching and lower batting power
             for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
@@ -146,12 +172,15 @@ module {
         };
         {
             matchStart = ?matchStartHook;
+            matchEnd = null;
             roundStart = null;
+            roundEnd = null;
             onDodge = null;
+            onPitch = null;
         };
     };
 
-    private func hittersDebtHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    private func hittersDebtHook(teamId : Team.TeamId) : PreCompiledHooks {
         let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
             switch (teamId) {
                 case (#team1) {
@@ -167,12 +196,15 @@ module {
         };
         {
             matchStart = ?matchStartHook;
+            matchEnd = null;
             roundStart = null;
+            roundEnd = null;
             onDodge = null;
+            onPitch = null;
         };
     };
 
-    private func ragePitchHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    private func ragePitchHook(teamId : Team.TeamId) : PreCompiledHooks {
         let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
             // Increase throwing power and lower throwing accuracy for pitchers
             label f for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
@@ -188,12 +220,15 @@ module {
         };
         {
             matchStart = ?matchStartHook;
+            matchEnd = null;
             roundStart = null;
+            roundEnd = null;
             onDodge = null;
+            onPitch = null;
         };
     };
 
-    private func bubbleHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    private func bubbleHook(teamId : Team.TeamId) : PreCompiledHooks {
         var usedOnPlayers : TrieSet.Set<Player.PlayerId> = TrieSet.empty();
         let onDodge = func(request : Hook.HookRequest<Hook.SkillTestContext>) : Hook.HookResult<Hook.SkillTestContext> {
             let alreadyUsed = TrieSet.mem(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
@@ -205,7 +240,10 @@ module {
                 });
                 {
                     request.context with
-                    state = #success;
+                    result = {
+                        request.context.result with
+                        crit = true; // TODO what if already crit?
+                    };
                 };
             } else {
                 request.context; //Skip
@@ -216,12 +254,15 @@ module {
         };
         {
             matchStart = null;
+            matchEnd = null;
             roundStart = null;
+            roundEnd = null;
             onDodge = ?onDodge;
+            onPitch = null;
         };
     };
 
-    // private func underdogHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    // private func underdogHook(teamId : Team.TeamId) : PreCompiledHooks{
     //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
 
     //         {
@@ -235,7 +276,7 @@ module {
     //     };
     // };
 
-    // private func piousHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    // private func piousHook(teamId : Team.TeamId) : PreCompiledHooks {
     //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
 
     //         {
@@ -249,7 +290,7 @@ module {
     //     };
     // };
 
-    // private func confidentHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    // private func confidentHook(teamId : Team.TeamId) : PreCompiledHooks {
     //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
 
     //         {
@@ -263,7 +304,7 @@ module {
     //     };
     // };
 
-    // private func moraleFlywheelHook(teamId : Team.TeamId) : Hook.CompiledHooks {
+    // private func moraleFlywheelHook(teamId : Team.TeamId) : PreCompiledHooks {
     //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
 
     //         {

@@ -94,6 +94,19 @@ module {
         };
     };
 
+    public func getPlayerSkill(skills : MutablePlayerSkills, skill : Skill.Skill) : Int {
+        switch (skill) {
+            case (#battingPower) skills.battingPower;
+            case (#battingAccuracy) skills.battingAccuracy;
+            case (#throwingPower) skills.throwingPower;
+            case (#throwingAccuracy) skills.throwingAccuracy;
+            case (#catching) skills.catching;
+            case (#defense) skills.defense;
+            case (#piety) skills.piety;
+            case (#speed) skills.speed;
+        };
+    };
+
     public func modifyPlayerSkill(skills : MutablePlayerSkills, skill : Skill.Skill, value : Int) {
         switch (skill) {
             case (#battingPower) skills.battingPower += value;

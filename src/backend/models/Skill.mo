@@ -29,7 +29,20 @@ module {
         return allSkills[skillIndex];
     };
 
-    public func modifySkill(skills : Player.Skills, skill : Skill, value : Int) : Player.Skills {
+    public func get(skills: Player.Skills, skill : Skill) : Int {
+        switch (skill) {
+            case (#battingAccuracy) skills.battingAccuracy;
+            case (#battingPower) skills.battingPower;
+            case (#throwingAccuracy) skills.throwingAccuracy;
+            case (#throwingPower) skills.throwingPower;
+            case (#catching) skills.catching;
+            case (#defense) skills.defense;
+            case (#piety) skills.piety;
+            case (#speed) skills.speed;
+        }
+    };
+
+    public func modify(skills : Player.Skills, skill : Skill, value : Int) : Player.Skills {
         switch (skill) {
             case (#battingAccuracy) {
                 return {

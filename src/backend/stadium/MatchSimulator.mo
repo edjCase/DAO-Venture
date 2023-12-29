@@ -238,30 +238,47 @@ module {
         simulation.tick();
     };
 
-    class MatchSimulation(initialState : StadiumTypes.InProgressMatch, prng : Prng, compiledHooks : Hook.CompiledHooks) {
+    class MatchSimulation(
+        initialState : StadiumTypes.InProgressMatch,
+        prng : Prng,
+        compiledHooks : Hook.CompiledHooks,
+    ) {
 
         let state : MutableState.MutableMatchState = MutableState.toMutableState(initialState);
 
         public func tick() : TickResult {
             if (state.round == 0) {
-                Hook.trigger(state, #matchStart);
+                ignore compiledHooks.matchStart({
+                    prng = prng;
+                    state = state;
+                    context = ();
+                });
                 state.round := 1;
             };
-            Hook.trigger(state, #roundStart);
-            let roll = Hook.trigger(state, #divineInterventionRoll);
-            let divineInterventionRoll = prng.nextNat(0, 999);
+            ignore compiledHooks.roundStart({
+                prng = prng;
+                state = state;
+                context = ();
+            });
 
-            let result = if (divineInterventionRoll <= 9) {
-                state.log.add({
-                    message = "Divine intervention!";
-                    isImportant = true;
-                });
-                let ?randomPlayerId = getRandomAvailablePlayer(null, null, false) else Prelude.unreachable();
-                blessOrCursePlayer(randomPlayerId);
-            } else {
-                pitch();
-            };
-            Hook.trigger(state, #roundEnd);
+            // TODO divine intervention
+            // let roll = Hook.trigger(state, #divineInterventionRoll);
+            // let divineInterventionRoll = prng.nextNat(0, 999);
+            // let result = if (divineInterventionRoll <= 9) {
+            //     state.log.add({
+            //         message = "Divine intervention!";
+            //         isImportant = true;
+            //     });
+            //     let ?randomPlayerId = getRandomAvailablePlayer(null, null, false) else Prelude.unreachable();
+            //     blessOrCursePlayer(randomPlayerId);
+            // } else {
+            let result = pitch();
+            // };
+            ignore compiledHooks.roundEnd({
+                prng = prng;
+                state = state;
+                context = ();
+            });
             buildTickResult(result);
         };
 
@@ -556,53 +573,104 @@ module {
         };
 
         private func roll(
-            min : Nat,
-            max : Nat,
-            modifier : Int,
+            type_ : { #d10 },
             playerId : Player.PlayerId,
             skill : Skill.Skill,
             hook : ?Hook.Hook<Hook.SkillTestContext>,
-        ) : Hook.SkillTestResult {
-            let roll = prng.nextNat(min, max);
+        ) : {
+            #ok : Hook.SkillTestResult;
+            #playerNotFound : StadiumTypes.PlayerNotFoundError;
+        } {
+            let (min, max) = switch (type_) {
+                case (#d10)(0, 10);
+            };
+            var roll = prng.nextNat(min, max);
+            let crit = roll == max;
+            if (crit) {
+                // Reroll for crit value, no double crit
+                roll := prng.nextNat(min, max);
+            };
+            let pitcherState = switch (getPlayerState(state.field.defense.pitcher)) {
+                case (#ok(p)) p;
+                case (#playerNotFound(e)) return #playerNotFound(e);
+            };
+            let modifier = MutableState.getPlayerSkill(pitcherState.skills, skill);
             let modifiedRoll = roll + modifier;
-            switch (hook) {
-                case (null) #value(modifiedRoll);
+            let postHookValue = switch (hook) {
+                case (null) { { value = modifiedRoll; crit = crit } };
                 case (?h) {
                     let result = h({
                         prng = prng;
                         state = state;
                         context = {
-                            state = #value(modifiedRoll);
+                            result = { value = modifiedRoll; crit = crit };
                             playerId = playerId;
                             skill = skill;
                         };
                     });
-                    result.updatedContext.state;
+                    result.updatedContext.result;
+                };
+            };
+            #ok(postHookValue);
+        };
+
+        private func getNetRoll(leftRoll : Hook.SkillTestResult, rightRoll : Hook.SkillTestResult) : Int {
+            switch ((leftRoll.crit, rightRoll.crit)) {
+                case ((false, false) or (true, true)) {
+                    // If both crit or normal, find the delta
+                    leftRoll.value - rightRoll.value;
+                };
+                case ((true, false)) {
+                    // Left crit trumps right value
+                    leftRoll.value;
+                };
+                case ((false, true)) {
+                    // Right crit trumps left value
+                    rightRoll.value;
                 };
             };
         };
 
         private func pitch() : SimulationResult {
-            let pitcherState = switch (getPlayerState(state.field.defense.pitcher)) {
-                case (#ok(p)) p;
+            let pitchRollResult = roll(
+                #d10,
+                state.field.defense.pitcher,
+                // TODO what about throwing power?
+                #throwingAccuracy,
+                ?compiledHooks.onPitch,
+            );
+            switch (pitchRollResult) {
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
+                case (#ok(pitchRoll)) {
+                    state.log.add({
+                        message = "Pitch";
+                        isImportant = false;
+                    });
+                    swing(pitchRoll);
+                };
             };
-            let pitchRoll = roll(0, 10, pitcherState.skills.throwingAccuracy, pitcherState.id, compiledHooks.onPitch);
 
-            state.log.add({
-                message = "Pitch";
-                isImportant = false;
-            });
-            let atBatPlayerState = switch (getPlayerState(state.field.offense.atBat)) {
-                case (#ok(p)) p;
+        };
+
+        private func swing(pitchRoll : Hook.SkillTestResult) : SimulationResult {
+            let swingRollResult = roll(
+                #d10,
+                state.field.offense.atBat,
+                #battingAccuracy,
+                ?compiledHooks.onSwing,
+            );
+            switch (swingRollResult) {
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
-            };
-            let batterRoll = prng.nextInt(0, 20) + atBatPlayerState.skills.battingAccuracy + atBatPlayerState.skills.battingPower;
-            let batterNetScore = batterRoll - pitchRoll;
-            if (batterNetScore <= 0) {
-                strike();
-            } else {
-                hit({ hitRoll = Int.abs(batterNetScore) });
+                case (#ok(swingRoll)) {
+                    let netRoll = getNetRoll(pitchRoll, swingRoll);
+                    if (netRoll == 0) {
+                        foul();
+                    } else if (netRoll > 0) {
+                        hit(Int.abs(netRoll));
+                    } else {
+                        strike();
+                    };
+                };
             };
         };
 
@@ -614,41 +682,81 @@ module {
             #inProgress;
         };
 
-        private func hit({ hitRoll : Nat }) : SimulationResult {
+        private func hit(hitDelta : Nat) : SimulationResult {
             state.log.add({
                 message = "Its a hit!";
                 isImportant = true;
             });
-            let precisionRoll = prng.nextInt(-2, 2) + hitRoll;
-            if (precisionRoll < 0) {
-                return foul();
+            let hitPowerRollResult = roll(
+                #d10,
+                state.field.offense.atBat,
+                #battingPower,
+                ?compiledHooks.onHit,
+            );
+            switch (hitPowerRollResult) {
+                case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
+                case (#ok(hitPowerRoll)) {
+                    let pitchPowerRollResult = roll(
+                        #d10,
+                        state.field.defense.pitcher,
+                        #throwingPower,
+                        null,
+                    );
+
+                    switch (pitchPowerRollResult) {
+                        case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
+                        case (#ok(pitchPowerRoll)) {
+                            let netRoll = getNetRoll(pitchPowerRoll, hitPowerRoll);
+                            if (netRoll < 0) {
+                                // bases
+                                let location = switch (prng.nextInt(0, 4)) {
+                                    case (0) #firstBase;
+                                    case (1) #secondBase;
+                                    case (2) #thirdBase;
+                                    case (3) #shortStop;
+                                    case (4) #pitcher;
+                                    case (_) Prelude.unreachable();
+                                };
+                                tryCatchHit(location);
+                            } else if (netRoll < 10) {
+                                // outfield
+                                let location = switch (prng.nextInt(0, 2)) {
+                                    case (0) #leftField;
+                                    case (1) #centerField;
+                                    case (2) #rightField;
+                                    case (_) Prelude.unreachable();
+                                };
+                                tryCatchHit(location);
+                            } else {
+                                // homerun
+                                state.log.add({
+                                    message = "Homerun!";
+                                    isImportant = true;
+                                });
+                                // hit it out of the park
+                                return batterRun({
+                                    fromBase = #homeBase;
+                                    ballLocation = null;
+                                });
+                            };
+                        };
+                    };
+                };
             };
-            let player = getPlayer(state.offenseTeamId, state.field.offense.atBat);
-            if (precisionRoll > 10) {
-                state.log.add({
-                    message = "Homerun!";
-                    isImportant = true;
-                });
-                // hit it out of the park
-                return batterRun({ fromBase = #homeBase; ballLocation = null });
-            };
-            let location = switch (prng.nextInt(0, 7)) {
-                case (0) #firstBase;
-                case (1) #secondBase;
-                case (2) #thirdBase;
-                case (3) #shortStop;
-                case (4) #pitcher;
-                case (5) #leftField;
-                case (6) #centerField;
-                case (7) #rightField;
-                case (_) Prelude.unreachable();
-            };
+        };
+
+        private func tryCatchHit(location : FieldPosition.FieldPosition) : SimulationResult {
             let catchingPlayerId = getPlayerAtPosition(location);
             let catchingPlayerState = switch (getPlayerState(catchingPlayerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
-            let catchRoll = prng.nextInt(-10, 10) + catchingPlayerState.skills.catching;
+            let catchRollResult = roll(
+                #d10,
+                catchingPlayerId,
+                #catching,
+                ?compiledHooks.onCatch,
+            );
             if (catchRoll <= 0) {
                 batterRun({
                     fromBase = #homeBase;
@@ -677,12 +785,11 @@ module {
                 // Ball caught, batter is out
                 out(state.field.offense.atBat);
             };
-
         };
 
         private func batterRun({
             ballLocation : ?FieldPosition.FieldPosition;
-        }) : { #endMatch : MatchEndReason } {
+        }) : SimulationResult {
             let battingPlayerState = switch (getPlayerState(state.field.offense.atBat)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
@@ -747,11 +854,11 @@ module {
                             toBase = #firstBase;
                         });
                     } else {
-                        let catchingPlayer = switch (getPlayer(getDefenseTeamId(), playerIdWithBall)) {
+                        let catchingPlayer = switch (getPlayerState(playerIdWithBall)) {
                             case (#ok(p)) p;
                             case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                         };
-                        let battingPlayer = switch (getPlayer(state.offenseTeamId, state.field.offense.atBat)) {
+                        let battingPlayer = switch (getPlayerState(state.field.offense.atBat)) {
                             case (#ok(p)) p;
                             case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                         };
@@ -805,7 +912,7 @@ module {
         private func out(playerId : Nat32) : SimulationResult {
             state.strikes := 0;
             state.outs += 1;
-            let outPlayer = switch (getPlayer(state.offenseTeamId, playerId)) {
+            let outPlayer = switch (getPlayerState(playerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
@@ -876,7 +983,7 @@ module {
             ];
             var newPositionText = "Team " # getTeamState(newDefenseTeamId).name # " is now on the field.\nNew positions -";
             for ((name, playerId) in Iter.fromArray(newState)) {
-                let player = switch (getPlayer(newDefenseTeamId, playerId)) {
+                let player = switch (getPlayerState(playerId)) {
                     case (#ok(p)) p;
                     case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                 };
@@ -909,7 +1016,7 @@ module {
                 case (#brokenArm) "Broken arm";
                 case (#concussion) "Concussion";
             };
-            let player = switch (getPlayer(playerState.teamId, playerId)) {
+            let player = switch (getPlayerState(playerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
@@ -964,7 +1071,7 @@ module {
                     ("Injury: " # debug_show (i), result);
                 };
             };
-            let player = switch (getPlayer(playerState.teamId, playerId)) {
+            let player = switch (getPlayerState(playerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
@@ -1003,7 +1110,7 @@ module {
                     "Increased skill: " # debug_show (s);
                 };
             };
-            let player = switch (getPlayer(playerState.teamId, playerId)) {
+            let player = switch (getPlayerState(playerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
@@ -1032,11 +1139,11 @@ module {
             // Get random from available players
             let randomIndex = prng.nextNat(0, availablePlayers.size() - 1);
             let subPlayerId = availablePlayers.get(randomIndex);
-            let subPlayer = switch (getPlayer(playerOutState.teamId, subPlayerId)) {
+            let subPlayer = switch (getPlayerState(subPlayerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
-            let playerOut = switch (getPlayer(playerOutState.teamId, playerId)) {
+            let playerOut = switch (getPlayerState(playerId)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
@@ -1081,7 +1188,7 @@ module {
                         return #endMatch(#outOfPlayers(state.offenseTeamId));
                     };
                     state.field.offense.atBat := nextBatterId;
-                    let nextBatter = switch (getPlayer(state.offenseTeamId, nextBatterId)) {
+                    let nextBatter = switch (getPlayerState(nextBatterId)) {
                         case (#ok(p)) p;
                         case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                     };
