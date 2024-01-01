@@ -33,6 +33,9 @@ module {
         roundEnd : Hook<()>;
         onDodge : Hook<SkillTestContext>;
         onPitch : Hook<SkillTestContext>;
+        onSwing : Hook<SkillTestContext>;
+        onHit : Hook<SkillTestContext>;
+        onCatch : Hook<SkillTestContext>;
     };
 
     public type Hook<T> = (HookRequest<T>) -> HookResult<T>;

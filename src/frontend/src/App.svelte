@@ -5,6 +5,8 @@
   import Header from "./components/Header.svelte";
   import MatchGroup from "./routes/MatchGroup.svelte";
   import Team from "./routes/Team.svelte";
+  import Teams from "./routes/Teams.svelte";
+  import Schedule from "./routes/Schedule.svelte";
 </script>
 
 <main>
@@ -12,8 +14,10 @@
     <Header />
     <div class="body">
       <Route path="/" component={Home} />
-      <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
+      <Route path="/schedule" component={Schedule} />
+      <Route path="/teams" component={Teams} />
       <Route path="/teams/:teamIdString" component={Team} />
+      <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
       <Route path="*" component={NotFound} />
     </div>
   </Router>

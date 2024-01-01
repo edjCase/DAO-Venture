@@ -43,8 +43,8 @@ export const scheduleStore = (() => {
             let winner: TeamIdOrTie | undefined;
             let state: MatchState;
             if ('played' in match.completed.result) {
-                team1Score = match.completed.result.played.team1Score;
-                team2Score = match.completed.result.played.team2Score;
+                team1Score = match.completed.result.played.team1.score;
+                team2Score = match.completed.result.played.team2.score;
                 winner = match.completed.result.played.winner;
                 state = "Played";
             } else if ('allAbsent' in match.completed.result) {

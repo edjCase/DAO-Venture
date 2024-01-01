@@ -757,7 +757,13 @@ module {
                 #catching,
                 ?compiledHooks.onCatch,
             );
-            if (catchRoll <= 0) {
+            let catchRoll = switch (catchRollResult) {
+                case (#ok(catchRoll)) catchRoll;
+                case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
+            };
+            let ballRoll = { crit = false; value = 5 }; // TODO how to handle difficulty?
+            let netCatchRoll = getNetRoll(ballRoll, catchRoll);
+            if (netCatchRoll <= 0) {
                 batterRun({
                     fromBase = #homeBase;
                     ballLocation = ?location;
@@ -774,7 +780,7 @@ module {
                     case (#rightField) "in right field";
                 };
                 let teamId = getDefenseTeamId();
-                let catchingPlayer = switch (getPlayer(teamId, catchingPlayerId)) {
+                let catchingPlayer = switch (getPlayerState(catchingPlayerId)) {
                     case (#ok(p)) p;
                     case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                 };

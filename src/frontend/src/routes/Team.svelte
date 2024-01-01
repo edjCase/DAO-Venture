@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Team } from "../ic-agent/League";
   import { teamStore } from "../stores/TeamStore";
   import PlayerRoster from "../components/PlayerRoster.svelte";
   import MatchHistory from "../components/MatchHistory.svelte";
+  import { Team } from "../ic-agent/Stadium";
 
   export let teamIdString: string;
 

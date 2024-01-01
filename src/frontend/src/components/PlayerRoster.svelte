@@ -1,13 +1,22 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { Deity } from "../models/Deity";
   import { playerStore } from "../stores/PlayerStore";
   import { Player } from "../models/Player";
+  import { Deity, FieldPosition } from "../ic-agent/PlayerLedger";
 
   export let teamId: Principal;
 
   const deityToString = (deity: Deity): string => {
-    return Deity[deity] || "Unknown";
+    if ("mischief" in deity) {
+      return "Mischief";
+    } else if ("indulgence" in deity) {
+      return "Indulgence";
+    } else if ("war" in deity) {
+      return "War";
+    } else if ("pestilence" in deity) {
+      return "Pestilence";
+    }
+    return "Unknown";
   };
   const skillToString = (skill: number): string => {
     if (skill == 0) {
@@ -17,6 +26,28 @@
     } else {
       return `${skill}`;
     }
+  };
+  const positionToString = (position: FieldPosition): string => {
+    if ("pitcher" in position) {
+      return "Pitcher";
+    } else if ("catcher" in position) {
+      return "Catcher";
+    } else if ("firstBase" in position) {
+      return "1st Base";
+    } else if ("secondBase" in position) {
+      return "2nd Base";
+    } else if ("thirdBase" in position) {
+      return "3rd Base";
+    } else if ("shortStop" in position) {
+      return "Short Stop";
+    } else if ("leftField" in position) {
+      return "Left Field";
+    } else if ("centerField" in position) {
+      return "Center Field";
+    } else if ("rightField" in position) {
+      return "Right Field";
+    }
+    return "Unknown";
   };
 
   let players: Player[] = [];
@@ -50,7 +81,7 @@
       <tr>
         <td>{player.id}</td>
         <td>{player.name}</td>
-        <td>{player.position}</td>
+        <td>{positionToString(player.position)}</td>
         <td>{deityToString(player.deity)}</td>
         <td>{skillToString(player.skills.battingAccuracy)}</td>
         <td>{skillToString(player.skills.battingPower)}</td>
@@ -97,7 +128,7 @@
   }
 
   .player-roster th.column-position {
-    width: 100px;
+    width: 120px;
   }
   .player-roster th.column-deity {
     width: 100px;

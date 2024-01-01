@@ -52,8 +52,8 @@ export type InProgressMatchState = {
 
 export const liveMatchGroupStore = (() => {
   const { subscribe, set } = writable<LiveMatchGroup | undefined>();
-  let nextMatchTimeout: NodeJS.Timeout;
-  let liveMatchInterval: NodeJS.Timeout;
+  let nextMatchTimeout: number;
+  let liveMatchInterval: number;
 
   const mapTeam = (team: Team, score: bigint | undefined): TeamDetails => {
     return {

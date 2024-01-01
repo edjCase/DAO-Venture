@@ -23,6 +23,9 @@ module {
         roundEnd : ?Hook.Hook<()>;
         onDodge : ?Hook.Hook<Hook.SkillTestContext>;
         onPitch : ?Hook.Hook<Hook.SkillTestContext>;
+        onSwing : ?Hook.Hook<Hook.SkillTestContext>;
+        onHit : ?Hook.Hook<Hook.SkillTestContext>;
+        onCatch : ?Hook.Hook<Hook.SkillTestContext>;
     };
 
     public func compile(state : StadiumTypes.InProgressMatch) : Hook.CompiledHooks {
@@ -38,6 +41,9 @@ module {
         var roundEnd : ?Hook.Hook<()> = null;
         var onDodge : ?Hook.Hook<Hook.SkillTestContext> = null;
         var onPitch : ?Hook.Hook<Hook.SkillTestContext> = null;
+        var onSwing : ?Hook.Hook<Hook.SkillTestContext> = null;
+        var onHit : ?Hook.Hook<Hook.SkillTestContext> = null;
+        var onCatch : ?Hook.Hook<Hook.SkillTestContext> = null;
         for (hook in Iter.fromArray(allHooks)) {
             matchStart := mergeHook(matchStart, hook.matchStart);
             matchEnd := mergeHook(matchEnd, hook.matchEnd);
@@ -45,6 +51,9 @@ module {
             roundEnd := mergeHook(roundEnd, hook.roundEnd);
             onDodge := mergeHook(onDodge, hook.onDodge);
             onPitch := mergeHook(onPitch, hook.onPitch);
+            onSwing := mergeHook(onSwing, hook.onSwing);
+            onHit := mergeHook(onHit, hook.onHit);
+            onCatch := mergeHook(onCatch, hook.onCatch);
         };
         // If there's no hook, then just return an empty hook
         let hookOrEmpty = func<T>(hook : ?Hook.Hook<T>) : Hook.Hook<T> {
@@ -64,6 +73,9 @@ module {
             roundEnd = hookOrEmpty(roundEnd);
             onDodge = hookOrEmpty(onDodge);
             onPitch = hookOrEmpty(onPitch);
+            onSwing = hookOrEmpty(onSwing);
+            onHit = hookOrEmpty(onHit);
+            onCatch = hookOrEmpty(onCatch);
         };
     };
 
@@ -135,6 +147,9 @@ module {
             roundEnd = null;
             onDodge = null;
             onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
         };
     };
 
@@ -156,6 +171,9 @@ module {
             roundEnd = null;
             onDodge = null;
             onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
         };
     };
 
@@ -177,6 +195,9 @@ module {
             roundEnd = null;
             onDodge = null;
             onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
         };
     };
 
@@ -201,6 +222,9 @@ module {
             roundEnd = null;
             onDodge = null;
             onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
         };
     };
 
@@ -225,6 +249,9 @@ module {
             roundEnd = null;
             onDodge = null;
             onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
         };
     };
 
@@ -259,6 +286,9 @@ module {
             roundEnd = null;
             onDodge = ?onDodge;
             onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
         };
     };
 

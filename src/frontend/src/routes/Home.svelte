@@ -6,13 +6,12 @@
   import TempInitialize from "../components/TempInitialize.svelte";
   import { teamStore } from "../stores/TeamStore";
   import ScheduleSeason from "../components/ScheduleSeason.svelte";
-  import TeamGrid from "../components/TeamGrid.svelte";
   import LastAndCurrentMatchGroups from "../components/LastAndCurrentMatchGroups.svelte";
   import { scheduleStore } from "../stores/ScheduleStore";
   import { SeasonStatus } from "../models/Season";
 
   $: teams = $teamStore;
-  let seasonStatus: SeasonStatus;
+  let seasonStatus: SeasonStatus | undefined;
 
   scheduleStore.subscribeStatus((status) => {
     seasonStatus = status;
@@ -22,23 +21,16 @@
 <div class="content">
   {#if teams.length === 0}
     <TempInitialize />
-  {:else}
-    <div>
-      <h1>Teams</h1>
-      <TeamGrid />
-    </div>
-
-    {#if seasonStatus}
-      {#if "notStarted" in seasonStatus}
-        <div>
-          <h1>Schedule Season</h1>
-          <ScheduleSeason />
-        </div>
-      {:else if "completed" in seasonStatus}
-        Season Complete
-      {:else}
-        <LastAndCurrentMatchGroups />
-      {/if}
+  {:else if seasonStatus}
+    {#if "notStarted" in seasonStatus}
+      <div>
+        <h1>Schedule Season</h1>
+        <ScheduleSeason />
+      </div>
+    {:else if "completed" in seasonStatus}
+      Season Complete
+    {:else}
+      <LastAndCurrentMatchGroups />
     {/if}
   {/if}
   <hr style="margin-top: 400px;" />

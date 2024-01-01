@@ -10,6 +10,12 @@
       <Link to="/" class="nav-link button-style">Home</Link>
     </li>
     <li class="nav-item">
+      <Link to="/teams" class="nav-link button-style">Teams</Link>
+    </li>
+    <li class="nav-item">
+      <Link to="/schedule" class="nav-link button-style">Schedule</Link>
+    </li>
+    <li class="nav-item">
       <a
         class="nav-link button-style"
         target="_blank"
@@ -19,7 +25,11 @@
       </a>
     </li>
     <li>
-      <a class="nav-link button-style" target="_blank" href="https://dscvr.one">
+      <a
+        class="nav-link button-style"
+        target="_blank"
+        href="https://dscvr.one/p/daoball"
+      >
         DSCVR
       </a>
     </li>
