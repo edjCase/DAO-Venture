@@ -158,13 +158,11 @@ export type PlayedMatch = {
   team1: TeamState;
   team2: TeamState;
   winner: TeamIdOrTie;
-  log: LogEntry[];
 };
 export const PlayedMatchIdl = IDL.Record({
   team1: TeamIdl,
   team2: TeamIdl,
   winner: TeamIdOrTieIdl,
-  log: IDL.Vec(LogEntryIdl),
 });
 
 export type PlayerNotFoundError = {
@@ -224,7 +222,6 @@ export const PlayedMatchResultIdl = IDL.Record({
   team1Score: IDL.Int,
   team2Score: IDL.Int,
   winner: TeamIdOrTieIdl,
-  log: IDL.Vec(LogEntryIdl),
 });
 
 export type CompletedMatchResult =

@@ -18,7 +18,7 @@
   });
 </script>
 
-<div>
+<div class="lastAndNext">
   {#if lastMatchGroup}
     <div>
       <div>Last</div>
@@ -32,3 +32,10 @@
     </div>
   {/if}
 </div>
+
+<style lang="postcss">
+  .lastAndNext {
+    display: flex;
+    justify-content: space-around;
+  }
+</style>

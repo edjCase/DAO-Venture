@@ -12,7 +12,7 @@
 <main>
   <Router>
     <Header />
-    <div class="body">
+    <div>
       <Route path="/" component={Home} />
       <Route path="/schedule" component={Schedule} />
       <Route path="/teams" component={Teams} />
@@ -27,7 +27,4 @@
   @tailwind base;
   @tailwind components;
   @tailwind utilities;
-  .body {
-    padding: 0 10rem;
-  }
 </style>

@@ -4,7 +4,7 @@
   import { scheduleStore } from "../stores/ScheduleStore";
   import MatchGroupSummaryCard from "./MatchGroupSummaryCard.svelte";
   import ScheduleSeason from "./ScheduleSeason.svelte";
-  import { AccordionItem, Accordion } from "flowbite-svelte";
+  import { TabItem, Tabs } from "flowbite-svelte";
 
   let seasonStatus: SeasonStatus | undefined;
 
@@ -30,12 +30,19 @@
   {/if}
 {/if}
 {#if !!matchGroupDetails}
-  <Accordion>
-    {#each matchGroupDetails as matchGroup}
-      <AccordionItem>
-        <span slot="header">Week X</span>
+  <Tabs
+    style="full"
+    defaultClass="flex rounded-lg divide-x shadow divide-gray-700"
+  >
+    {#each matchGroupDetails as matchGroup, index}
+      <TabItem
+        class="w-full"
+        title="Week {index + 1}"
+        open={matchGroup.state == "InProgress" ||
+          matchGroup.state == "Scheduled"}
+      >
         <MatchGroupSummaryCard {matchGroup} />
-      </AccordionItem>
+      </TabItem>
     {/each}
-  </Accordion>
+  </Tabs>
 {/if}

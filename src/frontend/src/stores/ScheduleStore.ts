@@ -157,7 +157,7 @@ export const scheduleStore = (() => {
                 } else {
                     matchGroups = [];
                 }
-                setMatchGroups(matchGroups);
+                setMatchGroups(matchGroups.sort((a, b) => Number(a.id) - Number(b.id)));
             });
     };
 

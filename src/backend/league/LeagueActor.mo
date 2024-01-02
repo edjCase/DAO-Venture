@@ -270,8 +270,10 @@ actor LeagueActor {
                     matches = inProgressMatches;
                 });
                 // Update status to inProgress
-                switch (updateInProgressMatchGroup(id, newStatus, season)) {
-                    case (#ok)();
+                switch (buildSeasonWithUpdatedMatchGroup(id, newStatus, season)) {
+                    case (#ok(inProgressSeason)) {
+                        seasonStatus := #inProgress(inProgressSeason);
+                    };
                     case (#matchGroupNotFound) return #matchGroupNotFound;
                 };
 
@@ -340,16 +342,22 @@ actor LeagueActor {
             time = inProgressMatchGroup.time;
             matches = completedMatches;
         };
+        Debug.print("Completed match group: " # debug_show (updatedMatchGroup));
 
-        switch (updateInProgressMatchGroup(request.id, #completed(updatedMatchGroup), season)) {
-            case (#ok)();
+        let updatedSeason = switch (buildSeasonWithUpdatedMatchGroup(request.id, #completed(updatedMatchGroup), season)) {
+            case (#ok(inProgressSeason)) {
+                seasonStatus := #inProgress(inProgressSeason);
+                inProgressSeason;
+            };
             case (#matchGroupNotFound) return #matchGroupNotFound;
         };
+
+        Debug.print("Updated season: " # debug_show (seasonStatus));
 
         // Get next match group to schedule
         let nextMatchGroupId = request.id + 1;
         let ?nextMatchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
-            season.matchGroups,
+            updatedSeason.matchGroups,
             nextMatchGroupId,
         ) else {
             // Season is over, cant find more match groups
@@ -359,7 +367,7 @@ actor LeagueActor {
         switch (nextMatchGroup) {
             case (#notScheduled(matchGroup)) {
                 // Schedule next match group
-                scheduleMatchGroup(nextMatchGroupId, matchGroup, season, prng);
+                scheduleMatchGroup(nextMatchGroupId, matchGroup, updatedSeason, prng);
             };
             case (_) {
                 // TODO
@@ -444,7 +452,7 @@ actor LeagueActor {
                     {
                         team1 = m.team1;
                         team2 = m.team2;
-                        offerings = getRandomOfferings(4);
+                        offerings = getRandomOfferings(prng, 4);
                         aura = getRandomMatchAura(prng);
                     };
                 },
@@ -452,17 +460,19 @@ actor LeagueActor {
             |> Iter.toArray(_);
         };
         let status = #scheduled(scheduledMatchGroup);
-        switch (updateInProgressMatchGroup(matchGroupId, status, inProgressSeason)) {
-            case (#ok)();
+        switch (buildSeasonWithUpdatedMatchGroup(matchGroupId, status, inProgressSeason)) {
+            case (#ok(inProgressSeason)) {
+                seasonStatus := #inProgress(inProgressSeason);
+            };
             case (#matchGroupNotFound) Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
         };
     };
 
-    private func updateInProgressMatchGroup(
+    private func buildSeasonWithUpdatedMatchGroup(
         matchGroupId : Nat,
         updatedMatchGroup : Season.InProgressSeasonMatchGroupVariant,
         inProgressSeason : Season.InProgressSeason,
-    ) : { #ok; #matchGroupNotFound } {
+    ) : { #ok : Season.InProgressSeason; #matchGroupNotFound } {
 
         let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
             inProgressSeason.matchGroups,
@@ -470,11 +480,10 @@ actor LeagueActor {
             updatedMatchGroup,
         ) else return #matchGroupNotFound;
 
-        seasonStatus := #inProgress({
+        #ok({
             inProgressSeason with
             matchGroups = newMatchGroups;
         });
-        #ok;
     };
 
     private func buildMatchStartData(
@@ -512,12 +521,20 @@ actor LeagueActor {
         #noVotes;
     } {
         let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
-        let options = try {
+        let options : TeamTypes.MatchGroupVoteResult = try {
             // Get match options from the team itself
             let result : TeamTypes.GetMatchGroupVoteResult = await teamActor.getMatchGroupVote(matchGroupId);
             switch (result) {
-                case (#noVotes) return #noVotes;
                 case (#ok(o)) o;
+                // TODO revert voting for prod, only for testing
+                // case (#noVotes) return #noVotes;
+                case (#noVotes) {
+                    // Temp for testing
+                    {
+                        championId = allPlayers[0].id;
+                        offering = #shuffleAndBoost;
+                    };
+                };
                 case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(team.id));
             };
         } catch (err : Error.Error) {
@@ -668,18 +685,29 @@ actor LeagueActor {
         trie;
     };
 
-    private func getRandomOfferings(count : Nat) : [Offering.OfferingWithMetaData] {
-        // TODO
-        [
-            #shuffleAndBoost
-        ]
-        |> Iter.fromArray(_)
+    private func getRandomOfferings(prng : Prng, count : Nat) : [Offering.OfferingWithMetaData] {
+        // TODO how to get all offerings without missing any
+        let offerings = Buffer.fromArray<Offering.Offering>([
+            #shuffleAndBoost,
+            #offensive,
+            #defensive,
+            #hittersDebt,
+            #bubble,
+            #underdog,
+            #ragePitch,
+            #pious,
+            #confident,
+            #moraleFlywheel,
+        ]);
+        prng.shuffleBuffer(offerings);
+        offerings.vals()
         |> Iter.map(
             _,
             func(o : Offering.Offering) : Offering.OfferingWithMetaData {
                 { Offering.getMetaData(o) with offering = o };
             },
         )
+        |> IterTools.take(_, count)
         |> Iter.toArray(_);
     };
 
@@ -690,6 +718,12 @@ actor LeagueActor {
             #explodingBalls,
             #fastBallsHardHits,
             #moreBlessingsAndCurses,
+            #moveBasesIn,
+            #doubleOrNothing,
+            #windy,
+            #rainy,
+            #foggy,
+            #extraStrike,
         ]);
         prng.shuffleBuffer(auras);
         let aura = auras.get(0);
