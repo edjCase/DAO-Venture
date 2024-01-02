@@ -9,8 +9,7 @@ import {
     SeasonStatus,
     TeamInfo
 } from "../models/Season";
-import { MatchDetails, MatchGroupDetails, MatchState } from "../models/Match";
-import { TeamIdOrTie } from "../models/Team";
+import { MatchDetails, MatchGroupDetails } from "../models/Match";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -38,36 +37,17 @@ export const scheduleStore = (() => {
         match: MatchVariant
     ): MatchDetails => {
         if ('completed' in match) {
-            let team1Score: bigint | undefined;
-            let team2Score: bigint | undefined;
-            let winner: TeamIdOrTie | undefined;
-            let state: MatchState;
-            if ('played' in match.completed.result) {
-                team1Score = match.completed.result.played.team1.score;
-                team2Score = match.completed.result.played.team2.score;
-                winner = match.completed.result.played.winner;
-                state = "Played";
-            } else if ('allAbsent' in match.completed.result) {
-                state = "AllAbsent";
-            } else if ('absentTeam' in match.completed.result) {
-                if ('team1' in match.completed.result.absentTeam) {
-                    state = "Team1Absent";
-                } else {
-                    state = "Team2Absent";
-                }
-            } else {
-                state = "Error";
-            }
 
             return {
                 id: BigInt(index),
                 time: time,
                 matchGroupId: matchGroupId,
-                state: state,
+                state: match.completed.error.length == 0 ? "Played" : "Error",
                 offerings: undefined,
-                team1: mapTeam(match.completed.team1, team1Score),
-                team2: mapTeam(match.completed.team2, team2Score),
-                winner: winner
+                team1: mapTeam(match.completed.team1, match.completed.team1.score),
+                team2: mapTeam(match.completed.team2, match.completed.team2.score),
+                winner: match.completed.winner,
+                error: match.completed.error.length == 0 ? undefined : match.completed.error[0]
             };
         } else if ('inProgress' in match) {
             return {
@@ -78,7 +58,8 @@ export const scheduleStore = (() => {
                 offerings: undefined,
                 team1: mapTeam(match.inProgress.team1, undefined),
                 team2: mapTeam(match.inProgress.team2, undefined),
-                winner: undefined
+                winner: undefined,
+                error: undefined
             };
         }
         else if ('scheduled' in match) {
@@ -90,7 +71,8 @@ export const scheduleStore = (() => {
                 offerings: match.scheduled.offerings,
                 team1: mapTeam(match.scheduled.team1, undefined),
                 team2: mapTeam(match.scheduled.team2, undefined),
-                winner: undefined
+                winner: undefined,
+                error: undefined
             };
         }
         else {
@@ -102,7 +84,8 @@ export const scheduleStore = (() => {
                 offerings: undefined,
                 team1: mapTeam(match.notScheduled.team1, undefined),
                 team2: mapTeam(match.notScheduled.team2, undefined),
-                winner: undefined
+                winner: undefined,
+                error: undefined
             };
         }
     };

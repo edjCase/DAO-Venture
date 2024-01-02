@@ -30,6 +30,7 @@ import Offering "../models/Offering";
 import MatchAura "../models/MatchAura";
 import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
+import Season "../models/Season";
 
 actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor = this {
     type Player = Player.Player;
@@ -83,35 +84,12 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         let matchErrors = Buffer.Buffer<{ matchId : Nat; error : StadiumTypes.StartMatchError }>(request.matches.size());
 
         label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
-            let startData = switch (match.data) {
-                case (#absentTeam(absentTeam)) {
-                    let completedMatch = #completed({
-                        team1 = match.team1;
-                        team2 = match.team2;
-                        log = [];
-                        result = #absentTeam(absentTeam);
-                    });
-                    matches.add(completedMatch);
-                    continue f;
-                };
-                case (#allAbsent) {
-                    let completedMatch = #completed({
-                        team1 = match.team1;
-                        team2 = match.team2;
-                        log = [];
-                        result = #allAbsent;
-                    });
-                    matches.add(completedMatch);
-                    continue f;
-                };
-                case (#start(data)) data;
-            };
 
-            let team1Init = createTeamInit(match.team1, startData.team1, prng);
-            let team2Init = createTeamInit(match.team2, startData.team2, prng);
+            let team1Init = createTeamInit(match.team1, prng);
+            let team2Init = createTeamInit(match.team2, prng);
             let team1IsOffense = prng.nextCoin();
             let initState = MatchSimulator.initState(
-                startData.aura,
+                match.aura,
                 team1Init,
                 team2Init,
                 team1IsOffense,
@@ -234,10 +212,10 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
     };
 
     private func tickMatches(prng : Prng, matches : [StadiumTypes.MatchVariant]) : {
-        #completed : [LeagueTypes.CompletedMatch];
+        #completed : [Season.CompletedMatch];
         #inProgress : [StadiumTypes.MatchVariant];
     } {
-        let completedMatches = Buffer.Buffer<StadiumTypes.CompletedMatch>(matches.size());
+        let completedMatches = Buffer.Buffer<Season.CompletedMatch>(matches.size());
         let allMatches = Buffer.Buffer<StadiumTypes.MatchVariant>(matches.size());
         for (match in Iter.fromArray(matches)) {
             let updatedMatch : StadiumTypes.MatchVariant = switch (match) {
@@ -259,49 +237,24 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         };
         if (allMatches.size() == completedMatches.size()) {
             // If all matches are complete, then complete the group
-            let compiledCompletedMatches = Buffer.toArray(completedMatches)
-            |> Array.map(
-                _,
-                func(m : StadiumTypes.CompletedMatch) : LeagueTypes.CompletedMatch {
-                    let result = switch (m.result) {
-                        case (#absentTeam(absentTeam)) #absentTeam(absentTeam);
-                        case (#allAbsent) #allAbsent;
-                        case (#played(playedState)) #played({
-                            team1 = playedState.team1;
-                            team2 = playedState.team2;
-                            winner = playedState.winner;
-                        });
-                        case (#stateBroken(failedState)) #failed({
-                            message = "Match in bad state: " # debug_show (failedState);
-                        });
-                    };
-                    {
-                        team1 = m.team1;
-                        team2 = m.team2;
-                        result = result;
-                        log = m.log;
-                    };
-                },
-            );
-            #completed(compiledCompletedMatches);
+            #completed(Buffer.toArray(completedMatches));
         } else {
             #inProgress(Buffer.toArray(allMatches));
         };
     };
 
     private func createTeamInit(
-        team : Team.TeamWithId,
-        teamData : StadiumTypes.TeamStartData,
+        team : StadiumTypes.StartMatchTeam,
         prng : Prng,
     ) : MatchSimulator.TeamInitData {
-        let players = Buffer.fromArray<PlayerWithId>(teamData.players);
+        let players = Buffer.fromArray<PlayerWithId>(team.players);
         {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
             players = Buffer.toArray(players);
-            offering = teamData.offering;
-            championId = teamData.championId;
+            offering = team.offering;
+            championId = team.championId;
         };
     };
 

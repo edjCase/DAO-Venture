@@ -2,12 +2,13 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from "../models/Offering";
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from "../models/MatchAura";
-import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from "../models/Team";
+import { TeamId, TeamIdIdl } from "../models/Team";
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
 import { FieldPosition, FieldPositionIdl, PlayerSkills, PlayerSkillsIdl } from './PlayerLedger';
 import { PlayerCondition, PlayerConditionIdl } from '../models/Player';
+import { CompletedMatch, CompletedMatchIdl } from '../models/Season';
 
 export type Nat = bigint;
 export type Nat32 = number;
@@ -142,8 +143,8 @@ export type InProgressMatch = {
 };
 export const InProgressMatchIdl = IDL.Record({
   offenseTeamId: TeamIdIdl,
-  team1: TeamIdl,
-  team2: TeamIdl,
+  team1: TeamStateIdl,
+  team2: TeamStateIdl,
   aura: MatchAuraIdl,
   players: IDL.Vec(PlayerStateIdl),
   field: FieldStateIdl,
@@ -153,17 +154,6 @@ export const InProgressMatchIdl = IDL.Record({
   strikes: IDL.Nat,
 });
 
-
-export type PlayedMatch = {
-  team1: TeamState;
-  team2: TeamState;
-  winner: TeamIdOrTie;
-};
-export const PlayedMatchIdl = IDL.Record({
-  team1: TeamIdl,
-  team2: TeamIdl,
-  winner: TeamIdOrTieIdl,
-});
 
 export type PlayerNotFoundError = {
   id: PlayerId;
@@ -202,53 +192,6 @@ export const BrokenStateErrorIdl = IDL.Variant({
   playerExpectedOnField: PlayerExpectedOnFieldErrorIdl,
 });
 
-export type PlayedMatchTeamData = {
-  score: Int;
-  offering: Offering;
-  championId: Nat32;
-};
-export const PlayedMatchTeamDataIdl = IDL.Record({
-  score: IDL.Int,
-  offering: OfferingIdl,
-  championId: IDL.Nat32,
-});
-
-export type PlayedMatchResult = {
-  team1: PlayedMatchTeamData;
-  team2: PlayedMatchTeamData;
-  winner: TeamIdOrTie;
-};
-export const PlayedMatchResultIdl = IDL.Record({
-  team1Score: IDL.Int,
-  team2Score: IDL.Int,
-  winner: TeamIdOrTieIdl,
-});
-
-export type CompletedMatchResult =
-  | { absentTeam: TeamId }
-  | { allAbsent: null }
-  | { played: PlayedMatchResult }
-  | { stateBroken: BrokenStateError };
-
-export const CompletedMatchResultIdl = IDL.Variant({
-  absentTeam: TeamIdIdl,
-  allAbsent: IDL.Null,
-  played: PlayedMatchResultIdl,
-  failed: IDL.Text,
-});
-
-export type CompletedMatch = {
-  team1: Team;
-  team2: Team;
-  log: LogEntry[];
-  result: CompletedMatchResult;
-}
-export const CompletedMatchIdl = IDL.Record({
-  team1: TeamIdl,
-  team2: TeamIdl,
-  log: IDL.Vec(LogEntryIdl),
-  result: CompletedMatchResultIdl,
-});
 
 export type CompletedMatchGroup = {
   matches: CompletedMatch[];

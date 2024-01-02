@@ -111,10 +111,10 @@ module {
             case (#hittersDebt) hittersDebtHook(teamId);
             case (#ragePitch) ragePitchHook(teamId);
             case (#bubble) bubbleHook(teamId);
-            // case (#underdog) underdogHook(teamId);
-            // case (#pious) piousHook(teamId);
-            // case (#confident) confidentHook(teamId);
-            // case (#moraleFlywheel) moraleFlywheelHook(teamId);
+            case (#underdog) underdogHook(teamId);
+            case (#pious) piousHook(teamId);
+            case (#confident) confidentHook(teamId);
+            case (#moraleFlywheel) moraleFlywheelHook(teamId);
         };
     };
 
@@ -292,60 +292,84 @@ module {
         };
     };
 
-    // private func underdogHook(teamId : Team.TeamId) : PreCompiledHooks{
-    //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    private func underdogHook(teamId : Team.TeamId) : PreCompiledHooks {
+        // Better stats when team is behind, worse when ahead
+        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+            // TODO
+            {
+                updatedContext = ();
+            };
+        };
+        {
+            matchStart = null;
+            matchEnd = null;
+            roundStart = ?roundStartHook;
+            roundEnd = null;
+            onDodge = null;
+            onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
+        };
+    };
 
-    //         {
-    //             updatedContext = ();
-    //         };
-    //     };
-    //     {
-    //         matchStart = ?matchStartHook;
-    //         roundStart = null;
-    //         onDodge = null;
-    //     };
-    // };
+    private func piousHook(teamId : Team.TeamId) : PreCompiledHooks {
+        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+            // TODO
+            {
+                updatedContext = ();
+            };
+        };
+        {
+            matchStart = null;
+            matchEnd = null;
+            roundStart = ?roundStartHook;
+            roundEnd = null;
+            onDodge = null;
+            onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
+        };
+    };
 
-    // private func piousHook(teamId : Team.TeamId) : PreCompiledHooks {
-    //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    private func confidentHook(teamId : Team.TeamId) : PreCompiledHooks {
+        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+            // TODO
+            {
+                updatedContext = ();
+            };
+        };
+        {
+            matchStart = null;
+            matchEnd = null;
+            roundStart = ?roundStartHook;
+            roundEnd = null;
+            onDodge = null;
+            onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
+        };
+    };
 
-    //         {
-    //             updatedContext = ();
-    //         };
-    //     };
-    //     {
-    //         matchStart = ?matchStartHook;
-    //         roundStart = null;
-    //         onDodge = null;
-    //     };
-    // };
-
-    // private func confidentHook(teamId : Team.TeamId) : PreCompiledHooks {
-    //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-
-    //         {
-    //             updatedContext = ();
-    //         };
-    //     };
-    //     {
-    //         matchStart = ?matchStartHook;
-    //         roundStart = null;
-    //         onDodge = null;
-    //     };
-    // };
-
-    // private func moraleFlywheelHook(teamId : Team.TeamId) : PreCompiledHooks {
-    //     func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-
-    //         {
-
-    //             updatedContext = ();
-    //         };
-    //     };
-    //     {
-    //         matchStart = ?matchStartHook;
-    //         roundStart = null;
-    //         onDodge = null;
-    //     };
-    // };
+    private func moraleFlywheelHook(teamId : Team.TeamId) : PreCompiledHooks {
+        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+            // TODO
+            {
+                updatedContext = ();
+            };
+        };
+        {
+            matchStart = null;
+            matchEnd = null;
+            roundStart = ?roundStartHook;
+            roundEnd = null;
+            onDodge = null;
+            onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
+        };
+    };
 };

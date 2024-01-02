@@ -243,22 +243,22 @@ actor LeagueActor {
                 |> Iter.map(
                     _,
                     func(match : (Season.ScheduledMatch, StadiumTypes.StartMatchRequest)) : Season.InProgressMatch {
-                        {
-                            team1 = match.0.team1;
-                            team2 = match.0.team2;
-                            aura = match.0.aura.aura;
-                            result = switch (match.1.data) {
-                                case (#start(startData)) {
-                                    #started({
-                                        team1Offering = startData.team1.offering;
-                                        team2Offering = startData.team2.offering;
-                                        team1ChampionId = startData.team1.championId;
-                                        team2ChampionId = startData.team2.championId;
-                                    });
-                                };
-                                case (#allAbsent) #allAbsent;
-                                case (#absentTeam(absentTeam)) #absentTeam(absentTeam);
+                        let mapTeam = func(
+                            team : Season.TeamInfo,
+                            teamData : StadiumTypes.StartMatchTeam,
+                        ) : Season.InProgressTeam {
+                            {
+                                id = team.id;
+                                name = team.name;
+                                logoUrl = team.logoUrl;
+                                championId = teamData.championId;
+                                offering = teamData.offering;
                             };
+                        };
+                        {
+                            team1 = mapTeam(match.0.team1, match.1.team1);
+                            team2 = mapTeam(match.0.team2, match.1.team2);
+                            aura = match.0.aura.aura;
                         };
                     },
                 )
@@ -316,22 +316,26 @@ actor LeagueActor {
         )
         |> Iter.map(
             _,
-            func((inProgressMatch : Season.InProgressMatch, completedMatch : Types.CompletedMatch)) : Season.CompletedMatch {
-                {
-                    team1 = inProgressMatch.team1;
-                    team2 = inProgressMatch.team2;
-                    log = completedMatch.log;
-                    result = switch (completedMatch.result) {
-                        case (#allAbsent) #allAbsent;
-                        case (#absentTeam(#team1)) #absentTeam(#team1);
-                        case (#absentTeam(#team2)) #absentTeam(#team2);
-                        case (#played(state)) #played({
-                            team1 = state.team1;
-                            team2 = state.team2;
-                            winner = state.winner;
-                        });
-                        case (#failed(failedState)) #failed(failedState.message);
+            func((inProgressMatch : Season.InProgressMatch, completedMatch : Season.CompletedMatch)) : Season.CompletedMatch {
+                let buildTeam = func(team : Season.TeamInfo, teamData : Season.CompletedMatchTeam) : Season.CompletedMatchTeam {
+                    {
+                        id = team.id;
+                        name = team.name;
+                        logoUrl = team.logoUrl;
+                        offering = teamData.offering;
+                        championId = teamData.championId;
+                        score = teamData.score;
                     };
+                };
+                let team1Data = buildTeam(inProgressMatch.team1, completedMatch.team1);
+                let team2Data = buildTeam(inProgressMatch.team2, completedMatch.team2);
+                {
+                    team1 = team1Data;
+                    team2 = team2Data;
+                    aura = inProgressMatch.aura;
+                    log = completedMatch.log;
+                    winner = completedMatch.winner;
+                    error = completedMatch.error;
                 };
             },
         )
@@ -491,24 +495,12 @@ actor LeagueActor {
         match : Season.ScheduledMatch,
         allPlayers : [Player.PlayerWithId],
     ) : async* StadiumTypes.StartMatchRequest {
-        let team1InitOrNull = await* buildTeamInitData(matchGroupId, match.team1, allPlayers);
-        let team2InitOrNull = await* buildTeamInitData(matchGroupId, match.team2, allPlayers);
-        let data = switch (team1InitOrNull, team2InitOrNull) {
-            case (#ok(t1), #ok(t2)) {
-                #start({
-                    team1 = t1;
-                    team2 = t2;
-                    aura = match.aura.aura;
-                });
-            };
-            case (#ok(_), #noVotes) #absentTeam(#team2);
-            case (#noVotes, #ok(_)) #absentTeam(#team1);
-            case (#noVotes, #noVotes) #allAbsent;
-        };
+        let team1Data = await buildTeamInitData(matchGroupId, match.team1, allPlayers);
+        let team2Data = await buildTeamInitData(matchGroupId, match.team2, allPlayers);
         {
-            team1 = match.team1;
-            team2 = match.team2;
-            data = data;
+            team1 = team1Data;
+            team2 = team2Data;
+            aura = match.aura.aura;
         };
     };
 
@@ -516,10 +508,7 @@ actor LeagueActor {
         matchGroupId : Nat,
         team : Season.TeamInfo,
         allPlayers : [Player.PlayerWithId],
-    ) : async* {
-        #ok : StadiumTypes.TeamStartData;
-        #noVotes;
-    } {
+    ) : async StadiumTypes.StartMatchTeam {
         let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
         let options : TeamTypes.MatchGroupVoteResult = try {
             // Get match options from the team itself
@@ -544,14 +533,14 @@ actor LeagueActor {
         |> Iter.fromArray(_)
         |> Iter.filter(_, func(p : Player.PlayerWithId) : Bool = p.teamId == ?team.id)
         |> Iter.toArray(_);
-        #ok({
+        {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
             offering = options.offering;
             championId = options.championId;
             players = teamPlayers;
-        });
+        };
     };
 
     private func getOrCreateStadium() : async* {
@@ -641,24 +630,8 @@ actor LeagueActor {
         // Populate scores
         label f1 for (matchGroup in Iter.fromArray(matchGroups)) {
             label f2 for (match in Iter.fromArray(matchGroup.matches)) {
-                switch (match.result) {
-                    case (#allAbsent or #failed(_)) {
-                        updateTeamScore(match.team1.id, 0, false);
-                        updateTeamScore(match.team2.id, 0, false);
-                    };
-                    case (#absentTeam(#team1)) {
-                        updateTeamScore(match.team1.id, 0, false);
-                        updateTeamScore(match.team2.id, 0, true);
-                    };
-                    case (#absentTeam(#team2)) {
-                        updateTeamScore(match.team1.id, 0, true);
-                        updateTeamScore(match.team2.id, 0, false);
-                    };
-                    case (#played(state)) {
-                        updateTeamScore(match.team1.id, state.team1.score, state.winner == #team1);
-                        updateTeamScore(match.team2.id, state.team2.score, state.winner == #team2);
-                    };
-                };
+                updateTeamScore(match.team1.id, match.team1.score, match.winner == #team1);
+                updateTeamScore(match.team2.id, match.team2.score, match.winner == #team2);
             };
         };
         teamScores;

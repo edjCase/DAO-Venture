@@ -2,9 +2,9 @@
   import { MatchDetails } from "../models/Match";
 
   import {
-    InProgressMatchState,
     LiveMatch,
     LiveMatchGroup,
+    LiveMatchState,
     liveMatchGroupStore,
   } from "../stores/LiveMatchGroupStore";
   import Bases from "./Bases.svelte";
@@ -12,6 +12,8 @@
 
   export let match: MatchDetails;
   export let compact: boolean = false;
+  let team1HeaderInfo = match.team1;
+  let team2HeaderInfo = match.team2;
 
   let liveMatch: LiveMatch | undefined;
 
@@ -19,15 +21,18 @@
     (liveMatchGroup: LiveMatchGroup | undefined) => {
       if (liveMatchGroup && liveMatchGroup.id == Number(match.matchGroupId)) {
         liveMatch = liveMatchGroup.matches[Number(match.id)];
+        if (!liveMatch) {
+          return;
+        }
+        team1HeaderInfo.score = liveMatch.team1.score;
+        console.log(team1HeaderInfo);
+        team2HeaderInfo.score = liveMatch.team2.score;
       }
     }
   );
 
-  let getPlayerName = (
-    playerId: number,
-    liveMatch: InProgressMatchState
-  ): string => {
-    let player = liveMatch.players.find((p) => p.id == playerId);
+  let getPlayerName = (playerId: number, state: LiveMatchState): string => {
+    let player = state.players.find((p) => p.id == playerId);
     if (!player) {
       return "Unknown Player";
     }
@@ -35,21 +40,21 @@
   };
   let getActivePlayerName = (
     team: "team1" | "team2",
-    liveMatch: InProgressMatchState
+    state: LiveMatchState
   ): string => {
     let playerId: number;
     let emoji: string;
-    if (team in liveMatch.offenseTeamId) {
-      playerId = liveMatch.field.offense.atBat;
+    if (team in state.offenseTeamId) {
+      playerId = state.field.offense.atBat;
       // Batter emoji
       emoji = "🏏";
     } else {
-      playerId = liveMatch.field.defense.pitcher;
+      playerId = state.field.defense.pitcher;
       // Pitcher emoji
       emoji = "⚾";
     }
-    let playerName = getPlayerName(playerId, liveMatch);
-    if (team in liveMatch.offenseTeamId) {
+    let playerName = getPlayerName(playerId, state);
+    if (team in state.offenseTeamId) {
       playerName = `${emoji} ${playerName}`;
     } else {
       playerName += ` ${emoji}`;
@@ -64,21 +69,21 @@
 
 <div class="card">
   <MatchCardHeader
-    team1={match.team1}
-    team2={match.team2}
+    team1={team1HeaderInfo}
+    team2={team2HeaderInfo}
     winner={match.winner}
   >
     {#if match.state == "InProgress"}
       {#if liveMatch}
-        {#if "inProgress" in liveMatch.state}
-          <Bases state={liveMatch.state.inProgress.field.offense} />
+        {#if !!liveMatch.liveState}
+          <Bases state={liveMatch.liveState.field.offense} />
         {/if}
       {:else}
         Loading...
       {/if}
     {:else if match.state == "Played"}
       {#if !match.winner}
-        <div>Bad state</div>
+        <div>Bad state: {match.error}</div>
       {:else if "team1" in match.winner}
         {match.team1.name} Win!
       {:else if "team2" in match.winner}
@@ -86,27 +91,21 @@
       {:else}
         Its a tie!
       {/if}
-    {:else if match.state == "AllAbsent"}
-      No one showed up
-    {:else if match.state == "Team1Absent"}
-      Team {match.team1.name} didn't show up, thus forfeit
-    {:else if match.state == "Team2Absent"}
-      Team {match.team2.name} didn't show up, thus forfeit
     {:else if match.state == "Error"}
-      Error
+      <div>Bad state: {match.error}</div>
     {/if}
   </MatchCardHeader>
   {#if !compact}
-    {#if liveMatch && "inProgress" in liveMatch.state}
+    {#if liveMatch && !!liveMatch.liveState}
       <div class="mid">
         <div class="team-lead">
-          {getActivePlayerName("team1", liveMatch.state.inProgress)}
+          {getActivePlayerName("team1", liveMatch.liveState)}
         </div>
         <div>
-          <div>Round {liveMatch.state.inProgress.round}</div>
+          <div>Round {liveMatch.liveState.round}</div>
         </div>
         <div class="team-lead">
-          {getActivePlayerName("team2", liveMatch.state.inProgress)}
+          {getActivePlayerName("team2", liveMatch.liveState)}
         </div>
       </div>
       <div class="footer">

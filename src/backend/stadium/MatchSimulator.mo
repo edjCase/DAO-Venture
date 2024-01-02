@@ -32,6 +32,7 @@ import Skill "../models/Skill";
 import Hook "../models/Hook";
 import MutableState "../models/MutableState";
 import HookCompiler "HookCompiler";
+import Season "../models/Season";
 
 module {
 
@@ -42,7 +43,7 @@ module {
 
     public type TickResult = {
         #inProgress : StadiumTypes.InProgressMatch;
-        #completed : StadiumTypes.CompletedMatch;
+        #completed : Season.CompletedMatch;
     };
 
     type SimulationResult = {
@@ -375,8 +376,8 @@ module {
             };
         };
 
-        private func buildCompletedMatch(reason : MatchEndReason) : StadiumTypes.CompletedMatch {
-            let (winner, message) = switch (reason) {
+        private func buildCompletedMatch(reason : MatchEndReason) : Season.CompletedMatch {
+            let (winner, message, error) : (Team.TeamIdOrTie, Text, ?Text) = switch (reason) {
                 case (#noMoreRounds) {
                     let winner = if (state.team1.score > state.team2.score) {
                         #team1;
@@ -385,23 +386,40 @@ module {
                     } else {
                         #team2;
                     };
-                    (winner, "Match ended due to no more rounds");
+                    (winner, "Match ended due to no more rounds", null);
                 };
                 case (#outOfPlayers(teamId)) {
                     switch (teamId) {
                         case (#bothTeams) {
-                            (#tie, "Match ended due to both teams running out of players");
+                            (
+                                #tie,
+                                "Match ended due to both teams running out of players",
+                                null,
+                            );
                         };
                         case (#team1) {
-                            (#team1, "Match ended due to team '" # getTeamState(#team1).name # "' running out of players");
+                            (
+                                #team1,
+                                "Match ended due to team '" # getTeamState(#team1).name # "' running out of players",
+                                null,
+                            );
                         };
                         case (#team2) {
-                            (#team2, "Match ended due to team '" # getTeamState(#team2).name # "' running out of players");
+                            (
+                                #team2,
+                                "Match ended due to team '" # getTeamState(#team2).name # "' running out of players",
+                                null,
+                            );
                         };
                     };
                 };
                 case (#stateBroken(e)) {
-                    (#tie, "Match ended due to the game being in a broken state: " # debug_show (e));
+                    let error = debug_show (e); // TODO
+                    (
+                        #tie,
+                        "Match ended due to the game being in a broken state: " # debug_show (e),
+                        ?error,
+                    );
                 };
             };
             state.log.add({
@@ -423,29 +441,14 @@ module {
                 });
             };
             let log : [LogEntry] = Buffer.toArray(state.log);
-            let result : StadiumTypes.CompletedMatchResult = switch (reason) {
-                case (#noMoreRounds or #outOfPlayers(_)) {
-                    #played({
-                        team1 = {
-                            score = state.team1.score;
-                            offering = state.team1.offering;
-                            championId = state.team1.championId;
-                        };
-                        team2 = {
-                            score = state.team2.score;
-                            offering = state.team2.offering;
-                            championId = state.team2.championId;
-                        };
-                        winner = winner;
-                    });
-                };
-                case (#stateBroken(error)) #stateBroken(error);
-            };
+
             {
                 team1 = mapMutableTeam(state.team1);
                 team2 = mapMutableTeam(state.team2);
+                aura = state.aura;
                 log = log;
-                result = result;
+                winner = winner;
+                error = error;
             };
         };
 

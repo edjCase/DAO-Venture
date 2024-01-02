@@ -2,7 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from './Offering';
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
-import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
+import { TeamIdOrTie, TeamIdOrTieIdl } from './Team';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -56,71 +56,58 @@ export const ScheduledMatchIdl = IDL.Record({
     aura: MatchAuraWithMetaDataIdl,
 });
 
-export type InProgressMatchResult =
-    | { started: { team1Offering: Offering; team1ChampionId: Nat32; team2Offering: Offering; team2ChampionId: Nat32; } }
-    | { absentTeam: TeamId }
-    | { allAbsent: null };
-export const InProgressMatchResultIdl = IDL.Variant({
-    started: IDL.Record({
-        team1Offering: OfferingIdl,
-        team1ChampionId: IDL.Nat32,
-        team2Offering: OfferingIdl,
-        team2ChampionId: IDL.Nat32,
-    }),
-    absentTeam: TeamIdIdl,
-    allAbsent: IDL.Null,
+export type InProgressMatchTeam = TeamInfo & {
+    offering: Offering;
+    championId: Nat32;
+};
+export const InProgressMatchTeamIdl = IDL.Record({
+    id: IDL.Principal,
+    name: IDL.Text,
+    logoUrl: IDL.Text,
+    offering: OfferingIdl,
+    championId: IDL.Nat32,
 });
 
 export type InProgressMatch = {
-    team1: TeamInfo;
-    team2: TeamInfo;
+    team1: InProgressMatchTeam;
+    team2: InProgressMatchTeam;
     aura: MatchAura;
-    result: InProgressMatchResult;
 };
 export const InProgressMatchIdl = IDL.Record({
-    team1: TeamInfoIdl,
-    team2: TeamInfoIdl,
+    team1: InProgressMatchTeamIdl,
+    team2: InProgressMatchTeamIdl,
     aura: MatchAuraIdl,
-    result: InProgressMatchResultIdl,
 });
 
-export type PlayedMatchTeamData = {
+export type CompletedMatchTeam = TeamInfo & {
     offering: Offering;
     championId: Nat32;
     score: Int;
 };
-export const PlayedMatchTeamDataIdl = IDL.Record({
+export const CompletedMatchTeamIdl = IDL.Record({
+    id: IDL.Principal,
+    name: IDL.Text,
+    logoUrl: IDL.Text,
     offering: OfferingIdl,
     championId: IDL.Nat32,
     score: IDL.Int,
 });
 
-export type CompletedMatchResult =
-    | { played: { team1: PlayedMatchTeamData; team2: PlayedMatchTeamData; winner: TeamIdOrTie; } }
-    | { absentTeam: TeamId }
-    | { allAbsent: null }
-    | { failed: Text };
-export const CompletedMatchResultIdl = IDL.Variant({
-    played: IDL.Record({
-        team1: PlayedMatchTeamDataIdl,
-        team2: PlayedMatchTeamDataIdl,
-        winner: TeamIdOrTieIdl,
-    }),
-    absentTeam: TeamIdIdl,
-    allAbsent: IDL.Null,
-    failed: IDL.Text,
-});
 
 export type CompletedMatch = {
-    team1: TeamInfo;
-    team2: TeamInfo;
+    team1: CompletedMatchTeam;
+    team2: CompletedMatchTeam;
+    aura: MatchAura;
     log: LogEntry[];
-    result: CompletedMatchResult;
+    winner: TeamIdOrTie;
+    error: [string] | [];
 };
 export const CompletedMatchIdl = IDL.Record({
-    team1: TeamInfoIdl,
-    team2: TeamInfoIdl,
-    result: CompletedMatchResultIdl,
+    team1: CompletedMatchTeamIdl,
+    team2: CompletedMatchTeamIdl,
+    log: IDL.Vec(LogEntryIdl),
+    winner: TeamIdOrTieIdl,
+    error: IDL.Opt(IDL.Text),
 });
 
 export type CompletedSeasonTeam = TeamInfo & {

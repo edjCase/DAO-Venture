@@ -20,8 +20,9 @@ export type MatchDetails = {
     offerings: OfferingWithMetaData[] | undefined;
     winner: TeamIdOrTie | undefined;
     state: MatchState;
+    error: string | undefined;
 };
-export type MatchState = 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Played' | 'AllAbsent' | 'Team1Absent' | 'Team2Absent' | 'Error';
+export type MatchState = 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Played' | 'Error';
 
 export type TeamDetails = {
     id: Principal;

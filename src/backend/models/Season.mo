@@ -3,7 +3,6 @@ import Array "mo:base/Array";
 import Offering "Offering";
 import MatchAura "MatchAura";
 import Team "Team";
-import StadiumTypes "../stadium/Types";
 
 module {
 
@@ -60,44 +59,30 @@ module {
         matches : [InProgressMatch];
     };
 
+    public type InProgressTeam = TeamInfo and {
+        offering : Offering.Offering;
+        championId : Nat32;
+    };
+
     public type InProgressMatch = {
-        team1 : TeamInfo;
-        team2 : TeamInfo;
+        team1 : InProgressTeam;
+        team2 : InProgressTeam;
         aura : MatchAura.MatchAura;
-        result : {
-            #started : {
-                team1Offering : Offering.Offering;
-                team1ChampionId : Nat32;
-                team2Offering : Offering.Offering;
-                team2ChampionId : Nat32;
-            };
-            #absentTeam : Team.TeamId;
-            #allAbsent;
-        };
     };
 
-    public type CompletedMatch = {
-        team1 : TeamInfo;
-        team2 : TeamInfo;
-        log : [LogEntry];
-        result : CompletedMatchResult;
-    };
-
-    public type CompletedMatchResult = {
-        #played : {
-            team1 : PlayedMatchTeamData;
-            team2 : PlayedMatchTeamData;
-            winner : Team.TeamIdOrTie;
-        };
-        #absentTeam : Team.TeamId;
-        #allAbsent;
-        #failed : Text;
-    };
-
-    public type PlayedMatchTeamData = {
+    public type CompletedMatchTeam = TeamInfo and {
         offering : Offering.Offering;
         championId : Nat32;
         score : Int;
+    };
+
+    public type CompletedMatch = {
+        team1 : CompletedMatchTeam;
+        team2 : CompletedMatchTeam;
+        aura : MatchAura.MatchAura;
+        log : [LogEntry];
+        winner : Team.TeamIdOrTie;
+        error : ?Text;
     };
 
     public type LogEntry = {
@@ -120,9 +105,5 @@ module {
         standing : Nat;
         wins : Nat;
         losses : Nat;
-    };
-
-    public type StartMatchGroupError = StadiumTypes.StartMatchGroupError or {
-        #stadiumStartCallError : Text;
     };
 };

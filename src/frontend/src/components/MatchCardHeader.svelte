@@ -28,8 +28,8 @@
     </Tooltip>
 
     <div class="score">
-      {team1.score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team1")}</span
-      >
+      {team1.score == undefined ? "-" : team1.score}
+      <span class="emoji">{crownEmojiOrEmpty("team1")}</span>
     </div>
   </div>
   <div class="header-center">
@@ -37,8 +37,8 @@
   </div>
   <div class="header-team team2">
     <div class="score">
-      {team2.score ?? "-"}<span class="emoji">{crownEmojiOrEmpty("team2")}</span
-      >
+      {team2.score == undefined ? "-" : team2.score}
+      <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
     <Tooltip>
       <img

@@ -64,21 +64,7 @@ module {
 
     public type OnMatchGroupCompleteRequest = {
         id : Nat;
-        matches : [CompletedMatch];
-    };
-
-    public type CompletedMatch = {
-        team1 : Team.TeamWithId;
-        team2 : Team.TeamWithId;
-        log : [LogEntry];
-        result : CompletedMatchResult;
-    };
-
-    public type CompletedMatchResult = {
-        #absentTeam : Team.TeamId;
-        #allAbsent;
-        #played : PlayedMatchResult;
-        #failed : FailedMatchResult;
+        matches : [Season.CompletedMatch];
     };
 
     public type PlayedMatchResult = {

@@ -9,6 +9,7 @@ import MatchAura "../models/MatchAura";
 import Base "../models/Base";
 import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
+import Season "../models/Season";
 
 module {
     type FieldPosition = FieldPosition.FieldPosition;
@@ -44,24 +45,22 @@ module {
         matches : [StartMatchRequest];
     };
 
-    public type StartMatchRequest = {
-        team1 : Team;
-        team2 : Team;
-        data : {
-            #start : {
-                team1 : TeamStartData;
-                team2 : TeamStartData;
-                aura : MatchAura.MatchAura;
-            };
-            #allAbsent;
-            #absentTeam : Team.TeamId;
-        };
+    public type Team = {
+        id : Principal;
+        name : Text;
+        logoUrl : Text;
     };
 
-    public type TeamStartData = {
+    public type StartMatchTeam = Team and {
         offering : Offering.Offering;
         championId : PlayerId;
         players : [Player.PlayerWithId];
+    };
+
+    public type StartMatchRequest = {
+        team1 : StartMatchTeam;
+        team2 : StartMatchTeam;
+        aura : MatchAura.MatchAura;
     };
 
     public type StartMatchGroupError = {
@@ -82,7 +81,7 @@ module {
 
     public type MatchVariant = {
         #inProgress : InProgressMatch;
-        #completed : CompletedMatch;
+        #completed : Season.CompletedMatch;
     };
     public type InProgressMatch = {
         team1 : TeamState;
@@ -111,32 +110,6 @@ module {
     public type BrokenStateError = {
         #playerNotFound : PlayerNotFoundError;
         #playerExpectedOnField : PlayerExpectedOnFieldError;
-    };
-
-    public type CompletedMatch = {
-        team1 : Team;
-        team2 : Team;
-        log : [LogEntry];
-        result : CompletedMatchResult;
-    };
-
-    public type CompletedMatchResult = {
-        #absentTeam : Team.TeamId;
-        #allAbsent;
-        #played : PlayedMatchResult;
-        #stateBroken : BrokenStateError;
-    };
-
-    public type PlayedMatchResult = {
-        team1 : PlayedMatchTeamData;
-        team2 : PlayedMatchTeamData;
-        winner : Team.TeamIdOrTie;
-    };
-
-    public type PlayedMatchTeamData = {
-        score : Int;
-        offering : Offering.Offering;
-        championId : PlayerId;
     };
 
     public type MatchGroup = {
@@ -210,12 +183,6 @@ module {
     public type Player = {
         id : PlayerId;
         name : Text;
-    };
-
-    public type Team = {
-        id : Principal;
-        name : Text;
-        logoUrl : Text;
     };
 
     public type TeamState = Team and {

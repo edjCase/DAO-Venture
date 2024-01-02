@@ -3,11 +3,12 @@ import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
 import { InterfaceFactory, Nat } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
-import { LogEntry, LogEntryIdl, SeasonStatus, SeasonStatusIdl } from '../models/Season';
+import { SeasonStatus, SeasonStatusIdl } from '../models/Season';
 import { Offering, OfferingIdl } from '../models/Offering';
 import { MatchAura, MatchAuraIdl } from '../models/MatchAura';
 import { Player, PlayerIdl } from './PlayerLedger';
-import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl, Team, TeamIdl } from '../models/Team';
+import { Team, TeamIdl } from '../models/Team';
+
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
 export type Nat = bigint;
@@ -17,24 +18,6 @@ export type Int = number;
 export type Bool = boolean;
 export type Text = string;
 
-export type OnMatchGroupStartRequest = {
-  id: Nat;
-};
-export const OnMatchGroupStartRequestIdl = IDL.Record({
-  id: IDL.Nat,
-});
-
-export type OnMatchGroupStartError =
-  | { notAuthorized: null }
-  | { matchGroupNotFound: null }
-  | { notScheduledYet: null }
-  | { alreadyStarted: null };
-export const OnMatchGroupStartErrorIdl = IDL.Variant({
-  notAuthorized: IDL.Null,
-  matchGroupNotFound: IDL.Null,
-  notScheduledYet: IDL.Null,
-  alreadyStarted: IDL.Null,
-});
 
 export type TeamStartData = {
   offering: Offering;
@@ -58,22 +41,6 @@ export const MatchStartDataIdl = IDL.Record({
   aura: MatchAuraIdl,
 });
 
-export type MatchStartOrSkipData =
-  | { start: MatchStartData }
-  | { absentTeam: TeamId }
-  | { allAbsent: null };
-export const MatchStartOrSkipDataIdl = IDL.Variant({
-  start: MatchStartDataIdl,
-  absentTeam: TeamIdIdl,
-  allAbsent: IDL.Null,
-});
-
-export type MatchGroupStartData = {
-  matches: MatchStartOrSkipData[];
-};
-export const MatchGroupStartDataIdl = IDL.Record({
-  matches: IDL.Vec(MatchStartOrSkipDataIdl),
-});
 
 export type StartSeasonRequest = {
   startTime: Time;
@@ -108,80 +75,6 @@ export const CloseSeasonResultIdl = IDL.Variant({
   seasonInProgress: IDL.Null,
   notAuthorized: IDL.Null,
   seasonNotOpen: IDL.Null,
-});
-
-export type PlayedMatchTeamData = {
-  score: Int;
-  offering: Offering;
-  championId: Nat32;
-};
-export const PlayedMatchTeamDataIdl = IDL.Record({
-  score: IDL.Int,
-  offering: OfferingIdl,
-  championId: IDL.Nat32,
-});
-
-export type PlayedMatchResult = {
-  team1: PlayedMatchTeamData;
-  team2: PlayedMatchTeamData;
-  winner: TeamIdOrTie;
-};
-export const PlayedMatchResultIdl = IDL.Record({
-  team1Score: IDL.Int,
-  team2Score: IDL.Int,
-  winner: TeamIdOrTieIdl,
-  log: IDL.Vec(LogEntryIdl),
-});
-
-export type CompletedMatchResult =
-  | { absentTeam: TeamId }
-  | { allAbsent: null }
-  | { played: PlayedMatchResult }
-  | { failed: string };
-
-export const CompletedMatchResultIdl = IDL.Variant({
-  absentTeam: TeamIdIdl,
-  allAbsent: IDL.Null,
-  played: PlayedMatchResultIdl,
-  failed: IDL.Text,
-});
-
-export type CompletedMatch = {
-  team1: Team;
-  team2: Team;
-  log: LogEntry[];
-  result: CompletedMatchResult;
-}
-export const CompletedMatchIdl = IDL.Record({
-  team1: TeamIdl,
-  team2: TeamIdl,
-  log: IDL.Vec(LogEntryIdl),
-  result: CompletedMatchResultIdl,
-});
-
-export type OnMatchGroupCompleteRequest = {
-  id: Nat;
-  matches: CompletedMatch[];
-};
-export const OnMatchGroupCompleteRequestIdl = IDL.Record({
-  id: IDL.Nat,
-  matches: IDL.Vec(CompletedMatchIdl),
-});
-
-export type OnMatchGroupCompleteResult =
-  | { ok: null }
-  | { seasonNotOpen: null }
-  | { matchGroupNotFound: null }
-  | { matchGroupNotInProgress: null }
-  | { seedGenerationError: Text }
-  | { notAuthorized: null };
-export const OnMatchGroupCompleteResultIdl = IDL.Variant({
-  ok: IDL.Null,
-  seasonNotOpen: IDL.Null,
-  matchGroupNotFound: IDL.Null,
-  matchGroupNotInProgress: IDL.Null,
-  seedGenerationError: IDL.Text,
-  notAuthorized: IDL.Null,
 });
 
 export type CreateTeamRequest = {
@@ -253,16 +146,6 @@ export const MintResultIdl = IDL.Variant({
   transferError: TransferErrorIdl,
 });
 
-export type OnMatchGroupStartResult =
-  | OnMatchGroupStartError
-  | { ok: MatchGroupStartData };
-export const OnMatchGroupStartResultIdl = IDL.Variant({
-  notAuthorized: IDL.Null,
-  matchGroupNotFound: IDL.Null,
-  notScheduledYet: IDL.Null,
-  alreadyStarted: IDL.Null,
-  ok: MatchGroupStartDataIdl,
-});
 
 
 export interface _SERVICE {
