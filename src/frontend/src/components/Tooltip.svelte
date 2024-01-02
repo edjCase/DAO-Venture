@@ -24,6 +24,10 @@
     position: relative;
     display: inline-block;
     height: inherit;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
   }
 
   .tooltip {

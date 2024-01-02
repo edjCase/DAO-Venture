@@ -12,8 +12,6 @@
 
   export let match: MatchDetails;
   export let compact: boolean = false;
-  let team1HeaderInfo = match.team1;
-  let team2HeaderInfo = match.team2;
 
   let liveMatch: LiveMatch | undefined;
 
@@ -21,12 +19,8 @@
     (liveMatchGroup: LiveMatchGroup | undefined) => {
       if (liveMatchGroup && liveMatchGroup.id == Number(match.matchGroupId)) {
         liveMatch = liveMatchGroup.matches[Number(match.id)];
-        if (!liveMatch) {
-          return;
-        }
-        team1HeaderInfo.score = liveMatch.team1.score;
-        console.log(team1HeaderInfo);
-        team2HeaderInfo.score = liveMatch.team2.score;
+        match.team1.score = liveMatch?.team1.score;
+        match.team2.score = liveMatch?.team2.score;
       }
     }
   );
@@ -67,10 +61,10 @@
       .slice(0, 5) || []; // Take only the first 5 entries
 </script>
 
-<div class="card">
+<div class="card" class:full={!compact}>
   <MatchCardHeader
-    team1={team1HeaderInfo}
-    team2={team2HeaderInfo}
+    team1={match.team1}
+    team2={match.team2}
     winner={match.winner}
   >
     {#if match.state == "InProgress"}
@@ -108,17 +102,17 @@
           {getActivePlayerName("team2", liveMatch.liveState)}
         </div>
       </div>
-      <div class="footer">
-        <ul>
-          {#each log as logEntry}
-            <li>{logEntry.message}</li>
-          {/each}
-        </ul>
-      </div>
     {:else}
       <div class="mid" />
-      <div class="footer" />
     {/if}
+
+    <div class="footer">
+      <ul>
+        {#each log as logEntry}
+          <li>{logEntry.message}</li>
+        {/each}
+      </ul>
+    </div>
   {/if}
 </div>
 
@@ -128,12 +122,9 @@
     background-color: var(--color-bg-dark);
     color: var(--color-text-light);
     padding: 0.5em;
-    margin: 0.5em;
     border: 1px solid var(--color-border);
     border-radius: 8px;
-    padding: 1em;
-    margin: 1em;
-    width: 400px;
+    width: 100%;
   }
 
   .card:hover {

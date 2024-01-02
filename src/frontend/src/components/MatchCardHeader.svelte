@@ -56,7 +56,6 @@
   .header-team {
     display: flex;
     flex-direction: row;
-    width: 140px;
     align-items: center;
   }
   .name {

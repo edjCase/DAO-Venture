@@ -27,6 +27,7 @@
     </div>
   {:else if "completed" in seasonStatus}
     Season Complete
+    <ScheduleSeason />
   {/if}
 {/if}
 {#if !!matchGroupDetails}

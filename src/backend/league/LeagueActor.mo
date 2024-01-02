@@ -42,6 +42,7 @@ actor LeagueActor {
 
     stable var teams : Trie.Trie<Principal, Team.TeamWithLedgerId> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
+    stable var historicalSeasons : [Season.CompletedSeason] = [];
     stable var stadiumIdOrNull : ?Principal = null;
 
     public query func getTeams() : async [TeamWithId] {
@@ -65,7 +66,9 @@ actor LeagueActor {
             case (#notStarted) {};
             case (#starting) return #alreadyStarted;
             case (#inProgress(_)) return #alreadyStarted;
-            case (#completed(_)) return #alreadyStarted;
+            case (#completed(completedSeason)) {
+                archiveSeason(completedSeason);
+            };
         };
         seasonStatus := #starting;
 
@@ -409,6 +412,13 @@ actor LeagueActor {
             matchGroups = completedMatchGroups;
         });
         #ok;
+    };
+
+    private func archiveSeason(season : Season.CompletedSeason) : () {
+        let historicalSeasonsBuffer = Buffer.fromArray<Season.CompletedSeason>(historicalSeasons);
+        historicalSeasonsBuffer.add(season);
+        seasonStatus := #notStarted;
+        historicalSeasons := Buffer.toArray(historicalSeasonsBuffer);
     };
 
     private func scheduleMatchGroup(

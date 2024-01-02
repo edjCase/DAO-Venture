@@ -67,6 +67,7 @@
     list-style: none;
     margin: 0;
     padding: 0;
+    flex-wrap: wrap;
   }
 
   .nav-item {

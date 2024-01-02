@@ -39,7 +39,7 @@
 
 <style>
   .match-group {
-    width: 400px;
+    max-width: 500px;
     background-color: var(--color-bg-dark);
     border: 1px solid var(--color-border);
     padding: 1em;
@@ -51,5 +51,9 @@
   }
   .match-group:hover {
     cursor: pointer;
+  }
+  .match {
+    width: 100%;
+    min-width: 300px;
   }
 </style>

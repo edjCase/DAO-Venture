@@ -1,14 +1,8 @@
 <script lang="ts">
+  import { Input } from "flowbite-svelte";
   import { leagueAgentFactory } from "../ic-agent/League";
-  import { SeasonStatus } from "../models/Season";
   import { scheduleStore } from "../stores/ScheduleStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
-
-  let seasonStatus: SeasonStatus | undefined;
-
-  scheduleStore.subscribeStatus((s) => {
-    seasonStatus = s;
-  });
 
   let startTime: bigint | undefined;
   let scheduleSeason = async () => {
@@ -28,15 +22,21 @@
         }
       });
   };
+  let setStartTime = (e: any) => {
+    if (!e.currentTarget) {
+      return;
+    }
+    startTime = dateToNanoseconds(new Date(e.currentTarget.value));
+  };
 </script>
 
-{#if seasonStatus}
-  {#if "notStarted" in seasonStatus}
-    <input
-      type="datetime-local"
-      on:change={(e) =>
-        (startTime = dateToNanoseconds(new Date(e.currentTarget.value)))}
-    />
-    <button class="button-style" on:click={scheduleSeason}>Schedule</button>
-  {/if}
-{/if}
+<div class="container">
+  <Input type="datetime-local" on:change={setStartTime} />
+  <button class="button-style" on:click={scheduleSeason}>Schedule</button>
+</div>
+
+<style>
+  .container {
+    width: 200px;
+  }
+</style>
