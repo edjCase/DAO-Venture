@@ -20,13 +20,13 @@
 
 <div class="lastAndNext">
   {#if lastMatchGroup}
-    <div>
+    <div class="item last">
       <div>Last</div>
       <MatchGroupSummaryCard matchGroup={lastMatchGroup} />
     </div>
   {/if}
   {#if nextOrCurrentMatchGroup}
-    <div>
+    <div class="item next">
       <div>Next</div>
       <MatchGroupSummaryCard matchGroup={nextOrCurrentMatchGroup} />
     </div>
@@ -36,6 +36,9 @@
 <style lang="postcss">
   .lastAndNext {
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+  }
+  .item {
+    margin: 0 20px;
   }
 </style>

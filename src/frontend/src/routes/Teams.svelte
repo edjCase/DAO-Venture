@@ -2,7 +2,13 @@
   import TeamGrid from "../components/TeamGrid.svelte";
 </script>
 
-<div>
-  <h1>Teams</h1>
+<div class="teams">
   <TeamGrid />
 </div>
+
+<style>
+  .teams {
+    display: flex;
+    justify-content: center;
+  }
+</style>

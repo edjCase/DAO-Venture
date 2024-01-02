@@ -15,15 +15,14 @@
 
   let liveMatch: LiveMatch | undefined;
 
-  liveMatchGroupStore.subscribe(
-    (liveMatchGroup: LiveMatchGroup | undefined) => {
-      if (liveMatchGroup && liveMatchGroup.id == Number(match.matchGroupId)) {
-        liveMatch = liveMatchGroup.matches[Number(match.id)];
-        match.team1.score = liveMatch?.team1.score;
-        match.team2.score = liveMatch?.team2.score;
-      }
+  $: {
+    const liveMatchGroup: LiveMatchGroup | undefined = $liveMatchGroupStore;
+    if (liveMatchGroup && liveMatchGroup.id == Number(match.matchGroupId)) {
+      liveMatch = liveMatchGroup.matches[Number(match.id)];
+      match.team1.score = liveMatch?.team1.score;
+      match.team2.score = liveMatch?.team2.score;
     }
-  );
+  }
 
   let getPlayerName = (playerId: number, state: LiveMatchState): string => {
     let player = state.players.find((p) => p.id == playerId);

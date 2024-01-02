@@ -42,8 +42,19 @@
         open={matchGroup.state == "InProgress" ||
           matchGroup.state == "Scheduled"}
       >
-        <MatchGroupSummaryCard {matchGroup} />
+        <div class="tab-content">
+          <MatchGroupSummaryCard {matchGroup} />
+        </div>
       </TabItem>
     {/each}
   </Tabs>
 {/if}
+
+<style>
+  .tab-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+  }
+</style>

@@ -21,7 +21,7 @@
         target="_blank"
         href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
       >
-        Blog
+        Blog &#8599;
       </a>
     </li>
     <li>
@@ -30,7 +30,7 @@
         target="_blank"
         href="https://dscvr.one/p/daoball"
       >
-        DSCVR
+        DSCVR &#8599;
       </a>
     </li>
     <li>
@@ -39,7 +39,7 @@
         target="_blank"
         href="https://github.com/edjcase/daoball"
       >
-        Github
+        Github &#8599;
       </a>
     </li>
     <li>
