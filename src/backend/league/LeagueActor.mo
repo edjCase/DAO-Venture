@@ -349,7 +349,6 @@ actor LeagueActor {
             time = inProgressMatchGroup.time;
             matches = completedMatches;
         };
-        Debug.print("Completed match group: " # debug_show (updatedMatchGroup));
 
         let updatedSeason = switch (buildSeasonWithUpdatedMatchGroup(request.id, #completed(updatedMatchGroup), season)) {
             case (#ok(inProgressSeason)) {
@@ -358,8 +357,6 @@ actor LeagueActor {
             };
             case (#matchGroupNotFound) return #matchGroupNotFound;
         };
-
-        Debug.print("Updated season: " # debug_show (seasonStatus));
 
         // Get next match group to schedule
         let nextMatchGroupId = request.id + 1;

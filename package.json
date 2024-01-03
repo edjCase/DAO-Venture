@@ -1,7 +1,7 @@
 {
     "scripts": {
         "build": "dfx build",
-        "deploy": "dfx deploy",
-        "reset": "dfx stop && dfx start --clean --background && dfx deps deploy && dfx deploy && dfx canister deposit-cycles 35000000000000 stadiumFactory && dfx canister deposit-cycles 35000000000000 teamFactory"
+        "deploy": "dfx deps deploy && dfx deploy && dfx canister deposit-cycles 35000000000000 stadiumFactory && dfx canister deposit-cycles 35000000000000 teamFactory",
+        "reset": "dfx stop && dfx start --clean --background && npm run deploy"
     }
 }
