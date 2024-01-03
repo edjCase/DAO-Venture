@@ -4,6 +4,6 @@ Basic Usage (** marks first run only)
 - ** Install mops packages `mops install`
 - Deploy canisters `npm run deploy`
 - Change to frontend directory `src/frontend`
-- Install npm packages `npm install`
+- ** Install npm packages `npm install`
 - Run `npm run dev`
 - https://localhost:8080 in the browswer
