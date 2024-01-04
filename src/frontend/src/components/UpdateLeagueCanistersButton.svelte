@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from "flowbite-svelte";
   import { leagueAgentFactory } from "../ic-agent/League";
 
   let updateLeagueCanisters = () => {
@@ -14,6 +15,4 @@
   };
 </script>
 
-<button on:click={updateLeagueCanisters} class="button-style">
-  Update League Canisters
-</button>
+<Button on:click={updateLeagueCanisters}>Update League Canisters</Button>

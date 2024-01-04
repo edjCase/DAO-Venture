@@ -9,6 +9,7 @@
   import { get } from "svelte/store";
   import { scheduleStore } from "../stores/ScheduleStore";
   import { Offering } from "../models/Offering";
+  import { Button } from "flowbite-svelte";
 
   export let teamId: Principal;
   export let matchGroupId: number;
@@ -55,7 +56,7 @@
   };
 
   scheduleStore.subscribeMatchGroups((matchGroups) => {
-    let matchGroup = matchGroups.find((g) => g.id == BigInt(matchGroupId));
+    let matchGroup = matchGroups.find((g) => g.id == matchGroupId);
     if (!matchGroup) {
       return;
     }
@@ -112,13 +113,12 @@
         />
       {/if}
     </div>
-    <button
-      class="button-style"
+    <Button
       on:click={() => {
         if (match) {
           register(match);
         }
-      }}>Submit Vote</button
+      }}>Submit Vote</Button
     >
   {/if}
 </div>

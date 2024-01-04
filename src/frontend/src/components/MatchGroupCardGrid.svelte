@@ -7,11 +7,11 @@
   let selectedMatch: MatchDetails | undefined;
   let otherMatches: MatchDetails[] = matchGroup.matches;
 
-  let selectMatch = (matchId: bigint) => () => {
+  let selectMatch = (matchId: number) => () => {
     selectedMatch = matchGroup.matches.find((m) => m.id == matchId);
     otherMatches = matchGroup.matches.filter((m) => m.id != matchId);
   };
-  selectMatch(BigInt(0))();
+  selectMatch(0)();
 </script>
 
 <div class="container">
@@ -42,30 +42,32 @@
     flex-direction: row;
     justify-content: center;
     flex-wrap: wrap;
-    padding: 5px;
     align-items: stretch;
+    padding: 5px;
   }
   .selected-match {
-    flex: 2;
     display: flex;
     justify-content: center;
     align-items: stretch;
     margin: 0 10px;
-    max-width: 600px;
+    height: 50vh;
   }
   .other-matches {
-    flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    max-width: 500px;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: center;
+    }
     .selected-match,
     .other-matches {
-      flex: 1;
+      flex: none;
     }
   }
   .clickable {

@@ -3,7 +3,6 @@
   import { SeasonStatus } from "../models/Season";
   import { scheduleStore } from "../stores/ScheduleStore";
   import MatchGroupSummaryCard from "./MatchGroupSummaryCard.svelte";
-  import ScheduleSeason from "./ScheduleSeason.svelte";
   import { TabItem, Tabs } from "flowbite-svelte";
 
   let seasonStatus: SeasonStatus | undefined;
@@ -22,12 +21,12 @@
 {#if !!seasonStatus}
   {#if "notStarted" in seasonStatus}
     <div>
-      <h1>Schedule Season</h1>
-      <ScheduleSeason />
+      <h1>Season Not Started</h1>
     </div>
   {:else if "completed" in seasonStatus}
     Season Complete
-    <ScheduleSeason />
+  {:else}
+    Season InProgress
   {/if}
 {/if}
 {#if !!matchGroupDetails}

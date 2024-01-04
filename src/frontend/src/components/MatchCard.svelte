@@ -56,6 +56,7 @@
   };
   $: log =
     liveMatch?.log
+      .slice()
       .reverse() // Reverse the filtered array
       .slice(0, 5) || []; // Take only the first 5 entries
 </script>

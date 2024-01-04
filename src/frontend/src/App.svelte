@@ -7,9 +7,10 @@
   import Team from "./routes/Team.svelte";
   import Teams from "./routes/Teams.svelte";
   import Schedule from "./routes/Schedule.svelte";
+  import Admin from "./routes/Admin.svelte";
 </script>
 
-<main>
+<main class="content">
   <Router>
     <Header />
     <div>
@@ -18,6 +19,7 @@
       <Route path="/teams" component={Teams} />
       <Route path="/teams/:teamIdString" component={Team} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
+      <Route path="/admin" component={Admin} />
       <Route path="*" component={NotFound} />
     </div>
   </Router>
@@ -27,4 +29,7 @@
   @tailwind base;
   @tailwind components;
   @tailwind utilities;
+  .content {
+    padding: 20px;
+  }
 </style>

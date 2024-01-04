@@ -49,7 +49,7 @@ export const liveMatchGroupStore = (() => {
       id: team.id,
       name: team.name,
       logoUrl: team.logoUrl,
-      score: team.score,
+      score: Number(team.score),
       offering: team.offering,
       championId: team.championId
     }

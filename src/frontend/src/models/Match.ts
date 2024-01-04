@@ -5,16 +5,16 @@ import { OfferingWithMetaData } from "./Offering";
 
 
 export type MatchGroupDetails = {
-    id: bigint;
+    id: number;
     time: bigint;
     matches: MatchDetails[];
     state: 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Completed';
 };
 
 export type MatchDetails = {
-    id: bigint;
+    id: number;
     time: bigint;
-    matchGroupId: bigint;
+    matchGroupId: number;
     team1: TeamDetails;
     team2: TeamDetails;
     offerings: OfferingWithMetaData[] | undefined;
@@ -28,5 +28,5 @@ export type TeamDetails = {
     id: Principal;
     name: string;
     logoUrl: string;
-    score: bigint | undefined;
+    score: number | undefined;
 };

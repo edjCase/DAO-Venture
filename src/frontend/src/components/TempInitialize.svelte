@@ -5,6 +5,7 @@
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
   import { Team, teams, Player } from "../data/InitData";
+  import { Button } from "flowbite-svelte";
 
   let createTeams = async function (teams: Team[]): Promise<void> {
     let leagueAgent = leagueAgentFactory();
@@ -63,6 +64,4 @@
   };
 </script>
 
-<button class="button-style" on:click={initialize}>
-  Initialize With Default Data
-</button>
+<Button on:click={initialize}>Initialize With Default Data</Button>

@@ -5,18 +5,21 @@
 </script>
 
 <div class="card-container">
-  {#each cards as { id, title, description }}
-    <button
-      class="card button-style"
+  {#each cards as { id, title, description }, index}
+    <div
+      class="card"
       class:selected={selectedId === id}
       on:click={() => {
         selectedId = id;
         onSelect(id);
       }}
+      on:keypress={() => {}}
+      role="button"
+      tabindex={index}
     >
       <div class="title">{title}</div>
       <div class="description">{description}</div>
-    </button>
+    </div>
   {/each}
 </div>
 

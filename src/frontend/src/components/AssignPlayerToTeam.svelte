@@ -3,6 +3,7 @@
   import { playerLedgerAgentFactory } from "../ic-agent/PlayerLedger";
   import { playerStore } from "../stores/PlayerStore";
   import { teamStore } from "../stores/TeamStore";
+  import { Button } from "flowbite-svelte";
 
   let teamId: string;
   let playerId: number;
@@ -41,5 +42,5 @@
   </select>
 </div>
 <div>
-  <button class="button-style" on:click={assign}>Assign</button>
+  <Button on:click={assign}>Assign</Button>
 </div>

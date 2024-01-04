@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Input } from "flowbite-svelte";
+  import { Button, Input } from "flowbite-svelte";
   import { leagueAgentFactory } from "../ic-agent/League";
   import { scheduleStore } from "../stores/ScheduleStore";
   import { dateToNanoseconds } from "../utils/DateUtils";
@@ -32,7 +32,7 @@
 
 <div class="container">
   <Input type="datetime-local" on:change={setStartTime} />
-  <button class="button-style" on:click={scheduleSeason}>Schedule</button>
+  <Button on:click={scheduleSeason}>Schedule</Button>
 </div>
 
 <style>

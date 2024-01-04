@@ -8,6 +8,7 @@
 
   scheduleStore.subscribeMatchGroups((matchGroups: MatchGroupDetails[]) => {
     lastMatchGroup = matchGroups
+      .slice()
       .reverse()
       .find((mg) => mg.state == "Completed");
     nextOrCurrentMatchGroup = matchGroups.find(

@@ -26,20 +26,20 @@ export const scheduleStore = (() => {
             id: team.id,
             name: team.name,
             logoUrl: team.logoUrl,
-            score: score
+            score: Number(score)
         };
     };
 
     const mapMatch = (
         index: number,
-        matchGroupId: bigint,
+        matchGroupId: number,
         time: bigint,
         match: MatchVariant
     ): MatchDetails => {
         if ('completed' in match) {
 
             return {
-                id: BigInt(index),
+                id: index,
                 time: time,
                 matchGroupId: matchGroupId,
                 state: match.completed.error.length == 0 ? "Played" : "Error",
@@ -51,7 +51,7 @@ export const scheduleStore = (() => {
             };
         } else if ('inProgress' in match) {
             return {
-                id: BigInt(index),
+                id: index,
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'InProgress',
@@ -64,7 +64,7 @@ export const scheduleStore = (() => {
         }
         else if ('scheduled' in match) {
             return {
-                id: BigInt(index),
+                id: index,
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'Scheduled',
@@ -77,7 +77,7 @@ export const scheduleStore = (() => {
         }
         else {
             return {
-                id: BigInt(index),
+                id: index,
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'NotScheduled',
@@ -91,7 +91,7 @@ export const scheduleStore = (() => {
     };
 
     const mapMatchGroup = (matchGroupIndex: number, matchGroup: InProgressSeasonMatchGroupVariant): MatchGroupDetails => {
-        let id = BigInt(matchGroupIndex);
+        let id = matchGroupIndex;
         if ('completed' in matchGroup) {
             return {
                 id: id,
@@ -140,7 +140,9 @@ export const scheduleStore = (() => {
                 } else {
                     matchGroups = [];
                 }
-                setMatchGroups(matchGroups.sort((a, b) => Number(a.id) - Number(b.id)));
+                // order by id
+                matchGroups.sort((a, b) => Number(a.id) - Number(b.id));
+                setMatchGroups(matchGroups);
             });
     };
 

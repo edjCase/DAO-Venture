@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button } from "flowbite-svelte";
   import { identityStore } from "../stores/IdentityStore";
 
   $: identity = $identityStore;
@@ -12,7 +13,7 @@
 </script>
 
 {#if identity}
-  <button class="button-style" on:click={logout}>Logout</button>
+  <Button on:click={logout}>Logout</Button>
 {:else}
-  <button class="button-style" on:click={login}>Login</button>
+  <Button on:click={login}>Login</Button>
 {/if}

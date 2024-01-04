@@ -2,87 +2,68 @@
   import { Link } from "svelte-routing";
   import LoginButton from "./LoginButton.svelte";
   import UpdateLeagueCanistersButton from "./UpdateLeagueCanistersButton.svelte";
+  import {
+    Navbar,
+    NavBrand,
+    NavLi,
+    NavUl,
+    NavHamburger,
+    Avatar,
+    Dropdown,
+    DropdownItem,
+    DropdownHeader,
+    DropdownDivider,
+  } from "flowbite-svelte";
+  import { ChevronDownOutline } from "flowbite-svelte-icons";
+  import { onMount } from "svelte";
+
+  let activeUrl = "";
+
+  onMount(() => (activeUrl = window.location.pathname));
+  let activeClass =
+    "text-white bg-green-700 md:bg-transparent md:text-green-700 md:dark:text-white dark:bg-green-600 md:dark:bg-transparent";
+  let nonActiveClass =
+    "text-gray-700 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent";
 </script>
 
-<nav class="navbar">
-  <ul class="navbar-nav">
-    <li class="nav-item">
-      <Link to="/" class="nav-link button-style">Home</Link>
-    </li>
-    <li class="nav-item">
-      <Link to="/teams" class="nav-link button-style">Teams</Link>
-    </li>
-    <li class="nav-item">
-      <Link to="/schedule" class="nav-link button-style">Schedule</Link>
-    </li>
-    <li class="nav-item">
-      <a
-        class="nav-link button-style"
-        target="_blank"
-        href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
+<Navbar rounded color="form" class="mb-4 mx-auto">
+  <NavBrand href="/">
+    <img src="/images/logo.jpg" class="me-3 h-6 sm:h-9" alt="DAOball Logo" />
+    <span
+      class="self-center whitespace-nowrap text-xl font-semibold dark:text-white"
+    >
+      DAOball
+    </span>
+  </NavBrand>
+  <div class="flex items-center md:order-2">
+    <Avatar id="avatar-menu" src="/images/logo.jpg" />
+    <NavHamburger class1="w-full md:flex md:w-auto md:order-1" />
+  </div>
+  <Dropdown placement="bottom" triggeredBy="#avatar-menu">
+    <DropdownHeader>
+      <span class="block text-sm">Username</span>
+      <span class="block truncate text-sm font-medium">100 points</span>
+    </DropdownHeader>
+    <DropdownItem href="/admin">Admin</DropdownItem>
+    <DropdownItem>Sign out</DropdownItem>
+  </Dropdown>
+  <NavUl {activeUrl} {activeClass} {nonActiveClass}>
+    <NavLi href="/">Home</NavLi>
+    <NavLi href="/teams">Teams</NavLi>
+    <NavLi href="/schedule">Schedule</NavLi>
+    <NavLi class="cursor-pointer">
+      Links<ChevronDownOutline
+        class="w-3 h-3 ms-2 text-primary-800 dark:text-white inline"
+      />
+    </NavLi>
+    <Dropdown class="w-44 z-20">
+      <DropdownItem href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
+        >Blog</DropdownItem
       >
-        Blog &#8599;
-      </a>
-    </li>
-    <li>
-      <a
-        class="nav-link button-style"
-        target="_blank"
-        href="https://dscvr.one/p/daoball"
+      <DropdownItem href="https://dscvr.one/p/daoball">DSCVR</DropdownItem>
+      <DropdownItem href="https://github.com/edjcase/daoball"
+        >Github</DropdownItem
       >
-        DSCVR &#8599;
-      </a>
-    </li>
-    <li>
-      <a
-        class="nav-link button-style"
-        target="_blank"
-        href="https://github.com/edjcase/daoball"
-      >
-        Github &#8599;
-      </a>
-    </li>
-    <li>
-      <LoginButton />
-    </li>
-    <li>
-      <UpdateLeagueCanistersButton />
-    </li>
-  </ul>
-</nav>
-
-<style>
-  .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background-color: var(--color-primary);
-    color: var(--color-text);
-    padding: 10px;
-    border-top: solid 4px var(--color-accent);
-  }
-
-  .navbar-nav {
-    display: flex;
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    flex-wrap: wrap;
-  }
-
-  .nav-item {
-    margin-right: 10px;
-  }
-
-  :global(.nav-link) {
-    color: var(--color-text);
-    text-decoration: none;
-    padding: 5px;
-    border-radius: 5px;
-  }
-
-  :global(.nav-link:hover) {
-    background-color: var(--color-primary);
-    color: var(--color-text);
-  }
-</style>
+    </Dropdown>
+  </NavUl>
+</Navbar>

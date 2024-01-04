@@ -13,6 +13,10 @@
     if ("tie" in winner) return "😑";
     return "";
   };
+  let getScoreText = (score: number | undefined) => {
+    if (score === undefined || isNaN(score)) return "-";
+    return score;
+  };
 </script>
 
 <div class="header">
@@ -28,7 +32,7 @@
     </Tooltip>
 
     <div class="score">
-      {team1.score == undefined ? "-" : team1.score}
+      {getScoreText(team1.score)}
       <span class="emoji">{crownEmojiOrEmpty("team1")}</span>
     </div>
   </div>
@@ -37,7 +41,7 @@
   </div>
   <div class="header-team team2">
     <div class="score">
-      {team2.score == undefined ? "-" : team2.score}
+      {getScoreText(team2.score)}
       <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
     <Tooltip>

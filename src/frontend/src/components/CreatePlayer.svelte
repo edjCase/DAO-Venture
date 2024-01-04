@@ -10,6 +10,7 @@
   import PositionPicker from "./PositionPicker.svelte";
   import { FieldPosition } from "../models/FieldPosition";
   import { Deity } from "../models/Deity";
+  import { Button } from "flowbite-svelte";
 
   $: teams = $teamStore;
 
@@ -115,4 +116,4 @@
   <label for="piety">Piety</label>
   <input type="number" id="piety" bind:value={piety} />
 </div>
-<button class="button-style" on:click={createPlayer}>Create Player</button>
+<Button on:click={createPlayer}>Create Player</Button>

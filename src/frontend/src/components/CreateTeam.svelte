@@ -1,6 +1,7 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
   import { leagueAgentFactory } from "../ic-agent/League";
+  import { Button } from "flowbite-svelte";
 
   let name: string;
   let logoUrl: string;
@@ -35,4 +36,4 @@
   <input type="text" bind:value={tokenSymbol} />
 </div>
 
-<button class="button-style" on:click={createTeam}>Create Team</button>
+<Button on:click={createTeam}>Create Team</Button>
