@@ -19,15 +19,15 @@
 </script>
 
 {#if !!seasonStatus}
-  {#if "notStarted" in seasonStatus}
-    <div>
-      <h1>Season Not Started</h1>
-    </div>
-  {:else if "completed" in seasonStatus}
-    Season Complete
-  {:else}
-    Season InProgress
-  {/if}
+  <div class="text-center text-3xl font-bold my-4">
+    {#if "notStarted" in seasonStatus}
+      Season Not Started
+    {:else if "completed" in seasonStatus}
+      Season Complete
+    {:else}
+      Season InProgress
+    {/if}
+  </div>
 {/if}
 {#if !!matchGroupDetails}
   <Tabs

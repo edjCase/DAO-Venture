@@ -1,56 +1,55 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
   import { teamStore } from "../stores/TeamStore";
+  import { Card } from "flowbite-svelte";
   $: teams = $teamStore;
 </script>
 
-<div class="team-container">
-  {#each teams as team, index}
-    <div class="team-card {index % 2 === 0 ? 'even' : 'odd'}">
-      <Link to={`/teams/${team.id.toString()}`} class="button-style">
-        <div class="link-content">
-          <div class="team-logo-container">
-            <img
-              class="team-logo"
-              src={team.logoUrl}
-              alt={team.name + " Logo"}
-            />
-          </div>
-          <div class="team-name">{team.name}</div>
+<div>
+  <Card
+    padding="md"
+    size="xl"
+    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+  >
+    {#each teams as team}
+      <figure
+        class="flex flex-col m-4 justify-center items-center p-8 text-center bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700"
+      >
+        <div class="team-logo-container">
+          <img class="team-logo" src={team.logoUrl} alt={team.name + " Logo"} />
         </div>
-      </Link>
-      <div class="team-content">
-        ~~~~~~~~~~~TEAM DESCRIPTION AND FLUFF~~~~~~~~~~~
-      </div>
-    </div>
-  {/each}
+        <blockquote class="mx-auto mb-4 max-w-2xl">
+          <h3 class="text-lg font-semibold">
+            <Link to={`/teams/${team.id.toString()}`}>
+              {team.name}
+            </Link>
+          </h3>
+          <div class="team-info">
+            <div class="team-info-title">Managers:</div>
+            <div>358</div>
+            <div class="team-info">
+              <div class="team-info-title">Championship Seasons:</div>
+              <div class="team-info-text">Season 1, Season 3</div>
+            </div>
+            <div class="team-info">
+              <div class="team-info-title">Team Motto:</div>
+              <div class="team-info-text">TEAM MOTTO</div>
+            </div>
+            <div class="team-info">
+              <div class="team-info-title">Links:</div>
+              <div class="team-info-text">
+                <a href={""}>Website</a>
+                <a href={""}>Twitter</a>
+              </div>
+            </div>
+          </div>
+        </blockquote>
+      </figure>
+    {/each}
+  </Card>
 </div>
 
 <style>
-  .team-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 800px;
-  }
-  .team-card {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-    padding: 10px;
-  }
-  .team-card.even {
-    flex-direction: row-reverse;
-  }
-  .team-card.odd {
-    flex-direction: row;
-  }
-  .link-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 150px;
-  }
   .team-logo-container {
     flex: 1;
     display: flex;
@@ -61,17 +60,15 @@
     width: 75px;
     height: 75px;
   }
-  .team-name {
-    flex: 2;
-    font-size: 20px;
-    font-weight: bold;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
-  .team-content {
+
+  .team-info {
     display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
+    flex-direction: column;
+  }
+  .team-info-title {
+    font-weight: bold;
+  }
+  .team-info-text {
+    font-weight: normal;
   }
 </style>
