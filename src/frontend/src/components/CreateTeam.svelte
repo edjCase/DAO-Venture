@@ -7,9 +7,11 @@
   let logoUrl: string;
   let tokenName: string;
   let tokenSymbol: string;
+  let motto: string;
+  let description: string;
   let createTeam = function () {
     leagueAgentFactory()
-      .createTeam({ name, logoUrl, tokenName, tokenSymbol })
+      .createTeam({ name, logoUrl, tokenName, tokenSymbol, motto, description })
       .then(() => {
         teamStore.refetch();
       })
@@ -35,5 +37,12 @@
   <label for="token-symbol">Token Symbol</label>
   <input type="text" bind:value={tokenSymbol} />
 </div>
-
+<div>
+  <label for="motto">Motto</label>
+  <input type="text" bind:value={motto} />
+</div>
+<div>
+  <label for="description">Description</label>
+  <input type="text" bind:value={description} />
+</div>
 <Button on:click={createTeam}>Create Team</Button>

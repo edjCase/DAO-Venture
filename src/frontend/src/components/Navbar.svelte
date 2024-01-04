@@ -14,7 +14,7 @@
     DropdownHeader,
     DropdownDivider,
   } from "flowbite-svelte";
-  import { ChevronDownOutline } from "flowbite-svelte-icons";
+  import { ChevronDownOutline, UserOutline } from "flowbite-svelte-icons";
   import { onMount } from "svelte";
 
   let activeUrl = "";
@@ -35,15 +35,17 @@
       DAOball
     </span>
   </NavBrand>
-  <div class="flex items-center md:order-2">
-    <Avatar id="avatar-menu" src="/images/logo.jpg" />
-    <NavHamburger class1="w-full md:flex md:w-auto md:order-1" />
+  <div
+    class="flex items-center space-x-4 md:order-1 cursor-pointer"
+    id="avatar-menu"
+  >
+    <Avatar border dot={{ color: "red" }} />
+    <div class="space-y-1 font-medium dark:text-white">
+      <div>Username</div>
+      <div class="text-sm text-gray-500 dark:text-gray-400">110 points</div>
+    </div>
   </div>
-  <Dropdown placement="bottom" triggeredBy="#avatar-menu">
-    <DropdownHeader>
-      <span class="block text-sm">Username</span>
-      <span class="block truncate text-sm font-medium">100 points</span>
-    </DropdownHeader>
+  <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-full">
     <DropdownItem href="/admin">Admin</DropdownItem>
     <DropdownItem>Sign out</DropdownItem>
   </Dropdown>
@@ -52,18 +54,22 @@
     <NavLi href="/teams">Teams</NavLi>
     <NavLi href="/schedule">Schedule</NavLi>
     <NavLi class="cursor-pointer">
-      Links<ChevronDownOutline
+      Links
+      <ChevronDownOutline
         class="w-3 h-3 ms-2 text-primary-800 dark:text-white inline"
       />
     </NavLi>
     <Dropdown class="w-44 z-20">
-      <DropdownItem href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
-        >Blog</DropdownItem
-      >
+      <DropdownItem href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai">
+        Blog
+      </DropdownItem>
       <DropdownItem href="https://dscvr.one/p/daoball">DSCVR</DropdownItem>
-      <DropdownItem href="https://github.com/edjcase/daoball"
-        >Github</DropdownItem
-      >
+      <DropdownItem href="https://github.com/edjcase/daoball">
+        Github
+      </DropdownItem>
     </Dropdown>
   </NavUl>
 </Navbar>
+
+Paperclips Pancakes Tumbleweeds Corkscrews Teapots Aglets Sock Puppets Bubbles
+Puddles Doodles Whiskers Keychains

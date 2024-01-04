@@ -29,9 +29,13 @@ export type Team = {
     id: Principal;
     name: Text;
     logoUrl: Text;
+    motto: Text;
+    description: Text;
 };
 export const TeamIdl = IDL.Record({
     id: IDL.Principal,
     name: IDL.Text,
     logoUrl: IDL.Text,
+    motto: IDL.Text,
+    description: IDL.Text,
 });

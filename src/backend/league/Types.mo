@@ -104,6 +104,8 @@ module {
         logoUrl : Text;
         tokenName : Text;
         tokenSymbol : Text;
+        motto : Text;
+        description : Text;
     };
 
     public type CreateTeamResult = {

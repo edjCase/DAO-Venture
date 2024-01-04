@@ -2,14 +2,12 @@
   import {
     playerLedgerAgentFactory,
     mapPosition,
-    mapDeity,
   } from "../ic-agent/PlayerLedger";
   import { Principal } from "@dfinity/principal";
   import { playerStore } from "../stores/PlayerStore";
   import { teamStore } from "../stores/TeamStore";
   import PositionPicker from "./PositionPicker.svelte";
   import { FieldPosition } from "../models/FieldPosition";
-  import { Deity } from "../models/Deity";
   import { Button } from "flowbite-svelte";
 
   $: teams = $teamStore;
@@ -17,7 +15,6 @@
   let name: string;
   let teamId: string;
   let position: FieldPosition;
-  let deity: string;
   let battingAccuracy: number = 0;
   let battingPower: number = 0;
   let throwingAccuracy: number = 0;
@@ -29,13 +26,11 @@
 
   let createPlayer = function () {
     let mappedPosition = mapPosition(position);
-    let mappedDeity = mapDeity(Deity[deity as keyof typeof Deity]);
     playerLedgerAgentFactory()
       .create({
         name: name,
         teamId: [Principal.from(teamId)],
         position: mappedPosition,
-        deity: mappedDeity,
         skills: {
           battingAccuracy: battingAccuracy,
           battingPower: battingPower,
@@ -55,9 +50,6 @@
         console.log("Failed to create player: " + err);
       });
   };
-  let deityOptions = Object.keys(Deity).map((deity) => {
-    return { value: deity, label: Deity[deity as keyof typeof Deity] };
-  });
 </script>
 
 <div>
@@ -79,14 +71,6 @@
       position = p;
     }}
   />
-</div>
-<div>
-  <label for="deity">Deity</label>
-  <select id="deity" bind:value={deity}>
-    {#each deityOptions as deity}
-      <option value={deity.value}>{deity.label}</option>
-    {/each}
-  </select>
 </div>
 <div>
   <label for="battingAccuracy">Batting Accuracy</label>

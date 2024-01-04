@@ -15,7 +15,6 @@ module {
         teamId : ?Principal;
         skills : Skills;
         position : FieldPosition.FieldPosition;
-        deity : Deity;
     };
 
     public type PlayerWithId = Player and {

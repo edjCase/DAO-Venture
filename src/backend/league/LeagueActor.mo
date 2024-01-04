@@ -49,10 +49,8 @@ actor LeagueActor {
         Trie.toArray(
             teams,
             func(k : Principal, v : Team.TeamWithLedgerId) : TeamWithId = {
+                v with
                 id = k;
-                name = v.name;
-                logoUrl = v.logoUrl;
-                ledgerId = v.ledgerId;
             },
         );
     };
@@ -83,10 +81,8 @@ actor LeagueActor {
         let teamsArray = Trie.toArray(
             teams,
             func(k : Principal, v : Team.TeamWithLedgerId) : TeamWithId = {
+                v with
                 id = k;
-                name = v.name;
-                logoUrl = v.logoUrl;
-                ledgerId = v.ledgerId;
             },
         );
         let buildResult = ScheduleBuilder.build(request, teamsArray, prng);
@@ -166,6 +162,8 @@ actor LeagueActor {
             name = request.name;
             logoUrl = request.logoUrl;
             ledgerId = teamInfo.ledgerId;
+            motto = request.motto;
+            description = request.description;
         };
         let teamKey = buildPrincipalKey(teamInfo.id);
         let (newTeams, _) = Trie.put(teams, teamKey, Principal.equal, team);

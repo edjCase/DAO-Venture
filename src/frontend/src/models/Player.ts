@@ -7,17 +7,6 @@ export type Text = string;
 
 export type PlayerId = Nat32;
 
-export type Deity =
-    | { mischief: null }
-    | { war: null }
-    | { pestilence: null }
-    | { indulgence: null };
-export const DeityIdl = IDL.Variant({
-    mischief: IDL.Null,
-    war: IDL.Null,
-    pestilence: IDL.Null,
-    indulgence: IDL.Null,
-});
 
 export type PlayerSkills = {
     battingAccuracy: Int;
@@ -66,15 +55,13 @@ export type Player = {
     teamId: [Principal] | [];
     skills: PlayerSkills;
     position: FieldPosition;
-    deity: Deity;
 };
 export const PlayerIdl = IDL.Record({
     id: IDL.Nat32,
     name: IDL.Text,
     teamId: IDL.Opt(IDL.Principal),
     skills: PlayerSkillsIdl,
-    position: FieldPositionIdl,
-    deity: DeityIdl,
+    position: FieldPositionIdl
 });
 
 export type Injury =

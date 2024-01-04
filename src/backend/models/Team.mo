@@ -12,6 +12,8 @@ module {
     public type Team = {
         name : Text;
         logoUrl : Text;
+        motto : Text;
+        description : Text;
     };
 
     public type TeamWithId = Team and {

@@ -82,12 +82,16 @@ export type CreateTeamRequest = {
   logoUrl: Text;
   tokenName: Text;
   tokenSymbol: Text;
+  motto: Text;
+  description: Text;
 };
 export const CreateTeamRequestIdl = IDL.Record({
   name: IDL.Text,
   logoUrl: IDL.Text,
   tokenName: IDL.Text,
   tokenSymbol: IDL.Text,
+  motto: IDL.Text,
+  description: IDL.Text,
 });
 
 export type CreateTeamResult =

@@ -25,6 +25,7 @@
             </Link>
           </h3>
           <div class="team-info">
+            <div class="team-info-text">{team.description}</div>
             <div class="team-info-title">Managers:</div>
             <div>358</div>
             <div class="team-info">
@@ -33,7 +34,7 @@
             </div>
             <div class="team-info">
               <div class="team-info-title">Team Motto:</div>
-              <div class="team-info-text">TEAM MOTTO</div>
+              <div class="team-info-text">{team.motto}</div>
             </div>
             <div class="team-info">
               <div class="team-info-title">Links:</div>
