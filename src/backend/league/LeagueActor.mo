@@ -34,6 +34,7 @@ import MatchAura "../models/MatchAura";
 import Offering "../models/Offering";
 import TeamFactoryActor "canister:teamFactory";
 import StadiumFactoryActor "canister:stadiumFactory";
+import MatchPrediction "../models/MatchPrediction";
 
 actor LeagueActor {
     type TeamLedgerActor = Token.Token;
@@ -42,6 +43,7 @@ actor LeagueActor {
 
     stable var teams : Trie.Trie<Principal, Team.TeamWithLedgerId> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
+    stable var predictionsOrNull : ?Trie.Trie<Principal, Trie.Trie<Nat32, MatchPrediction.MatchPrediction>> = null;
     stable var historicalSeasons : [Season.CompletedSeason] = [];
     stable var stadiumIdOrNull : ?Principal = null;
 
@@ -194,6 +196,28 @@ actor LeagueActor {
         };
     };
 
+    public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {
+        if (Principal.isAnonymous(caller)) {
+            return #identityRequired;
+        };
+
+        let ?predictions = predictionsOrNull else return #predictionsClosed;
+
+        let key = buildPrincipalKey(caller);
+        let userPredictions = switch (Trie.get(predictions, key, Principal.equal)) {
+            case (null) Trie.empty();
+            case (?predictions) predictions;
+        };
+        let matchKey = {
+            key = request.matchId;
+            hash = request.matchId;
+        };
+        let (newUserPredictions, _) = Trie.put(userPredictions, matchKey, Nat32.equal, request.prediction);
+        let (newPredictions, _) = Trie.put(predictions, key, Principal.equal, newUserPredictions);
+        predictionsOrNull := ?newPredictions;
+        #ok;
+    };
+
     public shared ({ caller }) func updateLeagueCanisters() : async () {
         await TeamFactoryActor.updateCanisters();
         await StadiumFactoryActor.updateCanisters();
@@ -241,9 +265,9 @@ actor LeagueActor {
                 let inProgressMatches = scheduledMatchGroup.matches
                 |> Iter.fromArray(_)
                 |> IterTools.zip(_, Iter.fromArray(startMatchGroupRequest.matches))
-                |> Iter.map(
+                |> IterTools.mapEntries(
                     _,
-                    func(match : (Season.ScheduledMatch, StadiumTypes.StartMatchRequest)) : Season.InProgressMatch {
+                    func(matchId : Nat, match : (Season.ScheduledMatch, StadiumTypes.StartMatchRequest)) : Season.InProgressMatch {
                         let mapTeam = func(
                             team : Season.TeamInfo,
                             teamData : StadiumTypes.StartMatchTeam,
@@ -256,10 +280,36 @@ actor LeagueActor {
                                 offering = teamData.offering;
                             };
                         };
+                        // Compile predictions for match
+                        var matchPredictions = Trie.empty<Principal, MatchPrediction.MatchPrediction>();
+                        let predictions = switch (predictionsOrNull) {
+                            case (null) Trie.empty();
+                            case (?predictions) predictions;
+                        };
+                        let matchKey = {
+                            key = Nat32.fromNat(matchId);
+                            hash = Nat32.fromNat(matchId);
+                        };
+                        for ((userId, userMatchPredictions) in Trie.iter(predictions)) {
+                            switch (Trie.get(userMatchPredictions, matchKey, Nat32.equal)) {
+                                case (?prediction) {
+                                    let userKey = {
+                                        key = userId;
+                                        hash = Principal.hash(userId);
+                                    };
+                                    let (newUserPredictions, _) = Trie.put(matchPredictions, userKey, Principal.equal, prediction);
+                                    matchPredictions := newUserPredictions;
+                                };
+                                case (null) {
+                                    // No prediction for this user and match
+                                };
+                            };
+                        };
                         {
                             team1 = mapTeam(match.0.team1, match.1.team1);
                             team2 = mapTeam(match.0.team2, match.1.team2);
                             aura = match.0.aura.aura;
+                            predictions = matchPredictions;
                         };
                     },
                 )
@@ -317,26 +367,10 @@ actor LeagueActor {
         )
         |> Iter.map(
             _,
-            func((inProgressMatch : Season.InProgressMatch, completedMatch : Season.CompletedMatch)) : Season.CompletedMatch {
-                let buildTeam = func(team : Season.TeamInfo, teamData : Season.CompletedMatchTeam) : Season.CompletedMatchTeam {
-                    {
-                        id = team.id;
-                        name = team.name;
-                        logoUrl = team.logoUrl;
-                        offering = teamData.offering;
-                        championId = teamData.championId;
-                        score = teamData.score;
-                    };
-                };
-                let team1Data = buildTeam(inProgressMatch.team1, completedMatch.team1);
-                let team2Data = buildTeam(inProgressMatch.team2, completedMatch.team2);
+            func((inProgressMatch : Season.InProgressMatch, completedMatch : Season.CompletedMatchWithoutPredictions)) : Season.CompletedMatch {
                 {
-                    team1 = team1Data;
-                    team2 = team2Data;
-                    aura = inProgressMatch.aura;
-                    log = completedMatch.log;
-                    winner = completedMatch.winner;
-                    error = completedMatch.error;
+                    completedMatch with
+                    predictions = inProgressMatch.predictions;
                 };
             },
         )
@@ -362,8 +396,12 @@ actor LeagueActor {
             updatedSeason.matchGroups,
             nextMatchGroupId,
         ) else {
-            // Season is over, cant find more match groups
-            ignore await closeSeason(); // TODO how to not await this?
+            // Season is over because cant find more match groups
+            try {
+                ignore await closeSeason(); // TODO how to not await this?
+            } catch (err) {
+                Debug.print("Failed to close season: " # Error.message(err));
+            };
             return #ok;
         };
         switch (nextMatchGroup) {

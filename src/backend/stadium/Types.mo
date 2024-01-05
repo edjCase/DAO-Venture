@@ -81,7 +81,7 @@ module {
 
     public type MatchVariant = {
         #inProgress : InProgressMatch;
-        #completed : Season.CompletedMatch;
+        #completed : Season.CompletedMatchWithoutPredictions;
     };
     public type InProgressMatch = {
         team1 : TeamState;

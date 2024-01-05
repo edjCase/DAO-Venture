@@ -1,8 +1,11 @@
 import Time "mo:base/Time";
 import Array "mo:base/Array";
+import Principal "mo:base/Principal";
+import Trie "mo:base/Trie";
 import Offering "Offering";
 import MatchAura "MatchAura";
 import Team "Team";
+import MatchPrediction "MatchPrediction";
 
 module {
 
@@ -68,6 +71,7 @@ module {
         team1 : InProgressTeam;
         team2 : InProgressTeam;
         aura : MatchAura.MatchAura;
+        predictions : Trie.Trie<Principal, MatchPrediction.MatchPrediction>;
     };
 
     public type CompletedMatchTeam = TeamInfo and {
@@ -75,14 +79,17 @@ module {
         championId : Nat32;
         score : Int;
     };
-
-    public type CompletedMatch = {
+    public type CompletedMatchWithoutPredictions = {
         team1 : CompletedMatchTeam;
         team2 : CompletedMatchTeam;
         aura : MatchAura.MatchAura;
         log : [LogEntry];
         winner : Team.TeamIdOrTie;
         error : ?Text;
+    };
+
+    public type CompletedMatch = CompletedMatchWithoutPredictions and {
+        predictions : Trie.Trie<Principal, MatchPrediction.MatchPrediction>;
     };
 
     public type LogEntry = {

@@ -212,10 +212,10 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
     };
 
     private func tickMatches(prng : Prng, matches : [StadiumTypes.MatchVariant]) : {
-        #completed : [Season.CompletedMatch];
+        #completed : [Season.CompletedMatchWithoutPredictions];
         #inProgress : [StadiumTypes.MatchVariant];
     } {
-        let completedMatches = Buffer.Buffer<Season.CompletedMatch>(matches.size());
+        let completedMatches = Buffer.Buffer<Season.CompletedMatchWithoutPredictions>(matches.size());
         let allMatches = Buffer.Buffer<StadiumTypes.MatchVariant>(matches.size());
         for (match in Iter.fromArray(matches)) {
             let updatedMatch : StadiumTypes.MatchVariant = switch (match) {

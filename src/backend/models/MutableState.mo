@@ -6,6 +6,7 @@ import TrieMap "mo:base/TrieMap";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
+import Trie "mo:base/Trie";
 import StadiumTypes "../stadium/Types";
 import FieldPosition "FieldPosition";
 import Skill "Skill";
