@@ -80,14 +80,14 @@ actor LeagueActor {
         };
         let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
 
-        let teamsArray = Trie.toArray(
-            teams,
-            func(k : Principal, v : Team.TeamWithLedgerId) : TeamWithId = {
-                v with
-                id = k;
-            },
-        );
-        let buildResult = ScheduleBuilder.build(request, teamsArray, prng);
+        let teamIdsBuffer = teams
+        |> Trie.iter(_)
+        |> Iter.map(_, func(k : (Principal, Team.TeamWithLedgerId)) : Principal = k.0)
+        |> Buffer.fromIter<Principal>(_);
+
+        prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
+
+        let buildResult = ScheduleBuilder.build(request.startTime, Buffer.toArray(teamIdsBuffer));
 
         let schedule : ScheduleBuilder.SeasonSchedule = switch (buildResult) {
             case (#ok(schedule)) schedule;

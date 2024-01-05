@@ -67,7 +67,9 @@
     </div>
     <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-full">
       <DropdownItem href="/admin">Admin</DropdownItem>
-      <DropdownItem>Sign out</DropdownItem>
+      <DropdownItem on:click={() => identityStore.logout()}>
+        Sign out
+      </DropdownItem>
     </Dropdown>
   {:else}
     <LoginButton />

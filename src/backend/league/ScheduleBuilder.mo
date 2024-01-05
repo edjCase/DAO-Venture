@@ -18,7 +18,6 @@ module {
     };
 
     public type MatchGroup = {
-        id : Nat32;
         time : Time.Time;
         matches : [Match];
     };
@@ -34,16 +33,9 @@ module {
     };
 
     public func build(
-        request : LeagueTypes.StartSeasonRequest,
-        teams : [Team.TeamWithId],
-        prng : Prng,
+        startTime : Time.Time,
+        teamIds : [Principal],
     ) : BuildScheduleResult {
-
-        // Build match group schedules without ids
-        let teamIds = teams
-        |> Iter.fromArray(_)
-        |> Iter.map(_, func(team : Team.TeamWithId) : Principal = team.id)
-        |> Iter.toArray(_);
 
         let teamCount = teamIds.size();
         if (teamCount == 0) {
@@ -56,10 +48,9 @@ module {
         // Round robin tournament algorithm
         var teamOrderForWeek = Buffer.fromArray<Principal>(teamIds);
 
-        prng.shuffleBuffer(teamOrderForWeek);
         let matchUpCountPerWeek = teamCount / 2;
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
-        var nextMatchDate = DateTime.fromTime(request.startTime);
+        var nextMatchDate = DateTime.fromTime(startTime);
 
         let matchGroupSchedules = Buffer.Buffer<MatchGroup>(weekCount);
         for (weekIndex in IterTools.range(0, weekCount)) {
@@ -69,7 +60,7 @@ module {
                 _,
                 func(i : Nat) : Match {
                     let team1Id = teamOrderForWeek.get(i);
-                    let team2Id = teamOrderForWeek.get(i + matchUpCountPerWeek); // Second half of teams
+                    let team2Id = teamOrderForWeek.get(teamCount - 1 - i); // First plays last, second plays second last, etc.
                     {
                         team1Id = team1Id;
                         team2Id = team2Id;
@@ -77,9 +68,7 @@ module {
                 },
             )
             |> Iter.toArray(_);
-            let nextMatchGroupId = Nat32.fromNat(matchGroupSchedules.size() + 1);
             matchGroupSchedules.add({
-                id = nextMatchGroupId;
                 time = nextMatchDate.toTime();
                 matches = matches;
             });

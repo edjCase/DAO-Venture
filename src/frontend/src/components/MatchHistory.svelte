@@ -17,7 +17,9 @@
         (m) =>
           m.team1.id.compareTo(teamId) == "eq" ||
           m.team2.id.compareTo(teamId) == "eq"
-      );
+      )
+      // Filter out the matches that haven't happened yet
+      .filter((m) => m.time < BigInt(Date.now() * 1000000));
   });
 </script>
 
