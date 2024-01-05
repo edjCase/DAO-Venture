@@ -89,12 +89,12 @@ export const teams: Team[] = [
         "tokenSymbol": "DOODS"
     },
     {
-        "name": "Whiskers",
-        "description": "Known for their precision and agility, akin to a cat's whiskers, this team excels in sensing opportunities and navigating tight situations with finesse.",
-        "motto": "Sensing Success, Pouncing on Opportunities",
-        "logoUrl": "/images/team-logos/whiskers.png",
-        "tokenName": "Whiskers",
-        "tokenSymbol": "WHISK"
+        "name": "Kaleidoscopes",
+        "description": "Inspired by the ever-changing and colorful patterns of a kaleidoscope, this team is celebrated for their dynamic and creative strategies. They bring a spectrum of innovative ideas to every game, dazzling their opponents.",
+        "motto": "Shifting Patterns, Shaping Victories",
+        "logoUrl": "/images/team-logos/kaleidoscopes.png",
+        "tokenName": "Kaleidoscopes",
+        "tokenSymbol": "KSCOPE"
     },
     {
         "name": "Keychains",

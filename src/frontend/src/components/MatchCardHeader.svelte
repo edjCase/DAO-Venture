@@ -1,6 +1,7 @@
 <script lang="ts">
   import { TeamDetails } from "../models/Match";
   import { TeamIdOrTie } from "../models/Team";
+  import TeamLogo from "./TeamLogo.svelte";
   import Tooltip from "./Tooltip.svelte";
 
   export let team1: TeamDetails;
@@ -22,12 +23,7 @@
 <div class="header">
   <div class="header-team team1">
     <Tooltip>
-      <img
-        class="logo"
-        src={team1.logoUrl}
-        alt="{team1.name} Logo"
-        slot="content"
-      />
+      <TeamLogo team={team1} size="sm" slot="content" />
       <div slot="tooltip" class="name">{team1.name}</div>
     </Tooltip>
 
@@ -45,12 +41,7 @@
       <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
     <Tooltip>
-      <img
-        class="logo"
-        src={team2.logoUrl}
-        alt="{team2.name} Logo"
-        slot="content"
-      />
+      <TeamLogo team={team2} size="sm" slot="content" />
       <div slot="tooltip" class="name">{team2.name}</div>
     </Tooltip>
   </div>
@@ -65,11 +56,6 @@
   .name {
     font-size: 2rem;
     font-weight: bold;
-  }
-  .logo {
-    width: 50px;
-    height: 50px;
-    border-radius: 5px;
   }
   .header {
     display: flex;
