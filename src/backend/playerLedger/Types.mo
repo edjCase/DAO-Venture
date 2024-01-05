@@ -6,7 +6,6 @@ module {
         name : Text;
         teamId : ?Principal;
         position : FieldPosition.FieldPosition;
-        deity : Player.Deity;
         skills : Player.Skills;
     };
 

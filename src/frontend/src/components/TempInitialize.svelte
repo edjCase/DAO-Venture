@@ -67,7 +67,7 @@
     let playerLedgerAgent = playerLedgerAgentFactory();
     let promises = [];
     // loop over count
-    for (let positionString in Object.keys(FieldPosition)) {
+    for (let positionString of Object.keys(FieldPosition)) {
       // Make 2 of every position
       for (let _ in [0, 1]) {
         let position =

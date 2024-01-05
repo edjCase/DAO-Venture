@@ -106,7 +106,6 @@ actor PlayerLedger {
             condition = #ok;
             position = options.position;
             skills = options.skills;
-            deity = options.deity;
         };
     };
 };

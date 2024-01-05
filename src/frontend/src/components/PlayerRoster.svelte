@@ -2,22 +2,10 @@
   import { Principal } from "@dfinity/principal";
   import { playerStore } from "../stores/PlayerStore";
   import { Player } from "../models/Player";
-  import { Deity, FieldPosition } from "../ic-agent/PlayerLedger";
+  import { FieldPosition } from "../ic-agent/PlayerLedger";
 
   export let teamId: Principal;
 
-  const deityToString = (deity: Deity): string => {
-    if ("mischief" in deity) {
-      return "Mischief";
-    } else if ("indulgence" in deity) {
-      return "Indulgence";
-    } else if ("war" in deity) {
-      return "War";
-    } else if ("pestilence" in deity) {
-      return "Pestilence";
-    }
-    return "Unknown";
-  };
   const skillToString = (skill: number): string => {
     if (skill == 0) {
       return "";
@@ -65,7 +53,6 @@
       <th class="column-number">#</th>
       <th class="column-name">Name</th>
       <th class="column-position">Position</th>
-      <th class="column-deity">Deity</th>
       <th class="column-skill">BA</th>
       <th class="column-skill">BP</th>
       <th class="column-skill">TA</th>
@@ -82,7 +69,6 @@
         <td>{player.id}</td>
         <td>{player.name}</td>
         <td>{positionToString(player.position)}</td>
-        <td>{deityToString(player.deity)}</td>
         <td>{skillToString(player.skills.battingAccuracy)}</td>
         <td>{skillToString(player.skills.battingPower)}</td>
         <td>{skillToString(player.skills.throwingAccuracy)}</td>
@@ -129,9 +115,6 @@
 
   .player-roster th.column-position {
     width: 120px;
-  }
-  .player-roster th.column-deity {
-    width: 100px;
   }
 
   .player-roster th {

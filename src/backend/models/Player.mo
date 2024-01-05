@@ -3,13 +3,6 @@ import FieldPosition "FieldPosition";
 module {
     public type PlayerId = Nat32;
 
-    public type Deity = {
-        #mischief;
-        #war;
-        #pestilence;
-        #indulgence;
-    };
-
     public type Player = {
         name : Text;
         teamId : ?Principal;
