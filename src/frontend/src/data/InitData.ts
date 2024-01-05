@@ -92,7 +92,7 @@ export const teams: Team[] = [
         "name": "Whiskers",
         "description": "Known for their precision and agility, akin to a cat's whiskers, this team excels in sensing opportunities and navigating tight situations with finesse.",
         "motto": "Sensing Success, Pouncing on Opportunities",
-        "logoUrl": "/images/team-logos/wiskers.png",
+        "logoUrl": "/images/team-logos/whiskers.png",
         "tokenName": "Whiskers",
         "tokenSymbol": "WHISK"
     },

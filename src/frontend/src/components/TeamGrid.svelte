@@ -55,11 +55,12 @@
     flex: 1;
     display: flex;
     justify-content: center;
-    width: 100px;
   }
   .team-logo {
-    width: 75px;
-    height: 75px;
+    width: 150px;
+    height: 150px;
+    background-color: rgba(120, 120, 120, 0.5);
+    border-radius: 25%;
   }
 
   .team-info {

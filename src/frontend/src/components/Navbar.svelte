@@ -70,6 +70,3 @@
     </Dropdown>
   </NavUl>
 </Navbar>
-
-Paperclips Pancakes Tumbleweeds Corkscrews Teapots Aglets Sock Puppets Bubbles
-Puddles Doodles Whiskers Keychains
