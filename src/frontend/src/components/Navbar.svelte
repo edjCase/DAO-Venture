@@ -16,8 +16,18 @@
   } from "flowbite-svelte";
   import { ChevronDownOutline, UserOutline } from "flowbite-svelte-icons";
   import { onMount } from "svelte";
+  import { toSvg } from "jdenticon";
+  import { identityStore } from "../stores/IdentityStore";
+  import {
+    uniqueNamesGenerator,
+    adjectives,
+    colors,
+    animals,
+  } from "unique-names-generator";
 
   let activeUrl = "";
+
+  $: identity = $identityStore;
 
   onMount(() => (activeUrl = window.location.pathname));
   let activeClass =
@@ -35,20 +45,33 @@
       DAOball
     </span>
   </NavBrand>
-  <div
-    class="flex items-center space-x-4 md:order-1 cursor-pointer"
-    id="avatar-menu"
-  >
-    <Avatar border dot={{ color: "red" }} />
-    <div class="space-y-1 font-medium dark:text-white">
-      <div>Username</div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">110 points</div>
+  {#if identity}
+    <div
+      class="flex items-center space-x-4 md:order-1 cursor-pointer"
+      id="avatar-menu"
+    >
+      <Avatar border dot={{ color: "red" }}>
+        {@html toSvg(identity.getPrincipal().toString(), 100)}
+      </Avatar>
+      <div class="space-y-1 font-medium dark:text-white">
+        <div>
+          {uniqueNamesGenerator({
+            dictionaries: [adjectives, colors, animals],
+            separator: " ",
+            style: "capital",
+            seed: identity.getPrincipal().toString(),
+          })}
+        </div>
+        <div class="text-sm text-gray-500 dark:text-gray-400">110 points</div>
+      </div>
     </div>
-  </div>
-  <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-full">
-    <DropdownItem href="/admin">Admin</DropdownItem>
-    <DropdownItem>Sign out</DropdownItem>
-  </Dropdown>
+    <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-full">
+      <DropdownItem href="/admin">Admin</DropdownItem>
+      <DropdownItem>Sign out</DropdownItem>
+    </Dropdown>
+  {:else}
+    <LoginButton />
+  {/if}
   <NavUl {activeUrl} {activeClass} {nonActiveClass}>
     <NavLi href="/">Home</NavLi>
     <NavLi href="/teams">Teams</NavLi>

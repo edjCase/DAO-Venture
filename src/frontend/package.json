@@ -35,7 +35,9 @@
     "tailwindcss": "^3.4.0",
     "tslib": "^2.5.0",
     "typescript": "^5.2.2",
-    "sillyname": "0.1.0"
+    "sillyname": "0.1.0",
+    "jdenticon": "^3.2.0",
+    "unique-names-generator": "^4.7.1"
   },
   "dependencies": {
     "@dfinity/agent": "^0.19.3",
