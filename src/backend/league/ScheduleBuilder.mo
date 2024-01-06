@@ -35,6 +35,7 @@ module {
     public func build(
         startTime : Time.Time,
         teamIds : [Principal],
+        timeBetweenMatchGroups : DateTime.Duration,
     ) : BuildScheduleResult {
 
         let teamCount = teamIds.size();
@@ -72,8 +73,7 @@ module {
                 time = nextMatchDate.toTime();
                 matches = matches;
             });
-            // nextMatchDate := nextMatchDate.add(#weeks(1)); // TODO revert
-            nextMatchDate := nextMatchDate.add(#minutes(15));
+            nextMatchDate := nextMatchDate.add(timeBetweenMatchGroups);
             // Rotate order of teams
             // 1) Freeze the first team
             // 2) Bring the last team to the second position

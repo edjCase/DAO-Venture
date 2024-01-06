@@ -44,6 +44,7 @@
     flex-wrap: wrap;
     align-items: stretch;
     padding: 5px;
+    max-width: 800px;
   }
   .selected-match {
     display: flex;
@@ -51,12 +52,14 @@
     align-items: stretch;
     margin: 0 10px;
     height: 50vh;
+    flex: 1;
   }
   .other-matches {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    flex: 1;
   }
 
   @media (max-width: 768px) {

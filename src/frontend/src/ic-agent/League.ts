@@ -7,7 +7,7 @@ import { SeasonStatus, SeasonStatusIdl } from '../models/Season';
 import { Offering, OfferingIdl } from '../models/Offering';
 import { MatchAura, MatchAuraIdl } from '../models/MatchAura';
 import { Player, PlayerIdl } from './PlayerLedger';
-import { Team, TeamIdl } from '../models/Team';
+import { Team, TeamIdOrTie, TeamIdOrTieIdl, TeamIdl } from '../models/Team';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -150,14 +150,42 @@ export const MintResultIdl = IDL.Variant({
   transferError: TransferErrorIdl,
 });
 
+export type MatchPrediction = {
+  winner: TeamIdOrTie;
+};
+export const MatchPredictionIdl = IDL.Record({
+  winner: TeamIdOrTieIdl
+});
 
+export type PredictMatchOutcomeRequest = {
+  matchId: Nat32;
+  prediction: MatchPrediction;
+};
+export const PredictMatchOutcomeRequestIdl = IDL.Record({
+  matchId: IDL.Nat32,
+  prediction: MatchPredictionIdl,
+});
+
+export type PredictMatchOutcomeResult =
+  | { ok: null }
+  | { matchNotFound: null }
+  | { matchGroupNotFound: null }
+  | { predictionsClosed: null }
+  | { identityRequired: null };
+export const PredictMatchOutcomeResultIdl = IDL.Variant({
+  ok: IDL.Null,
+  matchNotFound: IDL.Null,
+  matchGroupNotFound: IDL.Null,
+  predictionsClosed: IDL.Null,
+  identityRequired: IDL.Null,
+});
 
 export interface _SERVICE {
   'getTeams': ActorMethod<[], Array<Team>>,
   'getSeasonStatus': ActorMethod<[], SeasonStatus>,
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
-  'closeSeason': ActorMethod<[], CloseSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
+  'predictMatchOutcome': ActorMethod<[PredictMatchOutcomeRequest], PredictMatchOutcomeResult>;
   'mint': ActorMethod<[MintRequest], MintResult>,
   'updateLeagueCanisters': ActorMethod<[], undefined>,
 }
@@ -169,10 +197,11 @@ export const idlFactory: InterfaceFactory = ({ }) => {
   return IDL.Service({
     'getTeams': IDL.Func([], [IDL.Vec(TeamIdl)], ['query']),
     'getSeasonStatus': IDL.Func([], [SeasonStatusIdl], ['query']),
-    'updateLeagueCanisters': IDL.Func([], [], []),
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
+    'predictMatchOutcome': IDL.Func([PredictMatchOutcomeRequestIdl], [PredictMatchOutcomeResultIdl], []),
     'mint': IDL.Func([MintRequestIdl], [MintResultIdl], []),
+    'updateLeagueCanisters': IDL.Func([], [], []),
   });
 };
 

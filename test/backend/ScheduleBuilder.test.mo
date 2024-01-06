@@ -40,7 +40,7 @@ test(
             team11,
             team12,
         ];
-        let result = ScheduleBuilder.build(startTime, teamIds);
+        let result = ScheduleBuilder.build(startTime, teamIds, #weeks(1));
 
         let #ok(schedule) = result else Debug.trap("ScheduleBuilder.build failed");
         // Round robin schedule for 12 teams
@@ -76,7 +76,7 @@ test(
                     ];
                 },
                 {
-                    time = 900_000_000_000;
+                    time = 604_800_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -105,7 +105,7 @@ test(
                     ];
                 },
                 {
-                    time = 1_800_000_000_000;
+                    time = 1_209_600_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -134,7 +134,7 @@ test(
                     ];
                 },
                 {
-                    time = 2_700_000_000_000;
+                    time = 1_814_400_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -163,7 +163,7 @@ test(
                     ];
                 },
                 {
-                    time = 3_600_000_000_000;
+                    time = 2_419_200_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -192,7 +192,7 @@ test(
                     ];
                 },
                 {
-                    time = 4_500_000_000_000;
+                    time = 3_024_000_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -221,7 +221,7 @@ test(
                     ];
                 },
                 {
-                    time = 5_400_000_000_000;
+                    time = 3_628_800_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -250,7 +250,7 @@ test(
                     ];
                 },
                 {
-                    time = 6_300_000_000_000;
+                    time = 4_233_600_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -279,7 +279,7 @@ test(
                     ];
                 },
                 {
-                    time = 7_200_000_000_000;
+                    time = 4_838_400_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -308,7 +308,7 @@ test(
                     ];
                 },
                 {
-                    time = 8_100_000_000_000;
+                    time = 5_443_200_000_000_000;
                     matches = [
                         {
                             team1Id = team1;
@@ -337,7 +337,7 @@ test(
                     ];
                 },
                 {
-                    time = 9_000_000_000_000;
+                    time = 6_048_000_000_000_000;
                     matches = [
                         {
                             team1Id = team1;

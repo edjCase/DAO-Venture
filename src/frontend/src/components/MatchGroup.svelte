@@ -4,6 +4,7 @@
   import { scheduleStore } from "../stores/ScheduleStore";
   import { MatchGroupDetails } from "../models/Match";
   import { nanosecondsToDate } from "../utils/DateUtils";
+  import PredictMatchOutcome from "./PredictMatchOutcome.svelte";
 
   export let matchGroupId: number;
 
@@ -33,6 +34,8 @@
 
       {#if matchGroup.state == "Scheduled"}
         {#each matchGroup.matches as match}
+          <h1>Predict</h1>
+          <PredictMatchOutcome {match} />
           <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
           <div class="match-vote">
             <div class="team-vote">

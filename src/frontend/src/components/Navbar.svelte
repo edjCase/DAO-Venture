@@ -50,7 +50,7 @@
       class="flex items-center space-x-4 md:order-1 cursor-pointer"
       id="avatar-menu"
     >
-      <Avatar border dot={{ color: "red" }}>
+      <Avatar border>
         {@html toSvg(identity.getPrincipal().toString(), 100)}
       </Avatar>
       <div class="space-y-1 font-medium dark:text-white">

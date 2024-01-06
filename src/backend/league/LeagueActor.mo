@@ -87,7 +87,13 @@ actor LeagueActor {
 
         prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
 
-        let buildResult = ScheduleBuilder.build(request.startTime, Buffer.toArray(teamIdsBuffer));
+        let timeBetweenMatchGroups = #minutes(10);
+        // let timeBetweenMatchGroups = #weeks(1); // TODO revert
+        let buildResult = ScheduleBuilder.build(
+            request.startTime,
+            Buffer.toArray(teamIdsBuffer),
+            timeBetweenMatchGroups,
+        );
 
         let schedule : ScheduleBuilder.SeasonSchedule = switch (buildResult) {
             case (#ok(schedule)) schedule;
@@ -286,6 +292,7 @@ actor LeagueActor {
                             case (null) Trie.empty();
                             case (?predictions) predictions;
                         };
+                        predictionsOrNull := null; // Close predictions
                         let matchKey = {
                             key = Nat32.fromNat(matchId);
                             hash = Nat32.fromNat(matchId);
@@ -510,6 +517,7 @@ actor LeagueActor {
         switch (buildSeasonWithUpdatedMatchGroup(matchGroupId, status, inProgressSeason)) {
             case (#ok(inProgressSeason)) {
                 seasonStatus := #inProgress(inProgressSeason);
+                predictionsOrNull := ?Trie.empty(); // Open predictions
             };
             case (#matchGroupNotFound) Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
         };
