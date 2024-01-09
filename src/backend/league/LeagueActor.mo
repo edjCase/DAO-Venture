@@ -41,6 +41,7 @@ actor LeagueActor {
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
+    stable var users : Trie.Trie<Principal, Types.UserInfo> = Trie.empty();
     stable var teams : Trie.Trie<Principal, Team.TeamWithLedgerId> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
     stable var predictionsOrNull : ?Trie.Trie<Principal, Trie.Trie<Nat32, MatchPrediction.MatchPrediction>> = null;
@@ -61,7 +62,29 @@ actor LeagueActor {
         seasonStatus;
     };
 
+    public query ({ caller }) func getUserInfo() : async ?Types.UserInfo {
+        getUserInfoInternal(caller);
+    };
+
+    public shared ({ caller }) func updateUserInfo(id : Principal, request : Types.UpdateUserInfoRequest) : async Types.UpdateUserInfoResult {
+        // Check to make sure only admins can update other users
+        // BUT if there are no admins, skip the check
+        if (Trie.size(users) > 0) {
+            let ?existingUserInfo = getUserInfoInternal(id) else return #notAuthorized;
+            if (not existingUserInfo.isAdmin) {
+                return #notAuthorized;
+            };
+        };
+        let key = buildPrincipalKey(caller);
+        let (newUsers, _) = Trie.put(users, key, Principal.equal, request);
+        users := newUsers;
+        #ok;
+    };
+
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {
+        if (not isAdmin(caller)) {
+            return #notAuthorized;
+        };
         switch (seasonStatus) {
             case (#notStarted) {};
             case (#starting) return #alreadyStarted;
@@ -150,7 +173,9 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func createTeam(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
-
+        if (not isAdmin(caller)) {
+            return #notAuthorized;
+        };
         let nameAlreadyTaken = Trie.some(
             teams,
             func(k : Principal, v : Team.Team) : Bool = v.name == request.name,
@@ -180,10 +205,9 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func mint(request : Types.MintRequest) : async Types.MintResult {
-        // TODO
-        // if (caller != leagueId) {
-        //   return #notAuthorized;
-        // }
+        if (not isAdmin(caller)) {
+            return #notAuthorized;
+        };
         let ?team = Trie.get(teams, buildPrincipalKey(request.teamId), Principal.equal) else return #teamNotFound;
         let ledger = actor (Principal.toText(team.ledgerId)) : Token.Token;
 
@@ -224,12 +248,19 @@ actor LeagueActor {
         #ok;
     };
 
-    public shared ({ caller }) func updateLeagueCanisters() : async () {
+    public shared ({ caller }) func updateLeagueCanisters() : async Types.UpdateLeagueCanistersResult {
+        if (not isAdmin(caller)) {
+            return #notAuthorized;
+        };
         await TeamFactoryActor.updateCanisters();
         await StadiumFactoryActor.updateCanisters();
+        #ok;
     };
 
     public shared ({ caller }) func startMatchGroup(id : Nat) : async Types.StartMatchGroupResult {
+        if (not isAdmin(caller)) {
+            return #notAuthorized;
+        };
         let #inProgress(season) = seasonStatus else return #matchGroupNotFound;
         let stadiumId = switch (await* getOrCreateStadium()) {
             case (#ok(id)) id;
@@ -344,6 +375,9 @@ actor LeagueActor {
     public shared ({ caller }) func onMatchGroupComplete(
         request : Types.OnMatchGroupCompleteRequest
     ) : async Types.OnMatchGroupCompleteResult {
+        if (not isStadium(caller)) {
+            return #notAuthorized;
+        };
         Debug.print("On Match group complete called for: " # Nat.toText(request.id));
         let #inProgress(season) = seasonStatus else return #seasonNotOpen;
         let ?stadiumId = stadiumIdOrNull else return #notAuthorized;
@@ -427,6 +461,9 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func closeSeason() : async Types.CloseSeasonResult {
+        if (not isAdmin(caller)) {
+            return #notAuthorized;
+        };
         let #inProgress(inProgressSeason) = seasonStatus else return #seasonNotOpen;
         let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
             case (#ok(completedMatchGroups)) completedMatchGroups;
@@ -452,6 +489,24 @@ actor LeagueActor {
             matchGroups = completedMatchGroups;
         });
         #ok;
+    };
+
+    private func isAdmin(id : Principal) : Bool {
+        if (id == Principal.fromActor(LeagueActor)) {
+            // League is admin
+            return true;
+        };
+        let ?userInfo = getUserInfoInternal(id) else return false;
+        userInfo.isAdmin;
+    };
+
+    private func isStadium(id : Principal) : Bool {
+        let ?stadiumId = stadiumIdOrNull else return false;
+        id == stadiumId;
+    };
+
+    private func getUserInfoInternal(userId : Principal) : ?Types.UserInfo {
+        Trie.get(users, buildPrincipalKey(userId), Principal.equal);
     };
 
     private func archiveSeason(season : Season.CompletedSeason) : () {

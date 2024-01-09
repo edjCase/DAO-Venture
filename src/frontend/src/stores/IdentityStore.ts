@@ -1,7 +1,15 @@
-import type { Identity } from '@dfinity/agent';
 import { AuthClient } from '@dfinity/auth-client';
+import { Principal } from '@dfinity/principal';
 import { writable } from 'svelte/store';
+import { Bool } from '../models/Season';
+import { leagueAgentFactory } from '../ic-agent/League';
 
+
+type Identity = {
+    id: Principal;
+    isAdmin: Bool;
+
+};
 
 function createIdentityStore() {
     const { subscribe, set } = writable<Identity | undefined>();
@@ -10,10 +18,20 @@ function createIdentityStore() {
     const refresh = async () => {
         let authClient = await AuthClient.create();
         let identity = authClient.getIdentity();
-        if (identity.getPrincipal().isAnonymous()) {
+        let id = identity.getPrincipal();
+        if (id.isAnonymous()) {
             set(undefined);
         } else {
-            set(identity);
+            let userInfo = await leagueAgentFactory()
+                .getUserInfo();
+            let isAdmin = false;
+            if (userInfo && userInfo.length >= 1) {
+                isAdmin = userInfo[0]!.isAdmin;
+            }
+            set({
+                id: id,
+                isAdmin: isAdmin,
+            });
         }
     };
 

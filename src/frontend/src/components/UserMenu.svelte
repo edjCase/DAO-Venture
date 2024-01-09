@@ -1,7 +1,7 @@
 <script>
   import LoginButton from "./LoginButton.svelte";
-  import { Avatar } from "flowbite-svelte";
-  import { Dropdown, DropdownItem } from "flowbite-svelte";
+  import { Avatar, Dropdown, DropdownItem, Button } from "flowbite-svelte";
+  import { FileCopyOutline } from "flowbite-svelte-icons";
   import {
     uniqueNamesGenerator,
     adjectives,
@@ -12,6 +12,13 @@
   import { identityStore } from "../stores/IdentityStore";
 
   $: identity = $identityStore;
+
+  let copyPrincipal = () => {
+    navigator.clipboard.writeText(identity.id.toString());
+  };
+  let logout = () => {
+    identityStore.logout();
+  };
 </script>
 
 <div
@@ -20,7 +27,7 @@
 >
   {#if identity}
     <Avatar border>
-      {@html toSvg(identity.getPrincipal().toString(), 100)}
+      {@html toSvg(identity.id.toString(), 100)}
     </Avatar>
     <div class="space-y-1 font-medium dark:text-white">
       <div>
@@ -28,16 +35,23 @@
           dictionaries: [adjectives, colors, animals],
           separator: " ",
           style: "capital",
-          seed: identity.getPrincipal().toString(),
+          seed: identity.id.toString(),
         })}
       </div>
-      <div class="text-sm text-gray-500 dark:text-gray-400">110 points</div>
+      <div
+        class="text-sm text-gray-500 dark:text-gray-400 flex items-center w-32"
+      >
+        <div class="truncate flex-grow">
+          {identity.id.toString()}
+        </div>
+        <FileCopyOutline on:click={copyPrincipal} class="flex-shrink-0" />
+      </div>
     </div>
-    <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-full">
-      <DropdownItem href="/admin">Admin</DropdownItem>
-      <DropdownItem on:click={() => identityStore.logout()}>
-        Sign out
-      </DropdownItem>
+    <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-40">
+      {#if identity.isAdmin}
+        <DropdownItem href="/admin">Admin</DropdownItem>
+      {/if}
+      <DropdownItem on:click={logout} slot="footer">Logout</DropdownItem>
     </Dropdown>
   {:else}
     <LoginButton />

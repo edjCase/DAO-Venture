@@ -14,14 +14,34 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
+        getUserInfo : query () -> async ?UserInfo;
+        updateUserInfo : query (id : Principal, request : UserInfo) -> async UpdateUserInfoResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
         mint : (request : MintRequest) -> async MintResult;
-        updateLeagueCanisters : () -> async ();
+        updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
+    };
+
+    public type UserInfo = {
+        isAdmin : Bool;
+    };
+
+    public type UpdateUserInfoRequest = {
+        isAdmin : Bool;
+    };
+
+    public type UpdateUserInfoResult = {
+        #ok;
+        #notAuthorized;
+    };
+
+    public type UpdateLeagueCanistersResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type PredictMatchOutcomeRequest = {
@@ -66,6 +86,7 @@ module {
         #seedGenerationError : Text;
         #noTeams;
         #oddNumberOfTeams;
+        #notAuthorized;
     };
 
     public type CloseSeasonResult = {
@@ -128,6 +149,7 @@ module {
         #nameTaken;
         #noStadiumsExist;
         #teamFactoryCallError : Text;
+        #notAuthorized;
     };
 
     // Mint
@@ -141,5 +163,6 @@ module {
         #ok : ICRC1.TxIndex;
         #teamNotFound;
         #transferError : ICRC1.TransferError;
+        #notAuthorized;
     };
 };

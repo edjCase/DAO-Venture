@@ -55,7 +55,8 @@ export type StartSeasonResult =
   | { noStadiumsExist: null }
   | { seedGenerationError: Text }
   | { noTeams: null }
-  | { oddNumberOfTeams: null };
+  | { oddNumberOfTeams: null }
+  | { notAuthorized: null };
 export const StartSeasonResultIdl = IDL.Variant({
   ok: IDL.Null,
   alreadyStarted: IDL.Null,
@@ -63,6 +64,7 @@ export const StartSeasonResultIdl = IDL.Variant({
   seedGenerationError: IDL.Text,
   noTeams: IDL.Null,
   oddNumberOfTeams: IDL.Null,
+  notAuthorized: IDL.Null,
 });
 
 export type CloseSeasonResult =
@@ -97,11 +99,13 @@ export const CreateTeamRequestIdl = IDL.Record({
 export type CreateTeamResult =
   | { ok: Principal }
   | { nameTaken: null }
-  | { noStadiumsExist: null };
+  | { noStadiumsExist: null }
+  | { notAuthorized: null };
 export const CreateTeamResultIdl = IDL.Variant({
   ok: IDL.Principal,
   nameTaken: IDL.Null,
   noStadiumsExist: IDL.Null,
+  notAuthorized: IDL.Null,
 });
 
 export type MintRequest = {
@@ -143,11 +147,13 @@ export const TransferErrorIdl = IDL.Variant({
 export type MintResult =
   | { ok: Nat }
   | { teamNotFound: null }
-  | { transferError: TransferError };
+  | { transferError: TransferError }
+  | { notAuthorized: null };
 export const MintResultIdl = IDL.Variant({
   ok: IDL.Nat,
   teamNotFound: IDL.Null,
   transferError: TransferErrorIdl,
+  notAuthorized: IDL.Null,
 });
 
 export type MatchPrediction = {
@@ -180,14 +186,30 @@ export const PredictMatchOutcomeResultIdl = IDL.Variant({
   identityRequired: IDL.Null,
 });
 
+export type UserInfo = {
+  isAdmin: Bool;
+};
+export const UserInfoIdl = IDL.Record({
+  isAdmin: IDL.Bool,
+});
+
+export type UpdateLeagueCanistersResult =
+  | { ok: null }
+  | { notAuthorized: null };
+export const UpdateLeagueCanistersResultIdl = IDL.Variant({
+  ok: IDL.Null,
+  notAuthorized: IDL.Null,
+});
+
 export interface _SERVICE {
   'getTeams': ActorMethod<[], Array<Team>>,
   'getSeasonStatus': ActorMethod<[], SeasonStatus>,
+  'getUserInfo': ActorMethod<[], [UserInfo] | []>,
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'predictMatchOutcome': ActorMethod<[PredictMatchOutcomeRequest], PredictMatchOutcomeResult>;
   'mint': ActorMethod<[MintRequest], MintResult>,
-  'updateLeagueCanisters': ActorMethod<[], undefined>,
+  'updateLeagueCanisters': ActorMethod<[], UpdateLeagueCanistersResult>,
 }
 
 
@@ -197,11 +219,12 @@ export const idlFactory: InterfaceFactory = ({ }) => {
   return IDL.Service({
     'getTeams': IDL.Func([], [IDL.Vec(TeamIdl)], ['query']),
     'getSeasonStatus': IDL.Func([], [SeasonStatusIdl], ['query']),
+    'getUserInfo': IDL.Func([], [IDL.Opt(UserInfoIdl)], ['query']),
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
     'predictMatchOutcome': IDL.Func([PredictMatchOutcomeRequestIdl], [PredictMatchOutcomeResultIdl], []),
     'mint': IDL.Func([MintRequestIdl], [MintResultIdl], []),
-    'updateLeagueCanisters': IDL.Func([], [], []),
+    'updateLeagueCanisters': IDL.Func([], [UpdateLeagueCanistersResultIdl], []),
   });
 };
 
