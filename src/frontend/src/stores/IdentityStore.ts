@@ -3,12 +3,13 @@ import { Principal } from '@dfinity/principal';
 import { writable } from 'svelte/store';
 import { Bool } from '../models/Season';
 import { leagueAgentFactory } from '../ic-agent/League';
+import { Identity as DfinityIdentity } from '@dfinity/agent';
 
 
 type Identity = {
     id: Principal;
     isAdmin: Bool;
-
+    identity: DfinityIdentity;
 };
 
 function createIdentityStore() {
@@ -31,6 +32,7 @@ function createIdentityStore() {
             set({
                 id: id,
                 isAdmin: isAdmin,
+                identity: identity,
             });
         }
     };

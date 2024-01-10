@@ -33,7 +33,7 @@ export const createActor = <T>(
 ): ActorSubclass<T> => {
   const identity = get(identityStore);
   const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:4943";
-  const agent = new HttpAgent({ identity, host });
+  const agent = new HttpAgent({ identity: identity?.identity, host });
 
   // Fetch root key for certificate validation during development
   if (process.env.DFX_NETWORK !== "ic") {

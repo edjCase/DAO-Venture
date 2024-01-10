@@ -16,6 +16,7 @@
   } from "flowbite-svelte";
   import { ChevronDownOutline, UserOutline } from "flowbite-svelte-icons";
   import { onMount } from "svelte";
+  import NavBarLink from "./NavBarLink.svelte";
 
   let activeUrl = "";
 
@@ -37,9 +38,9 @@
   </NavBrand>
   <UserMenu />
   <NavUl {activeUrl} {activeClass} {nonActiveClass}>
-    <NavLi href="/">Home</NavLi>
-    <NavLi href="/teams">Teams</NavLi>
-    <NavLi href="/schedule">Schedule</NavLi>
+    <NavBarLink to="/">Home</NavBarLink>
+    <NavBarLink to="/teams">Teams</NavBarLink>
+    <NavBarLink to="/schedule">Schedule</NavBarLink>
     <NavLi class="cursor-pointer">
       Links
       <ChevronDownOutline
