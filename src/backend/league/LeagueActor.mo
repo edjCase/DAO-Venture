@@ -35,6 +35,7 @@ import Offering "../models/Offering";
 import TeamFactoryActor "canister:teamFactory";
 import StadiumFactoryActor "canister:stadiumFactory";
 import MatchPrediction "../models/MatchPrediction";
+import PlayerLedgerTypes "../playerLedger/Types";
 
 actor LeagueActor {
     type TeamLedgerActor = Token.Token;
@@ -599,7 +600,7 @@ actor LeagueActor {
     private func buildMatchStartData(
         matchGroupId : Nat,
         match : Season.ScheduledMatch,
-        allPlayers : [Player.PlayerWithId],
+        allPlayers : [PlayerLedgerTypes.PlayerWithId],
     ) : async* StadiumTypes.StartMatchRequest {
         let team1Data = await buildTeamInitData(matchGroupId, match.team1, allPlayers);
         let team2Data = await buildTeamInitData(matchGroupId, match.team2, allPlayers);
@@ -613,7 +614,7 @@ actor LeagueActor {
     private func buildTeamInitData(
         matchGroupId : Nat,
         team : Season.TeamInfo,
-        allPlayers : [Player.PlayerWithId],
+        allPlayers : [PlayerLedgerTypes.PlayerWithId],
     ) : async StadiumTypes.StartMatchTeam {
         let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
         let options : TeamTypes.MatchGroupVoteResult = try {
@@ -637,7 +638,24 @@ actor LeagueActor {
         };
         let teamPlayers = allPlayers
         |> Iter.fromArray(_)
-        |> Iter.filter(_, func(p : Player.PlayerWithId) : Bool = p.teamId == ?team.id)
+        |> IterTools.mapFilter(
+            _,
+            func(p : PlayerLedgerTypes.PlayerWithId) : ?Player.TeamPlayerWithId {
+                switch (p.teamId) {
+                    case (null) null;
+                    case (?teamId) {
+                        if (teamId == team.id) {
+                            null;
+                        } else {
+                            ?{
+                                p with
+                                teamId = teamId
+                            };
+                        };
+                    };
+                };
+            },
+        )
         |> Iter.toArray(_);
         {
             id = team.id;

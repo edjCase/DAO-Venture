@@ -33,8 +33,6 @@ import FieldPosition "../models/FieldPosition";
 import Season "../models/Season";
 
 actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor = this {
-    type Player = Player.Player;
-    type PlayerWithId = Player.PlayerWithId;
     type PlayerState = StadiumTypes.PlayerState;
     type FieldPosition = FieldPosition.FieldPosition;
     type Offering = Offering.Offering;
@@ -247,7 +245,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         team : StadiumTypes.StartMatchTeam,
         prng : Prng,
     ) : MatchSimulator.TeamInitData {
-        let players = Buffer.fromArray<PlayerWithId>(team.players);
+        let players = Buffer.fromArray<Player.TeamPlayerWithId>(team.players);
         {
             id = team.id;
             name = team.name;

@@ -4,38 +4,33 @@ import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
+import Iter "mo:base/Iter";
 import TextX "mo:xtended-text/TextX";
+import IterTools "mo:itertools/Iter";
 import Types "Types";
 // import LeagueActor "canister:league"; TODO
 
 actor PlayerLedger {
 
     stable var nextPlayerId : Nat32 = 1;
-    stable var players = Trie.empty<Nat32, Player.Player>();
+    stable var players = Trie.empty<Nat32, Types.Player>();
+    stable var futurePlayers : [Types.FuturePlayer] = [];
+    stable var retiredPlayers = Trie.empty<Nat32, Types.RetiredPlayer>();
 
-    public shared ({ caller }) func create(options : Types.CreatePlayerRequest) : async Types.CreatePlayerResult {
+    public shared ({ caller }) func create(request : Types.CreatePlayerRequest) : async Types.CreatePlayerResult {
         assertLeague(caller);
 
-        switch (validateOptions(options)) {
+        switch (validateRequest(request)) {
             case (null) {};
             case (?o) {
                 return #invalid(o);
             };
         };
 
-        let id = nextPlayerId;
-        nextPlayerId += 1;
-        let player = generatePlayer(options);
-        let key = {
-            key = id;
-            hash = id;
-        };
-        let (newPlayers, oldPlayer) = Trie.put(players, key, Nat32.equal, player);
-        if (oldPlayer != null) {
-            Debug.trap("Player id '" # Nat32.toText(id) # "' already exists");
-        };
-        players := newPlayers;
-        #created(id);
+        let newFuturePlayers = Buffer.fromArray<Types.FuturePlayer>(futurePlayers);
+        newFuturePlayers.add(request);
+        futurePlayers := Buffer.toArray(newFuturePlayers);
+        #created;
     };
 
     public query ({ caller }) func getPlayer(id : Nat32) : async Types.GetPlayerResult {
@@ -45,18 +40,35 @@ actor PlayerLedger {
         };
         let playerInfo = Trie.get(players, key, Nat32.equal);
         switch (playerInfo) {
-            case (?playerInfo) #ok(playerInfo);
+            case (?playerInfo) #ok({
+                playerInfo with
+                id = id;
+            });
             case (null) #notFound;
         };
     };
 
-    public query func getTeamPlayers(teamId : ?Principal) : async [Player.PlayerWithId] {
-        let teamPlayers = Trie.filter(players, func(k : Nat32, p : Player.Player) : Bool = p.teamId == teamId);
-        Trie.toArray(teamPlayers, func(k : Nat32, p : Player.Player) : Player.PlayerWithId = { p with id = k });
+    public query func getTeamPlayers(teamId : ?Principal) : async [Types.PlayerWithId] {
+        players
+        |> Trie.iter(_)
+        |> IterTools.mapFilter(
+            _,
+            func((playerId, player) : (Nat32, Types.Player)) : ?Types.PlayerWithId {
+                if (player.teamId != teamId) {
+                    return null;
+                };
+                ?{
+                    player with
+                    id = playerId;
+                };
+            },
+        )
+        |> Iter.toArray(_);
     };
 
-    public query func getAllPlayers() : async [Player.PlayerWithId] {
-        Trie.toArray(players, func(k : Nat32, p : Player.Player) : Player.PlayerWithId = { p with id = k });
+    public query func getAllPlayers() : async [Types.PlayerWithId] {
+        players
+        |> Trie.toArray(_, func(k : Nat32, p : Types.Player) : Types.PlayerWithId = { p with id = k });
     };
 
     public shared ({ caller }) func setPlayerTeam(playerId : Nat32, teamId : ?Principal) : async Types.SetPlayerTeamResult {
@@ -75,7 +87,7 @@ actor PlayerLedger {
         #ok;
     };
 
-    private func validateOptions(options : Types.CreatePlayerRequest) : ?[Types.InvalidError] {
+    private func validateRequest(options : Types.CreatePlayerRequest) : ?[Types.InvalidError] {
         let errors = Buffer.Buffer<Types.InvalidError>(0);
         if (TextX.isEmptyOrWhitespace(options.name)) {
             errors.add(#nameNotSpecified);
@@ -97,15 +109,5 @@ actor PlayerLedger {
         // if (caller != Principal.fromActor(LeagueActor)) {
         //     Debug.trap("Only the league can create players");
         // };
-    };
-
-    private func generatePlayer(options : Types.CreatePlayerRequest) : Player.Player {
-        {
-            name = options.name;
-            teamId = options.teamId;
-            condition = #ok;
-            position = options.position;
-            skills = options.skills;
-        };
     };
 };

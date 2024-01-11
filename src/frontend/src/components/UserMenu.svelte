@@ -2,6 +2,7 @@
   import LoginButton from "./LoginButton.svelte";
   import { Avatar, Dropdown, DropdownItem, Button } from "flowbite-svelte";
   import { FileCopyOutline } from "flowbite-svelte-icons";
+  import { Link } from "svelte-routing";
   import {
     uniqueNamesGenerator,
     adjectives,
@@ -49,7 +50,9 @@
     </div>
     <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-40">
       {#if identity.isAdmin}
-        <DropdownItem href="/admin">Admin</DropdownItem>
+        <DropdownItem>
+          <Link to="/admin">Admin</Link>
+        </DropdownItem>
       {/if}
       <DropdownItem on:click={logout} slot="footer">Logout</DropdownItem>
     </Dropdown>

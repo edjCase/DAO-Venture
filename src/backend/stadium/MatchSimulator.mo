@@ -63,7 +63,7 @@ module {
         logoUrl : Text;
         offering : Offering.Offering;
         championId : PlayerId;
-        players : [Player.PlayerWithId];
+        players : [Player.TeamPlayerWithId];
     };
 
     public func initState(
@@ -142,7 +142,7 @@ module {
         |> Iter.fromArray(_)
         |> Iter.map(
             _,
-            func(player : Player.PlayerWithId) : StadiumTypes.PlayerStateWithId = {
+            func(player : Player.TeamPlayerWithId) : StadiumTypes.PlayerStateWithId = {
                 id = player.id;
                 name = player.name;
                 teamId = teamId;
@@ -165,7 +165,7 @@ module {
         (teamState, playerStates);
     };
 
-    private func buildPlayerState(player : Player.PlayerWithId, teamId : Team.TeamId) : StadiumTypes.PlayerStateWithId {
+    private func buildPlayerState(player : Player.TeamPlayerWithId, teamId : Team.TeamId) : StadiumTypes.PlayerStateWithId {
         {
             id = player.id;
             name = player.name;

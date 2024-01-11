@@ -41,13 +41,13 @@
   .match-group {
     max-width: 500px;
     background-color: var(--color-bg-dark);
-    border: 1px solid var(--color-border);
     padding: 1em;
     margin-bottom: 1em;
     border-radius: 5px;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 10px;
   }
   .match-group:hover {
     cursor: pointer;

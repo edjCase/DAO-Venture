@@ -7,7 +7,7 @@ import Offering "../models/Offering";
 module {
 
     public type TeamActor = actor {
-        getPlayers : composite query () -> async [Player.PlayerWithId];
+        getPlayers : composite query () -> async [Player.TeamPlayerWithId];
         getMatchGroupVote : query (matchGroupId : Nat) -> async GetMatchGroupVoteResult;
         voteOnMatchGroup : (request : VoteOnMatchGroupRequest) -> async VoteOnMatchGroupResult;
     };

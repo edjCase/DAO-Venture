@@ -1,12 +1,14 @@
 import Player "../models/Player";
 import FieldPosition "../models/FieldPosition";
+import Principal "mo:base/Principal";
 module {
 
     public type CreatePlayerRequest = {
         name : Text;
-        teamId : ?Principal;
-        position : FieldPosition.FieldPosition;
-        skills : Player.Skills;
+        genesis : Text;
+        quirks : [Text];
+        likes : [Text];
+        dislikes : [Text];
     };
 
     public type InvalidError = {
@@ -15,12 +17,12 @@ module {
     };
 
     public type CreatePlayerResult = {
-        #created : Nat32;
+        #created;
         #invalid : [InvalidError];
     };
 
     public type GetPlayerResult = {
-        #ok : Player.Player;
+        #ok : Player;
         #notFound;
     };
 
@@ -28,4 +30,16 @@ module {
         #ok;
         #playerNotFound;
     };
+
+    public type Player = Player.FreeAgentPlayer and {
+        teamId : ?Principal;
+    };
+
+    public type PlayerWithId = Player and {
+        id : Nat32;
+    };
+
+    public type RetiredPlayer = Player.FreeAgentPlayer;
+
+    public type FuturePlayer = Player.PlayerFluff;
 };

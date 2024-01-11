@@ -50,15 +50,17 @@ export const PlayerSkillsIdl = IDL.Record({
 
 export interface CreatePlayerRequest {
   'name': string,
-  'teamId': [] | [Principal],
-  'position': FieldPosition,
-  'skills': PlayerSkills
+  'genesis': string;
+  'quirks': string[];
+  'likes': string[];
+  'dislikes': string[];
 };
 export const CreatePlayerRequestIdl = IDL.Record({
   'name': IDL.Text,
-  'teamId': IDL.Opt(IDL.Principal),
-  'position': FieldPositionIdl,
-  'skills': PlayerSkillsIdl
+  'genesis': IDL.Text,
+  'quirks': IDL.Vec(IDL.Text),
+  'likes': IDL.Vec(IDL.Text),
+  'dislikes': IDL.Vec(IDL.Text),
 });
 
 export interface Player {
@@ -103,10 +105,10 @@ const InvalidErrorIdl = IDL.Variant({
 
 
 export type CreatePlayerResult =
-  { 'created': number }
+  { 'created': null }
   | { 'invalid': InvalidError[] };
 export const CreatePlayerResultIdl = IDL.Variant({
-  'created': IDL.Nat32,
+  'created': IDL.Null,
   'invalid': IDL.Vec(InvalidErrorIdl)
 });
 

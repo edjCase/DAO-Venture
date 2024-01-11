@@ -1,16 +1,31 @@
 import Hash "mo:base/Hash";
+import Principal "mo:base/Principal";
 import FieldPosition "FieldPosition";
 module {
     public type PlayerId = Nat32;
 
-    public type Player = {
+    public type PlayerFluff = {
         name : Text;
-        teamId : ?Principal;
+        genesis : Text;
+        quirks : [Text];
+        likes : [Text];
+        dislikes : [Text];
+    };
+
+    public type FreeAgentPlayer = PlayerFluff and {
         skills : Skills;
         position : FieldPosition.FieldPosition;
     };
 
-    public type PlayerWithId = Player and {
+    public type TeamPlayer = FreeAgentPlayer and {
+        teamId : Principal;
+    };
+
+    public type FreeAgentPlayerWithId = FreeAgentPlayer and {
+        id : Nat32;
+    };
+
+    public type TeamPlayerWithId = TeamPlayer and {
         id : Nat32;
     };
 

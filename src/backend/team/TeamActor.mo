@@ -6,7 +6,6 @@ import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Prelude "mo:base/Prelude";
-import TeamUtil "TeamUtil";
 import TrieSet "mo:base/TrieSet";
 import PlayerLedgerActor "canister:playerLedger";
 import Array "mo:base/Array";
@@ -32,7 +31,6 @@ shared (install) actor class TeamActor(
   ledgerId : Principal,
 ) : async Types.TeamActor = this {
 
-  type PlayerWithId = Player.PlayerWithId;
   type Offering = Offering.Offering;
   type MatchAura = MatchAura.MatchAura;
   type GetCyclesResult = Types.GetCyclesResult;
@@ -42,7 +40,7 @@ shared (install) actor class TeamActor(
   stable var matchGroupVotes : Trie.Trie<Nat, Trie.Trie<Principal, Types.MatchGroupVote>> = Trie.empty();
   let ledger : ICRC1Types.TokenInterface = actor (Principal.toText(ledgerId));
 
-  public composite query func getPlayers() : async [PlayerWithId] {
+  public composite query func getPlayers() : async [Player.TeamPlayerWithId] {
     let teamId = Principal.fromActor(this);
     await PlayerLedgerActor.getTeamPlayers(?teamId);
   };

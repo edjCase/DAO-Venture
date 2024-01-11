@@ -54,7 +54,7 @@ module {
     public type StartMatchTeam = Team and {
         offering : Offering.Offering;
         championId : PlayerId;
-        players : [Player.PlayerWithId];
+        players : [Player.TeamPlayerWithId];
     };
 
     public type StartMatchRequest = {
