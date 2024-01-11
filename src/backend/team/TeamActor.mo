@@ -18,7 +18,6 @@ import None "mo:base/None";
 import { ic } "mo:ic";
 import StadiumTypes "../stadium/Types";
 import IterTools "mo:itertools/Iter";
-import ICRC1Types "mo:icrc1/ICRC1/Types";
 import LeagueTypes "../league/Types";
 import Types "Types";
 import Offering "../models/Offering";
@@ -27,22 +26,19 @@ import Season "../models/Season";
 import Util "../Util";
 
 shared (install) actor class TeamActor(
-  leagueId : Principal,
-  ledgerId : Principal,
+  leagueId : Principal
 ) : async Types.TeamActor = this {
 
   type Offering = Offering.Offering;
   type MatchAura = MatchAura.MatchAura;
   type GetCyclesResult = Types.GetCyclesResult;
-  type StadiumMatchId = Text; // Stadium Principal Text # _ # Match Id Text
   type PlayerId = Player.PlayerId;
 
   stable var matchGroupVotes : Trie.Trie<Nat, Trie.Trie<Principal, Types.MatchGroupVote>> = Trie.empty();
-  let ledger : ICRC1Types.TokenInterface = actor (Principal.toText(ledgerId));
 
   public composite query func getPlayers() : async [Player.TeamPlayerWithId] {
     let teamId = Principal.fromActor(this);
-    await PlayerLedgerActor.getTeamPlayers(?teamId);
+    await PlayerLedgerActor.getTeamPlayers(teamId);
   };
 
   public shared ({ caller }) func voteOnMatchGroup(request : Types.VoteOnMatchGroupRequest) : async Types.VoteOnMatchGroupResult {
@@ -147,10 +143,6 @@ shared (install) actor class TeamActor(
       canister_id = Principal.fromActor(this);
     });
     return #ok(canisterStatus.cycles);
-  };
-
-  public shared ({ caller }) func getLedgerId() : async Principal {
-    return ledgerId;
   };
 
   private func buildMatchGroupKey(matchGroupId : Nat) : Trie.Key<Nat> {

@@ -17,7 +17,7 @@
           let teamId = result.ok;
           console.log("Created team: ", teamId);
         } else {
-          console.log("Failed to make team: ", team);
+          console.log("Failed to make team: ", result);
         }
       });
       promises.push(promise);
@@ -32,7 +32,7 @@
     // loop over count
     for (let player of players) {
       let promise = playerLedgerAgent
-        .create({
+        .createFluff({
           name: player.name,
           genesis: player.genesis,
           likes: player.likes,
@@ -41,7 +41,6 @@
         })
         .then((result) => {
           if ("created" in result) {
-            console.log("Created player: ", result.created);
           } else {
             console.log("Failed to make player: ", result.invalid);
           }

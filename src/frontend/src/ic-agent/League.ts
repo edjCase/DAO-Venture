@@ -108,14 +108,6 @@ export const CreateTeamResultIdl = IDL.Variant({
   notAuthorized: IDL.Null,
 });
 
-export type MintRequest = {
-  amount: Nat;
-  teamId: Principal;
-};
-export const MintRequestIdl = IDL.Record({
-  amount: IDL.Nat,
-  teamId: IDL.Principal,
-});
 
 export type TimeError =
   | { TooOld: null }
@@ -208,7 +200,6 @@ export interface _SERVICE {
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'predictMatchOutcome': ActorMethod<[PredictMatchOutcomeRequest], PredictMatchOutcomeResult>;
-  'mint': ActorMethod<[MintRequest], MintResult>,
   'updateLeagueCanisters': ActorMethod<[], UpdateLeagueCanistersResult>,
 }
 
@@ -223,7 +214,6 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
     'predictMatchOutcome': IDL.Func([PredictMatchOutcomeRequestIdl], [PredictMatchOutcomeResultIdl], []),
-    'mint': IDL.Func([MintRequestIdl], [MintResultIdl], []),
     'updateLeagueCanisters': IDL.Func([], [UpdateLeagueCanistersResultIdl], []),
   });
 };

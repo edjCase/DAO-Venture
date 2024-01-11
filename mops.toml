@@ -5,7 +5,6 @@ datetime = "https://github.com/edjCase/motoko_datetime#28e765bf5bb6b9d75a9416713
 ic = "0.2.0"
 test = "1.0.1"
 xtended-text = "0.2.5"
-icrc1 = "0.0.1"
 icrc3-mo = "0.2.3"
 icrc7-mo = "0.3.1"
 icrc30-mo = "0.3.1"

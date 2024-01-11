@@ -21,7 +21,6 @@ import Error "mo:base/Error";
 import Blob "mo:base/Blob";
 import Order "mo:base/Order";
 import Timer "mo:base/Timer";
-import Token "mo:icrc1/ICRC1/Canisters/Token";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "../league/Types";
 import Util "../Util";
@@ -38,12 +37,11 @@ import MatchPrediction "../models/MatchPrediction";
 import PlayerLedgerTypes "../playerLedger/Types";
 
 actor LeagueActor {
-    type TeamLedgerActor = Token.Token;
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var users : Trie.Trie<Principal, Types.UserInfo> = Trie.empty();
-    stable var teams : Trie.Trie<Principal, Team.TeamWithLedgerId> = Trie.empty();
+    stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
     stable var predictionsOrNull : ?Trie.Trie<Principal, Trie.Trie<Nat32, MatchPrediction.MatchPrediction>> = null;
     stable var historicalSeasons : [Season.CompletedSeason] = [];
@@ -52,7 +50,7 @@ actor LeagueActor {
     public query func getTeams() : async [TeamWithId] {
         Trie.toArray(
             teams,
-            func(k : Principal, v : Team.TeamWithLedgerId) : TeamWithId = {
+            func(k : Principal, v : Team.Team) : TeamWithId = {
                 v with
                 id = k;
             },
@@ -68,15 +66,19 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func updateUserInfo(id : Principal, request : Types.UpdateUserInfoRequest) : async Types.UpdateUserInfoResult {
+        if (Principal.isAnonymous(id)) {
+            Debug.trap("Anonymous user is not a valid user");
+        };
+
         // Check to make sure only admins can update other users
         // BUT if there are no admins, skip the check
         if (Trie.size(users) > 0) {
-            let ?existingUserInfo = getUserInfoInternal(id) else return #notAuthorized;
-            if (not existingUserInfo.isAdmin) {
+            let ?callerUserInfo = getUserInfoInternal(caller) else return #notAuthorized;
+            if (not callerUserInfo.isAdmin) {
                 return #notAuthorized;
             };
         };
-        let key = buildPrincipalKey(caller);
+        let key = buildPrincipalKey(id);
         let (newUsers, _) = Trie.put(users, key, Principal.equal, request);
         users := newUsers;
         #ok;
@@ -106,7 +108,7 @@ actor LeagueActor {
 
         let teamIdsBuffer = teams
         |> Trie.iter(_)
-        |> Iter.map(_, func(k : (Principal, Team.TeamWithLedgerId)) : Principal = k.0)
+        |> Iter.map(_, func(k : (Principal, Team.Team)) : Principal = k.0)
         |> Buffer.fromIter<Principal>(_);
 
         prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
@@ -192,39 +194,31 @@ actor LeagueActor {
         let teamInfo = switch (createTeamResult) {
             case (#ok(teamInfo)) teamInfo;
         };
-        let team : Team.TeamWithLedgerId = {
+        let team : Team.Team = {
             name = request.name;
             logoUrl = request.logoUrl;
-            ledgerId = teamInfo.ledgerId;
             motto = request.motto;
             description = request.description;
         };
         let teamKey = buildPrincipalKey(teamInfo.id);
         let (newTeams, _) = Trie.put(teams, teamKey, Principal.equal, team);
         teams := newTeams;
-        return #ok(teamInfo.id);
-    };
 
-    public shared ({ caller }) func mint(request : Types.MintRequest) : async Types.MintResult {
-        if (not isAdmin(caller)) {
-            return #notAuthorized;
+        let populateResult = try {
+            await PlayerLedgerActor.populateTeamRoster(teamInfo.id);
+        } catch (err) {
+            return #populateTeamRosterCallError(Error.message(err));
         };
-        let ?team = Trie.get(teams, buildPrincipalKey(request.teamId), Principal.equal) else return #teamNotFound;
-        let ledger = actor (Principal.toText(team.ledgerId)) : Token.Token;
-
-        let transferResult = await ledger.mint({
-            amount = request.amount;
-            created_at_time = ?Nat64.fromNat(Int.abs(Time.now()));
-            memo = null;
-            to = {
-                owner = request.teamId;
-                subaccount = ?Principal.toBlob(caller);
+        switch (populateResult) {
+            case (#ok(_)) {};
+            case (#notAuthorized) {
+                Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Principal.toText(teamInfo.id));
             };
-        });
-        switch (transferResult) {
-            case (#Ok(txIndex)) #ok(txIndex);
-            case (#Err(error)) #transferError(error);
+            case (#noMorePlayers) {
+                Debug.print("Error populating team roster: No more players available");
+            };
         };
+        return #ok(teamInfo.id);
     };
 
     public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {

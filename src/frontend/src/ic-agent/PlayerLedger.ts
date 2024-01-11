@@ -48,14 +48,14 @@ export const PlayerSkillsIdl = IDL.Record({
 });
 
 
-export interface CreatePlayerRequest {
+export interface CreatePlayerFluffRequest {
   'name': string,
   'genesis': string;
   'quirks': string[];
   'likes': string[];
   'dislikes': string[];
 };
-export const CreatePlayerRequestIdl = IDL.Record({
+export const CreatePlayerFluffRequestIdl = IDL.Record({
   'name': IDL.Text,
   'genesis': IDL.Text,
   'quirks': IDL.Vec(IDL.Text),
@@ -104,10 +104,10 @@ const InvalidErrorIdl = IDL.Variant({
 });
 
 
-export type CreatePlayerResult =
+export type CreatePlayerFluffResult =
   { 'created': null }
   | { 'invalid': InvalidError[] };
-export const CreatePlayerResultIdl = IDL.Variant({
+export const CreatePlayerFluffResultIdl = IDL.Variant({
   'created': IDL.Null,
   'invalid': IDL.Vec(InvalidErrorIdl)
 });
@@ -120,20 +120,20 @@ export const CreatePlayerResultIdl = IDL.Variant({
 
 
 export interface _SERVICE {
-  'create': ActorMethod<[CreatePlayerRequest], CreatePlayerResult>,
+  'createFluff': ActorMethod<[CreatePlayerFluffRequest], CreatePlayerFluffResult>,
   'getAllPlayers': ActorMethod<[], Array<Player>>,
   'getPlayer': ActorMethod<[number], GetPlayerResult>,
   'getTeamPlayers': ActorMethod<[[] | [Principal]], Array<Player>>,
   'setPlayerTeam': ActorMethod<
     [number, [] | [Principal]],
     SetPlayerTeamResult
-  >,
+  >
 }
 
 
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
   return IDL.Service({
-    'create': IDL.Func([CreatePlayerRequestIdl], [CreatePlayerResultIdl], []),
+    'createFluff': IDL.Func([CreatePlayerFluffRequestIdl], [CreatePlayerFluffResultIdl], []),
     'getAllPlayers': IDL.Func([], [IDL.Vec(PlayerIdl)], ['query']),
     'getPlayer': IDL.Func([IDL.Nat32], [GetPlayerResultIdl], ['query']),
     'getTeamPlayers': IDL.Func([IDL.Opt(IDL.Principal)], [IDL.Vec(PlayerIdl)], ['query']),

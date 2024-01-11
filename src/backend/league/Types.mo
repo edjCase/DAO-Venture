@@ -1,7 +1,6 @@
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Nat "mo:base/Nat";
-import ICRC1 "mo:icrc1/ICRC1";
 import Player "../models/Player";
 import StadiumTypes "../stadium/Types";
 import MatchAura "../models/MatchAura";
@@ -20,7 +19,6 @@ module {
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
-        mint : (request : MintRequest) -> async MintResult;
         updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
@@ -150,19 +148,6 @@ module {
         #noStadiumsExist;
         #teamFactoryCallError : Text;
         #notAuthorized;
-    };
-
-    // Mint
-
-    public type MintRequest = {
-        amount : Nat;
-        teamId : Principal;
-    };
-
-    public type MintResult = {
-        #ok : ICRC1.TxIndex;
-        #teamNotFound;
-        #transferError : ICRC1.TransferError;
-        #notAuthorized;
+        #populateTeamRosterCallError : Text;
     };
 };

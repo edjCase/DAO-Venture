@@ -18,7 +18,7 @@ module {
         updateCanisters : () -> async ();
     };
 
-    public type TeamActorInfo = { ledgerId : Principal };
+    public type TeamActorInfo = {};
 
     public type TeamActorInfoWithId = TeamActorInfo and { id : Principal };
 
@@ -30,7 +30,6 @@ module {
     public type CreateTeamResult = {
         #ok : {
             id : Principal;
-            ledgerId : Principal;
         };
     };
 

@@ -3,7 +3,14 @@ import FieldPosition "../models/FieldPosition";
 import Principal "mo:base/Principal";
 module {
 
-    public type CreatePlayerRequest = {
+    public type PopulateTeamRosterResult = {
+        #ok : [Player.TeamPlayerWithId];
+        #noMorePlayers;
+        #notAuthorized;
+        // #teamNotFound; // TODO?
+    };
+
+    public type CreatePlayerFluffRequest = {
         name : Text;
         genesis : Text;
         quirks : [Text];
@@ -16,7 +23,7 @@ module {
         #nameNotSpecified;
     };
 
-    public type CreatePlayerResult = {
+    public type CreatePlayerFluffResult = {
         #created;
         #invalid : [InvalidError];
     };
@@ -42,4 +49,5 @@ module {
     public type RetiredPlayer = Player.FreeAgentPlayer;
 
     public type FuturePlayer = Player.PlayerFluff;
+
 };

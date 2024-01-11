@@ -19,8 +19,4 @@ module {
     public type TeamWithId = Team and {
         id : Principal;
     };
-
-    public type TeamWithLedgerId = Team and {
-        ledgerId : Principal;
-    };
 };
