@@ -10,6 +10,7 @@ module {
         #pious;
         #confident;
         #moraleFlywheel;
+        #badManagement;
     };
     public type OfferingMetaData = {
         name : Text;
@@ -31,6 +32,7 @@ module {
         case (#pious) 7;
         case (#confident) 8;
         case (#moraleFlywheel) 9;
+        case (#badManagement) 10;
     };
 
     public func equal(a : Offering, b : Offering) : Bool = a == b;
@@ -106,6 +108,13 @@ module {
                 {
                     name = "Morale Flywheel";
                     description = "If your team has made scored 3 times in a round, the team gets a boost for the rest of the game.";
+                };
+            };
+            // On match start
+            case (#badManagement) {
+                {
+                    name = "Bad Management";
+                    description = "Your team's morale is hurt by missing management.";
                 };
             };
         };

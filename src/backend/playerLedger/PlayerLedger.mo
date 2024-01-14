@@ -146,6 +146,7 @@ actor PlayerLedger {
             nextPlayerId += 1;
             ignore futurePlayersBuffer.remove(0);
         };
+        futurePlayers := Buffer.toArray(futurePlayersBuffer);
         #ok(Buffer.toArray(newPlayersBuffer));
     };
 
@@ -184,13 +185,23 @@ actor PlayerLedger {
         |> Iter.toArray(_);
     };
 
-    private func validateRequest(options : Types.CreatePlayerFluffRequest) : ?[Types.InvalidError] {
+    private func validateRequest(request : Types.CreatePlayerFluffRequest) : ?[Types.InvalidError] {
         let errors = Buffer.Buffer<Types.InvalidError>(0);
-        if (TextX.isEmptyOrWhitespace(options.name)) {
+        if (TextX.isEmptyOrWhitespace(request.name)) {
             errors.add(#nameNotSpecified);
         };
         for ((playerId, player) in Trie.iter(players)) {
-            if (player.name == options.name) {
+            if (player.name == request.name) {
+                errors.add(#nameTaken);
+            };
+        };
+        for (player in Iter.fromArray(futurePlayers)) {
+            if (player.name == request.name) {
+                errors.add(#nameTaken);
+            };
+        };
+        for ((playerId, player) in Trie.iter(retiredPlayers)) {
+            if (player.name == request.name) {
                 errors.add(#nameTaken);
             };
         };

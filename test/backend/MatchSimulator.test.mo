@@ -59,7 +59,6 @@
 //             team2 = {
 //                 battingOrder = [
 //                     #pitcher,
-//                     #catcher,
 //                     #firstBase,
 //                     #secondBase,
 //                     #thirdBase,
@@ -78,7 +77,6 @@
 //                         (#thirdBase, 13),
 //                         (#secondBase, 14),
 //                         (#firstBase, 15),
-//                         (#catcher, 16),
 //                         (#pitcher, 17),
 //                     ],
 //                     Player.hashFieldPosition,

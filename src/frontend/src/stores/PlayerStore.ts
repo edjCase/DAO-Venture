@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
-import { playerLedgerAgentFactory } from "../ic-agent/PlayerLedger";
-import type { Player } from "../models/Player";
+import { Player, playerLedgerAgentFactory } from "../ic-agent/PlayerLedger";
+
 
 
 export const playerStore = (() => {

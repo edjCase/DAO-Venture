@@ -40,6 +40,7 @@
   <NavUl {activeUrl} {activeClass} {nonActiveClass}>
     <NavBarLink to="/">Home</NavBarLink>
     <NavBarLink to="/teams">Teams</NavBarLink>
+    <NavBarLink to="/players">Players</NavBarLink>
     <NavBarLink to="/schedule">Schedule</NavBarLink>
     <NavLi class="cursor-pointer">
       Links

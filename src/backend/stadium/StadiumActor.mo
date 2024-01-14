@@ -79,30 +79,20 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         let tickTimerId = startTickTimer(request.id);
 
         let matches = Buffer.Buffer<StadiumTypes.MatchVariant>(request.matches.size());
-        let matchErrors = Buffer.Buffer<{ matchId : Nat; error : StadiumTypes.StartMatchError }>(request.matches.size());
-
         label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
 
-            let team1Init = createTeamInit(match.team1, prng);
-            let team2Init = createTeamInit(match.team2, prng);
             let team1IsOffense = prng.nextCoin();
             let initState = MatchSimulator.initState(
                 match.aura,
-                team1Init,
-                team2Init,
+                match.team1,
+                match.team2,
                 team1IsOffense,
                 prng,
             );
-            switch (initState) {
-                case (#ok(state)) matches.add(#inProgress(state));
-                case (#notEnoughPlayers(teamOrBoth)) matchErrors.add({
-                    matchId = matchId;
-                    error = #notEnoughPlayers(teamOrBoth);
-                });
-            };
+            matches.add(#inProgress(initState));
         };
-        if (matchErrors.size() > 0) {
-            return #matchErrors(Buffer.toArray(matchErrors));
+        if (matches.size() == 0) {
+            return #noMatchesSpecified;
         };
 
         let matchGroup : StadiumTypes.MatchGroupWithId = {
@@ -238,21 +228,6 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
             #completed(Buffer.toArray(completedMatches));
         } else {
             #inProgress(Buffer.toArray(allMatches));
-        };
-    };
-
-    private func createTeamInit(
-        team : StadiumTypes.StartMatchTeam,
-        prng : Prng,
-    ) : MatchSimulator.TeamInitData {
-        let players = Buffer.fromArray<Player.TeamPlayerWithId>(team.players);
-        {
-            id = team.id;
-            name = team.name;
-            logoUrl = team.logoUrl;
-            players = Buffer.toArray(players);
-            offering = team.offering;
-            championId = team.championId;
         };
     };
 

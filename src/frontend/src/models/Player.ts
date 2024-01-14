@@ -1,5 +1,4 @@
 import { IDL } from "@dfinity/candid";
-import type { Principal } from '@dfinity/principal';
 
 export type Nat32 = number;
 export type Int = number;
@@ -49,20 +48,26 @@ export const FieldPositionIdl = IDL.Variant({
     pitcher: IDL.Null,
 });
 
-export type Player = {
-    id: Nat32;
-    name: Text;
-    teamId: [Principal] | [];
-    skills: PlayerSkills;
-    position: FieldPosition;
+export const positionToString = (position: FieldPosition): string => {
+    if ("pitcher" in position) {
+        return "Pitcher";
+    } else if ("firstBase" in position) {
+        return "1st Base";
+    } else if ("secondBase" in position) {
+        return "2nd Base";
+    } else if ("thirdBase" in position) {
+        return "3rd Base";
+    } else if ("shortStop" in position) {
+        return "Short Stop";
+    } else if ("leftField" in position) {
+        return "Left Field";
+    } else if ("centerField" in position) {
+        return "Center Field";
+    } else if ("rightField" in position) {
+        return "Right Field";
+    }
+    return "Unknown";
 };
-export const PlayerIdl = IDL.Record({
-    id: IDL.Nat32,
-    name: IDL.Text,
-    teamId: IDL.Opt(IDL.Principal),
-    skills: PlayerSkillsIdl,
-    position: FieldPositionIdl
-});
 
 export type Injury =
     | { twistedAnkle: null }

@@ -41,6 +41,7 @@
         })
         .then((result) => {
           if ("created" in result) {
+            console.log("Created player: ", player.name);
           } else {
             console.log("Failed to make player: ", result.invalid);
           }

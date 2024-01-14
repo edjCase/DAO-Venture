@@ -115,6 +115,7 @@ module {
             case (#pious) piousHook(teamId);
             case (#confident) confidentHook(teamId);
             case (#moraleFlywheel) moraleFlywheelHook(teamId);
+            case (#badManagement) badManagementHook(teamId);
         };
     };
 
@@ -364,6 +365,26 @@ module {
             matchStart = null;
             matchEnd = null;
             roundStart = ?roundStartHook;
+            roundEnd = null;
+            onDodge = null;
+            onPitch = null;
+            onSwing = null;
+            onHit = null;
+            onCatch = null;
+        };
+    };
+
+    private func badManagementHook(teamId : Team.TeamId) : PreCompiledHooks {
+        let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+            // TODO
+            {
+                updatedContext = ();
+            };
+        };
+        {
+            matchStart = ?matchStartHook;
+            matchEnd = null;
+            roundStart = null;
             roundEnd = null;
             onDodge = null;
             onPitch = null;

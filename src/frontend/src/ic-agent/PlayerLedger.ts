@@ -63,20 +63,30 @@ export const CreatePlayerFluffRequestIdl = IDL.Record({
   'dislikes': IDL.Vec(IDL.Text),
 });
 
-export interface Player {
-  'id': number,
-  'name': string,
-  'teamId': [] | [Principal],
-  'position': FieldPosition,
-  'skills': PlayerSkills
+
+export type Player = {
+  id: number;
+  name: string;
+  genesis: string;
+  quirks: string[];
+  likes: string[];
+  dislikes: string[];
+  teamId: [Principal] | [];
+  skills: PlayerSkills;
+  position: FieldPosition;
 };
 export const PlayerIdl = IDL.Record({
-  'id': IDL.Nat32,
-  'name': IDL.Text,
-  'teamId': IDL.Opt(IDL.Principal),
-  'position': FieldPositionIdl,
-  'skills': PlayerSkillsIdl
+  id: IDL.Nat32,
+  name: IDL.Text,
+  genesis: IDL.Text,
+  quirks: IDL.Vec(IDL.Text),
+  likes: IDL.Vec(IDL.Text),
+  dislikes: IDL.Vec(IDL.Text),
+  teamId: IDL.Opt(IDL.Principal),
+  skills: PlayerSkillsIdl,
+  position: FieldPositionIdl
 });
+
 
 export type GetPlayerResult =
   { 'ok': Player }

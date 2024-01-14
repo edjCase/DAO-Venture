@@ -20,29 +20,14 @@ module {
         var score : Int;
         offering : Offering.Offering;
         championId : Player.PlayerId;
+        positions : StadiumTypes.TeamPositions;
     };
 
-    public type MutableDefenseFieldState = {
-        var firstBase : Player.PlayerId;
-        var secondBase : Player.PlayerId;
-        var thirdBase : Player.PlayerId;
-        var shortStop : Player.PlayerId;
-        var pitcher : Player.PlayerId;
-        var leftField : Player.PlayerId;
-        var centerField : Player.PlayerId;
-        var rightField : Player.PlayerId;
-    };
-
-    public type MutableOffenseFieldState = {
+    public type MutableFieldState = {
         var atBat : Player.PlayerId;
         var firstBase : ?Player.PlayerId;
         var secondBase : ?Player.PlayerId;
         var thirdBase : ?Player.PlayerId;
-    };
-
-    public type MutableFieldState = {
-        var offense : MutableOffenseFieldState;
-        var defense : MutableDefenseFieldState;
     };
 
     public type MutableMatchState = {
@@ -139,22 +124,10 @@ module {
         |> TrieMap.fromEntries<Nat32, MutablePlayerState>(_, Nat32.equal, func(h : Nat32) : Nat32 = h);
 
         let field = {
-            var offense = {
-                var atBat = state.field.offense.atBat;
-                var firstBase = state.field.offense.firstBase;
-                var secondBase = state.field.offense.secondBase;
-                var thirdBase = state.field.offense.thirdBase;
-            };
-            var defense = {
-                var firstBase = state.field.defense.firstBase;
-                var secondBase = state.field.defense.secondBase;
-                var thirdBase = state.field.defense.thirdBase;
-                var shortStop = state.field.defense.shortStop;
-                var pitcher = state.field.defense.pitcher;
-                var leftField = state.field.defense.leftField;
-                var centerField = state.field.defense.centerField;
-                var rightField = state.field.defense.rightField;
-            };
+            var atBat = state.field.atBat;
+            var firstBase = state.field.firstBase;
+            var secondBase = state.field.secondBase;
+            var thirdBase = state.field.thirdBase;
         };
         let log = Buffer.fromArray<StadiumTypes.LogEntry>(state.log);
         {
@@ -188,6 +161,7 @@ module {
             var score = team.score;
             offering = team.offering;
             championId = team.championId;
+            positions = team.positions;
         };
     };
 };

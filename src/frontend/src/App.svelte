@@ -8,6 +8,8 @@
   import Teams from "./routes/Teams.svelte";
   import Schedule from "./routes/Schedule.svelte";
   import Admin from "./routes/Admin.svelte";
+  import Player from "./routes/Player.svelte";
+  import Players from "./routes/Players.svelte";
 </script>
 
 <main class="content">
@@ -18,6 +20,8 @@
       <Route path="/schedule" component={Schedule} />
       <Route path="/teams" component={Teams} />
       <Route path="/teams/:teamIdString" component={Team} />
+      <Route path="/players" component={Players} />
+      <Route path="/players/:playerIdString" component={Player} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
       <Route path="/admin" component={Admin} />
       <Route path="*" component={NotFound} />

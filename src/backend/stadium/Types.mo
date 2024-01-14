@@ -54,7 +54,16 @@ module {
     public type StartMatchTeam = Team and {
         offering : Offering.Offering;
         championId : PlayerId;
-        players : [Player.TeamPlayerWithId];
+        positions : {
+            firstBase : Player.TeamPlayerWithId;
+            secondBase : Player.TeamPlayerWithId;
+            thirdBase : Player.TeamPlayerWithId;
+            shortStop : Player.TeamPlayerWithId;
+            pitcher : Player.TeamPlayerWithId;
+            leftField : Player.TeamPlayerWithId;
+            centerField : Player.TeamPlayerWithId;
+            rightField : Player.TeamPlayerWithId;
+        };
     };
 
     public type StartMatchRequest = {
@@ -65,10 +74,6 @@ module {
 
     public type StartMatchGroupError = {
         #noMatchesSpecified;
-        #matchErrors : [{
-            matchId : Nat;
-            error : StartMatchError;
-        }];
     };
 
     public type StartMatchError = {
@@ -139,7 +144,7 @@ module {
         id : PlayerId;
     };
 
-    public type DefenseFieldState = {
+    public type TeamPositions = {
         firstBase : PlayerId;
         secondBase : PlayerId;
         thirdBase : PlayerId;
@@ -150,16 +155,11 @@ module {
         rightField : PlayerId;
     };
 
-    public type OffenseFieldState = {
+    public type FieldState = {
         atBat : PlayerId;
         firstBase : ?PlayerId;
         secondBase : ?PlayerId;
         thirdBase : ?PlayerId;
-    };
-
-    public type FieldState = {
-        defense : DefenseFieldState;
-        offense : OffenseFieldState;
     };
 
     public type LogEntry = {
@@ -189,6 +189,7 @@ module {
         score : Int;
         offering : Offering.Offering;
         championId : PlayerId;
+        positions : TeamPositions;
     };
 
 };

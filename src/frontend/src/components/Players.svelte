@@ -1,0 +1,34 @@
+<script lang="ts">
+  import { Card } from "flowbite-svelte";
+  import { Player } from "../ic-agent/PlayerLedger";
+  import { positionToString } from "../models/Player";
+  import { playerStore } from "../stores/PlayerStore";
+  import { teamStore } from "../stores/TeamStore";
+  import { Link } from "svelte-routing";
+
+  // Assuming you have a way to fetch players
+  let players: Player[] = []; // Populate this array with player data
+  $: players = $playerStore.sort((a, b) => a.name.localeCompare(b.name));
+  $: teams = $teamStore;
+</script>
+
+<div class="p-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
+    {#each players as player}
+      <Card class="mb-2 cursor-pointer">
+        <Link to={"/players/" + player.id}>
+          <div class="font-bold text-lg">{player.name}</div>
+          {#if player.teamId}
+            <div class="text-sm text-gray-600">
+              {teams.find((t) => t.id.toString() === player.teamId?.toString())
+                ?.name}
+            </div>
+          {/if}
+          <div class="text-sm">{positionToString(player.position)}</div>
+          <div class="text-sm text-gray-600">{player.genesis}</div>
+          <!-- More player details can be added here -->
+        </Link>
+      </Card>
+    {/each}
+  </div>
+</div>
