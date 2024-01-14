@@ -1,15 +1,18 @@
 <script lang="ts">
-  import { teamStore } from "../stores/TeamStore";
-  import CardList from "./CardList.svelte";
+  import { teamStore } from "../../stores/TeamStore";
+  import CardList from "../common/CardList.svelte";
   import type { Principal } from "@dfinity/principal";
-  import { VoteOnMatchGroupRequest, teamAgentFactory } from "../ic-agent/Team";
-  import PlayerPicker from "./PlayerPicker.svelte";
-  import { Player } from "../models/Player";
-  import { playerStore } from "../stores/PlayerStore";
+  import {
+    VoteOnMatchGroupRequest,
+    teamAgentFactory,
+  } from "../../ic-agent/Team";
+  import PlayerPicker from "./../player/PlayerPicker.svelte";
+  import { playerStore } from "../../stores/PlayerStore";
   import { get } from "svelte/store";
-  import { scheduleStore } from "../stores/ScheduleStore";
-  import { Offering } from "../models/Offering";
+  import { scheduleStore } from "../../stores/ScheduleStore";
+  import { Offering } from "../../models/Offering";
   import { Button } from "flowbite-svelte";
+  import { Player } from "../../ic-agent/PlayerLedger";
 
   export let teamId: Principal;
   export let matchGroupId: number;

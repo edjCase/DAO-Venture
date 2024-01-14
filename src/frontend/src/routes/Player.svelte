@@ -1,5 +1,5 @@
 <script lang="ts">
-  import PlayerProfile from "../components/PlayerProfile.svelte";
+  import PlayerProfile from "../components/player/PlayerProfile.svelte";
   import { Player } from "../ic-agent/PlayerLedger";
   import { playerStore } from "../stores/PlayerStore";
 

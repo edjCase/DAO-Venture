@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Button, Input } from "flowbite-svelte";
-  import { leagueAgentFactory } from "../ic-agent/League";
-  import { scheduleStore } from "../stores/ScheduleStore";
-  import { dateToNanoseconds } from "../utils/DateUtils";
+  import { leagueAgentFactory } from "../../ic-agent/League";
+  import { scheduleStore } from "../../stores/ScheduleStore";
+  import { dateToNanoseconds } from "../../utils/DateUtils";
 
   let startTime: bigint | undefined;
   let scheduleSeason = async () => {

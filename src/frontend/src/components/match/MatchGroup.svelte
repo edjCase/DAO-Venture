@@ -1,9 +1,9 @@
 <script lang="ts">
-  import VoteForMatchGroup from "../components/VoteForMatchGroup.svelte";
-  import MatchGroupCardGrid from "../components/MatchGroupCardGrid.svelte";
-  import { scheduleStore } from "../stores/ScheduleStore";
-  import { MatchGroupDetails } from "../models/Match";
-  import { nanosecondsToDate } from "../utils/DateUtils";
+  import VoteForMatchGroup from "../match/VoteForMatchGroup.svelte";
+  import MatchGroupCardGrid from "../match/MatchGroupCardGrid.svelte";
+  import { scheduleStore } from "../../stores/ScheduleStore";
+  import { MatchGroupDetails } from "../../models/Match";
+  import { nanosecondsToDate } from "../../utils/DateUtils";
   import PredictMatchOutcome from "./PredictMatchOutcome.svelte";
 
   export let matchGroupId: number;

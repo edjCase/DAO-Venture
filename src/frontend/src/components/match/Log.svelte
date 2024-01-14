@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { LogEntry } from "../ic-agent/Stadium";
+  import type { LogEntry } from "../../ic-agent/Stadium";
 
   export let log: LogEntry[];
 </script>

@@ -1,8 +1,8 @@
 <script lang="ts">
-  import AssignPlayerToTeam from "../components/AssignPlayerToTeam.svelte";
-  import CreatePlayer from "../components/CreatePlayer.svelte";
-  import CreateTeam from "../components/CreateTeam.svelte";
-  import ScheduleSeason from "../components/ScheduleSeason.svelte";
+  import AssignPlayerToTeam from "../components/team/AssignPlayerToTeam.svelte";
+  import CreatePlayer from "../components/player/CreatePlayer.svelte";
+  import CreateTeam from "../components/team/CreateTeam.svelte";
+  import ScheduleSeason from "../components/season/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
   import UpdateLeagueCanistersButton from "../components/UpdateLeagueCanistersButton.svelte";
   import { teamStore } from "../stores/TeamStore";

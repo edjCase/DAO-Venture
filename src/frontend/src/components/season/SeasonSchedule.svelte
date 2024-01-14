@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { MatchGroupDetails } from "../models/Match";
-  import { SeasonStatus } from "../models/Season";
-  import { scheduleStore } from "../stores/ScheduleStore";
-  import MatchGroupSummaryCard from "./MatchGroupSummaryCard.svelte";
+  import { MatchGroupDetails } from "../../models/Match";
+  import { SeasonStatus } from "../../models/Season";
+  import { scheduleStore } from "../../stores/ScheduleStore";
+  import MatchGroupSummaryCard from "./../match/MatchGroupSummaryCard.svelte";
   import { TabItem, Tabs } from "flowbite-svelte";
 
   let seasonStatus: SeasonStatus | undefined;

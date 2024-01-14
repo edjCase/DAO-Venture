@@ -1,8 +1,8 @@
 <script lang="ts">
   import { navigate } from "svelte-routing";
-  import { nanosecondsToDate } from "../utils/DateUtils";
+  import { nanosecondsToDate } from "../../utils/DateUtils";
   import MatchCard from "./MatchCard.svelte";
-  import { MatchGroupDetails } from "../models/Match";
+  import { MatchGroupDetails } from "../../models/Match";
 
   export let matchGroup: MatchGroupDetails;
 </script>

@@ -1,6 +1,6 @@
 <script lang="ts">
   import { AtomOutline } from "flowbite-svelte-icons";
-  import { CompletedSeason } from "../models/Season";
+  import { CompletedSeason } from "../../models/Season";
   import { Card } from "flowbite-svelte";
 
   export let completedSeason: CompletedSeason;

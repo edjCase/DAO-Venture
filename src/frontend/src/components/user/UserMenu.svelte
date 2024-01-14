@@ -1,5 +1,5 @@
 <script>
-  import LoginButton from "./LoginButton.svelte";
+  import LoginButton from "../common/LoginButton.svelte";
   import { Avatar, Dropdown, DropdownItem, Button } from "flowbite-svelte";
   import { FileCopyOutline } from "flowbite-svelte-icons";
   import { Link } from "svelte-routing";
@@ -10,7 +10,7 @@
     animals,
   } from "unique-names-generator";
   import { toSvg } from "jdenticon";
-  import { identityStore } from "../stores/IdentityStore";
+  import { identityStore } from "../../stores/IdentityStore";
 
   $: identity = $identityStore;
 

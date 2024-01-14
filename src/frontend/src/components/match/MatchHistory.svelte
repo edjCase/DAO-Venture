@@ -1,9 +1,9 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { nanosecondsToRelativeWeekString } from "../utils/DateUtils";
-  import { scheduleStore } from "../stores/ScheduleStore";
+  import { nanosecondsToRelativeWeekString } from "../../utils/DateUtils";
+  import { scheduleStore } from "../../stores/ScheduleStore";
   import MatchCard from "./MatchCard.svelte";
-  import { MatchDetails, MatchGroupDetails } from "../models/Match";
+  import { MatchDetails, MatchGroupDetails } from "../../models/Match";
 
   export let teamId: Principal;
 

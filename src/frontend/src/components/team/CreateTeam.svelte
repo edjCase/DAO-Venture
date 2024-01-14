@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { teamStore } from "../stores/TeamStore";
-  import { leagueAgentFactory } from "../ic-agent/League";
+  import { teamStore } from "../../stores/TeamStore";
+  import { leagueAgentFactory } from "../../ic-agent/League";
   import { Button } from "flowbite-svelte";
 
   let name: string;

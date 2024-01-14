@@ -1,9 +1,9 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { playerStore } from "../stores/PlayerStore";
-  import { Player } from "../ic-agent/PlayerLedger";
+  import { playerStore } from "../../stores/PlayerStore";
+  import { Player } from "../../ic-agent/PlayerLedger";
   import { Link } from "svelte-routing";
-  import { positionToString } from "../models/Player";
+  import { positionToString } from "../../models/Player";
 
   export let teamId: Principal;
 

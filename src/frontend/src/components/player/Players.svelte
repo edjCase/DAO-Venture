@@ -1,9 +1,9 @@
 <script lang="ts">
   import { Card } from "flowbite-svelte";
-  import { Player } from "../ic-agent/PlayerLedger";
-  import { positionToString } from "../models/Player";
-  import { playerStore } from "../stores/PlayerStore";
-  import { teamStore } from "../stores/TeamStore";
+  import { Player } from "../../ic-agent/PlayerLedger";
+  import { positionToString } from "../../models/Player";
+  import { playerStore } from "../../stores/PlayerStore";
+  import { teamStore } from "../../stores/TeamStore";
   import { Link } from "svelte-routing";
 
   // Assuming you have a way to fetch players

@@ -2,12 +2,12 @@
   import {
     playerLedgerAgentFactory,
     mapPosition,
-  } from "../ic-agent/PlayerLedger";
+  } from "../../ic-agent/PlayerLedger";
   import { Principal } from "@dfinity/principal";
-  import { playerStore } from "../stores/PlayerStore";
-  import { teamStore } from "../stores/TeamStore";
+  import { playerStore } from "../../stores/PlayerStore";
+  import { teamStore } from "../../stores/TeamStore";
   import PositionPicker from "./PositionPicker.svelte";
-  import { FieldPosition } from "../models/FieldPosition";
+  import { FieldPosition } from "../../models/FieldPosition";
   import { Button } from "flowbite-svelte";
 
   $: teams = $teamStore;

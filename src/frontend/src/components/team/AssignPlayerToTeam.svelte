@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { playerLedgerAgentFactory } from "../ic-agent/PlayerLedger";
-  import { playerStore } from "../stores/PlayerStore";
-  import { teamStore } from "../stores/TeamStore";
+  import { playerLedgerAgentFactory } from "../../ic-agent/PlayerLedger";
+  import { playerStore } from "../../stores/PlayerStore";
+  import { teamStore } from "../../stores/TeamStore";
   import { Button } from "flowbite-svelte";
 
   let teamId: string;

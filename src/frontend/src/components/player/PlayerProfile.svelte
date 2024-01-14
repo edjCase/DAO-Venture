@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Player } from "../ic-agent/PlayerLedger";
-  import { positionToString } from "../models/Player";
+  import { Player } from "../../ic-agent/PlayerLedger";
+  import { positionToString } from "../../models/Player";
 
   export let player: Player;
 

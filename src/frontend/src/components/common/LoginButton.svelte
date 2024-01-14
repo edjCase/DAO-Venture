@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
-  import { identityStore } from "../stores/IdentityStore";
+  import { identityStore } from "../../stores/IdentityStore";
 
   $: identity = $identityStore;
 

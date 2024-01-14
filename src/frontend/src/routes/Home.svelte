@@ -1,10 +1,10 @@
 <script lang="ts">
   import { Record } from "@dfinity/candid/lib/cjs/idl";
-  import LastAndCurrentMatchGroups from "../components/LastAndCurrentMatchGroups.svelte";
+  import LastAndCurrentMatchGroups from "../components/match/LastAndCurrentMatchGroups.svelte";
   import { scheduleStore } from "../stores/ScheduleStore";
   import { SeasonStatus } from "../models/Season";
-  import TeamStandings from "../components/TeamStandings.svelte";
-  import PlayerAwards from "../components/PlayerAwards.svelte";
+  import TeamStandings from "../components/team/TeamStandings.svelte";
+  import PlayerAwards from "../components/player/PlayerAwards.svelte";
 
   let seasonStatus: SeasonStatus | undefined;
 

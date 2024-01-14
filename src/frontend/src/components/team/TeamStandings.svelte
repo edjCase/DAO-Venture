@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Card } from "flowbite-svelte";
-  import { CompletedSeason } from "../models/Season";
+  import { CompletedSeason } from "../../models/Season";
 
   export let completedSeason: CompletedSeason;
 

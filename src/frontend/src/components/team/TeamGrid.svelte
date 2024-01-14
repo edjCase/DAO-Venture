@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
-  import { teamStore } from "../stores/TeamStore";
-  import { Button, Card, Hr } from "flowbite-svelte";
+  import { teamStore } from "../../stores/TeamStore";
+  import { Card } from "flowbite-svelte";
   import TeamLogo from "./TeamLogo.svelte";
   $: teams = $teamStore;
 </script>
@@ -30,26 +30,6 @@
               {team.description}
             </div>
           </div>
-          <Hr />
-          <div class="team-info">
-            <div class="team-info-title">Team Motto</div>
-            <div class="team-info-text">{team.motto}</div>
-          </div>
-          <div class="team-info inline">
-            <div class="team-info-title">Managers:</div>
-            <div class="team-info-text">0</div>
-          </div>
-          <div class="team-info inline">
-            <div class="team-info-title">Championship Seasons:</div>
-            <div class="team-info-text"></div>
-          </div>
-          <div class="team-info">
-            <div class="team-info-title">Links:</div>
-            <div class="team-info-text">
-              <Button href={""}>Website</Button>
-              <Button href={""}>Twitter</Button>
-            </div>
-          </div>
         </blockquote>
       </figure>
     {/each}
@@ -67,14 +47,7 @@
     margin: 5px 0;
     display: block;
   }
-  .team-info-title {
-    font-weight: bold;
-    font-size: larger;
-  }
   .team-info-text {
     font-weight: normal;
-  }
-  .team-info.inline div {
-    display: inline;
   }
 </style>

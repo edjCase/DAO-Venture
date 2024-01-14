@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { MatchGroupDetails } from "../models/Match";
-  import { scheduleStore } from "../stores/ScheduleStore";
+  import { MatchGroupDetails } from "../../models/Match";
+  import { scheduleStore } from "../../stores/ScheduleStore";
   import MatchGroupSummaryCard from "./MatchGroupSummaryCard.svelte";
 
   let lastMatchGroup: MatchGroupDetails | undefined;

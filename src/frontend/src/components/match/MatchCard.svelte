@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { MatchDetails } from "../models/Match";
+  import { MatchDetails } from "../../models/Match";
 
   import {
     LiveMatch,
     LiveMatchGroup,
     LiveMatchState,
     liveMatchGroupStore,
-  } from "../stores/LiveMatchGroupStore";
+  } from "../../stores/LiveMatchGroupStore";
   import Bases from "./Bases.svelte";
   import MatchCardHeader from "./MatchCardHeader.svelte";
 

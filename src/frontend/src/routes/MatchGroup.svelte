@@ -1,6 +1,6 @@
 <script lang="ts">
   import { navigate } from "svelte-routing";
-  import MatchGroup from "../components/MatchGroup.svelte";
+  import MatchGroup from "../components/match/MatchGroup.svelte";
 
   export let matchGroupIdString: string;
 

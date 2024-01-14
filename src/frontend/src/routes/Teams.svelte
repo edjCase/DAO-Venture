@@ -1,5 +1,5 @@
 <script lang="ts">
-  import TeamGrid from "../components/TeamGrid.svelte";
+  import TeamGrid from "../components/team/TeamGrid.svelte";
 </script>
 
 <div class="teams">

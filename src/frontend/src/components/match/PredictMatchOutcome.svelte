@@ -1,8 +1,8 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
-  import { MatchDetails } from "../models/Match";
-  import { leagueAgentFactory } from "../ic-agent/League";
-  import TeamLogo from "./TeamLogo.svelte";
+  import { MatchDetails } from "../../models/Match";
+  import { leagueAgentFactory } from "../../ic-agent/League";
+  import TeamLogo from "../team/TeamLogo.svelte";
 
   export let match: MatchDetails;
 

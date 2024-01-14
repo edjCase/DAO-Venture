@@ -2,7 +2,7 @@
   import { Router, Route } from "svelte-routing";
   import Home from "./routes/Home.svelte";
   import NotFound from "./routes/NotFound.svelte";
-  import Header from "./components/Header.svelte";
+  import Header from "./components/common/Header.svelte";
   import MatchGroup from "./routes/MatchGroup.svelte";
   import Team from "./routes/Team.svelte";
   import Teams from "./routes/Teams.svelte";

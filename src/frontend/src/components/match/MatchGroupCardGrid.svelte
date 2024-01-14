@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MatchDetails, MatchGroupDetails } from "../models/Match";
+  import { MatchDetails, MatchGroupDetails } from "../../models/Match";
   import MatchCard from "./MatchCard.svelte";
 
   export let matchGroup: MatchGroupDetails;

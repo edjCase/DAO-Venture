@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FieldPosition } from "../models/FieldPosition";
+  import { FieldPosition } from "../../models/FieldPosition";
 
   export let onPositionChange: (position: FieldPosition) => void;
 

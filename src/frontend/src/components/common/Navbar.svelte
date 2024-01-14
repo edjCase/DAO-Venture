@@ -1,7 +1,7 @@
 <script>
   import { Link } from "svelte-routing";
-  import UserMenu from "./UserMenu.svelte";
-  import UpdateLeagueCanistersButton from "./UpdateLeagueCanistersButton.svelte";
+  import UserMenu from "../user/UserMenu.svelte";
+  import UpdateLeagueCanistersButton from "../UpdateLeagueCanistersButton.svelte";
   import {
     Navbar,
     NavBrand,

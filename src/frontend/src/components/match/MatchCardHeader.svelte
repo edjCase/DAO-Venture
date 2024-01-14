@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { TeamDetails } from "../models/Match";
-  import { TeamIdOrTie } from "../models/Team";
-  import TeamLogo from "./TeamLogo.svelte";
-  import Tooltip from "./Tooltip.svelte";
+  import { TeamDetails } from "../../models/Match";
+  import { TeamIdOrTie } from "../../models/Team";
+  import TeamLogo from "../team/TeamLogo.svelte";
+  import Tooltip from "../common/Tooltip.svelte";
 
   export let team1: TeamDetails;
   export let team2: TeamDetails;
