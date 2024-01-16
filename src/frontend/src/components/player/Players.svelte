@@ -12,10 +12,10 @@
   $: teams = $teamStore;
 </script>
 
-<div class="p-6">
-  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4">
+<div class="p-6 mx-auto lg:max-w-2xl xl:max-w-3xl">
+  <div class="grid grid-cols-1 md:grid-cols-3">
     {#each players as player}
-      <Card class="mb-2 cursor-pointer">
+      <Card class="mx-auto mb-2 cursor-pointer">
         <Link to={"/players/" + player.id}>
           <div class="font-bold text-lg">{player.name}</div>
           {#if player.teamId}

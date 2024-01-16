@@ -10,6 +10,8 @@
   import Admin from "./routes/Admin.svelte";
   import Player from "./routes/Player.svelte";
   import Players from "./routes/Players.svelte";
+  import About from "./routes/About.svelte";
+  import HowToPlay from "./routes/HowToPlay.svelte";
 </script>
 
 <main class="content">
@@ -23,6 +25,8 @@
       <Route path="/players" component={Players} />
       <Route path="/players/:playerIdString" component={Player} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
+      <Route path="/HowToPlay" component={HowToPlay} />
+      <Route path="/about" component={About} />
       <Route path="/admin" component={Admin} />
       <Route path="*" component={NotFound} />
     </div>

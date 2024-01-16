@@ -27,9 +27,9 @@
     "text-gray-700 hover:bg-gray-100 md:hover:bg-transparent md:border-0 md:hover:text-green-700 dark:text-gray-400 md:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white md:dark:hover:bg-transparent";
 </script>
 
-<Navbar rounded color="form" class="mb-4 mx-auto">
+<Navbar rounded color="form" class="mb-4 mt-4 mx-auto">
   <NavBrand href="/">
-    <img src="/images/logo.jpg" class="me-3 h-6 sm:h-9" alt="DAOball Logo" />
+    <img src="/images/logo.png" class="me-3 h-16" alt="DAOball Logo" />
     <span
       class="self-center whitespace-nowrap text-xl font-semibold dark:text-white"
     >
@@ -42,6 +42,8 @@
     <NavBarLink to="/teams">Teams</NavBarLink>
     <NavBarLink to="/players">Players</NavBarLink>
     <NavBarLink to="/schedule">Schedule</NavBarLink>
+    <NavBarLink to="/HowToPlay">How To Play</NavBarLink>
+    <NavBarLink to="/about">About</NavBarLink>
     <NavLi class="cursor-pointer">
       Links
       <ChevronDownOutline
@@ -51,6 +53,9 @@
     <Dropdown class="w-44 z-20">
       <DropdownItem href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai">
         Blog
+      </DropdownItem>
+      <DropdownItem href="https://taggr.network/#/realm/DAOBALL">
+        Taggr
       </DropdownItem>
       <DropdownItem href="https://dscvr.one/p/daoball">DSCVR</DropdownItem>
       <DropdownItem href="https://github.com/edjcase/daoball">

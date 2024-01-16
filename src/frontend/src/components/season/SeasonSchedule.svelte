@@ -18,36 +18,38 @@
   });
 </script>
 
-{#if !!seasonStatus}
-  <div class="text-center text-3xl font-bold my-4">
-    {#if "notStarted" in seasonStatus}
-      Season Not Started
-    {:else if "completed" in seasonStatus}
-      Season Complete
-    {:else}
-      Season InProgress
-    {/if}
-  </div>
-{/if}
-{#if !!matchGroupDetails}
-  <Tabs
-    style="full"
-    defaultClass="flex rounded-lg divide-x shadow divide-gray-700"
-  >
-    {#each matchGroupDetails as matchGroup, index}
-      <TabItem
-        class="w-full"
-        title="Week {index + 1}"
-        open={matchGroup.state == "InProgress" ||
-          matchGroup.state == "Scheduled"}
-      >
-        <div class="tab-content">
-          <MatchGroupSummaryCard {matchGroup} />
-        </div>
-      </TabItem>
-    {/each}
-  </Tabs>
-{/if}
+<div class="mx-auto lg:max-w-2xl xl:max-w-3xl">
+  {#if !!seasonStatus}
+    <div class="text-center text-3xl font-bold my-4">
+      {#if "notStarted" in seasonStatus}
+        Season Not Started
+      {:else if "completed" in seasonStatus}
+        Season Complete
+      {:else}
+        Season InProgress
+      {/if}
+    </div>
+  {/if}
+  {#if !!matchGroupDetails}
+    <Tabs
+      style="full"
+      defaultClass="flex rounded-lg divide-x shadow divide-gray-700"
+    >
+      {#each matchGroupDetails as matchGroup, index}
+        <TabItem
+          class="w-full"
+          title="Week {index + 1}"
+          open={matchGroup.state == "InProgress" ||
+            matchGroup.state == "Scheduled"}
+        >
+          <div class="tab-content">
+            <MatchGroupSummaryCard {matchGroup} />
+          </div>
+        </TabItem>
+      {/each}
+    </Tabs>
+  {/if}
+</div>
 
 <style>
   .tab-content {
