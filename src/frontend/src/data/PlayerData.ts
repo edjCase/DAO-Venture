@@ -165,9 +165,9 @@ export const players: Player[] = [
     {
         "name": "Bubblyn",
         "title": "The Fountain of Youth",
-        "genesis": "An elemental formed from mixed fountain drinks after the machine being hit by a grand slam",
+        "genesis": "An elemental formed from mixed fountain drinks fused from a thermonuclear explosion",
         "quirks": ["Changes flavor with mood", "Always leaves a tacky trail"],
-        "likes": ["A good amount of pressure", "Flukes"],
+        "likes": ["", ""],
         "dislikes": ["Straws", "Subtlety"]
     },
     {
