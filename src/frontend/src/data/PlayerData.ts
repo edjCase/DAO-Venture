@@ -12,27 +12,27 @@ export type Player = {
 export const players: Player[] = [
     {
         "name": "Bunsworth",
-        "title": "The Mustard Maven",
+        "title": "The Condiment Connoisseur",
         "genesis": "Assembled from petrified hot dog buns, held together by an array of aged condiments.",
-        "quirks": ["Leaves a mustard trail when excited", "Can sculpt ketchup art spontaneously"],
-        "likes": ["Picnics on sunny days", "Antique hot dog stands"],
-        "dislikes": ["Rain (it gets the buns soggy)", "Ants"]
+        "quirks": ["Leaves a trail of subtle scents", "Relishes the heat lamp-like glow of stadium lights"],
+        "likes": ["Staining white shirts", "Crinkling of cheap plastic"],
+        "dislikes": ["Moisture", "Ants"]
     },
     {
-        "name": "Twankello",
+        "name": "Golden Joe",
         "title": "The Eternal",
         "genesis": "A construct made of Twankies, notorious for their indestructibility and suspiciously long shelf life.",
         "quirks": ["Smells faintly of artificial vanilla", "Can bounce back into shape after being squished"],
-        "likes": ["Vintage snack commercials", "Collecting snack wrappers"],
-        "dislikes": ["Health food trends", "Extreme heat"]
+        "likes": ["Typewriters", "Collecting snack wrappers"],
+        "dislikes": ["Health food trends", "Funk music"]
     },
     {
         "name": "Roachard",
-        "title": "",
-        "genesis": "A collective of cockroaches, advocating for better working conditions in the post-apocalyptic world.",
-        "quirks": ["Organizes miniature protests", "Communicates in a series of clicks"],
-        "likes": ["Leftover crumbs", "Dark, cozy places"],
-        "dislikes": ["Cleanliness", "Insect repellent"]
+        "title": "The Collective",
+        "genesis": "A pile of cockroaches in a trenchcoat, advocating for better working conditions in the post-apocalyptic world.",
+        "quirks": ["Sounds like a chorus of soft whispers, blending seamlessly", "Communicates in a series of clicks"],
+        "likes": ["Leftover crumbs", "Tea ceremonies"],
+        "dislikes": ["Nuclear disarmament", "Velcro"]
     },
     {
         "name": "Squeaks",
@@ -44,139 +44,139 @@ export const players: Player[] = [
     },
     {
         "name": "Blockston",
-        "title": "",
-        "genesis": "A humanoid shape formed from cinder blocks, symbolizing the enduring spirit of forgotten constructions.",
+        "title": "The Dusty",
+        "genesis": "Created from weathered cinder blocks, meticulously aligned to avoid chipping its fragile soul.",
         "quirks": ["Tends to crumble a bit when laughing", "Can rearrange its blocks to change height"],
         "likes": ["Architectural documentaries", "Moss gardens"],
-        "dislikes": ["Demolition sites", "Rain (it erodes the mortar)"]
+        "dislikes": ["Gloveless hands", "1 meter falls"]
     },
     {
         "name": "Porto",
         "title": "The Echoing Solitude",
-        "genesis": "An old portapotty, haunted by the echoes of past events, exhibiting signs of PTSD.",
-        "quirks": ["Flinches at loud noises", "Murmurs old ballpark chants"],
-        "likes": ["Solitude", "Fresh air scents"],
+        "genesis": "An old portapotty, haunted by the echoes of past events.",
+        "quirks": ["Flinches at the sound of an opening door", "Emits a faint, lingering odor"],
+        "likes": ["Feeling abandoned", "Full handsanitizer dispensers"],
         "dislikes": ["Crowds", "Dirty jokes"]
     },
     {
         "name": "Sparky",
-        "title": "",
-        "genesis": "A grouping of constantly exploding fireworks, embodying the essence of surprise and celebration.",
-        "quirks": ["Startles easily, setting off a small spark", "Illuminates in vibrant colors at night"],
-        "likes": ["New Year celebrations", "Quiet, starry nights"],
-        "dislikes": ["Rain (it dampens the sparks)", "Silence"]
+        "title": "The Pyroclast",
+        "genesis": "A cache of perpetually exploding fireworks found in a pickup truck, abandoned in the stadium lot.",
+        "quirks": ["Startles easily, setting off a small spark", "Always self concious on how it looks"],
+        "likes": ["A fine wine", "Quiet, starry nights"],
+        "dislikes": ["Rain", "Children"]
     },
     {
         "name": "Spritz",
-        "title": "",
-        "genesis": "An amalgam of bug spray bottles entwined in a skeleton of discarded baseball bats, sticky yet formidable.",
-        "quirks": ["Emits a faint hissing sound", "Leaves a sticky residue when anxious"],
-        "likes": ["Insect documentaries", "Baseball history"],
-        "dislikes": ["Pests", "Being dropped or mishandled"]
+        "title": "The Sticky Slugger",
+        "genesis": "Emerging from the union of baseball bats and burst cans of insect repellent, tacky but efficient.",
+        "quirks": ["Doesn't require a bat when stepping up to the plate", "Leaves a sticky residue when anxious"],
+        "likes": ["Swampy water", "Soothing hiss of aerosols"],
+        "dislikes": ["Sound of fracturing wood", "Ozone"]
     },
     {
         "name": "Sunny",
-        "title": "",
-        "genesis": "A sentient blob of sunscreen lotion, forever immune to the sun's harsh rays.",
-        "quirks": ["Slips and slides effortlessly", "Can squeeze through tiny gaps"],
-        "likes": ["Beach volleyball", "Sunbathing"],
-        "dislikes": ["Shade (feels cold)", "Pollution"]
+        "title": "The Luminary Protector",
+        "genesis": "A sentient blob of purple sunscreen lotion, but transparent after application.",
+        "quirks": ["Watches 90's commercials on VHS tapes every night", "Immune to the sun's harsh rays"],
+        "likes": ["Tones of copper", "Zinc"],
+        "dislikes": ["Atomizing", "Adults"]
     },
     {
-        "name": "Mintie",
-        "title": "The Fresh Whisperer",
-        "genesis": "Stacked urinal cleaning tabs, carrying the burden of past experiences, yet exuding a fresh scent.",
-        "quirks": ["Always smells minty fresh", "Crumbles slightly under pressure"],
-        "likes": ["Hygiene commercials", "Aromatic candles"],
-        "dislikes": ["Being ignored", "Dirty environments"]
+        "name": "Cakeston",
+        "title": "The Reliever",
+        "genesis": "Stacked urinal cleaning tabs still doing their job millenia later, carrying the burden of past experiences.",
+        "quirks": ["Minty fresh, yet funky", "Always able to do a dirty job"],
+        "likes": ["Target practice", "Rushing water"],
+        "dislikes": ["Sitting down", "Carpeted floors"]
     },
     {
         "name": "Tread",
         "title": "The Rolling Relic",
-        "genesis": "Constructed from old tires, resembling a less refined version of a famous tire mascot.",
-        "quirks": ["Rolls around to move instead of walking", "Can expand or contract treads to change size"],
-        "likes": ["Racing documentaries", "Rock music"],
-        "dislikes": ["Flat surfaces (too easy)", "Punctures"]
+        "genesis": "Emerging from a tire fire that burned for a millennium, its form a testament to the melted and charred remnants of its past.",
+        "quirks": ["Rolls around to move instead of walking", "Smells like a racetrack"],
+        "likes": ["Rough surfaces", "Being tied to tree branches"],
+        "dislikes": ["Being compared to his white rubber cousin", "Nails"]
     },
     {
         "name": "Lumos",
         "title": "The Flickering Beacon",
         "genesis": "Formed from flickering stadium lights, embodying the erratic energy of forgotten games.",
-        "quirks": ["Brightness fluctuates with mood", "Can send Morse code messages by flickering"],
-        "likes": ["Night games", "Electrical engineering"],
-        "dislikes": ["Power outages", "Daytime (too bright)"]
+        "quirks": ["Brightness fluctuates with mood", "Has a constant, low-frequency hum"],
+        "likes": ["Night games", "Attention"],
+        "dislikes": ["Consistency", "Maintenance"]
     },
     {
         "name": "Gumby",
-        "title": "",
-        "genesis": "A humanoid figure made from millennia-old chewed bubblegum, tougher than steel yet surprisingly flexible.",
-        "quirks": ["Stretches limbs to impossible lengths", "Sometimes gets stuck to things"],
-        "likes": ["Candy stores", "Stretching exercises"],
-        "dislikes": ["Heat (gets too sticky)", "Dental hygiene ads"]
+        "title": "The Resilient",
+        "genesis": "Made from chewed bubblegum from an ancient past, pulled from the bottom of bleachers.",
+        "quirks": ["No longer sweet", "Tougher than steel yet surprisingly flexible"],
+        "likes": ["Cafeteria tables", "Hair"],
+        "dislikes": ["Sugar Alcohols", "Tobacco"]
     },
     {
         "name": "Vainray",
         "title": "The Brittle Glamour",
         "genesis": "Crafted from broken, overpriced sunglasses, once owned by someone with fragile self-esteem.",
-        "quirks": ["Shades darken in sunlight", "Occasionally reflects images of the past"],
-        "likes": ["Fashion shows", "Cloudy days"],
-        "dislikes": ["Mirrors", "Beach volleyball"]
+        "quirks": ["Looks cool", "Harbors an unshakeable dread of misplacement"],
+        "likes": ["Mirrors", "Malls"],
+        "dislikes": ["Polarized politics", "Back pockets"]
     },
     {
-        "name": "Colarick",
+        "name": "Sodie",
         "title": "The Sticky Stepper",
-        "genesis": "An animated patch of floor covered in the eternal stickiness of spilled soda, making a unique sound with each step.",
-        "quirks": ["Leaves a slight sticky residue", "Sounds like walking on bubble wrap"],
-        "likes": ["Clean-up crews", "Soda fountains"],
-        "dislikes": ["Water (dilutes the stickiness)", "Shoes (they get stuck)"]
+        "genesis": "An animated patch of floor covered in the eternal stickiness of spilled soda.",
+        "quirks": ["Collects whatever crosses its path", "Sounds like walking on bubble wrap"],
+        "likes": ["Popcorn", "Sublte grunts of disgust of those who tread"],
+        "dislikes": ["Mops", "Levitation"]
     },
     {
         "name": "Huff",
         "title": "The Breathless",
         "genesis": "The embodiment of the breathlessness one feels after climbing the steep steps of a stadium.",
-        "quirks": ["Pauses often as if catching breath", "Moves slowly and steadily"],
-        "likes": ["Mountain climbing films", "Yoga"],
-        "dislikes": ["Elevators (too easy)", "Rush hour"]
+        "quirks": ["Can hear its heartbeat from meters away", "Counts each step wherever it goes"],
+        "likes": ["A good rhythm", "Railings"],
+        "dislikes": ["High altitudes", "Nosebleeds"]
     },
     {
         "name": "Q",
-        "title": "The Restless",
-        "genesis": "Personified irritation from waiting in line for the ladies' room, manifesting as a sentient queue barrier.",
-        "quirks": ["Shifts impatiently", "Can extend and retract its segments"],
-        "likes": ["Efficient systems", "Puzzle solving"],
-        "dislikes": ["Long waits", "Disorganization"]
+        "title": "The Aspiring Stoic",
+        "genesis": "The energy of the lingering frustration of entities waiting in line for the ladies' room.",
+        "quirks": ["Constantly engaging in small talk", "Occasionally emits a faint, frustrated sigh"],
+        "likes": ["Off hours", "Empty mens rooms"],
+        "dislikes": ["Tile floors", "Aged motion sensors"]
     },
     {
         "name": "Splurge",
         "title": "The Regretful",
-        "genesis": "The physical form of the dread one feels at the thought of paying for a overpriced drink, shaped like a giant drink can.",
-        "quirks": ["Fizzes when agitated", "Often complains about prices"],
-        "likes": ["Brewery tours", "Economic documentaries"],
-        "dislikes": ["Overpriced anything", "Being empty (feels purposeless)"]
+        "genesis": "The spirit comprised of the souls of those who got stuck paying for a overpriced drink after waiting in a long line.",
+        "quirks": ["Fizzes when agitated", "Has a tendency to sneak snacks into the stadium"],
+        "likes": ["Water fountains", "Self-serve"],
+        "dislikes": ["Small cups", "Getting bumped when having that first sip"]
     },
     {
         "name": "Cleatus",
         "title": "The Unlaundered",
-        "genesis": "A construct made from a bag baseball equipment, washed or not.",
-        "quirks": ["Always prepared for any sport", "Makes clanging sounds when moving"],
-        "likes": ["Sports movies", "Teamwork activities"],
-        "dislikes": ["Rained-out games", "Solo sports"]
+        "genesis": "An animated bag DAOball equipment, left in the locker for too long.",
+        "quirks": ["Deoderant doesn't seem to help", "Makes clanging sounds when moving"],
+        "likes": ["Muffled sounds of cheering", "Sound of a zipper"],
+        "dislikes": ["New gear", "Moisture"]
     },
     {
         "name": "Bubblyn",
         "title": "The Fountain of Youth",
-        "genesis": "An elemental formed from mixed fountain drinks, bubbly and unpredictable.",
-        "quirks": ["Changes flavor with mood", "Can bubble over when excited"],
-        "likes": ["Tasting contests", "Sugar rushes"],
-        "dislikes": ["Flat drinks", "Diet anything"]
+        "genesis": "An elemental formed from mixed fountain drinks after the machine being hit by a grand slam",
+        "quirks": ["Changes flavor with mood", "Always leaves a tacky trail"],
+        "likes": ["A good amount of pressure", "Flukes"],
+        "dislikes": ["Straws", "Subtlety"]
     },
     {
         "name": "Fomo",
         "title": "The Turfinator",
         "genesis": "A patchwork quilt of foam fingers and emerald green turf, stitched to life.",
         "quirks": ["Waves incessantly", "Feels slightly springy to the touch"],
-        "likes": ["Cheering competitions", "Gardening shows"],
-        "dislikes": ["Silence (too quiet)", "Lawn mowers"]
+        "likes": ["", ""],
+        "dislikes": ["", ""]
     },
     {
         "name": "Jackie",
