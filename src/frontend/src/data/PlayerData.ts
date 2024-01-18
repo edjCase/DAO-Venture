@@ -222,7 +222,7 @@ export const players: Player[] = [
         "name": "Seagal",
         "title": "The Unexpected",
         "genesis": "A gull, intercepting a would-be grand slam with a flurry of feathers, looks to redeem disapointed fans.",
-        "quirks": ["Orbophobia", "Always apologizing"],
+        "quirks": ["Sfairesphobia", "Always apologizing"],
         "likes": ["Forgotten Morsels", "Helmets"],
         "dislikes": ["Predictable outcomes", "Drones"]
     },
