@@ -21,25 +21,25 @@ export const players: Player[] = [
     {
         "name": "Golden Joe",
         "title": "The Eternal",
-        "genesis": "A construct made of Twankies, notorious for their indestructibility and suspiciously long shelf life.",
-        "quirks": ["Smells faintly of artificial vanilla", "Can bounce back into shape after being squished"],
-        "likes": ["Typewriters", "Collecting snack wrappers"],
-        "dislikes": ["Health food trends", "Funk music"]
+        "genesis": "A construct made of Twankies, called by prophesy to endure in the worst of times.",
+        "quirks": ["Smells faintly of artificial vanilla", "Suspiciously long shelf life"],
+        "likes": ["Being wrapped tightly", "End caps"],
+        "dislikes": ["Ketosis", "Richard Simmons"]
     },
     {
         "name": "Roachard",
         "title": "The Collective",
         "genesis": "A pile of cockroaches in a trenchcoat, advocating for better working conditions in the post-apocalyptic world.",
-        "quirks": ["Sounds like a chorus of soft whispers, blending seamlessly", "Communicates in a series of clicks"],
-        "likes": ["Leftover crumbs", "Tea ceremonies"],
-        "dislikes": ["Nuclear disarmament", "Velcro"]
+        "quirks": ["Sounds like a chorus of soft whispers, blending seamlessly", ""],
+        "likes": ["Leftover crumbs", "Ownership of production"],
+        "dislikes": ["Nuclear disarmament", "The Bourgeoisie"]
     },
     {
         "name": "Squeaks",
         "title": "The Styro Bard",
-        "genesis": "Crafted from a cluster of Styrofoam coffee cups, their squeaky chorus is both haunting and rhythmic.",
-        "quirks": ["Creates a symphony of squeaks while moving", "Can form cup shapes at will"],
-        "likes": ["Morning dew", "Coffee shop jazz"],
+        "genesis": "Crafted from a cluster of Styrofoam coffee cups, used once and discarded, persistently yearning for a second chance at purpose",
+        "quirks": ["Creates a symphony of squeaks while moving", "Easily crushed"],
+        "likes": ["Stacking", "Burnt beans"],
         "dislikes": ["Microwaves", "Recycling bins"]
     },
     {
@@ -47,7 +47,7 @@ export const players: Player[] = [
         "title": "The Dusty",
         "genesis": "Created from weathered cinder blocks, meticulously aligned to avoid chipping its fragile soul.",
         "quirks": ["Tends to crumble a bit when laughing", "Can rearrange its blocks to change height"],
-        "likes": ["Architectural documentaries", "Moss gardens"],
+        "likes": ["Hard hats", "Moss"],
         "dislikes": ["Gloveless hands", "1 meter falls"]
     },
     {
@@ -55,7 +55,7 @@ export const players: Player[] = [
         "title": "The Echoing Solitude",
         "genesis": "An old portapotty, haunted by the echoes of past events.",
         "quirks": ["Flinches at the sound of an opening door", "Emits a faint, lingering odor"],
-        "likes": ["Feeling abandoned", "Full handsanitizer dispensers"],
+        "likes": ["Feeling abandoned", "Regular maintenance"],
         "dislikes": ["Crowds", "Dirty jokes"]
     },
     {
@@ -163,11 +163,35 @@ export const players: Player[] = [
         "dislikes": ["New gear", "Moisture"]
     },
     {
+        "name": "Promotheus",
+        "title": "The Jingle Jester",
+        "genesis": "A mismash of advertising slogans on poorly made signs, forced to walk the earth until its quota contract has been fufilled.",
+        "quirks": ["Flashes abnoxious bright colors", "Always seeking attention and approval"],
+        "likes": ["Marketing seminars", "Neon lights"],
+        "dislikes": ["Bad product market fit", "Genuine dialogue"]
+    },
+    {
+        "name": "Gale",
+        "title": "The Thrifty Throned",
+        "genesis": "With an unyielding to be closer to the action, a whirlwind of nosebleed tickets twirls into being.",
+        "quirks": ["Perpetually on their feet", "Their decibel level is a bit much for some"],
+        "likes": ["Binoculars", "A good deal"],
+        "dislikes": ["Fair weather fans", "Assigned seating"]
+    },
+    {
+        "name": "Numm",
+        "title": "The Still",
+        "genesis": "Blankets were possesed by the latent energy, borne from enduring countless hours of motionless sitting on a rigid seat in the piercing cold, amidst the prolonged nuclear winter.",
+        "quirks": ["Always moving, but never going anywhere", "Cocooned in a blanket at all times"],
+        "likes": ["Fast games", "Exothermic reactions"],
+        "dislikes": ["Low thread count", "Slightly textured plastics"]
+    },
+    {
         "name": "Bubblyn",
         "title": "The Fountain of Youth",
         "genesis": "An elemental formed from mixed fountain drinks fused from a thermonuclear explosion",
         "quirks": ["Changes flavor with mood", "Always leaves a tacky trail"],
-        "likes": ["", ""],
+        "likes": ["Carbonic acid", "An ancient civilization called Americans"],
         "dislikes": ["Straws", "Subtlety"]
     },
     {
@@ -175,159 +199,63 @@ export const players: Player[] = [
         "title": "The Turfinator",
         "genesis": "A patchwork quilt of foam fingers and emerald green turf, stitched to life.",
         "quirks": ["Waves incessantly", "Feels slightly springy to the touch"],
-        "likes": ["", ""],
-        "dislikes": ["", ""]
+        "likes": ["Unnecessary yelling", "Very small bits of rubber"],
+        "dislikes": ["Civil discussion", "Grass root movements"]
     },
     {
         "name": "Jackie",
         "title": "The Carmelized",
-        "genesis": "A mound of hard popped corn. Some say there is a prize nestled deep in its glazed core.",
+        "genesis": "A mound of hard popped corn, bound together by a prize deep inside its core.",
         "quirks": ["Crackles when moving", "Occasionally drops a peanut"],
-        "likes": ["Archeological digs", "Baseball history documentaries"],
-        "dislikes": ["Birds (they peck)", "Wet weather (gets soggy)"]
+        "likes": ["Young sailors", "Being niche"],
+        "dislikes": ["Change", "Allergies"]
     },
     {
-        "name": "Promotheus",
-        "title": "The Jingle Jester",
-        "genesis": "A mismash of advertising slogans on poorly made signs, always seeking attention and approval.",
-        "quirks": ["Flashes bright colors", "Constantly changes slogans"],
-        "likes": ["Marketing seminars", "Neon lights"],
-        "dislikes": ["Ignorance", "Power outages"]
+        "name": "Eddie",
+        "title": "The Rolling",
+        "genesis": "A stadium wave that never ended, a perpetual motion of energy and excitement.",
+        "quirks": ["Never sits still", "An instigator"],
+        "likes": ["High frequencies", "Camaraderie"],
+        "dislikes": ["Passive observers", "Low attendance"]
     },
     {
-        "name": "",
-        "title": "",
-        "genesis": "Formed from a pile of nosebleed seat tickets, its existence is a high, distant view of the world.",
-        "quirks": ["Speaks as if from a great distance", "Occasionally gets dizzy"],
-        "likes": ["Binoculars", "High altitude hiking"],
-        "dislikes": ["Crowded rows", "Restricted views"]
+        "name": "Seagal",
+        "title": "The Unexpected",
+        "genesis": "A gull, intercepting a would-be grand slam with a flurry of feathers, looks to redeem disapointed fans.",
+        "quirks": ["Orbophobia", "Always apologizing"],
+        "likes": ["Forgotten Morsels", "Helmets"],
+        "dislikes": ["Predictable outcomes", "Drones"]
     },
     {
-        "name": "Numm",
-        "title": "",
-        "genesis": "Personification of the discomfort of sitting motionless in a hard seat for hours in the cold, a stoic figure of endurance.",
-        "quirks": ["Rarely moves", "Feels cold to the touch"],
-        "likes": ["Ice sculptures", "Meditation retreats"],
-        "dislikes": ["Cushions (too soft)", "Hot weather"]
+        "name": "Siggy",
+        "title": "The Lingerer",
+        "genesis": "Composed of used cigarettes, mixed with nuclear fallout, creating a puff of sentient toxic particulates.",
+        "quirks": ["Leaves a trail of ash", "Needs many short breaks"],
+        "likes": ["Persistant aromas", "Coughing"],
+        "dislikes": ["Personal awareness", "Activism"]
     },
     {
-        "name": "",
-        "title": "",
-        "genesis": "The physical incarnation of 'the wave' energy in stadiums, a being of continuous motion and enthusiasm.",
-        "quirks": ["Never stands still", "Encourages others to join in movements"],
-        "likes": ["Dance parties", "Surfing documentaries"],
-        "dislikes": ["Stillness", "Isolation"]
+        "name": "Crystal",
+        "title": "The Briny Curmudgeon",
+        "genesis": "A crystalline entity made of soft pretzel salt, made from an spiteful bakerunder the glow of a full moon, cast a curse upon his own creation.",
+        "quirks": ["Piezoelectric", "Absorbs moisture from the air"],
+        "likes": ["Slugs", "Lattices"],
+        "dislikes": ["Tequila rims", "Nacho cheese"]
     },
     {
-        "name": "Sai",
-        "title": "",
-        "genesis": "Born from the excitement of a game-winning grand slam, only to be disappointed by a foul, a figure of mixed emotions.",
-        "quirks": ["Exhibits sudden shifts in mood", "Gestures grandly"],
-        "likes": ["Close games", "Theater dramas"],
-        "dislikes": ["Predictable outcomes", "Underwhelming performances"]
+        "name": "Echo",
+        "title": "The Unending",
+        "genesis": "The sound from a cracking bat, forever trapped, bouncing off the stadium walls.",
+        "quirks": ["Very repetative", "Harmonicist"],
+        "likes": ["Psychoacoustics", "Resonating with teammates"],
+        "dislikes": ["Foam Panels", "Time"]
     },
     {
-        "name": "",
-        "title": "",
-        "genesis": "A character formed from the smell of burnt popcorn, an aroma of nostalgia mixed with a hint of regret.",
-        "quirks": ["Smells faintly of smoke", "Pops unexpectedly"],
-        "likes": ["Movie marathons", "Cooking classes"],
-        "dislikes": ["Microwaves", "Unattended kitchens"]
-    },
-    {
-        "name": "Ciggy",
-        "title": "",
-        "genesis": "Composed of used cigarettes, a gritty reminder of past habits and smoky gatherings.",
-        "quirks": ["Leaves a trail of ash", "Emits a faint smoky scent"],
-        "likes": ["Noir films", "Jazz music"],
-        "dislikes": ["Clean air campaigns", "Rain (ruins the mood)"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "Made entirely of soft pretzel salt, a crystalline entity of savory taste and resilience.",
-        "quirks": ["Crunches when walking", "Absorbs moisture from the air"],
-        "likes": ["Salt mines", "Baking shows"],
-        "dislikes": ["Water", "Slugs"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "A sentient embodiment of the taste of stale, flat beer, reminiscent of forgotten celebrations.",
-        "quirks": ["Flat expression", "Leaves a slightly yeasty aroma"],
-        "likes": ["Brewery ruins", "Old pub songs"],
-        "dislikes": ["Refrigerators (too cold)", "Craft beer (too fancy)"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "Formed from the sound of a breaking bat, an echo of the game's raw energy and sudden turns.",
-        "quirks": ["Emits a faint cracking sound at random", "Resonates with other wooden objects"],
-        "likes": ["Woodworking", "Live baseball games"],
-        "dislikes": ["Silence (feels empty)", "Metal bats"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "The physical manifestation of the frustration of not being able to use a metal bat, a mix of anger and longing.",
-        "quirks": ["Tends to clang loudly when agitated", "Attracts magnetic objects"],
-        "likes": ["Heavy metal music", "Magnet collections"],
-        "dislikes": ["Wood (prefers metal)", "Quiet rooms"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "An entity formed from the feeling of someone touching your sunburned shoulder, a blend of discomfort and surprise.",
-        "quirks": ["Recoils from sudden contact", "Changes color like a mood ring"],
-        "likes": ["Aloe vera", "Cloudy days"],
-        "dislikes": ["Sunbathing", "Tactile games"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "Born from the stickiness of spilled soda on a cement floor, each step a reminder of past spills and messes.",
-        "quirks": ["Makes a sticking and unsticking sound when moving", "Attracts small debris"],
-        "likes": ["Cleaning crews", "Sticky note art"],
-        "dislikes": ["Water (washes away stickiness)", "Insects (get stuck)"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "A creature born from the disappointment of flat ale, a symbol of unmet expectations and lost fizz.",
-        "quirks": ["Emits a faint, deflated sigh", "Occasionally bubbles in frustration"],
-        "likes": ["Carbonation science", "Stand-up comedy"],
-        "dislikes": ["Open bottles (evokes sadness)", "Loud parties"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "A construct made from miscellaneous baseball equipment, embodying the spirit and diversity of the game.",
-        "quirks": ["Jingles with the sound of sports gear", "Can quickly don and doff equipment"],
-        "likes": ["Sports documentaries", "Team building exercises"],
-        "dislikes": ["Neglected sports fields", "Rain delays"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "An effervescent being made from a mixture of fountain drinks, constantly bubbling with excitement.",
-        "quirks": ["Changes color with emotion", "Can burst into spontaneous fizz"],
-        "likes": ["Taste testing competitions", "Carnivals"],
-        "dislikes": ["Dilution (loses identity)", "Plain water"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "Constructed from an array of foam fingers, this entity is the embodiment of fan passion and support.",
-        "quirks": ["Waves enthusiastically", "Feels exceptionally light and bouncy"],
-        "likes": ["Cheerleading competitions", "Parades"],
-        "dislikes": ["Quiet stadiums", "Deflated balloons"]
-    },
-    {
-        "name": "",
-        "title": "",
-        "genesis": "Made from fossilized crackerjacks, a reminder of the timeless nature of the game and its snacks.",
-        "quirks": ["Emits a faint, crackling sound", "Drops fossilized popcorn kernels"],
-        "likes": ["Museum visits", "Classic baseball games"],
-        "dislikes": ["Modern snacks (too new)", "Damp environments"]
+        "name": "Max",
+        "title": "The Forbidden",
+        "genesis": "Crafted in secret and smuggled into the stadium, this metal bat was born from the clandestine frustration and longing of players aching to feel its forbidden power.",
+        "quirks": ["Resonating personality", "Tempered"],
+        "likes": ["Innovation", "Feeling superior"],
+        "dislikes": ["Safety", "Buckling Under Stress"]
     }
 ];
