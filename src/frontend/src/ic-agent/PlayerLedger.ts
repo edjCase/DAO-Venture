@@ -50,14 +50,16 @@ export const PlayerSkillsIdl = IDL.Record({
 
 export interface CreatePlayerFluffRequest {
   'name': string,
-  'genesis': string;
+  'title': string,
+  'description': string;
   'quirks': string[];
   'likes': string[];
   'dislikes': string[];
 };
 export const CreatePlayerFluffRequestIdl = IDL.Record({
   'name': IDL.Text,
-  'genesis': IDL.Text,
+  'title': IDL.Text,
+  'description': IDL.Text,
   'quirks': IDL.Vec(IDL.Text),
   'likes': IDL.Vec(IDL.Text),
   'dislikes': IDL.Vec(IDL.Text),
@@ -67,7 +69,8 @@ export const CreatePlayerFluffRequestIdl = IDL.Record({
 export type Player = {
   id: number;
   name: string;
-  genesis: string;
+  title: string;
+  description: string;
   quirks: string[];
   likes: string[];
   dislikes: string[];
@@ -78,7 +81,8 @@ export type Player = {
 export const PlayerIdl = IDL.Record({
   id: IDL.Nat32,
   name: IDL.Text,
-  genesis: IDL.Text,
+  title: IDL.Text,
+  description: IDL.Text,
   quirks: IDL.Vec(IDL.Text),
   likes: IDL.Vec(IDL.Text),
   dislikes: IDL.Vec(IDL.Text),

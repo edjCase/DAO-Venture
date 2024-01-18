@@ -23,17 +23,24 @@ function createIdentityStore() {
         if (id.isAnonymous()) {
             set(undefined);
         } else {
+            set({
+                id: id,
+                isAdmin: false,
+                identity: identity,
+            });
             let userInfo = await leagueAgentFactory()
                 .getUserInfo();
             let isAdmin = false;
             if (userInfo && userInfo.length >= 1) {
                 isAdmin = userInfo[0]!.isAdmin;
             }
-            set({
-                id: id,
-                isAdmin: isAdmin,
-                identity: identity,
-            });
+            if (isAdmin) {
+                set({
+                    id: id,
+                    isAdmin: true,
+                    identity: identity,
+                });
+            }
         }
     };
 

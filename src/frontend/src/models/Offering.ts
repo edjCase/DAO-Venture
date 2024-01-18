@@ -12,7 +12,8 @@ export type Offering =
     | { ragePitch: null }
     | { pious: null }
     | { confident: null }
-    | { moraleFlywheel: null };
+    | { moraleFlywheel: null }
+    | { badManagement: null };
 export const OfferingIdl = IDL.Variant({
     shuffleAndBoost: IDL.Null,
     offensive: IDL.Null,
@@ -23,7 +24,8 @@ export const OfferingIdl = IDL.Variant({
     ragePitch: IDL.Null,
     pious: IDL.Null,
     confident: IDL.Null,
-    moraleFlywheel: IDL.Null
+    moraleFlywheel: IDL.Null,
+    badManagement: IDL.Null,
 });
 
 export type OfferingMetaData = {

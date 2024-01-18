@@ -1,6 +1,9 @@
 <script lang="ts">
   import { leagueAgentFactory } from "../ic-agent/League";
-  import { playerLedgerAgentFactory } from "../ic-agent/PlayerLedger";
+  import {
+    CreatePlayerFluffResult,
+    playerLedgerAgentFactory,
+  } from "../ic-agent/PlayerLedger";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
   import { Team, teams } from "../data/TeamData";
@@ -34,16 +37,17 @@
       let promise = playerLedgerAgent
         .createFluff({
           name: player.name,
-          genesis: player.genesis,
+          title: player.title,
+          description: player.description,
           likes: player.likes,
           dislikes: player.dislikes,
           quirks: player.quirks,
         })
-        .then((result) => {
+        .then((result: CreatePlayerFluffResult) => {
           if ("created" in result) {
             console.log("Created player: ", player.name);
           } else {
-            console.log("Failed to make player: ", result.invalid);
+            console.log("Failed to make player: ", player.name, result.invalid);
           }
         });
       promises.push(promise);

@@ -50,9 +50,9 @@
     </div>
     <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-40">
       {#if identity.isAdmin}
-        <DropdownItem>
-          <Link to="/admin">Admin</Link>
-        </DropdownItem>
+        <Link to="/admin">
+          <DropdownItem>Admin</DropdownItem>
+        </Link>
       {/if}
       <DropdownItem on:click={logout} slot="footer">Logout</DropdownItem>
     </Dropdown>

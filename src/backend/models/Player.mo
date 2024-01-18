@@ -6,7 +6,8 @@ module {
 
     public type PlayerFluff = {
         name : Text;
-        genesis : Text;
+        title : Text;
+        description : Text;
         quirks : [Text];
         likes : [Text];
         dislikes : [Text];

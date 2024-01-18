@@ -12,8 +12,9 @@
 
 <div class="rounded-lg p-6">
   <div class="text-lg font-bold">{player.name} - #{player.id}</div>
+  <div class="text-lg font-bold">{player.title}</div>
   <div class="text-md">{positionToString(player.position)}</div>
-  <div class="text-sm text-gray-600">{player.genesis}</div>
+  <div class="text-sm text-gray-600">{player.description}</div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
     <div>
       <div class="font-semibold">Quirks:</div>

@@ -29,9 +29,6 @@
       {:else if matchGroup.state == "InProgress"}
         <div>Match Group is LIVE!</div>
       {/if}
-
-      <MatchGroupCardGrid {matchGroup} />
-
       {#if matchGroup.state == "Scheduled"}
         {#each matchGroup.matches as match}
           <h1>Predict</h1>
@@ -48,6 +45,8 @@
             </div>
           </div>
         {/each}
+      {:else}
+        <MatchGroupCardGrid {matchGroup} />
       {/if}
     </section>
   </section>

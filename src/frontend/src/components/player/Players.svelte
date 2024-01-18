@@ -25,7 +25,7 @@
             </div>
           {/if}
           <div class="text-sm">{positionToString(player.position)}</div>
-          <div class="text-sm text-gray-600">{player.genesis}</div>
+          <div class="text-sm text-gray-600">{player.description}</div>
           <!-- More player details can be added here -->
         </Link>
       </Card>

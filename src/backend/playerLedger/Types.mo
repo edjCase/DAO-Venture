@@ -12,7 +12,8 @@ module {
 
     public type CreatePlayerFluffRequest = {
         name : Text;
-        genesis : Text;
+        title : Text;
+        description : Text;
         quirks : [Text];
         likes : [Text];
         dislikes : [Text];
