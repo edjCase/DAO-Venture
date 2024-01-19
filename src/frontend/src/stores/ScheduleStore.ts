@@ -7,7 +7,8 @@ import {
     NotScheduledMatch,
     ScheduledMatch,
     SeasonStatus,
-    TeamInfo
+    TeamAssignment,
+    TeamInfo,
 } from "../models/Season";
 import { MatchDetails, MatchGroupDetails } from "../models/Match";
 
@@ -21,6 +22,13 @@ export const scheduleStore = (() => {
     const { subscribe: subscribeStatus, set: setStatus } = writable<SeasonStatus | undefined>();
     const { subscribe: subscribeMatchGroups, set: setMatchGroups } = writable<MatchGroupDetails[]>([]);
 
+    const mapTeamAssignment = (team: TeamAssignment, score: bigint | undefined) => {
+        if ('predetermined' in team) {
+            return mapTeam(team.predetermined, score);
+        } else {
+            return undefined
+        }
+    };
     const mapTeam = (team: TeamInfo, score: bigint | undefined) => {
         return {
             id: team.id,
@@ -82,8 +90,8 @@ export const scheduleStore = (() => {
                 matchGroupId: matchGroupId,
                 state: 'NotScheduled',
                 offeringOptions: undefined,
-                team1: mapTeam(match.notScheduled.team1, undefined),
-                team2: mapTeam(match.notScheduled.team2, undefined),
+                team1: mapTeamAssignment(match.notScheduled.team1, undefined),
+                team2: mapTeamAssignment(match.notScheduled.team2, undefined),
                 winner: undefined,
                 error: undefined
             };

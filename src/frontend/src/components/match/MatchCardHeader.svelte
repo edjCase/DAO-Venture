@@ -4,8 +4,8 @@
   import TeamLogo from "../team/TeamLogo.svelte";
   import Tooltip from "../common/Tooltip.svelte";
 
-  export let team1: TeamDetails;
-  export let team2: TeamDetails;
+  export let team1: TeamDetails | undefined;
+  export let team2: TeamDetails | undefined;
   export let winner: TeamIdOrTie | undefined;
 
   let crownEmojiOrEmpty = (teamId: "team1" | "team2") => {
@@ -24,11 +24,11 @@
   <div class="header-team team1">
     <Tooltip>
       <TeamLogo team={team1} size="sm" slot="content" />
-      <div slot="tooltip" class="name">{team1.name}</div>
+      <div slot="tooltip" class="name">{team1?.name || "Undetermined"}</div>
     </Tooltip>
 
     <div class="score">
-      {getScoreText(team1.score)}
+      {getScoreText(team1?.score)}
       <span class="emoji">{crownEmojiOrEmpty("team1")}</span>
     </div>
   </div>
@@ -37,12 +37,12 @@
   </div>
   <div class="header-team team2">
     <div class="score">
-      {getScoreText(team2.score)}
+      {getScoreText(team2?.score)}
       <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
     <Tooltip>
       <TeamLogo team={team2} size="sm" slot="content" />
-      <div slot="tooltip" class="name">{team2.name}</div>
+      <div slot="tooltip" class="name">{team1?.name || "Undetermined"}</div>
     </Tooltip>
   </div>
 </div>

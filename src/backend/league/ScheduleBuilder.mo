@@ -4,6 +4,7 @@ import Trie "mo:base/Trie";
 import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Nat32 "mo:base/Nat32";
+import Debug "mo:base/Debug";
 import LeagueTypes "Types";
 import Util "../Util";
 import IterTools "mo:itertools/Iter";
@@ -23,8 +24,8 @@ module {
     };
 
     public type PlayoffTeam = {
-        #standing : Nat;
-        #winnerOf : Nat; // Match Id of last match group
+        #seasonStanding : Nat;
+        #winnerOfMatch : Nat; // Match Id of last match group
     };
 
     public type PlayoffMatch = {
@@ -107,6 +108,9 @@ module {
 
         let playoffMatchGroups = Buffer.Buffer<PlayoffMatchGroup>(4);
         let addPlayoffRound = func(matches : [PlayoffMatch]) {
+            if (matches.size() < 1) {
+                Debug.trap("No matches in playoff round");
+            };
             playoffMatchGroups.add({
                 time = nextMatchDate.toTime();
                 matches = matches;
@@ -118,9 +122,10 @@ module {
 
         // Split the teams up into two halves, but exclude the teams that get a bye in the first round
         let teamsInFirstRound = IterTools.range(byteTeamCount + 1, teamCount + 1);
+        let firstRoundMatchupCount : Nat = (teamCount - byteTeamCount) / 2;
         let (firstHalfOfTeams, secondHalfOfTeams) = teamsInFirstRound
         |> Buffer.fromIter<Nat>(_)
-        |> Buffer.split(_, nextPowerOfTwo / 2);
+        |> Buffer.split(_, firstRoundMatchupCount);
         // Reverse the second half to pair first - last, second - second last, etc.
         Buffer.reverse(secondHalfOfTeams);
         let firstRoundMatches = IterTools.zip(firstHalfOfTeams.vals(), secondHalfOfTeams.vals())
@@ -128,8 +133,8 @@ module {
             _,
             func((team1Standing, team2Standing) : (Nat, Nat)) : PlayoffMatch {
                 {
-                    team1 = #standing(team1Standing);
-                    team2 = #standing(team2Standing);
+                    team1 = #seasonStanding(team1Standing);
+                    team2 = #seasonStanding(team2Standing);
                 };
             },
         )
@@ -149,8 +154,8 @@ module {
                 _,
                 func(index : Nat, byeTeamStanding : Nat) : PlayoffMatch {
                     {
-                        team1 = #standing(byeTeamStanding);
-                        team2 = #winnerOf(index);
+                        team1 = #seasonStanding(byeTeamStanding);
+                        team2 = #winnerOfMatch(index);
                     };
                 },
             )
@@ -167,8 +172,8 @@ module {
             let nextRoundMatches = Buffer.Buffer<PlayoffMatch>(lastMatchCount / 2);
             for (i in IterTools.range(0, lastMatchCount / 2)) {
                 nextRoundMatches.add({
-                    team1 = #winnerOf(i * 2);
-                    team2 = #winnerOf(i * 2 + 1);
+                    team1 = #winnerOfMatch(i * 2);
+                    team2 = #winnerOfMatch(i * 2 + 1);
                 });
             };
             addPlayoffRound(Buffer.toArray(nextRoundMatches));

@@ -16,7 +16,4 @@
   .log {
     max-width: 300px;
   }
-  .important {
-    text-decoration: underline;
-  }
 </style>

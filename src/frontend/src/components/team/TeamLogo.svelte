@@ -1,13 +1,12 @@
 <script lang="ts">
-  export let team: { logoUrl: string; name: string };
+  export let team: { logoUrl: string; name: string } | undefined;
   export let size: "sm" | "md" | "lg" | undefined;
+
+  let logoUrl = team?.logoUrl || "/images/team-logos/unknown.png";
+  let alt = team?.name || "Undetermined";
 </script>
 
-<img
-  class="logo {size ? `size-${size}` : ''}"
-  src={team.logoUrl}
-  alt="{team.name} Logo"
-/>
+<img class="logo {size ? `size-${size}` : ''}" src={logoUrl} {alt} />
 
 <style>
   .logo {

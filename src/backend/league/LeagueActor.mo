@@ -133,37 +133,52 @@ actor LeagueActor {
             };
         };
 
-        let getTeamInfo = func(teamId : Principal) : Season.TeamInfo {
-            let ?team = Trie.get(teams, buildPrincipalKey(teamId), Principal.equal) else Debug.trap("Team not found: " # Principal.toText(teamId));
-            {
-                id = teamId;
-                name = team.name;
-                logoUrl = team.logoUrl;
-            };
-        };
-
         // Save full schedule, then try to start the first match groups
-        let inProgressMatchGroups = schedule.matchGroups
+        let regularMatchGroups = schedule.regularSeason
         |> Iter.fromArray(_)
         |> Iter.map(
             _,
-            func(mg : ScheduleBuilder.MatchGroup) : Season.InProgressSeasonMatchGroupVariant = #notScheduled({
+            func(mg : ScheduleBuilder.RegularMatchGroup) : Season.InProgressSeasonMatchGroupVariant = #notScheduled({
                 time = mg.time;
                 matches = mg.matches
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(m : ScheduleBuilder.Match) : Season.NotScheduledMatch = {
-                        team1 = getTeamInfo(m.team1Id);
-                        team2 = getTeamInfo(m.team2Id);
+                    func(m : ScheduleBuilder.RegularMatch) : Season.NotScheduledMatch = {
+                        team1 = #predetermined(getTeamInfo(m.team1Id));
+                        team2 = #predetermined(getTeamInfo(m.team2Id));
                     },
                 )
                 |> Iter.toArray(_);
             }),
-        )
+        );
+
+        let playoffMatchGroups = schedule.playoffs
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(mg : ScheduleBuilder.PlayoffMatchGroup) : Season.InProgressSeasonMatchGroupVariant = #notScheduled({
+                time = mg.time;
+                matches = mg.matches
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(m : ScheduleBuilder.PlayoffMatch) : Season.NotScheduledMatch = {
+                        team1 = m.team1;
+                        team2 = m.team2;
+                    },
+                )
+                |> Iter.toArray(_);
+            }),
+        );
+
+        let inProgressMatchGroups = regularMatchGroups
+        |> IterTools.chain(_, playoffMatchGroups)
         |> Iter.toArray(_);
+
         let inProgressSeason = {
             matchGroups = inProgressMatchGroups;
+            teamStandings = null; // No standings yet
         };
         seasonStatus := #inProgress(inProgressSeason);
 
@@ -368,18 +383,19 @@ actor LeagueActor {
                 )
                 |> Iter.toArray(_);
 
-                let newStatus : Season.InProgressSeasonMatchGroupVariant = #inProgress({
-                    time = scheduledMatchGroup.time;
-                    stadiumId = stadiumId;
-                    matches = inProgressMatches;
+                let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
+                    season.matchGroups,
+                    matchGroupId,
+                    #inProgress({
+                        time = scheduledMatchGroup.time;
+                        stadiumId = stadiumId;
+                        matches = inProgressMatches;
+                    }),
+                ) else return #matchGroupNotFound;
+                seasonStatus := #inProgress({
+                    season with
+                    matchGroups = newMatchGroups;
                 });
-                // Update status to inProgress
-                switch (buildSeasonWithUpdatedMatchGroup(matchGroupId, newStatus, season)) {
-                    case (#ok(inProgressSeason)) {
-                        seasonStatus := #inProgress(inProgressSeason);
-                    };
-                    case (#matchGroupNotFound) return #matchGroupNotFound;
-                };
 
                 #ok;
             };
@@ -438,13 +454,28 @@ actor LeagueActor {
             matches = completedMatches;
         };
 
-        let updatedSeason = switch (buildSeasonWithUpdatedMatchGroup(request.id, #completed(updatedMatchGroup), season)) {
-            case (#ok(inProgressSeason)) {
-                seasonStatus := #inProgress(inProgressSeason);
-                inProgressSeason;
+        let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
+            season.matchGroups,
+            request.id,
+            #completed(updatedMatchGroup),
+        ) else return #matchGroupNotFound;
+
+        let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(season.matchGroups.size());
+        label f for (matchGroup in Iter.fromArray(newMatchGroups)) {
+            switch (matchGroup) {
+                case (#completed(completedMatchGroup)) completedMatchGroups.add(completedMatchGroup);
+                case (_) break f; // Break on first incomplete match
             };
-            case (#matchGroupNotFound) return #matchGroupNotFound;
         };
+
+        let updatedTeamStandings : [Season.TeamStandingInfo] = calculateTeamStandings(Buffer.toArray(completedMatchGroups));
+
+        let updatedSeason = {
+            season with
+            teamStandings = ?updatedTeamStandings;
+            matchGroups = newMatchGroups;
+        };
+        seasonStatus := #inProgress(updatedSeason);
 
         // Get next match group to schedule
         let nextMatchGroupId = request.id + 1;
@@ -488,14 +519,19 @@ actor LeagueActor {
         let completedTeams = Trie.toArray(
             teams,
             func(k : Principal, v : Team.Team) : Season.CompletedSeasonTeam {
-                let ?standingInfo = Trie.get(teamStandings, buildPrincipalKey(k), Principal.equal) else Debug.trap("Team not found in standings: " # Principal.toText(k));
+                let ?standingIndex = teamStandings
+                |> Iter.fromArray(_)
+                |> IterTools.findIndex(_, func(s : Season.TeamStandingInfo) : Bool = s.id == k) else Debug.trap("Team not found in standings: " # Principal.toText(k));
+                let standingInfo = teamStandings[standingIndex];
+
                 {
                     id = k;
                     name = v.name;
                     logoUrl = v.logoUrl;
-                    standing = standingInfo.standing;
+                    standing = standingIndex;
                     wins = standingInfo.wins;
                     losses = standingInfo.losses;
+                    totalScore = standingInfo.totalScore;
                 };
             },
         );
@@ -504,6 +540,15 @@ actor LeagueActor {
             matchGroups = completedMatchGroups;
         });
         #ok;
+    };
+
+    private func getTeamInfo(teamId : Principal) : Season.TeamInfo {
+        let ?team = Trie.get(teams, buildPrincipalKey(teamId), Principal.equal) else Debug.trap("Team not found: " # Principal.toText(teamId));
+        {
+            id = teamId;
+            name = team.name;
+            logoUrl = team.logoUrl;
+        };
     };
 
     private func isAdmin(id : Principal) : Bool {
@@ -565,6 +610,41 @@ actor LeagueActor {
                 Debug.print("Match group '" #Nat.toText(matchGroupId) # "' start callback: " # message);
             },
         );
+
+        let compileTeamInfo = func(teamAssignment : Season.TeamAssignment) : Season.TeamInfo {
+            switch (teamAssignment) {
+                case (#predetermined(teamInfo)) teamInfo;
+                case (#seasonStanding(standingIndex)) {
+                    // get team based on current season standing
+                    let ?standings = inProgressSeason.teamStandings else Debug.trap("Season standings not found. Match Group Id: " # Nat.toText(matchGroupId));
+
+                    let ?teamWithStanding = Util.arrayGetSafe<Season.TeamStandingInfo>(
+                        standings,
+                        standingIndex,
+                    ) else Debug.trap("Previous match group not found, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId - 1));
+
+                    getTeamInfo(teamWithStanding.id);
+                };
+                case (#winnerOfMatch(matchId)) {
+                    // get winner of match in previous match group
+                    let ?previousMatchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
+                        inProgressSeason.matchGroups,
+                        matchGroupId - 1,
+                    ) else Debug.trap("Previous match group not found, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId - 1));
+                    let #completed(completedMatchGroup) = previousMatchGroup else Debug.trap("Previous match group not completed, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId - 1));
+                    let ?match = Util.arrayGetSafe<Season.CompletedMatch>(
+                        completedMatchGroup.matches,
+                        matchId,
+                    ) else Debug.trap("Previous match not found, cannot get winner of match. Match Id: " # Nat.toText(matchId));
+
+                    if (match.winner == #team1) {
+                        match.team1;
+                    } else {
+                        match.team2;
+                    };
+                };
+            };
+        };
         let scheduledMatchGroup : Season.ScheduledMatchGroup = {
             time = matchGroup.time;
             timerId = timerId;
@@ -574,8 +654,8 @@ actor LeagueActor {
                 _,
                 func(m : Season.NotScheduledMatch) : Season.ScheduledMatch {
                     {
-                        team1 = m.team1;
-                        team2 = m.team2;
+                        team1 = compileTeamInfo(m.team1);
+                        team2 = compileTeamInfo(m.team2);
                         offeringOptions = getRandomOfferings(prng, 4);
                         aura = getRandomMatchAura(prng);
                     };
@@ -583,33 +663,20 @@ actor LeagueActor {
             )
             |> Iter.toArray(_);
         };
-        let status = #scheduled(scheduledMatchGroup);
-        switch (buildSeasonWithUpdatedMatchGroup(matchGroupId, status, inProgressSeason)) {
-            case (#ok(inProgressSeason)) {
-                seasonStatus := #inProgress(inProgressSeason);
-                let matchCount = scheduledMatchGroup.matches.size();
-                predictionsOrNull := ?Array.tabulate(matchCount, func(i : Nat) : Trie.Trie<Principal, Team.TeamId> = Trie.empty()); // Open predictions
-            };
-            case (#matchGroupNotFound) Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
-        };
-    };
-
-    private func buildSeasonWithUpdatedMatchGroup(
-        matchGroupId : Nat,
-        updatedMatchGroup : Season.InProgressSeasonMatchGroupVariant,
-        inProgressSeason : Season.InProgressSeason,
-    ) : { #ok : Season.InProgressSeason; #matchGroupNotFound } {
 
         let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
             inProgressSeason.matchGroups,
             matchGroupId,
-            updatedMatchGroup,
-        ) else return #matchGroupNotFound;
+            #scheduled(scheduledMatchGroup),
+        ) else return Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
 
-        #ok({
+        seasonStatus := #inProgress({
             inProgressSeason with
             matchGroups = newMatchGroups;
         });
+        let matchCount = scheduledMatchGroup.matches.size();
+        predictionsOrNull := ?Array.tabulate(matchCount, func(i : Nat) : Trie.Trie<Principal, Team.TeamId> = Trie.empty()); // Open predictions
+
     };
 
     private func buildTeamInitData(
@@ -737,17 +804,10 @@ actor LeagueActor {
         #ok(Buffer.toArray(completedMatchGroups));
     };
 
-    type TeamSeasonStanding = {
-        wins : Nat;
-        losses : Nat;
-        totalScore : Int;
-        standing : Nat;
-    };
-
     private func calculateTeamStandings(
         matchGroups : [Season.CompletedMatchGroup]
-    ) : Trie.Trie<Principal, TeamSeasonStanding> {
-        var teamScores = Trie.empty<Principal, TeamSeasonStanding>();
+    ) : [Season.TeamStandingInfo] {
+        var teamScores = Trie.empty<Principal, Season.TeamStandingInfo>();
         let updateTeamScore = func(
             teamId : Principal,
             score : Int,
@@ -769,15 +829,15 @@ actor LeagueActor {
                 case (?score) score;
             };
             // Update with +1
-            let (newTeamScores, _) = Trie.put<Principal, TeamSeasonStanding>(
+            let (newTeamScores, _) = Trie.put<Principal, Season.TeamStandingInfo>(
                 teamScores,
                 teamKey,
                 Principal.equal,
                 {
+                    id = teamId;
                     wins = if (won) currentScore.wins + 1 else currentScore.wins;
                     losses = if (won) currentScore.losses else currentScore.losses + 1;
                     totalScore = currentScore.totalScore + score;
-                    standing = 0;
                 },
             );
             teamScores := newTeamScores;
@@ -790,7 +850,37 @@ actor LeagueActor {
                 updateTeamScore(match.team2.id, match.team2.score, match.winner == #team2);
             };
         };
-        teamScores;
+        teamScores
+        |> Trie.iter(_)
+        |> Iter.map(
+            _,
+            func((k, v) : (Principal, Season.TeamStandingInfo)) : Season.TeamStandingInfo = v,
+        )
+        |> IterTools.sort(
+            _,
+            func(a : Season.TeamStandingInfo, b : Season.TeamStandingInfo) : Order.Order {
+                if (a.wins > b.wins) {
+                    #greater;
+                } else if (a.wins < b.wins) {
+                    #less;
+                } else {
+                    if (a.losses < b.losses) {
+                        #greater;
+                    } else if (a.losses > b.losses) {
+                        #less;
+                    } else {
+                        if (a.totalScore > b.totalScore) {
+                            #greater;
+                        } else if (a.totalScore < b.totalScore) {
+                            #less;
+                        } else {
+                            #equal;
+                        };
+                    };
+                };
+            },
+        )
+        |> Iter.toArray(_);
     };
 
     private func buildPrincipalKey(id : Principal) : {

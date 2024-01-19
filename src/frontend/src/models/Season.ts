@@ -34,13 +34,23 @@ export const TeamInfoIdl = IDL.Record({
     logoUrl: IDL.Text,
 });
 
+export type TeamAssignment =
+    | { predetermined: TeamInfo }
+    | { seasonStanding: Nat }
+    | { winnerOfMatch: Nat };
+export const TeamAssignmentIdl = IDL.Variant({
+    predetermined: TeamInfoIdl,
+    seasonStanding: IDL.Nat,
+    winnerOfMatch: IDL.Nat,
+});
+
 export type NotScheduledMatch = {
-    team1: TeamInfo;
-    team2: TeamInfo;
+    team1: TeamAssignment;
+    team2: TeamAssignment;
 };
 export const NotScheduledMatchIdl = IDL.Record({
-    team1: TeamInfoIdl,
-    team2: TeamInfoIdl,
+    team1: TeamAssignmentIdl,
+    team2: TeamAssignmentIdl,
 });
 
 export type ScheduledMatch = {
@@ -114,6 +124,7 @@ export type CompletedSeasonTeam = TeamInfo & {
     standing: Nat;
     wins: Nat;
     losses: Nat;
+    totalScore: Int;
 };
 export const CompletedSeasonTeamIdl = IDL.Record({
     id: IDL.Principal,
@@ -122,6 +133,7 @@ export const CompletedSeasonTeamIdl = IDL.Record({
     standing: IDL.Nat,
     wins: IDL.Nat,
     losses: IDL.Nat,
+    totalScore: IDL.Int,
 });
 
 export type NotScheduledMatchGroup = {
@@ -184,11 +196,26 @@ export const InProgressSeasonMatchGroupVariantIdl = IDL.Variant({
     completed: CompletedMatchGroupIdl,
 });
 
+export type TeamStandingInfo = {
+    id: Principal;
+    wins: Nat;
+    losses: Nat;
+    totalScore: Int;
+};
+export const TeamStandingInfoIdl = IDL.Record({
+    id: IDL.Principal,
+    wins: IDL.Nat,
+    losses: IDL.Nat,
+    totalScore: IDL.Int,
+});
+
 export type InProgressSeason = {
     matchGroups: InProgressSeasonMatchGroupVariant[];
+    teamStandings: [TeamStandingInfo[]] | [];
 };
 export const InProgressSeasonIdl = IDL.Record({
     matchGroups: IDL.Vec(InProgressSeasonMatchGroupVariantIdl),
+    teamStandings: IDL.Opt(IDL.Vec(TeamStandingInfoIdl)),
 });
 
 

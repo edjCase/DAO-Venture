@@ -15,8 +15,16 @@ module {
         #completed : CompletedSeason;
     };
 
+    public type TeamStandingInfo = {
+        id : Principal;
+        wins : Nat;
+        losses : Nat;
+        totalScore : Int;
+    };
+
     public type InProgressSeason = {
         matchGroups : [InProgressSeasonMatchGroupVariant];
+        teamStandings : ?[TeamStandingInfo]; // First team to last team
     };
 
     public type InProgressSeasonMatchGroupVariant = {
@@ -37,9 +45,15 @@ module {
         matches : [NotScheduledMatch];
     };
 
+    public type TeamAssignment = {
+        #predetermined : TeamInfo;
+        #seasonStanding : Nat; // Current standing calculation
+        #winnerOfMatch : Nat; // Look at previous match group match id winner
+    };
+
     public type NotScheduledMatch = {
-        team1 : TeamInfo;
-        team2 : TeamInfo;
+        team1 : TeamAssignment;
+        team2 : TeamAssignment;
     };
 
     public type ScheduledMatchGroup = {
@@ -113,5 +127,6 @@ module {
         standing : Nat;
         wins : Nat;
         losses : Nat;
+        totalScore : Int;
     };
 };

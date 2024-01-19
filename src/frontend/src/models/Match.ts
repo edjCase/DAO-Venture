@@ -15,8 +15,8 @@ export type MatchDetails = {
     id: number;
     time: bigint;
     matchGroupId: number;
-    team1: TeamDetails;
-    team2: TeamDetails;
+    team1: TeamDetails | undefined;
+    team2: TeamDetails | undefined;
     offeringOptions: OfferingWithMetaData[] | undefined;
     winner: TeamIdOrTie | undefined;
     state: MatchState;

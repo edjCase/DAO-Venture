@@ -19,8 +19,10 @@
     const liveMatchGroup: LiveMatchGroup | undefined = $liveMatchGroupStore;
     if (liveMatchGroup && liveMatchGroup.id == Number(match.matchGroupId)) {
       liveMatch = liveMatchGroup.matches[Number(match.id)];
-      match.team1.score = liveMatch?.team1.score;
-      match.team2.score = liveMatch?.team2.score;
+      if (match.team1 && match.team2) {
+        match.team1.score = liveMatch?.team1.score;
+        match.team2.score = liveMatch?.team2.score;
+      }
     }
   }
 
@@ -82,9 +84,9 @@
       {#if !match.winner}
         <div>Bad state: {match.error}</div>
       {:else if "team1" in match.winner}
-        {match.team1.name} Win!
+        {match.team1?.name} Win!
       {:else if "team2" in match.winner}
-        {match.team2.name} Win!
+        {match.team2?.name} Win!
       {:else}
         Its a tie!
       {/if}
