@@ -314,22 +314,6 @@ export const players: Player[] = [
         ]
     },
     {
-        "name": "Rusty Rivet",
-        "title": "The Oxidized Oracle",
-        "description": "Rusty Rivet is a creaky amalgamation of ancient ironwork and corroded machinery, each movement echoing the industrial past.",
-        "quirks": [
-            "Leaves a trail of rust flakes",
-            "Communicates with clanks and whirrs"
-        ],
-        "likes": [
-            "The smell of motor oil",
-            "Rainy days"
-        ],
-        "dislikes": [
-            "Polished surfaces",
-            "Modern technology"
-        ]
-    }, {
         "name": "Fizzle Sprocket",
         "title": "The Gearbound Jester",
         "description": "An assemblage of misfit clockwork and sputtering gizmos, Fizzle Sprocket is a chaotic whirlwind of mechanical laughter and unpredictable movements.",
@@ -397,7 +381,6 @@ export const players: Player[] = [
         ]
     },
     {
-        // 40
         "name": "Echo Echo",
         "title": "The Reverb Raider",
         "description": "Echo Echo is a mysterious figure, formed from the reverberating sounds of ancient stadium cheers, forever bouncing between walls.",
@@ -415,6 +398,7 @@ export const players: Player[] = [
         ]
     },
     {
+        // 40
         "name": "Candlewick",
         "title": "The Illuminated Wanderer",
         "description": "Crafted from forgotten birthday candles, Candlewick carries the warm glow and fleeting wishes of many celebrations.",
@@ -505,7 +489,6 @@ export const players: Player[] = [
         "dislikes": ["Loudspeakers", "Silent auctions"]
     },
     {
-        // 50
         "name": "Zippy",
         "title": "The Sparky Spectator",
         "description": "Spawned from the collective static energy of thousands of excited fans shuffling on carpets.",
@@ -514,6 +497,7 @@ export const players: Player[] = [
         "dislikes": ["Grounding wires", "Rubber-soled shoes"]
     },
     {
+        // 50
         "name": "Misty",
         "title": "The Drizzling Dreamer",
         "description": "Born from the gentle drizzles that delayed games, a spirit of contemplation and patience.",
@@ -586,7 +570,6 @@ export const players: Player[] = [
         "dislikes": ["Out of tune instruments", "Silent discos"]
     },
     {
-        // 60
         "name": "Vortex",
         "title": "The Swirling Sentinel",
         "description": "Emerging from the whirlwind of ticket stubs and lost items, a guardian of forgotten memories.",
@@ -595,6 +578,7 @@ export const players: Player[] = [
         "dislikes": ["Neat piles", "Orderly queues"]
     },
     {
+        // 60
         "name": "Char",
         "title": "The Smoky Sentinel",
         "description": "Born from the charred remains of celebratory bonfires and barbecues in the parking lot.",
@@ -667,7 +651,6 @@ export const players: Player[] = [
         "dislikes": ["Torn pages", "Digital formats"]
     },
     {
-        // 70
         "name": "Boomer",
         "title": "The Resounding Roarer",
         "description": "Born from the echo of fans' cheers and boos, an auditory force of the stadium's soul.",
@@ -676,6 +659,7 @@ export const players: Player[] = [
         "dislikes": ["Silence", "Muffled sounds"]
     },
     {
+        // 70
         "name": "Pixel",
         "title": "The Digital Dreamer",
         "description": "A digital entity evolved from the old scoreboard's pixels, living in a world of bits and bytes.",
@@ -748,7 +732,6 @@ export const players: Player[] = [
         "dislikes": ["Monochrome", "Colorblindness"]
     },
     {
-        // 80
         "name": "Riff",
         "title": "The Rocking Rebel",
         "description": "A wild spirit from the electrifying guitar riffs played on the jumbotron, living for the thrill of the game.",
@@ -757,6 +740,7 @@ export const players: Player[] = [
         "dislikes": ["Silent crowds", "Easy listening music"]
     },
     {
+        // 80
         "name": "Zephyr",
         "title": "The Gentle Gust",
         "description": "Born from the playful breezes that lift spirits and papers alike, a soothing presence.",
@@ -830,7 +814,6 @@ export const players: Player[] = [
         "dislikes": ["Clumsiness", "Sitting still"]
     },
     {
-        // 90
         "name": "Rumble",
         "title": "The Thunderous Titan",
         "description": "A colossal presence born from the thundering stomps of the crowd during climactic moments, an embodiment of collective anticipation.",
@@ -839,6 +822,7 @@ export const players: Player[] = [
         "dislikes": ["Whispers", "Tiptoeing"]
     },
     {
+        // 90
         "name": "Sway",
         "title": "The Graceful Waver",
         "description": "Emerging from the gentle sway of flags and banners in the breeze, a symbol of fluidity and grace.",
@@ -911,7 +895,6 @@ export const players: Player[] = [
         "dislikes": ["Rainy days", "Dampened spirits"]
     },
     {
-        // 100
         "name": "Murmur",
         "title": "The Subtle Sibilant",
         "description": "A soft-spoken entity born from the whispered secrets and gossip of the crowd, a keeper of untold stories.",
@@ -920,7 +903,8 @@ export const players: Player[] = [
         "dislikes": ["Loud noises", "Public announcements"]
     },
     {
-        "name": "Ripple",
+        // 100
+        "name": "Ripple2",
         "title": "The Wavy Wanderer",
         "description": "Emerging from the ripples in cups of beer and soda, a fluid and unpredictable spirit of liquid motion.",
         "quirks": ["Moves in undulating waves", "Spills over with laughter"],

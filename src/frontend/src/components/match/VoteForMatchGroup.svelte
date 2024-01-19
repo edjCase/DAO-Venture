@@ -66,10 +66,10 @@
     let unmappedMatch = matchGroup.matches.find(
       (m) => m.team1.id == teamId || m.team2.id == teamId
     );
-    if (!unmappedMatch || !unmappedMatch.offerings) {
+    if (!unmappedMatch || !unmappedMatch.offeringOptions) {
       return;
     }
-    let offeringCards = unmappedMatch.offerings.map((o) => {
+    let offeringCards = unmappedMatch.offeringOptions.map((o) => {
       return {
         id: Object.keys(o.offering)[0],
         title: o.name,

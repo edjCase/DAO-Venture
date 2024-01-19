@@ -33,7 +33,6 @@ import MatchAura "../models/MatchAura";
 import Offering "../models/Offering";
 import TeamFactoryActor "canister:teamFactory";
 import StadiumFactoryActor "canister:stadiumFactory";
-import MatchPrediction "../models/MatchPrediction";
 import PlayerLedgerTypes "../playerLedger/Types";
 import FieldPosition "../models/FieldPosition";
 
@@ -44,7 +43,7 @@ actor LeagueActor {
     stable var users : Trie.Trie<Principal, Types.UserInfo> = Trie.empty();
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
-    stable var predictionsOrNull : ?Trie.Trie<Principal, Trie.Trie<Nat32, MatchPrediction.MatchPrediction>> = null;
+    stable var predictionsOrNull : ?[Trie.Trie<Principal, Team.TeamId>] = null;
     stable var historicalSeasons : [Season.CompletedSeason] = [];
     stable var stadiumIdOrNull : ?Principal = null;
 
@@ -228,20 +227,55 @@ actor LeagueActor {
         };
 
         let ?predictions = predictionsOrNull else return #predictionsClosed;
+        let predictionsBuffer = Buffer.fromArray<Trie.Trie<Principal, Team.TeamId>>(predictions);
 
-        let key = buildPrincipalKey(caller);
-        let userPredictions = switch (Trie.get(predictions, key, Principal.equal)) {
-            case (null) Trie.empty();
-            case (?predictions) predictions;
+        let ?matchPredictions = predictionsBuffer.getOpt(Nat32.toNat(request.matchId)) else return #matchNotFound;
+
+        let userKey = buildPrincipalKey(caller);
+        let newMatchPredictions : Trie.Trie<Principal, Team.TeamId> = switch (request.winner) {
+            case (null) {
+                let (newMatchPredictions, _) = Trie.remove(matchPredictions, userKey, Principal.equal);
+                newMatchPredictions;
+            };
+            case (?winningTeamId) {
+                let (newMatchPredictions, _) = Trie.put(matchPredictions, userKey, Principal.equal, winningTeamId);
+                newMatchPredictions;
+            };
         };
-        let matchKey = {
-            key = request.matchId;
-            hash = request.matchId;
-        };
-        let (newUserPredictions, _) = Trie.put(userPredictions, matchKey, Nat32.equal, request.prediction);
-        let (newPredictions, _) = Trie.put(predictions, key, Principal.equal, newUserPredictions);
-        predictionsOrNull := ?newPredictions;
+        predictionsBuffer.put(Nat32.toNat(request.matchId), newMatchPredictions);
+
+        predictionsOrNull := ?Buffer.toArray(predictionsBuffer);
         #ok;
+    };
+
+    public shared query ({ caller }) func getUpcomingMatchPredictions() : async Types.UpcomingMatchPredictionsResult {
+
+        let ?predictions = predictionsOrNull else return #noUpcomingMatches;
+        let predictionSummaryBuffer = Buffer.Buffer<Types.UpcomingMatchPrediction>(predictions.size());
+
+        for (matchPredictions in Iter.fromArray(predictions)) {
+            let matchPredictionSummary = {
+                var team1 = 0;
+                var team2 = 0;
+                var yourVote : ?Team.TeamId = null;
+            };
+            for ((userId, userPrediction) in Trie.iter(matchPredictions)) {
+                switch (userPrediction) {
+                    case (#team1) matchPredictionSummary.team1 += 1;
+                    case (#team2) matchPredictionSummary.team2 += 1;
+                };
+                if (userId == caller) {
+                    matchPredictionSummary.yourVote := ?userPrediction;
+                };
+            };
+            predictionSummaryBuffer.add({
+                team1 = matchPredictionSummary.team1;
+                team2 = matchPredictionSummary.team2;
+                yourVote = matchPredictionSummary.yourVote;
+            });
+        };
+
+        #ok(Buffer.toArray(predictionSummaryBuffer));
     };
 
     public shared ({ caller }) func updateLeagueCanisters() : async Types.UpdateLeagueCanistersResult {
@@ -300,6 +334,8 @@ actor LeagueActor {
         switch (startResult) {
             case (#noMatchesSpecified) Debug.trap("No matches specified for match group " # Nat.toText(matchGroupId));
             case (#ok) {
+
+                predictionsOrNull := null; // Close predictions
                 let inProgressMatches = scheduledMatchGroup.matches
                 |> Iter.fromArray(_)
                 |> IterTools.zip(_, Iter.fromArray(startMatchGroupRequest.matches))
@@ -318,31 +354,9 @@ actor LeagueActor {
                                 offering = teamData.offering;
                             };
                         };
-                        // Compile predictions for match
-                        var matchPredictions = Trie.empty<Principal, MatchPrediction.MatchPrediction>();
-                        let predictions = switch (predictionsOrNull) {
+                        let matchPredictions = switch (predictionsOrNull) {
                             case (null) Trie.empty();
-                            case (?predictions) predictions;
-                        };
-                        predictionsOrNull := null; // Close predictions
-                        let matchKey = {
-                            key = Nat32.fromNat(matchId);
-                            hash = Nat32.fromNat(matchId);
-                        };
-                        for ((userId, userMatchPredictions) in Trie.iter(predictions)) {
-                            switch (Trie.get(userMatchPredictions, matchKey, Nat32.equal)) {
-                                case (?prediction) {
-                                    let userKey = {
-                                        key = userId;
-                                        hash = Principal.hash(userId);
-                                    };
-                                    let (newUserPredictions, _) = Trie.put(matchPredictions, userKey, Principal.equal, prediction);
-                                    matchPredictions := newUserPredictions;
-                                };
-                                case (null) {
-                                    // No prediction for this user and match
-                                };
-                            };
+                            case (?predictions) predictions[matchId];
                         };
                         {
                             team1 = mapTeam(match.0.team1, match.1.team1);
@@ -562,7 +576,7 @@ actor LeagueActor {
                     {
                         team1 = m.team1;
                         team2 = m.team2;
-                        offerings = getRandomOfferings(prng, 4);
+                        offeringOptions = getRandomOfferings(prng, 4);
                         aura = getRandomMatchAura(prng);
                     };
                 },
@@ -573,7 +587,8 @@ actor LeagueActor {
         switch (buildSeasonWithUpdatedMatchGroup(matchGroupId, status, inProgressSeason)) {
             case (#ok(inProgressSeason)) {
                 seasonStatus := #inProgress(inProgressSeason);
-                predictionsOrNull := ?Trie.empty(); // Open predictions
+                let matchCount = scheduledMatchGroup.matches.size();
+                predictionsOrNull := ?Array.tabulate(matchCount, func(i : Nat) : Trie.Trie<Principal, Team.TeamId> = Trie.empty()); // Open predictions
             };
             case (#matchGroupNotFound) Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
         };
@@ -799,8 +814,14 @@ actor LeagueActor {
         trie;
     };
 
+    private func getRandomChampions(prng : Prng, count : Nat, allPlayerIds : [Nat32]) : [Nat32] {
+        let playerIdBuffer = Buffer.fromArray<Nat32>(allPlayerIds);
+        prng.shuffleBuffer(playerIdBuffer);
+        Buffer.toArray(Buffer.subBuffer(playerIdBuffer, 0, count));
+    };
+
     private func getRandomOfferings(prng : Prng, count : Nat) : [Offering.OfferingWithMetaData] {
-        // TODO how to get all offerings without missing any
+        // TODO how to get all offerings without missing any, except for reserved ones like #badManagement
         let offerings = Buffer.fromArray<Offering.Offering>([
             #shuffleAndBoost,
             #offensive,

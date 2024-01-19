@@ -46,13 +46,13 @@ export const NotScheduledMatchIdl = IDL.Record({
 export type ScheduledMatch = {
     team1: TeamInfo;
     team2: TeamInfo;
-    offerings: OfferingWithMetaData[];
+    offeringOptions: OfferingWithMetaData[];
     aura: MatchAuraWithMetaData;
 };
 export const ScheduledMatchIdl = IDL.Record({
     team1: TeamInfoIdl,
     team2: TeamInfoIdl,
-    offerings: IDL.Vec(OfferingWithMetaDataIdl),
+    offeringOptions: IDL.Vec(OfferingWithMetaDataIdl),
     aura: MatchAuraWithMetaDataIdl,
 });
 

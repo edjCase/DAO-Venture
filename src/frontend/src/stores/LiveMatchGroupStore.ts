@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { FieldState, LogEntry, MatchGroup, MatchVariant, PlayerState, TeamState, stadiumAgentFactory } from "../ic-agent/Stadium";
+import { BaseState, LogEntry, MatchGroup, MatchVariant, PlayerState, TeamState, stadiumAgentFactory } from "../ic-agent/Stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { Principal } from "@dfinity/principal";
 import { SeasonStatus } from "../models/Season";
@@ -33,7 +33,7 @@ export type LiveMatch = {
 export type LiveMatchState = {
   offenseTeamId: TeamId;
   players: PlayerState[];
-  field: FieldState;
+  bases: BaseState;
   round: number;
   outs: number;
   strikes: number;
@@ -41,8 +41,8 @@ export type LiveMatchState = {
 
 export const liveMatchGroupStore = (() => {
   const { subscribe, set } = writable<LiveMatchGroup | undefined>();
-  let nextMatchTimeout: number;
-  let liveMatchInterval: number;
+  let nextMatchTimeout: any;
+  let liveMatchInterval: any;
 
   const mapTeam = (team: TeamState): LiveTeamDetails => {
     return {
@@ -63,7 +63,7 @@ export const liveMatchGroupStore = (() => {
         liveState: {
           offenseTeamId: match.inProgress.offenseTeamId,
           players: match.inProgress.players,
-          field: match.inProgress.field,
+          bases: match.inProgress.bases,
           round: Number(match.inProgress.round),
           outs: Number(match.inProgress.outs),
           strikes: Number(match.inProgress.strikes)

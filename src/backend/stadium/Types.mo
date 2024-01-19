@@ -94,7 +94,7 @@ module {
         offenseTeamId : Team.TeamId;
         aura : MatchAura.MatchAura;
         players : [PlayerStateWithId];
-        field : FieldState;
+        bases : BaseState;
         log : [LogEntry];
         round : Nat;
         outs : Nat;
@@ -155,7 +155,7 @@ module {
         rightField : PlayerId;
     };
 
-    public type FieldState = {
+    public type BaseState = {
         atBat : PlayerId;
         firstBase : ?PlayerId;
         secondBase : ?PlayerId;

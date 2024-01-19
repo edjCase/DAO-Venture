@@ -60,47 +60,17 @@ export const TeamStateIdl = IDL.Record({
 });
 
 
-export type DefenseFieldState = {
-  firstBase: PlayerId;
-  secondBase: PlayerId;
-  thirdBase: PlayerId;
-  shortStop: PlayerId;
-  pitcher: PlayerId;
-  leftField: PlayerId;
-  centerField: PlayerId;
-  rightField: PlayerId;
-};
-export const DefenseFieldStateIdl = IDL.Record({
-  firstBase: PlayerIdIdl,
-  secondBase: PlayerIdIdl,
-  thirdBase: PlayerIdIdl,
-  shortStop: PlayerIdIdl,
-  pitcher: PlayerIdIdl,
-  leftField: PlayerIdIdl,
-  centerField: PlayerIdIdl,
-  rightField: PlayerIdIdl,
-});
-
-export type OffenseFieldState = {
+export type BaseState = {
   atBat: PlayerId;
   firstBase: [PlayerId] | [];
   secondBase: [PlayerId] | [];
   thirdBase: [PlayerId] | [];
 };
-export const OffenseFieldStateIdl = IDL.Record({
+export const BaseStateIdl = IDL.Record({
   atBat: PlayerIdIdl,
   firstBase: IDL.Opt(PlayerIdIdl),
   secondBase: IDL.Opt(PlayerIdIdl),
   thirdBase: IDL.Opt(PlayerIdIdl),
-});
-
-export type FieldState = {
-  defense: DefenseFieldState;
-  offense: OffenseFieldState;
-};
-export const FieldStateIdl = IDL.Record({
-  defense: DefenseFieldStateIdl,
-  offense: OffenseFieldStateIdl,
 });
 
 export type LogEntry = {
@@ -135,7 +105,7 @@ export type InProgressMatch = {
   offenseTeamId: TeamId;
   aura: MatchAura;
   players: PlayerState[];
-  field: FieldState;
+  bases: BaseState;
   log: LogEntry[];
   round: Nat;
   outs: Nat;
@@ -147,7 +117,7 @@ export const InProgressMatchIdl = IDL.Record({
   team2: TeamStateIdl,
   aura: MatchAuraIdl,
   players: IDL.Vec(PlayerStateIdl),
-  field: FieldStateIdl,
+  bases: BaseStateIdl,
   log: IDL.Vec(LogEntryIdl),
   round: IDL.Nat,
   outs: IDL.Nat,
@@ -239,13 +209,13 @@ export const MatchTeamIdl = IDL.Record({
 export type MatchWithoutState = {
   team1: MatchTeam;
   team2: MatchTeam;
-  offerings: OfferingWithMetaData[];
+  offeringOptions: OfferingWithMetaData[];
   aura: MatchAuraWithMetaData;
 };
 export const MatchWithoutStateIdl = IDL.Record({
   team1: MatchTeamIdl,
   team2: MatchTeamIdl,
-  offerings: IDL.Vec(OfferingWithMetaDataIdl),
+  offeringOptions: IDL.Vec(OfferingWithMetaDataIdl),
   aura: MatchAuraWithMetaDataIdl,
 });
 

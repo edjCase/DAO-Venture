@@ -5,7 +5,6 @@ import Trie "mo:base/Trie";
 import Offering "Offering";
 import MatchAura "MatchAura";
 import Team "Team";
-import MatchPrediction "MatchPrediction";
 
 module {
 
@@ -49,10 +48,12 @@ module {
         matches : [ScheduledMatch];
     };
 
+    public type ScheduledTeamInfo = TeamInfo and {};
+
     public type ScheduledMatch = {
-        team1 : TeamInfo;
-        team2 : TeamInfo;
-        offerings : [Offering.OfferingWithMetaData];
+        team1 : ScheduledTeamInfo;
+        team2 : ScheduledTeamInfo;
+        offeringOptions : [Offering.OfferingWithMetaData];
         aura : MatchAura.MatchAuraWithMetaData;
     };
 
@@ -71,7 +72,7 @@ module {
         team1 : InProgressTeam;
         team2 : InProgressTeam;
         aura : MatchAura.MatchAura;
-        predictions : Trie.Trie<Principal, MatchPrediction.MatchPrediction>;
+        predictions : Trie.Trie<Principal, Team.TeamId>;
     };
 
     public type CompletedMatchTeam = TeamInfo and {
@@ -89,7 +90,7 @@ module {
     };
 
     public type CompletedMatch = CompletedMatchWithoutPredictions and {
-        predictions : Trie.Trie<Principal, MatchPrediction.MatchPrediction>;
+        predictions : Trie.Trie<Principal, Team.TeamId>;
     };
 
     public type LogEntry = {

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import VoteForMatchGroup from "../match/VoteForMatchGroup.svelte";
   import MatchGroupCardGrid from "../match/MatchGroupCardGrid.svelte";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import { MatchGroupDetails } from "../../models/Match";
@@ -30,20 +29,9 @@
         <div>Match Group is LIVE!</div>
       {/if}
       {#if matchGroup.state == "Scheduled"}
+        <h1>Predict the upcoming match-up winners</h1>
         {#each matchGroup.matches as match}
-          <h1>Predict</h1>
           <PredictMatchOutcome {match} />
-          <h1>Vote: {match.team1.name} vs {match.team2.name}</h1>
-          <div class="match-vote">
-            <div class="team-vote">
-              <h1>{match.team1.name}</h1>
-              <VoteForMatchGroup {matchGroupId} teamId={match.team1.id} />
-            </div>
-            <div class="team-vote">
-              <h1>{match.team2.name}</h1>
-              <VoteForMatchGroup {matchGroupId} teamId={match.team2.id} />
-            </div>
-          </div>
         {/each}
       {:else}
         <MatchGroupCardGrid {matchGroup} />
@@ -62,13 +50,5 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-  }
-  .match-vote {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-  .team-vote {
-    margin: 20px;
   }
 </style>

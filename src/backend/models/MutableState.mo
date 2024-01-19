@@ -23,7 +23,7 @@ module {
         positions : StadiumTypes.TeamPositions;
     };
 
-    public type MutableFieldState = {
+    public type MutableBaseState = {
         var atBat : Player.PlayerId;
         var firstBase : ?Player.PlayerId;
         var secondBase : ?Player.PlayerId;
@@ -37,7 +37,7 @@ module {
         aura : MatchAura.MatchAura;
         var players : TrieMap.TrieMap<Player.PlayerId, MutablePlayerState>;
         var log : Buffer.Buffer<StadiumTypes.LogEntry>;
-        var field : MutableFieldState;
+        var bases : MutableBaseState;
         var round : Nat;
         var outs : Nat;
         var strikes : Nat;
@@ -123,11 +123,11 @@ module {
         )
         |> TrieMap.fromEntries<Nat32, MutablePlayerState>(_, Nat32.equal, func(h : Nat32) : Nat32 = h);
 
-        let field = {
-            var atBat = state.field.atBat;
-            var firstBase = state.field.firstBase;
-            var secondBase = state.field.secondBase;
-            var thirdBase = state.field.thirdBase;
+        let bases = {
+            var atBat = state.bases.atBat;
+            var firstBase = state.bases.firstBase;
+            var secondBase = state.bases.secondBase;
+            var thirdBase = state.bases.thirdBase;
         };
         let log = Buffer.fromArray<StadiumTypes.LogEntry>(state.log);
         {
@@ -136,7 +136,7 @@ module {
             var team2 = toMutableTeam(state.team2);
             var players = players;
             aura = state.aura;
-            var field = field;
+            var bases = bases;
             var log = log;
             var round = state.round;
             var outs = state.outs;

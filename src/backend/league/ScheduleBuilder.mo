@@ -12,18 +12,34 @@ import Team "../models/Team";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type Match = {
+    public type RegularMatch = {
         team1Id : Principal;
         team2Id : Principal;
     };
 
-    public type MatchGroup = {
+    public type RegularMatchGroup = {
         time : Time.Time;
-        matches : [Match];
+        matches : [RegularMatch];
+    };
+
+    public type PlayoffTeam = {
+        #standing : Nat;
+        #winnerOf : Nat; // Match Id of last match group
+    };
+
+    public type PlayoffMatch = {
+        team1 : PlayoffTeam;
+        team2 : PlayoffTeam;
+    };
+
+    public type PlayoffMatchGroup = {
+        time : Time.Time;
+        matches : [PlayoffMatch];
     };
 
     public type SeasonSchedule = {
-        matchGroups : [MatchGroup];
+        regularSeason : [RegularMatchGroup];
+        playoffs : [PlayoffMatchGroup];
     };
 
     public type BuildScheduleResult = {
@@ -53,13 +69,13 @@ module {
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
         var nextMatchDate = DateTime.fromTime(startTime);
 
-        let matchGroupSchedules = Buffer.Buffer<MatchGroup>(weekCount);
+        let regularMatchGroups = Buffer.Buffer<RegularMatchGroup>(weekCount);
         for (weekIndex in IterTools.range(0, weekCount)) {
 
-            let matches : [Match] = IterTools.range(0, matchUpCountPerWeek)
+            let matches : [RegularMatch] = IterTools.range(0, matchUpCountPerWeek)
             |> Iter.map(
                 _,
-                func(i : Nat) : Match {
+                func(i : Nat) : RegularMatch {
                     let team1Id = teamOrderForWeek.get(i);
                     let team2Id = teamOrderForWeek.get(teamCount - 1 - i); // First plays last, second plays second last, etc.
                     {
@@ -69,7 +85,7 @@ module {
                 },
             )
             |> Iter.toArray(_);
-            matchGroupSchedules.add({
+            regularMatchGroups.add({
                 time = nextMatchDate.toTime();
                 matches = matches;
             });
@@ -89,8 +105,86 @@ module {
             teamOrderForWeek := newOrder;
         };
 
+        let playoffMatchGroups = Buffer.Buffer<PlayoffMatchGroup>(4);
+        let addPlayoffRound = func(matches : [PlayoffMatch]) {
+            playoffMatchGroups.add({
+                time = nextMatchDate.toTime();
+                matches = matches;
+            });
+            nextMatchDate := nextMatchDate.add(timeBetweenMatchGroups);
+        };
+        let nextPowerOfTwo = findNextPowerOfTwo(teamCount);
+        let byteTeamCount : Nat = nextPowerOfTwo - teamCount; // Number of teams that get a bye in the first round
+
+        // Split the teams up into two halves, but exclude the teams that get a bye in the first round
+        let teamsInFirstRound = IterTools.range(byteTeamCount + 1, teamCount + 1);
+        let (firstHalfOfTeams, secondHalfOfTeams) = teamsInFirstRound
+        |> Buffer.fromIter<Nat>(_)
+        |> Buffer.split(_, nextPowerOfTwo / 2);
+        // Reverse the second half to pair first - last, second - second last, etc.
+        Buffer.reverse(secondHalfOfTeams);
+        let firstRoundMatches = IterTools.zip(firstHalfOfTeams.vals(), secondHalfOfTeams.vals())
+        |> Iter.map(
+            _,
+            func((team1Standing, team2Standing) : (Nat, Nat)) : PlayoffMatch {
+                {
+                    team1 = #standing(team1Standing);
+                    team2 = #standing(team2Standing);
+                };
+            },
+        )
+        |> Iter.toArray(_);
+
+        // First Round
+        addPlayoffRound(firstRoundMatches);
+
+        // If there are byes, then make a second round
+        if (byteTeamCount > 0) {
+            let byeTeams = IterTools.range(0, byteTeamCount);
+
+            // Second round has the top teams against the winners of the first round
+            // If team count is not a power of two, then some teams get a bye in the first round
+            let secondRoundMatches = byeTeams
+            |> IterTools.mapEntries(
+                _,
+                func(index : Nat, byeTeamStanding : Nat) : PlayoffMatch {
+                    {
+                        team1 = #standing(byeTeamStanding);
+                        team2 = #winnerOf(index);
+                    };
+                },
+            )
+            |> Iter.toArray(_);
+            addPlayoffRound(secondRoundMatches);
+        };
+
+        label l loop {
+            // Loop, halving the number of matches each time, until there is only one match left
+            let lastMatchCount = playoffMatchGroups.get(playoffMatchGroups.size() - 1).matches.size();
+            if (lastMatchCount <= 1) {
+                break l;
+            };
+            let nextRoundMatches = Buffer.Buffer<PlayoffMatch>(lastMatchCount / 2);
+            for (i in IterTools.range(0, lastMatchCount / 2)) {
+                nextRoundMatches.add({
+                    team1 = #winnerOf(i * 2);
+                    team2 = #winnerOf(i * 2 + 1);
+                });
+            };
+            addPlayoffRound(Buffer.toArray(nextRoundMatches));
+        };
+
         #ok({
-            matchGroups = Buffer.toArray(matchGroupSchedules);
+            regularSeason = Buffer.toArray(regularMatchGroups);
+            playoffs = Buffer.toArray(playoffMatchGroups);
         });
+    };
+
+    private func findNextPowerOfTwo(number : Nat) : Nat {
+        var count : Nat = 1;
+        while (count < number) {
+            count := count * 2;
+        };
+        return count;
     };
 };

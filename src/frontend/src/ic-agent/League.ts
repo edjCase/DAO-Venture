@@ -7,7 +7,7 @@ import { SeasonStatus, SeasonStatusIdl } from '../models/Season';
 import { Offering, OfferingIdl } from '../models/Offering';
 import { MatchAura, MatchAuraIdl } from '../models/MatchAura';
 import { Player, PlayerIdl } from './PlayerLedger';
-import { Team, TeamIdOrTie, TeamIdOrTieIdl, TeamIdl } from '../models/Team';
+import { Team, TeamId, TeamIdIdl, TeamIdl } from '../models/Team';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -148,20 +148,14 @@ export const MintResultIdl = IDL.Variant({
   notAuthorized: IDL.Null,
 });
 
-export type MatchPrediction = {
-  winner: TeamIdOrTie;
-};
-export const MatchPredictionIdl = IDL.Record({
-  winner: TeamIdOrTieIdl
-});
 
 export type PredictMatchOutcomeRequest = {
   matchId: Nat32;
-  prediction: MatchPrediction;
+  winner: [TeamId] | [];
 };
 export const PredictMatchOutcomeRequestIdl = IDL.Record({
   matchId: IDL.Nat32,
-  prediction: MatchPredictionIdl,
+  winner: IDL.Opt(TeamIdIdl),
 });
 
 export type PredictMatchOutcomeResult =
@@ -193,6 +187,26 @@ export const UpdateLeagueCanistersResultIdl = IDL.Variant({
   notAuthorized: IDL.Null,
 });
 
+export type UpcomingMatchPrediction = {
+  team1: Nat;
+  team2: Nat;
+  yourVote: [TeamId] | [];
+};
+export const UpcomingMatchPredictionIdl = IDL.Record({
+  team1: IDL.Nat,
+  team2: IDL.Nat,
+  yourVote: IDL.Opt(TeamIdIdl),
+});
+
+export type UpcomingMatchPredictionsResult =
+  | { ok: UpcomingMatchPrediction[] }
+  | { noUpcomingMatches: null };
+export const UpcomingMatchPredictionsResultIdl = IDL.Variant({
+  ok: IDL.Vec(UpcomingMatchPredictionIdl),
+  noUpcomingMatches: IDL.Null,
+});
+
+
 export interface _SERVICE {
   'getTeams': ActorMethod<[], Array<Team>>,
   'getSeasonStatus': ActorMethod<[], SeasonStatus>,
@@ -200,6 +214,7 @@ export interface _SERVICE {
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'predictMatchOutcome': ActorMethod<[PredictMatchOutcomeRequest], PredictMatchOutcomeResult>;
+  'getUpcomingMatchPredictions': ActorMethod<[], UpcomingMatchPredictionsResult>,
   'updateLeagueCanisters': ActorMethod<[], UpdateLeagueCanistersResult>,
 }
 
@@ -214,6 +229,7 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
     'predictMatchOutcome': IDL.Func([PredictMatchOutcomeRequestIdl], [PredictMatchOutcomeResultIdl], []),
+    'getUpcomingMatchPredictions': IDL.Func([], [UpcomingMatchPredictionsResultIdl], ['query']),
     'updateLeagueCanisters': IDL.Func([], [UpdateLeagueCanistersResultIdl], []),
   });
 };

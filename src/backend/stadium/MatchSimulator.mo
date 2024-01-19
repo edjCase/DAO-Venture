@@ -111,7 +111,7 @@ module {
             aura = aura;
             log = Buffer.toArray(log);
             players = Buffer.toArray(players);
-            field = {
+            bases = {
                 atBat = atBatPlayer.id;
                 firstBase = null;
                 secondBase = null;
@@ -320,11 +320,11 @@ module {
                 )
             );
 
-            let field = {
-                atBat = state.field.atBat;
-                firstBase = state.field.firstBase;
-                secondBase = state.field.secondBase;
-                thirdBase = state.field.thirdBase;
+            let bases = {
+                atBat = state.bases.atBat;
+                firstBase = state.bases.firstBase;
+                secondBase = state.bases.secondBase;
+                thirdBase = state.bases.thirdBase;
             };
             let log : [LogEntry] = Buffer.toArray(state.log);
             {
@@ -335,7 +335,7 @@ module {
                 offenseTeamId = state.offenseTeamId;
                 aura = state.aura;
                 players = players;
-                field = field;
+                bases = bases;
                 round = state.round;
                 outs = state.outs;
                 strikes = state.strikes;
@@ -508,16 +508,16 @@ module {
         };
 
         private func getBaseOfPlayer(playerId : PlayerId) : ?Base.Base {
-            if (state.field.firstBase == ?playerId) {
+            if (state.bases.firstBase == ?playerId) {
                 return ? #firstBase;
             };
-            if (state.field.secondBase == ?playerId) {
+            if (state.bases.secondBase == ?playerId) {
                 return ? #secondBase;
             };
-            if (state.field.thirdBase == ?playerId) {
+            if (state.bases.thirdBase == ?playerId) {
                 return ? #thirdBase;
             };
-            if (state.field.atBat == playerId) {
+            if (state.bases.atBat == playerId) {
                 return ? #homeBase;
             };
             null;
@@ -528,10 +528,10 @@ module {
             #playerNotFound : StadiumTypes.PlayerNotFoundError;
         } {
             let playerId = switch (base) {
-                case (#firstBase) state.field.firstBase;
-                case (#secondBase) state.field.secondBase;
-                case (#thirdBase) state.field.thirdBase;
-                case (#homeBase) ?state.field.atBat;
+                case (#firstBase) state.bases.firstBase;
+                case (#secondBase) state.bases.secondBase;
+                case (#thirdBase) state.bases.thirdBase;
+                case (#homeBase) ?state.bases.atBat;
             };
             switch (playerId) {
                 case (null) #ok(null);
@@ -627,7 +627,7 @@ module {
         private func swing(pitchRoll : Hook.SkillTestResult) : SimulationResult {
             let swingRollResult = roll(
                 #d10,
-                state.field.atBat,
+                state.bases.atBat,
                 #battingAccuracy,
                 ?compiledHooks.onSwing,
             );
@@ -661,7 +661,7 @@ module {
             });
             let hitPowerRollResult = roll(
                 #d10,
-                state.field.atBat,
+                state.bases.atBat,
                 #battingPower,
                 ?compiledHooks.onHit,
             );
@@ -762,14 +762,14 @@ module {
                     isImportant = true;
                 });
                 // Ball caught, batter is out
-                out(state.field.atBat);
+                out(state.bases.atBat);
             };
         };
 
         private func batterRun({
             ballLocation : ?FieldPosition.FieldPosition;
         }) : SimulationResult {
-            let battingPlayerState = switch (getPlayerState(state.field.atBat)) {
+            let battingPlayerState = switch (getPlayerState(state.bases.atBat)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
             };
@@ -788,27 +788,27 @@ module {
             switch (ballLocation) {
                 case (null) {
                     // Home run
-                    let thirdBaseRun = runPlayerToBase(state.field.secondBase, #thirdBase, #homeBase);
+                    let thirdBaseRun = runPlayerToBase(state.bases.secondBase, #thirdBase, #homeBase);
                     let #inProgress = thirdBaseRun else return thirdBaseRun;
 
-                    let secondBaseRun = runPlayerToBase(state.field.firstBase, #secondBase, #homeBase);
+                    let secondBaseRun = runPlayerToBase(state.bases.firstBase, #secondBase, #homeBase);
                     let #inProgress = secondBaseRun else return secondBaseRun;
 
-                    let firstBaseRun = runPlayerToBase(state.field.firstBase, #firstBase, #homeBase);
+                    let firstBaseRun = runPlayerToBase(state.bases.firstBase, #firstBase, #homeBase);
                     let #inProgress = firstBaseRun else return firstBaseRun;
 
-                    runPlayerToBase(?state.field.atBat, #homeBase, #homeBase);
+                    runPlayerToBase(?state.bases.atBat, #homeBase, #homeBase);
                 };
                 case (?l) {
                     // TODO the other bases should be able to get out, but they just run free right now
 
-                    let thirdBaseRun = runPlayerToBase(state.field.secondBase, #thirdBase, #homeBase);
+                    let thirdBaseRun = runPlayerToBase(state.bases.secondBase, #thirdBase, #homeBase);
                     let #inProgress = thirdBaseRun else return thirdBaseRun;
 
-                    let secondBaseRun = runPlayerToBase(state.field.firstBase, #secondBase, #thirdBase);
+                    let secondBaseRun = runPlayerToBase(state.bases.firstBase, #secondBase, #thirdBase);
                     let #inProgress = secondBaseRun else return secondBaseRun;
 
-                    let firstBaseRun = runPlayerToBase(state.field.firstBase, #firstBase, #secondBase);
+                    let firstBaseRun = runPlayerToBase(state.bases.firstBase, #firstBase, #secondBase);
                     let #inProgress = firstBaseRun else return firstBaseRun;
 
                     let playerIdWithBall = getPlayerAtPosition(l);
@@ -828,7 +828,7 @@ module {
                             isImportant = true;
                         });
                         playerMovedBases({
-                            playerId = state.field.atBat;
+                            playerId = state.bases.atBat;
                             fromBase = #homeBase;
                             toBase = #firstBase;
                         });
@@ -837,7 +837,7 @@ module {
                             case (#ok(p)) p;
                             case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                         };
-                        let battingPlayer = switch (getPlayerState(state.field.atBat)) {
+                        let battingPlayer = switch (getPlayerState(state.bases.atBat)) {
                             case (#ok(p)) p;
                             case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                         };
@@ -845,7 +845,7 @@ module {
                             message = "Player " # catchingPlayer.name # " hit " # battingPlayer.name # "!";
                             isImportant = true;
                         });
-                        let battingPlayerState = switch (getPlayerState(state.field.atBat)) {
+                        let battingPlayerState = switch (getPlayerState(state.bases.atBat)) {
                             case (#ok(p)) p;
                             case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
                         };
@@ -858,12 +858,12 @@ module {
                                 case (8) #brokenArm;
                                 case (_) #concussion;
                             };
-                            switch (injurePlayer({ playerId = state.field.atBat; injury = newInjury })) {
+                            switch (injurePlayer({ playerId = state.bases.atBat; injury = newInjury })) {
                                 case (#endMatch(m)) return #endMatch(m);
                                 case (#inProgress) {};
                             };
                         };
-                        switch (out(state.field.atBat)) {
+                        switch (out(state.bases.atBat)) {
                             case (#endMatch(m)) #endMatch(m);
                             case (#inProgress) #inProgress;
                         };
@@ -882,7 +882,7 @@ module {
                 isImportant = false;
             });
             if (state.strikes >= 3) {
-                out(state.field.atBat);
+                out(state.bases.atBat);
             } else {
                 #inProgress;
             };
@@ -911,9 +911,9 @@ module {
             playerId : PlayerId;
         }) : SimulationResult {
             switch (toBase) {
-                case (#firstBase) state.field.firstBase := ?playerId;
-                case (#secondBase) state.field.secondBase := ?playerId;
-                case (#thirdBase) state.field.thirdBase := ?playerId;
+                case (#firstBase) state.bases.firstBase := ?playerId;
+                case (#secondBase) state.bases.secondBase := ?playerId;
+                case (#thirdBase) state.bases.thirdBase := ?playerId;
                 // TODO should this be legal?
                 case (#homeBase) {
                     score({ teamId = state.offenseTeamId; amount = 1 });
@@ -942,7 +942,7 @@ module {
 
             let ?atBat = getRandomAvailablePlayer(?newOffenseTeamId, null, false) else return #endMatch(#outOfPlayers(newOffenseTeamId));
 
-            state.field := {
+            state.bases := {
                 var atBat = atBat;
                 var firstBase = null;
                 var secondBase = null;
@@ -1092,14 +1092,14 @@ module {
 
         private func clearBase(base : Base.Base) : SimulationResult {
             switch (base) {
-                case (#firstBase) state.field.firstBase := null;
-                case (#secondBase) state.field.secondBase := null;
-                case (#thirdBase) state.field.thirdBase := null;
+                case (#firstBase) state.bases.firstBase := null;
+                case (#secondBase) state.bases.secondBase := null;
+                case (#thirdBase) state.bases.thirdBase := null;
                 case (#homeBase) {
                     let ?nextBatterId = getRandomAvailablePlayer(?state.offenseTeamId, null, true) else {
                         return #endMatch(#outOfPlayers(state.offenseTeamId));
                     };
-                    state.field.atBat := nextBatterId;
+                    state.bases.atBat := nextBatterId;
                     let nextBatter = switch (getPlayerState(nextBatterId)) {
                         case (#ok(p)) p;
                         case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));

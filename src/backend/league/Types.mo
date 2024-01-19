@@ -7,7 +7,6 @@ import MatchAura "../models/MatchAura";
 import Offering "../models/Offering";
 import Team "../models/Team";
 import Season "../models/Season";
-import MatchPrediction "../models/MatchPrediction";
 
 module {
     public type LeagueActor = actor {
@@ -19,6 +18,7 @@ module {
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
+        getUpcomingMatchPredictions : () -> async UpcomingMatchPredictionsResult;
         updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
@@ -37,6 +37,17 @@ module {
         #notAuthorized;
     };
 
+    public type UpcomingMatchPredictionsResult = {
+        #ok : [UpcomingMatchPrediction];
+        #noUpcomingMatches;
+    };
+
+    public type UpcomingMatchPrediction = {
+        team1 : Nat;
+        team2 : Nat;
+        yourVote : ?Team.TeamId;
+    };
+
     public type UpdateLeagueCanistersResult = {
         #ok;
         #notAuthorized;
@@ -44,7 +55,7 @@ module {
 
     public type PredictMatchOutcomeRequest = {
         matchId : Nat32;
-        prediction : MatchPrediction.MatchPrediction;
+        winner : ?Team.TeamId;
     };
 
     public type PredictMatchOutcomeResult = {

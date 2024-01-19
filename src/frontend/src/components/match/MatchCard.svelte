@@ -38,11 +38,14 @@
     let playerId: number;
     let emoji: string;
     if (team in state.offenseTeamId) {
-      playerId = state.field.offense.atBat;
+      playerId = state.bases.atBat;
       // Batter emoji
       emoji = "🏏";
     } else {
-      playerId = state.field.defense.pitcher;
+      playerId =
+        state.players.find(
+          (p) => "pitcher" in p.position && p.teamId == state.offenseTeamId
+        )?.id || 0;
       // Pitcher emoji
       emoji = "⚾";
     }
@@ -70,7 +73,7 @@
     {#if match.state == "InProgress"}
       {#if liveMatch}
         {#if !!liveMatch.liveState}
-          <Bases state={liveMatch.liveState.field.offense} />
+          <Bases state={liveMatch.liveState.bases} />
         {/if}
       {:else}
         Loading...

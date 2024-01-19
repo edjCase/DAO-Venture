@@ -73,7 +73,7 @@ shared (install) actor class TeamActor(
     };
 
     let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let offeringExists = IterTools.any(matchGroupData.offerings.vals(), func(o : Offering.OfferingWithMetaData) : Bool = o.offering == request.offering);
+    let offeringExists = IterTools.any(matchGroupData.offeringOptions.vals(), func(o : Offering.OfferingWithMetaData) : Bool = o.offering == request.offering);
     if (not offeringExists) {
       errors.add(#invalidOffering(request.offering));
     };
