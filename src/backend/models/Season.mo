@@ -79,7 +79,6 @@ module {
 
     public type InProgressTeam = TeamInfo and {
         offering : Offering.Offering;
-        championId : Nat32;
     };
 
     public type InProgressMatch = {
@@ -91,7 +90,6 @@ module {
 
     public type CompletedMatchTeam = TeamInfo and {
         offering : Offering.Offering;
-        championId : Nat32;
         score : Int;
     };
     public type CompletedMatchWithoutPredictions = {

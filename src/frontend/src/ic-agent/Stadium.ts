@@ -48,7 +48,6 @@ export type TeamState = {
   logoUrl: Text;
   score: Int;
   offering: Offering;
-  championId: PlayerId;
 };
 export const TeamStateIdl = IDL.Record({
   id: IDL.Principal,
@@ -56,7 +55,6 @@ export const TeamStateIdl = IDL.Record({
   logoUrl: IDL.Text,
   score: IDL.Int,
   offering: OfferingIdl,
-  championId: PlayerIdIdl,
 });
 
 

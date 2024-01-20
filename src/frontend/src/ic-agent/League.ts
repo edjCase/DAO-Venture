@@ -21,12 +21,10 @@ export type Text = string;
 
 export type TeamStartData = {
   offering: Offering;
-  championId: Nat32;
   players: Player[];
 };
 export const TeamStartDataIdl = IDL.Record({
   offering: OfferingIdl,
-  championId: IDL.Nat32,
   players: IDL.Vec(PlayerIdl),
 });
 

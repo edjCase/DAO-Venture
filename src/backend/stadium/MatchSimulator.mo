@@ -53,7 +53,6 @@ module {
 
     type MatchEndReason = {
         #noMoreRounds;
-        #outOfPlayers : Team.TeamIdOrBoth;
         #stateBroken : StadiumTypes.BrokenStateError;
     };
 
@@ -62,7 +61,6 @@ module {
         name : Text;
         logoUrl : Text;
         offering : Offering.Offering;
-        championId : PlayerId;
         positions : {
             firstBase : Player.TeamPlayerWithId;
             secondBase : Player.TeamPlayerWithId;
@@ -169,7 +167,6 @@ module {
             logoUrl = team.logoUrl;
             score = 0;
             offering = team.offering;
-            championId = team.championId;
             positions = {
                 pitcher = team.positions.pitcher.id;
                 firstBase = team.positions.firstBase.id;
@@ -288,7 +285,6 @@ module {
                 logoUrl = team.logoUrl;
                 score = team.score;
                 offering = team.offering;
-                championId = team.championId;
                 positions = team.positions;
             };
         };
@@ -354,31 +350,6 @@ module {
                     };
                     (winner, "Match ended due to no more rounds", null);
                 };
-                case (#outOfPlayers(teamId)) {
-                    switch (teamId) {
-                        case (#bothTeams) {
-                            (
-                                #tie,
-                                "Match ended due to both teams running out of players",
-                                null,
-                            );
-                        };
-                        case (#team1) {
-                            (
-                                #team1,
-                                "Match ended due to team '" # getTeamState(#team1).name # "' running out of players",
-                                null,
-                            );
-                        };
-                        case (#team2) {
-                            (
-                                #team2,
-                                "Match ended due to team '" # getTeamState(#team2).name # "' running out of players",
-                                null,
-                            );
-                        };
-                    };
-                };
                 case (#stateBroken(e)) {
                     let error = debug_show (e); // TODO
                     (
@@ -418,63 +389,27 @@ module {
             };
         };
 
-        private func getRandomAvailablePlayer(teamId : ?Team.TeamId, position : ?FieldPosition.FieldPosition, notOnField : Bool) : ?PlayerId {
-            // get random player
-            let availablePlayers = getAvailablePlayers(teamId, position, notOnField);
-            if (availablePlayers.size() < 1) {
-                return null;
-            };
-            let randomIndex = prng.nextNat(0, availablePlayers.size() - 1);
-            ?availablePlayers.get(randomIndex);
+        private func getNextBatter() : PlayerId {
 
-        };
-
-        private func getAvailablePlayers(
-            teamId : ?Team.TeamId,
-            position : ?FieldPosition.FieldPosition,
-            notOnField : Bool,
-        ) : Buffer.Buffer<PlayerId> {
-
-            var playersIter : Iter.Iter<(PlayerId, MutableState.MutablePlayerState)> = state.players.entries()
+            let playerBuffer = state.players.entries()
             // Only good condition players
-            |> Iter.filter(_, func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool = p.1.condition == #ok);
-            if (notOnField) {
-                // Only players not on the field
-                playersIter := Iter.filter(
-                    playersIter,
-                    func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool {
-                        getDefensePositionOfPlayer(p.0) == null and getBaseOfPlayer(p.0) == null;
-                    },
-                );
-            };
-
-            switch (teamId) {
-                case (null) {};
-                case (?t) {
-                    // Only players on the specified team
-                    playersIter := Iter.filter(playersIter, func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool = p.1.teamId == t);
-                };
-            };
-            switch (position) {
-                case (null) {};
-                case (?po) {
-                    // Only players assigned to a certain position
-                    playersIter := Iter.filter(playersIter, func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool = p.1.position == po);
-                };
-            };
-            playersIter
+            |> Iter.filter(
+                _,
+                func(p : (PlayerId, MutableState.MutablePlayerState)) : Bool {
+                    p.1.teamId == state.offenseTeamId and getBaseOfPlayer(p.0) == null;
+                },
+            )
             |> Iter.map(_, func(p : (PlayerId, MutableState.MutablePlayerState)) : PlayerId = p.0)
-            |> Buffer.fromIter(_);
+            |> Buffer.fromIter<PlayerId>(_);
+
+            prng.nextBufferElement(playerBuffer);
         };
 
         private func getPlayerState(playerId : PlayerId) : {
             #ok : MutableState.MutablePlayerState;
-            #playerNotFound : StadiumTypes.PlayerNotFoundError;
+            #playerNotFound : PlayerId;
         } {
-            let ?player = state.players.get(playerId) else return #playerNotFound({
-                id = playerId;
-                teamId = null;
-            });
+            let ?player = state.players.get(playerId) else return #playerNotFound(playerId);
             #ok(player);
         };
 
@@ -525,7 +460,7 @@ module {
 
         private func getPlayerAtBase(base : Base.Base) : {
             #ok : ?MutableState.MutablePlayerState;
-            #playerNotFound : StadiumTypes.PlayerNotFoundError;
+            #playerNotFound : PlayerId;
         } {
             let playerId = switch (base) {
                 case (#firstBase) state.bases.firstBase;
@@ -549,7 +484,7 @@ module {
             hook : ?Hook.Hook<Hook.SkillTestContext>,
         ) : {
             #ok : Hook.SkillTestResult;
-            #playerNotFound : StadiumTypes.PlayerNotFoundError;
+            #playerNotFound : PlayerId;
         } {
             let (min, max) = switch (type_) {
                 case (#d10)(0, 10);
@@ -561,11 +496,40 @@ module {
                 roll := prng.nextNat(min, max);
             };
             let defensiveTeam = getDefenseTeamState();
-            let pitcherState = switch (getPlayerState(defensiveTeam.positions.pitcher)) {
+            let playerState = switch (getPlayerState(defensiveTeam.positions.pitcher)) {
                 case (#ok(p)) p;
                 case (#playerNotFound(e)) return #playerNotFound(e);
             };
-            let modifier = MutableState.getPlayerSkill(pitcherState.skills, skill);
+            let playerSkills : MutableState.MutablePlayerSkills = switch (playerState.condition) {
+                case (#ok) playerState.skills;
+                case (#injured(_)) {
+                    // TODO different values for different injuries
+                    {
+                        var battingPower = playerState.skills.battingPower - 1;
+                        var battingAccuracy = playerState.skills.battingAccuracy - 1;
+                        var throwingPower = playerState.skills.throwingPower - 1;
+                        var throwingAccuracy = playerState.skills.throwingAccuracy - 1;
+                        var catching = playerState.skills.catching - 1;
+                        var defense = playerState.skills.defense - 1;
+                        var piety = playerState.skills.piety - 1;
+                        var speed = playerState.skills.speed - 1;
+                    };
+                };
+                case (#dead) {
+                    // TODO 'placeholder construct' skills
+                    {
+                        var battingPower = 0;
+                        var battingAccuracy = 0;
+                        var throwingPower = 0;
+                        var throwingAccuracy = 0;
+                        var catching = 0;
+                        var defense = 0;
+                        var piety = 0;
+                        var speed = 0;
+                    };
+                };
+            };
+            let modifier = MutableState.getPlayerSkill(playerSkills, skill);
             let modifiedRoll = roll + modifier;
             let postHookValue = switch (hook) {
                 case (null) { { value = modifiedRoll; crit = crit } };
@@ -940,7 +904,7 @@ module {
             };
             state.offenseTeamId := newOffenseTeamId;
 
-            let ?atBat = getRandomAvailablePlayer(?newOffenseTeamId, null, false) else return #endMatch(#outOfPlayers(newOffenseTeamId));
+            let atBat = getNextBatter();
 
             state.bases := {
                 var atBat = atBat;
@@ -1096,9 +1060,7 @@ module {
                 case (#secondBase) state.bases.secondBase := null;
                 case (#thirdBase) state.bases.thirdBase := null;
                 case (#homeBase) {
-                    let ?nextBatterId = getRandomAvailablePlayer(?state.offenseTeamId, null, true) else {
-                        return #endMatch(#outOfPlayers(state.offenseTeamId));
-                    };
+                    let nextBatterId = getNextBatter();
                     state.bases.atBat := nextBatterId;
                     let nextBatter = switch (getPlayerState(nextBatterId)) {
                         case (#ok(p)) p;

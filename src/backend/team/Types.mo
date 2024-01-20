@@ -35,12 +35,10 @@ module {
 
     public type MatchVoteResult = {
         offeringVotes : Trie.Trie<Offering.Offering, Nat>;
-        championVotes : Trie.Trie<Player.PlayerId, Nat>;
     };
 
     public type MatchGroupVoteResult = {
         offering : Offering.Offering;
-        championId : Player.PlayerId;
     };
 
     public type GetMatchGroupVoteResult = {
@@ -56,7 +54,6 @@ module {
 
     public type MatchGroupVote = {
         offering : Offering.Offering;
-        championId : Player.PlayerId;
     };
 
     public type VoteOnMatchGroupRequest = MatchGroupVote and {
@@ -75,7 +72,6 @@ module {
     };
 
     public type InvalidVoteError = {
-        #invalidChampionId : Player.PlayerId;
         #invalidOffering : Offering.Offering;
     };
 };

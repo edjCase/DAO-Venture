@@ -77,18 +77,6 @@ shared (install) actor class TeamActor(
     if (not offeringExists) {
       errors.add(#invalidOffering(request.offering));
     };
-    // TODO check for valid champion here vs when calculating votes?
-    // let teamPlayers : [Stadium.MatchPlayer] = if (match.team1Id == teamId) {
-    //   match.team1.players;
-    // } else if (match.team2.id == teamId) {
-    //   match.team2.players;
-    // } else {
-    //   return #teamNotInMatchGroup;
-    // };
-    // let championExists = IterTools.any(teamPlayers.vals(), func(p : Stadium.MatchPlayer) : Bool = p.id == request.championId);
-    // if (not championExists) {
-    //   errors.add(#invalidChampionId(request.championId));
-    // };
     if (errors.size() > 0) {
       return #invalid(Buffer.toArray(errors));
     };
@@ -126,10 +114,9 @@ shared (install) actor class TeamActor(
     switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
       case (null) #noVotes;
       case (?o) {
-        let ?{ offering; championId } = calculateVotes(o) else return #noVotes;
+        let ?{ offering } = calculateVotes(o) else return #noVotes;
         #ok({
           offering = offering;
-          championId = championId;
         });
       };
     };
@@ -154,10 +141,8 @@ shared (install) actor class TeamActor(
 
   private func calculateVotes(matchVotes : Trie.Trie<Principal, Types.MatchGroupVote>) : ?{
     offering : Offering;
-    championId : PlayerId;
   } {
     var offeringVotes = Trie.empty<Offering, Nat>();
-    var championVotes = Trie.empty<PlayerId, Nat>();
     for ((userId, vote) in Trie.iter(matchVotes)) {
       // Offering
       let userVotingPower = 1; // TODO
@@ -166,17 +151,10 @@ shared (install) actor class TeamActor(
         hash = Offering.hash(vote.offering);
       };
       offeringVotes := addVotes(offeringVotes, offeringKey, Offering.equal, userVotingPower);
-      let championKey = {
-        key = vote.championId;
-        hash = vote.championId;
-      };
-      championVotes := addVotes(championVotes, championKey, Nat32.equal, userVotingPower);
     };
     let ?winningOffering = calculateVote(offeringVotes) else return null;
-    let ?winningChampionId = calculateVote(championVotes) else return null;
     ?{
       offering = winningOffering;
-      championId = winningChampionId;
     };
   };
 

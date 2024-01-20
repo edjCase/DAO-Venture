@@ -365,7 +365,6 @@ actor LeagueActor {
                                 id = team.id;
                                 name = team.name;
                                 logoUrl = team.logoUrl;
-                                championId = teamData.championId;
                                 offering = teamData.offering;
                             };
                         };
@@ -621,7 +620,7 @@ actor LeagueActor {
                     let ?teamWithStanding = Util.arrayGetSafe<Season.TeamStandingInfo>(
                         standings,
                         standingIndex,
-                    ) else Debug.trap("Previous match group not found, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId - 1));
+                    ) else Debug.trap("Previous match group not found, cannot get team standing. Match Group Id: " # Nat.toText(matchGroupId - 1));
 
                     getTeamInfo(teamWithStanding.id);
                 };
@@ -715,11 +714,8 @@ actor LeagueActor {
             switch (result) {
                 case (#ok(o)) o;
                 case (#noVotes) {
-                    // If no votes, get random champion and a negative offering
-                    // for not voting
-                    let randomChampion = prng.nextArrayElement(teamPlayers);
+                    // If no votes, get negative offering for not voting
                     {
-                        championId = randomChampion.id;
                         offering = #badManagement;
                     };
                 };
@@ -752,7 +748,6 @@ actor LeagueActor {
             name = team.name;
             logoUrl = team.logoUrl;
             offering = options.offering;
-            championId = options.championId;
             positions = {
                 pitcher = pitcher;
                 firstBase = firstBase;
@@ -902,12 +897,6 @@ actor LeagueActor {
             trie := newTrie;
         };
         trie;
-    };
-
-    private func getRandomChampions(prng : Prng, count : Nat, allPlayerIds : [Nat32]) : [Nat32] {
-        let playerIdBuffer = Buffer.fromArray<Nat32>(allPlayerIds);
-        prng.shuffleBuffer(playerIdBuffer);
-        Buffer.toArray(Buffer.subBuffer(playerIdBuffer, 0, count));
     };
 
     private func getRandomOfferings(prng : Prng, count : Nat) : [Offering.OfferingWithMetaData] {

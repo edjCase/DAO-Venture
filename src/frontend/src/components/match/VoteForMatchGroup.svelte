@@ -7,12 +7,9 @@
     teamAgentFactory,
   } from "../../ic-agent/Team";
   import PlayerPicker from "./../player/PlayerPicker.svelte";
-  import { playerStore } from "../../stores/PlayerStore";
-  import { get } from "svelte/store";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import { Offering } from "../../models/Offering";
   import { Button } from "flowbite-svelte";
-  import { Player } from "../../ic-agent/PlayerLedger";
 
   export let teamId: Principal;
   export let matchGroupId: number;
@@ -26,22 +23,19 @@
   type Match = {
     offeringCards: Card[];
     selectedOffering: string | undefined;
-    championChoices: Player[];
-    selectedChampion: number | undefined;
   };
 
   let match: Match | undefined;
 
   let register = function (match: Match) {
-    if (!match.selectedOffering || !match.selectedChampion) {
-      console.log("No offering or champion selected");
+    if (!match.selectedOffering) {
+      console.log("No offering selected");
       return;
     }
     let offering: Offering = { [match.selectedOffering]: null } as Offering;
     let request: VoteOnMatchGroupRequest = {
       matchGroupId: BigInt(matchGroupId),
       offering: offering,
-      championId: match.selectedChampion,
     };
     console.log(
       `Voting for team ${teamId.toString()} and match group ${matchGroupId}`,
@@ -76,16 +70,9 @@
         description: o.description,
       };
     });
-    let players = get(playerStore);
-    let championChoices =
-      players.filter(
-        (p) => p.teamId.length > 0 && p.teamId[0]?.compareTo(teamId) == "eq"
-      ) || [];
     match = {
       offeringCards: offeringCards,
       selectedOffering: undefined,
-      championChoices: championChoices,
-      selectedChampion: undefined,
     };
   });
 </script>
@@ -102,19 +89,6 @@
           }
         }}
       />
-    </div>
-    <div>
-      <h2>Champion</h2>
-      {#if match.championChoices}
-        <PlayerPicker
-          players={match.championChoices}
-          onPlayerSelected={(pId) => {
-            if (match) {
-              match.selectedChampion = pId;
-            }
-          }}
-        />
-      {/if}
     </div>
     <Button
       on:click={() => {

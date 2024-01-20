@@ -68,14 +68,12 @@ export const ScheduledMatchIdl = IDL.Record({
 
 export type InProgressMatchTeam = TeamInfo & {
     offering: Offering;
-    championId: Nat32;
 };
 export const InProgressMatchTeamIdl = IDL.Record({
     id: IDL.Principal,
     name: IDL.Text,
     logoUrl: IDL.Text,
     offering: OfferingIdl,
-    championId: IDL.Nat32,
 });
 
 export type InProgressMatch = {
@@ -91,7 +89,6 @@ export const InProgressMatchIdl = IDL.Record({
 
 export type CompletedMatchTeam = TeamInfo & {
     offering: Offering;
-    championId: Nat32;
     score: Int;
 };
 export const CompletedMatchTeamIdl = IDL.Record({
@@ -99,7 +96,6 @@ export const CompletedMatchTeamIdl = IDL.Record({
     name: IDL.Text,
     logoUrl: IDL.Text,
     offering: OfferingIdl,
-    championId: IDL.Nat32,
     score: IDL.Int,
 });
 

@@ -16,7 +16,6 @@ export type LiveMatchGroup = {
 
 export type LiveTeamDetails = TeamDetails & {
   offering: Offering;
-  championId: number;
 };
 
 export type LiveMatch = {
@@ -51,7 +50,6 @@ export const liveMatchGroupStore = (() => {
       logoUrl: team.logoUrl,
       score: Number(team.score),
       offering: team.offering,
-      championId: team.championId
     }
   };
 

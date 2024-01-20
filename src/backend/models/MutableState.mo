@@ -19,7 +19,6 @@ module {
         logoUrl : Text;
         var score : Int;
         offering : Offering.Offering;
-        championId : Player.PlayerId;
         positions : StadiumTypes.TeamPositions;
     };
 
@@ -160,7 +159,6 @@ module {
             logoUrl = team.logoUrl;
             var score = team.score;
             offering = team.offering;
-            championId = team.championId;
             positions = team.positions;
         };
     };

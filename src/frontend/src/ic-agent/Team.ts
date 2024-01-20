@@ -9,11 +9,9 @@ import { Offering, OfferingIdl } from '../models/Offering';
 
 export type MatchGroupVote = {
   'offering': Offering;
-  'championId': number;
 };
 export const MatchGroupVoteIdl = IDL.Record({
   'offering': OfferingIdl,
-  'championId': IDL.Nat32
 });
 
 export type GetMatchGroupVoteResult =
@@ -31,15 +29,12 @@ export type VoteOnMatchGroupRequest = MatchGroupVote & {
 };
 export const VoteOnMatchGroupRequestIdl = IDL.Record({
   'offering': OfferingIdl,
-  'championId': IDL.Nat32,
   'matchGroupId': IDL.Nat
 });
 
 export type InvalidVoteError =
-  | { 'invalidChampionId': number }
   | { 'invalidOffering': Offering };
 export const InvalidVoteErrorIdl = IDL.Variant({
-  'invalidChampionId': IDL.Nat32,
   'invalidOffering': OfferingIdl
 });
 

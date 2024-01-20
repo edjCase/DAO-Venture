@@ -53,7 +53,6 @@ module {
 
     public type StartMatchTeam = Team and {
         offering : Offering.Offering;
-        championId : PlayerId;
         positions : {
             firstBase : Player.TeamPlayerWithId;
             secondBase : Player.TeamPlayerWithId;
@@ -101,11 +100,6 @@ module {
         strikes : Nat;
     };
 
-    public type PlayerNotFoundError = {
-        id : PlayerId;
-        teamId : ?Team.TeamId;
-    };
-
     public type PlayerExpectedOnFieldError = {
         id : PlayerId;
         onOffense : Bool;
@@ -113,7 +107,7 @@ module {
     };
 
     public type BrokenStateError = {
-        #playerNotFound : PlayerNotFoundError;
+        #playerNotFound : PlayerId;
         #playerExpectedOnField : PlayerExpectedOnFieldError;
     };
 
@@ -188,7 +182,6 @@ module {
     public type TeamState = Team and {
         score : Int;
         offering : Offering.Offering;
-        championId : PlayerId;
         positions : TeamPositions;
     };
 

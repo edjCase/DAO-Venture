@@ -121,7 +121,6 @@ module {
     public type PlayedMatchTeamData = {
         score : Int;
         offering : Offering.Offering;
-        championId : Player.PlayerId;
     };
 
     public type FailedMatchResult = {
