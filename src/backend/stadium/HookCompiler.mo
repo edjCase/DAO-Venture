@@ -122,20 +122,38 @@ module {
     private func shuffleAndBoostHook(teamId : Team.TeamId) : PreCompiledHooks {
         let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
             // Shuffle all the players' positions but boost their stats
-            var teamPlayers : Buffer.Buffer<(Player.PlayerId, MutableState.MutablePlayerState)> = Buffer.fromIter(request.state.getTeamPlayers(teamId));
 
-            let currentPositions : Buffer.Buffer<FieldPosition.FieldPosition> = teamPlayers
-            |> Buffer.map(
-                _,
-                func(p : (Player.PlayerId, MutableState.MutablePlayerState)) : FieldPosition.FieldPosition = p.1.position,
-            );
-            request.prng.shuffleBuffer(currentPositions);
+            let team = switch (teamId) {
+                case (#team1) request.state.team1;
+                case (#team2) request.state.team2;
+            };
+
+            // Shuffle positions
+            let newPositions = Buffer.fromArray<Player.PlayerId>([
+                team.positions.pitcher,
+                team.positions.firstBase,
+                team.positions.secondBase,
+                team.positions.thirdBase,
+                team.positions.shortStop,
+                team.positions.leftField,
+                team.positions.centerField,
+                team.positions.rightField,
+            ]);
+            request.prng.shuffleBuffer(newPositions);
+
+            team.positions.pitcher := newPositions.get(0);
+            team.positions.firstBase := newPositions.get(1);
+            team.positions.secondBase := newPositions.get(2);
+            team.positions.thirdBase := newPositions.get(3);
+            team.positions.shortStop := newPositions.get(4);
+            team.positions.leftField := newPositions.get(5);
+            team.positions.centerField := newPositions.get(6);
+            team.positions.rightField := newPositions.get(7);
+
+            // Boost skills
             let randomSkill = Skill.getRandom(request.prng);
-            var i = 0;
-            for ((playerId, playerState) in teamPlayers.vals()) {
+            for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
                 MutableState.modifyPlayerSkill(playerState.skills, randomSkill, 1);
-                playerState.position := currentPositions.get(i);
-                i += 1;
             };
             {
                 updatedContext = ();
@@ -232,13 +250,10 @@ module {
     private func ragePitchHook(teamId : Team.TeamId) : PreCompiledHooks {
         let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
             // Increase throwing power and lower throwing accuracy for pitchers
-            label f for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
-                if (playerState.position != #pitcher) {
-                    continue f;
-                };
-                MutableState.modifyPlayerSkill(playerState.skills, #throwingPower, 1);
-                MutableState.modifyPlayerSkill(playerState.skills, #throwingAccuracy, -1);
-            };
+            let teamState = request.state.getTeamState(teamId);
+            let playerState = request.state.getPlayerState(teamState.positions.pitcher);
+            MutableState.modifyPlayerSkill(playerState.skills, #throwingPower, 1);
+            MutableState.modifyPlayerSkill(playerState.skills, #throwingAccuracy, -1);
             {
                 updatedContext = ();
             };
@@ -262,10 +277,15 @@ module {
             let alreadyUsed = TrieSet.mem(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
             let updatedContext = if (not alreadyUsed) {
                 usedOnPlayers := TrieSet.put(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
-                request.state.log.add({
-                    message = "Player " # Nat32.toText(request.context.playerId) # " is protected by a bubble!";
-                    isImportant = false;
-                });
+
+                // TODO this shouldnt be manual??
+                request.state.addEvent(
+                    #offeringTrigger({
+                        id = #bubble;
+                        teamId = teamId;
+                        description = "Player " # Nat32.toText(request.context.playerId) # " is protected by a bubble!";
+                    })
+                );
                 {
                     request.context with
                     result = {

@@ -94,8 +94,7 @@ module {
         aura : MatchAura.MatchAura;
         players : [PlayerStateWithId];
         bases : BaseState;
-        log : [LogEntry];
-        round : Nat;
+        log : Season.MatchLog;
         outs : Nat;
         strikes : Nat;
     };
@@ -131,7 +130,6 @@ module {
         teamId : Team.TeamId;
         condition : Player.PlayerCondition;
         skills : Player.Skills;
-        position : FieldPosition;
     };
 
     public type PlayerStateWithId = PlayerState and {
@@ -154,11 +152,6 @@ module {
         firstBase : ?PlayerId;
         secondBase : ?PlayerId;
         thirdBase : ?PlayerId;
-    };
-
-    public type LogEntry = {
-        message : Text;
-        isImportant : Bool;
     };
 
     public type TickMatchGroupResult = {

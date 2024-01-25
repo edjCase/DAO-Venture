@@ -4,7 +4,8 @@
     "league": {
       "dependencies": [
         "playerLedger",
-        "teamFactory"
+        "teamFactory",
+        "stadiumFactory"
       ],
       "main": "src/backend/league/LeagueActor.mo",
       "type": "motoko"
@@ -27,6 +28,21 @@
     "internet_identity": {
       "type": "pull",
       "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+    },
+    "frontend": {
+      "dependencies": [
+        "league"
+      ],
+      "frontend": {
+        "entrypoint": "src/frontend/public/index.html"
+      },
+      "source": [
+        "src/frontend/public"
+      ],
+      "build": [
+        "npm run build_frontend"
+      ],
+      "type": "assets"
     }
   },
   "defaults": {

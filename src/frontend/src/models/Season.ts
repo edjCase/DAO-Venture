@@ -2,7 +2,12 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from './Offering';
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
-import { TeamIdOrTie, TeamIdOrTieIdl } from './Team';
+import { TeamId, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
+import { Injury } from './Player';
+import { Trait, TraitIdl } from './Trait';
+import { Curse, CurseIdl } from './Curse';
+import { Blessing, BlessingIdl } from './Blessing';
+import { Base, BaseIdl } from './Base';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -11,16 +16,162 @@ export type Nat32 = number;
 export type Int = bigint;
 export type Bool = boolean;
 export type Text = string;
+export type PlayerId = Nat32;
 
-
-
-export type LogEntry = {
-    message: Text;
-    isImportant: Bool;
+export type Roll = {
+    value: number;
+    crit: boolean
 };
-export const LogEntryIdl = IDL.Record({
-    message: IDL.Text,
-    isImportant: IDL.Bool,
+export const RollIdl = IDL.Record({
+    value: IDL.Nat,
+    crit: IDL.Bool,
+});
+
+export type SwingOutcome =
+    | { foul: null }
+    | { strike: null }
+    | { hit: null };
+export const SwingOutcomeIdl = IDL.Variant({
+    foul: IDL.Null,
+    strike: IDL.Null,
+    hit: IDL.Null,
+});
+
+export type MatchEndReason =
+    | { noMoreRounds: null }
+    | { error: string };
+export const MatchEndReasonIdl = IDL.Variant({
+    noMoreRounds: IDL.Null,
+    error: IDL.Text,
+});
+
+export type OutReason =
+    | { ballCaught: null }
+    | { strikeout: null }
+    | { hitByBall: null };
+export const OutReasonIdl = IDL.Variant({
+    ballCaught: IDL.Null,
+    strikeout: IDL.Null,
+    hitByBall: IDL.Null,
+});
+
+export type MatchEvent =
+    | { traitTrigger: { id: Trait; playerId: PlayerId; description: string } }
+    | { offeringTrigger: { id: Offering; teamId: TeamId; description: string } }
+    | { auraTrigger: { id: MatchAura; description: string } }
+    | { pitch: { pitcherId: PlayerId; roll: Roll } }
+    | { swing: { playerId: PlayerId; roll: Roll; pitchRoll: Roll; outcome: SwingOutcome } }
+    | { catch_: { playerId: PlayerId; roll: Roll; difficulty: Roll } }
+    | { newRound: { offenseTeamId: TeamId; atBatPlayerId: PlayerId } }
+    | { injury: { playerId: number; injury: Injury } }
+    | { death: { playerId: number } }
+    | { curse: { playerId: number; curse: Curse } }
+    | { blessing: { playerId: number; blessing: Blessing } }
+    | { score: { teamId: TeamId; amount: number } }
+    | { newBatter: { playerId: PlayerId } }
+    | { out: { playerId: PlayerId; reason: OutReason } }
+    | { matchEnd: { reason: MatchEndReason } }
+    | { safeAtBase: { playerId: PlayerId; base: Base } }
+    | { hitByBall: { playerId: PlayerId; throwingPlayerId: PlayerId } };
+export const MatchEventIdl = IDL.Variant({
+    traitTrigger: IDL.Record({
+        id: TraitIdl,
+        playerId: IDL.Nat32,
+        description: IDL.Text,
+    }),
+    offeringTrigger: IDL.Record({
+        id: OfferingIdl,
+        teamId: TeamIdOrTieIdl,
+        description: IDL.Text,
+    }),
+    auraTrigger: IDL.Record({
+        id: MatchAuraIdl,
+        description: IDL.Text,
+    }),
+    pitch: IDL.Record({
+        pitcherId: IDL.Nat32,
+        roll: RollIdl,
+    }),
+    swing: IDL.Record({
+        playerId: IDL.Nat32,
+        roll: RollIdl,
+        pitchRoll: RollIdl,
+        outcome: SwingOutcomeIdl,
+    }),
+    catch_: IDL.Record({
+        playerId: IDL.Nat32,
+        roll: RollIdl,
+        difficulty: RollIdl,
+    }),
+    newRound: IDL.Record({
+        offenseTeamId: TeamIdOrTieIdl,
+        atBatPlayerId: IDL.Nat32,
+    }),
+    injury: IDL.Record({
+        playerId: IDL.Nat32,
+        injury: IDL.Variant({
+            none: IDL.Null,
+            mild: IDL.Null,
+            moderate: IDL.Null,
+            severe: IDL.Null,
+        }),
+    }),
+    death: IDL.Record({
+        playerId: IDL.Nat32,
+    }),
+    curse: IDL.Record({
+        playerId: IDL.Nat32,
+        curse: CurseIdl,
+    }),
+    blessing: IDL.Record({
+        playerId: IDL.Nat32,
+        blessing: BlessingIdl,
+    }),
+    score: IDL.Record({
+        teamId: TeamIdOrTieIdl,
+        amount: IDL.Nat,
+    }),
+    newBatter: IDL.Record({
+        playerId: IDL.Nat32,
+    }),
+    out: IDL.Record({
+        playerId: IDL.Nat32,
+        reason: OutReasonIdl,
+    }),
+    matchEnd: IDL.Record({
+        reason: MatchEndReasonIdl,
+    }),
+    safeAtBase: IDL.Record({
+        playerId: IDL.Nat32,
+        base: BaseIdl,
+    }),
+    hitByBall: IDL.Record({
+        playerId: IDL.Nat32,
+        throwingPlayerId: IDL.Nat32,
+    })
+});
+
+
+export type TurnLog = {
+    events: MatchEvent[];
+};
+export const TurnLogIdl = IDL.Record({
+    events: IDL.Vec(MatchEventIdl),
+});
+
+
+export type RoundLog = {
+    turns: TurnLog[];
+};
+export const RoundLogIdl = IDL.Record({
+    turns: IDL.Vec(TurnLogIdl),
+});
+
+export type MatchLog = {
+    rounds: RoundLog[];
+};
+export const MatchLogIdl = IDL.Record({
+    rounds: IDL.Vec(RoundLogIdl),
 });
 
 export type TeamInfo = {
@@ -99,21 +250,55 @@ export const CompletedMatchTeamIdl = IDL.Record({
     score: IDL.Int,
 });
 
+export type PlayerMatchStats = {
+    playerId: Nat32;
+    offenseStats: {
+        atBats: Nat;
+        hits: Nat;
+        runs: Nat;
+        runsBattedIn: Nat;
+        strikeouts: Nat;
+    };
+    defenseStats: {
+        catches: Nat;
+        missedCatches: Nat;
+        outs: Nat;
+        assists: Nat;
+    };
+};
+export const PlayerMatchStatsIdl = IDL.Record({
+    playerId: IDL.Nat32,
+    offenseStats: IDL.Record({
+        atBats: IDL.Nat,
+        hits: IDL.Nat,
+        runs: IDL.Nat,
+        runsBattedIn: IDL.Nat,
+        strikeouts: IDL.Nat,
+    }),
+    defenseStats: IDL.Record({
+        catches: IDL.Nat,
+        missedCatches: IDL.Nat,
+        outs: IDL.Nat,
+        assists: IDL.Nat,
+    }),
+});
+
 
 export type CompletedMatch = {
     team1: CompletedMatchTeam;
     team2: CompletedMatchTeam;
     aura: MatchAura;
-    log: LogEntry[];
+    log: MatchLog;
     winner: TeamIdOrTie;
-    error: [string] | [];
+    playerStats: PlayerMatchStats[];
 };
 export const CompletedMatchIdl = IDL.Record({
     team1: CompletedMatchTeamIdl,
     team2: CompletedMatchTeamIdl,
-    log: IDL.Vec(LogEntryIdl),
+    aura: MatchAuraIdl,
+    log: MatchLogIdl,
     winner: TeamIdOrTieIdl,
-    error: IDL.Opt(IDL.Text),
+    playerStats: PlayerMatchStatsIdl,
 });
 
 export type CompletedSeasonTeam = TeamInfo & {

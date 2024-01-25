@@ -5,6 +5,11 @@ import Trie "mo:base/Trie";
 import Offering "Offering";
 import MatchAura "MatchAura";
 import Team "Team";
+import Trait "Trait";
+import Player "Player";
+import Curse "Curse";
+import Blessing "Blessing";
+import Base "Base";
 
 module {
 
@@ -92,22 +97,150 @@ module {
         offering : Offering.Offering;
         score : Int;
     };
+
+    public type PlayerMatchStats = {
+        playerId : Player.PlayerId;
+        offenseStats : {
+            atBats : Nat;
+            hits : Nat;
+            runs : Nat;
+            runsBattedIn : Nat;
+            strikeouts : Nat;
+        };
+        defenseStats : {
+            catches : Nat;
+            missedCatches : Nat;
+            outs : Nat;
+            assists : Nat;
+        };
+    };
+
+    public type MatchLog = {
+        rounds : [RoundLog];
+    };
+
     public type CompletedMatchWithoutPredictions = {
         team1 : CompletedMatchTeam;
         team2 : CompletedMatchTeam;
         aura : MatchAura.MatchAura;
-        log : [LogEntry];
+        log : MatchLog;
         winner : Team.TeamIdOrTie;
-        error : ?Text;
+        playerStats : [PlayerMatchStats];
     };
 
     public type CompletedMatch = CompletedMatchWithoutPredictions and {
         predictions : Trie.Trie<Principal, Team.TeamId>;
     };
 
-    public type LogEntry = {
-        message : Text;
-        isImportant : Bool;
+    public type RoundLog = {
+        turns : [TurnLog];
+    };
+
+    public type TurnLog = {
+        events : [Event];
+    };
+
+    public type Event = {
+        #traitTrigger : {
+            id : Trait.Trait;
+            playerId : Player.PlayerId;
+            description : Text;
+        };
+        #offeringTrigger : {
+            id : Offering.Offering;
+            teamId : Team.TeamId;
+            description : Text;
+        };
+        #auraTrigger : {
+            id : MatchAura.MatchAura;
+            description : Text;
+        };
+        #pitch : {
+            pitcherId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+        };
+        #swing : {
+            playerId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+            pitchRoll : {
+                value : Int;
+                crit : Bool;
+            };
+            outcome : {
+                #foul;
+                #strike;
+                #hit;
+            };
+        };
+        #catch_ : {
+            playerId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+            difficulty : {
+                value : Int;
+                crit : Bool;
+            };
+        };
+        #newRound : {
+            offenseTeamId : Team.TeamId;
+            atBatPlayerId : Player.PlayerId;
+        };
+        #injury : {
+            playerId : Nat32;
+            injury : Player.Injury;
+        };
+        #death : {
+            playerId : Nat32;
+        };
+        #curse : {
+            playerId : Nat32;
+            curse : Curse.Curse;
+        };
+        #blessing : {
+            playerId : Nat32;
+            blessing : Blessing.Blessing;
+        };
+        #score : {
+            teamId : Team.TeamId;
+            amount : Int;
+        };
+        #newBatter : {
+            playerId : Player.PlayerId;
+        };
+        #out : {
+            playerId : Player.PlayerId;
+            reason : OutReason;
+        };
+        #matchEnd : {
+            reason : MatchEndReason;
+        };
+        #safeAtBase : {
+            playerId : Player.PlayerId;
+            base : Base.Base;
+        };
+        #hitByBall : {
+            playerId : Player.PlayerId;
+            throwingPlayerId : Player.PlayerId;
+        };
+    };
+
+    public type MatchEndReason = {
+        #noMoreRounds;
+        #error : Text;
+    };
+
+    public type OutReason = {
+        #ballCaught;
+        #strikeout;
+        #hitByBall;
     };
 
     public type CompletedMatchGroup = {

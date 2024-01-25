@@ -12,6 +12,17 @@ module {
         #pitcher;
     };
 
+    public let allPositions : [FieldPosition] = [
+        #pitcher,
+        #firstBase,
+        #secondBase,
+        #thirdBase,
+        #shortStop,
+        #leftField,
+        #centerField,
+        #rightField,
+    ];
+
     public func equal(a : FieldPosition, b : FieldPosition) : Bool {
         a == b;
     };

@@ -127,11 +127,6 @@ module {
         message : Text;
     };
 
-    public type LogEntry = {
-        message : Text;
-        isImportant : Bool;
-    };
-
     public type OnMatchGroupCompleteResult = {
         #ok;
         #seasonNotOpen;

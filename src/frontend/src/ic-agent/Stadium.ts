@@ -6,7 +6,7 @@ import { TeamId, TeamIdIdl } from "../models/Team";
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
-import { FieldPosition, FieldPositionIdl, PlayerSkills, PlayerSkillsIdl } from './PlayerLedger';
+import { PlayerSkills, PlayerSkillsIdl } from './PlayerLedger';
 import { PlayerCondition, PlayerConditionIdl } from '../models/Player';
 import { CompletedMatch, CompletedMatchIdl } from '../models/Season';
 
@@ -86,7 +86,6 @@ export type PlayerState = {
   teamId: TeamId;
   condition: PlayerCondition;
   skills: PlayerSkills;
-  position: FieldPosition;
 };
 export const PlayerStateIdl = IDL.Record({
   id: PlayerIdIdl,
@@ -94,7 +93,6 @@ export const PlayerStateIdl = IDL.Record({
   teamId: TeamIdIdl,
   condition: PlayerConditionIdl,
   skills: PlayerSkillsIdl,
-  position: FieldPositionIdl,
 });
 
 export type InProgressMatch = {
@@ -105,7 +103,6 @@ export type InProgressMatch = {
   players: PlayerState[];
   bases: BaseState;
   log: LogEntry[];
-  round: Nat;
   outs: Nat;
   strikes: Nat;
 };
@@ -117,7 +114,6 @@ export const InProgressMatchIdl = IDL.Record({
   players: IDL.Vec(PlayerStateIdl),
   bases: BaseStateIdl,
   log: IDL.Vec(LogEntryIdl),
-  round: IDL.Nat,
   outs: IDL.Nat,
   strikes: IDL.Nat,
 });
