@@ -9,9 +9,19 @@ import StadiumActor "StadiumActor";
 
 actor StadiumFactoryActor {
 
-    let leagueId : Principal = Principal.fromText("bkyz2-fmaaa-aaaaa-qaaaq-cai"); // TODO dont hard code
+    stable var leagueIdOrNull : ?Principal = null;
 
     stable var stadiums = Trie.empty<Principal, Types.StadiumActorInfo>();
+
+    public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
+        // TODO how to get the league id vs manual set
+        // Set if the league is not set or if the caller is the league
+        if (leagueIdOrNull == null or leagueIdOrNull == ?caller) {
+            leagueIdOrNull := ?id;
+            return #ok;
+        };
+        #notAuthorized;
+    };
 
     public func getStadiums() : async [Types.StadiumActorInfoWithId] {
         stadiums
@@ -26,6 +36,7 @@ actor StadiumFactoryActor {
     };
 
     public func createStadiumActor() : async Types.CreateStadiumResult {
+        let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
@@ -45,6 +56,7 @@ actor StadiumFactoryActor {
     };
 
     public func updateCanisters() : async () {
+        let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
         for ((stadiumId, stadiumInfo) in Trie.iter(stadiums)) {
             let stadiumActor = actor (Principal.toText(stadiumId)) : Types.StadiumActor;
             try {

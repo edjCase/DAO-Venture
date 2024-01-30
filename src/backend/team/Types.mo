@@ -13,9 +13,15 @@ module {
     };
 
     public type TeamFactoryActor = actor {
+        setLeague : (id : Principal) -> async SetLeagueResult;
         createTeamActor : (request : CreateTeamRequest) -> async CreateTeamResult;
         getTeamActors : () -> async [TeamActorInfoWithId];
         updateCanisters : () -> async ();
+    };
+
+    public type SetLeagueResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type TeamActorInfo = {};

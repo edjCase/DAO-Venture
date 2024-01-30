@@ -82,8 +82,20 @@ module {
         matches : [InProgressMatch];
     };
 
+    public type TeamPositions = {
+        firstBase : Player.PlayerId;
+        secondBase : Player.PlayerId;
+        thirdBase : Player.PlayerId;
+        shortStop : Player.PlayerId;
+        pitcher : Player.PlayerId;
+        leftField : Player.PlayerId;
+        centerField : Player.PlayerId;
+        rightField : Player.PlayerId;
+    };
+
     public type InProgressTeam = TeamInfo and {
         offering : Offering.Offering;
+        positions : TeamPositions;
     };
 
     public type InProgressMatch = {
@@ -96,6 +108,7 @@ module {
     public type CompletedMatchTeam = TeamInfo and {
         offering : Offering.Offering;
         score : Int;
+        positions : TeamPositions;
     };
 
     public type PlayerMatchStats = {

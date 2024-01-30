@@ -3,7 +3,7 @@ import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from './Offering';
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
 import { TeamId, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
-import { Injury } from './Player';
+import { Injury, InjuryIdl } from './Player';
 import { Trait, TraitIdl } from './Trait';
 import { Curse, CurseIdl } from './Curse';
 import { Blessing, BlessingIdl } from './Blessing';
@@ -18,12 +18,33 @@ export type Bool = boolean;
 export type Text = string;
 export type PlayerId = Nat32;
 
+export type TeamPositions = {
+    firstBase: PlayerId;
+    secondBase: PlayerId;
+    thirdBase: PlayerId;
+    shortStop: PlayerId;
+    pitcher: PlayerId;
+    leftField: PlayerId;
+    centerField: PlayerId;
+    rightField: PlayerId;
+};
+export const TeamPositionsIdl = IDL.Record({
+    firstBase: IDL.Nat32,
+    secondBase: IDL.Nat32,
+    thirdBase: IDL.Nat32,
+    shortStop: IDL.Nat32,
+    pitcher: IDL.Nat32,
+    leftField: IDL.Nat32,
+    centerField: IDL.Nat32,
+    rightField: IDL.Nat32,
+});
+
 export type Roll = {
     value: number;
     crit: boolean
 };
 export const RollIdl = IDL.Record({
-    value: IDL.Nat,
+    value: IDL.Int,
     crit: IDL.Bool,
 });
 
@@ -98,7 +119,7 @@ export const MatchEventIdl = IDL.Variant({
         pitchRoll: RollIdl,
         outcome: SwingOutcomeIdl,
     }),
-    catch_: IDL.Record({
+    catch: IDL.Record({
         playerId: IDL.Nat32,
         roll: RollIdl,
         difficulty: RollIdl,
@@ -109,12 +130,7 @@ export const MatchEventIdl = IDL.Variant({
     }),
     injury: IDL.Record({
         playerId: IDL.Nat32,
-        injury: IDL.Variant({
-            none: IDL.Null,
-            mild: IDL.Null,
-            moderate: IDL.Null,
-            severe: IDL.Null,
-        }),
+        injury: InjuryIdl,
     }),
     death: IDL.Record({
         playerId: IDL.Nat32,
@@ -129,7 +145,7 @@ export const MatchEventIdl = IDL.Variant({
     }),
     score: IDL.Record({
         teamId: TeamIdOrTieIdl,
-        amount: IDL.Nat,
+        amount: IDL.Int,
     }),
     newBatter: IDL.Record({
         playerId: IDL.Nat32,
@@ -219,12 +235,14 @@ export const ScheduledMatchIdl = IDL.Record({
 
 export type InProgressMatchTeam = TeamInfo & {
     offering: Offering;
+    positions: TeamPositions;
 };
 export const InProgressMatchTeamIdl = IDL.Record({
     id: IDL.Principal,
     name: IDL.Text,
     logoUrl: IDL.Text,
     offering: OfferingIdl,
+    positions: TeamPositionsIdl
 });
 
 export type InProgressMatch = {
@@ -241,6 +259,7 @@ export const InProgressMatchIdl = IDL.Record({
 export type CompletedMatchTeam = TeamInfo & {
     offering: Offering;
     score: Int;
+    positions: TeamPositions;
 };
 export const CompletedMatchTeamIdl = IDL.Record({
     id: IDL.Principal,
@@ -248,6 +267,7 @@ export const CompletedMatchTeamIdl = IDL.Record({
     logoUrl: IDL.Text,
     offering: OfferingIdl,
     score: IDL.Int,
+    positions: TeamPositionsIdl
 });
 
 export type PlayerMatchStats = {
@@ -298,7 +318,7 @@ export const CompletedMatchIdl = IDL.Record({
     aura: MatchAuraIdl,
     log: MatchLogIdl,
     winner: TeamIdOrTieIdl,
-    playerStats: PlayerMatchStatsIdl,
+    playerStats: IDL.Vec(PlayerMatchStatsIdl),
 });
 
 export type CompletedSeasonTeam = TeamInfo & {

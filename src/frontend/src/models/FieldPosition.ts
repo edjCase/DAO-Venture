@@ -1,4 +1,4 @@
-export enum FieldPosition {
+export enum FieldPositionEnum {
     Pitcher = "Pitcher",
     FirstBase = "First Base",
     SecondBase = "Second Base",

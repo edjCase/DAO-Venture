@@ -1,18 +1,19 @@
 <script lang="ts">
-  import { FieldPosition } from "../../models/FieldPosition";
+  import { FieldPositionEnum } from "../../models/FieldPosition";
 
-  export let onPositionChange: (position: FieldPosition) => void;
+  export let onPositionChange: (position: FieldPositionEnum) => void;
 
   let onPositionChangeInternal = (event: Event) => {
     let target = event.currentTarget as HTMLSelectElement;
-    let position = FieldPosition[target.value as keyof typeof FieldPosition];
+    let position =
+      FieldPositionEnum[target.value as keyof typeof FieldPositionEnum];
     onPositionChange(position);
   };
 
-  let positionOptions = Object.keys(FieldPosition).map((position) => {
+  let positionOptions = Object.keys(FieldPositionEnum).map((position) => {
     return {
       value: position,
-      label: FieldPosition[position as keyof typeof FieldPosition],
+      label: FieldPositionEnum[position as keyof typeof FieldPositionEnum],
     };
   });
 </script>

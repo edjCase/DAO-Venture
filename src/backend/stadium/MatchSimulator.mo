@@ -432,6 +432,10 @@ module {
             |> Iter.map(_, func(p : (PlayerId, MutableState.MutablePlayerState)) : PlayerId = p.0)
             |> Buffer.fromIter<PlayerId>(_);
 
+            if (playerBuffer.size() <= 0) {
+                Debug.trap("No players available to bat for team: " # debug_show (state.offenseTeamId));
+            };
+
             prng.nextBufferElement(playerBuffer);
         };
 
@@ -762,7 +766,7 @@ module {
                         let battingPlayerState = state.getPlayerState(state.bases.atBat);
                         let defenseRoll = prng.nextInt(-10, 10) + battingPlayerState.skills.defense;
                         let damageRoll = throwRoll - defenseRoll;
-                        if (damageRoll > 5) {
+                        if (damageRoll > 10) {
                             let newInjury = switch (damageRoll) {
                                 case (6) #twistedAnkle;
                                 case (7) #brokenLeg;
@@ -837,7 +841,8 @@ module {
                 state = state;
                 context = ();
             });
-            if (state.log.rounds.size() >= 9) {
+            state.endRound();
+            if (state.log.rounds.size() >= 18) {
                 ignore compiledHooks.matchEnd({
                     prng = prng;
                     state = state;

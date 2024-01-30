@@ -9,9 +9,19 @@ import Types "Types";
 
 actor TeamFactoryActor {
 
-    let leagueId : Principal = Principal.fromText("bkyz2-fmaaa-aaaaa-qaaaq-cai"); // TODO dont hard code
+    stable var leagueIdOrNull : ?Principal = null;
 
     stable var teams = Trie.empty<Principal, Types.TeamActorInfo>();
+
+    public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
+        // TODO how to get the league id vs manual set
+        // Set if the league is not set or if the caller is the league
+        if (leagueIdOrNull == null or leagueIdOrNull == ?caller) {
+            leagueIdOrNull := ?id;
+            return #ok;
+        };
+        #notAuthorized;
+    };
 
     public func getTeams() : async [Types.TeamActorInfoWithId] {
         teams
@@ -26,8 +36,7 @@ actor TeamFactoryActor {
     };
 
     public func createTeamActor(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
-        // TODO handle states where ledger exists but the team actor doesn't
-        // Create canister for team ledger
+        let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
         // Create canister for team logic
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 100_000_000_000;

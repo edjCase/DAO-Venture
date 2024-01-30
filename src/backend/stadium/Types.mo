@@ -24,9 +24,15 @@ module {
     };
 
     public type StadiumFactoryActor = actor {
+        setLeague : (id : Principal) -> async SetLeagueResult;
         createStadiumActor : () -> async CreateStadiumResult;
         getStadiumActors : () -> async [StadiumActorInfoWithId];
         updateCanisters : () -> async ();
+    };
+
+    public type SetLeagueResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type StadiumActorInfo = {};
@@ -136,17 +142,6 @@ module {
         id : PlayerId;
     };
 
-    public type TeamPositions = {
-        firstBase : PlayerId;
-        secondBase : PlayerId;
-        thirdBase : PlayerId;
-        shortStop : PlayerId;
-        pitcher : PlayerId;
-        leftField : PlayerId;
-        centerField : PlayerId;
-        rightField : PlayerId;
-    };
-
     public type BaseState = {
         atBat : PlayerId;
         firstBase : ?PlayerId;
@@ -175,7 +170,7 @@ module {
     public type TeamState = Team and {
         score : Int;
         offering : Offering.Offering;
-        positions : TeamPositions;
+        positions : Season.TeamPositions;
     };
 
 };

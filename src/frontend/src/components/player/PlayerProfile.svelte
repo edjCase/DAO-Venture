@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { Principal } from "@dfinity/principal";
   import { Player } from "../../ic-agent/PlayerLedger";
   import { positionToString } from "../../models/Player";
+  import { teamStore } from "../../stores/TeamStore";
 
   export let player: Player;
 
@@ -8,11 +10,19 @@
   const relevantSkills = Object.entries(player.skills).filter(
     ([_, value]) => value !== 0
   );
+
+  $: teams = $teamStore;
+  const getTeamName = (teamId: [Principal] | []) => {
+    if (teamId.length === 0) return "";
+    const team = teams.find((t) => t.id.compareTo(teamId[0]) == "eq");
+    return team ? team.name : "Unknown";
+  };
 </script>
 
 <div class="rounded-lg p-6">
-  <div class="text-lg font-bold">{player.name} - #{player.id}</div>
+  <div class="text-lg font-bold">{player.name} (#{player.id})</div>
   <div class="text-lg font-bold">{player.title}</div>
+  <div class="text-lg font-bold">Team: {getTeamName(player.teamId)}</div>
   <div class="text-md">{positionToString(player.position)}</div>
   <div class="text-sm text-gray-600">{player.description}</div>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">

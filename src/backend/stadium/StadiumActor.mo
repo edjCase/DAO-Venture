@@ -44,6 +44,13 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
 
     stable var matchGroups = Trie.empty<Nat, StadiumTypes.MatchGroup>();
 
+    system func postupgrade() {
+        // Restart the timers for any match groups that were in progress
+        for ((matchGroupId, matchGroup) in Trie.iter(matchGroups)) {
+            resetTickTimerInternal(matchGroupId);
+        };
+    };
+
     public query func getMatchGroup(id : Nat) : async ?StadiumTypes.MatchGroupWithId {
         switch (getMatchGroupOrNull(id)) {
             case (null) return null;
@@ -159,7 +166,12 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
     };
 
     public shared ({ caller }) func resetTickTimer(matchGroupId : Nat) : async StadiumTypes.ResetTickTimerResult {
-        let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
+        resetTickTimerInternal(matchGroupId);
+        #ok;
+    };
+
+    private func resetTickTimerInternal(matchGroupId : Nat) : () {
+        let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return;
         Timer.cancelTimer(matchGroup.tickTimerId);
         let newTickTimerId = startTickTimer(matchGroupId);
         addOrUpdateMatchGroup({
@@ -167,7 +179,6 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
             id = matchGroupId;
             tickTimerId = newTickTimerId;
         });
-        #ok;
     };
 
     private func startTickTimer(matchGroupId : Nat) : Timer.TimerId {

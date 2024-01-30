@@ -1,7 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import { createActor } from './Actor';
-import { FieldPosition as FieldPositionModel } from '../models/FieldPosition';
+import { FieldPositionEnum } from '../models/FieldPosition';
 import { toJsonString } from '../utils/JsonUtil';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
@@ -162,52 +162,52 @@ const canisterId = process.env.CANISTER_ID_PLAYERLEDGER || "";
 // Keep factory due to changing identity
 export const playerLedgerAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
 
-export function mapPosition(position: FieldPositionModel): FieldPosition {
+export function mapPosition(position: FieldPositionEnum): FieldPosition {
   switch (position) {
-    case FieldPositionModel.Pitcher:
+    case FieldPositionEnum.Pitcher:
       return { pitcher: null };
-    case FieldPositionModel.FirstBase:
+    case FieldPositionEnum.FirstBase:
       return { firstBase: null };
-    case FieldPositionModel.SecondBase:
+    case FieldPositionEnum.SecondBase:
       return { secondBase: null };
-    case FieldPositionModel.ThirdBase:
+    case FieldPositionEnum.ThirdBase:
       return { thirdBase: null };
-    case FieldPositionModel.ShortStop:
+    case FieldPositionEnum.ShortStop:
       return { shortStop: null };
-    case FieldPositionModel.LeftField:
+    case FieldPositionEnum.LeftField:
       return { leftField: null };
-    case FieldPositionModel.CenterField:
+    case FieldPositionEnum.CenterField:
       return { centerField: null };
-    case FieldPositionModel.RightField:
+    case FieldPositionEnum.RightField:
       return { rightField: null };
     default:
       throw "Invalid position: " + position;
   }
 };
-export function unMapPosition(position: FieldPosition): FieldPositionModel {
+export function unMapPosition(position: FieldPosition): FieldPositionEnum {
   if ('pitcher' in position) {
-    return FieldPositionModel.Pitcher;
+    return FieldPositionEnum.Pitcher;
   }
   if ('firstBase' in position) {
-    return FieldPositionModel.FirstBase;
+    return FieldPositionEnum.FirstBase;
   }
   if ('secondBase' in position) {
-    return FieldPositionModel.SecondBase;
+    return FieldPositionEnum.SecondBase;
   }
   if ('thirdBase' in position) {
-    return FieldPositionModel.ThirdBase;
+    return FieldPositionEnum.ThirdBase;
   }
   if ('shortStop' in position) {
-    return FieldPositionModel.ShortStop;
+    return FieldPositionEnum.ShortStop;
   }
   if ('leftField' in position) {
-    return FieldPositionModel.LeftField;
+    return FieldPositionEnum.LeftField;
   }
   if ('centerField' in position) {
-    return FieldPositionModel.CenterField;
+    return FieldPositionEnum.CenterField;
   }
   if ('rightField' in position) {
-    return FieldPositionModel.RightField;
+    return FieldPositionEnum.RightField;
   }
 
   throw new Error("Invalid position: " + toJsonString(position));

@@ -46,6 +46,8 @@ actor LeagueActor {
     stable var predictionsOrNull : ?[Trie.Trie<Principal, Team.TeamId>] = null;
     stable var historicalSeasons : [Season.CompletedSeason] = [];
     stable var stadiumIdOrNull : ?Principal = null;
+    stable var teamFactoryInitialized = false;
+    stable var stadiumFactoryInitialized = false;
 
     public query func getTeams() : async [TeamWithId] {
         Trie.toArray(
@@ -200,6 +202,10 @@ actor LeagueActor {
         );
         if (nameAlreadyTaken) {
             return #nameTaken;
+        };
+        if (not teamFactoryInitialized) {
+            let #ok = await TeamFactoryActor.setLeague(Principal.fromActor(LeagueActor)) else Debug.trap("Failed to set league on team factory");
+            teamFactoryInitialized := true;
         };
         let createTeamResult = try {
             await TeamFactoryActor.createTeamActor(request);
@@ -366,6 +372,16 @@ actor LeagueActor {
                                 name = team.name;
                                 logoUrl = team.logoUrl;
                                 offering = teamData.offering;
+                                positions = {
+                                    firstBase = teamData.positions.firstBase.id;
+                                    secondBase = teamData.positions.secondBase.id;
+                                    thirdBase = teamData.positions.thirdBase.id;
+                                    shortStop = teamData.positions.shortStop.id;
+                                    leftField = teamData.positions.leftField.id;
+                                    centerField = teamData.positions.centerField.id;
+                                    rightField = teamData.positions.rightField.id;
+                                    pitcher = teamData.positions.pitcher.id;
+                                };
                             };
                         };
                         let matchPredictions = switch (predictionsOrNull) {
@@ -613,14 +629,14 @@ actor LeagueActor {
         let compileTeamInfo = func(teamAssignment : Season.TeamAssignment) : Season.TeamInfo {
             switch (teamAssignment) {
                 case (#predetermined(teamInfo)) teamInfo;
-                case (#seasonStanding(standingIndex)) {
+                case (#seasonStanding(standingNumber)) {
                     // get team based on current season standing
                     let ?standings = inProgressSeason.teamStandings else Debug.trap("Season standings not found. Match Group Id: " # Nat.toText(matchGroupId));
 
                     let ?teamWithStanding = Util.arrayGetSafe<Season.TeamStandingInfo>(
                         standings,
-                        standingIndex,
-                    ) else Debug.trap("Previous match group not found, cannot get team standing. Match Group Id: " # Nat.toText(matchGroupId - 1));
+                        standingNumber - 1,
+                    ) else Debug.trap("Standing not found. Standings: " # debug_show (standings) # " Standing: " # Nat.toText(standingNumber));
 
                     getTeamInfo(teamWithStanding.id);
                 };
@@ -690,17 +706,12 @@ actor LeagueActor {
         |> IterTools.mapFilter(
             _,
             func(p : PlayerLedgerTypes.PlayerWithId) : ?Player.TeamPlayerWithId {
-                switch (p.teamId) {
-                    case (null) null;
-                    case (?teamId) {
-                        if (teamId == team.id) {
-                            null;
-                        } else {
-                            ?{
-                                p with
-                                teamId = teamId
-                            };
-                        };
+                if (p.teamId != ?team.id) {
+                    null;
+                } else {
+                    ?{
+                        p with
+                        teamId = team.id
                     };
                 };
             },
@@ -768,6 +779,11 @@ actor LeagueActor {
         switch (stadiumIdOrNull) {
             case (null)();
             case (?id) return #ok(id);
+        };
+
+        if (not stadiumFactoryInitialized) {
+            let #ok = await StadiumFactoryActor.setLeague(Principal.fromActor(LeagueActor)) else Debug.trap("Failed to set league on stadium factory");
+            stadiumFactoryInitialized := true;
         };
         let createStadiumResult = try {
             await StadiumFactoryActor.createStadiumActor();

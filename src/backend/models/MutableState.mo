@@ -68,7 +68,7 @@ module this {
             };
         };
 
-        private func toMutableTeamPositions(positions : StadiumTypes.TeamPositions) : MutableTeamPositions {
+        private func toMutableTeamPositions(positions : Season.TeamPositions) : MutableTeamPositions {
             {
                 var pitcher = positions.pitcher;
                 var firstBase = positions.firstBase;
@@ -246,15 +246,14 @@ module this {
 
         public func addEvent(event : Season.Event) {
             if (log.rounds.size() == 0) {
-                let turns = Buffer.Buffer<MutableTurnLog>(0);
-                turns.add({
-                    events = Buffer.Buffer<Season.Event>(1);
-                });
-                log.rounds.add({
-                    turns = turns;
-                });
+                addNewRound();
             };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
+            if (currentRound.turns.size() == 0) {
+                currentRound.turns.add({
+                    events = Buffer.Buffer<Season.Event>(0);
+                });
+            };
             let currentTurn = currentRound.turns.get(currentRound.turns.size() - 1);
             currentTurn.events.add(event);
 
@@ -268,6 +267,14 @@ module this {
         };
 
         public func endRound() {
+            addNewRound();
+        };
+
+        private func addNewRound() {
+            let turns = Buffer.Buffer<MutableTurnLog>(0);
+            turns.add({
+                events = Buffer.Buffer<Season.Event>(0);
+            });
             log.rounds.add({
                 turns = Buffer.Buffer<MutableTurnLog>(0);
             });

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { MatchDetails } from "../../models/Match";
+  import { TurnLog } from "../../models/Season";
 
   import {
     LiveMatch,
@@ -8,12 +9,15 @@
     liveMatchGroupStore,
   } from "../../stores/LiveMatchGroupStore";
   import Bases from "./Bases.svelte";
+  import Field from "./Field.svelte";
   import MatchCardHeader from "./MatchCardHeader.svelte";
+  import MatchEvent from "./MatchEvent.svelte";
 
   export let match: MatchDetails;
   export let compact: boolean = false;
 
   let liveMatch: LiveMatch | undefined;
+  let turn: TurnLog | undefined;
 
   $: {
     const liveMatchGroup: LiveMatchGroup | undefined = $liveMatchGroupStore;
@@ -22,6 +26,11 @@
       if (match.team1 && match.team2) {
         match.team1.score = liveMatch?.team1.score;
         match.team2.score = liveMatch?.team2.score;
+      }
+      if (liveMatch && liveMatch.log.rounds.length > 0) {
+        let currentRound =
+          liveMatch.log.rounds[liveMatch.log.rounds.length - 1];
+        turn = currentRound.turns[currentRound.turns.length - 1];
       }
     }
   }
@@ -33,37 +42,30 @@
     }
     return player.name;
   };
-  let getActivePlayerName = (
-    team: "team1" | "team2",
-    state: LiveMatchState
-  ): string => {
+  let getActivePlayerName = (teamId: "team1" | "team2"): string => {
+    if (!liveMatch?.liveState) {
+      return "";
+    }
+    let team = teamId == "team1" ? liveMatch.team1 : liveMatch.team2;
     let playerId: number;
     let emoji: string;
-    if (team in state.offenseTeamId) {
-      playerId = state.bases.atBat;
+    if (teamId in liveMatch.liveState.offenseTeamId) {
+      playerId = liveMatch.liveState.bases.atBat;
       // Batter emoji
       emoji = "🏏";
     } else {
-      playerId =
-        state.players.find(
-          (p) => "pitcher" in p.position && p.teamId == state.offenseTeamId
-        )?.id || 0;
+      playerId = team.positions.pitcher;
       // Pitcher emoji
       emoji = "⚾";
     }
-    let playerName = getPlayerName(playerId, state);
-    if (team in state.offenseTeamId) {
+    let playerName = getPlayerName(playerId, liveMatch.liveState);
+    if (teamId in liveMatch.liveState.offenseTeamId) {
       playerName = `${emoji} ${playerName}`;
     } else {
       playerName += ` ${emoji}`;
     }
     return playerName;
   };
-  $: log =
-    liveMatch?.log
-      .slice()
-      .reverse() // Reverse the filtered array
-      .slice(0, 5) || []; // Take only the first 5 entries
 </script>
 
 <div class="card" class:full={!compact}>
@@ -74,7 +76,7 @@
   >
     {#if match.state == "InProgress"}
       {#if liveMatch}
-        {#if !!liveMatch.liveState}
+        {#if !!liveMatch.liveState && compact}
           <Bases state={liveMatch.liveState.bases} />
         {/if}
       {:else}
@@ -82,7 +84,7 @@
       {/if}
     {:else if match.state == "Played"}
       {#if !match.winner}
-        <div>Bad state: {match.error}</div>
+        <div>Bad state</div>
       {:else if "team1" in match.winner}
         {match.team1?.name} Win!
       {:else if "team2" in match.winner}
@@ -91,32 +93,26 @@
         Its a tie!
       {/if}
     {:else if match.state == "Error"}
-      <div>Bad state: {match.error}</div>
+      <div>Bad state:</div>
     {/if}
   </MatchCardHeader>
   {#if !compact}
-    {#if liveMatch && !!liveMatch.liveState}
-      <div class="mid">
-        <div class="team-lead">
-          {getActivePlayerName("team1", liveMatch.liveState)}
-        </div>
-        <div>
-          <div>Round {liveMatch.liveState.round}</div>
-        </div>
-        <div class="team-lead">
-          {getActivePlayerName("team2", liveMatch.liveState)}
-        </div>
-      </div>
-    {:else}
-      <div class="mid" />
-    {/if}
+    <div class="mid">
+      {#if liveMatch && !!liveMatch.liveState}
+        <Field match={liveMatch} />
+      {/if}
+    </div>
 
     <div class="footer">
-      <ul>
-        {#each log as logEntry}
-          <li>{logEntry.message}</li>
+      {#if turn}
+        {#each turn.events as e}
+          <MatchEvent
+            event={e}
+            team1Id={match.team1.id}
+            team2Id={match.team2.id}
+          />
         {/each}
-      </ul>
+      {/if}
     </div>
   {/if}
 </div>
@@ -136,7 +132,7 @@
     border-color: var(--color-primary);
   }
 
-  .mid {
+  .mid-header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;

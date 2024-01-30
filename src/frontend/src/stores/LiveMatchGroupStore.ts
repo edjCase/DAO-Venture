@@ -1,8 +1,8 @@
 import { writable } from "svelte/store";
-import { BaseState, LogEntry, MatchGroup, MatchVariant, PlayerState, TeamState, stadiumAgentFactory } from "../ic-agent/Stadium";
+import { BaseState, MatchGroup, MatchVariant, PlayerState, TeamState, stadiumAgentFactory } from "../ic-agent/Stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { Principal } from "@dfinity/principal";
-import { SeasonStatus } from "../models/Season";
+import { MatchLog, SeasonStatus, TeamPositions } from "../models/Season";
 import { scheduleStore } from "./ScheduleStore";
 import { TeamId, TeamIdOrTie } from "../models/Team";
 import { TeamDetails } from "../models/Match";
@@ -16,6 +16,7 @@ export type LiveMatchGroup = {
 
 export type LiveTeamDetails = TeamDetails & {
   offering: Offering;
+  positions: TeamPositions
 };
 
 export type LiveMatch = {
@@ -23,9 +24,8 @@ export type LiveMatch = {
   team2: LiveTeamDetails;
   aura: MatchAura;
   liveState: LiveMatchState | undefined
-  log: LogEntry[];
+  log: MatchLog;
   winner: TeamIdOrTie | undefined;
-  error: string | undefined;
 };
 
 
@@ -50,6 +50,7 @@ export const liveMatchGroupStore = (() => {
       logoUrl: team.logoUrl,
       score: Number(team.score),
       offering: team.offering,
+      positions: team.positions
     }
   };
 
@@ -62,14 +63,13 @@ export const liveMatchGroupStore = (() => {
           offenseTeamId: match.inProgress.offenseTeamId,
           players: match.inProgress.players,
           bases: match.inProgress.bases,
-          round: Number(match.inProgress.round),
+          round: match.inProgress.log.rounds.length,
           outs: Number(match.inProgress.outs),
           strikes: Number(match.inProgress.strikes)
         },
         log: match.inProgress.log,
         winner: undefined,
-        aura: match.inProgress.aura,
-        error: undefined
+        aura: match.inProgress.aura
       };
     } else {
       return {
@@ -78,8 +78,7 @@ export const liveMatchGroupStore = (() => {
         liveState: undefined,
         log: match.completed.log,
         winner: match.completed.winner,
-        aura: match.completed.aura,
-        error: match.completed.error.length > 0 ? match.completed.error[0] : undefined
+        aura: match.completed.aura
       };
     }
   };

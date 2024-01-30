@@ -50,12 +50,11 @@ export const scheduleStore = (() => {
                 id: index,
                 time: time,
                 matchGroupId: matchGroupId,
-                state: match.completed.error.length == 0 ? "Played" : "Error",
+                state: "Played",
                 offeringOptions: undefined,
                 team1: mapTeam(match.completed.team1, match.completed.team1.score),
                 team2: mapTeam(match.completed.team2, match.completed.team2.score),
-                winner: match.completed.winner,
-                error: match.completed.error.length == 0 ? undefined : match.completed.error[0]
+                winner: match.completed.winner
             };
         } else if ('inProgress' in match) {
             return {
@@ -66,8 +65,7 @@ export const scheduleStore = (() => {
                 offeringOptions: undefined,
                 team1: mapTeam(match.inProgress.team1, undefined),
                 team2: mapTeam(match.inProgress.team2, undefined),
-                winner: undefined,
-                error: undefined
+                winner: undefined
             };
         }
         else if ('scheduled' in match) {
@@ -79,8 +77,7 @@ export const scheduleStore = (() => {
                 offeringOptions: match.scheduled.offeringOptions,
                 team1: mapTeam(match.scheduled.team1, undefined),
                 team2: mapTeam(match.scheduled.team2, undefined),
-                winner: undefined,
-                error: undefined
+                winner: undefined
             };
         }
         else {
@@ -92,8 +89,7 @@ export const scheduleStore = (() => {
                 offeringOptions: undefined,
                 team1: mapTeamAssignment(match.notScheduled.team1, undefined),
                 team2: mapTeamAssignment(match.notScheduled.team2, undefined),
-                winner: undefined,
-                error: undefined
+                winner: undefined
             };
         }
     };

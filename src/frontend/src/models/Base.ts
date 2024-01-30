@@ -11,3 +11,10 @@ export const BaseIdl = IDL.Variant({
     thirdBase: IDL.Null,
     homeBase: IDL.Null,
 });
+
+export enum BaseEnum {
+    FirstBase = "First Base",
+    SecondBase = "Second Base",
+    ThirdBase = "Third Base",
+    HomeBase = "Home Base",
+}

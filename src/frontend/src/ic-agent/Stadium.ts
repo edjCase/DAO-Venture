@@ -8,7 +8,7 @@ import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
 import { PlayerSkills, PlayerSkillsIdl } from './PlayerLedger';
 import { PlayerCondition, PlayerConditionIdl } from '../models/Player';
-import { CompletedMatch, CompletedMatchIdl } from '../models/Season';
+import { CompletedMatch, CompletedMatchIdl, MatchLog, MatchLogIdl, TeamPositions, TeamPositionsIdl } from '../models/Season';
 
 export type Nat = bigint;
 export type Nat32 = number;
@@ -42,12 +42,14 @@ export const TeamIdl = IDL.Record({
   logoUrl: IDL.Text,
 });
 
+
 export type TeamState = {
   id: Principal;
   name: Text;
   logoUrl: Text;
   score: Int;
   offering: Offering;
+  positions: TeamPositions
 };
 export const TeamStateIdl = IDL.Record({
   id: IDL.Principal,
@@ -55,6 +57,7 @@ export const TeamStateIdl = IDL.Record({
   logoUrl: IDL.Text,
   score: IDL.Int,
   offering: OfferingIdl,
+  positions: TeamPositionsIdl,
 });
 
 
@@ -71,14 +74,6 @@ export const BaseStateIdl = IDL.Record({
   thirdBase: IDL.Opt(PlayerIdIdl),
 });
 
-export type LogEntry = {
-  message: Text;
-  isImportant: Bool;
-};
-export const LogEntryIdl = IDL.Record({
-  message: IDL.Text,
-  isImportant: IDL.Bool,
-});
 
 export type PlayerState = {
   id: PlayerId;
@@ -102,7 +97,7 @@ export type InProgressMatch = {
   aura: MatchAura;
   players: PlayerState[];
   bases: BaseState;
-  log: LogEntry[];
+  log: MatchLog;
   outs: Nat;
   strikes: Nat;
 };
@@ -113,7 +108,7 @@ export const InProgressMatchIdl = IDL.Record({
   aura: MatchAuraIdl,
   players: IDL.Vec(PlayerStateIdl),
   bases: BaseStateIdl,
-  log: IDL.Vec(LogEntryIdl),
+  log: MatchLogIdl,
   outs: IDL.Nat,
   strikes: IDL.Nat,
 });
