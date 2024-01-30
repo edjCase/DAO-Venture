@@ -265,7 +265,7 @@ export const players: Player[] = [
     {
         "name": "Glitch Goblin",
         "title": "The Retro Anomaly",
-        "description": "Forged from the essence of countless forgotten 8-bit games, Glitch Goblin is a vibrant, pixelated character, always flickering with the colors of ancient gaming lore and echoing with the nostalgic sounds of retro adventures.",
+        "description": "Formed from the essence of countless forgotten 8-bit games, Glitch Goblin is a vibrant, pixelated character, always flickering with the colors of ancient gaming lore and echoing with the nostalgic sounds of retro adventures.",
         "quirks": [
             "Moves in a jittery, frame-skipping manner, reminiscent of old game animations",
             "Occasionally blurts out cryptic phrases in pixelated text bubbles"
@@ -446,7 +446,7 @@ export const players: Player[] = [
         "description": "A spirit formed from the forgotten flashlights of yesteryear's security guards, still seeking to illuminate the dark corners.",
         "quirks": ["Flickers in Morse code when anxious", "Casts dramatic shadows when telling stories"],
         "likes": ["Nighttime patrols", "Scavenger hunts"],
-        "dislikes": ["LED upgrades", "Daylight games"]
+        "dislikes": ["LED upgrades", "Daytime games"]
     },
     {
         "name": "Rusty",
@@ -503,12 +503,12 @@ export const players: Player[] = [
         "description": "Born from the gentle drizzles that delayed games, a spirit of contemplation and patience.",
         "quirks": ["Sighs softly, causing a light mist", "Condenses thoughts into raindrops"],
         "likes": ["Watercolor paintings", "Reflective puddles"],
-        "dislikes": ["Sun umbrellas", "Droughts"]
+        "dislikes": ["Parasoles", "Droughts"]
     },
     {
         "name": "Fervor",
         "title": "The Ember Enthusiast",
-        "description": "Forged from the burning desire of underdog teams, a blazing beacon of hope and persistence.",
+        "description": "Formed from the burning desire of underdog teams, a blazing beacon of hope and persistence.",
         "quirks": ["Glowing warmly in the face of adversity", "Sparks ideas in heated moments"],
         "likes": ["Rousing speeches", "Campfire stories"],
         "dislikes": ["Water cooler gossip", "Fair-weather fans"]
@@ -519,12 +519,12 @@ export const players: Player[] = [
         "description": "A spirit born from the playful gusts that snatch away baseball caps and ruffle flags on game days.",
         "quirks": ["Murmurs like a distant crowd", "Occasionally causes small whirlwinds"],
         "likes": ["Kite flying", "Wind chimes"],
-        "dislikes": ["Closed domes", "Stagnant air"]
+        "dislikes": ["Closed stadiums", "Stagnant air"]
     },
     {
         "name": "Clatter",
         "title": "The Rowdy Rhythmer",
-        "description": "Forged from the clanging of empty aluminum cans and snack wrappers, a symphony of past celebrations.",
+        "description": "Formed from the clanging of empty aluminum cans and snack wrappers, a symphony of past celebrations.",
         "quirks": ["Moves with a rhythmic jangle", "Can't resist tapping along to any beat"],
         "likes": ["Street parades", "Drum solos"],
         "dislikes": ["Silent rooms", "Litter bins"]
@@ -605,7 +605,7 @@ export const players: Player[] = [
     {
         "name": "Rattle",
         "title": "The Chattering Champion",
-        "description": "Forged from the loose screws and bolts of stadium seats, a symphony of the unsettled and restless.",
+        "description": "Formed from the loose screws and bolts of stadium seats, a symphony of the unsettled and restless.",
         "quirks": ["Shakes noisily when excited", "Tightens up in tense situations"],
         "likes": ["Toolkits", "Vibrant conversations"],
         "dislikes": ["Rust", "Silent treatment"]
@@ -668,7 +668,7 @@ export const players: Player[] = [
         "dislikes": ["System crashes", "Low resolution"]
     },
     {
-        "name": "Wisp",
+        "name": "Wysp",
         "title": "The Ethereal Drifter",
         "description": "Formed from the swirling steam of hotdogs and pretzels, a ghostly presence of comfort food past.",
         "quirks": ["Vanishes in a puff when startled", "Smells faintly of mustard and cheese"],
@@ -808,7 +808,7 @@ export const players: Player[] = [
     {
         "name": "Tumble",
         "title": "The Agile Acrobat",
-        "description": "Born from the tumbling of cheerleaders and the acrobatics of outfielders, a dynamic and spirited entity.",
+        "description": "Born from the tumbling of the acrobatics of outfielders, a dynamic and spirited entity.",
         "quirks": ["Performs spontaneous somersaults", "Always lands on its feet"],
         "likes": ["Gymnastics", "Parkour"],
         "dislikes": ["Clumsiness", "Sitting still"]
@@ -863,7 +863,7 @@ export const players: Player[] = [
         "dislikes": ["Apathy", "Quiet audiences"]
     },
     {
-        "name": "Echo2",
+        "name": "Resonant",
         "title": "The Resounding Reverberation",
         "description": "Born from the echoing cheers and jeers of historic games, a living echo of the stadium's past.",
         "quirks": ["Repeats the last words heard", "Resonates with a deep, echoing voice"],
@@ -904,7 +904,7 @@ export const players: Player[] = [
     },
     {
         // 100
-        "name": "Ripple2",
+        "name": "Ripplez",
         "title": "The Wavy Wanderer",
         "description": "Emerging from the ripples in cups of beer and soda, a fluid and unpredictable spirit of liquid motion.",
         "quirks": ["Moves in undulating waves", "Spills over with laughter"],
