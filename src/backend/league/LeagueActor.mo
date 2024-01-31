@@ -629,14 +629,14 @@ actor LeagueActor {
         let compileTeamInfo = func(teamAssignment : Season.TeamAssignment) : Season.TeamInfo {
             switch (teamAssignment) {
                 case (#predetermined(teamInfo)) teamInfo;
-                case (#seasonStanding(standingNumber)) {
+                case (#seasonStandingIndex(standingIndex)) {
                     // get team based on current season standing
                     let ?standings = inProgressSeason.teamStandings else Debug.trap("Season standings not found. Match Group Id: " # Nat.toText(matchGroupId));
 
                     let ?teamWithStanding = Util.arrayGetSafe<Season.TeamStandingInfo>(
                         standings,
-                        standingNumber - 1,
-                    ) else Debug.trap("Standing not found. Standings: " # debug_show (standings) # " Standing: " # Nat.toText(standingNumber));
+                        standingIndex,
+                    ) else Debug.trap("Standing not found. Standings: " # debug_show (standings) # " Standing index: " # Nat.toText(standingIndex));
 
                     getTeamInfo(teamWithStanding.id);
                 };

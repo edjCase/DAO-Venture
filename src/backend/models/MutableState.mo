@@ -259,7 +259,7 @@ module this {
 
         };
 
-        public func endTurn() {
+        public func startTurn() {
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             currentRound.turns.add({
                 events = Buffer.Buffer<Season.Event>(0);

@@ -52,7 +52,7 @@ module {
 
     public type TeamAssignment = {
         #predetermined : TeamInfo;
-        #seasonStanding : Nat; // Current standing calculation
+        #seasonStandingIndex : Nat; // Current standing calculation
         #winnerOfMatch : Nat; // Look at previous match group match id winner
     };
 

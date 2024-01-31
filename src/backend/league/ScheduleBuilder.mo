@@ -24,7 +24,7 @@ module {
     };
 
     public type PlayoffTeam = {
-        #seasonStanding : Nat;
+        #seasonStandingIndex : Nat;
         #winnerOfMatch : Nat; // Match Id of last match group
     };
 
@@ -118,11 +118,11 @@ module {
             nextMatchDate := nextMatchDate.add(timeBetweenMatchGroups);
         };
         let nextPowerOfTwo = findNextPowerOfTwo(teamCount);
-        let byteTeamCount : Nat = nextPowerOfTwo - teamCount; // Number of teams that get a bye in the first round
+        let byeTeamCount : Nat = nextPowerOfTwo - teamCount; // Number of teams that get a bye in the first round
 
         // Split the teams up into two halves, but exclude the teams that get a bye in the first round
-        let teamsInFirstRound = IterTools.range(byteTeamCount + 1, teamCount + 1);
-        let firstRoundMatchupCount : Nat = (teamCount - byteTeamCount) / 2;
+        let teamsInFirstRound = IterTools.range(byeTeamCount + 1, teamCount + 1);
+        let firstRoundMatchupCount : Nat = (teamCount - byeTeamCount) / 2;
         let (firstHalfOfTeams, secondHalfOfTeams) = teamsInFirstRound
         |> Buffer.fromIter<Nat>(_)
         |> Buffer.split(_, firstRoundMatchupCount);
@@ -131,10 +131,10 @@ module {
         let firstRoundMatches = IterTools.zip(firstHalfOfTeams.vals(), secondHalfOfTeams.vals())
         |> Iter.map(
             _,
-            func((team1Standing, team2Standing) : (Nat, Nat)) : PlayoffMatch {
+            func((team1StandingIndex, team2StandingIndex) : (Nat, Nat)) : PlayoffMatch {
                 {
-                    team1 = #seasonStanding(team1Standing);
-                    team2 = #seasonStanding(team2Standing);
+                    team1 = #seasonStandingIndex(team1StandingIndex);
+                    team2 = #seasonStandingIndex(team2StandingIndex);
                 };
             },
         )
@@ -144,17 +144,17 @@ module {
         addPlayoffRound(firstRoundMatches);
 
         // If there are byes, then make a second round
-        if (byteTeamCount > 0) {
-            let byeTeams = IterTools.range(0, byteTeamCount);
+        if (byeTeamCount > 0) {
+            let byeTeams = IterTools.range(0, byeTeamCount);
 
             // Second round has the top teams against the winners of the first round
             // If team count is not a power of two, then some teams get a bye in the first round
             let secondRoundMatches = byeTeams
             |> IterTools.mapEntries(
                 _,
-                func(index : Nat, byeTeamStanding : Nat) : PlayoffMatch {
+                func(index : Nat, byeTeamStandingIndex : Nat) : PlayoffMatch {
                     {
-                        team1 = #seasonStanding(byeTeamStanding);
+                        team1 = #seasonStandingIndex(byeTeamStandingIndex);
                         team2 = #winnerOfMatch(index);
                     };
                 },

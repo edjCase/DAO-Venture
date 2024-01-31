@@ -2,8 +2,8 @@
   import { Principal } from "@dfinity/principal";
   import { nanosecondsToRelativeWeekString } from "../../utils/DateUtils";
   import { scheduleStore } from "../../stores/ScheduleStore";
-  import MatchCard from "./MatchCard.svelte";
   import { MatchDetails, MatchGroupDetails } from "../../models/Match";
+  import MatchCardCompact from "./MatchCardCompact.svelte";
 
   export let teamId: Principal;
 
@@ -28,7 +28,7 @@
 <div class="match-history">
   {#each matches as match}
     <div>{nanosecondsToRelativeWeekString(match.time)}</div>
-    <MatchCard {match} compact={true} />
+    <MatchCardCompact {match} />
   {/each}
 </div>
 

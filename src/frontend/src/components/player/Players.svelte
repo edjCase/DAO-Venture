@@ -5,6 +5,7 @@
   import { playerStore } from "../../stores/PlayerStore";
   import { teamStore } from "../../stores/TeamStore";
   import { Link } from "svelte-routing";
+  import UniqueAvatar from "../common/UniqueAvatar.svelte";
 
   // Assuming you have a way to fetch players
   let players: Player[] = []; // Populate this array with player data
@@ -15,7 +16,7 @@
 <div class="p-6 mx-auto lg:max-w-2xl xl:max-w-3xl">
   <div class="grid grid-cols-1 md:grid-cols-3">
     {#each players as player}
-      <Card class="mx-auto mb-2 cursor-pointer">
+      <Card class="mx-auto mb-2 cursor-pointer relative">
         <Link to={"/players/" + player.id}>
           <div class="font-bold text-lg">{player.name}</div>
           {#if player.teamId}
@@ -25,8 +26,11 @@
             </div>
           {/if}
           <div class="text-sm">{positionToString(player.position)}</div>
+          <div class="absolute top-5 right-5">
+            <UniqueAvatar id={player.id} size={50} />
+          </div>
+
           <div class="text-sm text-gray-600">{player.description}</div>
-          <!-- More player details can be added here -->
         </Link>
       </Card>
     {/each}

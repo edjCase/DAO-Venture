@@ -218,6 +218,7 @@ module {
         let state : MutableState.MutableMatchState = MutableState.MutableMatchState(initialState);
 
         public func tick() : TickResult {
+            state.startTurn();
             if (state.log.rounds.size() < 1) {
                 ignore compiledHooks.matchStart({
                     prng = prng;
@@ -444,10 +445,7 @@ module {
             playerId : Player.PlayerId,
             skill : Skill.Skill,
             hook : ?Hook.Hook<Hook.SkillTestContext>,
-        ) : {
-            #ok : Hook.SkillTestResult;
-            #playerNotFound : PlayerId;
-        } {
+        ) : Hook.SkillTestResult {
             let (min, max) = switch (type_) {
                 case (#d10)(0, 10);
             };
@@ -505,7 +503,7 @@ module {
                     result.updatedContext.result;
                 };
             };
-            #ok(postHookValue);
+            postHookValue;
         };
 
         private func getNetRoll(leftRoll : Hook.SkillTestResult, rightRoll : Hook.SkillTestResult) : Int {
@@ -527,138 +525,113 @@ module {
 
         private func pitch() : SimulationResult {
             let defensiveTeam = state.getDefenseTeamState();
-            let pitchRollResult = roll(
+            let pitchRoll = roll(
                 #d10,
                 defensiveTeam.positions.pitcher,
                 // TODO what about throwing power?
                 #throwingAccuracy,
                 ?compiledHooks.onPitch,
             );
-            switch (pitchRollResult) {
-                case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
-                case (#ok(pitchRoll)) {
-                    state.addEvent(#pitch({ pitcherId = defensiveTeam.positions.pitcher; roll = pitchRoll }));
-                    swing(pitchRoll);
-                };
-            };
+            state.addEvent(#pitch({ pitcherId = defensiveTeam.positions.pitcher; roll = pitchRoll }));
+            swing(pitchRoll);
 
         };
 
         private func swing(pitchRoll : Hook.SkillTestResult) : SimulationResult {
-            let swingRollResult = roll(
+            let swingRoll = roll(
                 #d10,
                 state.bases.atBat,
                 #battingAccuracy,
                 ?compiledHooks.onSwing,
             );
-            switch (swingRollResult) {
-                case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
-                case (#ok(swingRoll)) {
-                    let netRoll = getNetRoll(pitchRoll, swingRoll);
-                    let swingOutcome = if (netRoll == 0) {
-                        #foul;
-                    } else if (netRoll > 0) {
-                        #hit;
-                    } else {
-                        #strike;
-                    };
-                    state.addEvent(
-                        #swing({
-                            playerId = state.bases.atBat;
-                            roll = swingRoll;
-                            pitchRoll = pitchRoll;
-                            outcome = swingOutcome;
-                        })
-                    );
-                    switch (swingOutcome) {
-                        case (#foul) {
-                            #inProgress; // TODO?
-                        };
-                        case (#hit) {
-                            hit(Int.abs(netRoll));
-                        };
-                        case (#strike) {
-                            strike();
-                        };
-                    };
+            let netRoll = getNetRoll(pitchRoll, swingRoll);
+            let swingOutcome = if (netRoll == 0) {
+                #foul;
+            } else if (netRoll > 0) {
+                #hit;
+            } else {
+                #strike;
+            };
+            state.addEvent(
+                #swing({
+                    playerId = state.bases.atBat;
+                    roll = swingRoll;
+                    pitchRoll = pitchRoll;
+                    outcome = swingOutcome;
+                })
+            );
+            switch (swingOutcome) {
+                case (#foul) {
+                    #inProgress; // TODO?
+                };
+                case (#hit) {
+                    hit(Int.abs(netRoll));
+                };
+                case (#strike) {
+                    strike();
                 };
             };
         };
 
         private func hit(hitDelta : Nat) : SimulationResult {
-            let hitPowerRollResult = roll(
+            let hitPowerRoll = roll(
                 #d10,
                 state.bases.atBat,
                 #battingPower,
                 ?compiledHooks.onHit,
             );
-            switch (hitPowerRollResult) {
-                case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
-                case (#ok(hitPowerRoll)) {
-                    let defensiveTeam = state.getDefenseTeamState();
-                    let pitchPowerRollResult = roll(
-                        #d10,
-                        defensiveTeam.positions.pitcher,
-                        #throwingPower,
-                        null,
-                    );
-
-                    switch (pitchPowerRollResult) {
-                        case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
-                        case (#ok(pitchPowerRoll)) {
-                            let netRoll = getNetRoll(pitchPowerRoll, hitPowerRoll);
-                            if (netRoll < 0) {
-                                // bases
-                                let location = switch (prng.nextInt(0, 4)) {
-                                    case (0) #firstBase;
-                                    case (1) #secondBase;
-                                    case (2) #thirdBase;
-                                    case (3) #shortStop;
-                                    case (4) #pitcher;
-                                    case (_) Prelude.unreachable();
-                                };
-                                tryCatchHit(location);
-                            } else if (netRoll < 10) {
-                                // outfield
-                                let location = switch (prng.nextInt(0, 2)) {
-                                    case (0) #leftField;
-                                    case (1) #centerField;
-                                    case (2) #rightField;
-                                    case (_) Prelude.unreachable();
-                                };
-                                tryCatchHit(location);
-                            } else {
-                                // homerun
-                                // TODO
-                                // state.addEvent({
-                                //     message = "Homerun!";
-                                //     isImportant = true;
-                                // });
-                                // hit it out of the park
-                                return batterRun({
-                                    fromBase = #homeBase;
-                                    ballLocation = null;
-                                });
-                            };
-                        };
-                    };
+            let defensiveTeam = state.getDefenseTeamState();
+            let pitchPowerRoll = roll(
+                #d10,
+                defensiveTeam.positions.pitcher,
+                #throwingPower,
+                null,
+            );
+            let netRoll = getNetRoll(pitchPowerRoll, hitPowerRoll);
+            if (netRoll < 0) {
+                // bases
+                let location = switch (prng.nextInt(0, 4)) {
+                    case (0) #firstBase;
+                    case (1) #secondBase;
+                    case (2) #thirdBase;
+                    case (3) #shortStop;
+                    case (4) #pitcher;
+                    case (_) Prelude.unreachable();
                 };
+                tryCatchHit(location);
+            } else if (netRoll < 10) {
+                // outfield
+                let location = switch (prng.nextInt(0, 2)) {
+                    case (0) #leftField;
+                    case (1) #centerField;
+                    case (2) #rightField;
+                    case (_) Prelude.unreachable();
+                };
+                tryCatchHit(location);
+            } else {
+                // homerun
+                // TODO
+                // state.addEvent({
+                //     message = "Homerun!";
+                //     isImportant = true;
+                // });
+                // hit it out of the park
+                return batterRun({
+                    fromBase = #homeBase;
+                    ballLocation = null;
+                });
             };
         };
 
         private func tryCatchHit(location : FieldPosition.FieldPosition) : SimulationResult {
             let catchingPlayerId = state.getPlayerAtDefensivePosition(location);
             let catchingPlayerState = state.getPlayerState(catchingPlayerId);
-            let catchRollResult = roll(
+            let catchRoll = roll(
                 #d10,
                 catchingPlayerId,
                 #catching,
                 ?compiledHooks.onCatch,
             );
-            let catchRoll = switch (catchRollResult) {
-                case (#ok(catchRoll)) catchRoll;
-                case (#playerNotFound(e)) return #endMatch(#stateBroken(#playerNotFound(e)));
-            };
             let ballRoll = { crit = false; value = 5 }; // TODO how to handle difficulty?
             let netCatchRoll = getNetRoll(ballRoll, catchRoll);
             if (netCatchRoll <= 0) {
@@ -694,100 +667,151 @@ module {
         private func batterRun({
             ballLocation : ?FieldPosition.FieldPosition;
         }) : SimulationResult {
-            let battingPlayerState = state.getPlayerState(state.bases.atBat);
-
-            let runRoll : Int = prng.nextNat(0, 10) + battingPlayerState.skills.speed;
-            let runPlayerToBase = func(playerId : ?PlayerId, fromBase : Base.Base, toBase : Base.Base) : SimulationResult {
-                switch (playerId) {
-                    case (null) {
-                        #inProgress;
+            // Pick a runner on base to try to hit out
+            let targetToHit = switch (state.bases.thirdBase) {
+                case (null) {
+                    // If no one is on third base, pick from 2nd, 1st, or batter
+                    let targets = Buffer.Buffer<Player.PlayerId>(3);
+                    targets.add(state.bases.atBat);
+                    switch (state.bases.firstBase) {
+                        case (null)();
+                        case (?firstBaseRunner) targets.add(firstBaseRunner);
                     };
-                    case (?pId) {
-                        playerMovedBases({ playerId = pId; fromBase; toBase });
+                    switch (state.bases.secondBase) {
+                        case (null)();
+                        case (?secondBaseRunner) targets.add(secondBaseRunner);
+                    };
+                    if (targets.size() == 1) {
+                        // Only one option, no need to roll
+                        targets.get(0);
+                    } else {
+                        // Roll to pick a target
+                        let chanceRoll = prng.nextNat(0, targets.size() - 1);
+                        targets.get(chanceRoll);
                     };
                 };
+                case (?thirdBaseRunner) {
+                    // If someone is on third base, running home, try to get them out
+                    thirdBaseRunner;
+                };
             };
+            let runRoll = roll(
+                #d10,
+                targetToHit,
+                #speed,
+                null, // TODO Hook here
+            );
             switch (ballLocation) {
                 case (null) {
                     // Home run
-                    let thirdBaseRun = runPlayerToBase(state.bases.secondBase, #thirdBase, #homeBase);
+                    // 3rd -> home
+                    let thirdBaseRun = runPlayerOrNot(state.bases.secondBase, #thirdBase, #homeBase);
                     let #inProgress = thirdBaseRun else return thirdBaseRun;
 
-                    let secondBaseRun = runPlayerToBase(state.bases.firstBase, #secondBase, #homeBase);
+                    // 2nd -> Home
+                    let secondBaseRun = runPlayerOrNot(state.bases.firstBase, #secondBase, #homeBase);
                     let #inProgress = secondBaseRun else return secondBaseRun;
 
-                    let firstBaseRun = runPlayerToBase(state.bases.firstBase, #firstBase, #homeBase);
+                    // 1st -> Home
+                    let firstBaseRun = runPlayerOrNot(state.bases.firstBase, #firstBase, #homeBase);
                     let #inProgress = firstBaseRun else return firstBaseRun;
 
-                    runPlayerToBase(?state.bases.atBat, #homeBase, #homeBase);
+                    // Batter -> Home
+                    playerMovedBases({
+                        playerId = state.bases.atBat;
+                        fromBase = #homeBase;
+                        toBase = #firstBase;
+                    });
                 };
                 case (?l) {
-                    // TODO the other bases should be able to get out, but they just run free right now
-
-                    let thirdBaseRun = runPlayerToBase(state.bases.secondBase, #thirdBase, #homeBase);
-                    let #inProgress = thirdBaseRun else return thirdBaseRun;
-
-                    let secondBaseRun = runPlayerToBase(state.bases.firstBase, #secondBase, #thirdBase);
-                    let #inProgress = secondBaseRun else return secondBaseRun;
-
-                    let firstBaseRun = runPlayerToBase(state.bases.firstBase, #firstBase, #secondBase);
-                    let #inProgress = firstBaseRun else return firstBaseRun;
 
                     let playerIdWithBall = state.getPlayerAtDefensivePosition(l);
-                    let playerStateWithBall = state.getPlayerState(playerIdWithBall);
-                    let canPickUpInTime = prng.nextInt(0, 10) + playerStateWithBall.skills.speed;
-                    if (canPickUpInTime <= 0) {
-                        return #inProgress;
-                    };
-                    // TODO against dodge/speed skill of runner
-                    let throwRoll = prng.nextInt(-10, 10) + playerStateWithBall.skills.throwingAccuracy;
-                    if (throwRoll <= 0) {
-                        state.addEvent(
-                            #safeAtBase({
-                                playerId = state.bases.atBat;
-                                base = #firstBase;
-                            })
-                        );
-                        playerMovedBases({
-                            playerId = state.bases.atBat;
-                            fromBase = #homeBase;
-                            toBase = #firstBase;
-                        });
-                    } else {
-                        let catchingPlayer = state.getPlayerState(playerIdWithBall);
-                        let battingPlayer = state.getPlayerState(state.bases.atBat);
-                        state.addEvent(
-                            #hitByBall({
-                                playerId = state.bases.atBat;
-                                throwingPlayerId = playerIdWithBall;
-                            })
-                        );
+                    let pickUpRoll = roll(
+                        #d10,
+                        playerIdWithBall,
+                        #speed,
+                        null, // TODO Hook here
+                    );
+                    let canPickUpInTime = getNetRoll(pickUpRoll, runRoll) >= 0;
 
-                        let battingPlayerState = state.getPlayerState(state.bases.atBat);
-                        let defenseRoll = prng.nextInt(-10, 10) + battingPlayerState.skills.defense;
-                        let damageRoll = throwRoll - defenseRoll;
-                        if (damageRoll > 10) {
-                            let newInjury = switch (damageRoll) {
-                                case (6) #twistedAnkle;
-                                case (7) #brokenLeg;
-                                case (8) #brokenArm;
-                                case (_) #concussion;
+                    if (canPickUpInTime) {
+                        let throwRoll = roll(
+                            #d10,
+                            playerIdWithBall,
+                            #throwingAccuracy,
+                            null, // TODO Hook here
+                        );
+                        let netThrowRoll = getNetRoll(throwRoll, runRoll);
+                        if (netThrowRoll >= 0) {
+                            // Runner is hit by the ball
+                            state.addEvent(
+                                #hitByBall({
+                                    playerId = targetToHit;
+                                    throwingPlayerId = playerIdWithBall;
+                                })
+                            );
+
+                            let defenseRoll = roll(
+                                #d10,
+                                targetToHit,
+                                #defense,
+                                null, // TODO Hook here
+                            );
+                            let damageRoll = getNetRoll({ crit = false; value = netThrowRoll }, defenseRoll);
+                            if (damageRoll > 10) {
+                                let newInjury = switch (damageRoll) {
+                                    case (6) #twistedAnkle;
+                                    case (7) #brokenLeg;
+                                    case (8) #brokenArm;
+                                    case (_) #concussion;
+                                };
+                                injurePlayer({
+                                    playerId = targetToHit;
+                                    injury = newInjury;
+                                });
                             };
-                            injurePlayer({
-                                playerId = state.bases.atBat;
-                                injury = newInjury;
-                            });
+                            // out will handle removing the player from base
+                            switch (out(targetToHit, #hitByBall)) {
+                                case (#endMatch(m)) return #endMatch(m);
+                                case (#inProgress)();
+                            };
                         };
-                        switch (out(state.bases.atBat, #hitByBall)) {
-                            case (#endMatch(m)) #endMatch(m);
-                            case (#inProgress) #inProgress;
-                        };
-
                     };
+
+                    // Shift everyone by one base
+                    // 3rd -> home
+                    let thirdBaseRun = runPlayerOrNot(state.bases.thirdBase, #thirdBase, #homeBase);
+                    let #inProgress = thirdBaseRun else return thirdBaseRun;
+
+                    // 2nd -> 3rd
+                    let secondBaseRun = runPlayerOrNot(state.bases.secondBase, #secondBase, #thirdBase);
+                    let #inProgress = secondBaseRun else return secondBaseRun;
+
+                    // 1st -> 2nd
+                    let firstBaseRun = runPlayerOrNot(state.bases.firstBase, #firstBase, #secondBase);
+                    let #inProgress = firstBaseRun else return firstBaseRun;
+
+                    // batter -> 1st
+                    playerMovedBases({
+                        playerId = state.bases.atBat;
+                        fromBase = #homeBase;
+                        toBase = #firstBase;
+                    });
 
                 };
             };
 
+        };
+
+        private func runPlayerOrNot(playerId : ?PlayerId, fromBase : Base.Base, toBase : Base.Base) : SimulationResult {
+            switch (playerId) {
+                case (null) {
+                    #inProgress;
+                };
+                case (?pId) {
+                    playerMovedBases({ playerId = pId; fromBase; toBase });
+                };
+            };
         };
 
         private func strike() : SimulationResult {
@@ -820,11 +844,17 @@ module {
             toBase : Base.Base;
             playerId : PlayerId;
         }) : SimulationResult {
+
+            state.addEvent(
+                #safeAtBase({
+                    playerId = state.bases.atBat;
+                    base = #firstBase;
+                })
+            );
             switch (toBase) {
                 case (#firstBase) state.bases.firstBase := ?playerId;
                 case (#secondBase) state.bases.secondBase := ?playerId;
                 case (#thirdBase) state.bases.thirdBase := ?playerId;
-                // TODO should this be legal?
                 case (#homeBase) {
                     score({ teamId = state.offenseTeamId; amount = 1 });
                 };

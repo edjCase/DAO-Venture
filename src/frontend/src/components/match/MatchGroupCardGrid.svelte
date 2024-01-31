@@ -1,6 +1,7 @@
 <script lang="ts">
   import { MatchDetails, MatchGroupDetails } from "../../models/Match";
-  import MatchCard from "./MatchCard.svelte";
+  import MatchCardCompact from "./MatchCardCompact.svelte";
+  import MatchCardFull from "./MatchCardFull.svelte";
 
   export let matchGroup: MatchGroupDetails;
 
@@ -17,7 +18,7 @@
 <div class="container">
   <div class="selected-match">
     {#if selectedMatch}
-      <MatchCard match={selectedMatch} compact={false} />
+      <MatchCardFull match={selectedMatch} />
     {/if}
   </div>
   <div class="other-matches">
@@ -30,7 +31,7 @@
         role="button"
         tabindex="0"
       >
-        <MatchCard {match} compact={true} />
+        <MatchCardCompact {match} />
       </div>
     {/each}
   </div>

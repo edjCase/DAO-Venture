@@ -4,6 +4,7 @@
   import { Player } from "../../ic-agent/PlayerLedger";
   import { Link } from "svelte-routing";
   import { positionToString } from "../../models/Player";
+  import UniqueAvatar from "../common/UniqueAvatar.svelte";
 
   export let teamId: Principal;
 
@@ -46,7 +47,14 @@
     {#each players as player}
       <tr>
         <td>{player.id}</td>
-        <td><Link to={"/players/" + player.id}>{player.name}</Link></td>
+        <td>
+          <Link to={"/players/" + player.id}>
+            <span class="flex items-center gap-2">
+              <UniqueAvatar id={player.id} size={20} />
+              {player.name}
+            </span>
+          </Link>
+        </td>
         <td>{positionToString(player.position)}</td>
         <td>{skillToString(player.skills.battingAccuracy)}</td>
         <td>{skillToString(player.skills.battingPower)}</td>

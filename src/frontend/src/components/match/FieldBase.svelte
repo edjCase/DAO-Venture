@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { toSvg } from "jdenticon";
   import { PlayerState } from "../../ic-agent/Stadium";
   import { BaseEnum } from "../../models/Base";
+  import UniqueAvatar from "../common/UniqueAvatar.svelte";
 
   export let x: number;
   export let y: number;
@@ -12,8 +12,8 @@
 
 <svg {x} {y}>
   {#if player}
-    {@html toSvg(player.id.toString(), width)}
-    <text x={2} y={15} font-size={3}>#{player.id}</text>
+    <UniqueAvatar id={player.id} size={width} />
+    <text x={5} y={13} font-size={3} text-anchor="middle">#{player.id}</text>
   {/if}
   <rect
     x={0.05}

@@ -203,11 +203,11 @@ export const TeamInfoIdl = IDL.Record({
 
 export type TeamAssignment =
     | { predetermined: TeamInfo }
-    | { seasonStanding: Nat }
+    | { seasonStandingIndex: Nat }
     | { winnerOfMatch: Nat };
 export const TeamAssignmentIdl = IDL.Variant({
     predetermined: TeamInfoIdl,
-    seasonStanding: IDL.Nat,
+    seasonStandingIndex: IDL.Nat,
     winnerOfMatch: IDL.Nat,
 });
 
