@@ -28,7 +28,7 @@
 <div class="match-history">
   {#each matches as match}
     <div>{nanosecondsToRelativeWeekString(match.time)}</div>
-    <MatchCardCompact {match} />
+    <MatchCardCompact {match} liveMatch={undefined} />
   {/each}
 </div>
 

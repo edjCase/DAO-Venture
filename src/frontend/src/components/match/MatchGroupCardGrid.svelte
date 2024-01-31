@@ -1,28 +1,56 @@
 <script lang="ts">
   import { MatchDetails, MatchGroupDetails } from "../../models/Match";
   import MatchCardCompact from "./MatchCardCompact.svelte";
-  import MatchCardFull from "./LiveMatch.svelte";
+  import LiveMatchCard from "./LiveMatch.svelte";
+  import {
+    LiveMatch,
+    liveMatchGroupStore,
+  } from "../../stores/LiveMatchGroupStore";
 
   export let matchGroup: MatchGroupDetails;
 
-  let selectedMatch: MatchDetails | undefined;
-  let otherMatches: MatchDetails[] = matchGroup.matches;
+  let selectedMatchId = 0;
+  let selectedMatch: MatchDetails = matchGroup.matches[selectedMatchId];
+  let liveMatches: LiveMatch[] | undefined = undefined;
+  let selectedLiveMatch: LiveMatch | undefined;
+  let matches: [MatchDetails, LiveMatch | undefined][] = [];
+
+  let updateMatches = () => {
+    matches = matchGroup.matches.map((match, index) => [
+      match,
+      liveMatches ? liveMatches[index] : undefined,
+    ]);
+    selectedMatch = matchGroup.matches[selectedMatchId];
+    selectedLiveMatch = liveMatches ? liveMatches[selectedMatchId] : undefined;
+  };
+
+  liveMatchGroupStore.subscribe((liveMatchGroup) => {
+    if (!liveMatchGroup || matchGroup.id != liveMatchGroup?.id) {
+      selectedLiveMatch = undefined;
+      liveMatches = undefined;
+    } else {
+      selectedLiveMatch = liveMatchGroup.matches[selectedMatchId];
+      liveMatches = liveMatchGroup.matches;
+    }
+    updateMatches();
+  });
 
   let selectMatch = (matchId: number) => () => {
-    selectedMatch = matchGroup.matches.find((m) => m.id == matchId);
-    otherMatches = matchGroup.matches.filter((m) => m.id != matchId);
+    selectedMatchId = matchId;
+    updateMatches();
   };
-  selectMatch(0)();
 </script>
 
 <div class="container">
   <div class="selected-match">
-    {#if selectedMatch}
-      <MatchCardFull match={selectedMatch} />
+    {#if selectedMatch && selectedLiveMatch}
+      <LiveMatchCard match={selectedMatch} liveMatch={selectedLiveMatch} />
+    {:else}
+      Loading...
     {/if}
   </div>
   <div class="other-matches">
-    {#each otherMatches as match}
+    {#each matches as [match, liveMatch]}
       <div
         class="clickable"
         on:click={selectMatch(match.id)}
@@ -31,7 +59,11 @@
         role="button"
         tabindex="0"
       >
-        <MatchCardCompact {match} />
+        <MatchCardCompact
+          {match}
+          {liveMatch}
+          selected={match.id == selectedMatchId}
+        />
       </div>
     {/each}
   </div>

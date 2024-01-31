@@ -50,7 +50,12 @@
         <td>
           <Link to={"/players/" + player.id}>
             <span class="flex items-center gap-2">
-              <UniqueAvatar id={player.id} size={20} />
+              <UniqueAvatar
+                id={player.id}
+                size={20}
+                borderStroke={undefined}
+                condition={undefined}
+              />
               {player.name}
             </span>
           </Link>

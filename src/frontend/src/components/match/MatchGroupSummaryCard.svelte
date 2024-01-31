@@ -1,7 +1,7 @@
 <script lang="ts">
   import { navigate } from "svelte-routing";
   import { nanosecondsToDate } from "../../utils/DateUtils";
-  import MatchCard from "./MatchCardCompact.svelte";
+  import MatchCardCompact from "./MatchCardCompact.svelte";
   import { MatchGroupDetails } from "../../models/Match";
 
   export let matchGroup: MatchGroupDetails;
@@ -31,7 +31,7 @@
   <div class="match-group">
     {#each matchGroup.matches as match}
       <div class="match">
-        <MatchCard {match} compact={true} />
+        <MatchCardCompact {match} liveMatch={undefined} />
       </div>
     {/each}
   </div>

@@ -9,6 +9,9 @@
   import FieldPlayer from "./FieldPlayer.svelte";
   import FieldBase from "./FieldBase.svelte";
   import { BaseEnum } from "../../models/Base";
+  import StrikeIcon from "../icons/StrikeIcon.svelte";
+  import HitIcon from "../icons/HitIcon.svelte";
+  import FoulIcon from "../icons/FoulIcon.svelte";
 
   export let match: LiveMatch;
 
@@ -33,6 +36,9 @@
   };
 
   let liveData: LiveData | undefined;
+
+  let battingIcon: "strike" | "hit" | "foul" | undefined;
+
   $: if (match.liveState) {
     let offenseTeam;
     let defenseTeam;
@@ -42,6 +48,27 @@
     } else {
       offenseTeam = match.team2;
       defenseTeam = match.team1;
+    }
+
+    if (match.log.rounds.length > 0) {
+      let currentRound = match.log.rounds[match.log.rounds.length - 1];
+      let lastTurn = currentRound.turns[currentRound.turns.length - 1];
+      if (lastTurn.events.length > 0) {
+        let swingEvent = lastTurn.events.find((e) => "swing" in e); // TODO how to return swing
+        if (swingEvent && "swing" in swingEvent) {
+          if ("foul" in swingEvent.swing.outcome) {
+            battingIcon = "foul";
+          } else if ("hit" in swingEvent.swing.outcome) {
+            battingIcon = "hit";
+          } else {
+            battingIcon = "strike";
+          }
+        } else {
+          battingIcon = undefined;
+        }
+      } else {
+        battingIcon = undefined;
+      }
     }
     liveData = {
       match: match.liveState,
@@ -60,18 +87,35 @@
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <rect
-        width="100%"
-        height="100%"
-        fill="#F5F5F5"
-        opacity={0.1}
-        rx={1}
-        ry={1}
+      <rect width="100%" height="100%" fill="#F5F5F5" opacity={0.1} />
+
+      <!-- Outfield -->
+      <FieldPlayer
+        x={5}
+        y={10}
+        teamColor={liveData.defenseTeam.color}
+        player={getPlayer(liveData.defenseTeam.positions.leftField)}
+        position={FieldPositionEnum.LeftField}
       />
+      <FieldPlayer
+        x={45}
+        y={0}
+        teamColor={liveData.defenseTeam.color}
+        player={getPlayer(liveData.defenseTeam.positions.centerField)}
+        position={FieldPositionEnum.CenterField}
+      />
+      <FieldPlayer
+        x={85}
+        y={10}
+        teamColor={liveData.defenseTeam.color}
+        player={getPlayer(liveData.defenseTeam.positions.rightField)}
+        position={FieldPositionEnum.RightField}
+      />
+
       <!-- Home base -->
       <FieldBase
         x={45}
-        y={70}
+        y={80}
         teamColor={liveData.offenseTeam.color}
         player={getPlayer(liveData.match.bases.atBat)}
         base={BaseEnum.HomeBase}
@@ -146,33 +190,34 @@
         position={FieldPositionEnum.Pitcher}
       />
 
-      <!-- Outfield -->
-      <FieldPlayer
-        x={5}
-        y={10}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.leftField)}
-        position={FieldPositionEnum.LeftField}
-      />
-      <FieldPlayer
-        x={45}
-        y={0}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.centerField)}
-        position={FieldPositionEnum.CenterField}
-      />
-      <FieldPlayer
-        x={85}
-        y={10}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.rightField)}
-        position={FieldPositionEnum.RightField}
-      />
+      <!-- Batting Icons -->
+      {#if battingIcon}
+        <svg x="45" y="67.5" width="10" height="10" viewBox="0 0 10 10">
+          {#if battingIcon == "strike"}
+            <StrikeIcon />
+          {:else if battingIcon == "hit"}
+            <HitIcon />
+          {:else if battingIcon == "foul"}
+            <FoulIcon />
+          {/if}
+        </svg>
+      {/if}
+
+      <!-- Text -->
+      <text x={60} y={88} font-size={3}>
+        Strikes: {liveData.match.strikes}
+      </text>
+      <text x={60} y={93} font-size={3}>
+        Outs: {liveData.match.outs}
+      </text>
     </svg>
   </div>
 {/if}
 
 <style>
+  text {
+    fill: var(--color-text);
+  }
   .field {
     position: relative;
     width: 100%;

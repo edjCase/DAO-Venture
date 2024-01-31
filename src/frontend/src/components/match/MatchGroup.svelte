@@ -25,8 +25,6 @@
         </h1>
       {:else if matchGroup.state == "Completed"}
         <div>Match Group is over</div>
-      {:else if matchGroup.state == "InProgress"}
-        <div>Match Group is LIVE!</div>
       {/if}
       {#if matchGroup.state == "Scheduled"}
         <h1>Predict the upcoming match-up winners</h1>

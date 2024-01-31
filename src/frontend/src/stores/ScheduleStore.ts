@@ -10,7 +10,7 @@ import {
     TeamAssignment,
     TeamInfo,
 } from "../models/Season";
-import { MatchDetails, MatchGroupDetails } from "../models/Match";
+import { MatchDetails, MatchGroupDetails, TeamDetails } from "../models/Match";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -29,12 +29,12 @@ export const scheduleStore = (() => {
             return undefined
         }
     };
-    const mapTeam = (team: TeamInfo, score: bigint | undefined) => {
+    const mapTeam = (team: TeamInfo, score: bigint | undefined): TeamDetails => {
         return {
             id: team.id,
             name: team.name,
             logoUrl: team.logoUrl,
-            score: Number(score)
+            score: score != undefined ? Number(score) : undefined
         };
     };
 

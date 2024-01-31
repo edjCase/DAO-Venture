@@ -27,7 +27,12 @@
           {/if}
           <div class="text-sm">{positionToString(player.position)}</div>
           <div class="absolute top-5 right-5">
-            <UniqueAvatar id={player.id} size={50} />
+            <UniqueAvatar
+              id={player.id}
+              size={50}
+              borderStroke={undefined}
+              condition={undefined}
+            />
           </div>
 
           <div class="text-sm text-gray-600">{player.description}</div>

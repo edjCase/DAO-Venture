@@ -622,7 +622,7 @@ actor LeagueActor {
                     case (#alreadyStarted) "Match group already started";
                     case (#matchErrors(errors)) "Match group errors: " # debug_show (errors);
                 };
-                Debug.print("Match group '" #Nat.toText(matchGroupId) # "' start callback: " # message);
+                Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback: " # message);
             },
         );
 

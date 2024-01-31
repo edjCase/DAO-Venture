@@ -13,7 +13,12 @@
 </script>
 
 <svg {x} {y}>
-  <UniqueAvatar id={player.id} size={width} borderStroke={teamColor} />
+  <UniqueAvatar
+    id={player.id}
+    size={width}
+    borderStroke={teamColor}
+    condition={player.condition}
+  />
   <text x={5} y={13} font-size={getFontSize(player.name)} text-anchor="middle">
     {player.name}
   </text>

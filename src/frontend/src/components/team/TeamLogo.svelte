@@ -3,8 +3,8 @@
   export let size: "sm" | "md" | "lg" | undefined;
   export let borderColor: string | undefined;
 
-  let logoUrl = team?.logoUrl || "/images/team-logos/unknown.png";
-  let alt = team?.name || "Undetermined";
+  $: logoUrl = team?.logoUrl || "/images/team-logos/unknown.png";
+  $: alt = team?.name || "Undetermined";
 </script>
 
 <img

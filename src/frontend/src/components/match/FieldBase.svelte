@@ -23,7 +23,12 @@
       {player.name}
     </text>
     <g transform="translate(.5, 5)">
-      <UniqueAvatar id={player.id} size={width} borderStroke={teamColor} />
+      <UniqueAvatar
+        id={player.id}
+        size={width}
+        borderStroke={teamColor}
+        condition={player.condition}
+      />
     </g>
   {/if}
   <rect

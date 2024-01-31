@@ -18,6 +18,8 @@
     if (score === undefined || isNaN(score)) return "-";
     return score;
   };
+  $: team1Score = getScoreText(team1?.score);
+  $: team2Score = getScoreText(team2?.score);
 </script>
 
 <div class="header">
@@ -28,7 +30,7 @@
     </Tooltip>
 
     <div class="score">
-      {getScoreText(team1?.score)}
+      {team1Score}
       <span class="emoji">{crownEmojiOrEmpty("team1")}</span>
     </div>
   </div>
@@ -37,12 +39,12 @@
   </div>
   <div class="header-team team2">
     <div class="score">
-      {getScoreText(team2?.score)}
+      {team2Score}
       <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
     <Tooltip>
       <TeamLogo team={team2} size="sm" slot="content" borderColor={undefined} />
-      <div slot="tooltip" class="name">{team1?.name || "Undetermined"}</div>
+      <div slot="tooltip" class="name">{team2?.name || "Undetermined"}</div>
     </Tooltip>
   </div>
 </div>
