@@ -641,12 +641,13 @@ actor LeagueActor {
                     getTeamInfo(teamWithStanding.id);
                 };
                 case (#winnerOfMatch(matchId)) {
+                    let previousMatchGroupId : Nat = matchGroupId - 1;
                     // get winner of match in previous match group
                     let ?previousMatchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
                         inProgressSeason.matchGroups,
-                        matchGroupId - 1,
-                    ) else Debug.trap("Previous match group not found, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId - 1));
-                    let #completed(completedMatchGroup) = previousMatchGroup else Debug.trap("Previous match group not completed, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId - 1));
+                        previousMatchGroupId,
+                    ) else Debug.trap("Previous match group not found, cannot get winner of match. Match Group Id: " # Nat.toText(previousMatchGroupId));
+                    let #completed(completedMatchGroup) = previousMatchGroup else Debug.trap("Previous match group not completed, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId));
                     let ?match = Util.arrayGetSafe<Season.CompletedMatch>(
                         completedMatchGroup.matches,
                         matchId,

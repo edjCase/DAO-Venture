@@ -121,7 +121,7 @@ module {
         let byeTeamCount : Nat = nextPowerOfTwo - teamCount; // Number of teams that get a bye in the first round
 
         // Split the teams up into two halves, but exclude the teams that get a bye in the first round
-        let teamsInFirstRound = IterTools.range(byeTeamCount + 1, teamCount + 1);
+        let teamsInFirstRound = IterTools.range(byeTeamCount, teamCount);
         let firstRoundMatchupCount : Nat = (teamCount - byeTeamCount) / 2;
         let (firstHalfOfTeams, secondHalfOfTeams) = teamsInFirstRound
         |> Buffer.fromIter<Nat>(_)

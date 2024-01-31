@@ -17,6 +17,7 @@ export type LiveMatchGroup = {
 export type LiveTeamDetails = TeamDetails & {
   offering: Offering;
   positions: TeamPositions
+  color: string;
 };
 
 export type LiveMatch = {
@@ -43,22 +44,25 @@ export const liveMatchGroupStore = (() => {
   let nextMatchTimeout: any;
   let liveMatchInterval: any;
 
-  const mapTeam = (team: TeamState): LiveTeamDetails => {
+  const mapTeam = (team: TeamState, color: string): LiveTeamDetails => {
     return {
       id: team.id,
       name: team.name,
       logoUrl: team.logoUrl,
       score: Number(team.score),
       offering: team.offering,
-      positions: team.positions
+      positions: team.positions,
+      color: color,
     }
   };
 
   const mapLiveMatch = (match: MatchVariant): LiveMatch => {
+    const team1Color = "#00FFFF";
+    const team2Color = "#FF00FF";
     if ('inProgress' in match) {
       return {
-        team1: mapTeam(match.inProgress.team1),
-        team2: mapTeam(match.inProgress.team2),
+        team1: mapTeam(match.inProgress.team1, team1Color),
+        team2: mapTeam(match.inProgress.team2, team2Color),
         liveState: {
           offenseTeamId: match.inProgress.offenseTeamId,
           players: match.inProgress.players,
@@ -73,8 +77,8 @@ export const liveMatchGroupStore = (() => {
       };
     } else {
       return {
-        team1: mapTeam(match.completed.team1),
-        team2: mapTeam(match.completed.team2),
+        team1: mapTeam(match.completed.team1, team1Color),
+        team2: mapTeam(match.completed.team2, team2Color),
         liveState: undefined,
         log: match.completed.log,
         winner: match.completed.winner,

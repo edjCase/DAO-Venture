@@ -1,12 +1,18 @@
 <script lang="ts">
   export let team: { logoUrl: string; name: string } | undefined;
   export let size: "sm" | "md" | "lg" | undefined;
+  export let borderColor: string | undefined;
 
   let logoUrl = team?.logoUrl || "/images/team-logos/unknown.png";
   let alt = team?.name || "Undetermined";
 </script>
 
-<img class="logo {size ? `size-${size}` : ''}" src={logoUrl} {alt} />
+<img
+  class="logo {size ? `size-${size}` : ''}"
+  src={logoUrl}
+  {alt}
+  style={borderColor ? "border: 1px solid " + borderColor : ""}
+/>
 
 <style>
   .logo {

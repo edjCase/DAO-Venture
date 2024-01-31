@@ -145,7 +145,7 @@ module this {
                 },
             );
         };
-        public func getPlayerState(playerId : Player.PlayerId) : MutablePlayerState {
+        public func getPlayerState(playerId : Player.PlayerId) : MutablePlayerStateWithId {
             let ?player = players.get(playerId) else Debug.trap("Player not found for 'getPlayerState': " # Nat32.toText(playerId));
             player;
         };
@@ -193,7 +193,7 @@ module this {
             null;
         };
 
-        public func getPlayerAtBase(base : Base.Base) : ?MutablePlayerState {
+        public func getPlayerAtBase(base : Base.Base) : ?MutablePlayerStateWithId {
             let playerId = switch (base) {
                 case (#firstBase) bases.firstBase;
                 case (#secondBase) bases.secondBase;
@@ -260,6 +260,9 @@ module this {
         };
 
         public func startTurn() {
+            if (log.rounds.size() == 0) {
+                addNewRound();
+            };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             currentRound.turns.add({
                 events = Buffer.Buffer<Season.Event>(0);

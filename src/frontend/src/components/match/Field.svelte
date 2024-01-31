@@ -60,17 +60,19 @@
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <linearGradient id="subtleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:#F5F5F5; stop-opacity:.1" />
-          <stop offset="100%" style="stop-color:#FFFFFF; stop-opacity:.1" />
-        </linearGradient>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#subtleGradient)" />
+      <rect
+        width="100%"
+        height="100%"
+        fill="#F5F5F5"
+        opacity={0.1}
+        rx={1}
+        ry={1}
+      />
       <!-- Home base -->
       <FieldBase
         x={45}
-        y={80}
+        y={70}
+        teamColor={liveData.offenseTeam.color}
         player={getPlayer(liveData.match.bases.atBat)}
         base={BaseEnum.HomeBase}
       />
@@ -78,14 +80,16 @@
       <!-- First base -->
       <FieldBase
         x={70}
-        y={55}
+        y={45}
+        teamColor={liveData.offenseTeam.color}
         player={getPlayerOrNull(liveData.match.bases.firstBase)}
         base={BaseEnum.FirstBase}
       />
 
       <FieldPlayer
-        x={80}
-        y={55}
+        x={85}
+        y={50}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.firstBase)}
         position={FieldPositionEnum.FirstBase}
       />
@@ -93,22 +97,25 @@
       <!-- Second base -->
       <FieldBase
         x={45}
-        y={30}
+        y={20}
+        teamColor={liveData.offenseTeam.color}
         player={getPlayerOrNull(liveData.match.bases.secondBase)}
         base={BaseEnum.SecondBase}
       />
 
       <FieldPlayer
-        x={55}
-        y={30}
+        x={60}
+        y={25}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.secondBase)}
         position={FieldPositionEnum.SecondBase}
       />
 
       <!-- Short stop -->
       <FieldPlayer
-        x={30}
-        y={40}
+        x={25}
+        y={30}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.shortStop)}
         position={FieldPositionEnum.ShortStop}
       />
@@ -116,14 +123,16 @@
       <!-- Third base -->
       <FieldBase
         x={20}
-        y={55}
+        y={45}
+        teamColor={liveData.offenseTeam.color}
         player={getPlayerOrNull(liveData.match.bases.thirdBase)}
         base={BaseEnum.ThirdBase}
       />
 
       <FieldPlayer
-        x={10}
-        y={55}
+        x={5}
+        y={50}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.thirdBase)}
         position={FieldPositionEnum.ThirdBase}
       />
@@ -131,7 +140,8 @@
       <!-- Pitcher -->
       <FieldPlayer
         x={45}
-        y={55}
+        y={50}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.pitcher)}
         position={FieldPositionEnum.Pitcher}
       />
@@ -140,18 +150,21 @@
       <FieldPlayer
         x={5}
         y={10}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.leftField)}
         position={FieldPositionEnum.LeftField}
       />
       <FieldPlayer
         x={45}
         y={0}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.centerField)}
         position={FieldPositionEnum.CenterField}
       />
       <FieldPlayer
         x={85}
         y={10}
+        teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.rightField)}
         position={FieldPositionEnum.RightField}
       />

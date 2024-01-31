@@ -681,7 +681,7 @@ module {
                         case (null)();
                         case (?secondBaseRunner) targets.add(secondBaseRunner);
                     };
-                    if (targets.size() == 1) {
+                    if (targets.size() <= 1) {
                         // Only one option, no need to roll
                         targets.get(0);
                     } else {
@@ -705,22 +705,30 @@ module {
                 case (null) {
                     // Home run
                     // 3rd -> home
-                    let thirdBaseRun = runPlayerOrNot(state.bases.secondBase, #thirdBase, #homeBase);
+                    let thirdBaseRun = moveBaseToBase({
+                        from = #thirdBase;
+                        to = #homeBase;
+                    });
                     let #inProgress = thirdBaseRun else return thirdBaseRun;
 
                     // 2nd -> Home
-                    let secondBaseRun = runPlayerOrNot(state.bases.firstBase, #secondBase, #homeBase);
+                    let secondBaseRun = moveBaseToBase({
+                        from = #secondBase;
+                        to = #homeBase;
+                    });
                     let #inProgress = secondBaseRun else return secondBaseRun;
 
                     // 1st -> Home
-                    let firstBaseRun = runPlayerOrNot(state.bases.firstBase, #firstBase, #homeBase);
+                    let firstBaseRun = moveBaseToBase({
+                        from = #firstBase;
+                        to = #homeBase;
+                    });
                     let #inProgress = firstBaseRun else return firstBaseRun;
 
                     // Batter -> Home
-                    playerMovedBases({
-                        playerId = state.bases.atBat;
-                        fromBase = #homeBase;
-                        toBase = #firstBase;
+                    moveBaseToBase({
+                        from = #homeBase;
+                        to = #firstBase;
                     });
                 };
                 case (?l) {
@@ -780,38 +788,35 @@ module {
 
                     // Shift everyone by one base
                     // 3rd -> home
-                    let thirdBaseRun = runPlayerOrNot(state.bases.thirdBase, #thirdBase, #homeBase);
-                    let #inProgress = thirdBaseRun else return thirdBaseRun;
+                    let thirdBaseRun = moveBaseToBase({
+                        from = #thirdBase;
+                        to = #homeBase;
+                    });
+                    let #inProgress = thirdBaseRun else return thirdBaseRun; // Short circuit if end match
 
                     // 2nd -> 3rd
-                    let secondBaseRun = runPlayerOrNot(state.bases.secondBase, #secondBase, #thirdBase);
-                    let #inProgress = secondBaseRun else return secondBaseRun;
+                    let secondBaseRun = moveBaseToBase({
+                        from = #secondBase;
+                        to = #thirdBase;
+                    });
+                    let #inProgress = secondBaseRun else return secondBaseRun; // Short circuit if end match
 
                     // 1st -> 2nd
-                    let firstBaseRun = runPlayerOrNot(state.bases.firstBase, #firstBase, #secondBase);
-                    let #inProgress = firstBaseRun else return firstBaseRun;
+                    let firstBaseRun = moveBaseToBase({
+                        from = #thirdBase;
+                        to = #homeBase;
+                    });
+                    let #inProgress = firstBaseRun else return firstBaseRun; // Short circuit if end match
 
                     // batter -> 1st
-                    playerMovedBases({
-                        playerId = state.bases.atBat;
-                        fromBase = #homeBase;
-                        toBase = #firstBase;
+                    moveBaseToBase({
+                        from = #homeBase;
+                        to = #firstBase;
                     });
 
                 };
             };
 
-        };
-
-        private func runPlayerOrNot(playerId : ?PlayerId, fromBase : Base.Base, toBase : Base.Base) : SimulationResult {
-            switch (playerId) {
-                case (null) {
-                    #inProgress;
-                };
-                case (?pId) {
-                    playerMovedBases({ playerId = pId; fromBase; toBase });
-                };
-            };
         };
 
         private func strike() : SimulationResult {
@@ -839,27 +844,27 @@ module {
             removePlayerFromBase(playerId);
         };
 
-        private func playerMovedBases({
-            fromBase : Base.Base;
-            toBase : Base.Base;
-            playerId : PlayerId;
+        private func moveBaseToBase({
+            from : Base.Base;
+            to : Base.Base;
         }) : SimulationResult {
+            let ?player = state.getPlayerAtBase(from) else return #inProgress; // no player to move, skip
 
             state.addEvent(
                 #safeAtBase({
-                    playerId = state.bases.atBat;
+                    playerId = player.id;
                     base = #firstBase;
                 })
             );
-            switch (toBase) {
-                case (#firstBase) state.bases.firstBase := ?playerId;
-                case (#secondBase) state.bases.secondBase := ?playerId;
-                case (#thirdBase) state.bases.thirdBase := ?playerId;
+            switch (to) {
+                case (#firstBase) state.bases.firstBase := ?player.id;
+                case (#secondBase) state.bases.secondBase := ?player.id;
+                case (#thirdBase) state.bases.thirdBase := ?player.id;
                 case (#homeBase) {
                     score({ teamId = state.offenseTeamId; amount = 1 });
                 };
             };
-            clearBase(fromBase);
+            clearBase(from);
         };
 
         private func endRound() : SimulationResult {

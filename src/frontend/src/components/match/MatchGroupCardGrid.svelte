@@ -1,7 +1,7 @@
 <script lang="ts">
   import { MatchDetails, MatchGroupDetails } from "../../models/Match";
   import MatchCardCompact from "./MatchCardCompact.svelte";
-  import MatchCardFull from "./MatchCardFull.svelte";
+  import MatchCardFull from "./LiveMatch.svelte";
 
   export let matchGroup: MatchGroupDetails;
 

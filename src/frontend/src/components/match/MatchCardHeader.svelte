@@ -23,7 +23,7 @@
 <div class="header">
   <div class="header-team team1">
     <Tooltip>
-      <TeamLogo team={team1} size="sm" slot="content" />
+      <TeamLogo team={team1} size="sm" slot="content" borderColor={undefined} />
       <div slot="tooltip" class="name">{team1?.name || "Undetermined"}</div>
     </Tooltip>
 
@@ -41,7 +41,7 @@
       <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
     <Tooltip>
-      <TeamLogo team={team2} size="sm" slot="content" />
+      <TeamLogo team={team2} size="sm" slot="content" borderColor={undefined} />
       <div slot="tooltip" class="name">{team1?.name || "Undetermined"}</div>
     </Tooltip>
   </div>

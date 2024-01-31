@@ -79,7 +79,7 @@
           "team1" in matchPredictions.yourVote}
         on:click={() => predict({ team1: null })}
       >
-        <TeamLogo team={match.team1} size="lg" />
+        <TeamLogo team={match.team1} size="lg" borderColor={undefined} />
       </Button>
     </div>
     <div>VS</div>
@@ -92,7 +92,7 @@
           "team2" in matchPredictions.yourVote}
         on:click={() => predict({ team2: null })}
       >
-        <TeamLogo team={match.team2} size="lg" />
+        <TeamLogo team={match.team2} size="lg" borderColor={undefined} />
       </Button>
     </div>
   </div>

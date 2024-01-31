@@ -21,7 +21,7 @@
         </div>
         <div class="team-logo-container m-5">
           <Link to={`/teams/${team.id.toString()}`}>
-            <TeamLogo {team} size="lg" />
+            <TeamLogo {team} size="lg" borderColor={undefined} />
           </Link>
         </div>
         <blockquote class="mx-auto mb-4 max-w-2xl">
