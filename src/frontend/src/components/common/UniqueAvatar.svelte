@@ -8,7 +8,7 @@
   export let borderStroke: string | undefined;
 </script>
 
-<svg width={size} height={size} viewBox="0 0 10 10">
+<svg width={size} height={size} viewBox="0 0 {size} {size}">
   <rect
     rx="2"
     ry="2"

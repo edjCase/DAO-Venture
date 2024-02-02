@@ -2,7 +2,7 @@
   import { TeamDetails } from "../../models/Match";
   import { TeamIdOrTie } from "../../models/Team";
   import TeamLogo from "../team/TeamLogo.svelte";
-  import Tooltip from "../common/Tooltip.svelte";
+  import { Popover } from "flowbite-svelte";
 
   export let team1: TeamDetails | undefined;
   export let team2: TeamDetails | undefined;
@@ -24,10 +24,12 @@
 
 <div class="header">
   <div class="header-team team1">
-    <Tooltip>
-      <TeamLogo team={team1} size="sm" slot="content" borderColor={undefined} />
-      <div slot="tooltip" class="name">{team1?.name || "Undetermined"}</div>
-    </Tooltip>
+    <TeamLogo
+      team={team1}
+      size="sm"
+      borderColor={undefined}
+      popoverText={team1?.id.toString()}
+    />
 
     <div class="score">
       {team1Score}
@@ -42,10 +44,19 @@
       {team2Score}
       <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
-    <Tooltip>
-      <TeamLogo team={team2} size="sm" slot="content" borderColor={undefined} />
-      <div slot="tooltip" class="name">{team2?.name || "Undetermined"}</div>
-    </Tooltip>
+    <TeamLogo
+      team={team2}
+      size="sm"
+      borderColor={undefined}
+      popoverText={team1?.id.toString()}
+    />
+    <Popover
+      class="w-64 text-sm font-light "
+      title={team2?.name || "Undertermined"}
+      triggeredBy="#team2Logo"
+    >
+      {team1?.id}
+    </Popover>
   </div>
 </div>
 

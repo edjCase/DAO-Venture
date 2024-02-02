@@ -528,7 +528,11 @@ actor LeagueActor {
         let #inProgress(inProgressSeason) = seasonStatus else return #seasonNotOpen;
         let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
             case (#ok(completedMatchGroups)) completedMatchGroups;
-            case (#matchGroupsNotComplete) return #seasonInProgress;
+            case (#matchGroupsNotComplete) {
+                // TODO put in bad state vs delete
+                seasonStatus := #notStarted;
+                return #ok;
+            };
         };
         let teamStandings = calculateTeamStandings(completedMatchGroups);
         let completedTeams = Trie.toArray(
@@ -543,14 +547,36 @@ actor LeagueActor {
                     id = k;
                     name = v.name;
                     logoUrl = v.logoUrl;
-                    standing = standingIndex;
                     wins = standingInfo.wins;
                     losses = standingInfo.losses;
                     totalScore = standingInfo.totalScore;
                 };
             },
         );
+        let finalMatch = completedMatchGroups[completedMatchGroups.size() - 1].matches[0];
+        let (champion, runnerUp) = switch (finalMatch.winner) {
+            case (#team1)(finalMatch.team1, finalMatch.team2);
+            case (#team2)(finalMatch.team2, finalMatch.team1);
+            case (#tie) {
+                // Break tie by their win/loss ratio
+                let getTeamStanding = func(teamId : Principal) : Nat {
+                    let ?teamStanding = IterTools.findIndex(Iter.fromArray(teamStandings), func(s : Season.TeamStandingInfo) : Bool = s.id == teamId) else Debug.trap("Team not found in standings: " # Principal.toText(teamId));
+                    teamStanding;
+                };
+                let team1Standing = getTeamStanding(finalMatch.team1.id);
+                let team2Standing = getTeamStanding(finalMatch.team2.id);
+                // TODO how to communicate why the team with the higher standing is the champion?
+                if (team1Standing > team2Standing) {
+                    (finalMatch.team1, finalMatch.team2);
+                } else {
+                    (finalMatch.team2, finalMatch.team1);
+                };
+            };
+        };
+
         seasonStatus := #completed({
+            championTeamId = champion.id;
+            runnerUpTeamId = runnerUp.id;
             teams = completedTeams;
             matchGroups = completedMatchGroups;
         });
@@ -823,7 +849,7 @@ actor LeagueActor {
         let updateTeamScore = func(
             teamId : Principal,
             score : Int,
-            won : Bool,
+            state : { #win; #loss; #tie },
         ) : () {
 
             let teamKey = {
@@ -840,6 +866,13 @@ actor LeagueActor {
                 };
                 case (?score) score;
             };
+
+            let (wins, losses) = switch (state) {
+                case (#win)(currentScore.wins + 1, currentScore.losses);
+                case (#loss)(currentScore.wins, currentScore.losses + 1);
+                case (#tie)(currentScore.wins, currentScore.losses);
+            };
+
             // Update with +1
             let (newTeamScores, _) = Trie.put<Principal, Season.TeamStandingInfo>(
                 teamScores,
@@ -847,8 +880,8 @@ actor LeagueActor {
                 Principal.equal,
                 {
                     id = teamId;
-                    wins = if (won) currentScore.wins + 1 else currentScore.wins;
-                    losses = if (won) currentScore.losses else currentScore.losses + 1;
+                    wins = wins;
+                    losses = losses;
                     totalScore = currentScore.totalScore + score;
                 },
             );
@@ -858,8 +891,13 @@ actor LeagueActor {
         // Populate scores
         label f1 for (matchGroup in Iter.fromArray(matchGroups)) {
             label f2 for (match in Iter.fromArray(matchGroup.matches)) {
-                updateTeamScore(match.team1.id, match.team1.score, match.winner == #team1);
-                updateTeamScore(match.team2.id, match.team2.score, match.winner == #team2);
+                let (team1State, team2State) = switch (match.winner) {
+                    case (#team1)(#win, #loss);
+                    case (#team2)(#loss, #win);
+                    case (#tie)(#tie, #tie);
+                };
+                updateTeamScore(match.team1.id, match.team1.score, team1State);
+                updateTeamScore(match.team2.id, match.team2.score, team2State);
             };
         };
         teamScores

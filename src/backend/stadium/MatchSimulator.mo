@@ -72,22 +72,6 @@ module {
         };
     };
 
-    public type MutablePlayerMatchStats = {
-        offenseStats : {
-            var atBats : Nat;
-            var hits : Nat;
-            var runs : Nat;
-            var runsBattedIn : Nat;
-            var strikeouts : Nat;
-        };
-        defenseStats : {
-            var catches : Nat;
-            var missedCatches : Nat;
-            var outs : Nat;
-            var assists : Nat;
-        };
-    };
-
     public func initState(
         aura : MatchAura.MatchAura,
         team1 : TeamInitData,
@@ -220,6 +204,7 @@ module {
         public func tick() : TickResult {
             state.startTurn();
             if (state.log.rounds.size() < 1) {
+
                 ignore compiledHooks.matchStart({
                     prng = prng;
                     state = state;
@@ -304,7 +289,7 @@ module {
                 secondBase = state.bases.secondBase;
                 thirdBase = state.bases.thirdBase;
             };
-            let log : Season.MatchLog = fromMutableLog(state.log);
+            let log : StadiumTypes.MatchLog = fromMutableLog(state.log);
             {
                 team1 = mapMutableTeam(state.team1);
                 team2 = mapMutableTeam(state.team2);
@@ -320,7 +305,7 @@ module {
         };
 
         private func buildCompletedMatch(reason : MatchEndReason) : Season.CompletedMatchWithoutPredictions {
-            let (winner, matchEndReason) : (Team.TeamIdOrTie, Season.MatchEndReason) = switch (reason) {
+            let (winner, matchEndReason) : (Team.TeamIdOrTie, StadiumTypes.MatchEndReason) = switch (reason) {
                 case (#noMoreRounds) {
                     let winner = if (state.team1.score > state.team2.score) {
                         #team1;
@@ -334,7 +319,7 @@ module {
                 case (#stateBroken(e))(#tie, #error(debug_show (e))); // TODO error format
             };
             state.addEvent(#matchEnd({ reason = matchEndReason }));
-            let log : Season.MatchLog = fromMutableLog(state.log);
+            let log : StadiumTypes.MatchLog = fromMutableLog(state.log);
 
             let playerStats = buildPlayerStats();
 
@@ -348,7 +333,7 @@ module {
             };
         };
 
-        private func fromMutableLog(log : MutableState.MutableMatchLog) : Season.MatchLog {
+        private func fromMutableLog(log : MutableState.MutableMatchLog) : StadiumTypes.MatchLog {
             {
                 rounds = log.rounds.vals()
                 |> Iter.map(_, fromMutableRoundLog)
@@ -356,7 +341,7 @@ module {
             };
         };
 
-        private func fromMutableRoundLog(log : MutableState.MutableRoundLog) : Season.RoundLog {
+        private func fromMutableRoundLog(log : MutableState.MutableRoundLog) : StadiumTypes.RoundLog {
             {
                 turns = log.turns.vals()
                 |> Iter.map(_, fromMutableTurns)
@@ -364,55 +349,39 @@ module {
             };
         };
 
-        private func fromMutableTurns(log : MutableState.MutableTurnLog) : Season.TurnLog {
+        private func fromMutableTurns(log : MutableState.MutableTurnLog) : StadiumTypes.TurnLog {
             {
                 events = Buffer.toArray(log.events);
             };
         };
 
         private func buildPlayerStats() : [Season.PlayerMatchStats] {
-            let playerStats : TrieMap.TrieMap<Player.PlayerId, MutablePlayerMatchStats> = state.players.vals()
-            |> Iter.map<MutableState.MutablePlayerStateWithId, (Player.PlayerId, MutablePlayerMatchStats)>(
-                _,
-                func(player : MutableState.MutablePlayerStateWithId) : (Player.PlayerId, MutablePlayerMatchStats) {
-                    let stats : MutablePlayerMatchStats = {
-                        offenseStats = {
-                            var atBats = 0;
-                            var hits = 0;
-                            var runs = 0;
-                            var runsBattedIn = 0;
-                            var strikeouts = 0;
-                        };
-                        defenseStats = {
-                            var catches = 0;
-                            var missedCatches = 0;
-                            var outs = 0;
-                            var assists = 0;
-                        };
-                    };
-                    (player.id, stats);
-                },
-            )
-            |> TrieMap.fromEntries<Player.PlayerId, MutablePlayerMatchStats>(_, Nat32.equal, func(i : Nat32) : Nat32 = i);
-
-            playerStats.entries()
+            state.players.vals()
             |> Iter.map(
                 _,
-                func(e : (Player.PlayerId, MutablePlayerMatchStats)) : Season.PlayerMatchStats {
+                func(player : MutableState.MutablePlayerStateWithId) : Season.PlayerMatchStats {
                     {
-                        playerId = e.0;
-                        offenseStats = {
-                            atBats = e.1.offenseStats.atBats;
-                            hits = e.1.offenseStats.hits;
-                            runs = e.1.offenseStats.runs;
-                            runsBattedIn = e.1.offenseStats.runsBattedIn;
-                            strikeouts = e.1.offenseStats.strikeouts;
+                        playerId = player.id;
+                        battingStats = {
+                            atBats = player.matchStats.battingStats.atBats;
+                            hits = player.matchStats.battingStats.hits;
+                            runs = player.matchStats.battingStats.runs;
+                            strikeouts = player.matchStats.battingStats.strikeouts;
+                            homeRuns = player.matchStats.battingStats.homeRuns;
                         };
-                        defenseStats = {
-                            catches = e.1.defenseStats.catches;
-                            missedCatches = e.1.defenseStats.missedCatches;
-                            outs = e.1.defenseStats.outs;
-                            assists = e.1.defenseStats.assists;
+                        catchingStats = {
+                            successfulCatches = player.matchStats.catchingStats.successfulCatches;
+                            missedCatches = player.matchStats.catchingStats.missedCatches;
+                            throws = player.matchStats.catchingStats.throws;
+                            throwOuts = player.matchStats.catchingStats.throwOuts;
+                        };
+                        pitchingStats = {
+                            pitches = player.matchStats.pitchingStats.pitches;
+                            strikes = player.matchStats.pitchingStats.strikes;
+                            hits = player.matchStats.pitchingStats.hits;
+                            runs = player.matchStats.pitchingStats.runs;
+                            strikeouts = player.matchStats.pitchingStats.strikeouts;
+                            homeRuns = player.matchStats.pitchingStats.homeRuns;
                         };
                     };
                 },
@@ -523,6 +492,11 @@ module {
             };
         };
 
+        private func updateStats(playerId : PlayerId, update : (MutableState.MutablePlayerMatchStats) -> ()) {
+            let playerState = state.getPlayerState(playerId);
+            update(playerState.matchStats);
+        };
+
         private func pitch() : SimulationResult {
             let defensiveTeam = state.getDefenseTeamState();
             let pitchRoll = roll(
@@ -532,9 +506,14 @@ module {
                 #throwingAccuracy,
                 ?compiledHooks.onPitch,
             );
+            updateStats(
+                defensiveTeam.positions.pitcher,
+                func(stats : MutableState.MutablePlayerMatchStats) {
+                    stats.pitchingStats.pitches += 1;
+                },
+            );
             state.addEvent(#pitch({ pitcherId = defensiveTeam.positions.pitcher; roll = pitchRoll }));
             swing(pitchRoll);
-
         };
 
         private func swing(pitchRoll : Hook.SkillTestResult) : SimulationResult {
@@ -548,7 +527,8 @@ module {
             let swingOutcome = if (netRoll == 0) {
                 #foul;
             } else if (netRoll > 0) {
-                #hit;
+                let hitLocation = getHitLocation();
+                #hit(hitLocation);
             } else {
                 #strike;
             };
@@ -564,8 +544,19 @@ module {
                 case (#foul) {
                     #inProgress; // TODO?
                 };
-                case (#hit) {
-                    hit(Int.abs(netRoll));
+                case (#hit(location)) {
+                    let position = switch (location) {
+                        case (#stands) return homeRun();
+                        case (#firstBase) #firstBase;
+                        case (#secondBase) #secondBase;
+                        case (#thirdBase) #thirdBase;
+                        case (#shortStop) #shortStop;
+                        case (#pitcher) #pitcher;
+                        case (#leftField) #leftField;
+                        case (#centerField) #centerField;
+                        case (#rightField) #rightField;
+                    };
+                    catchBall(position);
                 };
                 case (#strike) {
                     strike();
@@ -573,7 +564,7 @@ module {
             };
         };
 
-        private func hit(hitDelta : Nat) : SimulationResult {
+        private func getHitLocation() : StadiumTypes.HitLocation {
             let hitPowerRoll = roll(
                 #d10,
                 state.bases.atBat,
@@ -588,9 +579,9 @@ module {
                 null,
             );
             let netRoll = getNetRoll(pitchPowerRoll, hitPowerRoll);
-            if (netRoll < 0) {
+            let hitLocation = if (netRoll < 0) {
                 // bases
-                let location = switch (prng.nextInt(0, 4)) {
+                switch (prng.nextInt(0, 4)) {
                     case (0) #firstBase;
                     case (1) #secondBase;
                     case (2) #thirdBase;
@@ -598,33 +589,22 @@ module {
                     case (4) #pitcher;
                     case (_) Prelude.unreachable();
                 };
-                tryCatchHit(location);
-            } else if (netRoll < 10) {
+            } else if (netRoll < 11) {
                 // outfield
-                let location = switch (prng.nextInt(0, 2)) {
+                switch (prng.nextInt(0, 2)) {
                     case (0) #leftField;
                     case (1) #centerField;
                     case (2) #rightField;
                     case (_) Prelude.unreachable();
                 };
-                tryCatchHit(location);
             } else {
                 // homerun
-                // TODO
-                // state.addEvent({
-                //     message = "Homerun!";
-                //     isImportant = true;
-                // });
-                // hit it out of the park
-                return batterRun({
-                    fromBase = #homeBase;
-                    ballLocation = null;
-                });
+                #stands;
             };
         };
 
-        private func tryCatchHit(location : FieldPosition.FieldPosition) : SimulationResult {
-            let catchingPlayerId = state.getPlayerAtDefensivePosition(location);
+        private func catchBall(position : FieldPosition.FieldPosition) : SimulationResult {
+            let catchingPlayerId = state.getPlayerAtDefensivePosition(position);
             let catchingPlayerState = state.getPlayerState(catchingPlayerId);
             let catchRoll = roll(
                 #d10,
@@ -632,26 +612,27 @@ module {
                 #catching,
                 ?compiledHooks.onCatch,
             );
-            let ballRoll = { crit = false; value = 5 }; // TODO how to handle difficulty?
+            let ballRoll = { crit = false; value = 7 }; // TODO how to handle difficulty?
             let netCatchRoll = getNetRoll(ballRoll, catchRoll);
             if (netCatchRoll <= 0) {
-                batterRun({
-                    fromBase = #homeBase;
-                    ballLocation = ?location;
-                });
+
+                updateStats(
+                    catchingPlayerId,
+                    func(stats : MutableState.MutablePlayerMatchStats) {
+                        stats.catchingStats.missedCatches += 1;
+                    },
+                );
+                run(position);
             } else {
-                let locationText = switch (location) {
-                    case (#firstBase) "at first base";
-                    case (#secondBase) "at second base";
-                    case (#thirdBase) "at third base";
-                    case (#shortStop) "at short stop";
-                    case (#pitcher) "at the pitching mound";
-                    case (#leftField) "in left field";
-                    case (#centerField) "in center field";
-                    case (#rightField) "in right field";
-                };
                 let teamId = state.getDefenseTeamId();
                 let catchingPlayer = state.getPlayerState(catchingPlayerId);
+
+                updateStats(
+                    catchingPlayerId,
+                    func(stats : MutableState.MutablePlayerMatchStats) {
+                        stats.catchingStats.successfulCatches += 1;
+                    },
+                );
                 state.addEvent(
                     #catch_({
                         playerId = catchingPlayerId;
@@ -664,9 +645,7 @@ module {
             };
         };
 
-        private func batterRun({
-            ballLocation : ?FieldPosition.FieldPosition;
-        }) : SimulationResult {
+        private func run(positionWithBall : FieldPosition.FieldPosition) : SimulationResult {
             // Pick a runner on base to try to hit out
             let targetToHit = switch (state.bases.thirdBase) {
                 case (null) {
@@ -701,125 +680,168 @@ module {
                 #speed,
                 null, // TODO Hook here
             );
-            switch (ballLocation) {
-                case (null) {
-                    // Home run
-                    // 3rd -> home
-                    let thirdBaseRun = moveBaseToBase({
-                        from = #thirdBase;
-                        to = #homeBase;
-                    });
-                    let #inProgress = thirdBaseRun else return thirdBaseRun;
+            hitTargetWithBall(targetToHit, runRoll, positionWithBall);
+        };
 
-                    // 2nd -> Home
-                    let secondBaseRun = moveBaseToBase({
-                        from = #secondBase;
-                        to = #homeBase;
-                    });
-                    let #inProgress = secondBaseRun else return secondBaseRun;
+        private func hitTargetWithBall(
+            target : Player.PlayerId,
+            targetRunRoll : Hook.SkillTestResult,
+            positionWithBall : FieldPosition.FieldPosition,
+        ) : SimulationResult {
+            let playerIdWithBall = state.getPlayerAtDefensivePosition(positionWithBall);
+            let pickUpRoll = roll(
+                #d10,
+                playerIdWithBall,
+                #speed,
+                null, // TODO Hook here
+            );
+            let canPickUpInTime = getNetRoll(pickUpRoll, targetRunRoll) >= 0;
 
-                    // 1st -> Home
-                    let firstBaseRun = moveBaseToBase({
-                        from = #firstBase;
-                        to = #homeBase;
-                    });
-                    let #inProgress = firstBaseRun else return firstBaseRun;
+            if (canPickUpInTime) {
+                let throwRoll = roll(
+                    #d10,
+                    playerIdWithBall,
+                    #throwingAccuracy,
+                    null, // TODO Hook here
+                );
 
-                    // Batter -> Home
-                    moveBaseToBase({
-                        from = #homeBase;
-                        to = #firstBase;
-                    });
-                };
-                case (?l) {
-
-                    let playerIdWithBall = state.getPlayerAtDefensivePosition(l);
-                    let pickUpRoll = roll(
-                        #d10,
+                updateStats(
+                    playerIdWithBall,
+                    func(stats : MutableState.MutablePlayerMatchStats) {
+                        stats.catchingStats.throws += 1;
+                    },
+                );
+                let netThrowRoll = getNetRoll(throwRoll, targetRunRoll);
+                if (netThrowRoll >= 0) {
+                    // Runner is hit by the ball
+                    updateStats(
                         playerIdWithBall,
-                        #speed,
+                        func(stats : MutableState.MutablePlayerMatchStats) {
+                            stats.catchingStats.throwOuts += 1;
+                        },
+                    );
+                    state.addEvent(
+                        #throw_({
+                            to = target;
+                            from = playerIdWithBall;
+                        })
+                    );
+
+                    let defenseRoll = roll(
+                        #d10,
+                        target,
+                        #defense,
                         null, // TODO Hook here
                     );
-                    let canPickUpInTime = getNetRoll(pickUpRoll, runRoll) >= 0;
-
-                    if (canPickUpInTime) {
-                        let throwRoll = roll(
-                            #d10,
-                            playerIdWithBall,
-                            #throwingAccuracy,
-                            null, // TODO Hook here
-                        );
-                        let netThrowRoll = getNetRoll(throwRoll, runRoll);
-                        if (netThrowRoll >= 0) {
-                            // Runner is hit by the ball
-                            state.addEvent(
-                                #hitByBall({
-                                    playerId = targetToHit;
-                                    throwingPlayerId = playerIdWithBall;
-                                })
-                            );
-
-                            let defenseRoll = roll(
-                                #d10,
-                                targetToHit,
-                                #defense,
-                                null, // TODO Hook here
-                            );
-                            let damageRoll = getNetRoll({ crit = false; value = netThrowRoll }, defenseRoll);
-                            if (damageRoll > 10) {
-                                let newInjury = switch (damageRoll) {
-                                    case (6) #twistedAnkle;
-                                    case (7) #brokenLeg;
-                                    case (8) #brokenArm;
-                                    case (_) #concussion;
-                                };
-                                injurePlayer({
-                                    playerId = targetToHit;
-                                    injury = newInjury;
-                                });
-                            };
-                            // out will handle removing the player from base
-                            switch (out(targetToHit, #hitByBall)) {
-                                case (#endMatch(m)) return #endMatch(m);
-                                case (#inProgress)();
-                            };
+                    let damageRoll = getNetRoll({ crit = false; value = netThrowRoll }, defenseRoll);
+                    if (damageRoll > 10) {
+                        let newInjury = switch (damageRoll) {
+                            case (6) #twistedAnkle;
+                            case (7) #brokenLeg;
+                            case (8) #brokenArm;
+                            case (_) #concussion;
                         };
+                        injurePlayer({
+                            playerId = target;
+                            injury = newInjury;
+                        });
                     };
-
-                    // Shift everyone by one base
-                    // 3rd -> home
-                    let thirdBaseRun = moveBaseToBase({
-                        from = #thirdBase;
-                        to = #homeBase;
-                    });
-                    let #inProgress = thirdBaseRun else return thirdBaseRun; // Short circuit if end match
-
-                    // 2nd -> 3rd
-                    let secondBaseRun = moveBaseToBase({
-                        from = #secondBase;
-                        to = #thirdBase;
-                    });
-                    let #inProgress = secondBaseRun else return secondBaseRun; // Short circuit if end match
-
-                    // 1st -> 2nd
-                    let firstBaseRun = moveBaseToBase({
-                        from = #thirdBase;
-                        to = #homeBase;
-                    });
-                    let #inProgress = firstBaseRun else return firstBaseRun; // Short circuit if end match
-
-                    // batter -> 1st
-                    moveBaseToBase({
-                        from = #homeBase;
-                        to = #firstBase;
-                    });
-
+                    // out will handle removing the player from base
+                    switch (out(target, #hitByBall)) {
+                        case (#endMatch(m)) return #endMatch(m);
+                        case (#inProgress)();
+                    };
                 };
             };
 
+            updateStats(
+                state.bases.atBat,
+                func(stats : MutableState.MutablePlayerMatchStats) {
+                    stats.battingStats.hits += 1;
+                },
+            );
+
+            // Shift everyone by one base
+            // 3rd -> home
+            let thirdBaseRun = moveBaseToBase({
+                from = #thirdBase;
+                to = #homeBase;
+            });
+            let #inProgress = thirdBaseRun else return thirdBaseRun; // Short circuit if end match
+
+            // 2nd -> 3rd
+            let secondBaseRun = moveBaseToBase({
+                from = #secondBase;
+                to = #thirdBase;
+            });
+            let #inProgress = secondBaseRun else return secondBaseRun; // Short circuit if end match
+
+            // 1st -> 2nd
+            let firstBaseRun = moveBaseToBase({
+                from = #thirdBase;
+                to = #homeBase;
+            });
+            let #inProgress = firstBaseRun else return firstBaseRun; // Short circuit if end match
+
+            // batter -> 1st
+            moveBaseToBase({
+                from = #homeBase;
+                to = #firstBase;
+            });
+        };
+
+        private func homeRun() : SimulationResult {
+            updateStats(
+                state.bases.atBat,
+                func(stats : MutableState.MutablePlayerMatchStats) {
+                    stats.battingStats.homeRuns += 1;
+                },
+            );
+
+            let defenseTeam = state.getDefenseTeamState();
+            updateStats(
+                defenseTeam.positions.pitcher,
+                func(stats : MutableState.MutablePlayerMatchStats) {
+                    stats.pitchingStats.homeRuns += 1;
+                },
+            );
+            // Home run
+            // 3rd -> home
+            let thirdBaseRun = moveBaseToBase({
+                from = #thirdBase;
+                to = #homeBase;
+            });
+            let #inProgress = thirdBaseRun else return thirdBaseRun;
+
+            // 2nd -> Home
+            let secondBaseRun = moveBaseToBase({
+                from = #secondBase;
+                to = #homeBase;
+            });
+            let #inProgress = secondBaseRun else return secondBaseRun;
+
+            // 1st -> Home
+            let firstBaseRun = moveBaseToBase({
+                from = #firstBase;
+                to = #homeBase;
+            });
+            let #inProgress = firstBaseRun else return firstBaseRun;
+
+            // Batter -> Home
+            moveBaseToBase({
+                from = #homeBase;
+                to = #firstBase;
+            });
         };
 
         private func strike() : SimulationResult {
+            let defenseTeam = state.getDefenseTeamState();
+            updateStats(
+                defenseTeam.positions.pitcher,
+                func(stats : MutableState.MutablePlayerMatchStats) {
+                    stats.pitchingStats.strikes += 1;
+                },
+            );
             state.strikes += 1;
             if (state.strikes >= 3) {
                 out(state.bases.atBat, #strikeout);
@@ -828,7 +850,7 @@ module {
             };
         };
 
-        private func out(playerId : Nat32, reason : Season.OutReason) : SimulationResult {
+        private func out(playerId : Nat32, reason : StadiumTypes.OutReason) : SimulationResult {
             state.strikes := 0;
             state.outs += 1;
             let outPlayer = state.getPlayerState(playerId);
@@ -838,6 +860,25 @@ module {
                     reason = reason;
                 })
             );
+            switch (reason) {
+                case (#hitByBall) {};
+                case (#ballCaught) {};
+                case (#strikeout) {
+                    updateStats(
+                        playerId,
+                        func(stats : MutableState.MutablePlayerMatchStats) {
+                            stats.battingStats.strikeouts += 1;
+                        },
+                    );
+                    let defenseTeam = state.getDefenseTeamState();
+                    updateStats(
+                        defenseTeam.positions.pitcher,
+                        func(stats : MutableState.MutablePlayerMatchStats) {
+                            stats.pitchingStats.strikeouts += 1;
+                        },
+                    );
+                };
+            };
             if (state.outs >= 3) {
                 return endRound();
             };
@@ -862,6 +903,13 @@ module {
                 case (#thirdBase) state.bases.thirdBase := ?player.id;
                 case (#homeBase) {
                     score({ teamId = state.offenseTeamId; amount = 1 });
+                    let ?scoringPlayer = state.getPlayerAtBase(from) else Debug.trap("Expected player at base: " # debug_show (from));
+                    updateStats(
+                        scoringPlayer.id,
+                        func(stats : MutableState.MutablePlayerMatchStats) {
+                            stats.battingStats.runs += 1;
+                        },
+                    );
                 };
             };
             clearBase(from);
@@ -900,12 +948,19 @@ module {
                 var secondBase = null;
                 var thirdBase = null;
             };
-
             state.addEvent(
-                #newRound({
-                    offenseTeamId = newOffenseTeamId;
-                    atBatPlayerId = atBat;
-                })
+                #teamSwap(
+                    {
+                        offenseTeamId = newOffenseTeamId;
+                        atBatPlayerId = atBat;
+                    }
+                )
+            );
+            updateStats(
+                atBat,
+                func(stats : MutableState.MutablePlayerMatchStats) {
+                    stats.battingStats.atBats += 1;
+                },
             );
 
             ignore compiledHooks.roundStart({
@@ -1033,6 +1088,13 @@ module {
                 case (#thirdBase) state.bases.thirdBase := null;
                 case (#homeBase) {
                     let nextBatterId = getNextBatter();
+
+                    updateStats(
+                        nextBatterId,
+                        func(stats : MutableState.MutablePlayerMatchStats) {
+                            stats.battingStats.atBats += 1;
+                        },
+                    );
                     state.bases.atBat := nextBatterId;
                     state.addEvent(#newBatter({ playerId = nextBatterId }));
                 };

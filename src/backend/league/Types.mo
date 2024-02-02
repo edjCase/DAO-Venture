@@ -100,7 +100,6 @@ module {
 
     public type CloseSeasonResult = {
         #ok;
-        #seasonInProgress;
         #notAuthorized;
         #seasonNotOpen;
     };

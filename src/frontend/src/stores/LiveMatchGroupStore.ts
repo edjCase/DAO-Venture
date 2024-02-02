@@ -1,8 +1,8 @@
 import { writable } from "svelte/store";
-import { BaseState, MatchGroup, MatchVariant, PlayerState, TeamState, stadiumAgentFactory } from "../ic-agent/Stadium";
+import { BaseState, MatchGroup, MatchLog, MatchVariant, PlayerState, TeamState, stadiumAgentFactory } from "../ic-agent/Stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { Principal } from "@dfinity/principal";
-import { MatchLog, SeasonStatus, TeamPositions } from "../models/Season";
+import { SeasonStatus, TeamPositions } from "../models/Season";
 import { scheduleStore } from "./ScheduleStore";
 import { TeamId, TeamIdOrTie } from "../models/Team";
 import { TeamDetails } from "../models/Match";
@@ -25,7 +25,7 @@ export type LiveMatch = {
   team2: LiveTeamDetails;
   aura: MatchAura;
   liveState: LiveMatchState | undefined
-  log: MatchLog;
+  log: MatchLog | undefined;
   winner: TeamIdOrTie | undefined;
 };
 
@@ -80,7 +80,7 @@ export const liveMatchGroupStore = (() => {
         team1: mapTeam(match.completed.team1, team1Color),
         team2: mapTeam(match.completed.team2, team2Color),
         liveState: undefined,
-        log: match.completed.log,
+        log: undefined,
         winner: match.completed.winner,
         aura: match.completed.aura
       };

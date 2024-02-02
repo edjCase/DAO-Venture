@@ -67,12 +67,10 @@ export const StartSeasonResultIdl = IDL.Variant({
 
 export type CloseSeasonResult =
   | { ok: null }
-  | { seasonInProgress: null }
   | { notAuthorized: null }
   | { seasonNotOpen: null };
 export const CloseSeasonResultIdl = IDL.Variant({
   ok: IDL.Null,
-  seasonInProgress: IDL.Null,
   notAuthorized: IDL.Null,
   seasonNotOpen: IDL.Null,
 });
@@ -210,6 +208,7 @@ export interface _SERVICE {
   'getSeasonStatus': ActorMethod<[], SeasonStatus>,
   'getUserInfo': ActorMethod<[], [UserInfo] | []>,
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
+  'closeSeason': ActorMethod<[], CloseSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'predictMatchOutcome': ActorMethod<[PredictMatchOutcomeRequest], PredictMatchOutcomeResult>;
   'getUpcomingMatchPredictions': ActorMethod<[], UpcomingMatchPredictionsResult>,
@@ -225,6 +224,7 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'getSeasonStatus': IDL.Func([], [SeasonStatusIdl], ['query']),
     'getUserInfo': IDL.Func([], [IDL.Opt(UserInfoIdl)], ['query']),
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
+    'closeSeason': IDL.Func([], [CloseSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
     'predictMatchOutcome': IDL.Func([PredictMatchOutcomeRequestIdl], [PredictMatchOutcomeResultIdl], []),
     'getUpcomingMatchPredictions': IDL.Func([], [UpcomingMatchPredictionsResultIdl], ['query']),

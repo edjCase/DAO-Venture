@@ -1,18 +1,34 @@
 <script lang="ts">
+  import { Popover } from "flowbite-svelte";
+
   export let team: { logoUrl: string; name: string } | undefined;
   export let size: "sm" | "md" | "lg" | undefined;
   export let borderColor: string | undefined;
+  export let popoverText: string | undefined;
 
   $: logoUrl = team?.logoUrl || "/images/team-logos/unknown.png";
   $: alt = team?.name || "Undetermined";
 </script>
 
-<img
-  class="logo {size ? `size-${size}` : ''}"
-  src={logoUrl}
-  {alt}
-  style={borderColor ? "border: 1px solid " + borderColor : ""}
-/>
+<div>
+  <div id="teamLogo">
+    <img
+      class="logo {size ? `size-${size}` : ''}"
+      src={logoUrl}
+      {alt}
+      style={borderColor ? "border: 1px solid " + borderColor : ""}
+    />
+  </div>
+  {#if popoverText}
+    <Popover
+      class="w-64 text-sm font-light "
+      title={team?.name || "Undertermined"}
+      triggeredBy="#team1Logo"
+    >
+      {popoverText}
+    </Popover>
+  {/if}
+</div>
 
 <style>
   .logo {

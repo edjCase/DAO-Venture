@@ -10,6 +10,7 @@ import Player "Player";
 import Curse "Curse";
 import Blessing "Blessing";
 import Base "Base";
+import FieldPosition "FieldPosition";
 
 module {
 
@@ -113,147 +114,39 @@ module {
 
     public type PlayerMatchStats = {
         playerId : Player.PlayerId;
-        offenseStats : {
+        battingStats : {
             atBats : Nat;
             hits : Nat;
-            runs : Nat;
-            runsBattedIn : Nat;
             strikeouts : Nat;
+            runs : Nat;
+            homeRuns : Nat;
         };
-        defenseStats : {
-            catches : Nat;
+        catchingStats : {
+            successfulCatches : Nat;
             missedCatches : Nat;
-            outs : Nat;
-            assists : Nat;
+            throws : Nat;
+            throwOuts : Nat;
         };
-    };
-
-    public type MatchLog = {
-        rounds : [RoundLog];
+        pitchingStats : {
+            pitches : Nat;
+            strikes : Nat;
+            hits : Nat;
+            strikeouts : Nat;
+            runs : Nat;
+            homeRuns : Nat;
+        };
     };
 
     public type CompletedMatchWithoutPredictions = {
         team1 : CompletedMatchTeam;
         team2 : CompletedMatchTeam;
         aura : MatchAura.MatchAura;
-        log : MatchLog;
         winner : Team.TeamIdOrTie;
         playerStats : [PlayerMatchStats];
     };
 
     public type CompletedMatch = CompletedMatchWithoutPredictions and {
         predictions : Trie.Trie<Principal, Team.TeamId>;
-    };
-
-    public type RoundLog = {
-        turns : [TurnLog];
-    };
-
-    public type TurnLog = {
-        events : [Event];
-    };
-
-    public type Event = {
-        #traitTrigger : {
-            id : Trait.Trait;
-            playerId : Player.PlayerId;
-            description : Text;
-        };
-        #offeringTrigger : {
-            id : Offering.Offering;
-            teamId : Team.TeamId;
-            description : Text;
-        };
-        #auraTrigger : {
-            id : MatchAura.MatchAura;
-            description : Text;
-        };
-        #pitch : {
-            pitcherId : Player.PlayerId;
-            roll : {
-                value : Int;
-                crit : Bool;
-            };
-        };
-        #swing : {
-            playerId : Player.PlayerId;
-            roll : {
-                value : Int;
-                crit : Bool;
-            };
-            pitchRoll : {
-                value : Int;
-                crit : Bool;
-            };
-            outcome : {
-                #foul;
-                #strike;
-                #hit;
-            };
-        };
-        #catch_ : {
-            playerId : Player.PlayerId;
-            roll : {
-                value : Int;
-                crit : Bool;
-            };
-            difficulty : {
-                value : Int;
-                crit : Bool;
-            };
-        };
-        #newRound : {
-            offenseTeamId : Team.TeamId;
-            atBatPlayerId : Player.PlayerId;
-        };
-        #injury : {
-            playerId : Nat32;
-            injury : Player.Injury;
-        };
-        #death : {
-            playerId : Nat32;
-        };
-        #curse : {
-            playerId : Nat32;
-            curse : Curse.Curse;
-        };
-        #blessing : {
-            playerId : Nat32;
-            blessing : Blessing.Blessing;
-        };
-        #score : {
-            teamId : Team.TeamId;
-            amount : Int;
-        };
-        #newBatter : {
-            playerId : Player.PlayerId;
-        };
-        #out : {
-            playerId : Player.PlayerId;
-            reason : OutReason;
-        };
-        #matchEnd : {
-            reason : MatchEndReason;
-        };
-        #safeAtBase : {
-            playerId : Player.PlayerId;
-            base : Base.Base;
-        };
-        #hitByBall : {
-            playerId : Player.PlayerId;
-            throwingPlayerId : Player.PlayerId;
-        };
-    };
-
-    public type MatchEndReason = {
-        #noMoreRounds;
-        #error : Text;
-    };
-
-    public type OutReason = {
-        #ballCaught;
-        #strikeout;
-        #hitByBall;
     };
 
     public type CompletedMatchGroup = {
@@ -263,12 +156,13 @@ module {
 
     // Completed Season
     public type CompletedSeason = {
+        championTeamId : Principal;
+        runnerUpTeamId : Principal;
         teams : [CompletedSeasonTeam];
         matchGroups : [CompletedMatchGroup];
     };
 
     public type CompletedSeasonTeam = TeamInfo and {
-        standing : Nat;
         wins : Nat;
         losses : Nat;
         totalScore : Int;

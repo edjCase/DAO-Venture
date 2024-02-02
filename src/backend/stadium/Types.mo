@@ -10,6 +10,9 @@ import Base "../models/Base";
 import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
 import Season "../models/Season";
+import Trait "../models/Trait";
+import Curse "../models/Curse";
+import Blessing "../models/Blessing";
 
 module {
     type FieldPosition = FieldPosition.FieldPosition;
@@ -93,6 +96,129 @@ module {
         #inProgress : InProgressMatch;
         #completed : Season.CompletedMatchWithoutPredictions;
     };
+
+    public type RoundLog = {
+        turns : [TurnLog];
+    };
+
+    public type TurnLog = {
+        events : [Event];
+    };
+
+    public type HitLocation = FieldPosition.FieldPosition or {
+        #stands;
+    };
+
+    public type Event = {
+        #traitTrigger : {
+            id : Trait.Trait;
+            playerId : Player.PlayerId;
+            description : Text;
+        };
+        #offeringTrigger : {
+            id : Offering.Offering;
+            teamId : Team.TeamId;
+            description : Text;
+        };
+        #auraTrigger : {
+            id : MatchAura.MatchAura;
+            description : Text;
+        };
+        #pitch : {
+            pitcherId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+        };
+        #swing : {
+            playerId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+            pitchRoll : {
+                value : Int;
+                crit : Bool;
+            };
+            outcome : {
+                #foul;
+                #strike;
+                #hit : HitLocation;
+            };
+        };
+        #catch_ : {
+            playerId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+            difficulty : {
+                value : Int;
+                crit : Bool;
+            };
+        };
+        #teamSwap : {
+            offenseTeamId : Team.TeamId;
+            atBatPlayerId : Player.PlayerId;
+        };
+        #injury : {
+            playerId : Nat32;
+            injury : Player.Injury;
+        };
+        #death : {
+            playerId : Nat32;
+        };
+        #curse : {
+            playerId : Nat32;
+            curse : Curse.Curse;
+        };
+        #blessing : {
+            playerId : Nat32;
+            blessing : Blessing.Blessing;
+        };
+        #score : {
+            teamId : Team.TeamId;
+            amount : Int;
+        };
+        #newBatter : {
+            playerId : Player.PlayerId;
+        };
+        #out : {
+            playerId : Player.PlayerId;
+            reason : OutReason;
+        };
+        #matchEnd : {
+            reason : MatchEndReason;
+        };
+        #safeAtBase : {
+            playerId : Player.PlayerId;
+            base : Base.Base;
+        };
+        #throw_ : {
+            from : Player.PlayerId;
+            to : Player.PlayerId;
+        };
+        #hitByBall : {
+            playerId : Player.PlayerId;
+        };
+    };
+
+    public type MatchEndReason = {
+        #noMoreRounds;
+        #error : Text;
+    };
+
+    public type OutReason = {
+        #ballCaught;
+        #strikeout;
+        #hitByBall;
+    };
+
+    public type MatchLog = {
+        rounds : [RoundLog];
+    };
+
     public type InProgressMatch = {
         team1 : TeamState;
         team2 : TeamState;
@@ -100,7 +226,7 @@ module {
         aura : MatchAura.MatchAura;
         players : [PlayerStateWithId];
         bases : BaseState;
-        log : Season.MatchLog;
+        log : MatchLog;
         outs : Nat;
         strikes : Nat;
     };

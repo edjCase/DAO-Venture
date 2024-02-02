@@ -44,7 +44,7 @@ module this {
     };
 
     public type MutableTurnLog = {
-        events : Buffer.Buffer<Season.Event>;
+        events : Buffer.Buffer<StadiumTypes.Event>;
     };
 
     public type MutableRoundLog = {
@@ -81,15 +81,15 @@ module this {
             };
         };
 
-        private func toMutableTurnLog(turn : Season.TurnLog) : MutableTurnLog {
+        private func toMutableTurnLog(turn : StadiumTypes.TurnLog) : MutableTurnLog {
             {
                 events = turn.events
                 |> Iter.fromArray(_)
-                |> Buffer.fromIter<Season.Event>(_);
+                |> Buffer.fromIter<StadiumTypes.Event>(_);
             };
         };
 
-        private func toMutableRoundLog(round : Season.RoundLog) : MutableRoundLog {
+        private func toMutableRoundLog(round : StadiumTypes.RoundLog) : MutableRoundLog {
             {
                 turns = round.turns
                 |> Iter.fromArray(_)
@@ -98,7 +98,7 @@ module this {
             };
         };
 
-        private func toMutableLog(log : Season.MatchLog) : MutableMatchLog {
+        private func toMutableLog(log : StadiumTypes.MatchLog) : MutableMatchLog {
             {
                 rounds = log.rounds
                 |> Iter.fromArray(_)
@@ -124,12 +124,37 @@ module this {
         |> Iter.map<StadiumTypes.PlayerStateWithId, (Nat32, MutablePlayerStateWithId)>(
             _,
             func(player : StadiumTypes.PlayerStateWithId) : (Nat32, MutablePlayerStateWithId) {
-                let state = {
+                let isAtBat = player.id == bases.atBat;
+                let atBats = if (isAtBat) 1 else 0;
+                let state : MutablePlayerStateWithId = {
                     id = player.id;
                     name = player.name;
                     var teamId = player.teamId;
                     var condition = player.condition;
-                    var skills = toMutableSkills(player.skills);
+                    skills = toMutableSkills(player.skills);
+                    matchStats = {
+                        battingStats = {
+                            var atBats = atBats;
+                            var hits = 0;
+                            var strikeouts = 0;
+                            var runs = 0;
+                            var homeRuns = 0;
+                        };
+                        catchingStats = {
+                            var successfulCatches = 0;
+                            var missedCatches = 0;
+                            var throws = 0;
+                            var throwOuts = 0;
+                        };
+                        pitchingStats = {
+                            var pitches = 0;
+                            var strikes = 0;
+                            var hits = 0;
+                            var strikeouts = 0;
+                            var runs = 0;
+                            var homeRuns = 0;
+                        };
+                    };
                 };
                 (player.id, state);
             },
@@ -244,19 +269,18 @@ module this {
             };
         };
 
-        public func addEvent(event : Season.Event) {
+        public func addEvent(event : StadiumTypes.Event) {
             if (log.rounds.size() == 0) {
                 addNewRound();
             };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             if (currentRound.turns.size() == 0) {
                 currentRound.turns.add({
-                    events = Buffer.Buffer<Season.Event>(0);
+                    events = Buffer.Buffer<StadiumTypes.Event>(0);
                 });
             };
             let currentTurn = currentRound.turns.get(currentRound.turns.size() - 1);
             currentTurn.events.add(event);
-
         };
 
         public func startTurn() {
@@ -265,7 +289,7 @@ module this {
             };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             currentRound.turns.add({
-                events = Buffer.Buffer<Season.Event>(0);
+                events = Buffer.Buffer<StadiumTypes.Event>(0);
             });
         };
 
@@ -276,7 +300,7 @@ module this {
         private func addNewRound() {
             let turns = Buffer.Buffer<MutableTurnLog>(0);
             turns.add({
-                events = Buffer.Buffer<Season.Event>(0);
+                events = Buffer.Buffer<StadiumTypes.Event>(0);
             });
             log.rounds.add({
                 turns = Buffer.Buffer<MutableTurnLog>(0);
@@ -295,11 +319,36 @@ module this {
         var speed : Int;
     };
 
+    public type MutablePlayerMatchStats = {
+        battingStats : {
+            var atBats : Nat;
+            var hits : Nat;
+            var strikeouts : Nat;
+            var runs : Nat;
+            var homeRuns : Nat;
+        };
+        catchingStats : {
+            var successfulCatches : Nat;
+            var missedCatches : Nat;
+            var throws : Nat;
+            var throwOuts : Nat;
+        };
+        pitchingStats : {
+            var pitches : Nat;
+            var strikes : Nat;
+            var hits : Nat;
+            var strikeouts : Nat;
+            var runs : Nat;
+            var homeRuns : Nat;
+        };
+    };
+
     public type MutablePlayerState = {
         name : Text;
         var teamId : Team.TeamId;
         var condition : Player.PlayerCondition;
-        var skills : MutablePlayerSkills;
+        skills : MutablePlayerSkills;
+        matchStats : MutablePlayerMatchStats;
     };
 
     public type MutablePlayerStateWithId = MutablePlayerState and {
