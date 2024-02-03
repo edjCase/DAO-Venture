@@ -125,7 +125,6 @@ module this {
             _,
             func(player : StadiumTypes.PlayerStateWithId) : (Nat32, MutablePlayerStateWithId) {
                 let isAtBat = player.id == bases.atBat;
-                let atBats = if (isAtBat) 1 else 0;
                 let state : MutablePlayerStateWithId = {
                     id = player.id;
                     name = player.name;
@@ -134,26 +133,27 @@ module this {
                     skills = toMutableSkills(player.skills);
                     matchStats = {
                         battingStats = {
-                            var atBats = atBats;
-                            var hits = 0;
-                            var strikeouts = 0;
-                            var runs = 0;
-                            var homeRuns = 0;
+                            var atBats = player.matchStats.battingStats.atBats;
+                            var hits = player.matchStats.battingStats.hits;
+                            var strikeouts = player.matchStats.battingStats.strikeouts;
+                            var runs = player.matchStats.battingStats.runs;
+                            var homeRuns = player.matchStats.battingStats.homeRuns;
                         };
                         catchingStats = {
-                            var successfulCatches = 0;
-                            var missedCatches = 0;
-                            var throws = 0;
-                            var throwOuts = 0;
+                            var successfulCatches = player.matchStats.catchingStats.successfulCatches;
+                            var missedCatches = player.matchStats.catchingStats.missedCatches;
+                            var throws = player.matchStats.catchingStats.throws;
+                            var throwOuts = player.matchStats.catchingStats.throwOuts;
                         };
                         pitchingStats = {
-                            var pitches = 0;
-                            var strikes = 0;
-                            var hits = 0;
-                            var strikeouts = 0;
-                            var runs = 0;
-                            var homeRuns = 0;
+                            var pitches = player.matchStats.pitchingStats.pitches;
+                            var strikes = player.matchStats.pitchingStats.strikes;
+                            var hits = player.matchStats.pitchingStats.hits;
+                            var strikeouts = player.matchStats.pitchingStats.strikeouts;
+                            var runs = player.matchStats.pitchingStats.runs;
+                            var homeRuns = player.matchStats.pitchingStats.homeRuns;
                         };
+                        var injuries = player.matchStats.injuries;
                     };
                 };
                 (player.id, state);
@@ -341,6 +341,7 @@ module this {
             var runs : Nat;
             var homeRuns : Nat;
         };
+        var injuries : Nat;
     };
 
     public type MutablePlayerState = {

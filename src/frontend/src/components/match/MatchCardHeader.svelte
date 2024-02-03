@@ -48,7 +48,7 @@
       team={team2}
       size="sm"
       borderColor={undefined}
-      popoverText={team1?.id.toString()}
+      popoverText={team2?.id.toString()}
     />
     <Popover
       class="w-64 text-sm font-light "

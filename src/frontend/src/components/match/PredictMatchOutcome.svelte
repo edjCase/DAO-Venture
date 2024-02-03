@@ -79,7 +79,12 @@
           "team1" in matchPredictions.yourVote}
         on:click={() => predict({ team1: null })}
       >
-        <TeamLogo team={match.team1} size="lg" borderColor={undefined} />
+        <TeamLogo
+          team={match.team1}
+          size="lg"
+          borderColor={undefined}
+          popoverText={match.team1?.id.toString()}
+        />
       </Button>
     </div>
     <div>VS</div>
@@ -92,7 +97,12 @@
           "team2" in matchPredictions.yourVote}
         on:click={() => predict({ team2: null })}
       >
-        <TeamLogo team={match.team2} size="lg" borderColor={undefined} />
+        <TeamLogo
+          team={match.team2}
+          size="lg"
+          borderColor={undefined}
+          popoverText={match.team2?.id.toString()}
+        />
       </Button>
     </div>
   </div>

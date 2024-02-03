@@ -262,6 +262,7 @@ module {
         teamId : Team.TeamId;
         condition : Player.PlayerCondition;
         skills : Player.Skills;
+        matchStats : Season.PlayerMatchStats;
     };
 
     public type PlayerStateWithId = PlayerState and {

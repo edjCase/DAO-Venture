@@ -131,6 +131,30 @@ module {
             condition = #ok;
             skills = player.skills;
             position = player.position;
+            matchStats = {
+                battingStats = {
+                    atBats = 0;
+                    hits = 0;
+                    runs = 0;
+                    strikeouts = 0;
+                    homeRuns = 0;
+                };
+                catchingStats = {
+                    successfulCatches = 0;
+                    missedCatches = 0;
+                    throws = 0;
+                    throwOuts = 0;
+                };
+                pitchingStats = {
+                    pitches = 0;
+                    strikes = 0;
+                    hits = 0;
+                    runs = 0;
+                    strikeouts = 0;
+                    homeRuns = 0;
+                };
+                injuries = 0;
+            };
         };
         let playerStates = Buffer.Buffer<StadiumTypes.PlayerStateWithId>(8);
         playerStates.add(mapPlayer(team.positions.pitcher));
@@ -160,17 +184,6 @@ module {
             };
         };
         (teamState, playerStates);
-    };
-
-    private func buildPlayerState(player : Player.TeamPlayerWithId, teamId : Team.TeamId) : StadiumTypes.PlayerStateWithId {
-        {
-            id = player.id;
-            name = player.name;
-            teamId = teamId;
-            condition = #ok;
-            skills = player.skills;
-            position = player.position;
-        };
     };
 
     private func normalizeVotes(votes : Trie.Trie<MatchAura, Nat>) : Trie.Trie<MatchAura, Float> {
@@ -204,7 +217,13 @@ module {
         public func tick() : TickResult {
             state.startTurn();
             if (state.log.rounds.size() < 1) {
-
+                // Need to log first batter, others handled when batter switches
+                updateStats(
+                    state.bases.atBat,
+                    func(stats : MutableState.MutablePlayerMatchStats) {
+                        stats.battingStats.atBats += 1;
+                    },
+                );
                 ignore compiledHooks.matchStart({
                     prng = prng;
                     state = state;
@@ -277,6 +296,31 @@ module {
                                 defense = player.1.skills.defense;
                                 piety = player.1.skills.piety;
                                 speed = player.1.skills.speed;
+                            };
+                            matchStats = {
+                                battingStats = {
+                                    atBats = player.1.matchStats.battingStats.atBats;
+                                    hits = player.1.matchStats.battingStats.hits;
+                                    runs = player.1.matchStats.battingStats.runs;
+                                    strikeouts = player.1.matchStats.battingStats.strikeouts;
+                                    homeRuns = player.1.matchStats.battingStats.homeRuns;
+                                };
+                                catchingStats = {
+                                    successfulCatches = player.1.matchStats.catchingStats.successfulCatches;
+                                    missedCatches = player.1.matchStats.catchingStats.missedCatches;
+                                    throws = player.1.matchStats.catchingStats.throws;
+                                    throwOuts = player.1.matchStats.catchingStats.throwOuts;
+
+                                };
+                                pitchingStats = {
+                                    pitches = player.1.matchStats.pitchingStats.pitches;
+                                    strikes = player.1.matchStats.pitchingStats.strikes;
+                                    hits = player.1.matchStats.pitchingStats.hits;
+                                    runs = player.1.matchStats.pitchingStats.runs;
+                                    strikeouts = player.1.matchStats.pitchingStats.strikeouts;
+                                    homeRuns = player.1.matchStats.pitchingStats.homeRuns;
+                                };
+                                injuries = player.1.matchStats.injuries;
                             };
                         };
                     },
@@ -355,11 +399,11 @@ module {
             };
         };
 
-        private func buildPlayerStats() : [Season.PlayerMatchStats] {
+        private func buildPlayerStats() : [Season.PlayerMatchStatsWithId] {
             state.players.vals()
             |> Iter.map(
                 _,
-                func(player : MutableState.MutablePlayerStateWithId) : Season.PlayerMatchStats {
+                func(player : MutableState.MutablePlayerStateWithId) : Season.PlayerMatchStatsWithId {
                     {
                         playerId = player.id;
                         battingStats = {
@@ -383,6 +427,7 @@ module {
                             strikeouts = player.matchStats.pitchingStats.strikeouts;
                             homeRuns = player.matchStats.pitchingStats.homeRuns;
                         };
+                        injuries = player.matchStats.injuries;
                     };
                 },
             )
@@ -613,7 +658,7 @@ module {
                 ?compiledHooks.onCatch,
             );
             let ballRoll = { crit = false; value = 7 }; // TODO how to handle difficulty?
-            let netCatchRoll = getNetRoll(ballRoll, catchRoll);
+            let netCatchRoll = getNetRoll(catchRoll, ballRoll);
             if (netCatchRoll <= 0) {
 
                 updateStats(
@@ -745,6 +790,12 @@ module {
                             playerId = target;
                             injury = newInjury;
                         });
+                        updateStats(
+                            target,
+                            func(stats : MutableState.MutablePlayerMatchStats) {
+                                stats.injuries += 1;
+                            },
+                        );
                     };
                     // out will handle removing the player from base
                     switch (out(target, #hitByBall)) {
@@ -752,15 +803,27 @@ module {
                         case (#inProgress)();
                     };
                 };
+            } else {
+                updateStats(
+                    state.bases.atBat,
+                    func(stats : MutableState.MutablePlayerMatchStats) {
+                        stats.battingStats.hits += 1;
+                    },
+                );
+                let defenseTeam = state.getDefenseTeamState();
+                updateStats(
+                    defenseTeam.positions.pitcher,
+                    func(stats : MutableState.MutablePlayerMatchStats) {
+                        stats.pitchingStats.hits += 1;
+                    },
+                );
             };
 
-            updateStats(
-                state.bases.atBat,
-                func(stats : MutableState.MutablePlayerMatchStats) {
-                    stats.battingStats.hits += 1;
-                },
-            );
+            // Shift the rest of the runners by one base
+            single();
+        };
 
+        private func single() : SimulationResult {
             // Shift everyone by one base
             // 3rd -> home
             let thirdBaseRun = moveBaseToBase({
@@ -778,8 +841,8 @@ module {
 
             // 1st -> 2nd
             let firstBaseRun = moveBaseToBase({
-                from = #thirdBase;
-                to = #homeBase;
+                from = #firstBase;
+                to = #secondBase;
             });
             let #inProgress = firstBaseRun else return firstBaseRun; // Short circuit if end match
 
@@ -908,6 +971,14 @@ module {
                         scoringPlayer.id,
                         func(stats : MutableState.MutablePlayerMatchStats) {
                             stats.battingStats.runs += 1;
+                        },
+                    );
+
+                    let defenseTeam = state.getDefenseTeamState();
+                    updateStats(
+                        defenseTeam.positions.pitcher,
+                        func(stats : MutableState.MutablePlayerMatchStats) {
+                            stats.pitchingStats.runs += 1;
                         },
                     );
                 };

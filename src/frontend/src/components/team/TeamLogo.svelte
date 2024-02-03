@@ -23,7 +23,7 @@
     <Popover
       class="w-64 text-sm font-light "
       title={team?.name || "Undertermined"}
-      triggeredBy="#team1Logo"
+      triggeredBy="#teamLogo"
     >
       {popoverText}
     </Popover>

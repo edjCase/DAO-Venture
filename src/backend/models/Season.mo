@@ -113,7 +113,6 @@ module {
     };
 
     public type PlayerMatchStats = {
-        playerId : Player.PlayerId;
         battingStats : {
             atBats : Nat;
             hits : Nat;
@@ -135,6 +134,10 @@ module {
             runs : Nat;
             homeRuns : Nat;
         };
+        injuries : Nat;
+    };
+    public type PlayerMatchStatsWithId = PlayerMatchStats and {
+        playerId : Player.PlayerId;
     };
 
     public type CompletedMatchWithoutPredictions = {
@@ -142,7 +145,7 @@ module {
         team2 : CompletedMatchTeam;
         aura : MatchAura.MatchAura;
         winner : Team.TeamIdOrTie;
-        playerStats : [PlayerMatchStats];
+        playerStats : [PlayerMatchStatsWithId];
     };
 
     public type CompletedMatch = CompletedMatchWithoutPredictions and {
