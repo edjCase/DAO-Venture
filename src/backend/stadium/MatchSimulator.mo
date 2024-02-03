@@ -634,7 +634,7 @@ module {
                     case (4) #pitcher;
                     case (_) Prelude.unreachable();
                 };
-            } else if (netRoll < 11) {
+            } else if (netRoll < 8) {
                 // outfield
                 switch (prng.nextInt(0, 2)) {
                     case (0) #leftField;
