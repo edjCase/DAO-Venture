@@ -59,7 +59,7 @@
   };
 </script>
 
-{#if matchPredictions}
+{#if matchPredictions && "id" in match.team1 && "id" in match.team2}
   <div class="flex flex-row items-center mb-10 gap-5">
     <div>
       <div class="text-center">Abstain</div>
@@ -79,12 +79,7 @@
           "team1" in matchPredictions.yourVote}
         on:click={() => predict({ team1: null })}
       >
-        <TeamLogo
-          team={match.team1}
-          size="lg"
-          borderColor={undefined}
-          popoverText={match.team1?.id.toString()}
-        />
+        <TeamLogo team={match.team1} size="lg" borderColor={undefined} />
       </Button>
     </div>
     <div>VS</div>
@@ -97,12 +92,7 @@
           "team2" in matchPredictions.yourVote}
         on:click={() => predict({ team2: null })}
       >
-        <TeamLogo
-          team={match.team2}
-          size="lg"
-          borderColor={undefined}
-          popoverText={match.team2?.id.toString()}
-        />
+        <TeamLogo team={match.team2} size="lg" borderColor={undefined} />
       </Button>
     </div>
   </div>

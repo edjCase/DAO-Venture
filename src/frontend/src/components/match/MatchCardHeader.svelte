@@ -1,39 +1,40 @@
 <script lang="ts">
-  import { TeamDetails } from "../../models/Match";
+  import { TeamDetailsOrUndetermined } from "../../models/Match";
   import { TeamIdOrTie } from "../../models/Team";
   import TeamLogo from "../team/TeamLogo.svelte";
-  import { Popover } from "flowbite-svelte";
 
-  export let team1: TeamDetails | undefined;
-  export let team2: TeamDetails | undefined;
+  export let team1: TeamDetailsOrUndetermined;
+  export let team2: TeamDetailsOrUndetermined;
   export let winner: TeamIdOrTie | undefined;
 
-  let crownEmojiOrEmpty = (teamId: "team1" | "team2") => {
+  let crownEmojiOrEmpty = (
+    winner: TeamIdOrTie | undefined,
+    teamId: "team1" | "team2"
+  ) => {
     if (winner === undefined) return "";
     if (teamId in winner) return "👑";
     if ("tie" in winner) return "😑";
     return "";
   };
-  let getScoreText = (score: number | undefined) => {
-    if (score === undefined || isNaN(score)) return "-";
-    return score;
+  let getScoreText = (team: TeamDetailsOrUndetermined) => {
+    if ("score" in team && team.score !== undefined && !isNaN(team.score)) {
+      return team.score;
+    }
+    return "-";
   };
-  $: team1Score = getScoreText(team1?.score);
-  $: team2Score = getScoreText(team2?.score);
+  $: team1Score = getScoreText(team1);
+  $: team2Score = getScoreText(team2);
+  $: team1Emoji = crownEmojiOrEmpty(winner, "team1");
+  $: team2Emoji = crownEmojiOrEmpty(winner, "team2");
 </script>
 
 <div class="header">
   <div class="header-team team1">
-    <TeamLogo
-      team={team1}
-      size="sm"
-      borderColor={undefined}
-      popoverText={team1?.id.toString()}
-    />
+    <TeamLogo team={team1} size="sm" borderColor={undefined} />
 
     <div class="score">
       {team1Score}
-      <span class="emoji">{crownEmojiOrEmpty("team1")}</span>
+      <span class="emoji">{team1Emoji}</span>
     </div>
   </div>
   <div class="header-center">
@@ -41,22 +42,10 @@
   </div>
   <div class="header-team team2">
     <div class="score">
+      <span class="emoji">{team2Emoji}</span>
       {team2Score}
-      <span class="emoji">{crownEmojiOrEmpty("team2")}</span>
     </div>
-    <TeamLogo
-      team={team2}
-      size="sm"
-      borderColor={undefined}
-      popoverText={team2?.id.toString()}
-    />
-    <Popover
-      class="w-64 text-sm font-light "
-      title={team2?.name || "Undertermined"}
-      triggeredBy="#team2Logo"
-    >
-      {team1?.id}
-    </Popover>
+    <TeamLogo team={team2} size="sm" borderColor={undefined} />
   </div>
 </div>
 
@@ -65,10 +54,6 @@
     display: flex;
     flex-direction: row;
     align-items: center;
-  }
-  .name {
-    font-size: 2rem;
-    font-weight: bold;
   }
   .header {
     display: flex;
@@ -84,13 +69,6 @@
 
   .team2 {
     justify-content: right;
-  }
-
-  .header-team.team1 .name {
-    text-align: left;
-  }
-  .header-team.team2 .name {
-    text-align: right;
   }
 
   .score {

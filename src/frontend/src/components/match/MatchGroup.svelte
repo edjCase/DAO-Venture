@@ -11,7 +11,9 @@
 
   scheduleStore.subscribeMatchGroups(
     (seasonMatchGroups: MatchGroupDetails[]) => {
-      matchGroup = seasonMatchGroups[matchGroupId];
+      if (seasonMatchGroups.length > 0) {
+        matchGroup = seasonMatchGroups[matchGroupId];
+      }
     }
   );
 </script>

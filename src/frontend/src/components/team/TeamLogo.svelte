@@ -1,32 +1,47 @@
 <script lang="ts">
+  import { Principal } from "@dfinity/principal";
   import { Popover } from "flowbite-svelte";
 
-  export let team: { logoUrl: string; name: string } | undefined;
+  export let team:
+    | { logoUrl: string; name: string; id: Principal }
+    | { winnerOfMatch: number }
+    | { seasonStandingIndex: number };
   export let size: "sm" | "md" | "lg" | undefined;
   export let borderColor: string | undefined;
-  export let popoverText: string | undefined;
+  export let popover: boolean = true;
 
-  $: logoUrl = team?.logoUrl || "/images/team-logos/unknown.png";
-  $: alt = team?.name || "Undetermined";
+  $: logoUrl =
+    "logoUrl" in team ? team.logoUrl : "/images/team-logos/unknown.png";
+  $: title =
+    "name" in team
+      ? team.name
+      : "winnerOfMatch" in team
+        ? "Winner of previous match group"
+        : "Team with rank of: " + (team.seasonStandingIndex + 1);
+  $: triggerId =
+    "teamLogo_" +
+    ("id" in team
+      ? team.id.toText()
+      : "winnerOfMatch" in team
+        ? "W" + team.winnerOfMatch
+        : "S" + team.seasonStandingIndex);
 </script>
 
 <div>
-  <div id="teamLogo">
+  <div id={triggerId}>
     <img
       class="logo {size ? `size-${size}` : ''}"
       src={logoUrl}
-      {alt}
+      alt={title}
       style={borderColor ? "border: 1px solid " + borderColor : ""}
     />
   </div>
-  {#if popoverText}
+  {#if popover}
     <Popover
       class="w-64 text-sm font-light "
-      title={team?.name || "Undertermined"}
-      triggeredBy="#teamLogo"
-    >
-      {popoverText}
-    </Popover>
+      {title}
+      triggeredBy={"#" + triggerId}
+    ></Popover>
   {/if}
 </div>
 

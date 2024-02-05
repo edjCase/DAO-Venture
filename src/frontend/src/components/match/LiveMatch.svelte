@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { TurnLog } from "../../ic-agent/Stadium";
   import { MatchDetails } from "../../models/Match";
-  import { TurnLog } from "../../models/Season";
 
   import { LiveMatch, LiveTeamDetails } from "../../stores/LiveMatchGroupStore";
   import Field from "./Field.svelte";
@@ -18,23 +18,23 @@
   let winner: string | undefined;
 
   $: {
-    if (match.team1 && match.team2) {
+    if ("score" in match.team1 && "score" in match.team2) {
       match.team1.score = liveMatch.team1.score;
       match.team2.score = liveMatch.team2.score;
     }
     if (liveMatch) {
       match.winner = liveMatch.winner;
     }
-    if (match.winner) {
+    if (match.winner && "name" in match.team1 && "name" in match.team2) {
       if ("team1" in match.winner) {
-        winner = match.team1!.name;
+        winner = match.team1.name;
       } else if ("team2" in match.winner) {
-        winner = match.team2!.name;
+        winner = match.team2.name;
       } else {
         winner = "Tie";
       }
     }
-    if (liveMatch.log.rounds.length > 0) {
+    if (liveMatch.log && liveMatch.log.rounds.length > 0) {
       let currentRound = liveMatch.log.rounds[liveMatch.log.rounds.length - 1];
       lastTurn = currentRound.turns[currentRound.turns.length - 1];
     }
@@ -54,10 +54,10 @@
   <div>
     {#if liveMatch && !!liveMatch.liveState}
       <div class="text-center text-3xl mb-5">
-        Round {liveMatch.log.rounds.length}
+        Round {liveMatch.log?.rounds.length}
       </div>
       <div class="absolute top-[300px] left-[5%]">
-        {#if match.team1 && match.team2}
+        {#if "id" in match.team1 && "id" in match.team2}
           {#each lastTurn.events as e}
             <MatchEvent
               event={e}

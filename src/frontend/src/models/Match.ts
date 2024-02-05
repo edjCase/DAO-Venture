@@ -15,8 +15,8 @@ export type MatchDetails = {
     id: number;
     time: bigint;
     matchGroupId: number;
-    team1: TeamDetails | undefined;
-    team2: TeamDetails | undefined;
+    team1: TeamDetailsOrUndetermined;
+    team2: TeamDetailsOrUndetermined;
     offeringOptions: OfferingWithMetaData[] | undefined;
     winner: TeamIdOrTie | undefined;
     state: MatchState;
@@ -29,3 +29,8 @@ export type TeamDetails = {
     logoUrl: string;
     score: number | undefined;
 };
+
+export type TeamDetailsOrUndetermined =
+    | TeamDetails
+    | { winnerOfMatch: number }
+    | { seasonStandingIndex: number };

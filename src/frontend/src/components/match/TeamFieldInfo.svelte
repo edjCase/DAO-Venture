@@ -20,12 +20,7 @@
     </div>
   </div>
   <div class="flex-1 flex items-center justify-center">
-    <TeamLogo
-      {team}
-      size="md"
-      borderColor={team.color}
-      popoverText={team.id.toString()}
-    />
+    <TeamLogo {team} size="md" borderColor={team.color} />
   </div>
   <div class="flex-1 flex text-7xl items-center justify-center">
     {team.score}

@@ -10,7 +10,7 @@ import {
     TeamAssignment,
     TeamInfo,
 } from "../models/Season";
-import { MatchDetails, MatchGroupDetails, TeamDetails } from "../models/Match";
+import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined } from "../models/Match";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -22,11 +22,13 @@ export const scheduleStore = (() => {
     const { subscribe: subscribeStatus, set: setStatus } = writable<SeasonStatus | undefined>();
     const { subscribe: subscribeMatchGroups, set: setMatchGroups } = writable<MatchGroupDetails[]>([]);
 
-    const mapTeamAssignment = (team: TeamAssignment, score: bigint | undefined) => {
+    const mapTeamAssignment = (team: TeamAssignment, score: bigint | undefined): TeamDetailsOrUndetermined => {
         if ('predetermined' in team) {
             return mapTeam(team.predetermined, score);
+        } else if ('winnerOfMatch' in team) {
+            return { winnerOfMatch: Number(team.winnerOfMatch) };
         } else {
-            return undefined
+            return { seasonStandingIndex: Number(team.seasonStandingIndex) };
         }
     };
     const mapTeam = (team: TeamInfo, score: bigint | undefined): TeamDetails => {
