@@ -10,8 +10,9 @@ import ICRC7 "mo:icrc7-mo";
 import ICRC30 "mo:icrc30-mo";
 import ICRC3 "mo:icrc3-mo";
 import Types "Types";
+import NftLedger "NftLedger";
 
-shared (_init_msg) actor class NftLedgerActor(_args : InitArgs) : Types.NftLedgerActor = this {
+shared (_init_msg) actor class NftLedgerActor(_args : NftLedger.InitArgs) : Types.NftLedgerActor = this {
 
     private let ledger : NftLedger.NftLedger = NftLedger.NftLedger(_args, init_msg);
 

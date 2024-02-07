@@ -9,9 +9,19 @@ import NftLedgerActor "NftLedgerActor";
 
 actor NftLedgerFactoryActor {
 
-    let leagueId : Principal = Principal.fromText("bkyz2-fmaaa-aaaaa-qaaaq-cai"); // TODO dont hard code
+    stable var leagueIdOrNull : ?Principal = null;
 
     stable var ledgers = Trie.empty<Principal, Types.NftLedgerActorInfo>();
+
+    public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
+        // TODO how to get the league id vs manual set
+        // Set if the league is not set or if the caller is the league
+        if (leagueIdOrNull == null or leagueIdOrNull == ?caller) {
+            leagueIdOrNull := ?id;
+            return #ok;
+        };
+        #notAuthorized;
+    };
 
     public func getLedgers() : async [Types.NftLedgerActorInfoWithId] {
         ledgers
@@ -26,6 +36,7 @@ actor NftLedgerFactoryActor {
     };
 
     public func createNftLedger() : async Types.CreateNftLedgerResult {
+        let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
