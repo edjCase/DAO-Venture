@@ -8,7 +8,7 @@ import type {
 import type { Principal } from "@dfinity/principal";
 import type { IDL } from "@dfinity/candid";
 import { get } from "svelte/store";
-import { identityStore } from "../stores/IdentityStore";
+import { userStore } from "../stores/UserStore";
 
 export declare interface CreateActorOptions {
   /**
@@ -31,7 +31,7 @@ export const createActor = <T>(
   canisterId: string | Principal,
   idlFactory: IDL.InterfaceFactory
 ): ActorSubclass<T> => {
-  const identity = get(identityStore);
+  const identity = get(userStore);
   const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:4943";
   const agent = new HttpAgent({ identity: identity?.identity, host });
 

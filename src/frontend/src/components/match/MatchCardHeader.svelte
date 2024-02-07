@@ -1,21 +1,31 @@
 <script lang="ts">
   import { TeamDetailsOrUndetermined } from "../../models/Match";
-  import { TeamIdOrTie } from "../../models/Team";
+  import { TeamId, TeamIdOrTie } from "../../models/Team";
   import TeamLogo from "../team/TeamLogo.svelte";
 
   export let team1: TeamDetailsOrUndetermined;
   export let team2: TeamDetailsOrUndetermined;
   export let winner: TeamIdOrTie | undefined;
+  export let prediction: TeamId | undefined;
 
-  let crownEmojiOrEmpty = (
+  let getTeamEmojis = (
     winner: TeamIdOrTie | undefined,
     teamId: "team1" | "team2"
   ) => {
-    if (winner === undefined) return "";
-    if (teamId in winner) return "👑";
-    if ("tie" in winner) return "😑";
-    return "";
+    let emojis = [];
+    if (winner) {
+      if (teamId in winner) {
+        emojis.push("👑");
+      } else if ("tie" in winner) {
+        emojis.push("😑");
+      }
+    }
+    if (prediction && teamId in prediction) {
+      emojis.push("🔮");
+    }
+    return emojis.join(" ");
   };
+
   let getScoreText = (team: TeamDetailsOrUndetermined) => {
     if ("score" in team && team.score !== undefined && !isNaN(team.score)) {
       return team.score;
@@ -24,8 +34,8 @@
   };
   $: team1Score = getScoreText(team1);
   $: team2Score = getScoreText(team2);
-  $: team1Emoji = crownEmojiOrEmpty(winner, "team1");
-  $: team2Emoji = crownEmojiOrEmpty(winner, "team2");
+  $: team1Emoji = getTeamEmojis(winner, "team1");
+  $: team2Emoji = getTeamEmojis(winner, "team2");
 </script>
 
 <div class="header">

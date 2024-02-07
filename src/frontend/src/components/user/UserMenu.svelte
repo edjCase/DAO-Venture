@@ -10,15 +10,15 @@
     animals,
   } from "unique-names-generator";
   import { toSvg } from "jdenticon";
-  import { identityStore } from "../../stores/IdentityStore";
+  import { userStore } from "../../stores/UserStore";
 
-  $: identity = $identityStore;
+  $: user = $userStore;
 
   let copyPrincipal = () => {
-    navigator.clipboard.writeText(identity.id.toString());
+    navigator.clipboard.writeText(user.id.toString());
   };
   let logout = () => {
-    identityStore.logout();
+    userStore.logout();
   };
 </script>
 
@@ -26,9 +26,9 @@
   class="flex items-center space-x-4 md:order-1 cursor-pointer"
   id="avatar-menu"
 >
-  {#if identity}
+  {#if user}
     <Avatar border>
-      {@html toSvg(identity.id.toString(), 100)}
+      {@html toSvg(user.id.toString(), 100)}
     </Avatar>
     <div class="space-y-1 font-medium dark:text-white">
       <div>
@@ -36,20 +36,20 @@
           dictionaries: [adjectives, colors, animals],
           separator: " ",
           style: "capital",
-          seed: identity.id.toString(),
+          seed: user.id.toString(),
         })}
       </div>
       <div
         class="text-sm text-gray-500 dark:text-gray-400 flex items-center w-32"
       >
         <div class="truncate flex-grow">
-          {identity.id.toString()}
+          {user.id.toString()}
         </div>
         <FileCopyOutline on:click={copyPrincipal} class="flex-shrink-0" />
       </div>
     </div>
     <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-40">
-      {#if identity.isAdmin}
+      {#if user.isAdmin}
         <Link to="/admin">
           <DropdownItem>Admin</DropdownItem>
         </Link>

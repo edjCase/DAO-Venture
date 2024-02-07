@@ -1,9 +1,21 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
   import { teamStore } from "../../stores/TeamStore";
-  import { Card } from "flowbite-svelte";
+  import { Button, Card, Modal } from "flowbite-svelte";
   import TeamLogo from "./TeamLogo.svelte";
+  import { StarOutline, StarSolid } from "flowbite-svelte-icons";
+  import { userStore } from "../../stores/UserStore";
+  import { Principal } from "@dfinity/principal";
   $: teams = $teamStore;
+  $: user = $userStore;
+
+  let confirmModal: boolean = false;
+  let confirmFavoriteTeamId: Principal | undefined;
+  let setFavoriteTeam = async () => {
+    if (confirmFavoriteTeamId) {
+      await userStore.setFavoriteTeam(confirmFavoriteTeamId);
+    }
+  };
 </script>
 
 <div>
@@ -16,8 +28,26 @@
       <figure
         class="p-8 rounded-t-lg border-b md:rounded-t-none md:rounded-tl-lg md:border-e bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"
       >
-        <div class="text-2xl font-semibold text-center">
-          {team.name}
+        <div class="flex justify-center items-center gap-5">
+          <div class="text-2xl font-semibold text-center">
+            {team.name}
+          </div>
+          <div>
+            {#if user}
+              {#if user.favoriteTeamId?.compareTo(team.id) == "eq"}
+                <StarSolid size="lg" />
+              {:else if !user.favoriteTeamId}
+                <StarOutline
+                  size="lg"
+                  role="button"
+                  on:click={() => {
+                    confirmFavoriteTeamId = team.id;
+                    confirmModal = true;
+                  }}
+                />
+              {/if}
+            {/if}
+          </div>
         </div>
         <div class="team-logo-container m-5">
           <Link to={`/teams/${team.id.toString()}`}>
@@ -34,6 +64,18 @@
       </figure>
     {/each}
   </Card>
+
+  <Modal bind:open={confirmModal} autoclose>
+    <div class="text-center">
+      <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+        Setting your team is permanent for the season. Are you sure?
+      </h3>
+      <Button color="red" class="me-2" on:click={setFavoriteTeam}>
+        Yes, I'm sure
+      </Button>
+      <Button color="alternative">No, cancel</Button>
+    </div>
+  </Modal>
 </div>
 
 <style>

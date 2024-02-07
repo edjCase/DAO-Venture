@@ -3,17 +3,18 @@ import { Principal } from '@dfinity/principal';
 import { writable } from 'svelte/store';
 import { Bool } from '../models/Season';
 import { leagueAgentFactory } from '../ic-agent/League';
-import { Identity as DfinityIdentity } from '@dfinity/agent';
+import { Identity } from '@dfinity/agent';
 
 
-type Identity = {
+type User = {
     id: Principal;
     isAdmin: Bool;
-    identity: DfinityIdentity;
+    favoriteTeamId?: Principal;
+    identity: Identity;
 };
 
-function createIdentityStore() {
-    const { subscribe, set } = writable<Identity | undefined>();
+function createUserStore() {
+    const { subscribe, set } = writable<User | undefined>();
 
 
     const refresh = async () => {
@@ -30,17 +31,12 @@ function createIdentityStore() {
             });
             let userInfo = await leagueAgentFactory()
                 .getUserInfo();
-            let isAdmin = false;
-            if (userInfo && userInfo.length >= 1) {
-                isAdmin = userInfo[0]!.isAdmin;
-            }
-            if (isAdmin) {
-                set({
-                    id: id,
-                    isAdmin: true,
-                    identity: identity,
-                });
-            }
+            set({
+                id: id,
+                isAdmin: userInfo.isAdmin,
+                favoriteTeamId: userInfo.favoriteTeamId.length == 0 ? undefined : userInfo.favoriteTeamId[0],
+                identity: identity,
+            });
         }
     };
 
@@ -69,7 +65,13 @@ function createIdentityStore() {
         } finally {
             await refresh();
         }
-    }
+    };
+
+    const setFavoriteTeam = async (teamId: Principal) => {
+        await leagueAgentFactory()
+            .setUserFavoriteTeam(teamId);
+        refresh();
+    };
 
     refresh();
 
@@ -77,8 +79,9 @@ function createIdentityStore() {
         subscribe,
         login,
         logout,
+        setFavoriteTeam
     };
 }
 
 // Create a store
-export const identityStore = createIdentityStore();
+export const userStore = createUserStore();

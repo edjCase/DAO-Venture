@@ -63,11 +63,26 @@ actor LeagueActor {
         seasonStatus;
     };
 
-    public query ({ caller }) func getUserInfo() : async ?Types.UserInfo {
+    public query ({ caller }) func getUserInfo() : async Types.UserInfo {
         getUserInfoInternal(caller);
     };
 
-    public shared ({ caller }) func updateUserInfo(id : Principal, request : Types.UpdateUserInfoRequest) : async Types.UpdateUserInfoResult {
+    public shared ({ caller }) func setUserFavoriteTeam(teamId : Principal) : async Types.SetUserFavoriteTeamResult {
+        if (Principal.isAnonymous(caller)) {
+            return #identityRequired;
+        };
+        let key = buildPrincipalKey(caller);
+        let userInfo = getUserInfoInternal(caller);
+        let newUserInfo = {
+            userInfo with
+            favoriteTeamId = ?teamId;
+        };
+        let (newUsers, _) = Trie.put(users, key, Principal.equal, newUserInfo);
+        users := newUsers;
+        #ok;
+    };
+
+    public shared ({ caller }) func adminSetUserIsAdmin(id : Principal, isAdmin : Bool) : async Types.AdminSetUserIsAdminResult {
         if (Principal.isAnonymous(id)) {
             Debug.trap("Anonymous user is not a valid user");
         };
@@ -75,13 +90,19 @@ actor LeagueActor {
         // Check to make sure only admins can update other users
         // BUT if there are no admins, skip the check
         if (Trie.size(users) > 0) {
-            let ?callerUserInfo = getUserInfoInternal(caller) else return #notAuthorized;
+            let callerUserInfo = getUserInfoInternal(caller);
             if (not callerUserInfo.isAdmin) {
                 return #notAuthorized;
             };
         };
         let key = buildPrincipalKey(id);
-        let (newUsers, _) = Trie.put(users, key, Principal.equal, request);
+        let userInfo = getUserInfoInternal(id);
+        let newUserInfo = {
+            userInfo with
+            isAdmin = isAdmin;
+        };
+
+        let (newUsers, _) = Trie.put(users, key, Principal.equal, newUserInfo);
         users := newUsers;
         #ok;
     };
@@ -355,8 +376,6 @@ actor LeagueActor {
         switch (startResult) {
             case (#noMatchesSpecified) Debug.trap("No matches specified for match group " # Nat.toText(matchGroupId));
             case (#ok) {
-
-                predictionsOrNull := null; // Close predictions
                 let inProgressMatches = scheduledMatchGroup.matches
                 |> Iter.fromArray(_)
                 |> IterTools.zip(_, Iter.fromArray(startMatchGroupRequest.matches))
@@ -385,8 +404,10 @@ actor LeagueActor {
                             };
                         };
                         let matchPredictions = switch (predictionsOrNull) {
-                            case (null) Trie.empty();
-                            case (?predictions) predictions[matchId];
+                            case (null)[];
+                            case (?predictions) predictions[matchId]
+                            |> Trie.iter(_)
+                            |> Iter.toArray(_);
                         };
                         {
                             team1 = mapTeam(match.0.team1, match.1.team1);
@@ -397,6 +418,7 @@ actor LeagueActor {
                     },
                 )
                 |> Iter.toArray(_);
+                predictionsOrNull := null; // Close predictions
 
                 let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
                     season.matchGroups,
@@ -597,7 +619,7 @@ actor LeagueActor {
             // League is admin
             return true;
         };
-        let ?userInfo = getUserInfoInternal(id) else return false;
+        let userInfo = getUserInfoInternal(id);
         userInfo.isAdmin;
     };
 
@@ -606,8 +628,16 @@ actor LeagueActor {
         id == stadiumId;
     };
 
-    private func getUserInfoInternal(userId : Principal) : ?Types.UserInfo {
-        Trie.get(users, buildPrincipalKey(userId), Principal.equal);
+    private func getUserInfoInternal(userId : Principal) : Types.UserInfo {
+        switch (Trie.get(users, buildPrincipalKey(userId), Principal.equal)) {
+            case (?userInfo) userInfo;
+            case (null) {
+                {
+                    isAdmin = false;
+                    favoriteTeamId = null;
+                };
+            };
+        };
     };
 
     private func archiveSeason(season : Season.CompletedSeason) : () {

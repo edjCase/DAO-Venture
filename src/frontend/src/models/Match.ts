@@ -1,6 +1,6 @@
 
 import { Principal } from "@dfinity/principal";
-import { TeamIdOrTie } from "./Team";
+import { TeamId, TeamIdOrTie } from "./Team";
 import { OfferingWithMetaData } from "./Offering";
 
 
@@ -20,6 +20,7 @@ export type MatchDetails = {
     offeringOptions: OfferingWithMetaData[] | undefined;
     winner: TeamIdOrTie | undefined;
     state: MatchState;
+    predictions: Map<Principal, TeamId>;
 };
 export type MatchState = 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Played' | 'Error';
 

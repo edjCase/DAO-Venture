@@ -2,7 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from './Offering';
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
-import { TeamIdOrTie, TeamIdOrTieIdl } from './Team';
+import { TeamId, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -93,11 +93,13 @@ export type InProgressMatch = {
     team1: InProgressMatchTeam;
     team2: InProgressMatchTeam;
     aura: MatchAura;
+    predictions: [Principal, TeamId][];
 };
 export const InProgressMatchIdl = IDL.Record({
     team1: InProgressMatchTeamIdl,
     team2: InProgressMatchTeamIdl,
     aura: MatchAuraIdl,
+    predictions: IDL.Vec(IDL.Tuple(IDL.Principal, TeamIdOrTieIdl)),
 });
 
 export type CompletedMatchTeam = TeamInfo & {
@@ -170,6 +172,7 @@ export type CompletedMatch = {
     aura: MatchAura;
     winner: TeamIdOrTie;
     playerStats: PlayerMatchStats[];
+    predictions: [Principal, TeamId][];
 };
 export const CompletedMatchIdl = IDL.Record({
     team1: CompletedMatchTeamIdl,
@@ -177,6 +180,7 @@ export const CompletedMatchIdl = IDL.Record({
     aura: MatchAuraIdl,
     winner: TeamIdOrTieIdl,
     playerStats: IDL.Vec(PlayerMatchStatsIdl),
+    predictions: IDL.Vec(IDL.Tuple(IDL.Principal, TeamIdOrTieIdl)),
 });
 
 export type CompletedSeasonTeam = TeamInfo & {

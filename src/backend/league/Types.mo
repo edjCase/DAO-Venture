@@ -1,6 +1,7 @@
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Nat "mo:base/Nat";
+import Bool "mo:base/Bool";
 import Player "../models/Player";
 import StadiumTypes "../stadium/Types";
 import MatchAura "../models/MatchAura";
@@ -13,7 +14,7 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getUserInfo : query () -> async ?UserInfo;
-        updateUserInfo : query (id : Principal, request : UserInfo) -> async UpdateUserInfoResult;
+        setUserFavoriteTeam : (teamId : Principal) -> async SetUserFavoriteTeamResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
@@ -22,17 +23,23 @@ module {
         updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
+        adminSetUserIsAdmin : (id : Principal, isAdmin : Bool) -> async AdminSetUserIsAdminResult;
     };
 
     public type UserInfo = {
         isAdmin : Bool;
+        favoriteTeamId : ?Principal;
     };
 
-    public type UpdateUserInfoRequest = {
-        isAdmin : Bool;
+    public type SetUserFavoriteTeamResult = {
+        #ok;
+        #identityRequired;
+        #teamNotFound;
+        #favoriteTeamAlreadySet;
+        #notAuthorized;
     };
 
-    public type UpdateUserInfoResult = {
+    public type AdminSetUserIsAdminResult = {
         #ok;
         #notAuthorized;
     };

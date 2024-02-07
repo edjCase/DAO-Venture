@@ -47,7 +47,6 @@ export const scheduleStore = (() => {
         match: MatchVariant
     ): MatchDetails => {
         if ('completed' in match) {
-
             return {
                 id: index,
                 time: time,
@@ -56,7 +55,8 @@ export const scheduleStore = (() => {
                 offeringOptions: undefined,
                 team1: mapTeam(match.completed.team1, match.completed.team1.score),
                 team2: mapTeam(match.completed.team2, match.completed.team2.score),
-                winner: match.completed.winner
+                winner: match.completed.winner,
+                predictions: new Map(match.completed.predictions)
             };
         } else if ('inProgress' in match) {
             return {
@@ -67,7 +67,8 @@ export const scheduleStore = (() => {
                 offeringOptions: undefined,
                 team1: mapTeam(match.inProgress.team1, undefined),
                 team2: mapTeam(match.inProgress.team2, undefined),
-                winner: undefined
+                winner: undefined,
+                predictions: new Map(match.inProgress.predictions)
             };
         }
         else if ('scheduled' in match) {
@@ -79,7 +80,8 @@ export const scheduleStore = (() => {
                 offeringOptions: match.scheduled.offeringOptions,
                 team1: mapTeam(match.scheduled.team1, undefined),
                 team2: mapTeam(match.scheduled.team2, undefined),
-                winner: undefined
+                winner: undefined,
+                predictions: new Map() // TODO how to get live voting predictions?
             };
         }
         else {
@@ -91,7 +93,8 @@ export const scheduleStore = (() => {
                 offeringOptions: undefined,
                 team1: mapTeamAssignment(match.notScheduled.team1, undefined),
                 team2: mapTeamAssignment(match.notScheduled.team2, undefined),
-                winner: undefined
+                winner: undefined,
+                predictions: new Map()
             };
         }
     };
@@ -161,5 +164,4 @@ export const scheduleStore = (() => {
         refetch
     };
 })();
-
 

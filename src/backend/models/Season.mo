@@ -103,7 +103,7 @@ module {
         team1 : InProgressTeam;
         team2 : InProgressTeam;
         aura : MatchAura.MatchAura;
-        predictions : Trie.Trie<Principal, Team.TeamId>;
+        predictions : [(Principal, Team.TeamId)];
     };
 
     public type CompletedMatchTeam = TeamInfo and {
@@ -149,7 +149,7 @@ module {
     };
 
     public type CompletedMatch = CompletedMatchWithoutPredictions and {
-        predictions : Trie.Trie<Principal, Team.TeamId>;
+        predictions : [(Principal, Team.TeamId)];
     };
 
     public type CompletedMatchGroup = {

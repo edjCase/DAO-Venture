@@ -1,18 +1,18 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
-  import { identityStore } from "../../stores/IdentityStore";
+  import { userStore } from "../../stores/UserStore";
 
-  $: identity = $identityStore;
+  $: user = $userStore;
 
   let login = async () => {
-    await identityStore.login();
+    await userStore.login();
   };
   let logout = async () => {
-    await identityStore.logout();
+    await userStore.logout();
   };
 </script>
 
-{#if identity}
+{#if user}
   <Button on:click={logout}>Logout</Button>
 {:else}
   <Button on:click={login}>Login</Button>

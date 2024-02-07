@@ -2,13 +2,13 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from "../models/Offering";
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from "../models/MatchAura";
-import { TeamId, TeamIdIdl, TeamIdOrTieIdl } from "../models/Team";
+import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from "../models/Team";
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
 import { FieldPosition, PlayerSkills, PlayerSkillsIdl } from './PlayerLedger';
 import { Injury, InjuryIdl, PlayerCondition, PlayerConditionIdl } from '../models/Player';
-import { CompletedMatch, CompletedMatchIdl, TeamPositions, TeamPositionsIdl } from '../models/Season';
+import { CompletedMatchTeam, CompletedMatchTeamIdl, PlayerMatchStats, PlayerMatchStatsIdl, TeamPositions, TeamPositionsIdl } from '../models/Season';
 import { Base, BaseIdl } from '../models/Base';
 import { Curse, CurseIdl } from '../models/Curse';
 import { Blessing, BlessingIdl } from '../models/Blessing';
@@ -325,6 +325,23 @@ export type BrokenStateError =
 export const BrokenStateErrorIdl = IDL.Variant({
   playerNotFound: PlayerNotFoundErrorIdl,
   playerExpectedOnField: PlayerExpectedOnFieldErrorIdl,
+});
+
+
+
+export type CompletedMatch = {
+  team1: CompletedMatchTeam;
+  team2: CompletedMatchTeam;
+  aura: MatchAura;
+  winner: TeamIdOrTie;
+  playerStats: PlayerMatchStats[];
+};
+export const CompletedMatchIdl = IDL.Record({
+  team1: CompletedMatchTeamIdl,
+  team2: CompletedMatchTeamIdl,
+  aura: MatchAuraIdl,
+  winner: TeamIdOrTieIdl,
+  playerStats: IDL.Vec(PlayerMatchStatsIdl),
 });
 
 
