@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
   import LoginButton from "../common/LoginButton.svelte";
-  import { Avatar, Dropdown, DropdownItem, Button } from "flowbite-svelte";
-  import { FileCopyOutline } from "flowbite-svelte-icons";
+  import { Avatar, Dropdown, DropdownItem } from "flowbite-svelte";
+  import { CheckSolid, FileCopyOutline } from "flowbite-svelte-icons";
   import { Link } from "svelte-routing";
   import {
     uniqueNamesGenerator,
@@ -11,11 +11,25 @@
   } from "unique-names-generator";
   import { toSvg } from "jdenticon";
   import { userStore } from "../../stores/UserStore";
+  import { Principal } from "@dfinity/principal";
 
+  let adminUsers: string[] = [];
   $: user = $userStore;
+  $: isAdmin = user && adminUsers.includes(user.id.toString());
 
+  userStore.subscribeAdmins((adminIds: Principal[]) => {
+    adminUsers = adminIds.map((id) => id.toString());
+  });
+
+  let idCopied = false;
   let copyPrincipal = () => {
-    navigator.clipboard.writeText(user.id.toString());
+    if (user) {
+      idCopied = true;
+      navigator.clipboard.writeText(user.id.toString());
+      setTimeout(() => {
+        idCopied = false;
+      }, 2000); // wait for 2 seconds
+    }
   };
   let logout = () => {
     userStore.logout();
@@ -39,24 +53,38 @@
           seed: user.id.toString(),
         })}
       </div>
-      <div
-        class="text-sm text-gray-500 dark:text-gray-400 flex items-center w-32"
-      >
-        <div class="truncate flex-grow">
-          {user.id.toString()}
-        </div>
-        <FileCopyOutline on:click={copyPrincipal} class="flex-shrink-0" />
+      <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+        {#if user.user}
+          Points: {user.user.points}
+        {/if}
       </div>
     </div>
-    <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-40">
-      {#if user.isAdmin}
-        <Link to="/admin">
-          <DropdownItem>Admin</DropdownItem>
-        </Link>
-      {/if}
-      <DropdownItem on:click={logout} slot="footer">Logout</DropdownItem>
-    </Dropdown>
   {:else}
     <LoginButton />
   {/if}
 </div>
+{#if user}
+  <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-40">
+    <div slot="header" class="p-1">
+      <div
+        class="text-sm text-gray-500 dark:text-gray-400 flex items-center w-36 gap-2"
+      >
+        <!-- TODO how to get dropdown not to close one clicking this? -->
+        {#if idCopied}
+          <CheckSolid />
+        {:else}
+          <FileCopyOutline on:click={copyPrincipal} class="flex-shrink-0" />
+        {/if}
+        <div class="text-center truncate flex-grow">
+          {user.id.toString()}
+        </div>
+      </div>
+    </div>
+    {#if isAdmin}
+      <Link to="/admin">
+        <DropdownItem>Admin</DropdownItem>
+      </Link>
+    {/if}
+    <DropdownItem on:click={logout} slot="footer">Logout</DropdownItem>
+  </Dropdown>
+{/if}

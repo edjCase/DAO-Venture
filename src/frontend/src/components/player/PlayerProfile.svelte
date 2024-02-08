@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { Player } from "../../ic-agent/PlayerLedger";
+  import { Player } from "../../ic-agent/Players";
   import { positionToString } from "../../models/Player";
   import { teamStore } from "../../stores/TeamStore";
 

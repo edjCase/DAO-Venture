@@ -158,9 +158,9 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     ),
   });
 };
-const canisterId = process.env.CANISTER_ID_PLAYERLEDGER || "";
+const canisterId = process.env.CANISTER_ID_PLAYERS || "";
 // Keep factory due to changing identity
-export const playerLedgerAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
+export const playersAgentFactory = () => createActor<_SERVICE>(canisterId, idlFactory);
 
 export function mapPosition(position: FieldPositionEnum): FieldPosition {
   switch (position) {

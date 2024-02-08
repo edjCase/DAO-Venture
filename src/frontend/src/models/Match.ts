@@ -20,7 +20,7 @@ export type MatchDetails = {
     offeringOptions: OfferingWithMetaData[] | undefined;
     winner: TeamIdOrTie | undefined;
     state: MatchState;
-    predictions: Map<Principal, TeamId>;
+    predictions: Map<string, TeamId>;
 };
 export type MatchState = 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Played' | 'Error';
 

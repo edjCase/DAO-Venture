@@ -6,7 +6,7 @@ import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from "../models/Team";
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
-import { FieldPosition, PlayerSkills, PlayerSkillsIdl } from './PlayerLedger';
+import { FieldPosition, PlayerSkills, PlayerSkillsIdl } from './Players';
 import { Injury, InjuryIdl, PlayerCondition, PlayerConditionIdl } from '../models/Player';
 import { CompletedMatchTeam, CompletedMatchTeamIdl, PlayerMatchStats, PlayerMatchStatsIdl, TeamPositions, TeamPositionsIdl } from '../models/Season';
 import { Base, BaseIdl } from '../models/Base';

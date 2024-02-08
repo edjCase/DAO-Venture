@@ -14,7 +14,7 @@
   $: team2 = liveMatch?.team2 == undefined ? match.team2 : liveMatch.team2;
   $: borderColor = selected ? "border-green-500" : "border-gray-800";
   $: winner = liveMatch?.winner || match.winner;
-  $: prediction = user ? match.predictions.get(user.id) : undefined;
+  $: prediction = user ? match.predictions.get(user.id.toString()) : undefined;
 </script>
 
 <div

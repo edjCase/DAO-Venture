@@ -1,6 +1,6 @@
 <script lang="ts">
   import PlayerProfile from "../components/player/PlayerProfile.svelte";
-  import { Player } from "../ic-agent/PlayerLedger";
+  import { Player } from "../ic-agent/Players";
   import { playerStore } from "../stores/PlayerStore";
 
   export let playerIdString: string;

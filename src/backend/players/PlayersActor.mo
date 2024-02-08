@@ -10,7 +10,7 @@ import IterTools "mo:itertools/Iter";
 import Types "Types";
 // import LeagueActor "canister:league"; TODO
 
-actor PlayerLedger {
+actor PlayersActor {
 
     stable var nextPlayerId : Nat32 = 1;
     stable var players = Trie.empty<Nat32, Types.Player>();

@@ -10,7 +10,7 @@
   import FieldBase from "./FieldBase.svelte";
   import { BaseEnum } from "../../models/Base";
   import FieldBall from "./FieldBall.svelte";
-  import { FieldPosition } from "../../ic-agent/PlayerLedger";
+  import { FieldPosition } from "../../ic-agent/Players";
   import { toJsonString } from "../../utils/JsonUtil";
   import { PlayerId } from "../../models/Player";
 

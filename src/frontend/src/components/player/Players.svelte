@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Card } from "flowbite-svelte";
-  import { Player } from "../../ic-agent/PlayerLedger";
+  import { Player } from "../../ic-agent/Players";
   import { positionToString } from "../../models/Player";
   import { playerStore } from "../../stores/PlayerStore";
   import { teamStore } from "../../stores/TeamStore";

@@ -11,6 +11,8 @@ import {
     TeamInfo,
 } from "../models/Season";
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined } from "../models/Match";
+import { Principal } from "@dfinity/principal";
+import { TeamId } from "../models/Team";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -39,7 +41,9 @@ export const scheduleStore = (() => {
             score: score != undefined ? Number(score) : undefined
         };
     };
-
+    const mapPredictions = (predictions: [Principal, TeamId][]): Map<string, TeamId> => {
+        return new Map(predictions.map(([principal, teamId]) => [principal.toText(), teamId]));
+    };
     const mapMatch = (
         index: number,
         matchGroupId: number,
@@ -56,7 +60,7 @@ export const scheduleStore = (() => {
                 team1: mapTeam(match.completed.team1, match.completed.team1.score),
                 team2: mapTeam(match.completed.team2, match.completed.team2.score),
                 winner: match.completed.winner,
-                predictions: new Map(match.completed.predictions)
+                predictions: mapPredictions(match.completed.predictions)
             };
         } else if ('inProgress' in match) {
             return {
@@ -68,7 +72,7 @@ export const scheduleStore = (() => {
                 team1: mapTeam(match.inProgress.team1, undefined),
                 team2: mapTeam(match.inProgress.team2, undefined),
                 winner: undefined,
-                predictions: new Map(match.inProgress.predictions)
+                predictions: mapPredictions(match.inProgress.predictions)
             };
         }
         else if ('scheduled' in match) {
@@ -81,7 +85,7 @@ export const scheduleStore = (() => {
                 team1: mapTeam(match.scheduled.team1, undefined),
                 team2: mapTeam(match.scheduled.team2, undefined),
                 winner: undefined,
-                predictions: new Map() // TODO how to get live voting predictions?
+                predictions: mapPredictions([]) // TODO how to get live voting predictions?
             };
         }
         else {

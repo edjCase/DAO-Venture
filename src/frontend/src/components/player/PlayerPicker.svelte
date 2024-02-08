@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { Player } from "../../ic-agent/PlayerLedger";
+  import { Player } from "../../ic-agent/Players";
 
   export let players: Player[];
   export let onPlayerSelected: (playerId: number) => void;

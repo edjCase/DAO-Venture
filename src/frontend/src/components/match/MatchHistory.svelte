@@ -17,6 +17,8 @@
         (m) =>
           m.team1 &&
           m.team2 &&
+          "id" in m.team1 &&
+          "id" in m.team2 &&
           (m.team1.id.compareTo(teamId) == "eq" ||
             m.team2.id.compareTo(teamId) == "eq")
       )

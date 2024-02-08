@@ -13,7 +13,7 @@ import Buffer "mo:base/Buffer";
 import Time "mo:base/Time";
 import Iter "mo:base/Iter";
 import TrieSet "mo:base/TrieSet";
-import PlayerLedgerActor "canister:playerLedger";
+import PlayersActor "canister:players";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";

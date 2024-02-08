@@ -13,8 +13,6 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
-        getUserInfo : query () -> async ?UserInfo;
-        setUserFavoriteTeam : (teamId : Principal) -> async SetUserFavoriteTeamResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
@@ -23,23 +21,10 @@ module {
         updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
-        adminSetUserIsAdmin : (id : Principal, isAdmin : Bool) -> async AdminSetUserIsAdminResult;
+        setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
     };
 
-    public type UserInfo = {
-        isAdmin : Bool;
-        favoriteTeamId : ?Principal;
-    };
-
-    public type SetUserFavoriteTeamResult = {
-        #ok;
-        #identityRequired;
-        #teamNotFound;
-        #favoriteTeamAlreadySet;
-        #notAuthorized;
-    };
-
-    public type AdminSetUserIsAdminResult = {
+    public type SetUserIsAdminResult = {
         #ok;
         #notAuthorized;
     };

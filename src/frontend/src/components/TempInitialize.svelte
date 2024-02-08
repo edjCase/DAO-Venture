@@ -2,8 +2,8 @@
   import { leagueAgentFactory } from "../ic-agent/League";
   import {
     CreatePlayerFluffResult,
-    playerLedgerAgentFactory,
-  } from "../ic-agent/PlayerLedger";
+    playersAgentFactory,
+  } from "../ic-agent/Players";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
   import { Team, teams } from "../data/TeamData";
@@ -30,11 +30,11 @@
   };
 
   let createPlayers = async function (players: Player[]) {
-    let playerLedgerAgent = playerLedgerAgentFactory();
+    let playersAgent = playersAgentFactory();
     let promises = [];
     // loop over count
     for (let player of players) {
-      let promise = playerLedgerAgent
+      let promise = playersAgent
         .createFluff({
           name: player.name,
           title: player.title,

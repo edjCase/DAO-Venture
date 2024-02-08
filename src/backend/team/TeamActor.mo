@@ -7,7 +7,7 @@ import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Prelude "mo:base/Prelude";
 import TrieSet "mo:base/TrieSet";
-import PlayerLedgerActor "canister:playerLedger";
+import PlayersActor "canister:players";
 import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import Nat "mo:base/Nat";
@@ -38,7 +38,7 @@ shared (install) actor class TeamActor(
 
   public composite query func getPlayers() : async [Player.TeamPlayerWithId] {
     let teamId = Principal.fromActor(this);
-    await PlayerLedgerActor.getTeamPlayers(teamId);
+    await PlayersActor.getTeamPlayers(teamId);
   };
 
   public shared ({ caller }) func voteOnMatchGroup(request : Types.VoteOnMatchGroupRequest) : async Types.VoteOnMatchGroupResult {

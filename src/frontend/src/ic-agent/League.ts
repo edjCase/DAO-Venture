@@ -6,7 +6,7 @@ import { IDL } from "@dfinity/candid";
 import { SeasonStatus, SeasonStatusIdl } from '../models/Season';
 import { Offering, OfferingIdl } from '../models/Offering';
 import { MatchAura, MatchAuraIdl } from '../models/MatchAura';
-import { Player, PlayerIdl } from './PlayerLedger';
+import { Player, PlayerIdl } from './Players';
 import { Team, TeamId, TeamIdIdl, TeamIdl } from '../models/Team';
 
 export type Time = bigint;
@@ -168,15 +168,6 @@ export const PredictMatchOutcomeResultIdl = IDL.Variant({
   identityRequired: IDL.Null,
 });
 
-export type UserInfo = {
-  isAdmin: Bool;
-  favoriteTeamId: [Principal] | [];
-};
-export const UserInfoIdl = IDL.Record({
-  isAdmin: IDL.Bool,
-  favoriteTeamId: IDL.Opt(IDL.Principal),
-});
-
 export type UpdateLeagueCanistersResult =
   | { ok: null }
   | { notAuthorized: null };
@@ -204,41 +195,26 @@ export const UpcomingMatchPredictionsResultIdl = IDL.Variant({
   noUpcomingMatches: IDL.Null,
 });
 
-export type AdminSetUserIsAdminResult =
+export type SetUserIsAdminResult =
   | { ok: null }
   | { notAuthorized: null };
-export const AdminSetUserIsAdminResultIdl = IDL.Variant({
+export const SetUserIsAdminResultIdl = IDL.Variant({
   ok: IDL.Null,
   notAuthorized: IDL.Null,
-});
-
-export type SetUserFavoriteTeamResult =
-  | { ok: null }
-  | { notAuthorized: null }
-  | { identityRequired: null }
-  | { teamNotFound: null }
-  | { favoriteTeamAlreadySet: null };
-export const SetUserFavoriteTeamResultIdl = IDL.Variant({
-  ok: IDL.Null,
-  notAuthorized: IDL.Null,
-  identityRequired: IDL.Null,
-  teamNotFound: IDL.Null,
-  favoriteTeamAlreadySet: IDL.Null,
 });
 
 
 export interface _SERVICE {
   'getTeams': ActorMethod<[], Array<Team>>,
   'getSeasonStatus': ActorMethod<[], SeasonStatus>,
-  'getUserInfo': ActorMethod<[], UserInfo>,
-  'setUserFavoriteTeam': ActorMethod<[Principal], [SetUserFavoriteTeamResult] | []>,
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'closeSeason': ActorMethod<[], CloseSeasonResult>,
   'createTeam': ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'predictMatchOutcome': ActorMethod<[PredictMatchOutcomeRequest], PredictMatchOutcomeResult>;
   'getUpcomingMatchPredictions': ActorMethod<[], UpcomingMatchPredictionsResult>,
   'updateLeagueCanisters': ActorMethod<[], UpdateLeagueCanistersResult>,
-  'adminSetUserIsAdmin': ActorMethod<[Principal, Bool], [AdminSetUserIsAdminResult]>,
+  'setUserIsAdmin': ActorMethod<[Principal, Bool], [SetUserIsAdminResult]>,
+  'getAdmins': ActorMethod<[], Array<Principal>>,
 }
 
 
@@ -248,15 +224,14 @@ export const idlFactory: InterfaceFactory = ({ }) => {
   return IDL.Service({
     'getTeams': IDL.Func([], [IDL.Vec(TeamIdl)], ['query']),
     'getSeasonStatus': IDL.Func([], [SeasonStatusIdl], ['query']),
-    'getUserInfo': IDL.Func([], [UserInfoIdl], ['query']),
-    'setUserFavoriteTeam': IDL.Func([IDL.Principal], [SetUserFavoriteTeamResultIdl], []),
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'closeSeason': IDL.Func([], [CloseSeasonResultIdl], []),
     'createTeam': IDL.Func([CreateTeamRequestIdl], [CreateTeamResultIdl], []),
     'predictMatchOutcome': IDL.Func([PredictMatchOutcomeRequestIdl], [PredictMatchOutcomeResultIdl], []),
     'getUpcomingMatchPredictions': IDL.Func([], [UpcomingMatchPredictionsResultIdl], ['query']),
     'updateLeagueCanisters': IDL.Func([], [UpdateLeagueCanistersResultIdl], []),
-    'adminSetUserIsAdmin': IDL.Func([IDL.Principal, IDL.Bool], [AdminSetUserIsAdminResultIdl], []),
+    'setUserIsAdmin': IDL.Func([IDL.Principal, IDL.Bool], [SetUserIsAdminResultIdl], []),
+    'getAdmins': IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
   });
 };
 
