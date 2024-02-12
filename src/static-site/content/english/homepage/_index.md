@@ -3,7 +3,7 @@
 banner:
   title: "A Discordant Assembly of Oddities"
   content: "Where a silly world unfolds in a community-driven simulated spectator sport, blending collective consensus with strategy and chance in an oddball universe."
-  image: "/images/logo_banner.png"
+  image: "/images/logo_banner.jpg"
   button:
     enable: false
     coming_soon: true

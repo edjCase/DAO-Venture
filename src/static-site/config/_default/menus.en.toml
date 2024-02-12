@@ -12,23 +12,38 @@ url = "about/"
 weight = 2
 
 [[main]]
-name = "Wiki"
-url = "https://github.com/edjCase/daoball/wiki"
+name = "Links"
+hasChildren = true
 weight = 3
 
 [[main]]
+parent = "Links"
+name = "Wiki"
+url = "https://github.com/edjCase/daoball/wiki"
+
+[[main]]
+parent = "Links"
+name = "Taggr"
+url = "https://taggr.network/#/realm/DAOBALL"
+
+[[main]]
+parent = "Links"
+name = "Twitter"
+url = "https://twitter.com/daoballxyz"
+
+[[main]]
+parent = "Links"
 name = "Blog"
 url = "https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
-weight = 4
+
+[[main]]
+parent = "Links"
+name = "Github"
+url = "https://github.com/edjcase/daoball"
 
 
 # footer menu
 [[footer]]
-name = "About"
-url = "about/"
+name = "Contact Us"
+url = "mailto:daoball@edjcase.com"
 weight = 1
-
-[[footer]]
-name = "Whitepaper"
-url = "whitepaper/"
-weight = 2
