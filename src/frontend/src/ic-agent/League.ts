@@ -4,7 +4,7 @@ import { createActor } from './Actor';
 import { InterfaceFactory, Nat } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
 import { SeasonStatus, SeasonStatusIdl } from '../models/Season';
-import { Offering, OfferingIdl } from '../models/Offering';
+import { Offering, OfferingIdl } from '../models/Scenario';
 import { MatchAura, MatchAuraIdl } from '../models/MatchAura';
 import { Player, PlayerIdl } from './Players';
 import { Team, TeamId, TeamIdIdl, TeamIdl } from '../models/Team';

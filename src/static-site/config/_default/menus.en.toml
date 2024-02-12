@@ -12,9 +12,14 @@ url = "about/"
 weight = 2
 
 [[main]]
+name = "Wiki"
+url = "https://github.com/edjCase/daoball/wiki"
+weight = 3
+
+[[main]]
 name = "Blog"
 url = "https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
-weight = 3
+weight = 4
 
 
 # footer menu

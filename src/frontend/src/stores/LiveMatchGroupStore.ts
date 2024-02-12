@@ -7,7 +7,7 @@ import { scheduleStore } from "./ScheduleStore";
 import { TeamId, TeamIdOrTie } from "../models/Team";
 import { TeamDetails } from "../models/Match";
 import { MatchAura } from "../models/MatchAura";
-import { Offering } from "../models/Offering";
+import { Offering } from "../models/Scenario";
 
 export type LiveMatchGroup = {
   id: number;

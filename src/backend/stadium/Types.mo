@@ -4,7 +4,6 @@ import Time "mo:base/Time";
 import Trie "mo:base/Trie";
 import Hash "mo:base/Hash";
 import Nat "mo:base/Nat";
-import Offering "../models/Offering";
 import MatchAura "../models/MatchAura";
 import Base "../models/Base";
 import Team "../models/Team";
@@ -13,6 +12,7 @@ import Season "../models/Season";
 import Trait "../models/Trait";
 import Curse "../models/Curse";
 import Blessing "../models/Blessing";
+import Scenario "../models/Scenario";
 
 module {
     type FieldPosition = FieldPosition.FieldPosition;
@@ -61,7 +61,7 @@ module {
     };
 
     public type StartMatchTeam = Team and {
-        offering : Offering.Offering;
+        scenarioChoice : Nat8;
         positions : {
             firstBase : Player.TeamPlayerWithId;
             secondBase : Player.TeamPlayerWithId;
@@ -113,11 +113,6 @@ module {
         #traitTrigger : {
             id : Trait.Trait;
             playerId : Player.PlayerId;
-            description : Text;
-        };
-        #offeringTrigger : {
-            id : Offering.Offering;
-            teamId : Team.TeamId;
             description : Text;
         };
         #auraTrigger : {
@@ -296,7 +291,7 @@ module {
 
     public type TeamState = Team and {
         score : Int;
-        offering : Offering.Offering;
+        scenario : Scenario.ScenarioWithChoice;
         positions : Season.TeamPositions;
     };
 

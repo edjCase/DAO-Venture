@@ -32,12 +32,12 @@ import Team "../models/Team";
 import TeamTypes "../team/Types";
 import Season "../models/Season";
 import MatchAura "../models/MatchAura";
-import Offering "../models/Offering";
 import TeamFactoryActor "canister:teamFactory";
 import StadiumFactoryActor "canister:stadiumFactory";
 import PlayerTypes "../players/Types";
 import FieldPosition "../models/FieldPosition";
 import UserTypes "../users/Types";
+import Scenario "../models/Scenario";
 
 actor LeagueActor {
     type TeamWithId = Team.TeamWithId;
@@ -375,7 +375,7 @@ actor LeagueActor {
                                 id = team.id;
                                 name = team.name;
                                 logoUrl = team.logoUrl;
-                                offering = teamData.offering;
+                                scenario = teamData.scenario;
                                 positions = {
                                     firstBase = teamData.positions.firstBase.id;
                                     secondBase = teamData.positions.secondBase.id;
@@ -731,7 +731,7 @@ actor LeagueActor {
                     {
                         team1 = compileTeamInfo(m.team1);
                         team2 = compileTeamInfo(m.team2);
-                        offeringOptions = getRandomOfferings(prng, 4);
+                        scenario = getRandomScenario(prng);
                         aura = getRandomMatchAura(prng);
                     };
                 },
@@ -785,9 +785,9 @@ actor LeagueActor {
             switch (result) {
                 case (#ok(o)) o;
                 case (#noVotes) {
-                    // If no votes, get negative offering for not voting
+                    // If no votes, TODO
                     {
-                        offering = #badManagement;
+                        choice = #badManagement;
                     };
                 };
                 case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(team.id));
@@ -818,7 +818,7 @@ actor LeagueActor {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
-            offering = options.offering;
+            scenario = options.scenario;
             positions = {
                 pitcher = pitcher;
                 firstBase = firstBase;
@@ -987,30 +987,16 @@ actor LeagueActor {
         trie;
     };
 
-    private func getRandomOfferings(prng : Prng, count : Nat) : [Offering.OfferingWithMetaData] {
-        // TODO how to get all offerings without missing any, except for reserved ones like #badManagement
-        let offerings = Buffer.fromArray<Offering.Offering>([
-            #shuffleAndBoost,
-            #offensive,
-            #defensive,
-            #hittersDebt,
-            #bubble,
-            #underdog,
-            #ragePitch,
-            #pious,
-            #confident,
-            #moraleFlywheel,
-        ]);
-        prng.shuffleBuffer(offerings);
-        offerings.vals()
-        |> Iter.map(
+    private func getRandomScenario(prng : Prng, scenarios : [Scenario.Scenario]) : Scenario.Scenario {
+        // Filter down buffers/adjust the weights of the scenarios
+        let scenariosWithWeights : [(Scenario.Scenario, Float)] = scenarios
+        |> Iter.fromArray(_)
+        |> Iter.map<Scenario.Scenario, (Scenario.Scenario, Float)>(
             _,
-            func(o : Offering.Offering) : Offering.OfferingWithMetaData {
-                { Offering.getMetaData(o) with offering = o };
-            },
+            func(s : Scenario.Scenario) : (Scenario.Scenario, Float) = (s, 1.0), // TODO
         )
-        |> IterTools.take(_, count)
         |> Iter.toArray(_);
+        prng.nextArrayElementWeighted(scenariosWithWeights);
     };
 
     private func getRandomMatchAura(prng : Prng) : MatchAura.MatchAuraWithMetaData {

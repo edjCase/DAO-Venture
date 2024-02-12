@@ -2,7 +2,6 @@ import Time "mo:base/Time";
 import Array "mo:base/Array";
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
-import Offering "Offering";
 import MatchAura "MatchAura";
 import Team "Team";
 import Trait "Trait";
@@ -11,6 +10,7 @@ import Curse "Curse";
 import Blessing "Blessing";
 import Base "Base";
 import FieldPosition "FieldPosition";
+import Scenario "Scenario";
 
 module {
 
@@ -68,12 +68,13 @@ module {
         matches : [ScheduledMatch];
     };
 
-    public type ScheduledTeamInfo = TeamInfo and {};
+    public type ScheduledTeamInfo = TeamInfo and {
+        scenario : Scenario.Scenario;
+    };
 
     public type ScheduledMatch = {
         team1 : ScheduledTeamInfo;
         team2 : ScheduledTeamInfo;
-        offeringOptions : [Offering.OfferingWithMetaData];
         aura : MatchAura.MatchAuraWithMetaData;
     };
 
@@ -95,7 +96,7 @@ module {
     };
 
     public type InProgressTeam = TeamInfo and {
-        offering : Offering.Offering;
+        scenario : Scenario.ScenarioWithChoice;
         positions : TeamPositions;
     };
 
@@ -107,7 +108,7 @@ module {
     };
 
     public type CompletedMatchTeam = TeamInfo and {
-        offering : Offering.Offering;
+        scenario : Scenario.ScenarioWithChoice;
         score : Int;
         positions : TeamPositions;
     };

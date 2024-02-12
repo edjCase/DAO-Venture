@@ -1,6 +1,5 @@
 import StadiumTypes "Types";
 import Hook "../models/Hook";
-import Offering "../models/Offering";
 import Team "../models/Team";
 import MutableState "../models/MutableState";
 import PseudoRandomX "mo:random/PseudoRandomX";
@@ -30,8 +29,8 @@ module {
 
     public func compile(state : StadiumTypes.InProgressMatch) : Hook.CompiledHooks {
         let allHooks = [
-            fromOffering(state.team1.offering, #team1),
-            fromOffering(state.team2.offering, #team2),
+            // fromOffering(state.team1.offering, #team1),
+            // fromOffering(state.team2.offering, #team2),
             // fromAura(state.aura)
         ];
 
@@ -100,22 +99,6 @@ module {
                     }
                 );
             };
-        };
-    };
-
-    public func fromOffering(offering : Offering.Offering, teamId : Team.TeamId) : PreCompiledHooks {
-        switch (offering) {
-            case (#shuffleAndBoost) shuffleAndBoostHook(teamId);
-            case (#offensive) offensiveHook(teamId);
-            case (#defensive) defensiveHook(teamId);
-            case (#hittersDebt) hittersDebtHook(teamId);
-            case (#ragePitch) ragePitchHook(teamId);
-            case (#bubble) bubbleHook(teamId);
-            case (#underdog) underdogHook(teamId);
-            case (#pious) piousHook(teamId);
-            case (#confident) confidentHook(teamId);
-            case (#moraleFlywheel) moraleFlywheelHook(teamId);
-            case (#badManagement) badManagementHook(teamId);
         };
     };
 

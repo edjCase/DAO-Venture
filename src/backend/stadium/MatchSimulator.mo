@@ -22,7 +22,6 @@ import PseudoRandomX "mo:random/PseudoRandomX";
 import StadiumUtil "StadiumUtil";
 import IterTools "mo:itertools/Iter";
 import MatchAura "../models/MatchAura";
-import Offering "../models/Offering";
 import Base "../models/Base";
 import Curse "../models/Curse";
 import Blessing "../models/Blessing";
@@ -59,7 +58,7 @@ module {
         id : Principal;
         name : Text;
         logoUrl : Text;
-        offering : Offering.Offering;
+        scenario : Scenario.ScenarioWithChoice;
         positions : {
             firstBase : Player.TeamPlayerWithId;
             secondBase : Player.TeamPlayerWithId;
@@ -171,7 +170,7 @@ module {
             name = team.name;
             logoUrl = team.logoUrl;
             score = 0;
-            offering = team.offering;
+            scenario = team.scenario;
             positions = {
                 pitcher = team.positions.pitcher.id;
                 firstBase = team.positions.firstBase.id;
@@ -262,7 +261,7 @@ module {
                 name = team.name;
                 logoUrl = team.logoUrl;
                 score = team.score;
-                offering = team.offering;
+                scenario = team.scenario;
                 positions = {
                     pitcher = team.positions.pitcher;
                     firstBase = team.positions.firstBase;

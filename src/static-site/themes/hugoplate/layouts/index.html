@@ -5,6 +5,10 @@
       <section class="section pt-14">
         <div class="container">
           <div class="row justify-center">
+
+            <div class="col-12 banner-img" >
+              {{ partial "image" (dict "Src" .image "Alt" "Banner image" "Loading" "eager" "Class" "mx-auto" "Size" "800x") }}
+            </div>
             <div
               class="lg:col-7 mb-8 text-center">
               <h1 class="mb-4">
@@ -27,9 +31,6 @@
                   {{ end }}
                 {{ end }}
               {{ end }}
-            </div>
-            <div class="col-12 banner-img" >
-              {{ partial "image" (dict "Src" .image "Alt" "Banner image" "Loading" "eager" "Class" "mx-auto" "Size" "800x") }}
             </div>
           </div>
         </div>

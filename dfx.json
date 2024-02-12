@@ -48,6 +48,18 @@
         "npm run build_frontend"
       ],
       "type": "assets"
+    },
+    "marketing_frontend": {
+      "frontend": {
+        "entrypoint": "src/static-site/public/index.html"
+      },
+      "source": [
+        "src/static-site/public"
+      ],
+      "build": [
+        "npm run build_marketing_frontend"
+      ],
+      "type": "assets"
     }
   },
   "defaults": {

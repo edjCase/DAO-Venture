@@ -2,7 +2,7 @@
 title: "About"
 meta_title: "About"
 description: "About DAOBall"
-image: "/images/fractal_ball.png"
+image: "/images/stadium_spheres.png"
 draft: false
 ---
 

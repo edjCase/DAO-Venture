@@ -2,7 +2,6 @@ import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import Player "../models/Player";
 import StadiumTypes "../stadium/Types";
-import Offering "../models/Offering";
 
 module {
 
@@ -40,11 +39,11 @@ module {
     };
 
     public type MatchVoteResult = {
-        offeringVotes : Trie.Trie<Offering.Offering, Nat>;
+        votes : [Nat];
     };
 
     public type MatchGroupVoteResult = {
-        offering : Offering.Offering;
+        choice : Nat8;
     };
 
     public type GetMatchGroupVoteResult = {
@@ -59,7 +58,7 @@ module {
     };
 
     public type MatchGroupVote = {
-        offering : Offering.Offering;
+        choice : Nat8;
     };
 
     public type VoteOnMatchGroupRequest = MatchGroupVote and {
@@ -78,6 +77,6 @@ module {
     };
 
     public type InvalidVoteError = {
-        #invalidOffering : Offering.Offering;
+        #invalidChoice : Nat8;
     };
 };

@@ -4,14 +4,13 @@ import { createActor } from './Actor';
 import type { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { Player, PlayerIdl } from './Players';
 import { IDL } from "@dfinity/candid";
-import { Offering, OfferingIdl } from '../models/Offering';
 
 
 export type MatchGroupVote = {
-  'offering': Offering;
+  'choice': number;
 };
 export const MatchGroupVoteIdl = IDL.Record({
-  'offering': OfferingIdl,
+  'choice': IDL.Nat8,
 });
 
 export type GetMatchGroupVoteResult =
@@ -25,17 +24,17 @@ export const GetMatchGroupVoteResultIdl = IDL.Variant({
 });
 
 export type VoteOnMatchGroupRequest = MatchGroupVote & {
-  'matchGroupId': bigint;
+  'matchGroupId': number;
 };
 export const VoteOnMatchGroupRequestIdl = IDL.Record({
-  'offering': OfferingIdl,
+  'choice': IDL.Nat8,
   'matchGroupId': IDL.Nat
 });
 
 export type InvalidVoteError =
-  | { 'invalidOffering': Offering };
+  | { 'invalidChoice': number };
 export const InvalidVoteErrorIdl = IDL.Variant({
-  'invalidOffering': OfferingIdl
+  'invalidChoice': IDL.Nat8
 });
 
 export type VoteOnMatchGroupResult =

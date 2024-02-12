@@ -1,6 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
-import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from './Offering';
+import { Offering, OfferingIdl, OfferingWithMetaData, OfferingWithMetaDataIdl } from './Scenario';
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
 import { TeamId, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
 

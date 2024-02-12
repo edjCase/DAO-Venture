@@ -3,7 +3,6 @@ import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Trie "mo:base/Trie";
 import Iter "mo:base/Iter";
-import Offering "Offering";
 import FieldPosition "FieldPosition";
 import IterTools "mo:itertools/Iter";
 import Skill "Skill";

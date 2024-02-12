@@ -26,7 +26,6 @@ import PseudoRandomX "mo:random/PseudoRandomX";
 import CommonUtil "../Util";
 import LeagueTypes "../league/Types";
 import IterTools "mo:itertools/Iter";
-import Offering "../models/Offering";
 import MatchAura "../models/MatchAura";
 import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
@@ -35,7 +34,6 @@ import Season "../models/Season";
 actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor = this {
     type PlayerState = StadiumTypes.PlayerState;
     type FieldPosition = FieldPosition.FieldPosition;
-    type Offering = Offering.Offering;
     type MatchAura = MatchAura.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
     type TeamWithId = Team.TeamWithId;

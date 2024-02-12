@@ -20,7 +20,6 @@ import StadiumTypes "../stadium/Types";
 import IterTools "mo:itertools/Iter";
 import LeagueTypes "../league/Types";
 import Types "Types";
-import Offering "../models/Offering";
 import MatchAura "../models/MatchAura";
 import Season "../models/Season";
 import Util "../Util";
@@ -29,7 +28,6 @@ shared (install) actor class TeamActor(
   leagueId : Principal
 ) : async Types.TeamActor = this {
 
-  type Offering = Offering.Offering;
   type MatchAura = MatchAura.MatchAura;
   type GetCyclesResult = Types.GetCyclesResult;
   type PlayerId = Player.PlayerId;
@@ -73,7 +71,7 @@ shared (install) actor class TeamActor(
     };
 
     let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let offeringExists = IterTools.any(matchGroupData.offeringOptions.vals(), func(o : Offering.OfferingWithMetaData) : Bool = o.offering == request.offering);
+    let choiceExists = IterTools.any(matchGroupData.scenario.choices.vals(), func(o : Scenrio.Choice) : Bool = o.offering == request.offering);
     if (not offeringExists) {
       errors.add(#invalidOffering(request.offering));
     };

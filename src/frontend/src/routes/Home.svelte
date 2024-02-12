@@ -1,16 +1,31 @@
 <script lang="ts">
   import { Record } from "@dfinity/candid/lib/cjs/idl";
-  import LastAndCurrentMatchGroups from "../components/match/LastAndCurrentMatchGroups.svelte";
   import { scheduleStore } from "../stores/ScheduleStore";
   import { SeasonStatus } from "../models/Season";
   import TeamStandings from "../components/team/TeamStandings.svelte";
   import PlayerAwards from "../components/player/PlayerAwards.svelte";
   import SeasonWinners from "../components/season/SeasonWinners.svelte";
+  import { MatchGroupDetails } from "../models/Match";
+  import MatchGroup from "../components/match/MatchGroup.svelte";
 
   let seasonStatus: SeasonStatus | undefined;
+  let lastMatchGroup: MatchGroupDetails | undefined;
+  let nextOrCurrentMatchGroup: MatchGroupDetails | undefined;
 
   scheduleStore.subscribeStatus((status) => {
     seasonStatus = status;
+  });
+
+  scheduleStore.subscribeMatchGroups((matchGroups: MatchGroupDetails[]) => {
+    lastMatchGroup = matchGroups
+      .slice()
+      .reverse()
+      .find((mg) => mg.state == "Completed");
+    nextOrCurrentMatchGroup = matchGroups.find(
+      (mg) =>
+        mg.id > (lastMatchGroup?.id || -1) &&
+        (mg.state == "InProgress" || mg.state == "Scheduled")
+    );
   });
 </script>
 
@@ -29,8 +44,10 @@
           <PlayerAwards completedSeason={seasonStatus.completed} />
         </div>
       </div>
+    {:else if nextOrCurrentMatchGroup}
+      <MatchGroup matchGroup={nextOrCurrentMatchGroup} />
     {:else}
-      <LastAndCurrentMatchGroups />
+      Loading...
     {/if}
   {/if}
 </div>

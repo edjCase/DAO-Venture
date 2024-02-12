@@ -5,9 +5,9 @@ import Bool "mo:base/Bool";
 import Player "../models/Player";
 import StadiumTypes "../stadium/Types";
 import MatchAura "../models/MatchAura";
-import Offering "../models/Offering";
 import Team "../models/Team";
 import Season "../models/Season";
+import Scenario "../models/Scenario";
 
 module {
     public type LeagueActor = actor {
@@ -111,7 +111,7 @@ module {
 
     public type PlayedMatchTeamData = {
         score : Int;
-        offering : Offering.Offering;
+        scenario : Scenario.ScenarioWithChoice;
     };
 
     public type FailedMatchResult = {

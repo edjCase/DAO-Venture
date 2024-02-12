@@ -1,4 +1,3 @@
-import Offering "Offering";
 import Player "Player";
 import Team "Team";
 import MatchAura "MatchAura";
@@ -13,6 +12,7 @@ import FieldPosition "FieldPosition";
 import Skill "Skill";
 import Base "Base";
 import Season "Season";
+import Scenario "Scenario";
 
 module this {
 
@@ -32,7 +32,7 @@ module this {
         name : Text;
         logoUrl : Text;
         var score : Int;
-        offering : Offering.Offering;
+        scenario : Scenario.ScenarioWithChoice;
         positions : MutableTeamPositions;
     };
 
@@ -63,7 +63,7 @@ module this {
                 name = team.name;
                 logoUrl = team.logoUrl;
                 var score = team.score;
-                offering = team.offering;
+                scenario = team.scenario;
                 positions = toMutableTeamPositions(team.positions);
             };
         };
