@@ -14,12 +14,11 @@ banner:
 features:
   - title: "Opening Pitch: What is DAOball?"
     image: "/images/player.png"
-    content: "DAOball is a lighthearted blend of sport simulation and community engagement. In this game, teams face off in simulated baseball matches, but the real action unfolds off the field. Here, the community's collective decisions lead to whimsical, often chaotic outcomes, making each match an unpredictable spectacle."
+    content: "DAOball is a community-driven experiment in world-building and competition through a simulated sport that draws inspiration from baseball. It focuses on collective decision-making, where teams come together to shape the narrative and influence the outcomes of matches, emphasizing a communal experience over individual control. This imaginative approach invites players to partake in a shared journey, crafting a whimsical sports universe together."
     bulletpoints:
-      - "**Simulated Matches**: Daily matches are simulated, with outcomes hinging on the community's choices, adding a layer of playful unpredictability to the game​​."
-      - "**Chaos and Order**: The game teeters between strategic order and delightful chaos, with each decision potentially tilting the balance in unexpected ways."
-      - "**Simple Yet Engaging**: Easy to get involved and play with the community to make player choices that inject a dose of silly fun into each season."
-      - "**Community-Driven**: The game is designed to be community-driven, with teams and players controlled by blockchain technology to have decisions made through collective consensus."
+      - "**Spectate or Get Involved**: Engage as a spectator, predicting match outcomes and joining the social media conversation, or dive deeper as a team co-owner, collaborating with the community to make strategic decisions."
+      - "**Simulated Sport**: At its core, DAOball is a simulated sport inspired by baseball, offering an engaging blend of strategy and unpredictability, where the outcomes of matches hinge on community choices."
+      - "**Community-Driven Service**: The vision is rooted in continuous growth and true decentralization using blockchain technology, with the community at the helm of shaping the game's journey through collaboration, contribution and shared governance​​."
     button:
       enable: false
       label: "Play now"
@@ -27,11 +26,10 @@ features:
 
   - title: "Open Community Teams"
     image: "/images/stadium_spheres.png"
-    content: "In DAOball, each team operates through a collective decision-making model, where fans and members have a direct impact on team strategies and gameplay decisions. This model fosters a sense of shared ownership and collaboration, bringing fans closer to the teams they support."
+    content: "In DAOball, each team operates through a collective decision-making model, where fans and members have a direct impact on team strategies and gameplay decisions. This model fosters a sense of shared ownership and collaboration, bringing fans closer to the teams they support. A team's co-owners give a team its personality by making key decisions that impact them and the league."
     bulletpoints:
-      - "**Community Choices**: Fans contribute to key team decisions, influencing strategies and gameplay through a structured voting mechanism."
-      - "**Web 3**: Underlying technology supports transparent and fair voting, ensuring every community member's voice is heard."
-      - "**Shared Success**: Collective decision-making fosters a sense of shared achievement and team identity among community members."
+      - "**Shared Ownership**: Team co-owners have a direct say in team management, from player recruitment to match strategies, fostering a sense of collective responsibility and shared success."
+      - "**Open Team Model**: Teams are open to the community, with co-ownership opportunities available to anyone interested in participating."
     button:
       enable: false
       label: "Play now"
