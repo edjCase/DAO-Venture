@@ -15,6 +15,7 @@ import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Iter "mo:base/Iter";
 import None "mo:base/None";
+import Nat8 "mo:base/Nat8";
 import { ic } "mo:ic";
 import StadiumTypes "../stadium/Types";
 import IterTools "mo:itertools/Iter";
@@ -23,6 +24,7 @@ import Types "Types";
 import MatchAura "../models/MatchAura";
 import Season "../models/Season";
 import Util "../Util";
+import Scenario "../models/Scenario";
 
 shared (install) actor class TeamActor(
   leagueId : Principal
@@ -51,7 +53,7 @@ shared (install) actor class TeamActor(
       return #seasonStatusFetchError(Error.message(err));
     };
     let teamId = Principal.fromActor(this);
-    let matchGroupData : Season.ScheduledMatch = switch (seasonStatus) {
+    let scheduledMatch : Season.ScheduledMatch = switch (seasonStatus) {
       case (#notStarted or #starting) return #votingNotOpen;
       case (#completed(c)) return #votingNotOpen;
       case (#inProgress(ip)) {
@@ -69,11 +71,18 @@ shared (install) actor class TeamActor(
         };
       };
     };
+    let team = if (scheduledMatch.team1.id == teamId) {
+      scheduledMatch.team1;
+    } else if (scheduledMatch.team2.id == teamId) {
+      scheduledMatch.team2;
+    } else {
+      Prelude.unreachable();
+    };
 
     let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let choiceExists = IterTools.any(matchGroupData.scenario.choices.vals(), func(o : Scenrio.Choice) : Bool = o.offering == request.offering);
-    if (not offeringExists) {
-      errors.add(#invalidOffering(request.offering));
+    let choiceExists = team.scenario.scenario.options.size() > Nat8.toNat(request.scenarioChoice);
+    if (not choiceExists) {
+      errors.add(#invalidChoice(request.scenarioChoice));
     };
     if (errors.size() > 0) {
       return #invalid(Buffer.toArray(errors));
@@ -112,9 +121,9 @@ shared (install) actor class TeamActor(
     switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
       case (null) #noVotes;
       case (?o) {
-        let ?{ offering } = calculateVotes(o) else return #noVotes;
+        let ?{ scenarioChoice } = tallyVotes(o) else return #noVotes;
         #ok({
-          offering = offering;
+          scenarioChoice = scenarioChoice;
         });
       };
     };
@@ -137,22 +146,20 @@ shared (install) actor class TeamActor(
     };
   };
 
-  private func calculateVotes(matchVotes : Trie.Trie<Principal, Types.MatchGroupVote>) : ?{
-    offering : Offering;
-  } {
-    var offeringVotes = Trie.empty<Offering, Nat>();
+  private func tallyVotes(matchVotes : Trie.Trie<Principal, Types.MatchGroupVote>) : ?Types.MatchGroupVote {
+    // Scenario Option Id -> Vote Count
+    var choiceVotes = Trie.empty<Nat8, Nat>();
     for ((userId, vote) in Trie.iter(matchVotes)) {
-      // Offering
       let userVotingPower = 1; // TODO
       let offeringKey = {
-        key = vote.offering;
-        hash = Offering.hash(vote.offering);
+        key = vote.scenarioChoice;
+        hash = Nat32.fromNat(Nat8.toNat(vote.scenarioChoice));
       };
-      offeringVotes := addVotes(offeringVotes, offeringKey, Offering.equal, userVotingPower);
+      choiceVotes := addVotes(choiceVotes, offeringKey, Nat8.equal, userVotingPower);
     };
-    let ?winningOffering = calculateVote(offeringVotes) else return null;
+    let ?winningChoice = calculateVote(choiceVotes) else return null;
     ?{
-      offering = winningOffering;
+      scenarioChoice = winningChoice;
     };
   };
 

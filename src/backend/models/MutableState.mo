@@ -32,7 +32,7 @@ module this {
         name : Text;
         logoUrl : Text;
         var score : Int;
-        scenario : Scenario.ScenarioWithChoice;
+        scenario : Scenario.InstanceWithChoice;
         positions : MutableTeamPositions;
     };
 

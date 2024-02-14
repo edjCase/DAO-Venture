@@ -69,7 +69,7 @@ module {
     };
 
     public type ScheduledTeamInfo = TeamInfo and {
-        scenario : Scenario.Scenario;
+        scenario : Scenario.Instance;
     };
 
     public type ScheduledMatch = {
@@ -96,7 +96,7 @@ module {
     };
 
     public type InProgressTeam = TeamInfo and {
-        scenario : Scenario.ScenarioWithChoice;
+        scenario : Scenario.InstanceWithChoice;
         positions : TeamPositions;
     };
 
@@ -108,7 +108,7 @@ module {
     };
 
     public type CompletedMatchTeam = TeamInfo and {
-        scenario : Scenario.ScenarioWithChoice;
+        scenario : Scenario.InstanceWithChoice;
         score : Int;
         positions : TeamPositions;
     };

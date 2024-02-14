@@ -43,7 +43,7 @@ module {
     };
 
     public type MatchGroupVoteResult = {
-        choice : Nat8;
+        scenarioChoice : Nat8;
     };
 
     public type GetMatchGroupVoteResult = {
@@ -58,7 +58,7 @@ module {
     };
 
     public type MatchGroupVote = {
-        choice : Nat8;
+        scenarioChoice : Nat8;
     };
 
     public type VoteOnMatchGroupRequest = MatchGroupVote and {

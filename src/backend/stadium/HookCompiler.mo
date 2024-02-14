@@ -261,14 +261,6 @@ module {
             let updatedContext = if (not alreadyUsed) {
                 usedOnPlayers := TrieSet.put(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
 
-                // TODO this shouldnt be manual??
-                request.state.addEvent(
-                    #offeringTrigger({
-                        id = #bubble;
-                        teamId = teamId;
-                        description = "Player " # Nat32.toText(request.context.playerId) # " is protected by a bubble!";
-                    })
-                );
                 {
                     request.context with
                     result = {

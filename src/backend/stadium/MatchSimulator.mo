@@ -32,6 +32,7 @@ import Hook "../models/Hook";
 import MutableState "../models/MutableState";
 import HookCompiler "HookCompiler";
 import Season "../models/Season";
+import Scenario "../models/Scenario";
 
 module {
 
@@ -58,7 +59,7 @@ module {
         id : Principal;
         name : Text;
         logoUrl : Text;
-        scenario : Scenario.ScenarioWithChoice;
+        scenario : Scenario.InstanceWithChoice;
         positions : {
             firstBase : Player.TeamPlayerWithId;
             secondBase : Player.TeamPlayerWithId;

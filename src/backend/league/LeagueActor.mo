@@ -22,6 +22,7 @@ import Blob "mo:base/Blob";
 import Order "mo:base/Order";
 import Timer "mo:base/Timer";
 import TrieSet "mo:base/TrieSet";
+import Text "mo:base/Text";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "../league/Types";
 import Util "../Util";
@@ -38,6 +39,7 @@ import PlayerTypes "../players/Types";
 import FieldPosition "../models/FieldPosition";
 import UserTypes "../users/Types";
 import Scenario "../models/Scenario";
+import ScenarioUtil "ScenarioUtil";
 
 actor LeagueActor {
     type TeamWithId = Team.TeamWithId;
@@ -45,6 +47,7 @@ actor LeagueActor {
 
     stable var admins : TrieSet.Set<Principal> = TrieSet.empty();
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
+    stable var scenarios : Trie.Trie<Text, Scenario.Scenario> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
     stable var predictionsOrNull : ?[Trie.Trie<Principal, Team.TeamId>] = null;
     stable var historicalSeasons : [Season.CompletedSeason] = [];
@@ -53,17 +56,31 @@ actor LeagueActor {
     stable var stadiumFactoryInitialized = false;
 
     public query func getTeams() : async [TeamWithId] {
-        Trie.toArray(
-            teams,
-            func(k : Principal, v : Team.Team) : TeamWithId = {
-                v with
-                id = k;
-            },
-        );
+        getTeamsArray();
     };
 
     public query func getSeasonStatus() : async Season.SeasonStatus {
         seasonStatus;
+    };
+
+    public query func getScenarios() : async [Scenario.Scenario] {
+        getScenarioArray();
+    };
+
+    public shared ({ caller }) func addScenarios(request : Types.AddScenarioRequest) : async Types.AddScenarioResult {
+        if (not isAdminId(caller)) {
+            return #notAuthorized;
+        };
+        let key = {
+            key = request.id;
+            hash = Text.hash(request.id);
+        };
+        let (newScenarios, oldScenrio) = Trie.put(scenarios, key, Text.equal, request);
+        if (oldScenrio != null) {
+            return #idTaken;
+        };
+        scenarios := newScenarios;
+        #ok;
     };
 
     public shared query ({ caller }) func getAdmins() : async [Principal] {
@@ -122,7 +139,7 @@ actor LeagueActor {
         prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
 
         let timeBetweenMatchGroups = #minutes(10);
-        // let timeBetweenMatchGroups = #weeks(1); // TODO revert
+        // let timeBetweenMatchGroups = #days(1); // TODO revert
         let buildResult = ScheduleBuilder.build(
             request.startTime,
             Buffer.toArray(teamIdsBuffer),
@@ -188,13 +205,25 @@ actor LeagueActor {
             matchGroups = inProgressMatchGroups;
             teamStandings = null; // No standings yet
         };
-        seasonStatus := #inProgress(inProgressSeason);
 
         // Get first match group to open
         let #notScheduled(firstMatchGroup) = inProgressMatchGroups[0] else Prelude.unreachable();
 
-        scheduleMatchGroup(0, firstMatchGroup, inProgressSeason, prng);
+        let allTeams = getTeamsArray();
+        let allPlayers = await PlayersActor.getAllPlayers();
 
+        let allScenarios = getScenarioArray();
+        scheduleMatchGroup(
+            0,
+            firstMatchGroup,
+            inProgressSeason,
+            allTeams,
+            allPlayers,
+            allScenarios,
+            prng,
+        );
+
+        seasonStatus := #inProgress(inProgressSeason);
         #ok;
     };
 
@@ -518,7 +547,19 @@ actor LeagueActor {
         switch (nextMatchGroup) {
             case (#notScheduled(matchGroup)) {
                 // Schedule next match group
-                scheduleMatchGroup(nextMatchGroupId, matchGroup, updatedSeason, prng);
+                let allTeams = getTeamsArray();
+                // TODO how to reschedule if it fails?
+                let allPlayers = await PlayersActor.getAllPlayers();
+                let allScenarios = getScenarioArray();
+                scheduleMatchGroup(
+                    nextMatchGroupId,
+                    matchGroup,
+                    updatedSeason,
+                    allTeams,
+                    allPlayers,
+                    allScenarios,
+                    prng,
+                );
             };
             case (_) {
                 // TODO
@@ -592,6 +633,24 @@ actor LeagueActor {
         #ok;
     };
 
+    private func getTeamsArray() : [TeamWithId] {
+        teams
+        |> Trie.toArray(
+            _,
+            func(k : Principal, v : Team.Team) : TeamWithId = {
+                v with
+                id = k;
+            },
+        );
+    };
+
+    private func getScenarioArray() : [Scenario.Scenario] {
+        scenarios
+        |> Trie.iter(_)
+        |> Iter.map(_, func((k, v) : (Text, Scenario.Scenario)) : Scenario.Scenario = v)
+        |> Iter.toArray(_);
+    };
+
     private func awardUserPoints(completedMatches : [Season.CompletedMatch]) : async* () {
         let awards = Buffer.Buffer<UserTypes.AwardPointsRequest>(0);
         for (match in Iter.fromArray(completedMatches)) {
@@ -654,6 +713,9 @@ actor LeagueActor {
         matchGroupId : Nat,
         matchGroup : Season.NotScheduledMatchGroup,
         inProgressSeason : Season.InProgressSeason,
+        allTeamIds : [Team.TeamWithId],
+        allPlayerids : [PlayerTypes.PlayerWithId],
+        allScenarios : [Scenario.Scenario],
         prng : Prng,
     ) : () {
         let timeDiff = matchGroup.time - Time.now();
@@ -720,6 +782,9 @@ actor LeagueActor {
                 };
             };
         };
+        let allTeamIds = [];
+        let allPlayerIds = [];
+
         let scheduledMatchGroup : Season.ScheduledMatchGroup = {
             time = matchGroup.time;
             timerId = timerId;
@@ -728,10 +793,34 @@ actor LeagueActor {
             |> Iter.map(
                 _,
                 func(m : Season.NotScheduledMatch) : Season.ScheduledMatch {
+                    let team1WithoutScenario = compileTeamInfo(m.team1);
+                    let team2WithoutScenario = compileTeamInfo(m.team2);
+                    let instance1 = ScenarioUtil.getRandomScenario(
+                        prng,
+                        team1WithoutScenario.id,
+                        team2WithoutScenario.id,
+                        allTeamIds,
+                        allPlayerIds,
+                        allScenarios,
+                    );
+                    let instance2 = ScenarioUtil.getRandomScenario(
+                        prng,
+                        team2WithoutScenario.id,
+                        team1WithoutScenario.id,
+                        allTeamIds,
+                        allPlayerIds,
+                        allScenarios,
+                    );
+
                     {
-                        team1 = compileTeamInfo(m.team1);
-                        team2 = compileTeamInfo(m.team2);
-                        scenario = getRandomScenario(prng);
+                        team1 = {
+                            team1WithoutScenario with
+                            scenario = instance1
+                        };
+                        team2 = {
+                            team2WithoutScenario with
+                            scenario = instance2
+                        };
                         aura = getRandomMatchAura(prng);
                     };
                 },
@@ -756,7 +845,7 @@ actor LeagueActor {
 
     private func buildTeamInitData(
         matchGroupId : Nat,
-        team : Season.TeamInfo,
+        team : Season.ScheduledTeamInfo,
         allPlayers : [PlayerTypes.PlayerWithId],
         prng : Prng,
     ) : async* StadiumTypes.StartMatchTeam {
@@ -785,9 +874,10 @@ actor LeagueActor {
             switch (result) {
                 case (#ok(o)) o;
                 case (#noVotes) {
-                    // If no votes, TODO
+                    // If no votes, pick a random choice
+                    let choice : Nat8 = 0; // TODO
                     {
-                        choice = #badManagement;
+                        scenarioChoice = choice;
                     };
                 };
                 case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(team.id));
@@ -818,7 +908,10 @@ actor LeagueActor {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
-            scenario = options.scenario;
+            scenario = {
+                team.scenario with
+                choice = options.scenarioChoice;
+            };
             positions = {
                 pitcher = pitcher;
                 firstBase = firstBase;
@@ -986,19 +1079,6 @@ actor LeagueActor {
         };
         trie;
     };
-
-    private func getRandomScenario(prng : Prng, scenarios : [Scenario.Scenario]) : Scenario.Scenario {
-        // Filter down buffers/adjust the weights of the scenarios
-        let scenariosWithWeights : [(Scenario.Scenario, Float)] = scenarios
-        |> Iter.fromArray(_)
-        |> Iter.map<Scenario.Scenario, (Scenario.Scenario, Float)>(
-            _,
-            func(s : Scenario.Scenario) : (Scenario.Scenario, Float) = (s, 1.0), // TODO
-        )
-        |> Iter.toArray(_);
-        prng.nextArrayElementWeighted(scenariosWithWeights);
-    };
-
     private func getRandomMatchAura(prng : Prng) : MatchAura.MatchAuraWithMetaData {
         // TODO
         let auras = Buffer.fromArray<MatchAura.MatchAura>([

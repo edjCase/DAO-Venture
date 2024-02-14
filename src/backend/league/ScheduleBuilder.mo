@@ -5,7 +5,6 @@ import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import LeagueTypes "Types";
 import Util "../Util";
 import IterTools "mo:itertools/Iter";
 import DateTime "mo:datetime/DateTime";

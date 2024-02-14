@@ -13,6 +13,8 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
+        getScenarios : query () -> async [Scenario.Scenario];
+        addScenario : (request : AddScenarioRequest) -> async AddScenarioResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
@@ -22,6 +24,14 @@ module {
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
         setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
+    };
+
+    public type AddScenarioRequest = Scenario.Scenario;
+
+    public type AddScenarioResult = {
+        #ok;
+        #idTaken;
+        #notAuthorized;
     };
 
     public type SetUserIsAdminResult = {
@@ -111,7 +121,7 @@ module {
 
     public type PlayedMatchTeamData = {
         score : Int;
-        scenario : Scenario.ScenarioWithChoice;
+        scenario : Scenario.InstanceWithChoice;
     };
 
     public type FailedMatchResult = {
