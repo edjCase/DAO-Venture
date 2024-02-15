@@ -9,6 +9,7 @@
   import { Team, teams } from "../data/TeamData";
   import { Player, players } from "../data/PlayerData";
   import { Button } from "flowbite-svelte";
+  import { scenarios } from "../data/ScenarioData";
 
   let createTeams = async function (teams: Team[]): Promise<void> {
     let leagueAgent = leagueAgentFactory();
@@ -55,9 +56,20 @@
     await Promise.all(promises);
   };
 
+  let createScenarios = async function () {
+    let leagueAgent = leagueAgentFactory();
+    let promises = [];
+    for (let i = 0; i < scenarios.length; i++) {
+      let promise = leagueAgent.addScenarioTemplate(scenarios[i]);
+      promises.push(promise);
+    }
+    await Promise.all(promises);
+  };
+
   let initialize = async function () {
     await createPlayers(players);
     await createTeams(teams);
+    await createScenarios();
     playerStore.refetch();
   };
 </script>

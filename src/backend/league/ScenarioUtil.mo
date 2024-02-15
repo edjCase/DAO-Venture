@@ -8,7 +8,6 @@ import Float "mo:base/Float";
 import Nat8 "mo:base/Nat8";
 import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
-import Effect "../models/Effect";
 
 module {
 
@@ -40,9 +39,9 @@ module {
                 |> IterTools.flatten(_);
             };
             case (#oneOf(subEffects)) {
-                let weightedSubEffects = Array.map<(Scenario.Effect, Nat), (Scenario.Effect, Float)>(
+                let weightedSubEffects = Array.map<(Nat, Scenario.Effect), (Scenario.Effect, Float)>(
                     subEffects,
-                    func((effect, weight) : (Scenario.Effect, Nat)) : (Scenario.Effect, Float) = (effect, Float.fromInt(weight)),
+                    func((weight, effect) : (Nat, Scenario.Effect)) : (Scenario.Effect, Float) = (effect, Float.fromInt(weight)),
                 );
                 let subEffect = prng.nextArrayElementWeighted(weightedSubEffects);
                 resolveEffect(prng, scenario, subEffect);

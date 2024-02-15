@@ -49,7 +49,7 @@ module {
             team : Team;
             delta : Int;
         };
-        #oneOf : [(Effect, Nat)]; // Weighted choices
+        #oneOf : [(Nat, Effect)]; // Weighted choices
         #allOf : [Effect];
         #noEffect;
     };
@@ -129,20 +129,20 @@ module {
                 entropy = 10; // Reflects the chaos of risking a curse
                 effect = #oneOf([
                     (
+                        1,
                         #trait({
                             target = #teams([#scenarioTeam]);
                             traitId = "CURSED";
                             duration = #indefinite;
                         }),
-                        1,
                     ),
                     (
+                        1,
                         #trait({
                             target = #teams([#scenarioTeam]);
                             traitId = "ENHANCED";
                             duration = #matches(3); // Benefit for 3 matches if successful
                         }),
-                        1,
                     ),
                 ]);
             },
@@ -157,6 +157,7 @@ module {
                     // }),
                     #oneOf([
                         (
+                            1, // 33% chance of activation
                             #allOf([
                                 #trait({
                                     target = #teams([#opposingTeam]);
@@ -169,15 +170,14 @@ module {
                                     duration = #indefinite;
                                 }),
                             ]),
-                            1 // 33% chance of activation
                         ),
                         (
+                            2, // 66% chance of activation
                             #trait({
                                 target = #teams([#opposingTeam]);
                                 traitId = "ENHANCED";
                                 duration = #matches(3); // Benefit for 3 matches if successful
                             }),
-                            2 // 66% chance of activation
                         ),
                     ]),
                 ]);
@@ -194,16 +194,16 @@ module {
                     }),
                     #oneOf([
                         (
+                            4, // 80% chance of activation
                             #trait({
                                 target = #teams([#scenarioTeam]);
                                 traitId = "MYSTIC_PLAYBOOK";
                                 duration = #matches(1);
                             }),
-                            4, // 80% chance of activation
                         ),
                         (
-                            #noEffect,
                             1,
+                            #noEffect,
                         ),
                     ]),
                 ]);

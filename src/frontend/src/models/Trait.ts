@@ -1,27 +1,33 @@
 import { IDL } from "@dfinity/candid";
+import { PlayerSkills, PlayerSkillsIdl } from "../models/Player";
 
-export type Trait =
-    | { latePerfomer: null }
-    | { unstable: null }
-    | { jackOfAllTrades: null }
-    | { prepared: null }
-    | { pious: null }
-    | { juggernaut: null }
-    | { sensitive: null }
-    | { puddleJumper: null }
-    | { powerHitter: null }
-    | { inspiring: null }
-    | { madeOfGlass: null };
-export const TraitIdl = IDL.Variant({
-    latePerfomer: IDL.Null,
-    unstable: IDL.Null,
-    jackOfAllTrades: IDL.Null,
-    prepared: IDL.Null,
-    pious: IDL.Null,
-    juggernaut: IDL.Null,
-    sensitive: IDL.Null,
-    puddleJumper: IDL.Null,
-    powerHitter: IDL.Null,
-    inspiring: IDL.Null,
-    madeOfGlass: IDL.Null,
+export type Text = string;
+export type Int = number;
+
+export type Skill = PlayerSkills;
+export const SkillIdl = PlayerSkillsIdl;
+
+export type Effect =
+    | {
+        skill: Skill;
+        delta: Int;
+    };
+export const EffectIdl = IDL.Variant({
+    skill: IDL.Record({
+        skill: SkillIdl,
+        delta: IDL.Int,
+    }),
+});
+
+export type Trait = {
+    id: Text;
+    name: Text;
+    description: Text;
+    effects: Effect[];
+};
+export const TraitIdl = IDL.Record({
+    id: IDL.Text,
+    name: IDL.Text,
+    description: IDL.Text,
+    effects: IDL.Vec(EffectIdl),
 });

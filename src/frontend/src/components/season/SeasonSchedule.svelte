@@ -11,7 +11,6 @@
   import { MatchGroupDetails } from "../../models/Match";
   import { SeasonStatus } from "../../models/Season";
   import { scheduleStore } from "../../stores/ScheduleStore";
-  import MatchGroupSummaryCard from "../match/MatchGroupSummaryCard.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
 
   let seasonStatus: SeasonStatus | undefined;

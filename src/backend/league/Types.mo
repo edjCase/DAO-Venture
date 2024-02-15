@@ -25,6 +25,7 @@ module {
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
         setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
+        getAdmins : query () -> async [Principal];
     };
 
     public type ProcessEffectOutcomesRequest = {
