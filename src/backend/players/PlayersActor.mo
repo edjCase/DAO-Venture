@@ -5,15 +5,21 @@ import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
+import Array "mo:base/Array";
+import Text "mo:base/Text";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Types "Types";
+import Trait "../models/Trait";
+import Scenario "../models/Scenario";
+import Skill "../models/Skill";
 // import LeagueActor "canister:league"; TODO
 
 actor PlayersActor {
 
     stable var nextPlayerId : Nat32 = 1;
     stable var players = Trie.empty<Nat32, Types.Player>();
+    stable var traits = Trie.empty<Text, Trait.Trait>();
     stable var futurePlayers : [Types.FuturePlayer] = [];
     stable var retiredPlayers = Trie.empty<Nat32, Types.RetiredPlayer>();
 
@@ -48,7 +54,7 @@ actor PlayersActor {
         };
     };
 
-    public query func getTeamPlayers(teamId : Principal) : async [Player.TeamPlayerWithId] {
+    public query func getTeamPlayers(teamId : Principal) : async [Player.PlayerWithId] {
         getTeamPlayersInternal(teamId);
     };
 
@@ -72,13 +78,13 @@ actor PlayersActor {
             #rightField,
         ];
         let futurePlayersBuffer = Buffer.fromArray<Types.FuturePlayer>(futurePlayers);
-        let newPlayersBuffer = Buffer.Buffer<Player.TeamPlayerWithId>(1);
+        let newPlayersBuffer = Buffer.Buffer<Player.PlayerWithId>(1);
         label l for (position in Iter.fromArray(allPositions)) {
             let positionIsFilled = teamPlayers
             |> Iter.fromArray(_)
             |> IterTools.any(
                 _,
-                func(p : Player.TeamPlayerWithId) : Bool {
+                func(p : Player.PlayerWithId) : Bool {
                     p.position == position;
                 },
             );
@@ -97,7 +103,6 @@ actor PlayersActor {
                         throwingPower = 1;
                         catching = 0;
                         defense = 0;
-                        piety = 0;
                         speed = 0;
                     };
                 };
@@ -109,7 +114,6 @@ actor PlayersActor {
                         throwingPower = 0;
                         catching = 0;
                         defense = 0;
-                        piety = 0;
                         speed = 0;
                     };
                 };
@@ -121,7 +125,6 @@ actor PlayersActor {
                         throwingPower = 0;
                         catching = 1;
                         defense = 0;
-                        piety = 0;
                         speed = 1;
                     };
                 };
@@ -130,7 +133,8 @@ actor PlayersActor {
                 futurePlayer with
                 skills = skills;
                 position = position;
-                teamId = ?teamId;
+                teamId = teamId;
+                traitIds = []; // TODO
             };
             newPlayersBuffer.add({
                 newPlayer with
@@ -150,35 +154,92 @@ actor PlayersActor {
         #ok(Buffer.toArray(newPlayersBuffer));
     };
 
-    public shared ({ caller }) func setPlayerTeam(playerId : Nat32, teamId : ?Principal) : async Types.SetPlayerTeamResult {
+    public shared ({ caller }) func applyTraits(request : [Scenario.TraitEffectOutcome]) : async {
+        #ok;
+    } {
         assertLeague(caller);
+        for (trait in Iter.fromArray(request)) {
+            let targetPlayerIds = getTargetPlayerIds(trait.target);
+            for (playerId in Iter.fromArray(targetPlayerIds)) {
+                applyTrait(playerId, trait.traitId, trait.duration);
+            };
+        };
+        #ok;
+    };
+
+    private func getTargetPlayerIds(target : Scenario.TargetInstance) : [Nat32] {
+        let filterFunc = switch (target) {
+            case (#league) func((playerId, player) : (Nat32, Types.Player)) : Bool = true;
+            case (#teams(teamIds)) func((playerId, player) : (Nat32, Types.Player)) : Bool {
+                Array.indexOf(player.teamId, teamIds, Principal.equal) != null;
+            };
+            case (#players(playerIds)) func((playerId, player) : (Nat32, Types.Player)) : Bool {
+                Array.indexOf(playerId, playerIds, Nat32.equal) != null;
+            };
+        };
+        players
+        |> Trie.iter(_)
+        |> Iter.filter(
+            _,
+            filterFunc,
+        )
+        |> Iter.map(
+            _,
+            func((playerId, player) : (Nat32, Types.Player)) : Nat32 = playerId,
+        )
+        |> Iter.toArray(_);
+    };
+
+    private func applyTrait(playerId : Nat32, traitId : Text, duration : Scenario.Duration) {
         let playerKey = {
             key = playerId;
             hash = playerId;
         };
-        let ?playerInfo = Trie.get(players, playerKey, Nat32.equal) else return #playerNotFound;
-        let newPlayerInfo = {
-            playerInfo with
-            teamId = teamId;
+        let ?player = Trie.get(players, playerKey, Nat32.equal) else Debug.trap("Player not found: " # Nat32.toText(playerId)); // TODO trap?
+
+        let traitKey = {
+            key = traitId;
+            hash = Text.hash(traitId);
         };
-        let (newPlayers, _) = Trie.put(players, playerKey, Nat32.equal, newPlayerInfo);
+        let ?trait = Trie.get(traits, traitKey, Text.equal) else Debug.trap("Trait not found: " # traitId); // TODO trap?
+
+        let newTraitIdsBuffer = Buffer.fromArray<Text>(player.traitIds);
+        newTraitIdsBuffer.add(trait.id);
+
+        var newPlayer : Types.Player = {
+            player with
+            traits = Buffer.toArray(newTraitIdsBuffer);
+        };
+        // TODO apply effect here or when evaluating skills and whatnot?
+        for (effect in Iter.fromArray(trait.effects)) {
+            newPlayer := applyEffect(newPlayer, effect);
+        };
+
+        let (newPlayers, _) = Trie.put(players, playerKey, Nat32.equal, newPlayer);
         players := newPlayers;
-        #ok;
     };
 
-    private func getTeamPlayersInternal(teamId : Principal) : [Player.TeamPlayerWithId] {
+    private func applyEffect(player : Types.Player, effect : Trait.Effect) : Types.Player {
+        switch (effect) {
+            case (#skill(skillEffect)) {
+                let newSkills = Skill.modify(player.skills, skillEffect.skill, skillEffect.delta);
+                { player with skills = newSkills };
+            };
+        };
+    };
+
+    private func getTeamPlayersInternal(teamId : Principal) : [Player.PlayerWithId] {
         players
         |> Trie.iter(_)
         |> IterTools.mapFilter(
             _,
-            func((playerId, player) : (Nat32, Types.Player)) : ?Player.TeamPlayerWithId {
-                if (player.teamId != ?teamId) {
+            func((playerId, player) : (Nat32, Types.Player)) : ?Player.PlayerWithId {
+                if (player.teamId != teamId) {
                     return null;
                 };
                 ?{
                     player with
                     id = playerId;
-                    teamId = teamId;
                 };
             },
         )

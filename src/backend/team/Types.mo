@@ -6,7 +6,7 @@ import StadiumTypes "../stadium/Types";
 module {
 
     public type TeamActor = actor {
-        getPlayers : composite query () -> async [Player.TeamPlayerWithId];
+        getPlayers : composite query () -> async [Player.PlayerWithId];
         getMatchGroupVote : query (matchGroupId : Nat) -> async GetMatchGroupVoteResult;
         voteOnMatchGroup : (request : VoteOnMatchGroupRequest) -> async VoteOnMatchGroupResult;
     };

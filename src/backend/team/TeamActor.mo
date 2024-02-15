@@ -36,7 +36,7 @@ shared (install) actor class TeamActor(
 
   stable var matchGroupVotes : Trie.Trie<Nat, Trie.Trie<Principal, Types.MatchGroupVote>> = Trie.empty();
 
-  public composite query func getPlayers() : async [Player.TeamPlayerWithId] {
+  public composite query func getPlayers() : async [Player.PlayerWithId] {
     let teamId = Principal.fromActor(this);
     await PlayersActor.getTeamPlayers(teamId);
   };
@@ -80,7 +80,7 @@ shared (install) actor class TeamActor(
     };
 
     let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let choiceExists = team.scenario.scenario.options.size() > Nat8.toNat(request.scenarioChoice);
+    let choiceExists = team.scenario.template.options.size() > Nat8.toNat(request.scenarioChoice);
     if (not choiceExists) {
       errors.add(#invalidChoice(request.scenarioChoice));
     };

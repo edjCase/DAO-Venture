@@ -13,20 +13,14 @@ module {
         dislikes : [Text];
     };
 
-    public type FreeAgentPlayer = PlayerFluff and {
+    public type Player = PlayerFluff and {
+        teamId : Principal;
         skills : Skills;
         position : FieldPosition.FieldPosition;
+        traitIds : [Text];
     };
 
-    public type TeamPlayer = FreeAgentPlayer and {
-        teamId : Principal;
-    };
-
-    public type FreeAgentPlayerWithId = FreeAgentPlayer and {
-        id : Nat32;
-    };
-
-    public type TeamPlayerWithId = TeamPlayer and {
+    public type PlayerWithId = Player and {
         id : Nat32;
     };
 
@@ -37,7 +31,6 @@ module {
         throwingPower : Int;
         catching : Int;
         defense : Int;
-        piety : Int;
         speed : Int;
     };
 

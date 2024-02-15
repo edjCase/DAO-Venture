@@ -10,7 +10,6 @@ module {
         #throwingPower;
         #catching;
         #defense;
-        #piety;
         #speed;
     };
 
@@ -22,14 +21,13 @@ module {
             #throwingPower,
             #catching,
             #defense,
-            #piety,
             #speed,
         ]; // TODO how to get this list from variant
         let skillIndex = prng.nextNat(0, allSkills.size() - 1);
         return allSkills[skillIndex];
     };
 
-    public func get(skills: Player.Skills, skill : Skill) : Int {
+    public func get(skills : Player.Skills, skill : Skill) : Int {
         switch (skill) {
             case (#battingAccuracy) skills.battingAccuracy;
             case (#battingPower) skills.battingPower;
@@ -37,59 +35,52 @@ module {
             case (#throwingPower) skills.throwingPower;
             case (#catching) skills.catching;
             case (#defense) skills.defense;
-            case (#piety) skills.piety;
             case (#speed) skills.speed;
-        }
+        };
     };
 
-    public func modify(skills : Player.Skills, skill : Skill, value : Int) : Player.Skills {
+    public func modify(skills : Player.Skills, skill : Skill, delta : Int) : Player.Skills {
         switch (skill) {
             case (#battingAccuracy) {
                 return {
                     skills with
-                    battingAccuracy = skills.battingAccuracy + value
+                    battingAccuracy = skills.battingAccuracy + delta
                 };
             };
             case (#battingPower) {
                 return {
                     skills with
-                    battingPower = skills.battingPower + value
+                    battingPower = skills.battingPower + delta
                 };
             };
             case (#throwingAccuracy) {
                 return {
                     skills with
-                    throwingAccuracy = skills.throwingAccuracy + value
+                    throwingAccuracy = skills.throwingAccuracy + delta
                 };
             };
             case (#throwingPower) {
                 return {
                     skills with
-                    throwingPower = skills.throwingPower + value
+                    throwingPower = skills.throwingPower + delta
                 };
             };
             case (#catching) {
                 return {
                     skills with
-                    catching = skills.catching + value
+                    catching = skills.catching + delta
                 };
             };
             case (#defense) {
                 return {
                     skills with
-                    defense = skills.defense + value
-                };
-            };
-            case (#piety) {
-                return {
-                    skills with
-                    piety = skills.piety + value
+                    defense = skills.defense + delta
                 };
             };
             case (#speed) {
                 return {
                     skills with
-                    speed = skills.speed + value
+                    speed = skills.speed + delta
                 };
             };
         };

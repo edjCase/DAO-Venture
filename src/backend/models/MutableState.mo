@@ -315,7 +315,6 @@ module this {
         var throwingPower : Int;
         var catching : Int;
         var defense : Int;
-        var piety : Int;
         var speed : Int;
     };
 
@@ -364,7 +363,6 @@ module this {
             var throwingAccuracy = skills.throwingAccuracy;
             var catching = skills.catching;
             var defense = skills.defense;
-            var piety = skills.piety;
             var speed = skills.speed;
         };
     };
@@ -377,7 +375,6 @@ module this {
             case (#throwingAccuracy) skills.throwingAccuracy;
             case (#catching) skills.catching;
             case (#defense) skills.defense;
-            case (#piety) skills.piety;
             case (#speed) skills.speed;
         };
     };
@@ -390,7 +387,6 @@ module this {
             case (#throwingAccuracy) skills.throwingAccuracy += value;
             case (#catching) skills.catching += value;
             case (#defense) skills.defense += value;
-            case (#piety) skills.piety += value;
             case (#speed) skills.speed += value;
         };
     };

@@ -14,6 +14,7 @@ module {
         logoUrl : Text;
         motto : Text;
         description : Text;
+        entropy : Int;
     };
 
     public type TeamWithId = Team and {

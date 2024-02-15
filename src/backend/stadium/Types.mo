@@ -63,14 +63,14 @@ module {
     public type StartMatchTeam = Team and {
         scenario : Scenario.InstanceWithChoice;
         positions : {
-            firstBase : Player.TeamPlayerWithId;
-            secondBase : Player.TeamPlayerWithId;
-            thirdBase : Player.TeamPlayerWithId;
-            shortStop : Player.TeamPlayerWithId;
-            pitcher : Player.TeamPlayerWithId;
-            leftField : Player.TeamPlayerWithId;
-            centerField : Player.TeamPlayerWithId;
-            rightField : Player.TeamPlayerWithId;
+            firstBase : Player.PlayerWithId;
+            secondBase : Player.PlayerWithId;
+            thirdBase : Player.PlayerWithId;
+            shortStop : Player.PlayerWithId;
+            pitcher : Player.PlayerWithId;
+            leftField : Player.PlayerWithId;
+            centerField : Player.PlayerWithId;
+            rightField : Player.PlayerWithId;
         };
     };
 

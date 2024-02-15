@@ -31,7 +31,6 @@ export type PlayerSkills = {
   'battingPower': number,
   'catching': number,
   'defense': number,
-  'piety': number,
   'speed': number,
   'throwingAccuracy': number,
   'throwingPower': number
@@ -41,7 +40,6 @@ export const PlayerSkillsIdl = IDL.Record({
   'battingPower': IDL.Int,
   'catching': IDL.Int,
   'defense': IDL.Int,
-  'piety': IDL.Int,
   'speed': IDL.Int,
   'throwingAccuracy': IDL.Int,
   'throwingPower': IDL.Int
@@ -74,7 +72,7 @@ export type Player = {
   quirks: string[];
   likes: string[];
   dislikes: string[];
-  teamId: [Principal] | [];
+  teamId: Principal;
   skills: PlayerSkills;
   position: FieldPosition;
 };
@@ -86,7 +84,7 @@ export const PlayerIdl = IDL.Record({
   quirks: IDL.Vec(IDL.Text),
   likes: IDL.Vec(IDL.Text),
   dislikes: IDL.Vec(IDL.Text),
-  teamId: IDL.Opt(IDL.Principal),
+  teamId: IDL.Principal,
   skills: PlayerSkillsIdl,
   position: FieldPositionIdl
 });

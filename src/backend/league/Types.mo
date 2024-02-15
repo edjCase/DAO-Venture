@@ -13,8 +13,9 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
-        getScenarios : query () -> async [Scenario.Scenario];
-        addScenario : (request : AddScenarioRequest) -> async AddScenarioResult;
+        getScenarioTemplates : query () -> async [Scenario.Template];
+        addScenarioTemplate : (request : AddScenarioTemplateRequest) -> async AddScenarioTemplateResult;
+        processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
@@ -26,9 +27,19 @@ module {
         setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
     };
 
-    public type AddScenarioRequest = Scenario.Scenario;
+    public type ProcessEffectOutcomesRequest = {
+        outcomes : [Scenario.EffectOutcome];
+    };
 
-    public type AddScenarioResult = {
+    public type ProcessEffectOutcomesResult = {
+        #ok;
+        #notAuthorized;
+        #seasonNotInProgress;
+    };
+
+    public type AddScenarioTemplateRequest = Scenario.Template;
+
+    public type AddScenarioTemplateResult = {
         #ok;
         #idTaken;
         #notAuthorized;

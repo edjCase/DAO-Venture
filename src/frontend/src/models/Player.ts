@@ -14,7 +14,6 @@ export type PlayerSkills = {
     throwingPower: Int;
     catching: Int;
     defense: Int;
-    piety: Int;
     speed: Int;
 };
 export const PlayerSkillsIdl = IDL.Record({
@@ -24,7 +23,6 @@ export const PlayerSkillsIdl = IDL.Record({
     throwingPower: IDL.Int,
     catching: IDL.Int,
     defense: IDL.Int,
-    piety: IDL.Int,
     speed: IDL.Int,
 });
 

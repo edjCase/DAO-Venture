@@ -61,14 +61,14 @@ module {
         logoUrl : Text;
         scenario : Scenario.InstanceWithChoice;
         positions : {
-            firstBase : Player.TeamPlayerWithId;
-            secondBase : Player.TeamPlayerWithId;
-            thirdBase : Player.TeamPlayerWithId;
-            shortStop : Player.TeamPlayerWithId;
-            pitcher : Player.TeamPlayerWithId;
-            leftField : Player.TeamPlayerWithId;
-            centerField : Player.TeamPlayerWithId;
-            rightField : Player.TeamPlayerWithId;
+            firstBase : Player.PlayerWithId;
+            secondBase : Player.PlayerWithId;
+            thirdBase : Player.PlayerWithId;
+            shortStop : Player.PlayerWithId;
+            pitcher : Player.PlayerWithId;
+            leftField : Player.PlayerWithId;
+            centerField : Player.PlayerWithId;
+            rightField : Player.PlayerWithId;
         };
     };
 
@@ -124,7 +124,7 @@ module {
         prng : Prng,
     ) : (StadiumTypes.TeamState, Buffer.Buffer<StadiumTypes.PlayerStateWithId>) {
 
-        let mapPlayer = func(player : Player.TeamPlayerWithId) : StadiumTypes.PlayerStateWithId = {
+        let mapPlayer = func(player : Player.PlayerWithId) : StadiumTypes.PlayerStateWithId = {
             id = player.id;
             name = player.name;
             teamId = teamId;
@@ -294,7 +294,6 @@ module {
                                 throwingAccuracy = player.1.skills.throwingAccuracy;
                                 catching = player.1.skills.catching;
                                 defense = player.1.skills.defense;
-                                piety = player.1.skills.piety;
                                 speed = player.1.skills.speed;
                             };
                             matchStats = {
@@ -360,7 +359,7 @@ module {
                     };
                     (winner, #noMoreRounds);
                 };
-                case (#stateBroken(e))(#tie, #error(debug_show (e))); // TODO error format
+                case (#stateBroken(e)) (#tie, #error(debug_show (e))); // TODO error format
             };
             state.addEvent(#matchEnd({ reason = matchEndReason }));
             let log : StadiumTypes.MatchLog = fromMutableLog(state.log);
@@ -461,7 +460,7 @@ module {
             hook : ?Hook.Hook<Hook.SkillTestContext>,
         ) : Hook.SkillTestResult {
             let (min, max) = switch (type_) {
-                case (#d10)(0, 10);
+                case (#d10) (0, 10);
             };
             var roll = prng.nextNat(min, max);
             let crit = roll == max;
@@ -482,7 +481,6 @@ module {
                         var throwingAccuracy = playerState.skills.throwingAccuracy - 1;
                         var catching = playerState.skills.catching - 1;
                         var defense = playerState.skills.defense - 1;
-                        var piety = playerState.skills.piety - 1;
                         var speed = playerState.skills.speed - 1;
                     };
                 };
@@ -495,7 +493,6 @@ module {
                         var throwingAccuracy = 0;
                         var catching = 0;
                         var defense = 0;
-                        var piety = 0;
                         var speed = 0;
                     };
                 };
@@ -698,11 +695,11 @@ module {
                     let targets = Buffer.Buffer<Player.PlayerId>(3);
                     targets.add(state.bases.atBat);
                     switch (state.bases.firstBase) {
-                        case (null)();
+                        case (null) ();
                         case (?firstBaseRunner) targets.add(firstBaseRunner);
                     };
                     switch (state.bases.secondBase) {
-                        case (null)();
+                        case (null) ();
                         case (?secondBaseRunner) targets.add(secondBaseRunner);
                     };
                     if (targets.size() <= 1) {
@@ -800,7 +797,7 @@ module {
                     // out will handle removing the player from base
                     switch (out(target, #hitByBall)) {
                         case (#endMatch(m)) return #endMatch(m);
-                        case (#inProgress)();
+                        case (#inProgress) ();
                     };
                 };
             } else {
@@ -1006,8 +1003,8 @@ module {
                 return #endMatch(#noMoreRounds);
             };
             let (newOffenseTeamId, newDefenseTeamId) = switch (state.offenseTeamId) {
-                case (#team1)(#team2, #team1);
-                case (#team2)(#team1, #team2);
+                case (#team1) (#team2, #team1);
+                case (#team2) (#team1, #team2);
             };
             state.offenseTeamId := newOffenseTeamId;
 
@@ -1020,12 +1017,10 @@ module {
                 var thirdBase = null;
             };
             state.addEvent(
-                #teamSwap(
-                    {
-                        offenseTeamId = newOffenseTeamId;
-                        atBatPlayerId = atBat;
-                    }
-                )
+                #teamSwap({
+                    offenseTeamId = newOffenseTeamId;
+                    atBatPlayerId = atBat;
+                })
             );
             updateStats(
                 atBat,
@@ -1071,7 +1066,7 @@ module {
             let playerState = state.getPlayerState(playerId);
             let curse = switch (curseOrRandom) {
                 case (null) {
-                    let curseRoll = prng.nextNat(0, 11);
+                    let curseRoll = prng.nextNat(0, 10);
                     switch (curseRoll) {
                         case (0) #skill(#battingPower);
                         case (1) #skill(#battingAccuracy);
@@ -1079,12 +1074,11 @@ module {
                         case (3) #skill(#throwingAccuracy);
                         case (4) #skill(#catching);
                         case (5) #skill(#defense);
-                        case (6) #skill(#piety);
-                        case (7) #skill(#speed);
-                        case (8) #injury(#twistedAnkle);
-                        case (9) #injury(#brokenLeg);
-                        case (10) #injury(#brokenArm);
-                        case (11) #injury(#concussion);
+                        case (6) #skill(#speed);
+                        case (7) #injury(#twistedAnkle);
+                        case (8) #injury(#brokenLeg);
+                        case (9) #injury(#brokenArm);
+                        case (10) #injury(#concussion);
                         case (_) Prelude.unreachable();
                     };
                 };
@@ -1113,7 +1107,7 @@ module {
             let playerState = state.getPlayerState(playerId);
             let blessing = switch (blessingOrRandom) {
                 case (null) {
-                    let blessingRoll = prng.nextNat(0, 7);
+                    let blessingRoll = prng.nextNat(0, 6);
                     switch (blessingRoll) {
                         case (0) #skill(#battingPower);
                         case (1) #skill(#battingAccuracy);
@@ -1121,8 +1115,7 @@ module {
                         case (3) #skill(#throwingAccuracy);
                         case (4) #skill(#catching);
                         case (5) #skill(#defense);
-                        case (6) #skill(#piety);
-                        case (7) #skill(#speed);
+                        case (6) #skill(#speed);
                         case (_) Prelude.unreachable();
                     };
                 };

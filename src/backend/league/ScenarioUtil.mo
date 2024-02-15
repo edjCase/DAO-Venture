@@ -3,11 +3,107 @@ import Iter "mo:base/Iter";
 import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
+import Array "mo:base/Array";
+import Float "mo:base/Float";
+import Nat8 "mo:base/Nat8";
 import Scenario "../models/Scenario";
+import IterTools "mo:itertools/Iter";
+import Effect "../models/Effect";
 
 module {
 
     type Prng = PseudoRandomX.PseudoRandomGenerator;
+
+    public func resolveScenario(
+        prng : Prng,
+        scenario : Scenario.Instance,
+        choiceIndex : Nat8,
+    ) : [Scenario.EffectOutcome] {
+        let choice = scenario.template.options[Nat8.toNat(choiceIndex)];
+        let effectOutcomes = resolveEffect(prng, scenario, choice.effect);
+        Iter.toArray(effectOutcomes);
+    };
+
+    public func resolveEffect(
+        prng : Prng,
+        scenario : Scenario.Instance,
+        effect : Scenario.Effect,
+    ) : Iter.Iter<Scenario.EffectOutcome> {
+        switch (effect) {
+            case (#allOf(subEffects)) {
+                subEffects
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(subEffect : Scenario.Effect) : Iter.Iter<Scenario.EffectOutcome> = resolveEffect(prng, scenario, subEffect),
+                )
+                |> IterTools.flatten(_);
+            };
+            case (#oneOf(subEffects)) {
+                let weightedSubEffects = Array.map<(Scenario.Effect, Nat), (Scenario.Effect, Float)>(
+                    subEffects,
+                    func((effect, weight) : (Scenario.Effect, Nat)) : (Scenario.Effect, Float) = (effect, Float.fromInt(weight)),
+                );
+                let subEffect = prng.nextArrayElementWeighted(weightedSubEffects);
+                resolveEffect(prng, scenario, subEffect);
+            };
+            case (#trait(trait)) {
+                Iter.make(
+                    #trait({
+                        trait with
+                        target = getTargetInstance(scenario, trait.target)
+                    })
+                );
+            };
+            case (#entropy(entropyEffect)) {
+                Iter.make(
+                    #entropy({
+                        teamId = getTeamId(scenario, entropyEffect.team);
+                        delta = entropyEffect.delta;
+                    })
+                );
+            };
+            case (#noEffect) {
+                {
+                    next = func() : ?Scenario.EffectOutcome = null;
+                };
+            };
+        };
+    };
+
+    private func getTeamId(scenario : Scenario.Instance, team : Scenario.Team) : Principal {
+        switch (team) {
+            case (#scenarioTeam) scenario.teamId;
+            case (#opposingTeam) scenario.opposingTeamId;
+            case (#otherTeam(index)) scenario.otherTeamIds[index];
+        };
+    };
+
+    private func getTargetInstance(scenario : Scenario.Instance, target : Scenario.Target) : Scenario.TargetInstance {
+        switch (target) {
+            case (#league) #league;
+            case (#teams(teams)) {
+                let teamIds = teams
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(team : Scenario.Team) : Principal = getTeamId(scenario, team),
+                )
+                |> Iter.toArray(_);
+                #teams(teamIds);
+            };
+            case (#players(players)) {
+                let playerIds = players
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(i : Scenario.ScenarioPlayerIndex) : Nat32 = scenario.playerIds[i],
+                )
+                |> Iter.toArray(_);
+                #players(playerIds);
+            };
+        };
+    };
 
     public func getRandomScenario(
         prng : Prng,
@@ -15,13 +111,13 @@ module {
         team2Id : Principal,
         allTeamIds : [Principal],
         allPlayerIds : [Nat32],
-        scenarios : [Scenario.Scenario],
+        scenarios : [Scenario.Template],
     ) : Scenario.Instance {
         // Filter down buffers/adjust the weights of the scenarios
 
         let scenario = prng.nextArrayElementWeightedFunc(
             scenarios,
-            func(s : Scenario.Scenario) : Float {
+            func(s : Scenario.Template) : Float {
                 1.0; // TODO
             },
         );
@@ -51,7 +147,7 @@ module {
             };
         };
         {
-            scenario = scenario;
+            template = scenario;
             teamId = team1Id;
             opposingTeamId = team2Id;
             otherTeamIds = Buffer.toArray(otherTeamIds);

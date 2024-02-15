@@ -79,8 +79,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
     ) : async StadiumTypes.StartMatchGroupResult {
         assertLeague(caller);
 
-        let seedBlob = await Random.blob();
-        let prng = CommonUtil.buildPrng(seedBlob);
+        let prng = PseudoRandomX.fromBlob(await Random.blob());
         let tickTimerId = startTickTimer(request.id);
 
         let matches = Buffer.Buffer<StadiumTypes.MatchVariant>(request.matches.size());

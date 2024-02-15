@@ -47,7 +47,7 @@ actor LeagueActor {
 
     stable var admins : TrieSet.Set<Principal> = TrieSet.empty();
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
-    stable var scenarios : Trie.Trie<Text, Scenario.Scenario> = Trie.empty();
+    stable var scenarioTemplates : Trie.Trie<Text, Scenario.Template> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
     stable var predictionsOrNull : ?[Trie.Trie<Principal, Team.TeamId>] = null;
     stable var historicalSeasons : [Season.CompletedSeason] = [];
@@ -63,11 +63,11 @@ actor LeagueActor {
         seasonStatus;
     };
 
-    public query func getScenarios() : async [Scenario.Scenario] {
-        getScenarioArray();
+    public query func getScenarioTemplates() : async [Scenario.Template] {
+        getScenarioTemplateArray();
     };
 
-    public shared ({ caller }) func addScenarios(request : Types.AddScenarioRequest) : async Types.AddScenarioResult {
+    public shared ({ caller }) func addScenarioTeamplate(request : Types.AddScenarioTemplateRequest) : async Types.AddScenarioTemplateResult {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
@@ -75,11 +75,11 @@ actor LeagueActor {
             key = request.id;
             hash = Text.hash(request.id);
         };
-        let (newScenarios, oldScenrio) = Trie.put(scenarios, key, Text.equal, request);
-        if (oldScenrio != null) {
+        let (newScenarioTemplates, oldScenarioTemplate) = Trie.put(scenarioTemplates, key, Text.equal, request);
+        if (oldScenarioTemplate != null) {
             return #idTaken;
         };
-        scenarios := newScenarios;
+        scenarioTemplates := newScenarioTemplates;
         #ok;
     };
 
@@ -212,7 +212,7 @@ actor LeagueActor {
         let allTeams = getTeamsArray();
         let allPlayers = await PlayersActor.getAllPlayers();
 
-        let allScenarios = getScenarioArray();
+        let allScenarios = getScenarioTemplateArray();
         scheduleMatchGroup(
             0,
             firstMatchGroup,
@@ -255,6 +255,7 @@ actor LeagueActor {
             logoUrl = request.logoUrl;
             motto = request.motto;
             description = request.description;
+            entropy = 0; // TODO
         };
         let teamKey = buildPrincipalKey(teamInfo.id);
         let (newTeams, _) = Trie.put(teams, teamKey, Principal.equal, team);
@@ -343,6 +344,36 @@ actor LeagueActor {
         #ok;
     };
 
+    public shared ({ caller }) func processEffectOutcomes(effectOutcomes : [Scenario.EffectOutcome]) : async Types.ProcessEffectOutcomesResult {
+        if (not isAdminId(caller)) {
+            return #notAuthorized;
+        };
+        let #inProgress(season) = seasonStatus else return #seasonNotInProgress;
+        var updatedSeason = season;
+
+        let traitOutcomes = Buffer.Buffer<Scenario.TraitEffectOutcome>(effectOutcomes.size());
+        for (effectOutcome in Iter.fromArray(effectOutcomes)) {
+            switch (effectOutcome) {
+                case (#trait(traitEffect)) traitOutcomes.add(traitEffect);
+                case (#entropy(entropyEffect)) {
+                    updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
+                };
+            };
+        };
+        // TODO handle failure
+        if (traitOutcomes.size() > 0) {
+            let result = try {
+                await PlayersActor.applyTraits(Buffer.toArray(traitOutcomes));
+            } catch (err) {
+                return Debug.trap("Failed to apply traits: " # Error.message(err));
+            };
+            switch (result) {
+                case (#ok) ();
+            };
+        };
+        #ok;
+    };
+
     public shared ({ caller }) func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
         if (not isAdminId(caller)) {
             return #notAuthorized;
@@ -369,7 +400,8 @@ actor LeagueActor {
         let allPlayers = await PlayersActor.getAllPlayers();
         let matchStartRequestBuffer = Buffer.Buffer<StadiumTypes.StartMatchRequest>(scheduledMatchGroup.matches.size());
 
-        let prng = Util.buildPrng(await Random.blob());
+        let prng = PseudoRandomX.fromBlob(await Random.blob());
+        let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(scheduledMatchGroup.matches.size() * 2);
         for (match in Iter.fromArray(scheduledMatchGroup.matches)) {
             let team1Data = await* buildTeamInitData(matchGroupId, match.team1, allPlayers, prng);
             let team2Data = await* buildTeamInitData(matchGroupId, match.team2, allPlayers, prng);
@@ -378,6 +410,20 @@ actor LeagueActor {
                 team2 = team2Data;
                 aura = match.aura.aura;
             });
+            effectOutcomes.append(Buffer.fromArray(team1Data.scenario.effectOutcomes));
+            effectOutcomes.append(Buffer.fromArray(team2Data.scenario.effectOutcomes));
+        };
+
+        // TODO handle failure
+        try {
+            let result = await processEffectOutcomes(Buffer.toArray(effectOutcomes));
+            switch (result) {
+                case (#ok) ();
+                case (#notAuthorized) Debug.trap("League is not authorized to process effect outcomes");
+                case (#seasonNotInProgress) Debug.trap("Season is not in progress");
+            };
+        } catch (err) {
+            Debug.print("Failed to process effect outcomes: " # Error.message(err));
         };
 
         let startMatchGroupRequest : StadiumTypes.StartMatchGroupRequest = {
@@ -390,6 +436,7 @@ actor LeagueActor {
         switch (startResult) {
             case (#noMatchesSpecified) Debug.trap("No matches specified for match group " # Nat.toText(matchGroupId));
             case (#ok) {
+                // TODO this should better handled in case of failure to start the match
                 let inProgressMatches = scheduledMatchGroup.matches
                 |> Iter.fromArray(_)
                 |> IterTools.zip(_, Iter.fromArray(startMatchGroupRequest.matches))
@@ -418,7 +465,7 @@ actor LeagueActor {
                             };
                         };
                         let matchPredictions = switch (predictionsOrNull) {
-                            case (null)[];
+                            case (null) [];
                             case (?predictions) predictions[matchId]
                             |> Trie.iter(_)
                             |> Iter.toArray(_);
@@ -550,7 +597,7 @@ actor LeagueActor {
                 let allTeams = getTeamsArray();
                 // TODO how to reschedule if it fails?
                 let allPlayers = await PlayersActor.getAllPlayers();
-                let allScenarios = getScenarioArray();
+                let allScenarios = getScenarioTemplateArray();
                 scheduleMatchGroup(
                     nextMatchGroupId,
                     matchGroup,
@@ -605,8 +652,8 @@ actor LeagueActor {
         );
         let finalMatch = completedMatchGroups[completedMatchGroups.size() - 1].matches[0];
         let (champion, runnerUp) = switch (finalMatch.winner) {
-            case (#team1)(finalMatch.team1, finalMatch.team2);
-            case (#team2)(finalMatch.team2, finalMatch.team1);
+            case (#team1) (finalMatch.team1, finalMatch.team2);
+            case (#team2) (finalMatch.team2, finalMatch.team1);
             case (#tie) {
                 // Break tie by their win/loss ratio
                 let getTeamStanding = func(teamId : Principal) : Nat {
@@ -632,6 +679,15 @@ actor LeagueActor {
         });
         #ok;
     };
+    private func updateTeamEntropy(teamId : Principal, delta : Int) : () {
+        let ?team = Trie.get(teams, buildPrincipalKey(teamId), Principal.equal) else Debug.trap("Team not found: " # Principal.toText(teamId));
+        let newTeam = {
+            team with
+            entropy = team.entropy + delta;
+        };
+        let (newTeams, _) = Trie.put(teams, buildPrincipalKey(teamId), Principal.equal, newTeam);
+        teams := newTeams;
+    };
 
     private func getTeamsArray() : [TeamWithId] {
         teams
@@ -644,10 +700,10 @@ actor LeagueActor {
         );
     };
 
-    private func getScenarioArray() : [Scenario.Scenario] {
-        scenarios
+    private func getScenarioTemplateArray() : [Scenario.Template] {
+        scenarioTemplates
         |> Trie.iter(_)
-        |> Iter.map(_, func((k, v) : (Text, Scenario.Scenario)) : Scenario.Scenario = v)
+        |> Iter.map(_, func((k, v) : (Text, Scenario.Template)) : Scenario.Template = v)
         |> Iter.toArray(_);
     };
 
@@ -675,7 +731,7 @@ actor LeagueActor {
             ?Error.message(err);
         };
         switch (error) {
-            case (null)();
+            case (null) ();
             case (?error) Debug.print("Failed to award user points: " # error);
         };
     };
@@ -715,7 +771,7 @@ actor LeagueActor {
         inProgressSeason : Season.InProgressSeason,
         allTeamIds : [Team.TeamWithId],
         allPlayerids : [PlayerTypes.PlayerWithId],
-        allScenarios : [Scenario.Scenario],
+        allScenarios : [Scenario.Template],
         prng : Prng,
     ) : () {
         let timeDiff = matchGroup.time - Time.now();
@@ -854,8 +910,8 @@ actor LeagueActor {
         |> Iter.fromArray(_)
         |> IterTools.mapFilter(
             _,
-            func(p : PlayerTypes.PlayerWithId) : ?Player.TeamPlayerWithId {
-                if (p.teamId != ?team.id) {
+            func(p : PlayerTypes.PlayerWithId) : ?Player.PlayerWithId {
+                if (p.teamId != team.id) {
                     null;
                 } else {
                     ?{
@@ -886,15 +942,16 @@ actor LeagueActor {
             return Debug.trap("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
         };
 
-        let getPosition = func(position : FieldPosition.FieldPosition) : Player.TeamPlayerWithId {
+        let getPosition = func(position : FieldPosition.FieldPosition) : Player.PlayerWithId {
             let playerOrNull = teamPlayers
             |> Iter.fromArray(_)
-            |> IterTools.find(_, func(p : Player.TeamPlayerWithId) : Bool = p.position == position);
+            |> IterTools.find(_, func(p : Player.PlayerWithId) : Bool = p.position == position);
             switch (playerOrNull) {
                 case (null) Debug.trap("Team " # Principal.toText(team.id) # " is missing a player in position: " # debug_show (position)); // TODO
                 case (?player) player;
             };
         };
+        let effectOutcomes = ScenarioUtil.resolveScenario(prng, team.scenario, options.scenarioChoice);
 
         let pitcher = getPosition(#pitcher);
         let firstBase = getPosition(#firstBase);
@@ -911,6 +968,7 @@ actor LeagueActor {
             scenario = {
                 team.scenario with
                 choice = options.scenarioChoice;
+                effectOutcomes = effectOutcomes;
             };
             positions = {
                 pitcher = pitcher;
@@ -930,7 +988,7 @@ actor LeagueActor {
         #stadiumCreationError : Text;
     } {
         switch (stadiumIdOrNull) {
-            case (null)();
+            case (null) ();
             case (?id) return #ok(id);
         };
 
@@ -994,9 +1052,9 @@ actor LeagueActor {
             };
 
             let (wins, losses) = switch (state) {
-                case (#win)(currentScore.wins + 1, currentScore.losses);
-                case (#loss)(currentScore.wins, currentScore.losses + 1);
-                case (#tie)(currentScore.wins, currentScore.losses);
+                case (#win) (currentScore.wins + 1, currentScore.losses);
+                case (#loss) (currentScore.wins, currentScore.losses + 1);
+                case (#tie) (currentScore.wins, currentScore.losses);
             };
 
             // Update with +1
@@ -1018,9 +1076,9 @@ actor LeagueActor {
         label f1 for (matchGroup in Iter.fromArray(matchGroups)) {
             label f2 for (match in Iter.fromArray(matchGroup.matches)) {
                 let (team1State, team2State) = switch (match.winner) {
-                    case (#team1)(#win, #loss);
-                    case (#team2)(#loss, #win);
-                    case (#tie)(#tie, #tie);
+                    case (#team1) (#win, #loss);
+                    case (#team2) (#loss, #win);
+                    case (#tie) (#tie, #tie);
                 };
                 updateTeamScore(match.team1.id, match.team1.score, team1State);
                 updateTeamScore(match.team2.id, match.team2.score, team2State);

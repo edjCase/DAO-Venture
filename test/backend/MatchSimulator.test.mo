@@ -44,7 +44,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -86,7 +85,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -128,7 +126,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -170,7 +167,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -212,7 +208,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -254,7 +249,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -296,7 +290,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -338,7 +331,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -380,7 +372,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -422,7 +413,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -464,7 +454,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -506,7 +495,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -548,7 +536,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -590,7 +577,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -632,7 +618,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };
@@ -674,7 +659,6 @@ func getPlayers() : [StadiumTypes.PlayerStateWithId] {
                 throwingAccuracy = 0;
                 throwingPower = 0;
                 catching = 0;
-                piety = 0;
                 speed = 0;
                 defense = 0;
             };

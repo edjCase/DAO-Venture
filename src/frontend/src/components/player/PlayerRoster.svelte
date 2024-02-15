@@ -67,7 +67,6 @@
         <td>{skillToString(player.skills.throwingPower)}</td>
         <td>{skillToString(player.skills.catching)}</td>
         <td>{skillToString(player.skills.defense)}</td>
-        <td>{skillToString(player.skills.piety)}</td>
         <td>{skillToString(player.skills.speed)}</td>
       </tr>
     {/each}

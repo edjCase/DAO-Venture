@@ -13,7 +13,6 @@ export type Skill =
     | { throwingPower: null }
     | { catching: null }
     | { defense: null }
-    | { piety: null }
     | { speed: null };
 
 export const SkillIdl = IDL.Variant({
@@ -23,7 +22,6 @@ export const SkillIdl = IDL.Variant({
     throwingPower: IDL.Null,
     catching: IDL.Null,
     defense: IDL.Null,
-    piety: IDL.Null,
     speed: IDL.Null,
 })
 
