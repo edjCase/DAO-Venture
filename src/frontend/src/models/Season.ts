@@ -9,7 +9,7 @@ import { PlayerIdl } from '../ic-agent/Players';
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
 export type Nat = bigint;
-export type Int = number;
+export type Int = bigint;
 export type Bool = boolean;
 export type Text = string;
 
@@ -291,15 +291,15 @@ export type InProgressSeasonMatchGroupVariant =
     | { inProgress: InProgressMatchGroup }
     | { completed: CompletedMatchGroup };
 export const InProgressSeasonMatchGroupVariantIdl = IDL.Variant({
-    notScheduled: NotScheduledMatchIdl,
-    scheduled: ScheduledMatchIdl,
-    inProgress: InProgressMatchIdl,
+    notScheduled: NotScheduledMatchGroupIdl,
+    scheduled: ScheduledMatchGroupIdl,
+    inProgress: InProgressMatchGroupIdl,
     completed: CompletedMatchGroupIdl,
 });
 
 export type InProgressSeason = {
     matchGroups: InProgressSeasonMatchGroupVariant[];
-    teamStandings: [TeamStandingInfo] | null;
+    teamStandings: [TeamStandingInfo[]] | [];
 };
 export const InProgressSeasonIdl = IDL.Record({
     matchGroups: IDL.Vec(InProgressSeasonMatchGroupVariantIdl),

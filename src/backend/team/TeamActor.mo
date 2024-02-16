@@ -151,11 +151,11 @@ shared (install) actor class TeamActor(
     var choiceVotes = Trie.empty<Nat8, Nat>();
     for ((userId, vote) in Trie.iter(matchVotes)) {
       let userVotingPower = 1; // TODO
-      let offeringKey = {
+      let scenarioKey = {
         key = vote.scenarioChoice;
         hash = Nat32.fromNat(Nat8.toNat(vote.scenarioChoice));
       };
-      choiceVotes := addVotes(choiceVotes, offeringKey, Nat8.equal, userVotingPower);
+      choiceVotes := addVotes(choiceVotes, scenarioKey, Nat8.equal, userVotingPower);
     };
     let ?winningChoice = calculateVote(choiceVotes) else return null;
     ?{
@@ -178,7 +178,7 @@ shared (install) actor class TeamActor(
     };
     switch (winningVote) {
       case (null) null;
-      case (?offering) ?offering.0;
+      case (?v) ?v.0;
     };
   };
 

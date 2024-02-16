@@ -39,11 +39,11 @@
     "unique-names-generator": "^4.7.1"
   },
   "dependencies": {
-    "@dfinity/agent": "^0.19.3",
-    "@dfinity/auth-client": "^0.19.3",
-    "@dfinity/candid": "^0.19.3",
-    "@dfinity/identity": "^0.19.3",
-    "@dfinity/principal": "^0.19.3",
+    "@dfinity/agent": "^1.0.0",
+    "@dfinity/auth-client": "^1.0.0",
+    "@dfinity/candid": "^1.0.0",
+    "@dfinity/identity": "^1.0.0",
+    "@dfinity/principal": "^1.0.0",
     "sirv-cli": "^2.0.0"
   }
 }

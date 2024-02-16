@@ -12,6 +12,7 @@
   import { SeasonStatus } from "../../models/Season";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import { nanosecondsToDate } from "../../utils/DateUtils";
+  import MatchGroup from "../match/MatchGroup.svelte";
 
   let seasonStatus: SeasonStatus | undefined;
 
@@ -120,7 +121,7 @@
         {/each}
       </Dropdown>
       <div class="flex justify-center">
-        <MatchGroupSummaryCard
+        <MatchGroup
           matchGroup={data.matchGroups[data.selectedMatchGroupIndex]}
         />
       </div>

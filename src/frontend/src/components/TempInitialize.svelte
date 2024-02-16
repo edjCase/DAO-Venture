@@ -6,10 +6,15 @@
   } from "../ic-agent/Players";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
-  import { Team, teams } from "../data/TeamData";
-  import { Player, players } from "../data/PlayerData";
+  import { Team, teams as teamData } from "../data/TeamData";
+  import { Player, players as playerData } from "../data/PlayerData";
   import { Button } from "flowbite-svelte";
-  import { scenarios } from "../data/ScenarioData";
+  import { scenarios as scenarioData } from "../data/ScenarioData";
+  import { scenarioTemplateStore } from "../stores/ScenarioTemplateStore";
+  import { toJsonString } from "../utils/JsonUtil";
+
+  $: teams = $teamStore;
+  $: scenarioTemplates = $scenarioTemplateStore;
 
   let createTeams = async function (teams: Team[]): Promise<void> {
     let leagueAgent = leagueAgentFactory();
@@ -59,19 +64,32 @@
   let createScenarios = async function () {
     let leagueAgent = leagueAgentFactory();
     let promises = [];
-    for (let i = 0; i < scenarios.length; i++) {
-      let promise = leagueAgent.addScenarioTemplate(scenarios[i]);
+    for (let i = 0; i < scenarioData.length; i++) {
+      let promise = leagueAgent.addScenarioTemplate(scenarioData[i]);
       promises.push(promise);
     }
     await Promise.all(promises);
+    console.log("Created scenarios");
   };
 
   let initialize = async function () {
-    await createPlayers(players);
-    await createTeams(teams);
+    await createPlayers(playerData);
+    await createTeams(teamData);
     await createScenarios();
     playerStore.refetch();
   };
 </script>
 
-<Button on:click={initialize}>Initialize With Default Data</Button>
+{#if teams.length <= 0}
+  <Button on:click={initialize}>Initialize With Default Data</Button>
+{/if}
+{#if !scenarioTemplates || scenarioTemplates.length <= 0}
+  <Button on:click={createScenarios}>Create Scenarios</Button>
+{:else}
+  <div>
+    <div>Scenario Templates:</div>
+    {#each scenarioTemplates as scenario}
+      <pre>{toJsonString(scenario)}</pre>
+    {/each}
+  </div>
+{/if}

@@ -2,6 +2,8 @@ import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
 
 export type Text = string;
+export type ScenarioTeamIndex = bigint;
+export type ScenarioPlayerIndex = bigint;
 
 
 export type Skill =
@@ -20,11 +22,7 @@ export const SkillIdl = IDL.Variant({
     catching: IDL.Null,
     defense: IDL.Null,
     speed: IDL.Null,
-})
-
-
-export type ScenarioTeamIndex = number;
-export type ScenarioPlayerIndex = number;
+});
 
 export type OtherTeam =
     | { 'opposingTeam': null }
@@ -58,12 +56,12 @@ export type TargetInstance =
 export const TargetInstanceIdl = IDL.Variant({
     league: IDL.Null,
     teams: IDL.Vec(IDL.Principal),
-    players: IDL.Vec(IDL.Nat),
+    players: IDL.Vec(IDL.Nat32),
 })
 
 export type Duration =
     | { 'indefinite': null }
-    | { 'matches': number };
+    | { 'matches': bigint };
 export const DurationIdl = IDL.Variant({
     indefinite: IDL.Null,
     matches: IDL.Nat,
@@ -71,15 +69,15 @@ export const DurationIdl = IDL.Variant({
 
 export type Effect =
     | { 'trait': { target: Target; traitId: string; duration: Duration } }
-    | { 'entropy': { team: Team; delta: number } }
-    | { 'oneOf': [number, Effect][] }
+    | { 'entropy': { team: Team; delta: bigint } }
+    | { 'oneOf': [bigint, Effect][] }
     | { 'allOf': Effect[] }
     | { 'noEffect': null };
 export const EffectIdl = IDL.Rec();
 EffectIdl.fill(IDL.Variant({
     trait: IDL.Record({ target: TargetIdl, traitId: IDL.Text, duration: DurationIdl }),
-    entropy: IDL.Record({ team: TeamIdl, delta: IDL.Nat }),
-    oneOf: IDL.Tuple(IDL.Nat, IDL.Vec(EffectIdl)),
+    entropy: IDL.Record({ team: TeamIdl, delta: IDL.Int }),
+    oneOf: IDL.Vec(IDL.Tuple(IDL.Nat, EffectIdl)),
     allOf: IDL.Vec(EffectIdl),
     noEffect: IDL.Null,
 }))
@@ -97,10 +95,10 @@ export const TraitEffectOutcomeIdl = IDL.Record({
 
 export type EffectOutcome =
     | { 'trait': TraitEffectOutcome }
-    | { 'entropy': { teamId: Principal; delta: number } };
+    | { 'entropy': { teamId: Principal; delta: bigint } };
 export const EffectOutcomeIdl = IDL.Variant({
     trait: TraitEffectOutcomeIdl,
-    entropy: IDL.Record({ teamId: IDL.Principal, delta: IDL.Nat }),
+    entropy: IDL.Record({ teamId: IDL.Principal, delta: IDL.Int }),
 })
 
 export interface ScenarioTeam {
@@ -133,6 +131,7 @@ export interface ScenarioTemplate {
     options: ScenarioOption[];
     otherTeams: ScenarioTeam[];
     players: ScenarioPlayer[];
+    effect: Effect;
 }
 export const ScenarioTemplateIdl = IDL.Record({
     id: IDL.Text,
@@ -140,7 +139,8 @@ export const ScenarioTemplateIdl = IDL.Record({
     description: IDL.Text,
     options: IDL.Vec(ScenarioOptionIdl),
     otherTeams: IDL.Vec(ScenarioTeamIdl),
-    players: IDL.Vec(ScenarioPlayerIdl)
+    players: IDL.Vec(ScenarioPlayerIdl),
+    effect: EffectIdl
 });
 
 export interface ScenarioInstance {
@@ -155,7 +155,7 @@ export const ScenarioInstanceIdl = IDL.Record({
     teamId: IDL.Principal,
     opposingTeamId: IDL.Principal,
     otherTeamIds: IDL.Vec(IDL.Principal),
-    playerIds: IDL.Vec(IDL.Nat)
+    playerIds: IDL.Vec(IDL.Nat32)
 });
 
 export interface ScenarioInstanceWithChoice extends ScenarioInstance {
@@ -168,6 +168,6 @@ export const ScenarioInstanceWithChoiceIdl = IDL.Record({
     opposingTeamId: IDL.Principal,
     otherTeamIds: IDL.Vec(IDL.Principal),
     playerIds: IDL.Vec(IDL.Nat),
-    choice: IDL.Nat,
+    choice: IDL.Nat8,
     effectOutcomes: IDL.Vec(EffectOutcomeIdl)
 });

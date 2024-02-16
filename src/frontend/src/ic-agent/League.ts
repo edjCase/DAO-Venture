@@ -156,18 +156,16 @@ export const OnMatchGroupCompleteResultIdl = IDL.Variant({
 export type CreateTeamRequest = {
   name: Text;
   logoUrl: Text;
-  tokenName: Text;
-  tokenSymbol: Text;
   motto: Text;
   description: Text;
+  color: [number, number, number];
 };
 export const CreateTeamRequestIdl = IDL.Record({
   name: IDL.Text,
   logoUrl: IDL.Text,
-  tokenName: IDL.Text,
-  tokenSymbol: IDL.Text,
   motto: IDL.Text,
   description: IDL.Text,
+  color: IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
 });
 
 export type CreateTeamResult =

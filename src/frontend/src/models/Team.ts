@@ -31,6 +31,7 @@ export type Team = {
     logoUrl: Text;
     motto: Text;
     description: Text;
+    color: [number, number, number];
 };
 export const TeamIdl = IDL.Record({
     id: IDL.Principal,
@@ -38,4 +39,5 @@ export const TeamIdl = IDL.Record({
     logoUrl: IDL.Text,
     motto: IDL.Text,
     description: IDL.Text,
+    color: IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
 });

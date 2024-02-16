@@ -14,6 +14,7 @@ module {
         logoUrl : Text;
         motto : Text;
         description : Text;
+        color : (Nat8, Nat8, Nat8);
         entropy : Int;
     };
 

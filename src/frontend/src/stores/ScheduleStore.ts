@@ -13,6 +13,7 @@ import {
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined } from "../models/Match";
 import { Principal } from "@dfinity/principal";
 import { TeamId } from "../models/Team";
+import { ScenarioInstance, ScenarioInstanceWithChoice } from "../models/Scenario";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -26,19 +27,24 @@ export const scheduleStore = (() => {
 
     const mapTeamAssignment = (team: TeamAssignment, score: bigint | undefined): TeamDetailsOrUndetermined => {
         if ('predetermined' in team) {
-            return mapTeam(team.predetermined, score);
+            return mapTeam(team.predetermined, undefined, score);
         } else if ('winnerOfMatch' in team) {
             return { winnerOfMatch: Number(team.winnerOfMatch) };
         } else {
             return { seasonStandingIndex: Number(team.seasonStandingIndex) };
         }
     };
-    const mapTeam = (team: TeamInfo, score: bigint | undefined): TeamDetails => {
+    const mapTeam = (
+        team: TeamInfo,
+        scenario: ScenarioInstance | ScenarioInstanceWithChoice | undefined,
+        score: bigint | undefined
+    ): TeamDetails => {
         return {
             id: team.id,
             name: team.name,
             logoUrl: team.logoUrl,
-            score: score != undefined ? Number(score) : undefined
+            score: score != undefined ? Number(score) : undefined,
+            scenario: scenario
         };
     };
     const mapPredictions = (predictions: [Principal, TeamId][]): Map<string, TeamId> => {
@@ -56,9 +62,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: "Played",
-                offeringOptions: undefined,
-                team1: mapTeam(match.completed.team1, match.completed.team1.score),
-                team2: mapTeam(match.completed.team2, match.completed.team2.score),
+                team1: mapTeam(match.completed.team1, match.completed.team1.scenario, match.completed.team1.score),
+                team2: mapTeam(match.completed.team2, match.completed.team2.scenario, match.completed.team2.score),
                 winner: match.completed.winner,
                 predictions: mapPredictions(match.completed.predictions)
             };
@@ -68,9 +73,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'InProgress',
-                offeringOptions: undefined,
-                team1: mapTeam(match.inProgress.team1, undefined),
-                team2: mapTeam(match.inProgress.team2, undefined),
+                team1: mapTeam(match.inProgress.team1, match.inProgress.team1.scenario, undefined),
+                team2: mapTeam(match.inProgress.team2, match.inProgress.team2.scenario, undefined),
                 winner: undefined,
                 predictions: mapPredictions(match.inProgress.predictions)
             };
@@ -81,9 +85,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'Scheduled',
-                offeringOptions: match.scheduled.offeringOptions,
-                team1: mapTeam(match.scheduled.team1, undefined),
-                team2: mapTeam(match.scheduled.team2, undefined),
+                team1: mapTeam(match.scheduled.team1, match.scheduled.team1.scenario, undefined),
+                team2: mapTeam(match.scheduled.team2, match.scheduled.team2.scenario, undefined),
                 winner: undefined,
                 predictions: mapPredictions([]) // TODO how to get live voting predictions?
             };
@@ -94,7 +97,6 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'NotScheduled',
-                offeringOptions: undefined,
                 team1: mapTeamAssignment(match.notScheduled.team1, undefined),
                 team2: mapTeamAssignment(match.notScheduled.team2, undefined),
                 winner: undefined,

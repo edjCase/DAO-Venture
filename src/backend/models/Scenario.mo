@@ -92,6 +92,7 @@ module {
         options : [ScenarioOption];
         otherTeams : [ScenarioTeam];
         players : [ScenarioPlayer];
+        effect : Effect;
         // TODO weights
     };
 
@@ -111,104 +112,5 @@ module {
     public func hash(template : Template) : Nat32 = Text.hash(template.id);
 
     public func equal(a : Template, b : Template) : Bool = a.id == b.id;
-
-    public func buildScenario(teamId : Principal, opposingTeamId : Principal) : Template = {
-        id = "MYSTIC_PLAYBOOK_CONUNDRUM";
-        title = "The Mystic Playbook Conundrum";
-        description = "Amidst the ruins of an ancient sports complex, {Team0} uncovers the Mystic Playbook, said to be imbued with the wisdom of DAOball's greatest minds but rumored to be cursed.";
-        teamId = teamId;
-        opposingTeamId = opposingTeamId;
-        otherTeams = [];
-        players = [{
-            team = #scenarioTeam;
-        }];
-        options = [
-            {
-                title = "Open for {Team0}";
-                description = "{Team0} decides to brave the potential curse and gain strategic advantage by opening the Mystic Playbook themselves.";
-                entropy = 10; // Reflects the chaos of risking a curse
-                effect = #oneOf([
-                    (
-                        1,
-                        #trait({
-                            target = #teams([#scenarioTeam]);
-                            traitId = "CURSED";
-                            duration = #indefinite;
-                        }),
-                    ),
-                    (
-                        1,
-                        #trait({
-                            target = #teams([#scenarioTeam]);
-                            traitId = "ENHANCED";
-                            duration = #matches(3); // Benefit for 3 matches if successful
-                        }),
-                    ),
-                ]);
-            },
-            {
-                title = "Sell to {Team1}";
-                description = "{Team0} sells the Mystic Playbook to {Team1}, transferring the risk of the curse and the chance of becoming rivals if {Team1} is afflicted.";
-                entropy = -5; // Lower chaos due to transferring risk
-                effect = #allOf([
-                    // #currency({
-                    //     target = #team(0);
-                    //     amount = 100; // Team0 gains currency from the sale
-                    // }),
-                    #oneOf([
-                        (
-                            1, // 33% chance of activation
-                            #allOf([
-                                #trait({
-                                    target = #teams([#opposingTeam]);
-                                    traitId = "CURSED";
-                                    duration = #indefinite;
-                                }),
-                                #trait({
-                                    target = #teams([#scenarioTeam, #opposingTeam]);
-                                    traitId = "RIVALS";
-                                    duration = #indefinite;
-                                }),
-                            ]),
-                        ),
-                        (
-                            2, // 66% chance of activation
-                            #trait({
-                                target = #teams([#opposingTeam]);
-                                traitId = "ENHANCED";
-                                duration = #matches(3); // Benefit for 3 matches if successful
-                            }),
-                        ),
-                    ]),
-                ]);
-            },
-            {
-                title = "Secure and Research";
-                description = "{Team0} secures the playbook and invests in researching it to mitigate the risk of the curse while attempting to unlock its secrets.";
-                entropy = 0; // Neutral, as it's a balanced approach
-                effect = #allOf([
-                    #trait({
-                        target = #teams([#scenarioTeam]);
-                        traitId = "MODERATE_ENHANCEMENT";
-                        duration = #matches(3); // Lesser benefit for 3 matches if successful
-                    }),
-                    #oneOf([
-                        (
-                            4, // 80% chance of activation
-                            #trait({
-                                target = #teams([#scenarioTeam]);
-                                traitId = "MYSTIC_PLAYBOOK";
-                                duration = #matches(1);
-                            }),
-                        ),
-                        (
-                            1,
-                            #noEffect,
-                        ),
-                    ]),
-                ]);
-            },
-        ];
-    };
 
 };

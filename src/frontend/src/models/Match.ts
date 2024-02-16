@@ -1,7 +1,7 @@
 
 import { Principal } from "@dfinity/principal";
 import { TeamId, TeamIdOrTie } from "./Team";
-import { Scenario } from "./Scenario";
+import { ScenarioInstance, ScenarioInstanceWithChoice } from "./Scenario";
 
 
 export type MatchGroupDetails = {
@@ -28,7 +28,7 @@ export type TeamDetails = {
     name: string;
     logoUrl: string;
     score: number | undefined;
-    scenario: Scenario | undefined;
+    scenario: ScenarioInstance | ScenarioInstanceWithChoice | undefined;
 };
 
 export type TeamDetailsOrUndetermined =

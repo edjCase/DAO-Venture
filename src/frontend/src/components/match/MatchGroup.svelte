@@ -57,6 +57,20 @@
       {#if matchGroup.state == "Scheduled"}
         <h1>Predict the upcoming match-up winners</h1>
         {#each matchGroup.matches as match}
+          <div class="flex flex-col">
+            {#if "scenario" in match.team1 && match.team1.scenario}
+              <TeamChoice
+                matchGroupId={match.matchGroupId}
+                scenario={match.team1.scenario}
+              />
+            {/if}
+            {#if "scenario" in match.team2 && match.team2.scenario}
+              <TeamChoice
+                matchGroupId={match.matchGroupId}
+                scenario={match.team2.scenario}
+              />
+            {/if}
+          </div>
           <PredictMatchOutcome {match} />
         {/each}
       {:else if matchGroup.state == "NotScheduled"}
@@ -70,15 +84,15 @@
                 liveMatch={selectedLiveMatch}
               />
             {:else}
-              {#if "id" in selectedMatch.team1}
+              {#if "scenario" in selectedMatch.team1 && selectedMatch.team1.scenario}
                 <TeamChoice
-                  team={selectedMatch.team1}
+                  scenario={selectedMatch.team1.scenario}
                   matchGroupId={matchGroup.id}
                 />
               {/if}
-              {#if "id" in selectedMatch.team2}
+              {#if "scenario" in selectedMatch.team2 && selectedMatch.team2.scenario}
                 <TeamChoice
-                  team={selectedMatch.team2}
+                  scenario={selectedMatch.team2.scenario}
                   matchGroupId={matchGroup.id}
                 />
               {/if}

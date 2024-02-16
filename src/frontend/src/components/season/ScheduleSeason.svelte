@@ -51,7 +51,7 @@
 <div class="container">
   <Input type="datetime-local" on:change={setStartTime} />
   <Button on:click={scheduleSeason}>Schedule Season</Button>
-  {#if scheduleStatus && "inProgress" in scheduleStatus}
+  {#if scheduleStatus && ("inProgress" in scheduleStatus || "starting" in scheduleStatus)}
     <Button on:click={closeSeason}>Close Season</Button>
   {/if}
 </div>

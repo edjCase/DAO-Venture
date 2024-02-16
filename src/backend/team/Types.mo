@@ -28,8 +28,7 @@ module {
     public type TeamActorInfoWithId = TeamActorInfo and { id : Principal };
 
     public type CreateTeamRequest = {
-        tokenName : Text;
-        tokenSymbol : Text;
+
     };
 
     public type CreateTeamResult = {

@@ -67,7 +67,7 @@ actor LeagueActor {
         getScenarioTemplateArray();
     };
 
-    public shared ({ caller }) func addScenarioTeamplate(request : Types.AddScenarioTemplateRequest) : async Types.AddScenarioTemplateResult {
+    public shared ({ caller }) func addScenarioTemplate(request : Types.AddScenarioTemplateRequest) : async Types.AddScenarioTemplateResult {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
@@ -206,6 +206,7 @@ actor LeagueActor {
             teamStandings = null; // No standings yet
         };
 
+        seasonStatus := #inProgress(inProgressSeason);
         // Get first match group to open
         let #notScheduled(firstMatchGroup) = inProgressMatchGroups[0] else Prelude.unreachable();
 
@@ -223,7 +224,6 @@ actor LeagueActor {
             prng,
         );
 
-        seasonStatus := #inProgress(inProgressSeason);
         #ok;
     };
 
@@ -256,6 +256,7 @@ actor LeagueActor {
             motto = request.motto;
             description = request.description;
             entropy = 0; // TODO
+            color = request.color;
         };
         let teamKey = buildPrincipalKey(teamInfo.id);
         let (newTeams, _) = Trie.put(teams, teamKey, Principal.equal, team);
@@ -622,6 +623,11 @@ actor LeagueActor {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
+        if (seasonStatus == #starting) {
+            // TODO how to handle this?
+            seasonStatus := #notStarted;
+            return #ok;
+        };
         let #inProgress(inProgressSeason) = seasonStatus else return #seasonNotOpen;
         let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
             case (#ok(completedMatchGroups)) completedMatchGroups;
@@ -769,8 +775,8 @@ actor LeagueActor {
         matchGroupId : Nat,
         matchGroup : Season.NotScheduledMatchGroup,
         inProgressSeason : Season.InProgressSeason,
-        allTeamIds : [Team.TeamWithId],
-        allPlayerids : [PlayerTypes.PlayerWithId],
+        allTeams : [Team.TeamWithId],
+        allPlayers : [PlayerTypes.PlayerWithId],
         allScenarios : [Scenario.Template],
         prng : Prng,
     ) : () {
@@ -838,8 +844,14 @@ actor LeagueActor {
                 };
             };
         };
-        let allTeamIds = [];
-        let allPlayerIds = [];
+        let allTeamIds = allTeams
+        |> Iter.fromArray(_)
+        |> Iter.map(_, func(t : Team.TeamWithId) : Principal = t.id)
+        |> Iter.toArray(_);
+        let allPlayerIds = allPlayers
+        |> Iter.fromArray(_)
+        |> Iter.map(_, func(p : PlayerTypes.PlayerWithId) : Nat32 = p.id)
+        |> Iter.toArray(_);
 
         let scheduledMatchGroup : Season.ScheduledMatchGroup = {
             time = matchGroup.time;

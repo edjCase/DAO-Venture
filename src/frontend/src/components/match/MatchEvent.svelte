@@ -1,9 +1,9 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { MatchEvent } from "../../models/Season";
   import { TeamId } from "../../models/Team";
   import { playerStore } from "../../stores/PlayerStore";
   import { teamStore } from "../../stores/TeamStore";
+  import { MatchEvent } from "../../ic-agent/Stadium";
 
   export let event: MatchEvent;
   export let team1Id: Principal;
@@ -35,12 +35,6 @@
     {getPlayerName(event.traitTrigger.playerId)} triggered trait '{variantKeyToString(
       event.traitTrigger.id
     )}': {event.traitTrigger.description}
-  </div>
-{:else if "offeringTrigger" in event}
-  <div>
-    Team '{event.offeringTrigger.teamId}' triggered offering '{variantKeyToString(
-      event.offeringTrigger.id
-    )}': {event.offeringTrigger.description}
   </div>
 {:else if "auraTrigger" in event}
   <div>
@@ -108,7 +102,7 @@
 {:else if "hitByBall" in event}
   <div>
     {getPlayerName(event.hitByBall.playerId)} got hit by {getPlayerName(
-      event.hitByBall.throwingPlayerId
+      event.hitByBall.playerId
     )}
   </div>
 {/if}

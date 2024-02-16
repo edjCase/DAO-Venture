@@ -29,8 +29,6 @@ module {
 
     public func compile(state : StadiumTypes.InProgressMatch) : Hook.CompiledHooks {
         let allHooks = [
-            // fromOffering(state.team1.offering, #team1),
-            // fromOffering(state.team2.offering, #team2),
             // fromAura(state.aura)
         ];
 

@@ -7,7 +7,7 @@ import { scheduleStore } from "./ScheduleStore";
 import { TeamId, TeamIdOrTie } from "../models/Team";
 import { TeamDetails } from "../models/Match";
 import { MatchAura } from "../models/MatchAura";
-import { Offering } from "../models/Scenario";
+import { ScenarioInstanceWithChoice } from "../models/Scenario";
 
 export type LiveMatchGroup = {
   id: number;
@@ -15,9 +15,8 @@ export type LiveMatchGroup = {
 };
 
 export type LiveTeamDetails = TeamDetails & {
-  offering: Offering;
+  scenario: ScenarioInstanceWithChoice;
   positions: TeamPositions
-  color: string;
 };
 
 export type LiveMatch = {
@@ -44,25 +43,22 @@ export const liveMatchGroupStore = (() => {
   let nextMatchTimeout: any;
   let liveMatchInterval: any;
 
-  const mapTeam = (team: TeamState, color: string): LiveTeamDetails => {
+  const mapTeam = (team: TeamState): LiveTeamDetails => {
     return {
       id: team.id,
       name: team.name,
       logoUrl: team.logoUrl,
       score: Number(team.score),
-      offering: team.offering,
-      positions: team.positions,
-      color: color,
+      scenario: team.scenario,
+      positions: team.positions
     }
   };
 
   const mapLiveMatch = (match: MatchVariant): LiveMatch => {
-    const team1Color = "#00FFFF";
-    const team2Color = "#FF00FF";
     if ('inProgress' in match) {
       return {
-        team1: mapTeam(match.inProgress.team1, team1Color),
-        team2: mapTeam(match.inProgress.team2, team2Color),
+        team1: mapTeam(match.inProgress.team1),
+        team2: mapTeam(match.inProgress.team2),
         liveState: {
           offenseTeamId: match.inProgress.offenseTeamId,
           players: match.inProgress.players,
@@ -77,8 +73,8 @@ export const liveMatchGroupStore = (() => {
       };
     } else {
       return {
-        team1: mapTeam(match.completed.team1, team1Color),
-        team2: mapTeam(match.completed.team2, team2Color),
+        team1: mapTeam(match.completed.team1),
+        team2: mapTeam(match.completed.team2),
         liveState: undefined,
         log: undefined,
         winner: match.completed.winner,

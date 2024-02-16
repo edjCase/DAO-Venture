@@ -154,10 +154,9 @@ module {
     public type CreateTeamRequest = {
         name : Text;
         logoUrl : Text;
-        tokenName : Text;
-        tokenSymbol : Text;
         motto : Text;
         description : Text;
+        color : (Nat8, Nat8, Nat8);
     };
 
     public type CreateTeamResult = {
