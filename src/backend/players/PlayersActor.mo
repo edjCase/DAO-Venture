@@ -2,11 +2,13 @@ import Trie "mo:base/Trie";
 import Player "../models/Player";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
+import PseudoRandomX "mo:random/PseudoRandomX";
 import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
+import Random "mo:base/Random";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Types "Types";
@@ -16,6 +18,7 @@ import Skill "../models/Skill";
 // import LeagueActor "canister:league"; TODO
 
 actor PlayersActor {
+    type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var nextPlayerId : Nat32 = 1;
     stable var players = Trie.empty<Nat32, Types.Player>();
@@ -154,14 +157,89 @@ actor PlayersActor {
         #ok(Buffer.toArray(newPlayersBuffer));
     };
 
-    public shared ({ caller }) func applyTraits(request : [Scenario.TraitEffectOutcome]) : async {
-        #ok;
-    } {
+    public shared query ({ caller }) func getTraits() : async [Trait.Trait] {
+        traits
+        |> Trie.toArray(_, func(k : Text, t : Trait.Trait) : Trait.Trait = t);
+    };
+
+    public shared ({ caller }) func addTrait(request : Types.AddTraitRequest) : async Types.AddTraitResult {
         assertLeague(caller);
-        for (trait in Iter.fromArray(request)) {
-            let targetPlayerIds = getTargetPlayerIds(trait.target);
-            for (playerId in Iter.fromArray(targetPlayerIds)) {
-                applyTrait(playerId, trait.traitId, trait.duration);
+        let traitKey = {
+            key = request.id;
+            hash = Text.hash(request.id);
+        };
+        let (newTraits, oldTrait) = Trie.put(traits, traitKey, Text.equal, request);
+        if (oldTrait != null) {
+            return #idTaken;
+        };
+        traits := newTraits;
+        #ok;
+    };
+
+    public shared ({ caller }) func applyEffects(request : Types.ApplyEffectsRequest) : async Types.ApplyEffectsResult {
+        assertLeague(caller);
+        let prng = PseudoRandomX.fromBlob(await Random.blob());
+        for (effect in Iter.fromArray(request)) {
+            switch (effect) {
+                case (#trait(t)) {
+                    let targetPlayerIds = getTargetPlayerIds(t.target);
+                    for (playerId in Iter.fromArray(targetPlayerIds)) {
+                        updatePlayer(
+                            playerId,
+                            func(player) {
+                                let trait = getTrait(t.traitId);
+                                let newTraitIdsBuffer = Buffer.fromArray<Text>(player.traitIds);
+                                newTraitIdsBuffer.add(trait.id);
+
+                                var newPlayer : Types.Player = {
+                                    player with
+                                    traits = Buffer.toArray(newTraitIdsBuffer);
+                                };
+                                // TODO apply effect here or when evaluating skills and whatnot?
+                                for (effect in Iter.fromArray(trait.effects)) {
+                                    newPlayer := applyEffect(prng, newPlayer, effect);
+                                };
+                                newPlayer;
+                            },
+                        );
+                    };
+                };
+                case (#removeTrait(t)) {
+                    let targetPlayerIds = getTargetPlayerIds(t.target);
+                    for (playerId in Iter.fromArray(targetPlayerIds)) {
+                        updatePlayer(
+                            playerId,
+                            func(player) {
+                                let trait = getTrait(t.traitId);
+                                let newTraitIdsBuffer = Buffer.fromArray<Text>(player.traitIds);
+                                newTraitIdsBuffer.filterEntries(func(i : Nat, id : Text) : Bool = id == trait.id);
+
+                                var newPlayer : Types.Player = {
+                                    player with
+                                    traits = Buffer.toArray(newTraitIdsBuffer);
+                                };
+                                // TODO how to remove effect?
+                                newPlayer;
+                            },
+                        );
+                    };
+                };
+                case (#injury(injury)) {
+                    let targetPlayerIds = getTargetPlayerIds(injury.target);
+                    for (playerId in Iter.fromArray(targetPlayerIds)) {
+                        updatePlayer(
+                            playerId,
+                            func(player) {
+                                var newPlayer : Types.Player = {
+                                    player with
+                                    injury = injury;
+                                };
+                                // TODO how to remove effect?
+                                newPlayer;
+                            },
+                        );
+                    };
+                };
             };
         };
         #ok;
@@ -190,39 +268,36 @@ actor PlayersActor {
         |> Iter.toArray(_);
     };
 
-    private func applyTrait(playerId : Nat32, traitId : Text, duration : Scenario.Duration) {
+    private func getTrait(traitId : Text) : Trait.Trait {
+        let traitKey = {
+            key = traitId;
+            hash = Text.hash(traitId);
+        };
+        let ?trait = Trie.get(traits, traitKey, Text.equal) else Debug.trap("Trait not found: " # traitId); // TODO trap?
+        trait;
+    };
+
+    private func updatePlayer(playerId : Nat32, updateFunc : (player : Types.Player) -> Types.Player) {
         let playerKey = {
             key = playerId;
             hash = playerId;
         };
         let ?player = Trie.get(players, playerKey, Nat32.equal) else Debug.trap("Player not found: " # Nat32.toText(playerId)); // TODO trap?
 
-        let traitKey = {
-            key = traitId;
-            hash = Text.hash(traitId);
-        };
-        let ?trait = Trie.get(traits, traitKey, Text.equal) else Debug.trap("Trait not found: " # traitId); // TODO trap?
-
-        let newTraitIdsBuffer = Buffer.fromArray<Text>(player.traitIds);
-        newTraitIdsBuffer.add(trait.id);
-
-        var newPlayer : Types.Player = {
-            player with
-            traits = Buffer.toArray(newTraitIdsBuffer);
-        };
-        // TODO apply effect here or when evaluating skills and whatnot?
-        for (effect in Iter.fromArray(trait.effects)) {
-            newPlayer := applyEffect(newPlayer, effect);
-        };
+        let newPlayer = updateFunc(player);
 
         let (newPlayers, _) = Trie.put(players, playerKey, Nat32.equal, newPlayer);
         players := newPlayers;
     };
 
-    private func applyEffect(player : Types.Player, effect : Trait.Effect) : Types.Player {
+    private func applyEffect(prng : Prng, player : Types.Player, effect : Trait.Effect) : Types.Player {
         switch (effect) {
             case (#skill(skillEffect)) {
-                let newSkills = Skill.modify(player.skills, skillEffect.skill, skillEffect.delta);
+                let skill = switch (skillEffect.skill) {
+                    case (null) Skill.getRandom(prng);
+                    case (?s) s;
+                };
+                let newSkills = Skill.modify(player.skills, skill, skillEffect.delta);
                 { player with skills = newSkills };
             };
         };

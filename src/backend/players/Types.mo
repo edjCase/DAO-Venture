@@ -1,6 +1,8 @@
 import Player "../models/Player";
 import FieldPosition "../models/FieldPosition";
 import Principal "mo:base/Principal";
+import Trait "../models/Trait";
+import Scenario "../models/Scenario";
 module {
 
     public type PlayerActor = actor {
@@ -9,6 +11,22 @@ module {
         getTeamPlayers : (teamId : Principal) -> async [Player.PlayerWithId];
         getAllPlayers : () -> async [PlayerWithId];
         populateTeamRoster : (teamId : Principal) -> async PopulateTeamRosterResult;
+        addTrait : (request : AddTraitRequest) -> async AddTraitResult;
+        getTraits : () -> async [Trait.Trait];
+        applyEffects : (request : ApplyEffectsRequest) -> async ApplyEffectsResult;
+    };
+
+    public type ApplyEffectsRequest = [Scenario.PlayerEffectOutcome];
+
+    public type ApplyEffectsResult = {
+        #ok;
+    };
+
+    public type AddTraitRequest = Trait.Trait;
+
+    public type AddTraitResult = {
+        #ok;
+        #idTaken;
     };
 
     public type PopulateTeamRosterResult = {

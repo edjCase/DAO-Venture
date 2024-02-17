@@ -1,5 +1,6 @@
 import { IDL } from "@dfinity/candid";
 import { Principal } from "@dfinity/principal";
+import { Injury } from "./Player";
 
 export type Text = string;
 export type ScenarioTeamIndex = bigint;
@@ -69,6 +70,8 @@ export const DurationIdl = IDL.Variant({
 
 export type Effect =
     | { 'trait': { target: Target; traitId: string; duration: Duration } }
+    | { 'removeTrait': { target: Target; traitId: string } }
+    | { 'injury': { target: Target; injury: Injury } }
     | { 'entropy': { team: Team; delta: bigint } }
     | { 'oneOf': [bigint, Effect][] }
     | { 'allOf': Effect[] }
@@ -76,6 +79,8 @@ export type Effect =
 export const EffectIdl = IDL.Rec();
 EffectIdl.fill(IDL.Variant({
     trait: IDL.Record({ target: TargetIdl, traitId: IDL.Text, duration: DurationIdl }),
+    removeTrait: IDL.Record({ target: TargetIdl, traitId: IDL.Text }),
+    injury: IDL.Record({ target: TargetIdl, injury: IDL.Record({ type: IDL.Text, duration: DurationIdl }) }),
     entropy: IDL.Record({ team: TeamIdl, delta: IDL.Int }),
     oneOf: IDL.Vec(IDL.Tuple(IDL.Nat, EffectIdl)),
     allOf: IDL.Vec(EffectIdl),

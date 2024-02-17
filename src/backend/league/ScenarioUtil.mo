@@ -28,9 +28,9 @@ module {
         scenario : Scenario.Instance,
         effect : Scenario.Effect,
     ) : Iter.Iter<Scenario.EffectOutcome> {
-        switch (effect) {
+        let singleEffect : Scenario.EffectOutcome = switch (effect) {
             case (#allOf(subEffects)) {
-                subEffects
+                return subEffects
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
@@ -44,30 +44,39 @@ module {
                     func((weight, effect) : (Nat, Scenario.Effect)) : (Scenario.Effect, Float) = (effect, Float.fromInt(weight)),
                 );
                 let subEffect = prng.nextArrayElementWeighted(weightedSubEffects);
-                resolveEffect(prng, scenario, subEffect);
+                return resolveEffect(prng, scenario, subEffect);
             };
             case (#trait(trait)) {
-                Iter.make(
-                    #trait({
-                        trait with
-                        target = getTargetInstance(scenario, trait.target)
-                    })
-                );
+                #trait({
+                    trait with
+                    target = getTargetInstance(scenario, trait.target)
+                });
+            };
+            case (#removeTrait(removeTrait)) {
+                #removeTrait({
+                    removeTrait with
+                    target = getTargetInstance(scenario, removeTrait.target)
+                });
             };
             case (#entropy(entropyEffect)) {
-                Iter.make(
-                    #entropy({
-                        teamId = getTeamId(scenario, entropyEffect.team);
-                        delta = entropyEffect.delta;
-                    })
-                );
+                #entropy({
+                    teamId = getTeamId(scenario, entropyEffect.team);
+                    delta = entropyEffect.delta;
+                });
+            };
+            case (#injury(injuryEffect)) {
+                #injury({
+                    target = getTargetInstance(scenario, injuryEffect.target);
+                    injury = injuryEffect.injury;
+                });
             };
             case (#noEffect) {
-                {
+                return {
                     next = func() : ?Scenario.EffectOutcome = null;
                 };
             };
         };
+        Iter.make<Scenario.EffectOutcome>(singleEffect);
     };
 
     private func getTeamId(scenario : Scenario.Instance, team : Scenario.Team) : Principal {

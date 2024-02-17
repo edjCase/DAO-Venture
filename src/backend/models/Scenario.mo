@@ -7,6 +7,7 @@ import Bool "mo:base/Bool";
 import Trait "Trait";
 import MatchAura "MatchAura";
 import Team "Team";
+import Player "Player";
 
 module {
 
@@ -45,6 +46,14 @@ module {
             traitId : Text;
             duration : Duration;
         };
+        #removeTrait : {
+            target : Target;
+            traitId : Text;
+        };
+        #injury : {
+            target : Target;
+            injury : Player.Injury;
+        };
         #entropy : {
             team : Team;
             delta : Int;
@@ -60,13 +69,26 @@ module {
         duration : Duration;
     };
 
-    public type EffectOutcome = {
+    public type PlayerEffectOutcome = {
         #trait : TraitEffectOutcome;
+        #removeTrait : {
+            target : TargetInstance;
+            traitId : Text;
+        };
+        #injury : {
+            target : TargetInstance;
+            injury : Player.Injury;
+        };
+    };
+
+    public type TeamEffectOutcome = {
         #entropy : {
             teamId : Principal;
             delta : Int;
         };
     };
+
+    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome;
 
     public type ScenarioTeam = {
         // TODO other filters/weights

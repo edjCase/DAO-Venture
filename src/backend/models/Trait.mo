@@ -3,7 +3,7 @@ import Skill "Skill";
 module {
     public type Effect = {
         #skill : {
-            skill : Skill.Skill;
+            skill : ?Skill.Skill;
             delta : Int;
         };
     };

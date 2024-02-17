@@ -352,19 +352,21 @@ actor LeagueActor {
         let #inProgress(season) = seasonStatus else return #seasonNotInProgress;
         var updatedSeason = season;
 
-        let traitOutcomes = Buffer.Buffer<Scenario.TraitEffectOutcome>(effectOutcomes.size());
+        let playerOutcomes = Buffer.Buffer<Scenario.PlayerEffectOutcome>(effectOutcomes.size());
         for (effectOutcome in Iter.fromArray(effectOutcomes)) {
             switch (effectOutcome) {
-                case (#trait(traitEffect)) traitOutcomes.add(traitEffect);
+                case (#trait(traitEffect)) playerOutcomes.add(#trait(traitEffect));
+                case (#removeTrait(removeTraitEffect)) playerOutcomes.add(#removeTrait(removeTraitEffect));
+                case (#injury(injuryEffect)) playerOutcomes.add(#injury(injuryEffect));
                 case (#entropy(entropyEffect)) {
                     updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
                 };
             };
         };
         // TODO handle failure
-        if (traitOutcomes.size() > 0) {
+        if (playerOutcomes.size() > 0) {
             let result = try {
-                await PlayersActor.applyTraits(Buffer.toArray(traitOutcomes));
+                await PlayersActor.applyEffects(Buffer.toArray(playerOutcomes));
             } catch (err) {
                 return Debug.trap("Failed to apply traits: " # Error.message(err));
             };

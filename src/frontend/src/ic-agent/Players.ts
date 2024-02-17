@@ -5,6 +5,7 @@ import { FieldPositionEnum } from '../models/FieldPosition';
 import { toJsonString } from '../utils/JsonUtil';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { IDL } from "@dfinity/candid";
+import { Trait, TraitIdl } from '../models/Trait';
 
 export type FieldPosition = { 'firstBase': null }
   | { 'secondBase': null }
@@ -124,8 +125,18 @@ export const CreatePlayerFluffResultIdl = IDL.Variant({
   'invalid': IDL.Vec(InvalidErrorIdl)
 });
 
+export type AddTraitRequest = Trait;
+export const AddTraitRequestIdl = TraitIdl;
 
-
+export type AddTraitResult = {
+  'ok': null
+} | {
+  'idTaken': null
+};
+export const AddTraitResultIdl = IDL.Variant({
+  'ok': IDL.Null,
+  'idTaken': IDL.Null
+});
 
 
 
@@ -136,10 +147,9 @@ export interface _SERVICE {
   'getAllPlayers': ActorMethod<[], Array<Player>>,
   'getPlayer': ActorMethod<[number], GetPlayerResult>,
   'getTeamPlayers': ActorMethod<[[] | [Principal]], Array<Player>>,
-  'setPlayerTeam': ActorMethod<
-    [number, [] | [Principal]],
-    SetPlayerTeamResult
-  >
+  'setPlayerTeam': ActorMethod<[number, [] | [Principal]], SetPlayerTeamResult>,
+  'addTrait': ActorMethod<[AddTraitRequest], AddTraitResult>,
+  'getTraits': ActorMethod<[], Array<Trait>>;
 }
 
 
@@ -154,6 +164,8 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
       [SetPlayerTeamResultIdl],
       [],
     ),
+    'addTrait': IDL.Func([AddTraitRequestIdl], [AddTraitResultIdl], []),
+    'getTraits': IDL.Func([], [IDL.Vec(TraitIdl)], ['query']),
   });
 };
 const canisterId = process.env.CANISTER_ID_PLAYERS || "";

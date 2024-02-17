@@ -1,20 +1,20 @@
 import { IDL } from "@dfinity/candid";
-import { PlayerSkills, PlayerSkillsIdl } from "../models/Player";
+import { Skill, SkillIdl } from "./Scenario";
 
 export type Text = string;
-export type Int = number;
+export type Int = bigint;
 
-export type Skill = PlayerSkills;
-export const SkillIdl = PlayerSkillsIdl;
 
 export type Effect =
     | {
-        skill: Skill;
-        delta: Int;
+        skill: {
+            skill: [Skill] | [];
+            delta: Int;
+        }
     };
 export const EffectIdl = IDL.Variant({
     skill: IDL.Record({
-        skill: SkillIdl,
+        skill: IDL.Opt(SkillIdl),
         delta: IDL.Int,
     }),
 });
