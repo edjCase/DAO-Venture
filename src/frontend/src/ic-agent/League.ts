@@ -38,11 +38,13 @@ export const AddScenarioTemplateRequestIdl = ScenarioTemplateIdl;
 export type AddScenarioTemplateResult =
   | { ok: null }
   | { idTaken: null }
-  | { notAuthorized: null };
+  | { notAuthorized: null }
+  | { invalid: string[] };
 export const AddScenarioTemplateResultIdl = IDL.Variant({
   ok: IDL.Null,
   idTaken: IDL.Null,
   notAuthorized: IDL.Null,
+  invalid: IDL.Vec(IDL.Text),
 });
 
 export type UpcomingMatchPrediction = {

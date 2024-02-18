@@ -71,6 +71,7 @@ actor PlayersActor {
         players := Trie.empty<Nat32, Types.Player>();
         futurePlayers := [];
         retiredPlayers := Trie.empty<Nat32, Types.RetiredPlayer>();
+        nextPlayerId := 1;
     };
 
     public shared ({ caller }) func populateTeamRoster(teamId : Principal) : async Types.PopulateTeamRosterResult {

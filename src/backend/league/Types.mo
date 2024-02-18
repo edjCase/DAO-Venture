@@ -44,6 +44,7 @@ module {
         #ok;
         #idTaken;
         #notAuthorized;
+        #invalid : [Text];
     };
 
     public type SetUserIsAdminResult = {

@@ -36,7 +36,8 @@
       promises.push(promise);
     }
     await Promise.all(promises);
-    teamStore.refetch();
+    await teamStore.refetch();
+    await playerStore.refetch();
   };
 
   let createPlayers = async function () {
@@ -63,7 +64,6 @@
       promises.push(promise);
     }
     await Promise.all(promises);
-    await playerStore.refetch();
   };
 
   let createTraits = async function () {
@@ -93,7 +93,7 @@
         if ("ok" in result) {
           console.log("Created scenario: ", scenario.id);
         } else {
-          console.log("Failed to make scenario: ", scenario.id, scenario);
+          console.log("Failed to make scenario: ", scenario.id, result);
         }
       });
       promises.push(promise);

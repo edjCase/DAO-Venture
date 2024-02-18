@@ -6,12 +6,112 @@ import Debug "mo:base/Debug";
 import Array "mo:base/Array";
 import Float "mo:base/Float";
 import Nat8 "mo:base/Nat8";
+import Nat "mo:base/Nat";
+import Text "mo:base/Text";
 import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
+import TextX "mo:xtended-text/TextX";
 
 module {
 
     type Prng = PseudoRandomX.PseudoRandomGenerator;
+
+    public type ValidateScenarioResult = {
+        #ok;
+        #invalid : [Text];
+    };
+
+    public type ValidateEffectResult = {
+        #ok;
+        #invalid : [Text];
+    };
+
+    public func validateScenario(scenario : Scenario.Template, traitIds : [Text]) : ValidateScenarioResult {
+        let errors = Buffer.Buffer<Text>(0);
+        if (TextX.isEmptyOrWhitespace(scenario.id)) {
+            errors.add("Scenario must have an id");
+        };
+        if (TextX.isEmptyOrWhitespace(scenario.title)) {
+            errors.add("Scenario must have a title");
+        };
+        if (TextX.isEmptyOrWhitespace(scenario.description)) {
+            errors.add("Scenario must have a description");
+        };
+        if (scenario.options.size() < 2) {
+            errors.add("Scenario must have at least 2 options");
+        };
+        var index = 0;
+        for (option in Iter.fromArray(scenario.options)) {
+            if (TextX.isEmptyOrWhitespace(option.description)) {
+                errors.add("Option " # Nat.toText(index) # " must have a description");
+            };
+            switch (validateEffect(option.effect, traitIds)) {
+                case (#ok) {};
+                case (#invalid(effectErrors)) {
+                    for (effectError in Iter.fromArray(effectErrors)) {
+                        errors.add("Option " # Nat.toText(index) # " has an invalid effect: " # effectError);
+                    };
+                };
+            };
+            index += 1;
+        };
+        if (errors.size() > 0) {
+            #invalid(Buffer.toArray(errors));
+        } else {
+            #ok;
+        };
+    };
+
+    private func validateEffect(effect : Scenario.Effect, traitIds : [Text]) : ValidateEffectResult {
+        let errors = Buffer.Buffer<Text>(0);
+        switch (effect) {
+            case (#allOf(subEffects)) {
+                var index = 0;
+                for (subEffect in Iter.fromArray(subEffects)) {
+                    switch (validateEffect(subEffect, traitIds)) {
+                        case (#ok) {};
+                        case (#invalid(subEffectErrors)) {
+                            for (subEffectError in Iter.fromArray(subEffectErrors)) {
+                                errors.add("Effect allOf has an invalid subeffect " # Nat.toText(index) # ": " # subEffectError);
+                            };
+                        };
+                    };
+                    index += 1;
+                };
+            };
+            case (#oneOf(subEffects)) {
+                var index = 0;
+                for ((weight, subEffect) in Iter.fromArray(subEffects)) {
+                    if (weight < 1) {
+                        errors.add("Weight must be at least 1");
+                    };
+                    switch (validateEffect(subEffect, traitIds)) {
+                        case (#ok) {};
+                        case (#invalid(subEffectErrors)) {
+                            for (subEffectError in Iter.fromArray(subEffectErrors)) {
+                                errors.add("Effect oneOf has an invalid subeffect " # Nat.toText(index) # ": " # subEffectError);
+                            };
+                        };
+                    };
+                    index += 1;
+                };
+            };
+            case (#trait(traitEffect)) {
+                if (Array.indexOf(traitEffect.traitId, traitIds, Text.equal) == null) {
+                    return #invalid(["Trait not found: " # traitEffect.traitId]);
+                };
+            };
+            case (#removeTrait(removeTraitEffect)) {
+                if (Array.indexOf(removeTraitEffect.traitId, traitIds, Text.equal) == null) {
+                    return #invalid(["Trait not found: " # removeTraitEffect.traitId]);
+                };
+            };
+            case (#entropy(_)) {};
+            case (#injury(_)) {};
+            case (#noEffect) {};
+        };
+        #ok;
+    };
 
     public func resolveScenario(
         prng : Prng,

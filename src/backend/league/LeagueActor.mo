@@ -40,6 +40,7 @@ import FieldPosition "../models/FieldPosition";
 import UserTypes "../users/Types";
 import Scenario "../models/Scenario";
 import ScenarioUtil "ScenarioUtil";
+import Trait "../models/Trait";
 
 actor LeagueActor {
     type TeamWithId = Team.TeamWithId;
@@ -77,9 +78,20 @@ actor LeagueActor {
         scenarioTemplates := Trie.empty();
     };
 
-    public shared ({ caller }) func addScenarioTemplate(request : Types.AddScenarioTemplateRequest) : async Types.AddScenarioTemplateResult {
+    public shared ({ caller }) func addScenarioTemplate(
+        request : Types.AddScenarioTemplateRequest
+    ) : async Types.AddScenarioTemplateResult {
         if (not isAdminId(caller)) {
             return #notAuthorized;
+        };
+        let traits = await PlayersActor.getTraits();
+        let traitIds = traits
+        |> Iter.fromArray(_)
+        |> Iter.map(_, func(t : Trait.Trait) : Text = t.id)
+        |> Iter.toArray(_);
+        switch (ScenarioUtil.validateScenario(request, traitIds)) {
+            case (#ok) {};
+            case (#invalid(errors)) return #invalid(errors);
         };
         let key = {
             key = request.id;

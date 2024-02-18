@@ -8,7 +8,8 @@
     liveMatchGroupStore,
   } from "../../stores/LiveMatchGroupStore";
   import MatchCardCompact from "./MatchCardCompact.svelte";
-  import TeamChoice from "../team/TeamChoice.svelte";
+  import TeamChoice from "../scenario/Scenarios.svelte";
+  import { ScenarioInstance } from "../../models/Scenario";
 
   export let matchGroup: MatchGroupDetails;
 
@@ -42,87 +43,75 @@
     selectedMatchId = matchId;
     updateMatches();
   };
+  let currentScenarios: ScenarioInstance[] | undefined;
+  if (matchGroup.state == "Scheduled") {
+    currentScenarios = [];
+    for (let match of matchGroup.matches) {
+      if ("scenario" in match.team1 && match.team1.scenario) {
+        currentScenarios.push(match.team1.scenario);
+      }
+      if ("scenario" in match.team2 && match.team2.scenario) {
+        currentScenarios.push(match.team2.scenario);
+      }
+    }
+  }
 </script>
 
-{#if !!matchGroup}
-  <section>
-    <section class="match-details">
-      {#if matchGroup.state == "Scheduled" || matchGroup.state == "NotScheduled"}
-        <h1>
-          Start Time: {nanosecondsToDate(matchGroup.time).toLocaleString()}
-        </h1>
-      {:else if matchGroup.state == "Completed"}
-        <div>Match Group is over</div>
-      {/if}
-      {#if matchGroup.state == "Scheduled"}
-        <h1>Predict the upcoming match-up winners</h1>
-        {#each matchGroup.matches as match}
-          <div class="flex flex-col">
-            {#if "scenario" in match.team1 && match.team1.scenario}
-              <TeamChoice
-                matchGroupId={match.matchGroupId}
-                scenario={match.team1.scenario}
-              />
-            {/if}
-            {#if "scenario" in match.team2 && match.team2.scenario}
-              <TeamChoice
-                matchGroupId={match.matchGroupId}
-                scenario={match.team2.scenario}
-              />
-            {/if}
-          </div>
-          <PredictMatchOutcome {match} />
-        {/each}
-      {:else if matchGroup.state == "NotScheduled"}
-        Not Scheduled TODO
-      {:else}
-        <div class="container">
-          <div class="selected-match">
-            {#if selectedLiveMatch}
-              <LiveMatchComponent
-                match={selectedMatch}
-                liveMatch={selectedLiveMatch}
-              />
-            {:else}
-              {#if "scenario" in selectedMatch.team1 && selectedMatch.team1.scenario}
-                <TeamChoice
-                  scenario={selectedMatch.team1.scenario}
-                  matchGroupId={matchGroup.id}
-                />
-              {/if}
-              {#if "scenario" in selectedMatch.team2 && selectedMatch.team2.scenario}
-                <TeamChoice
-                  scenario={selectedMatch.team2.scenario}
-                  matchGroupId={matchGroup.id}
-                />
-              {/if}
-            {/if}
-          </div>
-          <div class="other-matches">
-            {#each matches as [match, liveMatch]}
-              <div
-                class="clickable"
-                on:click={selectMatch(match.id)}
-                on:keydown={() => {}}
-                on:keyup={() => {}}
-                role="button"
-                tabindex="0"
-              >
-                <MatchCardCompact
-                  {match}
-                  {liveMatch}
-                  selected={match.id == selectedMatchId}
-                />
-              </div>
-            {/each}
-          </div>
+<section>
+  <section class="match-details">
+    {#if matchGroup.state == "Scheduled" || matchGroup.state == "NotScheduled"}
+      <h1>
+        Start Time: {nanosecondsToDate(matchGroup.time).toLocaleString()}
+      </h1>
+    {:else if matchGroup.state == "Completed"}
+      <div>Match Group is over</div>
+    {/if}
+    {#if currentScenarios !== undefined}
+      <TeamChoice matchGroupId={matchGroup.id} scenarios={currentScenarios} />
+    {/if}
+    {#if matchGroup.state == "Scheduled"}
+      <h1>Predict the upcoming match-up winners</h1>
+      {#each matchGroup.matches as match}
+        <PredictMatchOutcome {match} />
+      {/each}
+    {:else if matchGroup.state == "NotScheduled"}
+      Not Scheduled TODO
+    {:else}
+      <div class="container">
+        <div class="selected-match">
+          {#if selectedLiveMatch}
+            <LiveMatchComponent
+              match={selectedMatch}
+              liveMatch={selectedLiveMatch}
+            />
+          {:else}
+            <!-- {#if lastScenarios !== undefined}
+              <TeamChoice matchGroupId={matchGroup.id} scenarios={currentScenarios} />
+            {/if} -->
+          {/if}
         </div>
-      {/if}
-    </section>
+        <div class="other-matches">
+          {#each matches as [match, liveMatch]}
+            <div
+              class="clickable"
+              on:click={selectMatch(match.id)}
+              on:keydown={() => {}}
+              on:keyup={() => {}}
+              role="button"
+              tabindex="0"
+            >
+              <MatchCardCompact
+                {match}
+                {liveMatch}
+                selected={match.id == selectedMatchId}
+              />
+            </div>
+          {/each}
+        </div>
+      </div>
+    {/if}
   </section>
-{:else}
-  Loading...
-{/if}
+</section>
 
 <style>
   section {

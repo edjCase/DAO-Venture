@@ -7,10 +7,10 @@ import { IDL } from "@dfinity/candid";
 
 
 export type MatchGroupVote = {
-  'choice': number;
+  'scenarioChoice': number;
 };
 export const MatchGroupVoteIdl = IDL.Record({
-  'choice': IDL.Nat8,
+  'scenarioChoice': IDL.Nat8,
 });
 
 export type GetMatchGroupVoteResult =
@@ -27,7 +27,7 @@ export type VoteOnMatchGroupRequest = MatchGroupVote & {
   'matchGroupId': number;
 };
 export const VoteOnMatchGroupRequestIdl = IDL.Record({
-  'choice': IDL.Nat8,
+  'scenarioChoice': IDL.Nat8,
   'matchGroupId': IDL.Nat
 });
 
