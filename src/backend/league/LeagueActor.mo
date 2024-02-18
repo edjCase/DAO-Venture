@@ -59,12 +59,22 @@ actor LeagueActor {
         getTeamsArray();
     };
 
+    // TODO REMOVE ALL DELETING METHODS
+    public shared func clearTeams() : async () {
+        teams := Trie.empty();
+    };
+
     public query func getSeasonStatus() : async Season.SeasonStatus {
         seasonStatus;
     };
 
     public query func getScenarioTemplates() : async [Scenario.Template] {
         getScenarioTemplateArray();
+    };
+
+    // TODO REMOVE ALL DELETING METHODS
+    public shared ({ caller }) func clearScenarioTemplates() : async () {
+        scenarioTemplates := Trie.empty();
     };
 
     public shared ({ caller }) func addScenarioTemplate(request : Types.AddScenarioTemplateRequest) : async Types.AddScenarioTemplateResult {

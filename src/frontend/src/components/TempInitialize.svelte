@@ -6,8 +6,8 @@
   } from "../ic-agent/Players";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
-  import { Team, teams as teamData } from "../data/TeamData";
-  import { Player, players as playerData } from "../data/PlayerData";
+  import { teams as teamData } from "../data/TeamData";
+  import { players as playerData } from "../data/PlayerData";
   import { traits as traitData } from "../data/TraitData";
   import { Button } from "flowbite-svelte";
   import { scenarios as scenarioData } from "../data/ScenarioData";
@@ -16,14 +16,15 @@
   import { toJsonString } from "../utils/JsonUtil";
 
   $: teams = $teamStore;
+  $: players = $playerStore;
   $: scenarioTemplates = $scenarioTemplateStore;
   $: traits = $traitStore;
 
-  let createTeams = async function (teams: Team[]): Promise<void> {
+  let createTeams = async function (): Promise<void> {
     let leagueAgent = leagueAgentFactory();
     let promises = [];
-    for (let i = 0; i < teams.length; i++) {
-      let team = teams[i];
+    for (let i = 0; i < teamData.length; i++) {
+      let team = teamData[i];
       let promise = leagueAgent.createTeam(team).then(async (result) => {
         if ("ok" in result) {
           let teamId = result.ok;
@@ -38,11 +39,11 @@
     teamStore.refetch();
   };
 
-  let createPlayers = async function (players: Player[]) {
+  let createPlayers = async function () {
     let playersAgent = playersAgentFactory();
     let promises = [];
     // loop over count
-    for (let player of players) {
+    for (let player of playerData) {
       let promise = playersAgent
         .createFluff({
           name: player.name,
@@ -62,6 +63,7 @@
       promises.push(promise);
     }
     await Promise.all(promises);
+    await playerStore.refetch();
   };
 
   let createTraits = async function () {
@@ -86,7 +88,14 @@
     let leagueAgent = leagueAgentFactory();
     let promises = [];
     for (let i = 0; i < scenarioData.length; i++) {
-      let promise = leagueAgent.addScenarioTemplate(scenarioData[i]);
+      let scenario = scenarioData[i];
+      let promise = leagueAgent.addScenarioTemplate(scenario).then((result) => {
+        if ("ok" in result) {
+          console.log("Created scenario: ", scenario.id);
+        } else {
+          console.log("Failed to make scenario: ", scenario.id, scenario);
+        }
+      });
       promises.push(promise);
     }
     await Promise.all(promises);
@@ -94,31 +103,92 @@
   };
 
   let initialize = async function () {
-    await createPlayers(playerData);
-    await createTeams(teamData);
+    await createPlayers();
+    await createTeams();
     await createTraits();
     await createScenarios();
-    playerStore.refetch();
-    traitStore.refetch();
-    scenarioTemplateStore.refetch();
+  };
+  let resetTraits = async function () {
+    console.log("resetting traits");
+    let playersAgent = playersAgentFactory();
+    await playersAgent.clearTraits();
+    await createTraits();
+  };
+  let resetScenarios = async function () {
+    console.log("resetting scenarios");
+    let leagueAgent = leagueAgentFactory();
+    await leagueAgent.clearScenarioTemplates();
+    await createScenarios();
+  };
+  let resetTeams = async function () {
+    console.log("resetting teams");
+    let leagueAgent = leagueAgentFactory();
+    await leagueAgent.clearTeams();
+    await createTeams();
+  };
+  let resetPlayers = async function () {
+    console.log("resetting players");
+    let playersAgent = playersAgentFactory();
+    await playersAgent.clearPlayers();
+    await createPlayers();
+  };
+  let resetTraitsAndScenarios = async function () {
+    await resetTraits();
+    await resetScenarios();
+  };
+  let resetTeamsAndPlayers = async function () {
+    await resetPlayers();
+    await resetTeams();
   };
 </script>
 
-{#if teams.length <= 0}
+{#if players.length + teams.length + scenarioTemplates.length + traits.length <= 0}
   <Button on:click={initialize}>Initialize With Default Data</Button>
-{/if}
-{#if !scenarioTemplates || scenarioTemplates.length <= 0}
-  <Button on:click={createScenarios}>Create Scenarios</Button>
-{/if}
-
-<Button on:click={createTraits}>Create Traits</Button>
-{#if !traits || traits.length <= 0}
-  <Button on:click={createTraits}>Create Traits</Button>
 {:else}
-  <div>
-    <div>Traits:</div>
-    {#each traits as trait}
-      <pre>{toJsonString(trait)}</pre>
-    {/each}
+  <div class="flex">
+    <div class="flex-1 w-1/4">
+      {#if traits.length <= 0}
+        <Button on:click={createTraits}>Create Traits</Button>
+      {:else}
+        <Button on:click={resetTraitsAndScenarios}>Reset Traits</Button>
+        <div>Traits:</div>
+        {#each traits as trait}
+          <pre class="text-wrap">{toJsonString(trait)}</pre>
+        {/each}
+      {/if}
+    </div>
+    <div class="flex-1 w-1/4">
+      {#if scenarioTemplates.length <= 0}
+        <Button on:click={createScenarios}>Create Scenarios</Button>
+      {:else}
+        <Button on:click={resetTraitsAndScenarios}>Reset Scenarios</Button>
+        <div>Scenarios:</div>
+        {#each scenarioTemplates as scenario}
+          <pre class="text-wrap">{toJsonString(scenario)}</pre>
+        {/each}
+      {/if}
+    </div>
+    <div class="flex-1 w-1/4">
+      {#if teams.length <= 0}
+        <Button on:click={createTeams}>Create Teams</Button>
+      {:else}
+        <Button on:click={resetTeamsAndPlayers}>Reset Teams</Button>
+        <div>Teams:</div>
+        {#each teams as team}
+          <pre class="text-wrap">{toJsonString(team)}</pre>
+        {/each}
+      {/if}
+    </div>
+    <div class="flex-1 w-1/4">
+      {#if players.length <= 0}
+        <Button on:click={createPlayers}>Create Players</Button>
+      {:else}
+        <Button on:click={resetTeamsAndPlayers}>Reset Players</Button>
+        <div>Players:</div>
+        {#each players as player}
+          <pre class="text-wrap">{toJsonString(player)}</pre>
+        {/each}
+      {/if}
+    </div>
   </div>
 {/if}

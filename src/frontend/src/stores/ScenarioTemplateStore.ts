@@ -4,7 +4,7 @@ import { leagueAgentFactory } from "../ic-agent/League";
 
 
 export const scenarioTemplateStore = (() => {
-    const { subscribe, set } = writable<ScenarioTemplate[] | undefined>();
+    const { subscribe, set } = writable<ScenarioTemplate[]>([]);
 
     const refetch = () => {
         leagueAgentFactory().getScenarioTemplates().then((result) => {

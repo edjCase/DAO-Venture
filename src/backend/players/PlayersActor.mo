@@ -66,6 +66,13 @@ actor PlayersActor {
         |> Trie.toArray(_, func(k : Nat32, p : Types.Player) : Types.PlayerWithId = { p with id = k });
     };
 
+    // TODO REMOVE DELETING METHODS
+    public shared ({ caller }) func clearPlayers() : async () {
+        players := Trie.empty<Nat32, Types.Player>();
+        futurePlayers := [];
+        retiredPlayers := Trie.empty<Nat32, Types.RetiredPlayer>();
+    };
+
     public shared ({ caller }) func populateTeamRoster(teamId : Principal) : async Types.PopulateTeamRosterResult {
         assertLeague(caller);
         // TODO validate that the teamid is valid?
@@ -155,6 +162,11 @@ actor PlayersActor {
         };
         futurePlayers := Buffer.toArray(futurePlayersBuffer);
         #ok(Buffer.toArray(newPlayersBuffer));
+    };
+
+    // TODO REMOVE DELETING METHODS
+    public shared ({ caller }) func clearTraits() : async () {
+        traits := Trie.empty<Text, Trait.Trait>();
     };
 
     public shared query ({ caller }) func getTraits() : async [Trait.Trait] {

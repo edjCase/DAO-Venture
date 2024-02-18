@@ -4,7 +4,7 @@ import { Trait } from "../models/Trait";
 
 
 export const traitStore = (() => {
-    const { subscribe, set } = writable<Trait[] | undefined>();
+    const { subscribe, set } = writable<Trait[]>([]);
 
     const refetch = () => {
         playersAgentFactory()

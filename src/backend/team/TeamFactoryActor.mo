@@ -57,16 +57,18 @@ actor TeamFactoryActor {
     };
 
     public func updateCanisters() : async () {
-        let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
-        for ((teamId, teamInfo) in Trie.iter(teams)) {
-            let teamActor = actor (Principal.toText(teamId)) : Types.TeamActor;
+        if (Trie.size(teams) > 0) {
+            let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
+            for ((teamId, teamInfo) in Trie.iter(teams)) {
+                let teamActor = actor (Principal.toText(teamId)) : Types.TeamActor;
 
-            try {
-                let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(
-                    leagueId, // Dummy argument, update doesn't use them
-                );
-            } catch (err) {
-                Debug.print("Error upgrading team actor: " # Error.message(err));
+                try {
+                    let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(
+                        leagueId
+                    );
+                } catch (err) {
+                    Debug.print("Error upgrading team actor: " # Error.message(err));
+                };
             };
         };
     };

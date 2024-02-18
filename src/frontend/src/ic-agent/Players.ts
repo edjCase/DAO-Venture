@@ -150,6 +150,8 @@ export interface _SERVICE {
   'setPlayerTeam': ActorMethod<[number, [] | [Principal]], SetPlayerTeamResult>,
   'addTrait': ActorMethod<[AddTraitRequest], AddTraitResult>,
   'getTraits': ActorMethod<[], Array<Trait>>;
+  'clearTraits': ActorMethod<[], []>;
+  'clearPlayers': ActorMethod<[], []>;
 }
 
 
@@ -166,6 +168,8 @@ export const idlFactory: InterfaceFactory = ({ IDL }) => {
     ),
     'addTrait': IDL.Func([AddTraitRequestIdl], [AddTraitResultIdl], []),
     'getTraits': IDL.Func([], [IDL.Vec(TraitIdl)], ['query']),
+    'clearTraits': IDL.Func([], [], []),
+    'clearPlayers': IDL.Func([], [], []),
   });
 };
 const canisterId = process.env.CANISTER_ID_PLAYERS || "";

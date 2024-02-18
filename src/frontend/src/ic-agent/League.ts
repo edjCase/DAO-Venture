@@ -250,6 +250,8 @@ export interface _SERVICE {
   'startMatchGroup': ActorMethod<[Nat], StartMatchGroupResult>,
   'setUserIsAdmin': ActorMethod<[Principal, Bool], SetUserIsAdminResult>,
   'getAdmins': ActorMethod<[], Array<Principal>>,
+  'clearTeams': ActorMethod<[], []>,
+  'clearScenarioTemplates': ActorMethod<[], []>,
 }
 
 export const idlFactory: InterfaceFactory = ({ }) => {
@@ -268,6 +270,8 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'startMatchGroup': IDL.Func([IDL.Nat], [StartMatchGroupResultIdl], []),
     'setUserIsAdmin': IDL.Func([IDL.Principal, IDL.Bool], [SetUserIsAdminResultIdl], []),
     'getAdmins': IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
+    'clearTeams': IDL.Func([], [], []),
+    'clearScenarioTemplates': IDL.Func([], [], []),
   });
 };
 

@@ -12,4 +12,6 @@
   <ScheduleSeason />
 </div>
 ---
-<TempInitialize />
+<div>
+  <TempInitialize />
+</div>
