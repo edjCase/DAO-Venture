@@ -9,6 +9,7 @@ import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
 import Random "mo:base/Random";
+import Nat "mo:base/Nat";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Types "Types";
@@ -22,6 +23,7 @@ actor PlayersActor {
 
     stable var nextPlayerId : Nat32 = 1;
     stable var players = Trie.empty<Nat32, Types.Player>();
+    stable var stats = Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
     stable var traits = Trie.empty<Text, Trait.Trait>();
     stable var futurePlayers : [Types.FuturePlayer] = [];
     stable var retiredPlayers = Trie.empty<Nat32, Types.RetiredPlayer>();
@@ -256,6 +258,32 @@ actor PlayersActor {
             };
         };
         #ok;
+    };
+
+    public shared ({ caller }) func addMatchStats(matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) : async () {
+        assertLeague(caller);
+
+        let matchGroupKey = {
+            key = matchGroupId;
+            hash = Nat32.fromNat(matchGroupId); // TODO
+        };
+        for (playerStat in Iter.fromArray(playerStats)) {
+            let playerKey = {
+                key = playerStat.playerId;
+                hash = playerStat.playerId;
+            };
+            let playerMatchGroupStats = switch (Trie.get(stats, playerKey, Nat32.equal)) {
+                case (null) Trie.empty<Nat, Player.PlayerMatchStats>();
+                case (?p) p;
+            };
+
+            let (newPlayerMatchGroupStats, oldPlayerStat) = Trie.put(playerMatchGroupStats, matchGroupKey, Nat.equal, playerStat);
+            if (oldPlayerStat != null) {
+                Debug.trap("Player match stats already exist for match group: " # Nat.toText(matchGroupId) # " and player: " # Nat32.toText(playerStat.playerId));
+            };
+            let (newStats, _) = Trie.put(stats, playerKey, Nat32.equal, newPlayerMatchGroupStats);
+            stats := newStats;
+        };
     };
 
     private func getTargetPlayerIds(target : Scenario.TargetInstance) : [Nat32] {

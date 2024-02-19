@@ -41,11 +41,6 @@ module {
     type MatchAura = MatchAura.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type TickResult = {
-        #inProgress : StadiumTypes.InProgressMatch;
-        #completed : LeagueTypes.MatchCompleteResult;
-    };
-
     type SimulationResult = {
         #endMatch : MatchEndReason;
         #inProgress;
@@ -201,7 +196,7 @@ module {
         );
     };
 
-    public func tick(match : StadiumTypes.InProgressMatch, random : Prng) : TickResult {
+    public func tick(match : StadiumTypes.InProgressMatch, random : Prng) : StadiumTypes.TickResult {
         let compiledHooks = HookCompiler.compile(match);
         let simulation = MatchSimulation(match, random, compiledHooks);
         simulation.tick();
@@ -215,7 +210,7 @@ module {
 
         let state : MutableState.MutableMatchState = MutableState.MutableMatchState(initialState);
 
-        public func tick() : TickResult {
+        public func tick() : StadiumTypes.TickResult {
             state.startTurn();
             if (state.log.rounds.size() < 1) {
                 // Need to log first batter, others handled when batter switches
@@ -249,7 +244,7 @@ module {
             buildTickResult(result);
         };
 
-        private func buildTickResult(result : SimulationResult) : TickResult {
+        private func buildTickResult(result : SimulationResult) : StadiumTypes.TickResult {
 
             switch (result) {
                 case (#inProgress) #inProgress(buildLiveMatch());
@@ -348,7 +343,7 @@ module {
             };
         };
 
-        private func buildCompletedMatch(reason : MatchEndReason) : LeagueTypes.MatchCompleteResult {
+        private func buildCompletedMatch(reason : MatchEndReason) : StadiumTypes.CompletedTickResult {
             let (winner, matchEndReason) : (Team.TeamIdOrTie, StadiumTypes.MatchEndReason) = switch (reason) {
                 case (#noMoreRounds) {
                     let winner = if (state.team1.score > state.team2.score) {
@@ -368,12 +363,15 @@ module {
             let playerStats = buildPlayerStats();
 
             {
-                team1 = mapMutableTeam(state.team1);
-                team2 = mapMutableTeam(state.team2);
-                aura = state.aura;
-                log = log;
-                winner = winner;
-                playerStats = playerStats;
+                match = {
+                    team1 = mapMutableTeam(state.team1);
+                    team2 = mapMutableTeam(state.team2);
+                    aura = state.aura;
+                    log = log;
+                    winner = winner;
+                    playerStats = playerStats;
+                };
+                matchStats = playerStats;
             };
         };
 

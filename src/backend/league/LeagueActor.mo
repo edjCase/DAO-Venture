@@ -594,6 +594,11 @@ actor LeagueActor {
         };
         teamStandings := ?updatedTeamStandings;
         seasonStatus := #inProgress(updatedSeason);
+        try {
+            await PlayersActor.addMatchStats(request.id, request.playerStats);
+        } catch (err) {
+            Debug.print("Failed to award user points: " # Error.message(err));
+        };
 
         // Get next match group to schedule
         let nextMatchGroupId = request.id + 1;

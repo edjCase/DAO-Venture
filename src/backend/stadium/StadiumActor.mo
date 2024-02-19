@@ -40,11 +40,6 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
 
     type MatchGroupId = Nat;
 
-    type InProgressMatchGroup = {
-        #inProgress : StadiumTypes.InProgressMatch;
-        #completed : LeagueTypes.MatchCompleteResult;
-    };
-
     stable var matchGroups = Trie.empty<Nat, StadiumTypes.MatchGroup>();
 
     system func postupgrade() {
@@ -87,7 +82,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         let prng = PseudoRandomX.fromBlob(await Random.blob());
         let tickTimerId = startTickTimer(request.id);
 
-        let matches = Buffer.Buffer<StadiumTypes.MatchVariant>(request.matches.size());
+        let matches = Buffer.Buffer<StadiumTypes.TickResult>(request.matches.size());
         label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
 
             let team1IsOffense = prng.nextCoin();
@@ -118,16 +113,35 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
         let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
         switch (tickMatches(prng, matchGroup.matches)) {
-            case (#completed(completedMatches)) {
+            case (#completed(completedTickResults)) {
                 // Cancel tick timer before disposing of match group
                 // NOTE: Should be canceled even if the onMatchGroupComplete fails, so it doesnt
                 // just keep ticking. Can retrigger manually if needed after fixing the
                 // issue
+
+                let completedMatches = completedTickResults
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(tickResult : StadiumTypes.CompletedTickResult) : Season.CompletedMatch = tickResult.match,
+                )
+                |> Iter.toArray(_);
+
+                let playerStats = completedTickResults
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(tickResult : StadiumTypes.CompletedTickResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
+                )
+                |> IterTools.flatten<Player.PlayerMatchStatsWithId>(_)
+                |> Iter.toArray(_);
+
                 Timer.cancelTimer(matchGroup.tickTimerId);
                 let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
                 let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
                     id = matchGroupId;
                     matches = completedMatches;
+                    playerStats = playerStats;
                 };
                 let result = try {
                     await leagueActor.onMatchGroupComplete(onCompleteRequest);
@@ -212,14 +226,14 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         Debug.print("Tick Match Group Callback Result - " # message);
     };
 
-    private func tickMatches(prng : Prng, matches : [InProgressMatchGroup]) : {
-        #completed : [LeagueTypes.MatchCompleteResult];
-        #inProgress : [InProgressMatchGroup];
+    private func tickMatches(prng : Prng, matches : [StadiumTypes.TickResult]) : {
+        #completed : [StadiumTypes.CompletedTickResult];
+        #inProgress : [StadiumTypes.TickResult];
     } {
-        let completedMatches = Buffer.Buffer<LeagueTypes.MatchCompleteResult>(matches.size());
-        let allMatches = Buffer.Buffer<InProgressMatchGroup>(matches.size());
+        let completedMatches = Buffer.Buffer<StadiumTypes.CompletedTickResult>(matches.size());
+        let allMatches = Buffer.Buffer<StadiumTypes.TickResult>(matches.size());
         for (match in Iter.fromArray(matches)) {
-            let updatedMatch : InProgressMatchGroup = switch (match) {
+            let updatedMatch : StadiumTypes.TickResult = switch (match) {
                 case (#completed(completedMatch)) {
                     completedMatches.add(completedMatch);
                     #completed(completedMatch);

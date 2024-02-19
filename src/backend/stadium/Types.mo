@@ -92,13 +92,9 @@ module {
         #ok;
     };
 
-    public type MatchCompleteResult = Season.CompletedMatch and {
-        playerStats : [Player.PlayerMatchStatsWithId];
-    };
-
     public type MatchVariant = {
         #inProgress : InProgressMatch;
-        #completed : MatchCompleteResult;
+        #completed : Season.CompletedMatch;
     };
 
     public type RoundLog = {
@@ -241,8 +237,18 @@ module {
         #playerExpectedOnField : PlayerExpectedOnFieldError;
     };
 
+    public type CompletedTickResult = {
+        match : Season.CompletedMatch;
+        matchStats : [Player.PlayerMatchStatsWithId];
+    };
+
+    public type TickResult = {
+        #inProgress : InProgressMatch;
+        #completed : CompletedTickResult;
+    };
+
     public type MatchGroup = {
-        matches : [MatchVariant];
+        matches : [TickResult];
         tickTimerId : Nat;
         currentSeed : Nat32;
     };

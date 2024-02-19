@@ -134,13 +134,10 @@ module {
 
     // On complete
 
-    public type MatchCompleteResult = Season.CompletedMatch and {
-        playerStats : [Player.PlayerMatchStatsWithId];
-    };
-
     public type OnMatchGroupCompleteRequest = {
         id : Nat;
-        matches : [MatchCompleteResult];
+        matches : [Season.CompletedMatch];
+        playerStats : [Player.PlayerMatchStatsWithId];
     };
 
     public type PlayedMatchResult = {
