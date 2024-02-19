@@ -16,10 +16,14 @@ module {
         if (index >= array.size()) {
             null;
         } else {
-            let newArray = Buffer.fromArray<T>(array);
-            newArray.put(index, value);
-            ?Buffer.toArray(newArray);
+            ?arrayUpdateElement(array, index, value);
         };
+    };
+
+    public func arrayUpdateElement<T>(array : [T], index : Nat, value : T) : [T] {
+        let newArray = Buffer.fromArray<T>(array);
+        newArray.put(index, value);
+        Buffer.toArray(newArray);
     };
 
 };

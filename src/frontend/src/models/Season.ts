@@ -1,10 +1,9 @@
 import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
-import { TeamId, TeamIdIdl, TeamIdOrTie, TeamIdOrTieIdl } from './Team';
+import { TeamIdOrTie, TeamIdOrTieIdl } from './Team';
 import { ScenarioInstance, ScenarioInstanceIdl, ScenarioInstanceWithChoice, ScenarioInstanceWithChoiceIdl } from './Scenario';
 import { PlayerId } from './Player';
-import { PlayerIdl } from '../ic-agent/Players';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -88,14 +87,14 @@ export type TeamPositions = {
     rightField: PlayerId;
 };
 export const TeamPositionsIdl = IDL.Record({
-    firstBase: PlayerIdl,
-    secondBase: PlayerIdl,
-    thirdBase: PlayerIdl,
-    shortStop: PlayerIdl,
-    pitcher: PlayerIdl,
-    leftField: PlayerIdl,
-    centerField: PlayerIdl,
-    rightField: PlayerIdl,
+    firstBase: IDL.Nat32,
+    secondBase: IDL.Nat32,
+    thirdBase: IDL.Nat32,
+    shortStop: IDL.Nat32,
+    pitcher: IDL.Nat32,
+    leftField: IDL.Nat32,
+    centerField: IDL.Nat32,
+    rightField: IDL.Nat32,
 });
 
 export type InProgressTeam = TeamInfo & {
@@ -114,13 +113,11 @@ export type InProgressMatch = {
     team1: InProgressTeam;
     team2: InProgressTeam;
     aura: MatchAura;
-    predictions: [Principal, TeamId][];
 };
 export const InProgressMatchIdl = IDL.Record({
     team1: InProgressTeamIdl,
     team2: InProgressTeamIdl,
     aura: MatchAuraIdl,
-    predictions: IDL.Vec(IDL.Tuple(IDL.Principal, TeamIdIdl)),
 });
 
 export type CompletedMatchTeam = TeamInfo & {
@@ -138,7 +135,6 @@ export const CompletedMatchTeamIdl = IDL.Record({
 });
 
 export type PlayerMatchStats = {
-    playerId: PlayerId;
     battingStats: {
         atBats: Nat;
         hits: Nat;
@@ -162,8 +158,37 @@ export type PlayerMatchStats = {
     };
     injuries: Nat;
 };
+
 export const PlayerMatchStatsIdl = IDL.Record({
-    playerId: PlayerIdl,
+    battingStats: IDL.Record({
+        atBats: IDL.Nat,
+        hits: IDL.Nat,
+        strikeouts: IDL.Nat,
+        runs: IDL.Nat,
+        homeRuns: IDL.Nat,
+    }),
+    catchingStats: IDL.Record({
+        successfulCatches: IDL.Nat,
+        missedCatches: IDL.Nat,
+        throws: IDL.Nat,
+        throwOuts: IDL.Nat,
+    }),
+    pitchingStats: IDL.Record({
+        pitches: IDL.Nat,
+        strikes: IDL.Nat,
+        hits: IDL.Nat,
+        strikeouts: IDL.Nat,
+        runs: IDL.Nat,
+        homeRuns: IDL.Nat,
+    }),
+    injuries: IDL.Nat,
+});
+
+export type PlayerMatchStatsWithId = PlayerMatchStats & {
+    playerId: PlayerId;
+};
+export const PlayerMatchStatsWithIdIdl = IDL.Record({
+    playerId: IDL.Nat32,
     battingStats: IDL.Record({
         atBats: IDL.Nat,
         hits: IDL.Nat,
@@ -190,23 +215,12 @@ export const PlayerMatchStatsIdl = IDL.Record({
 
 
 
-export type CompletedMatchWithoutPredictions = {
+export type CompletedMatch = {
     team1: CompletedMatchTeam;
     team2: CompletedMatchTeam;
     aura: MatchAura;
     winner: TeamIdOrTie;
-    playerStats: PlayerMatchStats[];
-};
-export const CompletedMatchWithoutPredictionsIdl = IDL.Record({
-    team1: CompletedMatchTeamIdl,
-    team2: CompletedMatchTeamIdl,
-    aura: MatchAuraIdl,
-    winner: TeamIdOrTieIdl,
-    playerStats: IDL.Vec(PlayerMatchStatsIdl),
-});
-
-export type CompletedMatch = CompletedMatchWithoutPredictions & {
-    predictions: [Principal, TeamId][];
+    playerStats: PlayerMatchStatsWithId[];
 };
 export const CompletedMatchIdl = IDL.Record({
     team1: CompletedMatchTeamIdl,
@@ -214,8 +228,8 @@ export const CompletedMatchIdl = IDL.Record({
     aura: MatchAuraIdl,
     winner: TeamIdOrTieIdl,
     playerStats: IDL.Vec(PlayerMatchStatsIdl),
-    predictions: IDL.Vec(IDL.Tuple(IDL.Principal, TeamIdIdl)),
 });
+
 
 export type CompletedSeasonTeam = TeamInfo & {
     wins: Nat;
@@ -299,11 +313,9 @@ export const InProgressSeasonMatchGroupVariantIdl = IDL.Variant({
 
 export type InProgressSeason = {
     matchGroups: InProgressSeasonMatchGroupVariant[];
-    teamStandings: [TeamStandingInfo[]] | [];
 };
 export const InProgressSeasonIdl = IDL.Record({
     matchGroups: IDL.Vec(InProgressSeasonMatchGroupVariantIdl),
-    teamStandings: IDL.Opt(IDL.Vec(TeamStandingInfoIdl)),
 });
 
 export type SeasonStatus =

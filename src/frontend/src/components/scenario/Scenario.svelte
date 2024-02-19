@@ -64,24 +64,26 @@
 </script>
 
 <div>
-  <div>
+  <div class="p-5 pt-0">
     {@html scenarioData.description}
   </div>
   {#if scenarioData.choice}
     <div>
-      <div class="title">
+      <div class="font-bold">
         {@html scenarioData.options[scenarioData.choice].title}
       </div>
-      <div class="description">
+      <div class="">
         {@html scenarioData.options[scenarioData.choice].description}
       </div>
     </div>
   {:else}
-    <div class="flex flex-col">
+    <div class="flex flex-col items-center gap-2">
       {#each scenarioData.options as { id, title, description }, index}
         <div
-          class="card"
-          class:selected={selectedChoice === id}
+          class="border border-gray-300 p-4 rounded-lg flex-1 cursor-pointer text-left w-96 text-base text-white"
+          class:bg-gray-500={selectedChoice === id}
+          class:border-gray-500={selectedChoice === id}
+          class:bg-gray-800={selectedChoice !== id}
           on:click={() => {
             selectedChoice = id;
           }}
@@ -89,43 +91,21 @@
           role="button"
           tabindex={index}
         >
-          <div class="title">{@html title}</div>
-          <div class="description">
+          <div class="font-bold">{@html title}</div>
+          <div class="">
             {@html description}
           </div>
         </div>
       {/each}
     </div>
-    <Button
-      on:click={() => {
-        register();
-      }}
-    >
-      Submit Vote
-    </Button>
+    <div class="flex justify-center p-5">
+      <Button
+        on:click={() => {
+          register();
+        }}
+      >
+        Submit Vote
+      </Button>
+    </div>
   {/if}
 </div>
-
-<style>
-  .card {
-    border: 1px solid #ddd;
-    padding: 16px;
-    background-color: var(--color-bg-dark);
-    border-radius: 8px;
-    flex: 1;
-    cursor: pointer;
-    text-align: left;
-    width: 400px;
-    font-size: 1em;
-    color: var(--color-text);
-  }
-  .card.selected {
-    background-color: #e0f7fa;
-    border-color: #00838f;
-    color: black;
-  }
-
-  .title {
-    font-weight: bold;
-  }
-</style>

@@ -176,7 +176,16 @@ module {
                 };
             };
         };
-        Iter.make<Scenario.EffectOutcome>(singleEffect);
+        var used = false;
+        {
+            next = func() : ?Scenario.EffectOutcome {
+                if (used) {
+                    return null;
+                };
+                used := true;
+                ?singleEffect;
+            };
+        };
     };
 
     private func getTeamId(scenario : Scenario.Instance, team : Scenario.Team) : Principal {

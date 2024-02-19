@@ -1,6 +1,6 @@
 
 import { Principal } from "@dfinity/principal";
-import { TeamId, TeamIdOrTie } from "./Team";
+import { TeamIdOrTie } from "./Team";
 import { ScenarioInstance, ScenarioInstanceWithChoice } from "./Scenario";
 
 
@@ -19,7 +19,6 @@ export type MatchDetails = {
     team2: TeamDetailsOrUndetermined;
     winner: TeamIdOrTie | undefined;
     state: MatchState;
-    predictions: Map<string, TeamId>;
 };
 export type MatchState = 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Played' | 'Error';
 

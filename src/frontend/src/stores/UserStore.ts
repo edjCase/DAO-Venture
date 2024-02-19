@@ -1,6 +1,6 @@
 import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { GetUserResult, User, usersAgentFactory } from '../ic-agent/Users';
 import { Identity } from '@dfinity/agent';
 import { leagueAgentFactory } from '../ic-agent/League';
@@ -91,8 +91,12 @@ function createUserStore() {
     };
 
     const setFavoriteTeam = async (teamId: Principal) => {
+        let user = get({ subscribe });
+        if (user === undefined) {
+            throw new Error("User not logged in, cannot set favorite team");
+        }
         await usersAgentFactory()
-            .setFavoriteTeam(teamId);
+            .setFavoriteTeam(user.id, teamId);
         refresh();
     };
 

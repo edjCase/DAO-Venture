@@ -42,7 +42,7 @@ module {
 
     public type TickResult = {
         #inProgress : StadiumTypes.InProgressMatch;
-        #completed : Season.CompletedMatchWithoutPredictions;
+        #completed : Season.CompletedMatch;
     };
 
     type SimulationResult = {
@@ -347,7 +347,7 @@ module {
             };
         };
 
-        private func buildCompletedMatch(reason : MatchEndReason) : Season.CompletedMatchWithoutPredictions {
+        private func buildCompletedMatch(reason : MatchEndReason) : Season.CompletedMatch {
             let (winner, matchEndReason) : (Team.TeamIdOrTie, StadiumTypes.MatchEndReason) = switch (reason) {
                 case (#noMoreRounds) {
                     let winner = if (state.team1.score > state.team2.score) {

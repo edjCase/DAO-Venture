@@ -21,16 +21,8 @@ module {
         #completed : CompletedSeason;
     };
 
-    public type TeamStandingInfo = {
-        id : Principal;
-        wins : Nat;
-        losses : Nat;
-        totalScore : Int;
-    };
-
     public type InProgressSeason = {
         matchGroups : [InProgressSeasonMatchGroupVariant];
-        teamStandings : ?[TeamStandingInfo]; // First team to last team
     };
 
     public type InProgressSeasonMatchGroupVariant = {
@@ -104,7 +96,6 @@ module {
         team1 : InProgressTeam;
         team2 : InProgressTeam;
         aura : MatchAura.MatchAura;
-        predictions : [(Principal, Team.TeamId)];
     };
 
     public type CompletedMatchTeam = TeamInfo and {
@@ -141,16 +132,12 @@ module {
         playerId : Player.PlayerId;
     };
 
-    public type CompletedMatchWithoutPredictions = {
+    public type CompletedMatch = {
         team1 : CompletedMatchTeam;
         team2 : CompletedMatchTeam;
         aura : MatchAura.MatchAura;
         winner : Team.TeamIdOrTie;
         playerStats : [PlayerMatchStatsWithId];
-    };
-
-    public type CompletedMatch = CompletedMatchWithoutPredictions and {
-        predictions : [(Principal, Team.TeamId)];
     };
 
     public type CompletedMatchGroup = {

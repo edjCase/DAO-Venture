@@ -745,7 +745,7 @@ test(
         };
         let iterations = 10;
 
-        let completedMatches = Buffer.Buffer<Season.CompletedMatchWithoutPredictions>(iterations);
+        let completedMatches = Buffer.Buffer<Season.CompletedMatch>(iterations);
         for (i in IterTools.range(0, iterations)) {
             var currentState = state;
             label l loop {

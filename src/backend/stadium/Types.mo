@@ -94,7 +94,7 @@ module {
 
     public type MatchVariant = {
         #inProgress : InProgressMatch;
-        #completed : Season.CompletedMatchWithoutPredictions;
+        #completed : Season.CompletedMatch;
     };
 
     public type RoundLog = {

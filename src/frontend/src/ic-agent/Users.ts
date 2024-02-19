@@ -164,14 +164,14 @@ export const SetFavoriteTeamResultIdl = IDL.Variant({
 
 export interface _SERVICE {
     'get': ActorMethod<[Principal], GetUserResult>,
-    'setFavoriteTeam': ActorMethod<[Principal], SetFavoriteTeamResult>;
+    'setFavoriteTeam': ActorMethod<[Principal, Principal], SetFavoriteTeamResult>;
 }
 
 
 export const idlFactory: InterfaceFactory = ({ IDL }) => {
     return IDL.Service({
         'get': IDL.Func([IDL.Principal], [GetUserResultIdl], ['query']),
-        'setFavoriteTeam': IDL.Func([IDL.Principal], [SetFavoriteTeamResultIdl], []),
+        'setFavoriteTeam': IDL.Func([IDL.Principal, IDL.Principal], [SetFavoriteTeamResultIdl], []),
     });
 };
 const canisterId = process.env.CANISTER_ID_USERS || "";

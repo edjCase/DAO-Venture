@@ -100,10 +100,14 @@ export const TraitEffectOutcomeIdl = IDL.Record({
 
 export type EffectOutcome =
     | { 'trait': TraitEffectOutcome }
-    | { 'entropy': { teamId: Principal; delta: bigint } };
+    | { 'removeTrait': { target: TargetInstance; traitId: string } }
+    | { 'entropy': { teamId: Principal; delta: bigint } }
+    | { 'injury': { target: TargetInstance; injury: Injury } };
 export const EffectOutcomeIdl = IDL.Variant({
     trait: TraitEffectOutcomeIdl,
+    removeTrait: IDL.Record({ target: TargetInstanceIdl, traitId: IDL.Text }),
     entropy: IDL.Record({ teamId: IDL.Principal, delta: IDL.Int }),
+    injury: IDL.Record({ target: TargetInstanceIdl, injury: InjuryIdl }),
 })
 
 export interface ScenarioTeam {
@@ -172,7 +176,7 @@ export const ScenarioInstanceWithChoiceIdl = IDL.Record({
     teamId: IDL.Principal,
     opposingTeamId: IDL.Principal,
     otherTeamIds: IDL.Vec(IDL.Principal),
-    playerIds: IDL.Vec(IDL.Nat),
+    playerIds: IDL.Vec(IDL.Nat32),
     choice: IDL.Nat8,
     effectOutcomes: IDL.Vec(EffectOutcomeIdl)
 });

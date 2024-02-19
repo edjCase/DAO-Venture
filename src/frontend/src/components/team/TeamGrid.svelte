@@ -34,9 +34,11 @@
           </div>
           <div>
             {#if user}
-              {#if user.favoriteTeamId?.compareTo(team.id) == "eq"}
-                <StarSolid size="lg" />
-              {:else if !user.favoriteTeamId}
+              {#if user.user?.favoriteTeamId.length == 1}
+                {#if user.user.favoriteTeamId[0].compareTo(team.id) == "eq"}
+                  <StarSolid size="lg" />
+                {/if}
+              {:else}
                 <StarOutline
                   size="lg"
                   role="button"

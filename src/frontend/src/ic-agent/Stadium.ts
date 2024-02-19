@@ -7,7 +7,7 @@ import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
 import { Injury, InjuryIdl, PlayerCondition, PlayerConditionIdl, PlayerSkills, PlayerSkillsIdl } from "../models/Player";
-import { CompletedMatchWithoutPredictions, CompletedMatchWithoutPredictionsIdl, PlayerMatchStats, PlayerMatchStatsIdl, TeamPositions, TeamPositionsIdl } from "../models/Season";
+import { CompletedMatch, CompletedMatchIdl, PlayerMatchStats, PlayerMatchStatsIdl, TeamPositions, TeamPositionsIdl } from "../models/Season";
 import { Trait, TraitIdl } from '../models/Trait';
 import { Curse, CurseIdl } from '../models/Curse';
 import { Blessing, BlessingIdl } from '../models/Blessing';
@@ -338,10 +338,10 @@ export const InProgressMatchIdl = IDL.Record({
 
 export type MatchVariant =
   | { inProgress: InProgressMatch }
-  | { completed: CompletedMatchWithoutPredictions };
+  | { completed: CompletedMatch };
 export const MatchVariantIdl = IDL.Variant({
   inProgress: InProgressMatchIdl,
-  completed: CompletedMatchWithoutPredictionsIdl,
+  completed: CompletedMatchIdl,
 });
 
 export type MatchGroup = {

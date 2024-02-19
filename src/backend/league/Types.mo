@@ -14,6 +14,7 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getScenarioTemplates : query () -> async [Scenario.Template];
+        getTeamStandings : query () -> async GetTeamStandingsResult;
         addScenarioTemplate : (request : AddScenarioTemplateRequest) -> async AddScenarioTemplateResult;
         processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
@@ -26,6 +27,18 @@ module {
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
         setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
         getAdmins : query () -> async [Principal];
+    };
+
+    public type TeamStandingInfo = {
+        id : Principal;
+        wins : Nat;
+        losses : Nat;
+        totalScore : Int;
+    };
+
+    public type GetTeamStandingsResult = {
+        #ok : [TeamStandingInfo];
+        #notFound;
     };
 
     public type ProcessEffectOutcomesRequest = {
@@ -123,7 +136,7 @@ module {
 
     public type OnMatchGroupCompleteRequest = {
         id : Nat;
-        matches : [Season.CompletedMatchWithoutPredictions];
+        matches : [Season.CompletedMatch];
     };
 
     public type PlayedMatchResult = {

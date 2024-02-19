@@ -10,6 +10,7 @@
   import MatchCardCompact from "./MatchCardCompact.svelte";
   import TeamChoice from "../scenario/Scenarios.svelte";
   import { ScenarioInstance } from "../../models/Scenario";
+  import Countdown from "../common/Countdown.svelte";
 
   export let matchGroup: MatchGroupDetails;
 
@@ -60,9 +61,7 @@
 <section>
   <section class="match-details">
     {#if matchGroup.state == "Scheduled" || matchGroup.state == "NotScheduled"}
-      <h1>
-        Start Time: {nanosecondsToDate(matchGroup.time).toLocaleString()}
-      </h1>
+      <Countdown title="Next Match" date={nanosecondsToDate(matchGroup.time)} />
     {:else if matchGroup.state == "Completed"}
       <div>Match Group is over</div>
     {/if}

@@ -11,8 +11,6 @@ import {
     TeamInfo,
 } from "../models/Season";
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined } from "../models/Match";
-import { Principal } from "@dfinity/principal";
-import { TeamId } from "../models/Team";
 import { ScenarioInstance, ScenarioInstanceWithChoice } from "../models/Scenario";
 
 type MatchVariant =
@@ -47,9 +45,6 @@ export const scheduleStore = (() => {
             scenario: scenario
         };
     };
-    const mapPredictions = (predictions: [Principal, TeamId][]): Map<string, TeamId> => {
-        return new Map(predictions.map(([principal, teamId]) => [principal.toText(), teamId]));
-    };
     const mapMatch = (
         index: number,
         matchGroupId: number,
@@ -64,8 +59,7 @@ export const scheduleStore = (() => {
                 state: "Played",
                 team1: mapTeam(match.completed.team1, match.completed.team1.scenario, match.completed.team1.score),
                 team2: mapTeam(match.completed.team2, match.completed.team2.scenario, match.completed.team2.score),
-                winner: match.completed.winner,
-                predictions: mapPredictions(match.completed.predictions)
+                winner: match.completed.winner
             };
         } else if ('inProgress' in match) {
             return {
@@ -76,7 +70,6 @@ export const scheduleStore = (() => {
                 team1: mapTeam(match.inProgress.team1, match.inProgress.team1.scenario, undefined),
                 team2: mapTeam(match.inProgress.team2, match.inProgress.team2.scenario, undefined),
                 winner: undefined,
-                predictions: mapPredictions(match.inProgress.predictions)
             };
         }
         else if ('scheduled' in match) {
@@ -87,8 +80,7 @@ export const scheduleStore = (() => {
                 state: 'Scheduled',
                 team1: mapTeam(match.scheduled.team1, match.scheduled.team1.scenario, undefined),
                 team2: mapTeam(match.scheduled.team2, match.scheduled.team2.scenario, undefined),
-                winner: undefined,
-                predictions: mapPredictions([]) // TODO how to get live voting predictions?
+                winner: undefined
             };
         }
         else {
@@ -99,8 +91,7 @@ export const scheduleStore = (() => {
                 state: 'NotScheduled',
                 team1: mapTeamAssignment(match.notScheduled.team1, undefined),
                 team2: mapTeamAssignment(match.notScheduled.team2, undefined),
-                winner: undefined,
-                predictions: new Map()
+                winner: undefined
             };
         }
     };

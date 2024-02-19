@@ -7,13 +7,13 @@ export type Team = {
 };
 
 export const teams: Team[] = [
-    {
-        "name": "Paperclips",
-        "description": "Originally a group of office supply enthusiasts, the Paperclips team is known for their ability to hold things together under pressure. Their ingenuity in strategy is as versatile as a paperclip's uses.",
-        "motto": "Binding Challenges, Unfolding Victories",
-        "logoUrl": "/images/team-logos/paperclips.png",
-        "color": [192, 192, 192]
-    },
+    // {
+    //     "name": "Paperclips",
+    //     "description": "Originally a group of office supply enthusiasts, the Paperclips team is known for their ability to hold things together under pressure. Their ingenuity in strategy is as versatile as a paperclip's uses.",
+    //     "motto": "Binding Challenges, Unfolding Victories",
+    //     "logoUrl": "/images/team-logos/paperclips.png",
+    //     "color": [192, 192, 192]
+    // },
     {
         "name": "Pancakes",
         "description": "The Pancakes team, with their layers of talent, emerged from a legendary diner where ideas and syrup flowed freely. They're famous for flipping expectations and serving up surprises.",
@@ -28,13 +28,13 @@ export const teams: Team[] = [
         "logoUrl": "/images/team-logos/tumbleweeds.png",
         "color": [210, 180, 140]
     },
-    {
-        "name": "Corkscrews",
-        "description": "The Corkscrews, masters of the unexpected twist, are a team that believes in unearthing hidden potential. Their strategies often involve complex turns but always aim for a satisfying finish.",
-        "motto": "Twisting Paths to Triumphant Ends",
-        "logoUrl": "/images/team-logos/corkscrews.png",
-        "color": [150, 75, 0]
-    },
+    // {
+    //     "name": "Corkscrews",
+    //     "description": "The Corkscrews, masters of the unexpected twist, are a team that believes in unearthing hidden potential. Their strategies often involve complex turns but always aim for a satisfying finish.",
+    //     "motto": "Twisting Paths to Triumphant Ends",
+    //     "logoUrl": "/images/team-logos/corkscrews.png",
+    //     "color": [150, 75, 0]
+    // },
     {
         "name": "Teapots",
         "description": "Steeped in tradition yet always ready to whistle when things heat up, the Teapots are a blend of calm strategy and sudden action, much like the brewing of a perfect cup of tea.",
@@ -49,27 +49,27 @@ export const teams: Team[] = [
         "logoUrl": "/images/team-logos/aglets.png",
         "color": [255, 215, 0]
     },
-    {
-        "name": "Sock Puppets",
-        "description": "With a colorful and imaginative approach, the Sock Puppets team is all about creativity and unexpected maneuvers. They bring joy and surprise to the field, much like a lively puppet show.",
-        "motto": "Unleashing Joy, Stitching Success",
-        "logoUrl": "/images/team-logos/sock-puppets.png",
-        "color": [255, 105, 180]
-    },
-    {
-        "name": "Bubbles",
-        "description": "Light-hearted and whimsical, the Bubbles team is known for their ability to rise above challenges and bring a sense of wonder to the game. Their strategies are often as unpredictable and enchanting as bubbles themselves.",
-        "motto": "Floating Above, Bursting Expectations",
-        "logoUrl": "/images/team-logos/bubbles.png",
-        "color": [135, 206, 250]
-    },
-    {
-        "name": "Puddles",
-        "description": "Emerging after a storm, the Puddles team symbolizes resilience and reflection. They adapt to any situation and mirror their opponents' strategies, turning them to their advantage.",
-        "motto": "Reflecting Strategy, Making a Splash",
-        "logoUrl": "/images/team-logos/puddles.png",
-        "color": [70, 130, 180]
-    },
+    // {
+    //     "name": "Sock Puppets",
+    //     "description": "With a colorful and imaginative approach, the Sock Puppets team is all about creativity and unexpected maneuvers. They bring joy and surprise to the field, much like a lively puppet show.",
+    //     "motto": "Unleashing Joy, Stitching Success",
+    //     "logoUrl": "/images/team-logos/sock-puppets.png",
+    //     "color": [255, 105, 180]
+    // },
+    // {
+    //     "name": "Bubbles",
+    //     "description": "Light-hearted and whimsical, the Bubbles team is known for their ability to rise above challenges and bring a sense of wonder to the game. Their strategies are often as unpredictable and enchanting as bubbles themselves.",
+    //     "motto": "Floating Above, Bursting Expectations",
+    //     "logoUrl": "/images/team-logos/bubbles.png",
+    //     "color": [135, 206, 250]
+    // },
+    // {
+    //     "name": "Puddles",
+    //     "description": "Emerging after a storm, the Puddles team symbolizes resilience and reflection. They adapt to any situation and mirror their opponents' strategies, turning them to their advantage.",
+    //     "motto": "Reflecting Strategy, Making a Splash",
+    //     "logoUrl": "/images/team-logos/puddles.png",
+    //     "color": [70, 130, 180]
+    // },
     {
         "name": "Doodles",
         "description": "Originating from the margins of creativity, the Doodles team is celebrated for their unconventional strategies and free-form approach to the game, much like the whimsical art of doodling.",
@@ -84,13 +84,13 @@ export const teams: Team[] = [
         "logoUrl": "/images/team-logos/kaleidoscopes.png",
         "color": [255, 127, 80]
     },
-    {
-        "name": "Keychains",
-        "description": "The Keychains team, a collection of diverse talents, is just like a keychain holding various keys. They unlock different strategies and solutions, adapting to whatever the game throws at them.",
-        "motto": "Unlocking Potential, Linking Success",
-        "logoUrl": "/images/team-logos/keychains.png",
-        "color": [112, 128, 144]
-    }
+    // {
+    //     "name": "Keychains",
+    //     "description": "The Keychains team, a collection of diverse talents, is just like a keychain holding various keys. They unlock different strategies and solutions, adapting to whatever the game throws at them.",
+    //     "motto": "Unlocking Potential, Linking Success",
+    //     "logoUrl": "/images/team-logos/keychains.png",
+    //     "color": [112, 128, 144]
+    // }
 ];
 
 

@@ -87,7 +87,6 @@
       }
       for (let i = 0; i < scenarioPlayers.length; i++) {
         let player = scenarioPlayers[i];
-        console.log(player);
         let playerTeam = getTeam(player.teamId);
         text = replaceStringValue(
           text,
@@ -131,9 +130,9 @@
       {#if !scenarioData}
         <div>Loading...</div>
       {:else}
-        <AccordionItem open>
+        <AccordionItem>
           <span slot="header">
-            <div class="flex items-center gap-5">
+            <div class="flex items-center gap-5 text-xl font-bold">
               <TeamLogo
                 team={scenarioData.team}
                 size="sm"
