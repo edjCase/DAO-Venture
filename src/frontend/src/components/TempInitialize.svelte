@@ -82,6 +82,7 @@
     }
     await Promise.all(promises);
     console.log("Created traits");
+    await traitStore.refetch();
   };
 
   let createScenarios = async function () {
@@ -100,6 +101,7 @@
     }
     await Promise.all(promises);
     console.log("Created scenarios");
+    await scenarioTemplateStore.refetch();
   };
 
   let initialize = async function () {

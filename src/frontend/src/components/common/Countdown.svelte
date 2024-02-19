@@ -1,9 +1,14 @@
 <script lang="ts">
+  import { onMount } from "svelte";
+
   export let title: string;
   export let date: Date;
 
   function timeTill(date: Date): [string, string, string, string] {
     let timeInMilliseconds = date.getTime() - new Date().getTime();
+    if (timeInMilliseconds < 0) {
+      return ["00", "00", "00", "00"];
+    }
     let seconds = Math.floor(timeInMilliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
     let hours = Math.floor(minutes / 60);
@@ -21,7 +26,13 @@
 
     return [paddedDays, paddedHours, paddedMinutes, paddedSeconds];
   }
-  $: timeTillNextMatch = timeTill(date);
+  let timeTillNextMatch = timeTill(date);
+  onMount(() => {
+    const interval = setInterval(() => {
+      timeTillNextMatch = timeTill(date);
+    }, 1000);
+    return () => clearInterval(interval);
+  });
 </script>
 
 <div class="p-5 mb-5">

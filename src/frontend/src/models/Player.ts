@@ -3,6 +3,7 @@ import { IDL } from "@dfinity/candid";
 export type Nat32 = number;
 export type Int = number;
 export type Text = string;
+export type Nat = bigint;
 
 export type PlayerId = Nat32;
 
@@ -87,5 +88,85 @@ export const PlayerConditionIdl = IDL.Variant({
     ok: IDL.Null,
     injured: InjuryIdl,
     dead: IDL.Null,
+});
+
+
+export type PlayerMatchStats = {
+    battingStats: {
+        atBats: Nat;
+        hits: Nat;
+        strikeouts: Nat;
+        runs: Nat;
+        homeRuns: Nat;
+    };
+    catchingStats: {
+        successfulCatches: Nat;
+        missedCatches: Nat;
+        throws: Nat;
+        throwOuts: Nat;
+    };
+    pitchingStats: {
+        pitches: Nat;
+        strikes: Nat;
+        hits: Nat;
+        strikeouts: Nat;
+        runs: Nat;
+        homeRuns: Nat;
+    };
+    injuries: Nat;
+};
+
+export const PlayerMatchStatsIdl = IDL.Record({
+    battingStats: IDL.Record({
+        atBats: IDL.Nat,
+        hits: IDL.Nat,
+        strikeouts: IDL.Nat,
+        runs: IDL.Nat,
+        homeRuns: IDL.Nat,
+    }),
+    catchingStats: IDL.Record({
+        successfulCatches: IDL.Nat,
+        missedCatches: IDL.Nat,
+        throws: IDL.Nat,
+        throwOuts: IDL.Nat,
+    }),
+    pitchingStats: IDL.Record({
+        pitches: IDL.Nat,
+        strikes: IDL.Nat,
+        hits: IDL.Nat,
+        strikeouts: IDL.Nat,
+        runs: IDL.Nat,
+        homeRuns: IDL.Nat,
+    }),
+    injuries: IDL.Nat,
+});
+
+export type PlayerMatchStatsWithId = PlayerMatchStats & {
+    playerId: PlayerId;
+};
+export const PlayerMatchStatsWithIdIdl = IDL.Record({
+    playerId: IDL.Nat32,
+    battingStats: IDL.Record({
+        atBats: IDL.Nat,
+        hits: IDL.Nat,
+        strikeouts: IDL.Nat,
+        runs: IDL.Nat,
+        homeRuns: IDL.Nat,
+    }),
+    catchingStats: IDL.Record({
+        successfulCatches: IDL.Nat,
+        missedCatches: IDL.Nat,
+        throws: IDL.Nat,
+        throwOuts: IDL.Nat,
+    }),
+    pitchingStats: IDL.Record({
+        pitches: IDL.Nat,
+        strikes: IDL.Nat,
+        hits: IDL.Nat,
+        strikeouts: IDL.Nat,
+        runs: IDL.Nat,
+        homeRuns: IDL.Nat,
+    }),
+    injuries: IDL.Nat,
 });
 

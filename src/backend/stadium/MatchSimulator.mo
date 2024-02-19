@@ -33,6 +33,7 @@ import MutableState "../models/MutableState";
 import HookCompiler "HookCompiler";
 import Season "../models/Season";
 import Scenario "../models/Scenario";
+import LeagueTypes "../league/Types";
 
 module {
 
@@ -42,7 +43,7 @@ module {
 
     public type TickResult = {
         #inProgress : StadiumTypes.InProgressMatch;
-        #completed : Season.CompletedMatch;
+        #completed : LeagueTypes.MatchCompleteResult;
     };
 
     type SimulationResult = {
@@ -347,7 +348,7 @@ module {
             };
         };
 
-        private func buildCompletedMatch(reason : MatchEndReason) : Season.CompletedMatch {
+        private func buildCompletedMatch(reason : MatchEndReason) : LeagueTypes.MatchCompleteResult {
             let (winner, matchEndReason) : (Team.TeamIdOrTie, StadiumTypes.MatchEndReason) = switch (reason) {
                 case (#noMoreRounds) {
                     let winner = if (state.team1.score > state.team2.score) {
@@ -398,11 +399,11 @@ module {
             };
         };
 
-        private func buildPlayerStats() : [Season.PlayerMatchStatsWithId] {
+        private func buildPlayerStats() : [Player.PlayerMatchStatsWithId] {
             state.players.vals()
             |> Iter.map(
                 _,
-                func(player : MutableState.MutablePlayerStateWithId) : Season.PlayerMatchStatsWithId {
+                func(player : MutableState.MutablePlayerStateWithId) : Player.PlayerMatchStatsWithId {
                     {
                         playerId = player.id;
                         battingStats = {

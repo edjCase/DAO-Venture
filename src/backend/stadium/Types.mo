@@ -92,9 +92,13 @@ module {
         #ok;
     };
 
+    public type MatchCompleteResult = Season.CompletedMatch and {
+        playerStats : [Player.PlayerMatchStatsWithId];
+    };
+
     public type MatchVariant = {
         #inProgress : InProgressMatch;
-        #completed : Season.CompletedMatch;
+        #completed : MatchCompleteResult;
     };
 
     public type RoundLog = {
@@ -257,7 +261,7 @@ module {
         teamId : Team.TeamId;
         condition : Player.PlayerCondition;
         skills : Player.Skills;
-        matchStats : Season.PlayerMatchStats;
+        matchStats : Player.PlayerMatchStats;
     };
 
     public type PlayerStateWithId = PlayerState and {

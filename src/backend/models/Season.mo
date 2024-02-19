@@ -104,40 +104,11 @@ module {
         positions : TeamPositions;
     };
 
-    public type PlayerMatchStats = {
-        battingStats : {
-            atBats : Nat;
-            hits : Nat;
-            strikeouts : Nat;
-            runs : Nat;
-            homeRuns : Nat;
-        };
-        catchingStats : {
-            successfulCatches : Nat;
-            missedCatches : Nat;
-            throws : Nat;
-            throwOuts : Nat;
-        };
-        pitchingStats : {
-            pitches : Nat;
-            strikes : Nat;
-            hits : Nat;
-            strikeouts : Nat;
-            runs : Nat;
-            homeRuns : Nat;
-        };
-        injuries : Nat;
-    };
-    public type PlayerMatchStatsWithId = PlayerMatchStats and {
-        playerId : Player.PlayerId;
-    };
-
     public type CompletedMatch = {
         team1 : CompletedMatchTeam;
         team2 : CompletedMatchTeam;
         aura : MatchAura.MatchAura;
         winner : Team.TeamIdOrTie;
-        playerStats : [PlayerMatchStatsWithId];
     };
 
     public type CompletedMatchGroup = {

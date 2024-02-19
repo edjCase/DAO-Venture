@@ -40,6 +40,11 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
 
     type MatchGroupId = Nat;
 
+    type InProgressMatchGroup = {
+        #inProgress : StadiumTypes.InProgressMatch;
+        #completed : LeagueTypes.MatchCompleteResult;
+    };
+
     stable var matchGroups = Trie.empty<Nat, StadiumTypes.MatchGroup>();
 
     system func postupgrade() {
@@ -207,14 +212,14 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         Debug.print("Tick Match Group Callback Result - " # message);
     };
 
-    private func tickMatches(prng : Prng, matches : [StadiumTypes.MatchVariant]) : {
-        #completed : [Season.CompletedMatch];
-        #inProgress : [StadiumTypes.MatchVariant];
+    private func tickMatches(prng : Prng, matches : [InProgressMatchGroup]) : {
+        #completed : [LeagueTypes.MatchCompleteResult];
+        #inProgress : [InProgressMatchGroup];
     } {
-        let completedMatches = Buffer.Buffer<Season.CompletedMatch>(matches.size());
-        let allMatches = Buffer.Buffer<StadiumTypes.MatchVariant>(matches.size());
+        let completedMatches = Buffer.Buffer<LeagueTypes.MatchCompleteResult>(matches.size());
+        let allMatches = Buffer.Buffer<InProgressMatchGroup>(matches.size());
         for (match in Iter.fromArray(matches)) {
-            let updatedMatch : StadiumTypes.MatchVariant = switch (match) {
+            let updatedMatch : InProgressMatchGroup = switch (match) {
                 case (#completed(completedMatch)) {
                     completedMatches.add(completedMatch);
                     #completed(completedMatch);
