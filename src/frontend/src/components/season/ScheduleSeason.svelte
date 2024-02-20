@@ -10,6 +10,7 @@
     if (!startTime) {
       return;
     }
+    console.log("Scheduling season", startTime);
     leagueAgentFactory()
       .startSeason({
         startTime: startTime,

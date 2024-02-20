@@ -115,16 +115,18 @@ module {
 
     public func resolveScenario(
         prng : Prng,
+        scenarioTemplate : Scenario.Template,
         scenario : Scenario.Instance,
         choiceIndex : Nat8,
     ) : [Scenario.EffectOutcome] {
-        let choice = scenario.template.options[Nat8.toNat(choiceIndex)];
-        let effectOutcomes = resolveEffect(prng, scenario, choice.effect);
+        let choice = scenarioTemplate.options[Nat8.toNat(choiceIndex)];
+        let effectOutcomes = resolveEffect(prng, scenarioTemplate, scenario, choice.effect);
         Iter.toArray(effectOutcomes);
     };
 
     public func resolveEffect(
         prng : Prng,
+        scenarioTemplate : Scenario.Template,
         scenario : Scenario.Instance,
         effect : Scenario.Effect,
     ) : Iter.Iter<Scenario.EffectOutcome> {
@@ -134,7 +136,7 @@ module {
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(subEffect : Scenario.Effect) : Iter.Iter<Scenario.EffectOutcome> = resolveEffect(prng, scenario, subEffect),
+                    func(subEffect : Scenario.Effect) : Iter.Iter<Scenario.EffectOutcome> = resolveEffect(prng, scenarioTemplate, scenario, subEffect),
                 )
                 |> IterTools.flatten(_);
             };
@@ -144,7 +146,7 @@ module {
                     func((weight, effect) : (Nat, Scenario.Effect)) : (Scenario.Effect, Float) = (effect, Float.fromInt(weight)),
                 );
                 let subEffect = prng.nextArrayElementWeighted(weightedSubEffects);
-                return resolveEffect(prng, scenario, subEffect);
+                return resolveEffect(prng, scenarioTemplate, scenario, subEffect);
             };
             case (#trait(trait)) {
                 #trait({
@@ -264,7 +266,7 @@ module {
             };
         };
         {
-            template = scenario;
+            templateId = scenario.id;
             teamId = team1Id;
             opposingTeamId = team2Id;
             otherTeamIds = Buffer.toArray(otherTeamIds);

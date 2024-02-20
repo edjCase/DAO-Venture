@@ -14,6 +14,12 @@ module {
         addTrait : (request : AddTraitRequest) -> async AddTraitResult;
         getTraits : () -> async [Trait.Trait];
         applyEffects : (request : ApplyEffectsRequest) -> async ApplyEffectsResult;
+        onSeasonComplete : () -> async OnSeasonCompleteResult;
+    };
+
+    public type OnSeasonCompleteResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type ApplyEffectsRequest = [Scenario.PlayerEffectOutcome];

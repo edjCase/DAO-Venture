@@ -81,6 +81,10 @@ actor LeagueActor {
         getScenarioTemplateArray();
     };
 
+    public query func getScenarioTemplate(id : Text) : async ?Scenario.Template {
+        getScenarioTemplateInternal(id);
+    };
+
     // TODO REMOVE ALL DELETING METHODS
     public shared ({ caller }) func clearScenarioTemplates() : async () {
         scenarioTemplates := Trie.empty();
@@ -143,15 +147,17 @@ actor LeagueActor {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
+        Debug.print("Starting season");
         switch (seasonStatus) {
             case (#notStarted) {};
             case (#starting) return #alreadyStarted;
             case (#inProgress(_)) return #alreadyStarted;
             case (#completed(completedSeason)) {
                 // TODO archive completed season?
-                seasonStatus := #notStarted;
             };
         };
+        teamStandings := null;
+        predictions := Trie.empty();
         seasonStatus := #starting;
 
         let seedBlob = try {
@@ -160,7 +166,7 @@ actor LeagueActor {
             seasonStatus := #notStarted;
             return #seedGenerationError(Error.message(err));
         };
-        let prng = PseudoRandomX.fromSeed(Blob.hash(seedBlob));
+        let prng = PseudoRandomX.fromBlob(seedBlob);
 
         let teamIdsBuffer = teams
         |> Trie.iter(_)
@@ -169,7 +175,7 @@ actor LeagueActor {
 
         prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
 
-        let timeBetweenMatchGroups = #minutes(10);
+        let timeBetweenMatchGroups = #minutes(2);
         // let timeBetweenMatchGroups = #days(1); // TODO revert
         let buildResult = ScheduleBuilder.build(
             request.startTime,
@@ -653,9 +659,24 @@ actor LeagueActor {
         let #inProgress(inProgressSeason) = seasonStatus else return #seasonNotOpen;
         let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
             case (#ok(completedMatchGroups)) completedMatchGroups;
-            case (#matchGroupsNotComplete) {
+            case (#matchGroupsNotComplete(currentMatchGroupId)) {
                 // TODO put in bad state vs delete
                 seasonStatus := #notStarted;
+                switch (currentMatchGroupId) {
+                    case (null) ();
+                    case (?currentMatchGroupId) {
+                        // Cancel live match
+                        let stadiumId = switch (await* getOrCreateStadium()) {
+                            case (#ok(id)) id;
+                            case (#stadiumCreationError(error)) return Debug.trap("Failed to create stadium: " # error);
+                        };
+                        let stadiumActor = actor (Principal.toText(stadiumId)) : StadiumTypes.StadiumActor;
+                        switch (await stadiumActor.cancelMatchGroup({ id = currentMatchGroupId })) {
+                            case (#ok or #matchGroupNotFound) ();
+                        };
+                    };
+                };
+                await* onSeasonCompleteInternal();
                 return #ok;
             };
         };
@@ -706,7 +727,30 @@ actor LeagueActor {
             teams = completedTeams;
             matchGroups = completedMatchGroups;
         });
+        await* onSeasonCompleteInternal();
         #ok;
+    };
+
+    private func onSeasonCompleteInternal() : async* () {
+        for ((teamId, _) in Trie.iter(teams)) {
+            let teamActor = actor (Principal.toText(teamId)) : TeamTypes.TeamActor;
+            try {
+                switch (await teamActor.onSeasonComplete()) {
+                    case (#ok) ();
+                    case (#notAuthorized) Debug.print("Error: League is not authorized to notify team of season completion");
+                };
+            } catch (err) {
+                Debug.print("Failed to notify team of season completion: " # Error.message(err));
+            };
+        };
+    };
+
+    private func getScenarioTemplateInternal(id : Text) : ?Scenario.Template {
+        let key = {
+            key = id;
+            hash = Text.hash(id);
+        };
+        Trie.get(scenarioTemplates, key, Text.equal);
     };
 
     private func getCurrentMatchGroupId() : ?Nat {
@@ -716,8 +760,12 @@ actor LeagueActor {
                 for (i in Iter.range(0, inProgressSeason.matchGroups.size())) {
                     let matchGroup = inProgressSeason.matchGroups[i];
                     switch (matchGroup) {
-                        case (#notScheduled(_)) return ?i;
-                        case (_) ();
+                        // Find first scheduled match group
+                        case (#scheduled(_)) return ?i;
+                        // If we find a match group that is not scheduled, then there are no upcoming match groups
+                        case (#notScheduled(_) or #inProgress(_)) return null;
+                        // Skip completed match groups
+                        case (#completed(_)) ();
                     };
                 };
                 return null;
@@ -962,7 +1010,7 @@ actor LeagueActor {
         let matchGroupPredictions = Array.tabulate(matchCount, func(_ : Nat) : Trie.Trie<Principal, Team.TeamId> = Trie.empty());
         let (newPredictions, oldMatchGroupPredictions) = Trie.put(predictions, predictionKey, Nat.equal, matchGroupPredictions);
         if (oldMatchGroupPredictions != null) {
-            Debug.trap("Match group predictions already open for match group " # Nat.toText(matchGroupId));
+            Debug.trap("Match group predictions already open for match group " # Nat.toText(matchGroupId) # ". Old predictions: " # debug_show (oldMatchGroupPredictions));
         };
         predictions := newPredictions;
     };
@@ -998,7 +1046,9 @@ actor LeagueActor {
         let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
         let options : TeamTypes.MatchGroupVoteResult = try {
             // Get match options from the team itself
-            let result : TeamTypes.GetMatchGroupVoteResult = await teamActor.getMatchGroupVote(matchGroupId);
+            let result : TeamTypes.GetMatchGroupVoteResult = await teamActor.getMatchGroupVote({
+                matchGroupId = matchGroupId;
+            });
             switch (result) {
                 case (#ok(o)) o;
                 case (#noVotes) {
@@ -1023,7 +1073,8 @@ actor LeagueActor {
                 case (?player) player;
             };
         };
-        let effectOutcomes = ScenarioUtil.resolveScenario(prng, team.scenario, options.scenarioChoice);
+        let ?scenarioTemplate = getScenarioTemplateInternal(team.scenario.templateId) else Debug.trap("Scenario template not found: " # team.scenario.templateId);
+        let effectOutcomes = ScenarioUtil.resolveScenario(prng, scenarioTemplate, team.scenario, options.scenarioChoice);
 
         let pitcher = getPosition(#pitcher);
         let firstBase = getPosition(#firstBase);
@@ -1084,15 +1135,17 @@ actor LeagueActor {
 
     private func buildCompletedMatchGroups(
         season : Season.InProgressSeason
-    ) : { #ok : [Season.CompletedMatchGroup]; #matchGroupsNotComplete } {
+    ) : { #ok : [Season.CompletedMatchGroup]; #matchGroupsNotComplete : ?Nat } {
         let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(season.matchGroups.size());
+        var matchGroupId = 0;
         for (matchGroup in Iter.fromArray(season.matchGroups)) {
             let completedMatchGroup = switch (matchGroup) {
                 case (#completed(completedMatchGroup)) completedMatchGroup;
-                case (#notScheduled(notScheduledMatchGroup)) return #matchGroupsNotComplete;
-                case (#scheduled(scheduledMatchGroup)) return #matchGroupsNotComplete;
-                case (#inProgress(inProgressMatchGroup)) return #matchGroupsNotComplete;
+                case (#notScheduled(notScheduledMatchGroup)) return #matchGroupsNotComplete(null);
+                case (#scheduled(scheduledMatchGroup)) return #matchGroupsNotComplete(null);
+                case (#inProgress(inProgressMatchGroup)) return #matchGroupsNotComplete(?matchGroupId);
             };
+            matchGroupId += 1;
             completedMatchGroups.add(completedMatchGroup);
         };
         #ok(Buffer.toArray(completedMatchGroups));

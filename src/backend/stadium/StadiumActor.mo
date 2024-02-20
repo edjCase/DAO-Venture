@@ -5,7 +5,7 @@ import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Prelude "mo:base/Prelude";
-import StadiumTypes "../stadium/Types";
+import Types "../stadium/Types";
 import Nat "mo:base/Nat";
 import Util "./StadiumUtil";
 import Array "mo:base/Array";
@@ -31,8 +31,8 @@ import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
 import Season "../models/Season";
 
-actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor = this {
-    type PlayerState = StadiumTypes.PlayerState;
+actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this {
+    type PlayerState = Types.PlayerState;
     type FieldPosition = FieldPosition.FieldPosition;
     type MatchAura = MatchAura.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -40,7 +40,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
 
     type MatchGroupId = Nat;
 
-    stable var matchGroups = Trie.empty<Nat, StadiumTypes.MatchGroup>();
+    stable var matchGroups = Trie.empty<Nat, Types.MatchGroup>();
 
     system func postupgrade() {
         // Restart the timers for any match groups that were in progress
@@ -49,7 +49,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         };
     };
 
-    public query func getMatchGroup(id : Nat) : async ?StadiumTypes.MatchGroupWithId {
+    public query func getMatchGroup(id : Nat) : async ?Types.MatchGroupWithId {
         switch (getMatchGroupOrNull(id)) {
             case (null) return null;
             case (?m) {
@@ -61,12 +61,12 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         };
     };
 
-    public query func getMatchGroups() : async [StadiumTypes.MatchGroupWithId] {
+    public query func getMatchGroups() : async [Types.MatchGroupWithId] {
         matchGroups
         |> Trie.iter(_)
         |> Iter.map(
             _,
-            func(m : (Nat, StadiumTypes.MatchGroup)) : StadiumTypes.MatchGroupWithId = {
+            func(m : (Nat, Types.MatchGroup)) : Types.MatchGroupWithId = {
                 m.1 with
                 id = m.0;
             },
@@ -75,14 +75,14 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
     };
 
     public shared ({ caller }) func startMatchGroup(
-        request : StadiumTypes.StartMatchGroupRequest
-    ) : async StadiumTypes.StartMatchGroupResult {
+        request : Types.StartMatchGroupRequest
+    ) : async Types.StartMatchGroupResult {
         assertLeague(caller);
 
         let prng = PseudoRandomX.fromBlob(await Random.blob());
         let tickTimerId = startTickTimer(request.id);
 
-        let matches = Buffer.Buffer<StadiumTypes.TickResult>(request.matches.size());
+        let matches = Buffer.Buffer<Types.TickResult>(request.matches.size());
         label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
 
             let team1IsOffense = prng.nextCoin();
@@ -99,7 +99,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
             return #noMatchesSpecified;
         };
 
-        let matchGroup : StadiumTypes.MatchGroupWithId = {
+        let matchGroup : Types.MatchGroupWithId = {
             id = request.id;
             matches = Buffer.toArray(matches);
             tickTimerId = tickTimerId;
@@ -109,79 +109,99 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         #ok;
     };
 
-    public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat) : async StadiumTypes.TickMatchGroupResult {
-        let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
-        let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
-        switch (tickMatches(prng, matchGroup.matches)) {
-            case (#completed(completedTickResults)) {
-                // Cancel tick timer before disposing of match group
-                // NOTE: Should be canceled even if the onMatchGroupComplete fails, so it doesnt
-                // just keep ticking. Can retrigger manually if needed after fixing the
-                // issue
-
-                let completedMatches = completedTickResults
-                |> Iter.fromArray(_)
-                |> Iter.map(
-                    _,
-                    func(tickResult : StadiumTypes.CompletedTickResult) : Season.CompletedMatch = tickResult.match,
-                )
-                |> Iter.toArray(_);
-
-                let playerStats = completedTickResults
-                |> Iter.fromArray(_)
-                |> Iter.map(
-                    _,
-                    func(tickResult : StadiumTypes.CompletedTickResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
-                )
-                |> IterTools.flatten<Player.PlayerMatchStatsWithId>(_)
-                |> Iter.toArray(_);
-
+    public shared ({ caller }) func cancelMatchGroup(
+        request : Types.CancelMatchGroupRequest
+    ) : async Types.CancelMatchGroupResult {
+        assertLeague(caller);
+        let matchGroupKey = buildMatchGroupKey(request.id);
+        let (newMatchGroups, matchGroup) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
+        switch (matchGroup) {
+            case (null) return #matchGroupNotFound;
+            case (?matchGroup) {
+                matchGroups := newMatchGroups;
                 Timer.cancelTimer(matchGroup.tickTimerId);
-                let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
-                let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
-                    id = matchGroupId;
-                    matches = completedMatches;
-                    playerStats = playerStats;
-                };
-                let result = try {
-                    await leagueActor.onMatchGroupComplete(onCompleteRequest);
-                } catch (err) {
-                    #onCompleteCallbackError(Error.message(err));
-                };
-
-                let errorMessage = switch (result) {
-                    case (#ok) {
-                        // Remove match group if successfully passed info to the league
-                        let matchGroupKey = buildMatchGroupKey(matchGroupId);
-                        let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
-                        matchGroups := newMatchGroups;
-                        return #completed;
-                    };
-                    case (#notAuthorized) "Failed: Not authorized to complete match group";
-                    case (#matchGroupNotFound) "Failed: Match group not found - " # Nat.toText(matchGroupId);
-                    case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
-                    case (#seasonNotOpen) "Failed: Season not open";
-                    case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
-                    case (#matchGroupNotInProgress) "Failed: Match group not in progress";
-                };
-                Debug.print("On Match Group Complete Result - " # errorMessage);
-                // Stuck in a bad state. Can retry by a manual tick call
-                #completed;
-            };
-            case (#inProgress(newMatches)) {
-                addOrUpdateMatchGroup({
-                    matchGroup with
-                    id = matchGroupId;
-                    matches = newMatches;
-                    currentSeed = prng.getCurrentSeed();
-                });
-
-                #inProgress;
+                #ok;
             };
         };
     };
 
-    public shared ({ caller }) func resetTickTimer(matchGroupId : Nat) : async StadiumTypes.ResetTickTimerResult {
+    public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat) : async Types.TickMatchGroupResult {
+        // TODO remove loop, used for debugging purposes
+        loop {
+            let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
+            let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
+
+            switch (tickMatches(prng, matchGroup.matches)) {
+                case (#completed(completedTickResults)) {
+                    // Cancel tick timer before disposing of match group
+                    // NOTE: Should be canceled even if the onMatchGroupComplete fails, so it doesnt
+                    // just keep ticking. Can retrigger manually if needed after fixing the
+                    // issue
+
+                    let completedMatches = completedTickResults
+                    |> Iter.fromArray(_)
+                    |> Iter.map(
+                        _,
+                        func(tickResult : Types.CompletedTickResult) : Season.CompletedMatch = tickResult.match,
+                    )
+                    |> Iter.toArray(_);
+
+                    let playerStats = completedTickResults
+                    |> Iter.fromArray(_)
+                    |> Iter.map(
+                        _,
+                        func(tickResult : Types.CompletedTickResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
+                    )
+                    |> IterTools.flatten<Player.PlayerMatchStatsWithId>(_)
+                    |> Iter.toArray(_);
+
+                    Timer.cancelTimer(matchGroup.tickTimerId);
+                    let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+                    let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
+                        id = matchGroupId;
+                        matches = completedMatches;
+                        playerStats = playerStats;
+                    };
+                    let result = try {
+                        await leagueActor.onMatchGroupComplete(onCompleteRequest);
+                    } catch (err) {
+                        #onCompleteCallbackError(Error.message(err));
+                    };
+
+                    let errorMessage = switch (result) {
+                        case (#ok) {
+                            // Remove match group if successfully passed info to the league
+                            let matchGroupKey = buildMatchGroupKey(matchGroupId);
+                            let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
+                            matchGroups := newMatchGroups;
+                            return #completed;
+                        };
+                        case (#notAuthorized) "Failed: Not authorized to complete match group";
+                        case (#matchGroupNotFound) "Failed: Match group not found - " # Nat.toText(matchGroupId);
+                        case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
+                        case (#seasonNotOpen) "Failed: Season not open";
+                        case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
+                        case (#matchGroupNotInProgress) "Failed: Match group not in progress";
+                    };
+                    Debug.print("On Match Group Complete Result - " # errorMessage);
+                    // Stuck in a bad state. Can retry by a manual tick call
+                    return #completed;
+                };
+                case (#inProgress(newMatches)) {
+                    addOrUpdateMatchGroup({
+                        matchGroup with
+                        id = matchGroupId;
+                        matches = newMatches;
+                        currentSeed = prng.getCurrentSeed();
+                    });
+
+                    //  #inProgress;
+                };
+            };
+        };
+    };
+
+    public shared ({ caller }) func resetTickTimer(matchGroupId : Nat) : async Types.ResetTickTimerResult {
         resetTickTimerInternal(matchGroupId);
         #ok;
     };
@@ -206,7 +226,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         );
     };
 
-    private func addOrUpdateMatchGroup(newMatchGroup : StadiumTypes.MatchGroupWithId) : () {
+    private func addOrUpdateMatchGroup(newMatchGroup : Types.MatchGroupWithId) : () {
         let matchGroupKey = buildMatchGroupKey(newMatchGroup.id);
         let (newMatchGroups, _) = Trie.replace(matchGroups, matchGroupKey, Nat.equal, ?newMatchGroup);
         matchGroups := newMatchGroups;
@@ -226,14 +246,14 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         Debug.print("Tick Match Group Callback Result - " # message);
     };
 
-    private func tickMatches(prng : Prng, matches : [StadiumTypes.TickResult]) : {
-        #completed : [StadiumTypes.CompletedTickResult];
-        #inProgress : [StadiumTypes.TickResult];
+    private func tickMatches(prng : Prng, matches : [Types.TickResult]) : {
+        #completed : [Types.CompletedTickResult];
+        #inProgress : [Types.TickResult];
     } {
-        let completedMatches = Buffer.Buffer<StadiumTypes.CompletedTickResult>(matches.size());
-        let allMatches = Buffer.Buffer<StadiumTypes.TickResult>(matches.size());
+        let completedMatches = Buffer.Buffer<Types.CompletedTickResult>(matches.size());
+        let allMatches = Buffer.Buffer<Types.TickResult>(matches.size());
         for (match in Iter.fromArray(matches)) {
-            let updatedMatch : StadiumTypes.TickResult = switch (match) {
+            let updatedMatch : Types.TickResult = switch (match) {
                 case (#completed(completedMatch)) {
                     completedMatches.add(completedMatch);
                     #completed(completedMatch);
@@ -258,7 +278,7 @@ actor class StadiumActor(leagueId : Principal) : async StadiumTypes.StadiumActor
         };
     };
 
-    private func getMatchGroupOrNull(matchGroupId : Nat) : ?StadiumTypes.MatchGroup {
+    private func getMatchGroupOrNull(matchGroupId : Nat) : ?Types.MatchGroup {
         let matchGroupKey = buildMatchGroupKey(matchGroupId);
         Trie.get(matchGroups, matchGroupKey, Nat.equal);
     };

@@ -119,7 +119,7 @@ module {
     };
 
     public type Instance = {
-        template : Template;
+        templateId : Text;
         teamId : Principal;
         opposingTeamId : Principal;
         otherTeamIds : [Principal];

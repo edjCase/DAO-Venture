@@ -24,6 +24,7 @@ module {
         tickMatchGroup : (id : Nat) -> async TickMatchGroupResult;
         resetTickTimer : (matchGroupId : Nat) -> async ResetTickTimerResult;
         startMatchGroup : (request : StartMatchGroupRequest) -> async StartMatchGroupResult;
+        cancelMatchGroup : (request : CancelMatchGroupRequest) -> async CancelMatchGroupResult;
     };
 
     public type StadiumFactoryActor = actor {
@@ -31,6 +32,14 @@ module {
         createStadiumActor : () -> async CreateStadiumResult;
         getStadiumActors : () -> async [StadiumActorInfoWithId];
         updateCanisters : () -> async ();
+    };
+
+    public type CancelMatchGroupRequest = {
+        id : Nat;
+    };
+    public type CancelMatchGroupResult = {
+        #ok;
+        #matchGroupNotFound;
     };
 
     public type SetLeagueResult = {

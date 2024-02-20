@@ -79,8 +79,18 @@ shared (install) actor class TeamActor(
       Prelude.unreachable();
     };
 
+    let scenarioTemplate = try {
+      let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+      switch (await leagueActor.getScenarioTemplate(team.scenario.templateId)) {
+        case (null) Debug.trap("Scenario template " # team.scenario.templateId # " not found");
+        case (?t) t;
+      };
+    } catch (err) {
+      Debug.trap("Error fetching scenario template: " # Error.message(err));
+    };
+
     let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let choiceExists = team.scenario.template.options.size() > Nat8.toNat(request.scenarioChoice);
+    let choiceExists = scenarioTemplate.options.size() > Nat8.toNat(request.scenarioChoice);
     if (not choiceExists) {
       errors.add(#invalidChoice(request.scenarioChoice));
     };
@@ -113,12 +123,12 @@ shared (install) actor class TeamActor(
     };
   };
 
-  public shared query ({ caller }) func getMatchGroupVote(matchGroupId : Nat) : async Types.GetMatchGroupVoteResult {
+  public shared query ({ caller }) func getMatchGroupVote(request : Types.GetMatchGroupVoteRequest) : async Types.GetMatchGroupVoteResult {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let matchGroupKey = buildMatchGroupKey(matchGroupId);
-    switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
+    let matchGroupKey = buildMatchGroupKey(request.matchGroupId);
+    let result = switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
       case (null) #noVotes;
       case (?o) {
         let ?{ scenarioChoice } = tallyVotes(o) else return #noVotes;
@@ -127,6 +137,15 @@ shared (install) actor class TeamActor(
         });
       };
     };
+    result;
+  };
+
+  public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    matchGroupVotes := Trie.empty();
+    #ok;
   };
 
   public shared ({ caller }) func getCycles() : async GetCyclesResult {

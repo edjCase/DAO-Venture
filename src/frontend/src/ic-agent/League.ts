@@ -50,7 +50,7 @@ export const AddScenarioTemplateResultIdl = IDL.Variant({
 export type UpcomingMatchPrediction = {
   team1: Nat;
   team2: Nat;
-  yourVote: TeamId | undefined;
+  yourVote: [TeamId] | [];
 };
 export const UpcomingMatchPredictionIdl = IDL.Record({
   team1: IDL.Nat,
@@ -68,7 +68,7 @@ export const UpcomingMatchPredictionsResultIdl = IDL.Variant({
 
 export type PredictMatchOutcomeRequest = {
   matchId: Nat32;
-  winner: TeamId | null;
+  winner: [TeamId] | [];
 };
 export const PredictMatchOutcomeRequestIdl = IDL.Record({
   matchId: IDL.Nat32,

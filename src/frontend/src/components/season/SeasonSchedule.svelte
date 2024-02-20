@@ -58,7 +58,7 @@
   };
   let selectMatchGroup = (i: number) => () => {
     if (!data || i < 0 || i >= data!.matchGroups.length) return;
-    data!.selectedMatchGroupIndex = i;
+    data.selectedMatchGroupIndex = i;
     dropdownOpen = false;
   };
 </script>

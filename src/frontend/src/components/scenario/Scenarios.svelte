@@ -1,3 +1,9 @@
+<script lang="ts" context="module">
+  export type ScenarioInfo = ScenarioInstance & {
+    choice: number | undefined;
+  };
+</script>
+
 <script lang="ts">
   import { teamStore } from "../../stores/TeamStore";
   import { Accordion, AccordionItem } from "flowbite-svelte";
@@ -5,17 +11,20 @@
   import {
     ScenarioInstance,
     ScenarioInstanceWithChoice,
+    ScenarioTemplate,
   } from "../../models/Scenario";
   import { Team } from "../../models/Team";
   import { playerStore } from "../../stores/PlayerStore";
   import { Player } from "../../ic-agent/Players";
   import Scenario, { ScenarioData } from "./Scenario.svelte";
   import TeamLogo from "../team/TeamLogo.svelte";
+  import { scenarioTemplateStore } from "../../stores/ScenarioTemplateStore";
 
-  export let scenarios: ScenarioInstance[] | ScenarioInstanceWithChoice[];
+  export let scenarios: ScenarioInfo[];
   export let matchGroupId: number;
 
   let buildData = function (
+    template: ScenarioTemplate,
     scenario: ScenarioInstance | ScenarioInstanceWithChoice,
     allTeams: Team[],
     allPlayers: Player[]
@@ -97,7 +106,7 @@
       }
       return text;
     };
-    let options = scenario.template.options.map((option, i) => {
+    let options = template.options.map((option, i) => {
       return {
         id: i,
         title: replaceText(option.title),
@@ -105,9 +114,9 @@
       };
     });
     return {
-      id: scenario.template.id,
-      title: replaceText(scenario.template.title),
-      description: replaceText(scenario.template.description),
+      id: template.id,
+      title: replaceText(template.title),
+      description: replaceText(template.description),
       team: scenarioTeam,
       opposingTeamName: opposingTeam.name,
       otherTeamNames: otherTeams.map((team: Team) => team.name),
@@ -119,9 +128,17 @@
 
   $: teams = $teamStore;
   $: players = $playerStore;
+  $: templates = $scenarioTemplateStore;
   $: scenariosWithData = scenarios.map<
-    [ScenarioInstance | ScenarioInstanceWithChoice, ScenarioData | undefined]
-  >((s) => [s, buildData(s, teams, players)]);
+    [ScenarioInfo, ScenarioData | undefined]
+  >((s) => {
+    let template = templates.find((t) => t.id == s.templateId);
+    let data;
+    if (template) {
+      data = buildData(template, s, teams, players);
+    }
+    return [s, data];
+  });
 </script>
 
 <div class="container">
@@ -139,7 +156,7 @@
                 popover={true}
                 borderColor={undefined}
               />
-              {@html scenario.template.title}
+              {@html scenarioData.title}
             </div>
           </span>
           <Scenario {scenario} {scenarioData} {matchGroupId} />

@@ -7,8 +7,9 @@ module {
 
     public type TeamActor = actor {
         getPlayers : composite query () -> async [Player.PlayerWithId];
-        getMatchGroupVote : query (matchGroupId : Nat) -> async GetMatchGroupVoteResult;
+        getMatchGroupVote : query (request : GetMatchGroupVoteRequest) -> async GetMatchGroupVoteResult;
         voteOnMatchGroup : (request : VoteOnMatchGroupRequest) -> async VoteOnMatchGroupResult;
+        onSeasonComplete() : async OnSeasonCompleteResult;
     };
 
     public type TeamFactoryActor = actor {
@@ -16,6 +17,11 @@ module {
         createTeamActor : (request : CreateTeamRequest) -> async CreateTeamResult;
         getTeamActors : () -> async [TeamActorInfoWithId];
         updateCanisters : () -> async ();
+    };
+
+    public type OnSeasonCompleteResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type SetLeagueResult = {
@@ -43,6 +49,10 @@ module {
 
     public type MatchGroupVoteResult = {
         scenarioChoice : Nat8;
+    };
+
+    public type GetMatchGroupVoteRequest = {
+        matchGroupId : Nat;
     };
 
     public type GetMatchGroupVoteResult = {

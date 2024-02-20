@@ -153,14 +153,14 @@ export const ScenarioTemplateIdl = IDL.Record({
 });
 
 export interface ScenarioInstance {
-    template: ScenarioTemplate;
+    templateId: string;
     teamId: Principal;
     opposingTeamId: Principal;
     otherTeamIds: Principal[];
     playerIds: number[];
 }
 export const ScenarioInstanceIdl = IDL.Record({
-    template: ScenarioTemplateIdl,
+    templateId: IDL.Text,
     teamId: IDL.Principal,
     opposingTeamId: IDL.Principal,
     otherTeamIds: IDL.Vec(IDL.Principal),
@@ -172,7 +172,7 @@ export interface ScenarioInstanceWithChoice extends ScenarioInstance {
     effectOutcomes: EffectOutcome[];
 }
 export const ScenarioInstanceWithChoiceIdl = IDL.Record({
-    template: ScenarioTemplateIdl,
+    templateId: IDL.Text,
     teamId: IDL.Principal,
     opposingTeamId: IDL.Principal,
     otherTeamIds: IDL.Vec(IDL.Principal),

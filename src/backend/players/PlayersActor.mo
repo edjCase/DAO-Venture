@@ -71,6 +71,7 @@ actor PlayersActor {
     // TODO REMOVE DELETING METHODS
     public shared ({ caller }) func clearPlayers() : async () {
         players := Trie.empty<Nat32, Types.Player>();
+        stats := Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
         futurePlayers := [];
         retiredPlayers := Trie.empty<Nat32, Types.RetiredPlayer>();
         nextPlayerId := 1;
@@ -286,6 +287,15 @@ actor PlayersActor {
         };
     };
 
+    public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {
+        if (not isLeague(caller)) {
+            return #notAuthorized;
+        };
+        // TODO
+        stats := Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
+        #ok;
+    };
+
     private func getTargetPlayerIds(target : Scenario.TargetInstance) : [Nat32] {
         let filterFunc = switch (target) {
             case (#league) func((playerId, player) : (Nat32, Types.Player)) : Bool = true;
@@ -389,10 +399,15 @@ actor PlayersActor {
         };
     };
 
-    private func assertLeague(caller : Principal) {
+    private func isLeague(caller : Principal) : Bool {
         // TODO
-        // if (caller != Principal.fromActor(LeagueActor)) {
-        //     Debug.trap("Only the league can create players");
-        // };
+        // caller == Principal.fromActor(LeagueActor);
+        false;
+    };
+
+    private func assertLeague(caller : Principal) {
+        if (not isLeague(caller)) {
+            Debug.trap("Only the league is authorized to perform this action.");
+        };
     };
 };

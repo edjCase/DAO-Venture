@@ -6,7 +6,7 @@ import { ScenarioInstanceWithChoice, ScenarioInstanceWithChoiceIdl } from "../mo
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
-import { Injury, InjuryIdl, PlayerCondition, PlayerConditionIdl, PlayerMatchStats, PlayerMatchStatsIdl, PlayerSkills, PlayerSkillsIdl } from "../models/Player";
+import { Injury, InjuryIdl, PlayerCondition, PlayerConditionIdl, PlayerMatchStats, PlayerMatchStatsIdl, PlayerMatchStatsWithId, PlayerMatchStatsWithIdIdl, PlayerSkills, PlayerSkillsIdl } from "../models/Player";
 import { CompletedMatch, CompletedMatchIdl, TeamPositions, TeamPositionsIdl } from "../models/Season";
 import { Trait, TraitIdl } from '../models/Trait';
 import { Curse, CurseIdl } from '../models/Curse';
@@ -336,6 +336,23 @@ export const InProgressMatchIdl = IDL.Record({
   strikes: NatIdl,
 });
 
+export type CompletedTickResult = {
+  match: CompletedMatch;
+  matchStats: [PlayerMatchStatsWithId];
+};
+export const CompletedTickResultIdl = IDL.Record({
+  match: CompletedMatchIdl,
+  matchStats: IDL.Vec(PlayerMatchStatsWithIdIdl),
+});
+
+export type TickResult =
+  | { inProgress: InProgressMatch }
+  | { completed: CompletedTickResult };
+export const TickResultIdl = IDL.Variant({
+  inProgress: InProgressMatchIdl,
+  completed: CompletedTickResultIdl,
+});
+
 export type MatchVariant =
   | { inProgress: InProgressMatch }
   | { completed: CompletedMatch };
@@ -346,13 +363,13 @@ export const MatchVariantIdl = IDL.Variant({
 
 export type MatchGroup = {
   id: Nat;
-  matches: MatchVariant[];
+  matches: TickResult[];
   tickTimerId: Nat;
   currentSeed: Nat32;
 };
 export const MatchGroupIdl = IDL.Record({
   id: NatIdl,
-  matches: IDL.Vec(MatchVariantIdl),
+  matches: IDL.Vec(TickResultIdl),
   tickTimerId: NatIdl,
   currentSeed: IDL.Nat32,
 });

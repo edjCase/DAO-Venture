@@ -14,6 +14,7 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getScenarioTemplates : query () -> async [Scenario.Template];
+        getScenarioTemplate : query (id : Text) -> async ?Scenario.Template;
         getTeamStandings : query () -> async GetTeamStandingsResult;
         addScenarioTemplate : (request : AddScenarioTemplateRequest) -> async AddScenarioTemplateResult;
         processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;

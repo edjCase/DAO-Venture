@@ -8,26 +8,20 @@
     liveMatchGroupStore,
   } from "../../stores/LiveMatchGroupStore";
   import MatchCardCompact from "./MatchCardCompact.svelte";
-  import TeamChoice from "../scenario/Scenarios.svelte";
-  import { ScenarioInstance } from "../../models/Scenario";
+  import Scenarios, { ScenarioInfo } from "../scenario/Scenarios.svelte";
   import Countdown from "../common/Countdown.svelte";
 
   export let matchGroup: MatchGroupDetails;
 
   let selectedMatchId = 0;
-  let selectedMatch: MatchDetails = matchGroup.matches[selectedMatchId];
   let liveMatches: LiveMatch[] | undefined = undefined;
-  let selectedLiveMatch: LiveMatch | undefined;
   let matches: [MatchDetails, LiveMatch | undefined][] = [];
-
-  let updateMatches = () => {
-    matches = matchGroup.matches.map((match, index) => [
-      match,
-      liveMatches ? liveMatches[index] : undefined,
-    ]);
-    selectedMatch = matchGroup.matches[selectedMatchId];
-    selectedLiveMatch = liveMatches ? liveMatches[selectedMatchId] : undefined;
-  };
+  $: matches = matchGroup.matches.map((match, index) => [
+    match,
+    liveMatches ? liveMatches[index] : undefined,
+  ]);
+  $: selectedMatch = matchGroup.matches[selectedMatchId];
+  $: selectedLiveMatch = liveMatches ? liveMatches[selectedMatchId] : undefined;
 
   liveMatchGroupStore.subscribe((liveMatchGroup) => {
     if (!liveMatchGroup || matchGroup.id != liveMatchGroup?.id) {
@@ -37,22 +31,32 @@
       selectedLiveMatch = liveMatchGroup.matches[selectedMatchId];
       liveMatches = liveMatchGroup.matches;
     }
-    updateMatches();
   });
 
   let selectMatch = (matchId: number) => () => {
     selectedMatchId = matchId;
-    updateMatches();
   };
-  let currentScenarios: ScenarioInstance[] | undefined;
+  let currentScenarios: ScenarioInfo[] | undefined;
   if (matchGroup.state == "Scheduled") {
     currentScenarios = [];
     for (let match of matchGroup.matches) {
       if ("scenario" in match.team1 && match.team1.scenario) {
-        currentScenarios.push(match.team1.scenario);
+        currentScenarios.push({
+          ...match.team1.scenario,
+          choice:
+            "choice" in match.team1.scenario
+              ? match.team1.scenario.choice
+              : undefined,
+        });
       }
       if ("scenario" in match.team2 && match.team2.scenario) {
-        currentScenarios.push(match.team2.scenario);
+        currentScenarios.push({
+          ...match.team2.scenario,
+          choice:
+            "choice" in match.team2.scenario
+              ? match.team2.scenario.choice
+              : undefined,
+        });
       }
     }
   }
@@ -65,10 +69,10 @@
     {:else if matchGroup.state == "Completed"}
       <div>Match Group is over</div>
     {/if}
-    {#if currentScenarios !== undefined}
-      <TeamChoice matchGroupId={matchGroup.id} scenarios={currentScenarios} />
-    {/if}
     {#if matchGroup.state == "Scheduled"}
+      {#if currentScenarios !== undefined}
+        <Scenarios matchGroupId={matchGroup.id} scenarios={currentScenarios} />
+      {/if}
       <h1>Predict the upcoming match-up winners</h1>
       {#each matchGroup.matches as match}
         <PredictMatchOutcome {match} />
@@ -77,18 +81,14 @@
       Not Scheduled TODO
     {:else}
       <div class="container">
-        <div class="selected-match">
-          {#if selectedLiveMatch}
+        {#if selectedLiveMatch}
+          <div class="selected-match">
             <LiveMatchComponent
               match={selectedMatch}
               liveMatch={selectedLiveMatch}
             />
-          {:else}
-            <!-- {#if lastScenarios !== undefined}
-              <TeamChoice matchGroupId={matchGroup.id} scenarios={currentScenarios} />
-            {/if} -->
-          {/if}
-        </div>
+          </div>
+        {/if}
         <div class="other-matches">
           {#each matches as [match, liveMatch]}
             <div
