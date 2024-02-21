@@ -21,6 +21,7 @@
   predictionStore.subscribe((predictions) => {
     if (!predictions) {
       matchPredictions = undefined;
+      predictionStore.refetch();
     } else {
       let matchPrediction = predictions[match.id];
       let totalPredictions =

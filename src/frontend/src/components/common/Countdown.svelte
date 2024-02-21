@@ -1,7 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
-  export let title: string;
   export let date: Date;
 
   function timeTill(date: Date): [string, string, string, string] {
@@ -35,24 +34,21 @@
   });
 </script>
 
-<div class="p-5 mb-5">
-  <div class="text-center text-4xl mb-2">{title}</div>
-  <div class="flex w-64">
-    <div class="flex flex-col w-1/4 items-center text-center">
-      <span class="text-3xl">{timeTillNextMatch[0]}</span>
-      <span class="text-xs">Days</span>
-    </div>
-    <div class="flex flex-col w-1/4 items-center text-center">
-      <span class="text-3xl">{timeTillNextMatch[1]}</span>
-      <span class="text-xs">Hours</span>
-    </div>
-    <div class="flex flex-col w-1/4 items-center text-center">
-      <span class="text-3xl">{timeTillNextMatch[2]}</span>
-      <span class="text-xs">Minutes</span>
-    </div>
-    <div class="flex flex-col w-1/4 items-center text-center">
-      <span class="text-3xl">{timeTillNextMatch[3]}</span>
-      <span class="text-xs">Seconds</span>
-    </div>
+<div class="flex w-64">
+  <div class="flex flex-col w-1/4 items-center text-center">
+    <span class="text-3xl">{timeTillNextMatch[0]}</span>
+    <span class="text-xs">Days</span>
+  </div>
+  <div class="flex flex-col w-1/4 items-center text-center">
+    <span class="text-3xl">{timeTillNextMatch[1]}</span>
+    <span class="text-xs">Hours</span>
+  </div>
+  <div class="flex flex-col w-1/4 items-center text-center">
+    <span class="text-3xl">{timeTillNextMatch[2]}</span>
+    <span class="text-xs">Minutes</span>
+  </div>
+  <div class="flex flex-col w-1/4 items-center text-center">
+    <span class="text-3xl">{timeTillNextMatch[3]}</span>
+    <span class="text-xs">Seconds</span>
   </div>
 </div>

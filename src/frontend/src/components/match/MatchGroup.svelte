@@ -1,6 +1,5 @@
 <script lang="ts">
   import { MatchDetails, MatchGroupDetails } from "../../models/Match";
-  import { nanosecondsToDate } from "../../utils/DateUtils";
   import PredictMatchOutcome from "./PredictMatchOutcome.svelte";
   import LiveMatchComponent from "./LiveMatch.svelte";
   import {
@@ -9,7 +8,6 @@
   } from "../../stores/LiveMatchGroupStore";
   import MatchCardCompact from "./MatchCardCompact.svelte";
   import Scenarios, { ScenarioInfo } from "../scenario/Scenarios.svelte";
-  import Countdown from "../common/Countdown.svelte";
 
   export let matchGroup: MatchGroupDetails;
 
@@ -64,11 +62,6 @@
 
 <section>
   <section class="match-details">
-    {#if matchGroup.state == "Scheduled" || matchGroup.state == "NotScheduled"}
-      <Countdown title="Next Match" date={nanosecondsToDate(matchGroup.time)} />
-    {:else if matchGroup.state == "Completed"}
-      <div>Match Group is over</div>
-    {/if}
     {#if matchGroup.state == "Scheduled"}
       {#if currentScenarios !== undefined}
         <Scenarios matchGroupId={matchGroup.id} scenarios={currentScenarios} />

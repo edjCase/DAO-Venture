@@ -7,6 +7,11 @@
   import SeasonWinners from "../components/season/SeasonWinners.svelte";
   import { MatchGroupDetails } from "../models/Match";
   import MatchGroup from "../components/match/MatchGroup.svelte";
+  import InBetweenMatchesOverview from "../components/match/InBetweenMatchesOverview.svelte";
+  import LiveMatchesOverview from "../components/match/LiveMatchesOverview.svelte";
+  import MatchUp from "../components/match/MatchUp.svelte";
+  import Countdown from "../components/common/Countdown.svelte";
+  import { nanosecondsToDate } from "../utils/DateUtils";
 
   let seasonStatus: SeasonStatus | undefined;
   let lastMatchGroup: MatchGroupDetails | undefined;
@@ -45,6 +50,25 @@
         </div>
       </div>
     {:else if nextOrCurrentMatchGroup}
+      {#if nextOrCurrentMatchGroup.state == "Scheduled"}
+        <InBetweenMatchesOverview />
+      {:else if nextOrCurrentMatchGroup.state == "InProgress"}
+        <LiveMatchesOverview />
+      {/if}
+      <section class="bg-gray-800 p-6 text-white">
+        <h2 class="text-3xl font-bold text-center mb-6">
+          <div class="flex justify-center mb-5">
+            <Countdown date={nanosecondsToDate(nextOrCurrentMatchGroup.time)} />
+          </div>
+          Next Session Matchups
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {#each nextOrCurrentMatchGroup.matches as match}
+            <MatchUp {match} />
+          {/each}
+        </div>
+      </section>
+
       <MatchGroup matchGroup={nextOrCurrentMatchGroup} />
     {:else}
       Loading...

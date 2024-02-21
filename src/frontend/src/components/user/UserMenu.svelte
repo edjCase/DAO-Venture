@@ -2,7 +2,6 @@
   import LoginButton from "../common/LoginButton.svelte";
   import { Avatar, Dropdown, DropdownItem } from "flowbite-svelte";
   import { CheckSolid, FileCopyOutline } from "flowbite-svelte-icons";
-  import { Link } from "svelte-routing";
   import {
     uniqueNamesGenerator,
     adjectives,
@@ -11,15 +10,8 @@
   } from "unique-names-generator";
   import { toSvg } from "jdenticon";
   import { userStore } from "../../stores/UserStore";
-  import { Principal } from "@dfinity/principal";
 
-  let adminUsers: string[] = [];
   $: user = $userStore;
-  $: isAdmin = user && adminUsers.includes(user.id.toString());
-
-  userStore.subscribeAdmins((adminIds: Principal[]) => {
-    adminUsers = adminIds.map((id) => id.toString());
-  });
 
   let idCopied = false;
   let copyPrincipal = () => {
@@ -80,11 +72,7 @@
         </div>
       </div>
     </div>
-    {#if isAdmin}
-      <Link to="/admin">
-        <DropdownItem>Admin</DropdownItem>
-      </Link>
-    {/if}
-    <DropdownItem on:click={logout} slot="footer">Logout</DropdownItem>
+
+    <DropdownItem on:click={logout}>Logout</DropdownItem>
   </Dropdown>
 {/if}
