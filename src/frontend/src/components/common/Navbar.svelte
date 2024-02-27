@@ -56,11 +56,6 @@
   <NavBrand>
     <Link to="/">
       <img src="/images/logo.png" class="me-3 h-16" alt="DAOball Logo" />
-      <span
-        class="self-center whitespace-nowrap text-xl font-semibold dark:text-white md:block hidden"
-      >
-        DAOball
-      </span>
     </Link>
   </NavBrand>
   <UserMenu />
