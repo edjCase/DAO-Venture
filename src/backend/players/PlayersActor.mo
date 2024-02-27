@@ -402,7 +402,7 @@ actor PlayersActor {
     private func isLeague(caller : Principal) : Bool {
         // TODO
         // caller == Principal.fromActor(LeagueActor);
-        false;
+        true;
     };
 
     private func assertLeague(caller : Principal) {
