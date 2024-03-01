@@ -7,12 +7,12 @@ module {
 
     public type PlayerActor = actor {
         createFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
-        getPlayer : (id : Nat32) -> async GetPlayerResult;
-        getTeamPlayers : (teamId : Principal) -> async [Player.PlayerWithId];
-        getAllPlayers : () -> async [PlayerWithId];
+        getPlayer : query (id : Nat32) -> async GetPlayerResult;
+        getTeamPlayers : query (teamId : Principal) -> async [Player.PlayerWithId];
+        getAllPlayers : query () -> async [PlayerWithId];
         populateTeamRoster : (teamId : Principal) -> async PopulateTeamRosterResult;
         addTrait : (request : AddTraitRequest) -> async AddTraitResult;
-        getTraits : () -> async [Trait.Trait];
+        getTraits : query () -> async [Trait.Trait];
         applyEffects : (request : ApplyEffectsRequest) -> async ApplyEffectsResult;
         onSeasonComplete : () -> async OnSeasonCompleteResult;
     };

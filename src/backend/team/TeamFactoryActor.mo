@@ -6,6 +6,7 @@ import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import Iter "mo:base/Iter";
 import Types "Types";
+import PlayersActor "canister:players";
 
 actor TeamFactoryActor {
 
@@ -42,7 +43,8 @@ actor TeamFactoryActor {
         let initialBalance = 100_000_000_000;
         Cycles.add(canisterCreationCost + initialBalance);
         let teamActor = await TeamActor.TeamActor(
-            leagueId
+            leagueId,
+            Principal.fromActor(PlayersActor),
         );
         let teamId = Principal.fromActor(teamActor);
         let teamKey = {
@@ -64,7 +66,8 @@ actor TeamFactoryActor {
 
                 try {
                     let _ = await (system TeamActor.TeamActor)(#upgrade(teamActor))(
-                        leagueId
+                        leagueId,
+                        Principal.fromActor(PlayersActor),
                     );
                 } catch (err) {
                     Debug.print("Error upgrading team actor: " # Error.message(err));
