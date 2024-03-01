@@ -32,7 +32,6 @@ module this {
         name : Text;
         logoUrl : Text;
         var score : Int;
-        scenario : Scenario.InstanceWithChoice;
         positions : MutableTeamPositions;
     };
 
@@ -63,12 +62,11 @@ module this {
                 name = team.name;
                 logoUrl = team.logoUrl;
                 var score = team.score;
-                scenario = team.scenario;
                 positions = toMutableTeamPositions(team.positions);
             };
         };
 
-        private func toMutableTeamPositions(positions : Season.TeamPositions) : MutableTeamPositions {
+        private func toMutableTeamPositions(positions : FieldPosition.TeamPositions) : MutableTeamPositions {
             {
                 var pitcher = positions.pitcher;
                 var firstBase = positions.firstBase;

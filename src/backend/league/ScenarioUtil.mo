@@ -8,9 +8,13 @@ import Float "mo:base/Float";
 import Nat8 "mo:base/Nat8";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
+import Trie "mo:base/Trie";
+import Option "mo:base/Option";
+import Nat32 "mo:base/Nat32";
 import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
 import TextX "mo:xtended-text/TextX";
+import FieldPosition "../models/FieldPosition";
 
 module {
 
@@ -26,7 +30,18 @@ module {
         #invalid : [Text];
     };
 
-    public func validateScenario(scenario : Scenario.Template, traitIds : [Text]) : ValidateScenarioResult {
+    type EffectContext = {
+        #league;
+        #team : Team;
+    };
+
+    public type Team = {
+        id : Principal;
+        positions : FieldPosition.TeamPositions;
+        choiceIndex : Nat8;
+    };
+
+    public func validateScenario(scenario : Scenario.Scenario, traitIds : [Text]) : ValidateScenarioResult {
         let errors = Buffer.Buffer<Text>(0);
         if (TextX.isEmptyOrWhitespace(scenario.id)) {
             errors.add("Scenario must have an id");
@@ -96,15 +111,11 @@ module {
                     index += 1;
                 };
             };
-            case (#trait(traitEffect)) {
-                if (Array.indexOf(traitEffect.traitId, traitIds, Text.equal) == null) {
-                    return #invalid(["Trait not found: " # traitEffect.traitId]);
-                };
+            case (#skill(s)) {
+                // TODO
             };
-            case (#removeTrait(removeTraitEffect)) {
-                if (Array.indexOf(removeTraitEffect.traitId, traitIds, Text.equal) == null) {
-                    return #invalid(["Trait not found: " # removeTraitEffect.traitId]);
-                };
+            case (#energy(e)) {
+                // TODO
             };
             case (#entropy(_)) {};
             case (#injury(_)) {};
@@ -115,30 +126,75 @@ module {
 
     public func resolveScenario(
         prng : Prng,
-        scenarioTemplate : Scenario.Template,
-        scenario : Scenario.Instance,
-        choiceIndex : Nat8,
-    ) : [Scenario.EffectOutcome] {
-        let choice = scenarioTemplate.options[Nat8.toNat(choiceIndex)];
-        let effectOutcomes = resolveEffect(prng, scenarioTemplate, scenario, choice.effect);
-        Iter.toArray(effectOutcomes);
+        scenario : Scenario.Scenario,
+        teams : [Team],
+    ) : Scenario.ResolvedScenario {
+        let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
+        let teamChoices = Buffer.Buffer<{ teamId : Principal; choiceIndex : Nat8 }>(0);
+        for (team in Iter.fromArray(teams)) {
+            let choice = scenario.options[Nat8.toNat(team.choiceIndex)];
+            teamChoices.add({
+                teamId = team.id;
+                choiceIndex = team.choiceIndex;
+            });
+            resolveEffectInternal(
+                prng,
+                #team(team),
+                scenario,
+                choice.effect,
+                effectOutcomes,
+            );
+        };
+        switch (scenario.effect) {
+            case (#simple) ();
+            case (#leagueChoice(leagueChoice)) {
+                let leagueChoiceIndex = getMajorityChoice(prng, teams);
+                let leagueOption = leagueChoice.options[Nat8.toNat(leagueChoiceIndex)];
+                resolveEffectInternal(prng, #league, scenario, leagueOption.effect, effectOutcomes);
+            };
+            case (#lottery(lottery)) {
+
+            };
+            case (#pickASide(pickASide)) {
+
+            };
+            case (#proportionalBid(proportionalBid)) {
+
+            };
+            case (#threshold(threshold)) {
+
+            };
+        };
+        {
+            scenario with
+            teamChoices = Buffer.toArray(teamChoices);
+            effectOutcomes = Buffer.toArray(effectOutcomes);
+        };
     };
 
     public func resolveEffect(
         prng : Prng,
-        scenarioTemplate : Scenario.Template,
-        scenario : Scenario.Instance,
+        context : EffectContext,
+        scenario : Scenario.Scenario,
         effect : Scenario.Effect,
-    ) : Iter.Iter<Scenario.EffectOutcome> {
-        let singleEffect : Scenario.EffectOutcome = switch (effect) {
+    ) : [Scenario.EffectOutcome] {
+        let buffer = Buffer.Buffer<Scenario.EffectOutcome>(0);
+        resolveEffectInternal(prng, context, scenario, effect, buffer);
+        Buffer.toArray(buffer);
+    };
+
+    private func resolveEffectInternal(
+        prng : Prng,
+        context : EffectContext,
+        scenario : Scenario.Scenario,
+        effect : Scenario.Effect,
+        outcomes : Buffer.Buffer<Scenario.EffectOutcome>,
+    ) {
+        switch (effect) {
             case (#allOf(subEffects)) {
-                return subEffects
-                |> Iter.fromArray(_)
-                |> Iter.map(
-                    _,
-                    func(subEffect : Scenario.Effect) : Iter.Iter<Scenario.EffectOutcome> = resolveEffect(prng, scenarioTemplate, scenario, subEffect),
-                )
-                |> IterTools.flatten(_);
+                for (subEffect in Iter.fromArray(subEffects)) {
+                    resolveEffectInternal(prng, context, scenario, subEffect, outcomes);
+                };
             };
             case (#oneOf(subEffects)) {
                 let weightedSubEffects = Array.map<(Nat, Scenario.Effect), (Scenario.Effect, Float)>(
@@ -146,59 +202,117 @@ module {
                     func((weight, effect) : (Nat, Scenario.Effect)) : (Scenario.Effect, Float) = (effect, Float.fromInt(weight)),
                 );
                 let subEffect = prng.nextArrayElementWeighted(weightedSubEffects);
-                return resolveEffect(prng, scenarioTemplate, scenario, subEffect);
-            };
-            case (#trait(trait)) {
-                #trait({
-                    trait with
-                    target = getTargetInstance(scenario, trait.target)
-                });
-            };
-            case (#removeTrait(removeTrait)) {
-                #removeTrait({
-                    removeTrait with
-                    target = getTargetInstance(scenario, removeTrait.target)
-                });
+                resolveEffectInternal(prng, context, scenario, subEffect, outcomes);
             };
             case (#entropy(entropyEffect)) {
-                #entropy({
-                    teamId = getTeamId(scenario, entropyEffect.team);
-                    delta = entropyEffect.delta;
-                });
+                outcomes.add(
+                    #entropy({
+                        teamId = getTeamId(entropyEffect.team, context);
+                        delta = entropyEffect.delta;
+                    })
+                );
             };
             case (#injury(injuryEffect)) {
-                #injury({
-                    target = getTargetInstance(scenario, injuryEffect.target);
-                    injury = injuryEffect.injury;
-                });
+                outcomes.add(
+                    #injury({
+                        target = getTargetInstance(scenario, context, injuryEffect.target);
+                        injury = injuryEffect.injury;
+                    })
+                );
             };
-            case (#noEffect) {
-                return {
-                    next = func() : ?Scenario.EffectOutcome = null;
+            case (#skill(s)) {
+                outcomes.add(
+                    #skill({
+                        target = getTargetInstance(scenario, context, s.target);
+                        skill = s.skill;
+                        duration = s.duration;
+                        delta = s.delta;
+                    })
+                );
+            };
+            case (#energy(e)) {
+                let delta = switch (e.value) {
+                    case (#flat(fixed)) fixed;
                 };
+                outcomes.add(
+                    #energy({
+                        teamId = getTeamId(e.team, context);
+                        delta = delta;
+                    })
+                );
             };
-        };
-        var used = false;
-        {
-            next = func() : ?Scenario.EffectOutcome {
-                if (used) {
-                    return null;
-                };
-                used := true;
-                ?singleEffect;
-            };
+            case (#noEffect) ();
         };
     };
 
-    private func getTeamId(scenario : Scenario.Instance, team : Scenario.Team) : Principal {
+    private func getMajorityChoice(
+        prng : Prng,
+        teamChoices : [Team],
+    ) : Nat8 {
+        if (teamChoices.size() < 1) {
+            Debug.trap("No team choices");
+        };
+        // Get the top choice(s), if there is a tie, choose randomly
+        var choiceCounts = Trie.empty<Nat8, Nat>();
+        var maxCount = 0;
+        for (teamChoice in Iter.fromArray(teamChoices)) {
+            let choiceKey = {
+                key = teamChoice.choiceIndex;
+                hash = Nat32.fromNat(Nat8.toNat(teamChoice.choiceIndex));
+            };
+            let currentCount = Option.get(Trie.get(choiceCounts, choiceKey, Nat8.equal), 0);
+            let newCount = currentCount + 1;
+            let (newChoiceCounts, _) = Trie.put(choiceCounts, choiceKey, Nat8.equal, newCount);
+            choiceCounts := newChoiceCounts;
+            if (newCount > maxCount) {
+                maxCount := newCount;
+            };
+        };
+        let topChoices = Buffer.Buffer<Nat8>(0);
+        for ((choiceIndex, choiceCount) in Trie.iter(choiceCounts)) {
+            if (choiceCount == maxCount) {
+                topChoices.add(choiceIndex);
+            };
+        };
+        if (topChoices.size() == 1) {
+            topChoices.get(0);
+        } else {
+            prng.nextBufferElement(topChoices);
+        };
+
+    };
+
+    private func getTeamId(
+        team : Scenario.TargetTeam,
+        context : EffectContext,
+    ) : Principal {
+        let choosingTeam = switch (context) {
+            case (#league) Debug.trap("Cannot get team id for league context");
+            case (#team(team)) team;
+        };
         switch (team) {
-            case (#scenarioTeam) scenario.teamId;
-            case (#opposingTeam) scenario.opposingTeamId;
-            case (#otherTeam(index)) scenario.otherTeamIds[index];
+            case (#choosingTeam) choosingTeam.id;
         };
     };
 
-    private func getTargetInstance(scenario : Scenario.Instance, target : Scenario.Target) : Scenario.TargetInstance {
+    private func getPlayerId(
+        player : Scenario.TargetPlayer,
+        context : EffectContext,
+    ) : Nat32 {
+        let choosingTeam = switch (context) {
+            case (#league) Debug.trap("Cannot get team id for league context");
+            case (#team(team)) team;
+        };
+        switch (player) {
+            case (#position(p)) FieldPosition.getTeamPosition(choosingTeam.positions, p);
+        };
+    };
+
+    private func getTargetInstance(
+        scenario : Scenario.Scenario,
+        context : EffectContext,
+        target : Scenario.Target,
+    ) : Scenario.TargetInstance {
         switch (target) {
             case (#league) #league;
             case (#teams(teams)) {
@@ -206,7 +320,7 @@ module {
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(team : Scenario.Team) : Principal = getTeamId(scenario, team),
+                    func(team : Scenario.TargetTeam) : Principal = getTeamId(team, context),
                 )
                 |> Iter.toArray(_);
                 #teams(teamIds);
@@ -216,61 +330,11 @@ module {
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(i : Scenario.ScenarioPlayerIndex) : Nat32 = scenario.playerIds[i],
+                    func(player : Scenario.TargetPlayer) : Nat32 = getPlayerId(player, context),
                 )
                 |> Iter.toArray(_);
                 #players(playerIds);
             };
-        };
-    };
-
-    public func getRandomScenario(
-        prng : Prng,
-        team1Id : Principal,
-        team2Id : Principal,
-        allTeamIds : [Principal],
-        allPlayerIds : [Nat32],
-        scenarios : [Scenario.Template],
-    ) : Scenario.Instance {
-        // Filter down buffers/adjust the weights of the scenarios
-
-        let scenario = prng.nextArrayElementWeightedFunc(
-            scenarios,
-            func(s : Scenario.Template) : Float {
-                1.0; // TODO
-            },
-        );
-        let otherTeamIds = Buffer.Buffer<Principal>(scenario.otherTeams.size());
-        if (scenario.otherTeams.size() > 0) {
-            let unusedOtherTeamIds = Buffer.fromArray<Principal>(allTeamIds);
-            unusedOtherTeamIds.filterEntries(func(i, id) = id != team1Id and id != team2Id);
-            prng.shuffleBuffer(unusedOtherTeamIds); // Randomize
-
-            // TODO filter/weigh the teams
-            for (otherTeam in Iter.fromArray(scenario.otherTeams)) {
-                let ?randomTeam = unusedOtherTeamIds.removeLast() else return Debug.trap("Not enough teams for scenario: " # scenario.id);
-                otherTeamIds.add(randomTeam);
-            };
-        };
-
-        let playerIds = Buffer.Buffer<Nat32>(scenario.players.size());
-
-        if (scenario.players.size() > 0) {
-            let unusedPlayerIds = Buffer.fromArray<Nat32>(allPlayerIds);
-            prng.shuffleBuffer(unusedPlayerIds); // Randomize
-
-            // TODO filter/weigh the players
-            for (player in Iter.fromArray(scenario.players)) {
-                let ?randomPlayer = unusedPlayerIds.removeLast() else return Debug.trap("Not enough players for scenario: " # scenario.id);
-                playerIds.add(randomPlayer);
-            };
-        };
-        {
-            templateId = scenario.id;
-            teamId = team1Id;
-            opposingTeamId = team2Id;
-            otherTeamIds = Buffer.toArray(otherTeamIds);
-            playerIds = Buffer.toArray(playerIds);
         };
     };
 

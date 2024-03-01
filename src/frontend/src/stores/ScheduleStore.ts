@@ -11,7 +11,7 @@ import {
     TeamInfo,
 } from "../models/Season";
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined } from "../models/Match";
-import { ScenarioInstance, ScenarioInstanceWithChoice } from "../models/Scenario";
+import { ScenarioInstance, ScenarioResolvedScenario } from "../models/Scenario";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -34,7 +34,7 @@ export const scheduleStore = (() => {
     };
     const mapTeam = (
         team: TeamInfo,
-        scenario: ScenarioInstance | ScenarioInstanceWithChoice | undefined,
+        scenario: ScenarioInstance | ScenarioResolvedScenario | undefined,
         score: bigint | undefined
     ): TeamDetails => {
         return {

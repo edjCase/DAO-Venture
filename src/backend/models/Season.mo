@@ -41,6 +41,7 @@ module {
     public type NotScheduledMatchGroup = {
         time : Time.Time;
         matches : [NotScheduledMatch];
+        scenario : Scenario.Scenario;
     };
 
     public type TeamAssignment = {
@@ -58,11 +59,10 @@ module {
         time : Time.Time;
         timerId : Nat;
         matches : [ScheduledMatch];
+        scenario : Scenario.Scenario;
     };
 
-    public type ScheduledTeamInfo = TeamInfo and {
-        scenario : Scenario.Instance;
-    };
+    public type ScheduledTeamInfo = TeamInfo and {};
 
     public type ScheduledMatch = {
         team1 : ScheduledTeamInfo;
@@ -74,22 +74,11 @@ module {
         time : Time.Time;
         stadiumId : Principal;
         matches : [InProgressMatch];
-    };
-
-    public type TeamPositions = {
-        firstBase : Player.PlayerId;
-        secondBase : Player.PlayerId;
-        thirdBase : Player.PlayerId;
-        shortStop : Player.PlayerId;
-        pitcher : Player.PlayerId;
-        leftField : Player.PlayerId;
-        centerField : Player.PlayerId;
-        rightField : Player.PlayerId;
+        scenario : Scenario.ResolvedScenario;
     };
 
     public type InProgressTeam = TeamInfo and {
-        scenario : Scenario.InstanceWithChoice;
-        positions : TeamPositions;
+        positions : FieldPosition.TeamPositions;
     };
 
     public type InProgressMatch = {
@@ -99,9 +88,8 @@ module {
     };
 
     public type CompletedMatchTeam = TeamInfo and {
-        scenario : Scenario.InstanceWithChoice;
         score : Int;
-        positions : TeamPositions;
+        positions : FieldPosition.TeamPositions;
     };
 
     public type CompletedMatch = {
@@ -114,6 +102,7 @@ module {
     public type CompletedMatchGroup = {
         time : Time.Time;
         matches : [CompletedMatch];
+        scenario : Scenario.ResolvedScenario;
     };
 
     // Completed Season

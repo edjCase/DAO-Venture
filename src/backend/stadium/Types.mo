@@ -70,7 +70,6 @@ module {
     };
 
     public type StartMatchTeam = Team and {
-        scenario : Scenario.InstanceWithChoice;
         positions : {
             firstBase : Player.PlayerWithId;
             secondBase : Player.PlayerWithId;
@@ -310,8 +309,7 @@ module {
 
     public type TeamState = Team and {
         score : Int;
-        scenario : Scenario.InstanceWithChoice;
-        positions : Season.TeamPositions;
+        positions : FieldPosition.TeamPositions;
     };
 
 };

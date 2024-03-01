@@ -55,7 +55,6 @@ module {
         id : Principal;
         name : Text;
         logoUrl : Text;
-        scenario : Scenario.InstanceWithChoice;
         positions : {
             firstBase : Player.PlayerWithId;
             secondBase : Player.PlayerWithId;
@@ -167,7 +166,6 @@ module {
             name = team.name;
             logoUrl = team.logoUrl;
             score = 0;
-            scenario = team.scenario;
             positions = {
                 pitcher = team.positions.pitcher.id;
                 firstBase = team.positions.firstBase.id;
@@ -258,7 +256,6 @@ module {
                 name = team.name;
                 logoUrl = team.logoUrl;
                 score = team.score;
-                scenario = team.scenario;
                 positions = {
                     pitcher = team.positions.pitcher;
                     firstBase = team.positions.firstBase;

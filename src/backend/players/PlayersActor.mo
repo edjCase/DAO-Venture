@@ -197,61 +197,33 @@ actor PlayersActor {
         let prng = PseudoRandomX.fromBlob(await Random.blob());
         for (effect in Iter.fromArray(request)) {
             switch (effect) {
-                case (#trait(t)) {
-                    let targetPlayerIds = getTargetPlayerIds(t.target);
+                case (#skill(skillEffect)) {
+                    let targetPlayerIds = getTargetPlayerIds(skillEffect.target);
                     for (playerId in Iter.fromArray(targetPlayerIds)) {
                         updatePlayer(
                             playerId,
                             func(player) {
-                                let trait = getTrait(t.traitId);
-                                let newTraitIdsBuffer = Buffer.fromArray<Text>(player.traitIds);
-                                newTraitIdsBuffer.add(trait.id);
+                                let newSkills = Skill.modify(player.skills, skillEffect.skill, skillEffect.delta);
 
-                                var newPlayer : Types.Player = {
+                                {
                                     player with
-                                    traits = Buffer.toArray(newTraitIdsBuffer);
+                                    skills = newSkills
                                 };
-                                // TODO apply effect here or when evaluating skills and whatnot?
-                                for (effect in Iter.fromArray(trait.effects)) {
-                                    newPlayer := applyEffect(prng, newPlayer, effect);
-                                };
-                                newPlayer;
                             },
                         );
                     };
                 };
-                case (#removeTrait(t)) {
-                    let targetPlayerIds = getTargetPlayerIds(t.target);
+                case (#injury(injuryEffect)) {
+                    let targetPlayerIds = getTargetPlayerIds(injuryEffect.target);
                     for (playerId in Iter.fromArray(targetPlayerIds)) {
                         updatePlayer(
                             playerId,
                             func(player) {
-                                let trait = getTrait(t.traitId);
-                                let newTraitIdsBuffer = Buffer.fromArray<Text>(player.traitIds);
-                                newTraitIdsBuffer.filterEntries(func(i : Nat, id : Text) : Bool = id == trait.id);
-
-                                var newPlayer : Types.Player = {
-                                    player with
-                                    traits = Buffer.toArray(newTraitIdsBuffer);
-                                };
                                 // TODO how to remove effect?
-                                newPlayer;
-                            },
-                        );
-                    };
-                };
-                case (#injury(injury)) {
-                    let targetPlayerIds = getTargetPlayerIds(injury.target);
-                    for (playerId in Iter.fromArray(targetPlayerIds)) {
-                        updatePlayer(
-                            playerId,
-                            func(player) {
-                                var newPlayer : Types.Player = {
+                                {
                                     player with
-                                    injury = injury;
+                                    injury = injuryEffect.injury;
                                 };
-                                // TODO how to remove effect?
-                                newPlayer;
                             },
                         );
                     };

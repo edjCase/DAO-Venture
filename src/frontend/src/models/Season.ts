@@ -2,8 +2,8 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { MatchAura, MatchAuraIdl, MatchAuraWithMetaData, MatchAuraWithMetaDataIdl } from './MatchAura';
 import { TeamIdOrTie, TeamIdOrTieIdl } from './Team';
-import { ScenarioInstance, ScenarioInstanceIdl, ScenarioInstanceWithChoice, ScenarioInstanceWithChoiceIdl } from './Scenario';
-import { PlayerId } from './Player';
+import { TeamPositions, TeamPositionsIdl } from './Player';
+import { Scenario, ScenarioIdl } from './Scenario';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -56,13 +56,11 @@ export const NotScheduledMatchIdl = IDL.Record({
 });
 
 export type ScheduledTeamInfo = TeamInfo & {
-    scenario: ScenarioInstance;
 };
 export const ScheduledTeamInfoIdl = IDL.Record({
     id: IDL.Principal,
     name: IDL.Text,
-    logoUrl: IDL.Text,
-    scenario: ScenarioInstanceIdl,
+    logoUrl: IDL.Text
 });
 
 export type ScheduledMatch = {
@@ -76,36 +74,13 @@ export const ScheduledMatchIdl = IDL.Record({
     aura: MatchAuraWithMetaDataIdl,
 });
 
-export type TeamPositions = {
-    firstBase: PlayerId;
-    secondBase: PlayerId;
-    thirdBase: PlayerId;
-    shortStop: PlayerId;
-    pitcher: PlayerId;
-    leftField: PlayerId;
-    centerField: PlayerId;
-    rightField: PlayerId;
-};
-export const TeamPositionsIdl = IDL.Record({
-    firstBase: IDL.Nat32,
-    secondBase: IDL.Nat32,
-    thirdBase: IDL.Nat32,
-    shortStop: IDL.Nat32,
-    pitcher: IDL.Nat32,
-    leftField: IDL.Nat32,
-    centerField: IDL.Nat32,
-    rightField: IDL.Nat32,
-});
-
 export type InProgressTeam = TeamInfo & {
-    scenario: ScenarioInstanceWithChoice;
     positions: TeamPositions;
 };
 export const InProgressTeamIdl = IDL.Record({
     id: IDL.Principal,
     name: IDL.Text,
     logoUrl: IDL.Text,
-    scenario: ScenarioInstanceWithChoiceIdl,
     positions: TeamPositionsIdl,
 });
 
@@ -121,7 +96,6 @@ export const InProgressMatchIdl = IDL.Record({
 });
 
 export type CompletedMatchTeam = TeamInfo & {
-    scenario: ScenarioInstanceWithChoice;
     score: Int;
     positions: TeamPositions;
 };
@@ -129,7 +103,6 @@ export const CompletedMatchTeamIdl = IDL.Record({
     id: IDL.Principal,
     name: IDL.Text,
     logoUrl: IDL.Text,
-    scenario: ScenarioInstanceWithChoiceIdl,
     score: IDL.Int,
     positions: TeamPositionsIdl,
 });
@@ -164,10 +137,12 @@ export const CompletedSeasonTeamIdl = IDL.Record({
 export type CompletedMatchGroup = {
     time: Time;
     matches: CompletedMatch[];
+    scenario: Scenario;
 };
 export const CompletedMatchGroupIdl = IDL.Record({
     time: TimeIdl,
     matches: IDL.Vec(CompletedMatchIdl),
+    scenario: ScenarioIdl,
 });
 
 export type CompletedSeason = {
@@ -186,21 +161,25 @@ export const CompletedSeasonIdl = IDL.Record({
 export type NotScheduledMatchGroup = {
     time: Time;
     matches: NotScheduledMatch[];
+    scenario: Scenario;
 };
 export const NotScheduledMatchGroupIdl = IDL.Record({
     time: TimeIdl,
     matches: IDL.Vec(NotScheduledMatchIdl),
+    scenario: ScenarioIdl,
 });
 
 export type ScheduledMatchGroup = {
     time: Time;
     timerId: Nat;
     matches: ScheduledMatch[];
+    scenario: Scenario;
 };
 export const ScheduledMatchGroupIdl = IDL.Record({
     time: TimeIdl,
     timerId: IDL.Nat,
     matches: IDL.Vec(ScheduledMatchIdl),
+    scenario: ScenarioIdl,
 });
 
 export type InProgressMatchGroup = {

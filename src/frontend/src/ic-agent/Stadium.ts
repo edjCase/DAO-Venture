@@ -2,12 +2,11 @@ import type { Principal } from '@dfinity/principal';
 import { IDL } from "@dfinity/candid";
 import { MatchAura, MatchAuraIdl } from "../models/MatchAura";
 import { TeamId, TeamIdIdl, TeamIdOrTieIdl } from "../models/Team";
-import { ScenarioInstanceWithChoice, ScenarioInstanceWithChoiceIdl } from "../models/Scenario";
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
-import { Injury, InjuryIdl, PlayerCondition, PlayerConditionIdl, PlayerMatchStats, PlayerMatchStatsIdl, PlayerMatchStatsWithId, PlayerMatchStatsWithIdIdl, PlayerSkills, PlayerSkillsIdl } from "../models/Player";
-import { CompletedMatch, CompletedMatchIdl, TeamPositions, TeamPositionsIdl } from "../models/Season";
+import { Injury, InjuryIdl, PlayerCondition, PlayerConditionIdl, PlayerMatchStats, PlayerMatchStatsIdl, PlayerMatchStatsWithId, PlayerMatchStatsWithIdIdl, PlayerSkills, PlayerSkillsIdl, TeamPositions, TeamPositionsIdl } from "../models/Player";
+import { CompletedMatch, CompletedMatchIdl } from "../models/Season";
 import { Trait, TraitIdl } from '../models/Trait';
 import { Curse, CurseIdl } from '../models/Curse';
 import { Blessing, BlessingIdl } from '../models/Blessing';
@@ -36,14 +35,12 @@ export type StartMatchTeam = {
   id: Principal;
   name: Text;
   logoUrl: Text;
-  scenario: ScenarioInstanceWithChoice;
   positions: TeamPositions;
 };
 export const StartMatchTeamIdl = IDL.Record({
   id: IDL.Principal,
   name: IDL.Text,
   logoUrl: IDL.Text,
-  scenario: ScenarioInstanceWithChoiceIdl,
   positions: TeamPositionsIdl,
 });
 
@@ -106,7 +103,6 @@ export type TeamState = {
   name: Text;
   logoUrl: Text;
   score: Int;
-  scenario: ScenarioInstanceWithChoice;
   positions: TeamPositions;
 };
 export const TeamStateIdl = IDL.Record({
@@ -114,7 +110,6 @@ export const TeamStateIdl = IDL.Record({
   name: IDL.Text,
   logoUrl: IDL.Text,
   score: IDL.Int,
-  scenario: ScenarioInstanceWithChoiceIdl,
   positions: TeamPositionsIdl,
 });
 

@@ -27,12 +27,12 @@
   } from "../../ic-agent/Team";
   import {
     ScenarioInstance,
-    ScenarioInstanceWithChoice,
+    ScenarioResolvedScenario,
   } from "../../models/Scenario";
   import { teamStore } from "../../stores/TeamStore";
   import { Team } from "../../models/Team";
 
-  export let scenario: ScenarioInstance | ScenarioInstanceWithChoice;
+  export let scenario: ScenarioInstance | ScenarioResolvedScenario;
   export let scenarioData: ScenarioData;
   export let matchGroupId: number;
 

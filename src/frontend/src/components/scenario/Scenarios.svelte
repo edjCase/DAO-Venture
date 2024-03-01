@@ -10,7 +10,7 @@
   import { Principal } from "@dfinity/principal";
   import {
     ScenarioInstance,
-    ScenarioInstanceWithChoice,
+    ScenarioResolvedScenario,
     ScenarioTemplate,
   } from "../../models/Scenario";
   import { Team } from "../../models/Team";
@@ -25,7 +25,7 @@
 
   let buildData = function (
     template: ScenarioTemplate,
-    scenario: ScenarioInstance | ScenarioInstanceWithChoice,
+    scenario: ScenarioInstance | ScenarioResolvedScenario,
     allTeams: Team[],
     allPlayers: Player[]
   ): ScenarioData | undefined {

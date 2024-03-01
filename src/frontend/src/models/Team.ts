@@ -32,6 +32,8 @@ export type Team = {
     motto: Text;
     description: Text;
     color: [number, number, number];
+    entropy: number;
+    energy: number;
 };
 export const TeamIdl = IDL.Record({
     id: IDL.Principal,
@@ -40,4 +42,6 @@ export const TeamIdl = IDL.Record({
     motto: IDL.Text,
     description: IDL.Text,
     color: IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    entropy: IDL.Nat,
+    energy: IDL.Int,
 });

@@ -13,10 +13,10 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
-        getScenarioTemplates : query () -> async [Scenario.Template];
-        getScenarioTemplate : query (id : Text) -> async ?Scenario.Template;
+        getScenarios : query () -> async [Scenario.Scenario];
+        getScenario : query (id : Text) -> async ?Scenario.Scenario;
         getTeamStandings : query () -> async GetTeamStandingsResult;
-        addScenarioTemplate : (request : AddScenarioTemplateRequest) -> async AddScenarioTemplateResult;
+        addScenario : (request : AddScenarioRequest) -> async AddScenarioResult;
         processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
@@ -52,9 +52,9 @@ module {
         #seasonNotInProgress;
     };
 
-    public type AddScenarioTemplateRequest = Scenario.Template;
+    public type AddScenarioRequest = Scenario.Scenario;
 
-    public type AddScenarioTemplateResult = {
+    public type AddScenarioResult = {
         #ok;
         #idTaken;
         #notAuthorized;
@@ -115,6 +115,7 @@ module {
     // Start season
     public type StartSeasonRequest = {
         startTime : Time.Time;
+        scenarios : [Scenario.Scenario];
     };
 
     public type StartSeasonResult = {
@@ -125,6 +126,10 @@ module {
         #noTeams;
         #oddNumberOfTeams;
         #notAuthorized;
+        #scenarioCountMismatch : {
+            expected : Nat;
+            actual : Nat;
+        };
     };
 
     public type CloseSeasonResult = {
@@ -139,17 +144,6 @@ module {
         id : Nat;
         matches : [Season.CompletedMatch];
         playerStats : [Player.PlayerMatchStatsWithId];
-    };
-
-    public type PlayedMatchResult = {
-        team1 : PlayedMatchTeamData;
-        team2 : PlayedMatchTeamData;
-        winner : Team.TeamIdOrTie;
-    };
-
-    public type PlayedMatchTeamData = {
-        score : Int;
-        scenario : Scenario.InstanceWithChoice;
     };
 
     public type FailedMatchResult = {

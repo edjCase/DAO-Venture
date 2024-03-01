@@ -7,7 +7,7 @@ import { scheduleStore } from "./ScheduleStore";
 import { TeamId, TeamIdOrTie } from "../models/Team";
 import { TeamDetails } from "../models/Match";
 import { MatchAura } from "../models/MatchAura";
-import { ScenarioInstanceWithChoice } from "../models/Scenario";
+import { ScenarioResolvedScenario } from "../models/Scenario";
 
 export type LiveMatchGroup = {
   id: number;
@@ -15,7 +15,7 @@ export type LiveMatchGroup = {
 };
 
 export type LiveTeamDetails = TeamDetails & {
-  scenario: ScenarioInstanceWithChoice;
+  scenario: ScenarioResolvedScenario;
   positions: TeamPositions
 };
 

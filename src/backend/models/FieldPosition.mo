@@ -1,4 +1,5 @@
 import Hash "mo:base/Hash";
+
 module {
 
     public type FieldPosition = {
@@ -23,6 +24,30 @@ module {
         #rightField,
     ];
 
+    public type TeamPositions = {
+        firstBase : Nat32;
+        secondBase : Nat32;
+        thirdBase : Nat32;
+        shortStop : Nat32;
+        pitcher : Nat32;
+        leftField : Nat32;
+        centerField : Nat32;
+        rightField : Nat32;
+    };
+
+    public func getTeamPosition(poistions : TeamPositions, position : FieldPosition) : Nat32 {
+        switch (position) {
+            case (#firstBase) poistions.firstBase;
+            case (#secondBase) poistions.secondBase;
+            case (#thirdBase) poistions.thirdBase;
+            case (#shortStop) poistions.shortStop;
+            case (#leftField) poistions.leftField;
+            case (#centerField) poistions.centerField;
+            case (#rightField) poistions.rightField;
+            case (#pitcher) poistions.pitcher;
+        };
+    };
+
     public func equal(a : FieldPosition, b : FieldPosition) : Bool {
         a == b;
     };
@@ -37,19 +62,6 @@ module {
             case (#leftField) 5;
             case (#centerField) 6;
             case (#rightField) 7;
-        };
-    };
-
-    public func toText(position : FieldPosition) : Text {
-        switch (position) {
-            case (#firstBase) "first base";
-            case (#secondBase) "second base";
-            case (#thirdBase) "third base";
-            case (#pitcher) "pitcher";
-            case (#shortStop) "short stop";
-            case (#leftField) "left field";
-            case (#centerField) "center field";
-            case (#rightField) "right field";
         };
     };
 };

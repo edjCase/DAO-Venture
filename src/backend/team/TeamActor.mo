@@ -53,7 +53,7 @@ shared (install) actor class TeamActor(
       return #seasonStatusFetchError(Error.message(err));
     };
     let teamId = Principal.fromActor(this);
-    let scheduledMatch : Season.ScheduledMatch = switch (seasonStatus) {
+    let scheduledMatchGroup : Season.ScheduledMatchGroup = switch (seasonStatus) {
       case (#notStarted or #starting) return #votingNotOpen;
       case (#completed(c)) return #votingNotOpen;
       case (#inProgress(ip)) {
@@ -61,36 +61,20 @@ shared (install) actor class TeamActor(
 
         switch (matchGroup) {
           case (#scheduled(scheduledMatchGroup)) {
+            // TODO necessary to check in in group?
             let ?match = Array.find(
               scheduledMatchGroup.matches,
               func(m : Season.ScheduledMatch) : Bool = m.team1.id == teamId or m.team2.id == teamId,
             ) else return #teamNotInMatchGroup;
-            match;
+            scheduledMatchGroup;
           };
           case (_) return #votingNotOpen;
         };
       };
     };
-    let team = if (scheduledMatch.team1.id == teamId) {
-      scheduledMatch.team1;
-    } else if (scheduledMatch.team2.id == teamId) {
-      scheduledMatch.team2;
-    } else {
-      Prelude.unreachable();
-    };
-
-    let scenarioTemplate = try {
-      let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
-      switch (await leagueActor.getScenarioTemplate(team.scenario.templateId)) {
-        case (null) Debug.trap("Scenario template " # team.scenario.templateId # " not found");
-        case (?t) t;
-      };
-    } catch (err) {
-      Debug.trap("Error fetching scenario template: " # Error.message(err));
-    };
 
     let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let choiceExists = scenarioTemplate.options.size() > Nat8.toNat(request.scenarioChoice);
+    let choiceExists = scheduledMatchGroup.scenario.options.size() > Nat8.toNat(request.scenarioChoice);
     if (not choiceExists) {
       errors.add(#invalidChoice(request.scenarioChoice));
     };

@@ -5,6 +5,8 @@ import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
+import Nat "mo:base/Nat";
+import Principal "mo:base/Principal";
 import Util "../Util";
 import IterTools "mo:itertools/Iter";
 import DateTime "mo:datetime/DateTime";
@@ -12,34 +14,24 @@ import Team "../models/Team";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type RegularMatch = {
-        team1Id : Principal;
-        team2Id : Principal;
-    };
-
-    public type RegularMatchGroup = {
-        time : Time.Time;
-        matches : [RegularMatch];
-    };
-
-    public type PlayoffTeam = {
+    public type Team = {
+        #id : Principal;
         #seasonStandingIndex : Nat;
         #winnerOfMatch : Nat; // Match Id of last match group
     };
 
-    public type PlayoffMatch = {
-        team1 : PlayoffTeam;
-        team2 : PlayoffTeam;
+    public type Match = {
+        team1 : Team;
+        team2 : Team;
     };
 
-    public type PlayoffMatchGroup = {
+    public type MatchGroup = {
         time : Time.Time;
-        matches : [PlayoffMatch];
+        matches : [Match];
     };
 
     public type SeasonSchedule = {
-        regularSeason : [RegularMatchGroup];
-        playoffs : [PlayoffMatchGroup];
+        matchGroups : [MatchGroup];
     };
 
     public type BuildScheduleResult = {
@@ -69,23 +61,23 @@ module {
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
         var nextMatchDate = DateTime.fromTime(startTime);
 
-        let regularMatchGroups = Buffer.Buffer<RegularMatchGroup>(weekCount);
+        let matchGroups = Buffer.Buffer<MatchGroup>(weekCount);
         for (weekIndex in IterTools.range(0, weekCount)) {
 
-            let matches : [RegularMatch] = IterTools.range(0, matchUpCountPerWeek)
+            let matches : [Match] = IterTools.range(0, matchUpCountPerWeek)
             |> Iter.map(
                 _,
-                func(i : Nat) : RegularMatch {
+                func(i : Nat) : Match {
                     let team1Id = teamOrderForWeek.get(i);
                     let team2Id = teamOrderForWeek.get(teamCount - 1 - i); // First plays last, second plays second last, etc.
                     {
-                        team1Id = team1Id;
-                        team2Id = team2Id;
+                        team1 = #id(team1Id);
+                        team2 = #id(team2Id);
                     };
                 },
             )
             |> Iter.toArray(_);
-            regularMatchGroups.add({
+            matchGroups.add({
                 time = nextMatchDate.toTime();
                 matches = matches;
             });
@@ -105,12 +97,11 @@ module {
             teamOrderForWeek := newOrder;
         };
 
-        let playoffMatchGroups = Buffer.Buffer<PlayoffMatchGroup>(4);
-        let addPlayoffRound = func(matches : [PlayoffMatch]) {
+        let addPlayoffRound = func(matches : [Match]) {
             if (matches.size() < 1) {
                 Debug.trap("No matches in playoff round");
             };
-            playoffMatchGroups.add({
+            matchGroups.add({
                 time = nextMatchDate.toTime();
                 matches = matches;
             });
@@ -130,7 +121,7 @@ module {
         let firstRoundMatches = IterTools.zip(firstHalfOfTeams.vals(), secondHalfOfTeams.vals())
         |> Iter.map(
             _,
-            func((team1StandingIndex, team2StandingIndex) : (Nat, Nat)) : PlayoffMatch {
+            func((team1StandingIndex, team2StandingIndex) : (Nat, Nat)) : Match {
                 {
                     team1 = #seasonStandingIndex(team1StandingIndex);
                     team2 = #seasonStandingIndex(team2StandingIndex);
@@ -151,7 +142,7 @@ module {
             let secondRoundMatches = byeTeams
             |> IterTools.mapEntries(
                 _,
-                func(index : Nat, byeTeamStandingIndex : Nat) : PlayoffMatch {
+                func(index : Nat, byeTeamStandingIndex : Nat) : Match {
                     {
                         team1 = #seasonStandingIndex(byeTeamStandingIndex);
                         team2 = #winnerOfMatch(index);
@@ -164,11 +155,11 @@ module {
 
         label l loop {
             // Loop, halving the number of matches each time, until there is only one match left
-            let lastMatchCount = playoffMatchGroups.get(playoffMatchGroups.size() - 1).matches.size();
+            let lastMatchCount = matchGroups.get(matchGroups.size() - 1).matches.size();
             if (lastMatchCount <= 1) {
                 break l;
             };
-            let nextRoundMatches = Buffer.Buffer<PlayoffMatch>(lastMatchCount / 2);
+            let nextRoundMatches = Buffer.Buffer<Match>(lastMatchCount / 2);
             for (i in IterTools.range(0, lastMatchCount / 2)) {
                 nextRoundMatches.add({
                     team1 = #winnerOfMatch(i * 2);
@@ -179,8 +170,7 @@ module {
         };
 
         #ok({
-            regularSeason = Buffer.toArray(regularMatchGroups);
-            playoffs = Buffer.toArray(playoffMatchGroups);
+            matchGroups = Buffer.toArray(matchGroups);
         });
     };
 

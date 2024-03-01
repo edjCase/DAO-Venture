@@ -32,6 +32,7 @@ module {
         catching : Int;
         defense : Int;
         speed : Int;
+
     };
 
     public type Injury = {
@@ -71,6 +72,7 @@ module {
         };
         injuries : Nat;
     };
+    
     public type PlayerMatchStatsWithId = PlayerMatchStats and {
         playerId : PlayerId;
     };

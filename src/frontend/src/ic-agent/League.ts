@@ -3,9 +3,9 @@ import { IDL } from "@dfinity/candid";
 import { ActorMethod } from '@dfinity/agent';
 import { InterfaceFactory } from '@dfinity/candid/lib/cjs/idl';
 import { createActor } from './Actor';
-import { Team, TeamId, TeamIdIdl, TeamIdOrBoth, TeamIdOrBothIdl, TeamIdOrTie, TeamIdOrTieIdl, TeamIdl } from '../models/Team';
+import { Team, TeamId, TeamIdIdl, TeamIdOrBoth, TeamIdOrBothIdl, TeamIdl } from '../models/Team';
 import { SeasonStatus, SeasonStatusIdl } from '../models/Season';
-import { ScenarioTemplate, ScenarioTemplateIdl, EffectOutcome, EffectOutcomeIdl, ScenarioInstanceWithChoice, ScenarioInstanceWithChoiceIdl } from '../models/Scenario';
+import { EffectOutcome, EffectOutcomeIdl, Scenario, ScenarioIdl } from '../models/Scenario';
 
 export type Time = bigint;
 export const TimeIdl = IDL.Int;
@@ -32,15 +32,15 @@ export const ProcessEffectOutcomesResultIdl = IDL.Variant({
   seasonNotInProgress: IDL.Null,
 });
 
-export type AddScenarioTemplateRequest = ScenarioTemplate;
-export const AddScenarioTemplateRequestIdl = ScenarioTemplateIdl;
+export type AddScenarioRequest = Scenario;
+export const AddScenarioRequestIdl = ScenarioIdl;
 
-export type AddScenarioTemplateResult =
+export type AddScenarioResult =
   | { ok: null }
   | { idTaken: null }
   | { notAuthorized: null }
   | { invalid: string[] };
-export const AddScenarioTemplateResultIdl = IDL.Variant({
+export const AddScenarioResultIdl = IDL.Variant({
   ok: IDL.Null,
   idTaken: IDL.Null,
   notAuthorized: IDL.Null,
@@ -111,25 +111,6 @@ export const StartMatchGroupResultIdl = IDL.Variant({
   matchErrors: IDL.Vec(IDL.Record({ matchId: IDL.Nat, error: StartMatchErrorIdl })),
 });
 
-export type PlayedMatchTeamData = {
-  score: Int;
-  scenario: ScenarioInstanceWithChoice;
-};
-export const PlayedMatchTeamDataIdl = IDL.Record({
-  score: IDL.Int,
-  scenario: ScenarioInstanceWithChoiceIdl,
-});
-
-export type PlayedMatchResult = {
-  team1: PlayedMatchTeamData;
-  team2: PlayedMatchTeamData;
-  winner: TeamIdOrTie;
-};
-export const PlayedMatchResultIdl = IDL.Record({
-  team1: PlayedMatchTeamDataIdl,
-  team2: PlayedMatchTeamDataIdl,
-  winner: TeamIdOrTieIdl,
-});
 
 export type FailedMatchResult = {
   message: Text;
@@ -188,9 +169,11 @@ export const CreateTeamResultIdl = IDL.Variant({
 
 export type StartSeasonRequest = {
   startTime: Time;
+  scenarios: Array<Scenario>;
 };
 export const StartSeasonRequestIdl = IDL.Record({
   startTime: TimeIdl,
+  scenarios: IDL.Vec(ScenarioIdl),
 });
 
 export type StartSeasonResult =
@@ -200,7 +183,13 @@ export type StartSeasonResult =
   | { seedGenerationError: Text }
   | { noTeams: null }
   | { oddNumberOfTeams: null }
-  | { notAuthorized: null };
+  | { notAuthorized: null }
+  | {
+    scenarioCountMismatch: {
+      expected: Nat,
+      actual: Nat,
+    }
+  };
 export const StartSeasonResultIdl = IDL.Variant({
   ok: IDL.Null,
   alreadyStarted: IDL.Null,
@@ -209,6 +198,7 @@ export const StartSeasonResultIdl = IDL.Variant({
   noTeams: IDL.Null,
   oddNumberOfTeams: IDL.Null,
   notAuthorized: IDL.Null,
+  scenarioCountMismatch: IDL.Record({ expected: IDL.Nat, actual: IDL.Nat }),
 });
 
 export type CloseSeasonResult =
@@ -240,8 +230,8 @@ export const UpdateLeagueCanistersResultIdl = IDL.Variant({
 export interface _SERVICE {
   'getTeams': ActorMethod<[], Array<Team>>,
   'getSeasonStatus': ActorMethod<[], SeasonStatus>,
-  'getScenarioTemplates': ActorMethod<[], Array<ScenarioTemplate>>,
-  'addScenarioTemplate': ActorMethod<[AddScenarioTemplateRequest], AddScenarioTemplateResult>,
+  'getScenarios': ActorMethod<[], Array<Scenario>>,
+  'addScenario': ActorMethod<[AddScenarioRequest], AddScenarioResult>,
   'processEventOutcomes': ActorMethod<[ProcessEffectOutcomesRequest], ProcessEffectOutcomesResult>,
   'startSeason': ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'closeSeason': ActorMethod<[], CloseSeasonResult>,
@@ -253,15 +243,15 @@ export interface _SERVICE {
   'setUserIsAdmin': ActorMethod<[Principal, Bool], SetUserIsAdminResult>,
   'getAdmins': ActorMethod<[], Array<Principal>>,
   'clearTeams': ActorMethod<[], []>,
-  'clearScenarioTemplates': ActorMethod<[], []>,
+  'clearScenarios': ActorMethod<[], []>,
 }
 
 export const idlFactory: InterfaceFactory = ({ }) => {
   return IDL.Service({
     'getTeams': IDL.Func([], [IDL.Vec(TeamIdl)], ['query']),
     'getSeasonStatus': IDL.Func([], [SeasonStatusIdl], ['query']),
-    'getScenarioTemplates': IDL.Func([], [IDL.Vec(ScenarioTemplateIdl)], ['query']),
-    'addScenarioTemplate': IDL.Func([AddScenarioTemplateRequestIdl], [AddScenarioTemplateResultIdl], []),
+    'getScenarios': IDL.Func([], [IDL.Vec(ScenarioIdl)], ['query']),
+    'addScenario': IDL.Func([AddScenarioRequestIdl], [AddScenarioResultIdl], []),
     'processEventOutcomes': IDL.Func([ProcessEffectOutcomesRequestIdl], [ProcessEffectOutcomesResultIdl], []),
     'startSeason': IDL.Func([StartSeasonRequestIdl], [StartSeasonResultIdl], []),
     'closeSeason': IDL.Func([], [CloseSeasonResultIdl], []),
@@ -273,7 +263,7 @@ export const idlFactory: InterfaceFactory = ({ }) => {
     'setUserIsAdmin': IDL.Func([IDL.Principal, IDL.Bool], [SetUserIsAdminResultIdl], []),
     'getAdmins': IDL.Func([], [IDL.Vec(IDL.Principal)], ['query']),
     'clearTeams': IDL.Func([], [], []),
-    'clearScenarioTemplates': IDL.Func([], [], []),
+    'clearScenarios': IDL.Func([], [], []),
   });
 };
 

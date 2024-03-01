@@ -47,6 +47,27 @@ export const FieldPositionIdl = IDL.Variant({
     pitcher: IDL.Null,
 });
 
+export type TeamPositions = {
+    firstBase: PlayerId;
+    secondBase: PlayerId;
+    thirdBase: PlayerId;
+    shortStop: PlayerId;
+    pitcher: PlayerId;
+    leftField: PlayerId;
+    centerField: PlayerId;
+    rightField: PlayerId;
+};
+export const TeamPositionsIdl = IDL.Record({
+    firstBase: IDL.Nat32,
+    secondBase: IDL.Nat32,
+    thirdBase: IDL.Nat32,
+    shortStop: IDL.Nat32,
+    pitcher: IDL.Nat32,
+    leftField: IDL.Nat32,
+    centerField: IDL.Nat32,
+    rightField: IDL.Nat32,
+});
+
 export const positionToString = (position: FieldPosition): string => {
     if ("pitcher" in position) {
         return "Pitcher";
