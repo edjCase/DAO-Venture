@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PlayerState } from "../../ic-agent/Stadium";
+  import { PlayerStateWithId as PlayerState } from "../../ic-agent/declarations/stadium";
   import { BaseEnum } from "../../models/Base";
   import { getFontSize } from "../../utils/FieldUtil";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";

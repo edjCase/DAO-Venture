@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
-import { UpcomingMatchPrediction, leagueAgentFactory } from "../ic-agent/League";
+import { UpcomingMatchPrediction } from "../ic-agent/declarations/league";
+import { leagueAgentFactory } from "../ic-agent/League";
 
 
 export const predictionStore = (() => {

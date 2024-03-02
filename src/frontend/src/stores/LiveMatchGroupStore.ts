@@ -1,13 +1,11 @@
 import { writable } from "svelte/store";
-import { BaseState, MatchGroup, MatchLog, MatchVariant, PlayerState, TeamState, stadiumAgentFactory } from "../ic-agent/Stadium";
+import { BaseState, MatchLog, PlayerStateWithId, TeamId, TeamState } from "../ic-agent/declarations/stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { Principal } from "@dfinity/principal";
-import { SeasonStatus, TeamPositions } from "../models/Season";
 import { scheduleStore } from "./ScheduleStore";
-import { TeamId, TeamIdOrTie } from "../models/Team";
 import { TeamDetails } from "../models/Match";
-import { MatchAura } from "../models/MatchAura";
-import { ScenarioResolvedScenario } from "../models/Scenario";
+import { MatchAura, ResolvedScenario, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/league";
+import { stadiumAgentFactory } from "../ic-agent/Stadium";
 
 export type LiveMatchGroup = {
   id: number;
@@ -15,7 +13,7 @@ export type LiveMatchGroup = {
 };
 
 export type LiveTeamDetails = TeamDetails & {
-  scenario: ScenarioResolvedScenario;
+  scenario: ResolvedScenario;
   positions: TeamPositions
 };
 
@@ -31,7 +29,7 @@ export type LiveMatch = {
 
 export type LiveMatchState = {
   offenseTeamId: TeamId;
-  players: PlayerState[];
+  players: PlayerStateWithId[];
   bases: BaseState;
   round: number;
   outs: number;

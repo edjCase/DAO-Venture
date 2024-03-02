@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-  export type ScenarioInfo = ScenarioInstance & {
+  export type ScenarioInfo = Scenario & {
     choice: number | undefined;
   };
 </script>
@@ -8,33 +8,29 @@
   import { teamStore } from "../../stores/TeamStore";
   import { Accordion, AccordionItem } from "flowbite-svelte";
   import { Principal } from "@dfinity/principal";
-  import {
-    ScenarioInstance,
-    ScenarioResolvedScenario,
-    ScenarioTemplate,
-  } from "../../models/Scenario";
-  import { Team } from "../../models/Team";
   import { playerStore } from "../../stores/PlayerStore";
-  import { Player } from "../../ic-agent/Players";
+  import { Player } from "../../ic-agent/declarations/players";
   import Scenario, { ScenarioData } from "./Scenario.svelte";
   import TeamLogo from "../team/TeamLogo.svelte";
-  import { scenarioTemplateStore } from "../../stores/ScenarioTemplateStore";
+  import {
+    ResolvedScenario,
+    TeamWithId,
+  } from "../../ic-agent/declarations/league";
 
   export let scenarios: ScenarioInfo[];
   export let matchGroupId: number;
 
   let buildData = function (
-    template: ScenarioTemplate,
-    scenario: ScenarioInstance | ScenarioResolvedScenario,
-    allTeams: Team[],
-    allPlayers: Player[]
+    scenario: Scenario | ResolvedScenario,
+    allTeams: TeamWithId[],
+    allPlayers: Player[],
   ): ScenarioData | undefined {
     if (allTeams.length == 0 || allPlayers.length == 0) {
       return undefined;
     }
-    let getTeam = (id: Principal): Team => {
+    let getTeam = (id: Principal): TeamWithId => {
       let teamOrUndefined = allTeams.find(
-        (team) => team.id.compareTo(id) === "eq"
+        (team) => team.id.compareTo(id) === "eq",
       );
       if (teamOrUndefined === undefined) {
         throw new Error(`Team with id ${id} not found`);
@@ -63,7 +59,7 @@
       text: string,
       key: string,
       value: string,
-      color: [number, number, number]
+      color: [number, number, number],
     ): string {
       let regex = new RegExp(`{${key}}`, "g");
       value =
@@ -78,20 +74,20 @@
         text,
         "ScenarioTeam",
         scenarioTeam.name,
-        scenarioTeam.color
+        scenarioTeam.color,
       );
       text = replaceStringValue(
         text,
         "OpposingTeam",
         opposingTeam.name,
-        opposingTeam.color
+        opposingTeam.color,
       );
       for (let i = 0; i < otherTeams.length; i++) {
         text = replaceStringValue(
           text,
           `OtherTeam${i}`,
           otherTeams[i].name,
-          otherTeams[i].color
+          otherTeams[i].color,
         );
       }
       for (let i = 0; i < scenarioPlayers.length; i++) {
@@ -101,7 +97,7 @@
           text,
           `Player${i}`,
           player.name,
-          playerTeam.color
+          playerTeam.color,
         );
       }
       return text;
@@ -128,7 +124,6 @@
 
   $: teams = $teamStore;
   $: players = $playerStore;
-  $: templates = $scenarioTemplateStore;
   $: scenariosWithData = scenarios.map<
     [ScenarioInfo, ScenarioData | undefined]
   >((s) => {

@@ -1,9 +1,10 @@
 import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
 import { get, writable } from 'svelte/store';
-import { GetUserResult, User, usersAgentFactory } from '../ic-agent/Users';
+import { usersAgentFactory } from '../ic-agent/Users';
 import { Identity } from '@dfinity/agent';
 import { leagueAgentFactory } from '../ic-agent/League';
+import { GetUserResult, User } from '../ic-agent/declarations/users';
 
 
 type UserContext = {
@@ -50,7 +51,7 @@ function createUserStore() {
                             id: id,
                             user: {
                                 favoriteTeamId: [],
-                                points: 0
+                                points: BigInt(0)
                             },
                             identity: identity,
                         });

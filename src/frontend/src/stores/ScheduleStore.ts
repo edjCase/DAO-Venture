@@ -5,13 +5,14 @@ import {
     InProgressMatch,
     InProgressSeasonMatchGroupVariant,
     NotScheduledMatch,
+    ResolvedScenario,
     ScheduledMatch,
     SeasonStatus,
     TeamAssignment,
     TeamInfo,
-} from "../models/Season";
+} from "../ic-agent/declarations/league";
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined } from "../models/Match";
-import { ScenarioInstance, ScenarioResolvedScenario } from "../models/Scenario";
+import { Scenario } from "../ic-agent/declarations/league";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -34,7 +35,7 @@ export const scheduleStore = (() => {
     };
     const mapTeam = (
         team: TeamInfo,
-        scenario: ScenarioInstance | ScenarioResolvedScenario | undefined,
+        scenario: Scenario | ResolvedScenario | undefined,
         score: bigint | undefined
     ): TeamDetails => {
         return {

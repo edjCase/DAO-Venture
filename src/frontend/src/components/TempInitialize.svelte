@@ -1,9 +1,5 @@
 <script lang="ts">
-  import { leagueAgentFactory } from "../ic-agent/League";
-  import {
-    CreatePlayerFluffResult,
-    playersAgentFactory,
-  } from "../ic-agent/Players";
+  import { CreatePlayerFluffResult } from "../ic-agent/declarations/players";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
   import { teams as teamData } from "../data/TeamData";
@@ -11,13 +7,14 @@
   import { traits as traitData } from "../data/TraitData";
   import { Button } from "flowbite-svelte";
   import { scenarios as scenarioData } from "../data/ScenarioData";
-  import { scenarioTemplateStore } from "../stores/ScenarioTemplateStore";
   import { traitStore } from "../stores/TraitStore";
   import { toJsonString } from "../utils/JsonUtil";
+  import { leagueAgentFactory } from "../ic-agent/League";
+  import { scenarioStore } from "../stores/ScenarioStore";
 
   $: teams = $teamStore;
   $: players = $playerStore;
-  $: scenarioTemplates = $scenarioTemplateStore;
+  $: scenarios = $scenarioStore;
   $: traits = $traitStore;
 
   let createTeams = async function (): Promise<void> {

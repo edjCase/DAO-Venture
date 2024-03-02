@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
 import { playersAgentFactory } from "../ic-agent/Players";
-import { Trait } from "../models/Trait";
+import { Trait } from "../ic-agent/declarations/players";
 
 
 export const traitStore = (() => {

@@ -1,7 +1,6 @@
 
 import { Principal } from "@dfinity/principal";
-import { TeamIdOrTie } from "./Team";
-import { ScenarioInstance, ScenarioResolvedScenario } from "./Scenario";
+import { ResolvedScenario, Scenario, TeamIdOrTie } from "../ic-agent/declarations/league";
 
 
 export type MatchGroupDetails = {
@@ -27,7 +26,7 @@ export type TeamDetails = {
     name: string;
     logoUrl: string;
     score: number | undefined;
-    scenario: ScenarioInstance | ScenarioResolvedScenario | undefined;
+    scenario: Scenario | ResolvedScenario | undefined;
 };
 
 export type TeamDetailsOrUndetermined =

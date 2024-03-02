@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { Player } from "../../ic-agent/Players";
+  import { Player } from "../../ic-agent/declarations/players";
   import { positionToString } from "../../models/Player";
   import { teamStore } from "../../stores/TeamStore";
 
@@ -8,7 +8,7 @@
 
   // Filter skills to include only those with non-zero values
   const relevantSkills = Object.entries(player.skills).filter(
-    ([_, value]) => value !== 0
+    ([_, value]) => value !== 0,
   );
 
   $: teams = $teamStore;

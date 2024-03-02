@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Button, Input } from "flowbite-svelte";
-  import { leagueAgentFactory } from "../../ic-agent/League";
+  import { leagueAgentFactory } from "../../ic-agent/declarations/league";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import { dateToNanoseconds } from "../../utils/DateUtils";
   import { SeasonStatus } from "../../models/Season";

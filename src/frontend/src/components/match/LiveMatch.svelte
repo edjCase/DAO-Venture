@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TurnLog } from "../../ic-agent/Stadium";
+  import { TurnLog } from "../../ic-agent/declarations/stadium";
   import { MatchDetails } from "../../models/Match";
 
   import { LiveMatch, LiveTeamDetails } from "../../stores/LiveMatchGroupStore";

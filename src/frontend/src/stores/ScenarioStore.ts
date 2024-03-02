@@ -1,13 +1,13 @@
 import { writable } from "svelte/store";
-import { ScenarioTemplate } from "../models/Scenario";
+import { Scenario } from "../ic-agent/declarations/league";
 import { leagueAgentFactory } from "../ic-agent/League";
 
 
-export const scenarioTemplateStore = (() => {
-    const { subscribe, set } = writable<ScenarioTemplate[]>([]);
+export const scenarioStore = (() => {
+    const { subscribe, set } = writable<Scenario[]>([]);
 
     const refetch = () => {
-        leagueAgentFactory().getScenarioTemplates().then((result) => {
+        leagueAgentFactory().getScenarios().then((result) => {
             set(result);
         });
     };

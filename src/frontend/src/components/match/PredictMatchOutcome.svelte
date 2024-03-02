@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
   import { MatchDetails } from "../../models/Match";
-  import { leagueAgentFactory } from "../../ic-agent/League";
+  import { leagueAgentFactory } from "../../ic-agent/declarations/league";
   import TeamLogo from "../team/TeamLogo.svelte";
   import { predictionStore } from "../../stores/PredictionsStore";
   import { TeamId } from "../../models/Team";

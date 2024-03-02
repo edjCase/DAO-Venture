@@ -1,5 +1,6 @@
 import { writable } from "svelte/store";
-import { Player, playersAgentFactory } from "../ic-agent/Players";
+import { Player } from "../ic-agent/declarations/players";
+import { playersAgentFactory } from "../ic-agent/Players";
 
 
 

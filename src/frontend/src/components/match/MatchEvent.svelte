@@ -3,7 +3,7 @@
   import { TeamId } from "../../models/Team";
   import { playerStore } from "../../stores/PlayerStore";
   import { teamStore } from "../../stores/TeamStore";
-  import { MatchEvent } from "../../ic-agent/Stadium";
+  import { MatchEvent } from "../../ic-agent/declarations/stadium";
 
   export let event: MatchEvent;
   export let team1Id: Principal;
@@ -33,7 +33,7 @@
 {#if "traitTrigger" in event}
   <div>
     {getPlayerName(event.traitTrigger.playerId)} triggered trait '{variantKeyToString(
-      event.traitTrigger.id
+      event.traitTrigger.id,
     )}': {event.traitTrigger.description}
   </div>
 {:else if "auraTrigger" in event}
@@ -48,7 +48,7 @@
 {:else if "swing" in event}
   <div>
     {getPlayerName(event.swing.playerId)} swung the bat and {variantKeyToString(
-      event.swing.outcome
+      event.swing.outcome,
     )}
   </div>
 {:else if "catch_" in event}
@@ -60,7 +60,7 @@
 {:else if "injury" in event}
   <div>
     {getPlayerName(event.injury.playerId)} got injured: {variantKeyToString(
-      event.injury.injury
+      event.injury.injury,
     )}
   </div>
 {:else if "death" in event}
@@ -68,13 +68,13 @@
 {:else if "curse" in event}
   <div>
     {getPlayerName(event.curse.playerId)} got cursed: {variantKeyToString(
-      event.curse.curse
+      event.curse.curse,
     )}
   </div>
 {:else if "blessing" in event}
   <div>
     {getPlayerName(event.blessing.playerId)} got blessed: {variantKeyToString(
-      event.blessing.blessing
+      event.blessing.blessing,
     )}
   </div>
 {:else if "score" in event}
@@ -88,7 +88,7 @@
 {:else if "out" in event}
   <div>
     {getPlayerName(event.out.playerId)} got out: {variantKeyToString(
-      event.out.reason
+      event.out.reason,
     )}
   </div>
 {:else if "matchEnd" in event}
@@ -96,13 +96,13 @@
 {:else if "safeAtBase" in event}
   <div>
     {getPlayerName(event.safeAtBase.playerId)} is safe at base '{variantKeyToString(
-      event.safeAtBase.base
+      event.safeAtBase.base,
     )}'
   </div>
 {:else if "hitByBall" in event}
   <div>
     {getPlayerName(event.hitByBall.playerId)} got hit by {getPlayerName(
-      event.hitByBall.playerId
+      event.hitByBall.playerId,
     )}
   </div>
 {/if}

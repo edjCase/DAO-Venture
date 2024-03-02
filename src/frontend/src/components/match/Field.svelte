@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { BaseState, PlayerState } from "../../ic-agent/Stadium";
+  import { BaseState, PlayerState } from "../../ic-agent/declarations/stadium";
   import { FieldPositionEnum } from "../../models/FieldPosition";
   import {
     LiveMatch,
@@ -10,7 +10,7 @@
   import FieldBase from "./FieldBase.svelte";
   import { BaseEnum } from "../../models/Base";
   import FieldBall from "./FieldBall.svelte";
-  import { FieldPosition } from "../../ic-agent/Players";
+  import { FieldPosition } from "../../ic-agent/declarations/players";
   import { toJsonString } from "../../utils/JsonUtil";
   import { PlayerId } from "../../models/Player";
 
@@ -56,7 +56,7 @@
   let ballLocations: { x: number; y: number }[] = [];
 
   let getPositionCoordinates = (
-    position: FieldPosition
+    position: FieldPosition,
   ): { x: number; y: number } => {
     if ("firstBase" in position) {
       return firstBasePosition;
@@ -82,7 +82,7 @@
 
   let getPlayerBaseCoordinates = (
     playerId: PlayerId,
-    bases: BaseState
+    bases: BaseState,
   ): { x: number; y: number } => {
     if (playerId == bases.atBat) {
       return homeBaseLocation;
@@ -121,7 +121,7 @@
               ballLocations.push({ x: 45, y: -5 });
             } else {
               let ballLocation = getPositionCoordinates(
-                swingEvent.swing.outcome.hit
+                swingEvent.swing.outcome.hit,
               );
               ballLocations.push(ballLocation);
 
@@ -129,7 +129,7 @@
               if (throwEvent && "throw_" in throwEvent) {
                 let position = getPlayerBaseCoordinates(
                   throwEvent.throw_.to,
-                  match.liveState.bases
+                  match.liveState.bases,
                 );
                 // TODO slightly miss if the hitByBall doesn't exist
                 ballLocations.push(position);

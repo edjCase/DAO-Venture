@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
   import { playerStore } from "../../stores/PlayerStore";
-  import { Player } from "../../ic-agent/Players";
+  import { Player } from "../../ic-agent/declarations/players";
   import { Link } from "svelte-routing";
   import { positionToString } from "../../models/Player";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";

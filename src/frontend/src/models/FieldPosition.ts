@@ -62,3 +62,26 @@ export function unMapPosition(position: FieldPosition): FieldPositionEnum {
 
     throw new Error("Invalid position: " + toJsonString(position));
 }
+
+
+export const positionToString = (position: FieldPosition): string => {
+    if ("pitcher" in position) {
+        return "Pitcher";
+    } else if ("firstBase" in position) {
+        return "1st Base";
+    } else if ("secondBase" in position) {
+        return "2nd Base";
+    } else if ("thirdBase" in position) {
+        return "3rd Base";
+    } else if ("shortStop" in position) {
+        return "Short Stop";
+    } else if ("leftField" in position) {
+        return "Left Field";
+    } else if ("centerField" in position) {
+        return "Center Field";
+    } else if ("rightField" in position) {
+        return "Right Field";
+    }
+    return "Unknown";
+};
+
