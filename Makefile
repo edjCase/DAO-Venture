@@ -30,7 +30,6 @@ compile_actor_class_mo_files:
 	@for mo in $(ACTOR_CLASS_MO_FILES); do \
 		full_mo_path="$(SRC_DIR)/$$mo"; \
 		ts="$$(echo "$$full_mo_path" | sed 's|^$(SRC_DIR)|$(OUT_DIR)|' | sed 's|\.mo$$|.ts|')"; \
-		mkdir -p $$(dirname $$ts); \
 		BASENAME=$$(basename $$mo .mo); \
 		$(MOC) $(MOPS_SOURCES) $$full_mo_path --idl; \
 		lowercase_did="$$(echo $$BASENAME | sed 's/Actor$$//' | tr '[:upper:]' '[:lower:]').did"; \
@@ -42,10 +41,10 @@ compile_actor_class_mo_files:
 compile_did_files:
 	@for did in $(DID_TEMP_DIR)/*.did; do \
 		if [ -f "$$did" ]; then \
-			ts="$$(echo "$$did" | sed 's|^$(DID_TEMP_DIR)|$(OUT_DIR)|' | sed 's|\.did$$|.ts|')"; \
-			./didc bind -t ts "$$did" > "$$ts"; \
-			js="$$(echo "$$ts" | sed 's|\.ts$$|.js|')"; \
+			js="$$(echo "$$did" | sed 's|^$(DID_TEMP_DIR)|$(OUT_DIR)|' | sed 's|\.did$$|.js|')"; \
 			./didc bind -t js "$$did" > "$$js"; \
+			ts="$$(echo "$$js" | sed 's|\.js$$|.d.ts|')"; \
+			./didc bind -t ts "$$did" > "$$ts"; \
 		fi; \
 	done
 	rm -rf $(DID_TEMP_DIR)
