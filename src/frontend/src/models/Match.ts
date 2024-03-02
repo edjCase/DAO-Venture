@@ -8,6 +8,7 @@ export type MatchGroupDetails = {
     time: bigint;
     matches: MatchDetails[];
     state: 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Completed';
+    scenario: Scenario | ResolvedScenario;
 };
 
 export type MatchDetails = {
@@ -26,7 +27,6 @@ export type TeamDetails = {
     name: string;
     logoUrl: string;
     score: number | undefined;
-    scenario: Scenario | ResolvedScenario | undefined;
 };
 
 export type TeamDetailsOrUndetermined =

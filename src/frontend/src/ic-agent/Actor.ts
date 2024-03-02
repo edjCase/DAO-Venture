@@ -4,11 +4,10 @@ import type {
   HttpAgentOptions,
   ActorConfig,
   Agent,
+  Identity,
 } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import type { IDL } from "@dfinity/candid";
-import { get } from "svelte/store";
-import { userStore } from "../stores/UserStore";
 
 export declare interface CreateActorOptions {
   /**
@@ -29,11 +28,11 @@ export declare interface CreateActorOptions {
 
 export const createActor = <T>(
   canisterId: string | Principal,
-  idlFactory: IDL.InterfaceFactory
+  idlFactory: IDL.InterfaceFactory,
+  identity?: Identity
 ): ActorSubclass<T> => {
-  const identity = get(userStore);
   const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:4943";
-  const agent = new HttpAgent({ identity: identity?.identity, host });
+  const agent = new HttpAgent({ identity: identity, host });
 
   // Fetch root key for certificate validation during development
   if (process.env.DFX_NETWORK !== "ic") {

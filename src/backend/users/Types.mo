@@ -10,8 +10,16 @@ import Season "../models/Season";
 
 module {
 
+    public type TeamAssociationType = {
+        #fan;
+        #owner;
+    };
+
     public type User = {
-        favoriteTeamId : ?Principal;
+        teamAssociation : ?{
+            id : Principal;
+            kind : TeamAssociationType;
+        };
         points : Int;
     };
 

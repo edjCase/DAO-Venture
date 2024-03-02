@@ -5,14 +5,12 @@ import {
     InProgressMatch,
     InProgressSeasonMatchGroupVariant,
     NotScheduledMatch,
-    ResolvedScenario,
     ScheduledMatch,
     SeasonStatus,
     TeamAssignment,
     TeamInfo,
 } from "../ic-agent/declarations/league";
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined } from "../models/Match";
-import { Scenario } from "../ic-agent/declarations/league";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -26,7 +24,7 @@ export const scheduleStore = (() => {
 
     const mapTeamAssignment = (team: TeamAssignment, score: bigint | undefined): TeamDetailsOrUndetermined => {
         if ('predetermined' in team) {
-            return mapTeam(team.predetermined, undefined, score);
+            return mapTeam(team.predetermined, score);
         } else if ('winnerOfMatch' in team) {
             return { winnerOfMatch: Number(team.winnerOfMatch) };
         } else {
@@ -35,15 +33,13 @@ export const scheduleStore = (() => {
     };
     const mapTeam = (
         team: TeamInfo,
-        scenario: Scenario | ResolvedScenario | undefined,
         score: bigint | undefined
     ): TeamDetails => {
         return {
             id: team.id,
             name: team.name,
             logoUrl: team.logoUrl,
-            score: score != undefined ? Number(score) : undefined,
-            scenario: scenario
+            score: score != undefined ? Number(score) : undefined
         };
     };
     const mapMatch = (
@@ -58,8 +54,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: "Played",
-                team1: mapTeam(match.completed.team1, match.completed.team1.scenario, match.completed.team1.score),
-                team2: mapTeam(match.completed.team2, match.completed.team2.scenario, match.completed.team2.score),
+                team1: mapTeam(match.completed.team1, match.completed.team1.score),
+                team2: mapTeam(match.completed.team2, match.completed.team2.score),
                 winner: match.completed.winner
             };
         } else if ('inProgress' in match) {
@@ -68,8 +64,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'InProgress',
-                team1: mapTeam(match.inProgress.team1, match.inProgress.team1.scenario, undefined),
-                team2: mapTeam(match.inProgress.team2, match.inProgress.team2.scenario, undefined),
+                team1: mapTeam(match.inProgress.team1, undefined),
+                team2: mapTeam(match.inProgress.team2, undefined),
                 winner: undefined,
             };
         }
@@ -79,8 +75,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'Scheduled',
-                team1: mapTeam(match.scheduled.team1, match.scheduled.team1.scenario, undefined),
-                team2: mapTeam(match.scheduled.team2, match.scheduled.team2.scenario, undefined),
+                team1: mapTeam(match.scheduled.team1, undefined),
+                team2: mapTeam(match.scheduled.team2, undefined),
                 winner: undefined
             };
         }
@@ -104,6 +100,7 @@ export const scheduleStore = (() => {
                 id: id,
                 time: matchGroup.completed.time,
                 matches: matchGroup.completed.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.completed.time, { completed: match }))),
+                scenario: matchGroup.completed.scenario,
                 state: 'Completed'
             };
         } else if ('inProgress' in matchGroup) {
@@ -111,6 +108,7 @@ export const scheduleStore = (() => {
                 id: id,
                 time: matchGroup.inProgress.time,
                 matches: matchGroup.inProgress.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.inProgress.time, { inProgress: match }))),
+                scenario: matchGroup.inProgress.scenario,
                 state: 'InProgress'
             };
         } else if ('scheduled' in matchGroup) {
@@ -118,6 +116,7 @@ export const scheduleStore = (() => {
                 id: id,
                 time: matchGroup.scheduled.time,
                 matches: matchGroup.scheduled.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.scheduled.time, { scheduled: match }))),
+                scenario: matchGroup.scheduled.scenario,
                 state: 'Scheduled'
             };
         } else {
@@ -125,6 +124,7 @@ export const scheduleStore = (() => {
                 id: id,
                 time: matchGroup.notScheduled.time,
                 matches: matchGroup.notScheduled.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.notScheduled.time, { notScheduled: match }))),
+                scenario: matchGroup.notScheduled.scenario,
                 state: 'NotScheduled'
             };
         }

@@ -1,10 +1,10 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { Player } from "../../ic-agent/declarations/players";
-  import { positionToString } from "../../models/Player";
   import { teamStore } from "../../stores/TeamStore";
+  import { PlayerWithId } from "../../ic-agent/declarations/stadium";
+  import { positionToString } from "../../models/FieldPosition";
 
-  export let player: Player;
+  export let player: PlayerWithId;
 
   // Filter skills to include only those with non-zero values
   const relevantSkills = Object.entries(player.skills).filter(

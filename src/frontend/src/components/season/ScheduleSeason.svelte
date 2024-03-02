@@ -1,9 +1,10 @@
 <script lang="ts">
   import { Button, Input } from "flowbite-svelte";
-  import { leagueAgentFactory } from "../../ic-agent/declarations/league";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import { dateToNanoseconds } from "../../utils/DateUtils";
-  import { SeasonStatus } from "../../models/Season";
+  import { leagueAgentFactory } from "../../ic-agent/League";
+  import { SeasonStatus } from "../../ic-agent/declarations/league";
+  import { scenarios } from "../../data/ScenarioData";
 
   let startTime: bigint | undefined;
   let scheduleSeason = async () => {
@@ -14,6 +15,7 @@
     leagueAgentFactory()
       .startSeason({
         startTime: startTime,
+        scenarios: scenarios,
       })
       .then((result) => {
         if ("ok" in result) {

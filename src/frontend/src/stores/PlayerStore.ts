@@ -1,11 +1,11 @@
 import { writable } from "svelte/store";
-import { Player } from "../ic-agent/declarations/players";
+import { PlayerWithId } from "../ic-agent/declarations/players";
 import { playersAgentFactory } from "../ic-agent/Players";
 
 
 
 export const playerStore = (() => {
-    const { subscribe, set } = writable<Player[]>([]);
+    const { subscribe, set } = writable<PlayerWithId[]>([]);
 
     const refetch = async () => {
         playersAgentFactory().getAllPlayers().then((players) => {

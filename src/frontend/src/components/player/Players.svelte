@@ -1,14 +1,14 @@
 <script lang="ts">
   import { Card } from "flowbite-svelte";
-  import { Player } from "../../ic-agent/declarations/players";
-  import { positionToString } from "../../models/Player";
   import { playerStore } from "../../stores/PlayerStore";
   import { teamStore } from "../../stores/TeamStore";
   import { Link } from "svelte-routing";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";
+  import { positionToString } from "../../models/FieldPosition";
+  import { PlayerWithId } from "../../ic-agent/declarations/stadium";
 
   // Assuming you have a way to fetch players
-  let players: Player[] = []; // Populate this array with player data
+  let players: PlayerWithId[] = []; // Populate this array with player data
   $: players = $playerStore.sort((a, b) => a.name.localeCompare(b.name));
   $: teams = $teamStore;
 </script>

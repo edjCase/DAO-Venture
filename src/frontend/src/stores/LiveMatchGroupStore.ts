@@ -1,10 +1,10 @@
 import { writable } from "svelte/store";
-import { BaseState, MatchLog, PlayerStateWithId, TeamId, TeamState } from "../ic-agent/declarations/stadium";
+import { BaseState, MatchGroupWithId, MatchLog, PlayerStateWithId, TeamId, TeamState, TickResult } from "../ic-agent/declarations/stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { Principal } from "@dfinity/principal";
 import { scheduleStore } from "./ScheduleStore";
 import { TeamDetails } from "../models/Match";
-import { MatchAura, ResolvedScenario, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/league";
+import { MatchAura, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/league";
 import { stadiumAgentFactory } from "../ic-agent/Stadium";
 
 export type LiveMatchGroup = {
@@ -13,7 +13,6 @@ export type LiveMatchGroup = {
 };
 
 export type LiveTeamDetails = TeamDetails & {
-  scenario: ResolvedScenario;
   positions: TeamPositions
 };
 
@@ -47,12 +46,11 @@ export const liveMatchGroupStore = (() => {
       name: team.name,
       logoUrl: team.logoUrl,
       score: Number(team.score),
-      scenario: team.scenario,
       positions: team.positions
     }
   };
 
-  const mapLiveMatch = (match: MatchVariant): LiveMatch => {
+  const mapTickResult = (match: TickResult): LiveMatch => {
     if ('inProgress' in match) {
       return {
         team1: mapTeam(match.inProgress.team1),
@@ -71,12 +69,12 @@ export const liveMatchGroupStore = (() => {
       };
     } else {
       return {
-        team1: mapTeam(match.completed.team1),
-        team2: mapTeam(match.completed.team2),
+        team1: mapTeam(match.completed.match.team1),
+        team2: mapTeam(match.completed.match.team2),
         liveState: undefined,
         log: undefined,
-        winner: match.completed.winner,
-        aura: match.completed.aura
+        winner: match.completed.match.winner,
+        aura: match.completed.match.aura
       };
     }
   };
@@ -85,14 +83,14 @@ export const liveMatchGroupStore = (() => {
   const refetchMatchGroup = async (stadiumId: Principal, matchGroupId: number) => {
     stadiumAgentFactory(stadiumId)
       .getMatchGroup(BigInt(matchGroupId))
-      .then((matchGroupOrNull: [MatchGroup] | []) => {
+      .then((matchGroupOrNull: [MatchGroupWithId] | []) => {
         if (matchGroupOrNull.length === 0) {
           return;
         }
         let matchGroup = matchGroupOrNull[0];
         set({
           id: matchGroupId,
-          matches: matchGroup.matches.map(mapLiveMatch)
+          matches: matchGroup.matches.map(mapTickResult)
         });
       });
   };

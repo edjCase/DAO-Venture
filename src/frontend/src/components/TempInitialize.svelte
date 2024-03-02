@@ -11,6 +11,7 @@
   import { toJsonString } from "../utils/JsonUtil";
   import { leagueAgentFactory } from "../ic-agent/League";
   import { scenarioStore } from "../stores/ScenarioStore";
+  import { playersAgentFactory } from "../ic-agent/Players";
 
   $: teams = $teamStore;
   $: players = $playerStore;
@@ -87,7 +88,7 @@
     let promises = [];
     for (let i = 0; i < scenarioData.length; i++) {
       let scenario = scenarioData[i];
-      let promise = leagueAgent.addScenarioTemplate(scenario).then((result) => {
+      let promise = leagueAgent.addScenario(scenario).then((result) => {
         if ("ok" in result) {
           console.log("Created scenario: ", scenario.id);
         } else {
@@ -98,7 +99,7 @@
     }
     await Promise.all(promises);
     console.log("Created scenarios");
-    await scenarioTemplateStore.refetch();
+    await scenarioStore.refetch();
   };
 
   let initialize = async function () {
@@ -116,7 +117,7 @@
   let resetScenarios = async function () {
     console.log("resetting scenarios");
     let leagueAgent = leagueAgentFactory();
-    await leagueAgent.clearScenarioTemplates();
+    await leagueAgent.clearScenarios();
     await createScenarios();
   };
   let resetTeams = async function () {
@@ -141,7 +142,7 @@
   };
 </script>
 
-{#if players.length + teams.length + scenarioTemplates.length + traits.length <= 0}
+{#if players.length + teams.length + scenarios.length + traits.length <= 0}
   <Button on:click={initialize}>Initialize With Default Data</Button>
 {:else}
   <div class="flex">
@@ -157,12 +158,12 @@
       {/if}
     </div>
     <div class="flex-1 w-1/4">
-      {#if scenarioTemplates.length <= 0}
+      {#if scenarios.length <= 0}
         <Button on:click={createScenarios}>Create Scenarios</Button>
       {:else}
         <Button on:click={resetTraitsAndScenarios}>Reset Scenarios</Button>
         <div>Scenarios:</div>
-        {#each scenarioTemplates as scenario}
+        {#each scenarios as scenario}
           <pre class="text-wrap">{toJsonString(scenario)}</pre>
         {/each}
       {/if}

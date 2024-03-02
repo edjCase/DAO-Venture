@@ -9,7 +9,7 @@
     id: string;
     title: string;
     description: string;
-    team: Team;
+    team: TeamWithId;
     opposingTeamName: string;
     otherTeamNames: string[];
     playerNames: string[];
@@ -21,24 +21,25 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
 
-  import {
-    VoteOnMatchGroupRequest,
-    teamAgentFactory,
-  } from "../../ic-agent/Team";
-  import {
-    ScenarioInstance,
-    ScenarioResolvedScenario,
-  } from "../../models/Scenario";
+  import { teamAgentFactory } from "../../ic-agent/Team";
   import { teamStore } from "../../stores/TeamStore";
-  import { Team } from "../../models/Team";
+  import { VoteOnMatchGroupRequest } from "../../ic-agent/declarations/team";
+  import { TeamWithId } from "../../ic-agent/declarations/league";
+  import { userStore } from "../../stores/UserStore";
+  import { Principal } from "@dfinity/principal";
 
-  export let scenario: ScenarioInstance | ScenarioResolvedScenario;
   export let scenarioData: ScenarioData;
-  export let matchGroupId: number;
+  export let matchGroupId: bigint;
 
   let selectedChoice: number | undefined;
 
-  let register = function () {
+  $: user = $userStore;
+
+  let register = function (teamId: Principal) {
+    if (user === undefined) {
+      console.log("No user logged in");
+      return;
+    }
     if (selectedChoice === undefined) {
       console.log("No choice selected");
       return;
@@ -49,9 +50,9 @@
     };
     console.log(
       `Voting for team ${scenarioData.team.name} and match group ${matchGroupId}`,
-      request
+      request,
     );
-    teamAgentFactory(scenario.teamId)
+    teamAgentFactory(teamId)
       .voteOnMatchGroup(request)
       .then((result) => {
         console.log("Voted for match: ", result);
@@ -98,14 +99,16 @@
         </div>
       {/each}
     </div>
-    <div class="flex justify-center p-5">
-      <Button
-        on:click={() => {
-          register();
-        }}
-      >
-        Submit Vote
-      </Button>
-    </div>
+    {#if user?.user?.teamId}
+      <div class="flex justify-center p-5">
+        <Button
+          on:click={() => {
+            register(user.user.teamId);
+          }}
+        >
+          Submit Vote for Team {user.user?.favoriteTeamId}
+        </Button>
+      </div>
+    {/if}
   {/if}
 </div>

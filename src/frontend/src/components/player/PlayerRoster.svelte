@@ -1,24 +1,24 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
   import { playerStore } from "../../stores/PlayerStore";
-  import { Player } from "../../ic-agent/declarations/players";
+  import { PlayerWithId } from "../../ic-agent/declarations/players";
   import { Link } from "svelte-routing";
-  import { positionToString } from "../../models/Player";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";
+  import { positionToString } from "../../models/FieldPosition";
 
   export let teamId: Principal;
 
-  const skillToString = (skill: number): string => {
-    if (skill == 0) {
+  const skillToString = (skill: bigint): string => {
+    if (skill == BigInt(0)) {
       return "";
-    } else if (skill > 0) {
+    } else if (skill > BigInt(0)) {
       return `+${skill}`;
     } else {
       return `${skill}`;
     }
   };
 
-  let players: Player[] = [];
+  let players: PlayerWithId[] = [];
   playerStore.subscribe((playerList) => {
     players = playerList
       .filter((p) => p.teamId?.toString() === teamId.toString())
