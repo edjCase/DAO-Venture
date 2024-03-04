@@ -1,239 +1,525 @@
-import { ScenarioTemplate } from "../models/Scenario";
+import { Scenario } from "../ic-agent/declarations/league";
 
 
-export let scenarios: ScenarioTemplate[] = [
+
+
+export let scenarios: Scenario[] = [
     {
-        id: "NOTEBOOK_CONUNDRUM",
-        title: "The Notebook Conundrum",
-        description: "On a walk around the stands, {Player0} runs across a notebook with strategies from {OpposingTeam}. Could be useful, or could be a fake plant by {OpposingTeam}.",
-        otherTeams: [],
-        players: [{ team: { scenarioTeam: null } }],
-        effect: { 'noEffect': null },
+        id: "SURGE_CRISIS_OPENING_CEREMONY",
+        title: "Surge Crisis at the Opening Ceremony",
+        description: "The DAOball opening ceremony is under threat due to an unprecedented energy surge. Teams, as beings of energy, face a dilemma: contribute their energy to stabilize the grid or conserve it for the upcoming matches.",
         options: [
             {
-                title: "Study it",
-                description: "Choose to steal the notebook to try get a benefit",
+                title: "Contribute",
+                description: "Contribute energy to stabilize the grid.",
                 effect: {
-                    'allOf': [
-                        { 'entropy': { team: { 'scenarioTeam': null }, delta: BigInt(1) } },
+                    allOf: [
                         {
-                            'oneOf': [
-                                [
-                                    // Useful, positive effect
-                                    BigInt(6), // TODO this should be affected by the opposing team order score
-                                    { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "STRATEGIC_ADVANTAGE", duration: { 'matches': BigInt(1) } } }
-                                ],
-                                [
-                                    // Fake plant, negative effect
-                                    BigInt(4), // TODO this should be affected by the opposing team chaos score
-                                    { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "STRATEGIC_DISADVANTAGE", duration: { 'matches': BigInt(1) } } }
-                                ]
-                            ]
-                        }
+                            entropy: {
+                                team: { choosingTeam: null },
+                                delta: BigInt(-1), // Lower entropy as aligning with league values
+                            }
+                        },
+                        {
+                            skill: {
+                                target: { teams: [{ choosingTeam: null }] },
+                                skill: { speed: null },
+                                duration: { matches: BigInt(1) },
+                                delta: BigInt(-1), // Temporary skill reduction due to energy contribution
+                            }
+                        },
                     ]
-                }
+                },
             },
             {
-                title: "Give back without reading it",
-                description: "Choose to give the notebook back to {OpposingTeam}, but risk them thinking you've read it.",
+                title: "Conserve",
+                description: "Conserve your energy for upcoming matches.",
                 effect: {
-                    'allOf': [
-                        { 'entropy': { team: { 'scenarioTeam': null }, delta: BigInt(-1) } },
-                        {
-                            'oneOf': [
-                                [
-                                    BigInt(9), // TODO this should be affected by the opposing team order score
-                                    { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }, { 'opposingTeam': null }] }, traitId: "ALLIES", duration: { 'matches': BigInt(1) } } }// TODO needs trait args for specifying the ally team
-                                ],
-                                [
-                                    BigInt(1), // TODO this should be affected by the opposing team chaos score
-                                    { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }, { 'opposingTeam': null }] }, traitId: "RIVALS", duration: { 'matches': BigInt(1) } } } // TODO needs trait args for specifying the rival team
-                                ]
-                            ]
-                        }
-                    ]
-                }
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase entropy from not contributing
+                    }
+                },
             },
             {
-                title: "Leave it Alone",
-                description: "Decide not to interfere with the notebook, respecting the sanctity of strategy and avoiding potential traps.",
-                effect: { 'entropy': { team: { 'scenarioTeam': null }, delta: BigInt(-2) } }
-            }
-        ]
+                title: "Convince fans to reduce energy",
+                description: "Convince fans to reduce their energy consumption, at the risk of backlash.",
+                effect: {
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(-1) }, // Spend tokens to convince fans
+                    }
+                },
+            },
+        ],
+        effect: {
+            threshold: {
+                threshold: BigInt(4), // Total energy contribution threshold
+                over: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(-1), // Additional decrease in entropy for contributing teams if threshold is met
+                    }
+                },
+                under: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase in entropy for all teams if threshold is not met
+                    }
+                },
+                options: [
+                    { value: { fixed: BigInt(1) } },
+                    { value: { fixed: BigInt(0) } },
+                    {
+                        value: {
+                            weightedChance: [
+                                [BigInt(1), BigInt(1)],
+                                [BigInt(1), BigInt(0)],
+                            ]
+                        }
+                    },
+                ],
+            },
+        },
     },
     {
-        id: "MYSTERIOUS_SPONSOR",
-        title: "The Mysterious Sponsor",
-        description: "A wealthy fan offers substantial support to your team, but their intentions are unclear. {Player0} and {Player1} have different opinions on the matter.",
-        otherTeams: [],
-        players: [{ team: { scenarioTeam: null } }, { team: { scenarioTeam: null } }],
-        effect: { 'noEffect': null },
+        id: "TRAINING_BID",
+        title: "Training bid",
+        description: "Training bid",
         options: [
             {
-                title: "Accept the Offer. Side with {Player0}",
-                description: "Embrace the sponsor's support, hoping for a boost but risking hidden strings attached.",
-                effect: {
-                    'allOf': [
-                        { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "BOOSTED_RESOURCES", duration: { 'matches': BigInt(2) } } },
-                        { 'trait': { target: { 'players': [BigInt(0)] }, traitId: "MORALE_BOOST", duration: { 'matches': BigInt(1) } } },
-                        { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "STRINGS_ATTACHED", duration: { 'indefinite': null } } }
-                    ]
-                }
+                title: "No bid",
+                description: "No bid.",
+                effect: { noEffect: null },
             },
             {
-                title: "Politely Decline. Side with {Player1}",
-                description: "Decline the offer to maintain autonomy, potentially missing out on resources but keeping the team's integrity.",
+                title: "Bid 1",
+                description: "Bid 1 energy",
                 effect: {
-                    'allOf': [
-                        { 'trait': { target: { 'players': [BigInt(0)] }, traitId: "MORALE_BOOST", duration: { 'matches': BigInt(1) } } }
-                    ]
-                }
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(1) },
+                    }
+                },
             },
             {
-                title: "Accept the Offer, but try to dig up dirt on them to get a better deal.",
-                description: "The team delves into the shadows, hoping to uncover leverage against the sponsor.",
+                title: "Bid 2",
+                description: "Bid 2 energy",
                 effect: {
-                    'allOf': [
-                        { 'entropy': { team: { 'scenarioTeam': null }, delta: BigInt(2) } },
-                        {
-                            'oneOf': [
-                                [
-                                    // Caught, negative effect, no deal
-                                    BigInt(4),
-                                    { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "CHEATER", duration: { 'indefinite': null } } }
-                                ],
-                                [
-                                    // Not caught, accept deal
-                                    BigInt(6),
-                                    {
-                                        'allOf': [
-                                            { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "BOOSTED_RESOURCES", duration: { 'matches': BigInt(2) } } },
-                                            {
-                                                'oneOf': [
-                                                    [
-                                                        // No dirt found, accept deal as is
-                                                        BigInt(6),
-                                                        { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "STRINGS_ATTACHED", duration: { 'indefinite': null } } }
-                                                    ],
-                                                    [
-                                                        // Found dirt, leverage for better deal
-                                                        BigInt(4),
-                                                        { 'noEffect': null }
-                                                    ]
-                                                ]
-                                            }
-                                        ]
-                                    }
-                                ]
-
-                            ]
-                        }
-                    ]
-
-                }
-            }
-        ]
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(2) },
+                    }
+                },
+            },
+            {
+                title: "Bid 3",
+                description: "Bid 3 energy",
+                effect: {
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(3) },
+                    }
+                },
+            },
+        ],
+        effect: {
+            proportionalBid: {
+                prize: {
+                    skill: {
+                        skill: { throwingPower: null },
+                        target: { position: { pitcher: null } },
+                        duration: { indefinite: null },
+                        total: BigInt(10),
+                    }
+                },
+                options: [
+                    {
+                        bidValue: BigInt(0),
+                    },
+                    {
+                        bidValue: BigInt(1),
+                    },
+                    {
+                        bidValue: BigInt(2),
+                    },
+                    {
+                        bidValue: BigInt(3),
+                    },
+                ],
+            },
+        },
     },
     {
-        id: "DAMAGED_EQUIPMENT_DILEMMA",
-        title: "The Damaged Equipment Dilemma",
-        description: "In a playful tussle for the last energy bar, {Player0} and {Player1} accidentally send a stack of bats clattering to the ground, only to find them splintered beyond repair, they better figure out how to get out of this predicament.",
-        otherTeams: [],
-        players: [{ 'team': { 'scenarioTeam': null } }, { 'team': { 'scenarioTeam': null } }],
-        effect: { 'trait': { target: { 'players': [BigInt(0), BigInt(1)] }, traitId: "LOW_MORALE", duration: { 'matches': BigInt(1) } } },
+        id: "TRAINING_LOTTERY",
+        title: "Training lottery",
+        description: "Training lottery",
         options: [
             {
-                title: "Attempt a Swap",
-                description: "Try to swap the damaged equipment with the opposing team, risking getting caught and facing penalties.",
+                title: "No ticket",
+                description: "No ticket.",
+                effect: { noEffect: null },
+            },
+            {
+                title: "1 ticket",
+                description: "1 ticket",
                 effect: {
-                    'allOf': [
-                        { 'entropy': { team: { 'scenarioTeam': null }, delta: BigInt(1) } },
-                        {
-                            'oneOf': [
-                                [
-                                    BigInt(5),
-                                    { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "STRATEGIC_ADVANTAGE", duration: { 'matches': BigInt(1) } } }
-                                ],
-                                [
-                                    BigInt(5),
-                                    {
-                                        'allOf': [
-                                            { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "STRATEGIC_DISADVANTAGE", duration: { 'matches': BigInt(1) } } },
-                                            { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "CHEATER", duration: { 'indefinite': null } } }
-                                        ]
-                                    }
-                                ]
-                            ]
-                        }
-                    ]
-                }
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(-1) },
+                    }
+                },
             },
             {
-                title: "Play with Damaged Gear",
-                description: "Decide to play with the damaged equipment, potentially impacting performance but maintaining integrity.",
-                effect: { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "STRATEGIC_DISADVANTAGE", duration: { 'matches': BigInt(1) } } }
+                title: "2 tickets",
+                description: "2 tickets",
+                effect: {
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(-2) },
+                    }
+                },
             },
             {
-                title: "Incur Debt for Replacements",
-                description: "Opt to quickly replace the equipment by incurring a debt, ensuring performance but at a future cost.",
-                effect: { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "DEBT", duration: { 'matches': BigInt(3) } } }
-            }
-        ]
+                title: "3 tickets",
+                description: "3 tickets",
+                effect: {
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(-3) },
+                    }
+                },
+            },
+        ],
+        effect: {
+            lottery: {
+                prize: {
+                    skill: {
+                        skill: { speed: null },
+                        target: { players: [{ position: { firstBase: null } }] },
+                        duration: { indefinite: null },
+                        delta: BigInt(3),
+                    }
+                },
+                options: [
+                    {
+                        tickets: BigInt(0),
+                    },
+                    {
+                        tickets: BigInt(1),
+                    },
+                    {
+                        tickets: BigInt(2),
+                    },
+                    {
+                        tickets: BigInt(3),
+                    },
+                ],
+            },
+        },
     },
     {
-        id: "DEBT_COLLECTOR",
-        title: "The Debt Collector",
-        description: "As the team huddled around the strategy board, a rift in reality crackled open, and out stepped a being made of shadows and whispers. It pointed a nebulous finger at {Player0}, murmuring about a 'debt' owed, leaving the team to ponder their next move.",
-        otherTeams: [],
-        players: [{ 'team': { 'scenarioTeam': null } }, { 'team': { 'scenarioTeam': null } }],
-        effect: { 'noEffect': null },
-        // requirement: { 'trait': "DEBT" }, TODO
+        id: "TRAINING_SECRET_BIDDING",
+        title: "Training secret bidding",
+        description: "Training secret bidding",
         options: [
             {
-                title: "Surrender to Fate",
-                description: "Reluctantly agree to hand over {Player0}, hoping the mystical figure's promise of 'settling the cosmic scales' brings unforeseen benefits.",
+                title: "No bid",
+                description: "No bid.",
+                effect: { noEffect: null },
+            },
+            {
+                title: "Bid 1",
+                description: "Bid 1 energy",
                 effect: {
-                    'allOf': [
-                        { 'entropy': { team: { 'scenarioTeam': null }, delta: BigInt(-2) } },
-                        { 'trait': { target: { 'players': [BigInt(0)] }, traitId: "OUT_OF_COMMISSION", duration: { 'matches': BigInt(1) } } },
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(1) },
+                    }
+                },
+            },
+            {
+                title: "Bid 2",
+                description: "Bid 2 energy",
+                effect: {
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(2) },
+                    }
+                },
+            },
+            {
+                title: "Bid 3",
+                description: "Bid 3 energy",
+                effect: {
+                    energy: {
+                        team: { choosingTeam: null },
+                        value: { flat: BigInt(3) },
+                    }
+                },
+            },
+        ],
+        effect: {
+            proportionalBid: {
+                prize: {
+                    skill: {
+                        skill: { throwingPower: null },
+                        target: { position: { pitcher: null } },
+                        duration: { indefinite: null },
+                        total: BigInt(10),
+                    }
+                },
+                options: [
+                    {
+                        bidValue: BigInt(0),
+                    },
+                    {
+                        bidValue: BigInt(1),
+                    },
+                    {
+                        bidValue: BigInt(2),
+                    },
+                    {
+                        bidValue: BigInt(3),
+                    },
+                ],
+            },
+        },
+    },
+    {
+        id: "RESOURCE_MANAGEMENT_CHALLENGE",
+        title: "Resource Management Challenge",
+        description: "An unexpected shortage of essential resources puts all teams in a tight spot. How will you manage?",
+        options: [
+            {
+                title: "Share Resources",
+                description: "Share your scarce resources with the league, promoting unity.",
+                effect: {
+                    allOf: [
                         {
-                            'oneOf': [
-                                [
-                                    // Break their leg
-                                    BigInt(3),
-                                    { 'injury': { target: { 'players': [BigInt(0)] }, injury: { brokenLeg: null } } }
-                                ],
-                                [
-                                    // Just scare them
-                                    BigInt(7),
-                                    { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "LOW_MORALE", duration: { 'matches': BigInt(1) } } }
-                                ]
-                            ]
-                        }
+                            entropy: {
+                                team: { choosingTeam: null },
+                                delta: BigInt(-1), // Decrease entropy for promoting unity
+                            }
+                        },
+                        {
+                            energy: {
+                                team: { choosingTeam: null },
+                                value: { flat: BigInt(-1) }, // Spend tokens to share resources
+                            }
+                        },
                     ]
-                }
+                },
             },
             {
-                title: "Defy the Collector",
-                description: "With a defiant cheer, the team refuses, accepting the 'Price on Head' trait, ready to face whatever whimsical challenges come their way.",
-                effect: { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "PRICE_ON_HEAD", duration: { 'matches': BigInt(1) } } }
-            },
-            {
-                title: "Bargain with Whimsy",
-                description: "Engage the collector in a bizarre contest of riddles and games, hoping to erase the debt without any losses.",
+                title: "Conserve Resources",
+                description: "Keep your resources, ensuring your team's stability.",
                 effect: {
-                    'oneOf': [
-                        [
-                            BigInt(3),
-                            { 'removeTrait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "DEBT" } }
-                        ],
-                        [
-                            BigInt(7),
-                            { 'trait': { target: { 'teams': [{ 'scenarioTeam': null }] }, traitId: "PRICE_ON_HEAD", duration: { 'matches': BigInt(1) } } }
-                        ]
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase entropy for being selfish
+                    }
+                },
+            },
+        ],
+        effect: {
+            threshold: {
+                threshold: BigInt(4), // Total resources shared threshold
+                over: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(-1), // Additional decrease in entropy for sharing teams if threshold is met
+                    }
+                },
+                under: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase in entropy for all teams if threshold is not met
+                    }
+                },
+                options: [
+                    { value: { fixed: BigInt(1) } },
+                    { value: { fixed: BigInt(0) } },
+                ],
+            },
+        },
+    },
+    // Ends here
+
+    {
+        id: "RESOURCE_MANAGEMENT_CHALLENGE",
+        title: "Resource Management Challenge",
+        description: "An unexpected shortage of essential resources puts all teams in a tight spot. How will you manage?",
+        options: [
+            {
+                title: "Share Resources",
+                description: "Share your scarce resources with the league, promoting unity.",
+                effect: {
+                    allOf: [
+                        {
+                            entropy: {
+                                team: { choosingTeam: null },
+                                delta: BigInt(-1), // Decrease entropy for promoting unity
+                            }
+                        },
+                        {
+                            energy: {
+                                team: { choosingTeam: null },
+                                value: { flat: BigInt(-1) }, // Spend tokens to share resources
+                            }
+                        },
                     ]
-                }
-            }
-        ]
-    }
+                },
+            },
+            {
+                title: "Conserve Resources",
+                description: "Keep your resources, ensuring your team's stability.",
+                effect: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase entropy for being selfish
+                    }
+                },
+            },
+        ],
+        effect: {
+            threshold: {
+                threshold: BigInt(4), // Total resources shared threshold
+                over: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(-1), // Additional decrease in entropy for sharing teams if threshold is met
+                    }
+                },
+                under: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase in entropy for all teams if threshold is not met
+                    }
+                },
+                options: [
+                    { value: { fixed: BigInt(1) } },
+                    { value: { fixed: BigInt(0) } },
+                ],
+            },
+        },
+    },
+    {
+        id: "RESOURCE_MANAGEMENT_CHALLENGE",
+        title: "Resource Management Challenge",
+        description: "An unexpected shortage of essential resources puts all teams in a tight spot. How will you manage?",
+        options: [
+            {
+                title: "Share Resources",
+                description: "Share your scarce resources with the league, promoting unity.",
+                effect: {
+                    allOf: [
+                        {
+                            entropy: {
+                                team: { choosingTeam: null },
+                                delta: BigInt(-1), // Decrease entropy for promoting unity
+                            }
+                        },
+                        {
+                            energy: {
+                                team: { choosingTeam: null },
+                                value: { flat: BigInt(-1) }, // Spend tokens to share resources
+                            }
+                        },
+                    ]
+                },
+            },
+            {
+                title: "Conserve Resources",
+                description: "Keep your resources, ensuring your team's stability.",
+                effect: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase entropy for being selfish
+                    }
+                },
+            },
+        ],
+        effect: {
+            threshold: {
+                threshold: BigInt(4), // Total resources shared threshold
+                over: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(-1), // Additional decrease in entropy for sharing teams if threshold is met
+                    }
+                },
+                under: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase in entropy for all teams if threshold is not met
+                    }
+                },
+                options: [
+                    { value: { fixed: BigInt(1) } },
+                    { value: { fixed: BigInt(0) } },
+                ],
+            },
+        },
+    },
+    {
+        id: "RESOURCE_MANAGEMENT_CHALLENGE",
+        title: "Resource Management Challenge",
+        description: "An unexpected shortage of essential resources puts all teams in a tight spot. How will you manage?",
+        options: [
+            {
+                title: "Share Resources",
+                description: "Share your scarce resources with the league, promoting unity.",
+                effect: {
+                    allOf: [
+                        {
+                            entropy: {
+                                team: { choosingTeam: null },
+                                delta: BigInt(-1), // Decrease entropy for promoting unity
+                            }
+                        },
+                        {
+                            energy: {
+                                team: { choosingTeam: null },
+                                value: { flat: BigInt(-1) }, // Spend tokens to share resources
+                            }
+                        },
+                    ]
+                },
+            },
+            {
+                title: "Conserve Resources",
+                description: "Keep your resources, ensuring your team's stability.",
+                effect: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase entropy for being selfish
+                    }
+                },
+            },
+        ],
+        effect: {
+            threshold: {
+                threshold: BigInt(4), // Total resources shared threshold
+                over: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(-1), // Additional decrease in entropy for sharing teams if threshold is met
+                    }
+                },
+                under: {
+                    entropy: {
+                        team: { choosingTeam: null },
+                        delta: BigInt(1), // Increase in entropy for all teams if threshold is not met
+                    }
+                },
+                options: [
+                    { value: { fixed: BigInt(1) } },
+                    { value: { fixed: BigInt(0) } },
+                ],
+            },
+        },
+    },
+
+
 ];

@@ -49,7 +49,6 @@ actor LeagueActor {
 
     stable var admins : TrieSet.Set<Principal> = TrieSet.empty();
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
-    stable var scenarios : Trie.Trie<Text, Scenario.Scenario> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
     stable var teamStandings : ?[Types.TeamStandingInfo] = null; // First team to last team
     // MatchGroupId => Match Array of UserId => TeamId votes
@@ -76,46 +75,6 @@ actor LeagueActor {
             case (?standings) return #ok(standings);
             case (null) return #notFound;
         };
-    };
-
-    public query func getScenarios() : async [Scenario.Scenario] {
-        getScenarioArray();
-    };
-
-    public query func getScenario(id : Text) : async ?Scenario.Scenario {
-        getScenarioInternal(id);
-    };
-
-    // TODO REMOVE ALL DELETING METHODS
-    public shared ({ caller }) func clearScenarios() : async () {
-        scenarios := Trie.empty();
-    };
-
-    public shared ({ caller }) func addScenario(
-        request : Types.AddScenarioRequest
-    ) : async Types.AddScenarioResult {
-        if (not isAdminId(caller)) {
-            return #notAuthorized;
-        };
-        let traits = await PlayersActor.getTraits();
-        let traitIds = traits
-        |> Iter.fromArray(_)
-        |> Iter.map(_, func(t : Trait.Trait) : Text = t.id)
-        |> Iter.toArray(_);
-        switch (ScenarioUtil.validateScenario(request, traitIds)) {
-            case (#ok) {};
-            case (#invalid(errors)) return #invalid(errors);
-        };
-        let key = {
-            key = request.id;
-            hash = Text.hash(request.id);
-        };
-        let (newScenarios, oldScenario) = Trie.put(scenarios, key, Text.equal, request);
-        if (oldScenario != null) {
-            return #idTaken;
-        };
-        scenarios := newScenarios;
-        #ok;
     };
 
     public shared query ({ caller }) func getAdmins() : async [Principal] {
@@ -157,6 +116,16 @@ actor LeagueActor {
                 // TODO archive completed season?
             };
         };
+        for (scenario in Iter.fromArray(request.scenarios)) {
+            switch (ScenarioUtil.validateScenario(scenario, [])) {
+                case (#ok) ();
+                case (#invalid(errors)) return #invalidScenario({
+                    id = scenario.id;
+                    errors = errors;
+                });
+            };
+        };
+
         teamStandings := null;
         predictions := Trie.empty();
         seasonStatus := #starting;
@@ -237,14 +206,12 @@ actor LeagueActor {
         let allTeams = getTeamsArray();
         let allPlayers = await PlayersActor.getAllPlayers();
 
-        let allScenarios = getScenarioArray();
         scheduleMatchGroup(
             0,
             firstMatchGroup,
             inProgressSeason,
             allTeams,
             allPlayers,
-            allScenarios,
             prng,
         );
 
@@ -671,14 +638,12 @@ actor LeagueActor {
                 let allTeams = getTeamsArray();
                 // TODO how to reschedule if it fails?
                 let allPlayers = await PlayersActor.getAllPlayers();
-                let allScenarios = getScenarioArray();
                 scheduleMatchGroup(
                     nextMatchGroupId,
                     matchGroup,
                     updatedSeason,
                     allTeams,
                     allPlayers,
-                    allScenarios,
                     prng,
                 );
             };
@@ -790,14 +755,6 @@ actor LeagueActor {
         };
     };
 
-    private func getScenarioInternal(id : Text) : ?Scenario.Scenario {
-        let key = {
-            key = id;
-            hash = Text.hash(id);
-        };
-        Trie.get(scenarios, key, Text.equal);
-    };
-
     private func getCurrentMatchGroupId() : ?Nat {
         // Get current match group by finding the next scheduled one
         switch (seasonStatus) {
@@ -855,13 +812,6 @@ actor LeagueActor {
                 id = k;
             },
         );
-    };
-
-    private func getScenarioArray() : [Scenario.Scenario] {
-        scenarios
-        |> Trie.iter(_)
-        |> Iter.map(_, func((k, v) : (Text, Scenario.Scenario)) : Scenario.Scenario = v)
-        |> Iter.toArray(_);
     };
 
     private func awardUserPoints(
@@ -941,7 +891,6 @@ actor LeagueActor {
         inProgressSeason : Season.InProgressSeason,
         allTeams : [Team.TeamWithId],
         allPlayers : [PlayerTypes.PlayerWithId],
-        allScenarios : [Scenario.Scenario],
         prng : Prng,
     ) : () {
         let timeDiff = matchGroup.time - Time.now();

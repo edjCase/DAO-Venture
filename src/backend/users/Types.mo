@@ -10,15 +10,16 @@ import Season "../models/Season";
 
 module {
 
-    public type TeamAssociationType = {
+    public type TeamAssociationKind = {
         #fan;
         #owner;
     };
 
     public type User = {
+        // TODO team association be in the season?
         teamAssociation : ?{
             id : Principal;
-            kind : TeamAssociationType;
+            kind : TeamAssociationKind;
         };
         points : Int;
     };
@@ -43,7 +44,7 @@ module {
         #ok;
         #identityRequired;
         #teamNotFound;
-        #favoriteTeamAlreadySet;
         #notAuthorized;
+        #alreadySet;
     };
 };

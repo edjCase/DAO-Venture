@@ -16,6 +16,8 @@
       await userStore.setFavoriteTeam(confirmFavoriteTeamId);
     }
   };
+  let associatedTeamId: Principal | undefined =
+    user?.user?.teamAssociation[0]?.id;
 </script>
 
 <div>
@@ -34,8 +36,8 @@
           </div>
           <div>
             {#if user}
-              {#if user.user?.favoriteTeamId.length == 1}
-                {#if user.user.favoriteTeamId[0].compareTo(team.id) == "eq"}
+              {#if associatedTeamId}
+                {#if associatedTeamId.compareTo(team.id) == "eq"}
                   <StarSolid size="lg" />
                 {/if}
               {:else}

@@ -1,4 +1,5 @@
-import { Trait } from "../models/Trait";
+import { Trait } from "../ic-agent/declarations/players";
+
 
 export let traits: Trait[] = [
     {

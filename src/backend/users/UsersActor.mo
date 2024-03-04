@@ -24,16 +24,34 @@ actor UsersActor {
     };
 
     public shared ({ caller }) func setFavoriteTeam(userId : Principal, teamId : Principal) : async Types.SetUserFavoriteTeamResult {
+        if (Principal.isAnonymous(userId)) {
+            return #identityRequired;
+        };
         if (caller != userId and not isLeague(caller)) {
             return #notAuthorized;
         };
-        updateUser(
-            userId,
-            func(user : Types.User) : Types.User = {
-                user with
-                favoriteTeamId = ?teamId;
-            },
-        );
+        let userInfo = getUserInfoInternal(userId);
+        switch (userInfo.teamAssociation) {
+            case (?association) {
+                return #alreadySet;
+            };
+            case (null) {
+                let teamExists = true; // TODO get all team ids and check if teamId is in there
+                if (not teamExists) {
+                    return #teamNotFound;
+                };
+                updateUser(
+                    userId,
+                    func(user : Types.User) : Types.User = {
+                        user with
+                        teamAssociation = ?{
+                            id = teamId;
+                            kind = #fan;
+                        };
+                    },
+                );
+            };
+        };
         #ok;
     };
 
@@ -67,7 +85,7 @@ actor UsersActor {
             case (?userInfo) userInfo;
             case (null) {
                 {
-                    favoriteTeamId = null;
+                    teamAssociation = null;
                     points = 0;
                 };
             };

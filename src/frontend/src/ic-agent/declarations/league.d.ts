@@ -2,51 +2,6 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export interface AddScenarioRequest {
-  'id' : string,
-  'title' : string,
-  'description' : string,
-  'effect' : {
-      'lottery' : {
-        'prize' : Effect,
-        'options' : Array<{ 'tickets' : bigint }>,
-      }
-    } |
-    {
-      'threshold' : {
-        'threshold' : bigint,
-        'over' : Effect,
-        'under' : Effect,
-        'options' : Array<
-          {
-            'value' : { 'fixed' : bigint } |
-              { 'weightedChance' : Array<[bigint, bigint]> },
-          }
-        >,
-      }
-    } |
-    { 'pickASide' : { 'options' : Array<{ 'sideId' : string }> } } |
-    {
-      'proportionalBid' : {
-        'prize' : {
-            'skill' : {
-              'total' : bigint,
-              'duration' : Duration,
-              'skill' : Skill,
-              'target' : { 'position' : FieldPosition },
-            }
-          },
-        'options' : Array<{ 'bidValue' : bigint }>,
-      }
-    } |
-    { 'simple' : null } |
-    { 'leagueChoice' : { 'options' : Array<{ 'effect' : Effect }> } },
-  'options' : Array<ScenarioOption>,
-}
-export type AddScenarioResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'invalid' : Array<string> } |
-  { 'idTaken' : null };
 export type CloseSeasonResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'seasonNotOpen' : null };
@@ -367,6 +322,7 @@ export interface StartSeasonRequest {
   'scenarios' : Array<Scenario>,
 }
 export type StartSeasonResult = { 'ok' : null } |
+  { 'invalidScenario' : { 'id' : string, 'errors' : Array<string> } } |
   { 'noStadiumsExist' : null } |
   { 'notAuthorized' : null } |
   { 'oddNumberOfTeams' : null } |
@@ -437,14 +393,10 @@ export type UpcomingMatchPredictionsResult = {
 export type UpdateLeagueCanistersResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface _SERVICE {
-  'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
-  'clearScenarios' : ActorMethod<[], undefined>,
   'clearTeams' : ActorMethod<[], undefined>,
   'closeSeason' : ActorMethod<[], CloseSeasonResult>,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'getAdmins' : ActorMethod<[], Array<Principal>>,
-  'getScenario' : ActorMethod<[string], [] | [Scenario]>,
-  'getScenarios' : ActorMethod<[], Array<Scenario>>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
   'getTeams' : ActorMethod<[], Array<TeamWithId>>,

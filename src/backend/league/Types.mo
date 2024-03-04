@@ -13,10 +13,7 @@ module {
     public type LeagueActor = actor {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
-        getScenarios : query () -> async [Scenario.Scenario];
-        getScenario : query (id : Text) -> async ?Scenario.Scenario;
         getTeamStandings : query () -> async GetTeamStandingsResult;
-        addScenario : (request : AddScenarioRequest) -> async AddScenarioResult;
         processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
@@ -129,6 +126,10 @@ module {
         #scenarioCountMismatch : {
             expected : Nat;
             actual : Nat;
+        };
+        #invalidScenario : {
+            id : Text;
+            errors : [Text];
         };
     };
 

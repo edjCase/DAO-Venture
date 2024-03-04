@@ -7,7 +7,8 @@
     liveMatchGroupStore,
   } from "../../stores/LiveMatchGroupStore";
   import MatchCardCompact from "./MatchCardCompact.svelte";
-  import Scenarios, { ScenarioInfo } from "../scenario/Scenarios.svelte";
+  import ResolvedScenario from "../scenario/ResolvedScenario.svelte";
+  import Scenario from "../scenario/Scenario.svelte";
 
   export let matchGroup: MatchGroupDetails;
 
@@ -34,37 +35,15 @@
   let selectMatch = (matchId: number) => () => {
     selectedMatchId = matchId;
   };
-  let currentScenarios: ScenarioInfo[] | undefined;
-  if (matchGroup.state == "Scheduled") {
-    currentScenarios = [];
-    for (let match of matchGroup.matches) {
-      if ("scenario" in match.team1 && match.team1.scenario) {
-        currentScenarios.push({
-          ...match.team1.scenario,
-          choice:
-            "choice" in match.team1.scenario
-              ? match.team1.scenario.choice
-              : undefined,
-        });
-      }
-      if ("scenario" in match.team2 && match.team2.scenario) {
-        currentScenarios.push({
-          ...match.team2.scenario,
-          choice:
-            "choice" in match.team2.scenario
-              ? match.team2.scenario.choice
-              : undefined,
-        });
-      }
-    }
-  }
 </script>
 
 <section>
   <section class="match-details">
     {#if matchGroup.state == "Scheduled"}
-      {#if currentScenarios !== undefined}
-        <Scenarios matchGroupId={matchGroup.id} scenarios={currentScenarios} />
+      {#if "effectOutcomes" in matchGroup.scenario}
+        <ResolvedScenario scenario={matchGroup.scenario} />
+      {:else}
+        <Scenario scenario={matchGroup.scenario} matchGroupId={matchGroup.id} />
       {/if}
       <h1>Predict the upcoming match-up winners</h1>
       {#each matchGroup.matches as match}

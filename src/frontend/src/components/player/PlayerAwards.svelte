@@ -1,7 +1,7 @@
 <script lang="ts">
   import { AtomOutline } from "flowbite-svelte-icons";
-  import { CompletedSeason } from "../../models/Season";
   import { Card } from "flowbite-svelte";
+  import { CompletedSeason } from "../../ic-agent/declarations/league";
 
   export let completedSeason: CompletedSeason;
 

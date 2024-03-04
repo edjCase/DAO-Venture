@@ -50,7 +50,7 @@ function createUserStore() {
                         set({
                             id: id,
                             user: {
-                                favoriteTeamId: [],
+                                teamAssociation: [],
                                 points: BigInt(0)
                             },
                             identity: identity,

@@ -7,8 +7,14 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
+  const TeamAssociationKind = IDL.Variant({
+    'fan' : IDL.Null,
+    'owner' : IDL.Null,
+  });
   const User = IDL.Record({
-    'favoriteTeamId' : IDL.Opt(IDL.Principal),
+    'teamAssociation' : IDL.Opt(
+      IDL.Record({ 'id' : IDL.Principal, 'kind' : TeamAssociationKind })
+    ),
     'points' : IDL.Int,
   });
   const GetUserResult = IDL.Variant({
@@ -19,9 +25,9 @@ export const idlFactory = ({ IDL }) => {
   const SetUserFavoriteTeamResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
+    'alreadySet' : IDL.Null,
     'identityRequired' : IDL.Null,
     'teamNotFound' : IDL.Null,
-    'favoriteTeamAlreadySet' : IDL.Null,
   });
   return IDL.Service({
     'awardPoints' : IDL.Func(
