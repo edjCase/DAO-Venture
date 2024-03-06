@@ -7,8 +7,11 @@ module {
 
     public type TeamActor = actor {
         getPlayers : composite query () -> async [Player.PlayerWithId];
-        getMatchGroupVote : query (request : GetMatchGroupVoteRequest) -> async GetMatchGroupVoteResult;
-        voteOnMatchGroup : (request : VoteOnMatchGroupRequest) -> async VoteOnMatchGroupResult;
+        getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
+        voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
+        getWinningScenarioOption : (request : GetWinningScenarioOptionRequest) -> async GetWinningScenarioOptionResult;
+        onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
+        onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
         onSeasonComplete() : async OnSeasonCompleteResult;
     };
 
@@ -17,6 +20,25 @@ module {
         createTeamActor : (request : CreateTeamRequest) -> async CreateTeamResult;
         getTeamActors : () -> async [TeamActorInfoWithId];
         updateCanisters : () -> async ();
+    };
+
+    public type OnScenarioVoteCompleteRequest = {
+        scenarioId : Text;
+    };
+
+    public type OnScenarioVoteCompleteResult = {
+        #ok;
+        #notAuthorized;
+    };
+
+    public type OnNewScenarioRequest = {
+        scenarioId : Text;
+        optionCount : Nat;
+    };
+
+    public type OnNewScenarioResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type OnSeasonCompleteResult = {
@@ -47,18 +69,28 @@ module {
         votes : [Nat];
     };
 
-    public type MatchGroupVoteResult = {
-        scenarioChoice : Nat8;
+    public type ScenarioVoteResult = {
+        option : Nat;
     };
 
-    public type GetMatchGroupVoteRequest = {
-        matchGroupId : Nat;
+    public type GetScenarioVoteRequest = {
+        scenarioId : Text;
     };
 
-    public type GetMatchGroupVoteResult = {
-        #ok : MatchGroupVoteResult;
+    public type GetScenarioVoteResult = {
+        #ok : ?Nat;
+        #scenarioNotFound;
+    };
+
+    public type GetWinningScenarioOptionRequest = {
+        scenarioId : Text;
+    };
+
+    public type GetWinningScenarioOptionResult = {
+        #ok : Nat;
         #noVotes;
         #notAuthorized;
+        #scenarioNotFound;
     };
 
     public type GetCyclesResult = {
@@ -66,26 +98,19 @@ module {
         #notAuthorized;
     };
 
-    public type MatchGroupVote = {
-        scenarioChoice : Nat8;
+    public type VoteOnScenarioRequest = {
+        scenarioId : Text;
+        option : Nat;
     };
 
-    public type VoteOnMatchGroupRequest = MatchGroupVote and {
-        matchGroupId : Nat;
-    };
-
-    public type VoteOnMatchGroupResult = {
+    public type VoteOnScenarioResult = {
         #ok;
         #notAuthorized;
-        #matchGroupNotFound;
+        #scenarioNotFound;
         #votingNotOpen;
-        #teamNotInMatchGroup;
+        #teamNotInScenario;
         #alreadyVoted;
         #seasonStatusFetchError : Text;
-        #invalid : [InvalidVoteError];
-    };
-
-    public type InvalidVoteError = {
-        #invalidChoice : Nat8;
+        #invalidOption;
     };
 };

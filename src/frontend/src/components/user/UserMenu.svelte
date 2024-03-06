@@ -29,14 +29,14 @@
 </script>
 
 <div
-  class="flex items-center space-x-4 md:order-1 cursor-pointer"
+  class="flex items-center space-x-2 md:order-1 cursor-pointer max-w-48"
   id="avatar-menu"
 >
   {#if user}
     <Avatar border>
       {@html toSvg(user.id.toString(), 100)}
     </Avatar>
-    <div class="space-y-1 font-medium dark:text-white">
+    <div class="space-y-1 font-medium dark:text-white text-center">
       <div>
         {uniqueNamesGenerator({
           dictionaries: [adjectives, colors, animals],

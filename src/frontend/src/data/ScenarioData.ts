@@ -7,11 +7,11 @@ export let scenarios: Scenario[] = [
     {
         id: "SURGE_CRISIS_OPENING_CEREMONY",
         title: "Surge Crisis at the Opening Ceremony",
-        description: "The DAOball opening ceremony is under threat due to an unprecedented energy surge. Teams, as beings of energy, face a dilemma: contribute their energy to stabilize the grid or conserve it for the upcoming matches.",
+        description: "The DAOball opening ceremony is under threat due to an unprecedented energy surge. Teams, as beings of energy, face a dilemma: contribute their energy to stabilize the grid or conserve it for the upcoming matches. At least 4 teams need to contribute their energy to stabilize the grid.",
         options: [
             {
                 title: "Contribute",
-                description: "Contribute energy to stabilize the grid.",
+                description: "Contribute energy to stabilize the grid. This will give the league 1 energy but will cause sluggishness in the next match for your team.",
                 effect: {
                     allOf: [
                         {
@@ -33,7 +33,7 @@ export let scenarios: Scenario[] = [
             },
             {
                 title: "Conserve",
-                description: "Conserve your energy for upcoming matches.",
+                description: "Conserve your energy for upcoming matches, but risk the opening ceremony not having enough power.",
                 effect: {
                     entropy: {
                         team: { choosingTeam: null },
@@ -43,7 +43,7 @@ export let scenarios: Scenario[] = [
             },
             {
                 title: "Convince fans to reduce energy",
-                description: "Convince fans to reduce their energy consumption, at the risk of backlash.",
+                description: "Convince fans to reduce their energy consumption, at the risk of backlash. This will not affect your team's energy, but could do nothing.",
                 effect: {
                     energy: {
                         team: { choosingTeam: null },

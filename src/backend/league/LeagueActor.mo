@@ -186,7 +186,7 @@ actor LeagueActor {
                     _,
                     func(m : ScheduleBuilder.Match) : Season.NotScheduledMatch = {
                         team1 = getMatchTeamInfo(m.team1);
-                        team2 = getMatchTeamInfo(m.team1);
+                        team2 = getMatchTeamInfo(m.team2);
                     },
                 )
                 |> Iter.toArray(_);
@@ -407,22 +407,20 @@ actor LeagueActor {
 
         let prng = PseudoRandomX.fromBlob(await Random.blob());
 
-        let teamDataMap = HashMap.HashMap<Principal, StadiumTypes.StartMatchTeam and { choiceIndex : Nat8 }>(0, Principal.equal, Principal.hash);
+        let teamDataMap = HashMap.HashMap<Principal, StadiumTypes.StartMatchTeam and { option : Nat8 }>(0, Principal.equal, Principal.hash);
         for ((teamId, team) in Trie.iter(teams)) {
             let teamActor = actor (Principal.toText(teamId)) : TeamTypes.TeamActor;
-            let options : TeamTypes.MatchGroupVoteResult = try {
+            let options : TeamTypes.ScenarioVoteResult = try {
                 // Get match options from the team itself
-                let result : TeamTypes.GetMatchGroupVoteResult = await teamActor.getMatchGroupVote({
-                    matchGroupId = matchGroupId;
+                let result : TeamTypes.GetScenarioVoteResult = await teamActor.getScenarioVote({
+                    scenarioId = scheduledMatchGroup.scenario.id;
                 });
                 switch (result) {
                     case (#ok(o)) o;
                     case (#noVotes) {
                         // If no votes, pick a random choice
                         let choice : Nat8 = 0; // TODO
-                        {
-                            scenarioChoice = choice;
-                        };
+                        choice;
                     };
                     case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(teamId));
                 };
@@ -433,7 +431,7 @@ actor LeagueActor {
             teamDataMap.put(
                 teamId,
                 {
-                    teamData with choiceIndex = options.scenarioChoice;
+                    teamData with option = options.option;
                 },
             );
         };
@@ -441,7 +439,7 @@ actor LeagueActor {
         let scenarioTeamData = teamDataMap.vals()
         |> Iter.map(
             _,
-            func(t : StadiumTypes.StartMatchTeam and { choiceIndex : Nat8 }) : ScenarioUtil.Team = {
+            func(t : StadiumTypes.StartMatchTeam and { option : Nat8 }) : ScenarioUtil.Team = {
                 t with
                 positions = {
                     firstBase = t.positions.firstBase.id;

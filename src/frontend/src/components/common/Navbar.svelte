@@ -55,7 +55,7 @@
 <Navbar rounded color="form" class="mb-4 mt-4 mx-auto" let:hidden let:toggle>
   <NavBrand>
     <Link to="/">
-      <img src="/images/logo.png" class="me-3 h-16" alt="DAOball Logo" />
+      <img src="/images/logo.png" class="h-16" alt="DAOball Logo" />
     </Link>
   </NavBrand>
   <UserMenu />

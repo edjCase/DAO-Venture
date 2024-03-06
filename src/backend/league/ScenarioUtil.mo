@@ -38,7 +38,7 @@ module {
     public type Team = {
         id : Principal;
         positions : FieldPosition.TeamPositions;
-        choiceIndex : Nat8;
+        option : Nat8;
     };
 
     public func validateScenario(scenario : Scenario.Scenario, traitIds : [Text]) : ValidateScenarioResult {
@@ -130,12 +130,12 @@ module {
         teams : [Team],
     ) : Scenario.ResolvedScenario {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
-        let teamChoices = Buffer.Buffer<{ teamId : Principal; choiceIndex : Nat8 }>(0);
+        let teamChoices = Buffer.Buffer<{ teamId : Principal; option : Nat8 }>(0);
         for (team in Iter.fromArray(teams)) {
-            let choice = scenario.options[Nat8.toNat(team.choiceIndex)];
+            let choice = scenario.options[Nat8.toNat(team.option)];
             teamChoices.add({
                 teamId = team.id;
-                choiceIndex = team.choiceIndex;
+                option = team.option;
             });
             resolveEffectInternal(
                 prng,
@@ -148,8 +148,8 @@ module {
         switch (scenario.effect) {
             case (#simple) ();
             case (#leagueChoice(leagueChoice)) {
-                let leagueChoiceIndex = getMajorityChoice(prng, teams);
-                let leagueOption = leagueChoice.options[Nat8.toNat(leagueChoiceIndex)];
+                let leagueOptionIndex = getMajorityOption(prng, teams);
+                let leagueOption = leagueChoice.options[Nat8.toNat(leagueOptionIndex)];
                 resolveEffectInternal(prng, #league, scenario, leagueOption.effect, effectOutcomes);
             };
             case (#lottery(lottery)) {
@@ -245,7 +245,7 @@ module {
         };
     };
 
-    private func getMajorityChoice(
+    private func getMajorityOption(
         prng : Prng,
         teamChoices : [Team],
     ) : Nat8 {
@@ -257,8 +257,8 @@ module {
         var maxCount = 0;
         for (teamChoice in Iter.fromArray(teamChoices)) {
             let choiceKey = {
-                key = teamChoice.choiceIndex;
-                hash = Nat32.fromNat(Nat8.toNat(teamChoice.choiceIndex));
+                key = teamChoice.option;
+                hash = Nat32.fromNat(Nat8.toNat(teamChoice.option));
             };
             let currentCount = Option.get(Trie.get(choiceCounts, choiceKey, Nat8.equal), 0);
             let newCount = currentCount + 1;
@@ -269,9 +269,9 @@ module {
             };
         };
         let topChoices = Buffer.Buffer<Nat8>(0);
-        for ((choiceIndex, choiceCount) in Trie.iter(choiceCounts)) {
+        for ((option, choiceCount) in Trie.iter(choiceCounts)) {
             if (choiceCount == maxCount) {
-                topChoices.add(choiceIndex);
+                topChoices.add(option);
             };
         };
         if (topChoices.size() == 1) {

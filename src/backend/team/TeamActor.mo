@@ -25,17 +25,18 @@ import MatchAura "../models/MatchAura";
 import Season "../models/Season";
 import Util "../Util";
 import Scenario "../models/Scenario";
+import TeamState "./TeamState";
+import TeamDao "./TeamDao";
+import ScenarioVoteHandler "ScenarioVoteHandler";
 
 shared (install) actor class TeamActor(
   leagueId : Principal,
   playersActorId : Principal,
 ) : async Types.TeamActor = this {
 
-  type MatchAura = MatchAura.MatchAura;
-  type GetCyclesResult = Types.GetCyclesResult;
-  type PlayerId = Player.PlayerId;
-
-  stable var matchGroupVotes : Trie.Trie<Nat, Trie.Trie<Principal, Types.MatchGroupVote>> = Trie.empty();
+  stable var scenarioVoteData = Trie.empty<Text, ScenarioVoteHandler.Data>();
+  stable let dao = TeamDao.TeamDao();
+  stable let team = TeamState.TeamState(Principal.fromActor(this), leagueId);
 
   public composite query func getPlayers() : async [Player.PlayerWithId] {
     let teamId = Principal.fromActor(this);
@@ -43,98 +44,76 @@ shared (install) actor class TeamActor(
     await playersActor.getTeamPlayers(teamId);
   };
 
-  public shared ({ caller }) func voteOnMatchGroup(request : Types.VoteOnMatchGroupRequest) : async Types.VoteOnMatchGroupResult {
-    let isOwner = await isTeamOwner(caller);
-    if (not isOwner) {
-      return #notAuthorized;
-    };
-    let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
-    let seasonStatus = try {
-      await leagueActor.getSeasonStatus();
-    } catch (err) {
-      return #seasonStatusFetchError(Error.message(err));
-    };
-    let teamId = Principal.fromActor(this);
-    let scheduledMatchGroup : Season.ScheduledMatchGroup = switch (seasonStatus) {
-      case (#notStarted or #starting) return #votingNotOpen;
-      case (#completed(c)) return #votingNotOpen;
-      case (#inProgress(ip)) {
-        let ?matchGroup = Util.arrayGetSafe(ip.matchGroups, request.matchGroupId) else return #matchGroupNotFound;
-
-        switch (matchGroup) {
-          case (#scheduled(scheduledMatchGroup)) {
-            // TODO necessary to check in in group?
-            let ?match = Array.find(
-              scheduledMatchGroup.matches,
-              func(m : Season.ScheduledMatch) : Bool = m.team1.id == teamId or m.team2.id == teamId,
-            ) else return #teamNotInMatchGroup;
-            scheduledMatchGroup;
-          };
-          case (_) return #votingNotOpen;
-        };
-      };
-    };
-
-    let errors = Buffer.Buffer<Types.InvalidVoteError>(0);
-    let choiceExists = scheduledMatchGroup.scenario.options.size() > Nat8.toNat(request.scenarioChoice);
-    if (not choiceExists) {
-      errors.add(#invalidChoice(request.scenarioChoice));
-    };
-    if (errors.size() > 0) {
-      return #invalid(Buffer.toArray(errors));
-    };
-
-    let matchGroupKey = buildMatchGroupKey(request.matchGroupId);
-    let matchGroupVoteData = switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
-      case (null) Trie.empty();
-      case (?o) o;
-    };
-    let voteKey = {
-      key = caller;
-      hash = Principal.hash(caller);
-    };
-    switch (Trie.put(matchGroupVoteData, voteKey, Principal.equal, request)) {
-      case ((_, ?existingVote)) #alreadyVoted;
-      case ((newMatchVotes, null)) {
-        // Add vote
-        let (newMatchGroupVotes, _) = Trie.put(
-          matchGroupVotes,
-          matchGroupKey,
-          Nat.equal,
-          newMatchVotes,
-        );
-        matchGroupVotes := newMatchGroupVotes;
-        #ok;
-      };
-    };
+  public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
+    let ?handler = getScenarioVoteHandler(request.scenarioId) else return #scenarioNotFound;
+    handler.vote(caller, request.option);
   };
 
-  public shared query ({ caller }) func getMatchGroupVote(request : Types.GetMatchGroupVoteRequest) : async Types.GetMatchGroupVoteResult {
+  public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
+    let ?handler = getScenarioVoteHandler(request.scenarioId) else return #scenarioNotFound;
+    #ok(handler.getVote(caller));
+  };
+
+  private func getScenarioVoteHandler(scenarioId : Text) : ?ScenarioVoteHandler.Handler {
+    let scenarioKey = {
+      key = scenarioId;
+      hash = Text.hash(scenarioId);
+    };
+    let ?data = Trie.get(scenarioVoteData, scenarioKey, Text.equal) else return null;
+    return ?ScenarioVoteHandler.Handler(data);
+  };
+
+  public shared ({ caller }) func getWinningScenarioOption(request : Types.GetWinningScenarioOptionRequest) : async Types.GetWinningScenarioOptionResult {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let matchGroupKey = buildMatchGroupKey(request.matchGroupId);
-    let result = switch (Trie.get(matchGroupVotes, matchGroupKey, Nat.equal)) {
-      case (null) #noVotes;
-      case (?o) {
-        let ?{ scenarioChoice } = tallyVotes(o) else return #noVotes;
-        #ok({
-          scenarioChoice = scenarioChoice;
-        });
-      };
+    let ?handler = getScenarioVoteHandler(request.scenarioId) else return #scenarioNotFound;
+    let ?winningOption = handler.calculateWinningOption() else return #noVotes;
+    #ok(winningOption);
+  };
+
+  public shared ({ caller }) func onNewScenario(request : Types.OnNewScenarioRequest) : async Types.OnNewScenarioResult {
+    if (caller != leagueId) {
+      return #notAuthorized;
     };
-    result;
+    let data : ScenarioVoteHandler.Data = {
+      optionCount = request.optionCount;
+      votes = Trie.empty<Principal, Nat>();
+    };
+    let scenarioKey = {
+      key = request.scenarioId;
+      hash = Text.hash(request.scenarioId);
+    };
+    let newScenarioVoteData = switch (Trie.put(scenarioVoteData, scenarioKey, Text.equal, data)) {
+      case ((new, null)) new;
+      case ((_, ?existingData)) Debug.trap("Scenario with id " # request.scenarioId # " already exists");
+    };
+    scenarioVoteData := newScenarioVoteData;
+    #ok;
+  };
+
+  public shared ({ caller }) func onScenarioVoteComplete(request : Types.OnScenarioVoteCompleteRequest) : async Types.OnScenarioVoteCompleteResult {
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let scenarioKey = {
+      key = request.scenarioId;
+      hash = Text.hash(request.scenarioId);
+    };
+    let (newScenarioVoteData, _) = Trie.remove(scenarioVoteData, scenarioKey, Text.equal);
+    scenarioVoteData := newScenarioVoteData;
+    #ok;
   };
 
   public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    matchGroupVotes := Trie.empty();
+    // TODO
     #ok;
   };
 
-  public shared ({ caller }) func getCycles() : async GetCyclesResult {
+  public shared ({ caller }) func getCycles() : async Types.GetCyclesResult {
     if (caller != leagueId) {
       return #notAuthorized;
     };
@@ -144,58 +123,6 @@ shared (install) actor class TeamActor(
     return #ok(canisterStatus.cycles);
   };
 
-  private func buildMatchGroupKey(matchGroupId : Nat) : Trie.Key<Nat> {
-    {
-      key = matchGroupId;
-      hash = Nat32.fromNat(matchGroupId); // TODO is this ok? numbers should be in the range of 0-2^32-1
-    };
-  };
-
-  private func tallyVotes(matchVotes : Trie.Trie<Principal, Types.MatchGroupVote>) : ?Types.MatchGroupVote {
-    // Scenario Option Id -> Vote Count
-    var choiceVotes = Trie.empty<Nat8, Nat>();
-    for ((userId, vote) in Trie.iter(matchVotes)) {
-      let userVotingPower = 1; // TODO
-      let scenarioKey = {
-        key = vote.scenarioChoice;
-        hash = Nat32.fromNat(Nat8.toNat(vote.scenarioChoice));
-      };
-      choiceVotes := addVotes(choiceVotes, scenarioKey, Nat8.equal, userVotingPower);
-    };
-    let ?winningChoice = calculateVote(choiceVotes) else return null;
-    ?{
-      scenarioChoice = winningChoice;
-    };
-  };
-
-  private func calculateVote<T>(votes : Trie.Trie<T, Nat>) : ?T {
-    var winningVote : ?(T, Nat) = null;
-    for ((choice, votes) in Trie.iter(votes)) {
-      switch (winningVote) {
-        case (null) winningVote := ?(choice, votes);
-        case (?o) {
-          if (o.1 < votes) {
-            winningVote := ?(choice, votes);
-          };
-          // TODO what to do if there is a tie?
-        };
-      };
-    };
-    switch (winningVote) {
-      case (null) null;
-      case (?v) ?v.0;
-    };
-  };
-
-  private func addVotes<T>(votes : Trie.Trie<T, Nat>, key : Trie.Key<T>, equal : (T, T) -> Bool, value : Nat) : Trie.Trie<T, Nat> {
-
-    let currentVotes = switch (Trie.get(votes, key, equal)) {
-      case (?v) v;
-      case (null) 0;
-    };
-    let (newVotes, _) = Trie.put(votes, key, equal, currentVotes + value);
-    newVotes;
-  };
   private func isTeamOwner(caller : Principal) : async Bool {
     // TODO change to staking
     // TODO re-enable
@@ -206,5 +133,4 @@ shared (install) actor class TeamActor(
     // return tokenCount > 0;
     return true;
   };
-
 };
