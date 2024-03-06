@@ -11,7 +11,6 @@ import Random "mo:base/Random";
 import Int "mo:base/Int";
 import Int32 "mo:base/Int32";
 import Prelude "mo:base/Prelude";
-import Nat8 "mo:base/Nat8";
 import Iter "mo:base/Iter";
 import TrieMap "mo:base/TrieMap";
 import Float "mo:base/Float";

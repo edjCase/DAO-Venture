@@ -3,51 +3,80 @@ import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import Buffer "mo:base/Buffer";
 import Principal "mo:base/Principal";
+import Iter "mo:base/Iter";
+import Text "mo:base/Text";
+import HashMap "mo:base/HashMap";
+import Debug "mo:base/Debug";
 import Types "./Types";
+import Team "../models/Team";
+import TeamDao "TeamDao";
 
 module {
     public type Data = {
+        scenarioId : Text;
         optionCount : Nat;
-        votes : Trie.Trie<Principal, Nat>;
+        votes : [(Principal, Nat)];
+    };
+
+    public class Manager(data : [Data]) {
+        let iter = data.vals()
+        |> Iter.map<Data, (Text, Handler)>(
+            _,
+            func(d : Data) : (Text, Handler) = (d.scenarioId, Handler(d)),
+        );
+        let handlers = HashMap.fromIter<Text, Handler>(iter, data.size(), Text.equal, Text.hash);
+
+        public func getHandler(scenarioId : Text) : ?Handler {
+            handlers.get(scenarioId);
+        };
+
+        public func add(scenarioId : Text, optionCount : Nat) {
+            let data : Data = {
+                scenarioId = scenarioId;
+                optionCount = optionCount;
+                votes = [];
+            };
+            let null = handlers.get(scenarioId) else Debug.trap("Scenario already exists with id: " # scenarioId);
+            handlers.put(scenarioId, Handler(data));
+        };
+
+        public func remove(scenarioId : Text) : { #ok; #notFound } {
+            let ?handler = handlers.remove(scenarioId) else return #notFound;
+            #ok;
+        };
+
+        public func toData() : [Data] {
+            handlers.entries()
+            |> Iter.map<(Text, Handler), Data>(
+                _,
+                func(e : (Text, Handler)) : Data = e.1.toData(),
+            )
+            |> Iter.toArray(_);
+        };
     };
 
     public class Handler(data : Data) {
-        var votes : Trie.Trie<Principal, Nat> = data.votes;
+        let votes = HashMap.fromIter<Principal, Nat>(data.votes.vals(), data.votes.size(), Principal.equal, Principal.hash);
 
         public func vote(
             voterId : Principal,
+            votingPower : Nat,
             option : Nat,
-        ) : Types.VoteOnScenarioResult {
-            // TODO
-            // let isOwner = await isTeamOwner(caller);
-            // if (not isOwner) {
-            //     return #notAuthorized;
-            // };
+        ) : { #ok; #invalidOption; #alreadyVoted } {
 
             let choiceExists = option < data.optionCount;
             if (not choiceExists) {
                 return #invalidOption;
             };
-
-            let voterKey = {
-                key = voterId;
-                hash = Principal.hash(voterId);
+            if (votes.get(voterId) != null) {
+                return #alreadyVoted;
             };
-            switch (Trie.put(votes, voterKey, Principal.equal, option)) {
-                case ((_, ?existingVote)) #alreadyVoted;
-                case ((newVotes, null)) {
-                    votes := newVotes;
-                    #ok;
-                };
-            };
+            votes.put(voterId, option);
+            #ok;
         };
 
         public func getVote(voterId : Principal) : ?Nat {
-            let voterKey = {
-                key = voterId;
-                hash = Principal.hash(voterId);
-            };
-            Trie.get(votes, voterKey, Principal.equal);
+            votes.get(voterId);
         };
 
         public func calculateWinningOption() : ?Nat {
@@ -57,7 +86,7 @@ module {
             // };
             // Scenario Option Id -> Vote Count
             var optionVotes = Trie.empty<Nat, Nat>();
-            for ((userId, vote) in Trie.iter(votes)) {
+            for ((userId, vote) in votes.entries()) {
                 let userVotingPower = 1; // TODO
 
                 let optionKey = {
@@ -72,6 +101,15 @@ module {
                 optionVotes := newOptionVotes;
             };
             calculateVote<Nat>(optionVotes);
+        };
+
+        public func toData() : Data {
+            let voteData = votes.entries()
+            |> Iter.toArray(_);
+            {
+                data with
+                votes = voteData
+            };
         };
 
         private func calculateVote<T>(votes : Trie.Trie<T, Nat>) : ?T {

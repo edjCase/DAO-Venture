@@ -156,7 +156,7 @@ module {
     public type ResolvedScenario = Scenario and {
         teamChoices : [{
             teamId : Principal;
-            option : Nat8;
+            option : Nat;
         }];
         effectOutcomes : [EffectOutcome];
     };

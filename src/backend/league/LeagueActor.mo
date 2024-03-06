@@ -11,7 +11,6 @@ import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import StadiumTypes "../stadium/Types";
 import Time "mo:base/Time";
-import Nat8 "mo:base/Nat8";
 import Nat64 "mo:base/Nat64";
 import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
@@ -407,22 +406,26 @@ actor LeagueActor {
 
         let prng = PseudoRandomX.fromBlob(await Random.blob());
 
-        let teamDataMap = HashMap.HashMap<Principal, StadiumTypes.StartMatchTeam and { option : Nat8 }>(0, Principal.equal, Principal.hash);
+        let teamDataMap = HashMap.HashMap<Principal, StadiumTypes.StartMatchTeam and { option : Nat }>(0, Principal.equal, Principal.hash);
         for ((teamId, team) in Trie.iter(teams)) {
             let teamActor = actor (Principal.toText(teamId)) : TeamTypes.TeamActor;
             let options : TeamTypes.ScenarioVoteResult = try {
                 // Get match options from the team itself
-                let result : TeamTypes.GetScenarioVoteResult = await teamActor.getScenarioVote({
+                let result : TeamTypes.GetWinningScenarioOptionResult = await teamActor.getWinningScenarioOption({
                     scenarioId = scheduledMatchGroup.scenario.id;
                 });
-                switch (result) {
+                let option = switch (result) {
                     case (#ok(o)) o;
                     case (#noVotes) {
                         // If no votes, pick a random choice
-                        let choice : Nat8 = 0; // TODO
-                        choice;
+                        let option : Nat = 0; // TODO
+                        option;
                     };
+                    case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scheduledMatchGroup.scenario.id);
                     case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(teamId));
+                };
+                {
+                    option = option;
                 };
             } catch (err : Error.Error) {
                 return Debug.trap("Failed to get team '" # Principal.toText(teamId) # "': " # Error.message(err));
@@ -439,7 +442,7 @@ actor LeagueActor {
         let scenarioTeamData = teamDataMap.vals()
         |> Iter.map(
             _,
-            func(t : StadiumTypes.StartMatchTeam and { option : Nat8 }) : ScenarioUtil.Team = {
+            func(t : StadiumTypes.StartMatchTeam and { option : Nat }) : ScenarioUtil.Team = {
                 t with
                 positions = {
                     firstBase = t.positions.firstBase.id;

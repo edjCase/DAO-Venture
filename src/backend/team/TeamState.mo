@@ -14,7 +14,6 @@ import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Iter "mo:base/Iter";
 import None "mo:base/None";
-import Nat8 "mo:base/Nat8";
 import { ic } "mo:ic";
 import StadiumTypes "../stadium/Types";
 import PlayersTypes "../players/Types";
@@ -28,7 +27,7 @@ import Scenario "../models/Scenario";
 
 module {
 
-    public class TeamState(teamId : Principal, leagueId : Principal) {
+    public class TeamState() {
 
     };
 };

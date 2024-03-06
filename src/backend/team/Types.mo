@@ -28,6 +28,7 @@ module {
 
     public type OnScenarioVoteCompleteResult = {
         #ok;
+        #scenarioNotFound;
         #notAuthorized;
     };
 

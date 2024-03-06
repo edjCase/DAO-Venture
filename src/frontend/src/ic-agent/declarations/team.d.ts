@@ -12,12 +12,24 @@ export type FieldPosition = { 'rightField' : null } |
   { 'firstBase' : null };
 export type GetCyclesResult = { 'ok' : bigint } |
   { 'notAuthorized' : null };
-export interface GetMatchGroupVoteRequest { 'matchGroupId' : bigint }
-export type GetMatchGroupVoteResult = { 'ok' : MatchGroupVoteResult } |
+export interface GetScenarioVoteRequest { 'scenarioId' : string }
+export type GetScenarioVoteResult = { 'ok' : [] | [bigint] } |
+  { 'scenarioNotFound' : null };
+export interface GetWinningScenarioOptionRequest { 'scenarioId' : string }
+export type GetWinningScenarioOptionResult = { 'ok' : bigint } |
   { 'noVotes' : null } |
+  { 'notAuthorized' : null } |
+  { 'scenarioNotFound' : null };
+export interface OnNewScenarioRequest {
+  'scenarioId' : string,
+  'optionCount' : bigint,
+}
+export type OnNewScenarioResult = { 'ok' : null } |
   { 'notAuthorized' : null };
-export type InvalidVoteError = { 'invalidChoice' : number };
-export interface MatchGroupVoteResult { 'scenarioChoice' : number }
+export interface OnScenarioVoteCompleteRequest { 'scenarioId' : string }
+export type OnScenarioVoteCompleteResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'scenarioNotFound' : null };
 export type OnSeasonCompleteResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface PlayerWithId {
@@ -44,29 +56,35 @@ export interface Skills {
 }
 export interface TeamActor {
   'getCycles' : ActorMethod<[], GetCyclesResult>,
-  'getMatchGroupVote' : ActorMethod<
-    [GetMatchGroupVoteRequest],
-    GetMatchGroupVoteResult
-  >,
   'getPlayers' : ActorMethod<[], Array<PlayerWithId>>,
-  'onSeasonComplete' : ActorMethod<[], OnSeasonCompleteResult>,
-  'voteOnMatchGroup' : ActorMethod<
-    [VoteOnMatchGroupRequest],
-    VoteOnMatchGroupResult
+  'getScenarioVote' : ActorMethod<
+    [GetScenarioVoteRequest],
+    GetScenarioVoteResult
   >,
+  'getWinningScenarioOption' : ActorMethod<
+    [GetWinningScenarioOptionRequest],
+    GetWinningScenarioOptionResult
+  >,
+  'onNewScenario' : ActorMethod<[OnNewScenarioRequest], OnNewScenarioResult>,
+  'onScenarioVoteComplete' : ActorMethod<
+    [OnScenarioVoteCompleteRequest],
+    OnScenarioVoteCompleteResult
+  >,
+  'onSeasonComplete' : ActorMethod<[], OnSeasonCompleteResult>,
+  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
 }
-export interface VoteOnMatchGroupRequest {
-  'matchGroupId' : bigint,
-  'scenarioChoice' : number,
+export interface VoteOnScenarioRequest {
+  'scenarioId' : string,
+  'option' : bigint,
 }
-export type VoteOnMatchGroupResult = { 'ok' : null } |
-  { 'teamNotInMatchGroup' : null } |
+export type VoteOnScenarioResult = { 'ok' : null } |
+  { 'invalidOption' : null } |
   { 'notAuthorized' : null } |
-  { 'invalid' : Array<InvalidVoteError> } |
   { 'alreadyVoted' : null } |
   { 'seasonStatusFetchError' : string } |
-  { 'matchGroupNotFound' : null } |
-  { 'votingNotOpen' : null };
+  { 'teamNotInScenario' : null } |
+  { 'votingNotOpen' : null } |
+  { 'scenarioNotFound' : null };
 export interface _SERVICE extends TeamActor {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

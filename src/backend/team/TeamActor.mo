@@ -14,7 +14,7 @@ import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Iter "mo:base/Iter";
 import None "mo:base/None";
-import Nat8 "mo:base/Nat8";
+import HashMap "mo:base/HashMap";
 import { ic } "mo:ic";
 import StadiumTypes "../stadium/Types";
 import PlayersTypes "../players/Types";
@@ -27,16 +27,35 @@ import Util "../Util";
 import Scenario "../models/Scenario";
 import TeamState "./TeamState";
 import TeamDao "./TeamDao";
-import ScenarioVoteHandler "ScenarioVoteHandler";
+import ScenarioVoting "ScenarioVoting";
 
 shared (install) actor class TeamActor(
   leagueId : Principal,
   playersActorId : Principal,
 ) : async Types.TeamActor = this {
 
-  stable var scenarioVoteData = Trie.empty<Text, ScenarioVoteHandler.Data>();
-  stable let dao = TeamDao.TeamDao();
-  stable let team = TeamState.TeamState(Principal.fromActor(this), leagueId);
+  stable var stableData = {
+    scenarioVoting : [ScenarioVoting.Data] = [];
+    dao : TeamDao.Data = {
+      members = [];
+    };
+  };
+
+  var dao = TeamDao.TeamDao(stableData.dao);
+
+  var scenarioVotingManager = ScenarioVoting.Manager(stableData.scenarioVoting);
+
+  system func preupgrade() {
+    stableData := {
+      scenarioVoting = scenarioVotingManager.toData();
+      dao = dao.toData();
+    };
+  };
+
+  system func postupgrade() {
+    dao := TeamDao.TeamDao(stableData.dao);
+    scenarioVotingManager := ScenarioVoting.Manager(stableData.scenarioVoting);
+  };
 
   public composite query func getPlayers() : async [Player.PlayerWithId] {
     let teamId = Principal.fromActor(this);
@@ -45,29 +64,21 @@ shared (install) actor class TeamActor(
   };
 
   public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
-    let ?handler = getScenarioVoteHandler(request.scenarioId) else return #scenarioNotFound;
-    handler.vote(caller, request.option);
+    let ?handler = scenarioVotingManager.getHandler(request.scenarioId) else return #scenarioNotFound;
+    let ?member = dao.getMember(caller) else return #notAuthorized;
+    handler.vote(caller, member.votingPower, request.option);
   };
 
   public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
-    let ?handler = getScenarioVoteHandler(request.scenarioId) else return #scenarioNotFound;
+    let ?handler = scenarioVotingManager.getHandler(request.scenarioId) else return #scenarioNotFound;
     #ok(handler.getVote(caller));
-  };
-
-  private func getScenarioVoteHandler(scenarioId : Text) : ?ScenarioVoteHandler.Handler {
-    let scenarioKey = {
-      key = scenarioId;
-      hash = Text.hash(scenarioId);
-    };
-    let ?data = Trie.get(scenarioVoteData, scenarioKey, Text.equal) else return null;
-    return ?ScenarioVoteHandler.Handler(data);
   };
 
   public shared ({ caller }) func getWinningScenarioOption(request : Types.GetWinningScenarioOptionRequest) : async Types.GetWinningScenarioOptionResult {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = getScenarioVoteHandler(request.scenarioId) else return #scenarioNotFound;
+    let ?handler = scenarioVotingManager.getHandler(request.scenarioId) else return #scenarioNotFound;
     let ?winningOption = handler.calculateWinningOption() else return #noVotes;
     #ok(winningOption);
   };
@@ -76,19 +87,7 @@ shared (install) actor class TeamActor(
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let data : ScenarioVoteHandler.Data = {
-      optionCount = request.optionCount;
-      votes = Trie.empty<Principal, Nat>();
-    };
-    let scenarioKey = {
-      key = request.scenarioId;
-      hash = Text.hash(request.scenarioId);
-    };
-    let newScenarioVoteData = switch (Trie.put(scenarioVoteData, scenarioKey, Text.equal, data)) {
-      case ((new, null)) new;
-      case ((_, ?existingData)) Debug.trap("Scenario with id " # request.scenarioId # " already exists");
-    };
-    scenarioVoteData := newScenarioVoteData;
+    scenarioVotingManager.add(request.scenarioId, request.optionCount);
     #ok;
   };
 
@@ -96,13 +95,10 @@ shared (install) actor class TeamActor(
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let scenarioKey = {
-      key = request.scenarioId;
-      hash = Text.hash(request.scenarioId);
+    switch (scenarioVotingManager.remove(request.scenarioId)) {
+      case (#ok) #ok;
+      case (#notFound) #scenarioNotFound;
     };
-    let (newScenarioVoteData, _) = Trie.remove(scenarioVoteData, scenarioKey, Text.equal);
-    scenarioVoteData := newScenarioVoteData;
-    #ok;
   };
 
   public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {

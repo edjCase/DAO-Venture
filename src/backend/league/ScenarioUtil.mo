@@ -5,7 +5,6 @@ import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Array "mo:base/Array";
 import Float "mo:base/Float";
-import Nat8 "mo:base/Nat8";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import Trie "mo:base/Trie";
@@ -38,7 +37,7 @@ module {
     public type Team = {
         id : Principal;
         positions : FieldPosition.TeamPositions;
-        option : Nat8;
+        option : Nat;
     };
 
     public func validateScenario(scenario : Scenario.Scenario, traitIds : [Text]) : ValidateScenarioResult {
@@ -130,9 +129,9 @@ module {
         teams : [Team],
     ) : Scenario.ResolvedScenario {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
-        let teamChoices = Buffer.Buffer<{ teamId : Principal; option : Nat8 }>(0);
+        let teamChoices = Buffer.Buffer<{ teamId : Principal; option : Nat }>(0);
         for (team in Iter.fromArray(teams)) {
-            let choice = scenario.options[Nat8.toNat(team.option)];
+            let choice = scenario.options[team.option];
             teamChoices.add({
                 teamId = team.id;
                 option = team.option;
@@ -149,7 +148,7 @@ module {
             case (#simple) ();
             case (#leagueChoice(leagueChoice)) {
                 let leagueOptionIndex = getMajorityOption(prng, teams);
-                let leagueOption = leagueChoice.options[Nat8.toNat(leagueOptionIndex)];
+                let leagueOption = leagueChoice.options[leagueOptionIndex];
                 resolveEffectInternal(prng, #league, scenario, leagueOption.effect, effectOutcomes);
             };
             case (#lottery(lottery)) {
@@ -248,27 +247,27 @@ module {
     private func getMajorityOption(
         prng : Prng,
         teamChoices : [Team],
-    ) : Nat8 {
+    ) : Nat {
         if (teamChoices.size() < 1) {
             Debug.trap("No team choices");
         };
         // Get the top choice(s), if there is a tie, choose randomly
-        var choiceCounts = Trie.empty<Nat8, Nat>();
+        var choiceCounts = Trie.empty<Nat, Nat>();
         var maxCount = 0;
         for (teamChoice in Iter.fromArray(teamChoices)) {
             let choiceKey = {
                 key = teamChoice.option;
-                hash = Nat32.fromNat(Nat8.toNat(teamChoice.option));
+                hash = Nat32.fromNat(teamChoice.option);
             };
-            let currentCount = Option.get(Trie.get(choiceCounts, choiceKey, Nat8.equal), 0);
+            let currentCount = Option.get(Trie.get(choiceCounts, choiceKey, Nat.equal), 0);
             let newCount = currentCount + 1;
-            let (newChoiceCounts, _) = Trie.put(choiceCounts, choiceKey, Nat8.equal, newCount);
+            let (newChoiceCounts, _) = Trie.put(choiceCounts, choiceKey, Nat.equal, newCount);
             choiceCounts := newChoiceCounts;
             if (newCount > maxCount) {
                 maxCount := newCount;
             };
         };
-        let topChoices = Buffer.Buffer<Nat8>(0);
+        let topChoices = Buffer.Buffer<Nat>(0);
         for ((option, choiceCount) in Trie.iter(choiceCounts)) {
             if (choiceCount == maxCount) {
                 topChoices.add(option);
