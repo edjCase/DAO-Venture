@@ -26,41 +26,53 @@ import Season "../models/Season";
 import Util "../Util";
 import Scenario "../models/Scenario";
 import TeamState "./TeamState";
-import TeamDao "./TeamDao";
 import ScenarioVoting "ScenarioVoting";
+import Dao "../Dao";
 
 shared (install) actor class TeamActor(
-  leagueId : Principal,
-  playersActorId : Principal,
+  leagueId : Principal
 ) : async Types.TeamActor = this {
 
   stable var stableData = {
     scenarioVoting : [ScenarioVoting.Data] = [];
-    dao : TeamDao.Data = {
+    dao : Dao.StableData<Types.ProposalContent> = {
       members = [];
+      proposals = [];
+      proposalDuration = #days(3);
+      votingThreshold = #percent({
+        percent = 50;
+        quorum = ?20;
+      });
     };
   };
 
-  var dao = TeamDao.TeamDao(stableData.dao);
+  func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* () {
+    switch (proposal.content) {
+      case (#trainPlayer(trainPlayer)) {
+
+      };
+    };
+  };
+
+  func onReject(proposal : Dao.Proposal<Types.ProposalContent>) : async* () {
+    // TODO
+  };
+
+  var dao = Dao.Dao<Types.ProposalContent>(stableData.dao, onExecute, onReject);
 
   var scenarioVotingManager = ScenarioVoting.Manager(stableData.scenarioVoting);
 
   system func preupgrade() {
     stableData := {
-      scenarioVoting = scenarioVotingManager.toData();
-      dao = dao.toData();
+      stableData with
+      scenarioVoting = scenarioVotingManager.toStableData();
+      dao = dao.toStableData();
     };
   };
 
   system func postupgrade() {
-    dao := TeamDao.TeamDao(stableData.dao);
+    dao := Dao.Dao<Types.ProposalContent>(stableData.dao, onExecute, onReject);
     scenarioVotingManager := ScenarioVoting.Manager(stableData.scenarioVoting);
-  };
-
-  public composite query func getPlayers() : async [Player.PlayerWithId] {
-    let teamId = Principal.fromActor(this);
-    let playersActor = actor (Principal.toText(playersActorId)) : PlayersTypes.PlayerActor;
-    await playersActor.getTeamPlayers(teamId);
   };
 
   public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
@@ -72,6 +84,14 @@ shared (install) actor class TeamActor(
   public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
     let ?handler = scenarioVotingManager.getHandler(request.scenarioId) else return #scenarioNotFound;
     #ok(handler.getVote(caller));
+  };
+
+  public shared ({ caller }) func createProposal(request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
+    dao.createProposal(caller, request.content);
+  };
+
+  public shared query ({ caller }) func getProposal(id : Nat) : async ?Types.Proposal {
+    dao.getProposal(id);
   };
 
   public shared ({ caller }) func getWinningScenarioOption(request : Types.GetWinningScenarioOptionRequest) : async Types.GetWinningScenarioOptionResult {
@@ -117,16 +137,5 @@ shared (install) actor class TeamActor(
       canister_id = Principal.fromActor(this);
     });
     return #ok(canisterStatus.cycles);
-  };
-
-  private func isTeamOwner(caller : Principal) : async Bool {
-    // TODO change to staking
-    // TODO re-enable
-    // let tokenCount = await ledger.icrc1_balance_of({
-    //   owner = Principal.fromActor(this);
-    //   subaccount = ?Principal.toBlob(caller);
-    // });
-    // return tokenCount > 0;
-    return true;
   };
 };

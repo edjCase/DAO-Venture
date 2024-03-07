@@ -2,13 +2,16 @@ import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import Player "../models/Player";
 import StadiumTypes "../stadium/Types";
+import Dao "../Dao";
+import Skill "../models/Skill";
 
 module {
 
     public type TeamActor = actor {
-        getPlayers : composite query () -> async [Player.PlayerWithId];
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
+        createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
+        getProposal : query (id : Nat) -> async ?Proposal;
         getWinningScenarioOption : (request : GetWinningScenarioOptionRequest) -> async GetWinningScenarioOptionResult;
         onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
         onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
@@ -20,6 +23,24 @@ module {
         createTeamActor : (request : CreateTeamRequest) -> async CreateTeamResult;
         getTeamActors : () -> async [TeamActorInfoWithId];
         updateCanisters : () -> async ();
+    };
+
+    public type Proposal = Dao.Proposal<ProposalContent>;
+
+    public type ProposalContent = {
+        #trainPlayer : {
+            playerId : Nat32;
+            skill : Skill.Skill;
+        };
+    };
+
+    public type CreateProposalRequest = {
+        content : ProposalContent;
+    };
+
+    public type CreateProposalResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type OnScenarioVoteCompleteRequest = {

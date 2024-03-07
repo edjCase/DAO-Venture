@@ -9,7 +9,6 @@ import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
 import Types "./Types";
 import Team "../models/Team";
-import TeamDao "TeamDao";
 
 module {
     public type Data = {
@@ -45,11 +44,11 @@ module {
             #ok;
         };
 
-        public func toData() : [Data] {
+        public func toStableData() : [Data] {
             handlers.entries()
             |> Iter.map<(Text, Handler), Data>(
                 _,
-                func(e : (Text, Handler)) : Data = e.1.toData(),
+                func(e : (Text, Handler)) : Data = e.1.toStableData(),
             )
             |> Iter.toArray(_);
         };
@@ -103,7 +102,7 @@ module {
             calculateVote<Nat>(optionVotes);
         };
 
-        public func toData() : Data {
+        public func toStableData() : Data {
             let voteData = votes.entries()
             |> Iter.toArray(_);
             {

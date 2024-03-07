@@ -1,180 +1,392 @@
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
-import Iter "mo:base/Iter";
+import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
+import Prelude "mo:base/Prelude";
+import TrieSet "mo:base/TrieSet";
+import Array "mo:base/Array";
+import Buffer "mo:base/Buffer";
+import Nat "mo:base/Nat";
+import Error "mo:base/Error";
+import Text "mo:base/Text";
+import Iter "mo:base/Iter";
+import None "mo:base/None";
+import HashMap "mo:base/HashMap";
+import Time "mo:base/Time";
+import Timer "mo:base/Timer";
+import Float "mo:base/Float";
+import Int "mo:base/Int";
+import DateTime "mo:datetime/DateTime";
+
 module {
-
-    type MemberWithoutId = {
-
+    public type StableData<TProposalContent> = {
+        members : [Member];
+        proposals : [Proposal<TProposalContent>];
+        proposalDuration : Duration;
+        votingThreshold : VotingThreshold;
     };
 
-    public type Member = MemberWithoutId and {
+    public type VotingThreshold = {
+        #percent : { percent : Percent; quorum : ?Percent };
+    };
+
+    public type Duration = {
+        #days : Nat;
+        #nanoseconds : Nat;
+    };
+
+    public type Percent = Nat; // 0-100
+
+    public type Member = {
+        votingPower : Nat;
         id : Principal;
     };
 
-    public type ProposalWithoutId = {
-        title : Text;
-        description : Text;
+    public type Proposal<TProposalContent> = {
+        id : Nat;
         proposer : Principal;
-        votes : Trie.Trie<Principal, Vote>;
-
+        timeStart : Int;
+        timeEnd : Int;
+        endTimerId : ?Nat;
+        content : TProposalContent;
+        votes : [(Principal, Vote)];
+        status : ProposalStatus;
     };
 
-    public type Proposal = ProposalWithoutId and {
-        id : Nat32;
+    public type ProposalStatus = {
+        #open;
+        #executed;
+        #rejected;
+    };
+
+    public type Vote = {
+        value : ?Bool;
+        votingPower : Nat;
+    };
+
+    type MutableProposal<TProposalContent> = {
+        id : Nat;
+        proposer : Principal;
+        timeStart : Int;
+        timeEnd : Int;
+        var endTimerId : ?Nat;
+        content : TProposalContent;
+        votes : HashMap.HashMap<Principal, Vote>;
+        var status : ProposalStatus; // TODO status log
+        votingSummary : VotingSummary;
+    };
+
+    type VotingSummary = {
+        var yes : Nat;
+        var no : Nat;
+        var notVoted : Nat;
     };
 
     public type AddMemberResult = {
         #ok;
-        #alreadyMember;
+        #alreadyExists;
+    };
+
+    public type CreateProposalResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type VoteResult = {
         #ok;
+        #notAuthorized;
         #alreadyVoted;
-        #notMember;
+        #votingClosed;
         #proposalNotFound;
     };
 
-    public type Vote = {
-        #yes;
-        #no;
-        #abstain;
-    };
+    public class Dao<TProposalContent>(
+        data : StableData<TProposalContent>,
+        onExecute : Proposal<TProposalContent> -> async* (),
+        onReject : Proposal<TProposalContent> -> async* (),
+    ) {
+        let membersIter = data.members.vals()
+        |> Iter.map<Member, (Principal, Member)>(
+            _,
+            func(member : Member) : (Principal, Member) = (member.id, member),
+        );
+        var members = HashMap.fromIter<Principal, Member>(membersIter, data.members.size(), Principal.equal, Principal.hash);
 
-    public type GetVoteResult = {
-        #ok : ?Vote;
-        #proposalNotFound;
-    };
+        func hashNat(n : Nat) : Nat32 = Nat32.fromNat(n); // TODO
 
-    public class Dao() {
-        var members = Trie.empty<Principal, MemberWithoutId>();
-        var nextProposalId : Nat32 = 1;
-        var proposals = Trie.empty<Nat32, ProposalWithoutId>();
+        let proposalsIter = data.proposals.vals()
+        |> Iter.map<Proposal<TProposalContent>, (Nat, MutableProposal<TProposalContent>)>(
+            _,
+            func(proposal : Proposal<TProposalContent>) : (Nat, MutableProposal<TProposalContent>) {
+                let mutableProposal = toMutableProposal(proposal);
+                (
+                    proposal.id,
+                    mutableProposal,
+                );
+            },
+        );
 
-        public func addMember(id : Principal, member : Member) : AddMemberResult {
-            // TODO security check here or in the caller?
-            let idKey = {
-                key = id;
-                hash = Principal.hash(id);
-            };
-            let (newMembers, currentMember) = Trie.put(members, idKey, Principal.equal, member);
-            if (currentMember != null) {
-                return #alreadyMember;
-            };
-            members := newMembers;
-            #ok;
-        };
+        var proposals = HashMap.fromIter<Nat, MutableProposal<TProposalContent>>(proposalsIter, 0, Nat.equal, hashNat);
+        var nextProposalId = data.proposals.size(); // TODO make last proposal + 1
 
-        public func addProposal(proposal : ProposalWithoutId) : () {
-            // TODO security check here or in the caller?
-            let proposalId = nextProposalId;
-            let idKey = {
-                key = proposalId;
-                hash = proposalId;
-            };
-            let (newProposals, currentProposal) = Trie.put(proposals, idKey, Nat32.equal, proposal);
-            if (currentProposal != null) {
-                Debug.trap("Proposal id " # Nat32.toText(proposalId) # " already exists");
-            };
-            proposals := newProposals;
-        };
-
-        public func vote(proposalId : Nat32, memberId : Principal, vote : Vote) : VoteResult {
-            let ?proposal = getProposal(proposalId) else return #proposalNotFound;
-            let ?_ = getMember(memberId) else return #notMember;
-            let memberKey = {
-                key = memberId;
-                hash = Principal.hash(memberId);
-            };
-            let (newVotes, currentVote) = Trie.put(proposal.votes, memberKey, Principal.equal, vote);
-            if (currentVote != null) {
-                return #alreadyVoted;
-            };
-            let newProposal : Proposal = {
-                proposal with
-                votes = newVotes;
-            };
-            let proposalKey = {
-                key = proposalId;
-                hash = proposalId;
-            };
-            let (newProposals, _) = Trie.put(proposals, proposalKey, Nat32.equal, newProposal);
-            #ok;
-        };
-
-        public func getVote(proposalId : Nat32, memberId : Principal) : GetVoteResult {
-            let ?proposal = getProposal(proposalId) else return #proposalNotFound;
-            let idKey = {
-                key = memberId;
-                hash = Principal.hash(memberId);
-            };
-            let vote = Trie.get(proposal.votes, idKey, Principal.equal);
-            #ok(vote);
-        };
-
-        public func getProposal(id : Nat32) : ?Proposal {
-            let idKey = {
-                key = id;
-                hash = id;
-            };
-            switch (Trie.get(proposals, idKey, Nat32.equal)) {
-                case (null) null;
-                case (?proposal) {
-                    ?{
-                        proposal with
-                        id = id;
-                    };
-                };
-            };
-        };
-
-        public func getProposals() : [Proposal] {
-            proposals
-            |> Trie.iter(_)
-            |> Iter.map(
-                _,
-                func(kv : (Nat32, ProposalWithoutId)) : Proposal {
-                    {
-                        kv.1 with
-                        id = kv.0;
-                    };
-                },
-            )
-            |> Iter.toArray(_);
-        };
+        var proposalDuration = data.proposalDuration;
+        var votingThreshold = data.votingThreshold;
 
         public func getMember(id : Principal) : ?Member {
-            let idKey = {
-                key = id;
-                hash = Principal.hash(id);
+            let ?member = members.get(id) else return null;
+            ?{
+                member with
+                id = id;
             };
-            switch (Trie.get(members, idKey, Principal.equal)) {
-                case (null) null;
-                case (?member) {
-                    ?{
-                        member with
-                        id = id;
-                    };
+        };
+
+        public func addMember(member : Member) : AddMemberResult {
+            let null = members.get(member.id) else return #alreadyExists;
+            members.put(member.id, member);
+            #ok;
+        };
+
+        public func getProposal(id : Nat) : ?Proposal<TProposalContent> {
+            let ?proposal = proposals.get(id) else return null;
+            ?{
+                proposal with
+                endTimerId = proposal.endTimerId;
+                votes = Iter.toArray(proposal.votes.entries());
+                status = proposal.status;
+                votingSummary = {
+                    yes = proposal.votingSummary.yes;
+                    no = proposal.votingSummary.no;
+                    notVoted = proposal.votingSummary.notVoted;
                 };
             };
         };
 
-        public func getMembers() : [Member] {
-            members
-            |> Trie.iter(_)
-            |> Iter.map(
-                _,
-                func(kv : (Principal, MemberWithoutId)) : Member {
+        public func vote(proposalId : Nat, voterId : Principal, vote : Bool) : VoteResult {
+            let ?proposal = proposals.get(proposalId) else return #proposalNotFound;
+            let now = Time.now();
+            if (proposal.timeStart > now or proposal.timeEnd < now or proposal.status != #open) {
+                return #votingClosed;
+            };
+            let ?existingVote = proposal.votes.get(voterId) else return #notAuthorized; // Only allow members to vote who existed when the proposal was created
+            if (existingVote.value != null) {
+                return #alreadyVoted;
+            };
+            proposal.votes.put(
+                voterId,
+                {
+                    existingVote with
+                    value = ?vote;
+                },
+            );
+            proposal.votingSummary.notVoted -= existingVote.votingPower;
+            if (vote) {
+                proposal.votingSummary.yes += existingVote.votingPower;
+            } else {
+                proposal.votingSummary.no += existingVote.votingPower;
+            };
+            let passed = switch (calculateVoteStatus(proposal)) {
+                case (#passed) {
+
+                    await* executeOrRejectProposal(mutableProposal, true);
+                };
+                case (#rejected or #undetermined) ();
+            };
+            #ok;
+        };
+
+        public func createProposal(
+            proposer : Principal,
+            content : TProposalContent,
+        ) : CreateProposalResult {
+            let ?member = members.get(proposer) else return #notAuthorized;
+            let now = Time.now();
+            let votes = HashMap.HashMap<Principal, Vote>(0, Principal.equal, Principal.hash);
+            // Take snapshot of members at the time of proposal creation
+            for (member in members.vals()) {
+                votes.put(
+                    member.id,
                     {
-                        kv.1 with
-                        id = kv.0;
+                        value = null; // Not voted
+                        votingPower = member.votingPower;
+                    },
+                );
+            };
+            let proposalId = nextProposalId;
+            let proposalDurationNanoseconds = switch (proposalDuration) {
+                case (#nanoseconds(n)) n;
+                case (#days(d)) d * 24 * 60 * 60 * 1_000_000_000;
+            };
+            let endTimerId = Timer.setTimer(
+                #nanoseconds(proposalDurationNanoseconds),
+                func() : async () {
+                    switch (await* onProposalEnd(proposalId)) {
+                        case (#ok) ();
+                        case (#alreadyEnded) {
+                            Debug.print("EndTimer: Proposal already ended: " # Nat.toText(proposalId));
+                        };
                     };
                 },
+            );
+            let proposal : MutableProposal<TProposalContent> = {
+                id = proposalId;
+                proposer = proposer;
+                content = content;
+                timeStart = now;
+                timeEnd = now + proposalDurationNanoseconds;
+                var endTimerId = ?endTimerId;
+                votes = votes;
+                var status = #open;
+                votingSummary = buildVotingSummary(votes);
+            };
+            proposals.put(nextProposalId, proposal);
+            nextProposalId += 1;
+            #ok;
+        };
+
+        private func onProposalEnd(proposalId : Nat) : async* {
+            #ok;
+            #alreadyEnded;
+        } {
+            let ?mutableProposal = proposals.get(proposalId) else Debug.trap("Proposal not found for onProposalEnd: " # Nat.toText(proposalId));
+            switch (mutableProposal.status) {
+                case (#open) {
+                    let passed = switch (calculateVoteStatus(mutableProposal)) {
+                        case (#passed) true;
+                        case (#rejected or #undetermined) false;
+                    };
+                    await* executeOrRejectProposal(mutableProposal, passed);
+                    #ok;
+                };
+                case (#executed or #rejected) {
+                    #alreadyEnded;
+                };
+            };
+        };
+
+        public func toStableData() : StableData<TProposalContent> {
+            let membersArray = members.entries()
+            |> Iter.map(
+                _,
+                func((k, v) : (Principal, Member)) : Member = v,
             )
             |> Iter.toArray(_);
+
+            let proposalsArray = proposals.entries()
+            |> Iter.map(
+                _,
+                func((k, v) : (Nat, MutableProposal<TProposalContent>)) : Proposal<TProposalContent> = fromMutableProposal(v),
+            )
+            |> Iter.toArray(_);
+
+            {
+                members = membersArray;
+                proposals = proposalsArray;
+                proposalDuration = proposalDuration;
+                votingThreshold = votingThreshold;
+            };
+        };
+
+        private func executeOrRejectProposal(mutableProposal : MutableProposal<TProposalContent>, execute : Bool) : async* () {
+            // TODO executing
+            mutableProposal.status := if (execute) #executed else #rejected;
+            let proposal = fromMutableProposal(mutableProposal);
+            if (execute) {
+                await* onExecute(proposal);
+            } else {
+                await* onReject(proposal);
+            };
+        };
+
+        private func calculateVoteStatus(proposal : MutableProposal<TProposalContent>) : {
+            #undetermined;
+            #passed;
+            #rejected;
+        } {
+            let votedVotingPower = proposal.votingSummary.yes + proposal.votingSummary.no;
+            let totalVotingPower = votedVotingPower + proposal.votingSummary.notVoted;
+            switch (votingThreshold) {
+                case (#percent({ percent; quorum })) {
+                    let quorumThreshold = switch (quorum) {
+                        case (null) 0;
+                        case (?q) calculateFromPercent(q, totalVotingPower);
+                    };
+                    // The proposal must reach the quorum threshold in any case
+                    if (votedVotingPower >= quorumThreshold) {
+                        let voteThreshold = if (proposal.timeEnd >= Time.now()) {
+                            // If the proposal has reached the end time, it passes if the votes are above the threshold of the VOTED voting power
+                            let votedPercent = votedVotingPower / totalVotingPower;
+                            calculateFromPercent(percent, votedVotingPower);
+                        } else {
+                            // If the proposal has not reached the end time, it passes if votes are above the threshold of the TOTAL voting power
+                            calculateFromPercent(percent, totalVotingPower);
+                        };
+                        if (proposal.votingSummary.yes > proposal.votingSummary.no and proposal.votingSummary.yes >= voteThreshold) {
+                            return #passed;
+                        } else if (proposal.votingSummary.no > proposal.votingSummary.yes and proposal.votingSummary.no >= voteThreshold) {
+                            return #rejected;
+                        };
+                    };
+                };
+            };
+            return #undetermined;
         };
 
     };
+
+    private func fromMutableProposal<TProposalContent>(proposal : MutableProposal<TProposalContent>) : Proposal<TProposalContent> = {
+        proposal with
+        endTimerId = proposal.endTimerId;
+        votes = Iter.toArray(proposal.votes.entries());
+        status = proposal.status;
+        votingSummary = {
+            yes = proposal.votingSummary.yes;
+            no = proposal.votingSummary.no;
+            notVoted = proposal.votingSummary.notVoted;
+        };
+    };
+
+    private func toMutableProposal<TProposalContent>(proposal : Proposal<TProposalContent>) : MutableProposal<TProposalContent> {
+        let votes = HashMap.fromIter<Principal, Vote>(
+            proposal.votes.vals(),
+            proposal.votes.size(),
+            Principal.equal,
+            Principal.hash,
+        );
+        {
+            proposal with
+            var endTimerId = proposal.endTimerId;
+            votes = votes;
+            var status = proposal.status;
+            votingSummary = buildVotingSummary(votes);
+        };
+    };
+
+    private func calculateFromPercent(percent : Percent, total : Nat) : Nat {
+        Int.abs(Float.toInt(Float.ceil((Float.fromInt(percent) / 100.0) * Float.fromInt(total))));
+    };
+
+    private func buildVotingSummary(votes : HashMap.HashMap<Principal, Vote>) : VotingSummary {
+        let votingSummary = {
+            var yes = 0;
+            var no = 0;
+            var notVoted = 0;
+        };
+
+        for (vote in votes.vals()) {
+            switch (vote.value) {
+                case (null) {
+                    votingSummary.notVoted += vote.votingPower;
+                };
+                case (?true) {
+                    votingSummary.yes += vote.votingPower;
+                };
+                case (?false) {
+                    votingSummary.no += vote.votingPower;
+                };
+            };
+        };
+        votingSummary;
+    };
+
 };
