@@ -1,0 +1,78 @@
+<script lang="ts">
+    import {
+        Button,
+        Input,
+        Label,
+        Select,
+        SelectOptionType,
+        TabItem,
+        Tabs,
+    } from "flowbite-svelte";
+    import { teamStore } from "../stores/TeamStore";
+    import { teamAgentFactory } from "../ic-agent/Team";
+    import { Principal } from "@dfinity/principal";
+    import ProposalList from "./TeamDao/ProposalList.svelte";
+    import CreateProposal from "./TeamDao/CreateProposal.svelte";
+
+    $: teams = $teamStore;
+
+    let teamItems: SelectOptionType<string>[] = [];
+    let selectedTeamId: string | undefined;
+    let newMemberId: string = "";
+
+    $: {
+        if (teams && teams.length > 0) {
+            teamItems = teams.map((team) => {
+                return {
+                    value: team.id.toString(),
+                    name: team.name,
+                };
+            });
+            if (!selectedTeamId) {
+                selectedTeamId = teamItems[0].value;
+            }
+        }
+    }
+
+    let addMember = async () => {
+        if (!selectedTeamId) {
+            console.log("No team selected");
+            return;
+        }
+        console.log("Adding member", newMemberId);
+        let res = await teamAgentFactory(selectedTeamId).addMember({
+            id: Principal.fromText(newMemberId),
+        });
+
+        if ("ok" in res) {
+            console.log("Added member", res);
+        } else {
+            console.log("Error adding member", res);
+        }
+    };
+</script>
+
+{#if teamItems}
+    <div class="text-3xl">Team DAO Admin Panel</div>
+    <hr class="mb-6" />
+    <div class="text-2xl">Team Context:</div>
+    <Select items={teamItems} bind:value={selectedTeamId}></Select>
+
+    {#if selectedTeamId}
+        <Tabs>
+            <TabItem open title="Proposals">
+                <ProposalList teamId={selectedTeamId} />
+                <CreateProposal teamId={selectedTeamId} />
+            </TabItem>
+            <TabItem title="Members">
+                <div class="text-2xl">Add a DAO member:</div>
+                <div class="mb-6">
+                    <Label for="default-input" class="block mb-2">User Id</Label
+                    >
+                    <Input id="default-input" bind:value={newMemberId} />
+                    <Button on:click={addMember}>Add Member</Button>
+                </div>
+            </TabItem>
+        </Tabs>
+    {/if}
+{/if}

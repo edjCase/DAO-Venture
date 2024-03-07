@@ -10,8 +10,11 @@ module {
     public type TeamActor = actor {
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
+        addMember : (request : AddMemberRequest) -> async AddMemberResult;
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (id : Nat) -> async ?Proposal;
+        getProposals : query () -> async [Proposal];
+        voteOnProposal : (request : VoteOnProposalRequest) -> async VoteOnProposalResult;
         getWinningScenarioOption : (request : GetWinningScenarioOptionRequest) -> async GetWinningScenarioOptionResult;
         onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
         onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
@@ -23,6 +26,29 @@ module {
         createTeamActor : (request : CreateTeamRequest) -> async CreateTeamResult;
         getTeamActors : () -> async [TeamActorInfoWithId];
         updateCanisters : () -> async ();
+    };
+
+    public type AddMemberRequest = {
+        id : Principal;
+    };
+
+    public type AddMemberResult = {
+        #ok;
+        #notAuthorized;
+        #alreadyExists;
+    };
+
+    public type VoteOnProposalRequest = {
+        proposalId : Nat;
+        vote : Bool;
+    };
+
+    public type VoteOnProposalResult = {
+        #ok;
+        #notAuthorized;
+        #proposalNotFound;
+        #alreadyVoted;
+        #votingClosed;
     };
 
     public type Proposal = Dao.Proposal<ProposalContent>;
@@ -39,7 +65,7 @@ module {
     };
 
     public type CreateProposalResult = {
-        #ok;
+        #ok : Nat;
         #notAuthorized;
     };
 

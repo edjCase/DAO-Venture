@@ -89,7 +89,7 @@ module {
     };
 
     public type CreateProposalResult = {
-        #ok;
+        #ok : Nat;
         #notAuthorized;
     };
 
@@ -133,6 +133,21 @@ module {
         var proposalDuration = data.proposalDuration;
         var votingThreshold = data.votingThreshold;
 
+        public func resetEndTimers() {
+            for (proposal in proposals.vals()) {
+                switch (proposal.endTimerId) {
+                    case (null) ();
+                    case (?id) Timer.cancelTimer(id);
+                };
+                proposal.endTimerId := null;
+                if (proposal.status == #open) {
+                    let proposalDurationNanoseconds = durationToNanoseconds(proposalDuration);
+                    let endTimerId = createEndTimer(proposal.id, proposalDurationNanoseconds);
+                    proposal.endTimerId := ?endTimerId;
+                };
+            };
+        };
+
         public func getMember(id : Principal) : ?Member {
             let ?member = members.get(id) else return null;
             ?{
@@ -162,7 +177,16 @@ module {
             };
         };
 
-        public func vote(proposalId : Nat, voterId : Principal, vote : Bool) : VoteResult {
+        public func getProposals() : [Proposal<TProposalContent>] {
+            proposals.vals()
+            |> Iter.map(
+                _,
+                func(proposal : MutableProposal<TProposalContent>) : Proposal<TProposalContent> = fromMutableProposal(proposal),
+            )
+            |> Iter.toArray(_);
+        };
+
+        public func vote(proposalId : Nat, voterId : Principal, vote : Bool) : async* VoteResult {
             let ?proposal = proposals.get(proposalId) else return #proposalNotFound;
             let now = Time.now();
             if (proposal.timeStart > now or proposal.timeEnd < now or proposal.status != #open) {
@@ -187,10 +211,12 @@ module {
             };
             let passed = switch (calculateVoteStatus(proposal)) {
                 case (#passed) {
-
-                    await* executeOrRejectProposal(mutableProposal, true);
+                    await* executeOrRejectProposal(proposal, true);
                 };
-                case (#rejected or #undetermined) ();
+                case (#rejected) {
+                    await* executeOrRejectProposal(proposal, false);
+                };
+                case (#undetermined) ();
             };
             #ok;
         };
@@ -213,21 +239,8 @@ module {
                 );
             };
             let proposalId = nextProposalId;
-            let proposalDurationNanoseconds = switch (proposalDuration) {
-                case (#nanoseconds(n)) n;
-                case (#days(d)) d * 24 * 60 * 60 * 1_000_000_000;
-            };
-            let endTimerId = Timer.setTimer(
-                #nanoseconds(proposalDurationNanoseconds),
-                func() : async () {
-                    switch (await* onProposalEnd(proposalId)) {
-                        case (#ok) ();
-                        case (#alreadyEnded) {
-                            Debug.print("EndTimer: Proposal already ended: " # Nat.toText(proposalId));
-                        };
-                    };
-                },
-            );
+            let proposalDurationNanoseconds = durationToNanoseconds(proposalDuration);
+            let endTimerId = createEndTimer(proposalId, proposalDurationNanoseconds);
             let proposal : MutableProposal<TProposalContent> = {
                 id = proposalId;
                 proposer = proposer;
@@ -241,7 +254,28 @@ module {
             };
             proposals.put(nextProposalId, proposal);
             nextProposalId += 1;
-            #ok;
+            #ok(proposalId);
+        };
+
+        private func durationToNanoseconds(duration : Duration) : Nat {
+            switch (duration) {
+                case (#days(d)) d * 24 * 60 * 60 * 1_000_000_000;
+                case (#nanoseconds(n)) n;
+            };
+        };
+
+        private func createEndTimer(proposalId : Nat, proposalDurationNanoseconds : Nat) : Nat {
+            Timer.setTimer(
+                #nanoseconds(proposalDurationNanoseconds),
+                func() : async () {
+                    switch (await* onProposalEnd(proposalId)) {
+                        case (#ok) ();
+                        case (#alreadyEnded) {
+                            Debug.print("EndTimer: Proposal already ended: " # Nat.toText(proposalId));
+                        };
+                    };
+                },
+            );
         };
 
         private func onProposalEnd(proposalId : Nat) : async* {
@@ -275,7 +309,7 @@ module {
             let proposalsArray = proposals.entries()
             |> Iter.map(
                 _,
-                func((k, v) : (Nat, MutableProposal<TProposalContent>)) : Proposal<TProposalContent> = fromMutableProposal(v),
+                func((k, v) : (Nat, MutableProposal<TProposalContent>)) : Proposal<TProposalContent> = fromMutableProposal<TProposalContent>(v),
             )
             |> Iter.toArray(_);
 
@@ -289,6 +323,11 @@ module {
 
         private func executeOrRejectProposal(mutableProposal : MutableProposal<TProposalContent>, execute : Bool) : async* () {
             // TODO executing
+            switch (mutableProposal.endTimerId) {
+                case (null) ();
+                case (?id) Timer.cancelTimer(id);
+            };
+            mutableProposal.endTimerId := null;
             mutableProposal.status := if (execute) #executed else #rejected;
             let proposal = fromMutableProposal(mutableProposal);
             if (execute) {
@@ -332,6 +371,7 @@ module {
             return #undetermined;
         };
 
+        resetEndTimers(); // Always reset end timers on init
     };
 
     private func fromMutableProposal<TProposalContent>(proposal : MutableProposal<TProposalContent>) : Proposal<TProposalContent> = {

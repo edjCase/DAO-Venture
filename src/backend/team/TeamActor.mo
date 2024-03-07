@@ -49,13 +49,13 @@ shared (install) actor class TeamActor(
   func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* () {
     switch (proposal.content) {
       case (#trainPlayer(trainPlayer)) {
-
+        Debug.print("Training player: " # debug_show (trainPlayer));
       };
     };
   };
 
   func onReject(proposal : Dao.Proposal<Types.ProposalContent>) : async* () {
-    // TODO
+    Debug.print("Rejected proposal: " # debug_show (proposal));
   };
 
   var dao = Dao.Dao<Types.ProposalContent>(stableData.dao, onExecute, onReject);
@@ -86,12 +86,31 @@ shared (install) actor class TeamActor(
     #ok(handler.getVote(caller));
   };
 
+  public shared ({ caller }) func addMember(request : Types.AddMemberRequest) : async Types.AddMemberResult {
+    // TODO
+    // if (caller != leagueId) {
+    //   return #notAuthorized;
+    // };
+    dao.addMember({
+      id = request.id;
+      votingPower = 1;
+    });
+  };
+
   public shared ({ caller }) func createProposal(request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
     dao.createProposal(caller, request.content);
   };
 
   public shared query ({ caller }) func getProposal(id : Nat) : async ?Types.Proposal {
     dao.getProposal(id);
+  };
+
+  public shared query ({ caller }) func getProposals() : async [Types.Proposal] {
+    dao.getProposals();
+  };
+
+  public shared ({ caller }) func voteOnProposal(request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {
+    await* dao.vote(request.proposalId, caller, request.vote);
   };
 
   public shared ({ caller }) func getWinningScenarioOption(request : Types.GetWinningScenarioOptionRequest) : async Types.GetWinningScenarioOptionResult {

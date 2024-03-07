@@ -1,39 +1,49 @@
 export const idlFactory = ({ IDL }) => {
+  const AddMemberRequest = IDL.Record({ 'id' : IDL.Principal });
+  const AddMemberResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'alreadyExists' : IDL.Null,
+  });
+  const Skill = IDL.Variant({
+    'battingAccuracy' : IDL.Null,
+    'throwingAccuracy' : IDL.Null,
+    'speed' : IDL.Null,
+    'catching' : IDL.Null,
+    'battingPower' : IDL.Null,
+    'defense' : IDL.Null,
+    'throwingPower' : IDL.Null,
+  });
+  const ProposalContent = IDL.Variant({
+    'trainPlayer' : IDL.Record({ 'playerId' : IDL.Nat32, 'skill' : Skill }),
+  });
+  const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
+  const CreateProposalResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'notAuthorized' : IDL.Null,
+  });
   const GetCyclesResult = IDL.Variant({
     'ok' : IDL.Nat,
     'notAuthorized' : IDL.Null,
   });
-  const FieldPosition = IDL.Variant({
-    'rightField' : IDL.Null,
-    'leftField' : IDL.Null,
-    'thirdBase' : IDL.Null,
-    'pitcher' : IDL.Null,
-    'secondBase' : IDL.Null,
-    'shortStop' : IDL.Null,
-    'centerField' : IDL.Null,
-    'firstBase' : IDL.Null,
+  const ProposalStatus = IDL.Variant({
+    'open' : IDL.Null,
+    'rejected' : IDL.Null,
+    'executed' : IDL.Null,
   });
-  const Skills = IDL.Record({
-    'battingAccuracy' : IDL.Int,
-    'throwingAccuracy' : IDL.Int,
-    'speed' : IDL.Int,
-    'catching' : IDL.Int,
-    'battingPower' : IDL.Int,
-    'defense' : IDL.Int,
-    'throwingPower' : IDL.Int,
+  const Vote = IDL.Record({
+    'value' : IDL.Opt(IDL.Bool),
+    'votingPower' : IDL.Nat,
   });
-  const PlayerWithId = IDL.Record({
-    'id' : IDL.Nat32,
-    'title' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Principal,
-    'position' : FieldPosition,
-    'quirks' : IDL.Vec(IDL.Text),
-    'dislikes' : IDL.Vec(IDL.Text),
-    'skills' : Skills,
-    'traitIds' : IDL.Vec(IDL.Text),
+  const Proposal = IDL.Record({
+    'id' : IDL.Nat,
+    'status' : ProposalStatus,
+    'content' : ProposalContent,
+    'timeStart' : IDL.Int,
+    'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
+    'endTimerId' : IDL.Opt(IDL.Nat),
+    'proposer' : IDL.Principal,
+    'timeEnd' : IDL.Int,
   });
   const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Text });
   const GetScenarioVoteResult = IDL.Variant({
@@ -67,6 +77,17 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
+  const VoteOnProposalRequest = IDL.Record({
+    'vote' : IDL.Bool,
+    'proposalId' : IDL.Nat,
+  });
+  const VoteOnProposalResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'proposalNotFound' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'alreadyVoted' : IDL.Null,
+    'votingClosed' : IDL.Null,
+  });
   const VoteOnScenarioRequest = IDL.Record({
     'scenarioId' : IDL.Text,
     'option' : IDL.Nat,
@@ -82,8 +103,15 @@ export const idlFactory = ({ IDL }) => {
     'scenarioNotFound' : IDL.Null,
   });
   const TeamActor = IDL.Service({
+    'addMember' : IDL.Func([AddMemberRequest], [AddMemberResult], []),
+    'createProposal' : IDL.Func(
+        [CreateProposalRequest],
+        [CreateProposalResult],
+        [],
+      ),
     'getCycles' : IDL.Func([], [GetCyclesResult], []),
-    'getPlayers' : IDL.Func([], [IDL.Vec(PlayerWithId)], ['composite_query']),
+    'getProposal' : IDL.Func([IDL.Nat], [IDL.Opt(Proposal)], ['query']),
+    'getProposals' : IDL.Func([], [IDL.Vec(Proposal)], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
         [GetScenarioVoteResult],
@@ -105,6 +133,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'onSeasonComplete' : IDL.Func([], [OnSeasonCompleteResult], []),
+    'voteOnProposal' : IDL.Func(
+        [VoteOnProposalRequest],
+        [VoteOnProposalResult],
+        [],
+      ),
     'voteOnScenario' : IDL.Func(
         [VoteOnScenarioRequest],
         [VoteOnScenarioResult],
@@ -113,4 +146,4 @@ export const idlFactory = ({ IDL }) => {
   });
   return TeamActor;
 };
-export const init = ({ IDL }) => { return [IDL.Principal, IDL.Principal]; };
+export const init = ({ IDL }) => { return [IDL.Principal]; };

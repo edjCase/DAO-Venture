@@ -2,14 +2,13 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export type FieldPosition = { 'rightField' : null } |
-  { 'leftField' : null } |
-  { 'thirdBase' : null } |
-  { 'pitcher' : null } |
-  { 'secondBase' : null } |
-  { 'shortStop' : null } |
-  { 'centerField' : null } |
-  { 'firstBase' : null };
+export interface AddMemberRequest { 'id' : Principal }
+export type AddMemberResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'alreadyExists' : null };
+export interface CreateProposalRequest { 'content' : ProposalContent }
+export type CreateProposalResult = { 'ok' : bigint } |
+  { 'notAuthorized' : null };
 export type GetCyclesResult = { 'ok' : bigint } |
   { 'notAuthorized' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : string }
@@ -32,31 +31,35 @@ export type OnScenarioVoteCompleteResult = { 'ok' : null } |
   { 'scenarioNotFound' : null };
 export type OnSeasonCompleteResult = { 'ok' : null } |
   { 'notAuthorized' : null };
-export interface PlayerWithId {
-  'id' : number,
-  'title' : string,
-  'name' : string,
-  'description' : string,
-  'likes' : Array<string>,
-  'teamId' : Principal,
-  'position' : FieldPosition,
-  'quirks' : Array<string>,
-  'dislikes' : Array<string>,
-  'skills' : Skills,
-  'traitIds' : Array<string>,
+export interface Proposal {
+  'id' : bigint,
+  'status' : ProposalStatus,
+  'content' : ProposalContent,
+  'timeStart' : bigint,
+  'votes' : Array<[Principal, Vote]>,
+  'endTimerId' : [] | [bigint],
+  'proposer' : Principal,
+  'timeEnd' : bigint,
 }
-export interface Skills {
-  'battingAccuracy' : bigint,
-  'throwingAccuracy' : bigint,
-  'speed' : bigint,
-  'catching' : bigint,
-  'battingPower' : bigint,
-  'defense' : bigint,
-  'throwingPower' : bigint,
-}
+export type ProposalContent = {
+    'trainPlayer' : { 'playerId' : number, 'skill' : Skill }
+  };
+export type ProposalStatus = { 'open' : null } |
+  { 'rejected' : null } |
+  { 'executed' : null };
+export type Skill = { 'battingAccuracy' : null } |
+  { 'throwingAccuracy' : null } |
+  { 'speed' : null } |
+  { 'catching' : null } |
+  { 'battingPower' : null } |
+  { 'defense' : null } |
+  { 'throwingPower' : null };
 export interface TeamActor {
+  'addMember' : ActorMethod<[AddMemberRequest], AddMemberResult>,
+  'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
   'getCycles' : ActorMethod<[], GetCyclesResult>,
-  'getPlayers' : ActorMethod<[], Array<PlayerWithId>>,
+  'getProposal' : ActorMethod<[bigint], [] | [Proposal]>,
+  'getProposals' : ActorMethod<[], Array<Proposal>>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
     GetScenarioVoteResult
@@ -71,8 +74,19 @@ export interface TeamActor {
     OnScenarioVoteCompleteResult
   >,
   'onSeasonComplete' : ActorMethod<[], OnSeasonCompleteResult>,
+  'voteOnProposal' : ActorMethod<[VoteOnProposalRequest], VoteOnProposalResult>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
 }
+export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
+export interface VoteOnProposalRequest {
+  'vote' : boolean,
+  'proposalId' : bigint,
+}
+export type VoteOnProposalResult = { 'ok' : null } |
+  { 'proposalNotFound' : null } |
+  { 'notAuthorized' : null } |
+  { 'alreadyVoted' : null } |
+  { 'votingClosed' : null };
 export interface VoteOnScenarioRequest {
   'scenarioId' : string,
   'option' : bigint,
