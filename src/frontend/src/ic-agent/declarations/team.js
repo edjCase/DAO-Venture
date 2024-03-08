@@ -26,6 +26,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'notAuthorized' : IDL.Null,
   });
+  const Member = IDL.Record({ 'id' : IDL.Principal, 'votingPower' : IDL.Nat });
   const ProposalStatus = IDL.Variant({
     'open' : IDL.Null,
     'rejected' : IDL.Null,
@@ -110,6 +111,8 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getCycles' : IDL.Func([], [GetCyclesResult], []),
+    'getMember' : IDL.Func([IDL.Principal], [IDL.Opt(Member)], ['query']),
+    'getMembers' : IDL.Func([], [IDL.Vec(Member)], ['query']),
     'getProposal' : IDL.Func([IDL.Nat], [IDL.Opt(Proposal)], ['query']),
     'getProposals' : IDL.Func([], [IDL.Vec(Proposal)], ['query']),
     'getScenarioVote' : IDL.Func(

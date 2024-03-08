@@ -87,14 +87,21 @@ shared (install) actor class TeamActor(
   };
 
   public shared ({ caller }) func addMember(request : Types.AddMemberRequest) : async Types.AddMemberResult {
-    // TODO
-    // if (caller != leagueId) {
-    //   return #notAuthorized;
-    // };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
     dao.addMember({
       id = request.id;
       votingPower = 1;
     });
+  };
+
+  public shared query ({ caller }) func getMember(id : Principal) : async ?Types.Member {
+    dao.getMember(id);
+  };
+
+  public shared query ({ caller }) func getMembers() : async [Types.Member] {
+    dao.getMembers();
   };
 
   public shared ({ caller }) func createProposal(request : Types.CreateProposalRequest) : async Types.CreateProposalResult {

@@ -11,6 +11,7 @@ module {
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
         addMember : (request : AddMemberRequest) -> async AddMemberResult;
+        getMembers : query () -> async [Member];
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (id : Nat) -> async ?Proposal;
         getProposals : query () -> async [Proposal];
@@ -27,6 +28,8 @@ module {
         getTeamActors : () -> async [TeamActorInfoWithId];
         updateCanisters : () -> async ();
     };
+
+    public type Member = Dao.Member;
 
     public type AddMemberRequest = {
         id : Principal;

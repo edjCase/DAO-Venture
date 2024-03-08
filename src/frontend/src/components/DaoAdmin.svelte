@@ -13,6 +13,8 @@
     import { Principal } from "@dfinity/principal";
     import ProposalList from "./TeamDao/ProposalList.svelte";
     import CreateProposal from "./TeamDao/CreateProposal.svelte";
+    import MemberList from "./TeamDao/MemberList.svelte";
+    import { memberStore } from "../stores/MemberStore";
 
     $: teams = $teamStore;
 
@@ -46,6 +48,7 @@
 
         if ("ok" in res) {
             console.log("Added member", res);
+            memberStore.refetchTeamMembers(selectedTeamId);
         } else {
             console.log("Error adding member", res);
         }
@@ -56,7 +59,7 @@
     <div class="text-3xl">Team DAO Admin Panel</div>
     <hr class="mb-6" />
     <div class="text-2xl">Team Context:</div>
-    <Select items={teamItems} bind:value={selectedTeamId}></Select>
+    <Select items={teamItems} bind:value={selectedTeamId} />
 
     {#if selectedTeamId}
         <Tabs>
@@ -65,6 +68,7 @@
                 <CreateProposal teamId={selectedTeamId} />
             </TabItem>
             <TabItem title="Members">
+                <MemberList teamId={selectedTeamId} />
                 <div class="text-2xl">Add a DAO member:</div>
                 <div class="mb-6">
                     <Label for="default-input" class="block mb-2">User Id</Label

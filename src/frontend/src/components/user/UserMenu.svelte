@@ -1,15 +1,10 @@
 <script lang="ts">
   import LoginButton from "../common/LoginButton.svelte";
-  import { Avatar, Dropdown, DropdownItem } from "flowbite-svelte";
+  import { Dropdown, DropdownItem } from "flowbite-svelte";
   import { CheckSolid, FileCopyOutline } from "flowbite-svelte-icons";
-  import {
-    uniqueNamesGenerator,
-    adjectives,
-    colors,
-    animals,
-  } from "unique-names-generator";
-  import { toSvg } from "jdenticon";
   import { userStore } from "../../stores/UserStore";
+  import UserAvatar from "./UserAvatar.svelte";
+  import UserPseudonym from "./UserPseudonym.svelte";
 
   $: user = $userStore;
 
@@ -33,17 +28,10 @@
   id="avatar-menu"
 >
   {#if user}
-    <Avatar border>
-      {@html toSvg(user.id.toString(), 100)}
-    </Avatar>
+    <UserAvatar userId={user.id} />
     <div class="space-y-1 font-medium dark:text-white text-center">
       <div>
-        {uniqueNamesGenerator({
-          dictionaries: [adjectives, colors, animals],
-          separator: " ",
-          style: "capital",
-          seed: user.id.toString(),
-        })}
+        <UserPseudonym userId={user.id} />
       </div>
       <div class="text-center text-sm text-gray-500 dark:text-gray-400">
         {#if user.user}

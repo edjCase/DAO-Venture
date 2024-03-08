@@ -19,6 +19,7 @@ export type GetWinningScenarioOptionResult = { 'ok' : bigint } |
   { 'noVotes' : null } |
   { 'notAuthorized' : null } |
   { 'scenarioNotFound' : null };
+export interface Member { 'id' : Principal, 'votingPower' : bigint }
 export interface OnNewScenarioRequest {
   'scenarioId' : string,
   'optionCount' : bigint,
@@ -58,6 +59,8 @@ export interface TeamActor {
   'addMember' : ActorMethod<[AddMemberRequest], AddMemberResult>,
   'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
   'getCycles' : ActorMethod<[], GetCyclesResult>,
+  'getMember' : ActorMethod<[Principal], [] | [Member]>,
+  'getMembers' : ActorMethod<[], Array<Member>>,
   'getProposal' : ActorMethod<[bigint], [] | [Proposal]>,
   'getProposals' : ActorMethod<[], Array<Proposal>>,
   'getScenarioVote' : ActorMethod<

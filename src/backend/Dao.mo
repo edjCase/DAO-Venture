@@ -156,6 +156,10 @@ module {
             };
         };
 
+        public func getMembers() : [Member] {
+            Iter.toArray(members.vals());
+        };
+
         public func addMember(member : Member) : AddMemberResult {
             let null = members.get(member.id) else return #alreadyExists;
             members.put(member.id, member);
