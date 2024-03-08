@@ -10,18 +10,48 @@ import Season "../models/Season";
 
 module {
 
+    public type Actor = actor {
+        get : query (userId : Principal) -> async GetUserResult;
+        getAll : query () -> async [User];
+        getTeamOwners : query (teamId : Principal) -> async [TeamOwnerInfo];
+        setFavoriteTeam : (userId : Principal, teamId : Principal) -> async SetUserFavoriteTeamResult;
+        addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
+        awardPoints : (awards : [AwardPointsRequest]) -> async AwardPointsResult;
+    };
+
     public type TeamAssociationKind = {
         #fan;
-        #owner;
+        #owner : {
+            votingPower : Nat;
+        };
     };
 
     public type User = {
         // TODO team association be in the season?
-        teamAssociation : ?{
+        id : Principal;
+        team : ?{
             id : Principal;
             kind : TeamAssociationKind;
         };
         points : Int;
+    };
+
+    public type TeamOwnerInfo = {
+        id : Principal;
+        votingPower : Nat;
+    };
+
+    public type AddTeamOwnerRequest = {
+        userId : Principal;
+        teamId : Principal;
+        votingPower : Nat;
+    };
+
+    public type AddTeamOwnerResult = {
+        #ok;
+        #onOtherTeam : Principal;
+        #teamNotFound;
+        #notAuthorized;
     };
 
     public type GetUserResult = {

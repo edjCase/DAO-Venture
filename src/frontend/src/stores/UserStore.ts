@@ -1,113 +1,68 @@
-import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
-import { get, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { usersAgentFactory } from '../ic-agent/Users';
-import { Identity } from '@dfinity/agent';
-import { leagueAgentFactory } from '../ic-agent/League';
 import { GetUserResult, User } from '../ic-agent/declarations/users';
 
-
-type UserContext = {
-    id: Principal;
-    user?: User;
-    identity: Identity;
-};
-const authClientOptions = { idleOptions: { disableIdle: true } };
-
 function createUserStore() {
-    const { subscribe, set } = writable<UserContext | undefined>();
-    const { subscribe: subscribeAdmins, set: setAdmins } = writable<Principal[]>([]);
+    const { subscribe, set, update } = writable<User[]>([]); // TODO better way to only have subset of users?
 
-    const refreshAdmins = async () => {
-        let admins = await leagueAgentFactory()
-            .getAdmins();
-        setAdmins(admins);
-    };
-
-
-    const refresh = async () => {
-        let authClient = await AuthClient.create(authClientOptions);
-        let identity = authClient.getIdentity();
-        let id = identity.getPrincipal();
-        if (id.isAnonymous()) {
-            set(undefined);
-        } else {
-            set({
-                id: id,
-                user: undefined,
-                identity: identity,
-            });
-            usersAgentFactory()
-                .get(id)
-                .then((result: GetUserResult) => {
-                    if ('ok' in result) {
-                        set({
-                            id: id,
-                            user: result.ok,
-                            identity: identity,
-                        });
-                    } else if ('notFound' in result) {
-                        set({
-                            id: id,
-                            user: {
-                                teamAssociation: [],
-                                points: BigInt(0)
-                            },
-                            identity: identity,
-                        });
-                    } else {
-                        console.log("Error getting user: ", result)
-                    }
-                });
-
-        }
-        refreshAdmins();
-    };
-
-    const login = async () => {
-        let authClient = await AuthClient.create(authClientOptions);
-        await authClient.login({
-            maxTimeToLive: BigInt(30) * BigInt(24) * BigInt(3_600_000_000_000), // 30 days
-            identityProvider:
-                process.env.DFX_NETWORK === "ic"
-                    ? `https://identity.ic0.app`
-                    : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
-            onSuccess: () => {
-                refresh();
-            },
-            onError: (err) => {
-                console.error(err);
-                refresh();
+    const updateUser = (userId: Principal, user: User | undefined) => {
+        update((users) => {
+            let index = users.findIndex((u) => u.id.toText() === userId.toText());
+            if (index >= 0) {
+                if (user === undefined) {
+                    users.splice(index, 1);
+                } else {
+                    users[index] = user;
+                }
+            } else {
+                if (user !== undefined) {
+                    users.push(user);
+                }
             }
+            return users;
         });
     };
 
-    const logout = async () => {
-        let authClient = await AuthClient.create(authClientOptions);
-        try {
-            await authClient.logout();
-        } finally {
-            await refresh();
-        }
+    const refetch = async () => {
+        let users = await usersAgentFactory()
+            .getAll();
+        set(users);
+    }
+
+    const refetchUser = async (userId: Principal) => {
+        usersAgentFactory()
+            .get(userId)
+            .then((result: GetUserResult) => {
+                if ('ok' in result) {
+                    updateUser(userId, result.ok);
+                } else if ('notFound' in result) {
+                    updateUser(userId, undefined);
+                } else {
+                    console.log("Error getting user: ", result)
+                }
+            });
     };
 
-    const setFavoriteTeam = async (teamId: Principal) => {
-        let user = get({ subscribe });
-        if (user === undefined) {
-            throw new Error("User not logged in, cannot set favorite team");
-        }
+    const setFavoriteTeam = async (userId: Principal, teamId: Principal) => {
         await usersAgentFactory()
-            .setFavoriteTeam(user.id, teamId);
-        refresh();
+            .setFavoriteTeam(userId, teamId);
+        refetchUser(userId);
     };
 
-    refresh();
+    const subscribeUser = (userId: Principal, callback: (value: User | undefined) => void) => {
+        refetchUser(userId);
+        return subscribe((users) => {
+            let user = users.find((u) => u.id.toText() === userId.toText());
+            callback(user);
+        });
+    };
 
     return {
         subscribe,
-        subscribeAdmins,
-        login,
-        logout,
+        refetch,
+        subscribeUser,
+        refetchUser,
         setFavoriteTeam
     };
 }

@@ -21,7 +21,6 @@ import DateTime "mo:datetime/DateTime";
 
 module {
     public type StableData<TProposalContent> = {
-        members : [Member];
         proposals : [Proposal<TProposalContent>];
         proposalDuration : Duration;
         votingThreshold : VotingThreshold;
@@ -106,13 +105,6 @@ module {
         onExecute : Proposal<TProposalContent> -> async* (),
         onReject : Proposal<TProposalContent> -> async* (),
     ) {
-        let membersIter = data.members.vals()
-        |> Iter.map<Member, (Principal, Member)>(
-            _,
-            func(member : Member) : (Principal, Member) = (member.id, member),
-        );
-        var members = HashMap.fromIter<Principal, Member>(membersIter, data.members.size(), Principal.equal, Principal.hash);
-
         func hashNat(n : Nat) : Nat32 = Nat32.fromNat(n); // TODO
 
         let proposalsIter = data.proposals.vals()
@@ -146,24 +138,6 @@ module {
                     proposal.endTimerId := ?endTimerId;
                 };
             };
-        };
-
-        public func getMember(id : Principal) : ?Member {
-            let ?member = members.get(id) else return null;
-            ?{
-                member with
-                id = id;
-            };
-        };
-
-        public func getMembers() : [Member] {
-            Iter.toArray(members.vals());
-        };
-
-        public func addMember(member : Member) : AddMemberResult {
-            let null = members.get(member.id) else return #alreadyExists;
-            members.put(member.id, member);
-            #ok;
         };
 
         public func getProposal(id : Nat) : ?Proposal<TProposalContent> {
@@ -228,8 +202,19 @@ module {
         public func createProposal(
             proposer : Principal,
             content : TProposalContent,
+            members : [Member],
         ) : CreateProposalResult {
-            let ?member = members.get(proposer) else return #notAuthorized;
+            // TODO check proposer is member here or in actor?
+            let isAMember = members
+            |> Iter.fromArray(_)
+            |> Iter.filter(
+                _,
+                func(member : Member) : Bool = member.id == proposer,
+            )
+            |> _.next() != null;
+            if (not isAMember) {
+                return #notAuthorized;
+            };
             let now = Time.now();
             let votes = HashMap.HashMap<Principal, Vote>(0, Principal.equal, Principal.hash);
             // Take snapshot of members at the time of proposal creation
@@ -303,13 +288,6 @@ module {
         };
 
         public func toStableData() : StableData<TProposalContent> {
-            let membersArray = members.entries()
-            |> Iter.map(
-                _,
-                func((k, v) : (Principal, Member)) : Member = v,
-            )
-            |> Iter.toArray(_);
-
             let proposalsArray = proposals.entries()
             |> Iter.map(
                 _,
@@ -318,7 +296,6 @@ module {
             |> Iter.toArray(_);
 
             {
-                members = membersArray;
                 proposals = proposalsArray;
                 proposalDuration = proposalDuration;
                 votingThreshold = votingThreshold;

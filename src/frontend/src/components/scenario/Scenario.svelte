@@ -3,19 +3,31 @@
 
   import { teamAgentFactory } from "../../ic-agent/Team";
   import { teamStore } from "../../stores/TeamStore";
-  import { VoteOnMatchGroupRequest } from "../../ic-agent/declarations/team";
+  import { VoteOnScenarioRequest } from "../../ic-agent/declarations/team";
   import { Scenario } from "../../ic-agent/declarations/league";
+  import { identityStore } from "../../stores/IdentityStore";
   import { userStore } from "../../stores/UserStore";
+  import { Principal } from "@dfinity/principal";
+  import { User } from "../../ic-agent/declarations/users";
 
   export let scenario: Scenario;
-  export let matchGroupId: number;
 
   let selectedChoice: number | undefined;
 
-  $: user = $userStore;
+  $: identity = $identityStore;
 
-  let teamId = user?.user?.teamAssociation[0]?.id;
-  let isOwner = teamId && user!.user!.teamAssociation[0]!.kind;
+  let user: User | undefined;
+  let teamId: Principal | undefined;
+  let isOwner: boolean | undefined;
+  $: {
+    if (identity) {
+      userStore.subscribeUser(identity.id, (u) => {
+        user = u;
+        teamId = user?.team[0]?.id;
+        isOwner = teamId && "owner" in user!.team[0]!.kind;
+      });
+    }
+  }
 
   let register = function () {
     if (!isOwner || !teamId) {
@@ -26,16 +38,16 @@
       console.log("No choice selected");
       return;
     }
-    let request: VoteOnMatchGroupRequest = {
-      matchGroupId: BigInt(matchGroupId),
-      scenarioChoice: selectedChoice,
+    let request: VoteOnScenarioRequest = {
+      scenarioId: scenario.id,
+      option: BigInt(selectedChoice),
     };
     console.log(
-      `Voting for team ${teamId} and match group ${matchGroupId}`,
+      `Voting for team ${teamId} and scenario ${scenario.id} with option ${selectedChoice}`,
       request,
     );
     teamAgentFactory(teamId)
-      .voteOnMatchGroup(request)
+      .voteOnScenario(request)
       .then((result) => {
         console.log("Voted for match: ", result);
         teamStore.refetch();

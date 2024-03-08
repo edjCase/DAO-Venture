@@ -6,18 +6,34 @@
   import { StarOutline, StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
   import { Principal } from "@dfinity/principal";
+  import { identityStore } from "../../stores/IdentityStore";
+  import { User } from "../../ic-agent/declarations/users";
+
   $: teams = $teamStore;
-  $: user = $userStore;
+  $: identity = $identityStore;
+
+  let user: User | undefined;
+  let associatedTeamId: Principal | undefined;
+  $: {
+    if (identity) {
+      userStore.subscribeUser(identity.id, (u) => {
+        user = u;
+        associatedTeamId = u?.team[0]?.id;
+      });
+    }
+  }
 
   let confirmModal: boolean = false;
   let confirmFavoriteTeamId: Principal | undefined;
   let setFavoriteTeam = async () => {
+    if (!identity) {
+      console.log("User not logged in");
+      return;
+    }
     if (confirmFavoriteTeamId) {
-      await userStore.setFavoriteTeam(confirmFavoriteTeamId);
+      await userStore.setFavoriteTeam(identity.id, confirmFavoriteTeamId);
     }
   };
-  let associatedTeamId: Principal | undefined =
-    user?.user?.teamAssociation[0]?.id;
 </script>
 
 <div>

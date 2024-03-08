@@ -2,10 +2,6 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export interface AddMemberRequest { 'id' : Principal }
-export type AddMemberResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'alreadyExists' : null };
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
   { 'notAuthorized' : null };
@@ -19,7 +15,6 @@ export type GetWinningScenarioOptionResult = { 'ok' : bigint } |
   { 'noVotes' : null } |
   { 'notAuthorized' : null } |
   { 'scenarioNotFound' : null };
-export interface Member { 'id' : Principal, 'votingPower' : bigint }
 export interface OnNewScenarioRequest {
   'scenarioId' : string,
   'optionCount' : bigint,
@@ -56,11 +51,8 @@ export type Skill = { 'battingAccuracy' : null } |
   { 'defense' : null } |
   { 'throwingPower' : null };
 export interface TeamActor {
-  'addMember' : ActorMethod<[AddMemberRequest], AddMemberResult>,
   'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
   'getCycles' : ActorMethod<[], GetCyclesResult>,
-  'getMember' : ActorMethod<[Principal], [] | [Member]>,
-  'getMembers' : ActorMethod<[], Array<Member>>,
   'getProposal' : ActorMethod<[bigint], [] | [Proposal]>,
   'getProposals' : ActorMethod<[], Array<Proposal>>,
   'getScenarioVote' : ActorMethod<

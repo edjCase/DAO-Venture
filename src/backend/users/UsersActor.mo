@@ -23,6 +23,35 @@ actor UsersActor {
         #ok(user);
     };
 
+    // TODO should there be a get all?
+    public shared query ({ caller }) func getAll() : async [Types.User] {
+        Trie.iter(users)
+        |> Iter.map(
+            _,
+            func((_, user) : (Principal, Types.User)) : Types.User = user,
+        )
+        |> Iter.toArray(_);
+    };
+
+    public shared query ({ caller }) func getTeamOwners(teamId : Principal) : async [Types.TeamOwnerInfo] {
+        Trie.iter(users)
+        |> IterTools.mapFilter(
+            _,
+            func((userId, user) : (Principal, Types.User)) : ?Types.TeamOwnerInfo {
+                let ?team = user.team else return null;
+                if (team.id != teamId) {
+                    return null;
+                };
+                let #owner(o) = team.kind else return null;
+                ?{
+                    id = userId;
+                    votingPower = o.votingPower;
+                };
+            },
+        )
+        |> Iter.toArray(_);
+    };
+
     public shared ({ caller }) func setFavoriteTeam(userId : Principal, teamId : Principal) : async Types.SetUserFavoriteTeamResult {
         if (Principal.isAnonymous(userId)) {
             return #identityRequired;
@@ -31,8 +60,8 @@ actor UsersActor {
             return #notAuthorized;
         };
         let userInfo = getUserInfoInternal(userId);
-        switch (userInfo.teamAssociation) {
-            case (?association) {
+        switch (userInfo.team) {
+            case (?team) {
                 return #alreadySet;
             };
             case (null) {
@@ -52,6 +81,37 @@ actor UsersActor {
                 );
             };
         };
+        #ok;
+    };
+
+    public shared ({ caller }) func addTeamOwner(request : Types.AddTeamOwnerRequest) : async Types.AddTeamOwnerResult {
+        if (not isLeague(caller)) {
+            return #notAuthorized;
+        };
+        let userInfo = getUserInfoInternal(request.userId);
+        switch (userInfo.team) {
+            case (?team) {
+                if (team.id != request.teamId) {
+                    return #onOtherTeam(team.id);
+                };
+            };
+            case (null) {
+                let teamExists = true; // TODO get all team ids and check if teamId is in there
+                if (not teamExists) {
+                    return #teamNotFound;
+                };
+            };
+        };
+        updateUser(
+            request.userId,
+            func(user : Types.User) : Types.User = {
+                user with
+                team = ?{
+                    id = request.teamId;
+                    kind = #owner({ votingPower = request.votingPower });
+                };
+            },
+        );
         #ok;
     };
 
@@ -85,7 +145,8 @@ actor UsersActor {
             case (?userInfo) userInfo;
             case (null) {
                 {
-                    teamAssociation = null;
+                    id = userId;
+                    team = null;
                     points = 0;
                 };
             };

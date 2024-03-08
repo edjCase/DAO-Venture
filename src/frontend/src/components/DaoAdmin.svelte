@@ -9,12 +9,12 @@
         Tabs,
     } from "flowbite-svelte";
     import { teamStore } from "../stores/TeamStore";
-    import { teamAgentFactory } from "../ic-agent/Team";
     import { Principal } from "@dfinity/principal";
     import ProposalList from "./TeamDao/ProposalList.svelte";
     import CreateProposal from "./TeamDao/CreateProposal.svelte";
     import MemberList from "./TeamDao/MemberList.svelte";
-    import { memberStore } from "../stores/MemberStore";
+    import { usersAgentFactory } from "../ic-agent/Users";
+    import { userStore } from "../stores/UserStore";
 
     $: teams = $teamStore;
 
@@ -42,13 +42,16 @@
             return;
         }
         console.log("Adding member", newMemberId);
-        let res = await teamAgentFactory(selectedTeamId).addMember({
-            id: Principal.fromText(newMemberId),
+        let userId = Principal.fromText(newMemberId);
+        let res = await usersAgentFactory().addTeamOwner({
+            teamId: Principal.fromText(selectedTeamId),
+            userId: userId,
+            votingPower: BigInt(1),
         });
 
         if ("ok" in res) {
             console.log("Added member", res);
-            memberStore.refetchTeamMembers(selectedTeamId);
+            userStore.refetchUser(userId);
         } else {
             console.log("Error adding member", res);
         }

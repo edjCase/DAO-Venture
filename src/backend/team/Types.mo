@@ -10,8 +10,6 @@ module {
     public type TeamActor = actor {
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
-        addMember : (request : AddMemberRequest) -> async AddMemberResult;
-        getMembers : query () -> async [Member];
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (id : Nat) -> async ?Proposal;
         getProposals : query () -> async [Proposal];

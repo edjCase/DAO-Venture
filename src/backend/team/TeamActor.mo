@@ -28,10 +28,16 @@ import Scenario "../models/Scenario";
 import TeamState "./TeamState";
 import ScenarioVoting "ScenarioVoting";
 import Dao "../Dao";
+// TODO cant use because of generating did files for JS/TS
+// import UsersActor "cansiter:users";
+import UserTypes "../users/Types";
 
 shared (install) actor class TeamActor(
-  leagueId : Principal
+  leagueId : Principal,
+  usersActorId : Principal,
 ) : async Types.TeamActor = this {
+
+  let usersActor = actor (Principal.toText(usersActorId)) : UserTypes.Actor;
 
   stable var stableData = {
     scenarioVoting : [ScenarioVoting.Data] = [];
@@ -77,8 +83,17 @@ shared (install) actor class TeamActor(
 
   public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
     let ?handler = scenarioVotingManager.getHandler(request.scenarioId) else return #scenarioNotFound;
-    let ?member = dao.getMember(caller) else return #notAuthorized;
-    handler.vote(caller, member.votingPower, request.option);
+    switch (await usersActor.get(caller)) {
+      case (#ok(user)) {
+        let ?team = user.team else return #notAuthorized;
+        if (team.id != Principal.fromActor(this)) {
+          return #notAuthorized;
+        };
+        let #owner(o) = team.kind else return #notAuthorized;
+        handler.vote(caller, o.votingPower, request.option);
+      };
+      case (#notFound or #notAuthorized) #notAuthorized;
+    };
   };
 
   public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
@@ -86,26 +101,9 @@ shared (install) actor class TeamActor(
     #ok(handler.getVote(caller));
   };
 
-  public shared ({ caller }) func addMember(request : Types.AddMemberRequest) : async Types.AddMemberResult {
-    if (caller != leagueId) {
-      return #notAuthorized;
-    };
-    dao.addMember({
-      id = request.id;
-      votingPower = 1;
-    });
-  };
-
-  public shared query ({ caller }) func getMember(id : Principal) : async ?Types.Member {
-    dao.getMember(id);
-  };
-
-  public shared query ({ caller }) func getMembers() : async [Types.Member] {
-    dao.getMembers();
-  };
-
   public shared ({ caller }) func createProposal(request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
-    dao.createProposal(caller, request.content);
+    let members = await usersActor.getTeamOwners(Principal.fromActor(this));
+    dao.createProposal(caller, request.content, members);
   };
 
   public shared query ({ caller }) func getProposal(id : Nat) : async ?Types.Proposal {

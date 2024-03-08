@@ -1,10 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const AddMemberRequest = IDL.Record({ 'id' : IDL.Principal });
-  const AddMemberResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
-    'alreadyExists' : IDL.Null,
-  });
   const Skill = IDL.Variant({
     'battingAccuracy' : IDL.Null,
     'throwingAccuracy' : IDL.Null,
@@ -26,7 +20,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'notAuthorized' : IDL.Null,
   });
-  const Member = IDL.Record({ 'id' : IDL.Principal, 'votingPower' : IDL.Nat });
   const ProposalStatus = IDL.Variant({
     'open' : IDL.Null,
     'rejected' : IDL.Null,
@@ -104,15 +97,12 @@ export const idlFactory = ({ IDL }) => {
     'scenarioNotFound' : IDL.Null,
   });
   const TeamActor = IDL.Service({
-    'addMember' : IDL.Func([AddMemberRequest], [AddMemberResult], []),
     'createProposal' : IDL.Func(
         [CreateProposalRequest],
         [CreateProposalResult],
         [],
       ),
     'getCycles' : IDL.Func([], [GetCyclesResult], []),
-    'getMember' : IDL.Func([IDL.Principal], [IDL.Opt(Member)], ['query']),
-    'getMembers' : IDL.Func([], [IDL.Vec(Member)], ['query']),
     'getProposal' : IDL.Func([IDL.Nat], [IDL.Opt(Proposal)], ['query']),
     'getProposals' : IDL.Func([], [IDL.Vec(Proposal)], ['query']),
     'getScenarioVote' : IDL.Func(
@@ -149,4 +139,4 @@ export const idlFactory = ({ IDL }) => {
   });
   return TeamActor;
 };
-export const init = ({ IDL }) => { return [IDL.Principal]; };
+export const init = ({ IDL }) => { return [IDL.Principal, IDL.Principal]; };

@@ -4,19 +4,19 @@
     import { teamAgentFactory } from "../../ic-agent/Team";
     import { Proposal } from "../../ic-agent/declarations/team";
     import { toJsonString } from "../../utils/JsonUtil";
-    import { userStore } from "../../stores/UserStore";
     import { nanosecondsToDate } from "../../utils/DateUtils";
     import { proposalStore } from "../../stores/ProposalStore";
+    import { identityStore } from "../../stores/IdentityStore";
 
     export let teamId: string | Principal;
     export let proposal: Proposal;
 
-    $: user = $userStore;
+    $: identity = $identityStore;
 
     let yourVote: boolean | undefined;
     $: {
-        if (user) {
-            let yourUserId = user.id;
+        if (identity) {
+            let yourUserId = identity.id;
             let v = proposal.votes.find(
                 ([memberId, _]) => memberId.compareTo(yourUserId) == "eq",
             )?.[1];
