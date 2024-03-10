@@ -14,6 +14,7 @@ import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
 import TextX "mo:xtended-text/TextX";
 import FieldPosition "../models/FieldPosition";
+import Types "./Types";
 
 module {
 
@@ -40,7 +41,7 @@ module {
         option : Nat;
     };
 
-    public func validateScenario(scenario : Scenario.Scenario, traitIds : [Text]) : ValidateScenarioResult {
+    public func validateScenario(scenario : Types.AddScenarioRequest, traitIds : [Text]) : ValidateScenarioResult {
         let errors = Buffer.Buffer<Text>(0);
         if (TextX.isEmptyOrWhitespace(scenario.id)) {
             errors.add("Scenario must have an id");
@@ -144,7 +145,7 @@ module {
                 effectOutcomes,
             );
         };
-        switch (scenario.effect) {
+        switch (scenario.metaEffect) {
             case (#simple) ();
             case (#leagueChoice(leagueChoice)) {
                 let leagueOptionIndex = getMajorityOption(prng, teams);
@@ -152,16 +153,16 @@ module {
                 resolveEffectInternal(prng, #league, scenario, leagueOption.effect, effectOutcomes);
             };
             case (#lottery(lottery)) {
-
+                // TODO
             };
             case (#pickASide(pickASide)) {
-
+                // TODO
             };
             case (#proportionalBid(proportionalBid)) {
-
+                // TODO
             };
             case (#threshold(threshold)) {
-
+                // TODO
             };
         };
         {

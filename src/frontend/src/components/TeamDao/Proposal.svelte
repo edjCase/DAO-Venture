@@ -53,19 +53,23 @@
         <div>PlayerId: {proposal.content.trainPlayer.playerId}</div>
         <div>Skill: {toJsonString(proposal.content.trainPlayer.skill)}</div>
     {:else}
-        ProposalType Not Impletmented
+        Proposal Type Not Implemented
     {/if}
     {#if "open" in proposal.status}
         <div class="text-2xl">Vote:</div>
-        {#if yourVote === undefined}
-            <div class="mb-6">
-                <Button on:click={() => vote(true)}>Yes</Button>
-                <Button on:click={() => vote(false)}>No</Button>
-            </div>
+        {#if proposal.votes.some((v) => identity && v[0].toString() == identity.id.toString())}
+            {#if yourVote === undefined}
+                <div class="mb-6">
+                    <Button on:click={() => vote(true)}>Yes</Button>
+                    <Button on:click={() => vote(false)}>No</Button>
+                </div>
+            {:else}
+                <div class="text-xl">
+                    You have voted: {yourVote ? "Yes" : "No"}
+                </div>
+            {/if}
         {:else}
-            <div class="text-xl">
-                You have voted: {yourVote ? "Yes" : "No"}
-            </div>
+            You are not eligible to vote
         {/if}
     {:else if "executed" in proposal.status}
         <div class="text-xl">Proposal Executed</div>

@@ -14,6 +14,7 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getTeamStandings : query () -> async GetTeamStandingsResult;
+        getScenario : query (id : Text) -> async ?Scenario;
         processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
@@ -25,6 +26,29 @@ module {
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
         setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
         getAdmins : query () -> async [Principal];
+    };
+
+    public type Scenario = {
+        id : Text;
+        title : Text;
+        description : Text;
+        options : [ScenarioOption];
+        state : {
+            #notStarted;
+            #started;
+            #resolved : {
+                teamChoices : [{
+                    teamId : Principal;
+                    option : Nat;
+                }];
+            };
+        };
+
+    };
+
+    public type ScenarioOption = {
+        id : Nat;
+        description : Text;
     };
 
     public type TeamStandingInfo = {
@@ -47,15 +71,6 @@ module {
         #ok;
         #notAuthorized;
         #seasonNotInProgress;
-    };
-
-    public type AddScenarioRequest = Scenario.Scenario;
-
-    public type AddScenarioResult = {
-        #ok;
-        #idTaken;
-        #notAuthorized;
-        #invalid : [Text];
     };
 
     public type SetUserIsAdminResult = {
@@ -112,7 +127,15 @@ module {
     // Start season
     public type StartSeasonRequest = {
         startTime : Time.Time;
-        scenarios : [Scenario.Scenario];
+        scenarios : [AddScenarioRequest];
+    };
+
+    public type AddScenarioRequest = {
+        id : Text;
+        title : Text;
+        description : Text;
+        options : [Scenario.ScenarioOption];
+        metaEffect : Scenario.MetaEffect;
     };
 
     public type StartSeasonResult = {

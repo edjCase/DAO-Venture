@@ -48,6 +48,8 @@ actor LeagueActor {
 
     stable var admins : TrieSet.Set<Principal> = TrieSet.empty();
     stable var teams : Trie.Trie<Principal, Team.Team> = Trie.empty();
+    stable var unresolvedScenarios : Trie.Trie<Text, Scenario.Scenario> = Trie.empty();
+    stable var resolvedScenarios : Trie.Trie<Text, Scenario.ResolvedScenario> = Trie.empty();
     stable var seasonStatus : Season.SeasonStatus = #notStarted;
     stable var teamStandings : ?[Types.TeamStandingInfo] = null; // First team to last team
     // MatchGroupId => Match Array of UserId => TeamId votes
@@ -73,6 +75,53 @@ actor LeagueActor {
         switch (teamStandings) {
             case (?standings) return #ok(standings);
             case (null) return #notFound;
+        };
+    };
+
+    public query func getScenario(scenarioId : Text) : async ?Types.Scenario {
+        let scenarioKey = {
+            key = scenarioId;
+            hash = Text.hash(scenarioId);
+        };
+
+        let mapOptions = func(s : Scenario.Scenario) : [Types.ScenarioOption] {
+            s.options.vals()
+            |> IterTools.mapEntries<Scenario.ScenarioOption, Types.ScenarioOption>(
+                _,
+                func(i : Nat, v : Scenario.ScenarioOption) : Types.ScenarioOption = {
+                    id = i;
+                    title = v.title;
+                    description = v.description;
+                },
+            )
+            |> Iter.toArray(_);
+        };
+        switch (Trie.get(unresolvedScenarios, scenarioKey, Text.equal)) {
+            case (?s) {
+                ?{
+                    id = scenarioId;
+                    title = s.title;
+                    description = s.description;
+                    options = mapOptions(s);
+                    state = if (s.started) #started else #notStarted;
+                };
+            };
+            case (null) {
+                switch (Trie.get(resolvedScenarios, scenarioKey, Text.equal)) {
+                    case (?s) {
+                        ?{
+                            id = scenarioId;
+                            title = s.title;
+                            description = s.description;
+                            options = mapOptions(s);
+                            state = #resolved({
+                                teamChoices = s.teamChoices;
+                            });
+                        };
+                    };
+                    case (null) null;
+                };
+            };
         };
     };
 
@@ -178,7 +227,7 @@ actor LeagueActor {
             _,
             func(mg : ScheduleBuilder.MatchGroup) : Season.InProgressSeasonMatchGroupVariant = #notScheduled({
                 time = mg.time;
-                scenario = request.scenarios[scenarioIndex];
+                scenarioId = request.scenarios[scenarioIndex].id;
                 matches = mg.matches
                 |> Iter.fromArray(_)
                 |> Iter.map(
@@ -412,7 +461,7 @@ actor LeagueActor {
             let options : TeamTypes.ScenarioVoteResult = try {
                 // Get match options from the team itself
                 let result : TeamTypes.GetWinningScenarioOptionResult = await teamActor.getWinningScenarioOption({
-                    scenarioId = scheduledMatchGroup.scenario.id;
+                    scenarioId = scheduledMatchGroup.scenarioId;
                 });
                 let option = switch (result) {
                     case (#ok(o)) o;
@@ -421,7 +470,7 @@ actor LeagueActor {
                         let option : Nat = 0; // TODO
                         option;
                     };
-                    case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scheduledMatchGroup.scenario.id);
+                    case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scheduledMatchGroup.scenarioId);
                     case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(teamId));
                 };
                 {
@@ -457,11 +506,21 @@ actor LeagueActor {
             },
         )
         |> Iter.toArray(_);
+        let scenarioKey = {
+            key = scheduledMatchGroup.scenarioId;
+            hash = Text.hash(scheduledMatchGroup.scenarioId);
+        };
+        let (newUnresolvedScenarios, ?scenario) = Trie.remove(unresolvedScenarios, scenarioKey, Text.equal) else Debug.trap("Unresolved scenario not found: " # scheduledMatchGroup.scenarioId);
+
+        unresolvedScenarios := newUnresolvedScenarios;
+
         let resolvedScenario = ScenarioUtil.resolveScenario(
             prng,
-            scheduledMatchGroup.scenario,
+            scenario,
             scenarioTeamData,
         );
+        let (newResolvedScenarios, _) = Trie.put(resolvedScenarios, scenarioKey, Text.equal, resolvedScenario);
+        resolvedScenarios := newResolvedScenarios;
 
         // TODO handle failure
         try {
@@ -539,7 +598,7 @@ actor LeagueActor {
             #inProgress({
                 time = scheduledMatchGroup.time;
                 stadiumId = stadiumId;
-                scenario = resolvedScenario;
+                scenarioId = scheduledMatchGroup.scenarioId;
                 matches = inProgressMatches;
             }),
         ) else return #matchGroupNotFound;
@@ -585,7 +644,7 @@ actor LeagueActor {
         // Update status to completed
         let updatedMatchGroup : Season.CompletedMatchGroup = {
             time = inProgressMatchGroup.time;
-            scenario = inProgressMatchGroup.scenario;
+            scenarioId = inProgressMatchGroup.scenarioId;
             matches = request.matches;
         };
 
@@ -962,7 +1021,7 @@ actor LeagueActor {
         let scheduledMatchGroup : Season.ScheduledMatchGroup = {
             time = matchGroup.time;
             timerId = timerId;
-            scenario = matchGroup.scenario;
+            scenarioId = matchGroup.scenarioId;
             matches = matchGroup.matches
             |> Iter.fromArray(_)
             |> Iter.map(

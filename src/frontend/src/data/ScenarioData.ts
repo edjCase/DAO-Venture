@@ -1,9 +1,9 @@
-import { Scenario } from "../ic-agent/declarations/league";
+import { AddScenarioRequest } from "../ic-agent/declarations/league";
 
 
 
 
-export let scenarios: Scenario[] = [
+export let scenarios: AddScenarioRequest[] = [
     {
         id: "SURGE_CRISIS_OPENING_CEREMONY",
         title: "Surge Crisis at the Opening Ceremony",
@@ -52,7 +52,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             threshold: {
                 threshold: BigInt(4), // Total energy contribution threshold
                 over: {
@@ -123,7 +123,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             proportionalBid: {
                 prize: {
                     skill: {
@@ -191,7 +191,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             lottery: {
                 prize: {
                     skill: {
@@ -259,7 +259,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             proportionalBid: {
                 prize: {
                     skill: {
@@ -322,7 +322,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             threshold: {
                 threshold: BigInt(4), // Total resources shared threshold
                 over: {
@@ -382,7 +382,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             threshold: {
                 threshold: BigInt(4), // Total resources shared threshold
                 over: {
@@ -440,7 +440,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             threshold: {
                 threshold: BigInt(4), // Total resources shared threshold
                 over: {
@@ -498,7 +498,7 @@ export let scenarios: Scenario[] = [
                 },
             },
         ],
-        effect: {
+        metaEffect: {
             threshold: {
                 threshold: BigInt(4), // Total resources shared threshold
                 over: {

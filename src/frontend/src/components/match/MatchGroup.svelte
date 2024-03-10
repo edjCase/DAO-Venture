@@ -43,7 +43,7 @@
       {#if "effectOutcomes" in matchGroup.scenario}
         <ResolvedScenario scenario={matchGroup.scenario} />
       {:else}
-        <Scenario scenario={matchGroup.scenario} matchGroupId={matchGroup.id} />
+        <Scenario scenario={matchGroup.scenarioId} />
       {/if}
       <h1>Predict the upcoming match-up winners</h1>
       {#each matchGroup.matches as match}

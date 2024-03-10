@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { SeasonStatus } from "../../models/Season";
+  import { SeasonStatus } from "../../ic-agent/declarations/league";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import MatchGroupCarosel from "../match/MatchGroupCarosel.svelte";
   import SeasonScheduleOverview from "./SeasonScheduleOverview.svelte";

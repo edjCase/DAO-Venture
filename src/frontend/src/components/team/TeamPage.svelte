@@ -2,8 +2,8 @@
   import PlayerRoster from "../player/PlayerRoster.svelte";
   import MatchHistory from "../match/MatchHistory.svelte";
   import { Button } from "flowbite-svelte";
-  import { Team } from "../../models/Team";
-  export let team: Team;
+  import { TeamWithId } from "../../ic-agent/declarations/league";
+  export let team: TeamWithId;
 </script>
 
 <div class="team-container">

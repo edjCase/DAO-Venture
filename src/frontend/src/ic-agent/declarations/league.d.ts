@@ -2,6 +2,13 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface AddScenarioRequest {
+  'id' : string,
+  'title' : string,
+  'metaEffect' : MetaEffect,
+  'description' : string,
+  'options' : Array<ScenarioOption>,
+}
 export type CloseSeasonResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'seasonNotOpen' : null };
@@ -12,9 +19,9 @@ export interface CompletedMatch {
   'winner' : TeamIdOrTie,
 }
 export interface CompletedMatchGroup {
+  'scenarioId' : string,
   'time' : Time,
   'matches' : Array<CompletedMatch>,
-  'scenario' : ResolvedScenario,
 }
 export interface CompletedMatchTeam {
   'id' : Principal,
@@ -95,10 +102,10 @@ export interface InProgressMatch {
   'aura' : MatchAura,
 }
 export interface InProgressMatchGroup {
+  'scenarioId' : string,
   'stadiumId' : Principal,
   'time' : Time,
   'matches' : Array<InProgressMatch>,
-  'scenario' : ResolvedScenario,
 }
 export interface InProgressSeason {
   'matchGroups' : Array<InProgressSeasonMatchGroupVariant>,
@@ -134,14 +141,46 @@ export interface MatchAuraWithMetaData {
   'name' : string,
   'description' : string,
 }
+export type MetaEffect = {
+    'lottery' : { 'prize' : Effect, 'options' : Array<{ 'tickets' : bigint }> }
+  } |
+  {
+    'threshold' : {
+      'threshold' : bigint,
+      'over' : Effect,
+      'under' : Effect,
+      'options' : Array<
+        {
+          'value' : { 'fixed' : bigint } |
+            { 'weightedChance' : Array<[bigint, bigint]> },
+        }
+      >,
+    }
+  } |
+  { 'pickASide' : { 'options' : Array<{ 'sideId' : string }> } } |
+  {
+    'proportionalBid' : {
+      'prize' : {
+          'skill' : {
+            'total' : bigint,
+            'duration' : Duration,
+            'skill' : Skill,
+            'target' : { 'position' : FieldPosition },
+          }
+        },
+      'options' : Array<{ 'bidValue' : bigint }>,
+    }
+  } |
+  { 'simple' : null } |
+  { 'leagueChoice' : { 'options' : Array<{ 'effect' : Effect }> } };
 export interface NotScheduledMatch {
   'team1' : TeamAssignment,
   'team2' : TeamAssignment,
 }
 export interface NotScheduledMatchGroup {
+  'scenarioId' : string,
   'time' : Time,
   'matches' : Array<NotScheduledMatch>,
-  'scenario' : Scenario,
 }
 export interface OnMatchGroupCompleteRequest {
   'id' : bigint,
@@ -192,104 +231,34 @@ export type PredictMatchOutcomeResult = { 'ok' : null } |
 export type ProcessEffectOutcomesResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'seasonNotInProgress' : null };
-export interface ResolvedScenario {
-  'id' : string,
-  'title' : string,
-  'teamChoices' : Array<{ 'option' : bigint, 'teamId' : Principal }>,
-  'description' : string,
-  'effect' : {
-      'lottery' : {
-        'prize' : Effect,
-        'options' : Array<{ 'tickets' : bigint }>,
-      }
-    } |
-    {
-      'threshold' : {
-        'threshold' : bigint,
-        'over' : Effect,
-        'under' : Effect,
-        'options' : Array<
-          {
-            'value' : { 'fixed' : bigint } |
-              { 'weightedChance' : Array<[bigint, bigint]> },
-          }
-        >,
-      }
-    } |
-    { 'pickASide' : { 'options' : Array<{ 'sideId' : string }> } } |
-    {
-      'proportionalBid' : {
-        'prize' : {
-            'skill' : {
-              'total' : bigint,
-              'duration' : Duration,
-              'skill' : Skill,
-              'target' : { 'position' : FieldPosition },
-            }
-          },
-        'options' : Array<{ 'bidValue' : bigint }>,
-      }
-    } |
-    { 'simple' : null } |
-    { 'leagueChoice' : { 'options' : Array<{ 'effect' : Effect }> } },
-  'options' : Array<ScenarioOption>,
-  'effectOutcomes' : Array<EffectOutcome>,
-}
 export interface Scenario {
   'id' : string,
   'title' : string,
   'description' : string,
-  'effect' : {
-      'lottery' : {
-        'prize' : Effect,
-        'options' : Array<{ 'tickets' : bigint }>,
-      }
-    } |
+  'state' : { 'notStarted' : null } |
     {
-      'threshold' : {
-        'threshold' : bigint,
-        'over' : Effect,
-        'under' : Effect,
-        'options' : Array<
-          {
-            'value' : { 'fixed' : bigint } |
-              { 'weightedChance' : Array<[bigint, bigint]> },
-          }
-        >,
+      'resolved' : {
+        'teamChoices' : Array<{ 'option' : bigint, 'teamId' : Principal }>,
       }
     } |
-    { 'pickASide' : { 'options' : Array<{ 'sideId' : string }> } } |
-    {
-      'proportionalBid' : {
-        'prize' : {
-            'skill' : {
-              'total' : bigint,
-              'duration' : Duration,
-              'skill' : Skill,
-              'target' : { 'position' : FieldPosition },
-            }
-          },
-        'options' : Array<{ 'bidValue' : bigint }>,
-      }
-    } |
-    { 'simple' : null } |
-    { 'leagueChoice' : { 'options' : Array<{ 'effect' : Effect }> } },
-  'options' : Array<ScenarioOption>,
+    { 'started' : null },
+  'options' : Array<ScenarioOption__1>,
 }
 export interface ScenarioOption {
   'title' : string,
   'description' : string,
   'effect' : Effect,
 }
+export interface ScenarioOption__1 { 'id' : bigint, 'description' : string }
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
   'team2' : ScheduledTeamInfo,
   'aura' : MatchAuraWithMetaData,
 }
 export interface ScheduledMatchGroup {
+  'scenarioId' : string,
   'time' : Time,
   'matches' : Array<ScheduledMatch>,
-  'scenario' : Scenario,
   'timerId' : bigint,
 }
 export interface ScheduledTeamInfo {
@@ -319,7 +288,7 @@ export type StartMatchGroupResult = { 'ok' : null } |
   { 'matchErrors' : Array<{ 'error' : StartMatchError, 'matchId' : bigint }> };
 export interface StartSeasonRequest {
   'startTime' : Time,
-  'scenarios' : Array<Scenario>,
+  'scenarios' : Array<AddScenarioRequest>,
 }
 export type StartSeasonResult = { 'ok' : null } |
   { 'invalidScenario' : { 'id' : string, 'errors' : Array<string> } } |
@@ -397,6 +366,7 @@ export interface _SERVICE {
   'closeSeason' : ActorMethod<[], CloseSeasonResult>,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'getAdmins' : ActorMethod<[], Array<Principal>>,
+  'getScenario' : ActorMethod<[string], [] | [Scenario]>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
   'getTeams' : ActorMethod<[], Array<TeamWithId>>,

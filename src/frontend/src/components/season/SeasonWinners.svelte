@@ -1,12 +1,15 @@
 <script lang="ts">
   import { Principal } from "@dfinity/principal";
-  import { CompletedSeason, CompletedSeasonTeam } from "../../models/Season";
+  import {
+    CompletedSeason,
+    CompletedSeasonTeam,
+  } from "../../ic-agent/declarations/league";
 
   export let completedSeason: CompletedSeason;
 
   let getTeam = (teamId: Principal): CompletedSeasonTeam => {
     let team = completedSeason.teams.find(
-      (team) => team.id.compareTo(teamId) == "eq"
+      (team) => team.id.compareTo(teamId) == "eq",
     );
     if (!team) throw new Error(`Team ${teamId} not found`); // TODO
     return team;
