@@ -74,7 +74,7 @@ actor LeagueActor {
     var seasonHandler = SeasonHandler.SeasonHandler(stableData.season);
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
     var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios);
-    var teamsHandler = TeamsHandler.Handler(Principal.fromActor(LeagueActor), stableData.teams);
+    var teamsHandler = TeamsHandler.Handler(leagueId, stableData.teams);
 
     system func preupgrade() {
         stableData := {
@@ -223,9 +223,9 @@ actor LeagueActor {
     };
 
     public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {
-        let ?currentMatchGroupId = seasonHandler.getCurrentMatchGroupId() else return #predictionsClosed;
+        let ?nextScheduled = seasonHandler.getNextScheduledMatchGroup() else return #predictionsClosed;
         predictionHandler.predictMatchOutcome(
-            currentMatchGroupId,
+            nextScheduled.matchGroupId,
             request.matchId,
             caller,
             request.winner,
@@ -288,67 +288,31 @@ actor LeagueActor {
             case (#ok(id)) id;
             case (#stadiumCreationError(error)) return Debug.trap("Failed to create stadium: " # error);
         };
-        let #inProgress(inProgressSeason) = seasonHandler.seasonStatus else return #notScheduledYet;
-        let teams = inProgressSeason.teams;
-        let teamScenarioData = Buffer.Buffer<ScenarioHandler.TeamScenarioData>(teams.size());
+        let prng = PseudoRandomX.fromBlob(await Random.blob());
+        switch (await* buildTeamScenarioData(matchGroupId)) {
+            case (#ok(data)) {
+                let resolvedScenarioState = scenarioHandler.resolve(
+                    data.scenarioId,
+                    data.teamScenarioData,
+                    prng,
+                );
 
-        for (team in Iter.fromArray(teams)) {
-            let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
-            let options : TeamTypes.ScenarioVoteResult = try {
-                // Get match options from the team itself
-                let result : TeamTypes.GetWinningScenarioOptionResult = await teamActor.getWinningScenarioOption({
-                    scenarioId = scenarioId;
-                });
-                let option = switch (result) {
-                    case (#ok(o)) o;
-                    case (#noVotes) {
-                        // If no votes, pick a random choice
-                        let option : Nat = 0; // TODO
-                        option;
+                // TODO handle failure
+                try {
+                    let result = await processEffectOutcomes(resolvedScenarioState.effectOutcomes);
+                    switch (result) {
+                        case (#ok) ();
+                        case (#notAuthorized) Debug.trap("League is not authorized to process effect outcomes");
+                        case (#seasonNotInProgress) Debug.trap("Season is not in progress");
                     };
-                    case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scenarioId);
-                    case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(team.id));
+                } catch (err) {
+                    Debug.print("Failed to process effect outcomes: " # Error.message(err));
                 };
-                {
-                    option = option;
-                };
-            } catch (err : Error.Error) {
-                return Debug.trap("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
             };
-            teamScenarioData.add({
-                team with
-                positions = {
-                    firstBase = team.positions.firstBase.id;
-                    secondBase = team.positions.secondBase.id;
-                    thirdBase = team.positions.thirdBase.id;
-                    shortStop = team.positions.shortStop.id;
-                    leftField = team.positions.leftField.id;
-                    centerField = team.positions.centerField.id;
-                    rightField = team.positions.rightField.id;
-                    pitcher = team.positions.pitcher.id;
-                };
-            });
+            case (#notScheduledYet) return #notScheduledYet;
         };
 
-        let effectOutcomes = scenarioHandler.resolve(
-            scenarioId,
-            teamScenarioData,
-            prng,
-        );
-
-        // TODO handle failure
-        try {
-            let result = await processEffectOutcomes(resolvedScenario.effectOutcomes);
-            switch (result) {
-                case (#ok) ();
-                case (#notAuthorized) Debug.trap("League is not authorized to process effect outcomes");
-                case (#seasonNotInProgress) Debug.trap("Season is not in progress");
-            };
-        } catch (err) {
-            Debug.print("Failed to process effect outcomes: " # Error.message(err));
-        };
-        // TO HERE
-        seasonHandler.startMatchGroup(matchGroupId, stadiumId);
+        await* seasonHandler.startMatchGroup(matchGroupId, prng);
 
     };
 
@@ -364,12 +328,11 @@ actor LeagueActor {
             return #notAuthorized;
         };
 
-        let seed = try {
-            await Random.blob();
+        let prng = try {
+            PseudoRandomX.fromBlob(await Random.blob());
         } catch (err) {
             return #seedGenerationError(Error.message(err));
         };
-        let prng = PseudoRandomX.fromSeed(Blob.hash(seed));
 
         let result = await* seasonHandler.onMatchGroupComplete(request, prng);
         // TODO handle failure
@@ -438,6 +401,55 @@ actor LeagueActor {
 
     private func hashNatAsNat32(matchGroupId : Nat) : Nat32 {
         Nat32.fromNat(matchGroupId);
+    };
+
+    private func buildTeamScenarioData(matchGroupId : Nat) : async* {
+        #ok : {
+            scenarioId : Text;
+            teamScenarioData : [ScenarioHandler.TeamScenarioData];
+        };
+        #notScheduledYet;
+    } {
+
+        let ?nextScheduled = seasonHandler.getNextScheduledMatchGroup() else return #notScheduledYet;
+        let teams = nextScheduled.season.teams;
+        let teamScenarioData = Buffer.Buffer<ScenarioHandler.TeamScenarioData>(teams.size());
+
+        let scenarioId = nextScheduled.matchGroup.scenarioId;
+
+        for (team in Iter.fromArray(teams)) {
+            let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
+            let options : TeamTypes.ScenarioVoteResult = try {
+                // Get match options from the team itself
+                let result : TeamTypes.GetWinningScenarioOptionResult = await teamActor.getWinningScenarioOption({
+                    scenarioId = scenarioId;
+                });
+                let option = switch (result) {
+                    case (#ok(o)) o;
+                    case (#noVotes) {
+                        // If no votes, pick a random choice
+                        let option : Nat = 0; // TODO
+                        option;
+                    };
+                    case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scenarioId);
+                    case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(team.id));
+                };
+                {
+                    option = option;
+                };
+            } catch (err : Error.Error) {
+                return Debug.trap("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
+            };
+            teamScenarioData.add({
+                team with
+                option = options.option;
+                positions = team.positions;
+            });
+        };
+        #ok({
+            scenarioId = scenarioId;
+            teamScenarioData = Buffer.toArray(teamScenarioData);
+        });
     };
 
     private func getOrCreateStadium() : async* {

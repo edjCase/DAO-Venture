@@ -38,6 +38,7 @@ module {
         id : Principal;
         name : Text;
         logoUrl : Text;
+        positions : FieldPosition.TeamPositions;
     };
 
     public type NotScheduledMatchGroup = {
@@ -82,7 +83,6 @@ module {
 
     public type InProgressTeam = {
         id : Principal;
-        positions : FieldPosition.TeamPositions;
     };
 
     public type InProgressMatch = {
@@ -94,7 +94,6 @@ module {
     public type CompletedMatchTeam = {
         id : Principal;
         score : Int;
-        positions : FieldPosition.TeamPositions;
     };
 
     public type CompletedMatch = {

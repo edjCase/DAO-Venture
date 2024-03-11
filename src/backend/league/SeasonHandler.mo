@@ -125,13 +125,6 @@ module {
                 });
             };
 
-            let teamsMap = teams
-            |> Iter.fromArray(_)
-            |> Iter.map<Team.TeamWithId, (Principal, Team.TeamWithId)>(
-                _,
-                func(t : Team.TeamWithId) : (Principal, Team.TeamWithId) = (t.id, t),
-            )
-            |> HashMap.fromIter<Principal, Team.TeamWithId>(_, teams.size(), Principal.equal, Principal.hash);
             var scenarioIndex = 0;
             // Save full schedule, then try to start the first match groups
             let notScheduledMatchGroups = schedule.matchGroups
@@ -155,8 +148,18 @@ module {
             )
             |> Iter.toArray(_);
 
+            let teamsWithPositions = teams
+            |> Iter.fromArray(_)
+            |> Iter.map(
+                _,
+                func(t : Team.TeamWithId) : Season.TeamInfo {
+                    buildTeamInitData(t, players, prng);
+                },
+            )
+            |> Iter.toArray(_);
+
             let inProgressSeason = {
-                teams = teams;
+                teams = teamsWithPositions;
                 players = players;
                 stadiumId = stadiumId;
                 matchGroups = notScheduledMatchGroups;
@@ -177,114 +180,11 @@ module {
             #ok;
         };
 
-        private func scheduleMatchGroup(
-            matchGroupId : Nat,
-            stadiumId : Principal,
-            matchGroup : Season.NotScheduledMatchGroup,
-            inProgressSeason : Season.InProgressSeason,
-            prng : Prng,
-        ) : () {
-            let timeDiff = matchGroup.time - Time.now();
-            Debug.print("Scheduling match group " # Nat.toText(matchGroupId) # " in " # Int.toText(timeDiff) # " nanoseconds");
-            let duration = if (timeDiff <= 0) {
-                // Schedule immediately
-                #nanoseconds(0);
-            } else {
-                #nanoseconds(Int.abs(timeDiff));
-            };
-            let timerId = Timer.setTimer(
-                duration,
-                func() : async () {
-                    let result = try {
-                        let prng = PseudoRandomX.fromBlob(await Random.blob());
-                        await* startMatchGroup(matchGroupId, prng);
-                    } catch (err) {
-                        Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback failed: " # Error.message(err));
-                        return;
-                    };
-                    let message = switch (result) {
-                        case (#ok) "Match group started";
-                        case (#matchGroupNotFound) "Match group not found";
-                        case (#notAuthorized) "Not authorized";
-                        case (#notScheduledYet) "Match group not scheduled yet";
-                        case (#alreadyStarted) "Match group already started";
-                        case (#matchErrors(errors)) "Match group errors: " # debug_show (errors);
-                    };
-                    Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback: " # message);
-                },
-            );
-
-            let getTeamId = func(teamAssignment : Season.TeamAssignment) : Principal {
-                switch (teamAssignment) {
-                    case (#predetermined(teamId)) teamId;
-                    case (#seasonStandingIndex(standingIndex)) {
-                        // get team based on current season standing
-                        let ?standings = teamStandings else Debug.trap("Season standings not found. Match Group Id: " # Nat.toText(matchGroupId));
-
-                        let ?teamWithStanding = standings.getOpt(standingIndex) else Debug.trap("Standing not found. Standings: " # debug_show (Buffer.toArray(standings)) # " Standing index: " # Nat.toText(standingIndex));
-
-                        teamWithStanding.id;
-                    };
-                    case (#winnerOfMatch(matchId)) {
-                        let previousMatchGroupId : Nat = matchGroupId - 1;
-                        // get winner of match in previous match group
-                        let ?previousMatchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
-                            inProgressSeason.matchGroups,
-                            previousMatchGroupId,
-                        ) else Debug.trap("Previous match group not found, cannot get winner of match. Match Group Id: " # Nat.toText(previousMatchGroupId));
-                        let #completed(completedMatchGroup) = previousMatchGroup else Debug.trap("Previous match group not completed, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId));
-                        let ?match = Util.arrayGetSafe<Season.CompletedMatch>(
-                            completedMatchGroup.matches,
-                            matchId,
-                        ) else Debug.trap("Previous match not found, cannot get winner of match. Match Id: " # Nat.toText(matchId));
-
-                        if (match.winner == #team1) {
-                            match.team1.id;
-                        } else {
-                            match.team2.id;
-                        };
-                    };
-                };
-            };
-
-            let scheduledMatchGroup : Season.ScheduledMatchGroup = {
-                time = matchGroup.time;
-                timerId = timerId;
-                stadiumId = stadiumId;
-                scenarioId = matchGroup.scenarioId;
-                matches = matchGroup.matches
-                |> Iter.fromArray(_)
-                |> Iter.map(
-                    _,
-                    func(m : Season.NotScheduledMatch) : Season.ScheduledMatch {
-                        let team1Id = getTeamId(m.team1);
-                        let team2Id = getTeamId(m.team2);
-
-                        {
-                            team1 = { id = team1Id };
-                            team2 = { id = team2Id };
-                            aura = getRandomMatchAura(prng);
-                        };
-                    },
-                )
-                |> Iter.toArray(_);
-            };
-
-            let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
-                inProgressSeason.matchGroups,
-                matchGroupId,
-                #scheduled(scheduledMatchGroup),
-            ) else return Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
-
-            seasonStatus := #inProgress({
-                inProgressSeason with
-                matchGroups = newMatchGroups;
-            });
-            let matchCount = scheduledMatchGroup.matches.size();
-
-        };
-
-        public func getCurrentMatchGroupId() : ?Nat {
+        public func getNextScheduledMatchGroup() : ?{
+            matchGroupId : Nat;
+            matchGroup : Season.ScheduledMatchGroup;
+            season : Season.InProgressSeason;
+        } {
             // Get current match group by finding the next scheduled one
             switch (seasonStatus) {
                 case (#inProgress(inProgressSeason)) {
@@ -292,7 +192,11 @@ module {
                         let matchGroup = inProgressSeason.matchGroups[i];
                         switch (matchGroup) {
                             // Find first scheduled match group
-                            case (#scheduled(_)) return ?i;
+                            case (#scheduled(s)) return ?{
+                                matchGroupId = i;
+                                matchGroup = s;
+                                season = inProgressSeason;
+                            };
                             // If we find a match group that is not scheduled, then there are no upcoming match groups
                             case (#notScheduled(_) or #inProgress(_)) return null;
                             // Skip completed match groups
@@ -434,6 +338,7 @@ module {
                         wins = standingInfo.wins;
                         losses = standingInfo.losses;
                         totalScore = standingInfo.totalScore;
+                        positions = t.positions;
                     };
                 },
             )
@@ -468,6 +373,113 @@ module {
                 matchGroups = completedMatchGroups;
             });
             #ok;
+        };
+
+        private func scheduleMatchGroup(
+            matchGroupId : Nat,
+            stadiumId : Principal,
+            matchGroup : Season.NotScheduledMatchGroup,
+            inProgressSeason : Season.InProgressSeason,
+            prng : Prng,
+        ) : () {
+            let timeDiff = matchGroup.time - Time.now();
+            Debug.print("Scheduling match group " # Nat.toText(matchGroupId) # " in " # Int.toText(timeDiff) # " nanoseconds");
+            let duration = if (timeDiff <= 0) {
+                // Schedule immediately
+                #nanoseconds(0);
+            } else {
+                #nanoseconds(Int.abs(timeDiff));
+            };
+            let timerId = Timer.setTimer(
+                duration,
+                func() : async () {
+                    let result = try {
+                        let prng = PseudoRandomX.fromBlob(await Random.blob());
+                        await* startMatchGroup(matchGroupId, prng);
+                    } catch (err) {
+                        Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback failed: " # Error.message(err));
+                        return;
+                    };
+                    let message = switch (result) {
+                        case (#ok) "Match group started";
+                        case (#matchGroupNotFound) "Match group not found";
+                        case (#notAuthorized) "Not authorized";
+                        case (#notScheduledYet) "Match group not scheduled yet";
+                        case (#alreadyStarted) "Match group already started";
+                        case (#matchErrors(errors)) "Match group errors: " # debug_show (errors);
+                    };
+                    Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback: " # message);
+                },
+            );
+
+            let getTeamId = func(teamAssignment : Season.TeamAssignment) : Principal {
+                switch (teamAssignment) {
+                    case (#predetermined(teamId)) teamId;
+                    case (#seasonStandingIndex(standingIndex)) {
+                        // get team based on current season standing
+                        let ?standings = teamStandings else Debug.trap("Season standings not found. Match Group Id: " # Nat.toText(matchGroupId));
+
+                        let ?teamWithStanding = standings.getOpt(standingIndex) else Debug.trap("Standing not found. Standings: " # debug_show (Buffer.toArray(standings)) # " Standing index: " # Nat.toText(standingIndex));
+
+                        teamWithStanding.id;
+                    };
+                    case (#winnerOfMatch(matchId)) {
+                        let previousMatchGroupId : Nat = matchGroupId - 1;
+                        // get winner of match in previous match group
+                        let ?previousMatchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
+                            inProgressSeason.matchGroups,
+                            previousMatchGroupId,
+                        ) else Debug.trap("Previous match group not found, cannot get winner of match. Match Group Id: " # Nat.toText(previousMatchGroupId));
+                        let #completed(completedMatchGroup) = previousMatchGroup else Debug.trap("Previous match group not completed, cannot get winner of match. Match Group Id: " # Nat.toText(matchGroupId));
+                        let ?match = Util.arrayGetSafe<Season.CompletedMatch>(
+                            completedMatchGroup.matches,
+                            matchId,
+                        ) else Debug.trap("Previous match not found, cannot get winner of match. Match Id: " # Nat.toText(matchId));
+
+                        if (match.winner == #team1) {
+                            match.team1.id;
+                        } else {
+                            match.team2.id;
+                        };
+                    };
+                };
+            };
+
+            let scheduledMatchGroup : Season.ScheduledMatchGroup = {
+                time = matchGroup.time;
+                timerId = timerId;
+                stadiumId = stadiumId;
+                scenarioId = matchGroup.scenarioId;
+                matches = matchGroup.matches
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(m : Season.NotScheduledMatch) : Season.ScheduledMatch {
+                        let team1Id = getTeamId(m.team1);
+                        let team2Id = getTeamId(m.team2);
+
+                        {
+                            team1 = { id = team1Id };
+                            team2 = { id = team2Id };
+                            aura = getRandomMatchAura(prng);
+                        };
+                    },
+                )
+                |> Iter.toArray(_);
+            };
+
+            let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
+                inProgressSeason.matchGroups,
+                matchGroupId,
+                #scheduled(scheduledMatchGroup),
+            ) else return Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
+
+            seasonStatus := #inProgress({
+                inProgressSeason with
+                matchGroups = newMatchGroups;
+            });
+            let matchCount = scheduledMatchGroup.matches.size();
+
         };
 
         private func buildCompletedMatchGroups(
@@ -590,7 +602,7 @@ module {
             |> Buffer.fromIter(_);
         };
 
-        private func startMatchGroup(
+        public func startMatchGroup(
             matchGroupId : Nat,
             prng : Prng,
         ) : async* Types.StartMatchGroupResult {
@@ -612,8 +624,27 @@ module {
             let matchStartRequestBuffer = Buffer.Buffer<StadiumTypes.StartMatchRequest>(scheduledMatchGroup.matches.size());
 
             let teamDataMap = HashMap.HashMap<Principal, StadiumTypes.StartMatchTeam>(0, Principal.equal, Principal.hash);
+
+            let getPlayer = func(playerId : Nat32) : Player.PlayerWithId {
+                let ?player = season.players
+                |> Iter.fromArray(_)
+                |> IterTools.find(_, func(p : Player.PlayerWithId) : Bool = p.id == playerId) else Debug.trap("Player not found: " # Nat32.toText(playerId));
+                player;
+            };
             for (team in season.teams.vals()) {
-                let teamData = buildTeamInitData(team, season.players, prng);
+                let teamData : StadiumTypes.StartMatchTeam = {
+                    team with
+                    positions = {
+                        pitcher = getPlayer(team.positions.pitcher);
+                        firstBase = getPlayer(team.positions.firstBase);
+                        secondBase = getPlayer(team.positions.secondBase);
+                        thirdBase = getPlayer(team.positions.thirdBase);
+                        shortStop = getPlayer(team.positions.shortStop);
+                        leftField = getPlayer(team.positions.leftField);
+                        centerField = getPlayer(team.positions.centerField);
+                        rightField = getPlayer(team.positions.rightField);
+                    };
+                };
                 teamDataMap.put(team.id, teamData);
             };
 
@@ -650,16 +681,6 @@ module {
                     ) : Season.InProgressTeam {
                         {
                             id = teamData.id;
-                            positions = {
-                                firstBase = teamData.positions.firstBase.id;
-                                secondBase = teamData.positions.secondBase.id;
-                                thirdBase = teamData.positions.thirdBase.id;
-                                shortStop = teamData.positions.shortStop.id;
-                                leftField = teamData.positions.leftField.id;
-                                centerField = teamData.positions.centerField.id;
-                                rightField = teamData.positions.rightField.id;
-                                pitcher = teamData.positions.pitcher.id;
-                            };
                         };
                     };
                     {
@@ -691,10 +712,10 @@ module {
     };
 
     private func buildTeamInitData(
-        team : Season.TeamInfo,
+        team : Team.TeamWithId,
         allPlayers : [PlayerTypes.PlayerWithId],
         prng : Prng,
-    ) : StadiumTypes.StartMatchTeam {
+    ) : Season.TeamInfo {
 
         let teamPlayers = allPlayers
         |> Iter.fromArray(_)
@@ -713,13 +734,13 @@ module {
         )
         |> Iter.toArray(_);
 
-        let getPosition = func(position : FieldPosition.FieldPosition) : Player.PlayerWithId {
+        let getPosition = func(position : FieldPosition.FieldPosition) : Nat32 {
             let playerOrNull = teamPlayers
             |> Iter.fromArray(_)
             |> IterTools.find(_, func(p : Player.PlayerWithId) : Bool = p.position == position);
             switch (playerOrNull) {
                 case (null) Debug.trap("Team " # Principal.toText(team.id) # " is missing a player in position: " # debug_show (position)); // TODO
-                case (?player) player;
+                case (?player) player.id;
             };
         };
 
