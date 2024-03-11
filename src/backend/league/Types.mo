@@ -104,7 +104,7 @@ module {
     };
 
     public type PredictMatchOutcomeRequest = {
-        matchId : Nat32;
+        matchId : Nat;
         winner : ?Team.TeamId;
     };
 
@@ -150,6 +150,7 @@ module {
     public type StartSeasonResult = {
         #ok;
         #alreadyStarted;
+        #idTaken;
         #noStadiumsExist;
         #seedGenerationError : Text;
         #noTeams;

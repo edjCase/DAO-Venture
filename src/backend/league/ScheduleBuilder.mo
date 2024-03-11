@@ -11,18 +11,14 @@ import Util "../Util";
 import IterTools "mo:itertools/Iter";
 import DateTime "mo:datetime/DateTime";
 import Team "../models/Team";
+import Season "../models/Season";
+
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type Team = {
-        #id : Principal;
-        #seasonStandingIndex : Nat;
-        #winnerOfMatch : Nat; // Match Id of last match group
-    };
-
     public type Match = {
-        team1 : Team;
-        team2 : Team;
+        team1 : Season.TeamAssignment;
+        team2 : Season.TeamAssignment;
     };
 
     public type MatchGroup = {
@@ -71,8 +67,8 @@ module {
                     let team1Id = teamOrderForWeek.get(i);
                     let team2Id = teamOrderForWeek.get(teamCount - 1 - i); // First plays last, second plays second last, etc.
                     {
-                        team1 = #id(team1Id);
-                        team2 = #id(team2Id);
+                        team1 = #predetermined(team1Id);
+                        team2 = #predetermined(team2Id);
                     };
                 },
             )

@@ -34,22 +34,7 @@ module {
                 _,
                 func((matchGroupId, matchPredictions) : (Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>)) : MatchGroupPredictions = {
                     matchGroupId = matchGroupId;
-                    matchPredictions = matchPredictions.vals()
-                    |> Iter.map<HashMap.HashMap<Principal, Team.TeamId>, [MatchPrediction]>(
-                        _,
-                        func(matchPrediction : HashMap.HashMap<Principal, Team.TeamId>) : [MatchPrediction] {
-                            matchPrediction.entries()
-                            |> Iter.map(
-                                _,
-                                func((userId, teamId) : (Principal, Team.TeamId)) : MatchPrediction = {
-                                    userId = userId;
-                                    teamId = teamId;
-                                },
-                            )
-                            |> Iter.toArray(_);
-                        },
-                    )
-                    |> Iter.toArray(_);
+                    matchPredictions = mapMatchPredictions(matchPredictions);
                 },
             )
             |> Iter.toArray(_);
@@ -80,6 +65,11 @@ module {
                 case (?winningTeamId) matchPredictions.put(caller, winningTeamId);
             };
             #ok;
+        };
+
+        public func getMatchGroup(matchGroupId : Nat) : ?[[MatchPrediction]] {
+            let ?matchPredictions = matchGroupPredictions.get(matchGroupId) else return null;
+            ?mapMatchPredictions(matchPredictions);
         };
 
         public func getMatchGroupSummary(matchGroupId : Nat, userContext : ?Principal) : Types.GetMatchGroupPredictionsResult {
@@ -114,7 +104,26 @@ module {
         };
     };
 
-    public func toPredictionsHashMap(predictions : [MatchGroupPredictions]) : HashMap.HashMap<Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>> {
+    private func mapMatchPredictions(matchPredictions : Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>) : [[MatchPrediction]] {
+        matchPredictions.vals()
+        |> Iter.map<HashMap.HashMap<Principal, Team.TeamId>, [MatchPrediction]>(
+            _,
+            func(matchPrediction : HashMap.HashMap<Principal, Team.TeamId>) : [MatchPrediction] {
+                matchPrediction.entries()
+                |> Iter.map(
+                    _,
+                    func((userId, teamId) : (Principal, Team.TeamId)) : MatchPrediction = {
+                        userId = userId;
+                        teamId = teamId;
+                    },
+                )
+                |> Iter.toArray(_);
+            },
+        )
+        |> Iter.toArray(_);
+    };
+
+    private func toPredictionsHashMap(predictions : [MatchGroupPredictions]) : HashMap.HashMap<Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>> {
         let hashMap = HashMap.HashMap<Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>>(predictions.size(), Nat.equal, Nat32.fromNat);
         for ({ matchGroupId; matchPredictions } in Iter.fromArray(predictions)) {
             let buffer = Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>(matchPredictions.size());

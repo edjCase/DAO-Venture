@@ -101,7 +101,21 @@ module {
         description : Text;
         options : [ScenarioOption];
         metaEffect : MetaEffect;
-        started : Bool;
+        state : ScenarioState;
+    };
+
+    public type ScenarioState = {
+        #notStarted;
+        #started;
+        #resolved : ScenarioStateResolved;
+    };
+
+    public type ScenarioStateResolved = {
+        teamChoices : [{
+            teamId : Principal;
+            option : Nat;
+        }];
+        effectOutcomes : [EffectOutcome];
     };
 
     public type MetaEffect = {
@@ -153,15 +167,7 @@ module {
                 bidValue : Nat;
             }];
         };
-        #simple;
-    };
-
-    public type ResolvedScenario = Scenario and {
-        teamChoices : [{
-            teamId : Principal;
-            option : Nat;
-        }];
-        effectOutcomes : [EffectOutcome];
+        #noEffect;
     };
 
 };

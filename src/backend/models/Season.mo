@@ -22,6 +22,8 @@ module {
     };
 
     public type InProgressSeason = {
+        teams : [TeamInfo];
+        players : [Player.PlayerWithId];
         matchGroups : [InProgressSeasonMatchGroupVariant];
     };
 
@@ -45,7 +47,7 @@ module {
     };
 
     public type TeamAssignment = {
-        #predetermined : TeamInfo;
+        #predetermined : Principal;
         #seasonStandingIndex : Nat; // Current standing calculation
         #winnerOfMatch : Nat; // Look at previous match group match id winner
     };
@@ -58,11 +60,12 @@ module {
     public type ScheduledMatchGroup = {
         time : Time.Time;
         timerId : Nat;
+        stadiumId : Principal;
         matches : [ScheduledMatch];
         scenarioId : Text;
     };
 
-    public type ScheduledTeamInfo = TeamInfo and {};
+    public type ScheduledTeamInfo = { id : Principal };
 
     public type ScheduledMatch = {
         team1 : ScheduledTeamInfo;
@@ -77,7 +80,8 @@ module {
         scenarioId : Text;
     };
 
-    public type InProgressTeam = TeamInfo and {
+    public type InProgressTeam = {
+        id : Principal;
         positions : FieldPosition.TeamPositions;
     };
 
@@ -87,7 +91,8 @@ module {
         aura : MatchAura.MatchAura;
     };
 
-    public type CompletedMatchTeam = TeamInfo and {
+    public type CompletedMatchTeam = {
+        id : Principal;
         score : Int;
         positions : FieldPosition.TeamPositions;
     };
