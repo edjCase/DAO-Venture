@@ -25,7 +25,6 @@ import MatchAura "../models/MatchAura";
 import Season "../models/Season";
 import Util "../Util";
 import Scenario "../models/Scenario";
-import TeamState "./TeamState";
 import ScenarioVoting "ScenarioVoting";
 import Dao "../Dao";
 // TODO cant use because of generating did files for JS/TS
@@ -42,7 +41,6 @@ shared (install) actor class TeamActor(
   stable var stableData = {
     scenarioVoting : [ScenarioVoting.Data] = [];
     dao : Dao.StableData<Types.ProposalContent> = {
-      members = [];
       proposals = [];
       proposalDuration = #days(3);
       votingThreshold = #percent({
@@ -70,7 +68,6 @@ shared (install) actor class TeamActor(
 
   system func preupgrade() {
     stableData := {
-      stableData with
       scenarioVoting = scenarioVotingManager.toStableData();
       dao = dao.toStableData();
     };

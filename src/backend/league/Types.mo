@@ -14,18 +14,23 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getTeamStandings : query () -> async GetTeamStandingsResult;
-        getScenario : query (id : Text) -> async ?Scenario;
+        getScenario : query (id : Text) -> async GetScenarioResult;
         processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
-        getUpcomingMatchPredictions : () -> async UpcomingMatchPredictionsResult;
+        getMatchGroupPredictions : (matchGroupId : Nat) -> async GetMatchGroupPredictionsResult;
         updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
         setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
         getAdmins : query () -> async [Principal];
+    };
+
+    public type GetScenarioResult = {
+        #ok : Scenario;
+        #notFound;
     };
 
     public type Scenario = {
@@ -78,12 +83,16 @@ module {
         #notAuthorized;
     };
 
-    public type UpcomingMatchPredictionsResult = {
-        #ok : [UpcomingMatchPrediction];
-        #noUpcomingMatches;
+    public type GetMatchGroupPredictionsResult = {
+        #ok : MatchGroupPredictionSummary;
+        #notFound;
     };
 
-    public type UpcomingMatchPrediction = {
+    public type MatchGroupPredictionSummary = {
+        matches : [MatchPredictionSummary];
+    };
+
+    public type MatchPredictionSummary = {
         team1 : Nat;
         team2 : Nat;
         yourVote : ?Team.TeamId;
