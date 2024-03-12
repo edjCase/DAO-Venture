@@ -50,7 +50,7 @@ module {
         rounds : Buffer.Buffer<MutableRoundLog>;
     };
 
-    public class MutableMatchState(immutableState : StadiumTypes.InProgressMatch) = {
+    public class MutableMatchState(immutableState : StadiumTypes.Match) = {
 
         private func toMutableTeam(team : StadiumTypes.TeamState) : MutableTeamState {
             {

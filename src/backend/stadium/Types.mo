@@ -5,7 +5,6 @@ import MatchAura "../models/MatchAura";
 import Base "../models/Base";
 import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
-import Season "../models/Season";
 import Trait "../models/Trait";
 
 module {
@@ -92,11 +91,6 @@ module {
 
     public type StartMatchGroupResult = StartMatchGroupError or {
         #ok;
-    };
-
-    public type MatchVariant = {
-        #inProgress : InProgressMatch;
-        #completed : Season.CompletedMatch;
     };
 
     public type RoundLog = {
@@ -208,7 +202,7 @@ module {
         rounds : [RoundLog];
     };
 
-    public type InProgressMatch = {
+    public type Match = {
         team1 : TeamState;
         team2 : TeamState;
         offenseTeamId : Team.TeamId;
@@ -231,14 +225,18 @@ module {
         #playerExpectedOnField : PlayerExpectedOnFieldError;
     };
 
-    public type CompletedTickResult = {
-        match : Season.CompletedMatch;
-        matchStats : [Player.PlayerMatchStatsWithId];
+    public type TickResult = {
+        match : Match;
+        status : MatchStatus;
     };
 
-    public type TickResult = {
-        #inProgress : InProgressMatch;
-        #completed : CompletedTickResult;
+    public type MatchStatus = {
+        #inProgress;
+        #completed : MatchStatusCompleted;
+    };
+
+    public type MatchStatusCompleted = {
+        reason : MatchEndReason;
     };
 
     public type MatchGroup = {

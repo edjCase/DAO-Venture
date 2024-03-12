@@ -28,6 +28,11 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
 
     type MatchGroupId = Nat;
 
+    type CompletedMatchResult = {
+        match : Season.CompletedMatch;
+        matchStats : [Player.PlayerMatchStatsWithId];
+    };
+
     stable var matchGroups = Trie.empty<Nat, Types.MatchGroup>();
 
     system func postupgrade() {
@@ -70,7 +75,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         let prng = PseudoRandomX.fromBlob(await Random.blob());
         let tickTimerId = startTickTimer<system>(request.id);
 
-        let matches = Buffer.Buffer<Types.TickResult>(request.matches.size());
+        let tickResults = Buffer.Buffer<Types.TickResult>(request.matches.size());
         label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
 
             let team1IsOffense = prng.nextCoin();
@@ -81,15 +86,18 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
                 team1IsOffense,
                 prng,
             );
-            matches.add(#inProgress(initState));
+            tickResults.add({
+                match = initState;
+                status = #inProgress;
+            });
         };
-        if (matches.size() == 0) {
+        if (tickResults.size() == 0) {
             return #noMatchesSpecified;
         };
 
         let matchGroup : Types.MatchGroupWithId = {
             id = request.id;
-            matches = Buffer.toArray(matches);
+            matches = Buffer.toArray(tickResults);
             tickTimerId = tickTimerId;
             currentSeed = prng.getCurrentSeed();
         };
@@ -130,7 +138,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
                     |> Iter.fromArray(_)
                     |> Iter.map(
                         _,
-                        func(tickResult : Types.CompletedTickResult) : Season.CompletedMatch = tickResult.match,
+                        func(tickResult : CompletedMatchResult) : Season.CompletedMatch = tickResult.match,
                     )
                     |> Iter.toArray(_);
 
@@ -138,7 +146,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
                     |> Iter.fromArray(_)
                     |> Iter.map(
                         _,
-                        func(tickResult : Types.CompletedTickResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
+                        func(tickResult : CompletedMatchResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
                     )
                     |> IterTools.flatten<Player.PlayerMatchStatsWithId>(_)
                     |> Iter.toArray(_);
@@ -234,36 +242,96 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         Debug.print("Tick Match Group Callback Result - " # message);
     };
 
-    private func tickMatches(prng : Prng, matches : [Types.TickResult]) : {
-        #completed : [Types.CompletedTickResult];
+    private func tickMatches(prng : Prng, tickResults : [Types.TickResult]) : {
+        #completed : [CompletedMatchResult];
         #inProgress : [Types.TickResult];
     } {
-        let completedMatches = Buffer.Buffer<Types.CompletedTickResult>(matches.size());
-        let allMatches = Buffer.Buffer<Types.TickResult>(matches.size());
-        for (match in Iter.fromArray(matches)) {
-            let updatedMatch : Types.TickResult = switch (match) {
-                case (#completed(completedMatch)) {
-                    completedMatches.add(completedMatch);
-                    #completed(completedMatch);
+        let completedMatches = Buffer.Buffer<(Types.Match, Types.MatchStatusCompleted)>(tickResults.size());
+        let updatedTickResults = Buffer.Buffer<Types.TickResult>(tickResults.size());
+        for (tickResult in Iter.fromArray(tickResults)) {
+            let updatedTickResult = switch (tickResult.status) {
+                case (#completed(c)) {
+                    completedMatches.add((tickResult.match, c));
+                    tickResult;
                 };
-                case (#inProgress(inProgressState)) {
-                    switch (MatchSimulator.tick(inProgressState, prng)) {
-                        case (#completed(completedMatch)) {
-                            completedMatches.add(completedMatch);
-                            #completed(completedMatch);
-                        };
-                        case (#inProgress(updatedMatch)) #inProgress(updatedMatch);
-                    };
-                };
+                case (#inProgress) MatchSimulator.tick(tickResult.match, prng);
             };
-            allMatches.add(updatedMatch);
+            updatedTickResults.add(updatedTickResult);
         };
-        if (allMatches.size() == completedMatches.size()) {
+        if (updatedTickResults.size() == completedMatches.size()) {
             // If all matches are complete, then complete the group
-            #completed(Buffer.toArray(completedMatches));
+            let completedCompiledMatches = compileCompletedMatches(completedMatches);
+            #completed(completedCompiledMatches);
         } else {
-            #inProgress(Buffer.toArray(allMatches));
+            #inProgress(Buffer.toArray(updatedTickResults));
         };
+    };
+
+    private func compileCompletedMatch(match : Types.Match, status : Types.MatchStatusCompleted) : CompletedMatchResult {
+        let (winner, matchEndReason) : (Team.TeamIdOrTie, Types.MatchEndReason) = switch (status.reason) {
+            case (#noMoreRounds) {
+                let winner = if (match.team1.score > match.team2.score) {
+                    #team1;
+                } else if (match.team1.score == match.team2.score) {
+                    #tie;
+                } else {
+                    #team2;
+                };
+                (winner, #noMoreRounds);
+            };
+            case (#error(e)) (#tie, #error(e));
+        };
+        match.addEvent(#matchEnd({ reason = matchEndReason }));
+        let log : Types.MatchLog = fromMutableLog(match.log);
+
+        let playerStats = buildPlayerStats();
+
+        {
+            match = {
+                team1 = mapMutableTeam(match.team1);
+                team2 = mapMutableTeam(match.team2);
+                aura = match.aura;
+                log = log;
+                winner = winner;
+                playerStats = playerStats;
+            };
+            matchStats = playerStats;
+        };
+    };
+
+    private func buildPlayerStats() : [Player.PlayerMatchStatsWithId] {
+        state.players.vals()
+        |> Iter.map(
+            _,
+            func(player : MutableState.MutablePlayerStateWithId) : Player.PlayerMatchStatsWithId {
+                {
+                    playerId = player.id;
+                    battingStats = {
+                        atBats = player.matchStats.battingStats.atBats;
+                        hits = player.matchStats.battingStats.hits;
+                        runs = player.matchStats.battingStats.runs;
+                        strikeouts = player.matchStats.battingStats.strikeouts;
+                        homeRuns = player.matchStats.battingStats.homeRuns;
+                    };
+                    catchingStats = {
+                        successfulCatches = player.matchStats.catchingStats.successfulCatches;
+                        missedCatches = player.matchStats.catchingStats.missedCatches;
+                        throws = player.matchStats.catchingStats.throws;
+                        throwOuts = player.matchStats.catchingStats.throwOuts;
+                    };
+                    pitchingStats = {
+                        pitches = player.matchStats.pitchingStats.pitches;
+                        strikes = player.matchStats.pitchingStats.strikes;
+                        hits = player.matchStats.pitchingStats.hits;
+                        runs = player.matchStats.pitchingStats.runs;
+                        strikeouts = player.matchStats.pitchingStats.strikeouts;
+                        homeRuns = player.matchStats.pitchingStats.homeRuns;
+                    };
+                    injuries = player.matchStats.injuries;
+                };
+            },
+        )
+        |> Iter.toArray(_);
     };
 
     private func getMatchGroupOrNull(matchGroupId : Nat) : ?Types.MatchGroup {

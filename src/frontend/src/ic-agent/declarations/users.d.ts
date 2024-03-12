@@ -14,6 +14,9 @@ export type AddTeamOwnerResult = { 'ok' : null } |
 export interface AwardPointsRequest { 'userId' : Principal, 'points' : bigint }
 export type AwardPointsResult = { 'ok' : null } |
   { 'notAuthorized' : null };
+export type GetTeamOwnersRequest = { 'all' : null } |
+  { 'team' : Principal };
+export type GetTeamOwnersResult = { 'ok' : Array<UserVotingInfo> };
 export type GetUserResult = { 'ok' : User } |
   { 'notAuthorized' : null } |
   { 'notFound' : null };
@@ -24,18 +27,18 @@ export type SetUserFavoriteTeamResult = { 'ok' : null } |
   { 'teamNotFound' : null };
 export type TeamAssociationKind = { 'fan' : null } |
   { 'owner' : { 'votingPower' : bigint } };
-export interface TeamOwnerInfo { 'id' : Principal, 'votingPower' : bigint }
 export interface User {
   'id' : Principal,
   'team' : [] | [{ 'id' : Principal, 'kind' : TeamAssociationKind }],
   'points' : bigint,
 }
+export interface UserVotingInfo { 'id' : Principal, 'votingPower' : bigint }
 export interface _SERVICE {
   'addTeamOwner' : ActorMethod<[AddTeamOwnerRequest], AddTeamOwnerResult>,
   'awardPoints' : ActorMethod<[Array<AwardPointsRequest>], AwardPointsResult>,
   'get' : ActorMethod<[Principal], GetUserResult>,
   'getAll' : ActorMethod<[], Array<User>>,
-  'getTeamOwners' : ActorMethod<[Principal], Array<TeamOwnerInfo>>,
+  'getTeamOwners' : ActorMethod<[GetTeamOwnersRequest], GetTeamOwnersResult>,
   'setFavoriteTeam' : ActorMethod<
     [Principal, Principal],
     SetUserFavoriteTeamResult

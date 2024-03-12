@@ -1,13 +1,26 @@
-import { writable } from "svelte/store";
-import { UpcomingMatchPrediction } from "../ic-agent/declarations/league";
+import { Writable, writable } from "svelte/store";
 import { leagueAgentFactory } from "../ic-agent/League";
+import { MatchGroupPredictionSummary } from "../ic-agent/declarations/league";
+import { Subscriber } from "svelte/motion";
 
 
 export const predictionStore = (() => {
-    const { subscribe, set } = writable<UpcomingMatchPrediction[] | undefined>();
+    const matchGroupPredictions = new Map<bigint, Writable<MatchGroupPredictionSummary | undefined>>();
 
-    const refetch = () => {
-        leagueAgentFactory().getUpcomingMatchPredictions().then((result) => {
+
+    const getOrCreateMatchGroupStore = (matchGroupId: bigint): Writable<MatchGroupPredictionSummary | undefined> => {
+        let store = matchGroupPredictions.get(matchGroupId);
+        if (!store) {
+            store = writable<MatchGroupPredictionSummary | undefined>();
+            matchGroupPredictions.set(matchGroupId, store);
+            refetchMatchGroup(matchGroupId);
+        };
+        return store;
+    };
+
+    const refetchMatchGroup = (matchGroupId: bigint) => {
+        let { set } = getOrCreateMatchGroupStore(matchGroupId);
+        leagueAgentFactory().getMatchGroupPredictions(matchGroupId).then((result) => {
             if ('ok' in result) {
                 const matchPredictions = result.ok;
                 set(matchPredictions);
@@ -18,11 +31,14 @@ export const predictionStore = (() => {
         });
     };
 
-    refetch();
+    const subscribeToMatchGroup = (matchGroupId: bigint, callback: Subscriber<MatchGroupPredictionSummary | undefined>) => {
+        let { subscribe } = getOrCreateMatchGroupStore(matchGroupId);
+        subscribe(callback);
+    };
 
     return {
-        subscribe,
-        refetch
+        subscribeToMatchGroup,
+        refetchMatchGroup
     };
 })();
 

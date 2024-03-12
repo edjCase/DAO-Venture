@@ -1,22 +1,24 @@
 import Principal "mo:base/Principal";
-import Time "mo:base/Time";
 import Nat "mo:base/Nat";
-import Bool "mo:base/Bool";
-import Player "../models/Player";
-import StadiumTypes "../stadium/Types";
-import MatchAura "../models/MatchAura";
-import Team "../models/Team";
-import Season "../models/Season";
 
 module {
 
     public type Actor = actor {
         get : query (userId : Principal) -> async GetUserResult;
         getAll : query () -> async [User];
-        getTeamOwners : query (teamId : Principal) -> async [TeamOwnerInfo];
+        getTeamOwners : query (request : GetTeamOwnersRequest) -> async GetTeamOwnersResult;
         setFavoriteTeam : (userId : Principal, teamId : Principal) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
         awardPoints : (awards : [AwardPointsRequest]) -> async AwardPointsResult;
+    };
+
+    public type GetTeamOwnersRequest = {
+        #team : Principal;
+        #all;
+    };
+
+    public type GetTeamOwnersResult = {
+        #ok : [UserVotingInfo];
     };
 
     public type TeamAssociationKind = {
@@ -36,7 +38,7 @@ module {
         points : Int;
     };
 
-    public type TeamOwnerInfo = {
+    public type UserVotingInfo = {
         id : Principal;
         votingPower : Nat;
     };

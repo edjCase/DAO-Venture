@@ -8,7 +8,9 @@ export type CreateProposalResult = { 'ok' : bigint } |
 export type GetCyclesResult = { 'ok' : bigint } |
   { 'notAuthorized' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : string }
-export type GetScenarioVoteResult = { 'ok' : [] | [bigint] } |
+export type GetScenarioVoteResult = {
+    'ok' : [] | [{ 'option' : bigint, 'votingPower' : bigint }]
+  } |
   { 'scenarioNotFound' : null };
 export interface GetWinningScenarioOptionRequest { 'scenarioId' : string }
 export type GetWinningScenarioOptionResult = { 'ok' : bigint } |
@@ -29,20 +31,22 @@ export type OnSeasonCompleteResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface Proposal {
   'id' : bigint,
-  'status' : ProposalStatus,
   'content' : ProposalContent,
   'timeStart' : bigint,
   'votes' : Array<[Principal, Vote]>,
+  'statusLog' : Array<ProposalStatusLogEntry>,
   'endTimerId' : [] | [bigint],
   'proposer' : Principal,
   'timeEnd' : bigint,
 }
-export type ProposalContent = {
-    'trainPlayer' : { 'playerId' : number, 'skill' : Skill }
-  };
-export type ProposalStatus = { 'open' : null } |
-  { 'rejected' : null } |
-  { 'executed' : null };
+export type ProposalContent = { 'changeName' : { 'name' : string } } |
+  { 'trainPlayer' : { 'playerId' : number, 'skill' : Skill } };
+export type ProposalStatusLogEntry = {
+    'failedToExecute' : { 'time' : Time, 'error' : string }
+  } |
+  { 'rejected' : { 'time' : Time } } |
+  { 'executing' : { 'time' : Time } } |
+  { 'executed' : { 'time' : Time } };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -72,6 +76,7 @@ export interface TeamActor {
   'voteOnProposal' : ActorMethod<[VoteOnProposalRequest], VoteOnProposalResult>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
 }
+export type Time = bigint;
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export interface VoteOnProposalRequest {
   'vote' : boolean,

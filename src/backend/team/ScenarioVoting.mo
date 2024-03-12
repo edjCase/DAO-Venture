@@ -7,7 +7,7 @@ import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
 
 module {
-    public type Data = {
+    public type StableData = {
         scenarioId : Text;
         optionCount : Nat;
         votes : [(Principal, Vote)];
@@ -18,11 +18,11 @@ module {
         votingPower : Nat;
     };
 
-    public class Manager(data : [Data]) {
+    public class Manager(data : [StableData]) {
         let iter = data.vals()
-        |> Iter.map<Data, (Text, Handler)>(
+        |> Iter.map<StableData, (Text, Handler)>(
             _,
-            func(d : Data) : (Text, Handler) = (d.scenarioId, Handler(d)),
+            func(d : StableData) : (Text, Handler) = (d.scenarioId, Handler(d)),
         );
         let handlers = HashMap.fromIter<Text, Handler>(iter, data.size(), Text.equal, Text.hash);
 
@@ -31,7 +31,7 @@ module {
         };
 
         public func add(scenarioId : Text, optionCount : Nat) {
-            let data : Data = {
+            let data : StableData = {
                 scenarioId = scenarioId;
                 optionCount = optionCount;
                 votes = [];
@@ -45,17 +45,17 @@ module {
             #ok;
         };
 
-        public func toStableData() : [Data] {
+        public func toStableData() : [StableData] {
             handlers.entries()
-            |> Iter.map<(Text, Handler), Data>(
+            |> Iter.map<(Text, Handler), StableData>(
                 _,
-                func(e : (Text, Handler)) : Data = e.1.toStableData(),
+                func(e : (Text, Handler)) : StableData = e.1.toStableData(),
             )
             |> Iter.toArray(_);
         };
     };
 
-    public class Handler(data : Data) {
+    public class Handler(data : StableData) {
         let votes = HashMap.fromIter<Principal, Vote>(data.votes.vals(), data.votes.size(), Principal.equal, Principal.hash);
 
         public func vote(
@@ -103,7 +103,7 @@ module {
             calculateVote<Nat>(optionVotes.entries());
         };
 
-        public func toStableData() : Data {
+        public func toStableData() : StableData {
             let voteData = votes.entries()
             |> Iter.toArray(_);
             {

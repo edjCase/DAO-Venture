@@ -28,14 +28,20 @@ actor {
         |> Iter.toArray(_);
     };
 
-    public shared query func getTeamOwners(teamId : Principal) : async [Types.TeamOwnerInfo] {
-        Trie.iter(users)
+    public shared query func getTeamOwners(request : Types.GetTeamOwnersRequest) : async Types.GetTeamOwnersResult {
+        let owners = Trie.iter(users)
         |> IterTools.mapFilter(
             _,
-            func((userId, user) : (Principal, Types.User)) : ?Types.TeamOwnerInfo {
+            func((userId, user) : (Principal, Types.User)) : ?Types.UserVotingInfo {
                 let ?team = user.team else return null;
-                if (team.id != teamId) {
-                    return null;
+                switch (request) {
+                    case (#team(teamId)) {
+                        // Filter to only the team we want
+                        if (team.id != teamId) {
+                            return null;
+                        };
+                    };
+                    case (#all) (); // No filter
                 };
                 let #owner(o) = team.kind else return null;
                 ?{
@@ -45,6 +51,7 @@ actor {
             },
         )
         |> Iter.toArray(_);
+        #ok(owners);
     };
 
     public shared ({ caller }) func setFavoriteTeam(userId : Principal, teamId : Principal) : async Types.SetUserFavoriteTeamResult {

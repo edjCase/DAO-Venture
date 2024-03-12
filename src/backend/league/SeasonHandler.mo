@@ -30,7 +30,7 @@ import FieldPosition "../models/FieldPosition";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type Data = {
+    public type StableData = {
         seasonStatus : Season.SeasonStatus;
         teamStandings : ?[Types.TeamStandingInfo]; // First team to last team
     };
@@ -50,7 +50,7 @@ module {
         };
     };
 
-    public class SeasonHandler(data : Data) {
+    public class SeasonHandler(data : StableData) {
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
 
         // First team to last team
@@ -59,7 +59,7 @@ module {
             case (?standings) ?Buffer.fromArray(standings);
         };
 
-        public func toStableData() : Data {
+        public func toStableData() : StableData {
             {
                 seasonStatus = seasonStatus;
                 teamStandings = switch (teamStandings) {

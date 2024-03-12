@@ -12,7 +12,6 @@ export interface BaseState {
   'secondBase' : [] | [PlayerId__1],
   'firstBase' : [] | [PlayerId__1],
 }
-export type Blessing = { 'skill' : Skill };
 export interface CancelMatchGroupRequest { 'id' : bigint }
 export type CancelMatchGroupResult = { 'ok' : null } |
   { 'matchGroupNotFound' : null };
@@ -22,19 +21,11 @@ export interface CompletedMatch {
   'aura' : MatchAura,
   'winner' : TeamIdOrTie,
 }
-export interface CompletedMatchTeam {
-  'id' : Principal,
-  'name' : string,
-  'score' : bigint,
-  'logoUrl' : string,
-  'positions' : TeamPositions,
-}
+export interface CompletedMatchTeam { 'id' : Principal, 'score' : bigint }
 export interface CompletedTickResult {
   'match' : CompletedMatch,
   'matchStats' : Array<PlayerMatchStatsWithId>,
 }
-export type Curse = { 'skill' : Skill } |
-  { 'injury' : Injury };
 export type Effect = { 'skill' : { 'skill' : [] | [Skill], 'delta' : bigint } };
 export type Event = {
     'out' : { 'playerId' : PlayerId, 'reason' : OutReason }
@@ -51,8 +42,6 @@ export type Event = {
     }
   } |
   { 'auraTrigger' : { 'id' : MatchAura, 'description' : string } } |
-  { 'curse' : { 'playerId' : number, 'curse' : Curse } } |
-  { 'blessing' : { 'playerId' : number, 'blessing' : Blessing } } |
   {
     'traitTrigger' : {
       'id' : Trait,

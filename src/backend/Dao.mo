@@ -8,6 +8,8 @@ import Time "mo:base/Time";
 import Timer "mo:base/Timer";
 import Float "mo:base/Float";
 import Int "mo:base/Int";
+import Buffer "mo:base/Buffer";
+import Error "mo:base/Error";
 
 module {
     public type StableData<TProposalContent> = {
@@ -40,13 +42,23 @@ module {
         endTimerId : ?Nat;
         content : TProposalContent;
         votes : [(Principal, Vote)];
-        status : ProposalStatus;
+        statusLog : [ProposalStatusLogEntry];
     };
 
-    public type ProposalStatus = {
-        #open;
-        #executed;
-        #rejected;
+    public type ProposalStatusLogEntry = {
+        #executing : {
+            time : Time.Time;
+        };
+        #executed : {
+            time : Time.Time;
+        };
+        #failedToExecute : {
+            time : Time.Time;
+            error : Text;
+        };
+        #rejected : {
+            time : Time.Time;
+        };
     };
 
     public type Vote = {
@@ -62,7 +74,7 @@ module {
         var endTimerId : ?Nat;
         content : TProposalContent;
         votes : HashMap.HashMap<Principal, Vote>;
-        var status : ProposalStatus; // TODO status log
+        statusLog : Buffer.Buffer<ProposalStatusLogEntry>;
         votingSummary : VotingSummary;
     };
 
@@ -90,9 +102,14 @@ module {
         #proposalNotFound;
     };
 
+    public type OnExecuteResult = {
+        #ok;
+        #err : Text;
+    };
+
     public class Dao<TProposalContent>(
         data : StableData<TProposalContent>,
-        onExecute : Proposal<TProposalContent> -> async* (),
+        onExecute : Proposal<TProposalContent> -> async* OnExecuteResult,
         onReject : Proposal<TProposalContent> -> async* (),
     ) {
         func hashNat(n : Nat) : Nat32 = Nat32.fromNat(n); // TODO
@@ -122,7 +139,8 @@ module {
                     case (?id) Timer.cancelTimer(id);
                 };
                 proposal.endTimerId := null;
-                if (proposal.status == #open) {
+                let currentStatus = getProposalStatus(proposal.statusLog);
+                if (currentStatus == #open) {
                     let proposalDurationNanoseconds = durationToNanoseconds(proposalDuration);
                     let endTimerId = createEndTimer<system>(proposal.id, proposalDurationNanoseconds);
                     proposal.endTimerId := ?endTimerId;
@@ -136,7 +154,7 @@ module {
                 proposal with
                 endTimerId = proposal.endTimerId;
                 votes = Iter.toArray(proposal.votes.entries());
-                status = proposal.status;
+                statusLog = Buffer.toArray(proposal.statusLog);
                 votingSummary = {
                     yes = proposal.votingSummary.yes;
                     no = proposal.votingSummary.no;
@@ -157,7 +175,8 @@ module {
         public func vote(proposalId : Nat, voterId : Principal, vote : Bool) : async* VoteResult {
             let ?proposal = proposals.get(proposalId) else return #proposalNotFound;
             let now = Time.now();
-            if (proposal.timeStart > now or proposal.timeEnd < now or proposal.status != #open) {
+            let currentStatus = getProposalStatus(proposal.statusLog);
+            if (proposal.timeStart > now or proposal.timeEnd < now or currentStatus != #open) {
                 return #votingClosed;
             };
             let ?existingVote = proposal.votes.get(voterId) else return #notAuthorized; // Only allow members to vote who existed when the proposal was created
@@ -194,17 +213,6 @@ module {
             content : TProposalContent,
             members : [Member],
         ) : CreateProposalResult {
-            // TODO check proposer is member here or in actor?
-            let isAMember = members
-            |> Iter.fromArray(_)
-            |> Iter.filter(
-                _,
-                func(member : Member) : Bool = member.id == proposer,
-            )
-            |> _.next() != null;
-            if (not isAMember) {
-                return #notAuthorized;
-            };
             let now = Time.now();
             let votes = HashMap.HashMap<Principal, Vote>(0, Principal.equal, Principal.hash);
             // Take snapshot of members at the time of proposal creation
@@ -228,7 +236,7 @@ module {
                 timeEnd = now + proposalDurationNanoseconds;
                 var endTimerId = ?endTimerId;
                 votes = votes;
-                var status = #open;
+                statusLog = Buffer.Buffer<ProposalStatusLogEntry>(0);
                 votingSummary = buildVotingSummary(votes);
             };
             proposals.put(nextProposalId, proposal);
@@ -265,7 +273,7 @@ module {
             #alreadyEnded;
         } {
             let ?mutableProposal = proposals.get(proposalId) else Debug.trap("Proposal not found for onProposalEnd: " # Nat.toText(proposalId));
-            switch (mutableProposal.status) {
+            switch (getProposalStatus(mutableProposal.statusLog)) {
                 case (#open) {
                     let passed = switch (calculateVoteStatus(mutableProposal)) {
                         case (#passed) true;
@@ -274,9 +282,7 @@ module {
                     await* executeOrRejectProposal(mutableProposal, passed);
                     #ok;
                 };
-                case (#executed or #rejected) {
-                    #alreadyEnded;
-                };
+                case (_) #alreadyEnded;
             };
         };
 
@@ -302,11 +308,29 @@ module {
                 case (?id) Timer.cancelTimer(id);
             };
             mutableProposal.endTimerId := null;
-            mutableProposal.status := if (execute) #executed else #rejected;
             let proposal = fromMutableProposal(mutableProposal);
             if (execute) {
-                await* onExecute(proposal);
+                mutableProposal.statusLog.add(#executing({ time = Time.now() }));
+
+                let newStatus : ProposalStatusLogEntry = try {
+                    switch (await* onExecute(proposal)) {
+                        case (#ok) #executed({
+                            time = Time.now();
+                        });
+                        case (#err(e)) #failedToExecute({
+                            time = Time.now();
+                            error = e;
+                        });
+                    };
+                } catch (e) {
+                    #failedToExecute({
+                        time = Time.now();
+                        error = Error.message(e);
+                    });
+                };
+                mutableProposal.statusLog.add(newStatus);
             } else {
+                mutableProposal.statusLog.add(#rejected({ time = Time.now() }));
                 await* onReject(proposal);
             };
         };
@@ -347,11 +371,20 @@ module {
 
     };
 
+    private func getProposalStatus(proposalStatusLog : Buffer.Buffer<ProposalStatusLogEntry>) : ProposalStatusLogEntry or {
+        #open;
+    } {
+        if (proposalStatusLog.size() < 1) {
+            return #open;
+        };
+        proposalStatusLog.get(proposalStatusLog.size() - 1);
+    };
+
     private func fromMutableProposal<TProposalContent>(proposal : MutableProposal<TProposalContent>) : Proposal<TProposalContent> = {
         proposal with
         endTimerId = proposal.endTimerId;
         votes = Iter.toArray(proposal.votes.entries());
-        status = proposal.status;
+        statusLog = Buffer.toArray(proposal.statusLog);
         votingSummary = {
             yes = proposal.votingSummary.yes;
             no = proposal.votingSummary.no;
@@ -370,7 +403,7 @@ module {
             proposal with
             var endTimerId = proposal.endTimerId;
             votes = votes;
-            var status = proposal.status;
+            statusLog = Buffer.fromArray<ProposalStatusLogEntry>(proposal.statusLog);
             votingSummary = buildVotingSummary(votes);
         };
     };

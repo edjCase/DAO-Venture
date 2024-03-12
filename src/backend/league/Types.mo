@@ -1,20 +1,18 @@
 import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Nat "mo:base/Nat";
-import Bool "mo:base/Bool";
 import Player "../models/Player";
-import StadiumTypes "../stadium/Types";
-import MatchAura "../models/MatchAura";
 import Team "../models/Team";
 import Season "../models/Season";
 import Scenario "../models/Scenario";
+import Dao "../Dao";
 
 module {
     public type LeagueActor = actor {
+        createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getTeamStandings : query () -> async GetTeamStandingsResult;
-        getScenario : query (id : Text) -> async GetScenarioResult;
         processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
@@ -24,8 +22,24 @@ module {
         updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
-        setUserIsAdmin : (id : Principal, isAdmin : Bool) -> async SetUserIsAdminResult;
-        getAdmins : query () -> async [Principal];
+    };
+
+    public type Proposal = Dao.Proposal<ProposalContent>;
+
+    public type ProposalContent = {
+        #changeTeamName : {
+            teamId : Principal;
+            name : Text;
+        };
+    };
+
+    public type CreateProposalRequest = {
+        content : ProposalContent;
+    };
+
+    public type CreateProposalResult = {
+        #ok : Nat;
+        #notAuthorized;
     };
 
     public type GetScenarioResult = {
@@ -76,11 +90,6 @@ module {
         #ok;
         #notAuthorized;
         #seasonNotInProgress;
-    };
-
-    public type SetUserIsAdminResult = {
-        #ok;
-        #notAuthorized;
     };
 
     public type GetMatchGroupPredictionsResult = {

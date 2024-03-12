@@ -52,6 +52,9 @@ module {
     public type Proposal = Dao.Proposal<ProposalContent>;
 
     public type ProposalContent = {
+        #changeName : {
+            name : Text;
+        };
         #trainPlayer : {
             playerId : Nat32;
             skill : Skill.Skill;

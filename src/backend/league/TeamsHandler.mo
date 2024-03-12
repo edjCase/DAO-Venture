@@ -13,15 +13,15 @@ import TeamTypes "../team/Types";
 
 module {
 
-    public type Data = {
+    public type StableData = {
         teams : [Team.TeamWithId];
         teamFactoryInitialized : Bool;
     };
-    public class Handler(data : Data) {
+    public class Handler(data : StableData) {
         var teams : HashMap.HashMap<Principal, Team.Team> = toTeamHashMap(data.teams);
         var teamFactoryInitialized = data.teamFactoryInitialized;
 
-        public func toStableData() : Data {
+        public func toStableData() : StableData {
             let teams = getAll();
             return {
                 teams = teams;
@@ -39,6 +39,15 @@ module {
                 },
             )
             |> Iter.toArray(_);
+        };
+
+        public func updateTeamName(teamId : Principal, newName : Text) : () {
+            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Principal.toText(teamId));
+            let newTeam : Team.Team = {
+                team with
+                name = newName;
+            };
+            teams.put(teamId, newTeam);
         };
 
         public func updateTeamEnergy(teamId : Principal, delta : Int) : () {

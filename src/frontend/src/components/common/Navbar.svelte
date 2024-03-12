@@ -11,18 +11,7 @@
   import { ChevronDownOutline } from "flowbite-svelte-icons";
   import { onMount } from "svelte";
   import NavBarLink from "./NavBarLink.svelte";
-  import { Principal } from "@dfinity/principal";
   import { Link } from "svelte-routing";
-  import { identityStore } from "../../stores/IdentityStore";
-
-  let adminUsers: string[] = [];
-  $: identity = $identityStore;
-
-  identityStore.subscribeAdmins((adminIds: Principal[]) => {
-    adminUsers = adminIds.map((id) => id.toString());
-  });
-
-  $: isAdmin = identity && adminUsers.includes(identity.id.toString());
 
   let activeUrl = "";
 
@@ -85,8 +74,6 @@
         >{item.name}</a
       >
     </MegaMenu>
-    {#if isAdmin}
-      <NavBarLink to="/admin">Admin</NavBarLink>
-    {/if}
+    <NavBarLink to="/admin">Admin</NavBarLink>
   </NavUl>
 </Navbar>

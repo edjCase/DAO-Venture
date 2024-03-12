@@ -10,7 +10,7 @@ import Team "../models/Team";
 import Types "Types";
 
 module {
-    public type Data = {
+    public type StableData = {
         matchGroups : [MatchGroupPredictions];
     };
 
@@ -24,11 +24,11 @@ module {
         teamId : Team.TeamId;
     };
 
-    public class Handler(data : Data) {
+    public class Handler(data : StableData) {
         // MatchGroupId => Match Array of UserId => TeamId votes
         public var matchGroupPredictions : HashMap.HashMap<Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>> = toPredictionsHashMap(data.matchGroups);
 
-        public func toStableData() : Data {
+        public func toStableData() : StableData {
             let matchGroups = matchGroupPredictions.entries()
             |> Iter.map(
                 _,

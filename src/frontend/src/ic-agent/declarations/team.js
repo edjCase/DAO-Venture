@@ -9,6 +9,7 @@ export const idlFactory = ({ IDL }) => {
     'throwingPower' : IDL.Null,
   });
   const ProposalContent = IDL.Variant({
+    'changeName' : IDL.Record({ 'name' : IDL.Text }),
     'trainPlayer' : IDL.Record({ 'playerId' : IDL.Nat32, 'skill' : Skill }),
   });
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
@@ -20,28 +21,30 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'notAuthorized' : IDL.Null,
   });
-  const ProposalStatus = IDL.Variant({
-    'open' : IDL.Null,
-    'rejected' : IDL.Null,
-    'executed' : IDL.Null,
-  });
   const Vote = IDL.Record({
     'value' : IDL.Opt(IDL.Bool),
     'votingPower' : IDL.Nat,
   });
+  const Time = IDL.Int;
+  const ProposalStatusLogEntry = IDL.Variant({
+    'failedToExecute' : IDL.Record({ 'time' : Time, 'error' : IDL.Text }),
+    'rejected' : IDL.Record({ 'time' : Time }),
+    'executing' : IDL.Record({ 'time' : Time }),
+    'executed' : IDL.Record({ 'time' : Time }),
+  });
   const Proposal = IDL.Record({
     'id' : IDL.Nat,
-    'status' : ProposalStatus,
     'content' : ProposalContent,
     'timeStart' : IDL.Int,
     'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
+    'statusLog' : IDL.Vec(ProposalStatusLogEntry),
     'endTimerId' : IDL.Opt(IDL.Nat),
     'proposer' : IDL.Principal,
     'timeEnd' : IDL.Int,
   });
   const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Text });
   const GetScenarioVoteResult = IDL.Variant({
-    'ok' : IDL.Opt(IDL.Nat),
+    'ok' : IDL.Opt(IDL.Record({ 'option' : IDL.Nat, 'votingPower' : IDL.Nat })),
     'scenarioNotFound' : IDL.Null,
   });
   const GetWinningScenarioOptionRequest = IDL.Record({

@@ -4,22 +4,9 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'matchGroupNotFound' : IDL.Null,
   });
-  const TeamPositions = IDL.Record({
-    'rightField' : IDL.Nat32,
-    'leftField' : IDL.Nat32,
-    'thirdBase' : IDL.Nat32,
-    'pitcher' : IDL.Nat32,
-    'secondBase' : IDL.Nat32,
-    'shortStop' : IDL.Nat32,
-    'centerField' : IDL.Nat32,
-    'firstBase' : IDL.Nat32,
-  });
   const CompletedMatchTeam = IDL.Record({
     'id' : IDL.Principal,
-    'name' : IDL.Text,
     'score' : IDL.Int,
-    'logoUrl' : IDL.Text,
-    'positions' : TeamPositions,
   });
   const MatchAura = IDL.Variant({
     'foggy' : IDL.Null,
@@ -89,14 +76,6 @@ export const idlFactory = ({ IDL }) => {
     'defense' : IDL.Null,
     'throwingPower' : IDL.Null,
   });
-  const Injury = IDL.Variant({
-    'twistedAnkle' : IDL.Null,
-    'brokenArm' : IDL.Null,
-    'brokenLeg' : IDL.Null,
-    'concussion' : IDL.Null,
-  });
-  const Curse = IDL.Variant({ 'skill' : Skill, 'injury' : Injury });
-  const Blessing = IDL.Variant({ 'skill' : Skill });
   const Effect = IDL.Variant({
     'skill' : IDL.Record({ 'skill' : IDL.Opt(Skill), 'delta' : IDL.Int }),
   });
@@ -123,6 +102,12 @@ export const idlFactory = ({ IDL }) => {
     'centerField' : IDL.Null,
     'firstBase' : IDL.Null,
   });
+  const Injury = IDL.Variant({
+    'twistedAnkle' : IDL.Null,
+    'brokenArm' : IDL.Null,
+    'brokenLeg' : IDL.Null,
+    'concussion' : IDL.Null,
+  });
   const MatchEndReason = IDL.Variant({
     'noMoreRounds' : IDL.Null,
     'error' : IDL.Text,
@@ -142,8 +127,6 @@ export const idlFactory = ({ IDL }) => {
       'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
     }),
     'auraTrigger' : IDL.Record({ 'id' : MatchAura, 'description' : IDL.Text }),
-    'curse' : IDL.Record({ 'playerId' : IDL.Nat32, 'curse' : Curse }),
-    'blessing' : IDL.Record({ 'playerId' : IDL.Nat32, 'blessing' : Blessing }),
     'traitTrigger' : IDL.Record({
       'id' : Trait,
       'playerId' : PlayerId,
@@ -172,6 +155,16 @@ export const idlFactory = ({ IDL }) => {
   const TurnLog = IDL.Record({ 'events' : IDL.Vec(Event) });
   const RoundLog = IDL.Record({ 'turns' : IDL.Vec(TurnLog) });
   const MatchLog = IDL.Record({ 'rounds' : IDL.Vec(RoundLog) });
+  const TeamPositions = IDL.Record({
+    'rightField' : IDL.Nat32,
+    'leftField' : IDL.Nat32,
+    'thirdBase' : IDL.Nat32,
+    'pitcher' : IDL.Nat32,
+    'secondBase' : IDL.Nat32,
+    'shortStop' : IDL.Nat32,
+    'centerField' : IDL.Nat32,
+    'firstBase' : IDL.Nat32,
+  });
   const TeamState = IDL.Record({
     'id' : IDL.Principal,
     'name' : IDL.Text,

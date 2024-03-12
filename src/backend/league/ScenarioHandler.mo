@@ -19,7 +19,7 @@ import FieldPosition "../models/FieldPosition";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type Data = {
+    public type StableData = {
         scenarios : [Scenario.Scenario];
     };
 
@@ -35,14 +35,14 @@ module {
         #invalid : [Text];
     };
 
-    public class Handler(data : Data) {
+    public class Handler(data : StableData) {
         let scenarios : HashMap.HashMap<Text, Scenario.Scenario> = toHashMap(data.scenarios);
 
         public func getScenario(id : Text) : ?Scenario.Scenario {
             scenarios.get(id);
         };
 
-        public func toStableData() : Data {
+        public func toStableData() : StableData {
             {
                 scenarios = scenarios.vals()
                 |> Iter.toArray(_);

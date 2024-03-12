@@ -34,10 +34,15 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'notFound' : IDL.Null,
   });
-  const TeamOwnerInfo = IDL.Record({
+  const GetTeamOwnersRequest = IDL.Variant({
+    'all' : IDL.Null,
+    'team' : IDL.Principal,
+  });
+  const UserVotingInfo = IDL.Record({
     'id' : IDL.Principal,
     'votingPower' : IDL.Nat,
   });
+  const GetTeamOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
   const SetUserFavoriteTeamResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
@@ -55,8 +60,8 @@ export const idlFactory = ({ IDL }) => {
     'get' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
     'getAll' : IDL.Func([], [IDL.Vec(User)], ['query']),
     'getTeamOwners' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Vec(TeamOwnerInfo)],
+        [GetTeamOwnersRequest],
+        [GetTeamOwnersResult],
         ['query'],
       ),
     'setFavoriteTeam' : IDL.Func(

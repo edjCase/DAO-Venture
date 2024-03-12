@@ -1,6 +1,6 @@
 
 import { Principal } from "@dfinity/principal";
-import { ResolvedScenario, Scenario, TeamIdOrTie } from "../ic-agent/declarations/league";
+import { TeamIdOrTie } from "../ic-agent/declarations/league";
 
 
 export type MatchGroupDetails = {
@@ -8,7 +8,7 @@ export type MatchGroupDetails = {
     time: bigint;
     matches: MatchDetails[];
     state: 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Completed';
-    scenario: Scenario | ResolvedScenario;
+    scenarioId: string;
 };
 
 export type MatchDetails = {
@@ -26,8 +26,9 @@ export type TeamDetails = {
     id: Principal;
     name: string;
     logoUrl: string;
-    score: number | undefined;
 };
+
+export type TeamDetailsWithScore = TeamDetails & { score: bigint | undefined };
 
 export type TeamDetailsOrUndetermined =
     | TeamDetails

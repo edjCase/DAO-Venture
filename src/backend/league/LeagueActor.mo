@@ -1,9 +1,7 @@
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import IterTools "mo:itertools/Iter";
-import Hash "mo:base/Hash";
 import Iter "mo:base/Iter";
-import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import Buffer "mo:base/Buffer";
 import Random "mo:base/Random";
@@ -26,30 +24,38 @@ import TeamsHandler "TeamsHandler";
 import PlayersActor "canister:players";
 import TeamFactoryActor "canister:teamFactory";
 import TeamTypes "../team/Types";
+import Dao "../Dao";
 
 actor LeagueActor {
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var stableData = {
-        season : SeasonHandler.Data = {
+        season : SeasonHandler.StableData = {
             seasonStatus = #notStarted;
             teamStandings = null;
             predictions = [];
         };
-        predictions : PredictionHandler.Data = {
+        predictions : PredictionHandler.StableData = {
             matchGroups = [];
         };
-        scenarios : ScenarioHandler.Data = {
+        scenarios : ScenarioHandler.StableData = {
             scenarios = [];
         };
-        teams : TeamsHandler.Data = {
+        teams : TeamsHandler.StableData = {
             teams = [];
             teamFactoryInitialized = false;
         };
+        dao : Dao.StableData<Types.ProposalContent> = {
+            proposalDuration = #days(3);
+            proposals = [];
+            votingThreshold = #percent({
+                percent = 50;
+                quorum = ?20;
+            });
+        };
     };
 
-    stable var admins : TrieSet.Set<Principal> = TrieSet.empty();
     stable var stadiumIdOrNull : ?Principal = null;
     stable var stadiumFactoryInitialized = false;
 
@@ -58,12 +64,25 @@ actor LeagueActor {
     var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios);
     var teamsHandler = TeamsHandler.Handler(stableData.teams);
 
+    func onExecuted(proposal : Types.Proposal) : async* Dao.OnExecuteResult {
+        switch (proposal.content) {
+            case (#changeTeamName(c)) {
+                teamsHandler.updateTeamName(c.teamId, c.name);
+                #ok;
+            };
+        };
+    };
+    func onRejected(_ : Types.Proposal) : async* () {}; // TODO
+    var dao = Dao.Dao(stableData.dao, onExecuted, onRejected);
+    dao.resetEndTimers<system>(); // TODO move into DAO
+
     system func preupgrade() {
         stableData := {
             season = seasonHandler.toStableData();
             predictions = predictionHandler.toStableData();
             scenarios = scenarioHandler.toStableData();
             teams = teamsHandler.toStableData();
+            dao = dao.toStableData();
         };
     };
 
@@ -72,6 +91,8 @@ actor LeagueActor {
         predictionHandler := PredictionHandler.Handler(stableData.predictions);
         scenarioHandler := ScenarioHandler.Handler(stableData.scenarios);
         teamsHandler := TeamsHandler.Handler(stableData.teams);
+        dao := Dao.Dao(stableData.dao, onExecuted, onRejected);
+        dao.resetEndTimers<system>(); // TODO move into DAO
     };
 
     public query func getTeams() : async [TeamWithId] {
@@ -88,6 +109,21 @@ actor LeagueActor {
 
     public query func getSeasonStatus() : async Season.SeasonStatus {
         seasonHandler.seasonStatus;
+    };
+
+    public shared ({ caller }) func createProposal(request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
+        let members = switch (await UsersActor.getTeamOwners(#all)) {
+            case (#ok(members)) members;
+        };
+        switch (request.content) {
+            case (#changeTeamName(c)) {
+                // Team is only one who can propose to change their name
+                if (caller != c.teamId) {
+                    return #notAuthorized;
+                };
+            };
+        };
+        dao.createProposal<system>(caller, request.content, members);
     };
 
     public query func getTeamStandings() : async Types.GetTeamStandingsResult {
@@ -123,32 +159,6 @@ actor LeagueActor {
                 });
             };
         };
-    };
-
-    public shared query func getAdmins() : async [Principal] {
-        TrieSet.toArray(admins);
-    };
-
-    public shared ({ caller }) func setUserIsAdmin(id : Principal, isAdmin : Bool) : async Types.SetUserIsAdminResult {
-        if (Principal.isAnonymous(id)) {
-            Debug.trap("Anonymous user is not a valid user");
-        };
-
-        // Check to make sure only admins can update other users
-        // BUT if there are no admins, skip the check
-        if (Trie.size(admins) > 0) {
-            let callerIsAdmin = isAdminId(caller);
-            if (not callerIsAdmin) {
-                return #notAuthorized;
-            };
-        };
-        let newAdmins = if (isAdmin) {
-            TrieSet.put(admins, id, Principal.hash(id), Principal.equal);
-        } else {
-            TrieSet.delete(admins, id, Principal.hash(id), Principal.equal);
-        };
-        admins := newAdmins;
-        #ok;
     };
 
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {
@@ -367,7 +377,8 @@ actor LeagueActor {
             // League is admin
             return true;
         };
-        TrieSet.mem(admins, id, Principal.hash(id), Principal.equal);
+        return true; // TODO i dont want to use admin pattern
+        // TrieSet.mem(admins, id, Principal.hash(id), Principal.equal);
     };
 
     private func isStadium(id : Principal) : Bool {

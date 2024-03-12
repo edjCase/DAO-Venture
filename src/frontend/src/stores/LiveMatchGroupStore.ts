@@ -3,7 +3,7 @@ import { BaseState, MatchGroupWithId, MatchLog, PlayerStateWithId, TeamId, TeamS
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { Principal } from "@dfinity/principal";
 import { scheduleStore } from "./ScheduleStore";
-import { TeamDetails } from "../models/Match";
+import { TeamDetailsWithScore } from "../models/Match";
 import { MatchAura, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/league";
 import { stadiumAgentFactory } from "../ic-agent/Stadium";
 
@@ -12,7 +12,7 @@ export type LiveMatchGroup = {
   matches: LiveMatch[];
 };
 
-export type LiveTeamDetails = TeamDetails & {
+export type LiveTeamDetails = TeamDetailsWithScore & {
   positions: TeamPositions
 };
 
@@ -45,7 +45,7 @@ export const liveMatchGroupStore = (() => {
       id: team.id,
       name: team.name,
       logoUrl: team.logoUrl,
-      score: Number(team.score),
+      score: team.score,
       positions: team.positions
     }
   };

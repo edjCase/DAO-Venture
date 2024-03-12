@@ -18,7 +18,7 @@ module {
         onCatch : ?Hook.Hook<Hook.SkillTestContext>;
     };
 
-    public func compile(_ : StadiumTypes.InProgressMatch) : Hook.CompiledHooks {
+    public func compile(_ : StadiumTypes.Match) : Hook.CompiledHooks {
         let allHooks = [
             // fromAura(state.aura)
         ];

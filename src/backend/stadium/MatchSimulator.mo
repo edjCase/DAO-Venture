@@ -57,7 +57,7 @@ module {
         team2 : TeamInitData,
         team1StartOffense : Bool,
         prng : Prng,
-    ) : StadiumTypes.InProgressMatch {
+    ) : StadiumTypes.Match {
         let (team1State, team1Players) = buildTeamState(team1, #team1);
         let (team2State, team2Players) = buildTeamState(team2, #team2);
         let offensePlayers = if (team1StartOffense) {
@@ -163,14 +163,14 @@ module {
         (teamState, playerStates);
     };
 
-    public func tick(match : StadiumTypes.InProgressMatch, random : Prng) : StadiumTypes.TickResult {
+    public func tick(match : StadiumTypes.Match, random : Prng) : StadiumTypes.TickResult {
         let compiledHooks = HookCompiler.compile(match);
         let simulation = MatchSimulation(match, random, compiledHooks);
         simulation.tick();
     };
 
     class MatchSimulation(
-        initialState : StadiumTypes.InProgressMatch,
+        initialState : StadiumTypes.Match,
         prng : Prng,
         compiledHooks : Hook.CompiledHooks,
     ) {
@@ -212,11 +212,22 @@ module {
         };
 
         private func buildTickResult(result : SimulationResult) : StadiumTypes.TickResult {
-
-            switch (result) {
-                case (#inProgress) #inProgress(buildLiveMatch());
-                case (#endMatch(reason)) #completed(buildCompletedMatch(reason));
+            let match = buildLiveMatch();
+            let status : StadiumTypes.MatchStatus = switch (result) {
+                case (#endMatch(reason)) {
+                    let mappedReason = switch (reason) {
+                        case (#noMoreRounds) #noMoreRounds;
+                        case (#stateBroken(e)) #error(debug_show (e)); // TODO error format
+                    };
+                    #completed({ reason = mappedReason });
+                };
+                case (#inProgress) #inProgress;
             };
+            {
+                match = match;
+                status = status;
+            };
+
         };
 
         private func mapMutableTeam(team : MutableState.MutableTeamState) : StadiumTypes.TeamState {
@@ -238,7 +249,7 @@ module {
             };
         };
 
-        private func buildLiveMatch() : StadiumTypes.InProgressMatch {
+        private func buildLiveMatch() : StadiumTypes.Match {
 
             let players = Iter.toArray(
                 Iter.map(
@@ -309,38 +320,6 @@ module {
             };
         };
 
-        private func buildCompletedMatch(reason : MatchEndReason) : StadiumTypes.CompletedTickResult {
-            let (winner, matchEndReason) : (Team.TeamIdOrTie, StadiumTypes.MatchEndReason) = switch (reason) {
-                case (#noMoreRounds) {
-                    let winner = if (state.team1.score > state.team2.score) {
-                        #team1;
-                    } else if (state.team1.score == state.team2.score) {
-                        #tie;
-                    } else {
-                        #team2;
-                    };
-                    (winner, #noMoreRounds);
-                };
-                case (#stateBroken(e)) (#tie, #error(debug_show (e))); // TODO error format
-            };
-            state.addEvent(#matchEnd({ reason = matchEndReason }));
-            let log : StadiumTypes.MatchLog = fromMutableLog(state.log);
-
-            let playerStats = buildPlayerStats();
-
-            {
-                match = {
-                    team1 = mapMutableTeam(state.team1);
-                    team2 = mapMutableTeam(state.team2);
-                    aura = state.aura;
-                    log = log;
-                    winner = winner;
-                    playerStats = playerStats;
-                };
-                matchStats = playerStats;
-            };
-        };
-
         private func fromMutableLog(log : MutableState.MutableMatchLog) : StadiumTypes.MatchLog {
             {
                 rounds = log.rounds.vals()
@@ -361,41 +340,6 @@ module {
             {
                 events = Buffer.toArray(log.events);
             };
-        };
-
-        private func buildPlayerStats() : [Player.PlayerMatchStatsWithId] {
-            state.players.vals()
-            |> Iter.map(
-                _,
-                func(player : MutableState.MutablePlayerStateWithId) : Player.PlayerMatchStatsWithId {
-                    {
-                        playerId = player.id;
-                        battingStats = {
-                            atBats = player.matchStats.battingStats.atBats;
-                            hits = player.matchStats.battingStats.hits;
-                            runs = player.matchStats.battingStats.runs;
-                            strikeouts = player.matchStats.battingStats.strikeouts;
-                            homeRuns = player.matchStats.battingStats.homeRuns;
-                        };
-                        catchingStats = {
-                            successfulCatches = player.matchStats.catchingStats.successfulCatches;
-                            missedCatches = player.matchStats.catchingStats.missedCatches;
-                            throws = player.matchStats.catchingStats.throws;
-                            throwOuts = player.matchStats.catchingStats.throwOuts;
-                        };
-                        pitchingStats = {
-                            pitches = player.matchStats.pitchingStats.pitches;
-                            strikes = player.matchStats.pitchingStats.strikes;
-                            hits = player.matchStats.pitchingStats.hits;
-                            runs = player.matchStats.pitchingStats.runs;
-                            strikeouts = player.matchStats.pitchingStats.strikeouts;
-                            homeRuns = player.matchStats.pitchingStats.homeRuns;
-                        };
-                        injuries = player.matchStats.injuries;
-                    };
-                },
-            )
-            |> Iter.toArray(_);
         };
 
         private func getNextBatter() : PlayerId {
