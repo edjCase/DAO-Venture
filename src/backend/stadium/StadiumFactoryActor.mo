@@ -1,13 +1,13 @@
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
-import Cycles "mo:base/ExperimentalCycles";
 import Debug "mo:base/Debug";
-import Error "mo:base/Error";
 import Iter "mo:base/Iter";
 import Types "Types";
 import StadiumActor "StadiumActor";
+import Cycles "mo:base/ExperimentalCycles";
+import Error "mo:base/Error";
 
-actor StadiumFactoryActor {
+actor {
 
     stable var leagueIdOrNull : ?Principal = null;
 
@@ -39,7 +39,7 @@ actor StadiumFactoryActor {
         let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 1_000_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
+        Cycles.add<system>(canisterCreationCost + initialBalance);
         let stadium = try {
             await StadiumActor.StadiumActor(leagueId);
         } catch (err) {

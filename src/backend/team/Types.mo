@@ -1,7 +1,4 @@
 import Principal "mo:base/Principal";
-import Trie "mo:base/Trie";
-import Player "../models/Player";
-import StadiumTypes "../stadium/Types";
 import Dao "../Dao";
 import Skill "../models/Skill";
 
@@ -127,7 +124,10 @@ module {
     };
 
     public type GetScenarioVoteResult = {
-        #ok : ?Nat;
+        #ok : ?{
+            option : Nat;
+            votingPower : Nat;
+        };
         #scenarioNotFound;
     };
 

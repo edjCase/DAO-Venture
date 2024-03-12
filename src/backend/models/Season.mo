@@ -1,16 +1,9 @@
 import Time "mo:base/Time";
-import Array "mo:base/Array";
 import Principal "mo:base/Principal";
-import Trie "mo:base/Trie";
 import MatchAura "MatchAura";
 import Team "Team";
-import Trait "Trait";
 import Player "Player";
-import Curse "Curse";
-import Blessing "Blessing";
-import Base "Base";
 import FieldPosition "FieldPosition";
-import Scenario "Scenario";
 
 module {
 

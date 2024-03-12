@@ -1,49 +1,31 @@
-import Array "mo:base/Array";
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
-import Prelude "mo:base/Prelude";
-import Cycles "mo:base/ExperimentalCycles";
 import IterTools "mo:itertools/Iter";
 import Hash "mo:base/Hash";
-import Player "../models/Player";
 import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
-import StadiumTypes "../stadium/Types";
-import Time "mo:base/Time";
-import Nat64 "mo:base/Nat64";
-import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
 import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
-import Blob "mo:base/Blob";
-import Order "mo:base/Order";
-import Timer "mo:base/Timer";
 import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
-import HashMap "mo:base/HashMap";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "Types";
-import Util "../Util";
-import ScheduleBuilder "ScheduleBuilder";
 import UsersActor "canister:users";
 import Team "../models/Team";
-import TeamTypes "../team/Types";
 import Season "../models/Season";
-import MatchAura "../models/MatchAura";
 import StadiumFactoryActor "canister:stadiumFactory";
-import PlayerTypes "../players/Types";
-import FieldPosition "../models/FieldPosition";
 import UserTypes "../users/Types";
 import Scenario "../models/Scenario";
-import Trait "../models/Trait";
 import SeasonHandler "SeasonHandler";
 import PredictionHandler "PredictionHandler";
 import ScenarioHandler "ScenarioHandler";
 import TeamsHandler "TeamsHandler";
 import PlayersActor "canister:players";
 import TeamFactoryActor "canister:teamFactory";
+import TeamTypes "../team/Types";
 
 actor LeagueActor {
     type TeamWithId = Team.TeamWithId;
@@ -74,7 +56,7 @@ actor LeagueActor {
     var seasonHandler = SeasonHandler.SeasonHandler(stableData.season);
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
     var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios);
-    var teamsHandler = TeamsHandler.Handler(leagueId, stableData.teams);
+    var teamsHandler = TeamsHandler.Handler(stableData.teams);
 
     system func preupgrade() {
         stableData := {
@@ -89,7 +71,7 @@ actor LeagueActor {
         seasonHandler := SeasonHandler.SeasonHandler(stableData.season);
         predictionHandler := PredictionHandler.Handler(stableData.predictions);
         scenarioHandler := ScenarioHandler.Handler(stableData.scenarios);
-        teamsHandler := TeamsHandler.Handler(Principal.fromActor(LeagueActor), stableData.teams);
+        teamsHandler := TeamsHandler.Handler(stableData.teams);
     };
 
     public query func getTeams() : async [TeamWithId] {
@@ -98,13 +80,10 @@ actor LeagueActor {
 
     // TODO REMOVE ALL DELETING METHODS
     public shared func clearTeams() : async () {
-        teamsHandler := TeamsHandler.Handler(
-            Principal.fromActor(LeagueActor),
-            {
-                teamFactoryInitialized = stableData.teams.teamFactoryInitialized;
-                teams = [];
-            },
-        );
+        teamsHandler := TeamsHandler.Handler({
+            teamFactoryInitialized = stableData.teams.teamFactoryInitialized;
+            teams = [];
+        });
     };
 
     public query func getSeasonStatus() : async Season.SeasonStatus {
@@ -146,7 +125,7 @@ actor LeagueActor {
         };
     };
 
-    public shared query ({ caller }) func getAdmins() : async [Principal] {
+    public shared query func getAdmins() : async [Principal] {
         TrieSet.toArray(admins);
     };
 
@@ -205,7 +184,7 @@ actor LeagueActor {
         };
 
         let prng = PseudoRandomX.fromBlob(seedBlob);
-        seasonHandler.startSeason(
+        seasonHandler.startSeason<system>(
             prng,
             stadiumId,
             request.startTime,
@@ -219,7 +198,8 @@ actor LeagueActor {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
-        await* teamsHandler.create(request);
+        let leagueId = Principal.fromActor(LeagueActor);
+        await* teamsHandler.create(leagueId, request);
     };
 
     public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {
@@ -279,15 +259,11 @@ actor LeagueActor {
         #ok;
     };
 
-    public shared ({ caller }) func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
+    public shared func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
         // TODO
         // if (not isAdminId(caller)) {
         //     return #notAuthorized;
         // };
-        let stadiumId = switch (await* getOrCreateStadium()) {
-            case (#ok(id)) id;
-            case (#stadiumCreationError(error)) return Debug.trap("Failed to create stadium: " # error);
-        };
         let prng = PseudoRandomX.fromBlob(await Random.blob());
         switch (await* buildTeamScenarioData(matchGroupId)) {
             case (#ok(data)) {
@@ -312,7 +288,7 @@ actor LeagueActor {
             case (#notScheduledYet) return #notScheduledYet;
         };
 
-        await* seasonHandler.startMatchGroup(matchGroupId, prng);
+        await* seasonHandler.startMatchGroup(matchGroupId);
 
     };
 
@@ -399,10 +375,6 @@ actor LeagueActor {
         id == stadiumId;
     };
 
-    private func hashNatAsNat32(matchGroupId : Nat) : Nat32 {
-        Nat32.fromNat(matchGroupId);
-    };
-
     private func buildTeamScenarioData(matchGroupId : Nat) : async* {
         #ok : {
             scenarioId : Text;
@@ -410,12 +382,20 @@ actor LeagueActor {
         };
         #notScheduledYet;
     } {
+        let ?matchGroupInfo = seasonHandler.getMatchGroup(matchGroupId) else Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
 
-        let ?nextScheduled = seasonHandler.getNextScheduledMatchGroup() else return #notScheduledYet;
-        let teams = nextScheduled.season.teams;
+        let teams = switch (matchGroupInfo.season) {
+            case (#inProgress(s)) s.teams;
+            case (#completed(c)) c.teams;
+        };
         let teamScenarioData = Buffer.Buffer<ScenarioHandler.TeamScenarioData>(teams.size());
 
-        let scenarioId = nextScheduled.matchGroup.scenarioId;
+        let scenarioId = switch (matchGroupInfo.matchGroup) {
+            case (#notScheduled(_)) return #notScheduledYet;
+            case (#scheduled(s)) s.scenarioId;
+            case (#inProgress(i)) i.scenarioId;
+            case (#completed(c)) c.scenarioId;
+        };
 
         for (team in Iter.fromArray(teams)) {
             let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
@@ -478,26 +458,4 @@ actor LeagueActor {
             case (#stadiumCreationError(error)) return #stadiumCreationError(error);
         };
     };
-
-    private func buildPrincipalKey(id : Principal) : {
-        key : Principal;
-        hash : Hash.Hash;
-    } {
-        { key = id; hash = Principal.hash(id) };
-    };
-
-    private func arrayToIdTrie<T>(items : [T], getId : (T) -> Nat32) : Trie.Trie<Nat32, T> {
-        var trie = Trie.empty<Nat32, T>();
-        for (item in Iter.fromArray(items)) {
-            let id = getId(item);
-            let key = {
-                key = id;
-                hash = id;
-            };
-            let (newTrie, _) = Trie.put(trie, key, Nat32.equal, item);
-            trie := newTrie;
-        };
-        trie;
-    };
-
 };

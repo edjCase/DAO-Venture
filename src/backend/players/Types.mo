@@ -1,5 +1,4 @@
 import Player "../models/Player";
-import FieldPosition "../models/FieldPosition";
 import Principal "mo:base/Principal";
 import Trait "../models/Trait";
 import Scenario "../models/Scenario";

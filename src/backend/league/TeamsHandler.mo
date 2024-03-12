@@ -17,7 +17,7 @@ module {
         teams : [Team.TeamWithId];
         teamFactoryInitialized : Bool;
     };
-    public class Handler(leagueId : Principal, data : Data) {
+    public class Handler(data : Data) {
         var teams : HashMap.HashMap<Principal, Team.Team> = toTeamHashMap(data.teams);
         var teamFactoryInitialized = data.teamFactoryInitialized;
 
@@ -66,11 +66,14 @@ module {
             teams.put(teamId, newTeam);
         };
 
-        public func create(request : Types.CreateTeamRequest) : async* Types.CreateTeamResult {
+        public func create(
+            leagueId : Principal, // TODO this should be part of the data, but we don't have a way to pass it in yet
+            request : Types.CreateTeamRequest,
+        ) : async* Types.CreateTeamResult {
             let nameAlreadyTaken = teams.entries()
             |> IterTools.any(
                 _,
-                func((k, v) : (Principal, Team.Team)) : Bool = v.name == request.name,
+                func((_, v) : (Principal, Team.Team)) : Bool = v.name == request.name,
             );
 
             if (nameAlreadyTaken) {

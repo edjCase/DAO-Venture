@@ -1,20 +1,16 @@
 import Player "Player";
 import Team "Team";
-import MatchAura "MatchAura";
 import TrieMap "mo:base/TrieMap";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
-import Trie "mo:base/Trie";
 import Debug "mo:base/Debug";
 import StadiumTypes "../stadium/Types";
 import FieldPosition "FieldPosition";
 import Skill "Skill";
 import Base "Base";
-import Season "Season";
-import Scenario "Scenario";
 
-module this {
+module {
 
     public type MutableTeamPositions = {
         var pitcher : Player.PlayerId;
@@ -122,7 +118,6 @@ module this {
         |> Iter.map<StadiumTypes.PlayerStateWithId, (Nat32, MutablePlayerStateWithId)>(
             _,
             func(player : StadiumTypes.PlayerStateWithId) : (Nat32, MutablePlayerStateWithId) {
-                let isAtBat = player.id == bases.atBat;
                 let state : MutablePlayerStateWithId = {
                     id = player.id;
                     name = player.name;

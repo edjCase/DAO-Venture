@@ -1,17 +1,12 @@
 import Trie "mo:base/Trie";
-import Player "../models/Player";
-import Nat32 "mo:base/Nat32";
-import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
-import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Hash "mo:base/Hash";
-import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Types "./Types";
 // import LeagueActor "canister:league"; TODO
 
-actor UsersActor {
+actor {
 
     stable var users : Trie.Trie<Principal, Types.User> = Trie.empty();
 
@@ -24,7 +19,7 @@ actor UsersActor {
     };
 
     // TODO should there be a get all?
-    public shared query ({ caller }) func getAll() : async [Types.User] {
+    public shared query func getAll() : async [Types.User] {
         Trie.iter(users)
         |> Iter.map(
             _,
@@ -33,7 +28,7 @@ actor UsersActor {
         |> Iter.toArray(_);
     };
 
-    public shared query ({ caller }) func getTeamOwners(teamId : Principal) : async [Types.TeamOwnerInfo] {
+    public shared query func getTeamOwners(teamId : Principal) : async [Types.TeamOwnerInfo] {
         Trie.iter(users)
         |> IterTools.mapFilter(
             _,
@@ -160,16 +155,9 @@ actor UsersActor {
         { key = id; hash = Principal.hash(id) };
     };
 
-    private func isLeague(caller : Principal) : Bool {
+    private func isLeague(_ : Principal) : Bool {
         // TODO
         // return caller == Principal.fromActor(LeagueActor);
         return true;
-    };
-
-    private func assertLeague(caller : Principal) {
-        // TODO
-        // if (!isLeague(caller)) {
-        //     Debug.trap("Only the league can create players");
-        // };
     };
 };

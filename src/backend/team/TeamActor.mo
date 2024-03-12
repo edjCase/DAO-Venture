@@ -1,30 +1,8 @@
-import Player "../models/Player";
 import Principal "mo:base/Principal";
-import Team "../models/Team";
-import Trie "mo:base/Trie";
-import Hash "mo:base/Hash";
-import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import Prelude "mo:base/Prelude";
-import TrieSet "mo:base/TrieSet";
-import Array "mo:base/Array";
-import Buffer "mo:base/Buffer";
 import Nat "mo:base/Nat";
-import Error "mo:base/Error";
-import Text "mo:base/Text";
-import Iter "mo:base/Iter";
-import None "mo:base/None";
-import HashMap "mo:base/HashMap";
 import { ic } "mo:ic";
-import StadiumTypes "../stadium/Types";
-import PlayersTypes "../players/Types";
-import IterTools "mo:itertools/Iter";
-import LeagueTypes "../league/Types";
 import Types "Types";
-import MatchAura "../models/MatchAura";
-import Season "../models/Season";
-import Util "../Util";
-import Scenario "../models/Scenario";
 import ScenarioVoting "ScenarioVoting";
 import Dao "../Dao";
 // TODO cant use because of generating did files for JS/TS
@@ -63,6 +41,7 @@ shared (install) actor class TeamActor(
   };
 
   var dao = Dao.Dao<Types.ProposalContent>(stableData.dao, onExecute, onReject);
+  dao.resetEndTimers<system>(); // TODO move to inside DAO
 
   var scenarioVotingManager = ScenarioVoting.Manager(stableData.scenarioVoting);
 
@@ -75,6 +54,7 @@ shared (install) actor class TeamActor(
 
   system func postupgrade() {
     dao := Dao.Dao<Types.ProposalContent>(stableData.dao, onExecute, onReject);
+    dao.resetEndTimers<system>(); // TODO move to inside DAO
     scenarioVotingManager := ScenarioVoting.Manager(stableData.scenarioVoting);
   };
 
@@ -100,14 +80,14 @@ shared (install) actor class TeamActor(
 
   public shared ({ caller }) func createProposal(request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
     let members = await usersActor.getTeamOwners(Principal.fromActor(this));
-    dao.createProposal(caller, request.content, members);
+    dao.createProposal<system>(caller, request.content, members);
   };
 
-  public shared query ({ caller }) func getProposal(id : Nat) : async ?Types.Proposal {
+  public shared query func getProposal(id : Nat) : async ?Types.Proposal {
     dao.getProposal(id);
   };
 
-  public shared query ({ caller }) func getProposals() : async [Types.Proposal] {
+  public shared query func getProposals() : async [Types.Proposal] {
     dao.getProposals();
   };
 

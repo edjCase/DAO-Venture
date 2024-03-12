@@ -1,8 +1,5 @@
 import Principal "mo:base/Principal";
 import Player "../models/Player";
-import Time "mo:base/Time";
-import Trie "mo:base/Trie";
-import Hash "mo:base/Hash";
 import Nat "mo:base/Nat";
 import MatchAura "../models/MatchAura";
 import Base "../models/Base";
@@ -10,9 +7,6 @@ import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
 import Season "../models/Season";
 import Trait "../models/Trait";
-import Curse "../models/Curse";
-import Blessing "../models/Blessing";
-import Scenario "../models/Scenario";
 
 module {
     type FieldPosition = FieldPosition.FieldPosition;
@@ -171,14 +165,6 @@ module {
         };
         #death : {
             playerId : Nat32;
-        };
-        #curse : {
-            playerId : Nat32;
-            curse : Curse.Curse;
-        };
-        #blessing : {
-            playerId : Nat32;
-            blessing : Blessing.Blessing;
         };
         #score : {
             teamId : Team.TeamId;

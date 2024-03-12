@@ -1,28 +1,17 @@
 import Player "../models/Player";
 import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
-import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import Prelude "mo:base/Prelude";
 import Types "../stadium/Types";
 import Nat "mo:base/Nat";
-import Util "./StadiumUtil";
-import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
-import Time "mo:base/Time";
 import Iter "mo:base/Iter";
-import TrieSet "mo:base/TrieSet";
-import Order "mo:base/Order";
-import Int "mo:base/Int";
 import Timer "mo:base/Timer";
 import MatchSimulator "MatchSimulator";
 import Random "mo:base/Random";
 import Error "mo:base/Error";
-import Blob "mo:base/Blob";
-import RandomX "mo:random/RandomX";
 import PseudoRandomX "mo:random/PseudoRandomX";
-import CommonUtil "../Util";
 import LeagueTypes "../league/Types";
 import IterTools "mo:itertools/Iter";
 import MatchAura "../models/MatchAura";
@@ -44,7 +33,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
     system func postupgrade() {
         // Restart the timers for any match groups that were in progress
         for ((matchGroupId, matchGroup) in Trie.iter(matchGroups)) {
-            resetTickTimerInternal(matchGroupId);
+            resetTickTimerInternal<system>(matchGroupId);
         };
     };
 
@@ -79,7 +68,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         assertLeague(caller);
 
         let prng = PseudoRandomX.fromBlob(await Random.blob());
-        let tickTimerId = startTickTimer(request.id);
+        let tickTimerId = startTickTimer<system>(request.id);
 
         let matches = Buffer.Buffer<Types.TickResult>(request.matches.size());
         label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
@@ -124,7 +113,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         };
     };
 
-    public shared ({ caller }) func tickMatchGroup(matchGroupId : Nat) : async Types.TickMatchGroupResult {
+    public shared func tickMatchGroup(matchGroupId : Nat) : async Types.TickMatchGroupResult {
         // TODO remove loop, used for debugging purposes
         loop {
             let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
@@ -200,15 +189,15 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         };
     };
 
-    public shared ({ caller }) func resetTickTimer(matchGroupId : Nat) : async Types.ResetTickTimerResult {
-        resetTickTimerInternal(matchGroupId);
+    public shared func resetTickTimer(matchGroupId : Nat) : async Types.ResetTickTimerResult {
+        resetTickTimerInternal<system>(matchGroupId);
         #ok;
     };
 
-    private func resetTickTimerInternal(matchGroupId : Nat) : () {
+    private func resetTickTimerInternal<system>(matchGroupId : Nat) : () {
         let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return;
         Timer.cancelTimer(matchGroup.tickTimerId);
-        let newTickTimerId = startTickTimer(matchGroupId);
+        let newTickTimerId = startTickTimer<system>(matchGroupId);
         addOrUpdateMatchGroup({
             matchGroup with
             id = matchGroupId;
@@ -216,8 +205,8 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         });
     };
 
-    private func startTickTimer(matchGroupId : Nat) : Timer.TimerId {
-        Timer.recurringTimer(
+    private func startTickTimer<system>(matchGroupId : Nat) : Timer.TimerId {
+        Timer.recurringTimer<system>(
             #seconds(5),
             func() : async () {
                 await tickMatchGroupCallback(matchGroupId);
@@ -258,7 +247,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
                     #completed(completedMatch);
                 };
                 case (#inProgress(inProgressState)) {
-                    let updatedMatch = switch (MatchSimulator.tick(inProgressState, prng)) {
+                    switch (MatchSimulator.tick(inProgressState, prng)) {
                         case (#completed(completedMatch)) {
                             completedMatches.add(completedMatch);
                             #completed(completedMatch);

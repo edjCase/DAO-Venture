@@ -13,10 +13,8 @@ import Time "mo:base/Time";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
 import Debug "mo:base/Debug";
-import Array "mo:base/Array";
 import Text "mo:base/Text";
 import Error "mo:base/Error";
-import Random "mo:base/Random";
 import Order "mo:base/Order";
 import ScheduleBuilder "ScheduleBuilder";
 import PseudoRandomX "mo:random/PseudoRandomX";
@@ -25,7 +23,6 @@ import StadiumTypes "../stadium/Types";
 import Util "../Util";
 import MatchAura "../models/MatchAura";
 import IterTools "mo:itertools/Iter";
-import TeamTypes "../team/Types";
 import PlayersActor "canister:players";
 import Player "../models/Player";
 import FieldPosition "../models/FieldPosition";
@@ -72,7 +69,7 @@ module {
             };
         };
 
-        public func startSeason(
+        public func startSeason<system>(
             prng : Prng,
             stadiumId : Principal,
             startTime : Time.Time,
@@ -153,7 +150,7 @@ module {
             |> Iter.map(
                 _,
                 func(t : Team.TeamWithId) : Season.TeamInfo {
-                    buildTeamInitData(t, players, prng);
+                    buildTeamInitData(t, players);
                 },
             )
             |> Iter.toArray(_);
@@ -170,7 +167,7 @@ module {
             // Get first match group to open
             let #notScheduled(firstMatchGroup) = notScheduledMatchGroups[0] else Prelude.unreachable();
 
-            scheduleMatchGroup(
+            scheduleMatchGroup<system>(
                 0,
                 stadiumId,
                 firstMatchGroup,
@@ -209,7 +206,31 @@ module {
             };
         };
 
-        public func onMatchGroupComplete(
+        public func getMatchGroup(matchGroupId : Nat) : ?{
+            matchGroupId : Nat;
+            matchGroup : Season.InProgressSeasonMatchGroupVariant;
+            season : {
+                #inProgress : Season.InProgressSeason;
+                #completed : Season.CompletedSeason;
+            };
+        } {
+            // Get current match group by finding the next scheduled one
+            switch (seasonStatus) {
+                case (#notStarted or #starting) null;
+                case (#inProgress(inProgressSeason)) ?{
+                    matchGroupId = matchGroupId;
+                    matchGroup = inProgressSeason.matchGroups[matchGroupId];
+                    season = #inProgress(inProgressSeason);
+                };
+                case (#completed(c)) ?{
+                    matchGroupId = matchGroupId;
+                    matchGroup = #completed(c.matchGroups[matchGroupId]);
+                    season = #completed(c);
+                };
+            };
+        };
+
+        public func onMatchGroupComplete<system>(
             request : Types.OnMatchGroupCompleteRequest,
             prng : Prng,
         ) : async* Types.OnMatchGroupCompleteResult {
@@ -277,7 +298,7 @@ module {
             switch (nextMatchGroup) {
                 case (#notScheduled(matchGroup)) {
                     // Schedule next match group
-                    scheduleMatchGroup(
+                    scheduleMatchGroup<system>(
                         nextMatchGroupId,
                         inProgressMatchGroup.stadiumId,
                         matchGroup,
@@ -375,7 +396,7 @@ module {
             #ok;
         };
 
-        private func scheduleMatchGroup(
+        private func scheduleMatchGroup<system>(
             matchGroupId : Nat,
             stadiumId : Principal,
             matchGroup : Season.NotScheduledMatchGroup,
@@ -390,12 +411,11 @@ module {
             } else {
                 #nanoseconds(Int.abs(timeDiff));
             };
-            let timerId = Timer.setTimer(
+            let timerId = Timer.setTimer<system>(
                 duration,
                 func() : async () {
                     let result = try {
-                        let prng = PseudoRandomX.fromBlob(await Random.blob());
-                        await* startMatchGroup(matchGroupId, prng);
+                        await* startMatchGroup<system>(matchGroupId);
                     } catch (err) {
                         Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback failed: " # Error.message(err));
                         return;
@@ -478,7 +498,6 @@ module {
                 inProgressSeason with
                 matchGroups = newMatchGroups;
             });
-            let matchCount = scheduledMatchGroup.matches.size();
 
         };
 
@@ -496,8 +515,8 @@ module {
             for (matchGroup in Iter.fromArray(season.matchGroups)) {
                 let completedMatchGroup = switch (matchGroup) {
                     case (#completed(completedMatchGroup)) completedMatchGroup;
-                    case (#notScheduled(notScheduledMatchGroup)) return #matchGroupsNotComplete(null);
-                    case (#scheduled(scheduledMatchGroup)) return #matchGroupsNotComplete(null);
+                    case (#notScheduled(_)) return #matchGroupsNotComplete(null);
+                    case (#scheduled(_)) return #matchGroupsNotComplete(null);
                     case (#inProgress(inProgressMatchGroup)) return #matchGroupsNotComplete(
                         ?{
                             matchGroupId = matchGroupId;
@@ -573,7 +592,7 @@ module {
             |> Trie.iter(_)
             |> Iter.map(
                 _,
-                func((k, v) : (Principal, Types.TeamStandingInfo)) : Types.TeamStandingInfo = v,
+                func((_, v) : (Principal, Types.TeamStandingInfo)) : Types.TeamStandingInfo = v,
             )
             |> IterTools.sort(
                 _,
@@ -603,8 +622,7 @@ module {
         };
 
         public func startMatchGroup(
-            matchGroupId : Nat,
-            prng : Prng,
+            matchGroupId : Nat
         ) : async* Types.StartMatchGroupResult {
             let #inProgress(season) = seasonStatus else return #matchGroupNotFound;
 
@@ -714,7 +732,6 @@ module {
     private func buildTeamInitData(
         team : Team.TeamWithId,
         allPlayers : [PlayerTypes.PlayerWithId],
-        prng : Prng,
     ) : Season.TeamInfo {
 
         let teamPlayers = allPlayers

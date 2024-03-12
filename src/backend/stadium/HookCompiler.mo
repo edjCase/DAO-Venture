@@ -1,16 +1,7 @@
 import StadiumTypes "Types";
 import Hook "../models/Hook";
-import Team "../models/Team";
-import MutableState "../models/MutableState";
 import PseudoRandomX "mo:random/PseudoRandomX";
-import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
-import TrieSet "mo:base/TrieSet";
-import Nat32 "mo:base/Nat32";
-import Option "mo:base/Option";
-import FieldPosition "../models/FieldPosition";
-import Player "../models/Player";
-import Skill "../models/Skill";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -27,7 +18,7 @@ module {
         onCatch : ?Hook.Hook<Hook.SkillTestContext>;
     };
 
-    public func compile(state : StadiumTypes.InProgressMatch) : Hook.CompiledHooks {
+    public func compile(_ : StadiumTypes.InProgressMatch) : Hook.CompiledHooks {
         let allHooks = [
             // fromAura(state.aura)
         ];
@@ -88,9 +79,10 @@ module {
                         // TODO callback
                         let result1 = h1(request);
                         let request2 = {
+                            request with
                             context = result1.updatedContext;
                         };
-                        let result2 = h2(request);
+                        let result2 = h2(request2);
                         {
                             updatedContext = result2.updatedContext;
                         };
@@ -100,290 +92,290 @@ module {
         };
     };
 
-    private func shuffleAndBoostHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // Shuffle all the players' positions but boost their stats
+    // private func shuffleAndBoostHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // Shuffle all the players' positions but boost their stats
 
-            let team = switch (teamId) {
-                case (#team1) request.state.team1;
-                case (#team2) request.state.team2;
-            };
+    //         let team = switch (teamId) {
+    //             case (#team1) request.state.team1;
+    //             case (#team2) request.state.team2;
+    //         };
 
-            // Shuffle positions
-            let newPositions = Buffer.fromArray<Player.PlayerId>([
-                team.positions.pitcher,
-                team.positions.firstBase,
-                team.positions.secondBase,
-                team.positions.thirdBase,
-                team.positions.shortStop,
-                team.positions.leftField,
-                team.positions.centerField,
-                team.positions.rightField,
-            ]);
-            request.prng.shuffleBuffer(newPositions);
+    //         // Shuffle positions
+    //         let newPositions = Buffer.fromArray<Player.PlayerId>([
+    //             team.positions.pitcher,
+    //             team.positions.firstBase,
+    //             team.positions.secondBase,
+    //             team.positions.thirdBase,
+    //             team.positions.shortStop,
+    //             team.positions.leftField,
+    //             team.positions.centerField,
+    //             team.positions.rightField,
+    //         ]);
+    //         request.prng.shuffleBuffer(newPositions);
 
-            team.positions.pitcher := newPositions.get(0);
-            team.positions.firstBase := newPositions.get(1);
-            team.positions.secondBase := newPositions.get(2);
-            team.positions.thirdBase := newPositions.get(3);
-            team.positions.shortStop := newPositions.get(4);
-            team.positions.leftField := newPositions.get(5);
-            team.positions.centerField := newPositions.get(6);
-            team.positions.rightField := newPositions.get(7);
+    //         team.positions.pitcher := newPositions.get(0);
+    //         team.positions.firstBase := newPositions.get(1);
+    //         team.positions.secondBase := newPositions.get(2);
+    //         team.positions.thirdBase := newPositions.get(3);
+    //         team.positions.shortStop := newPositions.get(4);
+    //         team.positions.leftField := newPositions.get(5);
+    //         team.positions.centerField := newPositions.get(6);
+    //         team.positions.rightField := newPositions.get(7);
 
-            // Boost skills
-            let randomSkill = Skill.getRandom(request.prng);
-            for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
-                MutableState.modifyPlayerSkill(playerState.skills, randomSkill, 1);
-            };
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = ?matchStartHook;
-            matchEnd = null;
-            roundStart = null;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    //         // Boost skills
+    //         let randomSkill = Skill.getRandom(request.prng);
+    //         for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
+    //             MutableState.modifyPlayerSkill(playerState.skills, randomSkill, 1);
+    //         };
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = ?matchStartHook;
+    //         matchEnd = null;
+    //         roundStart = null;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func offensiveHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // Increase batting power and lower catching
-            for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
-                MutableState.modifyPlayerSkill(playerState.skills, #battingPower, 1);
-                MutableState.modifyPlayerSkill(playerState.skills, #catching, -1);
-            };
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = ?matchStartHook;
-            matchEnd = null;
-            roundStart = null;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func offensiveHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // Increase batting power and lower catching
+    //         for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
+    //             MutableState.modifyPlayerSkill(playerState.skills, #battingPower, 1);
+    //             MutableState.modifyPlayerSkill(playerState.skills, #catching, -1);
+    //         };
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = ?matchStartHook;
+    //         matchEnd = null;
+    //         roundStart = null;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func defensiveHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // Increase catching and lower batting power
-            for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
-                MutableState.modifyPlayerSkill(playerState.skills, #catching, 1);
-                MutableState.modifyPlayerSkill(playerState.skills, #battingPower, -1);
-            };
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = ?matchStartHook;
-            matchEnd = null;
-            roundStart = null;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func defensiveHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // Increase catching and lower batting power
+    //         for ((playerId, playerState) in request.state.getTeamPlayers(teamId)) {
+    //             MutableState.modifyPlayerSkill(playerState.skills, #catching, 1);
+    //             MutableState.modifyPlayerSkill(playerState.skills, #battingPower, -1);
+    //         };
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = ?matchStartHook;
+    //         matchEnd = null;
+    //         roundStart = null;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func hittersDebtHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            switch (teamId) {
-                case (#team1) {
-                    request.state.team1.score -= 1;
-                };
-                case (#team2) {
-                    request.state.team2.score -= 1;
-                };
-            };
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = ?matchStartHook;
-            matchEnd = null;
-            roundStart = null;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func hittersDebtHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         switch (teamId) {
+    //             case (#team1) {
+    //                 request.state.team1.score -= 1;
+    //             };
+    //             case (#team2) {
+    //                 request.state.team2.score -= 1;
+    //             };
+    //         };
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = ?matchStartHook;
+    //         matchEnd = null;
+    //         roundStart = null;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func ragePitchHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // Increase throwing power and lower throwing accuracy for pitchers
-            let teamState = request.state.getTeamState(teamId);
-            let playerState = request.state.getPlayerState(teamState.positions.pitcher);
-            MutableState.modifyPlayerSkill(playerState.skills, #throwingPower, 1);
-            MutableState.modifyPlayerSkill(playerState.skills, #throwingAccuracy, -1);
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = ?matchStartHook;
-            matchEnd = null;
-            roundStart = null;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func ragePitchHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // Increase throwing power and lower throwing accuracy for pitchers
+    //         let teamState = request.state.getTeamState(teamId);
+    //         let playerState = request.state.getPlayerState(teamState.positions.pitcher);
+    //         MutableState.modifyPlayerSkill(playerState.skills, #throwingPower, 1);
+    //         MutableState.modifyPlayerSkill(playerState.skills, #throwingAccuracy, -1);
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = ?matchStartHook;
+    //         matchEnd = null;
+    //         roundStart = null;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func bubbleHook(teamId : Team.TeamId) : PreCompiledHooks {
-        var usedOnPlayers : TrieSet.Set<Player.PlayerId> = TrieSet.empty();
-        let onDodge = func(request : Hook.HookRequest<Hook.SkillTestContext>) : Hook.HookResult<Hook.SkillTestContext> {
-            let alreadyUsed = TrieSet.mem(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
-            let updatedContext = if (not alreadyUsed) {
-                usedOnPlayers := TrieSet.put(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
+    // private func bubbleHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     var usedOnPlayers : TrieSet.Set<Player.PlayerId> = TrieSet.empty();
+    //     let onDodge = func(request : Hook.HookRequest<Hook.SkillTestContext>) : Hook.HookResult<Hook.SkillTestContext> {
+    //         let alreadyUsed = TrieSet.mem(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
+    //         let updatedContext = if (not alreadyUsed) {
+    //             usedOnPlayers := TrieSet.put(usedOnPlayers, request.context.playerId, request.context.playerId, Nat32.equal);
 
-                {
-                    request.context with
-                    result = {
-                        request.context.result with
-                        crit = true; // TODO what if already crit?
-                    };
-                };
-            } else {
-                request.context; //Skip
-            };
-            {
-                updatedContext = updatedContext;
-            };
-        };
-        {
-            matchStart = null;
-            matchEnd = null;
-            roundStart = null;
-            roundEnd = null;
-            onDodge = ?onDodge;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    //             {
+    //                 request.context with
+    //                 result = {
+    //                     request.context.result with
+    //                     crit = true; // TODO what if already crit?
+    //                 };
+    //             };
+    //         } else {
+    //             request.context; //Skip
+    //         };
+    //         {
+    //             updatedContext = updatedContext;
+    //         };
+    //     };
+    //     {
+    //         matchStart = null;
+    //         matchEnd = null;
+    //         roundStart = null;
+    //         roundEnd = null;
+    //         onDodge = ?onDodge;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func underdogHook(teamId : Team.TeamId) : PreCompiledHooks {
-        // Better stats when team is behind, worse when ahead
-        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // TODO
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = null;
-            matchEnd = null;
-            roundStart = ?roundStartHook;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func underdogHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     // Better stats when team is behind, worse when ahead
+    //     let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // TODO
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = null;
+    //         matchEnd = null;
+    //         roundStart = ?roundStartHook;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func piousHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // TODO
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = null;
-            matchEnd = null;
-            roundStart = ?roundStartHook;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func piousHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // TODO
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = null;
+    //         matchEnd = null;
+    //         roundStart = ?roundStartHook;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func confidentHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // TODO
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = null;
-            matchEnd = null;
-            roundStart = ?roundStartHook;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func confidentHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // TODO
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = null;
+    //         matchEnd = null;
+    //         roundStart = ?roundStartHook;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func moraleFlywheelHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // TODO
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = null;
-            matchEnd = null;
-            roundStart = ?roundStartHook;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func moraleFlywheelHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let roundStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // TODO
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = null;
+    //         matchEnd = null;
+    //         roundStart = ?roundStartHook;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 
-    private func badManagementHook(teamId : Team.TeamId) : PreCompiledHooks {
-        let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
-            // TODO
-            {
-                updatedContext = ();
-            };
-        };
-        {
-            matchStart = ?matchStartHook;
-            matchEnd = null;
-            roundStart = null;
-            roundEnd = null;
-            onDodge = null;
-            onPitch = null;
-            onSwing = null;
-            onHit = null;
-            onCatch = null;
-        };
-    };
+    // private func badManagementHook(teamId : Team.TeamId) : PreCompiledHooks {
+    //     let matchStartHook = func(request : Hook.HookRequest<()>) : Hook.HookResult<()> {
+    //         // TODO
+    //         {
+    //             updatedContext = ();
+    //         };
+    //     };
+    //     {
+    //         matchStart = ?matchStartHook;
+    //         matchEnd = null;
+    //         roundStart = null;
+    //         roundEnd = null;
+    //         onDodge = null;
+    //         onPitch = null;
+    //         onSwing = null;
+    //         onHit = null;
+    //         onCatch = null;
+    //     };
+    // };
 };

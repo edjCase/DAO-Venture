@@ -1,5 +1,5 @@
 {
-  "dfx": "0.17.0",
+  "dfx": "0.18.0",
   "canisters": {
     "league": {
       "dependencies": [

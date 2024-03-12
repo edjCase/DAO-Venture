@@ -8,7 +8,7 @@ import Iter "mo:base/Iter";
 import Types "Types";
 import UsersActor "canister:users";
 
-actor TeamFactoryActor {
+actor {
 
     stable var leagueIdOrNull : ?Principal = null;
 
@@ -36,12 +36,12 @@ actor TeamFactoryActor {
         |> Iter.toArray(_);
     };
 
-    public func createTeamActor(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
+    public func createTeamActor(_ : Types.CreateTeamRequest) : async Types.CreateTeamResult {
         let ?leagueId = leagueIdOrNull else Debug.trap("League id not set");
         // Create canister for team logic
         let canisterCreationCost = 100_000_000_000;
         let initialBalance = 100_000_000_000;
-        Cycles.add(canisterCreationCost + initialBalance);
+        Cycles.add<system>(canisterCreationCost + initialBalance);
         let teamActor = await TeamActor.TeamActor(
             leagueId,
             Principal.fromActor(UsersActor),

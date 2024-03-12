@@ -13,7 +13,6 @@ import Nat "mo:base/Nat";
 import Trie "mo:base/Trie";
 import Option "mo:base/Option";
 import Nat32 "mo:base/Nat32";
-import IterTools "mo:itertools/Iter";
 import TextX "mo:xtended-text/TextX";
 import FieldPosition "../models/FieldPosition";
 
@@ -71,7 +70,7 @@ module {
             prng : Prng,
         ) : Scenario.ScenarioStateResolved {
             let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # scenarioId);
-            let resolvedScenarioState = resolveScenario(
+            resolveScenario(
                 prng,
                 scenario,
                 scenarioTeams,
@@ -267,7 +266,7 @@ module {
             case (#injury(injuryEffect)) {
                 outcomes.add(
                     #injury({
-                        target = getTargetInstance(scenario, context, injuryEffect.target);
+                        target = getTargetInstance(context, injuryEffect.target);
                         injury = injuryEffect.injury;
                     })
                 );
@@ -275,7 +274,7 @@ module {
             case (#skill(s)) {
                 outcomes.add(
                     #skill({
-                        target = getTargetInstance(scenario, context, s.target);
+                        target = getTargetInstance(context, s.target);
                         skill = s.skill;
                         duration = s.duration;
                         delta = s.delta;
@@ -361,7 +360,6 @@ module {
     };
 
     private func getTargetInstance(
-        scenario : Scenario.Scenario,
         context : EffectContext,
         target : Scenario.Target,
     ) : Scenario.TargetInstance {
@@ -390,8 +388,8 @@ module {
         };
     };
 
-    public func toHashMap(scenarios : [Scenario.Scenario]) : HashMap.HashMap<Text, Scenario.Scenario> {
-        let result : HashMap.HashMap<Text, Scenario.Scenario> = scenarios
+    private func toHashMap(scenarios : [Scenario.Scenario]) : HashMap.HashMap<Text, Scenario.Scenario> {
+        scenarios
         |> Iter.fromArray(_)
         |> Iter.map<Scenario.Scenario, (Text, Scenario.Scenario)>(
             _,

@@ -1,23 +1,13 @@
 import Principal "mo:base/Principal";
-import Trie "mo:base/Trie";
-import Hash "mo:base/Hash";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import Prelude "mo:base/Prelude";
-import TrieSet "mo:base/TrieSet";
-import Array "mo:base/Array";
-import Buffer "mo:base/Buffer";
 import Nat "mo:base/Nat";
-import Error "mo:base/Error";
-import Text "mo:base/Text";
 import Iter "mo:base/Iter";
-import None "mo:base/None";
 import HashMap "mo:base/HashMap";
 import Time "mo:base/Time";
 import Timer "mo:base/Timer";
 import Float "mo:base/Float";
 import Int "mo:base/Int";
-import DateTime "mo:datetime/DateTime";
 
 module {
     public type StableData<TProposalContent> = {
@@ -125,7 +115,7 @@ module {
         var proposalDuration = data.proposalDuration;
         var votingThreshold = data.votingThreshold;
 
-        public func resetEndTimers() {
+        public func resetEndTimers<system>() {
             for (proposal in proposals.vals()) {
                 switch (proposal.endTimerId) {
                     case (null) ();
@@ -134,7 +124,7 @@ module {
                 proposal.endTimerId := null;
                 if (proposal.status == #open) {
                     let proposalDurationNanoseconds = durationToNanoseconds(proposalDuration);
-                    let endTimerId = createEndTimer(proposal.id, proposalDurationNanoseconds);
+                    let endTimerId = createEndTimer<system>(proposal.id, proposalDurationNanoseconds);
                     proposal.endTimerId := ?endTimerId;
                 };
             };
@@ -187,7 +177,7 @@ module {
             } else {
                 proposal.votingSummary.no += existingVote.votingPower;
             };
-            let passed = switch (calculateVoteStatus(proposal)) {
+            switch (calculateVoteStatus(proposal)) {
                 case (#passed) {
                     await* executeOrRejectProposal(proposal, true);
                 };
@@ -199,7 +189,7 @@ module {
             #ok;
         };
 
-        public func createProposal(
+        public func createProposal<system>(
             proposer : Principal,
             content : TProposalContent,
             members : [Member],
@@ -229,7 +219,7 @@ module {
             };
             let proposalId = nextProposalId;
             let proposalDurationNanoseconds = durationToNanoseconds(proposalDuration);
-            let endTimerId = createEndTimer(proposalId, proposalDurationNanoseconds);
+            let endTimerId = createEndTimer<system>(proposalId, proposalDurationNanoseconds);
             let proposal : MutableProposal<TProposalContent> = {
                 id = proposalId;
                 proposer = proposer;
@@ -253,8 +243,11 @@ module {
             };
         };
 
-        private func createEndTimer(proposalId : Nat, proposalDurationNanoseconds : Nat) : Nat {
-            Timer.setTimer(
+        private func createEndTimer<system>(
+            proposalId : Nat,
+            proposalDurationNanoseconds : Nat,
+        ) : Nat {
+            Timer.setTimer<system>(
                 #nanoseconds(proposalDurationNanoseconds),
                 func() : async () {
                     switch (await* onProposalEnd(proposalId)) {
@@ -291,7 +284,7 @@ module {
             let proposalsArray = proposals.entries()
             |> Iter.map(
                 _,
-                func((k, v) : (Nat, MutableProposal<TProposalContent>)) : Proposal<TProposalContent> = fromMutableProposal<TProposalContent>(v),
+                func((_, v) : (Nat, MutableProposal<TProposalContent>)) : Proposal<TProposalContent> = fromMutableProposal<TProposalContent>(v),
             )
             |> Iter.toArray(_);
 
@@ -352,7 +345,6 @@ module {
             return #undetermined;
         };
 
-        resetEndTimers(); // Always reset end timers on init
     };
 
     private func fromMutableProposal<TProposalContent>(proposal : MutableProposal<TProposalContent>) : Proposal<TProposalContent> = {

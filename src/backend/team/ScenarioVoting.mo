@@ -1,20 +1,21 @@
-import Trie "mo:base/Trie";
 import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
-import Buffer "mo:base/Buffer";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
-import Types "./Types";
-import Team "../models/Team";
 
 module {
     public type Data = {
         scenarioId : Text;
         optionCount : Nat;
-        votes : [(Principal, Nat)];
+        votes : [(Principal, Vote)];
+    };
+
+    public type Vote = {
+        option : Nat;
+        votingPower : Nat;
     };
 
     public class Manager(data : [Data]) {
@@ -40,7 +41,7 @@ module {
         };
 
         public func remove(scenarioId : Text) : { #ok; #notFound } {
-            let ?handler = handlers.remove(scenarioId) else return #notFound;
+            let ?_ = handlers.remove(scenarioId) else return #notFound;
             #ok;
         };
 
@@ -55,7 +56,7 @@ module {
     };
 
     public class Handler(data : Data) {
-        let votes = HashMap.fromIter<Principal, Nat>(data.votes.vals(), data.votes.size(), Principal.equal, Principal.hash);
+        let votes = HashMap.fromIter<Principal, Vote>(data.votes.vals(), data.votes.size(), Principal.equal, Principal.hash);
 
         public func vote(
             voterId : Principal,
@@ -70,11 +71,17 @@ module {
             if (votes.get(voterId) != null) {
                 return #alreadyVoted;
             };
-            votes.put(voterId, option);
+            votes.put(
+                voterId,
+                {
+                    option = option;
+                    votingPower = votingPower;
+                },
+            );
             #ok;
         };
 
-        public func getVote(voterId : Principal) : ?Nat {
+        public func getVote(voterId : Principal) : ?Vote {
             votes.get(voterId);
         };
 
@@ -84,22 +91,16 @@ module {
             //     return #notAuthorized;
             // };
             // Scenario Option Id -> Vote Count
-            var optionVotes = Trie.empty<Nat, Nat>();
+            let optionVotes = HashMap.HashMap<Nat, Nat>(data.optionCount, Nat.equal, Nat32.fromNat);
             for ((userId, vote) in votes.entries()) {
-                let userVotingPower = 1; // TODO
 
-                let optionKey = {
-                    key = vote;
-                    hash = Nat32.fromNat(vote);
-                };
-                let currentVotes = switch (Trie.get(optionVotes, optionKey, Nat.equal)) {
+                let currentVotes = switch (optionVotes.get(vote.option)) {
                     case (?v) v;
                     case (null) 0;
                 };
-                let (newOptionVotes, _) = Trie.put(optionVotes, optionKey, Nat.equal, currentVotes + userVotingPower);
-                optionVotes := newOptionVotes;
+                optionVotes.put(vote.option, currentVotes + vote.votingPower);
             };
-            calculateVote<Nat>(optionVotes);
+            calculateVote<Nat>(optionVotes.entries());
         };
 
         public func toStableData() : Data {
@@ -111,9 +112,9 @@ module {
             };
         };
 
-        private func calculateVote<T>(votes : Trie.Trie<T, Nat>) : ?T {
+        private func calculateVote<T>(votes : Iter.Iter<(T, Nat)>) : ?T {
             var winningVote : ?(T, Nat) = null;
-            for ((choice, votes) in Trie.iter(votes)) {
+            for ((choice, votes) in votes) {
                 switch (winningVote) {
                     case (null) winningVote := ?(choice, votes);
                     case (?o) {

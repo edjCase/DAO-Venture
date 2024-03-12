@@ -8,7 +8,6 @@ import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
-import Random "mo:base/Random";
 import Nat "mo:base/Nat";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
@@ -18,7 +17,7 @@ import Scenario "../models/Scenario";
 import Skill "../models/Skill";
 // import LeagueActor "canister:league"; TODO
 
-actor PlayersActor {
+actor {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var nextPlayerId : Nat32 = 1;
@@ -44,7 +43,7 @@ actor PlayersActor {
         #created;
     };
 
-    public query ({ caller }) func getPlayer(id : Nat32) : async Types.GetPlayerResult {
+    public query func getPlayer(id : Nat32) : async Types.GetPlayerResult {
         let key = {
             key = id;
             hash = id;
@@ -69,7 +68,7 @@ actor PlayersActor {
     };
 
     // TODO REMOVE DELETING METHODS
-    public shared ({ caller }) func clearPlayers() : async () {
+    public shared func clearPlayers() : async () {
         players := Trie.empty<Nat32, Types.Player>();
         stats := Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
         futurePlayers := [];
@@ -169,13 +168,13 @@ actor PlayersActor {
     };
 
     // TODO REMOVE DELETING METHODS
-    public shared ({ caller }) func clearTraits() : async () {
+    public shared func clearTraits() : async () {
         traits := Trie.empty<Text, Trait.Trait>();
     };
 
-    public shared query ({ caller }) func getTraits() : async [Trait.Trait] {
+    public shared query func getTraits() : async [Trait.Trait] {
         traits
-        |> Trie.toArray(_, func(k : Text, t : Trait.Trait) : Trait.Trait = t);
+        |> Trie.toArray(_, func(_ : Text, t : Trait.Trait) : Trait.Trait = t);
     };
 
     public shared ({ caller }) func addTrait(request : Types.AddTraitRequest) : async Types.AddTraitResult {
@@ -194,7 +193,6 @@ actor PlayersActor {
 
     public shared ({ caller }) func applyEffects(request : Types.ApplyEffectsRequest) : async Types.ApplyEffectsResult {
         assertLeague(caller);
-        let prng = PseudoRandomX.fromBlob(await Random.blob());
         for (effect in Iter.fromArray(request)) {
             switch (effect) {
                 case (#skill(skillEffect)) {
@@ -291,15 +289,6 @@ actor PlayersActor {
         |> Iter.toArray(_);
     };
 
-    private func getTrait(traitId : Text) : Trait.Trait {
-        let traitKey = {
-            key = traitId;
-            hash = Text.hash(traitId);
-        };
-        let ?trait = Trie.get(traits, traitKey, Text.equal) else Debug.trap("Trait not found: " # traitId); // TODO trap?
-        trait;
-    };
-
     private func updatePlayer(playerId : Nat32, updateFunc : (player : Types.Player) -> Types.Player) {
         let playerKey = {
             key = playerId;
@@ -311,19 +300,6 @@ actor PlayersActor {
 
         let (newPlayers, _) = Trie.put(players, playerKey, Nat32.equal, newPlayer);
         players := newPlayers;
-    };
-
-    private func applyEffect(prng : Prng, player : Types.Player, effect : Trait.Effect) : Types.Player {
-        switch (effect) {
-            case (#skill(skillEffect)) {
-                let skill = switch (skillEffect.skill) {
-                    case (null) Skill.getRandom(prng);
-                    case (?s) s;
-                };
-                let newSkills = Skill.modify(player.skills, skill, skillEffect.delta);
-                { player with skills = newSkills };
-            };
-        };
     };
 
     private func getTeamPlayersInternal(teamId : Principal) : [Player.PlayerWithId] {
@@ -371,7 +347,7 @@ actor PlayersActor {
         };
     };
 
-    private func isLeague(caller : Principal) : Bool {
+    private func isLeague(_ : Principal) : Bool {
         // TODO
         // caller == Principal.fromActor(LeagueActor);
         true;
