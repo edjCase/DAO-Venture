@@ -33,6 +33,19 @@ module {
         };
     };
 
+    public type VoteOnProposalRequest = {
+        proposalId : Nat;
+        vote : Bool;
+    };
+
+    public type VoteOnProposalResult = {
+        #ok;
+        #notAuthorized;
+        #proposalNotFound;
+        #alreadyVoted;
+        #votingClosed;
+    };
+
     public type CreateProposalRequest = {
         content : ProposalContent;
     };

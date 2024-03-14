@@ -44,6 +44,27 @@ export const idlFactory = ({ IDL }) => {
     'ok' : MatchGroupPredictionSummary,
     'notFound' : IDL.Null,
   });
+  const Vote = IDL.Record({
+    'value' : IDL.Opt(IDL.Bool),
+    'votingPower' : IDL.Nat,
+  });
+  const Time = IDL.Int;
+  const ProposalStatusLogEntry = IDL.Variant({
+    'failedToExecute' : IDL.Record({ 'time' : Time, 'error' : IDL.Text }),
+    'rejected' : IDL.Record({ 'time' : Time }),
+    'executing' : IDL.Record({ 'time' : Time }),
+    'executed' : IDL.Record({ 'time' : Time }),
+  });
+  const Proposal = IDL.Record({
+    'id' : IDL.Nat,
+    'content' : ProposalContent,
+    'timeStart' : IDL.Int,
+    'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
+    'statusLog' : IDL.Vec(ProposalStatusLogEntry),
+    'endTimerId' : IDL.Opt(IDL.Nat),
+    'proposer' : IDL.Principal,
+    'timeEnd' : IDL.Int,
+  });
   const ScenarioOption__1 = IDL.Record({
     'id' : IDL.Nat,
     'description' : IDL.Text,
@@ -86,7 +107,6 @@ export const idlFactory = ({ IDL }) => {
     'logoUrl' : IDL.Text,
     'positions' : TeamPositions,
   });
-  const Time = IDL.Int;
   const CompletedMatchTeam = IDL.Record({
     'id' : IDL.Principal,
     'score' : IDL.Int,
@@ -451,6 +471,17 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
+  const VoteOnProposalRequest = IDL.Record({
+    'vote' : IDL.Bool,
+    'proposalId' : IDL.Nat,
+  });
+  const VoteOnProposalResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'proposalNotFound' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'alreadyVoted' : IDL.Null,
+    'votingClosed' : IDL.Null,
+  });
   return IDL.Service({
     'clearTeams' : IDL.Func([], [], []),
     'closeSeason' : IDL.Func([], [CloseSeasonResult], []),
@@ -465,6 +496,8 @@ export const idlFactory = ({ IDL }) => {
         [GetMatchGroupPredictionsResult],
         ['query'],
       ),
+    'getProposal' : IDL.Func([IDL.Nat], [IDL.Opt(Proposal)], ['query']),
+    'getProposals' : IDL.Func([], [IDL.Vec(Proposal)], ['query']),
     'getScenario' : IDL.Func([IDL.Text], [GetScenarioResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
     'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
@@ -487,6 +520,11 @@ export const idlFactory = ({ IDL }) => {
     'startMatchGroup' : IDL.Func([IDL.Nat], [StartMatchGroupResult], []),
     'startSeason' : IDL.Func([StartSeasonRequest], [StartSeasonResult], []),
     'updateLeagueCanisters' : IDL.Func([], [UpdateLeagueCanistersResult], []),
+    'voteOnProposal' : IDL.Func(
+        [VoteOnProposalRequest],
+        [VoteOnProposalResult],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

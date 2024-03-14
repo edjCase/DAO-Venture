@@ -7,37 +7,26 @@ export type Base = { 'homeBase' : null } |
   { 'secondBase' : null } |
   { 'firstBase' : null };
 export interface BaseState {
-  'atBat' : PlayerId__1,
-  'thirdBase' : [] | [PlayerId__1],
-  'secondBase' : [] | [PlayerId__1],
-  'firstBase' : [] | [PlayerId__1],
+  'atBat' : PlayerId,
+  'thirdBase' : [] | [PlayerId],
+  'secondBase' : [] | [PlayerId],
+  'firstBase' : [] | [PlayerId],
 }
 export interface CancelMatchGroupRequest { 'id' : bigint }
 export type CancelMatchGroupResult = { 'ok' : null } |
   { 'matchGroupNotFound' : null };
-export interface CompletedMatch {
-  'team1' : CompletedMatchTeam,
-  'team2' : CompletedMatchTeam,
-  'aura' : MatchAura,
-  'winner' : TeamIdOrTie,
-}
-export interface CompletedMatchTeam { 'id' : Principal, 'score' : bigint }
-export interface CompletedTickResult {
-  'match' : CompletedMatch,
-  'matchStats' : Array<PlayerMatchStatsWithId>,
-}
 export type Effect = { 'skill' : { 'skill' : [] | [Skill], 'delta' : bigint } };
 export type Event = {
-    'out' : { 'playerId' : PlayerId, 'reason' : OutReason }
+    'out' : { 'playerId' : PlayerId__1, 'reason' : OutReason }
   } |
-  { 'throw' : { 'to' : PlayerId, 'from' : PlayerId } } |
-  { 'newBatter' : { 'playerId' : PlayerId } } |
-  { 'teamSwap' : { 'atBatPlayerId' : PlayerId, 'offenseTeamId' : TeamId } } |
-  { 'hitByBall' : { 'playerId' : PlayerId } } |
+  { 'throw' : { 'to' : PlayerId__1, 'from' : PlayerId__1 } } |
+  { 'newBatter' : { 'playerId' : PlayerId__1 } } |
+  { 'teamSwap' : { 'atBatPlayerId' : PlayerId__1, 'offenseTeamId' : TeamId } } |
+  { 'hitByBall' : { 'playerId' : PlayerId__1 } } |
   {
     'catch' : {
       'difficulty' : { 'value' : bigint, 'crit' : boolean },
-      'playerId' : PlayerId,
+      'playerId' : PlayerId__1,
       'roll' : { 'value' : bigint, 'crit' : boolean },
     }
   } |
@@ -45,16 +34,16 @@ export type Event = {
   {
     'traitTrigger' : {
       'id' : Trait,
-      'playerId' : PlayerId,
+      'playerId' : PlayerId__1,
       'description' : string,
     }
   } |
-  { 'safeAtBase' : { 'base' : Base, 'playerId' : PlayerId } } |
+  { 'safeAtBase' : { 'base' : Base, 'playerId' : PlayerId__1 } } |
   { 'score' : { 'teamId' : TeamId, 'amount' : bigint } } |
   {
     'swing' : {
       'pitchRoll' : { 'value' : bigint, 'crit' : boolean },
-      'playerId' : PlayerId,
+      'playerId' : PlayerId__1,
       'roll' : { 'value' : bigint, 'crit' : boolean },
       'outcome' : { 'hit' : HitLocation } |
         { 'strike' : null } |
@@ -65,7 +54,7 @@ export type Event = {
   {
     'pitch' : {
       'roll' : { 'value' : bigint, 'crit' : boolean },
-      'pitcherId' : PlayerId,
+      'pitcherId' : PlayerId__1,
     }
   } |
   { 'matchEnd' : { 'reason' : MatchEndReason } } |
@@ -87,7 +76,11 @@ export type HitLocation = { 'rightField' : null } |
   { 'shortStop' : null } |
   { 'centerField' : null } |
   { 'firstBase' : null };
-export interface InProgressMatch {
+export type Injury = { 'twistedAnkle' : null } |
+  { 'brokenArm' : null } |
+  { 'brokenLeg' : null } |
+  { 'concussion' : null };
+export interface Match {
   'log' : MatchLog,
   'team1' : TeamState,
   'team2' : TeamState,
@@ -98,10 +91,6 @@ export interface InProgressMatch {
   'bases' : BaseState,
   'strikes' : bigint,
 }
-export type Injury = { 'twistedAnkle' : null } |
-  { 'brokenArm' : null } |
-  { 'brokenLeg' : null } |
-  { 'concussion' : null };
 export type MatchAura = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
   { 'extraStrike' : null } |
@@ -121,6 +110,9 @@ export interface MatchGroupWithId {
   'matches' : Array<TickResult>,
 }
 export interface MatchLog { 'rounds' : Array<RoundLog> }
+export type MatchStatus = { 'completed' : MatchStatusCompleted } |
+  { 'inProgress' : null };
+export interface MatchStatusCompleted { 'reason' : MatchEndReason }
 export type OutReason = { 'strikeout' : null } |
   { 'ballCaught' : null } |
   { 'hitByBall' : null };
@@ -153,33 +145,8 @@ export interface PlayerMatchStats {
     'successfulCatches' : bigint,
   },
 }
-export interface PlayerMatchStatsWithId {
-  'playerId' : PlayerId,
-  'battingStats' : {
-    'homeRuns' : bigint,
-    'hits' : bigint,
-    'runs' : bigint,
-    'strikeouts' : bigint,
-    'atBats' : bigint,
-  },
-  'injuries' : bigint,
-  'pitchingStats' : {
-    'homeRuns' : bigint,
-    'pitches' : bigint,
-    'hits' : bigint,
-    'runs' : bigint,
-    'strikeouts' : bigint,
-    'strikes' : bigint,
-  },
-  'catchingStats' : {
-    'missedCatches' : bigint,
-    'throwOuts' : bigint,
-    'throws' : bigint,
-    'successfulCatches' : bigint,
-  },
-}
 export interface PlayerStateWithId {
-  'id' : PlayerId__1,
+  'id' : PlayerId,
   'name' : string,
   'matchStats' : PlayerMatchStats,
   'teamId' : TeamId,
@@ -260,9 +227,6 @@ export interface StartMatchTeam {
 }
 export type TeamId = { 'team1' : null } |
   { 'team2' : null };
-export type TeamIdOrTie = { 'tie' : null } |
-  { 'team1' : null } |
-  { 'team2' : null };
 export interface TeamPositions {
   'rightField' : number,
   'leftField' : number,
@@ -290,8 +254,7 @@ export type TickMatchGroupResult = { 'completed' : null } |
       { 'unknown' : string }
   } |
   { 'inProgress' : null };
-export type TickResult = { 'completed' : CompletedTickResult } |
-  { 'inProgress' : InProgressMatch };
+export interface TickResult { 'match' : Match, 'status' : MatchStatus }
 export interface Trait {
   'id' : string,
   'effects' : Array<Effect>,

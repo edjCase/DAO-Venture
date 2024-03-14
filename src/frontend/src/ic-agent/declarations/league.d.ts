@@ -253,9 +253,25 @@ export type PredictMatchOutcomeResult = { 'ok' : null } |
 export type ProcessEffectOutcomesResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'seasonNotInProgress' : null };
+export interface Proposal {
+  'id' : bigint,
+  'content' : ProposalContent,
+  'timeStart' : bigint,
+  'votes' : Array<[Principal, Vote]>,
+  'statusLog' : Array<ProposalStatusLogEntry>,
+  'endTimerId' : [] | [bigint],
+  'proposer' : Principal,
+  'timeEnd' : bigint,
+}
 export type ProposalContent = {
     'changeTeamName' : { 'name' : string, 'teamId' : Principal }
   };
+export type ProposalStatusLogEntry = {
+    'failedToExecute' : { 'time' : Time, 'error' : string }
+  } |
+  { 'rejected' : { 'time' : Time } } |
+  { 'executing' : { 'time' : Time } } |
+  { 'executed' : { 'time' : Time } };
 export interface Scenario {
   'id' : string,
   'title' : string,
@@ -383,6 +399,16 @@ export interface TeamWithId {
 export type Time = bigint;
 export type UpdateLeagueCanistersResult = { 'ok' : null } |
   { 'notAuthorized' : null };
+export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
+export interface VoteOnProposalRequest {
+  'vote' : boolean,
+  'proposalId' : bigint,
+}
+export type VoteOnProposalResult = { 'ok' : null } |
+  { 'proposalNotFound' : null } |
+  { 'notAuthorized' : null } |
+  { 'alreadyVoted' : null } |
+  { 'votingClosed' : null };
 export interface _SERVICE {
   'clearTeams' : ActorMethod<[], undefined>,
   'closeSeason' : ActorMethod<[], CloseSeasonResult>,
@@ -392,6 +418,8 @@ export interface _SERVICE {
     [bigint],
     GetMatchGroupPredictionsResult
   >,
+  'getProposal' : ActorMethod<[bigint], [] | [Proposal]>,
+  'getProposals' : ActorMethod<[], Array<Proposal>>,
   'getScenario' : ActorMethod<[string], GetScenarioResult>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
@@ -411,6 +439,7 @@ export interface _SERVICE {
   'startMatchGroup' : ActorMethod<[bigint], StartMatchGroupResult>,
   'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'updateLeagueCanisters' : ActorMethod<[], UpdateLeagueCanistersResult>,
+  'voteOnProposal' : ActorMethod<[VoteOnProposalRequest], VoteOnProposalResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

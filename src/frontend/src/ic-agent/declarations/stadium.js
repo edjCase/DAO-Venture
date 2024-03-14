@@ -4,10 +4,13 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'matchGroupNotFound' : IDL.Null,
   });
-  const CompletedMatchTeam = IDL.Record({
-    'id' : IDL.Principal,
-    'score' : IDL.Int,
+  const PlayerId__1 = IDL.Nat32;
+  const OutReason = IDL.Variant({
+    'strikeout' : IDL.Null,
+    'ballCaught' : IDL.Null,
+    'hitByBall' : IDL.Null,
   });
+  const TeamId = IDL.Variant({ 'team1' : IDL.Null, 'team2' : IDL.Null });
   const MatchAura = IDL.Variant({
     'foggy' : IDL.Null,
     'moveBasesIn' : IDL.Null,
@@ -20,53 +23,6 @@ export const idlFactory = ({ IDL }) => {
     'windy' : IDL.Null,
     'rainy' : IDL.Null,
   });
-  const TeamIdOrTie = IDL.Variant({
-    'tie' : IDL.Null,
-    'team1' : IDL.Null,
-    'team2' : IDL.Null,
-  });
-  const CompletedMatch = IDL.Record({
-    'team1' : CompletedMatchTeam,
-    'team2' : CompletedMatchTeam,
-    'aura' : MatchAura,
-    'winner' : TeamIdOrTie,
-  });
-  const PlayerId = IDL.Nat32;
-  const PlayerMatchStatsWithId = IDL.Record({
-    'playerId' : PlayerId,
-    'battingStats' : IDL.Record({
-      'homeRuns' : IDL.Nat,
-      'hits' : IDL.Nat,
-      'runs' : IDL.Nat,
-      'strikeouts' : IDL.Nat,
-      'atBats' : IDL.Nat,
-    }),
-    'injuries' : IDL.Nat,
-    'pitchingStats' : IDL.Record({
-      'homeRuns' : IDL.Nat,
-      'pitches' : IDL.Nat,
-      'hits' : IDL.Nat,
-      'runs' : IDL.Nat,
-      'strikeouts' : IDL.Nat,
-      'strikes' : IDL.Nat,
-    }),
-    'catchingStats' : IDL.Record({
-      'missedCatches' : IDL.Nat,
-      'throwOuts' : IDL.Nat,
-      'throws' : IDL.Nat,
-      'successfulCatches' : IDL.Nat,
-    }),
-  });
-  const CompletedTickResult = IDL.Record({
-    'match' : CompletedMatch,
-    'matchStats' : IDL.Vec(PlayerMatchStatsWithId),
-  });
-  const OutReason = IDL.Variant({
-    'strikeout' : IDL.Null,
-    'ballCaught' : IDL.Null,
-    'hitByBall' : IDL.Null,
-  });
-  const TeamId = IDL.Variant({ 'team1' : IDL.Null, 'team2' : IDL.Null });
   const Skill = IDL.Variant({
     'battingAccuracy' : IDL.Null,
     'throwingAccuracy' : IDL.Null,
@@ -113,30 +69,30 @@ export const idlFactory = ({ IDL }) => {
     'error' : IDL.Text,
   });
   const Event = IDL.Variant({
-    'out' : IDL.Record({ 'playerId' : PlayerId, 'reason' : OutReason }),
-    'throw' : IDL.Record({ 'to' : PlayerId, 'from' : PlayerId }),
-    'newBatter' : IDL.Record({ 'playerId' : PlayerId }),
+    'out' : IDL.Record({ 'playerId' : PlayerId__1, 'reason' : OutReason }),
+    'throw' : IDL.Record({ 'to' : PlayerId__1, 'from' : PlayerId__1 }),
+    'newBatter' : IDL.Record({ 'playerId' : PlayerId__1 }),
     'teamSwap' : IDL.Record({
-      'atBatPlayerId' : PlayerId,
+      'atBatPlayerId' : PlayerId__1,
       'offenseTeamId' : TeamId,
     }),
-    'hitByBall' : IDL.Record({ 'playerId' : PlayerId }),
+    'hitByBall' : IDL.Record({ 'playerId' : PlayerId__1 }),
     'catch' : IDL.Record({
       'difficulty' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
-      'playerId' : PlayerId,
+      'playerId' : PlayerId__1,
       'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
     }),
     'auraTrigger' : IDL.Record({ 'id' : MatchAura, 'description' : IDL.Text }),
     'traitTrigger' : IDL.Record({
       'id' : Trait,
-      'playerId' : PlayerId,
+      'playerId' : PlayerId__1,
       'description' : IDL.Text,
     }),
-    'safeAtBase' : IDL.Record({ 'base' : Base, 'playerId' : PlayerId }),
+    'safeAtBase' : IDL.Record({ 'base' : Base, 'playerId' : PlayerId__1 }),
     'score' : IDL.Record({ 'teamId' : TeamId, 'amount' : IDL.Int }),
     'swing' : IDL.Record({
       'pitchRoll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
-      'playerId' : PlayerId,
+      'playerId' : PlayerId__1,
       'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
       'outcome' : IDL.Variant({
         'hit' : HitLocation,
@@ -147,7 +103,7 @@ export const idlFactory = ({ IDL }) => {
     'injury' : IDL.Record({ 'playerId' : IDL.Nat32, 'injury' : Injury }),
     'pitch' : IDL.Record({
       'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
-      'pitcherId' : PlayerId,
+      'pitcherId' : PlayerId__1,
     }),
     'matchEnd' : IDL.Record({ 'reason' : MatchEndReason }),
     'death' : IDL.Record({ 'playerId' : IDL.Nat32 }),
@@ -172,7 +128,7 @@ export const idlFactory = ({ IDL }) => {
     'logoUrl' : IDL.Text,
     'positions' : TeamPositions,
   });
-  const PlayerId__1 = IDL.Nat32;
+  const PlayerId = IDL.Nat32;
   const PlayerMatchStats = IDL.Record({
     'battingStats' : IDL.Record({
       'homeRuns' : IDL.Nat,
@@ -212,7 +168,7 @@ export const idlFactory = ({ IDL }) => {
     'injured' : Injury,
   });
   const PlayerStateWithId = IDL.Record({
-    'id' : PlayerId__1,
+    'id' : PlayerId,
     'name' : IDL.Text,
     'matchStats' : PlayerMatchStats,
     'teamId' : TeamId,
@@ -220,12 +176,12 @@ export const idlFactory = ({ IDL }) => {
     'condition' : PlayerCondition,
   });
   const BaseState = IDL.Record({
-    'atBat' : PlayerId__1,
-    'thirdBase' : IDL.Opt(PlayerId__1),
-    'secondBase' : IDL.Opt(PlayerId__1),
-    'firstBase' : IDL.Opt(PlayerId__1),
+    'atBat' : PlayerId,
+    'thirdBase' : IDL.Opt(PlayerId),
+    'secondBase' : IDL.Opt(PlayerId),
+    'firstBase' : IDL.Opt(PlayerId),
   });
-  const InProgressMatch = IDL.Record({
+  const Match = IDL.Record({
     'log' : MatchLog,
     'team1' : TeamState,
     'team2' : TeamState,
@@ -236,10 +192,12 @@ export const idlFactory = ({ IDL }) => {
     'bases' : BaseState,
     'strikes' : IDL.Nat,
   });
-  const TickResult = IDL.Variant({
-    'completed' : CompletedTickResult,
-    'inProgress' : InProgressMatch,
+  const MatchStatusCompleted = IDL.Record({ 'reason' : MatchEndReason });
+  const MatchStatus = IDL.Variant({
+    'completed' : MatchStatusCompleted,
+    'inProgress' : IDL.Null,
   });
+  const TickResult = IDL.Record({ 'match' : Match, 'status' : MatchStatus });
   const MatchGroupWithId = IDL.Record({
     'id' : IDL.Nat,
     'tickTimerId' : IDL.Nat,

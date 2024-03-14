@@ -10,11 +10,12 @@
     } from "flowbite-svelte";
     import { teamStore } from "../stores/TeamStore";
     import { Principal } from "@dfinity/principal";
-    import ProposalList from "./TeamDao/ProposalList.svelte";
-    import CreateProposal from "./TeamDao/CreateProposal.svelte";
-    import MemberList from "./TeamDao/MemberList.svelte";
+    import TeamCreateProposal from "./dao/TeamCreateProposal.svelte";
+    import MemberList from "./dao/MemberList.svelte";
     import { usersAgentFactory } from "../ic-agent/Users";
     import { userStore } from "../stores/UserStore";
+    import TeamProposalList from "./dao/TeamProposalList.svelte";
+    import LeagueProposalList from "./dao/LeagueProposalList.svelte";
 
     $: teams = $teamStore;
 
@@ -58,6 +59,9 @@
     };
 </script>
 
+<div class="text-3xl">League DAO Admin Panel</div>
+<LeagueProposalList />
+
 {#if teamItems}
     <div class="text-3xl">Team DAO Admin Panel</div>
     <hr class="mb-6" />
@@ -67,8 +71,8 @@
     {#if selectedTeamId}
         <Tabs>
             <TabItem open title="Proposals">
-                <ProposalList teamId={selectedTeamId} />
-                <CreateProposal teamId={selectedTeamId} />
+                <TeamProposalList teamId={selectedTeamId} />
+                <TeamCreateProposal teamId={selectedTeamId} />
             </TabItem>
             <TabItem title="Members">
                 <MemberList teamId={selectedTeamId} />

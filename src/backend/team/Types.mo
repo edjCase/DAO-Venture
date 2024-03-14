@@ -24,18 +24,6 @@ module {
         updateCanisters : () -> async ();
     };
 
-    public type Member = Dao.Member;
-
-    public type AddMemberRequest = {
-        id : Principal;
-    };
-
-    public type AddMemberResult = {
-        #ok;
-        #notAuthorized;
-        #alreadyExists;
-    };
-
     public type VoteOnProposalRequest = {
         proposalId : Nat;
         vote : Bool;

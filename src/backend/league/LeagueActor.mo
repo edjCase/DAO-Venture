@@ -1,5 +1,4 @@
 import Principal "mo:base/Principal";
-import Trie "mo:base/Trie";
 import IterTools "mo:itertools/Iter";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
@@ -7,7 +6,6 @@ import Buffer "mo:base/Buffer";
 import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
-import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "Types";
@@ -124,6 +122,18 @@ actor LeagueActor {
             };
         };
         dao.createProposal<system>(caller, request.content, members);
+    };
+
+    public shared query func getProposal(id : Nat) : async ?Types.Proposal {
+        dao.getProposal(id);
+    };
+
+    public shared query func getProposals() : async [Types.Proposal] {
+        dao.getProposals();
+    };
+
+    public shared ({ caller }) func voteOnProposal(request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {
+        await* dao.vote(request.proposalId, caller, request.vote);
     };
 
     public query func getTeamStandings() : async Types.GetTeamStandingsResult {

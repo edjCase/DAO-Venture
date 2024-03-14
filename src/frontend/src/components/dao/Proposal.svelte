@@ -1,15 +1,21 @@
 <script lang="ts">
-    import { Principal } from "@dfinity/principal";
     import { Button } from "flowbite-svelte";
-    import { teamAgentFactory } from "../../ic-agent/Team";
-    import { Proposal } from "../../ic-agent/declarations/team";
+    import { ProposalStatusLogEntry } from "../../ic-agent/declarations/team";
     import { toJsonString } from "../../utils/JsonUtil";
     import { nanosecondsToDate } from "../../utils/DateUtils";
-    import { proposalStore } from "../../stores/ProposalStore";
     import { identityStore } from "../../stores/IdentityStore";
+    import { Principal } from "@dfinity/principal";
 
-    export let teamId: string | Principal;
+    interface Proposal {
+        id: bigint;
+        timeStart: bigint;
+        timeEnd: bigint;
+        votes: [Principal, { value: boolean[] }][];
+        statusLog: ProposalStatusLogEntry[];
+    }
+
     export let proposal: Proposal;
+    export let onVote: (vote: boolean) => void;
 
     $: identity = $identityStore;
 
@@ -25,37 +31,19 @@
     }
 
     let vote = async (vote: boolean) => {
-        console.log(
-            "Voting on proposal",
-            proposal.id,
-            "for team",
-            teamId,
-            "vote",
-            vote,
-        );
-        let result = await teamAgentFactory(teamId).voteOnProposal({
-            proposalId: proposal.id,
-            vote,
-        });
-        console.log("Vote Result: ", result);
-        if ("ok" in result) {
-            proposalStore.refetchTeamProposal(teamId, proposal.id);
-        }
+        console.log("Voting on proposal", proposal.id, "vote", vote);
+        onVote(vote);
     };
+    let lastStatus: ProposalStatusLogEntry | undefined =
+        proposal.statusLog[proposal.statusLog.length - 1];
 </script>
 
 <div class="border p-5">
     <div class="text-3xl">Proposal: {proposal.id}</div>
     <div>Created: {nanosecondsToDate(proposal.timeStart).toLocaleString()}</div>
     <div>Ends: {nanosecondsToDate(proposal.timeEnd).toLocaleString()}</div>
-    {#if "trainPlayer"}
-        <div class="text-xl">Type: Train Player</div>
-        <div>PlayerId: {proposal.content.trainPlayer.playerId}</div>
-        <div>Skill: {toJsonString(proposal.content.trainPlayer.skill)}</div>
-    {:else}
-        Proposal Type Not Implemented
-    {/if}
-    {#if "open" in proposal.status}
+    <slot />
+    {#if !lastStatus}
         <div class="text-2xl">Vote:</div>
         {#if proposal.votes.some((v) => identity && v[0].toString() == identity.id.toString())}
             {#if yourVote === undefined}
@@ -71,9 +59,15 @@
         {:else}
             You are not eligible to vote
         {/if}
-    {:else if "executed" in proposal.status}
+    {:else if "executing" in lastStatus}
+        <div class="text-xl">Proposal Executing</div>
+    {:else if "executed" in lastStatus}
         <div class="text-xl">Proposal Executed</div>
-    {:else if "rejected" in proposal.status}
+    {:else if "failedToExecute" in lastStatus}
+        <div class="text-xl">Proposal Failed To Execute</div>
+    {:else if "rejected" in lastStatus}
         <div class="text-xl">Proposal Rejected</div>
+    {:else}
+        NOT IMPLEMENTED: {toJsonString(lastStatus)}
     {/if}
 </div>

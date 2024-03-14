@@ -2,7 +2,6 @@ import { AuthClient } from '@dfinity/auth-client';
 import { Principal } from '@dfinity/principal';
 import { writable } from 'svelte/store';
 import { Identity } from '@dfinity/agent';
-import { leagueAgentFactory } from '../ic-agent/League';
 
 
 type IdentityContext = {
@@ -13,13 +12,6 @@ const authClientOptions = { idleOptions: { disableIdle: true } };
 
 function createIdentityStore() {
     const { subscribe, set } = writable<IdentityContext | undefined>();
-    const { subscribe: subscribeAdmins, set: setAdmins } = writable<Principal[]>([]);
-
-    const refreshAdmins = async () => {
-        let admins = await leagueAgentFactory()
-            .getAdmins();
-        setAdmins(admins);
-    };
 
 
     const refresh = async () => {
@@ -34,7 +26,6 @@ function createIdentityStore() {
                 identity: identity,
             });
         }
-        refreshAdmins();
     };
 
     const login = async () => {
@@ -68,7 +59,6 @@ function createIdentityStore() {
 
     return {
         subscribe,
-        subscribeAdmins,
         login,
         logout
     };

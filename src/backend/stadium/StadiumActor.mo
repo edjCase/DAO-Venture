@@ -250,17 +250,26 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         let updatedTickResults = Buffer.Buffer<Types.TickResult>(tickResults.size());
         for (tickResult in Iter.fromArray(tickResults)) {
             let updatedTickResult = switch (tickResult.status) {
+                // Don't tick if completed
                 case (#completed(c)) {
                     completedMatches.add((tickResult.match, c));
                     tickResult;
                 };
+                // Tick if still in progress
                 case (#inProgress) MatchSimulator.tick(tickResult.match, prng);
             };
             updatedTickResults.add(updatedTickResult);
         };
         if (updatedTickResults.size() == completedMatches.size()) {
             // If all matches are complete, then complete the group
-            let completedCompiledMatches = compileCompletedMatches(completedMatches);
+            let completedCompiledMatches = completedMatches.vals()
+            |> Iter.map(
+                _,
+                func((match, status) : (Types.Match, Types.MatchStatusCompleted)) : CompletedMatchResult {
+                    compileCompletedMatch(match, status);
+                },
+            )
+            |> Iter.toArray(_);
             #completed(completedCompiledMatches);
         } else {
             #inProgress(Buffer.toArray(updatedTickResults));
@@ -268,30 +277,27 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
     };
 
     private func compileCompletedMatch(match : Types.Match, status : Types.MatchStatusCompleted) : CompletedMatchResult {
-        let (winner, matchEndReason) : (Team.TeamIdOrTie, Types.MatchEndReason) = switch (status.reason) {
+        let winner : Team.TeamIdOrTie = switch (status.reason) {
             case (#noMoreRounds) {
-                let winner = if (match.team1.score > match.team2.score) {
+                if (match.team1.score > match.team2.score) {
                     #team1;
                 } else if (match.team1.score == match.team2.score) {
                     #tie;
                 } else {
                     #team2;
                 };
-                (winner, #noMoreRounds);
             };
-            case (#error(e)) (#tie, #error(e));
+            case (#error(e)) #tie;
         };
-        match.addEvent(#matchEnd({ reason = matchEndReason }));
-        let log : Types.MatchLog = fromMutableLog(match.log);
 
-        let playerStats = buildPlayerStats();
+        let playerStats = buildPlayerStats(match);
 
         {
-            match = {
-                team1 = mapMutableTeam(match.team1);
-                team2 = mapMutableTeam(match.team2);
+            match : Season.CompletedMatch = {
+                team1 = match.team1;
+                team2 = match.team2;
                 aura = match.aura;
-                log = log;
+                log = match.log;
                 winner = winner;
                 playerStats = playerStats;
             };
@@ -299,11 +305,11 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
         };
     };
 
-    private func buildPlayerStats() : [Player.PlayerMatchStatsWithId] {
-        state.players.vals()
+    private func buildPlayerStats(match : Types.Match) : [Player.PlayerMatchStatsWithId] {
+        match.players.vals()
         |> Iter.map(
             _,
-            func(player : MutableState.MutablePlayerStateWithId) : Player.PlayerMatchStatsWithId {
+            func(player : Types.PlayerStateWithId) : Player.PlayerMatchStatsWithId {
                 {
                     playerId = player.id;
                     battingStats = {

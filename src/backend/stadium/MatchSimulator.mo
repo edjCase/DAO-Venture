@@ -212,17 +212,18 @@ module {
         };
 
         private func buildTickResult(result : SimulationResult) : StadiumTypes.TickResult {
-            let match = buildLiveMatch();
             let status : StadiumTypes.MatchStatus = switch (result) {
                 case (#endMatch(reason)) {
                     let mappedReason = switch (reason) {
                         case (#noMoreRounds) #noMoreRounds;
                         case (#stateBroken(e)) #error(debug_show (e)); // TODO error format
                     };
+                    state.addEvent(#matchEnd({ reason = mappedReason }));
                     #completed({ reason = mappedReason });
                 };
                 case (#inProgress) #inProgress;
             };
+            let match = buildLiveMatch();
             {
                 match = match;
                 status = status;
