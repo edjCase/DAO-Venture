@@ -34,7 +34,7 @@ module {
 
     public type ProposalContent = {
         #changeTeamName : {
-            teamId : Principal;
+            teamId : Nat;
             name : Text;
         };
     };
@@ -235,7 +235,7 @@ module {
         #ok : Principal;
         #nameTaken;
         #noStadiumsExist;
-        #teamFactoryCallError : Text;
+        #teamsCallError : Text;
         #notAuthorized;
         #populateTeamRosterCallError : Text;
     };

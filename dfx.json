@@ -1,39 +1,6 @@
 {
   "dfx": "0.18.0",
   "canisters": {
-    "league": {
-      "dependencies": [
-        "players",
-        "users",
-        "teamFactory",
-        "stadiumFactory"
-      ],
-      "main": "src/backend/league/LeagueActor.mo",
-      "type": "motoko"
-    },
-    "players": {
-      "main": "src/backend/players/PlayersActor.mo",
-      "type": "motoko"
-    },
-    "users": {
-      "main": "src/backend/users/UsersActor.mo",
-      "type": "motoko"
-    },
-    "teamFactory": {
-      "dependencies": [
-        "players"
-      ],
-      "main": "src/backend/team/TeamFactoryActor.mo",
-      "type": "motoko"
-    },
-    "stadiumFactory": {
-      "main": "src/backend/stadium/StadiumFactoryActor.mo",
-      "type": "motoko"
-    },
-    "internet_identity": {
-      "type": "pull",
-      "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
-    },
     "frontend": {
       "dependencies": [
         "league"
@@ -49,17 +16,38 @@
       ],
       "type": "assets"
     },
-    "static_frontend": {
-      "frontend": {
-        "entrypoint": "src/static-site/public/index.html"
-      },
-      "source": [
-        "src/static-site/public"
+    "league": {
+      "dependencies": [
+        "players",
+        "users",
+        "teams",
+        "stadium"
       ],
-      "build": [
-        "npm run build_static_frontend"
+      "main": "src/backend/league/LeagueActor.mo",
+      "type": "motoko"
+    },
+    "players": {
+      "main": "src/backend/players/PlayersActor.mo",
+      "type": "motoko"
+    },
+    "users": {
+      "main": "src/backend/users/UsersActor.mo",
+      "type": "motoko"
+    },
+    "teams": {
+      "dependencies": [
+        "players"
       ],
-      "type": "assets"
+      "main": "src/backend/team/TeamsActor.mo",
+      "type": "motoko"
+    },
+    "stadium": {
+      "main": "src/backend/stadium/StadiumActor.mo",
+      "type": "motoko"
+    },
+    "internet_identity": {
+      "type": "pull",
+      "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
     }
   },
   "defaults": {

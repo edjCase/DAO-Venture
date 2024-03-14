@@ -1,8 +1,20 @@
 {
+    "frontend": {
+        "ic": "dtwn5-4iaaa-aaaag-aa6da-cai"
+    },
     "league": {
         "ic": "sctyd-5qaaa-aaaag-aa5lq-cai"
     },
-    "static_frontend": {
-        "ic": "dtwn5-4iaaa-aaaag-aa6da-cai"
+    "stadium": {
+        "ic": "pd7ra-qiaaa-aaaan-qltsq-cai"
+    },
+    "players": {
+        "ic": "oblw4-zaaaa-aaaag-ahlkq-cai"
+    },
+    "users": {
+        "ic": "sflgi-byaaa-aaaak-afolq-cai"
+    },
+    "teams": {
+        "ic": "hcjhv-viaaa-aaaak-qdcxa-cai"
     }
 }

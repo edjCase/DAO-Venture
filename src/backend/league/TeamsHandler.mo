@@ -7,7 +7,7 @@ import Debug "mo:base/Debug";
 import Int "mo:base/Int";
 import Types "Types";
 import IterTools "mo:itertools/Iter";
-import TeamFactoryActor "canister:teamFactory";
+import TeamsActor "canister:teams";
 import PlayersActor "canister:players";
 import TeamTypes "../team/Types";
 
@@ -15,17 +15,17 @@ module {
 
     public type StableData = {
         teams : [Team.TeamWithId];
-        teamFactoryInitialized : Bool;
+        teamsInitialized : Bool;
     };
     public class Handler(data : StableData) {
         var teams : HashMap.HashMap<Principal, Team.Team> = toTeamHashMap(data.teams);
-        var teamFactoryInitialized = data.teamFactoryInitialized;
+        var teamsInitialized = data.teamsInitialized;
 
         public func toStableData() : StableData {
             let teams = getAll();
             return {
                 teams = teams;
-                teamFactoryInitialized = teamFactoryInitialized;
+                teamsInitialized = teamsInitialized;
             };
         };
 
@@ -88,14 +88,14 @@ module {
             if (nameAlreadyTaken) {
                 return #nameTaken;
             };
-            if (not teamFactoryInitialized) {
-                let #ok = await TeamFactoryActor.setLeague(leagueId) else Debug.trap("Failed to set league on team factory");
-                teamFactoryInitialized := true;
+            if (not teamsInitialized) {
+                let #ok = await TeamsActor.setLeague(leagueId) else Debug.trap("Failed to set league on teams actor");
+                teamsInitialized := true;
             };
             let createTeamResult = try {
-                await TeamFactoryActor.createTeamActor(request);
+                await TeamsActor.createTeam(request);
             } catch (err) {
-                return #teamFactoryCallError(Error.message(err));
+                return #teamsCallError(Error.message(err));
             };
             let teamInfo = switch (createTeamResult) {
                 case (#ok(teamInfo)) teamInfo;

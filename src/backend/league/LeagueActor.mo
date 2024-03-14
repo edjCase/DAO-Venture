@@ -12,7 +12,6 @@ import Types "Types";
 import UsersActor "canister:users";
 import Team "../models/Team";
 import Season "../models/Season";
-import StadiumFactoryActor "canister:stadiumFactory";
 import UserTypes "../users/Types";
 import Scenario "../models/Scenario";
 import SeasonHandler "SeasonHandler";
@@ -20,9 +19,10 @@ import PredictionHandler "PredictionHandler";
 import ScenarioHandler "ScenarioHandler";
 import TeamsHandler "TeamsHandler";
 import PlayersActor "canister:players";
-import TeamFactoryActor "canister:teamFactory";
+import TeamsActor "canister:teams";
 import TeamTypes "../team/Types";
 import Dao "../Dao";
+import StadiumActor "canister:stadium";
 
 actor LeagueActor : Types.LeagueActor {
     type TeamWithId = Team.TeamWithId;
@@ -42,7 +42,7 @@ actor LeagueActor : Types.LeagueActor {
         };
         teams : TeamsHandler.StableData = {
             teams = [];
-            teamFactoryInitialized = false;
+            teamsInitialized = false;
         };
         dao : Dao.StableData<Types.ProposalContent> = {
             proposalDuration = #days(3);
@@ -54,8 +54,7 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    stable var stadiumIdOrNull : ?Principal = null;
-    stable var stadiumFactoryInitialized = false;
+    stable var stadiumInitialized = false;
 
     var seasonHandler = SeasonHandler.SeasonHandler(stableData.season);
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
@@ -100,7 +99,7 @@ actor LeagueActor : Types.LeagueActor {
     // TODO REMOVE ALL DELETING METHODS
     public shared func clearTeams() : async () {
         teamsHandler := TeamsHandler.Handler({
-            teamFactoryInitialized = stableData.teams.teamFactoryInitialized;
+            teamsInitialized = stableData.teams.teamsInitialized;
             teams = [];
         });
     };
@@ -181,11 +180,8 @@ actor LeagueActor : Types.LeagueActor {
         } catch (err) {
             return #seedGenerationError(Error.message(err));
         };
-
-        let stadiumId = switch (await* getOrCreateStadium()) {
-            case (#ok(id)) id;
-            case (#stadiumCreationError(error)) return Debug.trap("Failed to create stadium: " # error);
-        };
+        await* initStadium(); // Hack to init stadium for calling
+        let stadiumId = Principal.fromActor(StadiumActor);
         let teamsArray = teamsHandler.getAll();
 
         let allPlayers = await PlayersActor.getAllPlayers();
@@ -234,15 +230,6 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared query ({ caller }) func getMatchGroupPredictions(matchGroupId : Nat) : async Types.GetMatchGroupPredictionsResult {
         predictionHandler.getMatchGroupSummary(matchGroupId, ?caller);
-    };
-
-    public shared ({ caller }) func updateLeagueCanisters() : async Types.UpdateLeagueCanistersResult {
-        if (not isAdminId(caller)) {
-            return #notAuthorized;
-        };
-        await TeamFactoryActor.updateCanisters();
-        await StadiumFactoryActor.updateCanisters();
-        #ok;
     };
 
     public shared ({ caller }) func processEffectOutcomes(request : Types.ProcessEffectOutcomesRequest) : async Types.ProcessEffectOutcomesResult {
@@ -317,12 +304,8 @@ actor LeagueActor : Types.LeagueActor {
     public shared ({ caller }) func onMatchGroupComplete(
         request : Types.OnMatchGroupCompleteRequest
     ) : async Types.OnMatchGroupCompleteResult {
-        if (not isStadium(caller)) {
-            return #notAuthorized;
-        };
         Debug.print("On Match group complete called for: " # Nat.toText(request.id));
-        let ?stadiumId = stadiumIdOrNull else return #notAuthorized;
-        if (caller != stadiumId) {
+        if (caller != Principal.fromActor(StadiumActor)) {
             return #notAuthorized;
         };
 
@@ -393,11 +376,6 @@ actor LeagueActor : Types.LeagueActor {
         // TrieSet.mem(admins, id, Principal.hash(id), Principal.equal);
     };
 
-    private func isStadium(id : Principal) : Bool {
-        let ?stadiumId = stadiumIdOrNull else return false;
-        id == stadiumId;
-    };
-
     private func buildTeamScenarioData(matchGroupId : Nat) : async* {
         #ok : {
             scenarioId : Text;
@@ -455,30 +433,11 @@ actor LeagueActor : Types.LeagueActor {
         });
     };
 
-    private func getOrCreateStadium() : async* {
-        #ok : Principal;
-        #stadiumCreationError : Text;
-    } {
-        switch (stadiumIdOrNull) {
-            case (null) ();
-            case (?id) return #ok(id);
-        };
+    private func initStadium() : async* () {
 
-        if (not stadiumFactoryInitialized) {
-            let #ok = await StadiumFactoryActor.setLeague(Principal.fromActor(LeagueActor)) else Debug.trap("Failed to set league on stadium factory");
-            stadiumFactoryInitialized := true;
-        };
-        let createStadiumResult = try {
-            await StadiumFactoryActor.createStadiumActor();
-        } catch (err) {
-            return #stadiumCreationError(Error.message(err));
-        };
-        switch (createStadiumResult) {
-            case (#ok(id)) {
-                stadiumIdOrNull := ?id;
-                #ok(id);
-            };
-            case (#stadiumCreationError(error)) return #stadiumCreationError(error);
+        if (not stadiumInitialized) {
+            let #ok = await StadiumActor.setLeague(Principal.fromActor(LeagueActor)) else Debug.trap("Failed to set league on stadium");
+            stadiumInitialized := true;
         };
     };
 };

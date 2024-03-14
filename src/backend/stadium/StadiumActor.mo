@@ -19,7 +19,7 @@ import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
 import Season "../models/Season";
 
-actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this {
+actor : Types.StadiumActor {
     type PlayerState = Types.PlayerState;
     type FieldPosition = FieldPosition.FieldPosition;
     type MatchAura = MatchAura.MatchAura;
@@ -34,12 +34,23 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
     };
 
     stable var matchGroups = Trie.empty<Nat, Types.MatchGroup>();
+    stable var leagueIdOrNull : ?Principal = null;
 
     system func postupgrade() {
         // Restart the timers for any match groups that were in progress
         for ((matchGroupId, matchGroup) in Trie.iter(matchGroups)) {
             resetTickTimerInternal<system>(matchGroupId);
         };
+    };
+
+    public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
+        // TODO how to get the league id vs manual set
+        // Set if the league is not set or if the caller is the league
+        if (leagueIdOrNull == null or leagueIdOrNull == ?caller) {
+            leagueIdOrNull := ?id;
+            return #ok;
+        };
+        #notAuthorized;
     };
 
     public query func getMatchGroup(id : Nat) : async ?Types.MatchGroupWithId {
@@ -122,6 +133,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
     };
 
     public shared func tickMatchGroup(matchGroupId : Nat) : async Types.TickMatchGroupResult {
+        let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
         // TODO remove loop, used for debugging purposes
         loop {
             let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
@@ -356,6 +368,7 @@ actor class StadiumActor(leagueId : Principal) : async Types.StadiumActor = this
     };
 
     private func assertLeague(caller : Principal) {
+        let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
         if (caller != leagueId) {
             Debug.trap("Only the league can schedule matches");
         };

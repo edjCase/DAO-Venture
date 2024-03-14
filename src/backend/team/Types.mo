@@ -5,6 +5,7 @@ import Skill "../models/Skill";
 module {
 
     public type TeamActor = actor {
+        setLeague : (id : Principal) -> async SetLeagueResult;
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
@@ -15,13 +16,6 @@ module {
         onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
         onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
         onSeasonComplete() : async OnSeasonCompleteResult;
-    };
-
-    public type TeamFactoryActor = actor {
-        setLeague : (id : Principal) -> async SetLeagueResult;
-        createTeamActor : (request : CreateTeamRequest) -> async CreateTeamResult;
-        getTeamActors : () -> async [TeamActorInfoWithId];
-        updateCanisters : () -> async ();
     };
 
     public type VoteOnProposalRequest = {
@@ -100,6 +94,7 @@ module {
         #ok : {
             id : Principal;
         };
+        #notAuthorized;
     };
 
     public type MatchVoteResult = {
