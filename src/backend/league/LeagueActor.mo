@@ -24,7 +24,7 @@ import TeamFactoryActor "canister:teamFactory";
 import TeamTypes "../team/Types";
 import Dao "../Dao";
 
-actor LeagueActor {
+actor LeagueActor : Types.LeagueActor {
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
@@ -245,13 +245,13 @@ actor LeagueActor {
         #ok;
     };
 
-    public shared ({ caller }) func processEffectOutcomes(effectOutcomes : [Scenario.EffectOutcome]) : async Types.ProcessEffectOutcomesResult {
+    public shared ({ caller }) func processEffectOutcomes(request : Types.ProcessEffectOutcomesRequest) : async Types.ProcessEffectOutcomesResult {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
 
-        let playerOutcomes = Buffer.Buffer<Scenario.PlayerEffectOutcome>(effectOutcomes.size());
-        for (effectOutcome in Iter.fromArray(effectOutcomes)) {
+        let playerOutcomes = Buffer.Buffer<Scenario.PlayerEffectOutcome>(request.outcomes.size());
+        for (effectOutcome in Iter.fromArray(request.outcomes)) {
             switch (effectOutcome) {
                 case (#injury(injuryEffect)) playerOutcomes.add(#injury(injuryEffect));
                 case (#entropy(entropyEffect)) {
@@ -295,7 +295,9 @@ actor LeagueActor {
 
                 // TODO handle failure
                 try {
-                    let result = await processEffectOutcomes(resolvedScenarioState.effectOutcomes);
+                    let result = await processEffectOutcomes({
+                        outcomes = resolvedScenarioState.effectOutcomes;
+                    });
                     switch (result) {
                         case (#ok) ();
                         case (#notAuthorized) Debug.trap("League is not authorized to process effect outcomes");

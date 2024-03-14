@@ -6,7 +6,7 @@ import IterTools "mo:itertools/Iter";
 import Types "./Types";
 // import LeagueActor "canister:league"; TODO
 
-actor {
+actor : Types.Actor {
 
     stable var users : Trie.Trie<Principal, Types.User> = Trie.empty();
 

@@ -9,19 +9,25 @@ import Dao "../Dao";
 
 module {
     public type LeagueActor = actor {
-        createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getTeamStandings : query () -> async GetTeamStandingsResult;
-        processEventOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
+        processEffectOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
-        getMatchGroupPredictions : (matchGroupId : Nat) -> async GetMatchGroupPredictionsResult;
+        getMatchGroupPredictions : query (matchGroupId : Nat) -> async GetMatchGroupPredictionsResult;
         updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
+
+        createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
+        getProposal : query (Nat) -> async ?Proposal;
+        getProposals : query () -> async [Proposal];
+        getScenario : query (Text) -> async GetScenarioResult;
+        voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
+        clearTeams : () -> async (); // TODO remove
     };
 
     public type Proposal = Dao.Proposal<ProposalContent>;

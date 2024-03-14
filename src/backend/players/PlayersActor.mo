@@ -17,7 +17,7 @@ import Scenario "../models/Scenario";
 import Skill "../models/Skill";
 // import LeagueActor "canister:league"; TODO
 
-actor {
+actor : Types.PlayerActor {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var nextPlayerId : Nat32 = 1;

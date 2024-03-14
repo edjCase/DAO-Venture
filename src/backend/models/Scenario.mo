@@ -3,10 +3,6 @@ import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Nat32 "mo:base/Nat32";
-import Bool "mo:base/Bool";
-import Trait "Trait";
-import MatchAura "MatchAura";
-import Team "Team";
 import Player "Player";
 import FieldPosition "FieldPosition";
 
