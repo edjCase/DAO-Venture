@@ -1,16 +1,11 @@
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Time "mo:base/Time";
-import Trie "mo:base/Trie";
 import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
-import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Nat "mo:base/Nat";
-import Principal "mo:base/Principal";
-import Util "../Util";
 import IterTools "mo:itertools/Iter";
 import DateTime "mo:datetime/DateTime";
-import Team "../models/Team";
 import Season "../models/Season";
 
 module {
@@ -38,7 +33,7 @@ module {
 
     public func build(
         startTime : Time.Time,
-        teamIds : [Principal],
+        teamIds : [Nat],
         timeBetweenMatchGroups : DateTime.Duration,
     ) : BuildScheduleResult {
 
@@ -51,7 +46,7 @@ module {
         };
 
         // Round robin tournament algorithm
-        var teamOrderForWeek = Buffer.fromArray<Principal>(teamIds);
+        var teamOrderForWeek = Buffer.fromArray<Nat>(teamIds);
 
         let matchUpCountPerWeek = teamCount / 2;
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
@@ -84,7 +79,7 @@ module {
             // 3) Rotate the rest of the teams by one position
             let firstTeamId = teamOrderForWeek.get(0);
             let lastTeamId = teamOrderForWeek.get(teamOrderForWeek.size() - 1);
-            let newOrder = Buffer.Buffer<Principal>(teamCount);
+            let newOrder = Buffer.Buffer<Nat>(teamCount);
             newOrder.add(firstTeamId);
             newOrder.add(lastTeamId);
             for (i in IterTools.range(1, teamCount - 1)) {

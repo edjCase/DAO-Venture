@@ -90,8 +90,8 @@ module {
 
             let teamIdsBuffer = teams
             |> Iter.fromArray(_)
-            |> Iter.map(_, func(t : Team.TeamWithId) : Principal = t.id)
-            |> Buffer.fromIter<Principal>(_);
+            |> Iter.map(_, func(t : Team.TeamWithId) : Nat = t.id)
+            |> Buffer.fromIter<Nat>(_);
 
             prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
 
@@ -349,7 +349,7 @@ module {
                 _,
                 func(t : Season.TeamInfo) : Season.CompletedSeasonTeam {
                     let ?standingIndex = finalTeamStandings.vals()
-                    |> IterTools.findIndex(_, func(s : Types.TeamStandingInfo) : Bool = s.id == t.id) else Debug.trap("Team not found in standings: " # Principal.toText(t.id));
+                    |> IterTools.findIndex(_, func(s : Types.TeamStandingInfo) : Bool = s.id == t.id) else Debug.trap("Team not found in standings: " # Nat.toText(t.id));
                     let standingInfo = finalTeamStandings.get(standingIndex);
 
                     {
@@ -371,8 +371,8 @@ module {
                 case (#team2) (finalMatch.team2, finalMatch.team1);
                 case (#tie) {
                     // Break tie by their win/loss ratio
-                    let getTeamStanding = func(teamId : Principal) : Nat {
-                        let ?teamStanding = IterTools.findIndex(finalTeamStandings.vals(), func(s : Types.TeamStandingInfo) : Bool = s.id == teamId) else Debug.trap("Team not found in standings: " # Principal.toText(teamId));
+                    let getTeamStanding = func(teamId : Nat) : Nat {
+                        let ?teamStanding = IterTools.findIndex(finalTeamStandings.vals(), func(s : Types.TeamStandingInfo) : Bool = s.id == teamId) else Debug.trap("Team not found in standings: " # Nat.toText(teamId));
                         teamStanding;
                     };
                     let team1Standing = getTeamStanding(finalMatch.team1.id);
@@ -432,7 +432,7 @@ module {
                 },
             );
 
-            let getTeamId = func(teamAssignment : Season.TeamAssignment) : Principal {
+            let getTeamId = func(teamAssignment : Season.TeamAssignment) : Nat {
                 switch (teamAssignment) {
                     case (#predetermined(teamId)) teamId;
                     case (#seasonStandingIndex(standingIndex)) {
@@ -533,18 +533,18 @@ module {
         private func calculateTeamStandings(
             matchGroups : [Season.CompletedMatchGroup]
         ) : Buffer.Buffer<Types.TeamStandingInfo> {
-            var teamScores = Trie.empty<Principal, Types.TeamStandingInfo>();
+            var teamScores = Trie.empty<Nat, Types.TeamStandingInfo>();
             let updateTeamScore = func(
-                teamId : Principal,
+                teamId : Nat,
                 score : Int,
                 state : { #win; #loss; #tie },
             ) : () {
 
                 let teamKey = {
                     key = teamId;
-                    hash = Principal.hash(teamId);
+                    hash = Nat32.fromNat(teamId);
                 };
-                let currentScore = switch (Trie.get(teamScores, teamKey, Principal.equal)) {
+                let currentScore = switch (Trie.get(teamScores, teamKey, Nat.equal)) {
                     case (null) {
                         {
                             wins = 0;
@@ -562,10 +562,10 @@ module {
                 };
 
                 // Update with +1
-                let (newTeamScores, _) = Trie.put<Principal, Types.TeamStandingInfo>(
+                let (newTeamScores, _) = Trie.put<Nat, Types.TeamStandingInfo>(
                     teamScores,
                     teamKey,
-                    Principal.equal,
+                    Nat.equal,
                     {
                         id = teamId;
                         wins = wins;
@@ -592,7 +592,7 @@ module {
             |> Trie.iter(_)
             |> Iter.map(
                 _,
-                func((_, v) : (Principal, Types.TeamStandingInfo)) : Types.TeamStandingInfo = v,
+                func((_, v) : (Nat, Types.TeamStandingInfo)) : Types.TeamStandingInfo = v,
             )
             |> IterTools.sort(
                 _,
@@ -641,7 +641,7 @@ module {
 
             let matchStartRequestBuffer = Buffer.Buffer<StadiumTypes.StartMatchRequest>(scheduledMatchGroup.matches.size());
 
-            let teamDataMap = HashMap.HashMap<Principal, StadiumTypes.StartMatchTeam>(0, Principal.equal, Principal.hash);
+            let teamDataMap = HashMap.HashMap<Nat, StadiumTypes.StartMatchTeam>(0, Nat.equal, Nat32.fromNat);
 
             let getPlayer = func(playerId : Nat32) : Player.PlayerWithId {
                 let ?player = season.players
@@ -667,8 +667,8 @@ module {
             };
 
             for (match in Iter.fromArray(scheduledMatchGroup.matches)) {
-                let ?team1Data = teamDataMap.get(match.team1.id) else Debug.trap("Team data not found: " # Principal.toText(match.team1.id));
-                let ?team2Data = teamDataMap.get(match.team2.id) else Debug.trap("Team data not found: " # Principal.toText(match.team2.id));
+                let ?team1Data = teamDataMap.get(match.team1.id) else Debug.trap("Team data not found: " # Nat.toText(match.team1.id));
+                let ?team2Data = teamDataMap.get(match.team2.id) else Debug.trap("Team data not found: " # Nat.toText(match.team2.id));
                 matchStartRequestBuffer.add({
                     team1 = team1Data;
                     team2 = team2Data;
@@ -756,7 +756,7 @@ module {
             |> Iter.fromArray(_)
             |> IterTools.find(_, func(p : Player.PlayerWithId) : Bool = p.position == position);
             switch (playerOrNull) {
-                case (null) Debug.trap("Team " # Principal.toText(team.id) # " is missing a player in position: " # debug_show (position)); // TODO
+                case (null) Debug.trap("Team " # Nat.toText(team.id) # " is missing a player in position: " # debug_show (position)); // TODO
                 case (?player) player.id;
             };
         };

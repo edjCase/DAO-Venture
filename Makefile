@@ -6,10 +6,6 @@ MOC := $(shell dfx cache show)/moc
 MOPS_SOURCES := $(shell mops sources)
 DIDC := didc
 
-# List of .mo files
-ACTOR_CLASS_MO_FILES := stadium/StadiumActor.mo \
-            team/TeamActor.mo \
-
 build_league:
 	dfx build league
 
@@ -26,16 +22,6 @@ process_did_files:
 		fi; \
 	done
 
-compile_actor_class_mo_files:
-	@for mo in $(ACTOR_CLASS_MO_FILES); do \
-		full_mo_path="$(SRC_DIR)/$$mo"; \
-		ts="$$(echo "$$full_mo_path" | sed 's|^$(SRC_DIR)|$(OUT_DIR)|' | sed 's|\.mo$$|.ts|')"; \
-		BASENAME=$$(basename $$mo .mo); \
-		$(MOC) $(MOPS_SOURCES) $$full_mo_path --idl; \
-		lowercase_did="$$(echo $$BASENAME | sed 's/Actor$$//' | tr '[:upper:]' '[:lower:]').did"; \
-		mv $$BASENAME.did $(DID_TEMP_DIR)/$$lowercase_did; \
-		rm -f $$BASENAME.wasm; \
-	done
 
 
 compile_did_files:
@@ -61,7 +47,7 @@ clean:
 	@rm -f $(DIDC)
 	
 # Default target
-generate: $(DIDC) build_league process_did_files compile_actor_class_mo_files compile_did_files
+generate: $(DIDC) build_league process_did_files compile_did_files
 
 # Phony targets
-.PHONY: generate clean build_league process_did_files compile_actor_class_mo_files compile_did_files
+.PHONY: generate clean build_league process_did_files compile_did_files

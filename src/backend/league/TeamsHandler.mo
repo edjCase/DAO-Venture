@@ -5,11 +5,12 @@ import Iter "mo:base/Iter";
 import Error "mo:base/Error";
 import Debug "mo:base/Debug";
 import Int "mo:base/Int";
+import Nat "mo:base/Nat";
+import Nat32 "mo:base/Nat32";
 import Types "Types";
 import IterTools "mo:itertools/Iter";
 import TeamsActor "canister:teams";
 import PlayersActor "canister:players";
-import TeamTypes "../team/Types";
 
 module {
 
@@ -18,7 +19,7 @@ module {
         teamsInitialized : Bool;
     };
     public class Handler(data : StableData) {
-        var teams : HashMap.HashMap<Principal, Team.Team> = toTeamHashMap(data.teams);
+        var teams : HashMap.HashMap<Nat, Team.Team> = toTeamHashMap(data.teams);
         var teamsInitialized = data.teamsInitialized;
 
         public func toStableData() : StableData {
@@ -33,7 +34,7 @@ module {
             teams.entries()
             |> Iter.map(
                 _,
-                func((k, v) : (Principal, Team.Team)) : Team.TeamWithId = {
+                func((k, v) : (Nat, Team.Team)) : Team.TeamWithId = {
                     v with
                     id = k;
                 },
@@ -41,8 +42,8 @@ module {
             |> Iter.toArray(_);
         };
 
-        public func updateTeamName(teamId : Principal, newName : Text) : () {
-            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Principal.toText(teamId));
+        public func updateTeamName(teamId : Nat, newName : Text) : () {
+            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Nat.toText(teamId));
             let newTeam : Team.Team = {
                 team with
                 name = newName;
@@ -50,8 +51,8 @@ module {
             teams.put(teamId, newTeam);
         };
 
-        public func updateTeamEnergy(teamId : Principal, delta : Int) : () {
-            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Principal.toText(teamId));
+        public func updateTeamEnergy(teamId : Nat, delta : Int) : () {
+            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Nat.toText(teamId));
             let newTeam : Team.Team = {
                 team with
                 energy = team.energy + delta;
@@ -59,8 +60,8 @@ module {
             teams.put(teamId, newTeam);
         };
 
-        public func updateTeamEntropy(teamId : Principal, delta : Int) : () {
-            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Principal.toText(teamId));
+        public func updateTeamEntropy(teamId : Nat, delta : Int) : () {
+            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Nat.toText(teamId));
             let newEntropyInt : Int = team.entropy + delta;
             let newEntropyNat : Nat = if (newEntropyInt <= 0) {
                 // Entropy cant be negative
@@ -82,7 +83,7 @@ module {
             let nameAlreadyTaken = teams.entries()
             |> IterTools.any(
                 _,
-                func((_, v) : (Principal, Team.Team)) : Bool = v.name == request.name,
+                func((_, v) : (Nat, Team.Team)) : Bool = v.name == request.name,
             );
 
             if (nameAlreadyTaken) {
@@ -99,6 +100,7 @@ module {
             };
             let teamInfo = switch (createTeamResult) {
                 case (#ok(teamInfo)) teamInfo;
+                case (#notAuthorized) return #notAuthorized;
             };
             let team : Team.Team = {
                 name = request.name;
@@ -119,7 +121,7 @@ module {
             switch (populateResult) {
                 case (#ok(_)) {};
                 case (#notAuthorized) {
-                    Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Principal.toText(teamInfo.id));
+                    Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Nat.toText(teamInfo.id));
                 };
                 case (#noMorePlayers) {
                     Debug.print("Error populating team roster: No more players available");
@@ -129,22 +131,19 @@ module {
         };
 
         public func onSeasonComplete() : async* () {
-            for ((teamId, _) in teams.entries()) {
-                let teamActor = actor (Principal.toText(teamId)) : TeamTypes.TeamActor;
-                try {
-                    switch (await teamActor.onSeasonComplete()) {
-                        case (#ok) ();
-                        case (#notAuthorized) Debug.print("Error: League is not authorized to notify team of season completion");
-                    };
-                } catch (err) {
-                    Debug.print("Failed to notify team of season completion: " # Error.message(err));
+            try {
+                switch (await TeamsActor.onSeasonComplete()) {
+                    case (#ok) ();
+                    case (#notAuthorized) Debug.print("Error: League is not authorized to notify team of season completion");
                 };
+            } catch (err) {
+                Debug.print("Failed to notify team of season completion: " # Error.message(err));
             };
         };
     };
 
-    private func toTeamHashMap(teams : [Team.TeamWithId]) : HashMap.HashMap<Principal, Team.Team> {
-        var result = HashMap.HashMap<Principal, Team.Team>(0, Principal.equal, Principal.hash);
+    private func toTeamHashMap(teams : [Team.TeamWithId]) : HashMap.HashMap<Nat, Team.Team> {
+        var result = HashMap.HashMap<Nat, Team.Team>(0, Nat.equal, Nat32.fromNat);
         for (team in Iter.fromArray(teams)) {
             result.put(team.id, team);
         };

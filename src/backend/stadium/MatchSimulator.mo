@@ -36,7 +36,7 @@ module {
     };
 
     public type TeamInitData = {
-        id : Principal;
+        id : Nat;
         name : Text;
         logoUrl : Text;
         positions : {

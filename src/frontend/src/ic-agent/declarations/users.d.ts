@@ -5,17 +5,17 @@ import type { IDL } from '@dfinity/candid';
 export interface AddTeamOwnerRequest {
   'votingPower' : bigint,
   'userId' : Principal,
-  'teamId' : Principal,
+  'teamId' : bigint,
 }
 export type AddTeamOwnerResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
-  { 'onOtherTeam' : Principal } |
+  { 'onOtherTeam' : bigint } |
   { 'teamNotFound' : null };
 export interface AwardPointsRequest { 'userId' : Principal, 'points' : bigint }
 export type AwardPointsResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export type GetTeamOwnersRequest = { 'all' : null } |
-  { 'team' : Principal };
+  { 'team' : bigint };
 export type GetTeamOwnersResult = { 'ok' : Array<UserVotingInfo> };
 export type GetUserResult = { 'ok' : User } |
   { 'notAuthorized' : null } |
@@ -29,7 +29,7 @@ export type TeamAssociationKind = { 'fan' : null } |
   { 'owner' : { 'votingPower' : bigint } };
 export interface User {
   'id' : Principal,
-  'team' : [] | [{ 'id' : Principal, 'kind' : TeamAssociationKind }],
+  'team' : [] | [{ 'id' : bigint, 'kind' : TeamAssociationKind }],
   'points' : bigint,
 }
 export interface UserVotingInfo { 'id' : Principal, 'votingPower' : bigint }
@@ -40,7 +40,7 @@ export interface _SERVICE {
   'getAll' : ActorMethod<[], Array<User>>,
   'getTeamOwners' : ActorMethod<[GetTeamOwnersRequest], GetTeamOwnersResult>,
   'setFavoriteTeam' : ActorMethod<
-    [Principal, Principal],
+    [Principal, bigint],
     SetUserFavoriteTeamResult
   >,
 }

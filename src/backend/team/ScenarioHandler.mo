@@ -5,20 +5,23 @@ import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
+import Types "Types";
 
 module {
-    public type StableData = {
-        scenarioId : Text;
-        optionCount : Nat;
-        votes : [(Principal, Vote)];
-    };
-
     public type Vote = {
+        userId : Principal;
+        teamId : Nat;
         option : Nat;
         votingPower : Nat;
     };
 
-    public class Manager(data : [StableData]) {
+    public type StableData = {
+        scenarioId : Text;
+        optionCount : Nat;
+        votes : [Vote];
+    };
+
+    public class MultiHandler(data : [StableData]) {
         let iter = data.vals()
         |> Iter.map<StableData, (Text, Handler)>(
             _,
@@ -56,10 +59,16 @@ module {
     };
 
     public class Handler(data : StableData) {
-        let votes = HashMap.fromIter<Principal, Vote>(data.votes.vals(), data.votes.size(), Principal.equal, Principal.hash);
+        let userVotes = data.votes.vals()
+        |> Iter.map<Vote, (Principal, Vote)>(
+            _,
+            func(v : Vote) : (Principal, Vote) = (v.userId, v),
+        );
+        let votes = HashMap.fromIter<Principal, Vote>(userVotes, data.votes.size(), Principal.equal, Principal.hash);
 
         public func vote(
             voterId : Principal,
+            teamId : Nat,
             votingPower : Nat,
             option : Nat,
         ) : { #ok; #invalidOption; #alreadyVoted } {
@@ -74,6 +83,8 @@ module {
             votes.put(
                 voterId,
                 {
+                    userId = voterId;
+                    teamId = teamId;
                     option = option;
                     votingPower = votingPower;
                 },
@@ -85,49 +96,60 @@ module {
             votes.get(voterId);
         };
 
-        public func calculateWinningOption() : ?Nat {
+        public func calculateResults() : Types.ScenarioVotingResults {
             // TODO
             // if (caller != leagueId) {
             //     return #notAuthorized;
             // };
-            // Scenario Option Id -> Vote Count
-            let optionVotes = HashMap.HashMap<Nat, Nat>(data.optionCount, Nat.equal, Nat32.fromNat);
+            // TeamId + Scenario Option Id -> Vote Count
+            let optionVotes = HashMap.HashMap<(Nat, Nat), Nat>(
+                data.optionCount,
+                func(a : (Nat, Nat), b : (Nat, Nat)) = a == b,
+                func(a : (Nat, Nat)) = Nat32.fromNat(a.0) + Nat32.fromNat(a.1), // TODO
+            );
             for ((userId, vote) in votes.entries()) {
-
-                let currentVotes = switch (optionVotes.get(vote.option)) {
+                let key = (vote.teamId, vote.option);
+                let currentVotes = switch (optionVotes.get(key)) {
                     case (?v) v;
                     case (null) 0;
                 };
-                optionVotes.put(vote.option, currentVotes + vote.votingPower);
+                optionVotes.put(key, currentVotes + vote.votingPower);
             };
-            calculateVote<Nat>(optionVotes.entries());
-        };
-
-        public func toStableData() : StableData {
-            let voteData = votes.entries()
-            |> Iter.toArray(_);
-            {
-                data with
-                votes = voteData
-            };
-        };
-
-        private func calculateVote<T>(votes : Iter.Iter<(T, Nat)>) : ?T {
-            var winningVote : ?(T, Nat) = null;
-            for ((choice, votes) in votes) {
-                switch (winningVote) {
-                    case (null) winningVote := ?(choice, votes);
-                    case (?o) {
-                        if (o.1 < votes) {
-                            winningVote := ?(choice, votes);
+            var teamWinningOptions : HashMap.HashMap<Nat, (Nat, Nat)> = HashMap.HashMap(6, Nat.equal, Nat32.fromNat);
+            for (((teamId, option), voteCount) in optionVotes.entries()) {
+                switch (teamWinningOptions.get(teamId)) {
+                    case (null) teamWinningOptions.put(teamId, (option, voteCount));
+                    case (?currentWinner) {
+                        if (currentWinner.1 < voteCount) {
+                            teamWinningOptions.put(teamId, (option, voteCount));
                         };
                         // TODO what to do if there is a tie?
                     };
                 };
             };
-            switch (winningVote) {
-                case (null) null;
-                case (?v) ?v.0;
+            let teamChoices = teamWinningOptions.entries()
+            |> Iter.map(
+                _,
+                func((teamId, (option, _)) : (Nat, (Nat, Nat))) : {
+                    teamId : Nat;
+                    option : Nat;
+                } = {
+                    option = option;
+                    teamId = teamId;
+                },
+            )
+            |> Iter.toArray(_);
+            {
+                teamOptions = teamChoices;
+            };
+        };
+
+        public func toStableData() : StableData {
+            let voteData = votes.vals()
+            |> Iter.toArray(_);
+            {
+                data with
+                votes = voteData
             };
         };
     };

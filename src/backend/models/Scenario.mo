@@ -1,6 +1,5 @@
 import Skill "Skill";
 import Nat "mo:base/Nat";
-import Principal "mo:base/Principal";
 import Text "mo:base/Text";
 import Nat32 "mo:base/Nat32";
 import Player "Player";
@@ -68,11 +67,11 @@ module {
 
     public type TeamEffectOutcome = {
         #entropy : {
-            teamId : Principal;
+            teamId : Nat;
             delta : Int;
         };
         #energy : {
-            teamId : Principal;
+            teamId : Nat;
             delta : Int;
         };
     };
@@ -81,7 +80,7 @@ module {
 
     public type TargetInstance = {
         #league;
-        #teams : [Principal];
+        #teams : [Nat];
         #players : [Nat32];
     };
 
@@ -108,7 +107,7 @@ module {
 
     public type ScenarioStateResolved = {
         teamChoices : [{
-            teamId : Principal;
+            teamId : Nat;
             option : Nat;
         }];
         effectOutcomes : [EffectOutcome];

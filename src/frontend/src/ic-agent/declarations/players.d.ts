@@ -48,7 +48,7 @@ export interface Player {
   'name' : string,
   'description' : string,
   'likes' : Array<string>,
-  'teamId' : Principal,
+  'teamId' : bigint,
   'position' : FieldPosition,
   'quirks' : Array<string>,
   'dislikes' : Array<string>,
@@ -96,7 +96,7 @@ export interface PlayerWithId {
   'name' : string,
   'description' : string,
   'likes' : Array<string>,
-  'teamId' : Principal,
+  'teamId' : bigint,
   'position' : FieldPosition,
   'quirks' : Array<string>,
   'dislikes' : Array<string>,
@@ -109,7 +109,7 @@ export interface PlayerWithId__1 {
   'name' : string,
   'description' : string,
   'likes' : Array<string>,
-  'teamId' : Principal,
+  'teamId' : bigint,
   'position' : FieldPosition,
   'quirks' : Array<string>,
   'dislikes' : Array<string>,
@@ -135,7 +135,7 @@ export interface Skills {
   'defense' : bigint,
   'throwingPower' : bigint,
 }
-export type TargetInstance = { 'teams' : Array<Principal> } |
+export type TargetInstance = { 'teams' : Array<bigint> } |
   { 'players' : Uint32Array | number[] } |
   { 'league' : null };
 export interface Trait {
@@ -159,10 +159,10 @@ export interface _SERVICE {
   >,
   'getAllPlayers' : ActorMethod<[], Array<PlayerWithId__1>>,
   'getPlayer' : ActorMethod<[number], GetPlayerResult>,
-  'getTeamPlayers' : ActorMethod<[Principal], Array<PlayerWithId>>,
+  'getTeamPlayers' : ActorMethod<[bigint], Array<PlayerWithId>>,
   'getTraits' : ActorMethod<[], Array<Trait>>,
   'onSeasonComplete' : ActorMethod<[], OnSeasonCompleteResult>,
-  'populateTeamRoster' : ActorMethod<[Principal], PopulateTeamRosterResult>,
+  'populateTeamRoster' : ActorMethod<[bigint], PopulateTeamRosterResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -122,7 +122,7 @@ export const idlFactory = ({ IDL }) => {
     'firstBase' : IDL.Nat32,
   });
   const TeamState = IDL.Record({
-    'id' : IDL.Principal,
+    'id' : IDL.Nat,
     'name' : IDL.Text,
     'score' : IDL.Int,
     'logoUrl' : IDL.Text,
@@ -208,6 +208,10 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'matchGroupNotFound' : IDL.Null,
   });
+  const SetLeagueResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+  });
   const FieldPosition = IDL.Variant({
     'rightField' : IDL.Null,
     'leftField' : IDL.Null,
@@ -224,7 +228,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Principal,
+    'teamId' : IDL.Nat,
     'position' : FieldPosition,
     'quirks' : IDL.Vec(IDL.Text),
     'dislikes' : IDL.Vec(IDL.Text),
@@ -232,7 +236,7 @@ export const idlFactory = ({ IDL }) => {
     'traitIds' : IDL.Vec(IDL.Text),
   });
   const StartMatchTeam = IDL.Record({
-    'id' : IDL.Principal,
+    'id' : IDL.Nat,
     'name' : IDL.Text,
     'logoUrl' : IDL.Text,
     'positions' : IDL.Record({
@@ -271,7 +275,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'inProgress' : IDL.Null,
   });
-  const StadiumActor = IDL.Service({
+  return IDL.Service({
     'cancelMatchGroup' : IDL.Func(
         [CancelMatchGroupRequest],
         [CancelMatchGroupResult],
@@ -284,6 +288,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getMatchGroups' : IDL.Func([], [IDL.Vec(MatchGroupWithId)], ['query']),
     'resetTickTimer' : IDL.Func([IDL.Nat], [ResetTickTimerResult], []),
+    'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
     'startMatchGroup' : IDL.Func(
         [StartMatchGroupRequest],
         [StartMatchGroupResult],
@@ -291,6 +296,5 @@ export const idlFactory = ({ IDL }) => {
       ),
     'tickMatchGroup' : IDL.Func([IDL.Nat], [TickMatchGroupResult], []),
   });
-  return StadiumActor;
 };
-export const init = ({ IDL }) => { return [IDL.Principal]; };
+export const init = ({ IDL }) => { return []; };

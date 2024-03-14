@@ -18,16 +18,24 @@ module {
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
         getMatchGroupPredictions : query (matchGroupId : Nat) -> async GetMatchGroupPredictionsResult;
-        updateLeagueCanisters : () -> async UpdateLeagueCanistersResult;
         startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
         onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
 
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
-        getProposal : query (Nat) -> async ?Proposal;
-        getProposals : query () -> async [Proposal];
+        getProposal : query (Nat) -> async GetProposalResult;
+        getProposals : query () -> async GetProposalsResult;
         getScenario : query (Text) -> async GetScenarioResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
         clearTeams : () -> async (); // TODO remove
+    };
+
+    public type GetProposalResult = {
+        #ok : Proposal;
+        #proposalNotFound;
+    };
+
+    public type GetProposalsResult = {
+        #ok : [Proposal];
     };
 
     public type Proposal = Dao.Proposal<ProposalContent>;
@@ -76,7 +84,7 @@ module {
             #started;
             #resolved : {
                 teamChoices : [{
-                    teamId : Principal;
+                    teamId : Nat;
                     option : Nat;
                 }];
             };
@@ -90,7 +98,7 @@ module {
     };
 
     public type TeamStandingInfo = {
-        id : Principal;
+        id : Nat;
         wins : Nat;
         losses : Nat;
         totalScore : Int;
@@ -124,11 +132,6 @@ module {
         team1 : Nat;
         team2 : Nat;
         yourVote : ?Team.TeamId;
-    };
-
-    public type UpdateLeagueCanistersResult = {
-        #ok;
-        #notAuthorized;
     };
 
     public type PredictMatchOutcomeRequest = {
@@ -232,7 +235,7 @@ module {
     };
 
     public type CreateTeamResult = {
-        #ok : Principal;
+        #ok : Nat;
         #nameTaken;
         #noStadiumsExist;
         #teamsCallError : Text;

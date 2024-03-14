@@ -4,7 +4,6 @@ import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import Types "Types";
 import PseudoRandomX "mo:random/PseudoRandomX";
-import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Array "mo:base/Array";
@@ -24,7 +23,7 @@ module {
     };
 
     public type TeamScenarioData = {
-        id : Principal;
+        id : Nat;
         positions : FieldPosition.TeamPositions;
         option : Nat;
     };
@@ -182,7 +181,7 @@ module {
         teams : [TeamScenarioData],
     ) : Scenario.ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
-        let teamChoices = Buffer.Buffer<{ teamId : Principal; option : Nat }>(0);
+        let teamChoices = Buffer.Buffer<{ teamId : Nat; option : Nat }>(0);
         for (team in Iter.fromArray(teams)) {
             let choice = scenario.options[team.option];
             teamChoices.add({
@@ -336,7 +335,7 @@ module {
     private func getTeamId(
         team : Scenario.TargetTeam,
         context : EffectContext,
-    ) : Principal {
+    ) : Nat {
         let choosingTeam = switch (context) {
             case (#league) Debug.trap("Cannot get team id for league context");
             case (#team(team)) team;
@@ -370,7 +369,7 @@ module {
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(team : Scenario.TargetTeam) : Principal = getTeamId(team, context),
+                    func(team : Scenario.TargetTeam) : Nat = getTeamId(team, context),
                 )
                 |> Iter.toArray(_);
                 #teams(teamIds);

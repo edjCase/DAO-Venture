@@ -20,6 +20,6 @@ module {
     };
 
     public type TeamWithId = Team and {
-        id : Principal;
+        id : Nat;
     };
 };

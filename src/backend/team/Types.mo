@@ -4,18 +4,29 @@ import Skill "../models/Skill";
 
 module {
 
-    public type TeamActor = actor {
+    public type Actor = actor {
         setLeague : (id : Principal) -> async SetLeagueResult;
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
-        voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
-        createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
-        getProposal : query (id : Nat) -> async ?Proposal;
-        getProposals : query () -> async [Proposal];
-        voteOnProposal : (request : VoteOnProposalRequest) -> async VoteOnProposalResult;
-        getWinningScenarioOption : (request : GetWinningScenarioOptionRequest) -> async GetWinningScenarioOptionResult;
+        voteOnScenario : (teamId : Nat, request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
+        createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
+        getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
+        getProposals : query (teamId : Nat) -> async GetProposalsResult;
+        voteOnProposal : (teamId : Nat, request : VoteOnProposalRequest) -> async VoteOnProposalResult;
+        getScenarioVotingResults : (request : GetScenarioVotingResultsRequest) -> async GetScenarioVotingResultsResult;
         onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
         onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
         onSeasonComplete() : async OnSeasonCompleteResult;
+    };
+
+    public type GetProposalResult = {
+        #ok : Proposal;
+        #proposalNotFound;
+        #teamNotFound;
+    };
+
+    public type GetProposalsResult = {
+        #ok : [Proposal];
+        #teamNotFound;
     };
 
     public type VoteOnProposalRequest = {
@@ -29,6 +40,7 @@ module {
         #proposalNotFound;
         #alreadyVoted;
         #votingClosed;
+        #teamNotFound;
     };
 
     public type Proposal = Dao.Proposal<ProposalContent>;
@@ -50,6 +62,7 @@ module {
     public type CreateProposalResult = {
         #ok : Nat;
         #notAuthorized;
+        #teamNotFound;
     };
 
     public type OnScenarioVoteCompleteRequest = {
@@ -82,17 +95,13 @@ module {
         #notAuthorized;
     };
 
-    public type TeamActorInfo = {};
-
-    public type TeamActorInfoWithId = TeamActorInfo and { id : Principal };
-
     public type CreateTeamRequest = {
 
     };
 
     public type CreateTeamResult = {
         #ok : {
-            id : Principal;
+            id : Nat;
         };
         #notAuthorized;
     };
@@ -115,15 +124,24 @@ module {
             votingPower : Nat;
         };
         #scenarioNotFound;
+        #teamNotFound;
     };
 
-    public type GetWinningScenarioOptionRequest = {
+    public type GetScenarioVotingResultsRequest = {
         scenarioId : Text;
     };
 
-    public type GetWinningScenarioOptionResult = {
-        #ok : Nat;
-        #noVotes;
+    public type ScenarioTeamVotingResult = {
+        teamId : Nat;
+        option : Nat;
+    };
+
+    public type ScenarioVotingResults = {
+        teamOptions : [ScenarioTeamVotingResult];
+    };
+
+    public type GetScenarioVotingResultsResult = {
+        #ok : ScenarioVotingResults;
         #notAuthorized;
         #scenarioNotFound;
     };
@@ -147,5 +165,6 @@ module {
         #alreadyVoted;
         #seasonStatusFetchError : Text;
         #invalidOption;
+        #teamNotFound;
     };
 };

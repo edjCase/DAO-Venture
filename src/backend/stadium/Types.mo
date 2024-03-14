@@ -51,7 +51,7 @@ module {
     };
 
     public type Team = {
-        id : Principal;
+        id : Nat;
         name : Text;
         logoUrl : Text;
     };

@@ -24,7 +24,7 @@ module {
     };
 
     public type MutableTeamState = {
-        id : Principal;
+        id : Nat;
         name : Text;
         logoUrl : Text;
         var score : Int;

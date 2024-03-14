@@ -7,13 +7,13 @@ module {
         get : query (userId : Principal) -> async GetUserResult;
         getAll : query () -> async [User];
         getTeamOwners : query (request : GetTeamOwnersRequest) -> async GetTeamOwnersResult;
-        setFavoriteTeam : (userId : Principal, teamId : Principal) -> async SetUserFavoriteTeamResult;
+        setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
         awardPoints : (awards : [AwardPointsRequest]) -> async AwardPointsResult;
     };
 
     public type GetTeamOwnersRequest = {
-        #team : Principal;
+        #team : Nat;
         #all;
     };
 
@@ -32,7 +32,7 @@ module {
         // TODO team association be in the season?
         id : Principal;
         team : ?{
-            id : Principal;
+            id : Nat;
             kind : TeamAssociationKind;
         };
         points : Int;
@@ -45,13 +45,13 @@ module {
 
     public type AddTeamOwnerRequest = {
         userId : Principal;
-        teamId : Principal;
+        teamId : Nat;
         votingPower : Nat;
     };
 
     public type AddTeamOwnerResult = {
         #ok;
-        #onOtherTeam : Principal;
+        #onOtherTeam : Nat;
         #teamNotFound;
         #notAuthorized;
     };

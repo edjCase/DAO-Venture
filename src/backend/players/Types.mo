@@ -7,9 +7,9 @@ module {
     public type PlayerActor = actor {
         createFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
         getPlayer : query (id : Nat32) -> async GetPlayerResult;
-        getTeamPlayers : query (teamId : Principal) -> async [Player.PlayerWithId];
+        getTeamPlayers : query (teamId : Nat) -> async [Player.PlayerWithId];
         getAllPlayers : query () -> async [PlayerWithId];
-        populateTeamRoster : (teamId : Principal) -> async PopulateTeamRosterResult;
+        populateTeamRoster : (teamId : Nat) -> async PopulateTeamRosterResult;
         addTrait : (request : AddTraitRequest) -> async AddTraitResult;
         getTraits : query () -> async [Trait.Trait];
         applyEffects : (request : ApplyEffectsRequest) -> async ApplyEffectsResult;

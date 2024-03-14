@@ -159,7 +159,7 @@ export interface PlayerWithId {
   'name' : string,
   'description' : string,
   'likes' : Array<string>,
-  'teamId' : Principal,
+  'teamId' : bigint,
   'position' : FieldPosition,
   'quirks' : Array<string>,
   'dislikes' : Array<string>,
@@ -169,6 +169,8 @@ export interface PlayerWithId {
 export type ResetTickTimerResult = { 'ok' : null } |
   { 'matchGroupNotFound' : null };
 export interface RoundLog { 'turns' : Array<TurnLog> }
+export type SetLeagueResult = { 'ok' : null } |
+  { 'notAuthorized' : null };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -185,20 +187,6 @@ export interface Skills {
   'defense' : bigint,
   'throwingPower' : bigint,
 }
-export interface StadiumActor {
-  'cancelMatchGroup' : ActorMethod<
-    [CancelMatchGroupRequest],
-    CancelMatchGroupResult
-  >,
-  'getMatchGroup' : ActorMethod<[bigint], [] | [MatchGroupWithId]>,
-  'getMatchGroups' : ActorMethod<[], Array<MatchGroupWithId>>,
-  'resetTickTimer' : ActorMethod<[bigint], ResetTickTimerResult>,
-  'startMatchGroup' : ActorMethod<
-    [StartMatchGroupRequest],
-    StartMatchGroupResult
-  >,
-  'tickMatchGroup' : ActorMethod<[bigint], TickMatchGroupResult>,
-}
 export interface StartMatchGroupRequest {
   'id' : bigint,
   'matches' : Array<StartMatchRequest>,
@@ -211,7 +199,7 @@ export interface StartMatchRequest {
   'aura' : MatchAura,
 }
 export interface StartMatchTeam {
-  'id' : Principal,
+  'id' : bigint,
   'name' : string,
   'logoUrl' : string,
   'positions' : {
@@ -238,7 +226,7 @@ export interface TeamPositions {
   'firstBase' : number,
 }
 export interface TeamState {
-  'id' : Principal,
+  'id' : bigint,
   'name' : string,
   'score' : bigint,
   'logoUrl' : string,
@@ -262,6 +250,20 @@ export interface Trait {
   'description' : string,
 }
 export interface TurnLog { 'events' : Array<Event> }
-export interface _SERVICE extends StadiumActor {}
+export interface _SERVICE {
+  'cancelMatchGroup' : ActorMethod<
+    [CancelMatchGroupRequest],
+    CancelMatchGroupResult
+  >,
+  'getMatchGroup' : ActorMethod<[bigint], [] | [MatchGroupWithId]>,
+  'getMatchGroups' : ActorMethod<[], Array<MatchGroupWithId>>,
+  'resetTickTimer' : ActorMethod<[bigint], ResetTickTimerResult>,
+  'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
+  'startMatchGroup' : ActorMethod<
+    [StartMatchGroupRequest],
+    StartMatchGroupResult
+  >,
+  'tickMatchGroup' : ActorMethod<[bigint], TickMatchGroupResult>,
+}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

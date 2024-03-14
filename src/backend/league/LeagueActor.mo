@@ -115,7 +115,7 @@ actor LeagueActor : Types.LeagueActor {
         switch (request.content) {
             case (#changeTeamName(c)) {
                 // Team is only one who can propose to change their name
-                if (caller != c.teamId) {
+                if (caller != Principal.fromActor(TeamsActor)) {
                     return #notAuthorized;
                 };
             };
@@ -123,12 +123,15 @@ actor LeagueActor : Types.LeagueActor {
         dao.createProposal<system>(caller, request.content, members);
     };
 
-    public shared query func getProposal(id : Nat) : async ?Types.Proposal {
-        dao.getProposal(id);
+    public shared query func getProposal(id : Nat) : async Types.GetProposalResult {
+        switch (dao.getProposal(id)) {
+            case (?proposal) return #ok(proposal);
+            case (null) return #proposalNotFound;
+        };
     };
 
-    public shared query func getProposals() : async [Types.Proposal] {
-        dao.getProposals();
+    public shared query func getProposals() : async Types.GetProposalsResult {
+        #ok(dao.getProposals());
     };
 
     public shared ({ caller }) func voteOnProposal(request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {
@@ -397,33 +400,29 @@ actor LeagueActor : Types.LeagueActor {
             case (#inProgress(i)) i.scenarioId;
             case (#completed(c)) c.scenarioId;
         };
+        let scenarioResults = try {
+            await TeamsActor.getScenarioVotingResults({
+                scenarioId = scenarioId;
+            });
+        } catch (err : Error.Error) {
+            return Debug.trap("Failed to get scenario voting results: " # Error.message(err));
+        };
+        let teamResults = switch (scenarioResults) {
+            case (#ok(o)) o;
+            case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scenarioId);
+            case (#notAuthorized) return Debug.trap("League is not authorized to get scenario results");
+        };
 
         for (team in Iter.fromArray(teams)) {
-            let teamActor = actor (Principal.toText(team.id)) : TeamTypes.TeamActor;
-            let options : TeamTypes.ScenarioVoteResult = try {
-                // Get match options from the team itself
-                let result : TeamTypes.GetWinningScenarioOptionResult = await teamActor.getWinningScenarioOption({
-                    scenarioId = scenarioId;
-                });
-                let option = switch (result) {
-                    case (#ok(o)) o;
-                    case (#noVotes) {
-                        // If no votes, pick a random choice
-                        let option : Nat = 0; // TODO
-                        option;
-                    };
-                    case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scenarioId);
-                    case (#notAuthorized) return Debug.trap("League is not authorized to get match options from team: " # Principal.toText(team.id));
-                };
-                {
-                    option = option;
-                };
-            } catch (err : Error.Error) {
-                return Debug.trap("Failed to get team '" # Principal.toText(team.id) # "': " # Error.message(err));
+            let optionOrNull = IterTools.find(teamResults.teamOptions.vals(), func(o : TeamTypes.ScenarioTeamVotingResult) : Bool = o.teamId == team.id);
+            let option = switch (optionOrNull) {
+                case (?o) o.option;
+                case (null) 0; // TODO random if no votes?
             };
+
             teamScenarioData.add({
                 team with
-                option = options.option;
+                option = option;
                 positions = team.positions;
             });
         };

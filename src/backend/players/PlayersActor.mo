@@ -58,7 +58,7 @@ actor : Types.PlayerActor {
         };
     };
 
-    public query func getTeamPlayers(teamId : Principal) : async [Player.PlayerWithId] {
+    public query func getTeamPlayers(teamId : Nat) : async [Player.PlayerWithId] {
         getTeamPlayersInternal(teamId);
     };
 
@@ -76,7 +76,7 @@ actor : Types.PlayerActor {
         nextPlayerId := 1;
     };
 
-    public shared ({ caller }) func populateTeamRoster(teamId : Principal) : async Types.PopulateTeamRosterResult {
+    public shared ({ caller }) func populateTeamRoster(teamId : Nat) : async Types.PopulateTeamRosterResult {
         assertLeague(caller);
         // TODO validate that the teamid is valid?
         let teamPlayers = getTeamPlayersInternal(teamId);
@@ -270,7 +270,7 @@ actor : Types.PlayerActor {
         let filterFunc = switch (target) {
             case (#league) func((playerId, player) : (Nat32, Types.Player)) : Bool = true;
             case (#teams(teamIds)) func((playerId, player) : (Nat32, Types.Player)) : Bool {
-                Array.indexOf(player.teamId, teamIds, Principal.equal) != null;
+                Array.indexOf(player.teamId, teamIds, Nat.equal) != null;
             };
             case (#players(playerIds)) func((playerId, player) : (Nat32, Types.Player)) : Bool {
                 Array.indexOf(playerId, playerIds, Nat32.equal) != null;
@@ -302,7 +302,7 @@ actor : Types.PlayerActor {
         players := newPlayers;
     };
 
-    private func getTeamPlayersInternal(teamId : Principal) : [Player.PlayerWithId] {
+    private func getTeamPlayersInternal(teamId : Nat) : [Player.PlayerWithId] {
         players
         |> Trie.iter(_)
         |> IterTools.mapFilter(

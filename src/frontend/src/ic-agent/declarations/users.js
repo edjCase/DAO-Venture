@@ -2,12 +2,12 @@ export const idlFactory = ({ IDL }) => {
   const AddTeamOwnerRequest = IDL.Record({
     'votingPower' : IDL.Nat,
     'userId' : IDL.Principal,
-    'teamId' : IDL.Principal,
+    'teamId' : IDL.Nat,
   });
   const AddTeamOwnerResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
-    'onOtherTeam' : IDL.Principal,
+    'onOtherTeam' : IDL.Nat,
     'teamNotFound' : IDL.Null,
   });
   const AwardPointsRequest = IDL.Record({
@@ -25,7 +25,7 @@ export const idlFactory = ({ IDL }) => {
   const User = IDL.Record({
     'id' : IDL.Principal,
     'team' : IDL.Opt(
-      IDL.Record({ 'id' : IDL.Principal, 'kind' : TeamAssociationKind })
+      IDL.Record({ 'id' : IDL.Nat, 'kind' : TeamAssociationKind })
     ),
     'points' : IDL.Int,
   });
@@ -36,7 +36,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetTeamOwnersRequest = IDL.Variant({
     'all' : IDL.Null,
-    'team' : IDL.Principal,
+    'team' : IDL.Nat,
   });
   const UserVotingInfo = IDL.Record({
     'id' : IDL.Principal,
@@ -65,7 +65,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'setFavoriteTeam' : IDL.Func(
-        [IDL.Principal, IDL.Principal],
+        [IDL.Principal, IDL.Nat],
         [SetUserFavoriteTeamResult],
         [],
       ),

@@ -49,7 +49,7 @@ export const idlFactory = ({ IDL }) => {
     'indefinite' : IDL.Null,
   });
   const TargetInstance = IDL.Variant({
-    'teams' : IDL.Vec(IDL.Principal),
+    'teams' : IDL.Vec(IDL.Nat),
     'players' : IDL.Vec(IDL.Nat32),
     'league' : IDL.Null,
   });
@@ -111,7 +111,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Principal,
+    'teamId' : IDL.Nat,
     'position' : FieldPosition,
     'quirks' : IDL.Vec(IDL.Text),
     'dislikes' : IDL.Vec(IDL.Text),
@@ -123,7 +123,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Principal,
+    'teamId' : IDL.Nat,
     'position' : FieldPosition,
     'quirks' : IDL.Vec(IDL.Text),
     'dislikes' : IDL.Vec(IDL.Text),
@@ -137,7 +137,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Principal,
+    'teamId' : IDL.Nat,
     'position' : FieldPosition,
     'quirks' : IDL.Vec(IDL.Text),
     'dislikes' : IDL.Vec(IDL.Text),
@@ -176,18 +176,10 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getAllPlayers' : IDL.Func([], [IDL.Vec(PlayerWithId__1)], ['query']),
     'getPlayer' : IDL.Func([IDL.Nat32], [GetPlayerResult], ['query']),
-    'getTeamPlayers' : IDL.Func(
-        [IDL.Principal],
-        [IDL.Vec(PlayerWithId)],
-        ['query'],
-      ),
+    'getTeamPlayers' : IDL.Func([IDL.Nat], [IDL.Vec(PlayerWithId)], ['query']),
     'getTraits' : IDL.Func([], [IDL.Vec(Trait)], ['query']),
     'onSeasonComplete' : IDL.Func([], [OnSeasonCompleteResult], []),
-    'populateTeamRoster' : IDL.Func(
-        [IDL.Principal],
-        [PopulateTeamRosterResult],
-        [],
-      ),
+    'populateTeamRoster' : IDL.Func([IDL.Nat], [PopulateTeamRosterResult], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

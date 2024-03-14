@@ -28,7 +28,7 @@ module {
     };
 
     public type TeamInfo = {
-        id : Principal;
+        id : Nat;
         name : Text;
         logoUrl : Text;
         positions : FieldPosition.TeamPositions;
@@ -41,7 +41,7 @@ module {
     };
 
     public type TeamAssignment = {
-        #predetermined : Principal;
+        #predetermined : Nat;
         #seasonStandingIndex : Nat; // Current standing calculation
         #winnerOfMatch : Nat; // Look at previous match group match id winner
     };
@@ -59,7 +59,7 @@ module {
         scenarioId : Text;
     };
 
-    public type ScheduledTeamInfo = { id : Principal };
+    public type ScheduledTeamInfo = { id : Nat };
 
     public type ScheduledMatch = {
         team1 : ScheduledTeamInfo;
@@ -75,7 +75,7 @@ module {
     };
 
     public type InProgressTeam = {
-        id : Principal;
+        id : Nat;
     };
 
     public type InProgressMatch = {
@@ -85,7 +85,7 @@ module {
     };
 
     public type CompletedMatchTeam = {
-        id : Principal;
+        id : Nat;
         score : Int;
     };
 
@@ -104,8 +104,8 @@ module {
 
     // Completed Season
     public type CompletedSeason = {
-        championTeamId : Principal;
-        runnerUpTeamId : Principal;
+        championTeamId : Nat;
+        runnerUpTeamId : Nat;
         teams : [CompletedSeasonTeam];
         matchGroups : [CompletedMatchGroup];
     };

@@ -14,7 +14,7 @@ module {
     };
 
     public type Player = PlayerFluff and {
-        teamId : Principal;
+        teamId : Nat;
         skills : Skills;
         position : FieldPosition.FieldPosition;
         traitIds : [Text];
@@ -72,7 +72,7 @@ module {
         };
         injuries : Nat;
     };
-    
+
     public type PlayerMatchStatsWithId = PlayerMatchStats and {
         playerId : PlayerId;
     };

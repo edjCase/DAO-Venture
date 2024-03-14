@@ -7,15 +7,12 @@ import Iter "mo:base/Iter";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
-import ScenarioVoting "ScenarioVoting";
-import UsersActor "canister:users";
 
 module {
 
     public type StableData = {
         leagueId : Principal;
         teamId : Nat;
-        scenarioVoting : [ScenarioVoting.StableData];
         dao : Dao.StableData<Types.ProposalContent>;
     };
 
@@ -29,6 +26,17 @@ module {
         };
 
         var nextTeamId = teams.size(); // TODO change to check for the largest team id in the list
+
+        public func toStableData() : [(Nat, StableData)] {
+            handlers.entries()
+            |> Iter.map<(Nat, Handler), (Nat, StableData)>(
+                _,
+                func((teamId, handler) : (Nat, Handler)) : (Nat, StableData) {
+                    (teamId, handler.toStableData());
+                },
+            )
+            |> Iter.toArray(_);
+        };
 
         public func get(teamId : Nat) : ?Handler {
             handlers.get(teamId);
@@ -86,49 +94,32 @@ module {
         };
         var dao = Dao.Dao<Types.ProposalContent>(stableData.dao, onExecute, onReject);
 
-        var scenarioVotingManager = ScenarioVoting.Manager(stableData.scenarioVoting);
-
         public func onInit<system>() {
             dao.resetEndTimers<system>();
         };
 
-        public func voteOnScenario(caller : Principal, request : Types.VoteOnScenarioRequest) : async* Types.VoteOnScenarioResult {
-            let ?handler = scenarioVotingManager.getHandler(request.scenarioId) else return #scenarioNotFound;
-            switch (await UsersActor.get(caller)) {
-                case (#ok(user)) {
-                    let ?team = user.team else return #notAuthorized;
-                    if (team.id != teamId) {
-                        return #notAuthorized;
-                    };
-                    let #owner(o) = team.kind else return #notAuthorized;
-                    handler.vote(caller, o.votingPower, request.option);
-                };
-                case (#notFound or #notAuthorized) #notAuthorized;
+        public func toStableData() : StableData {
+            {
+                leagueId = leagueId;
+                teamId = teamId;
+                dao = dao.toStableData();
             };
         };
 
-        public func getScenarioVote(scenarioId : Text, caller : Principal) : Types.GetScenarioVoteResult {
-            let ?handler = scenarioVotingManager.getHandler(scenarioId) else return #scenarioNotFound;
-            #ok(handler.getVote(caller));
+        public func getProposal(id : Nat) : ?Dao.Proposal<Types.ProposalContent> {
+            dao.getProposal(id);
         };
 
-        public func getWinningScenarioOption(scenarioId : Text) : Types.GetWinningScenarioOptionResult {
-            let ?handler = scenarioVotingManager.getHandler(scenarioId) else return #scenarioNotFound;
-            let ?winningOption = handler.calculateWinningOption() else return #noVotes;
-            #ok(winningOption);
+        public func getProposals() : [Dao.Proposal<Types.ProposalContent>] {
+            dao.getProposals();
         };
 
-        public func onNewScenario(request : Types.OnNewScenarioRequest) : Types.OnNewScenarioResult {
-
-            scenarioVotingManager.add(request.scenarioId, request.optionCount);
-            #ok;
+        public func voteOnProposal(caller : Principal, request : Types.VoteOnProposalRequest) : async* Types.VoteOnProposalResult {
+            await* dao.vote(request.proposalId, caller, request.vote);
         };
 
-        public func onScenarioVoteComplete(request : Types.OnScenarioVoteCompleteRequest) : async Types.OnScenarioVoteCompleteResult {
-            switch (scenarioVotingManager.remove(request.scenarioId)) {
-                case (#ok) #ok;
-                case (#notFound) #scenarioNotFound;
-            };
+        public func createProposal<system>(caller : Principal, request : Types.CreateProposalRequest, members : [Dao.Member]) : Types.CreateProposalResult {
+            dao.createProposal<system>(caller, request.content, members);
         };
 
     };

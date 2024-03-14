@@ -54,7 +54,7 @@ actor : Types.Actor {
         #ok(owners);
     };
 
-    public shared ({ caller }) func setFavoriteTeam(userId : Principal, teamId : Principal) : async Types.SetUserFavoriteTeamResult {
+    public shared ({ caller }) func setFavoriteTeam(userId : Principal, teamId : Nat) : async Types.SetUserFavoriteTeamResult {
         if (Principal.isAnonymous(userId)) {
             return #identityRequired;
         };
