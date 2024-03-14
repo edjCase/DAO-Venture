@@ -45,7 +45,7 @@
         console.log("Adding member", newMemberId);
         let userId = Principal.fromText(newMemberId);
         let res = await usersAgentFactory().addTeamOwner({
-            teamId: Principal.fromText(selectedTeamId),
+            teamId: BigInt(selectedTeamId),
             userId: userId,
             votingPower: BigInt(1),
         });
@@ -71,11 +71,11 @@
     {#if selectedTeamId}
         <Tabs>
             <TabItem open title="Proposals">
-                <TeamProposalList teamId={selectedTeamId} />
-                <TeamCreateProposal teamId={selectedTeamId} />
+                <TeamProposalList teamId={BigInt(selectedTeamId)} />
+                <TeamCreateProposal teamId={BigInt(selectedTeamId)} />
             </TabItem>
             <TabItem title="Members">
-                <MemberList teamId={selectedTeamId} />
+                <MemberList teamId={BigInt(selectedTeamId)} />
                 <div class="text-2xl">Add a DAO member:</div>
                 <div class="mb-6">
                     <Label for="default-input" class="block mb-2">User Id</Label

@@ -1,5 +1,3 @@
-
-import { Principal } from "@dfinity/principal";
 import { TeamIdOrTie } from "../ic-agent/declarations/league";
 
 
@@ -23,7 +21,7 @@ export type MatchDetails = {
 export type MatchState = 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Played' | 'Error';
 
 export type TeamDetails = {
-    id: Principal;
+    id: bigint;
     name: string;
     logoUrl: string;
 };

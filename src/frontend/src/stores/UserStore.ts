@@ -44,7 +44,7 @@ function createUserStore() {
             });
     };
 
-    const setFavoriteTeam = async (userId: Principal, teamId: Principal) => {
+    const setFavoriteTeam = async (userId: Principal, teamId: bigint) => {
         await usersAgentFactory()
             .setFavoriteTeam(userId, teamId);
         refetchUser(userId);

@@ -1,7 +1,6 @@
 import { writable } from "svelte/store";
 import { BaseState, MatchGroupWithId, MatchLog, PlayerStateWithId, TeamId, TeamState, TickResult } from "../ic-agent/declarations/stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
-import { Principal } from "@dfinity/principal";
 import { scheduleStore } from "./ScheduleStore";
 import { TeamDetailsWithScore } from "../models/Match";
 import { MatchAura, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/league";
@@ -50,38 +49,35 @@ export const liveMatchGroupStore = (() => {
     }
   };
 
-  const mapTickResult = (match: TickResult): LiveMatch => {
-    if ('inProgress' in match) {
-      return {
-        team1: mapTeam(match.inProgress.team1),
-        team2: mapTeam(match.inProgress.team2),
-        liveState: {
-          offenseTeamId: match.inProgress.offenseTeamId,
-          players: match.inProgress.players,
-          bases: match.inProgress.bases,
-          round: match.inProgress.log.rounds.length,
-          outs: Number(match.inProgress.outs),
-          strikes: Number(match.inProgress.strikes)
-        },
-        log: match.inProgress.log,
-        winner: undefined,
-        aura: match.inProgress.aura
-      };
+  const mapTickResult = (tickResult: TickResult): LiveMatch => {
+    let liveState: LiveMatchState | undefined;
+    let winner: TeamIdOrTie | undefined;
+    if ('inProgress' in tickResult.status) {
+      liveState = {
+        offenseTeamId: tickResult.match.offenseTeamId,
+        players: tickResult.match.players,
+        bases: tickResult.match.bases,
+        round: tickResult.match.log.rounds.length,
+        outs: Number(tickResult.match.outs),
+        strikes: Number(tickResult.match.strikes)
+      }
     } else {
-      return {
-        team1: mapTeam(match.completed.match.team1),
-        team2: mapTeam(match.completed.match.team2),
-        liveState: undefined,
-        log: undefined,
-        winner: match.completed.match.winner,
-        aura: match.completed.match.aura
-      };
+      liveState = undefined;
+      winner = undefined; // TODO
     }
+    return {
+      team1: mapTeam(tickResult.match.team1),
+      team2: mapTeam(tickResult.match.team2),
+      liveState: liveState,
+      log: tickResult.match.log,
+      winner: winner,
+      aura: tickResult.match.aura
+    };
   };
 
 
-  const refetchMatchGroup = async (stadiumId: Principal, matchGroupId: number) => {
-    stadiumAgentFactory(stadiumId)
+  const refetchMatchGroup = async (matchGroupId: number) => {
+    stadiumAgentFactory()
       .getMatchGroup(BigInt(matchGroupId))
       .then((matchGroupOrNull: [MatchGroupWithId] | []) => {
         if (matchGroupOrNull.length === 0) {
@@ -116,10 +112,9 @@ export const liveMatchGroupStore = (() => {
         if (liveMatchInterval) {
           clearInterval(liveMatchInterval);
         }
-        let stadiumId = matchGroup.inProgress.stadiumId;
-        refetchMatchGroup(stadiumId, index);
+        refetchMatchGroup(index);
         liveMatchInterval = setInterval(
-          () => refetchMatchGroup(stadiumId, index),
+          () => refetchMatchGroup(index),
           5000
         );
         // Dont break, to set next match timer

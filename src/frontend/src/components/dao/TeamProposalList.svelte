@@ -1,12 +1,11 @@
 <script lang="ts">
-    import { Principal } from "@dfinity/principal";
     import ProposalList from "./ProposalList.svelte";
     import { proposalStore } from "../../stores/ProposalStore";
     import { Proposal } from "../../ic-agent/declarations/team";
     import { onDestroy } from "svelte";
     import TeamProposal from "./TeamProposal.svelte";
 
-    export let teamId: string | Principal;
+    export let teamId: bigint;
 
     let proposals: Proposal[] = [];
 

@@ -1,13 +1,12 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
 
-  import { teamAgentFactory } from "../../ic-agent/Team";
+  import { teamsAgentFactory } from "../../ic-agent/Teams";
   import { teamStore } from "../../stores/TeamStore";
   import { VoteOnScenarioRequest } from "../../ic-agent/declarations/team";
   import { Scenario } from "../../ic-agent/declarations/league";
   import { identityStore } from "../../stores/IdentityStore";
   import { userStore } from "../../stores/UserStore";
-  import { Principal } from "@dfinity/principal";
   import { User } from "../../ic-agent/declarations/users";
 
   export let scenario: Scenario;
@@ -17,14 +16,14 @@
   $: identity = $identityStore;
 
   let user: User | undefined;
-  let teamId: Principal | undefined;
+  let teamId: bigint | undefined;
   let isOwner: boolean | undefined;
   $: {
     if (identity) {
       userStore.subscribeUser(identity.id, (u) => {
         user = u;
         teamId = user?.team[0]?.id;
-        isOwner = teamId && "owner" in user!.team[0]!.kind;
+        isOwner = !!teamId && "owner" in user!.team[0]!.kind;
       });
     }
   }
@@ -46,8 +45,8 @@
       `Voting for team ${teamId} and scenario ${scenario.id} with option ${selectedChoice}`,
       request,
     );
-    teamAgentFactory(teamId)
-      .voteOnScenario(request)
+    teamsAgentFactory()
+      .voteOnScenario(teamId, request)
       .then((result) => {
         console.log("Voted for match: ", result);
         teamStore.refetch();
@@ -63,7 +62,7 @@
     {@html scenario.description}
   </div>
   <div class="flex flex-col items-center gap-2">
-    {#each scenario.options as { title, description }, index}
+    {#each scenario.options as { description }, index}
       <div
         class="border border-gray-300 p-4 rounded-lg flex-1 cursor-pointer text-left w-96 text-base text-white"
         class:bg-gray-500={selectedChoice === index}
@@ -76,7 +75,6 @@
         role="button"
         tabindex={index}
       >
-        <div class="font-bold">{@html title}</div>
         <div class="">
           {@html description}
         </div>

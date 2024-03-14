@@ -58,6 +58,7 @@ module {
                 };
                 scenarioVoting = [];
             });
+            handlers.put(teamId, handler);
             (teamId, handler);
         };
     };

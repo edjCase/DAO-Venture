@@ -10,7 +10,6 @@ import {
     TeamAssignment,
 } from "../ic-agent/declarations/league";
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined, TeamDetailsWithScore } from "../models/Match";
-import { Principal } from "@dfinity/principal";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -22,7 +21,7 @@ export const scheduleStore = (() => {
     const { subscribe: subscribeStatus, set: setStatus } = writable<SeasonStatus | undefined>();
     const { subscribe: subscribeMatchGroups, set: setMatchGroups } = writable<MatchGroupDetails[]>([]);
 
-    const getTeam = (id: Principal, teams: TeamDetails[]): TeamDetails => {
+    const getTeam = (id: bigint, teams: TeamDetails[]): TeamDetails => {
         const foundTeam = teams.find((t) => t.id === id);
         if (foundTeam) {
             return foundTeam;
@@ -44,7 +43,7 @@ export const scheduleStore = (() => {
         }
     };
     const mapTeam = (
-        id: Principal,
+        id: bigint,
         score: bigint | undefined,
         teams: TeamDetails[]
     ): TeamDetailsWithScore => {

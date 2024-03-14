@@ -1,16 +1,15 @@
 <script lang="ts">
     import Proposal from "./Proposal.svelte";
     import { Proposal as ProposalType } from "../../ic-agent/declarations/team";
-    import { teamAgentFactory } from "../../ic-agent/Team";
-    import { Principal } from "@dfinity/principal";
+    import { teamsAgentFactory } from "../../ic-agent/Teams";
     import { proposalStore } from "../../stores/ProposalStore";
     import { toJsonString } from "../../utils/JsonUtil";
 
     export let proposal: ProposalType;
-    export let teamId: string | Principal;
+    export let teamId: bigint;
 
     let onVote = async (vote: boolean) => {
-        let result = await teamAgentFactory(teamId).voteOnProposal({
+        let result = await teamsAgentFactory().voteOnProposal(teamId, {
             proposalId: proposal.id,
             vote,
         });

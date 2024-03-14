@@ -2,10 +2,9 @@
     import { Button, Input, Select } from "flowbite-svelte";
     import CreateProposal from "./CreateProposal.svelte";
     import { proposalStore } from "../../stores/ProposalStore";
-    import { Principal } from "@dfinity/principal";
-    import { teamAgentFactory } from "../../ic-agent/Team";
+    import { teamsAgentFactory } from "../../ic-agent/Teams";
 
-    export let teamId: string | Principal;
+    export let teamId: bigint;
 
     let selectedPlayerId: string | undefined;
     let newName: string | undefined;
@@ -35,7 +34,7 @@
                 throw new Error("Unknown skill type: " + selectedSkillId);
         }
 
-        let result = await teamAgentFactory(teamId).createProposal({
+        let result = await teamsAgentFactory().createProposal(teamId, {
             content: {
                 trainPlayer: {
                     playerId: playerId,
@@ -54,7 +53,7 @@
             console.log("No new name selected");
             return;
         }
-        let result = await teamAgentFactory(teamId).createProposal({
+        let result = await teamsAgentFactory().createProposal(teamId, {
             content: {
                 changeName: {
                     name: newName,
