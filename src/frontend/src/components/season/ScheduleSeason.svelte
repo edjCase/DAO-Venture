@@ -15,7 +15,7 @@
     leagueAgentFactory()
       .startSeason({
         startTime: startTime,
-        scenarios: scenarios,
+        scenarioIds: scenarios.map((s) => s.id), // TODO
       })
       .then((result) => {
         if ("ok" in result) {

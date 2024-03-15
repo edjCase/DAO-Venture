@@ -101,7 +101,7 @@ module {
 
     public type ScenarioState = {
         #notStarted;
-        #started;
+        #inProgress;
         #resolved : ScenarioStateResolved;
     };
 

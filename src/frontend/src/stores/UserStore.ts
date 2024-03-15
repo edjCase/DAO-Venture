@@ -50,11 +50,13 @@ function createUserStore() {
         refetchUser(userId);
     };
 
-    const subscribeUser = (userId: Principal, callback: (value: User | undefined) => void) => {
+    const subscribeUser = (userId: Principal, callback: (value: User) => void) => {
         refetchUser(userId);
         return subscribe((users) => {
             let user = users.find((u) => u.id.toText() === userId.toText());
-            callback(user);
+            if (user) {
+                callback(user);
+            }
         });
     };
 

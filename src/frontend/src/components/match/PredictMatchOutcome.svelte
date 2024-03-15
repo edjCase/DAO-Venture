@@ -18,12 +18,12 @@
 
   let matchPredictions: MatchPrediction | undefined;
 
-  predictionStore.subscribe((predictions) => {
+  predictionStore.subscribeToMatchGroup(match.matchGroupId, (predictions) => {
     if (!predictions) {
       matchPredictions = undefined;
-      predictionStore.refetch();
+      predictionStore.refetchMatchGroup(match.matchGroupId);
     } else {
-      let matchPrediction = predictions[match.id];
+      let matchPrediction = predictions.matches[match.id];
       let totalPredictions =
         Number(matchPrediction.team1) + Number(matchPrediction.team2);
       matchPredictions = {
@@ -52,7 +52,7 @@
       .then((result) => {
         if ("ok" in result) {
           console.log("Predicted for match: ", match.id);
-          predictionStore.refetch();
+          predictionStore.refetchMatchGroup(match.matchGroupId);
         } else {
           console.log("Failed to predict for match: ", match.id, result);
         }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { MatchGroupPredictionSummary } from "../../ic-agent/declarations/league";
   import { MatchDetails } from "../../models/Match";
   import { LiveMatch } from "../../stores/LiveMatchGroupStore";
   import { predictionStore } from "../../stores/PredictionsStore";
@@ -8,14 +9,19 @@
   export let liveMatch: LiveMatch | undefined;
   export let selected: boolean = false;
 
-  $: predictions = $predictionStore;
+  let predictions: MatchGroupPredictionSummary | undefined;
+  predictionStore.subscribeToMatchGroup(match.matchGroupId, (p) => {
+    predictions = p;
+  });
 
   $: team1 = liveMatch?.team1 == undefined ? match.team1 : liveMatch.team1;
   $: team2 = liveMatch?.team2 == undefined ? match.team2 : liveMatch.team2;
   $: borderColor = selected ? "border-green-500" : "border-gray-800";
   $: winner = liveMatch?.winner || match.winner;
   $: prediction =
-    predictions === undefined ? undefined : predictions[match.id].yourVote;
+    predictions === undefined
+      ? undefined
+      : predictions.matches[match.id].yourVote;
 </script>
 
 <div

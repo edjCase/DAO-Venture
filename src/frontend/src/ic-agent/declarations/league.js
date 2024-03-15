@@ -1,5 +1,114 @@
 export const idlFactory = ({ IDL }) => {
   const Effect = IDL.Rec();
+  const TargetTeam = IDL.Variant({ 'choosingTeam' : IDL.Null });
+  const Duration = IDL.Variant({
+    'matches' : IDL.Nat,
+    'indefinite' : IDL.Null,
+  });
+  const Skill = IDL.Variant({
+    'battingAccuracy' : IDL.Null,
+    'throwingAccuracy' : IDL.Null,
+    'speed' : IDL.Null,
+    'catching' : IDL.Null,
+    'battingPower' : IDL.Null,
+    'defense' : IDL.Null,
+    'throwingPower' : IDL.Null,
+  });
+  const FieldPosition = IDL.Variant({
+    'rightField' : IDL.Null,
+    'leftField' : IDL.Null,
+    'thirdBase' : IDL.Null,
+    'pitcher' : IDL.Null,
+    'secondBase' : IDL.Null,
+    'shortStop' : IDL.Null,
+    'centerField' : IDL.Null,
+    'firstBase' : IDL.Null,
+  });
+  const TargetPlayer = IDL.Variant({ 'position' : FieldPosition });
+  const Target = IDL.Variant({
+    'teams' : IDL.Vec(TargetTeam),
+    'players' : IDL.Vec(TargetPlayer),
+    'league' : IDL.Null,
+  });
+  const Injury = IDL.Variant({
+    'twistedAnkle' : IDL.Null,
+    'brokenArm' : IDL.Null,
+    'brokenLeg' : IDL.Null,
+    'concussion' : IDL.Null,
+  });
+  Effect.fill(
+    IDL.Variant({
+      'allOf' : IDL.Vec(Effect),
+      'noEffect' : IDL.Null,
+      'oneOf' : IDL.Vec(IDL.Tuple(IDL.Nat, Effect)),
+      'entropy' : IDL.Record({ 'team' : TargetTeam, 'delta' : IDL.Int }),
+      'skill' : IDL.Record({
+        'duration' : Duration,
+        'skill' : Skill,
+        'target' : Target,
+        'delta' : IDL.Int,
+      }),
+      'injury' : IDL.Record({ 'target' : Target, 'injury' : Injury }),
+      'energy' : IDL.Record({
+        'value' : IDL.Variant({ 'flat' : IDL.Int }),
+        'team' : TargetTeam,
+      }),
+    })
+  );
+  const MetaEffect = IDL.Variant({
+    'lottery' : IDL.Record({
+      'prize' : Effect,
+      'options' : IDL.Vec(IDL.Record({ 'tickets' : IDL.Nat })),
+    }),
+    'noEffect' : IDL.Null,
+    'threshold' : IDL.Record({
+      'threshold' : IDL.Nat,
+      'over' : Effect,
+      'under' : Effect,
+      'options' : IDL.Vec(
+        IDL.Record({
+          'value' : IDL.Variant({
+            'fixed' : IDL.Int,
+            'weightedChance' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Int)),
+          }),
+        })
+      ),
+    }),
+    'pickASide' : IDL.Record({
+      'options' : IDL.Vec(IDL.Record({ 'sideId' : IDL.Text })),
+    }),
+    'proportionalBid' : IDL.Record({
+      'prize' : IDL.Variant({
+        'skill' : IDL.Record({
+          'total' : IDL.Nat,
+          'duration' : Duration,
+          'skill' : Skill,
+          'target' : IDL.Variant({ 'position' : FieldPosition }),
+        }),
+      }),
+      'options' : IDL.Vec(IDL.Record({ 'bidValue' : IDL.Nat })),
+    }),
+    'leagueChoice' : IDL.Record({
+      'options' : IDL.Vec(IDL.Record({ 'effect' : Effect })),
+    }),
+  });
+  const ScenarioOption__1 = IDL.Record({
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+    'effect' : Effect,
+  });
+  const AddScenarioRequest = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'metaEffect' : MetaEffect,
+    'description' : IDL.Text,
+    'options' : IDL.Vec(ScenarioOption__1),
+  });
+  const AddScenarioResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(IDL.Text),
+  });
   const CloseSeasonResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
@@ -67,7 +176,12 @@ export const idlFactory = ({ IDL }) => {
     'proposalNotFound' : IDL.Null,
   });
   const GetProposalsResult = IDL.Variant({ 'ok' : IDL.Vec(Proposal) });
-  const ScenarioOption__1 = IDL.Record({
+  const ScenarioStateResolved = IDL.Record({
+    'teamChoices' : IDL.Vec(
+      IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
+    ),
+  });
+  const ScenarioOption = IDL.Record({
     'id' : IDL.Nat,
     'description' : IDL.Text,
   });
@@ -77,14 +191,10 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'state' : IDL.Variant({
       'notStarted' : IDL.Null,
-      'resolved' : IDL.Record({
-        'teamChoices' : IDL.Vec(
-          IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
-        ),
-      }),
-      'started' : IDL.Null,
+      'resolved' : ScenarioStateResolved,
+      'inProgress' : IDL.Null,
     }),
-    'options' : IDL.Vec(ScenarioOption__1),
+    'options' : IDL.Vec(ScenarioOption),
   });
   const GetScenarioResult = IDL.Variant({
     'ok' : Scenario,
@@ -149,16 +259,6 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'logoUrl' : IDL.Text,
     'positions' : TeamPositions,
-  });
-  const FieldPosition = IDL.Variant({
-    'rightField' : IDL.Null,
-    'leftField' : IDL.Null,
-    'thirdBase' : IDL.Null,
-    'pitcher' : IDL.Null,
-    'secondBase' : IDL.Null,
-    'shortStop' : IDL.Null,
-    'centerField' : IDL.Null,
-    'firstBase' : IDL.Null,
   });
   const Skills = IDL.Record({
     'battingAccuracy' : IDL.Int,
@@ -313,29 +413,10 @@ export const idlFactory = ({ IDL }) => {
     'matchGroupNotFound' : IDL.Null,
     'identityRequired' : IDL.Null,
   });
-  const Duration = IDL.Variant({
-    'matches' : IDL.Nat,
-    'indefinite' : IDL.Null,
-  });
-  const Skill = IDL.Variant({
-    'battingAccuracy' : IDL.Null,
-    'throwingAccuracy' : IDL.Null,
-    'speed' : IDL.Null,
-    'catching' : IDL.Null,
-    'battingPower' : IDL.Null,
-    'defense' : IDL.Null,
-    'throwingPower' : IDL.Null,
-  });
   const TargetInstance = IDL.Variant({
     'teams' : IDL.Vec(IDL.Nat),
     'players' : IDL.Vec(IDL.Nat32),
     'league' : IDL.Null,
-  });
-  const Injury = IDL.Variant({
-    'twistedAnkle' : IDL.Null,
-    'brokenArm' : IDL.Null,
-    'brokenLeg' : IDL.Null,
-    'concussion' : IDL.Null,
   });
   const EffectOutcome = IDL.Variant({
     'entropy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
@@ -372,84 +453,9 @@ export const idlFactory = ({ IDL }) => {
       IDL.Record({ 'error' : StartMatchError, 'matchId' : IDL.Nat })
     ),
   });
-  const TargetTeam = IDL.Variant({ 'choosingTeam' : IDL.Null });
-  const TargetPlayer = IDL.Variant({ 'position' : FieldPosition });
-  const Target = IDL.Variant({
-    'teams' : IDL.Vec(TargetTeam),
-    'players' : IDL.Vec(TargetPlayer),
-    'league' : IDL.Null,
-  });
-  Effect.fill(
-    IDL.Variant({
-      'allOf' : IDL.Vec(Effect),
-      'noEffect' : IDL.Null,
-      'oneOf' : IDL.Vec(IDL.Tuple(IDL.Nat, Effect)),
-      'entropy' : IDL.Record({ 'team' : TargetTeam, 'delta' : IDL.Int }),
-      'skill' : IDL.Record({
-        'duration' : Duration,
-        'skill' : Skill,
-        'target' : Target,
-        'delta' : IDL.Int,
-      }),
-      'injury' : IDL.Record({ 'target' : Target, 'injury' : Injury }),
-      'energy' : IDL.Record({
-        'value' : IDL.Variant({ 'flat' : IDL.Int }),
-        'team' : TargetTeam,
-      }),
-    })
-  );
-  const MetaEffect = IDL.Variant({
-    'lottery' : IDL.Record({
-      'prize' : Effect,
-      'options' : IDL.Vec(IDL.Record({ 'tickets' : IDL.Nat })),
-    }),
-    'noEffect' : IDL.Null,
-    'threshold' : IDL.Record({
-      'threshold' : IDL.Nat,
-      'over' : Effect,
-      'under' : Effect,
-      'options' : IDL.Vec(
-        IDL.Record({
-          'value' : IDL.Variant({
-            'fixed' : IDL.Int,
-            'weightedChance' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Int)),
-          }),
-        })
-      ),
-    }),
-    'pickASide' : IDL.Record({
-      'options' : IDL.Vec(IDL.Record({ 'sideId' : IDL.Text })),
-    }),
-    'proportionalBid' : IDL.Record({
-      'prize' : IDL.Variant({
-        'skill' : IDL.Record({
-          'total' : IDL.Nat,
-          'duration' : Duration,
-          'skill' : Skill,
-          'target' : IDL.Variant({ 'position' : FieldPosition }),
-        }),
-      }),
-      'options' : IDL.Vec(IDL.Record({ 'bidValue' : IDL.Nat })),
-    }),
-    'leagueChoice' : IDL.Record({
-      'options' : IDL.Vec(IDL.Record({ 'effect' : Effect })),
-    }),
-  });
-  const ScenarioOption = IDL.Record({
-    'title' : IDL.Text,
-    'description' : IDL.Text,
-    'effect' : Effect,
-  });
-  const AddScenarioRequest = IDL.Record({
-    'id' : IDL.Text,
-    'title' : IDL.Text,
-    'metaEffect' : MetaEffect,
-    'description' : IDL.Text,
-    'options' : IDL.Vec(ScenarioOption),
-  });
   const StartSeasonRequest = IDL.Record({
     'startTime' : Time,
-    'scenarios' : IDL.Vec(AddScenarioRequest),
+    'scenarioIds' : IDL.Vec(IDL.Text),
   });
   const StartSeasonResult = IDL.Variant({
     'ok' : IDL.Null,
@@ -481,6 +487,7 @@ export const idlFactory = ({ IDL }) => {
     'votingClosed' : IDL.Null,
   });
   return IDL.Service({
+    'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
     'clearTeams' : IDL.Func([], [], []),
     'closeSeason' : IDL.Func([], [CloseSeasonResult], []),
     'createProposal' : IDL.Func(

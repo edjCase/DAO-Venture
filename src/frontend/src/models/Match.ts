@@ -10,9 +10,9 @@ export type MatchGroupDetails = {
 };
 
 export type MatchDetails = {
-    id: number;
+    id: bigint;
     time: bigint;
-    matchGroupId: number;
+    matchGroupId: bigint;
     team1: TeamDetailsOrUndetermined;
     team2: TeamDetailsOrUndetermined;
     winner: TeamIdOrTie | undefined;

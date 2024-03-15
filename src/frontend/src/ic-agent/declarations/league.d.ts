@@ -7,8 +7,11 @@ export interface AddScenarioRequest {
   'title' : string,
   'metaEffect' : MetaEffect,
   'description' : string,
-  'options' : Array<ScenarioOption>,
+  'options' : Array<ScenarioOption__1>,
 }
+export type AddScenarioResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> };
 export type CloseSeasonResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'seasonNotOpen' : null };
@@ -283,20 +286,19 @@ export interface Scenario {
   'title' : string,
   'description' : string,
   'state' : { 'notStarted' : null } |
-    {
-      'resolved' : {
-        'teamChoices' : Array<{ 'option' : bigint, 'teamId' : bigint }>,
-      }
-    } |
-    { 'started' : null },
-  'options' : Array<ScenarioOption__1>,
+    { 'resolved' : ScenarioStateResolved } |
+    { 'inProgress' : null },
+  'options' : Array<ScenarioOption>,
 }
-export interface ScenarioOption {
+export interface ScenarioOption { 'id' : bigint, 'description' : string }
+export interface ScenarioOption__1 {
   'title' : string,
   'description' : string,
   'effect' : Effect,
 }
-export interface ScenarioOption__1 { 'id' : bigint, 'description' : string }
+export interface ScenarioStateResolved {
+  'teamChoices' : Array<{ 'option' : bigint, 'teamId' : bigint }>,
+}
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
   'team2' : ScheduledTeamInfo,
@@ -339,7 +341,7 @@ export type StartMatchGroupResult = { 'ok' : null } |
   { 'matchErrors' : Array<{ 'error' : StartMatchError, 'matchId' : bigint }> };
 export interface StartSeasonRequest {
   'startTime' : Time,
-  'scenarios' : Array<AddScenarioRequest>,
+  'scenarioIds' : Array<string>,
 }
 export type StartSeasonResult = { 'ok' : null } |
   { 'invalidScenario' : { 'id' : string, 'errors' : Array<string> } } |
@@ -414,6 +416,7 @@ export type VoteOnProposalResult = { 'ok' : null } |
   { 'alreadyVoted' : null } |
   { 'votingClosed' : null };
 export interface _SERVICE {
+  'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
   'clearTeams' : ActorMethod<[], undefined>,
   'closeSeason' : ActorMethod<[], CloseSeasonResult>,
   'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,

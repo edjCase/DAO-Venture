@@ -4,16 +4,14 @@
   import { playerStore } from "../stores/PlayerStore";
   import { teams as teamData } from "../data/TeamData";
   import { players as playerData } from "../data/PlayerData";
-  import { traits as traitData } from "../data/TraitData";
+  import { scenarios as scenarioData } from "../data/ScenarioData";
   import { Button } from "flowbite-svelte";
-  import { traitStore } from "../stores/TraitStore";
   import { toJsonString } from "../utils/JsonUtil";
   import { leagueAgentFactory } from "../ic-agent/League";
   import { playersAgentFactory } from "../ic-agent/Players";
 
   $: teams = $teamStore;
   $: players = $playerStore;
-  $: traits = $traitStore;
 
   let createTeams = async function (): Promise<void> {
     let leagueAgent = leagueAgentFactory();
@@ -61,35 +59,28 @@
     await Promise.all(promises);
   };
 
-  let createTraits = async function () {
-    let playersAgent = playersAgentFactory();
+  let createScenarios = async function () {
+    let leagueAgent = leagueAgentFactory();
     let promises = [];
-    for (let i = 0; i < traitData.length; i++) {
-      let trait = traitData[i];
-      let promise = playersAgent.addTrait(trait).then((result) => {
+    for (let i = 0; i < scenarioData.length; i++) {
+      let scenario = scenarioData[i];
+      let promise = leagueAgent.addScenario(scenario).then(async (result) => {
         if ("ok" in result) {
-          console.log("Created trait: ", trait.id);
+          let scenarioId = result.ok;
+          console.log("Created scenario: ", scenarioId);
         } else {
-          console.log("Failed to make trait: ", trait.id, result);
+          console.log("Failed to make scenario: ", result);
         }
       });
       promises.push(promise);
     }
     await Promise.all(promises);
-    console.log("Created traits");
-    await traitStore.refetch();
   };
 
   let initialize = async function () {
     await createPlayers();
     await createTeams();
-    await createTraits();
-  };
-  let resetTraits = async function () {
-    console.log("resetting traits");
-    let playersAgent = playersAgentFactory();
-    await playersAgent.clearTraits();
-    await createTraits();
+    await createScenarios();
   };
   let resetTeams = async function () {
     console.log("resetting teams");
@@ -107,22 +98,20 @@
     await resetPlayers();
     await resetTeams();
   };
+  // let resetScenarios = async function () {
+  //   console.log("resetting scenarios");
+  //   let leagueAgent = leagueAgentFactory();
+  //   await leagueAgent.clearScenarios();
+  //   await createScenarios();
+  // };
 </script>
 
-{#if players.length + teams.length + traits.length <= 0}
+{#if players.length + teams.length <= 0}
   <Button on:click={initialize}>Initialize With Default Data</Button>
 {:else}
   <div class="flex">
     <div class="flex-1 w-1/3">
-      {#if traits.length <= 0}
-        <Button on:click={createTraits}>Create Traits</Button>
-      {:else}
-        <Button on:click={resetTraits}>Reset Traits</Button>
-        <div>Traits:</div>
-        {#each traits as trait}
-          <pre class="text-wrap">{toJsonString(trait)}</pre>
-        {/each}
-      {/if}
+      <Button on:click={createScenarios}>Create Scenarios</Button>
     </div>
     <div class="flex-1 w-1/3">
       {#if teams.length <= 0}

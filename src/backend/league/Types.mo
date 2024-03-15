@@ -1,4 +1,3 @@
-import Principal "mo:base/Principal";
 import Time "mo:base/Time";
 import Nat "mo:base/Nat";
 import Player "../models/Player";
@@ -74,6 +73,13 @@ module {
         #notFound;
     };
 
+    public type ScenarioStateResolved = {
+        teamChoices : [{
+            teamId : Nat;
+            option : Nat;
+        }];
+    };
+
     public type Scenario = {
         id : Text;
         title : Text;
@@ -81,13 +87,8 @@ module {
         options : [ScenarioOption];
         state : {
             #notStarted;
-            #started;
-            #resolved : {
-                teamChoices : [{
-                    teamId : Nat;
-                    option : Nat;
-                }];
-            };
+            #inProgress;
+            #resolved : ScenarioStateResolved;
         };
 
     };
@@ -167,7 +168,7 @@ module {
     // Start season
     public type StartSeasonRequest = {
         startTime : Time.Time;
-        scenarios : [AddScenarioRequest];
+        scenarioIds : [Text];
     };
 
     public type AddScenarioRequest = {
@@ -176,6 +177,12 @@ module {
         description : Text;
         options : [Scenario.ScenarioOption];
         metaEffect : Scenario.MetaEffect;
+    };
+
+    public type AddScenarioResult = {
+        #ok;
+        #invalid : [Text];
+        #notAuthorized;
     };
 
     public type StartSeasonResult = {

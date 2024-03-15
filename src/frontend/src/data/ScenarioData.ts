@@ -347,7 +347,7 @@ export let scenarios: AddScenarioRequest[] = [
     // Ends here
 
     {
-        id: "RESOURCE_MANAGEMENT_CHALLENGE",
+        id: "RESOURCE_MANAGEMENT_CHALLENGE2",
         title: "Resource Management Challenge",
         description: "An unexpected shortage of essential resources puts all teams in a tight spot. How will you manage?",
         options: [
@@ -405,7 +405,7 @@ export let scenarios: AddScenarioRequest[] = [
         },
     },
     {
-        id: "RESOURCE_MANAGEMENT_CHALLENGE",
+        id: "RESOURCE_MANAGEMENT_CHALLENGE3",
         title: "Resource Management Challenge",
         description: "An unexpected shortage of essential resources puts all teams in a tight spot. How will you manage?",
         options: [
@@ -463,7 +463,7 @@ export let scenarios: AddScenarioRequest[] = [
         },
     },
     {
-        id: "RESOURCE_MANAGEMENT_CHALLENGE",
+        id: "RESOURCE_MANAGEMENT_CHALLENGE4",
         title: "Resource Management Challenge",
         description: "An unexpected shortage of essential resources puts all teams in a tight spot. How will you manage?",
         options: [

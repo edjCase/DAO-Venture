@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Record } from "@dfinity/candid/lib/cjs/idl";
   import { scheduleStore } from "../stores/ScheduleStore";
-  import { SeasonStatus } from "../models/Season";
   import TeamStandings from "../components/team/TeamStandings.svelte";
   import PlayerAwards from "../components/player/PlayerAwards.svelte";
   import SeasonWinners from "../components/season/SeasonWinners.svelte";
@@ -12,6 +11,7 @@
   import MatchUp from "../components/match/MatchUp.svelte";
   import Countdown from "../components/common/Countdown.svelte";
   import { nanosecondsToDate } from "../utils/DateUtils";
+  import { SeasonStatus } from "../ic-agent/declarations/league";
 
   let seasonStatus: SeasonStatus | undefined;
   let lastMatchGroup: MatchGroupDetails | undefined;
@@ -29,7 +29,7 @@
     nextOrCurrentMatchGroup = matchGroups.find(
       (mg) =>
         mg.id > (lastMatchGroup?.id || -1) &&
-        (mg.state == "InProgress" || mg.state == "Scheduled")
+        (mg.state == "InProgress" || mg.state == "Scheduled"),
     );
   });
 </script>

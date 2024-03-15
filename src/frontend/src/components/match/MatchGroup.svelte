@@ -7,7 +7,6 @@
     liveMatchGroupStore,
   } from "../../stores/LiveMatchGroupStore";
   import MatchCardCompact from "./MatchCardCompact.svelte";
-  import ResolvedScenario from "../scenario/ResolvedScenario.svelte";
   import Scenario from "../scenario/Scenario.svelte";
 
   export let matchGroup: MatchGroupDetails;
@@ -40,11 +39,7 @@
 <section>
   <section class="match-details">
     {#if matchGroup.state == "Scheduled"}
-      {#if "effectOutcomes" in matchGroup.scenario}
-        <ResolvedScenario scenario={matchGroup.scenario} />
-      {:else}
-        <Scenario scenario={matchGroup.scenarioId} />
-      {/if}
+      <Scenario scenarioId={matchGroup.scenarioId} />
       <h1>Predict the upcoming match-up winners</h1>
       {#each matchGroup.matches as match}
         <PredictMatchOutcome {match} />

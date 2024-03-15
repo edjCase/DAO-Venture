@@ -55,9 +55,27 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     stable var stadiumInitialized = false;
-
-    var seasonHandler = SeasonHandler.SeasonHandler(stableData.season);
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
+
+    let seasonEventHandler : SeasonHandler.EventHandler = {
+        onSeasonStart = func(season : Season.InProgressSeason) {
+
+        };
+        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) {
+            predictionHandler.addMatchGroup(matchGroup.id, matchGroup.matches.size());
+        };
+        onMatchGroupStart = func(matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) {
+
+        };
+        onMatchGroupComplete = func(matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) {
+
+        };
+        onSeasonComplete = func(season : Season.CompletedSeason) {
+
+        };
+    };
+
+    var seasonHandler = SeasonHandler.SeasonHandler(stableData.season, seasonEventHandler);
     var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios);
     var teamsHandler = TeamsHandler.Handler(stableData.teams);
 
@@ -173,6 +191,17 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
+    public shared ({ caller }) func addScenario(scenario : Types.AddScenarioRequest) : async Types.AddScenarioResult {
+        if (not isAdminId(caller)) {
+            return #notAuthorized;
+        };
+        switch (scenarioHandler.add(scenario)) {
+            case (#ok) #ok;
+            case (#idTaken) return #invalid(["Scenario id already taken: " # scenario.id]);
+            case (#invalid(errors)) return #invalid(errors);
+        };
+    };
+
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {
         if (not isAdminId(caller)) {
             return #notAuthorized;
@@ -189,25 +218,14 @@ actor LeagueActor : Types.LeagueActor {
 
         let allPlayers = await PlayersActor.getAllPlayers();
 
-        let scenarioIds = Buffer.Buffer<Text>(request.scenarios.size());
-        for (scenario in Iter.fromArray(request.scenarios)) {
-            switch (scenarioHandler.add(scenario)) {
-                case (#ok) ();
-                case (#idTaken) return #idTaken;
-                case (#invalid(errors)) return #invalidScenario({
-                    id = scenario.id;
-                    errors = errors;
-                });
-            };
-            scenarioIds.add(scenario.id);
-        };
+        // TODO validate the scenarios are not used
 
         let prng = PseudoRandomX.fromBlob(seedBlob);
         seasonHandler.startSeason<system>(
             prng,
             stadiumId,
             request.startTime,
-            Buffer.toArray(scenarioIds),
+            request.scenarioIds,
             teamsArray,
             allPlayers,
         );
@@ -338,7 +356,10 @@ actor LeagueActor : Types.LeagueActor {
         completedMatches : [Season.CompletedMatch],
     ) : async* () {
         // Award users points for their predictions
-        let ?matchGroupPredictions = predictionHandler.getMatchGroup(matchGroupId) else Debug.trap("Match group predictions not found: " # Nat.toText(matchGroupId));
+        let matchGroupPredictions = switch (predictionHandler.getMatchGroup(matchGroupId)) {
+            case (?p) p;
+            case (null) [];
+        };
         let awards = Buffer.Buffer<UserTypes.AwardPointsRequest>(0);
         var i = 0;
         for (match in Iter.fromArray(completedMatches)) {

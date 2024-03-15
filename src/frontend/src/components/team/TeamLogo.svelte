@@ -21,7 +21,7 @@
   $: triggerId =
     "teamLogo_" +
     ("id" in team
-      ? team.id.toText()
+      ? team.id.toString()
       : "winnerOfMatch" in team
         ? "W" + team.winnerOfMatch
         : "S" + team.seasonStandingIndex);

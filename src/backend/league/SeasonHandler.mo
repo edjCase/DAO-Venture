@@ -50,7 +50,15 @@ module {
         };
     };
 
-    public class SeasonHandler(data : StableData) {
+    public type EventHandler = {
+        onSeasonStart : (Season.InProgressSeason) -> ();
+        onMatchGroupSchedule : (Season.ScheduledMatchGroup) -> ();
+        onMatchGroupStart : (Season.InProgressMatchGroup) -> ();
+        onMatchGroupComplete : (Season.CompletedMatchGroup) -> ();
+        onSeasonComplete : (Season.CompletedSeason) -> ();
+    };
+
+    public class SeasonHandler(data : StableData, eventHandler : EventHandler) {
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
 
         // First team to last team
@@ -164,6 +172,7 @@ module {
 
             teamStandings := null; // No standings yet
             seasonStatus := #inProgress(inProgressSeason);
+            eventHandler.onSeasonStart(inProgressSeason);
             // Get first match group to open
             let #notScheduled(firstMatchGroup) = notScheduledMatchGroups[0] else Prelude.unreachable();
 
@@ -275,6 +284,7 @@ module {
             };
             teamStandings := ?updatedTeamStandings;
             seasonStatus := #inProgress(updatedSeason);
+            eventHandler.onMatchGroupComplete(updatedMatchGroup);
             try {
                 await PlayersActor.addMatchStats(request.id, request.playerStats);
             } catch (err) {
@@ -387,12 +397,14 @@ module {
             };
 
             teamStandings := ?finalTeamStandings;
-            seasonStatus := #completed({
+            let completedSeason = {
                 championTeamId = champion.id;
                 runnerUpTeamId = runnerUp.id;
                 teams = completedTeams;
                 matchGroups = completedMatchGroups;
-            });
+            };
+            seasonStatus := #completed(completedSeason);
+            eventHandler.onSeasonComplete(completedSeason);
             #ok;
         };
 
@@ -498,6 +510,7 @@ module {
                 inProgressSeason with
                 matchGroups = newMatchGroups;
             });
+            eventHandler.onMatchGroupSchedule(scheduledMatchGroup);
 
         };
 
@@ -710,20 +723,22 @@ module {
             )
             |> Iter.toArray(_);
 
+            let inProgressMatchGroup = {
+                time = scheduledMatchGroup.time;
+                stadiumId = scheduledMatchGroup.stadiumId;
+                scenarioId = scheduledMatchGroup.scenarioId;
+                matches = inProgressMatches;
+            };
             let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
                 season.matchGroups,
                 matchGroupId,
-                #inProgress({
-                    time = scheduledMatchGroup.time;
-                    stadiumId = scheduledMatchGroup.stadiumId;
-                    scenarioId = scheduledMatchGroup.scenarioId;
-                    matches = inProgressMatches;
-                }),
+                #inProgress(inProgressMatchGroup),
             ) else return #matchGroupNotFound;
             seasonStatus := #inProgress({
                 season with
                 matchGroups = newMatchGroups;
             });
+            eventHandler.onMatchGroupStart(inProgressMatchGroup);
 
             #ok;
         };
