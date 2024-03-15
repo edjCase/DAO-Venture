@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Principal } from "@dfinity/principal";
   import {
     CompletedSeason,
     CompletedSeasonTeam,
@@ -7,10 +6,8 @@
 
   export let completedSeason: CompletedSeason;
 
-  let getTeam = (teamId: Principal): CompletedSeasonTeam => {
-    let team = completedSeason.teams.find(
-      (team) => team.id.compareTo(teamId) == "eq",
-    );
+  let getTeam = (teamId: bigint): CompletedSeasonTeam => {
+    let team = completedSeason.teams.find((team) => team.id == teamId);
     if (!team) throw new Error(`Team ${teamId} not found`); // TODO
     return team;
   };

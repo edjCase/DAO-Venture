@@ -14,6 +14,7 @@ import Option "mo:base/Option";
 import Nat32 "mo:base/Nat32";
 import TextX "mo:xtended-text/TextX";
 import FieldPosition "../models/FieldPosition";
+import TeamTypes "../team/Types";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -30,8 +31,13 @@ module {
 
     public type AddScenarioResult = {
         #ok;
-        #idTaken;
         #invalid : [Text];
+    };
+
+    public type StartScenarioResult = {
+        #ok;
+        #alreadyStarted;
+        #notFound;
     };
 
     public class Handler(data : StableData) {
@@ -59,8 +65,34 @@ module {
                     scenario with
                     state = #notStarted
                 },
-            ) else return #idTaken;
+            ) else return #invalid(["Scenario with id '" #scenario.id # "' already exists"]);
             #ok;
+        };
+
+        public func start(scenarioId : Text, teamsActor : TeamTypes.Actor) : async* StartScenarioResult {
+            let ?scenario = scenarios.get(scenarioId) else return #notFound;
+            switch (scenario.state) {
+                case (#notStarted) {
+                    ignore scenarios.replace(
+                        scenarioId,
+                        {
+                            scenario with
+                            state = #inProgress
+                        },
+                    );
+                    let onNewScenarioRequest = {
+                        scenarioId = scenarioId;
+                        optionCount = scenario.options.size();
+                    };
+                    switch (await teamsActor.onNewScenario(onNewScenarioRequest)) {
+                        case (#ok) ();
+                        case (#notAuthorized) Debug.print("ERROR: Not authorized to start scenario for teams");
+                    };
+                    #ok;
+                };
+                case (#inProgress) #alreadyStarted;
+                case (#resolved(_)) #alreadyStarted;
+            };
         };
 
         public func resolve(

@@ -15,6 +15,7 @@ module {
     };
 
     public type InProgressSeason = {
+        campaignId : Nat;
         teams : [TeamInfo];
         players : [Player.PlayerWithId];
         matchGroups : [InProgressSeasonMatchGroupVariant];
@@ -37,7 +38,6 @@ module {
     public type NotScheduledMatchGroup = {
         time : Time.Time;
         matches : [NotScheduledMatch];
-        scenarioId : Text;
     };
 
     public type TeamAssignment = {
@@ -56,7 +56,6 @@ module {
         timerId : Nat;
         stadiumId : Principal;
         matches : [ScheduledMatch];
-        scenarioId : Text;
     };
 
     public type ScheduledTeamInfo = { id : Nat };
@@ -71,7 +70,6 @@ module {
         time : Time.Time;
         stadiumId : Principal;
         matches : [InProgressMatch];
-        scenarioId : Text;
     };
 
     public type InProgressTeam = {
@@ -99,11 +97,11 @@ module {
     public type CompletedMatchGroup = {
         time : Time.Time;
         matches : [CompletedMatch];
-        scenarioId : Text;
     };
 
     // Completed Season
     public type CompletedSeason = {
+        campaignId : Nat;
         championTeamId : Nat;
         runnerUpTeamId : Nat;
         teams : [CompletedSeasonTeam];

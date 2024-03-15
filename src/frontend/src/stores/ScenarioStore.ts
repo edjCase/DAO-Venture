@@ -23,6 +23,8 @@ export const scenarioStore = (() => {
             const scenario = scenarios.get(id);
             if (scenario) {
                 callback(scenario);
+            } else {
+                refetchById(id);
             }
         });
         return unsubscribe;

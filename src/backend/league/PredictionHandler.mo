@@ -16,25 +16,27 @@ module {
 
     public type MatchGroupPredictions = {
         matchGroupId : Nat;
-        matchPredictions : [[MatchPrediction]];
+        isOpen : Bool;
+        matchPredictions : [[(Principal, Team.TeamId)]];
     };
 
-    public type MatchPrediction = {
-        userId : Principal;
-        teamId : Team.TeamId;
+    type MatchGroupPredictionInfo = {
+        var isOpen : Bool;
+        matchPredictions : Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>;
     };
 
     public class Handler(data : StableData) {
         // MatchGroupId => Match Array of UserId => TeamId votes
-        public var matchGroupPredictions : HashMap.HashMap<Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>> = toPredictionsHashMap(data.matchGroups);
+        public var matchGroupPredictions : HashMap.HashMap<Nat, MatchGroupPredictionInfo> = toPredictionsHashMap(data.matchGroups);
 
         public func toStableData() : StableData {
             let matchGroups = matchGroupPredictions.entries()
             |> Iter.map(
                 _,
-                func((matchGroupId, matchPredictions) : (Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>)) : MatchGroupPredictions = {
+                func((matchGroupId, matchGroupInfo) : (Nat, MatchGroupPredictionInfo)) : MatchGroupPredictions = {
                     matchGroupId = matchGroupId;
-                    matchPredictions = mapMatchPredictions(matchPredictions);
+                    isOpen = matchGroupInfo.isOpen;
+                    matchPredictions = mapMatchPredictions(matchGroupInfo.matchPredictions);
                 },
             )
             |> Iter.toArray(_);
@@ -45,7 +47,16 @@ module {
 
         public func addMatchGroup(matchGroupId : Nat, matchCount : Nat) : () {
             let matchPredictions = Array.tabulate(matchCount, func(_ : Nat) : HashMap.HashMap<Principal, Team.TeamId> = HashMap.HashMap<Principal, Team.TeamId>(0, Principal.equal, Principal.hash));
-            let null = matchGroupPredictions.replace(matchGroupId, Buffer.fromArray(matchPredictions)) else Debug.trap("Match group predictions already exists for match group " # Nat.toText(matchGroupId));
+            let matchGroupPredictionInfo : MatchGroupPredictionInfo = {
+                var isOpen = true;
+                matchPredictions = Buffer.fromArray(matchPredictions);
+            };
+            let null = matchGroupPredictions.replace(matchGroupId, matchGroupPredictionInfo) else Debug.trap("Match group predictions already exists for match group " # Nat.toText(matchGroupId));
+        };
+
+        public func closeMatchGroup(matchGroupId : Nat) : () {
+            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else Debug.trap("Match group predictions not found for match group " # Nat.toText(matchGroupId));
+            matchGroupInfo.isOpen := false;
         };
 
         public func predictMatchOutcome(
@@ -57,8 +68,11 @@ module {
             if (Principal.isAnonymous(caller)) {
                 return #identityRequired;
             };
-            let ?matchesPredictions = matchGroupPredictions.get(matchGroupId) else return #predictionsClosed;
-            let ?matchPredictions = matchesPredictions.getOpt(matchId) else return #matchNotFound;
+            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return #predictionsClosed;
+            if (not matchGroupInfo.isOpen) {
+                return #predictionsClosed;
+            };
+            let ?matchPredictions = matchGroupInfo.matchPredictions.getOpt(matchId) else return #matchNotFound;
 
             switch (prediction) {
                 case (null) ignore matchPredictions.remove(caller);
@@ -67,16 +81,16 @@ module {
             #ok;
         };
 
-        public func getMatchGroup(matchGroupId : Nat) : ?[[MatchPrediction]] {
-            let ?matchPredictions = matchGroupPredictions.get(matchGroupId) else return null;
-            ?mapMatchPredictions(matchPredictions);
+        public func getMatchGroup(matchGroupId : Nat) : ?[[(Principal, Team.TeamId)]] {
+            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return null;
+            ?mapMatchPredictions(matchGroupInfo.matchPredictions);
         };
 
         public func getMatchGroupSummary(matchGroupId : Nat, userContext : ?Principal) : Types.GetMatchGroupPredictionsResult {
-            let ?matchesPredictions = matchGroupPredictions.get(matchGroupId) else return #notFound;
-            let predictionSummaryBuffer = Buffer.Buffer<Types.MatchPredictionSummary>(matchesPredictions.size());
+            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return #notFound;
+            let predictionSummaryBuffer = Buffer.Buffer<Types.MatchPredictionSummary>(matchGroupInfo.matchPredictions.size());
 
-            for (matchPredictions in matchesPredictions.vals()) {
+            for (matchPredictions in matchGroupInfo.matchPredictions.vals()) {
                 let matchPredictionSummary = {
                     var team1 = 0;
                     var team2 = 0;
@@ -104,37 +118,34 @@ module {
         };
     };
 
-    private func mapMatchPredictions(matchPredictions : Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>) : [[MatchPrediction]] {
+    private func mapMatchPredictions(matchPredictions : Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>) : [[(Principal, Team.TeamId)]] {
         matchPredictions.vals()
-        |> Iter.map<HashMap.HashMap<Principal, Team.TeamId>, [MatchPrediction]>(
+        |> Iter.map<HashMap.HashMap<Principal, Team.TeamId>, [(Principal, Team.TeamId)]>(
             _,
-            func(matchPrediction : HashMap.HashMap<Principal, Team.TeamId>) : [MatchPrediction] {
+            func(matchPrediction : HashMap.HashMap<Principal, Team.TeamId>) : [(Principal, Team.TeamId)] {
                 matchPrediction.entries()
-                |> Iter.map(
-                    _,
-                    func((userId, teamId) : (Principal, Team.TeamId)) : MatchPrediction = {
-                        userId = userId;
-                        teamId = teamId;
-                    },
-                )
                 |> Iter.toArray(_);
             },
         )
         |> Iter.toArray(_);
     };
 
-    private func toPredictionsHashMap(predictions : [MatchGroupPredictions]) : HashMap.HashMap<Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>> {
-        let hashMap = HashMap.HashMap<Nat, Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>>(predictions.size(), Nat.equal, Nat32.fromNat);
-        for ({ matchGroupId; matchPredictions } in Iter.fromArray(predictions)) {
+    private func toPredictionsHashMap(predictions : [MatchGroupPredictions]) : HashMap.HashMap<Nat, MatchGroupPredictionInfo> {
+        let hashMap = HashMap.HashMap<Nat, MatchGroupPredictionInfo>(predictions.size(), Nat.equal, Nat32.fromNat);
+        for ({ matchGroupId; isOpen; matchPredictions } in Iter.fromArray(predictions)) {
             let buffer = Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>(matchPredictions.size());
             for (userPredictions in Iter.fromArray(matchPredictions)) {
                 let userPredictionMap = HashMap.HashMap<Principal, Team.TeamId>(userPredictions.size(), Principal.equal, Principal.hash);
-                for ({ userId; teamId } in Iter.fromArray(userPredictions)) {
+                for ((userId, teamId) in Iter.fromArray(userPredictions)) {
                     userPredictionMap.put(userId, teamId);
                 };
                 buffer.add(userPredictionMap);
             };
-            hashMap.put(matchGroupId, buffer);
+            let matchGroupPredictionInfo : MatchGroupPredictionInfo = {
+                var isOpen = isOpen;
+                matchPredictions = buffer;
+            };
+            hashMap.put(matchGroupId, matchGroupPredictionInfo);
         };
         hashMap;
     };

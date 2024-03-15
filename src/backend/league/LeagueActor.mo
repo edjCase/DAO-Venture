@@ -56,28 +56,33 @@ actor LeagueActor : Types.LeagueActor {
 
     stable var stadiumInitialized = false;
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
+    var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios);
+    var teamsHandler = TeamsHandler.Handler(stableData.teams);
 
     let seasonEventHandler : SeasonHandler.EventHandler = {
-        onSeasonStart = func(season : Season.InProgressSeason) {
+        onSeasonStart = func(s : Season.InProgressSeason) : async* () {
+            scenarioHandler.startCampaign(s.campaignId);
+        };
+        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : async* () {
+            predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
+            switch (await* scenarioHandler.start(matchGroup.scenarioId, TeamsActor)) {
+                case (#ok) ();
+                case (#alreadyStarted) Debug.print("WARNING: Scenario already started: " # matchGroup.scenarioId);
+                case (#notFound) Debug.print("WARNING: Scenario not found to start: " # matchGroup.scenarioId);
+            };
+        };
+        onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : async* () {
+            predictionHandler.closeMatchGroup(matchGroupId);
+        };
+        onMatchGroupComplete = func(_ : Nat, _ : Season.CompletedMatchGroup) : async* () {
 
         };
-        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) {
-            predictionHandler.addMatchGroup(matchGroup.id, matchGroup.matches.size());
-        };
-        onMatchGroupStart = func(matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) {
-
-        };
-        onMatchGroupComplete = func(matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) {
-
-        };
-        onSeasonComplete = func(season : Season.CompletedSeason) {
+        onSeasonComplete = func(_ : Season.CompletedSeason) : async* () {
 
         };
     };
 
-    var seasonHandler = SeasonHandler.SeasonHandler(stableData.season, seasonEventHandler);
-    var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios);
-    var teamsHandler = TeamsHandler.Handler(stableData.teams);
+    var seasonHandler = SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
 
     func onExecuted(proposal : Types.Proposal) : async* Dao.OnExecuteResult {
         switch (proposal.content) {
@@ -102,7 +107,7 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     system func postupgrade() {
-        seasonHandler := SeasonHandler.SeasonHandler(stableData.season);
+        seasonHandler := SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
         predictionHandler := PredictionHandler.Handler(stableData.predictions);
         scenarioHandler := ScenarioHandler.Handler(stableData.scenarios);
         teamsHandler := TeamsHandler.Handler(stableData.teams);
@@ -167,11 +172,11 @@ actor LeagueActor : Types.LeagueActor {
         switch (scenarioHandler.getScenario(scenarioId)) {
             case (null) #notFound;
             case (?scenario) {
-                let options : [Types.ScenarioOption] = scenario.options
+                let options : [Scenario.ScenarioOption] = scenario.options
                 |> Iter.fromArray(_)
                 |> IterTools.mapEntries(
                     _,
-                    func(i : Nat, option : Scenario.ScenarioOption) : Types.ScenarioOption {
+                    func(i : Nat, option : Scenario.ScenarioOptionWithEffect) : Scenario.ScenarioOption {
                         {
                             id = i;
                             title = option.title;
@@ -197,7 +202,6 @@ actor LeagueActor : Types.LeagueActor {
         };
         switch (scenarioHandler.add(scenario)) {
             case (#ok) #ok;
-            case (#idTaken) return #invalid(["Scenario id already taken: " # scenario.id]);
             case (#invalid(errors)) return #invalid(errors);
         };
     };
@@ -221,11 +225,11 @@ actor LeagueActor : Types.LeagueActor {
         // TODO validate the scenarios are not used
 
         let prng = PseudoRandomX.fromBlob(seedBlob);
-        seasonHandler.startSeason<system>(
+        await* seasonHandler.startSeason<system>(
             prng,
             stadiumId,
             request.startTime,
-            request.scenarioIds,
+            request.campaignId,
             teamsArray,
             allPlayers,
         );
@@ -355,6 +359,7 @@ actor LeagueActor : Types.LeagueActor {
         matchGroupId : Nat,
         completedMatches : [Season.CompletedMatch],
     ) : async* () {
+
         // Award users points for their predictions
         let matchGroupPredictions = switch (predictionHandler.getMatchGroup(matchGroupId)) {
             case (?p) p;
@@ -365,17 +370,16 @@ actor LeagueActor : Types.LeagueActor {
         for (match in Iter.fromArray(completedMatches)) {
             let matchPredictions = matchGroupPredictions[i];
             i += 1;
-            for (p in Iter.fromArray(matchPredictions)) {
-                if (p.teamId == match.winner) {
+            for ((userId, teamId) in Iter.fromArray(matchPredictions)) {
+                if (teamId == match.winner) {
                     // Award points
                     awards.add({
-                        userId = p.userId;
+                        userId = userId;
                         points = 10; // TODO amount?
                     });
                 };
             };
         };
-
         let error : ?Text = try {
             switch (await UsersActor.awardPoints(Buffer.toArray(awards))) {
                 case (#ok) null;

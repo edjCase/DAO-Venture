@@ -40,25 +40,17 @@ module {
         #noStadiumsExist;
         #noTeams;
         #oddNumberOfTeams;
-        #scenarioCountMismatch : {
-            expected : Nat;
-            actual : Nat;
-        };
-        #invalidScenario : {
-            id : Text;
-            errors : [Text];
-        };
     };
 
     public type EventHandler = {
-        onSeasonStart : (Season.InProgressSeason) -> ();
-        onMatchGroupSchedule : (Season.ScheduledMatchGroup) -> ();
-        onMatchGroupStart : (Season.InProgressMatchGroup) -> ();
-        onMatchGroupComplete : (Season.CompletedMatchGroup) -> ();
-        onSeasonComplete : (Season.CompletedSeason) -> ();
+        onSeasonStart : (Season.InProgressSeason) -> async* ();
+        onMatchGroupSchedule : (matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> async* ();
+        onMatchGroupStart : (matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) -> async* ();
+        onMatchGroupComplete : (matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) -> async* ();
+        onSeasonComplete : (Season.CompletedSeason) -> async* ();
     };
 
-    public class SeasonHandler(data : StableData, eventHandler : EventHandler) {
+    public class SeasonHandler<system>(data : StableData, eventHandler : EventHandler) {
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
 
         // First team to last team
@@ -81,10 +73,10 @@ module {
             prng : Prng,
             stadiumId : Principal,
             startTime : Time.Time,
-            scenarioIds : [Text],
+            campaignId : Nat,
             teams : [Team.TeamWithId],
             players : [PlayerTypes.PlayerWithId],
-        ) : StartSeasonResult {
+        ) : async* StartSeasonResult {
             switch (seasonStatus) {
                 case (#notStarted) {};
                 case (#starting) return #alreadyStarted;
@@ -122,15 +114,7 @@ module {
                     return #oddNumberOfTeams;
                 };
             };
-            if (scenarioIds.size() != schedule.matchGroups.size()) {
-                // TODO this feels frail
-                return #scenarioCountMismatch({
-                    expected = schedule.matchGroups.size();
-                    actual = scenarioIds.size();
-                });
-            };
 
-            var scenarioIndex = 0;
             // Save full schedule, then try to start the first match groups
             let notScheduledMatchGroups = schedule.matchGroups
             |> Iter.fromArray(_)
@@ -138,7 +122,6 @@ module {
                 _,
                 func(mg : ScheduleBuilder.MatchGroup) : Season.InProgressSeasonMatchGroupVariant = #notScheduled({
                     time = mg.time;
-                    scenarioId = scenarioIds[scenarioIndex];
                     matches = mg.matches
                     |> Iter.fromArray(_)
                     |> Iter.map(
@@ -164,6 +147,7 @@ module {
             |> Iter.toArray(_);
 
             let inProgressSeason = {
+                campaignId = campaignId;
                 teams = teamsWithPositions;
                 players = players;
                 stadiumId = stadiumId;
@@ -172,11 +156,11 @@ module {
 
             teamStandings := null; // No standings yet
             seasonStatus := #inProgress(inProgressSeason);
-            eventHandler.onSeasonStart(inProgressSeason);
+            await* eventHandler.onSeasonStart(inProgressSeason);
             // Get first match group to open
             let #notScheduled(firstMatchGroup) = notScheduledMatchGroups[0] else Prelude.unreachable();
 
-            scheduleMatchGroup<system>(
+            await* scheduleMatchGroup<system>(
                 0,
                 stadiumId,
                 firstMatchGroup,
@@ -258,7 +242,6 @@ module {
             // Update status to completed
             let updatedMatchGroup : Season.CompletedMatchGroup = {
                 time = inProgressMatchGroup.time;
-                scenarioId = inProgressMatchGroup.scenarioId;
                 matches = request.matches;
             };
 
@@ -284,11 +267,11 @@ module {
             };
             teamStandings := ?updatedTeamStandings;
             seasonStatus := #inProgress(updatedSeason);
-            eventHandler.onMatchGroupComplete(updatedMatchGroup);
+            await* eventHandler.onMatchGroupComplete(request.id, updatedMatchGroup);
             try {
                 await PlayersActor.addMatchStats(request.id, request.playerStats);
             } catch (err) {
-                Debug.print("Failed to award user points: " # Error.message(err));
+                Debug.print("Failed to award user points: " # Error.message(err) # "\nStats: " # debug_show (request.playerStats));
             };
 
             // Get next match group to schedule
@@ -308,7 +291,7 @@ module {
             switch (nextMatchGroup) {
                 case (#notScheduled(matchGroup)) {
                     // Schedule next match group
-                    scheduleMatchGroup<system>(
+                    await* scheduleMatchGroup<system>(
                         nextMatchGroupId,
                         inProgressMatchGroup.stadiumId,
                         matchGroup,
@@ -398,24 +381,54 @@ module {
 
             teamStandings := ?finalTeamStandings;
             let completedSeason = {
+                campaignId = inProgressSeason.campaignId;
                 championTeamId = champion.id;
                 runnerUpTeamId = runnerUp.id;
                 teams = completedTeams;
                 matchGroups = completedMatchGroups;
             };
             seasonStatus := #completed(completedSeason);
-            eventHandler.onSeasonComplete(completedSeason);
+            await* eventHandler.onSeasonComplete(completedSeason);
             #ok;
         };
 
-        private func scheduleMatchGroup<system>(
+        private func resetTimers<system>() {
+            switch (seasonStatus) {
+                case (#notStarted or #starting) ();
+                case (#inProgress(inProgressSeason)) {
+                    for (i in Iter.range(0, inProgressSeason.matchGroups.size())) {
+                        let matchGroup = inProgressSeason.matchGroups[i];
+                        switch (matchGroup) {
+                            case (#scheduled(scheduledMatchGroup)) {
+                                let timerId = scheduledMatchGroup.timerId;
+                                Timer.cancelTimer(timerId);
+                                let newTimerId = createStartTimer<system>(i, scheduledMatchGroup.time);
+                                let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
+                                    inProgressSeason.matchGroups,
+                                    i,
+                                    #scheduled({
+                                        scheduledMatchGroup with
+                                        timerId = newTimerId;
+                                    }),
+                                ) else Debug.trap("Match group not found: " # Nat.toText(i));
+                                seasonStatus := #inProgress({
+                                    inProgressSeason with
+                                    matchGroups = newMatchGroups;
+                                });
+                            };
+                            case (#notScheduled(_) or #inProgress(_) or #completed(_)) ();
+                        };
+                    };
+                };
+                case (#completed(_)) ();
+            };
+        };
+
+        private func createStartTimer<system>(
             matchGroupId : Nat,
-            stadiumId : Principal,
-            matchGroup : Season.NotScheduledMatchGroup,
-            inProgressSeason : Season.InProgressSeason,
-            prng : Prng,
-        ) : () {
-            let timeDiff = matchGroup.time - Time.now();
+            startTime : Time.Time,
+        ) : Timer.TimerId {
+            let timeDiff = startTime - Time.now();
             Debug.print("Scheduling match group " # Nat.toText(matchGroupId) # " in " # Int.toText(timeDiff) # " nanoseconds");
             let duration = if (timeDiff <= 0) {
                 // Schedule immediately
@@ -423,7 +436,7 @@ module {
             } else {
                 #nanoseconds(Int.abs(timeDiff));
             };
-            let timerId = Timer.setTimer<system>(
+            Timer.setTimer<system>(
                 duration,
                 func() : async () {
                     let result = try {
@@ -443,6 +456,16 @@ module {
                     Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback: " # message);
                 },
             );
+        };
+
+        private func scheduleMatchGroup<system>(
+            matchGroupId : Nat,
+            stadiumId : Principal,
+            matchGroup : Season.NotScheduledMatchGroup,
+            inProgressSeason : Season.InProgressSeason,
+            prng : Prng,
+        ) : async* () {
+            let timerId = createStartTimer<system>(matchGroupId, matchGroup.time);
 
             let getTeamId = func(teamAssignment : Season.TeamAssignment) : Nat {
                 switch (teamAssignment) {
@@ -481,7 +504,6 @@ module {
                 time = matchGroup.time;
                 timerId = timerId;
                 stadiumId = stadiumId;
-                scenarioId = matchGroup.scenarioId;
                 matches = matchGroup.matches
                 |> Iter.fromArray(_)
                 |> Iter.map(
@@ -510,7 +532,7 @@ module {
                 inProgressSeason with
                 matchGroups = newMatchGroups;
             });
-            eventHandler.onMatchGroupSchedule(scheduledMatchGroup);
+            await* eventHandler.onMatchGroupSchedule(matchGroupId, scheduledMatchGroup);
 
         };
 
@@ -726,7 +748,6 @@ module {
             let inProgressMatchGroup = {
                 time = scheduledMatchGroup.time;
                 stadiumId = scheduledMatchGroup.stadiumId;
-                scenarioId = scheduledMatchGroup.scenarioId;
                 matches = inProgressMatches;
             };
             let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
@@ -738,10 +759,12 @@ module {
                 season with
                 matchGroups = newMatchGroups;
             });
-            eventHandler.onMatchGroupStart(inProgressMatchGroup);
+            await* eventHandler.onMatchGroupStart(matchGroupId, inProgressMatchGroup);
 
             #ok;
         };
+
+        ignore resetTimers<system>(); // TODO remove ignore after bug fix
     };
 
     private func buildTeamInitData(

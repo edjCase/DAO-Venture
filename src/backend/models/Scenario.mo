@@ -87,6 +87,9 @@ module {
     public type ScenarioOption = {
         title : Text;
         description : Text;
+    };
+
+    public type ScenarioOptionWithEffect = ScenarioOption and {
         effect : Effect;
     };
 
@@ -94,7 +97,7 @@ module {
         id : Text;
         title : Text;
         description : Text;
-        options : [ScenarioOption];
+        options : [ScenarioOptionWithEffect];
         metaEffect : MetaEffect;
         state : ScenarioState;
     };

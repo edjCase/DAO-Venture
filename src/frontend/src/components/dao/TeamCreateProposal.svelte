@@ -77,15 +77,13 @@
                 bind:value={selectedPlayerId}
             />
             <Button on:click={createTrainPlayerProposal}>
-                Create Train Player Proposal
+                Create Proposal
             </Button>
         </div>
     {:else if selectedProposalType === "changeName"}
         <div>
             <Input type="text" placeholder="New Name" bind:value={newName} />
-            <Button on:click={createNewNameProposal}>
-                Create Train Player Proposal
-            </Button>
+            <Button on:click={createNewNameProposal}>Create Proposal</Button>
         </div>
     {:else}
         NOT IMPLEMENTED: {selectedProposalType}

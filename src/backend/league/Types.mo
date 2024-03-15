@@ -84,18 +84,13 @@ module {
         id : Text;
         title : Text;
         description : Text;
-        options : [ScenarioOption];
+        options : [Scenario.ScenarioOption];
         state : {
             #notStarted;
             #inProgress;
             #resolved : ScenarioStateResolved;
         };
 
-    };
-
-    public type ScenarioOption = {
-        id : Nat;
-        description : Text;
     };
 
     public type TeamStandingInfo = {
@@ -168,14 +163,14 @@ module {
     // Start season
     public type StartSeasonRequest = {
         startTime : Time.Time;
-        scenarioIds : [Text];
+        campaignId : Nat;
     };
 
     public type AddScenarioRequest = {
         id : Text;
         title : Text;
         description : Text;
-        options : [Scenario.ScenarioOption];
+        options : [Scenario.ScenarioOptionWithEffect];
         metaEffect : Scenario.MetaEffect;
     };
 

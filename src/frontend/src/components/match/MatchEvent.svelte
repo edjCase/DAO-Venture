@@ -1,13 +1,11 @@
 <script lang="ts">
-  import { Principal } from "@dfinity/principal";
-  import { TeamId } from "../../models/Team";
+  import { Event, TeamId } from "../../ic-agent/declarations/stadium";
   import { playerStore } from "../../stores/PlayerStore";
   import { teamStore } from "../../stores/TeamStore";
-  import { MatchEvent } from "../../ic-agent/declarations/stadium";
 
-  export let event: MatchEvent;
-  export let team1Id: Principal;
-  export let team2Id: Principal;
+  export let event: Event;
+  export let team1Id: bigint;
+  export let team2Id: bigint;
 
   $: players = $playerStore;
   $: teams = $teamStore;
@@ -18,15 +16,12 @@
   const getPlayerName = (playerId: number): string => {
     return players.find((p) => p.id === playerId)?.name ?? "Unknown";
   };
-  const getTeamPrincipal = (teamId: TeamId): Principal => {
+  const getTeamId = (teamId: TeamId): bigint => {
     return "team1" in teamId ? team1Id : team2Id;
   };
   const getTeamName = (teamId: TeamId): string => {
-    let teamPrincipal = getTeamPrincipal(teamId);
-    return (
-      teams.find((p) => p.id.compareTo(teamPrincipal) == "eq")?.name ??
-      "Unknown"
-    );
+    let teamIdId = getTeamId(teamId);
+    return teams.find((p) => p.id == teamIdId)?.name ?? "Unknown";
   };
 </script>
 
@@ -51,9 +46,9 @@
       event.swing.outcome,
     )}
   </div>
-{:else if "catch_" in event}
+{:else if "catch" in event}
   <div>
-    {getPlayerName(event.catch_.playerId)} caught the ball
+    {getPlayerName(event.catch.playerId)} caught the ball
   </div>
 {:else if "newRound" in event}
   <div>Round Over</div>
@@ -65,18 +60,6 @@
   </div>
 {:else if "death" in event}
   <div>Player '{getPlayerName(event.death.playerId)}' died</div>
-{:else if "curse" in event}
-  <div>
-    {getPlayerName(event.curse.playerId)} got cursed: {variantKeyToString(
-      event.curse.curse,
-    )}
-  </div>
-{:else if "blessing" in event}
-  <div>
-    {getPlayerName(event.blessing.playerId)} got blessed: {variantKeyToString(
-      event.blessing.blessing,
-    )}
-  </div>
 {:else if "score" in event}
   <div>
     {getTeamName(event.score.teamId)} scored {event.score.amount} points!

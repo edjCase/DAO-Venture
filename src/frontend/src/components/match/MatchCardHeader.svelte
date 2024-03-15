@@ -1,6 +1,6 @@
 <script lang="ts">
+  import { TeamId, TeamIdOrTie } from "../../ic-agent/declarations/league";
   import { TeamDetailsOrUndetermined } from "../../models/Match";
-  import { TeamId, TeamIdOrTie } from "../../models/Team";
   import TeamLogo from "../team/TeamLogo.svelte";
 
   export let team1: TeamDetailsOrUndetermined;
@@ -10,7 +10,7 @@
 
   let getTeamEmojis = (
     winner: TeamIdOrTie | undefined,
-    teamId: "team1" | "team2"
+    teamId: "team1" | "team2",
   ) => {
     let emojis = [];
     if (winner) {
@@ -27,7 +27,7 @@
   };
 
   let getScoreText = (team: TeamDetailsOrUndetermined) => {
-    if ("score" in team && team.score !== undefined && !isNaN(team.score)) {
+    if ("score" in team && team.score !== undefined) {
       return team.score;
     }
     return "-";

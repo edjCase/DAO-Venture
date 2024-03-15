@@ -1,21 +1,25 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { teamsAgentFactory } from "../../ic-agent/Teams";
-    import { ScenarioOption__1 } from "../../ic-agent/declarations/league";
+    import { ScenarioOption } from "../../ic-agent/declarations/league";
     import { VoteOnScenarioRequest } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
+    import { toJsonString } from "../../utils/JsonUtil";
 
     export let scenarioId: string;
-    export let options: ScenarioOption__1[];
+    export let options: ScenarioOption[];
     export let userContext: User | undefined;
     let selectedChoice: number | undefined;
-
-    let teamId: bigint | undefined = userContext?.team[0]?.id;
-    let isOwner: boolean = !!teamId && "owner" in userContext!.team[0]!.kind;
+    let teamId: bigint | undefined;
+    let isOwner: boolean = false;
+    $: {
+        teamId = userContext?.team[0]?.id;
+        isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
+    }
 
     let register = function () {
-        if (!isOwner || !teamId) {
+        if (!isOwner || teamId === undefined) {
             console.log("User cant vote unless they are a team owner");
             return;
         }

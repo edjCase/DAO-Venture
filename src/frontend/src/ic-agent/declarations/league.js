@@ -92,7 +92,7 @@ export const idlFactory = ({ IDL }) => {
       'options' : IDL.Vec(IDL.Record({ 'effect' : Effect })),
     }),
   });
-  const ScenarioOption__1 = IDL.Record({
+  const ScenarioOptionWithEffect = IDL.Record({
     'title' : IDL.Text,
     'description' : IDL.Text,
     'effect' : Effect,
@@ -102,7 +102,7 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'metaEffect' : MetaEffect,
     'description' : IDL.Text,
-    'options' : IDL.Vec(ScenarioOption__1),
+    'options' : IDL.Vec(ScenarioOptionWithEffect),
   });
   const AddScenarioResult = IDL.Variant({
     'ok' : IDL.Null,
@@ -182,7 +182,7 @@ export const idlFactory = ({ IDL }) => {
     ),
   });
   const ScenarioOption = IDL.Record({
-    'id' : IDL.Nat,
+    'title' : IDL.Text,
     'description' : IDL.Text,
   });
   const Scenario = IDL.Record({

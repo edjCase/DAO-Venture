@@ -7,7 +7,7 @@ export interface AddScenarioRequest {
   'title' : string,
   'metaEffect' : MetaEffect,
   'description' : string,
-  'options' : Array<ScenarioOption__1>,
+  'options' : Array<ScenarioOptionWithEffect>,
 }
 export type AddScenarioResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
@@ -290,8 +290,8 @@ export interface Scenario {
     { 'inProgress' : null },
   'options' : Array<ScenarioOption>,
 }
-export interface ScenarioOption { 'id' : bigint, 'description' : string }
-export interface ScenarioOption__1 {
+export interface ScenarioOption { 'title' : string, 'description' : string }
+export interface ScenarioOptionWithEffect {
   'title' : string,
   'description' : string,
   'effect' : Effect,

@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Principal } from "@dfinity/principal";
   import { teamStore } from "../../stores/TeamStore";
   import { PlayerWithId } from "../../ic-agent/declarations/stadium";
   import { positionToString } from "../../models/FieldPosition";
@@ -12,9 +11,9 @@
   );
 
   $: teams = $teamStore;
-  const getTeamName = (teamId: [Principal] | []) => {
+  const getTeamName = (teamId: [bigint] | []) => {
     if (teamId.length === 0) return "";
-    const team = teams.find((t) => t.id.compareTo(teamId[0]) == "eq");
+    const team = teams.find((t) => t.id == teamId[0]);
     return team ? team.name : "Unknown";
   };
 </script>

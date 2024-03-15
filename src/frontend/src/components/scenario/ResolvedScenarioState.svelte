@@ -1,12 +1,12 @@
 <script lang="ts">
     import {
-        ScenarioOption__1,
+        ScenarioOption,
         ScenarioStateResolved,
     } from "../../ic-agent/declarations/league";
     import { User } from "../../ic-agent/declarations/users";
 
     export let state: ScenarioStateResolved;
-    export let options: ScenarioOption__1[];
+    export let options: ScenarioOption[];
     export let userContext: User | undefined;
 
     let selectedChoice: number | undefined;

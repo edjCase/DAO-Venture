@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
-    import { ProposalStatusLogEntry } from "../../ic-agent/declarations/team";
     import { toJsonString } from "../../utils/JsonUtil";
     import { nanosecondsToDate } from "../../utils/DateUtils";
     import { identityStore } from "../../stores/IdentityStore";
     import { Principal } from "@dfinity/principal";
+    import { ProposalStatusLogEntry } from "../../ic-agent/declarations/league";
 
     interface Proposal {
         id: bigint;
