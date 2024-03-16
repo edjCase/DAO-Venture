@@ -168,10 +168,13 @@ module {
 
     public type AddScenarioRequest = {
         id : Text;
+        startTime : Time.Time;
+        endTime : Time.Time;
         title : Text;
         description : Text;
         options : [Scenario.ScenarioOptionWithEffect];
         metaEffect : Scenario.MetaEffect;
+        teamIds : [Nat];
     };
 
     public type AddScenarioResult = {

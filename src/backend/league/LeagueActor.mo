@@ -7,6 +7,7 @@ import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import Text "mo:base/Text";
+import Bool "mo:base/Bool";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "Types";
 import UsersActor "canister:users";
@@ -20,7 +21,6 @@ import ScenarioHandler "ScenarioHandler";
 import TeamsHandler "TeamsHandler";
 import PlayersActor "canister:players";
 import TeamsActor "canister:teams";
-import TeamTypes "../team/Types";
 import Dao "../Dao";
 import StadiumActor "canister:stadium";
 
@@ -54,22 +54,55 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
+    private func processEventOutcomes(effectOutcomes : [Scenario.EffectOutcome]) : async* ScenarioHandler.ProcessEffectOutcomesResult {
+        let playerOutcomes = Buffer.Buffer<Scenario.PlayerEffectOutcome>(resolvedScenarioState.effectOutcomes.size());
+        let teamsProcessed = try {
+            for (effectOutcome in Iter.fromArray(resolvedScenarioState.effectOutcomes)) {
+                switch (effectOutcome) {
+                    case (#injury(injuryEffect)) playerOutcomes.add(#injury(injuryEffect));
+                    case (#entropy(entropyEffect)) {
+                        teamsHandler.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
+                    };
+                    case (#energy(e)) {
+                        teamsHandler.updateTeamEnergy(e.teamId, e.delta);
+                    };
+                    case (#skill(s)) {
+                        playerOutcomes.add(#skill(s));
+                    };
+                };
+                true;
+            };
+        } catch (err) {
+            // TODO this should have rollback and whatnot, there shouldnt be an error but im not sure how to handle
+            // errors for now
+            Debug.print("Failed to process team effect outcomes: " # Error.message(err));
+            false;
+        };
+        // TODO handle failure
+        let playersProcessed = if (playerOutcomes.size() > 0) {
+            let result = try {
+                await PlayersActor.applyEffects(Buffer.toArray(playerOutcomes));
+                switch (result) {
+                    case (#ok) ();
+                };
+                true;
+            } catch (err) {
+                false;
+            };
+        } else {
+            true; // no players to process
+        };
+    };
+
     stable var stadiumInitialized = false;
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
-    var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios);
+    var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios, processEffectOutcomes);
     var teamsHandler = TeamsHandler.Handler(stableData.teams);
 
     let seasonEventHandler : SeasonHandler.EventHandler = {
-        onSeasonStart = func(s : Season.InProgressSeason) : async* () {
-            scenarioHandler.startCampaign(s.campaignId);
-        };
+        onSeasonStart = func(_ : Season.InProgressSeason) : async* () {};
         onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : async* () {
             predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
-            switch (await* scenarioHandler.start(matchGroup.scenarioId, TeamsActor)) {
-                case (#ok) ();
-                case (#alreadyStarted) Debug.print("WARNING: Scenario already started: " # matchGroup.scenarioId);
-                case (#notFound) Debug.print("WARNING: Scenario not found to start: " # matchGroup.scenarioId);
-            };
         };
         onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : async* () {
             predictionHandler.closeMatchGroup(matchGroupId);
@@ -229,7 +262,6 @@ actor LeagueActor : Types.LeagueActor {
             prng,
             stadiumId,
             request.startTime,
-            request.campaignId,
             teamsArray,
             allPlayers,
         );
@@ -257,70 +289,11 @@ actor LeagueActor : Types.LeagueActor {
         predictionHandler.getMatchGroupSummary(matchGroupId, ?caller);
     };
 
-    public shared ({ caller }) func processEffectOutcomes(request : Types.ProcessEffectOutcomesRequest) : async Types.ProcessEffectOutcomesResult {
-        if (not isAdminId(caller)) {
-            return #notAuthorized;
-        };
-
-        let playerOutcomes = Buffer.Buffer<Scenario.PlayerEffectOutcome>(request.outcomes.size());
-        for (effectOutcome in Iter.fromArray(request.outcomes)) {
-            switch (effectOutcome) {
-                case (#injury(injuryEffect)) playerOutcomes.add(#injury(injuryEffect));
-                case (#entropy(entropyEffect)) {
-                    teamsHandler.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
-                };
-                case (#energy(e)) {
-                    teamsHandler.updateTeamEnergy(e.teamId, e.delta);
-                };
-                case (#skill(s)) {
-                    playerOutcomes.add(#skill(s));
-                };
-            };
-        };
-        // TODO handle failure
-        if (playerOutcomes.size() > 0) {
-            let result = try {
-                await PlayersActor.applyEffects(Buffer.toArray(playerOutcomes));
-            } catch (err) {
-                return Debug.trap("Failed to apply traits: " # Error.message(err));
-            };
-            switch (result) {
-                case (#ok) ();
-            };
-        };
-        #ok;
-    };
-
     public shared func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
         // TODO
         // if (not isAdminId(caller)) {
         //     return #notAuthorized;
         // };
-        let prng = PseudoRandomX.fromBlob(await Random.blob());
-        switch (await* buildTeamScenarioData(matchGroupId)) {
-            case (#ok(data)) {
-                let resolvedScenarioState = scenarioHandler.resolve(
-                    data.scenarioId,
-                    data.teamScenarioData,
-                    prng,
-                );
-
-                // TODO handle failure
-                try {
-                    let result = await processEffectOutcomes({
-                        outcomes = resolvedScenarioState.effectOutcomes;
-                    });
-                    switch (result) {
-                        case (#ok) ();
-                        case (#notAuthorized) Debug.trap("League is not authorized to process effect outcomes");
-                        case (#seasonNotInProgress) Debug.trap("Season is not in progress");
-                    };
-                } catch (err) {
-                    Debug.print("Failed to process effect outcomes: " # Error.message(err));
-                };
-            };
-            case (#notScheduledYet) return #notScheduledYet;
-        };
 
         await* seasonHandler.startMatchGroup(matchGroupId);
 
@@ -402,59 +375,6 @@ actor LeagueActor : Types.LeagueActor {
         };
         return true; // TODO i dont want to use admin pattern
         // TrieSet.mem(admins, id, Principal.hash(id), Principal.equal);
-    };
-
-    private func buildTeamScenarioData(matchGroupId : Nat) : async* {
-        #ok : {
-            scenarioId : Text;
-            teamScenarioData : [ScenarioHandler.TeamScenarioData];
-        };
-        #notScheduledYet;
-    } {
-        let ?matchGroupInfo = seasonHandler.getMatchGroup(matchGroupId) else Debug.trap("Match group not found: " # Nat.toText(matchGroupId));
-
-        let teams = switch (matchGroupInfo.season) {
-            case (#inProgress(s)) s.teams;
-            case (#completed(c)) c.teams;
-        };
-        let teamScenarioData = Buffer.Buffer<ScenarioHandler.TeamScenarioData>(teams.size());
-
-        let scenarioId = switch (matchGroupInfo.matchGroup) {
-            case (#notScheduled(_)) return #notScheduledYet;
-            case (#scheduled(s)) s.scenarioId;
-            case (#inProgress(i)) i.scenarioId;
-            case (#completed(c)) c.scenarioId;
-        };
-        let scenarioResults = try {
-            await TeamsActor.getScenarioVotingResults({
-                scenarioId = scenarioId;
-            });
-        } catch (err : Error.Error) {
-            return Debug.trap("Failed to get scenario voting results: " # Error.message(err));
-        };
-        let teamResults = switch (scenarioResults) {
-            case (#ok(o)) o;
-            case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scenarioId);
-            case (#notAuthorized) return Debug.trap("League is not authorized to get scenario results");
-        };
-
-        for (team in Iter.fromArray(teams)) {
-            let optionOrNull = IterTools.find(teamResults.teamOptions.vals(), func(o : TeamTypes.ScenarioTeamVotingResult) : Bool = o.teamId == team.id);
-            let option = switch (optionOrNull) {
-                case (?o) o.option;
-                case (null) 0; // TODO random if no votes?
-            };
-
-            teamScenarioData.add({
-                team with
-                option = option;
-                positions = team.positions;
-            });
-        };
-        #ok({
-            scenarioId = scenarioId;
-            teamScenarioData = Buffer.toArray(teamScenarioData);
-        });
     };
 
     private func initStadium() : async* () {

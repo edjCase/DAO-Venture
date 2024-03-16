@@ -73,7 +73,6 @@ module {
             prng : Prng,
             stadiumId : Principal,
             startTime : Time.Time,
-            campaignId : Nat,
             teams : [Team.TeamWithId],
             players : [PlayerTypes.PlayerWithId],
         ) : async* StartSeasonResult {
@@ -147,7 +146,6 @@ module {
             |> Iter.toArray(_);
 
             let inProgressSeason = {
-                campaignId = campaignId;
                 teams = teamsWithPositions;
                 players = players;
                 stadiumId = stadiumId;
@@ -381,7 +379,6 @@ module {
 
             teamStandings := ?finalTeamStandings;
             let completedSeason = {
-                campaignId = inProgressSeason.campaignId;
                 championTeamId = champion.id;
                 runnerUpTeamId = runnerUp.id;
                 teams = completedTeams;
@@ -764,7 +761,7 @@ module {
             #ok;
         };
 
-        ignore resetTimers<system>(); // TODO remove ignore after bug fix
+        ignore resetTimers<system>();
     };
 
     private func buildTeamInitData(

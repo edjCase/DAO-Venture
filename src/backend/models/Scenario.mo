@@ -11,14 +11,15 @@ module {
         #choosingTeam;
     };
 
-    public type TargetPlayer = {
-        #position : FieldPosition.FieldPosition;
+    public type TargetPosition = {
+        teamId : TargetTeam;
+        position : FieldPosition.FieldPosition;
     };
 
     public type Target = {
         #league;
         #teams : [TargetTeam];
-        #players : [TargetPlayer];
+        #positions : [TargetPosition];
     };
 
     public type Duration = {
@@ -81,7 +82,12 @@ module {
     public type TargetInstance = {
         #league;
         #teams : [Nat];
-        #players : [Nat32];
+        #positions : [TargetPositionInstance];
+    };
+
+    public type TargetPositionInstance = {
+        teamId : Nat;
+        position : FieldPosition.FieldPosition;
     };
 
     public type ScenarioOption = {

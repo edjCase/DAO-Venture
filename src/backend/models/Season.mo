@@ -15,7 +15,6 @@ module {
     };
 
     public type InProgressSeason = {
-        campaignId : Nat;
         teams : [TeamInfo];
         players : [Player.PlayerWithId];
         matchGroups : [InProgressSeasonMatchGroupVariant];
@@ -101,7 +100,6 @@ module {
 
     // Completed Season
     public type CompletedSeason = {
-        campaignId : Nat;
         championTeamId : Nat;
         runnerUpTeamId : Nat;
         teams : [CompletedSeasonTeam];

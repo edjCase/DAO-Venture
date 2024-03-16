@@ -12,20 +12,26 @@ import Nat "mo:base/Nat";
 import Trie "mo:base/Trie";
 import Option "mo:base/Option";
 import Nat32 "mo:base/Nat32";
+import Random "mo:base/Random";
+import Error "mo:base/Error";
+import Timer "mo:base/Timer";
+import Time "mo:base/Time";
+import Int "mo:base/Int";
 import TextX "mo:xtended-text/TextX";
 import FieldPosition "../models/FieldPosition";
 import TeamTypes "../team/Types";
-
+import TeamsActor "canister:teams";
+import IterTools "mo:itertools/Iter";
+import LeagueActor "canister:league";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
-        scenarios : [Scenario.Scenario];
+        scenarios : [ScenarioData];
     };
 
     public type TeamScenarioData = {
         id : Nat;
-        positions : FieldPosition.TeamPositions;
         option : Nat;
     };
 
@@ -40,11 +46,82 @@ module {
         #notFound;
     };
 
-    public class Handler(data : StableData) {
-        let scenarios : HashMap.HashMap<Text, Scenario.Scenario> = toHashMap(data.scenarios);
+    public type ProcessEffectOutcomesResult = {
+        #ok : [EffectOutcomeData];
+    };
+
+    type ScenarioData = {
+        id : Text;
+        title : Text;
+        description : Text;
+        options : [Scenario.ScenarioOptionWithEffect];
+        metaEffect : Scenario.MetaEffect;
+        state : ScenarioState;
+        startTime : Time.Time;
+        endTime : Time.Time;
+        teamIds : [Nat];
+    };
+
+    type ScenarioState = {
+        #notStarted : {
+            startTimerId : Nat;
+        };
+        #inProgress : {
+            endTimerId : Nat;
+        };
+        #resolved : ScenarioStateResolved;
+    };
+
+    public type ScenarioStateResolved = {
+        teamChoices : [TeamScenarioData];
+        effectOutcomes : [EffectOutcomeData];
+    };
+
+    public type EffectOutcomeData = {
+        processed : Bool;
+        outcome : Scenario.EffectOutcome;
+    };
+
+    public class Handler<system>(data : StableData, processEffectOutcomes : (outcomes : [Scenario.EffectOutcome]) -> async* ProcessEffectOutcomesResult) {
+        let scenarios : HashMap.HashMap<Text, ScenarioData> = toHashMap(data.scenarios);
 
         public func getScenario(id : Text) : ?Scenario.Scenario {
-            scenarios.get(id);
+            do ? {
+                let data = scenarios.get(id)!;
+                let state : Scenario.ScenarioState = switch (data.state) {
+                    case (#notStarted(_)) #notStarted;
+                    case (#inProgress(_)) #inProgress;
+                    case (#resolved(resolved)) #resolved({
+                        resolved with
+                        teamChoices = resolved.teamChoices.vals()
+                        |> Iter.map(
+                            _,
+                            func(team : TeamScenarioData) : {
+                                teamId : Nat;
+                                option : Nat;
+                            } = {
+                                teamId = team.id;
+                                option = team.option;
+                            },
+                        )
+                        |> Iter.toArray(_);
+                        effectOutcomes = resolved.effectOutcomes.vals()
+                        |> Iter.map(
+                            _,
+                            func(outcome : EffectOutcomeData) : Scenario.EffectOutcome = outcome.outcome,
+                        )
+                        |> Iter.toArray(_);
+                    });
+                };
+                {
+                    id = data.id;
+                    title = data.title;
+                    description = data.description;
+                    options = data.options;
+                    metaEffect = data.metaEffect;
+                    state = state;
+                };
+            };
         };
 
         public func toStableData() : StableData {
@@ -54,52 +131,123 @@ module {
             };
         };
 
-        public func add(scenario : Types.AddScenarioRequest) : AddScenarioResult {
+        public func add<system>(scenario : Types.AddScenarioRequest) : AddScenarioResult {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
                 case (#invalid(errors)) return #invalid(errors);
             };
-            let null = scenarios.replace(
+            if (scenarios.get(scenario.id) != null) {
+                return #invalid(["Scenario with id '" #scenario.id # "' already exists"]);
+            };
+            let startTimerId = createStartTimer<system>(scenario.id, scenario.startTime);
+            scenarios.put(
                 scenario.id,
                 {
-                    scenario with
-                    state = #notStarted
+
+                    id = scenario.id;
+                    title = scenario.title;
+                    description = scenario.description;
+                    options = scenario.options;
+                    metaEffect = scenario.metaEffect;
+                    state = #notStarted({
+                        startTimerId = startTimerId;
+                    });
+                    startTime = scenario.startTime;
+                    endTime = scenario.endTime;
+                    teamIds = scenario.teamIds;
                 },
-            ) else return #invalid(["Scenario with id '" #scenario.id # "' already exists"]);
+            );
             #ok;
         };
 
-        public func start(scenarioId : Text, teamsActor : TeamTypes.Actor) : async* StartScenarioResult {
+        private func start(scenarioId : Text) : async* StartScenarioResult {
             let ?scenario = scenarios.get(scenarioId) else return #notFound;
             switch (scenario.state) {
-                case (#notStarted) {
+                case (#notStarted({ startTimerId })) {
+                    Timer.cancelTimer(startTimerId);
                     ignore scenarios.replace(
                         scenarioId,
                         {
                             scenario with
-                            state = #inProgress
+                            state = #inProgress({
+                                endTimerId = createEndTimer<system>(scenarioId, scenario.endTime);
+                            })
                         },
                     );
                     let onNewScenarioRequest = {
                         scenarioId = scenarioId;
                         optionCount = scenario.options.size();
                     };
-                    switch (await teamsActor.onNewScenario(onNewScenarioRequest)) {
+                    switch (await TeamsActor.onNewScenario(onNewScenarioRequest)) {
                         case (#ok) ();
                         case (#notAuthorized) Debug.print("ERROR: Not authorized to start scenario for teams");
                     };
                     #ok;
                 };
-                case (#inProgress) #alreadyStarted;
+                case (#inProgress(_)) #alreadyStarted;
                 case (#resolved(_)) #alreadyStarted;
             };
         };
 
-        public func resolve(
+        private func end(scenarioId : Text) : async* {
+            #ok;
+            #scenarioNotFound;
+        } {
+            let prng = PseudoRandomX.fromBlob(await Random.blob());
+            let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
+            let teamScenarioData = await* buildTeamScenarioData(scenario);
+            let resolvedScenarioState = resolve(
+                scenarioId,
+                teamScenarioData,
+                prng,
+            );
+
+            let effectOutcomes = resolvedScenarioState.effectOutcomes.vals()
+            |> Iter.filter(
+                _,
+                func(outcome : EffectOutcomeData) : Bool = not outcome.processed,
+            )
+            |> Iter.map(
+                _,
+                func(outcome : EffectOutcomeData) : Scenario.EffectOutcome = outcome.outcome,
+            )
+            |> Iter.toArray(_);
+
+            // TODO how to reproccess them?
+            let processedScenarioState : ScenarioStateResolved = switch (await* processEffectOutcomes(effectOutcomes)) {
+                case (#ok(updatedEffectOutcomes)) {
+
+                    // Rejoin already processed outcomes with the newly processed ones
+                    let alreadyProcessedOutcomes = resolvedScenarioState.effectOutcomes.vals()
+                    |> Iter.filter(
+                        _,
+                        func(outcome : EffectOutcomeData) : Bool = outcome.processed,
+                    )
+                    |> Iter.toArray(_);
+
+                    let allProcessedOutcomes = Array.append(alreadyProcessedOutcomes, updatedEffectOutcomes);
+
+                    {
+                        resolvedScenarioState with
+                        effectOutcomes = allProcessedOutcomes
+                    };
+                };
+            };
+            scenarios.put(
+                scenarioId,
+                {
+                    scenario with
+                    state = #resolved(processedScenarioState);
+                },
+            );
+            #ok;
+        };
+
+        private func resolve(
             scenarioId : Text,
             scenarioTeams : [TeamScenarioData],
             prng : Prng,
-        ) : Scenario.ScenarioStateResolved {
+        ) : ScenarioStateResolved {
             let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # scenarioId);
             resolveScenario(
                 prng,
@@ -107,6 +255,111 @@ module {
                 scenarioTeams,
             );
         };
+
+        private func createStartTimer<system>(scenarioId : Text, startTime : Time.Time) : Nat {
+            createTimer<system>(
+                startTime,
+                func() : async* () {
+                    switch (await* start(scenarioId)) {
+                        case (#ok) ();
+                        case (#alreadyStarted) Debug.trap("Scenario already started: " # scenarioId);
+                        case (#notFound) Debug.trap("Scenario not found: " # scenarioId);
+                    };
+                },
+            );
+        };
+
+        private func createEndTimer<system>(scenarioId : Text, endTime : Time.Time) : Nat {
+            createTimer<system>(
+                endTime,
+                func() : async* () {
+                    switch (await* end(scenarioId)) {
+                        case (#ok) ();
+                        case (#scenarioNotFound) Debug.trap("Scenario not found: " # scenarioId);
+                        case (#processEffectOutcomesError(err)) Debug.trap("Error processing effect outcomes: " # err);
+                    };
+                },
+            );
+        };
+
+        private func createTimer<system>(time : Time.Time, func_ : () -> async* ()) : Nat {
+            let durationNanos = time - Time.now();
+            let durationNanosNat = if (durationNanos < 0) {
+                0;
+            } else {
+                Int.abs(durationNanos);
+            };
+            Timer.setTimer<system>(
+                #nanoseconds(durationNanosNat),
+                func() : async () {
+                    await* func_();
+                },
+            );
+        };
+
+        private func resetTimers<system>() : () {
+            for (scenario in scenarios.vals()) {
+                let updatedScenario = switch (scenario.state) {
+                    case (#notStarted({ startTimerId })) {
+                        Timer.cancelTimer(startTimerId);
+                        ?{
+                            scenario with
+                            state = #notStarted({
+                                startTimerId = createStartTimer<system>(scenario.id, scenario.startTime);
+                            });
+                        };
+                    };
+                    case (#inProgress({ endTimerId })) {
+                        Timer.cancelTimer(endTimerId);
+                        ?{
+                            scenario with
+                            state = #inProgress({
+                                endTimerId = createEndTimer<system>(scenario.id, scenario.startTime);
+                            });
+                        };
+                    };
+                    case (#resolved(_)) null;
+                };
+                switch (updatedScenario) {
+                    case (?s) scenarios.put(scenario.id, s);
+                    case (null) ();
+                };
+            };
+
+        };
+
+        ignore resetTimers<system>();
+    };
+
+    private func buildTeamScenarioData(scenario : ScenarioData) : async* [TeamScenarioData] {
+        let teamScenarioData = Buffer.Buffer<TeamScenarioData>(scenario.teamIds.size());
+
+        let scenarioResults = try {
+            await TeamsActor.getScenarioVotingResults({
+                scenarioId = scenario.id;
+            });
+        } catch (err : Error.Error) {
+            return Debug.trap("Failed to get scenario voting results: " # Error.message(err));
+        };
+        let teamResults = switch (scenarioResults) {
+            case (#ok(o)) o;
+            case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scenario.id);
+            case (#notAuthorized) return Debug.trap("League is not authorized to get scenario results");
+        };
+
+        for (teamId in Iter.fromArray(scenario.teamIds)) {
+            let optionOrNull = IterTools.find(teamResults.teamOptions.vals(), func(o : TeamTypes.ScenarioTeamVotingResult) : Bool = o.teamId == teamId);
+            let option = switch (optionOrNull) {
+                case (?o) o.option;
+                case (null) 0; // TODO random if no votes?
+            };
+
+            teamScenarioData.add({
+                id = teamId;
+                option = option;
+            });
+        };
+        Buffer.toArray(teamScenarioData);
     };
 
     type ValidateScenarioResult = {
@@ -209,15 +462,15 @@ module {
 
     public func resolveScenario(
         prng : Prng,
-        scenario : Scenario.Scenario,
+        scenario : ScenarioData,
         teams : [TeamScenarioData],
-    ) : Scenario.ScenarioStateResolved {
+    ) : ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
-        let teamChoices = Buffer.Buffer<{ teamId : Nat; option : Nat }>(0);
+        let teamChoices = Buffer.Buffer<TeamScenarioData>(0);
         for (team in Iter.fromArray(teams)) {
             let choice = scenario.options[team.option];
             teamChoices.add({
-                teamId = team.id;
+                id = team.id;
                 option = team.option;
             });
             resolveEffectInternal(
@@ -250,14 +503,22 @@ module {
         };
         {
             teamChoices = Buffer.toArray(teamChoices);
-            effectOutcomes = Buffer.toArray(effectOutcomes);
+            effectOutcomes = effectOutcomes.vals()
+            |> Iter.map(
+                _,
+                func(outcome : Scenario.EffectOutcome) : EffectOutcomeData = {
+                    processed = false;
+                    outcome = outcome;
+                },
+            )
+            |> Iter.toArray(_);
         };
     };
 
     public func resolveEffect(
         prng : Prng,
         context : EffectContext,
-        scenario : Scenario.Scenario,
+        scenario : ScenarioData,
         effect : Scenario.Effect,
     ) : [Scenario.EffectOutcome] {
         let buffer = Buffer.Buffer<Scenario.EffectOutcome>(0);
@@ -268,7 +529,7 @@ module {
     private func resolveEffectInternal(
         prng : Prng,
         context : EffectContext,
-        scenario : Scenario.Scenario,
+        scenario : ScenarioData,
         effect : Scenario.Effect,
         outcomes : Buffer.Buffer<Scenario.EffectOutcome>,
     ) {
@@ -377,19 +638,6 @@ module {
         };
     };
 
-    private func getPlayerId(
-        player : Scenario.TargetPlayer,
-        context : EffectContext,
-    ) : Nat32 {
-        let choosingTeam = switch (context) {
-            case (#league) Debug.trap("Cannot get team id for league context");
-            case (#team(team)) team;
-        };
-        switch (player) {
-            case (#position(p)) FieldPosition.getTeamPosition(choosingTeam.positions, p);
-        };
-    };
-
     private func getTargetInstance(
         context : EffectContext,
         target : Scenario.Target,
@@ -406,27 +654,30 @@ module {
                 |> Iter.toArray(_);
                 #teams(teamIds);
             };
-            case (#players(players)) {
-                let playerIds = players
+            case (#positions(positions)) {
+                let mappedPositions = positions
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(player : Scenario.TargetPlayer) : Nat32 = getPlayerId(player, context),
+                    func(target : Scenario.TargetPosition) : Scenario.TargetPositionInstance = {
+                        teamId = getTeamId(target.teamId, context);
+                        position = target.position;
+                    },
                 )
                 |> Iter.toArray(_);
-                #players(playerIds);
+                #positions(mappedPositions);
             };
         };
     };
 
-    private func toHashMap(scenarios : [Scenario.Scenario]) : HashMap.HashMap<Text, Scenario.Scenario> {
+    private func toHashMap(scenarios : [ScenarioData]) : HashMap.HashMap<Text, ScenarioData> {
         scenarios
         |> Iter.fromArray(_)
-        |> Iter.map<Scenario.Scenario, (Text, Scenario.Scenario)>(
+        |> Iter.map<ScenarioData, (Text, ScenarioData)>(
             _,
-            func(scenario : Scenario.Scenario) : (Text, Scenario.Scenario) = (scenario.id, scenario),
+            func(scenario : ScenarioData) : (Text, ScenarioData) = (scenario.id, scenario),
         )
-        |> HashMap.fromIter<Text, Scenario.Scenario>(_, scenarios.size(), Text.equal, Text.hash);
+        |> HashMap.fromIter<Text, ScenarioData>(_, scenarios.size(), Text.equal, Text.hash);
 
     };
 };
