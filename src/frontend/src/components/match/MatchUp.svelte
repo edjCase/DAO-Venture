@@ -1,6 +1,7 @@
 <script lang="ts">
   import { MatchDetails, TeamDetailsOrUndetermined } from "../../models/Match";
   import TeamLogo from "../team/TeamLogo.svelte";
+  import PredictMatchOutcome from "./PredictMatchOutcome.svelte";
 
   export let match: MatchDetails;
 
@@ -27,6 +28,7 @@
       <span class="team-stats text-sm mt-2">
         {getTeamStats(match.team1)}
       </span>
+      <PredictMatchOutcome {match} teamId={{ team1: null }} />
     </div>
     <span class="text-xl font-bold my-4">VS</span>
     <div class="flex flex-col items-center">
@@ -37,17 +39,7 @@
       <span class="team-stats text-sm mt-2">
         {getTeamStats(match.team2)}
       </span>
+      <PredictMatchOutcome {match} teamId={{ team2: null }} />
     </div>
-  </div>
-  <!-- Prediction Selection -->
-  <div class="prediction-selection text-center">
-    <button
-      class="predict-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mr-2"
-      data-team="team1">Predict {getTeamName(match.team1)}</button
-    >
-    <button
-      class="predict-btn bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg"
-      data-team="team2">Predict {getTeamName(match.team2)}</button
-    >
   </div>
 </div>

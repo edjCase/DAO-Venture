@@ -134,6 +134,14 @@ actor : Types.Actor {
         #ok;
     };
 
+    public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {
+        if (not isLeague(caller)) {
+            return #notAuthorized;
+        };
+        users := Trie.empty();
+        #ok;
+    };
+
     private func updateUser(userId : Principal, f : (Types.User) -> Types.User) {
         let userInfo = getUserInfoInternal(userId);
         let newUserInfo = f(userInfo);

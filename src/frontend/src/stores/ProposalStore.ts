@@ -13,7 +13,8 @@ export const proposalStore = (() => {
 
 
     const refetchLeagueProposal = async (proposalId: bigint) => {
-        let proposalResult = await leagueAgentFactory().getProposal(proposalId);
+        let leagueAgent = await leagueAgentFactory();
+        let proposalResult = await leagueAgent.getProposal(proposalId);
         let proposal: LeagueProposal;
         if ('ok' in proposalResult) {
             proposal = proposalResult.ok;
@@ -32,7 +33,8 @@ export const proposalStore = (() => {
     }
 
     const refetchLeagueProposals = async () => {
-        let proposalsResult = await leagueAgentFactory().getProposals();
+        let leagueAgent = await leagueAgentFactory();
+        let proposalsResult = await leagueAgent.getProposals();
         if ('ok' in proposalsResult) {
             leagueStore.set(proposalsResult.ok);
         } else {
@@ -56,7 +58,9 @@ export const proposalStore = (() => {
 
     const refetchTeamProposal = async (teamId: bigint, proposalId: bigint) => {
         let store = getOrCreateTeamStore(teamId);
-        let proposalResult = await teamsAgentFactory().getProposal(teamId, proposalId);
+        let teamsAgent = await teamsAgentFactory();
+        let proposalResult = await teamsAgent
+            .getProposal(teamId, proposalId);
         if ('ok' in proposalResult) {
             let proposal = proposalResult.ok;
             store.update((current) => {
@@ -75,7 +79,9 @@ export const proposalStore = (() => {
 
     const refetchTeamProposals = async (teamId: bigint) => {
         let store = getOrCreateTeamStore(teamId);
-        let proposals = await teamsAgentFactory().getProposals(teamId);
+        let teamsAgent = await teamsAgentFactory();
+        let proposals = await teamsAgent
+            .getProposals(teamId);
         if ('ok' in proposals) {
             store.set(proposals.ok);
         } else {

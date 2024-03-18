@@ -17,7 +17,7 @@
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
     }
 
-    let register = function () {
+    let register = async function () {
         if (!isOwner || teamId === undefined) {
             console.log("User cant vote unless they are a team owner");
             return;
@@ -34,7 +34,8 @@
             `Voting for team ${teamId} and scenario ${scenarioId} with option ${selectedChoice}`,
             request,
         );
-        teamsAgentFactory()
+        let teamsAgent = await teamsAgentFactory();
+        teamsAgent
             .voteOnScenario(teamId, request)
             .then((result) => {
                 console.log("Voted for match: ", result);

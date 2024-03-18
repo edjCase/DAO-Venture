@@ -9,7 +9,8 @@
     export let teamId: bigint;
 
     let onVote = async (vote: boolean) => {
-        let result = await teamsAgentFactory().voteOnProposal(teamId, {
+        let teamsAgent = await teamsAgentFactory();
+        let result = await teamsAgent.voteOnProposal(teamId, {
             proposalId: proposal.id,
             vote,
         });

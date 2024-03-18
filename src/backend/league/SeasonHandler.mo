@@ -13,7 +13,6 @@ import Time "mo:base/Time";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
 import Debug "mo:base/Debug";
-import Text "mo:base/Text";
 import Error "mo:base/Error";
 import Order "mo:base/Order";
 import ScheduleBuilder "ScheduleBuilder";
@@ -43,11 +42,11 @@ module {
     };
 
     public type EventHandler = {
-        onSeasonStart : (Season.InProgressSeason) -> async* ();
+        onSeasonStart : (season : Season.InProgressSeason) -> async* ();
         onMatchGroupSchedule : (matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> async* ();
         onMatchGroupStart : (matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) -> async* ();
         onMatchGroupComplete : (matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) -> async* ();
-        onSeasonComplete : (Season.CompletedSeason) -> async* ();
+        onSeasonComplete : (season : Season.CompletedSeason) -> async* ();
     };
 
     public class SeasonHandler<system>(data : StableData, eventHandler : EventHandler) {
@@ -176,7 +175,7 @@ module {
             // Get current match group by finding the next scheduled one
             switch (seasonStatus) {
                 case (#inProgress(inProgressSeason)) {
-                    for (i in Iter.range(0, inProgressSeason.matchGroups.size())) {
+                    for (i in Iter.range(0, inProgressSeason.matchGroups.size() - 1)) {
                         let matchGroup = inProgressSeason.matchGroups[i];
                         switch (matchGroup) {
                             // Find first scheduled match group
@@ -208,15 +207,25 @@ module {
             // Get current match group by finding the next scheduled one
             switch (seasonStatus) {
                 case (#notStarted or #starting) null;
-                case (#inProgress(inProgressSeason)) ?{
-                    matchGroupId = matchGroupId;
-                    matchGroup = inProgressSeason.matchGroups[matchGroupId];
-                    season = #inProgress(inProgressSeason);
+                case (#inProgress(inProgressSeason)) {
+                    if (matchGroupId >= inProgressSeason.matchGroups.size()) {
+                        return null;
+                    };
+                    ?{
+                        matchGroupId = matchGroupId;
+                        matchGroup = inProgressSeason.matchGroups[matchGroupId];
+                        season = #inProgress(inProgressSeason);
+                    };
                 };
-                case (#completed(c)) ?{
-                    matchGroupId = matchGroupId;
-                    matchGroup = #completed(c.matchGroups[matchGroupId]);
-                    season = #completed(c);
+                case (#completed(c)) {
+                    if (matchGroupId >= c.matchGroups.size()) {
+                        return null;
+                    };
+                    ?{
+                        matchGroupId = matchGroupId;
+                        matchGroup = #completed(c.matchGroups[matchGroupId]);
+                        season = #completed(c);
+                    };
                 };
             };
         };
@@ -394,7 +403,7 @@ module {
             switch (seasonStatus) {
                 case (#notStarted or #starting) ();
                 case (#inProgress(inProgressSeason)) {
-                    for (i in Iter.range(0, inProgressSeason.matchGroups.size())) {
+                    for (i in Iter.range(0, inProgressSeason.matchGroups.size() - 1)) {
                         let matchGroup = inProgressSeason.matchGroups[i];
                         switch (matchGroup) {
                             case (#scheduled(scheduledMatchGroup)) {

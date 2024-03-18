@@ -12,7 +12,7 @@
   };
 </script>
 
-{#if identity}
+{#if !identity.getPrincipal().isAnonymous()}
   <Button on:click={logout}>Logout</Button>
 {:else}
   <Button on:click={login}>Login</Button>

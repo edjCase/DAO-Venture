@@ -1,35 +1,30 @@
-import { AuthClient } from '@dfinity/auth-client';
-import { Principal } from '@dfinity/principal';
-import { writable } from 'svelte/store';
-import { Identity } from '@dfinity/agent';
+import { AnonymousIdentity, Identity } from "@dfinity/agent";
+import { AuthClient } from "@dfinity/auth-client";
+import { writable } from "svelte/store";
 
-
-type IdentityContext = {
-    id: Principal;
-    identity: Identity;
-};
+let authClientCache: AuthClient | undefined;
+let authClientPromise: Promise<AuthClient> | undefined;
 const authClientOptions = { idleOptions: { disableIdle: true } };
 
-function createIdentityStore() {
-    const { subscribe, set } = writable<IdentityContext | undefined>();
 
-
-    const refresh = async () => {
-        let authClient = await AuthClient.create(authClientOptions);
-        let identity = authClient.getIdentity();
-        let id = identity.getPrincipal();
-        if (id.isAnonymous()) {
-            set(undefined);
-        } else {
-            set({
-                id: id,
-                identity: identity,
-            });
+const getOrCreateAuthClient = async () => {
+    if (!authClientCache) {
+        if (!authClientPromise) {
+            // Prevent multiple concurrent calls to createAuthClient
+            authClientPromise = AuthClient.create(authClientOptions);
         }
-    };
+        authClientCache = await authClientPromise;
+        authClientPromise = undefined;
+    }
+    return authClientCache;
+};
+
+export const identityStore = (() => {
+    const { subscribe, set } = writable<Identity>(new AnonymousIdentity());
+
 
     const login = async () => {
-        let authClient = await AuthClient.create(authClientOptions);
+        let authClient = await getOrCreateAuthClient();
         await authClient.login({
             maxTimeToLive: BigInt(30) * BigInt(24) * BigInt(3_600_000_000_000), // 30 days
             identityProvider:
@@ -37,32 +32,38 @@ function createIdentityStore() {
                     ? `https://identity.ic0.app`
                     : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
             onSuccess: () => {
-                refresh();
+                console.log("Logged in");
+                set(authClient.getIdentity());
             },
             onError: (err) => {
                 console.error(err);
-                refresh();
             }
         });
     };
 
     const logout = async () => {
-        let authClient = await AuthClient.create(authClientOptions);
-        try {
-            await authClient.logout();
-        } finally {
-            await refresh();
-        }
+        let authClient = await getOrCreateAuthClient();
+        set(new AnonymousIdentity());
+        await authClient.logout();
     };
 
-    refresh();
+    const check = async () => {
+        let authClient = await getOrCreateAuthClient();
+        set(authClient.getIdentity());
+    }
+
+    check();
+
 
     return {
-        subscribe,
         login,
-        logout
+        logout,
+        subscribe
     };
-}
+})();
 
-// Create a store
-export const identityStore = createIdentityStore();
+export const getIdentity = async (): Promise<Identity> => {
+    let authClient = await getOrCreateAuthClient();
+    return authClient.getIdentity();
+};
+

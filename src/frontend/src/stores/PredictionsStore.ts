@@ -18,17 +18,20 @@ export const predictionStore = (() => {
         return store;
     };
 
-    const refetchMatchGroup = (matchGroupId: bigint) => {
+    const refetchMatchGroup = async (matchGroupId: bigint) => {
         let { set } = getOrCreateMatchGroupStore(matchGroupId);
-        leagueAgentFactory().getMatchGroupPredictions(matchGroupId).then((result) => {
-            if ('ok' in result) {
-                const matchPredictions = result.ok;
-                set(matchPredictions);
-                return;
-            } else {
-                console.error("Failed to get match group predictions: " + matchGroupId, result);
-            }
-        });
+
+        let leagueAgent = await leagueAgentFactory();
+        await leagueAgent
+            .getMatchGroupPredictions(matchGroupId).then((result) => {
+                if ('ok' in result) {
+                    const matchPredictions = result.ok;
+                    set(matchPredictions);
+                    return;
+                } else {
+                    console.error("Failed to get match group predictions: " + matchGroupId, result);
+                }
+            });
     };
 
     const subscribeToMatchGroup = (matchGroupId: bigint, callback: Subscriber<MatchGroupPredictionSummary>) => {

@@ -4,22 +4,24 @@
   import { Scenario } from "../../ic-agent/declarations/league";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { userStore } from "../../stores/UserStore";
-  import { identityStore } from "../../stores/IdentityStore";
   import { User } from "../../ic-agent/declarations/users";
+  import { getIdentity } from "../../stores/IdentityStore";
 
   export let scenarioId: string;
 
   let scenario: Scenario | undefined;
 
-  $: identity = $identityStore;
-
   let user: User | undefined;
   $: {
-    if (identity) {
-      userStore.subscribeUser(identity.id, (u) => {
-        user = u;
-      });
-    }
+    (async () => {
+      let identity = await getIdentity();
+      let id = identity.getPrincipal();
+      if (!id.isAnonymous()) {
+        userStore.subscribeUser(id, (u) => {
+          user = u;
+        });
+      }
+    })();
   }
 
   scenarioStore.subscribeById(scenarioId, (s) => {

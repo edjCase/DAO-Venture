@@ -15,7 +15,7 @@
   $: players = $playerStore;
 
   let createTeams = async function (): Promise<void> {
-    let leagueAgent = leagueAgentFactory();
+    let leagueAgent = await leagueAgentFactory();
     let promises = [];
     for (let i = 0; i < teamData.length; i++) {
       let team = teamData[i];
@@ -35,7 +35,7 @@
   };
 
   let createPlayers = async function () {
-    let playersAgent = playersAgentFactory();
+    let playersAgent = await playersAgentFactory();
     let promises = [];
     // loop over count
     for (let player of playerData) {
@@ -61,7 +61,7 @@
   };
 
   let createScenarios = async function () {
-    let leagueAgent = leagueAgentFactory();
+    let leagueAgent = await leagueAgentFactory();
     let promises = [];
     let startTime = new Date().getTime() * 1000000;
     for (let i = 0; i < scenarioData.length; i++) {
@@ -76,8 +76,7 @@
         .addScenario(addScenarioRequest)
         .then(async (result) => {
           if ("ok" in result) {
-            let scenarioId = result.ok;
-            console.log("Created scenario: ", scenarioId);
+            console.log("Created scenario: ", scenario.id);
           } else {
             console.log("Failed to make scenario: ", result);
           }
@@ -94,13 +93,13 @@
   };
   let resetTeams = async function () {
     console.log("resetting teams");
-    let leagueAgent = leagueAgentFactory();
+    let leagueAgent = await leagueAgentFactory();
     await leagueAgent.clearTeams();
     await createTeams();
   };
   let resetPlayers = async function () {
     console.log("resetting players");
-    let playersAgent = playersAgentFactory();
+    let playersAgent = await playersAgentFactory();
     await playersAgent.clearPlayers();
     await createPlayers();
   };
@@ -110,7 +109,7 @@
   };
   // let resetScenarios = async function () {
   //   console.log("resetting scenarios");
-  //   let leagueAgent = leagueAgentFactory();
+  //   let leagueAgent = await leagueAgentFactory();
   //   await leagueAgent.clearScenarios();
   //   await createScenarios();
   // };

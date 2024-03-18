@@ -140,7 +140,8 @@ export const scheduleStore = (() => {
     };
 
     const refetch = async () => {
-        return leagueAgentFactory()
+        let leagueAgent = await leagueAgentFactory();
+        await leagueAgent
             .getSeasonStatus()
             .then((status: SeasonStatus) => {
                 setStatus(status);

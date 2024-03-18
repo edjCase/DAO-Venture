@@ -14,8 +14,8 @@
   let user: User | undefined;
   let associatedTeamId: bigint | undefined;
   $: {
-    if (identity) {
-      userStore.subscribeUser(identity.id, (u) => {
+    if (!identity.getPrincipal().isAnonymous()) {
+      userStore.subscribeUser(identity.getPrincipal(), (u) => {
         user = u;
         associatedTeamId = u?.team[0]?.id;
       });
@@ -25,12 +25,15 @@
   let confirmModal: boolean = false;
   let confirmFavoriteTeamId: bigint | undefined;
   let setFavoriteTeam = async () => {
-    if (!identity) {
+    if (identity.getPrincipal().isAnonymous()) {
       console.log("User not logged in");
       return;
     }
     if (confirmFavoriteTeamId) {
-      await userStore.setFavoriteTeam(identity.id, confirmFavoriteTeamId);
+      await userStore.setFavoriteTeam(
+        identity.getPrincipal(),
+        confirmFavoriteTeamId,
+      );
     }
   };
 </script>
@@ -51,7 +54,7 @@
           </div>
           <div>
             {#if user}
-              {#if associatedTeamId}
+              {#if associatedTeamId !== undefined}
                 {#if associatedTeamId == team.id}
                   <StarSolid size="lg" />
                 {/if}

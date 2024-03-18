@@ -23,7 +23,6 @@ import PlayersActor "canister:players";
 import TeamsActor "canister:teams";
 import Dao "../Dao";
 import StadiumActor "canister:stadium";
-
 actor LeagueActor : Types.LeagueActor {
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -112,7 +111,27 @@ actor LeagueActor : Types.LeagueActor {
 
         };
         onSeasonComplete = func(_ : Season.CompletedSeason) : async* () {
+            // TODO archive vs delete
+            predictionHandler.clear();
+            // TODO teams reset energy/entropy? or is that a scenario thing
 
+            // TODO handle failures
+            try {
+                switch (await UsersActor.onSeasonComplete()) {
+                    case (#ok) ();
+                    case (#notAuthorized) Debug.print("League is not authorized to call users actor 'onSeasonComplete'");
+                };
+            } catch (err) {
+                Debug.print("Failed to call UsersActor.onSeasonComplete: " # Error.message(err));
+            };
+            try {
+                switch (await PlayersActor.onSeasonComplete()) {
+                    case (#ok) ();
+                    case (#notAuthorized) Debug.print("League is not authorized to call players actor 'onSeasonComplete'");
+                };
+            } catch (err) {
+                Debug.print("Failed to call PlayersActor.onSeasonComplete: " # Error.message(err));
+            };
         };
     };
 
@@ -330,6 +349,9 @@ actor LeagueActor : Types.LeagueActor {
         let awards = Buffer.Buffer<UserTypes.AwardPointsRequest>(0);
         var i = 0;
         for (match in Iter.fromArray(completedMatches)) {
+            if (i >= matchGroupPredictions.size()) {
+                Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
+            };
             let matchPredictions = matchGroupPredictions[i];
             i += 1;
             for ((userId, teamId) in Iter.fromArray(matchPredictions)) {

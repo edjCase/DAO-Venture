@@ -11,7 +11,9 @@
       return;
     }
     console.log("Scheduling season", startTime);
-    leagueAgentFactory()
+
+    let leagueAgent = await leagueAgentFactory();
+    leagueAgent
       .startSeason({
         startTime: startTime,
       })
@@ -25,16 +27,15 @@
       });
   };
   let closeSeason = async () => {
-    leagueAgentFactory()
-      .closeSeason()
-      .then((result) => {
-        if ("ok" in result) {
-          console.log("Closed season");
-          scheduleStore.refetch();
-        } else {
-          console.log("Failed to close season", result);
-        }
-      });
+    let leagueAgent = await leagueAgentFactory();
+    await leagueAgent.closeSeason().then((result) => {
+      if ("ok" in result) {
+        console.log("Closed season");
+        scheduleStore.refetch();
+      } else {
+        console.log("Failed to close season", result);
+      }
+    });
   };
   let setStartTime = (e: any) => {
     if (!e.currentTarget) {

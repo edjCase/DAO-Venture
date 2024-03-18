@@ -1,68 +1,58 @@
 import { Principal } from '@dfinity/principal';
-import { writable } from 'svelte/store';
+import { Writable, writable } from 'svelte/store';
 import { usersAgentFactory } from '../ic-agent/Users';
 import { GetUserResult, User } from '../ic-agent/declarations/users';
+import { toJsonString } from '../utils/StringUtil';
 
 function createUserStore() {
-    const { subscribe, set, update } = writable<User[]>([]); // TODO better way to only have subset of users?
-
-    const updateUser = (userId: Principal, user: User | undefined) => {
-        update((users) => {
-            let index = users.findIndex((u) => u.id.toText() === userId.toText());
-            if (index >= 0) {
-                if (user === undefined) {
-                    users.splice(index, 1);
-                } else {
-                    users[index] = user;
-                }
-            } else {
-                if (user !== undefined) {
-                    users.push(user);
-                }
-            }
-            return users;
-        });
-    };
-
-    const refetch = async () => {
-        let users = await usersAgentFactory()
-            .getAll();
-        set(users);
-    }
+    const userStores = new Map<string, Writable<User>>();
 
     const refetchUser = async (userId: Principal) => {
-        usersAgentFactory()
-            .get(userId)
-            .then((result: GetUserResult) => {
-                if ('ok' in result) {
-                    updateUser(userId, result.ok);
-                } else if ('notFound' in result) {
-                    updateUser(userId, undefined);
-                } else {
-                    console.log("Error getting user: ", result)
-                }
-            });
+        let store = await getOrCreateStore(userId);
+        let user = await get(userId);
+        store.set(user);
+    };
+
+    const getOrCreateStore = async (userId: Principal) => {
+        if (!userStores.has(userId.toText())) {
+            let user = await get(userId);
+            if (user) {
+                userStores.set(userId.toText(), writable<User>(user));
+            }
+        }
+        return userStores.get(userId.toText())!;
+    };
+
+    const get = async (userId: Principal) => {
+        let usersAgent = await usersAgentFactory();
+        let result: GetUserResult = await usersAgent.get(userId);
+        if ('ok' in result) {
+            return result.ok;
+        }
+        else if ('notFound' in result) {
+            let emptyUser: User = {
+                id: userId,
+                points: BigInt(0),
+                team: []
+            };
+            return emptyUser;
+        } else {
+            throw new Error("Failed to get user: " + userId + " " + toJsonString(result));
+        }
+    }
+
+    const subscribeUser = async (userId: Principal, callback: (user: User) => void) => {
+        let store = await getOrCreateStore(userId);
+        return store.subscribe(callback);
     };
 
     const setFavoriteTeam = async (userId: Principal, teamId: bigint) => {
-        await usersAgentFactory()
-            .setFavoriteTeam(userId, teamId);
+        let usersAgent = await usersAgentFactory();
+        await usersAgent.setFavoriteTeam(userId, teamId);
         refetchUser(userId);
-    };
-
-    const subscribeUser = (userId: Principal, callback: (value: User) => void) => {
-        refetchUser(userId);
-        return subscribe((users) => {
-            let user = users.find((u) => u.id.toText() === userId.toText());
-            if (user) {
-                callback(user);
-            }
-        });
     };
 
     return {
-        subscribe,
-        refetch,
         subscribeUser,
         refetchUser,
         setFavoriteTeam

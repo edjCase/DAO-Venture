@@ -12,8 +12,8 @@
 
   let user: User | undefined;
   $: {
-    if (identity) {
-      userStore.subscribeUser(identity.id, (u) => {
+    if (!identity.getPrincipal().isAnonymous()) {
+      userStore.subscribeUser(identity.getPrincipal(), (u) => {
         user = u;
       });
     }
@@ -21,9 +21,9 @@
 
   let idCopied = false;
   let copyPrincipal = () => {
-    if (identity) {
+    if (!identity.getPrincipal().isAnonymous()) {
       idCopied = true;
-      navigator.clipboard.writeText(identity.id.toString());
+      navigator.clipboard.writeText(identity.getPrincipal().toString());
       setTimeout(() => {
         idCopied = false;
       }, 2000); // wait for 2 seconds
@@ -38,11 +38,11 @@
   class="flex items-center space-x-2 md:order-1 cursor-pointer max-w-48"
   id="avatar-menu"
 >
-  {#if identity}
-    <UserAvatar userId={identity.id} />
+  {#if !identity.getPrincipal().isAnonymous()}
+    <UserAvatar userId={identity.getPrincipal()} />
     <div class="space-y-1 font-medium dark:text-white text-center">
       <div>
-        <UserPseudonym userId={identity.id} />
+        <UserPseudonym userId={identity.getPrincipal()} />
       </div>
       <div class="text-center text-sm text-gray-500 dark:text-gray-400">
         {#if user}
@@ -54,7 +54,7 @@
     <LoginButton />
   {/if}
 </div>
-{#if identity}
+{#if !identity.getPrincipal().isAnonymous()}
   <Dropdown placement="bottom" triggeredBy="#avatar-menu" class="w-40">
     <div slot="header" class="p-1">
       <div
@@ -67,7 +67,7 @@
           <FileCopyOutline on:click={copyPrincipal} class="flex-shrink-0" />
         {/if}
         <div class="text-center truncate flex-grow">
-          {identity.id.toString()}
+          {identity.getPrincipal().toString()}
         </div>
       </div>
     </div>

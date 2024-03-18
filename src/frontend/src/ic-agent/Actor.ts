@@ -4,10 +4,10 @@ import type {
   HttpAgentOptions,
   ActorConfig,
   Agent,
-  Identity,
 } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import type { IDL } from "@dfinity/candid";
+import { getIdentity } from "../stores/IdentityStore";
 
 export declare interface CreateActorOptions {
   /**
@@ -24,14 +24,12 @@ export declare interface CreateActorOptions {
   actorOptions?: ActorConfig;
 }
 
-
-
-export const createActor = <T>(
+export const createActor = async <T>(
   canisterId: string | Principal,
   idlFactory: IDL.InterfaceFactory,
-  identity?: Identity
-): ActorSubclass<T> => {
+): Promise<ActorSubclass<T>> => {
   const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:4943";
+  const identity = getIdentity();
   const agent = new HttpAgent({ identity: identity, host });
 
   // Fetch root key for certificate validation during development

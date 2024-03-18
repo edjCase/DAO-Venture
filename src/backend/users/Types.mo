@@ -10,6 +10,12 @@ module {
         setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
         awardPoints : (awards : [AwardPointsRequest]) -> async AwardPointsResult;
+        onSeasonComplete : () -> async OnSeasonCompleteResult;
+    };
+
+    public type OnSeasonCompleteResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type GetTeamOwnersRequest = {

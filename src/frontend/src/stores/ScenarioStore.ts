@@ -1,33 +1,45 @@
-import { writable } from "svelte/store";
+import { Writable, writable } from "svelte/store";
 import { Scenario } from "../ic-agent/declarations/league";
 import { leagueAgentFactory } from "../ic-agent/League";
 
+
+
 export const scenarioStore = (() => {
-    const { subscribe, update } = writable<Map<string, Scenario>>(new Map());
+    const scenarioStores = new Map<string, Writable<Scenario>>();
 
     const refetchById = async (id: string) => {
-        leagueAgentFactory().getScenario(id).then((scenario) => {
-            if ('ok' in scenario) {
-                update(scenarios => {
-                    scenarios.set(id, scenario.ok);
-                    return scenarios;
-                });
-            } else {
-                console.error("Failed to get scenario: " + id, scenario);
-            }
-        });
+        let store = await getOrCreateStore(id);
+        let scenario = await get(id);
+        store.set(scenario!);
     };
 
-    const subscribeById = (id: string, callback: (scenario: Scenario) => void) => {
-        const unsubscribe = subscribe(scenarios => {
-            const scenario = scenarios.get(id);
+    const getOrCreateStore = async (id: string) => {
+        if (!scenarioStores.has(id)) {
+            let scenario = await get(id);
             if (scenario) {
-                callback(scenario);
+                scenarioStores.set(id, writable<Scenario>(scenario));
             } else {
-                refetchById(id);
+                throw new Error("Scenario not found: " + id);
             }
-        });
-        return unsubscribe;
+        }
+        return scenarioStores.get(id)!;
+    };
+
+    const get = async (id: string) => {
+        let leagueAgent = await leagueAgentFactory();
+        let scenario = await leagueAgent
+            .getScenario(id);
+        if ('ok' in scenario) {
+            return scenario.ok;
+        } else {
+            console.error("Failed to get scenario: " + id, scenario);
+            return null;
+        }
+    }
+
+    const subscribeById = async (id: string, callback: (scenario: Scenario) => void) => {
+        let store = await getOrCreateStore(id);
+        return store.subscribe(callback);
     }
 
     return {

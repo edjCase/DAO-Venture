@@ -78,10 +78,12 @@ export const liveMatchGroupStore = (() => {
 
 
   const refetchMatchGroup = async (matchGroupId: bigint) => {
-    stadiumAgentFactory()
+    let stadiumAgent = await stadiumAgentFactory();
+    stadiumAgent
       .getMatchGroup(matchGroupId)
       .then((matchGroupOrNull: [MatchGroupWithId] | []) => {
         if (matchGroupOrNull.length === 0) {
+          set(undefined);
           return;
         }
         let matchGroup = matchGroupOrNull[0];

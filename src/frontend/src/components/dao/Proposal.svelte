@@ -2,9 +2,9 @@
     import { Button } from "flowbite-svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import { nanosecondsToDate } from "../../utils/DateUtils";
-    import { identityStore } from "../../stores/IdentityStore";
     import { Principal } from "@dfinity/principal";
     import { ProposalStatusLogEntry } from "../../ic-agent/declarations/league";
+    import { identityStore } from "../../stores/IdentityStore";
 
     interface Proposal {
         id: bigint;
@@ -17,18 +17,20 @@
     export let proposal: Proposal;
     export let onVote: (vote: boolean) => void;
 
-    $: identity = $identityStore;
-
+    let userId: Principal = Principal.anonymous();
     let yourVote: boolean | undefined;
-    $: {
-        if (identity) {
-            let yourUserId = identity.id;
+
+    identityStore.subscribe((i) => {
+        userId = i.getPrincipal();
+        if (!userId.isAnonymous()) {
             let v = proposal.votes.find(
-                ([memberId, _]) => memberId.compareTo(yourUserId) == "eq",
+                ([memberId, _]) => memberId.compareTo(userId) == "eq",
             )?.[1];
             yourVote = v && v.value.length > 0 ? v.value[0] : undefined;
+        } else {
+            yourVote = undefined;
         }
-    }
+    });
 
     let vote = async (vote: boolean) => {
         console.log("Voting on proposal", proposal.id, "vote", vote);
@@ -45,7 +47,7 @@
     <slot />
     {#if !lastStatus}
         <div class="text-2xl">Vote:</div>
-        {#if proposal.votes.some((v) => identity && v[0].toString() == identity.id.toString())}
+        {#if proposal.votes.some((v) => userId.toString() == v[0].toString())}
             {#if yourVote === undefined}
                 <div class="mb-6">
                     <Button on:click={() => vote(true)}>Yes</Button>

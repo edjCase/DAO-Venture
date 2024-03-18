@@ -8,7 +8,8 @@
     export let proposal: ProposalType;
 
     let onVote = async (vote: boolean) => {
-        let result = await leagueAgentFactory().voteOnProposal({
+        let leagueAgent = await leagueAgentFactory();
+        let result = await leagueAgent.voteOnProposal({
             proposalId: proposal.id,
             vote,
         });

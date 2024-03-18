@@ -8,7 +8,8 @@ export const playerStore = (() => {
     const { subscribe, set } = writable<PlayerWithId[]>([]);
 
     const refetch = async () => {
-        playersAgentFactory().getAllPlayers().then((players) => {
+        let playersAgent = await playersAgentFactory();
+        playersAgent.getAllPlayers().then((players) => {
             set(players);
         });
     };

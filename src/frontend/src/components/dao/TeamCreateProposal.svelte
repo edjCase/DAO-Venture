@@ -33,8 +33,9 @@
             default:
                 throw new Error("Unknown skill type: " + selectedSkillId);
         }
+        let teamsAgent = await teamsAgentFactory();
 
-        let result = await teamsAgentFactory().createProposal(teamId, {
+        let result = await teamsAgent.createProposal(teamId, {
             content: {
                 trainPlayer: {
                     playerId: playerId,
@@ -53,7 +54,8 @@
             console.log("No new name selected");
             return;
         }
-        let result = await teamsAgentFactory().createProposal(teamId, {
+        let teamsAgent = await teamsAgentFactory();
+        let result = await teamsAgent.createProposal(teamId, {
             content: {
                 changeName: {
                     name: newName,

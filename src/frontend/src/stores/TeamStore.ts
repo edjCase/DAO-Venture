@@ -9,9 +9,11 @@ export const teamStore = (() => {
   const { subscribe, set } = writable<TeamWithId[]>([]);
 
   const refetch = async () => {
-    leagueAgentFactory().getTeams().then((teams) => {
-      set(teams);
-    });
+    let leagueAgent = await leagueAgentFactory();
+    leagueAgent
+      .getTeams().then((teams) => {
+        set(teams);
+      });
   };
   refetch();
 

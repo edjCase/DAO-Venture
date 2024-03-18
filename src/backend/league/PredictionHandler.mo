@@ -45,6 +45,11 @@ module {
             };
         };
 
+        // TODO archive vs delete
+        public func clear() : () {
+            matchGroupPredictions := HashMap.HashMap<Nat, MatchGroupPredictionInfo>(0, Nat.equal, Nat32.fromNat);
+        };
+
         public func addMatchGroup(matchGroupId : Nat, matchCount : Nat) : () {
             let matchPredictions = Array.tabulate(matchCount, func(_ : Nat) : HashMap.HashMap<Principal, Team.TeamId> = HashMap.HashMap<Principal, Team.TeamId>(0, Principal.equal, Principal.hash));
             let matchGroupPredictionInfo : MatchGroupPredictionInfo = {
