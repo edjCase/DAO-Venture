@@ -2,11 +2,10 @@ import { TeamIdOrTie } from "../ic-agent/declarations/league";
 
 
 export type MatchGroupDetails = {
-    id: number;
+    id: bigint;
     time: bigint;
     matches: MatchDetails[];
     state: 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Completed';
-    scenarioId: string;
 };
 
 export type MatchDetails = {
@@ -24,6 +23,7 @@ export type TeamDetails = {
     id: bigint;
     name: string;
     logoUrl: string;
+    color: [number, number, number];
 };
 
 export type TeamDetailsWithScore = TeamDetails & { score: bigint | undefined };

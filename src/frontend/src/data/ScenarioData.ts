@@ -1,9 +1,16 @@
-import { AddScenarioRequest } from "../ic-agent/declarations/league";
+import { MetaEffect, ScenarioOptionWithEffect } from "../ic-agent/declarations/league";
 
 
+export interface Scenario {
+    'id': string,
+    'title': string,
+    'description': string,
+    'metaEffect': MetaEffect,
+    'options': Array<ScenarioOptionWithEffect>,
+}
 
 
-export let scenarios: AddScenarioRequest[] = [
+export let scenarios: Scenario[] = [
     {
         id: "SURGE_CRISIS_OPENING_CEREMONY",
         title: "Surge Crisis at the Opening Ceremony",
@@ -196,7 +203,7 @@ export let scenarios: AddScenarioRequest[] = [
                 prize: {
                     skill: {
                         skill: { speed: null },
-                        target: { players: [{ position: { firstBase: null } }] },
+                        target: { positions: [{ teamId: { choosingTeam: null }, position: { firstBase: null } }] },
                         duration: { indefinite: null },
                         delta: BigInt(3),
                     }

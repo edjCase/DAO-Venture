@@ -1,9 +1,9 @@
 <script lang="ts">
     import Proposal from "./Proposal.svelte";
-    import { Proposal as ProposalType } from "../../ic-agent/declarations/team";
+    import { Proposal as ProposalType } from "../../ic-agent/declarations/teams";
     import { teamsAgentFactory } from "../../ic-agent/Teams";
     import { proposalStore } from "../../stores/ProposalStore";
-    import { toJsonString } from "../../utils/JsonUtil";
+    import { toJsonString } from "../../utils/StringUtil";
 
     export let proposal: ProposalType;
     export let teamId: bigint;

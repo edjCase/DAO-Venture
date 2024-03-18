@@ -9,3 +9,7 @@ export function toJsonString(obj: any, indent: boolean = true): string {
         return value;
     }, space);
 }
+
+export function toRgbString(color: [number, number, number]): string {
+    return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+}

@@ -1,9 +1,9 @@
 <script lang="ts">
     import ProposalList from "./ProposalList.svelte";
     import { proposalStore } from "../../stores/ProposalStore";
-    import { Proposal } from "../../ic-agent/declarations/team";
     import { onDestroy } from "svelte";
     import TeamProposal from "./TeamProposal.svelte";
+    import { Proposal } from "../../ic-agent/declarations/teams";
 
     export let teamId: bigint;
 

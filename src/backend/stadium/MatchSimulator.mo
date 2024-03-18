@@ -39,6 +39,7 @@ module {
         id : Nat;
         name : Text;
         logoUrl : Text;
+        color : (Nat8, Nat8, Nat8);
         positions : {
             firstBase : Player.PlayerWithId;
             secondBase : Player.PlayerWithId;
@@ -148,6 +149,7 @@ module {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
+            color = team.color;
             score = 0;
             positions = {
                 pitcher = team.positions.pitcher.id;
@@ -237,6 +239,7 @@ module {
                 name = team.name;
                 logoUrl = team.logoUrl;
                 score = team.score;
+                color = team.color;
                 positions = {
                     pitcher = team.positions.pitcher;
                     firstBase = team.positions.firstBase;

@@ -32,6 +32,7 @@ module {
         name : Text;
         logoUrl : Text;
         positions : FieldPosition.TeamPositions;
+        color : (Nat8, Nat8, Nat8);
     };
 
     public type NotScheduledMatchGroup = {

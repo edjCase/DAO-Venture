@@ -136,8 +136,12 @@ export interface Skills {
   'throwingPower' : bigint,
 }
 export type TargetInstance = { 'teams' : Array<bigint> } |
-  { 'players' : Uint32Array | number[] } |
-  { 'league' : null };
+  { 'league' : null } |
+  { 'positions' : Array<TargetPositionInstance> };
+export interface TargetPositionInstance {
+  'teamId' : bigint,
+  'position' : FieldPosition,
+}
 export interface Trait {
   'id' : string,
   'effects' : Array<Effect>,

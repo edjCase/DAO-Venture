@@ -201,6 +201,7 @@ export interface StartMatchRequest {
 export interface StartMatchTeam {
   'id' : bigint,
   'name' : string,
+  'color' : [number, number, number],
   'logoUrl' : string,
   'positions' : {
     'rightField' : PlayerWithId,
@@ -228,6 +229,7 @@ export interface TeamPositions {
 export interface TeamState {
   'id' : bigint,
   'name' : string,
+  'color' : [number, number, number],
   'score' : bigint,
   'logoUrl' : string,
   'positions' : TeamPositions,

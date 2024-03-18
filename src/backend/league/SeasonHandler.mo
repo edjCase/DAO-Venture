@@ -347,6 +347,7 @@ module {
                         id = t.id;
                         name = t.name;
                         logoUrl = t.logoUrl;
+                        color = t.color;
                         wins = standingInfo.wins;
                         losses = standingInfo.losses;
                         totalScore = standingInfo.totalScore;
@@ -808,6 +809,7 @@ module {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
+            color = team.color;
             positions = {
                 pitcher = pitcher;
                 firstBase = firstBase;

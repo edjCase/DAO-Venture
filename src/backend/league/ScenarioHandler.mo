@@ -18,11 +18,9 @@ import Timer "mo:base/Timer";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
 import TextX "mo:xtended-text/TextX";
-import FieldPosition "../models/FieldPosition";
 import TeamTypes "../team/Types";
 import TeamsActor "canister:teams";
 import IterTools "mo:itertools/Iter";
-import LeagueActor "canister:league";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
@@ -85,50 +83,34 @@ module {
     public class Handler<system>(data : StableData, processEffectOutcomes : (outcomes : [Scenario.EffectOutcome]) -> async* ProcessEffectOutcomesResult) {
         let scenarios : HashMap.HashMap<Text, ScenarioData> = toHashMap(data.scenarios);
 
-        public func getScenario(id : Text) : ?Scenario.Scenario {
-            do ? {
-                let data = scenarios.get(id)!;
-                let state : Scenario.ScenarioState = switch (data.state) {
-                    case (#notStarted(_)) #notStarted;
-                    case (#inProgress(_)) #inProgress;
-                    case (#resolved(resolved)) #resolved({
-                        resolved with
-                        teamChoices = resolved.teamChoices.vals()
-                        |> Iter.map(
-                            _,
-                            func(team : TeamScenarioData) : {
-                                teamId : Nat;
-                                option : Nat;
-                            } = {
-                                teamId = team.id;
-                                option = team.option;
-                            },
-                        )
-                        |> Iter.toArray(_);
-                        effectOutcomes = resolved.effectOutcomes.vals()
-                        |> Iter.map(
-                            _,
-                            func(outcome : EffectOutcomeData) : Scenario.EffectOutcome = outcome.outcome,
-                        )
-                        |> Iter.toArray(_);
-                    });
-                };
-                {
-                    id = data.id;
-                    title = data.title;
-                    description = data.description;
-                    options = data.options;
-                    metaEffect = data.metaEffect;
-                    state = state;
-                };
-            };
-        };
-
         public func toStableData() : StableData {
             {
                 scenarios = scenarios.vals()
                 |> Iter.toArray(_);
             };
+        };
+
+        public func getScenario(id : Text) : ?Scenario.Scenario {
+            do ? {
+                let data = scenarios.get(id)!;
+                mapScenarioDataToScenario(data);
+            };
+        };
+
+        public func getOpenScenarios() : [Scenario.Scenario] {
+            scenarios.vals()
+            |> Iter.filter(
+                _,
+                func(scenario : ScenarioData) : Bool = switch (scenario.state) {
+                    case (#notStarted(_) or #resolved(_)) false;
+                    case (#inProgress(_)) true;
+                },
+            )
+            |> Iter.map(
+                _,
+                mapScenarioDataToScenario,
+            )
+            |> Iter.toArray(_);
         };
 
         public func add<system>(scenario : Types.AddScenarioRequest) : AddScenarioResult {
@@ -276,7 +258,6 @@ module {
                     switch (await* end(scenarioId)) {
                         case (#ok) ();
                         case (#scenarioNotFound) Debug.trap("Scenario not found: " # scenarioId);
-                        case (#processEffectOutcomesError(err)) Debug.trap("Error processing effect outcomes: " # err);
                     };
                 },
             );
@@ -329,6 +310,42 @@ module {
         };
 
         ignore resetTimers<system>();
+    };
+
+    private func mapScenarioDataToScenario(data : ScenarioData) : Scenario.Scenario {
+        let state : Scenario.ScenarioState = switch (data.state) {
+            case (#notStarted(_)) #notStarted;
+            case (#inProgress(_)) #inProgress;
+            case (#resolved(resolved)) #resolved({
+                resolved with
+                teamChoices = resolved.teamChoices.vals()
+                |> Iter.map(
+                    _,
+                    func(team : TeamScenarioData) : {
+                        teamId : Nat;
+                        option : Nat;
+                    } = {
+                        teamId = team.id;
+                        option = team.option;
+                    },
+                )
+                |> Iter.toArray(_);
+                effectOutcomes = resolved.effectOutcomes.vals()
+                |> Iter.map(
+                    _,
+                    func(outcome : EffectOutcomeData) : Scenario.EffectOutcome = outcome.outcome,
+                )
+                |> Iter.toArray(_);
+            });
+        };
+        {
+            id = data.id;
+            title = data.title;
+            description = data.description;
+            options = data.options;
+            metaEffect = data.metaEffect;
+            state = state;
+        };
     };
 
     private func buildTeamScenarioData(scenario : ScenarioData) : async* [TeamScenarioData] {

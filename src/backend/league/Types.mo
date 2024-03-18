@@ -11,7 +11,6 @@ module {
         getTeams : query () -> async [Team.TeamWithId];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getTeamStandings : query () -> async GetTeamStandingsResult;
-        processEffectOutcomes : (request : ProcessEffectOutcomesRequest) -> async ProcessEffectOutcomesResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
         closeSeason : () -> async CloseSeasonResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
@@ -24,6 +23,7 @@ module {
         getProposal : query (Nat) -> async GetProposalResult;
         getProposals : query () -> async GetProposalsResult;
         getScenario : query (Text) -> async GetScenarioResult;
+        getOpenScenarios : query () -> async GetOpenScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
         clearTeams : () -> async (); // TODO remove
     };
@@ -71,6 +71,11 @@ module {
     public type GetScenarioResult = {
         #ok : Scenario;
         #notFound;
+        #notStarted;
+    };
+
+    public type GetOpenScenariosResult = {
+        #ok : [Scenario];
     };
 
     public type ScenarioStateResolved = {
@@ -163,7 +168,6 @@ module {
     // Start season
     public type StartSeasonRequest = {
         startTime : Time.Time;
-        campaignId : Nat;
     };
 
     public type AddScenarioRequest = {

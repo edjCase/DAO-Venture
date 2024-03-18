@@ -4,6 +4,7 @@
 
   export let team: LiveTeamDetails;
   export let isOffense: boolean;
+  let color = `rgb(${team.color[0]}, ${team.color[1]}, ${team.color[2]})`;
 </script>
 
 <div
@@ -20,7 +21,7 @@
     </div>
   </div>
   <div class="flex-1 flex items-center justify-center">
-    <TeamLogo {team} size="md" borderColor={team.color} />
+    <TeamLogo {team} size="md" borderColor={color} />
   </div>
   <div class="flex-1 flex text-7xl items-center justify-center">
     {team.score}

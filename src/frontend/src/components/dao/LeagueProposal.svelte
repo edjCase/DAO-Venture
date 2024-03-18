@@ -2,7 +2,7 @@
     import Proposal from "./Proposal.svelte";
     import { Proposal as ProposalType } from "../../ic-agent/declarations/league";
     import { proposalStore } from "../../stores/ProposalStore";
-    import { toJsonString } from "../../utils/JsonUtil";
+    import { toJsonString } from "../../utils/StringUtil";
     import { leagueAgentFactory } from "../../ic-agent/League";
 
     export let proposal: ProposalType;

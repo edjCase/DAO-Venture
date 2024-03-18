@@ -3,7 +3,7 @@ import { Proposal as TeamProposal } from "../ic-agent/declarations/teams";
 import { Proposal as LeagueProposal } from "../ic-agent/declarations/league";
 import { teamsAgentFactory } from "../ic-agent/Teams";
 import { leagueAgentFactory } from "../ic-agent/League";
-import { toJsonString } from "../utils/JsonUtil";
+import { toJsonString } from "../utils/StringUtil";
 
 
 export const proposalStore = (() => {

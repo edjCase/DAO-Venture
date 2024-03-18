@@ -1,9 +1,8 @@
 <script lang="ts">
-  import { Principal } from "@dfinity/principal";
   import { Popover } from "flowbite-svelte";
 
   export let team:
-    | { logoUrl: string; name: string; id: Principal }
+    | { logoUrl: string; name: string; id: bigint }
     | { winnerOfMatch: number }
     | { seasonStandingIndex: number };
   export let size: "sm" | "md" | "lg" | undefined;

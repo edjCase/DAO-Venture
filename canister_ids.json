@@ -1,6 +1,9 @@
 {
-    "frontend": {
+    "static_frontend": {
         "ic": "dtwn5-4iaaa-aaaag-aa6da-cai"
+    },
+    "frontend": {
+        "ic": "bpo6s-4qaaa-aaaap-acava-cai"
     },
     "league": {
         "ic": "sctyd-5qaaa-aaaag-aa5lq-cai"

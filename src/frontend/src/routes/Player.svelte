@@ -1,11 +1,11 @@
 <script lang="ts">
   import PlayerProfile from "../components/player/PlayerProfile.svelte";
-  import { Player } from "../ic-agent/declarations/players";
+  import { PlayerWithId } from "../ic-agent/declarations/league";
   import { playerStore } from "../stores/PlayerStore";
 
   export let playerIdString: string;
 
-  let player: Player | undefined;
+  let player: PlayerWithId | undefined;
   playerStore.subscribe((players) => {
     player = players.find((p) => p.id.toString() === playerIdString);
   });

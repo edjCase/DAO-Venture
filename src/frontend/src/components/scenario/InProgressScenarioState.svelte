@@ -5,7 +5,6 @@
     import { VoteOnScenarioRequest } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
-    import { toJsonString } from "../../utils/JsonUtil";
 
     export let scenarioId: string;
     export let options: ScenarioOption[];

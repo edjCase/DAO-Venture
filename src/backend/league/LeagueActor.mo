@@ -54,50 +54,51 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    private func processEventOutcomes(effectOutcomes : [Scenario.EffectOutcome]) : async* ScenarioHandler.ProcessEffectOutcomesResult {
-        let playerOutcomes = Buffer.Buffer<Scenario.PlayerEffectOutcome>(resolvedScenarioState.effectOutcomes.size());
-        let teamsProcessed = try {
-            for (effectOutcome in Iter.fromArray(resolvedScenarioState.effectOutcomes)) {
+    private func processEffectOutcomes(effectOutcomes : [Scenario.EffectOutcome]) : async* ScenarioHandler.ProcessEffectOutcomesResult {
+        let processedOutcomes = Buffer.Buffer<ScenarioHandler.EffectOutcomeData>(effectOutcomes.size());
+        for (effectOutcome in Iter.fromArray(effectOutcomes)) {
+            let processed = try {
                 switch (effectOutcome) {
-                    case (#injury(injuryEffect)) playerOutcomes.add(#injury(injuryEffect));
+                    case (#injury(injuryEffect)) {
+                        let result = await PlayersActor.applyEffects([#injury(injuryEffect)]); // TODO optimize with bulk call
+                        switch (result) {
+                            case (#ok) true;
+                        };
+                    };
                     case (#entropy(entropyEffect)) {
                         teamsHandler.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
+                        true;
                     };
                     case (#energy(e)) {
                         teamsHandler.updateTeamEnergy(e.teamId, e.delta);
+                        true;
                     };
                     case (#skill(s)) {
-                        playerOutcomes.add(#skill(s));
+                        let result = await PlayersActor.applyEffects([#skill(s)]); // TODO optimize with bulk call
+                        switch (result) {
+                            case (#ok) true;
+                        };
                     };
                 };
-                true;
-            };
-        } catch (err) {
-            // TODO this should have rollback and whatnot, there shouldnt be an error but im not sure how to handle
-            // errors for now
-            Debug.print("Failed to process team effect outcomes: " # Error.message(err));
-            false;
-        };
-        // TODO handle failure
-        let playersProcessed = if (playerOutcomes.size() > 0) {
-            let result = try {
-                await PlayersActor.applyEffects(Buffer.toArray(playerOutcomes));
-                switch (result) {
-                    case (#ok) ();
-                };
-                true;
+
             } catch (err) {
+                // TODO this should have rollback and whatnot, there shouldnt be an error but im not sure how to handle
+                // errors for now
+                Debug.print("Failed to process team effect outcomes: " # Error.message(err));
                 false;
             };
-        } else {
-            true; // no players to process
+            processedOutcomes.add({
+                outcome = effectOutcome;
+                processed = processed;
+            });
         };
+        #ok(Buffer.toArray(processedOutcomes));
     };
 
     stable var stadiumInitialized = false;
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
-    var scenarioHandler = ScenarioHandler.Handler(stableData.scenarios, processEffectOutcomes);
     var teamsHandler = TeamsHandler.Handler(stableData.teams);
+    var scenarioHandler = ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
 
     let seasonEventHandler : SeasonHandler.EventHandler = {
         onSeasonStart = func(_ : Season.InProgressSeason) : async* () {};
@@ -142,7 +143,7 @@ actor LeagueActor : Types.LeagueActor {
     system func postupgrade() {
         seasonHandler := SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
         predictionHandler := PredictionHandler.Handler(stableData.predictions);
-        scenarioHandler := ScenarioHandler.Handler(stableData.scenarios);
+        scenarioHandler := ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
         teamsHandler := TeamsHandler.Handler(stableData.teams);
         dao := Dao.Dao(stableData.dao, onExecuted, onRejected);
         dao.resetEndTimers<system>(); // TODO move into DAO
@@ -205,35 +206,23 @@ actor LeagueActor : Types.LeagueActor {
         switch (scenarioHandler.getScenario(scenarioId)) {
             case (null) #notFound;
             case (?scenario) {
-                let options : [Scenario.ScenarioOption] = scenario.options
-                |> Iter.fromArray(_)
-                |> IterTools.mapEntries(
-                    _,
-                    func(i : Nat, option : Scenario.ScenarioOptionWithEffect) : Scenario.ScenarioOption {
-                        {
-                            id = i;
-                            title = option.title;
-                            description = option.description;
-                        };
-                    },
-                )
-                |> Iter.toArray(_);
-                #ok({
-                    id = scenario.id;
-                    title = scenario.title;
-                    description = scenario.description;
-                    options = options;
-                    state = scenario.state;
-                });
+                #ok(mapScenario(scenario));
             };
         };
+    };
+
+    public query func getOpenScenarios() : async Types.GetOpenScenariosResult {
+        let openScenarios = scenarioHandler.getOpenScenarios().vals()
+        |> Iter.map(_, mapScenario)
+        |> Iter.toArray(_);
+        #ok(openScenarios);
     };
 
     public shared ({ caller }) func addScenario(scenario : Types.AddScenarioRequest) : async Types.AddScenarioResult {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
-        switch (scenarioHandler.add(scenario)) {
+        switch (scenarioHandler.add<system>(scenario)) {
             case (#ok) #ok;
             case (#invalid(errors)) return #invalid(errors);
         };
@@ -365,6 +354,29 @@ actor LeagueActor : Types.LeagueActor {
         switch (error) {
             case (null) ();
             case (?error) Debug.print("Failed to award user points: " # error);
+        };
+    };
+
+    private func mapScenario(scenario : Scenario.Scenario) : Types.Scenario {
+        let options : [Scenario.ScenarioOption] = scenario.options
+        |> Iter.fromArray(_)
+        |> IterTools.mapEntries(
+            _,
+            func(i : Nat, option : Scenario.ScenarioOptionWithEffect) : Scenario.ScenarioOption {
+                {
+                    id = i;
+                    title = option.title;
+                    description = option.description;
+                };
+            },
+        )
+        |> Iter.toArray(_);
+        {
+            id = scenario.id;
+            title = scenario.title;
+            description = scenario.description;
+            options = options;
+            state = scenario.state;
         };
     };
 

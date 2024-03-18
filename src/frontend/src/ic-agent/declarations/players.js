@@ -48,10 +48,24 @@ export const idlFactory = ({ IDL }) => {
     'matches' : IDL.Nat,
     'indefinite' : IDL.Null,
   });
+  const FieldPosition = IDL.Variant({
+    'rightField' : IDL.Null,
+    'leftField' : IDL.Null,
+    'thirdBase' : IDL.Null,
+    'pitcher' : IDL.Null,
+    'secondBase' : IDL.Null,
+    'shortStop' : IDL.Null,
+    'centerField' : IDL.Null,
+    'firstBase' : IDL.Null,
+  });
+  const TargetPositionInstance = IDL.Record({
+    'teamId' : IDL.Nat,
+    'position' : FieldPosition,
+  });
   const TargetInstance = IDL.Variant({
     'teams' : IDL.Vec(IDL.Nat),
-    'players' : IDL.Vec(IDL.Nat32),
     'league' : IDL.Null,
+    'positions' : IDL.Vec(TargetPositionInstance),
   });
   const Injury = IDL.Variant({
     'twistedAnkle' : IDL.Null,
@@ -85,16 +99,6 @@ export const idlFactory = ({ IDL }) => {
   const CreatePlayerFluffResult = IDL.Variant({
     'created' : IDL.Null,
     'invalid' : IDL.Vec(InvalidError),
-  });
-  const FieldPosition = IDL.Variant({
-    'rightField' : IDL.Null,
-    'leftField' : IDL.Null,
-    'thirdBase' : IDL.Null,
-    'pitcher' : IDL.Null,
-    'secondBase' : IDL.Null,
-    'shortStop' : IDL.Null,
-    'centerField' : IDL.Null,
-    'firstBase' : IDL.Null,
   });
   const Skills = IDL.Record({
     'battingAccuracy' : IDL.Int,

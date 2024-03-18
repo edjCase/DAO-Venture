@@ -4,7 +4,6 @@
   import { dateToNanoseconds } from "../../utils/DateUtils";
   import { leagueAgentFactory } from "../../ic-agent/League";
   import { SeasonStatus } from "../../ic-agent/declarations/league";
-  import { scenarios } from "../../data/ScenarioData";
 
   let startTime: bigint | undefined;
   let scheduleSeason = async () => {
@@ -15,7 +14,6 @@
     leagueAgentFactory()
       .startSeason({
         startTime: startTime,
-        scenarioIds: scenarios.map((s) => s.id), // TODO
       })
       .then((result) => {
         if ("ok" in result) {

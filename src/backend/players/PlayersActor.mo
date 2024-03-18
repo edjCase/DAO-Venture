@@ -9,6 +9,7 @@ import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
+import Bool "mo:base/Bool";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Types "Types";
@@ -272,8 +273,8 @@ actor : Types.PlayerActor {
             case (#teams(teamIds)) func((playerId, player) : (Nat32, Types.Player)) : Bool {
                 Array.indexOf(player.teamId, teamIds, Nat.equal) != null;
             };
-            case (#players(playerIds)) func((playerId, player) : (Nat32, Types.Player)) : Bool {
-                Array.indexOf(playerId, playerIds, Nat32.equal) != null;
+            case (#positions(positions)) func((playerId, player) : (Nat32, Types.Player)) : Bool {
+                IterTools.any(positions.vals(), func(p : Scenario.TargetPositionInstance) : Bool = p.position == player.position and p.teamId == player.teamId);
             };
         };
         players

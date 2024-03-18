@@ -1,6 +1,6 @@
 <script lang="ts">
   import { toSvg } from "jdenticon";
-  import { PlayerCondition } from "../../models/Player";
+  import { PlayerCondition } from "../../ic-agent/declarations/stadium";
 
   export let id: any;
   export let size: number;

@@ -23,7 +23,7 @@
       matchPredictions = undefined;
       predictionStore.refetchMatchGroup(match.matchGroupId);
     } else {
-      let matchPrediction = predictions.matches[match.id];
+      let matchPrediction = predictions.matches[Number(match.id)];
       let totalPredictions =
         Number(matchPrediction.team1) + Number(matchPrediction.team2);
       matchPredictions = {

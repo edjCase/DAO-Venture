@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
-    import { toJsonString } from "../../utils/JsonUtil";
+    import { toJsonString } from "../../utils/StringUtil";
     import { nanosecondsToDate } from "../../utils/DateUtils";
     import { identityStore } from "../../stores/IdentityStore";
     import { Principal } from "@dfinity/principal";

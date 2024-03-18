@@ -1,5 +1,6 @@
 export const idlFactory = ({ IDL }) => {
   const Effect = IDL.Rec();
+  const Time = IDL.Int;
   const TargetTeam = IDL.Variant({ 'choosingTeam' : IDL.Null });
   const Duration = IDL.Variant({
     'matches' : IDL.Nat,
@@ -24,11 +25,14 @@ export const idlFactory = ({ IDL }) => {
     'centerField' : IDL.Null,
     'firstBase' : IDL.Null,
   });
-  const TargetPlayer = IDL.Variant({ 'position' : FieldPosition });
+  const TargetPosition = IDL.Record({
+    'teamId' : TargetTeam,
+    'position' : FieldPosition,
+  });
   const Target = IDL.Variant({
     'teams' : IDL.Vec(TargetTeam),
-    'players' : IDL.Vec(TargetPlayer),
     'league' : IDL.Null,
+    'positions' : IDL.Vec(TargetPosition),
   });
   const Injury = IDL.Variant({
     'twistedAnkle' : IDL.Null,
@@ -99,8 +103,11 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddScenarioRequest = IDL.Record({
     'id' : IDL.Text,
+    'startTime' : Time,
     'title' : IDL.Text,
+    'endTime' : Time,
     'metaEffect' : MetaEffect,
+    'teamIds' : IDL.Vec(IDL.Nat),
     'description' : IDL.Text,
     'options' : IDL.Vec(ScenarioOptionWithEffect),
   });
@@ -150,11 +157,31 @@ export const idlFactory = ({ IDL }) => {
     'ok' : MatchGroupPredictionSummary,
     'notFound' : IDL.Null,
   });
+  const ScenarioStateResolved = IDL.Record({
+    'teamChoices' : IDL.Vec(
+      IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
+    ),
+  });
+  const ScenarioOption = IDL.Record({
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Scenario = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+    'state' : IDL.Variant({
+      'notStarted' : IDL.Null,
+      'resolved' : ScenarioStateResolved,
+      'inProgress' : IDL.Null,
+    }),
+    'options' : IDL.Vec(ScenarioOption),
+  });
+  const GetOpenScenariosResult = IDL.Variant({ 'ok' : IDL.Vec(Scenario) });
   const Vote = IDL.Record({
     'value' : IDL.Opt(IDL.Bool),
     'votingPower' : IDL.Nat,
   });
-  const Time = IDL.Int;
   const ProposalStatusLogEntry = IDL.Variant({
     'failedToExecute' : IDL.Record({ 'time' : Time, 'error' : IDL.Text }),
     'rejected' : IDL.Record({ 'time' : Time }),
@@ -176,28 +203,9 @@ export const idlFactory = ({ IDL }) => {
     'proposalNotFound' : IDL.Null,
   });
   const GetProposalsResult = IDL.Variant({ 'ok' : IDL.Vec(Proposal) });
-  const ScenarioStateResolved = IDL.Record({
-    'teamChoices' : IDL.Vec(
-      IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
-    ),
-  });
-  const ScenarioOption = IDL.Record({
-    'title' : IDL.Text,
-    'description' : IDL.Text,
-  });
-  const Scenario = IDL.Record({
-    'id' : IDL.Text,
-    'title' : IDL.Text,
-    'description' : IDL.Text,
-    'state' : IDL.Variant({
-      'notStarted' : IDL.Null,
-      'resolved' : ScenarioStateResolved,
-      'inProgress' : IDL.Null,
-    }),
-    'options' : IDL.Vec(ScenarioOption),
-  });
   const GetScenarioResult = IDL.Variant({
     'ok' : Scenario,
+    'notStarted' : IDL.Null,
     'notFound' : IDL.Null,
   });
   const TeamPositions = IDL.Record({
@@ -213,6 +221,7 @@ export const idlFactory = ({ IDL }) => {
   const CompletedSeasonTeam = IDL.Record({
     'id' : IDL.Nat,
     'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'wins' : IDL.Nat,
     'losses' : IDL.Nat,
     'totalScore' : IDL.Int,
@@ -244,7 +253,6 @@ export const idlFactory = ({ IDL }) => {
     'winner' : TeamIdOrTie,
   });
   const CompletedMatchGroup = IDL.Record({
-    'scenarioId' : IDL.Text,
     'time' : Time,
     'matches' : IDL.Vec(CompletedMatch),
   });
@@ -257,6 +265,7 @@ export const idlFactory = ({ IDL }) => {
   const TeamInfo = IDL.Record({
     'id' : IDL.Nat,
     'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'logoUrl' : IDL.Text,
     'positions' : TeamPositions,
   });
@@ -294,7 +303,6 @@ export const idlFactory = ({ IDL }) => {
     'aura' : MatchAuraWithMetaData,
   });
   const ScheduledMatchGroup = IDL.Record({
-    'scenarioId' : IDL.Text,
     'stadiumId' : IDL.Principal,
     'time' : Time,
     'matches' : IDL.Vec(ScheduledMatch),
@@ -307,7 +315,6 @@ export const idlFactory = ({ IDL }) => {
     'aura' : MatchAura,
   });
   const InProgressMatchGroup = IDL.Record({
-    'scenarioId' : IDL.Text,
     'stadiumId' : IDL.Principal,
     'time' : Time,
     'matches' : IDL.Vec(InProgressMatch),
@@ -322,7 +329,6 @@ export const idlFactory = ({ IDL }) => {
     'team2' : TeamAssignment,
   });
   const NotScheduledMatchGroup = IDL.Record({
-    'scenarioId' : IDL.Text,
     'time' : Time,
     'matches' : IDL.Vec(NotScheduledMatch),
   });
@@ -413,30 +419,6 @@ export const idlFactory = ({ IDL }) => {
     'matchGroupNotFound' : IDL.Null,
     'identityRequired' : IDL.Null,
   });
-  const TargetInstance = IDL.Variant({
-    'teams' : IDL.Vec(IDL.Nat),
-    'players' : IDL.Vec(IDL.Nat32),
-    'league' : IDL.Null,
-  });
-  const EffectOutcome = IDL.Variant({
-    'entropy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
-    'skill' : IDL.Record({
-      'duration' : Duration,
-      'skill' : Skill,
-      'target' : TargetInstance,
-      'delta' : IDL.Int,
-    }),
-    'injury' : IDL.Record({ 'target' : TargetInstance, 'injury' : Injury }),
-    'energy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
-  });
-  const ProcessEffectOutcomesRequest = IDL.Record({
-    'outcomes' : IDL.Vec(EffectOutcome),
-  });
-  const ProcessEffectOutcomesResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
-    'seasonNotInProgress' : IDL.Null,
-  });
   const TeamIdOrBoth = IDL.Variant({
     'team1' : IDL.Null,
     'team2' : IDL.Null,
@@ -453,10 +435,7 @@ export const idlFactory = ({ IDL }) => {
       IDL.Record({ 'error' : StartMatchError, 'matchId' : IDL.Nat })
     ),
   });
-  const StartSeasonRequest = IDL.Record({
-    'startTime' : Time,
-    'scenarioIds' : IDL.Vec(IDL.Text),
-  });
+  const StartSeasonRequest = IDL.Record({ 'startTime' : Time });
   const StartSeasonResult = IDL.Variant({
     'ok' : IDL.Null,
     'invalidScenario' : IDL.Record({
@@ -501,6 +480,7 @@ export const idlFactory = ({ IDL }) => {
         [GetMatchGroupPredictionsResult],
         ['query'],
       ),
+    'getOpenScenarios' : IDL.Func([], [GetOpenScenariosResult], ['query']),
     'getProposal' : IDL.Func([IDL.Nat], [GetProposalResult], ['query']),
     'getProposals' : IDL.Func([], [GetProposalsResult], ['query']),
     'getScenario' : IDL.Func([IDL.Text], [GetScenarioResult], ['query']),
@@ -515,11 +495,6 @@ export const idlFactory = ({ IDL }) => {
     'predictMatchOutcome' : IDL.Func(
         [PredictMatchOutcomeRequest],
         [PredictMatchOutcomeResult],
-        [],
-      ),
-    'processEffectOutcomes' : IDL.Func(
-        [ProcessEffectOutcomesRequest],
-        [ProcessEffectOutcomesResult],
         [],
       ),
     'startMatchGroup' : IDL.Func([IDL.Nat], [StartMatchGroupResult], []),

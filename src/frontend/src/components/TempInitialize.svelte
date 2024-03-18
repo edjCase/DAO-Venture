@@ -6,9 +6,10 @@
   import { players as playerData } from "../data/PlayerData";
   import { scenarios as scenarioData } from "../data/ScenarioData";
   import { Button } from "flowbite-svelte";
-  import { toJsonString } from "../utils/JsonUtil";
+  import { toJsonString } from "../utils/StringUtil";
   import { leagueAgentFactory } from "../ic-agent/League";
   import { playersAgentFactory } from "../ic-agent/Players";
+  import { AddScenarioRequest } from "../ic-agent/declarations/league";
 
   $: teams = $teamStore;
   $: players = $playerStore;
@@ -62,16 +63,25 @@
   let createScenarios = async function () {
     let leagueAgent = leagueAgentFactory();
     let promises = [];
+    let startTime = new Date().getTime() * 1000000;
     for (let i = 0; i < scenarioData.length; i++) {
       let scenario = scenarioData[i];
-      let promise = leagueAgent.addScenario(scenario).then(async (result) => {
-        if ("ok" in result) {
-          let scenarioId = result.ok;
-          console.log("Created scenario: ", scenarioId);
-        } else {
-          console.log("Failed to make scenario: ", result);
-        }
-      });
+      let addScenarioRequest: AddScenarioRequest = {
+        ...scenario,
+        teamIds: teams.map((team) => team.id),
+        startTime: BigInt(startTime),
+        endTime: BigInt(startTime + 1000 * 60 * 60 * 24 * 7), // 1 week
+      };
+      let promise = leagueAgent
+        .addScenario(addScenarioRequest)
+        .then(async (result) => {
+          if ("ok" in result) {
+            let scenarioId = result.ok;
+            console.log("Created scenario: ", scenarioId);
+          } else {
+            console.log("Failed to make scenario: ", result);
+          }
+        });
       promises.push(promise);
     }
     await Promise.all(promises);

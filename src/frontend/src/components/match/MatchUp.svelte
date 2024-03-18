@@ -12,7 +12,7 @@
   };
 
   // Placeholder function for getting team stats
-  let getTeamStats = (team: TeamDetailsOrUndetermined) => {
+  let getTeamStats = (_: TeamDetailsOrUndetermined) => {
     return "(4-3)";
   };
 </script>

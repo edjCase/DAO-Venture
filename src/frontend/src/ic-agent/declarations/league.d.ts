@@ -4,8 +4,11 @@ import type { IDL } from '@dfinity/candid';
 
 export interface AddScenarioRequest {
   'id' : string,
+  'startTime' : Time,
   'title' : string,
+  'endTime' : Time,
   'metaEffect' : MetaEffect,
+  'teamIds' : Array<bigint>,
   'description' : string,
   'options' : Array<ScenarioOptionWithEffect>,
 }
@@ -22,7 +25,6 @@ export interface CompletedMatch {
   'winner' : TeamIdOrTie,
 }
 export interface CompletedMatchGroup {
-  'scenarioId' : string,
   'time' : Time,
   'matches' : Array<CompletedMatch>,
 }
@@ -36,6 +38,7 @@ export interface CompletedSeason {
 export interface CompletedSeasonTeam {
   'id' : bigint,
   'name' : string,
+  'color' : [number, number, number],
   'wins' : bigint,
   'losses' : bigint,
   'totalScore' : bigint,
@@ -74,19 +77,6 @@ export type Effect = { 'allOf' : Array<Effect> } |
   } |
   { 'injury' : { 'target' : Target, 'injury' : Injury } } |
   { 'energy' : { 'value' : { 'flat' : bigint }, 'team' : TargetTeam } };
-export type EffectOutcome = {
-    'entropy' : { 'teamId' : bigint, 'delta' : bigint }
-  } |
-  {
-    'skill' : {
-      'duration' : Duration,
-      'skill' : Skill,
-      'target' : TargetInstance,
-      'delta' : bigint,
-    }
-  } |
-  { 'injury' : { 'target' : TargetInstance, 'injury' : Injury } } |
-  { 'energy' : { 'teamId' : bigint, 'delta' : bigint } };
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -99,10 +89,12 @@ export type GetMatchGroupPredictionsResult = {
     'ok' : MatchGroupPredictionSummary
   } |
   { 'notFound' : null };
+export type GetOpenScenariosResult = { 'ok' : Array<Scenario> };
 export type GetProposalResult = { 'ok' : Proposal } |
   { 'proposalNotFound' : null };
 export type GetProposalsResult = { 'ok' : Array<Proposal> };
 export type GetScenarioResult = { 'ok' : Scenario } |
+  { 'notStarted' : null } |
   { 'notFound' : null };
 export type GetTeamStandingsResult = { 'ok' : Array<TeamStandingInfo> } |
   { 'notFound' : null };
@@ -112,7 +104,6 @@ export interface InProgressMatch {
   'aura' : MatchAura,
 }
 export interface InProgressMatchGroup {
-  'scenarioId' : string,
   'stadiumId' : Principal,
   'time' : Time,
   'matches' : Array<InProgressMatch>,
@@ -193,7 +184,6 @@ export interface NotScheduledMatch {
   'team2' : TeamAssignment,
 }
 export interface NotScheduledMatchGroup {
-  'scenarioId' : string,
   'time' : Time,
   'matches' : Array<NotScheduledMatch>,
 }
@@ -256,12 +246,6 @@ export type PredictMatchOutcomeResult = { 'ok' : null } |
   { 'matchNotFound' : null } |
   { 'matchGroupNotFound' : null } |
   { 'identityRequired' : null };
-export interface ProcessEffectOutcomesRequest {
-  'outcomes' : Array<EffectOutcome>,
-}
-export type ProcessEffectOutcomesResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'seasonNotInProgress' : null };
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent,
@@ -305,7 +289,6 @@ export interface ScheduledMatch {
   'aura' : MatchAuraWithMetaData,
 }
 export interface ScheduledMatchGroup {
-  'scenarioId' : string,
   'stadiumId' : Principal,
   'time' : Time,
   'matches' : Array<ScheduledMatch>,
@@ -339,10 +322,7 @@ export type StartMatchGroupResult = { 'ok' : null } |
   { 'matchGroupNotFound' : null } |
   { 'alreadyStarted' : null } |
   { 'matchErrors' : Array<{ 'error' : StartMatchError, 'matchId' : bigint }> };
-export interface StartSeasonRequest {
-  'startTime' : Time,
-  'scenarioIds' : Array<string>,
-}
+export interface StartSeasonRequest { 'startTime' : Time }
 export type StartSeasonResult = { 'ok' : null } |
   { 'invalidScenario' : { 'id' : string, 'errors' : Array<string> } } |
   { 'noStadiumsExist' : null } |
@@ -354,12 +334,12 @@ export type StartSeasonResult = { 'ok' : null } |
   { 'scenarioCountMismatch' : { 'actual' : bigint, 'expected' : bigint } } |
   { 'noTeams' : null };
 export type Target = { 'teams' : Array<TargetTeam> } |
-  { 'players' : Array<TargetPlayer> } |
-  { 'league' : null };
-export type TargetInstance = { 'teams' : Array<bigint> } |
-  { 'players' : Uint32Array | number[] } |
-  { 'league' : null };
-export type TargetPlayer = { 'position' : FieldPosition };
+  { 'league' : null } |
+  { 'positions' : Array<TargetPosition> };
+export interface TargetPosition {
+  'teamId' : TargetTeam,
+  'position' : FieldPosition,
+}
 export type TargetTeam = { 'choosingTeam' : null };
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
@@ -375,6 +355,7 @@ export type TeamIdOrTie = { 'tie' : null } |
 export interface TeamInfo {
   'id' : bigint,
   'name' : string,
+  'color' : [number, number, number],
   'logoUrl' : string,
   'positions' : TeamPositions,
 }
@@ -425,6 +406,7 @@ export interface _SERVICE {
     [bigint],
     GetMatchGroupPredictionsResult
   >,
+  'getOpenScenarios' : ActorMethod<[], GetOpenScenariosResult>,
   'getProposal' : ActorMethod<[bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[], GetProposalsResult>,
   'getScenario' : ActorMethod<[string], GetScenarioResult>,
@@ -438,10 +420,6 @@ export interface _SERVICE {
   'predictMatchOutcome' : ActorMethod<
     [PredictMatchOutcomeRequest],
     PredictMatchOutcomeResult
-  >,
-  'processEffectOutcomes' : ActorMethod<
-    [ProcessEffectOutcomesRequest],
-    ProcessEffectOutcomesResult
   >,
   'startMatchGroup' : ActorMethod<[bigint], StartMatchGroupResult>,
   'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,

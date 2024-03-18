@@ -7,7 +7,7 @@ import { MatchAura, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent
 import { stadiumAgentFactory } from "../ic-agent/Stadium";
 
 export type LiveMatchGroup = {
-  id: number;
+  id: bigint;
   matches: LiveMatch[];
 };
 
@@ -45,7 +45,8 @@ export const liveMatchGroupStore = (() => {
       name: team.name,
       logoUrl: team.logoUrl,
       score: team.score,
-      positions: team.positions
+      positions: team.positions,
+      color: team.color
     }
   };
 
@@ -76,9 +77,9 @@ export const liveMatchGroupStore = (() => {
   };
 
 
-  const refetchMatchGroup = async (matchGroupId: number) => {
+  const refetchMatchGroup = async (matchGroupId: bigint) => {
     stadiumAgentFactory()
-      .getMatchGroup(BigInt(matchGroupId))
+      .getMatchGroup(matchGroupId)
       .then((matchGroupOrNull: [MatchGroupWithId] | []) => {
         if (matchGroupOrNull.length === 0) {
           return;
@@ -112,9 +113,9 @@ export const liveMatchGroupStore = (() => {
         if (liveMatchInterval) {
           clearInterval(liveMatchInterval);
         }
-        refetchMatchGroup(index);
+        refetchMatchGroup(BigInt(index));
         liveMatchInterval = setInterval(
-          () => refetchMatchGroup(index),
+          () => refetchMatchGroup(BigInt(index)),
           5000
         );
         // Dont break, to set next match timer

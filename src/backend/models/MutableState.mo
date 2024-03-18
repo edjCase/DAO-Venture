@@ -27,6 +27,7 @@ module {
         id : Nat;
         name : Text;
         logoUrl : Text;
+        color : (Nat8, Nat8, Nat8);
         var score : Int;
         positions : MutableTeamPositions;
     };
@@ -57,6 +58,7 @@ module {
                 id = team.id;
                 name = team.name;
                 logoUrl = team.logoUrl;
+                color = team.color;
                 var score = team.score;
                 positions = toMutableTeamPositions(team.positions);
             };

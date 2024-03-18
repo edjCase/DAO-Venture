@@ -5,7 +5,6 @@
   import TeamLogo from "./TeamLogo.svelte";
   import { StarOutline, StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
-  import { Principal } from "@dfinity/principal";
   import { identityStore } from "../../stores/IdentityStore";
   import { User } from "../../ic-agent/declarations/users";
 
@@ -13,7 +12,7 @@
   $: identity = $identityStore;
 
   let user: User | undefined;
-  let associatedTeamId: Principal | undefined;
+  let associatedTeamId: bigint | undefined;
   $: {
     if (identity) {
       userStore.subscribeUser(identity.id, (u) => {
@@ -24,7 +23,7 @@
   }
 
   let confirmModal: boolean = false;
-  let confirmFavoriteTeamId: Principal | undefined;
+  let confirmFavoriteTeamId: bigint | undefined;
   let setFavoriteTeam = async () => {
     if (!identity) {
       console.log("User not logged in");
@@ -53,7 +52,7 @@
           <div>
             {#if user}
               {#if associatedTeamId}
-                {#if associatedTeamId.compareTo(team.id) == "eq"}
+                {#if associatedTeamId == team.id}
                   <StarSolid size="lg" />
                 {/if}
               {:else}

@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { Principal } from "@dfinity/principal";
   import { playerStore } from "../../stores/PlayerStore";
   import { PlayerWithId } from "../../ic-agent/declarations/players";
   import { Link } from "svelte-routing";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";
   import { positionToString } from "../../models/FieldPosition";
 
-  export let teamId: Principal;
+  export let teamId: bigint;
 
   const skillToString = (skill: bigint): string => {
     if (skill == BigInt(0)) {

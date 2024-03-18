@@ -124,6 +124,7 @@ export const idlFactory = ({ IDL }) => {
   const TeamState = IDL.Record({
     'id' : IDL.Nat,
     'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'score' : IDL.Int,
     'logoUrl' : IDL.Text,
     'positions' : TeamPositions,
@@ -238,6 +239,7 @@ export const idlFactory = ({ IDL }) => {
   const StartMatchTeam = IDL.Record({
     'id' : IDL.Nat,
     'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'logoUrl' : IDL.Text,
     'positions' : IDL.Record({
       'rightField' : PlayerWithId,

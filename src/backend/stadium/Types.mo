@@ -54,6 +54,7 @@ module {
         id : Nat;
         name : Text;
         logoUrl : Text;
+        color : (Nat8, Nat8, Nat8);
     };
 
     public type StartMatchTeam = Team and {

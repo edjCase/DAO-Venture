@@ -7,31 +7,32 @@
     liveMatchGroupStore,
   } from "../../stores/LiveMatchGroupStore";
   import MatchCardCompact from "./MatchCardCompact.svelte";
-  import Scenario from "../scenario/Scenario.svelte";
 
   export let matchGroup: MatchGroupDetails;
 
-  let selectedMatchId = 0;
+  let selectedMatchId = BigInt(0);
   let liveMatches: LiveMatch[] | undefined = undefined;
   let matches: [MatchDetails, LiveMatch | undefined][] = [];
   $: matches = matchGroup.matches.map((match, index) => [
     match,
     liveMatches ? liveMatches[index] : undefined,
   ]);
-  $: selectedMatch = matchGroup.matches[selectedMatchId];
-  $: selectedLiveMatch = liveMatches ? liveMatches[selectedMatchId] : undefined;
+  $: selectedMatch = matchGroup.matches[Number(selectedMatchId)];
+  $: selectedLiveMatch = liveMatches
+    ? liveMatches[Number(selectedMatchId)]
+    : undefined;
 
   liveMatchGroupStore.subscribe((liveMatchGroup) => {
     if (!liveMatchGroup || matchGroup.id != liveMatchGroup?.id) {
       selectedLiveMatch = undefined;
       liveMatches = undefined;
     } else {
-      selectedLiveMatch = liveMatchGroup.matches[selectedMatchId];
+      selectedLiveMatch = liveMatchGroup.matches[Number(selectedMatchId)];
       liveMatches = liveMatchGroup.matches;
     }
   });
 
-  let selectMatch = (matchId: number) => () => {
+  let selectMatch = (matchId: bigint) => () => {
     selectedMatchId = matchId;
   };
 </script>
@@ -39,7 +40,6 @@
 <section>
   <section class="match-details">
     {#if matchGroup.state == "Scheduled"}
-      <Scenario scenarioId={matchGroup.scenarioId} />
       <h1>Predict the upcoming match-up winners</h1>
       {#each matchGroup.matches as match}
         <PredictMatchOutcome {match} />

@@ -21,7 +21,9 @@
   $: prediction =
     predictions === undefined
       ? undefined
-      : predictions.matches[match.id].yourVote;
+      : predictions.matches[Number(match.id)].yourVote.length < 1
+        ? undefined
+        : predictions.matches[Number(match.id)].yourVote[0];
 </script>
 
 <div

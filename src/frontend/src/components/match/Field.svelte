@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { BaseState, PlayerState } from "../../ic-agent/declarations/stadium";
+  import {
+    BaseState,
+    PlayerStateWithId,
+  } from "../../ic-agent/declarations/stadium";
   import { FieldPositionEnum } from "../../models/FieldPosition";
   import {
     LiveMatch,
@@ -11,18 +14,19 @@
   import { BaseEnum } from "../../models/Base";
   import FieldBall from "./FieldBall.svelte";
   import { FieldPosition } from "../../ic-agent/declarations/players";
-  import { toJsonString } from "../../utils/JsonUtil";
-  import { PlayerId } from "../../models/Player";
+  import { toJsonString } from "../../utils/StringUtil";
 
   export let match: LiveMatch;
 
-  let getPlayerOrNull = (playerId: [number] | []): PlayerState | undefined => {
+  let getPlayerOrNull = (
+    playerId: [number] | [],
+  ): PlayerStateWithId | undefined => {
     if (playerId.length == 0) return undefined;
     let id = playerId[0];
     return match.liveState?.players.find((p) => p.id == id) || undefined;
   };
 
-  let getPlayer = (playerId: number): PlayerState => {
+  let getPlayer = (playerId: number): PlayerStateWithId => {
     let playerOrNull = getPlayerOrNull([playerId]);
     if (!playerOrNull) {
       throw new Error("Player not found");
@@ -81,7 +85,7 @@
   };
 
   let getPlayerBaseCoordinates = (
-    playerId: PlayerId,
+    playerId: number,
     bases: BaseState,
   ): { x: number; y: number } => {
     if (playerId == bases.atBat) {
@@ -125,10 +129,10 @@
               );
               ballLocations.push(ballLocation);
 
-              let throwEvent = lastTurn.events.find((e) => "throw_" in e); // TODO how to return throw_
-              if (throwEvent && "throw_" in throwEvent) {
+              let throwEvent = lastTurn.events.find((e) => "throw" in e); // TODO how to return throw_
+              if (throwEvent && "throw" in throwEvent) {
                 let position = getPlayerBaseCoordinates(
-                  throwEvent.throw_.to,
+                  throwEvent.throw.to,
                   match.liveState.bases,
                 );
                 // TODO slightly miss if the hitByBall doesn't exist

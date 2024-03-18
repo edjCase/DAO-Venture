@@ -1,11 +1,11 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
   import TeamPage from "../components/team/TeamPage.svelte";
-  import { Team } from "../models/Team";
+  import { TeamWithId } from "../ic-agent/declarations/league";
 
   export let teamIdString: string;
 
-  let team: Team | undefined;
+  let team: TeamWithId | undefined;
   teamStore.subscribe((teams) => {
     team = teams.find((t) => t.id.toString() === teamIdString);
   });
