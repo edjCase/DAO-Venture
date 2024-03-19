@@ -40,7 +40,7 @@
 
 <div class="header">
   <div class="header-team team1">
-    <TeamLogo team={team1} size="sm" borderColor={undefined} />
+    <TeamLogo team={team1} size="sm" />
 
     <div class="score">
       {team1Score}
@@ -55,7 +55,7 @@
       <span class="emoji">{team2Emoji}</span>
       {team2Score}
     </div>
-    <TeamLogo team={team2} size="sm" borderColor={undefined} />
+    <TeamLogo team={team2} size="sm" />
   </div>
 </div>
 

@@ -24,7 +24,7 @@
       <span class="team-name font-semibold block mb-2">
         {getTeamName(match.team1)}
       </span>
-      <TeamLogo team={match.team1} size="md" borderColor={undefined} />
+      <TeamLogo team={match.team1} size="md" />
       <span class="team-stats text-sm mt-2">
         {getTeamStats(match.team1)}
       </span>
@@ -35,7 +35,7 @@
       <span class="team-name font-semibold block mb-2">
         {getTeamName(match.team2)}
       </span>
-      <TeamLogo team={match.team2} size="md" borderColor={undefined} />
+      <TeamLogo team={match.team2} size="md" />
       <span class="team-stats text-sm mt-2">
         {getTeamStats(match.team2)}
       </span>

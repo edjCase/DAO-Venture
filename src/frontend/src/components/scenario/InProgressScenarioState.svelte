@@ -83,4 +83,7 @@
             Submit Vote for Team {team?.name}
         </Button>
     </div>
+{:else}
+    <div>Want to participate in scenarios?</div>
+    <Button>Become a Team co-owner</Button>
 {/if}

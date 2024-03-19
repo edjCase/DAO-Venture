@@ -12,6 +12,11 @@
   import Players from "./routes/Players.svelte";
   import About from "./routes/About.svelte";
   import HowToPlay from "./routes/HowToPlay.svelte";
+  import Scenarios from "./routes/Scenarios.svelte";
+  import Season from "./routes/Season.svelte";
+  import UserProfile from "./routes/UserProfile.svelte";
+  import BottomNavigation from "./components/common/BottomNavigation.svelte";
+  import MyTeam from "./routes/MyTeam.svelte";
 </script>
 
 <main class="content">
@@ -19,7 +24,11 @@
     <Header />
     <div>
       <Route path="/" component={Home} />
+      <Route path="/scenarios" component={Scenarios} />
+      <Route path="/season" component={Season} />
+      <Route path="/profile" component={UserProfile} />
       <Route path="/schedule" component={Schedule} />
+      <Route path="/my-team" component={MyTeam} />
       <Route path="/teams" component={Teams} />
       <Route path="/teams/:teamIdString" component={Team} />
       <Route path="/players" component={Players} />
@@ -30,6 +39,7 @@
       <Route path="/admin" component={Admin} />
       <Route path="*" component={NotFound} />
     </div>
+    <BottomNavigation />
   </Router>
 </main>
 

@@ -1,13 +1,17 @@
 <script lang="ts">
-  import { Popover } from "flowbite-svelte";
+  import { toRgbString } from "../../utils/StringUtil";
 
   export let team:
-    | { logoUrl: string; name: string; id: bigint }
+    | {
+        logoUrl: string;
+        name: string;
+        id: bigint;
+        color: [number, number, number];
+      }
     | { winnerOfMatch: number }
     | { seasonStandingIndex: number };
   export let size: "sm" | "md" | "lg" | undefined;
-  export let borderColor: string | undefined;
-  export let popover: boolean = true;
+  export let border: boolean = true;
 
   $: logoUrl =
     "logoUrl" in team ? team.logoUrl : "/images/team-logos/unknown.png";
@@ -24,24 +28,17 @@
       : "winnerOfMatch" in team
         ? "W" + team.winnerOfMatch
         : "S" + team.seasonStandingIndex);
+
+  let teamColor = "color" in team ? toRgbString(team.color) : "grey";
 </script>
 
-<div>
-  <div id={triggerId}>
-    <img
-      class="logo {size ? `size-${size}` : ''}"
-      src={logoUrl}
-      alt={title}
-      style={borderColor ? "border: 1px solid " + borderColor : ""}
-    />
-  </div>
-  {#if popover}
-    <Popover
-      class="w-64 text-sm font-light "
-      {title}
-      triggeredBy={"#" + triggerId}
-    ></Popover>
-  {/if}
+<div id={triggerId} class="flex justify-center">
+  <img
+    class="logo {size ? `size-${size}` : ''}"
+    src={logoUrl}
+    alt={title}
+    style={border ? "border: 2px solid " + teamColor : ""}
+  />
 </div>
 
 <style>
