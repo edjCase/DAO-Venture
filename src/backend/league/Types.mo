@@ -23,7 +23,7 @@ module {
         getProposal : query (Nat) -> async GetProposalResult;
         getProposals : query () -> async GetProposalsResult;
         getScenario : query (Text) -> async GetScenarioResult;
-        getOpenScenarios : query () -> async GetOpenScenariosResult;
+        getScenarios : query () -> async GetScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
         clearTeams : () -> async (); // TODO remove
     };
@@ -74,7 +74,7 @@ module {
         #notStarted;
     };
 
-    public type GetOpenScenariosResult = {
+    public type GetScenariosResult = {
         #ok : [Scenario];
     };
 

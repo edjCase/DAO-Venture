@@ -89,13 +89,13 @@ export type GetMatchGroupPredictionsResult = {
     'ok' : MatchGroupPredictionSummary
   } |
   { 'notFound' : null };
-export type GetOpenScenariosResult = { 'ok' : Array<Scenario> };
 export type GetProposalResult = { 'ok' : Proposal } |
   { 'proposalNotFound' : null };
 export type GetProposalsResult = { 'ok' : Array<Proposal> };
 export type GetScenarioResult = { 'ok' : Scenario } |
   { 'notStarted' : null } |
   { 'notFound' : null };
+export type GetScenariosResult = { 'ok' : Array<Scenario> };
 export type GetTeamStandingsResult = { 'ok' : Array<TeamStandingInfo> } |
   { 'notFound' : null };
 export interface InProgressMatch {
@@ -406,10 +406,10 @@ export interface _SERVICE {
     [bigint],
     GetMatchGroupPredictionsResult
   >,
-  'getOpenScenarios' : ActorMethod<[], GetOpenScenariosResult>,
   'getProposal' : ActorMethod<[bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[], GetProposalsResult>,
   'getScenario' : ActorMethod<[string], GetScenarioResult>,
+  'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
   'getTeams' : ActorMethod<[], Array<TeamWithId>>,

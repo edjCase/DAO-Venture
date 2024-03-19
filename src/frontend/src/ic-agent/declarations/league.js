@@ -157,27 +157,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : MatchGroupPredictionSummary,
     'notFound' : IDL.Null,
   });
-  const ScenarioStateResolved = IDL.Record({
-    'teamChoices' : IDL.Vec(
-      IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
-    ),
-  });
-  const ScenarioOption = IDL.Record({
-    'title' : IDL.Text,
-    'description' : IDL.Text,
-  });
-  const Scenario = IDL.Record({
-    'id' : IDL.Text,
-    'title' : IDL.Text,
-    'description' : IDL.Text,
-    'state' : IDL.Variant({
-      'notStarted' : IDL.Null,
-      'resolved' : ScenarioStateResolved,
-      'inProgress' : IDL.Null,
-    }),
-    'options' : IDL.Vec(ScenarioOption),
-  });
-  const GetOpenScenariosResult = IDL.Variant({ 'ok' : IDL.Vec(Scenario) });
   const Vote = IDL.Record({
     'value' : IDL.Opt(IDL.Bool),
     'votingPower' : IDL.Nat,
@@ -203,11 +182,32 @@ export const idlFactory = ({ IDL }) => {
     'proposalNotFound' : IDL.Null,
   });
   const GetProposalsResult = IDL.Variant({ 'ok' : IDL.Vec(Proposal) });
+  const ScenarioStateResolved = IDL.Record({
+    'teamChoices' : IDL.Vec(
+      IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
+    ),
+  });
+  const ScenarioOption = IDL.Record({
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Scenario = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+    'state' : IDL.Variant({
+      'notStarted' : IDL.Null,
+      'resolved' : ScenarioStateResolved,
+      'inProgress' : IDL.Null,
+    }),
+    'options' : IDL.Vec(ScenarioOption),
+  });
   const GetScenarioResult = IDL.Variant({
     'ok' : Scenario,
     'notStarted' : IDL.Null,
     'notFound' : IDL.Null,
   });
+  const GetScenariosResult = IDL.Variant({ 'ok' : IDL.Vec(Scenario) });
   const TeamPositions = IDL.Record({
     'rightField' : IDL.Nat32,
     'leftField' : IDL.Nat32,
@@ -480,10 +480,10 @@ export const idlFactory = ({ IDL }) => {
         [GetMatchGroupPredictionsResult],
         ['query'],
       ),
-    'getOpenScenarios' : IDL.Func([], [GetOpenScenariosResult], ['query']),
     'getProposal' : IDL.Func([IDL.Nat], [GetProposalResult], ['query']),
     'getProposals' : IDL.Func([], [GetProposalsResult], ['query']),
     'getScenario' : IDL.Func([IDL.Text], [GetScenarioResult], ['query']),
+    'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
     'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
     'getTeams' : IDL.Func([], [IDL.Vec(TeamWithId)], ['query']),

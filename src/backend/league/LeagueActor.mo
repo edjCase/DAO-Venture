@@ -23,6 +23,7 @@ import PlayersActor "canister:players";
 import TeamsActor "canister:teams";
 import Dao "../Dao";
 import StadiumActor "canister:stadium";
+
 actor LeagueActor : Types.LeagueActor {
     type TeamWithId = Team.TeamWithId;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -112,6 +113,7 @@ actor LeagueActor : Types.LeagueActor {
         };
         onSeasonComplete = func(_ : Season.CompletedSeason) : async* () {
             // TODO archive vs delete
+            Debug.print("Season complete, clearing season data");
             predictionHandler.clear();
             // TODO teams reset energy/entropy? or is that a scenario thing
 
@@ -230,8 +232,8 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    public query func getOpenScenarios() : async Types.GetOpenScenariosResult {
-        let openScenarios = scenarioHandler.getOpenScenarios().vals()
+    public query func getScenarios() : async Types.GetScenariosResult {
+        let openScenarios = scenarioHandler.getScenarios(false).vals()
         |> Iter.map(_, mapScenario)
         |> Iter.toArray(_);
         #ok(openScenarios);
@@ -241,6 +243,7 @@ actor LeagueActor : Types.LeagueActor {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
+        Debug.print("Adding scenario: " # debug_show (scenario));
         switch (scenarioHandler.add<system>(scenario)) {
             case (#ok) #ok;
             case (#invalid(errors)) return #invalid(errors);
@@ -342,40 +345,49 @@ actor LeagueActor : Types.LeagueActor {
     ) : async* () {
 
         // Award users points for their predictions
-        let matchGroupPredictions = switch (predictionHandler.getMatchGroup(matchGroupId)) {
-            case (?p) p;
-            case (null) [];
-        };
-        let awards = Buffer.Buffer<UserTypes.AwardPointsRequest>(0);
-        var i = 0;
-        for (match in Iter.fromArray(completedMatches)) {
-            if (i >= matchGroupPredictions.size()) {
-                Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
-            };
-            let matchPredictions = matchGroupPredictions[i];
-            i += 1;
-            for ((userId, teamId) in Iter.fromArray(matchPredictions)) {
-                if (teamId == match.winner) {
-                    // Award points
-                    awards.add({
-                        userId = userId;
-                        points = 10; // TODO amount?
-                    });
+        let anyAwards = switch (predictionHandler.getMatchGroup(matchGroupId)) {
+            case (null) false;
+            case (?matchGroupPredictions) {
+                let awards = Buffer.Buffer<UserTypes.AwardPointsRequest>(0);
+                var i = 0;
+                for (match in Iter.fromArray(completedMatches)) {
+                    if (i >= matchGroupPredictions.size()) {
+                        Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
+                    };
+                    let matchPredictions = matchGroupPredictions[i];
+                    i += 1;
+                    for ((userId, teamId) in Iter.fromArray(matchPredictions)) {
+                        if (teamId == match.winner) {
+                            // Award points
+                            awards.add({
+                                userId = userId;
+                                points = 10; // TODO amount?
+                            });
+                        };
+                    };
+                };
+                if (awards.size() > 0) {
+                    let error : ?Text = try {
+                        switch (await UsersActor.awardPoints(Buffer.toArray(awards))) {
+                            case (#ok) null;
+                            case (#notAuthorized) ?"League is not authorized to award user points";
+                        };
+                    } catch (err) {
+                        // TODO how to handle this?
+                        ?Error.message(err);
+                    };
+                    switch (error) {
+                        case (null) ();
+                        case (?error) Debug.print("Failed to award user points: " # error);
+                    };
+                    true;
+                } else {
+                    false;
                 };
             };
         };
-        let error : ?Text = try {
-            switch (await UsersActor.awardPoints(Buffer.toArray(awards))) {
-                case (#ok) null;
-                case (#notAuthorized) ?"League is not authorized to award user points";
-            };
-        } catch (err) {
-            // TODO how to handle this?
-            ?Error.message(err);
-        };
-        switch (error) {
-            case (null) ();
-            case (?error) Debug.print("Failed to award user points: " # error);
+        if (not anyAwards) {
+            Debug.print("No user points to award, skipping...");
         };
     };
 

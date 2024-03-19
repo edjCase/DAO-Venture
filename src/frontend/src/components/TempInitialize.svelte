@@ -4,12 +4,10 @@
   import { playerStore } from "../stores/PlayerStore";
   import { teams as teamData } from "../data/TeamData";
   import { players as playerData } from "../data/PlayerData";
-  import { scenarios as scenarioData } from "../data/ScenarioData";
   import { Button } from "flowbite-svelte";
   import { toJsonString } from "../utils/StringUtil";
   import { leagueAgentFactory } from "../ic-agent/League";
   import { playersAgentFactory } from "../ic-agent/Players";
-  import { AddScenarioRequest } from "../ic-agent/declarations/league";
 
   $: teams = $teamStore;
   $: players = $playerStore;
@@ -60,36 +58,9 @@
     await Promise.all(promises);
   };
 
-  let createScenarios = async function () {
-    let leagueAgent = await leagueAgentFactory();
-    let promises = [];
-    let startTime = new Date().getTime() * 1000000;
-    for (let i = 0; i < scenarioData.length; i++) {
-      let scenario = scenarioData[i];
-      let addScenarioRequest: AddScenarioRequest = {
-        ...scenario,
-        teamIds: teams.map((team) => team.id),
-        startTime: BigInt(startTime),
-        endTime: BigInt(startTime + 1000 * 60 * 60 * 24 * 7), // 1 week
-      };
-      let promise = leagueAgent
-        .addScenario(addScenarioRequest)
-        .then(async (result) => {
-          if ("ok" in result) {
-            console.log("Created scenario: ", scenario.id);
-          } else {
-            console.log("Failed to make scenario: ", result);
-          }
-        });
-      promises.push(promise);
-    }
-    await Promise.all(promises);
-  };
-
   let initialize = async function () {
     await createPlayers();
     await createTeams();
-    await createScenarios();
   };
   let resetTeams = async function () {
     console.log("resetting teams");
@@ -107,22 +78,13 @@
     await resetPlayers();
     await resetTeams();
   };
-  // let resetScenarios = async function () {
-  //   console.log("resetting scenarios");
-  //   let leagueAgent = await leagueAgentFactory();
-  //   await leagueAgent.clearScenarios();
-  //   await createScenarios();
-  // };
 </script>
 
 {#if players.length + teams.length <= 0}
   <Button on:click={initialize}>Initialize With Default Data</Button>
 {:else}
   <div class="flex">
-    <div class="flex-1 w-1/3">
-      <Button on:click={createScenarios}>Create Scenarios</Button>
-    </div>
-    <div class="flex-1 w-1/3">
+    <div class="flex-1 w-1/2">
       {#if teams.length <= 0}
         <Button on:click={createTeams}>Create Teams</Button>
       {:else}
@@ -133,7 +95,7 @@
         {/each}
       {/if}
     </div>
-    <div class="flex-1 w-1/3">
+    <div class="flex-1 w-1/2">
       {#if players.length <= 0}
         <Button on:click={createPlayers}>Create Players</Button>
       {:else}

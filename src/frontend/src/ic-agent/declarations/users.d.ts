@@ -20,6 +20,8 @@ export type GetTeamOwnersResult = { 'ok' : Array<UserVotingInfo> };
 export type GetUserResult = { 'ok' : User } |
   { 'notAuthorized' : null } |
   { 'notFound' : null };
+export type OnSeasonCompleteResult = { 'ok' : null } |
+  { 'notAuthorized' : null };
 export type SetUserFavoriteTeamResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'alreadySet' : null } |
@@ -39,6 +41,7 @@ export interface _SERVICE {
   'get' : ActorMethod<[Principal], GetUserResult>,
   'getAll' : ActorMethod<[], Array<User>>,
   'getTeamOwners' : ActorMethod<[GetTeamOwnersRequest], GetTeamOwnersResult>,
+  'onSeasonComplete' : ActorMethod<[], OnSeasonCompleteResult>,
   'setFavoriteTeam' : ActorMethod<
     [Principal, bigint],
     SetUserFavoriteTeamResult

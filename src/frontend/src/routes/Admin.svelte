@@ -1,11 +1,16 @@
 <script lang="ts">
   import DaoAdmin from "../components/DaoAdmin.svelte";
+  import AddScenario from "../components/scenario/AddScenario.svelte";
   import ScheduleSeason from "../components/season/ScheduleSeason.svelte";
   import TempInitialize from "../components/TempInitialize.svelte";
 </script>
 
 <div>
   <ScheduleSeason />
+</div>
+---
+<div>
+  <AddScenario />
 </div>
 ---
 <div>

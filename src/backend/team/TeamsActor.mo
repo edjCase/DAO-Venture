@@ -130,6 +130,7 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared ({ caller }) func onNewScenario(request : Types.OnNewScenarioRequest) : async Types.OnNewScenarioResult {
+    Debug.print("onNewScenario called: " # debug_show (request));
     let leagueId = switch (leagueIdOrNull) {
       case (null) Debug.trap("League not set");
       case (?id) id;

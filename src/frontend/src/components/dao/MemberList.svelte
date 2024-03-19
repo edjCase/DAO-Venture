@@ -1,30 +1,26 @@
 <script lang="ts">
-    import { onDestroy } from "svelte";
+    import { onMount } from "svelte";
     import UserAvatar from "../user/UserAvatar.svelte";
     import UserPseudonym from "../user/UserPseudonym.svelte";
-    import { userStore } from "../../stores/UserStore";
     import { User } from "../../ic-agent/declarations/users";
+    import { usersAgentFactory } from "../../ic-agent/Users";
 
     export let teamId: bigint;
 
     let members: User[] = [];
-    let unsubscribeToTeamMembers = () => {};
 
-    $: {
-        unsubscribeToTeamMembers(); // Unsubscribe from the old subscription
-        unsubscribeToTeamMembers = userStore.subscribe((users) => {
-            members = users.filter((user) => {
-                return (
-                    user.team[0]?.id.toString() === teamId.toString() &&
-                    "owner" in user.team[0].kind
-                );
-            });
+    let getUsers = async () => {
+        let usersAgent = await usersAgentFactory();
+        let users = await usersAgent.getAll();
+        members = users.filter((user) => {
+            return (
+                user.team[0]?.id.toString() === teamId.toString() &&
+                "owner" in user.team[0].kind
+            );
         });
-    }
+    };
 
-    onDestroy(() => {
-        unsubscribeToTeamMembers();
-    });
+    onMount(getUsers);
 </script>
 
 {#each members as member}

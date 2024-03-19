@@ -97,13 +97,13 @@ module {
             };
         };
 
-        public func getOpenScenarios() : [Scenario.Scenario] {
+        public func getScenarios(includeNotStarted : Bool) : [Scenario.Scenario] {
             scenarios.vals()
             |> Iter.filter(
                 _,
                 func(scenario : ScenarioData) : Bool = switch (scenario.state) {
-                    case (#notStarted(_) or #resolved(_)) false;
-                    case (#inProgress(_)) true;
+                    case (#notStarted(_)) includeNotStarted;
+                    case (#inProgress(_) or #resolved(_)) true;
                 },
             )
             |> Iter.map(
@@ -242,6 +242,7 @@ module {
             createTimer<system>(
                 startTime,
                 func() : async* () {
+                    Debug.print("Starting scenario with timer. Scenario id: " # scenarioId);
                     switch (await* start(scenarioId)) {
                         case (#ok) ();
                         case (#alreadyStarted) Debug.trap("Scenario already started: " # scenarioId);
@@ -255,6 +256,7 @@ module {
             createTimer<system>(
                 endTime,
                 func() : async* () {
+                    Debug.print("Ending scenario with timer. Scenario id: " # scenarioId);
                     switch (await* end(scenarioId)) {
                         case (#ok) ();
                         case (#scenarioNotFound) Debug.trap("Scenario not found: " # scenarioId);
