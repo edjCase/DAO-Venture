@@ -14,6 +14,6 @@
     let selectedProposalType: string = proposalTypes[0].value;
 </script>
 
-<div>Create Proposal</div>
+<div class="text-3xl text-center">Create Proposal</div>
 <Select items={proposalTypes} bind:value={selectedProposalType} />
 <slot {selectedProposalType} />

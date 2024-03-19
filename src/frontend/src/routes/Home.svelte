@@ -91,15 +91,17 @@
     {/if}
     <hr class="my-5" />
     <div>
-        <div class="text-3xl text-center">Scenarios</div>
+        <div class="text-3xl text-center mb-5">Scenarios</div>
         {#if activeScenarios.length == 0}
             <div class="text-xl text-center">Next scenario in ???</div>
         {:else}
-            {#each activeScenarios as scenario}
-                <Button on:click={() => navigate("/scenarios")}>
-                    {scenario.title}
-                </Button>
-            {/each}
+            <div class="flex flex-col items-center">
+                {#each activeScenarios as scenario}
+                    <Button on:click={() => navigate("/scenarios")}>
+                        {scenario.title}
+                    </Button>
+                {/each}
+            </div>
         {/if}
         <div class="flex justify-center"></div>
     </div>

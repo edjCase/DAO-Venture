@@ -40,10 +40,16 @@
     }
 </script>
 
-<Select items={statuses} bind:value={statusFilter} />
-
-{#each filteredProposals as proposal}
-    <div>
-        <slot proposalId={proposal.id} />
+<div class="flex justify-center">
+    <div class="text-3xl text-center flex-grow">Proposals</div>
+    <div class="w-24">
+        <Select items={statuses} bind:value={statusFilter} />
     </div>
-{/each}
+</div>
+<div class="border rounded min-h-48">
+    {#each filteredProposals as proposal}
+        <div>
+            <slot proposalId={proposal.id} />
+        </div>
+    {/each}
+</div>

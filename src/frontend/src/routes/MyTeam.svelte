@@ -1,6 +1,7 @@
 <script lang="ts">
     import TeamCreateProposal from "../components/dao/TeamCreateProposal.svelte";
     import TeamProposalList from "../components/dao/TeamProposalList.svelte";
+    import TeamLogo from "../components/team/TeamLogo.svelte";
     import { User } from "../ic-agent/declarations/users";
     import { identityStore } from "../stores/IdentityStore";
     import { teamStore } from "../stores/TeamStore";
@@ -25,10 +26,15 @@
 </script>
 
 {#if team}
-    <div class="text-3xl text-center">{team.name}</div>
+    <div class="text-5xl text-center mb-2">{team.name}</div>
+    <TeamLogo {team} size="lg" />
     {#if coOwner}
-        <TeamProposalList teamId={team.id} />
-        <TeamCreateProposal teamId={team.id} />
+        <div class="mt-5">
+            <TeamProposalList teamId={team.id} />
+        </div>
+        <div class="mt-5">
+            <TeamCreateProposal teamId={team.id} />
+        </div>
     {:else}
         You are just a fan
     {/if}
