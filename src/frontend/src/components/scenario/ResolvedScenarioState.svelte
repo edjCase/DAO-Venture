@@ -22,7 +22,7 @@
 
 {#each options as { description }, index}
     <div
-        class="border border-gray-300 p-4 rounded-lg flex-1 cursor-pointer text-left w-96 text-base text-white"
+        class="border border-gray-300 p-4 rounded-lg flex-1 cursor-pointer text-left text-base text-white"
         class:bg-gray-500={selectedChoice === index}
         class:border-gray-500={selectedChoice === index}
         class:bg-gray-800={selectedChoice !== index}

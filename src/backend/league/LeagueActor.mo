@@ -243,7 +243,7 @@ actor LeagueActor : Types.LeagueActor {
         if (not isAdminId(caller)) {
             return #notAuthorized;
         };
-        Debug.print("Adding scenario: " # debug_show (scenario));
+        Debug.print("Adding scenario: " # scenario.id);
         switch (scenarioHandler.add<system>(scenario)) {
             case (#ok) #ok;
             case (#invalid(errors)) return #invalid(errors);

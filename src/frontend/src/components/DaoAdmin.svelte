@@ -45,7 +45,7 @@
         console.log("Adding member", newMemberId);
         let userId = Principal.fromText(newMemberId);
         let usersAgent = await usersAgentFactory();
-        let res = usersAgent.addTeamOwner({
+        let res = await usersAgent.addTeamOwner({
             teamId: BigInt(selectedTeamId),
             userId: userId,
             votingPower: BigInt(1),

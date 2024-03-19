@@ -23,6 +23,9 @@
 </script>
 
 <div>
+  <div class="text-3xl p-5">
+    {scenario.title}
+  </div>
   <div class="p-5 pt-0">
     {@html scenario.description}
   </div>

@@ -1,7 +1,10 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { teamsAgentFactory } from "../../ic-agent/Teams";
-    import { ScenarioOption } from "../../ic-agent/declarations/league";
+    import {
+        ScenarioOption,
+        TeamWithId,
+    } from "../../ic-agent/declarations/league";
     import { VoteOnScenarioRequest } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
@@ -9,12 +12,17 @@
     export let scenarioId: string;
     export let options: ScenarioOption[];
     export let userContext: User | undefined;
+
+    $: teams = $teamStore;
+
     let selectedChoice: number | undefined;
     let teamId: bigint | undefined;
     let isOwner: boolean = false;
+    let team: TeamWithId | undefined;
     $: {
         teamId = userContext?.team[0]?.id;
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
+        team = teams.find((team) => team.id === teamId);
     }
 
     let register = async function () {
@@ -49,7 +57,7 @@
 
 {#each options as { description }, index}
     <div
-        class="border border-gray-300 p-4 rounded-lg flex-1 cursor-pointer text-left w-96 text-base text-white"
+        class="border border-gray-300 p-4 rounded-lg flex-1 cursor-pointer text-left text-base text-white"
         class:bg-gray-500={selectedChoice === index}
         class:border-gray-500={selectedChoice === index}
         class:bg-gray-800={selectedChoice !== index}
@@ -72,7 +80,7 @@
                 register();
             }}
         >
-            Submit Vote for Team {teamId}
+            Submit Vote for Team {team?.name}
         </Button>
     </div>
 {/if}
