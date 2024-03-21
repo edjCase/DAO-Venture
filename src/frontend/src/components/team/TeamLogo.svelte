@@ -37,7 +37,7 @@
     class="logo {size ? `size-${size}` : ''}"
     src={logoUrl}
     alt={title}
-    style={border ? "border: 2px solid " + teamColor : ""}
+    style={border ? "border: 5px solid " + teamColor : ""}
   />
 </div>
 

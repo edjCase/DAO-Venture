@@ -17,12 +17,13 @@
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import MyTeam from "./routes/MyTeam.svelte";
+  import Footer from "./components/common/Footer.svelte";
 </script>
 
 <main class="content">
   <Router>
     <Header />
-    <div>
+    <div class="mb-14">
       <Route path="/" component={Home} />
       <Route path="/scenarios" component={Scenarios} />
       <Route path="/season" component={Season} />
@@ -38,6 +39,7 @@
       <Route path="/about" component={About} />
       <Route path="/admin" component={Admin} />
       <Route path="*" component={NotFound} />
+      <Footer />
     </div>
     <BottomNavigation />
   </Router>

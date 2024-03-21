@@ -1,5 +1,5 @@
 <script lang="ts">
-    import ScenarioHome from "../components/scenario/ScenarioHome.svelte";
+    import ScenarioPage from "../components/scenario/ScenarioPage.svelte";
 </script>
 
-<ScenarioHome />
+<ScenarioPage />

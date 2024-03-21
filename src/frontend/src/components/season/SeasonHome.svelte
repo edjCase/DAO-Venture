@@ -1,90 +1,75 @@
 <script lang="ts">
+    import Countdown from "../common/Countdown.svelte";
     import { scheduleStore } from "../../stores/ScheduleStore";
-    import TeamStandings from "../../components/team/TeamStandings.svelte";
-    import PlayerAwards from "../../components/player/PlayerAwards.svelte";
-    import SeasonWinners from "../../components/season/SeasonWinners.svelte";
-    import { MatchGroupDetails } from "../../models/Match";
-    import MatchGroup from "../../components/match/MatchGroup.svelte";
-    import InBetweenMatchesOverview from "../../components/match/InBetweenMatchesOverview.svelte";
-    import LiveMatchesOverview from "../../components/match/LiveMatchesOverview.svelte";
-    import { SeasonStatus } from "../../ic-agent/declarations/league";
-    import { onDestroy } from "svelte";
-    import { toJsonString } from "../../utils/StringUtil";
+    import { nanosecondsToDate } from "../../utils/DateUtils";
+    import { Button } from "flowbite-svelte";
+    import { navigate } from "svelte-routing";
+    import TeamLogo from "../team/TeamLogo.svelte";
+    import { teamStore } from "../../stores/TeamStore";
+    import { TeamWithId } from "../../ic-agent/declarations/league";
 
-    let seasonStatus: SeasonStatus | undefined;
-    let lastMatchGroup: MatchGroupDetails | undefined;
-    let nextOrCurrentMatchGroup: MatchGroupDetails | undefined;
+    $: teams = $teamStore;
 
+    let nextMatchGroupDate: Date | undefined;
+    let matchGroupInProgress: bigint | undefined;
+    let seasonChampionId: bigint | undefined;
+    let seasonChampion: TeamWithId | undefined;
+    scheduleStore.subscribeMatchGroups((matchGroups) => {
+        let now = new Date();
+        nextMatchGroupDate = undefined;
+        matchGroupInProgress = undefined;
+        for (let matchGroup of matchGroups) {
+            if (matchGroup.state == "InProgress") {
+                matchGroupInProgress = matchGroup.id;
+                break;
+            }
+            let date = nanosecondsToDate(matchGroup.time);
+            if (date > now) {
+                nextMatchGroupDate = date;
+                break;
+            }
+        }
+    });
     scheduleStore.subscribeStatus((status) => {
-        seasonStatus = status;
+        if (status == undefined) {
+            return;
+        }
+        if ("completed" in status) {
+            seasonChampionId = status.completed.championTeamId;
+        } else {
+            seasonChampionId = undefined;
+        }
     });
 
-    scheduleStore.subscribeMatchGroups((matchGroups: MatchGroupDetails[]) => {
-        lastMatchGroup = matchGroups
-            .slice()
-            .reverse()
-            .find((mg) => mg.state == "Completed");
-        nextOrCurrentMatchGroup = matchGroups.find(
-            (mg) =>
-                mg.id > (lastMatchGroup?.id || -1) &&
-                (mg.state == "InProgress" || mg.state == "Scheduled"),
-        );
-    });
-    // TODO handle this better?
-    const interval = setInterval(() => {
-        scheduleStore.refetch();
-    }, 5000);
-    onDestroy(() => {
-        clearInterval(interval);
-    });
+    $: {
+        seasonChampion = teams.find((t) => t.id == seasonChampionId);
+    }
 </script>
 
-{#if seasonStatus}
-    {#if "notStarted" in seasonStatus}
-        <div class="text-center text-3xl font-bold my-4">
-            Season Not Started
-        </div>
-    {:else if "completed" in seasonStatus}
-        <SeasonWinners completedSeason={seasonStatus.completed} />
+<div class="text-3xl text-center">Season 0</div>
+<div class="text-xl text-center mb-5">The Awakening</div>
+<div class="flex justify-around">
+    <div>
+        {#if matchGroupInProgress}
+            <Button on:click={() => navigate("/season")}>Match LIVE! =></Button>
+        {:else if nextMatchGroupDate}
+            <div class="text-xl text-center">
+                Next Matches in <Countdown date={nextMatchGroupDate} />
+            </div>
+            <div class="flex justify-center">
+                <Button on:click={() => navigate("/season")}>
+                    Make your predictions
+                </Button>
+            </div>
+        {:else if seasonChampion !== undefined}
+            <div class="text-xl text-center">Season Complete</div>
+            <div class="text-xl text-center">Champions:</div>
+            <div class="text-xl text-center">{seasonChampion.name}</div>
 
-        <div class="complete">
-            <div class="teams">
-                <TeamStandings completedSeason={seasonStatus.completed} />
-            </div>
-            <div class="players">
-                <PlayerAwards completedSeason={seasonStatus.completed} />
-            </div>
-        </div>
-    {:else if "inProgress" in seasonStatus}
-        {#if nextOrCurrentMatchGroup}
-            {#if nextOrCurrentMatchGroup.state == "Scheduled"}
-                <InBetweenMatchesOverview />
-            {:else if nextOrCurrentMatchGroup.state == "InProgress"}
-                <LiveMatchesOverview />
-            {/if}
-            <MatchGroup matchGroup={nextOrCurrentMatchGroup} />
-        {:else}
-            Season in progress, but there is no upcoming match... <pre>{toJsonString(
-                    seasonStatus.inProgress,
-                )}</pre>
+            <TeamLogo team={seasonChampion} size="md" />
         {/if}
-    {:else}
-        Season Starting...
-    {/if}
-{/if}
-
-<style>
-    .complete {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
-        gap: 20px;
-    }
-    .teams {
-        max-width: 400px;
-    }
-    .players {
-        max-width: 600px;
-    }
-</style>
+    </div>
+    <div class="flex items-center">
+        <Button on:click={() => navigate("/season")}>Details =></Button>
+    </div>
+</div>

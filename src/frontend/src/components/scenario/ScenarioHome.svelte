@@ -1,45 +1,29 @@
 <script lang="ts">
-    import { Select } from "flowbite-svelte";
+    import { Button } from "flowbite-svelte";
+    import { navigate } from "svelte-routing";
+    import { Scenario } from "../../ic-agent/declarations/league";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import Scenario from "./Scenario.svelte";
+    let activeScenarios: Scenario[] = [];
 
-    $: scenarios = $scenarioStore;
-
-    $: inProgressScenarios = scenarios.filter(
-        (scenario) => "inProgress" in scenario.state,
-    );
-
-    $: resolvedScenarios = scenarios.filter(
-        (scenario) => "resolved" in scenario.state,
-    );
-
-    let selectedIndex = 0;
-
-    $: resolvedItems = resolvedScenarios.map((scenario, index) => {
-        return {
-            name: scenario.title,
-            value: index,
-        };
+    scenarioStore.subscribe((scenarios) => {
+        activeScenarios = scenarios.filter(
+            (scenario) => "inProgress" in scenario.state,
+        );
     });
 </script>
 
 <div>
-    <div class="mt-5 mb-5">
-        {#if inProgressScenarios.length <= 0}
-            <div class="text-3xl text-center">No Active Scenarios</div>
-        {:else}
-            {#each inProgressScenarios as scenario}
-                <Scenario {scenario} />
+    <div class="text-3xl text-center mb-5">Scenarios</div>
+    {#if activeScenarios.length == 0}
+        <div class="text-xl text-center">Next scenario in ???</div>
+    {:else}
+        <div class="flex flex-col items-center">
+            {#each activeScenarios as scenario}
+                <Button on:click={() => navigate("/scenarios")}>
+                    {scenario.title}
+                </Button>
             {/each}
-        {/if}
-    </div>
-    {#if resolvedScenarios.length > 0}
-        <hr />
-        <div class="pt-5">
-            <div class="text-3xl text-center mb-5">Historical</div>
-            <Select items={resolvedItems} bind:value={selectedIndex} />
-
-            <Scenario scenario={resolvedScenarios[selectedIndex]} />
         </div>
     {/if}
+    <div class="flex justify-center"></div>
 </div>
