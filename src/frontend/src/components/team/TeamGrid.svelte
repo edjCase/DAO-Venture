@@ -1,12 +1,13 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
   import { teamStore } from "../../stores/TeamStore";
-  import { Button, Card, Modal } from "flowbite-svelte";
+  import { Button, Modal } from "flowbite-svelte";
   import TeamLogo from "./TeamLogo.svelte";
   import { StarOutline, StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
   import { identityStore } from "../../stores/IdentityStore";
   import { User } from "../../ic-agent/declarations/users";
+  import { TeamWithId } from "../../ic-agent/declarations/league";
 
   $: teams = $teamStore;
   $: identity = $identityStore;
@@ -36,82 +37,74 @@
       );
     }
   };
+  let selectedTeam: TeamWithId | undefined;
+  $: selectedTeam = teams && teams[0];
 </script>
 
-<div>
-  <Card
-    padding="none"
-    size="xl"
-    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-  >
-    {#each teams as team}
-      <figure
-        class="p-8 rounded-t-lg border-b md:rounded-t-none md:rounded-tl-lg md:border-e bg-white border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-      >
-        <div class="flex justify-center items-center gap-5">
-          <div class="text-2xl font-semibold text-center">
-            {team.name}
-          </div>
-          <div>
-            {#if user}
-              {#if associatedTeamId !== undefined}
-                {#if associatedTeamId == team.id}
-                  <StarSolid size="lg" />
-                {/if}
-              {:else}
-                <StarOutline
-                  size="lg"
-                  role="button"
-                  on:click={() => {
-                    confirmFavoriteTeamId = team.id;
-                    confirmModal = true;
-                  }}
-                />
+<div class="flex flex-col justify-between h-[80vh]">
+  <div class="flex-grow pb-10">
+    {#if selectedTeam}
+      <div class="flex justify-center items-center">
+        <div class="text-3xl text-center m-5">{selectedTeam.name}</div>
+        <div>
+          {#if user}
+            {#if associatedTeamId !== undefined}
+              {#if associatedTeamId == selectedTeam.id}
+                <StarSolid size="lg" />
               {/if}
+            {:else}
+              <StarOutline
+                size="lg"
+                role="button"
+                on:click={() => {
+                  if (selectedTeam) {
+                    confirmFavoriteTeamId = selectedTeam.id;
+                    confirmModal = true;
+                  }
+                }}
+              />
             {/if}
+          {/if}
+        </div>
+      </div>
+      <TeamLogo team={selectedTeam} size="lg" />
+      <blockquote class="mx-auto mb-4 max-w-2xl">
+        <div class="mt-5">
+          <div class="text-lg team-info-text text-justify">
+            {selectedTeam.description}
           </div>
         </div>
-        <div class="team-logo-container m-5">
-          <Link to={`/teams/${team.id.toString()}`}>
-            <TeamLogo {team} size="lg" />
-          </Link>
-        </div>
-        <blockquote class="mx-auto mb-4 max-w-2xl">
-          <div class="team-info">
-            <div class="text-lg team-info-text text-justify">
-              {team.description}
-            </div>
-          </div>
-        </blockquote>
-      </figure>
+      </blockquote>
+      <div class="flex justify-center">
+        <Link to={`/teams/${selectedTeam.id.toString()}`}>
+          <Button>View Team Page</Button>
+        </Link>
+      </div>
+    {/if}
+  </div>
+  <div class="flex flex-wrap justify-around">
+    {#each teams as team}
+      <div
+        class="mb-5 {selectedTeam === team ? 'opacity-50' : ''}"
+        role="button"
+        tabindex="0"
+        on:keydown={() => {}}
+        on:click={() => (selectedTeam = team)}
+      >
+        <TeamLogo {team} size="md" />
+      </div>
     {/each}
-  </Card>
 
-  <Modal bind:open={confirmModal} autoclose>
-    <div class="text-center">
-      <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-        Setting your team is permanent for the season. Are you sure?
-      </h3>
-      <Button color="red" class="me-2" on:click={setFavoriteTeam}>
-        Yes, I'm sure
-      </Button>
-      <Button color="alternative">No, cancel</Button>
-    </div>
-  </Modal>
+    <Modal bind:open={confirmModal} autoclose>
+      <div class="text-center">
+        <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+          Setting your team is permanent for the season. Are you sure?
+        </h3>
+        <Button color="red" class="me-2" on:click={setFavoriteTeam}>
+          Yes, I'm sure
+        </Button>
+        <Button color="alternative">No, cancel</Button>
+      </div>
+    </Modal>
+  </div>
 </div>
-
-<style>
-  .team-logo-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-  }
-
-  .team-info {
-    margin: 5px 0;
-    display: block;
-  }
-  .team-info-text {
-    font-weight: normal;
-  }
-</style>

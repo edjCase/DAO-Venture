@@ -5,7 +5,6 @@
   import UserPseudonym from "./UserPseudonym.svelte";
   import { identityStore } from "../../stores/IdentityStore";
   import { User } from "../../ic-agent/declarations/users";
-  import { navigate } from "svelte-routing";
 
   $: identity = $identityStore;
 
@@ -19,17 +18,7 @@
   }
 </script>
 
-<div
-  class="flex items-center space-x-2 md:order-1 cursor-pointer max-w-48"
-  on:click={() => {
-    if (!identity.getPrincipal().isAnonymous()) {
-      navigate("/profile");
-    }
-  }}
-  role="button"
-  tabindex="0"
-  on:keydown={() => {}}
->
+<div class="flex flex-col items-center">
   {#if !identity.getPrincipal().isAnonymous()}
     <UserAvatar userId={identity.getPrincipal()} />
     <div class="space-y-1 font-medium dark:text-white text-center">

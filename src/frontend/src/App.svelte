@@ -35,7 +35,7 @@
       <Route path="/players" component={Players} />
       <Route path="/players/:playerIdString" component={Player} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
-      <Route path="/HowToPlay" component={HowToPlay} />
+      <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/about" component={About} />
       <Route path="/admin" component={Admin} />
       <Route path="*" component={NotFound} />
