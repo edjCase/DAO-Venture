@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Navbar, NavBrand } from "flowbite-svelte";
+  import { Indicator, Navbar, NavBrand } from "flowbite-svelte";
   import { BellOutline, BellRingSolid } from "flowbite-svelte-icons";
   import { Link } from "svelte-routing";
-  let notifications = false;
+  let notificationCount = 0;
   let openNotifications = () => {
     // TODO
   };
@@ -21,8 +21,13 @@
     tabindex="0"
     on:keydown={() => {}}
   >
-    {#if notifications}
-      <BellRingSolid size="md" />
+    {#if notificationCount > 0}
+      <div class="relative p-2">
+        <BellRingSolid size="md" />
+        <Indicator color="red" size="lg" placement="top-right">
+          <span class="text-white text-xs font-bold">{notificationCount}</span>
+        </Indicator>
+      </div>
     {:else}
       <BellOutline size="md" />
     {/if}

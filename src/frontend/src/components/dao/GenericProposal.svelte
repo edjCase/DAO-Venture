@@ -1,21 +1,29 @@
+<script lang="ts" context="module">
+    import {
+        ProposalStatusLogEntry,
+        Vote,
+    } from "../../ic-agent/declarations/league";
+
+    export interface ProposalType {
+        id: bigint;
+        title: string;
+        description: string;
+        timeStart: bigint;
+        timeEnd: bigint;
+        votes: [Principal, Vote][];
+        statusLog: ProposalStatusLogEntry[];
+    }
+</script>
+
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import { nanosecondsToDate } from "../../utils/DateUtils";
     import { Principal } from "@dfinity/principal";
-    import { ProposalStatusLogEntry } from "../../ic-agent/declarations/league";
     import { identityStore } from "../../stores/IdentityStore";
 
-    interface Proposal {
-        id: bigint;
-        timeStart: bigint;
-        timeEnd: bigint;
-        votes: [Principal, { value: boolean[] }][];
-        statusLog: ProposalStatusLogEntry[];
-    }
-
-    export let proposal: Proposal;
-    export let onVote: (vote: boolean) => void;
+    export let proposal: ProposalType;
+    export let onVote: (proposalId: bigint, vote: boolean) => Promise<void>;
 
     let userId: Principal = Principal.anonymous();
     let yourVote: boolean | undefined;
@@ -32,9 +40,9 @@
         }
     });
 
-    let vote = async (vote: boolean) => {
+    let vote = async (proposalId: bigint, vote: boolean) => {
         console.log("Voting on proposal", proposal.id, "vote", vote);
-        onVote(vote);
+        await onVote(proposalId, vote);
     };
     let lastStatus: ProposalStatusLogEntry | undefined =
         proposal.statusLog[proposal.statusLog.length - 1];
@@ -50,12 +58,16 @@
         {#if proposal.votes.some((v) => userId.toString() == v[0].toString())}
             {#if yourVote === undefined}
                 <div class="mb-6">
-                    <Button on:click={() => vote(true)}>Yes</Button>
-                    <Button on:click={() => vote(false)}>No</Button>
+                    <Button on:click={() => vote(proposal.id, true)}>
+                        Adopt
+                    </Button>
+                    <Button on:click={() => vote(proposal.id, false)}>
+                        Reject
+                    </Button>
                 </div>
             {:else}
                 <div class="text-xl">
-                    You have voted: {yourVote ? "Yes" : "No"}
+                    You have voted: {yourVote ? "Adopt" : "Reject"}
                 </div>
             {/if}
         {:else}

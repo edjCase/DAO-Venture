@@ -20,7 +20,7 @@
   import Footer from "./components/common/Footer.svelte";
 </script>
 
-<main class="content">
+<main class="p-5 max-w-xl mx-auto">
   <Router>
     <Header />
     <div class="mb-14">
@@ -49,7 +49,4 @@
   @tailwind base;
   @tailwind components;
   @tailwind utilities;
-  .content {
-    padding: 20px;
-  }
 </style>
