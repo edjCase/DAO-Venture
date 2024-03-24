@@ -75,7 +75,7 @@ actor : Types.Actor {
                     userId,
                     func(user : Types.User) : Types.User = {
                         user with
-                        teamAssociation = ?{
+                        team = ?{
                             id = teamId;
                             kind = #fan;
                         };

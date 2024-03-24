@@ -10,13 +10,9 @@
     } from "flowbite-svelte";
     import { teamStore } from "../stores/TeamStore";
     import { Principal } from "@dfinity/principal";
-    import TeamCreateProposal from "./dao/TeamCreateProposal.svelte";
     import MemberList from "./dao/MemberList.svelte";
     import { usersAgentFactory } from "../ic-agent/Users";
     import { userStore } from "../stores/UserStore";
-    import TeamProposalList from "./dao/TeamProposalList.svelte";
-    import LeagueProposalList from "./dao/LeagueProposalList.svelte";
-
     $: teams = $teamStore;
 
     let teamItems: SelectOptionType<string>[] = [];
@@ -60,9 +56,6 @@
     };
 </script>
 
-<div class="text-3xl">League DAO Admin Panel</div>
-<LeagueProposalList />
-
 {#if teamItems}
     <div class="text-3xl">Team DAO Admin Panel</div>
     <hr class="mb-6" />
@@ -71,11 +64,7 @@
 
     {#if selectedTeamId}
         <Tabs>
-            <TabItem open title="Proposals">
-                <TeamProposalList teamId={BigInt(selectedTeamId)} />
-                <TeamCreateProposal teamId={BigInt(selectedTeamId)} />
-            </TabItem>
-            <TabItem title="Members">
+            <TabItem title="Members" open>
                 <MemberList teamId={BigInt(selectedTeamId)} />
                 <div class="text-2xl">Add a DAO member:</div>
                 <div class="mb-6">

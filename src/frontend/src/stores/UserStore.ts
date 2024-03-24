@@ -48,8 +48,11 @@ function createUserStore() {
 
     const setFavoriteTeam = async (userId: Principal, teamId: bigint) => {
         let usersAgent = await usersAgentFactory();
-        await usersAgent.setFavoriteTeam(userId, teamId);
-        refetchUser(userId);
+        let result = await usersAgent.setFavoriteTeam(userId, teamId);
+        if ('ok' in result) {
+            refetchUser(userId);
+        }
+        return result;
     };
 
     return {

@@ -10,8 +10,9 @@
       }
     | { winnerOfMatch: number }
     | { seasonStandingIndex: number };
-  export let size: "sm" | "md" | "lg" | undefined;
+  export let size: "xs" | "sm" | "md" | "lg" | undefined;
   export let border: boolean = true;
+  export let padding: boolean = true;
 
   $: logoUrl =
     "logoUrl" in team ? team.logoUrl : "/images/team-logos/unknown.png";
@@ -34,7 +35,7 @@
 
 <div id={triggerId} class="flex justify-center">
   <img
-    class="logo {size ? `size-${size}` : ''}"
+    class="logo {padding ? `p-1` : ''} {size ? `size-${size}` : ''}"
     src={logoUrl}
     alt={title}
     style={border ? "border: 5px solid " + teamColor : ""}
@@ -45,9 +46,12 @@
   .logo {
     background-color: rgba(120, 120, 120, 0.5);
     border-radius: 25%;
-    padding: 5px;
   }
 
+  .size-xs {
+    width: 25px;
+    height: 25px;
+  }
   .size-sm {
     width: 50px;
     height: 50px;

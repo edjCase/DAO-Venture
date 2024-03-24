@@ -14,6 +14,7 @@
         BullhornSolid,
         CalendarMonthOutline,
         GithubSolid,
+        GlobeSolid,
         HomeSolid,
         QuestionCircleOutline,
         TwitterSolid,
@@ -59,7 +60,7 @@
     });
 </script>
 
-<BottomNav {activeUrl} position="fixed" classInner="grid-cols-5">
+<BottomNav {activeUrl} position="fixed" classInner="grid-cols-6">
     <BottomNavItem btnName="Home" href="/" on:click={navOnClick("/")}>
         <HomeSolid class={iconClass} />
     </BottomNavItem>
@@ -83,6 +84,13 @@
         on:click={navOnClick("/my-team")}
     >
         <UsersSolid class={iconClass} />
+    </BottomNavItem>
+    <BottomNavItem
+        btnName="League"
+        href="/league"
+        on:click={navOnClick("/league")}
+    >
+        <GlobeSolid class={iconClass} />
     </BottomNavItem>
     <BottomNavItem id="hamburger" btnName="" on:click={toggleDrawer}>
         <BarsOutline class={iconClass} />

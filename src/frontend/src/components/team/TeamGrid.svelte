@@ -27,14 +27,21 @@
   let confirmFavoriteTeamId: bigint | undefined;
   let setFavoriteTeam = async () => {
     if (identity.getPrincipal().isAnonymous()) {
-      console.log("User not logged in");
+      console.error("User not logged in");
       return;
     }
-    if (confirmFavoriteTeamId) {
-      await userStore.setFavoriteTeam(
-        identity.getPrincipal(),
-        confirmFavoriteTeamId,
-      );
+    if (confirmFavoriteTeamId === undefined) {
+      console.error("Favorite team not selected");
+      return;
+    }
+    let result = await userStore.setFavoriteTeam(
+      identity.getPrincipal(),
+      confirmFavoriteTeamId,
+    );
+    if ("ok" in result) {
+      console.log("Favorite team set");
+    } else {
+      console.error("Failed to set favorite team", result);
     }
   };
   let selectedTeam: TeamWithId | undefined;

@@ -41,6 +41,10 @@
     if (!matchPredictions) {
       return;
     }
+    matchPredictions = {
+      ...matchPredictions,
+      yourVote: team,
+    };
     let leagueAgent = await leagueAgentFactory();
     let result = await leagueAgent.predictMatchOutcome({
       matchId: match.id,

@@ -60,8 +60,6 @@
     };
 </script>
 
-{proposals.length}
-
 <GenericProposalList proposals={genericProposals} {onVote} let:proposalId>
     <slot context="details">
         <LeagueProposalDetails proposal={getProposal(proposalId)} />

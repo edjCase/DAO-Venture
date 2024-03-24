@@ -49,7 +49,7 @@
           </div>
           Next Session Matchups
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 gap-4">
           {#each matchGroup.matches as match}
             <MatchUp {match} />
           {/each}

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { nanosecondsToRelativeWeekString } from "../../utils/DateUtils";
+  import { nanosecondsToDate } from "../../utils/DateUtils";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import { MatchDetails, MatchGroupDetails } from "../../models/Match";
   import MatchCardCompact from "./MatchCardCompact.svelte";
@@ -25,17 +25,9 @@
   });
 </script>
 
-<div class="match-history">
+<div class="flex flex-col items-center">
   {#each matches as match}
-    <div>{nanosecondsToRelativeWeekString(match.time)}</div>
+    <div>{nanosecondsToDate(match.time).toLocaleDateString()}</div>
     <MatchCardCompact {match} liveMatch={undefined} />
   {/each}
 </div>
-
-<style>
-  .match-history {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-</style>

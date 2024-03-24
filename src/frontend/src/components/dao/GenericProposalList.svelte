@@ -59,10 +59,15 @@
     <Accordion>
         {#each proposals as proposal}
             <AccordionItem>
-                <span slot="header" class="w-full p-2">
-                    <div class="flex justify-between">
+                <span
+                    slot="header"
+                    class="w-full p-2 flex justify-between items-center"
+                >
+                    <div>
                         <div>{proposal.title}</div>
                         <div>{getVotingStatus(proposal)}</div>
+                    </div>
+                    <div>
                         <div>{getProposalStatus(proposal)}</div>
                     </div>
                 </span>

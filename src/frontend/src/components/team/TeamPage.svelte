@@ -7,7 +7,7 @@
 </script>
 
 <div class="team-container">
-  <div class="team-header flex flex-col md:flex-row p-5">
+  <div class="team-header flex flex-col p-5">
     <div class="flex-1 flex flex-col justify-center text-justify p-5 text-xl">
       {team.description}
     </div>
@@ -37,7 +37,7 @@
       </div>
     </div>
   </div>
-  <div class="flex flex-col justify-evenly lg:flex-row">
+  <div class="flex flex-col justify-evenly">
     <PlayerRoster teamId={team.id} />
     <div>
       <h1>Match History</h1>

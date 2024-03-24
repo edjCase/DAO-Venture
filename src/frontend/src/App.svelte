@@ -17,10 +17,11 @@
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import MyTeam from "./routes/MyTeam.svelte";
+  import League from "./routes/League.svelte";
   import Footer from "./components/common/Footer.svelte";
 </script>
 
-<main class="p-5 max-w-xl mx-auto">
+<main class="p-5 max-w-xl mx-auto h-screen">
   <Router>
     <Header />
     <div class="mb-14">
@@ -32,6 +33,7 @@
       <Route path="/my-team" component={MyTeam} />
       <Route path="/teams" component={Teams} />
       <Route path="/teams/:teamIdString" component={Team} />
+      <Route path="/league" component={League} />
       <Route path="/players" component={Players} />
       <Route path="/players/:playerIdString" component={Player} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
