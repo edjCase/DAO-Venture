@@ -56,7 +56,7 @@ export const idlFactory = ({ IDL }) => {
     'votingPower' : IDL.Nat,
   });
   const GetTeamOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
-  const OnSeasonCompleteResult = IDL.Variant({
+  const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
@@ -81,7 +81,7 @@ export const idlFactory = ({ IDL }) => {
         [GetTeamOwnersResult],
         ['query'],
       ),
-    'onSeasonComplete' : IDL.Func([], [OnSeasonCompleteResult], []),
+    'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'setFavoriteTeam' : IDL.Func(
         [IDL.Principal, IDL.Nat],
         [SetUserFavoriteTeamResult],

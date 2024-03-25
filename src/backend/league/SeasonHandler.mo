@@ -46,7 +46,12 @@ module {
         onMatchGroupSchedule : (matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> async* ();
         onMatchGroupStart : (matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) -> async* ();
         onMatchGroupComplete : (matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) -> async* ();
-        onSeasonComplete : (season : Season.CompletedSeason) -> async* ();
+        onSeasonEnd : (season : EndedSeasonVariant) -> async* ();
+    };
+
+    public type EndedSeasonVariant = {
+        #incomplete : Season.InProgressSeason;
+        #completed : Season.CompletedSeason;
     };
 
     public class SeasonHandler<system>(data : StableData, eventHandler : EventHandler) {
@@ -344,6 +349,7 @@ module {
                             };
                         };
                     };
+                    await* eventHandler.onSeasonEnd(#incomplete(inProgressSeason));
                     return #ok;
                 };
             };
@@ -401,9 +407,9 @@ module {
             };
             seasonStatus := #completed(completedSeason);
             try {
-                await* eventHandler.onSeasonComplete(completedSeason);
+                await* eventHandler.onSeasonEnd(#completed(completedSeason));
             } catch (err) {
-                Debug.print("onSeasonComplete hook failed. Error: " # Error.message(err));
+                Debug.print("onSeasonEnd hook failed. Error: " # Error.message(err));
                 // TODO handle error
             };
             #ok;

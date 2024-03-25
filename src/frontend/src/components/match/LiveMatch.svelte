@@ -4,7 +4,6 @@
 
   import { LiveMatch, LiveTeamDetails } from "../../stores/LiveMatchGroupStore";
   import Field from "./Field.svelte";
-  import MatchEvent from "./MatchEvent.svelte";
   import TeamFieldInfo from "./TeamFieldInfo.svelte";
 
   export let match: MatchDetails;
@@ -50,13 +49,12 @@
   }
 </script>
 
-<div>
-  <div>
-    {#if liveMatch && !!liveMatch.liveState}
-      <div class="text-center text-3xl mb-5">
-        Round {liveMatch.log?.rounds.length}
-      </div>
-      <div class="absolute top-[300px] left-[5%]">
+<div class="w-full">
+  {#if liveMatch && !!liveMatch.liveState}
+    <div class="text-center text-3xl mb-5">
+      Round {liveMatch.log?.rounds.length}
+    </div>
+    <!-- <div class="absolute top-[300px] left-[5%]">
         {#if "id" in match.team1 && "id" in match.team2}
           {#each lastTurn.events as e}
             <MatchEvent
@@ -66,23 +64,19 @@
             />
           {/each}
         {/if}
-      </div>
-      {#if defenseTeam}
-        <TeamFieldInfo team={defenseTeam} isOffense={false} />
-      {/if}
-      <Field match={liveMatch} />
-      {#if offenseTeam}
-        <TeamFieldInfo team={offenseTeam} isOffense={true} />
-      {/if}
-    {:else if winner}
-      <div class="text-center text-3xl mb-5">
-        Winner: {winner}
-      </div>
-    {:else}
-      <div class="text-center text-3xl mb-5">No Live</div>
+      </div> -->
+    {#if defenseTeam}
+      <TeamFieldInfo team={defenseTeam} isOffense={false} />
     {/if}
-  </div>
+    <Field match={liveMatch} />
+    {#if offenseTeam}
+      <TeamFieldInfo team={offenseTeam} isOffense={true} />
+    {/if}
+  {:else if winner}
+    <div class="text-center text-3xl mb-5">
+      Winner: {winner}
+    </div>
+  {:else}
+    <div class="text-center text-3xl mb-5">No Live</div>
+  {/if}
 </div>
-
-<style>
-</style>

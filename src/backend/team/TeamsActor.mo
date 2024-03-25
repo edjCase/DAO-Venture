@@ -155,7 +155,7 @@ actor TeamsActor : Types.Actor {
     };
   };
 
-  public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {
+  public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
     let leagueId = switch (leagueIdOrNull) {
       case (null) Debug.trap("League not set");
       case (?id) id;

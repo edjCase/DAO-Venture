@@ -97,7 +97,7 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
   });
-  const OnSeasonCompleteResult = IDL.Variant({
+  const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
@@ -170,7 +170,7 @@ export const idlFactory = ({ IDL }) => {
         [OnScenarioVoteCompleteResult],
         [],
       ),
-    'onSeasonComplete' : IDL.Func([], [OnSeasonCompleteResult], []),
+    'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
     'voteOnProposal' : IDL.Func(
         [IDL.Nat, VoteOnProposalRequest],

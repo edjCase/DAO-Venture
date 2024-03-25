@@ -16,7 +16,7 @@ module {
         getScenarioVotingResults : (request : GetScenarioVotingResultsRequest) -> async GetScenarioVotingResultsResult;
         onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
         onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
-        onSeasonComplete() : async OnSeasonCompleteResult;
+        onSeasonEnd() : async OnSeasonEndResult;
     };
 
     public type GetProposalResult = {
@@ -86,7 +86,7 @@ module {
         #notAuthorized;
     };
 
-    public type OnSeasonCompleteResult = {
+    public type OnSeasonEndResult = {
         #ok;
         #notAuthorized;
     };

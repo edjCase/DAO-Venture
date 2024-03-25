@@ -13,10 +13,10 @@ module {
         addTrait : (request : AddTraitRequest) -> async AddTraitResult;
         getTraits : query () -> async [Trait.Trait];
         applyEffects : (request : ApplyEffectsRequest) -> async ApplyEffectsResult;
-        onSeasonComplete : () -> async OnSeasonCompleteResult;
+        onSeasonEnd : () -> async OnSeasonEndResult;
     };
 
-    public type OnSeasonCompleteResult = {
+    public type OnSeasonEndResult = {
         #ok;
         #notAuthorized;
     };

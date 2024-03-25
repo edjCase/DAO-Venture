@@ -154,7 +154,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
-  const OnSeasonCompleteResult = IDL.Variant({
+  const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
@@ -182,7 +182,7 @@ export const idlFactory = ({ IDL }) => {
     'getPlayer' : IDL.Func([IDL.Nat32], [GetPlayerResult], ['query']),
     'getTeamPlayers' : IDL.Func([IDL.Nat], [IDL.Vec(PlayerWithId)], ['query']),
     'getTraits' : IDL.Func([], [IDL.Vec(Trait)], ['query']),
-    'onSeasonComplete' : IDL.Func([], [OnSeasonCompleteResult], []),
+    'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'populateTeamRoster' : IDL.Func([IDL.Nat], [PopulateTeamRosterResult], []),
   });
 };

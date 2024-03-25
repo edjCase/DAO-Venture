@@ -5,7 +5,6 @@ import Hash "mo:base/Hash";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
-import Buffer "mo:base/Buffer";
 import IterTools "mo:itertools/Iter";
 import Types "./Types";
 // import LeagueActor "canister:league"; TODO
@@ -176,7 +175,7 @@ actor : Types.Actor {
         #ok;
     };
 
-    public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {
+    public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
         if (not isLeague(caller)) {
             return #notAuthorized;
         };

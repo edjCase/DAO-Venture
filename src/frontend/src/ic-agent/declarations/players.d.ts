@@ -41,7 +41,7 @@ export type Injury = { 'twistedAnkle' : null } |
   { 'concussion' : null };
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
-export type OnSeasonCompleteResult = { 'ok' : null } |
+export type OnSeasonEndResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface Player {
   'title' : string,
@@ -165,7 +165,7 @@ export interface _SERVICE {
   'getPlayer' : ActorMethod<[number], GetPlayerResult>,
   'getTeamPlayers' : ActorMethod<[bigint], Array<PlayerWithId>>,
   'getTraits' : ActorMethod<[], Array<Trait>>,
-  'onSeasonComplete' : ActorMethod<[], OnSeasonCompleteResult>,
+  'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'populateTeamRoster' : ActorMethod<[bigint], PopulateTeamRosterResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;

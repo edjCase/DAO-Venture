@@ -258,7 +258,7 @@ actor : Types.PlayerActor {
         };
     };
 
-    public shared ({ caller }) func onSeasonComplete() : async Types.OnSeasonCompleteResult {
+    public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
         if (not isLeague(caller)) {
             return #notAuthorized;
         };

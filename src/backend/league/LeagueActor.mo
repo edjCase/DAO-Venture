@@ -111,7 +111,7 @@ actor LeagueActor : Types.LeagueActor {
         onMatchGroupComplete = func(_ : Nat, _ : Season.CompletedMatchGroup) : async* () {
 
         };
-        onSeasonComplete = func(_ : Season.CompletedSeason) : async* () {
+        onSeasonEnd = func(_ : SeasonHandler.EndedSeasonVariant) : async* () {
             // TODO archive vs delete
             Debug.print("Season complete, clearing season data");
             predictionHandler.clear();
@@ -119,20 +119,20 @@ actor LeagueActor : Types.LeagueActor {
 
             // TODO handle failures
             try {
-                switch (await UsersActor.onSeasonComplete()) {
+                switch (await UsersActor.onSeasonEnd()) {
                     case (#ok) ();
-                    case (#notAuthorized) Debug.print("League is not authorized to call users actor 'onSeasonComplete'");
+                    case (#notAuthorized) Debug.print("League is not authorized to call users actor 'onSeasonEnd'");
                 };
             } catch (err) {
-                Debug.print("Failed to call UsersActor.onSeasonComplete: " # Error.message(err));
+                Debug.print("Failed to call UsersActor.onSeasonEnd: " # Error.message(err));
             };
             try {
-                switch (await PlayersActor.onSeasonComplete()) {
+                switch (await PlayersActor.onSeasonEnd()) {
                     case (#ok) ();
-                    case (#notAuthorized) Debug.print("League is not authorized to call players actor 'onSeasonComplete'");
+                    case (#notAuthorized) Debug.print("League is not authorized to call players actor 'onSeasonEnd'");
                 };
             } catch (err) {
-                Debug.print("Failed to call PlayersActor.onSeasonComplete: " # Error.message(err));
+                Debug.print("Failed to call PlayersActor.onSeasonEnd: " # Error.message(err));
             };
         };
     };
@@ -336,7 +336,7 @@ actor LeagueActor : Types.LeagueActor {
             return #notAuthorized;
         };
         let result = await* seasonHandler.close();
-        await* teamsHandler.onSeasonComplete();
+        await* teamsHandler.onSeasonEnd();
         result;
     };
 

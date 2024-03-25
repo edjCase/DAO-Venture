@@ -157,12 +157,8 @@
 </script>
 
 {#if liveData}
-  <div class="field">
-    <svg
-      class="field-svg"
-      viewBox="0 0 100 100"
-      xmlns="http://www.w3.org/2000/svg"
-    >
+  <div class="">
+    <svg class="" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" fill="#F5F5F5" opacity={0.1} />
 
       <!-- Outfield -->
@@ -279,21 +275,3 @@
     </svg>
   </div>
 {/if}
-
-<style>
-  text {
-    fill: var(--color-text);
-  }
-  .field {
-    position: relative;
-    width: 100%;
-    height: 100%;
-  }
-  .field-svg {
-    margin: auto;
-    width: 100vw;
-    height: 100vw;
-    max-width: 500px;
-    max-height: 500px;
-  }
-</style>

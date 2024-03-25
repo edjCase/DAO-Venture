@@ -58,19 +58,19 @@
     {:else if matchGroup.state == "NotScheduled"}
       Not Scheduled TODO
     {:else}
-      <div class="container">
+      <div class="flex flex-col items-center justify-center">
         {#if selectedLiveMatch}
-          <div class="selected-match">
+          <div class="flex items-center justify-center w-screen sm:w-96">
             <LiveMatchComponent
               match={selectedMatch}
               liveMatch={selectedLiveMatch}
             />
           </div>
         {/if}
-        <div class="other-matches">
+        <div class="">
           {#each matches as [match, liveMatch]}
             <div
-              class="clickable"
+              class="cursor-pointer"
               on:click={selectMatch(match.id)}
               on:keydown={() => {}}
               on:keyup={() => {}}
@@ -89,55 +89,3 @@
     {/if}
   </section>
 </section>
-
-<style>
-  section {
-    margin-bottom: 20px;
-  }
-  .match-details {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .container {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    flex-wrap: wrap;
-    align-items: stretch;
-    padding: 5px;
-    max-width: 800px;
-  }
-  .selected-match {
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    margin: 0 10px;
-    height: 50vh;
-    flex: 1;
-  }
-  .other-matches {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    flex: 1;
-  }
-
-  @media (max-width: 768px) {
-    .container {
-      flex-direction: column;
-      flex-wrap: nowrap;
-      align-items: center;
-    }
-    .selected-match,
-    .other-matches {
-      flex: none;
-    }
-  }
-  .clickable {
-    cursor: pointer;
-    width: 100%;
-  }
-</style>

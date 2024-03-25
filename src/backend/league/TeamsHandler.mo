@@ -130,9 +130,9 @@ module {
             return #ok(teamInfo.id);
         };
 
-        public func onSeasonComplete() : async* () {
+        public func onSeasonEnd() : async* () {
             try {
-                switch (await TeamsActor.onSeasonComplete()) {
+                switch (await TeamsActor.onSeasonEnd()) {
                     case (#ok) ();
                     case (#notAuthorized) Debug.print("Error: League is not authorized to notify team of season completion");
                 };

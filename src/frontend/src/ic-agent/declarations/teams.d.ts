@@ -36,7 +36,7 @@ export interface OnScenarioVoteCompleteRequest { 'scenarioId' : string }
 export type OnScenarioVoteCompleteResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'scenarioNotFound' : null };
-export type OnSeasonCompleteResult = { 'ok' : null } |
+export type OnSeasonEndResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface PagedResult {
   'data' : Array<Proposal>,
@@ -124,7 +124,7 @@ export interface _SERVICE {
     [OnScenarioVoteCompleteRequest],
     OnScenarioVoteCompleteResult
   >,
-  'onSeasonComplete' : ActorMethod<[], OnSeasonCompleteResult>,
+  'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
   'voteOnProposal' : ActorMethod<
     [bigint, VoteOnProposalRequest],
