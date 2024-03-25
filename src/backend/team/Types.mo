@@ -1,6 +1,7 @@
 import Principal "mo:base/Principal";
 import Dao "../Dao";
 import Skill "../models/Skill";
+import CommonTypes "../Types";
 
 module {
 
@@ -10,7 +11,7 @@ module {
         voteOnScenario : (teamId : Nat, request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
         createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
-        getProposals : query (teamId : Nat) -> async GetProposalsResult;
+        getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
         voteOnProposal : (teamId : Nat, request : VoteOnProposalRequest) -> async VoteOnProposalResult;
         getScenarioVotingResults : (request : GetScenarioVotingResultsRequest) -> async GetScenarioVotingResultsResult;
         onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
@@ -25,7 +26,7 @@ module {
     };
 
     public type GetProposalsResult = {
-        #ok : [Proposal];
+        #ok : CommonTypes.PagedResult<Proposal>;
         #teamNotFound;
     };
 

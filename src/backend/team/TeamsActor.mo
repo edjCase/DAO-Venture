@@ -105,10 +105,9 @@ actor TeamsActor : Types.Actor {
     };
   };
 
-  public shared query func getProposals(teamId : Nat) : async Types.GetProposalsResult {
+  public shared query func getProposals(teamId : Nat, count : Nat, offset : Nat) : async Types.GetProposalsResult {
     let ?teamHandler = multiTeamHandler.get(teamId) else return #teamNotFound;
-    let proposals = teamHandler.getProposals();
-    #ok(proposals);
+    #ok(teamHandler.getProposals(count, offset));
   };
 
   public shared ({ caller }) func voteOnProposal(teamId : Nat, request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {

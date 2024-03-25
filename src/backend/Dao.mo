@@ -10,6 +10,9 @@ import Float "mo:base/Float";
 import Int "mo:base/Int";
 import Buffer "mo:base/Buffer";
 import Error "mo:base/Error";
+import Order "mo:base/Order";
+import IterTools "mo:itertools/Iter";
+import CommonTypes "./Types";
 
 module {
     public type StableData<TProposalContent> = {
@@ -163,13 +166,26 @@ module {
             };
         };
 
-        public func getProposals() : [Proposal<TProposalContent>] {
-            proposals.vals()
+        public func getProposals(count : Nat, offset : Nat) : CommonTypes.PagedResult<Proposal<TProposalContent>> {
+            let vals = proposals.vals()
             |> Iter.map(
                 _,
                 func(proposal : MutableProposal<TProposalContent>) : Proposal<TProposalContent> = fromMutableProposal(proposal),
             )
+            |> IterTools.sort(
+                _,
+                func(proposalA : Proposal<TProposalContent>, proposalB : Proposal<TProposalContent>) : Order.Order {
+                    Int.compare(proposalA.timeStart, proposalB.timeStart);
+                },
+            )
+            |> IterTools.skip(_, offset)
+            |> IterTools.take(_, count)
             |> Iter.toArray(_);
+            {
+                data = vals;
+                offset = offset;
+                count = count;
+            };
         };
 
         public func vote(proposalId : Nat, voterId : Principal, vote : Bool) : async* VoteResult {

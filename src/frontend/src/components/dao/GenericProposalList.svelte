@@ -49,7 +49,7 @@
 </script>
 
 <div class="flex justify-center">
-    <div class="text-3xl text-center flex-grow">Proposals</div>
+    <div class="text-3xl text-center flex-grow">Recent Proposals</div>
 </div>
 {#if proposals.length === 0}
     <div class="flex justify-center">

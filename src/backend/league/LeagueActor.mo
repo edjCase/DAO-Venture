@@ -208,8 +208,8 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    public shared query func getProposals() : async Types.GetProposalsResult {
-        #ok(dao.getProposals());
+    public shared query func getProposals(count : Nat, offset : Nat) : async Types.GetProposalsResult {
+        #ok(dao.getProposals(count, offset));
     };
 
     public shared ({ caller }) func voteOnProposal(request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {

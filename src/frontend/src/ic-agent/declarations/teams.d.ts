@@ -14,7 +14,7 @@ export type GetCyclesResult = { 'ok' : bigint } |
 export type GetProposalResult = { 'ok' : Proposal } |
   { 'proposalNotFound' : null } |
   { 'teamNotFound' : null };
-export type GetProposalsResult = { 'ok' : Array<Proposal> } |
+export type GetProposalsResult = { 'ok' : PagedResult } |
   { 'teamNotFound' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : string }
 export type GetScenarioVoteResult = {
@@ -38,6 +38,11 @@ export type OnScenarioVoteCompleteResult = { 'ok' : null } |
   { 'scenarioNotFound' : null };
 export type OnSeasonCompleteResult = { 'ok' : null } |
   { 'notAuthorized' : null };
+export interface PagedResult {
+  'data' : Array<Proposal>,
+  'count' : bigint,
+  'offset' : bigint,
+}
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent,
@@ -105,7 +110,7 @@ export interface _SERVICE {
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'getCycles' : ActorMethod<[], GetCyclesResult>,
   'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
-  'getProposals' : ActorMethod<[bigint], GetProposalsResult>,
+  'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
     GetScenarioVoteResult

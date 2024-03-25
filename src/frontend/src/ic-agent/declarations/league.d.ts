@@ -91,7 +91,7 @@ export type GetMatchGroupPredictionsResult = {
   { 'notFound' : null };
 export type GetProposalResult = { 'ok' : Proposal } |
   { 'proposalNotFound' : null };
-export type GetProposalsResult = { 'ok' : Array<Proposal> };
+export type GetProposalsResult = { 'ok' : PagedResult };
 export type GetScenarioResult = { 'ok' : Scenario } |
   { 'notStarted' : null } |
   { 'notFound' : null };
@@ -198,6 +198,11 @@ export type OnMatchGroupCompleteResult = { 'ok' : null } |
   { 'matchGroupNotFound' : null } |
   { 'seasonNotOpen' : null } |
   { 'matchGroupNotInProgress' : null };
+export interface PagedResult {
+  'data' : Array<Proposal>,
+  'count' : bigint,
+  'offset' : bigint,
+}
 export type PlayerId = number;
 export interface PlayerMatchStatsWithId {
   'playerId' : PlayerId,
@@ -407,7 +412,7 @@ export interface _SERVICE {
     GetMatchGroupPredictionsResult
   >,
   'getProposal' : ActorMethod<[bigint], GetProposalResult>,
-  'getProposals' : ActorMethod<[], GetProposalsResult>,
+  'getProposals' : ActorMethod<[bigint, bigint], GetProposalsResult>,
   'getScenario' : ActorMethod<[string], GetScenarioResult>,
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,

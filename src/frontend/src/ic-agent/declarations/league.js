@@ -181,7 +181,12 @@ export const idlFactory = ({ IDL }) => {
     'ok' : Proposal,
     'proposalNotFound' : IDL.Null,
   });
-  const GetProposalsResult = IDL.Variant({ 'ok' : IDL.Vec(Proposal) });
+  const PagedResult = IDL.Record({
+    'data' : IDL.Vec(Proposal),
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const GetProposalsResult = IDL.Variant({ 'ok' : PagedResult });
   const ScenarioStateResolved = IDL.Record({
     'teamChoices' : IDL.Vec(
       IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
@@ -481,7 +486,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getProposal' : IDL.Func([IDL.Nat], [GetProposalResult], ['query']),
-    'getProposals' : IDL.Func([], [GetProposalsResult], ['query']),
+    'getProposals' : IDL.Func(
+        [IDL.Nat, IDL.Nat],
+        [GetProposalsResult],
+        ['query'],
+      ),
     'getScenario' : IDL.Func([IDL.Text], [GetScenarioResult], ['query']),
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),

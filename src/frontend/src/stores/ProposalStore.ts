@@ -34,9 +34,9 @@ export const proposalStore = (() => {
 
     const refetchLeagueProposals = async () => {
         let leagueAgent = await leagueAgentFactory();
-        let proposalsResult = await leagueAgent.getProposals();
+        let proposalsResult = await leagueAgent.getProposals(BigInt(999), BigInt(0)); // TODO
         if ('ok' in proposalsResult) {
-            leagueStore.set(proposalsResult.ok);
+            leagueStore.set(proposalsResult.ok.data);
         } else {
             throw new Error("Error fetching proposals: " + toJsonString(proposalsResult));
         }
@@ -81,9 +81,9 @@ export const proposalStore = (() => {
         let store = getOrCreateTeamStore(teamId);
         let teamsAgent = await teamsAgentFactory();
         let proposals = await teamsAgent
-            .getProposals(teamId);
+            .getProposals(teamId, BigInt(999), BigInt(0)); // TODO
         if ('ok' in proposals) {
-            store.set(proposals.ok);
+            store.set(proposals.ok.data);
         } else {
             throw new Error("Error fetching team proposals: " + toJsonString(proposals));
         }

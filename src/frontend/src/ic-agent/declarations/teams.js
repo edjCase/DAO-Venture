@@ -53,8 +53,13 @@ export const idlFactory = ({ IDL }) => {
     'proposalNotFound' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
+  const PagedResult = IDL.Record({
+    'data' : IDL.Vec(Proposal),
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
   const GetProposalsResult = IDL.Variant({
-    'ok' : IDL.Vec(Proposal),
+    'ok' : PagedResult,
     'teamNotFound' : IDL.Null,
   });
   const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Text });
@@ -140,7 +145,11 @@ export const idlFactory = ({ IDL }) => {
         [GetProposalResult],
         ['query'],
       ),
-    'getProposals' : IDL.Func([IDL.Nat], [GetProposalsResult], ['query']),
+    'getProposals' : IDL.Func(
+        [IDL.Nat, IDL.Nat, IDL.Nat],
+        [GetProposalsResult],
+        ['query'],
+      ),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
         [GetScenarioVoteResult],

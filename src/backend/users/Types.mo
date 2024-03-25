@@ -5,12 +5,30 @@ module {
 
     public type Actor = actor {
         get : query (userId : Principal) -> async GetUserResult;
-        getAll : query () -> async [User];
+        getStats : query () -> async GetStatsResult;
         getTeamOwners : query (request : GetTeamOwnersRequest) -> async GetTeamOwnersResult;
         setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
         awardPoints : (awards : [AwardPointsRequest]) -> async AwardPointsResult;
         onSeasonComplete : () -> async OnSeasonCompleteResult;
+    };
+
+    public type GetStatsResult = {
+        #ok : UserStats;
+    };
+
+    public type UserStats = {
+        totalPoints : Int;
+        userCount : Nat;
+        teamOwnerCount : Nat;
+        teams : [TeamStats];
+    };
+
+    public type TeamStats = {
+        id : Nat;
+        totalPoints : Int;
+        userCount : Nat;
+        ownerCount : Nat;
     };
 
     public type OnSeasonCompleteResult = {

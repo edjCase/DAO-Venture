@@ -5,6 +5,7 @@ import Team "../models/Team";
 import Season "../models/Season";
 import Scenario "../models/Scenario";
 import Dao "../Dao";
+import CommonTypes "../Types";
 
 module {
     public type LeagueActor = actor {
@@ -21,7 +22,7 @@ module {
 
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (Nat) -> async GetProposalResult;
-        getProposals : query () -> async GetProposalsResult;
+        getProposals : query (count : Nat, offset : Nat) -> async GetProposalsResult;
         getScenario : query (Text) -> async GetScenarioResult;
         getScenarios : query () -> async GetScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
@@ -34,7 +35,7 @@ module {
     };
 
     public type GetProposalsResult = {
-        #ok : [Proposal];
+        #ok : CommonTypes.PagedResult<Proposal>;
     };
 
     public type Proposal = Dao.Proposal<ProposalContent>;

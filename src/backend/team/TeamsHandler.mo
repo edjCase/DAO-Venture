@@ -7,6 +7,7 @@ import Iter "mo:base/Iter";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
+import CommonTypes "../Types";
 
 module {
 
@@ -111,8 +112,8 @@ module {
             dao.getProposal(id);
         };
 
-        public func getProposals() : [Dao.Proposal<Types.ProposalContent>] {
-            dao.getProposals();
+        public func getProposals(count : Nat, offset : Nat) : CommonTypes.PagedResult<Dao.Proposal<Types.ProposalContent>> {
+            dao.getProposals(count, offset);
         };
 
         public func voteOnProposal(caller : Principal, request : Types.VoteOnProposalRequest) : async* Types.VoteOnProposalResult {

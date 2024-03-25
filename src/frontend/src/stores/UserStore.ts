@@ -1,11 +1,13 @@
 import { Principal } from '@dfinity/principal';
 import { Writable, writable } from 'svelte/store';
 import { usersAgentFactory } from '../ic-agent/Users';
-import { GetUserResult, User } from '../ic-agent/declarations/users';
+import { GetUserResult, User, UserStats } from '../ic-agent/declarations/users';
 import { toJsonString } from '../utils/StringUtil';
 
 function createUserStore() {
     const userStores = new Map<string, Writable<User>>();
+    const userStats = writable<UserStats>();
+
 
     const refetchUser = async (userId: Principal) => {
         let store = await getOrCreateStore(userId);
@@ -55,10 +57,32 @@ function createUserStore() {
         return result;
     };
 
+    const subscribeStats = async (callback: (stats: UserStats) => void) => {
+        userStats.subscribe(s => {
+            if (s) {
+                callback(s);
+            }
+        });
+    };
+
+    const refetchStats = async () => {
+        let usersAgent = await usersAgentFactory();
+        let result = await usersAgent.getStats();
+        if ('ok' in result) {
+            userStats.set(result.ok);
+        } else {
+            console.log("Error getting user stats", result);
+        }
+    }
+
+    refetchStats();
+
     return {
         subscribeUser,
         refetchUser,
-        setFavoriteTeam
+        setFavoriteTeam,
+        subscribeStats,
+        refetchStats
     };
 }
 

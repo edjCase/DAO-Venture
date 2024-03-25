@@ -2,22 +2,21 @@
     import { onMount } from "svelte";
     import UserAvatar from "../user/UserAvatar.svelte";
     import UserPseudonym from "../user/UserPseudonym.svelte";
-    import { User } from "../../ic-agent/declarations/users";
+    import { UserVotingInfo } from "../../ic-agent/declarations/users";
     import { usersAgentFactory } from "../../ic-agent/Users";
 
     export let teamId: bigint;
 
-    let members: User[] = [];
+    let members: UserVotingInfo[] = [];
 
     let getUsers = async () => {
         let usersAgent = await usersAgentFactory();
-        let users = await usersAgent.getAll();
-        members = users.filter((user) => {
-            return (
-                user.team[0]?.id.toString() === teamId.toString() &&
-                "owner" in user.team[0].kind
-            );
-        });
+        let result = await usersAgent.getTeamOwners({ team: teamId });
+        if ("ok" in result) {
+            members = result.ok;
+        } else {
+            console.error("Failed to get team owners: ", result);
+        }
     };
 
     onMount(getUsers);

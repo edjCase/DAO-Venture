@@ -2,6 +2,10 @@ import Trie "mo:base/Trie";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Hash "mo:base/Hash";
+import HashMap "mo:base/HashMap";
+import Nat "mo:base/Nat";
+import Nat32 "mo:base/Nat32";
+import Buffer "mo:base/Buffer";
 import IterTools "mo:itertools/Iter";
 import Types "./Types";
 // import LeagueActor "canister:league"; TODO
@@ -18,14 +22,52 @@ actor : Types.Actor {
         #ok(user);
     };
 
-    // TODO should there be a get all?
-    public shared query func getAll() : async [Types.User] {
-        Trie.iter(users)
-        |> Iter.map(
-            _,
-            func((_, user) : (Principal, Types.User)) : Types.User = user,
-        )
-        |> Iter.toArray(_);
+    public shared query func getStats() : async Types.GetStatsResult {
+        let leagueStats = {
+            var totalPoints : Int = 0;
+            var userCount = 0;
+            var teamOwnerCount = 0;
+        };
+        let teamStats = HashMap.HashMap<Nat, Types.TeamStats>(6, Nat.equal, Nat32.fromNat);
+        for ((userId, user) in Trie.iter(users)) {
+            switch (user.team) {
+                case (?team) {
+                    let stats : Types.TeamStats = switch (teamStats.get(team.id)) {
+                        case (?stats) stats;
+                        case (null) {
+                            {
+                                id = team.id;
+                                totalPoints = 0;
+                                userCount = 0;
+                                ownerCount = 0;
+                            };
+                        };
+                    };
+                    let isOwner = switch (team.kind) {
+                        case (#owner(_)) true;
+                        case (#fan) false;
+                    };
+                    let newStats : Types.TeamStats = {
+                        id = team.id;
+                        totalPoints = stats.totalPoints + user.points;
+                        userCount = stats.userCount + 1;
+                        ownerCount = stats.ownerCount + (if (isOwner) 1 else 0);
+                    };
+                    leagueStats.totalPoints += user.points;
+                    leagueStats.userCount += 1;
+                    leagueStats.teamOwnerCount += (if (isOwner) 1 else 0);
+
+                    teamStats.put(team.id, newStats);
+                };
+                case (null) ();
+            };
+        };
+        #ok({
+            totalPoints = leagueStats.totalPoints;
+            userCount = leagueStats.userCount;
+            teamOwnerCount = leagueStats.teamOwnerCount;
+            teams = Iter.toArray<Types.TeamStats>(teamStats.vals());
+        });
     };
 
     public shared query func getTeamOwners(request : Types.GetTeamOwnersRequest) : async Types.GetTeamOwnersResult {

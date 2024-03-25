@@ -7,19 +7,31 @@ import { Subscriber } from "svelte/motion";
 
 
 export const teamStore = (() => {
-  const { subscribe, set } = writable<TeamWithId[]>([]);
-  const teamStandingsWritable = writable<TeamStandingInfo[]>([]);
+  const teamsStore = writable<TeamWithId[]>();
+  const teamStandingsWritable = writable<TeamStandingInfo[]>();
 
   const refetch = async () => {
     let leagueAgent = await leagueAgentFactory();
     leagueAgent
       .getTeams().then((teams) => {
-        set(teams);
+        teamsStore.set(teams);
       });
   };
 
+  const subscribe = async (subscriber: Subscriber<TeamWithId[]>) => {
+    return teamsStore.subscribe(s => {
+      if (s) {
+        subscriber(s);
+      }
+    });
+  }
+
   const subscribeTeamStandings = async (subscriber: Subscriber<TeamStandingInfo[]>) => {
-    return teamStandingsWritable.subscribe(subscriber);
+    return teamStandingsWritable.subscribe(s => {
+      if (s) {
+        subscriber(s);
+      }
+    });
   }
 
   const refetchTeamStandings = async () => {
@@ -31,6 +43,7 @@ export const teamStore = (() => {
       console.error("Failed to get team standings: ", result);
     }
   }
+
 
 
   refetch();

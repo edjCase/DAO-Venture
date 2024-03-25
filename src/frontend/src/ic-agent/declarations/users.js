@@ -34,6 +34,19 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'notFound' : IDL.Null,
   });
+  const TeamStats = IDL.Record({
+    'id' : IDL.Nat,
+    'totalPoints' : IDL.Int,
+    'ownerCount' : IDL.Nat,
+    'userCount' : IDL.Nat,
+  });
+  const UserStats = IDL.Record({
+    'teams' : IDL.Vec(TeamStats),
+    'teamOwnerCount' : IDL.Nat,
+    'totalPoints' : IDL.Int,
+    'userCount' : IDL.Nat,
+  });
+  const GetStatsResult = IDL.Variant({ 'ok' : UserStats });
   const GetTeamOwnersRequest = IDL.Variant({
     'all' : IDL.Null,
     'team' : IDL.Nat,
@@ -62,7 +75,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'get' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
-    'getAll' : IDL.Func([], [IDL.Vec(User)], ['query']),
+    'getStats' : IDL.Func([], [GetStatsResult], ['query']),
     'getTeamOwners' : IDL.Func(
         [GetTeamOwnersRequest],
         [GetTeamOwnersResult],
