@@ -14,6 +14,9 @@
     });
 
     teamStore.subscribeTeamStandings((standings) => {
+        if (standings === undefined) {
+            return;
+        }
         winLossRecords = standings.reduce(
             (acc, standing) => {
                 acc[Number(standing.id)] =

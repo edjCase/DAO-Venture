@@ -35,6 +35,10 @@
     let endTime = formatDateTimeLocal(initialEnd);
 
     let addScenario = async () => {
+        if (!teams) {
+            console.error("Teams have not loaded. Cannot add scenario.");
+            return;
+        }
         let request: AddScenarioRequest = {
             id: id,
             startTime: dateToNanoseconds(new Date(startTime)),

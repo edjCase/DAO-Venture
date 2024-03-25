@@ -80,7 +80,7 @@
   };
 </script>
 
-{#if players.length + teams.length <= 0}
+{#if !teams || !players || players.length + teams.length <= 0}
   <Button on:click={initialize}>Initialize With Default Data</Button>
 {:else}
   <div class="flex">

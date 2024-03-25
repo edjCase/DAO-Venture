@@ -7,7 +7,7 @@
 
   let team: TeamWithId | undefined;
   teamStore.subscribe((teams) => {
-    team = teams.find((t) => t.id.toString() === teamIdString);
+    team = teams?.find((t) => t.id.toString() === teamIdString);
   });
 </script>
 

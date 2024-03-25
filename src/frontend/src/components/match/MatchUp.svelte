@@ -7,7 +7,7 @@
 
   export let match: MatchDetails;
 
-  let teamStandings: TeamStandingInfo[] = [];
+  let teamStandings: TeamStandingInfo[] | undefined;
 
   let getTeamName = (team: TeamDetailsOrUndetermined) => {
     if ("name" in team) {
@@ -23,7 +23,7 @@
   // Placeholder function for getting team stats
   let getTeamStats = (team: TeamDetailsOrUndetermined) => {
     if ("id" in team) {
-      const standing = teamStandings.find((s) => s.id == team.id);
+      const standing = teamStandings?.find((s) => s.id == team.id);
       if (standing) {
         return `(${standing.wins}-${standing.losses})`;
       }

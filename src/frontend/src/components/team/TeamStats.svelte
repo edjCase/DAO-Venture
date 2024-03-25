@@ -8,7 +8,7 @@
     let entropy: bigint | undefined;
 
     teamStore.subscribe((teams) => {
-        const team = teams.find((t) => t.id == teamId);
+        const team = teams?.find((t) => t.id == teamId);
         if (team) {
             entropy = team.entropy;
         } else {
@@ -16,7 +16,7 @@
         }
     });
     teamStore.subscribeTeamStandings((standings) => {
-        const standing = standings.find((s) => s.id == teamId);
+        const standing = standings?.find((s) => s.id == teamId);
         if (standing) {
             wins = standing.wins;
             losses = standing.losses;

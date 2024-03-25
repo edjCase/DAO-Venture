@@ -14,14 +14,14 @@
     return Object.keys(trait)[0];
   };
   const getPlayerName = (playerId: number): string => {
-    return players.find((p) => p.id === playerId)?.name ?? "Unknown";
+    return players?.find((p) => p.id === playerId)?.name ?? "Unknown";
   };
   const getTeamId = (teamId: TeamId): bigint => {
     return "team1" in teamId ? team1Id : team2Id;
   };
   const getTeamName = (teamId: TeamId): string => {
     let teamIdId = getTeamId(teamId);
-    return teams.find((p) => p.id == teamIdId)?.name ?? "Unknown";
+    return teams?.find((p) => p.id == teamIdId)?.name ?? "Unknown";
   };
 </script>
 

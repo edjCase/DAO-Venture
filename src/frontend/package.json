@@ -20,6 +20,7 @@
     "flowbite": "^2.1.1",
     "flowbite-svelte": "^0.44.19",
     "flowbite-svelte-icons": "^0.4.5",
+    "jdenticon": "^3.2.0",
     "postcss": "^8.4.32",
     "postcss-load-config": "^4.0.1",
     "rollup": "^3.29.4",
@@ -35,7 +36,6 @@
     "tailwindcss": "^3.4.0",
     "tslib": "^2.5.0",
     "typescript": "^5.2.2",
-    "jdenticon": "^3.2.0",
     "unique-names-generator": "^4.7.1"
   },
   "dependencies": {

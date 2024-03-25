@@ -1,14 +1,13 @@
 import { writable } from "svelte/store";
 import { TeamStandingInfo, TeamWithId } from "../ic-agent/declarations/league";
 import { leagueAgentFactory } from "../ic-agent/League";
-import { Subscriber } from "svelte/motion";
 
 
 
 
 export const teamStore = (() => {
-  const teamsStore = writable<TeamWithId[]>();
-  const teamStandingsWritable = writable<TeamStandingInfo[]>();
+  const teamsStore = writable<TeamWithId[] | undefined>();
+  const teamStandingsWritable = writable<TeamStandingInfo[] | undefined>();
 
   const refetch = async () => {
     let leagueAgent = await leagueAgentFactory();
@@ -18,21 +17,6 @@ export const teamStore = (() => {
       });
   };
 
-  const subscribe = async (subscriber: Subscriber<TeamWithId[]>) => {
-    return teamsStore.subscribe(s => {
-      if (s) {
-        subscriber(s);
-      }
-    });
-  }
-
-  const subscribeTeamStandings = async (subscriber: Subscriber<TeamStandingInfo[]>) => {
-    return teamStandingsWritable.subscribe(s => {
-      if (s) {
-        subscriber(s);
-      }
-    });
-  }
 
   const refetchTeamStandings = async () => {
     let leagueAgent = await leagueAgentFactory();
@@ -51,9 +35,9 @@ export const teamStore = (() => {
 
 
   return {
-    subscribeTeamStandings,
+    subscribeTeamStandings: teamStandingsWritable.subscribe,
     refetchTeamStandings,
-    subscribe,
+    subscribe: teamsStore.subscribe,
     refetch
   };
 })();

@@ -13,7 +13,7 @@
   $: teams = $teamStore;
   const getTeamName = (teamId: [bigint] | []) => {
     if (teamId.length === 0) return "";
-    const team = teams.find((t) => t.id == teamId[0]);
+    const team = teams?.find((t) => t.id == teamId[0]);
     return team ? team.name : "Unknown";
   };
 </script>

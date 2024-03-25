@@ -5,7 +5,7 @@ import { playersAgentFactory } from "../ic-agent/Players";
 
 
 export const playerStore = (() => {
-    const { subscribe, set } = writable<PlayerWithId[]>([]);
+    const { subscribe, set } = writable<PlayerWithId[] | undefined>();
 
     const refetch = async () => {
         let playersAgent = await playersAgentFactory();

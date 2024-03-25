@@ -25,7 +25,7 @@
             });
         }
     }
-    $: team = teams.find((t) => t.id == user?.team[0]?.id);
+    $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: votingPower =
         user?.team[0]?.kind && "owner" in user.team[0].kind
             ? user.team[0].kind.owner.votingPower

@@ -21,7 +21,7 @@
             });
         }
     }
-    $: team = teams.find((t) => t.id == user?.team[0]?.id);
+    $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: coOwner = user?.team[0]?.kind && "owner" in user.team[0].kind;
 
     let copyPrincipal = () => {

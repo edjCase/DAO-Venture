@@ -22,7 +22,7 @@
     $: {
         teamId = userContext?.team[0]?.id;
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
-        team = teams.find((team) => team.id === teamId);
+        team = teams?.find((team) => team.id === teamId);
     }
 
     let register = async function () {

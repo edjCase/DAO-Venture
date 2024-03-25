@@ -7,7 +7,7 @@
 
   let player: PlayerWithId | undefined;
   playerStore.subscribe((players) => {
-    player = players.find((p) => p.id.toString() === playerIdString);
+    player = players?.find((p) => p.id.toString() === playerIdString);
   });
 </script>
 

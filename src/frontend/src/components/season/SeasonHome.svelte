@@ -42,7 +42,7 @@
     });
 
     $: {
-        seasonChampion = teams.find((t) => t.id == seasonChampionId);
+        seasonChampion = teams?.find((t) => t.id == seasonChampionId);
     }
 </script>
 

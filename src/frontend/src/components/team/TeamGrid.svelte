@@ -89,29 +89,31 @@
       </div>
     {/if}
   </div>
-  <div class="flex flex-wrap justify-around">
-    {#each teams as team}
-      <div
-        class="mb-5 {selectedTeam === team ? 'opacity-50' : ''}"
-        role="button"
-        tabindex="0"
-        on:keydown={() => {}}
-        on:click={() => (selectedTeam = team)}
-      >
-        <TeamLogo {team} size="md" />
-      </div>
-    {/each}
+  {#if teams !== undefined}
+    <div class="flex flex-wrap justify-around">
+      {#each teams as team}
+        <div
+          class="mb-5 {selectedTeam === team ? 'opacity-50' : ''}"
+          role="button"
+          tabindex="0"
+          on:keydown={() => {}}
+          on:click={() => (selectedTeam = team)}
+        >
+          <TeamLogo {team} size="md" />
+        </div>
+      {/each}
 
-    <Modal bind:open={confirmModal} autoclose>
-      <div class="text-center">
-        <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-          Setting your team is permanent for the season. Are you sure?
-        </h3>
-        <Button color="red" class="me-2" on:click={setFavoriteTeam}>
-          Yes, I'm sure
-        </Button>
-        <Button color="alternative">No, cancel</Button>
-      </div>
-    </Modal>
-  </div>
+      <Modal bind:open={confirmModal} autoclose>
+        <div class="text-center">
+          <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+            Setting your team is permanent for the season. Are you sure?
+          </h3>
+          <Button color="red" class="me-2" on:click={setFavoriteTeam}>
+            Yes, I'm sure
+          </Button>
+          <Button color="alternative">No, cancel</Button>
+        </div>
+      </Modal>
+    </div>
+  {/if}
 </div>
