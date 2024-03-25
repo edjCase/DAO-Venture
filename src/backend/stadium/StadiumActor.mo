@@ -134,77 +134,74 @@ actor : Types.StadiumActor {
 
     public shared func tickMatchGroup(matchGroupId : Nat) : async Types.TickMatchGroupResult {
         let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
-        // TODO remove loop, used for debugging purposes
-        loop {
-            let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
-            let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
+        let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
+        let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
 
-            switch (tickMatches(prng, matchGroup.matches)) {
-                case (#completed(completedTickResults)) {
-                    // Cancel tick timer before disposing of match group
-                    // NOTE: Should be canceled even if the onMatchGroupComplete fails, so it doesnt
-                    // just keep ticking. Can retrigger manually if needed after fixing the
-                    // issue
+        switch (tickMatches(prng, matchGroup.matches)) {
+            case (#completed(completedTickResults)) {
+                // Cancel tick timer before disposing of match group
+                // NOTE: Should be canceled even if the onMatchGroupComplete fails, so it doesnt
+                // just keep ticking. Can retrigger manually if needed after fixing the
+                // issue
 
-                    let completedMatches = completedTickResults
-                    |> Iter.fromArray(_)
-                    |> Iter.map(
-                        _,
-                        func(tickResult : CompletedMatchResult) : Season.CompletedMatch = tickResult.match,
-                    )
-                    |> Iter.toArray(_);
+                let completedMatches = completedTickResults
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(tickResult : CompletedMatchResult) : Season.CompletedMatch = tickResult.match,
+                )
+                |> Iter.toArray(_);
 
-                    let playerStats = completedTickResults
-                    |> Iter.fromArray(_)
-                    |> Iter.map(
-                        _,
-                        func(tickResult : CompletedMatchResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
-                    )
-                    |> IterTools.flatten<Player.PlayerMatchStatsWithId>(_)
-                    |> Iter.toArray(_);
+                let playerStats = completedTickResults
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(tickResult : CompletedMatchResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
+                )
+                |> IterTools.flatten<Player.PlayerMatchStatsWithId>(_)
+                |> Iter.toArray(_);
 
-                    Timer.cancelTimer(matchGroup.tickTimerId);
-                    let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
-                    let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
-                        id = matchGroupId;
-                        matches = completedMatches;
-                        playerStats = playerStats;
-                    };
-                    let result = try {
-                        await leagueActor.onMatchGroupComplete(onCompleteRequest);
-                    } catch (err) {
-                        #onCompleteCallbackError(Error.message(err));
-                    };
-
-                    let errorMessage = switch (result) {
-                        case (#ok) {
-                            // Remove match group if successfully passed info to the league
-                            let matchGroupKey = buildMatchGroupKey(matchGroupId);
-                            let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
-                            matchGroups := newMatchGroups;
-                            return #completed;
-                        };
-                        case (#notAuthorized) "Failed: Not authorized to complete match group";
-                        case (#matchGroupNotFound) "Failed: Match group not found - " # Nat.toText(matchGroupId);
-                        case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
-                        case (#seasonNotOpen) "Failed: Season not open";
-                        case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
-                        case (#matchGroupNotInProgress) "Failed: Match group not in progress";
-                    };
-                    Debug.print("On Match Group Complete Result - " # errorMessage);
-                    // Stuck in a bad state. Can retry by a manual tick call
-                    return #completed;
+                Timer.cancelTimer(matchGroup.tickTimerId);
+                let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+                let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
+                    id = matchGroupId;
+                    matches = completedMatches;
+                    playerStats = playerStats;
                 };
-                case (#inProgress(newMatches)) {
-                    addOrUpdateMatchGroup({
-                        matchGroup with
-                        id = matchGroupId;
-                        matches = newMatches;
-                        currentSeed = prng.getCurrentSeed();
-                    });
-
-                    //  #inProgress;
+                let result = try {
+                    await leagueActor.onMatchGroupComplete(onCompleteRequest);
+                } catch (err) {
+                    #onCompleteCallbackError(Error.message(err));
                 };
+
+                let errorMessage = switch (result) {
+                    case (#ok) {
+                        // Remove match group if successfully passed info to the league
+                        let matchGroupKey = buildMatchGroupKey(matchGroupId);
+                        let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
+                        matchGroups := newMatchGroups;
+                        return #completed;
+                    };
+                    case (#notAuthorized) "Failed: Not authorized to complete match group";
+                    case (#matchGroupNotFound) "Failed: Match group not found - " # Nat.toText(matchGroupId);
+                    case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
+                    case (#seasonNotOpen) "Failed: Season not open";
+                    case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
+                    case (#matchGroupNotInProgress) "Failed: Match group not in progress";
+                };
+                Debug.print("On Match Group Complete Result - " # errorMessage);
+                // Stuck in a bad state. Can retry by a manual tick call
+                #completed;
+            };
+            case (#inProgress(newMatches)) {
+                addOrUpdateMatchGroup({
+                    matchGroup with
+                    id = matchGroupId;
+                    matches = newMatches;
+                    currentSeed = prng.getCurrentSeed();
+                });
+
+                #inProgress;
             };
         };
     };

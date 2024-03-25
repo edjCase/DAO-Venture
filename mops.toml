@@ -1,7 +1,7 @@
 [dependencies]
 base = "0.11.0"
 itertools = "0.2.1"
-datetime = "https://github.com/edjCase/motoko_datetime#28e765bf5bb6b9d75a9416713ab863bea0d4a61f"
+datetime = "https://github.com/edjCase/motoko_datetime#e08e39020fa4ac1871f3c17fc0e96e0b3c898c9f"
 ic = "1.0.1"
 test = "1.2.0"
 xtended-text = "0.2.5"

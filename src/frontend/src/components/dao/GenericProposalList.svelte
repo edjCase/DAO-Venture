@@ -61,7 +61,7 @@
             <AccordionItem>
                 <span
                     slot="header"
-                    class="w-full p-2 flex justify-between items-center"
+                    class="w-full flex justify-between items-center"
                 >
                     <div>
                         <div>{proposal.title}</div>

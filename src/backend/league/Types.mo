@@ -6,6 +6,7 @@ import Season "../models/Season";
 import Scenario "../models/Scenario";
 import Dao "../Dao";
 import CommonTypes "../Types";
+import Components "mo:datetime/Components";
 
 module {
     public type LeagueActor = actor {
@@ -169,6 +170,7 @@ module {
     // Start season
     public type StartSeasonRequest = {
         startTime : Time.Time;
+        weekDays : [Components.DayOfWeek];
     };
 
     public type AddScenarioRequest = {
@@ -194,17 +196,8 @@ module {
         #idTaken;
         #noStadiumsExist;
         #seedGenerationError : Text;
-        #noTeams;
-        #oddNumberOfTeams;
+        #invalidArgs : Text;
         #notAuthorized;
-        #scenarioCountMismatch : {
-            expected : Nat;
-            actual : Nat;
-        };
-        #invalidScenario : {
-            id : Text;
-            errors : [Text];
-        };
     };
 
     public type CloseSeasonResult = {

@@ -61,6 +61,13 @@ export type CreateTeamResult = { 'ok' : bigint } |
   { 'notAuthorized' : null } |
   { 'teamsCallError' : string } |
   { 'populateTeamRosterCallError' : string };
+export type DayOfWeek = { 'tuesday' : null } |
+  { 'wednesday' : null } |
+  { 'saturday' : null } |
+  { 'thursday' : null } |
+  { 'sunday' : null } |
+  { 'friday' : null } |
+  { 'monday' : null };
 export type Duration = { 'matches' : bigint } |
   { 'indefinite' : null };
 export type Effect = { 'allOf' : Array<Effect> } |
@@ -327,17 +334,17 @@ export type StartMatchGroupResult = { 'ok' : null } |
   { 'matchGroupNotFound' : null } |
   { 'alreadyStarted' : null } |
   { 'matchErrors' : Array<{ 'error' : StartMatchError, 'matchId' : bigint }> };
-export interface StartSeasonRequest { 'startTime' : Time }
+export interface StartSeasonRequest {
+  'startTime' : Time,
+  'weekDays' : Array<DayOfWeek>,
+}
 export type StartSeasonResult = { 'ok' : null } |
-  { 'invalidScenario' : { 'id' : string, 'errors' : Array<string> } } |
   { 'noStadiumsExist' : null } |
   { 'notAuthorized' : null } |
-  { 'oddNumberOfTeams' : null } |
   { 'seedGenerationError' : string } |
   { 'alreadyStarted' : null } |
   { 'idTaken' : null } |
-  { 'scenarioCountMismatch' : { 'actual' : bigint, 'expected' : bigint } } |
-  { 'noTeams' : null };
+  { 'invalidArgs' : string };
 export type Target = { 'teams' : Array<TargetTeam> } |
   { 'league' : null } |
   { 'positions' : Array<TargetPosition> };

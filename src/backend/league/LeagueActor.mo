@@ -273,6 +273,7 @@ actor LeagueActor : Types.LeagueActor {
             prng,
             stadiumId,
             request.startTime,
+            request.weekDays,
             teamsArray,
             allPlayers,
         );

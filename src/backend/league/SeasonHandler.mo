@@ -25,6 +25,7 @@ import IterTools "mo:itertools/Iter";
 import PlayersActor "canister:players";
 import Player "../models/Player";
 import FieldPosition "../models/FieldPosition";
+import Components "mo:datetime/Components";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -37,8 +38,7 @@ module {
         #ok;
         #alreadyStarted;
         #noStadiumsExist;
-        #noTeams;
-        #oddNumberOfTeams;
+        #invalidArgs : Text;
     };
 
     public type EventHandler = {
@@ -72,6 +72,7 @@ module {
             prng : Prng,
             stadiumId : Principal,
             startTime : Time.Time,
+            weekDays : [Components.DayOfWeek],
             teams : [Team.TeamWithId],
             players : [PlayerTypes.PlayerWithId],
         ) : async* StartSeasonResult {
@@ -93,23 +94,17 @@ module {
 
             prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
 
-            let timeBetweenMatchGroups = #minutes(2);
-            // let timeBetweenMatchGroups = #days(1); // TODO revert
             let buildResult = ScheduleBuilder.build(
                 startTime,
                 Buffer.toArray(teamIdsBuffer),
-                timeBetweenMatchGroups,
+                weekDays,
             );
 
             let schedule : ScheduleBuilder.SeasonSchedule = switch (buildResult) {
                 case (#ok(schedule)) schedule;
-                case (#noTeams) {
+                case (#err(#invalidArgs(err))) {
                     seasonStatus := #notStarted;
-                    return #noTeams;
-                };
-                case (#oddNumberOfTeams) {
-                    seasonStatus := #notStarted;
-                    return #oddNumberOfTeams;
+                    return #invalidArgs(err);
                 };
             };
 
@@ -153,7 +148,12 @@ module {
 
             teamStandings := null; // No standings yet
             seasonStatus := #inProgress(inProgressSeason);
-            await* eventHandler.onSeasonStart(inProgressSeason);
+            try {
+                await* eventHandler.onSeasonStart(inProgressSeason);
+            } catch (err) {
+                Debug.print("onSeasonStart hook failed: " # Error.message(err));
+                // TODO handle error
+            };
             // Get first match group to open
             let #notScheduled(firstMatchGroup) = notScheduledMatchGroups[0] else Prelude.unreachable();
 
@@ -274,7 +274,12 @@ module {
             };
             teamStandings := ?updatedTeamStandings;
             seasonStatus := #inProgress(updatedSeason);
-            await* eventHandler.onMatchGroupComplete(request.id, updatedMatchGroup);
+            try {
+                await* eventHandler.onMatchGroupComplete(request.id, updatedMatchGroup);
+            } catch (err) {
+                Debug.print("onMatchGroupComplete hook failed for match group " # Nat.toText(request.id) # ". Error: " # Error.message(err));
+                // TODO handle error
+            };
             try {
                 await PlayersActor.addMatchStats(request.id, request.playerStats);
             } catch (err) {
@@ -395,7 +400,12 @@ module {
                 matchGroups = completedMatchGroups;
             };
             seasonStatus := #completed(completedSeason);
-            await* eventHandler.onSeasonComplete(completedSeason);
+            try {
+                await* eventHandler.onSeasonComplete(completedSeason);
+            } catch (err) {
+                Debug.print("onSeasonComplete hook failed. Error: " # Error.message(err));
+                // TODO handle error
+            };
             #ok;
         };
 
@@ -539,7 +549,12 @@ module {
                 inProgressSeason with
                 matchGroups = newMatchGroups;
             });
-            await* eventHandler.onMatchGroupSchedule(matchGroupId, scheduledMatchGroup);
+            try {
+                await* eventHandler.onMatchGroupSchedule(matchGroupId, scheduledMatchGroup);
+            } catch (err) {
+                Debug.print("onMatchGroupSchedule hook failed for match group " # Nat.toText(matchGroupId) # ". Error: " # Error.message(err));
+                // TODO handle error
+            };
 
         };
 
@@ -766,7 +781,12 @@ module {
                 season with
                 matchGroups = newMatchGroups;
             });
-            await* eventHandler.onMatchGroupStart(matchGroupId, inProgressMatchGroup);
+            try {
+                await* eventHandler.onMatchGroupStart(matchGroupId, inProgressMatchGroup);
+            } catch (err) {
+                Debug.print("onMatchGroupStart hook failed for match group " #Nat.toText(matchGroupId) # ". Error: " # Error.message(err));
+                // TODO handle error
+            };
 
             #ok;
         };

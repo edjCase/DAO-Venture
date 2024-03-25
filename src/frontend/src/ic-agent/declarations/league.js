@@ -440,24 +440,27 @@ export const idlFactory = ({ IDL }) => {
       IDL.Record({ 'error' : StartMatchError, 'matchId' : IDL.Nat })
     ),
   });
-  const StartSeasonRequest = IDL.Record({ 'startTime' : Time });
+  const DayOfWeek = IDL.Variant({
+    'tuesday' : IDL.Null,
+    'wednesday' : IDL.Null,
+    'saturday' : IDL.Null,
+    'thursday' : IDL.Null,
+    'sunday' : IDL.Null,
+    'friday' : IDL.Null,
+    'monday' : IDL.Null,
+  });
+  const StartSeasonRequest = IDL.Record({
+    'startTime' : Time,
+    'weekDays' : IDL.Vec(DayOfWeek),
+  });
   const StartSeasonResult = IDL.Variant({
     'ok' : IDL.Null,
-    'invalidScenario' : IDL.Record({
-      'id' : IDL.Text,
-      'errors' : IDL.Vec(IDL.Text),
-    }),
     'noStadiumsExist' : IDL.Null,
     'notAuthorized' : IDL.Null,
-    'oddNumberOfTeams' : IDL.Null,
     'seedGenerationError' : IDL.Text,
     'alreadyStarted' : IDL.Null,
     'idTaken' : IDL.Null,
-    'scenarioCountMismatch' : IDL.Record({
-      'actual' : IDL.Nat,
-      'expected' : IDL.Nat,
-    }),
-    'noTeams' : IDL.Null,
+    'invalidArgs' : IDL.Text,
   });
   const VoteOnProposalRequest = IDL.Record({
     'vote' : IDL.Bool,

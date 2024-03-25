@@ -4,9 +4,14 @@ import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Nat "mo:base/Nat";
+import Order "mo:base/Order";
+import Nat32 "mo:base/Nat32";
+import Array "mo:base/Array";
+import Prelude "mo:base/Prelude";
 import IterTools "mo:itertools/Iter";
 import DateTime "mo:datetime/DateTime";
 import Season "../models/Season";
+import Components "mo:datetime/Components";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -27,22 +32,27 @@ module {
 
     public type BuildScheduleResult = {
         #ok : SeasonSchedule;
-        #noTeams;
-        #oddNumberOfTeams;
+        #err : {
+            #invalidArgs : Text;
+        };
     };
 
     public func build(
         startTime : Time.Time,
         teamIds : [Nat],
-        timeBetweenMatchGroups : DateTime.Duration,
+        weekDays : [Components.DayOfWeek],
     ) : BuildScheduleResult {
+
+        if (weekDays.size() == 0) {
+            return #err(#invalidArgs("No week days specified"));
+        };
 
         let teamCount = teamIds.size();
         if (teamCount == 0) {
-            return #noTeams;
+            return #err(#invalidArgs("No teams specified"));
         };
         if (teamCount % 2 == 1) {
-            return #oddNumberOfTeams;
+            return #err(#invalidArgs("Odd number of teams"));
         };
 
         // Round robin tournament algorithm
@@ -50,7 +60,55 @@ module {
 
         let matchUpCountPerWeek = teamCount / 2;
         let weekCount : Nat = teamCount - 1; // Round robin should be teamCount - 1 weeks
+
         var nextMatchDate = DateTime.fromTime(startTime);
+        let firstDayOfWeek = nextMatchDate.dayOfWeek();
+        if (not IterTools.any(weekDays.vals(), func(day : Components.DayOfWeek) : Bool = day == firstDayOfWeek)) {
+            return #err(#invalidArgs("Start date is not on a specified week day"));
+        };
+        let getDayOfWeekIndex = func(day : Components.DayOfWeek) : Nat {
+            switch (day) {
+                case (#sunday) 0;
+                case (#monday) 1;
+                case (#tuesday) 2;
+                case (#wednesday) 3;
+                case (#thursday) 4;
+                case (#friday) 5;
+                case (#saturday) 6;
+            };
+        };
+
+        let compareDayOfWeek = func(a : Components.DayOfWeek, b : Components.DayOfWeek) : Order.Order {
+            Nat.compare(getDayOfWeekIndex(a), getDayOfWeekIndex(b));
+        };
+        let equalDayOfWeek = func(a : Components.DayOfWeek, b : Components.DayOfWeek) : Bool {
+            compareDayOfWeek(a, b) == #equal;
+        };
+        let hashDayOfWeek = func(day : Components.DayOfWeek) : Nat32 {
+            Nat32.fromNat(getDayOfWeekIndex(day));
+        };
+
+        let orderedDaysOfWeek = weekDays.vals()
+        |> IterTools.unique<Components.DayOfWeek>(_, hashDayOfWeek, equalDayOfWeek)
+        |> Iter.sort(_, compareDayOfWeek)
+        |> Iter.toArray(_);
+
+        let ?firstDayOfWeekIndex = Array.indexOf(firstDayOfWeek, orderedDaysOfWeek, equalDayOfWeek) else Prelude.unreachable();
+        var dayOfWeekIndex = firstDayOfWeekIndex;
+        let maxDayOfWeekIndex : Nat = orderedDaysOfWeek.size() - 1;
+        let advanceOptions = {
+            addWeekOnMatchingDay = true;
+            resetToStartOfDay = false;
+        };
+        let getNextMatchDate = func(date : DateTime.DateTime) : DateTime.DateTime {
+            let newDate = date.advanceToDayOfWeek(orderedDaysOfWeek[dayOfWeekIndex], advanceOptions);
+            if (dayOfWeekIndex >= maxDayOfWeekIndex) {
+                dayOfWeekIndex := 0;
+            } else {
+                dayOfWeekIndex := dayOfWeekIndex + 1;
+            };
+            newDate;
+        };
 
         let matchGroups = Buffer.Buffer<MatchGroup>(weekCount);
         for (weekIndex in IterTools.range(0, weekCount)) {
@@ -72,7 +130,7 @@ module {
                 time = nextMatchDate.toTime();
                 matches = matches;
             });
-            nextMatchDate := nextMatchDate.add(timeBetweenMatchGroups);
+            nextMatchDate := getNextMatchDate(nextMatchDate);
             // Rotate order of teams
             // 1) Freeze the first team
             // 2) Bring the last team to the second position
@@ -96,7 +154,7 @@ module {
                 time = nextMatchDate.toTime();
                 matches = matches;
             });
-            nextMatchDate := nextMatchDate.add(timeBetweenMatchGroups);
+            nextMatchDate := getNextMatchDate(nextMatchDate);
         };
         let nextPowerOfTwo = findNextPowerOfTwo(teamCount);
         let byeTeamCount : Nat = nextPowerOfTwo - teamCount; // Number of teams that get a bye in the first round

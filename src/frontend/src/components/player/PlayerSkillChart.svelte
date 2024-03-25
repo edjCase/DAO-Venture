@@ -45,7 +45,7 @@
     const lineY = 50; // Vertical position of the line
 </script>
 
-<svg class="skill-chart" width="100%" height="100px">
+<svg class="" width="100px" height="100px">
     <!-- Horizontal line -->
     <line
         x1="0"

@@ -10,6 +10,7 @@
     import MatchHistory from "../match/MatchHistory.svelte";
     import TeamStats from "./TeamStats.svelte";
     import TeamGrid from "./TeamGrid.svelte";
+    import PlayerRoster from "../player/PlayerRoster.svelte";
 
     $: identity = $identityStore;
     $: teams = $teamStore;
@@ -32,37 +33,44 @@
             : 0;
 </script>
 
-{#if team}
-    <div class="p-5">
-        <TeamLogo {team} size="md" />
-        <div class="text-5xl text-center mb-2">{team.name}</div>
-    </div>
-    {#if votingPower <= 0}
-        <div>
-            You are just a FAN. Become a Coowner <Button>HERE</Button> to be able
-            to create and vote on proposals.
+<div class="p-2 border rounded mt-2">
+    {#if team}
+        <div class="flex-1 flex justify-center items-center gap-2">
+            <TeamLogo {team} size="md" />
+            <div class="text-3xl">{team.name}</div>
         </div>
-    {:else}
-        Voting Power: {votingPower}
-    {/if}
-    <Tabs>
-        <TabItem title="Summary" open>
-            <TeamStats teamId={team.id} />
-            <MatchHistory teamId={team.id} />
-        </TabItem>
-        <TabItem title="Proposals">
-            <div class="mt-5">
-                <TeamProposalList teamId={team.id} />
-            </div>
-            {#if votingPower > 0}
-                <div class="mt-5">
-                    <TeamCreateProposal teamId={team.id} />
+        <div class="p-2">
+            {#if votingPower <= 0}
+                <div>
+                    You are just a FAN. Become a Coowner <Button>HERE</Button> to
+                    be able to create and vote on proposals.
                 </div>
+            {:else}
+                <div class="text-center">Voting Power: {votingPower}</div>
             {/if}
-        </TabItem>
-    </Tabs>
-{:else}
-    <div>You are not a member of any team, choose a team to follow:</div>
+        </div>
+        <Tabs>
+            <TabItem title="Summary" open>
+                <TeamStats teamId={team.id} />
+                <MatchHistory teamId={team.id} />
+            </TabItem>
+            <TabItem title="Roster">
+                <PlayerRoster teamId={team.id} />
+            </TabItem>
+            <TabItem title="Proposals">
+                <div class="mt-5">
+                    <TeamProposalList teamId={team.id} />
+                </div>
+                {#if votingPower > 0}
+                    <div class="mt-5">
+                        <TeamCreateProposal teamId={team.id} />
+                    </div>
+                {/if}
+            </TabItem>
+        </Tabs>
+    {:else}
+        <div>You are not a member of any team, choose a team to follow:</div>
 
-    <TeamGrid />
-{/if}
+        <TeamGrid />
+    {/if}
+</div>

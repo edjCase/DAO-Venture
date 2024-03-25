@@ -8,8 +8,6 @@
   import Teams from "./routes/Teams.svelte";
   import Schedule from "./routes/Schedule.svelte";
   import Admin from "./routes/Admin.svelte";
-  import Player from "./routes/Player.svelte";
-  import Players from "./routes/Players.svelte";
   import About from "./routes/About.svelte";
   import HowToPlay from "./routes/HowToPlay.svelte";
   import Scenarios from "./routes/Scenarios.svelte";
@@ -34,8 +32,6 @@
       <Route path="/teams" component={Teams} />
       <Route path="/teams/:teamIdString" component={Team} />
       <Route path="/league" component={League} />
-      <Route path="/players" component={Players} />
-      <Route path="/players/:playerIdString" component={Player} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/about" component={About} />
