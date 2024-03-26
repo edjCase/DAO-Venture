@@ -28,7 +28,7 @@ import FieldPosition "../models/FieldPosition";
 import Components "mo:datetime/Components";
 
 module {
-    type Prng = PseudoRandomX.PseudoRandomGeneratorz;
+    type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
         seasonStatus : Season.SeasonStatus;
