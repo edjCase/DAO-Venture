@@ -48,7 +48,7 @@
 </script>
 
 {#if matchPredictions && "id" in match.team1 && "id" in match.team2}
-  <div class="w-full">
+  <div class="w-full flex flex-col items-center justify-center">
     <div class="w-full flex items-center justify-center">
       <div class="whitespace-nowrap mr-2">
         🔮 {matchPredictions.teamPercentage * 100}%
