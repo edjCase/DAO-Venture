@@ -31,9 +31,22 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
-        seasonStatus : Season.SeasonStatus;
-        teamStandings : ?[Types.TeamStandingInfo]; // First team to last team
+        activeSeason : ?ActiveSeason;
+        completedSeasons : [CompletedSeason];
     };
+
+    public type ActiveSeason = {
+        season : Season.InProgressSeason;
+        teamStandings : [Types.TeamStandingInfo];
+    };
+
+    public type CompletedSeason = {
+        championTeamId : Nat;
+        runnerUpTeamId : Nat;
+        teams : [Season.CompletedSeasonTeam];
+        matchGroups : [Season.CompletedMatchGroup];
+    };
+
     public type StartSeasonResult = {
         #ok;
         #alreadyStarted;
@@ -55,21 +68,13 @@ module {
     };
 
     public class SeasonHandler<system>(data : StableData, eventHandler : EventHandler) {
-        public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
-
-        // First team to last team
-        public var teamStandings : ?Buffer.Buffer<Types.TeamStandingInfo> = switch (data.teamStandings) {
-            case (null) null;
-            case (?standings) ?Buffer.fromArray(standings);
-        };
+        public var activeSeason : ?ActiveSeason = data.activeSeason;
+        public let completedSeasons : Buffer.Buffer<CompletedSeason> = Buffer.fromArray(data.completedSeasons);
 
         public func toStableData() : StableData {
             {
-                seasonStatus = seasonStatus;
-                teamStandings = switch (teamStandings) {
-                    case (null) null;
-                    case (?standings) ?Buffer.toArray(standings);
-                };
+                activeSeason = activeSeason;
+                completedSeasons = Buffer.toArray(completedSeasons);
             };
         };
 
@@ -81,16 +86,9 @@ module {
             teams : [Team.TeamWithId],
             players : [PlayerTypes.PlayerWithId],
         ) : async* StartSeasonResult {
-            switch (seasonStatus) {
-                case (#notStarted) {};
-                case (#starting) return #alreadyStarted;
-                case (#inProgress(_)) return #alreadyStarted;
-                case (#completed(completedSeason)) {
-                    // TODO archive completed season?
-                };
+            if (activeSeasion != null) {
+                return #alreadyStarted;
             };
-            teamStandings := null;
-            seasonStatus := #starting;
 
             let teamIdsBuffer = teams
             |> Iter.fromArray(_)
@@ -108,7 +106,6 @@ module {
             let schedule : ScheduleBuilder.SeasonSchedule = switch (buildResult) {
                 case (#ok(schedule)) schedule;
                 case (#err(#invalidArgs(err))) {
-                    seasonStatus := #notStarted;
                     return #invalidArgs(err);
                 };
             };
@@ -144,15 +141,26 @@ module {
             )
             |> Iter.toArray(_);
 
-            let inProgressSeason = {
-                teams = teamsWithPositions;
-                players = players;
-                stadiumId = stadiumId;
-                matchGroups = notScheduledMatchGroups;
+            activeSeason := ?{
+                season = {
+                    teams = teamsWithPositions;
+                    players = players;
+                    stadiumId = stadiumId;
+                    matchGroups = notScheduledMatchGroups;
+                };
+                teamStandings = teams
+                |> Iter.fromArray(_)
+                |> Iter.map(
+                    _,
+                    func(t : Team.TeamWithId) : Types.TeamStandingInfo = {
+                        id = t.id;
+                        wins = 0;
+                        losses = 0;
+                        totalScore = 0;
+                    },
+                )
+                |> Iter.toArray(_);
             };
-
-            teamStandings := null; // No standings yet
-            seasonStatus := #inProgress(inProgressSeason);
             try {
                 await* eventHandler.onSeasonStart(inProgressSeason);
             } catch (err) {
@@ -178,8 +186,9 @@ module {
             season : Season.InProgressSeason;
         } {
             // Get current match group by finding the next scheduled one
-            switch (seasonStatus) {
-                case (#inProgress(inProgressSeason)) {
+            switch (activeSeason) {
+                case (null) return null;
+                case (?inProgressSeason) {
                     for (i in Iter.range(0, inProgressSeason.matchGroups.size() - 1)) {
                         let matchGroup = inProgressSeason.matchGroups[i];
                         switch (matchGroup) {
@@ -197,39 +206,25 @@ module {
                     };
                     return null;
                 };
-                case (_) return null;
             };
         };
 
         public func getMatchGroup(matchGroupId : Nat) : ?{
             matchGroupId : Nat;
             matchGroup : Season.InProgressSeasonMatchGroupVariant;
-            season : {
-                #inProgress : Season.InProgressSeason;
-                #completed : Season.CompletedSeason;
-            };
+            season : Season.InProgressSeason;
         } {
             // Get current match group by finding the next scheduled one
-            switch (seasonStatus) {
-                case (#notStarted or #starting) null;
-                case (#inProgress(inProgressSeason)) {
+            switch (activeSeason) {
+                case (null) null;
+                case (?inProgressSeason) {
                     if (matchGroupId >= inProgressSeason.matchGroups.size()) {
                         return null;
                     };
                     ?{
                         matchGroupId = matchGroupId;
                         matchGroup = inProgressSeason.matchGroups[matchGroupId];
-                        season = #inProgress(inProgressSeason);
-                    };
-                };
-                case (#completed(c)) {
-                    if (matchGroupId >= c.matchGroups.size()) {
-                        return null;
-                    };
-                    ?{
-                        matchGroupId = matchGroupId;
-                        matchGroup = #completed(c.matchGroups[matchGroupId]);
-                        season = #completed(c);
+                        season = inProgressSeason;
                     };
                 };
             };
@@ -240,7 +235,7 @@ module {
             prng : Prng,
         ) : async* Types.OnMatchGroupCompleteResult {
 
-            let #inProgress(season) = seasonStatus else return #seasonNotOpen;
+            let ?season = activeSeason else return #seasonNotOpen;
             // Get current match group
             let ?matchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
                 season.matchGroups,
@@ -277,8 +272,10 @@ module {
                 season with
                 matchGroups = newMatchGroups;
             };
-            teamStandings := ?updatedTeamStandings;
-            seasonStatus := #inProgress(updatedSeason);
+            activeSeason := {
+                season = updatedSeason;
+                teamStandings = updatedTeamStandings;
+            };
             try {
                 await* eventHandler.onMatchGroupComplete(request.id, updatedMatchGroup);
             } catch (err) {
@@ -327,29 +324,28 @@ module {
         };
 
         public func close() : async* Types.CloseSeasonResult {
-
-            if (seasonStatus == #starting) {
-                // TODO how to handle this?
-                seasonStatus := #notStarted;
-                return #ok;
-            };
-            let #inProgress(inProgressSeason) = seasonStatus else return #seasonNotOpen;
+            let ?inProgressSeason = activeSeason else return #seasonNotOpen;
             let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
                 case (#ok(completedMatchGroups)) completedMatchGroups;
                 case (#matchGroupsNotComplete(inProgressMatchGroup)) {
                     // TODO put in bad state vs delete
-                    seasonStatus := #notStarted;
+                    activeSeason := null;
+                    await* eventHandler.onSeasonEnd(#incomplete(inProgressSeason));
                     switch (inProgressMatchGroup) {
                         case (null) ();
                         case (?inProgressMatchGroup) {
                             // Cancel live match
-                            let stadiumActor = actor (Principal.toText(inProgressMatchGroup.stadiumId)) : StadiumTypes.StadiumActor;
-                            switch (await stadiumActor.cancelMatchGroup({ id = inProgressMatchGroup.matchGroupId })) {
-                                case (#ok or #matchGroupNotFound) ();
+                            try {
+                                let stadiumActor = actor (Principal.toText(inProgressMatchGroup.stadiumId)) : StadiumTypes.StadiumActor;
+                                switch (await stadiumActor.cancelMatchGroup({ id = inProgressMatchGroup.matchGroupId })) {
+                                    case (#ok or #matchGroupNotFound) ();
+                                };
+                            } catch (err) {
+                                // TODO handle
+                                Debug.print("Failed to cancel match group in stadium: " # Error.message(err));
                             };
                         };
                     };
-                    await* eventHandler.onSeasonEnd(#incomplete(inProgressSeason));
                     return #ok;
                 };
             };
@@ -398,14 +394,14 @@ module {
                 };
             };
 
-            teamStandings := ?finalTeamStandings;
             let completedSeason = {
                 championTeamId = champion.id;
                 runnerUpTeamId = runnerUp.id;
                 teams = completedTeams;
                 matchGroups = completedMatchGroups;
             };
-            seasonStatus := #completed(completedSeason);
+            activeSeason := null;
+            completedSeasons.add(completedSeason);
             try {
                 await* eventHandler.onSeasonEnd(#completed(completedSeason));
             } catch (err) {
@@ -416,9 +412,9 @@ module {
         };
 
         private func resetTimers<system>() {
-            switch (seasonStatus) {
-                case (#notStarted or #starting) ();
-                case (#inProgress(inProgressSeason)) {
+            switch (activeSeason) {
+                case (null) ();
+                case (?inProgressSeason) {
                     for (i in Iter.range(0, inProgressSeason.matchGroups.size() - 1)) {
                         let matchGroup = inProgressSeason.matchGroups[i];
                         switch (matchGroup) {
@@ -434,16 +430,15 @@ module {
                                         timerId = newTimerId;
                                     }),
                                 ) else Debug.trap("Match group not found: " # Nat.toText(i));
-                                seasonStatus := #inProgress({
+                                activeSeason := {
                                     inProgressSeason with
                                     matchGroups = newMatchGroups;
-                                });
+                                };
                             };
                             case (#notScheduled(_) or #inProgress(_) or #completed(_)) ();
                         };
                     };
                 };
-                case (#completed(_)) ();
             };
         };
 

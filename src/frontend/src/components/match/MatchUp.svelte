@@ -34,7 +34,7 @@
 
 <div class="bg-gray-700 rounded-lg p-4">
   <div class="flex items-center justify-center justify-evently mb-4">
-    <div class="flex flex-col items-center">
+    <div class="flex-1 flex flex-col items-center">
       <span class="team-name font-semibold block mb-2">
         {getTeamName(match.team1)}
         {getTeamStats(match.team1)}
@@ -43,7 +43,7 @@
       <PredictMatchOutcome {match} teamId={{ team1: null }} />
     </div>
     <span class="text-xl font-bold my-4">VS</span>
-    <div class="flex flex-col items-center">
+    <div class="flex-1 flex flex-col items-center">
       <span class="team-name font-semibold block mb-2">
         {getTeamName(match.team2)}
         {getTeamStats(match.team2)}

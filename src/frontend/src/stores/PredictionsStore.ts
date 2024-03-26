@@ -1,6 +1,6 @@
 import { Writable, writable } from "svelte/store";
 import { leagueAgentFactory } from "../ic-agent/League";
-import { MatchGroupPredictionSummary } from "../ic-agent/declarations/league";
+import { MatchGroupPredictionSummary, TeamId } from "../ic-agent/declarations/league";
 import { Subscriber } from "svelte/motion";
 
 
@@ -39,9 +39,38 @@ export const predictionStore = (() => {
         subscribe(callback);
     };
 
+    const predictMatchOutcome = async (matchGroupId: bigint, matchId: bigint, team: TeamId) => {
+        let { update } = getOrCreateMatchGroupStore(matchGroupId);
+        let winner: [TeamId] | [] = team ? [team] : [];
+        update((current) => {
+            let match = current.matches[Number(matchId)];
+            if (match) {
+                if ('team1' in team) {
+                    match.team1 += BigInt(1);
+                } else {
+                    match.team2 += BigInt(1);
+                }
+                match.yourVote = winner
+            }
+            return current;
+        });
+        let leagueAgent = await leagueAgentFactory();
+        let result = await leagueAgent.predictMatchOutcome({
+            matchId: matchId,
+            winner: winner,
+        });
+        if ("ok" in result) {
+            console.log("Predicted for match: ", matchId);
+            refetchMatchGroup(matchGroupId);
+        } else {
+            console.log("Failed to predict for match: ", matchId, result);
+        }
+    };
+
     return {
         subscribeToMatchGroup,
-        refetchMatchGroup
+        refetchMatchGroup,
+        predictMatchOutcome
     };
 })();
 

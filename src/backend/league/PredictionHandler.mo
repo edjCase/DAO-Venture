@@ -11,6 +11,11 @@ import Types "Types";
 
 module {
     public type StableData = {
+        seasons : [SeasonPredictions];
+    };
+
+    public type SeasonPredictions = {
+        seasonId : Nat;
         matchGroups : [MatchGroupPredictions];
     };
 
@@ -27,21 +32,32 @@ module {
 
     public class Handler(data : StableData) {
         // MatchGroupId => Match Array of UserId => TeamId votes
-        public var matchGroupPredictions : HashMap.HashMap<Nat, MatchGroupPredictionInfo> = toPredictionsHashMap(data.matchGroups);
+        public var seasonPredictions : HashMap.HashMap<Nat, [MatchGroupPredictionInfo]> = toPredictionsHashMap(data.seasons);
 
         public func toStableData() : StableData {
-            let matchGroups = matchGroupPredictions.entries()
-            |> Iter.map(
+            let seasons = seasonPredictions.entries()
+            |> Iter.map<(Nat, [MatchGroupPredictionInfo]), SeasonPredictions>(
                 _,
-                func((matchGroupId, matchGroupInfo) : (Nat, MatchGroupPredictionInfo)) : MatchGroupPredictions = {
-                    matchGroupId = matchGroupId;
-                    isOpen = matchGroupInfo.isOpen;
-                    matchPredictions = mapMatchPredictions(matchGroupInfo.matchPredictions);
+                func((seasonId, matchGroups) : (Nat, [MatchGroupPredictionInfo])) : SeasonPredictions {
+                    let matchGroups = matchGroups
+                    |> Iter.map(
+                        _,
+                        func((matchGroupId, matchGroupInfo) : (Nat, MatchGroupPredictionInfo)) : MatchGroupPredictions = {
+                            matchGroupId = matchGroupId;
+                            isOpen = matchGroupInfo.isOpen;
+                            matchPredictions = mapMatchPredictions(matchGroupInfo.matchPredictions);
+                        },
+                    )
+                    |> Iter.toArray(_);
+                    {
+                        seasonId = seasonId;
+                        matchGroups = matchGroups;
+                    };
                 },
             )
             |> Iter.toArray(_);
             {
-                matchGroups = matchGroups;
+                seasons = seasons;
             };
         };
 
@@ -135,22 +151,31 @@ module {
         |> Iter.toArray(_);
     };
 
-    private func toPredictionsHashMap(predictions : [MatchGroupPredictions]) : HashMap.HashMap<Nat, MatchGroupPredictionInfo> {
-        let hashMap = HashMap.HashMap<Nat, MatchGroupPredictionInfo>(predictions.size(), Nat.equal, Nat32.fromNat);
-        for ({ matchGroupId; isOpen; matchPredictions } in Iter.fromArray(predictions)) {
-            let buffer = Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>(matchPredictions.size());
-            for (userPredictions in Iter.fromArray(matchPredictions)) {
-                let userPredictionMap = HashMap.HashMap<Principal, Team.TeamId>(userPredictions.size(), Principal.equal, Principal.hash);
-                for ((userId, teamId) in Iter.fromArray(userPredictions)) {
-                    userPredictionMap.put(userId, teamId);
+    private func toPredictionsHashMap(predictions : [SeasonPredictions]) : HashMap.HashMap<Nat, SeasonPredictions> {
+        let hashMap = HashMap.HashMap<Nat, SeasonPredictions>(predictions.size(), Nat.equal, Nat32.fromNat);
+        for ({ seasonId; matchGroups } in Iter.fromArray(predictions)) {
+            let matchGroupInfos = Buffer.Buffer<MatchGroupPredictionInfo>(matchGroups.size());
+            for ({ matchGroupId; isOpen; matchPredictions } in Iter.fromArray(matchGroups)) {
+                let buffer = Buffer.Buffer<HashMap.HashMap<Principal, Team.TeamId>>(matchPredictions.size());
+                for (userPredictions in Iter.fromArray(matchPredictions)) {
+                    let userPredictionMap = HashMap.HashMap<Principal, Team.TeamId>(userPredictions.size(), Principal.equal, Principal.hash);
+                    for ((userId, teamId) in Iter.fromArray(userPredictions)) {
+                        userPredictionMap.put(userId, teamId);
+                    };
+                    buffer.add(userPredictionMap);
                 };
-                buffer.add(userPredictionMap);
+                matchGroupInfos.add({
+                    var isOpen = isOpen;
+                    matchPredictions = buffer;
+                });
             };
-            let matchGroupPredictionInfo : MatchGroupPredictionInfo = {
-                var isOpen = isOpen;
-                matchPredictions = buffer;
-            };
-            hashMap.put(matchGroupId, matchGroupPredictionInfo);
+            hashMap.put(
+                matchGroupId,
+                {
+                    seasonId = seasonId;
+                    matchGroups = matchGroups;
+                },
+            );
         };
         hashMap;
     };

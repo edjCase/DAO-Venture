@@ -35,6 +35,8 @@
             <span class="mr-2">Total User Points:</span>
             <LoadingValue value={userStats?.totalPoints} />
         </div>
+    </TabItem>
+    <TabItem title="Teams">
         <div>
             {#if teams}
                 {#each teams as team}

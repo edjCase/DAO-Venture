@@ -1,10 +1,8 @@
 <script lang="ts">
-  import { Button } from "flowbite-svelte";
+  import { Button, Progressbar } from "flowbite-svelte";
   import { MatchDetails } from "../../models/Match";
   import { predictionStore } from "../../stores/PredictionsStore";
   import { TeamId } from "../../ic-agent/declarations/league";
-  import { leagueAgentFactory } from "../../ic-agent/League";
-
   export let match: MatchDetails;
   export let teamId: TeamId;
 
@@ -37,34 +35,30 @@
     }
   });
 
-  let predict = async function (team: TeamId | undefined) {
+  let predict = async function (team: TeamId) {
     if (!matchPredictions) {
       return;
     }
-    matchPredictions = {
-      ...matchPredictions,
-      yourVote: team,
-    };
-    let leagueAgent = await leagueAgentFactory();
-    let result = await leagueAgent.predictMatchOutcome({
-      matchId: match.id,
-      winner: team ? [team] : [],
-    });
-    if ("ok" in result) {
-      console.log("Predicted for match: ", match.id);
-      predictionStore.refetchMatchGroup(match.matchGroupId);
-    } else {
-      console.log("Failed to predict for match: ", match.id, result);
-    }
+    await predictionStore.predictMatchOutcome(
+      match.matchGroupId,
+      match.id,
+      team,
+    );
   };
 </script>
 
 {#if matchPredictions && "id" in match.team1 && "id" in match.team2}
-  <div>
-    <div class="text-center">
-      <div>
-        ({matchPredictions.teamPercentage * 100}% - {matchPredictions.teamTotal})
+  <div class="w-full">
+    <div class="w-full flex items-center justify-center">
+      <div class="whitespace-nowrap mr-2">
+        🔮 {matchPredictions.teamPercentage * 100}%
       </div>
+      <Progressbar
+        progress={matchPredictions.teamPercentage * 100}
+        labelInside={false}
+        size="h-2.5"
+        color="green"
+      />
     </div>
     {#if matchPredictions.yourVote === undefined}
       <Button on:click={() => predict(teamId)}>
