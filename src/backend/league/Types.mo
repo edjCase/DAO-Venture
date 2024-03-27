@@ -28,6 +28,20 @@ module {
         getScenarios : query () -> async GetScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
         clearTeams : () -> async (); // TODO remove
+
+        claimBenevolentDictatorRole : () -> async ClaimBenevolentDictatorRoleResult;
+        setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
+        getBenevolentDictatorState : query () -> async BenevolentDictatorState;
+    };
+
+    public type ClaimBenevolentDictatorRoleResult = {
+        #ok;
+        #notOpenToClaim;
+    };
+
+    public type SetBenevolentDictatorStateResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type GetProposalResult = {

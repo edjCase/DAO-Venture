@@ -15,6 +15,11 @@ export interface AddScenarioRequest {
 export type AddScenarioResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'invalid' : Array<string> };
+export type BenevolentDictatorState = { 'open' : null } |
+  { 'claimed' : Principal } |
+  { 'disabled' : null };
+export type ClaimBenevolentDictatorRoleResult = { 'ok' : null } |
+  { 'notOpenToClaim' : null };
 export type CloseSeasonResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'seasonNotOpen' : null };
@@ -311,6 +316,8 @@ export type SeasonStatus = { 'notStarted' : null } |
   { 'starting' : null } |
   { 'completed' : CompletedSeason } |
   { 'inProgress' : InProgressSeason };
+export type SetBenevolentDictatorStateResult = { 'ok' : null } |
+  { 'notAuthorized' : null };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -410,10 +417,15 @@ export type VoteOnProposalResult = { 'ok' : null } |
   { 'votingClosed' : null };
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
+  'claimBenevolentDictatorRole' : ActorMethod<
+    [],
+    ClaimBenevolentDictatorRoleResult
+  >,
   'clearTeams' : ActorMethod<[], undefined>,
   'closeSeason' : ActorMethod<[], CloseSeasonResult>,
   'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
+  'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
   'getMatchGroupPredictions' : ActorMethod<
     [bigint],
     GetMatchGroupPredictionsResult
@@ -432,6 +444,10 @@ export interface _SERVICE {
   'predictMatchOutcome' : ActorMethod<
     [PredictMatchOutcomeRequest],
     PredictMatchOutcomeResult
+  >,
+  'setBenevolentDictatorState' : ActorMethod<
+    [BenevolentDictatorState],
+    SetBenevolentDictatorStateResult
   >,
   'startMatchGroup' : ActorMethod<[bigint], StartMatchGroupResult>,
   'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,

@@ -177,18 +177,24 @@ actor LeagueActor : Types.LeagueActor {
         dao.resetEndTimers<system>(); // TODO move into DAO
     };
 
-    public shared ({ caller }) func claimBenevolentDictatorRole() : async () {
+    public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
         if (benevolentDictator != #open) {
             return #notOpenToClaim;
         };
         benevolentDictator := #claimed(caller);
+        #ok;
     };
 
-    public shared ({ caller }) func setBenevolentDictatorState(state : Types.BenevolentDictatorState) : async () {
+    public shared ({ caller }) func setBenevolentDictatorState(state : Types.BenevolentDictatorState) : async Types.SetBenevolentDictatorStateResult {
         if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
         benevolentDictator := state;
+        #ok;
+    };
+
+    public query func getBenevolentDictatorState() : async Types.BenevolentDictatorState {
+        benevolentDictator;
     };
 
     public query func getTeams() : async [TeamWithId] {
@@ -325,7 +331,7 @@ actor LeagueActor : Types.LeagueActor {
         predictionHandler.getMatchGroupSummary(matchGroupId, ?caller);
     };
 
-    public shared func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
+    public shared ({ caller }) func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
         if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
@@ -445,7 +451,7 @@ actor LeagueActor : Types.LeagueActor {
         };
         switch (benevolentDictator) {
             case (#open or #disabled) false;
-            case (#claimed(claimantId)) return ?id == claimantId;
+            case (#claimed(claimantId)) return id == claimantId;
         };
     };
 

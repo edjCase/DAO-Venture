@@ -39,24 +39,10 @@ export const predictionStore = (() => {
     };
 
     const predictMatchOutcome = async (matchGroupId: bigint, matchId: bigint, team: TeamId) => {
-        let { update } = getOrCreateMatchGroupStore(matchGroupId);
-        let winner: [TeamId] | [] = team ? [team] : [];
-        update((current) => {
-            let match = current.matches[Number(matchId)];
-            if (match) {
-                if ('team1' in team) {
-                    match.team1 += BigInt(1);
-                } else {
-                    match.team2 += BigInt(1);
-                }
-                match.yourVote = winner
-            }
-            return current;
-        });
         let leagueAgent = await leagueAgentFactory();
         let result = await leagueAgent.predictMatchOutcome({
             matchId: matchId,
-            winner: winner,
+            winner: team ? [team] : [],
         });
         if ("ok" in result) {
             console.log("Predicted for match: ", matchId);

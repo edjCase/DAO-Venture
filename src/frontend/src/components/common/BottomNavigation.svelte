@@ -24,6 +24,9 @@
     import { onMount } from "svelte";
     import { navigate, useLocation } from "svelte-routing";
     import UserMenu from "../user/UserMenu.svelte";
+    import { userStore } from "../../stores/UserStore";
+    import { BenevolentDictatorState } from "../../ic-agent/declarations/league";
+    import { identityStore } from "../../stores/IdentityStore";
 
     let location = useLocation();
     let activeUrl: string | undefined;
@@ -57,6 +60,27 @@
                 drawerHidden = true;
             }
         });
+    });
+
+    $: identity = $identityStore;
+
+    let bdfnState: BenevolentDictatorState | undefined;
+    let isBdfnOrBdfnOpen: Boolean = false;
+    $: {
+        if (bdfnState !== undefined) {
+            if ("open" in bdfnState) {
+                isBdfnOrBdfnOpen = true;
+            } else if ("claimed" in bdfnState) {
+                isBdfnOrBdfnOpen =
+                    bdfnState.claimed.toString() ==
+                    identity.getPrincipal().toString();
+            } else {
+                isBdfnOrBdfnOpen = false;
+            }
+        }
+    }
+    userStore.subscribeBdfnState((state) => {
+        bdfnState = state;
     });
 </script>
 
@@ -129,15 +153,6 @@
                     </svelte:fragment>
                 </SidebarItem>
                 <SidebarItem
-                    label="Players"
-                    href="/players"
-                    on:click={navOnClick("/players")}
-                >
-                    <svelte:fragment slot="icon">
-                        <UserCircleSolid class={iconClass} />
-                    </svelte:fragment>
-                </SidebarItem>
-                <SidebarItem
                     label="Schedule"
                     href="/schedule"
                     on:click={navOnClick("/schedule")}
@@ -203,17 +218,19 @@
                     </SidebarItem>
                 </SidebarGroup>
             </SidebarGroup>
-            <SidebarGroup border={true}>
-                <SidebarItem
-                    label="Admin"
-                    href="/admin"
-                    on:click={navOnClick("/admin")}
-                >
-                    <svelte:fragment slot="icon">
-                        <UserCircleSolid class={iconClass} />
-                    </svelte:fragment>
-                </SidebarItem>
-            </SidebarGroup>
+            {#if isBdfnOrBdfnOpen}
+                <SidebarGroup border={true}>
+                    <SidebarItem
+                        label="Admin"
+                        href="/admin"
+                        on:click={navOnClick("/admin")}
+                    >
+                        <svelte:fragment slot="icon">
+                            <UserCircleSolid class={iconClass} />
+                        </svelte:fragment>
+                    </SidebarItem>
+                </SidebarGroup>
+            {/if}
         </Sidebar>
     </Drawer>
 </BottomNav>

@@ -116,6 +116,10 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'invalid' : IDL.Vec(IDL.Text),
   });
+  const ClaimBenevolentDictatorRoleResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notOpenToClaim' : IDL.Null,
+  });
   const CloseSeasonResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
@@ -143,6 +147,11 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'teamsCallError' : IDL.Text,
     'populateTeamRosterCallError' : IDL.Text,
+  });
+  const BenevolentDictatorState = IDL.Variant({
+    'open' : IDL.Null,
+    'claimed' : IDL.Principal,
+    'disabled' : IDL.Null,
   });
   const TeamId = IDL.Variant({ 'team1' : IDL.Null, 'team2' : IDL.Null });
   const MatchPredictionSummary = IDL.Record({
@@ -424,6 +433,10 @@ export const idlFactory = ({ IDL }) => {
     'matchGroupNotFound' : IDL.Null,
     'identityRequired' : IDL.Null,
   });
+  const SetBenevolentDictatorStateResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+  });
   const TeamIdOrBoth = IDL.Variant({
     'team1' : IDL.Null,
     'team2' : IDL.Null,
@@ -475,6 +488,11 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
+    'claimBenevolentDictatorRole' : IDL.Func(
+        [],
+        [ClaimBenevolentDictatorRoleResult],
+        [],
+      ),
     'clearTeams' : IDL.Func([], [], []),
     'closeSeason' : IDL.Func([], [CloseSeasonResult], []),
     'createProposal' : IDL.Func(
@@ -483,6 +501,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'createTeam' : IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
+    'getBenevolentDictatorState' : IDL.Func(
+        [],
+        [BenevolentDictatorState],
+        ['query'],
+      ),
     'getMatchGroupPredictions' : IDL.Func(
         [IDL.Nat],
         [GetMatchGroupPredictionsResult],
@@ -507,6 +530,11 @@ export const idlFactory = ({ IDL }) => {
     'predictMatchOutcome' : IDL.Func(
         [PredictMatchOutcomeRequest],
         [PredictMatchOutcomeResult],
+        [],
+      ),
+    'setBenevolentDictatorState' : IDL.Func(
+        [BenevolentDictatorState],
+        [SetBenevolentDictatorStateResult],
         [],
       ),
     'startMatchGroup' : IDL.Func([IDL.Nat], [StartMatchGroupResult], []),
