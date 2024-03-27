@@ -4,13 +4,15 @@
   import { playerStore } from "../stores/PlayerStore";
   import { teams as teamData } from "../data/TeamData";
   import { players as playerData } from "../data/PlayerData";
-  import { Button } from "flowbite-svelte";
   import { toJsonString } from "../utils/StringUtil";
   import { leagueAgentFactory } from "../ic-agent/League";
   import { playersAgentFactory } from "../ic-agent/Players";
+  import LoadingButton from "./common/LoadingButton.svelte";
 
   $: teams = $teamStore;
   $: players = $playerStore;
+
+  let intializing = false;
 
   let createTeams = async function (): Promise<void> {
     let leagueAgent = await leagueAgentFactory();
@@ -59,8 +61,10 @@
   };
 
   let initialize = async function () {
+    intializing = true;
     await createPlayers();
     await createTeams();
+    intializing = false;
   };
   let resetTeams = async function () {
     console.log("resetting teams");
@@ -81,14 +85,18 @@
 </script>
 
 {#if !teams || !players || players.length + teams.length <= 0}
-  <Button on:click={initialize}>Initialize With Default Data</Button>
+  <LoadingButton onClick={initialize}>
+    Initialize With Default Data
+  </LoadingButton>
 {:else}
   <div class="flex">
     <div class="flex-1 w-1/2">
       {#if teams.length <= 0}
-        <Button on:click={createTeams}>Create Teams</Button>
+        <LoadingButton onClick={createTeams}>Create Teams</LoadingButton>
       {:else}
-        <Button on:click={resetTeamsAndPlayers}>Reset Teams</Button>
+        <LoadingButton onClick={resetTeamsAndPlayers}>
+          Reset Teams
+        </LoadingButton>
         <div>Teams:</div>
         {#each teams as team}
           <pre class="text-wrap">{toJsonString(team)}</pre>
@@ -97,9 +105,11 @@
     </div>
     <div class="flex-1 w-1/2">
       {#if players.length <= 0}
-        <Button on:click={createPlayers}>Create Players</Button>
+        <LoadingButton onClick={createPlayers}>Create Players</LoadingButton>
       {:else}
-        <Button on:click={resetTeamsAndPlayers}>Reset Players</Button>
+        <LoadingButton onClick={resetTeamsAndPlayers}>
+          Reset Players
+        </LoadingButton>
         <div>Players:</div>
         {#each players as player}
           <pre class="text-wrap">{toJsonString(player)}</pre>

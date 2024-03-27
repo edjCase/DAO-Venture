@@ -1,11 +1,12 @@
 <script lang="ts">
-    import { Button, Input, Select, SelectOptionType } from "flowbite-svelte";
+    import { Input, Select, SelectOptionType } from "flowbite-svelte";
     import { scenarios } from "../../data/ScenarioData";
     import { leagueAgentFactory } from "../../ic-agent/League";
     import { AddScenarioRequest } from "../../ic-agent/declarations/league";
     import { teamStore } from "../../stores/TeamStore";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { dateToNanoseconds } from "../../utils/DateUtils";
+    import LoadingButton from "../common/LoadingButton.svelte";
 
     let items: SelectOptionType<number>[] = scenarios.map((scenario, index) => {
         return {
@@ -66,4 +67,4 @@
 <Input type="datetime-local" bind:value={startTime} />
 <Input type="datetime-local" bind:value={endTime} />
 
-<Button on:click={addScenario}>Add Scenario</Button>
+<LoadingButton onClick={addScenario}>Add Scenario</LoadingButton>

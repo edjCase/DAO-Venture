@@ -16,11 +16,11 @@
 </script>
 
 <script lang="ts">
-    import { Button } from "flowbite-svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import { nanosecondsToDate } from "../../utils/DateUtils";
     import { Principal } from "@dfinity/principal";
     import { identityStore } from "../../stores/IdentityStore";
+    import LoadingButton from "../common/LoadingButton.svelte";
 
     export let proposal: ProposalType;
     export let onVote: (proposalId: bigint, vote: boolean) => Promise<void>;
@@ -58,12 +58,12 @@
         {#if proposal.votes.some((v) => userId.toString() == v[0].toString())}
             {#if yourVote === undefined}
                 <div class="mb-6">
-                    <Button on:click={() => vote(proposal.id, true)}>
+                    <LoadingButton onClick={() => vote(proposal.id, true)}>
                         Adopt
-                    </Button>
-                    <Button on:click={() => vote(proposal.id, false)}>
+                    </LoadingButton>
+                    <LoadingButton onClick={() => vote(proposal.id, false)}>
                         Reject
-                    </Button>
+                    </LoadingButton>
                 </div>
             {:else}
                 <div class="text-xl">

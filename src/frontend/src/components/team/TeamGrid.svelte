@@ -8,6 +8,7 @@
   import { identityStore } from "../../stores/IdentityStore";
   import { User } from "../../ic-agent/declarations/users";
   import { TeamWithId } from "../../ic-agent/declarations/league";
+  import LoadingButton from "../common/LoadingButton.svelte";
 
   $: teams = $teamStore;
   $: identity = $identityStore;
@@ -108,9 +109,9 @@
           <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
             Setting your team is permanent for the season. Are you sure?
           </h3>
-          <Button color="red" class="me-2" on:click={setFavoriteTeam}>
+          <LoadingButton color="red" class="me-2" onClick={setFavoriteTeam}>
             Yes, I'm sure
-          </Button>
+          </LoadingButton>
           <Button color="alternative">No, cancel</Button>
         </div>
       </Modal>

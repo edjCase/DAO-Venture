@@ -50,30 +50,27 @@
       weekDays.push({ saturday: null });
     }
 
-    leagueAgent
-      .startSeason({
-        startTime: startTime,
-        weekDays: weekDays,
-      })
-      .then((result) => {
-        if ("ok" in result) {
-          console.log("Scheduled season");
-          scheduleStore.refetch();
-        } else {
-          console.log("Failed to schedule season", result);
-        }
-      });
+    let result = await leagueAgent.startSeason({
+      startTime: startTime,
+      weekDays: weekDays,
+    });
+    if ("ok" in result) {
+      console.log("Scheduled season");
+      scheduleStore.refetch();
+    } else {
+      console.log("Failed to schedule season", result);
+    }
   };
   let closeSeason = async () => {
     let leagueAgent = await leagueAgentFactory();
-    await leagueAgent.closeSeason().then((result) => {
-      if ("ok" in result) {
-        console.log("Closed season");
-        scheduleStore.refetch();
-      } else {
-        console.log("Failed to close season", result);
-      }
-    });
+    let result = await leagueAgent.closeSeason();
+
+    if ("ok" in result) {
+      console.log("Closed season");
+      scheduleStore.refetch();
+    } else {
+      console.log("Failed to close season", result);
+    }
   };
   let setStartTime = (e: any) => {
     if (!e.currentTarget) {

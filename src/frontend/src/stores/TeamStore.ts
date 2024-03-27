@@ -11,10 +11,8 @@ export const teamStore = (() => {
 
   const refetch = async () => {
     let leagueAgent = await leagueAgentFactory();
-    leagueAgent
-      .getTeams().then((teams) => {
-        teamsStore.set(teams);
-      });
+    let teams = await leagueAgent.getTeams();
+    teamsStore.set(teams);
   };
 
 

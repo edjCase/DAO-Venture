@@ -9,9 +9,8 @@ export const playerStore = (() => {
 
     const refetch = async () => {
         let playersAgent = await playersAgentFactory();
-        playersAgent.getAllPlayers().then((players) => {
-            set(players);
-        });
+        let players = await playersAgent.getAllPlayers();
+        set(players);
     };
     refetch();
 

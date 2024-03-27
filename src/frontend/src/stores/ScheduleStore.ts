@@ -141,26 +141,26 @@ export const scheduleStore = (() => {
 
     const refetch = async () => {
         let leagueAgent = await leagueAgentFactory();
-        await leagueAgent
-            .getSeasonStatus()
-            .then((status: SeasonStatus) => {
-                setStatus(status);
-                let matchGroups: MatchGroupDetails[] = [];
-                if ('inProgress' in status) {
-                    matchGroups = status.inProgress.matchGroups.map((matchGroup, index) => {
-                        return mapMatchGroup(index, matchGroup, status.inProgress.teams);
-                    });
-                } else if ('completed' in status) {
-                    matchGroups = status.completed.matchGroups.map((matchGroup, index) => {
-                        return mapMatchGroup(index, { completed: matchGroup }, status.completed.teams);
-                    });
-                } else {
-                    matchGroups = [];
-                }
-                // order by id
-                matchGroups.sort((a, b) => Number(a.id) - Number(b.id));
-                setMatchGroups(matchGroups);
+        let status = await leagueAgent
+            .getSeasonStatus();
+        setStatus(status);
+        let matchGroups: MatchGroupDetails[] = [];
+        if ('inProgress' in status) {
+            let teams = status.inProgress.teams;
+            matchGroups = status.inProgress.matchGroups.map((matchGroup, index) => {
+                return mapMatchGroup(index, matchGroup, teams);
             });
+        } else if ('completed' in status) {
+            let teams = status.completed.teams;
+            matchGroups = status.completed.matchGroups.map((matchGroup, index) => {
+                return mapMatchGroup(index, { completed: matchGroup }, teams);
+            });
+        } else {
+            matchGroups = [];
+        }
+        // order by id
+        matchGroups.sort((a, b) => Number(a.id) - Number(b.id));
+        setMatchGroups(matchGroups);
     };
 
     refetch();

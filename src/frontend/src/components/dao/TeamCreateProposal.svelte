@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { Button, Input, Select } from "flowbite-svelte";
+    import { Input, Select } from "flowbite-svelte";
     import CreateProposal from "./CreateProposal.svelte";
     import { proposalStore } from "../../stores/ProposalStore";
     import { teamsAgentFactory } from "../../ic-agent/Teams";
+    import LoadingButton from "../common/LoadingButton.svelte";
 
     export let teamId: bigint;
 
@@ -78,14 +79,16 @@
                 placeholder="Player ID"
                 bind:value={selectedPlayerId}
             />
-            <Button on:click={createTrainPlayerProposal}>
+            <LoadingButton onClick={createTrainPlayerProposal}>
                 Create Proposal
-            </Button>
+            </LoadingButton>
         </div>
     {:else if selectedProposalType === "changeName"}
         <div>
             <Input type="text" placeholder="New Name" bind:value={newName} />
-            <Button on:click={createNewNameProposal}>Create Proposal</Button>
+            <LoadingButton onClick={createNewNameProposal}>
+                Create Proposal
+            </LoadingButton>
         </div>
     {:else}
         NOT IMPLEMENTED: {selectedProposalType}

@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { BaseState, MatchGroupWithId, MatchLog, PlayerStateWithId, TeamId, TeamState, TickResult } from "../ic-agent/declarations/stadium";
+import { BaseState, MatchLog, PlayerStateWithId, TeamId, TeamState, TickResult } from "../ic-agent/declarations/stadium";
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { scheduleStore } from "./ScheduleStore";
 import { TeamDetailsWithScore } from "../models/Match";
@@ -79,19 +79,17 @@ export const liveMatchGroupStore = (() => {
 
   const refetchMatchGroup = async (matchGroupId: bigint) => {
     let stadiumAgent = await stadiumAgentFactory();
-    stadiumAgent
-      .getMatchGroup(matchGroupId)
-      .then((matchGroupOrNull: [MatchGroupWithId] | []) => {
-        if (matchGroupOrNull.length === 0) {
-          set(undefined);
-          return;
-        }
-        let matchGroup = matchGroupOrNull[0];
-        set({
-          id: matchGroupId,
-          matches: matchGroup.matches.map(mapTickResult)
-        });
-      });
+    let matchGroupOrNull = await stadiumAgent
+      .getMatchGroup(matchGroupId);
+    if (matchGroupOrNull.length === 0) {
+      set(undefined);
+      return;
+    }
+    let matchGroup = matchGroupOrNull[0];
+    set({
+      id: matchGroupId,
+      matches: matchGroup.matches.map(mapTickResult)
+    });
   };
 
 

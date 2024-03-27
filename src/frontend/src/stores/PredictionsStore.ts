@@ -22,16 +22,15 @@ export const predictionStore = (() => {
         let { set } = getOrCreateMatchGroupStore(matchGroupId);
 
         let leagueAgent = await leagueAgentFactory();
-        await leagueAgent
-            .getMatchGroupPredictions(matchGroupId).then((result) => {
-                if ('ok' in result) {
-                    const matchPredictions = result.ok;
-                    set(matchPredictions);
-                    return;
-                } else {
-                    console.error("Failed to get match group predictions: " + matchGroupId, result);
-                }
-            });
+        let result = await leagueAgent
+            .getMatchGroupPredictions(matchGroupId);
+        if ('ok' in result) {
+            const matchPredictions = result.ok;
+            set(matchPredictions);
+            return;
+        } else {
+            console.error("Failed to get match group predictions: " + matchGroupId, result);
+        }
     };
 
     const subscribeToMatchGroup = (matchGroupId: bigint, callback: Subscriber<MatchGroupPredictionSummary>) => {

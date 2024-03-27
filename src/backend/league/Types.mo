@@ -100,6 +100,12 @@ module {
 
     };
 
+    public type BenevolentDictatorState = {
+        #open;
+        #claimed : Principal;
+        #disabled;
+    };
+
     public type TeamStandingInfo = {
         id : Nat;
         wins : Nat;

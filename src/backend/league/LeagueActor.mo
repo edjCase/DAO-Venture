@@ -29,6 +29,8 @@ actor LeagueActor : Types.LeagueActor {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var stableData = {
+        stadiumInitialized = false;
+        benevolentDictator : Types.BenevolentDictatorState = #open;
         season : SeasonHandler.StableData = {
             seasonStatus = #notStarted;
             teamStandings = null;
@@ -95,7 +97,8 @@ actor LeagueActor : Types.LeagueActor {
         #ok(Buffer.toArray(processedOutcomes));
     };
 
-    stable var stadiumInitialized = false;
+    var stadiumInitialized = stableData.stadiumInitialized;
+    var benevolentDictator : Types.BenevolentDictatorState = stableData.benevolentDictator;
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
     var teamsHandler = TeamsHandler.Handler(stableData.teams);
     var scenarioHandler = ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
@@ -153,6 +156,8 @@ actor LeagueActor : Types.LeagueActor {
 
     system func preupgrade() {
         stableData := {
+            stadiumInitialized = stadiumInitialized;
+            benevolentDictator = benevolentDictator;
             season = seasonHandler.toStableData();
             predictions = predictionHandler.toStableData();
             scenarios = scenarioHandler.toStableData();
@@ -162,6 +167,8 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     system func postupgrade() {
+        stadiumInitialized := stableData.stadiumInitialized;
+        benevolentDictator := stableData.benevolentDictator;
         seasonHandler := SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
         predictionHandler := PredictionHandler.Handler(stableData.predictions);
         scenarioHandler := ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
@@ -170,12 +177,29 @@ actor LeagueActor : Types.LeagueActor {
         dao.resetEndTimers<system>(); // TODO move into DAO
     };
 
+    public shared ({ caller }) func claimBenevolentDictatorRole() : async () {
+        if (benevolentDictator != #open) {
+            return #notOpenToClaim;
+        };
+        benevolentDictator := #claimed(caller);
+    };
+
+    public shared ({ caller }) func setBenevolentDictatorState(state : Types.BenevolentDictatorState) : async () {
+        if (not isLeagueOrDictator(caller)) {
+            return #notAuthorized;
+        };
+        benevolentDictator := state;
+    };
+
     public query func getTeams() : async [TeamWithId] {
         teamsHandler.getAll();
     };
 
     // TODO REMOVE ALL DELETING METHODS
-    public shared func clearTeams() : async () {
+    public shared ({ caller }) func clearTeams() : async () {
+        if (not isLeagueOrDictator(caller)) {
+            Debug.trap("Not authorized to clear teams");
+        };
         teamsHandler := TeamsHandler.Handler({
             teamsInitialized = stableData.teams.teamsInitialized;
             teams = [];
@@ -240,7 +264,7 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     public shared ({ caller }) func addScenario(scenario : Types.AddScenarioRequest) : async Types.AddScenarioResult {
-        if (not isAdminId(caller)) {
+        if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
         Debug.print("Adding scenario: " # scenario.id);
@@ -251,7 +275,7 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {
-        if (not isAdminId(caller)) {
+        if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
         Debug.print("Starting season");
@@ -280,7 +304,7 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     public shared ({ caller }) func createTeam(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
-        if (not isAdminId(caller)) {
+        if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
         let leagueId = Principal.fromActor(LeagueActor);
@@ -302,10 +326,9 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     public shared func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
-        // TODO
-        // if (not isAdminId(caller)) {
-        //     return #notAuthorized;
-        // };
+        if (not isLeagueOrDictator(caller)) {
+            return #notAuthorized;
+        };
 
         await* seasonHandler.startMatchGroup(matchGroupId);
 
@@ -332,7 +355,7 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     public shared ({ caller }) func closeSeason() : async Types.CloseSeasonResult {
-        if (not isAdminId(caller)) {
+        if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
         let result = await* seasonHandler.close();
@@ -415,13 +438,15 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    private func isAdminId(id : Principal) : Bool {
+    private func isLeagueOrDictator(id : Principal) : Bool {
         if (id == Principal.fromActor(LeagueActor)) {
             // League is admin
             return true;
         };
-        return true; // TODO i dont want to use admin pattern
-        // TrieSet.mem(admins, id, Principal.hash(id), Principal.equal);
+        switch (benevolentDictator) {
+            case (#open or #disabled) false;
+            case (#claimed(claimantId)) return ?id == claimantId;
+        };
     };
 
     private func initStadium() : async* () {

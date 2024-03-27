@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { Button, Progressbar } from "flowbite-svelte";
+  import { Progressbar } from "flowbite-svelte";
   import { MatchDetails } from "../../models/Match";
   import { predictionStore } from "../../stores/PredictionsStore";
   import { TeamId } from "../../ic-agent/declarations/league";
+  import LoadingButton from "../common/LoadingButton.svelte";
   export let match: MatchDetails;
   export let teamId: TeamId;
 
@@ -61,9 +62,9 @@
       />
     </div>
     {#if matchPredictions.yourVote === undefined}
-      <Button on:click={() => predict(teamId)}>
+      <LoadingButton onClick={() => predict(teamId)}>
         Predict {"team1" in teamId ? match.team1.name : match.team2.name}
-      </Button>
+      </LoadingButton>
     {/if}
   </div>
 {/if}

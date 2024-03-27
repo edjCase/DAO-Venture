@@ -8,6 +8,7 @@
     import { VoteOnScenarioRequest } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
+    import LoadingButton from "../common/LoadingButton.svelte";
 
     export let scenarioId: string;
     export let options: ScenarioOption[];
@@ -43,15 +44,13 @@
             request,
         );
         let teamsAgent = await teamsAgentFactory();
-        teamsAgent
-            .voteOnScenario(teamId, request)
-            .then((result) => {
-                console.log("Voted for match: ", result);
-                teamStore.refetch();
-            })
-            .catch((err) => {
-                console.log("Failed to vote for match: ", err);
-            });
+        let result = await teamsAgent.voteOnScenario(teamId, request);
+        if ("ok" in result) {
+            console.log("Voted for scenario", request.scenarioId);
+            teamStore.refetch();
+        } else {
+            console.log("Failed to vote for match: ", result);
+        }
     };
 </script>
 
@@ -75,13 +74,9 @@
 {/each}
 {#if userContext && isOwner}
     <div class="flex justify-center p-5">
-        <Button
-            on:click={() => {
-                register();
-            }}
-        >
+        <LoadingButton onClick={register}>
             Submit Vote for Team {team?.name}
-        </Button>
+        </LoadingButton>
     </div>
 {:else}
     <div>Want to participate in scenarios?</div>
