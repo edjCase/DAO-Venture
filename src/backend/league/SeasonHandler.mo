@@ -79,7 +79,7 @@ module {
             startTime : Time.Time,
             weekDays : [Components.DayOfWeek],
             teams : [Team.TeamWithId],
-            players : [PlayerTypes.PlayerWithId],
+            players : [Player.Player],
         ) : async* StartSeasonResult {
             switch (seasonStatus) {
                 case (#notStarted) {};
@@ -285,10 +285,17 @@ module {
                 Debug.print("onMatchGroupComplete hook failed for match group " # Nat.toText(request.id) # ". Error: " # Error.message(err));
                 // TODO handle error
             };
-            try {
-                await PlayersActor.addMatchStats(request.id, request.playerStats);
+            let errorOrNull : ?Text = try {
+                switch (await PlayersActor.addMatchStats(request.id, request.playerStats)) {
+                    case (#ok) null;
+                    case (#notAuthorized) ?"League not authorized to award points";
+                };
             } catch (err) {
-                Debug.print("Failed to award user points: " # Error.message(err) # "\nStats: " # debug_show (request.playerStats));
+                ?Error.message(err);
+            };
+            switch (errorOrNull) {
+                case (null) ();
+                case (?error) Debug.print("Failed to award user points: " # error # "\nRequest: " # debug_show (request.playerStats));
             };
 
             // Get next match group to schedule
@@ -706,10 +713,10 @@ module {
 
             let teamDataMap = HashMap.HashMap<Nat, StadiumTypes.StartMatchTeam>(0, Nat.equal, Nat32.fromNat);
 
-            let getPlayer = func(playerId : Nat32) : Player.PlayerWithId {
+            let getPlayer = func(playerId : Nat32) : Player.Player {
                 let ?player = season.players
                 |> Iter.fromArray(_)
-                |> IterTools.find(_, func(p : Player.PlayerWithId) : Bool = p.id == playerId) else Debug.trap("Player not found: " # Nat32.toText(playerId));
+                |> IterTools.find(_, func(p : Player.Player) : Bool = p.id == playerId) else Debug.trap("Player not found: " # Nat32.toText(playerId));
                 player;
             };
             for (team in season.teams.vals()) {
@@ -802,30 +809,21 @@ module {
 
     private func buildTeamInitData(
         team : Team.TeamWithId,
-        allPlayers : [PlayerTypes.PlayerWithId],
+        allPlayers : [Player.Player],
     ) : Season.TeamInfo {
 
         let teamPlayers = allPlayers
         |> Iter.fromArray(_)
-        |> IterTools.mapFilter(
+        |> Iter.filter(
             _,
-            func(p : PlayerTypes.PlayerWithId) : ?Player.PlayerWithId {
-                if (p.teamId != team.id) {
-                    null;
-                } else {
-                    ?{
-                        p with
-                        teamId = team.id
-                    };
-                };
-            },
+            func(p : Player.Player) : Bool = p.teamId == team.id,
         )
         |> Iter.toArray(_);
 
         let getPosition = func(position : FieldPosition.FieldPosition) : Nat32 {
             let playerOrNull = teamPlayers
             |> Iter.fromArray(_)
-            |> IterTools.find(_, func(p : Player.PlayerWithId) : Bool = p.position == position);
+            |> IterTools.find(_, func(p : Player.Player) : Bool = p.position == position);
             switch (playerOrNull) {
                 case (null) Debug.trap("Team " # Nat.toText(team.id) # " is missing a player in position: " # debug_show (position)); // TODO
                 case (?player) player.id;

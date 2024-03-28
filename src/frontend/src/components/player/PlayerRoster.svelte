@@ -1,11 +1,11 @@
 <script lang="ts">
   import { playerStore } from "../../stores/PlayerStore";
-  import { PlayerWithId } from "../../ic-agent/declarations/players";
+  import { Player } from "../../ic-agent/declarations/players";
   import PlayerCard from "./PlayerCard.svelte";
 
   export let teamId: bigint;
 
-  let players: PlayerWithId[] | undefined;
+  let players: Player[] | undefined;
   playerStore.subscribe((playerList) => {
     players = playerList
       ?.filter((p) => p.teamId?.toString() === teamId.toString())

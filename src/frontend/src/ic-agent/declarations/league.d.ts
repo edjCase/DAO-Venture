@@ -122,7 +122,7 @@ export interface InProgressMatchGroup {
 }
 export interface InProgressSeason {
   'teams' : Array<TeamInfo>,
-  'players' : Array<PlayerWithId>,
+  'players' : Array<Player>,
   'matchGroups' : Array<InProgressSeasonMatchGroupVariant>,
 }
 export type InProgressSeasonMatchGroupVariant = {
@@ -215,6 +215,18 @@ export interface PagedResult {
   'count' : bigint,
   'offset' : bigint,
 }
+export interface Player {
+  'id' : number,
+  'title' : string,
+  'name' : string,
+  'description' : string,
+  'likes' : Array<string>,
+  'teamId' : bigint,
+  'position' : FieldPosition,
+  'quirks' : Array<string>,
+  'dislikes' : Array<string>,
+  'skills' : Skills,
+}
 export type PlayerId = number;
 export interface PlayerMatchStatsWithId {
   'playerId' : PlayerId,
@@ -240,19 +252,6 @@ export interface PlayerMatchStatsWithId {
     'throws' : bigint,
     'successfulCatches' : bigint,
   },
-}
-export interface PlayerWithId {
-  'id' : number,
-  'title' : string,
-  'name' : string,
-  'description' : string,
-  'likes' : Array<string>,
-  'teamId' : bigint,
-  'position' : FieldPosition,
-  'quirks' : Array<string>,
-  'dislikes' : Array<string>,
-  'skills' : Skills,
-  'traitIds' : Array<string>,
 }
 export interface PredictMatchOutcomeRequest {
   'winner' : [] | [TeamId],

@@ -7,9 +7,9 @@
         ChevronDoubleUpOutline,
     } from "flowbite-svelte-icons";
     import { Accordion, AccordionItem } from "flowbite-svelte";
-    import { PlayerWithId } from "../../ic-agent/declarations/league";
+    import { Player } from "../../ic-agent/declarations/league";
 
-    export let player: PlayerWithId;
+    export let player: Player;
 </script>
 
 <div class="mt-2 border rounded p-2">

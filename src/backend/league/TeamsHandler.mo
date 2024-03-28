@@ -123,8 +123,8 @@ module {
                 case (#notAuthorized) {
                     Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Nat.toText(teamInfo.id));
                 };
-                case (#noMorePlayers) {
-                    Debug.print("Error populating team roster: No more players available");
+                case (#missingFluff) {
+                    Debug.print("Error populating team roster: No unused player fluff available");
                 };
             };
             return #ok(teamInfo.id);

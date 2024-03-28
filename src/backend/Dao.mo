@@ -110,6 +110,7 @@ module {
         #err : Text;
     };
 
+    // TODO add validate proposal method
     public class Dao<TProposalContent>(
         data : StableData<TProposalContent>,
         onExecute : Proposal<TProposalContent> -> async* OnExecuteResult,

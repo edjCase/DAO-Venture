@@ -16,7 +16,7 @@ module {
 
     public type InProgressSeason = {
         teams : [TeamInfo];
-        players : [Player.PlayerWithId];
+        players : [Player.Player];
         matchGroups : [InProgressSeasonMatchGroupVariant];
     };
 

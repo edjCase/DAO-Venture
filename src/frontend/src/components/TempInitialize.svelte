@@ -40,7 +40,7 @@
     // loop over count
     for (let player of playerData) {
       let promise = playersAgent
-        .createFluff({
+        .addluff({
           name: player.name,
           title: player.title,
           description: player.description,
@@ -49,10 +49,14 @@
           quirks: player.quirks,
         })
         .then((result: CreatePlayerFluffResult) => {
-          if ("created" in result) {
-            console.log("Created player: ", player.name);
+          if ("ok" in result) {
+            console.log("Added player fluff: ", player.name);
           } else {
-            console.log("Failed to make player: ", player.name, result.invalid);
+            console.log(
+              "Failed to add player fluff: ",
+              player.name,
+              result.invalid,
+            );
           }
         });
       promises.push(promise);

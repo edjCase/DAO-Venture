@@ -41,14 +41,14 @@ module {
         logoUrl : Text;
         color : (Nat8, Nat8, Nat8);
         positions : {
-            firstBase : Player.PlayerWithId;
-            secondBase : Player.PlayerWithId;
-            thirdBase : Player.PlayerWithId;
-            shortStop : Player.PlayerWithId;
-            pitcher : Player.PlayerWithId;
-            leftField : Player.PlayerWithId;
-            centerField : Player.PlayerWithId;
-            rightField : Player.PlayerWithId;
+            firstBase : Player.Player;
+            secondBase : Player.Player;
+            thirdBase : Player.Player;
+            shortStop : Player.Player;
+            pitcher : Player.Player;
+            leftField : Player.Player;
+            centerField : Player.Player;
+            rightField : Player.Player;
         };
     };
 
@@ -103,7 +103,7 @@ module {
         teamId : Team.TeamId,
     ) : (StadiumTypes.TeamState, Buffer.Buffer<StadiumTypes.PlayerStateWithId>) {
 
-        let mapPlayer = func(player : Player.PlayerWithId) : StadiumTypes.PlayerStateWithId = {
+        let mapPlayer = func(player : Player.Player) : StadiumTypes.PlayerStateWithId = {
             id = player.id;
             name = player.name;
             teamId = teamId;

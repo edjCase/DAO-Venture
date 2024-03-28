@@ -1,4 +1,21 @@
 export const idlFactory = ({ IDL }) => {
+  const CreatePlayerFluffRequest = IDL.Record({
+    'title' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'likes' : IDL.Vec(IDL.Text),
+    'quirks' : IDL.Vec(IDL.Text),
+    'dislikes' : IDL.Vec(IDL.Text),
+  });
+  const InvalidError = IDL.Variant({
+    'nameTaken' : IDL.Null,
+    'nameNotSpecified' : IDL.Null,
+  });
+  const CreatePlayerFluffResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(InvalidError),
+  });
   const PlayerId = IDL.Nat32;
   const PlayerMatchStatsWithId = IDL.Record({
     'playerId' : PlayerId,
@@ -25,6 +42,14 @@ export const idlFactory = ({ IDL }) => {
       'successfulCatches' : IDL.Nat,
     }),
   });
+  const AddMatchStatsResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+  });
+  const Duration = IDL.Variant({
+    'matches' : IDL.Nat,
+    'indefinite' : IDL.Null,
+  });
   const Skill = IDL.Variant({
     'battingAccuracy' : IDL.Null,
     'throwingAccuracy' : IDL.Null,
@@ -33,20 +58,6 @@ export const idlFactory = ({ IDL }) => {
     'battingPower' : IDL.Null,
     'defense' : IDL.Null,
     'throwingPower' : IDL.Null,
-  });
-  const Effect = IDL.Variant({
-    'skill' : IDL.Record({ 'skill' : IDL.Opt(Skill), 'delta' : IDL.Int }),
-  });
-  const AddTraitRequest = IDL.Record({
-    'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect),
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-  });
-  const AddTraitResult = IDL.Variant({ 'ok' : IDL.Null, 'idTaken' : IDL.Null });
-  const Duration = IDL.Variant({
-    'matches' : IDL.Nat,
-    'indefinite' : IDL.Null,
   });
   const FieldPosition = IDL.Variant({
     'rightField' : IDL.Null,
@@ -83,22 +94,9 @@ export const idlFactory = ({ IDL }) => {
     'injury' : IDL.Record({ 'target' : TargetInstance, 'injury' : Injury }),
   });
   const ApplyEffectsRequest = IDL.Vec(PlayerEffectOutcome);
-  const ApplyEffectsResult = IDL.Variant({ 'ok' : IDL.Null });
-  const CreatePlayerFluffRequest = IDL.Record({
-    'title' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'likes' : IDL.Vec(IDL.Text),
-    'quirks' : IDL.Vec(IDL.Text),
-    'dislikes' : IDL.Vec(IDL.Text),
-  });
-  const InvalidError = IDL.Variant({
-    'nameTaken' : IDL.Null,
-    'nameNotSpecified' : IDL.Null,
-  });
-  const CreatePlayerFluffResult = IDL.Variant({
-    'created' : IDL.Null,
-    'invalid' : IDL.Vec(InvalidError),
+  const ApplyEffectsResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
   });
   const Skills = IDL.Record({
     'battingAccuracy' : IDL.Int,
@@ -109,7 +107,7 @@ export const idlFactory = ({ IDL }) => {
     'defense' : IDL.Int,
     'throwingPower' : IDL.Int,
   });
-  const PlayerWithId__1 = IDL.Record({
+  const Player = IDL.Record({
     'id' : IDL.Nat32,
     'title' : IDL.Text,
     'name' : IDL.Text,
@@ -120,70 +118,52 @@ export const idlFactory = ({ IDL }) => {
     'quirks' : IDL.Vec(IDL.Text),
     'dislikes' : IDL.Vec(IDL.Text),
     'skills' : Skills,
-    'traitIds' : IDL.Vec(IDL.Text),
-  });
-  const Player = IDL.Record({
-    'title' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Nat,
-    'position' : FieldPosition,
-    'quirks' : IDL.Vec(IDL.Text),
-    'dislikes' : IDL.Vec(IDL.Text),
-    'skills' : Skills,
-    'traitIds' : IDL.Vec(IDL.Text),
   });
   const GetPlayerResult = IDL.Variant({ 'ok' : Player, 'notFound' : IDL.Null });
-  const PlayerWithId = IDL.Record({
-    'id' : IDL.Nat32,
-    'title' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Nat,
-    'position' : FieldPosition,
-    'quirks' : IDL.Vec(IDL.Text),
-    'dislikes' : IDL.Vec(IDL.Text),
-    'skills' : Skills,
-    'traitIds' : IDL.Vec(IDL.Text),
-  });
-  const Trait = IDL.Record({
-    'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect),
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-  });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
   const PopulateTeamRosterResult = IDL.Variant({
-    'ok' : IDL.Vec(PlayerWithId),
+    'ok' : IDL.Vec(Player),
+    'missingFluff' : IDL.Null,
     'notAuthorized' : IDL.Null,
-    'noMorePlayers' : IDL.Null,
+  });
+  const SetTeamsCanisterIdResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+  });
+  const SwapPlayerPositionsResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
   });
   return IDL.Service({
-    'addMatchStats' : IDL.Func(
-        [IDL.Nat, IDL.Vec(PlayerMatchStatsWithId)],
-        [],
-        [],
-      ),
-    'addTrait' : IDL.Func([AddTraitRequest], [AddTraitResult], []),
-    'applyEffects' : IDL.Func([ApplyEffectsRequest], [ApplyEffectsResult], []),
-    'clearPlayers' : IDL.Func([], [], []),
-    'clearTraits' : IDL.Func([], [], []),
-    'createFluff' : IDL.Func(
+    'addFluff' : IDL.Func(
         [CreatePlayerFluffRequest],
         [CreatePlayerFluffResult],
         [],
       ),
-    'getAllPlayers' : IDL.Func([], [IDL.Vec(PlayerWithId__1)], ['query']),
+    'addMatchStats' : IDL.Func(
+        [IDL.Nat, IDL.Vec(PlayerMatchStatsWithId)],
+        [AddMatchStatsResult],
+        [],
+      ),
+    'applyEffects' : IDL.Func([ApplyEffectsRequest], [ApplyEffectsResult], []),
+    'getAllPlayers' : IDL.Func([], [IDL.Vec(Player)], ['query']),
     'getPlayer' : IDL.Func([IDL.Nat32], [GetPlayerResult], ['query']),
-    'getTeamPlayers' : IDL.Func([IDL.Nat], [IDL.Vec(PlayerWithId)], ['query']),
-    'getTraits' : IDL.Func([], [IDL.Vec(Trait)], ['query']),
+    'getTeamPlayers' : IDL.Func([IDL.Nat], [IDL.Vec(Player)], ['query']),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'populateTeamRoster' : IDL.Func([IDL.Nat], [PopulateTeamRosterResult], []),
+    'setTeamsCanisterId' : IDL.Func(
+        [IDL.Principal],
+        [SetTeamsCanisterIdResult],
+        [],
+      ),
+    'swapTeamPositions' : IDL.Func(
+        [IDL.Nat, FieldPosition, FieldPosition],
+        [SwapPlayerPositionsResult],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

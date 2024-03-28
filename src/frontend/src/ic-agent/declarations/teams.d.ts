@@ -9,6 +9,14 @@ export type CreateProposalResult = { 'ok' : bigint } |
 export type CreateTeamRequest = {};
 export type CreateTeamResult = { 'ok' : { 'id' : bigint } } |
   { 'notAuthorized' : null };
+export type FieldPosition = { 'rightField' : null } |
+  { 'leftField' : null } |
+  { 'thirdBase' : null } |
+  { 'pitcher' : null } |
+  { 'secondBase' : null } |
+  { 'shortStop' : null } |
+  { 'centerField' : null } |
+  { 'firstBase' : null };
 export type GetCyclesResult = { 'ok' : bigint } |
   { 'notAuthorized' : null };
 export type GetProposalResult = { 'ok' : Proposal } |
@@ -54,6 +62,12 @@ export interface Proposal {
   'timeEnd' : bigint,
 }
 export type ProposalContent = { 'changeName' : { 'name' : string } } |
+  {
+    'swapPlayerPositions' : {
+      'position1' : FieldPosition,
+      'position2' : FieldPosition,
+    }
+  } |
   { 'trainPlayer' : { 'playerId' : number, 'skill' : Skill } };
 export type ProposalStatusLogEntry = {
     'failedToExecute' : { 'time' : Time, 'error' : string }

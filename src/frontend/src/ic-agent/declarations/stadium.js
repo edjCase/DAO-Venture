@@ -223,7 +223,7 @@ export const idlFactory = ({ IDL }) => {
     'centerField' : IDL.Null,
     'firstBase' : IDL.Null,
   });
-  const PlayerWithId = IDL.Record({
+  const Player = IDL.Record({
     'id' : IDL.Nat32,
     'title' : IDL.Text,
     'name' : IDL.Text,
@@ -234,7 +234,6 @@ export const idlFactory = ({ IDL }) => {
     'quirks' : IDL.Vec(IDL.Text),
     'dislikes' : IDL.Vec(IDL.Text),
     'skills' : Skills,
-    'traitIds' : IDL.Vec(IDL.Text),
   });
   const StartMatchTeam = IDL.Record({
     'id' : IDL.Nat,
@@ -242,14 +241,14 @@ export const idlFactory = ({ IDL }) => {
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'logoUrl' : IDL.Text,
     'positions' : IDL.Record({
-      'rightField' : PlayerWithId,
-      'leftField' : PlayerWithId,
-      'thirdBase' : PlayerWithId,
-      'pitcher' : PlayerWithId,
-      'secondBase' : PlayerWithId,
-      'shortStop' : PlayerWithId,
-      'centerField' : PlayerWithId,
-      'firstBase' : PlayerWithId,
+      'rightField' : Player,
+      'leftField' : Player,
+      'thirdBase' : Player,
+      'pitcher' : Player,
+      'secondBase' : Player,
+      'shortStop' : Player,
+      'centerField' : Player,
+      'firstBase' : Player,
     }),
   });
   const StartMatchRequest = IDL.Record({

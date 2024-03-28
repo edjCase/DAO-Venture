@@ -1,19 +1,38 @@
 import Player "../models/Player";
-import Principal "mo:base/Principal";
-import Trait "../models/Trait";
 import Scenario "../models/Scenario";
+import FieldPosition "../models/FieldPosition";
 module {
 
     public type PlayerActor = actor {
-        createFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
+        addFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
         getPlayer : query (id : Nat32) -> async GetPlayerResult;
-        getTeamPlayers : query (teamId : Nat) -> async [Player.PlayerWithId];
-        getAllPlayers : query () -> async [PlayerWithId];
+        getTeamPlayers : query (teamId : Nat) -> async [Player.Player];
+        getAllPlayers : query () -> async [Player.Player];
         populateTeamRoster : (teamId : Nat) -> async PopulateTeamRosterResult;
-        addTrait : (request : AddTraitRequest) -> async AddTraitResult;
-        getTraits : query () -> async [Trait.Trait];
         applyEffects : (request : ApplyEffectsRequest) -> async ApplyEffectsResult;
         onSeasonEnd : () -> async OnSeasonEndResult;
+        swapTeamPositions : (
+            teamId : Nat,
+            position1 : FieldPosition.FieldPosition,
+            position2 : FieldPosition.FieldPosition,
+        ) -> async SwapPlayerPositionsResult;
+        addMatchStats : (matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) -> async AddMatchStatsResult;
+        setTeamsCanisterId : (canisterId : Principal) -> async SetTeamsCanisterIdResult;
+    };
+
+    public type SetTeamsCanisterIdResult = {
+        #ok;
+        #notAuthorized;
+    };
+
+    public type AddMatchStatsResult = {
+        #ok;
+        #notAuthorized;
+    };
+
+    public type SwapPlayerPositionsResult = {
+        #ok;
+        #notAuthorized;
     };
 
     public type OnSeasonEndResult = {
@@ -25,18 +44,12 @@ module {
 
     public type ApplyEffectsResult = {
         #ok;
-    };
-
-    public type AddTraitRequest = Trait.Trait;
-
-    public type AddTraitResult = {
-        #ok;
-        #idTaken;
+        #notAuthorized;
     };
 
     public type PopulateTeamRosterResult = {
-        #ok : [Player.PlayerWithId];
-        #noMorePlayers;
+        #ok : [Player.Player];
+        #missingFluff;
         #notAuthorized;
         // #teamNotFound; // TODO?
     };
@@ -56,12 +69,13 @@ module {
     };
 
     public type CreatePlayerFluffResult = {
-        #created;
+        #ok;
+        #notAuthorized;
         #invalid : [InvalidError];
     };
 
     public type GetPlayerResult = {
-        #ok : Player;
+        #ok : Player.Player;
         #notFound;
     };
 
@@ -69,15 +83,5 @@ module {
         #ok;
         #playerNotFound;
     };
-
-    public type Player = Player.Player;
-
-    public type PlayerWithId = Player and {
-        id : Nat32;
-    };
-
-    public type RetiredPlayer = Player.PlayerFluff; // TODO
-
-    public type FuturePlayer = Player.PlayerFluff;
 
 };

@@ -59,14 +59,14 @@ module {
 
     public type StartMatchTeam = Team and {
         positions : {
-            firstBase : Player.PlayerWithId;
-            secondBase : Player.PlayerWithId;
-            thirdBase : Player.PlayerWithId;
-            shortStop : Player.PlayerWithId;
-            pitcher : Player.PlayerWithId;
-            leftField : Player.PlayerWithId;
-            centerField : Player.PlayerWithId;
-            rightField : Player.PlayerWithId;
+            firstBase : Player.Player;
+            secondBase : Player.Player;
+            thirdBase : Player.Player;
+            shortStop : Player.Player;
+            pitcher : Player.Player;
+            leftField : Player.Player;
+            centerField : Player.Player;
+            rightField : Player.Player;
         };
     };
 

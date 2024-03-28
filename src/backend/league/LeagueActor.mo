@@ -65,6 +65,7 @@ actor LeagueActor : Types.LeagueActor {
                         let result = await PlayersActor.applyEffects([#injury(injuryEffect)]); // TODO optimize with bulk call
                         switch (result) {
                             case (#ok) true;
+                            case (#notAuthorized) false;
                         };
                     };
                     case (#entropy(entropyEffect)) {
@@ -79,6 +80,7 @@ actor LeagueActor : Types.LeagueActor {
                         let result = await PlayersActor.applyEffects([#skill(s)]); // TODO optimize with bulk call
                         switch (result) {
                             case (#ok) true;
+                            case (#notAuthorized) false;
                         };
                     };
                 };

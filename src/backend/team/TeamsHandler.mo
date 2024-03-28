@@ -8,6 +8,7 @@ import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import CommonTypes "../Types";
+import PlayersActor "canister:players";
 
 module {
 
@@ -86,6 +87,12 @@ module {
                     switch (result) {
                         case (#ok(_)) #ok;
                         case (#notAuthorized) #err("Not authorized to create change name proposal in league DAO");
+                    };
+                };
+                case (#swapPlayerPositions(swap)) {
+                    switch (await PlayersActor.swapTeamPositions(teamId, swap.position1, swap.position2)) {
+                        case (#ok) #ok;
+                        case (#notAuthorized) #err("Not authorized to swap player positions in players actor");
                     };
                 };
             };

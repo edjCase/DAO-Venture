@@ -1,5 +1,3 @@
-import Hash "mo:base/Hash";
-import Principal "mo:base/Principal";
 import FieldPosition "FieldPosition";
 module {
     public type PlayerId = Nat32;
@@ -14,16 +12,11 @@ module {
     };
 
     public type Player = PlayerFluff and {
+        id : Nat32;
         teamId : Nat;
         skills : Skills;
         position : FieldPosition.FieldPosition;
-        traitIds : [Text];
     };
-
-    public type PlayerWithId = Player and {
-        id : Nat32;
-    };
-
     public type Skills = {
         battingAccuracy : Int;
         battingPower : Int;

@@ -292,7 +292,7 @@ export const idlFactory = ({ IDL }) => {
     'defense' : IDL.Int,
     'throwingPower' : IDL.Int,
   });
-  const PlayerWithId = IDL.Record({
+  const Player = IDL.Record({
     'id' : IDL.Nat32,
     'title' : IDL.Text,
     'name' : IDL.Text,
@@ -303,7 +303,6 @@ export const idlFactory = ({ IDL }) => {
     'quirks' : IDL.Vec(IDL.Text),
     'dislikes' : IDL.Vec(IDL.Text),
     'skills' : Skills,
-    'traitIds' : IDL.Vec(IDL.Text),
   });
   const ScheduledTeamInfo = IDL.Record({ 'id' : IDL.Nat });
   const MatchAuraWithMetaData = IDL.Record({
@@ -354,7 +353,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const InProgressSeason = IDL.Record({
     'teams' : IDL.Vec(TeamInfo),
-    'players' : IDL.Vec(PlayerWithId),
+    'players' : IDL.Vec(Player),
     'matchGroups' : IDL.Vec(InProgressSeasonMatchGroupVariant),
   });
   const SeasonStatus = IDL.Variant({

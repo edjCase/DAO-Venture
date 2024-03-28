@@ -116,6 +116,18 @@ export interface MatchStatusCompleted { 'reason' : MatchEndReason }
 export type OutReason = { 'strikeout' : null } |
   { 'ballCaught' : null } |
   { 'hitByBall' : null };
+export interface Player {
+  'id' : number,
+  'title' : string,
+  'name' : string,
+  'description' : string,
+  'likes' : Array<string>,
+  'teamId' : bigint,
+  'position' : FieldPosition,
+  'quirks' : Array<string>,
+  'dislikes' : Array<string>,
+  'skills' : Skills,
+}
 export type PlayerCondition = { 'ok' : null } |
   { 'dead' : null } |
   { 'injured' : Injury };
@@ -152,19 +164,6 @@ export interface PlayerStateWithId {
   'teamId' : TeamId,
   'skills' : Skills,
   'condition' : PlayerCondition,
-}
-export interface PlayerWithId {
-  'id' : number,
-  'title' : string,
-  'name' : string,
-  'description' : string,
-  'likes' : Array<string>,
-  'teamId' : bigint,
-  'position' : FieldPosition,
-  'quirks' : Array<string>,
-  'dislikes' : Array<string>,
-  'skills' : Skills,
-  'traitIds' : Array<string>,
 }
 export type ResetTickTimerResult = { 'ok' : null } |
   { 'matchGroupNotFound' : null };
@@ -204,14 +203,14 @@ export interface StartMatchTeam {
   'color' : [number, number, number],
   'logoUrl' : string,
   'positions' : {
-    'rightField' : PlayerWithId,
-    'leftField' : PlayerWithId,
-    'thirdBase' : PlayerWithId,
-    'pitcher' : PlayerWithId,
-    'secondBase' : PlayerWithId,
-    'shortStop' : PlayerWithId,
-    'centerField' : PlayerWithId,
-    'firstBase' : PlayerWithId,
+    'rightField' : Player,
+    'leftField' : Player,
+    'thirdBase' : Player,
+    'pitcher' : Player,
+    'secondBase' : Player,
+    'shortStop' : Player,
+    'centerField' : Player,
+    'firstBase' : Player,
   },
 }
 export type TeamId = { 'team1' : null } |

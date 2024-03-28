@@ -2,16 +2,11 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export interface AddTraitRequest {
-  'id' : string,
-  'effects' : Array<Effect>,
-  'name' : string,
-  'description' : string,
-}
-export type AddTraitResult = { 'ok' : null } |
-  { 'idTaken' : null };
+export type AddMatchStatsResult = { 'ok' : null } |
+  { 'notAuthorized' : null };
 export type ApplyEffectsRequest = Array<PlayerEffectOutcome>;
-export type ApplyEffectsResult = { 'ok' : null };
+export type ApplyEffectsResult = { 'ok' : null } |
+  { 'notAuthorized' : null };
 export interface CreatePlayerFluffRequest {
   'title' : string,
   'name' : string,
@@ -20,11 +15,11 @@ export interface CreatePlayerFluffRequest {
   'quirks' : Array<string>,
   'dislikes' : Array<string>,
 }
-export type CreatePlayerFluffResult = { 'created' : null } |
+export type CreatePlayerFluffResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
   { 'invalid' : Array<InvalidError> };
 export type Duration = { 'matches' : bigint } |
   { 'indefinite' : null };
-export type Effect = { 'skill' : { 'skill' : [] | [Skill], 'delta' : bigint } };
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -44,6 +39,7 @@ export type InvalidError = { 'nameTaken' : null } |
 export type OnSeasonEndResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface Player {
+  'id' : number,
   'title' : string,
   'name' : string,
   'description' : string,
@@ -53,7 +49,6 @@ export interface Player {
   'quirks' : Array<string>,
   'dislikes' : Array<string>,
   'skills' : Skills,
-  'traitIds' : Array<string>,
 }
 export type PlayerEffectOutcome = {
     'skill' : {
@@ -90,35 +85,11 @@ export interface PlayerMatchStatsWithId {
     'successfulCatches' : bigint,
   },
 }
-export interface PlayerWithId {
-  'id' : number,
-  'title' : string,
-  'name' : string,
-  'description' : string,
-  'likes' : Array<string>,
-  'teamId' : bigint,
-  'position' : FieldPosition,
-  'quirks' : Array<string>,
-  'dislikes' : Array<string>,
-  'skills' : Skills,
-  'traitIds' : Array<string>,
-}
-export interface PlayerWithId__1 {
-  'id' : number,
-  'title' : string,
-  'name' : string,
-  'description' : string,
-  'likes' : Array<string>,
-  'teamId' : bigint,
-  'position' : FieldPosition,
-  'quirks' : Array<string>,
-  'dislikes' : Array<string>,
-  'skills' : Skills,
-  'traitIds' : Array<string>,
-}
-export type PopulateTeamRosterResult = { 'ok' : Array<PlayerWithId> } |
-  { 'notAuthorized' : null } |
-  { 'noMorePlayers' : null };
+export type PopulateTeamRosterResult = { 'ok' : Array<Player> } |
+  { 'missingFluff' : null } |
+  { 'notAuthorized' : null };
+export type SetTeamsCanisterIdResult = { 'ok' : null } |
+  { 'notAuthorized' : null };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -135,6 +106,8 @@ export interface Skills {
   'defense' : bigint,
   'throwingPower' : bigint,
 }
+export type SwapPlayerPositionsResult = { 'ok' : null } |
+  { 'notAuthorized' : null };
 export type TargetInstance = { 'teams' : Array<bigint> } |
   { 'league' : null } |
   { 'positions' : Array<TargetPositionInstance> };
@@ -142,31 +115,23 @@ export interface TargetPositionInstance {
   'teamId' : bigint,
   'position' : FieldPosition,
 }
-export interface Trait {
-  'id' : string,
-  'effects' : Array<Effect>,
-  'name' : string,
-  'description' : string,
-}
 export interface _SERVICE {
+  'addFluff' : ActorMethod<[CreatePlayerFluffRequest], CreatePlayerFluffResult>,
   'addMatchStats' : ActorMethod<
     [bigint, Array<PlayerMatchStatsWithId>],
-    undefined
+    AddMatchStatsResult
   >,
-  'addTrait' : ActorMethod<[AddTraitRequest], AddTraitResult>,
   'applyEffects' : ActorMethod<[ApplyEffectsRequest], ApplyEffectsResult>,
-  'clearPlayers' : ActorMethod<[], undefined>,
-  'clearTraits' : ActorMethod<[], undefined>,
-  'createFluff' : ActorMethod<
-    [CreatePlayerFluffRequest],
-    CreatePlayerFluffResult
-  >,
-  'getAllPlayers' : ActorMethod<[], Array<PlayerWithId__1>>,
+  'getAllPlayers' : ActorMethod<[], Array<Player>>,
   'getPlayer' : ActorMethod<[number], GetPlayerResult>,
-  'getTeamPlayers' : ActorMethod<[bigint], Array<PlayerWithId>>,
-  'getTraits' : ActorMethod<[], Array<Trait>>,
+  'getTeamPlayers' : ActorMethod<[bigint], Array<Player>>,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'populateTeamRoster' : ActorMethod<[bigint], PopulateTeamRosterResult>,
+  'setTeamsCanisterId' : ActorMethod<[Principal], SetTeamsCanisterIdResult>,
+  'swapTeamPositions' : ActorMethod<
+    [bigint, FieldPosition, FieldPosition],
+    SwapPlayerPositionsResult
+  >,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

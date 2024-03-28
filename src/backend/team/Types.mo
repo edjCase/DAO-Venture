@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import Dao "../Dao";
 import Skill "../models/Skill";
 import CommonTypes "../Types";
+import FieldPosition "../models/FieldPosition";
 
 module {
 
@@ -53,6 +54,10 @@ module {
         #trainPlayer : {
             playerId : Nat32;
             skill : Skill.Skill;
+        };
+        #swapPlayerPositions : {
+            position1 : FieldPosition.FieldPosition;
+            position2 : FieldPosition.FieldPosition;
         };
     };
 
