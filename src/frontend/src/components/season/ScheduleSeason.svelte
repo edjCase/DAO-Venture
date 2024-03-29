@@ -58,7 +58,7 @@
       console.log("Scheduled season");
       scheduleStore.refetch();
     } else {
-      console.log("Failed to schedule season", result);
+      console.error("Failed to schedule season", result);
     }
   };
   let closeSeason = async () => {
@@ -69,7 +69,7 @@
       console.log("Closed season");
       scheduleStore.refetch();
     } else {
-      console.log("Failed to close season", result);
+      console.error("Failed to close season", result);
     }
   };
   let setStartTime = (e: any) => {
