@@ -9,6 +9,7 @@ import Prelude "mo:base/Prelude";
 import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import Order "mo:base/Order";
+import Bool "mo:base/Bool";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import MatchAura "../models/MatchAura";
 import Base "../models/Base";
@@ -649,7 +650,7 @@ module {
             );
             let canPickUpInTime = getNetRoll(pickUpRoll, targetRunRoll) >= 0;
 
-            if (canPickUpInTime) {
+            let batterIsOut = if (canPickUpInTime) {
                 let throwRoll = roll(
                     #d10,
                     playerIdWithBall,
@@ -709,6 +710,9 @@ module {
                         case (#endMatch(m)) return #endMatch(m);
                         case (#inProgress) ();
                     };
+                    true;
+                } else {
+                    false;
                 };
             } else {
                 updateStats(
@@ -724,13 +728,14 @@ module {
                         stats.pitchingStats.hits += 1;
                     },
                 );
+                false;
             };
 
             // Shift the rest of the runners by one base
-            single();
+            single(batterIsOut);
         };
 
-        private func single() : SimulationResult {
+        private func single(batterIsOut : Bool) : SimulationResult {
             // Shift everyone by one base
             // 3rd -> home
             let thirdBaseRun = moveBaseToBase({
@@ -753,11 +758,15 @@ module {
             });
             let #inProgress = firstBaseRun else return firstBaseRun; // Short circuit if end match
 
-            // batter -> 1st
-            moveBaseToBase({
-                from = #homeBase;
-                to = #firstBase;
-            });
+            if (batterIsOut) {
+                #inProgress;
+            } else {
+                // batter -> 1st
+                moveBaseToBase({
+                    from = #homeBase;
+                    to = #firstBase;
+                });
+            };
         };
 
         private func homeRun() : SimulationResult {
@@ -851,7 +860,8 @@ module {
             if (state.outs >= 3) {
                 return endRound();
             };
-            removePlayerFromBase(playerId);
+            let ?position = state.getOffensivePositionOfPlayer(playerId) else return #endMatch(#stateBroken(#playerExpectedOnField({ id = playerId; onOffense = false; description = "Player not on base, cannot remove from field" })));
+            clearBase(position);
         };
 
         private func moveBaseToBase({
@@ -961,11 +971,6 @@ module {
             let team = state.getTeamState(teamId);
             team.score += amount;
             state.addEvent(#score({ teamId = teamId; amount = amount }));
-        };
-
-        private func removePlayerFromBase(playerId : PlayerId) : SimulationResult {
-            let ?position = state.getOffensivePositionOfPlayer(playerId) else return #endMatch(#stateBroken(#playerExpectedOnField({ id = playerId; onOffense = false; description = "Player not on base, cannot remove from field" })));
-            clearBase(position);
         };
 
         private func clearBase(base : Base.Base) : SimulationResult {

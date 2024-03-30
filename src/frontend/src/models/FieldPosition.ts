@@ -12,7 +12,7 @@ export enum FieldPositionEnum {
     RightField = "Right Field",
 }
 
-export function mapPosition(position: FieldPositionEnum): FieldPosition {
+export function fromEnum(position: FieldPositionEnum): FieldPosition {
     switch (position) {
         case FieldPositionEnum.Pitcher:
             return { pitcher: null };
@@ -34,7 +34,7 @@ export function mapPosition(position: FieldPositionEnum): FieldPosition {
             throw "Invalid position: " + position;
     }
 };
-export function unMapPosition(position: FieldPosition): FieldPositionEnum {
+export function toEnum(position: FieldPosition): FieldPositionEnum {
     if ('pitcher' in position) {
         return FieldPositionEnum.Pitcher;
     }

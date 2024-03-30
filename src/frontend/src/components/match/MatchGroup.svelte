@@ -58,6 +58,24 @@
     {:else if matchGroup.state == "NotScheduled"}
       Not Scheduled TODO
     {:else}
+      <div class="">
+        {#each matches as [match, liveMatch]}
+          <div
+            class="cursor-pointer"
+            on:click={selectMatch(match.id)}
+            on:keydown={() => {}}
+            on:keyup={() => {}}
+            role="button"
+            tabindex="0"
+          >
+            <MatchCardCompact
+              {match}
+              {liveMatch}
+              selected={match.id == selectedMatchId}
+            />
+          </div>
+        {/each}
+      </div>
       <div class="flex flex-col items-center justify-center">
         {#if selectedLiveMatch}
           <div class="flex items-center justify-center w-screen sm:w-96">
@@ -67,24 +85,6 @@
             />
           </div>
         {/if}
-        <div class="">
-          {#each matches as [match, liveMatch]}
-            <div
-              class="cursor-pointer"
-              on:click={selectMatch(match.id)}
-              on:keydown={() => {}}
-              on:keyup={() => {}}
-              role="button"
-              tabindex="0"
-            >
-              <MatchCardCompact
-                {match}
-                {liveMatch}
-                selected={match.id == selectedMatchId}
-              />
-            </div>
-          {/each}
-        </div>
       </div>
     {/if}
   </section>

@@ -51,8 +51,8 @@ module {
         #changeName : {
             name : Text;
         };
-        #trainPlayer : {
-            playerId : Nat32;
+        #train : {
+            position : FieldPosition.FieldPosition;
             skill : Skill.Skill;
         };
         #swapPlayerPositions : {

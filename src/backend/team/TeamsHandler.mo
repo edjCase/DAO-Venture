@@ -7,8 +7,10 @@ import Iter "mo:base/Iter";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
+import Error "mo:base/Error";
 import CommonTypes "../Types";
 import PlayersActor "canister:players";
+import Scenario "../models/Scenario";
 
 module {
 
@@ -71,28 +73,51 @@ module {
 
         func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Dao.OnExecuteResult {
             switch (proposal.content) {
-                case (#trainPlayer(trainPlayer)) {
-                    // TODO
-                    Debug.print("Training player: " # debug_show (trainPlayer));
-                    #ok;
+                case (#train(train)) {
+                    try {
+                        // TODO make the 'applyEffects' generic, not scenario specific
+                        let trainSkillEffect : Scenario.PlayerEffectOutcome = #skill({
+                            target = #positions([{
+                                teamId = teamId;
+                                position = train.position;
+                            }]);
+                            delta = 1;
+                            duration = #indefinite;
+                            skill = train.skill;
+                        });
+                        switch (await PlayersActor.applyEffects([trainSkillEffect])) {
+                            case (#ok) #ok;
+                            case (#notAuthorized) #err("Not authorized to train player in players actor");
+                        };
+                    } catch (err) {
+                        #err("Error training player in players actor: " # Error.message(err));
+                    };
                 };
                 case (#changeName(n)) {
                     let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
-                    let result = await leagueActor.createProposal({
-                        content = #changeTeamName({
-                            teamId = teamId;
-                            name = n.name;
+                    try {
+                        let result = await leagueActor.createProposal({
+                            content = #changeTeamName({
+                                teamId = teamId;
+                                name = n.name;
+                            });
                         });
-                    });
-                    switch (result) {
-                        case (#ok(_)) #ok;
-                        case (#notAuthorized) #err("Not authorized to create change name proposal in league DAO");
+                        switch (result) {
+                            case (#ok(_)) #ok;
+                            case (#notAuthorized) #err("Not authorized to create change name proposal in league DAO");
+                        };
+                    } catch (err) {
+                        #err("Error creating change name proposal in league DAO: " # Error.message(err));
                     };
                 };
                 case (#swapPlayerPositions(swap)) {
-                    switch (await PlayersActor.swapTeamPositions(teamId, swap.position1, swap.position2)) {
-                        case (#ok) #ok;
-                        case (#notAuthorized) #err("Not authorized to swap player positions in players actor");
+                    try {
+                        switch (await PlayersActor.swapTeamPositions(teamId, swap.position1, swap.position2)) {
+                            case (#ok) #ok;
+                            case (#notAuthorized) #err("Not authorized to swap player positions in players actor");
+                        };
+                    } catch (err) {
+                        #err("Error swapping player positions in players actor: " # Error.message(err));
                     };
                 };
             };
