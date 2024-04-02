@@ -64,13 +64,19 @@ export interface Proposal {
 export type ProposalContent = {
     'train' : { 'skill' : Skill, 'position' : FieldPosition }
   } |
+  { 'changeLogo' : { 'logoUrl' : string } } |
   { 'changeName' : { 'name' : string } } |
+  { 'changeMotto' : { 'motto' : string } } |
+  { 'changeColor' : { 'color' : [number, number, number] } } |
+  { 'addLink' : { 'url' : string, 'name' : string } } |
   {
     'swapPlayerPositions' : {
       'position1' : FieldPosition,
       'position2' : FieldPosition,
     }
-  };
+  } |
+  { 'removeLink' : { 'name' : string } } |
+  { 'changeDescription' : { 'description' : string } };
 export type ProposalStatusLogEntry = {
     'failedToExecute' : { 'time' : Time, 'error' : string }
   } |

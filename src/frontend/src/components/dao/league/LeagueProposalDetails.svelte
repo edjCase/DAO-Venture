@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { Proposal } from "../../ic-agent/declarations/league";
-    import { toJsonString } from "../../utils/StringUtil";
+    import { Proposal } from "../../../ic-agent/declarations/league";
+    import { toJsonString } from "../../../utils/StringUtil";
 
     export let proposal: Proposal;
 </script>

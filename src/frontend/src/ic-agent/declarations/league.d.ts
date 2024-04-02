@@ -273,8 +273,15 @@ export interface Proposal {
   'timeEnd' : bigint,
 }
 export type ProposalContent = {
-    'changeTeamName' : { 'name' : string, 'teamId' : bigint }
-  };
+    'changeTeamColor' : {
+      'color' : [number, number, number],
+      'teamId' : bigint,
+    }
+  } |
+  { 'changeTeamDescription' : { 'description' : string, 'teamId' : bigint } } |
+  { 'changeTeamLogo' : { 'logoUrl' : string, 'teamId' : bigint } } |
+  { 'changeTeamName' : { 'name' : string, 'teamId' : bigint } } |
+  { 'changeTeamMotto' : { 'motto' : string, 'teamId' : bigint } };
 export type ProposalStatusLogEntry = {
     'failedToExecute' : { 'time' : Time, 'error' : string }
   } |

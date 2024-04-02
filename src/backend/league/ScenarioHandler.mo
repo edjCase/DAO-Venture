@@ -200,18 +200,18 @@ module {
                 case (#ok(updatedEffectOutcomes)) {
 
                     // Rejoin already processed outcomes with the newly processed ones
-                    let alreadyProcessedOutcomes = resolvedScenarioState.effectOutcomes.vals()
+                    let processedOutcomes = resolvedScenarioState.effectOutcomes.vals()
                     |> Iter.filter(
                         _,
                         func(outcome : EffectOutcomeData) : Bool = outcome.processed,
                     )
-                    |> Iter.toArray(_);
+                    |> Buffer.fromIter<EffectOutcomeData>(_);
 
-                    let allProcessedOutcomes = Array.append(alreadyProcessedOutcomes, updatedEffectOutcomes);
+                    processedOutcomes.append(Buffer.fromArray(updatedEffectOutcomes));
 
                     {
                         resolvedScenarioState with
-                        effectOutcomes = allProcessedOutcomes
+                        effectOutcomes = Buffer.toArray(processedOutcomes)
                     };
                 };
             };

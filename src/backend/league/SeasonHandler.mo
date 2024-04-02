@@ -17,7 +17,6 @@ import Error "mo:base/Error";
 import Order "mo:base/Order";
 import ScheduleBuilder "ScheduleBuilder";
 import PseudoRandomX "mo:random/PseudoRandomX";
-import PlayerTypes "../players/Types";
 import StadiumTypes "../stadium/Types";
 import Util "../Util";
 import MatchAura "../models/MatchAura";

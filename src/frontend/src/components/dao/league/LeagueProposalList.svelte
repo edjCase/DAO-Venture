@@ -1,11 +1,11 @@
 <script lang="ts">
-    import GenericProposalList from "./GenericProposalList.svelte";
-    import { proposalStore } from "../../stores/ProposalStore";
+    import GenericProposalList from "../GenericProposalList.svelte";
+    import { proposalStore } from "../../../stores/ProposalStore";
     import { onDestroy } from "svelte";
-    import { leagueAgentFactory } from "../../ic-agent/League";
-    import { ProposalType } from "./GenericProposal.svelte";
+    import { leagueAgentFactory } from "../../../ic-agent/League";
+    import { ProposalType } from "../GenericProposal.svelte";
     import LeagueProposalDetails from "./LeagueProposalDetails.svelte";
-    import { Proposal } from "../../ic-agent/declarations/league";
+    import { Proposal } from "../../../ic-agent/declarations/league";
 
     let proposals: Proposal[] = [];
     let genericProposals: ProposalType[] = [];

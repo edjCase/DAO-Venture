@@ -1,11 +1,7 @@
 <script lang="ts">
-  import { Indicator, Navbar, NavBrand } from "flowbite-svelte";
-  import { BellOutline, BellRingSolid } from "flowbite-svelte-icons";
-  import { Link } from "svelte-routing";
-  let notificationCount = 0;
-  let openNotifications = () => {
-    // TODO
-  };
+  import { Navbar, NavBrand } from "flowbite-svelte";
+  import { Link, navigate } from "svelte-routing";
+  import UserMenu from "../user/UserMenu.svelte";
 </script>
 
 <Navbar rounded color="form">
@@ -14,22 +10,15 @@
       <img src="/images/logo.png" class="h-16" alt="DAOball Logo" />
     </Link>
   </NavBrand>
+
   <div
-    class="mx-5"
-    on:click={openNotifications}
+    class="cursor-pointer"
+    on:click={() => navigate("/profile")}
     role="button"
     tabindex="0"
     on:keydown={() => {}}
   >
-    {#if notificationCount > 0}
-      <div class="relative p-2">
-        <BellRingSolid size="md" />
-        <Indicator color="red" size="lg" placement="top-right">
-          <span class="text-white text-xs font-bold">{notificationCount}</span>
-        </Indicator>
-      </div>
-    {:else}
-      <BellOutline size="md" />
-    {/if}
+    <UserMenu />
   </div>
+  <div class="w-10 h-10"></div>
 </Navbar>

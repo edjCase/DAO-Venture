@@ -59,6 +59,25 @@ module {
             position1 : FieldPosition.FieldPosition;
             position2 : FieldPosition.FieldPosition;
         };
+        #changeColor : {
+            color : (Nat8, Nat8, Nat8);
+        };
+        #changeLogo : {
+            logoUrl : Text;
+        };
+        #changeMotto : {
+            motto : Text;
+        };
+        #changeDescription : {
+            description : Text;
+        };
+        #addLink : {
+            name : Text;
+            url : Text;
+        };
+        #removeLink : {
+            name : Text;
+        };
     };
 
     public type CreateProposalRequest = {

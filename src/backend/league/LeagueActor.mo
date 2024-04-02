@@ -150,6 +150,22 @@ actor LeagueActor : Types.LeagueActor {
                 teamsHandler.updateTeamName(c.teamId, c.name);
                 #ok;
             };
+            case (#changeTeamColor(c)) {
+                teamsHandler.updateTeamColor(c.teamId, c.color);
+                #ok;
+            };
+            case (#changeTeamLogo(c)) {
+                teamsHandler.updateTeamLogo(c.teamId, c.logoUrl);
+                #ok;
+            };
+            case (#changeTeamMotto(c)) {
+                teamsHandler.updateTeamMotto(c.teamId, c.motto);
+                #ok;
+            };
+            case (#changeTeamDescription(c)) {
+                teamsHandler.updateTeamDescription(c.teamId, c.description);
+                #ok;
+            };
         };
     };
     func onRejected(_ : Types.Proposal) : async* () {}; // TODO
@@ -223,7 +239,7 @@ actor LeagueActor : Types.LeagueActor {
             case (#ok(members)) members;
         };
         switch (request.content) {
-            case (#changeTeamName(c)) {
+            case (#changeTeamName(_) or #changeTeamColor(_) or #changeTeamLogo(_) or #changeTeamMotto(_) or #changeTeamDescription(_)) {
                 // Team is only one who can propose to change their name
                 if (caller != Principal.fromActor(TeamsActor)) {
                     return #notAuthorized;

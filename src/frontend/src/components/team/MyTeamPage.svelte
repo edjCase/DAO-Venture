@@ -1,6 +1,6 @@
 <script lang="ts">
-    import TeamCreateProposal from "../dao/TeamCreateProposal.svelte";
-    import TeamProposalList from "../dao/TeamProposalList.svelte";
+    import TeamCreateProposal from "../dao/team/TeamCreateProposal.svelte";
+    import TeamProposalList from "../dao/team/TeamProposalList.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
     import { User } from "../../ic-agent/declarations/users";
     import { identityStore } from "../../stores/IdentityStore";

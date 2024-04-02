@@ -20,7 +20,7 @@
 
 <div class="flex flex-col items-center">
   {#if !identity.getPrincipal().isAnonymous()}
-    <UserAvatar userId={identity.getPrincipal()} />
+    <UserAvatar userId={identity.getPrincipal()} size="lg" />
     <div class="space-y-1 font-medium dark:text-white text-center">
       <div>
         <UserPseudonym userId={identity.getPrincipal()} />

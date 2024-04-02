@@ -23,10 +23,10 @@
     } from "flowbite-svelte-icons";
     import { onMount } from "svelte";
     import { navigate, useLocation } from "svelte-routing";
-    import UserMenu from "../user/UserMenu.svelte";
     import { userStore } from "../../stores/UserStore";
     import { BenevolentDictatorState } from "../../ic-agent/declarations/league";
     import { identityStore } from "../../stores/IdentityStore";
+    import UserAvatar from "../user/UserAvatar.svelte";
 
     let location = useLocation();
     let activeUrl: string | undefined;
@@ -131,18 +131,22 @@
         divClass="overflow-y-auto z-50 p-4 bg-white dark:bg-gray-800 mb-16"
     >
         <Sidebar asideClass="w-32" {activeUrl}>
-            <SidebarGroup ulClass="mb-10">
-                <div
-                    class="cursor-pointer"
-                    on:click={navOnClick("/profile")}
-                    role="button"
-                    tabindex="0"
-                    on:keydown={() => {}}
-                >
-                    <UserMenu />
-                </div>
-            </SidebarGroup>
             <SidebarGroup>
+                {#if identity && !identity.getPrincipal().isAnonymous()}
+                    <SidebarItem
+                        label="Profile"
+                        href="/profile"
+                        on:click={navOnClick("/profile")}
+                    >
+                        <svelte:fragment slot="icon">
+                            <UserAvatar
+                                userId={identity.getPrincipal()}
+                                border={false}
+                                size="md"
+                            />
+                        </svelte:fragment>
+                    </SidebarItem>
+                {/if}
                 <SidebarItem
                     label="Teams"
                     href="/teams"

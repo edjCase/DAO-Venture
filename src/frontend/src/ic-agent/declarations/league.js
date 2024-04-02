@@ -126,7 +126,17 @@ export const idlFactory = ({ IDL }) => {
     'seasonNotOpen' : IDL.Null,
   });
   const ProposalContent = IDL.Variant({
+    'changeTeamColor' : IDL.Record({
+      'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+      'teamId' : IDL.Nat,
+    }),
+    'changeTeamDescription' : IDL.Record({
+      'description' : IDL.Text,
+      'teamId' : IDL.Nat,
+    }),
+    'changeTeamLogo' : IDL.Record({ 'logoUrl' : IDL.Text, 'teamId' : IDL.Nat }),
     'changeTeamName' : IDL.Record({ 'name' : IDL.Text, 'teamId' : IDL.Nat }),
+    'changeTeamMotto' : IDL.Record({ 'motto' : IDL.Text, 'teamId' : IDL.Nat }),
   });
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
   const CreateProposalResult = IDL.Variant({

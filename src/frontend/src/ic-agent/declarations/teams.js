@@ -20,11 +20,19 @@ export const idlFactory = ({ IDL }) => {
   });
   const ProposalContent = IDL.Variant({
     'train' : IDL.Record({ 'skill' : Skill, 'position' : FieldPosition }),
+    'changeLogo' : IDL.Record({ 'logoUrl' : IDL.Text }),
     'changeName' : IDL.Record({ 'name' : IDL.Text }),
+    'changeMotto' : IDL.Record({ 'motto' : IDL.Text }),
+    'changeColor' : IDL.Record({
+      'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    }),
+    'addLink' : IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text }),
     'swapPlayerPositions' : IDL.Record({
       'position1' : FieldPosition,
       'position2' : FieldPosition,
     }),
+    'removeLink' : IDL.Record({ 'name' : IDL.Text }),
+    'changeDescription' : IDL.Record({ 'description' : IDL.Text }),
   });
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
   const CreateProposalResult = IDL.Variant({

@@ -43,36 +43,87 @@ module {
         };
 
         public func updateTeamName(teamId : Nat, newName : Text) : () {
-            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Nat.toText(teamId));
-            let newTeam : Team.Team = {
-                team with
-                name = newName;
-            };
-            teams.put(teamId, newTeam);
+            updateTeamInternal(
+                teamId,
+                func(team : Team.Team) : Team.Team = {
+                    team with
+                    name = newName;
+                },
+            );
+        };
+
+        public func updateTeamColor(teamId : Nat, color : (Nat8, Nat8, Nat8)) : () {
+            updateTeamInternal(
+                teamId,
+                func(team : Team.Team) : Team.Team = {
+                    team with
+                    color = color;
+                },
+            );
+        };
+
+        public func updateTeamLogo(teamId : Nat, logoUrl : Text) : () {
+            updateTeamInternal(
+                teamId,
+                func(team : Team.Team) : Team.Team = {
+                    team with
+                    logoUrl = logoUrl;
+                },
+            );
+        };
+
+        public func updateTeamMotto(teamId : Nat, motto : Text) : () {
+            updateTeamInternal(
+                teamId,
+                func(team : Team.Team) : Team.Team = {
+                    team with
+                    motto = motto;
+                },
+            );
+        };
+
+        public func updateTeamDescription(teamId : Nat, description : Text) : () {
+            updateTeamInternal(
+                teamId,
+                func(team : Team.Team) : Team.Team = {
+                    team with
+                    description = description;
+                },
+            );
         };
 
         public func updateTeamEnergy(teamId : Nat, delta : Int) : () {
-            let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Nat.toText(teamId));
-            let newTeam : Team.Team = {
-                team with
-                energy = team.energy + delta;
-            };
-            teams.put(teamId, newTeam);
+            updateTeamInternal(
+                teamId,
+                func(team : Team.Team) : Team.Team = {
+                    team with
+                    energy = team.energy + delta;
+                },
+            );
         };
 
         public func updateTeamEntropy(teamId : Nat, delta : Int) : () {
+            updateTeamInternal(
+                teamId,
+                func(team : Team.Team) : Team.Team {
+                    let newEntropyInt : Int = team.entropy + delta;
+                    let newEntropyNat : Nat = if (newEntropyInt <= 0) {
+                        // Entropy cant be negative
+                        0;
+                    } else {
+                        Int.abs(newEntropyInt);
+                    };
+                    {
+                        team with
+                        entropy = newEntropyNat;
+                    };
+                },
+            );
+        };
+
+        private func updateTeamInternal(teamId : Nat, updateFunc : (Team.Team) -> Team.Team) : () {
             let ?team = teams.get(teamId) else Debug.trap("Team not found: " # Nat.toText(teamId));
-            let newEntropyInt : Int = team.entropy + delta;
-            let newEntropyNat : Nat = if (newEntropyInt <= 0) {
-                // Entropy cant be negative
-                0;
-            } else {
-                Int.abs(newEntropyInt);
-            };
-            let newTeam : Team.Team = {
-                team with
-                entropy = newEntropyNat;
-            };
+            let newTeam = updateFunc(team);
             teams.put(teamId, newTeam);
         };
 

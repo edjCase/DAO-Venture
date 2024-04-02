@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { proposalStore } from "../../stores/ProposalStore";
+    import { proposalStore } from "../../../stores/ProposalStore";
     import { onDestroy } from "svelte";
-    import { Proposal } from "../../ic-agent/declarations/teams";
-    import { teamsAgentFactory } from "../../ic-agent/Teams";
-    import GenericProposalList from "./GenericProposalList.svelte";
-    import { ProposalType } from "./GenericProposal.svelte";
+    import { Proposal } from "../../../ic-agent/declarations/teams";
+    import { teamsAgentFactory } from "../../../ic-agent/Teams";
+    import GenericProposalList from "../GenericProposalList.svelte";
+    import { ProposalType } from "../GenericProposal.svelte";
     import TeamProposalDetails from "./TeamProposalDetails.svelte";
-    import { toJsonString } from "../../utils/StringUtil";
+    import { toJsonString } from "../../../utils/StringUtil";
 
     export let teamId: bigint;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Card, TabItem, Tabs } from "flowbite-svelte";
-    import LeagueProposalList from "../dao/LeagueProposalList.svelte";
+    import LeagueProposalList from "../dao/league/LeagueProposalList.svelte";
     import { teamStore } from "../../stores/TeamStore";
     import { userStore } from "../../stores/UserStore";
     import LoadingValue from "../common/LoadingValue.svelte";
