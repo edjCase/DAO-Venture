@@ -6,6 +6,7 @@
     import GenericProposalList from "./GenericProposalList.svelte";
     import { ProposalType } from "./GenericProposal.svelte";
     import TeamProposalDetails from "./TeamProposalDetails.svelte";
+    import { toJsonString } from "../../utils/StringUtil";
 
     export let teamId: bigint;
 
@@ -18,9 +19,20 @@
             title = "Change Team Name to " + p.content.changeName.name;
             description =
                 "Change the team name to " + p.content.changeName.name;
-        } else if ("trainPlayer" in p.content) {
-            title = "Train Player " + p.content.trainPlayer.playerId;
-            description = "Train player " + p.content.trainPlayer.playerId;
+        } else if ("train" in p.content) {
+            title = "Train Position " + p.content.train.position;
+            description =
+                "Train Position " +
+                p.content.train.position +
+                " in " +
+                toJsonString(p.content.train.skill);
+        } else if ("swapPlayerPositions" in p.content) {
+            title = "Swap Player Positions";
+            description =
+                "Swap the positions of " +
+                p.content.swapPlayerPositions.position1 +
+                " and " +
+                p.content.swapPlayerPositions.position2;
         } else {
             title = "Not Implemented Proposal Type";
             description = "Not Implemented Proposal Type";
