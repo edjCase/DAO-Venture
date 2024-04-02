@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Navbar, NavBrand } from "flowbite-svelte";
-  import { Link, navigate } from "svelte-routing";
+  import { Link } from "svelte-routing";
   import UserMenu from "../user/UserMenu.svelte";
 </script>
 
@@ -11,14 +11,6 @@
     </Link>
   </NavBrand>
 
-  <div
-    class="cursor-pointer"
-    on:click={() => navigate("/profile")}
-    role="button"
-    tabindex="0"
-    on:keydown={() => {}}
-  >
-    <UserMenu />
-  </div>
+  <UserMenu />
   <div class="w-10 h-10"></div>
 </Navbar>

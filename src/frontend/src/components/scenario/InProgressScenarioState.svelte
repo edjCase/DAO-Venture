@@ -65,11 +65,12 @@
             let teamsAgent = await teamsAgentFactory();
             let result = await teamsAgent.getScenarioVote({ scenarioId });
             if ("ok" in result) {
-                voted = true;
                 if (result.ok[0] === undefined) {
                     selectedChoice = undefined;
+                    voted = false;
                 } else {
                     selectedChoice = Number(result.ok[0].option);
+                    voted = true;
                 }
             } else {
                 console.error("Failed to get scenario vote: ", result);

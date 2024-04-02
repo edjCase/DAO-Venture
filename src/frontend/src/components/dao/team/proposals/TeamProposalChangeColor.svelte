@@ -1,8 +1,9 @@
 <script lang="ts">
-    import { Input, Label, Range } from "flowbite-svelte";
+    import { Label, Range } from "flowbite-svelte";
     import { teamsAgentFactory } from "../../../../ic-agent/Teams";
     import { proposalStore } from "../../../../stores/ProposalStore";
     import LoadingButton from "../../../common/LoadingButton.svelte";
+    import RgbColor from "../../../common/RgbColor.svelte";
 
     export let teamId: bigint;
     let red: number = 0;
@@ -25,10 +26,6 @@
             console.error("Error creating proposal: ", result);
         }
     };
-
-    $: rgb = `#${red.toString(16).padStart(2, "0")}${green
-        .toString(16)
-        .padStart(2, "0")}${blue.toString(16).padStart(2, "0")}`;
 </script>
 
 <div>
@@ -38,15 +35,6 @@
     <Range bind:value={green} min={0} max={255} />
     <Label>Blue</Label>
     <Range bind:value={blue} min={0} max={255} />
-    <div
-        class="my-2"
-        style="display: grid; grid-template-columns: auto auto; align-items: center; gap: 10px;"
-    >
-        <span
-            class="mx-2"
-            style="width: 50px; height: 50px; background-color: {rgb};"
-        ></span>
-        <Input disabled type="text" value={rgb} />
-    </div>
+    <RgbColor {red} {green} {blue} />
     <LoadingButton onClick={createProposal}>Create Proposal</LoadingButton>
 </div>

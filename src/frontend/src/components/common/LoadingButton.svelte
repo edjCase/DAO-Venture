@@ -26,8 +26,11 @@
     let loading = false;
     let onClickHandler = async () => {
         loading = true;
-        await onClick();
-        loading = false;
+        try {
+            await onClick();
+        } finally {
+            loading = false;
+        }
     };
 </script>
 

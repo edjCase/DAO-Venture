@@ -84,7 +84,7 @@
     });
 </script>
 
-<BottomNav {activeUrl} position="fixed" classInner="grid-cols-6">
+<BottomNav {activeUrl} position="fixed" classInner="grid-cols-6 z-50">
     <BottomNavItem btnName="Home" href="/" on:click={navOnClick("/")}>
         <HomeSolid class={iconClass} />
     </BottomNavItem>
@@ -119,122 +119,123 @@
     <BottomNavItem id="hamburger" btnName="" on:click={toggleDrawer}>
         <BarsOutline class={iconClass} />
     </BottomNavItem>
-    <Drawer
-        id="drawer"
-        backdrop={false}
-        bind:hidden={drawerHidden}
-        activateClickOutside={false}
-        placement="right"
-        transitionType="fly"
-        width="w-42"
-        position="fixed"
-        divClass="overflow-y-auto z-50 p-4 bg-white dark:bg-gray-800 mb-16"
-    >
-        <Sidebar asideClass="w-32" {activeUrl}>
-            <SidebarGroup>
-                {#if identity && !identity.getPrincipal().isAnonymous()}
-                    <SidebarItem
-                        label="Profile"
-                        href="/profile"
-                        on:click={navOnClick("/profile")}
-                    >
-                        <svelte:fragment slot="icon">
-                            <UserAvatar
-                                userId={identity.getPrincipal()}
-                                border={false}
-                                size="md"
-                            />
-                        </svelte:fragment>
-                    </SidebarItem>
-                {/if}
-                <SidebarItem
-                    label="Teams"
-                    href="/teams"
-                    on:click={navOnClick("/teams")}
-                >
-                    <svelte:fragment slot="icon">
-                        <UsersSolid class={iconClass} />
-                    </svelte:fragment>
-                </SidebarItem>
-                <SidebarItem
-                    label="Schedule"
-                    href="/schedule"
-                    on:click={navOnClick("/schedule")}
-                >
-                    <svelte:fragment slot="icon">
-                        <CalendarMonthOutline class={iconClass} />
-                    </svelte:fragment>
-                </SidebarItem>
-                <SidebarItem
-                    label="How To Play"
-                    href="/how-to-play"
-                    on:click={navOnClick("/how-to-play")}
-                >
-                    <svelte:fragment slot="icon">
-                        <BookOutline class={iconClass} />
-                    </svelte:fragment>
-                </SidebarItem>
-                <SidebarItem
-                    label="About"
-                    href="/about"
-                    on:click={navOnClick("/about")}
-                >
-                    <svelte:fragment slot="icon">
-                        <QuestionCircleOutline class={iconClass} />
-                    </svelte:fragment>
-                </SidebarItem>
-                <SidebarGroup border={true}>
-                    <SidebarItem
-                        label="Taggr &nearr;"
-                        target="_blank"
-                        href="https://github.com/edjcase/daoball"
-                    >
-                        <svelte:fragment slot="icon">
-                            <GithubSolid class={iconClass} />
-                        </svelte:fragment>
-                    </SidebarItem>
-                    <SidebarItem
-                        label="Github &nearr;"
-                        target="_blank"
-                        href="https://github.com/edjcase/daoball"
-                    >
-                        <svelte:fragment slot="icon">
-                            <GithubSolid class={iconClass} />
-                        </svelte:fragment>
-                    </SidebarItem>
-                    <SidebarItem
-                        label="Twitter &nearr;"
-                        target="_blank"
-                        href="https://twitter.com/daoballxyz"
-                    >
-                        <svelte:fragment slot="icon">
-                            <TwitterSolid class={iconClass} />
-                        </svelte:fragment>
-                    </SidebarItem>
-                    <SidebarItem
-                        label="Blog &nearr;"
-                        target="_blank"
-                        href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
-                    >
-                        <svelte:fragment slot="icon">
-                            <TwitterSolid class={iconClass} />
-                        </svelte:fragment>
-                    </SidebarItem>
-                </SidebarGroup>
-            </SidebarGroup>
-            {#if isBdfnOrBdfnOpen}
-                <SidebarGroup border={true}>
-                    <SidebarItem
-                        label="Admin"
-                        href="/admin"
-                        on:click={navOnClick("/admin")}
-                    >
-                        <svelte:fragment slot="icon">
-                            <UserCircleSolid class={iconClass} />
-                        </svelte:fragment>
-                    </SidebarItem>
-                </SidebarGroup>
-            {/if}
-        </Sidebar>
-    </Drawer>
 </BottomNav>
+
+<Drawer
+    id="drawer"
+    backdrop={false}
+    bind:hidden={drawerHidden}
+    activateClickOutside={false}
+    placement="right"
+    transitionType="fly"
+    width="w-42"
+    position="fixed"
+    divClass="overflow-y-auto z-40 p-4 bg-gray-800 flex flex-col justify-center"
+>
+    <Sidebar asideClass="w-32" {activeUrl}>
+        <SidebarGroup>
+            {#if identity && !identity.getPrincipal().isAnonymous()}
+                <SidebarItem
+                    label="Profile"
+                    href="/profile"
+                    on:click={navOnClick("/profile")}
+                >
+                    <svelte:fragment slot="icon">
+                        <UserAvatar
+                            userId={identity.getPrincipal()}
+                            border={false}
+                            size="md"
+                        />
+                    </svelte:fragment>
+                </SidebarItem>
+            {/if}
+            <SidebarItem
+                label="Teams"
+                href="/teams"
+                on:click={navOnClick("/teams")}
+            >
+                <svelte:fragment slot="icon">
+                    <UsersSolid class={iconClass} />
+                </svelte:fragment>
+            </SidebarItem>
+            <SidebarItem
+                label="Schedule"
+                href="/schedule"
+                on:click={navOnClick("/schedule")}
+            >
+                <svelte:fragment slot="icon">
+                    <CalendarMonthOutline class={iconClass} />
+                </svelte:fragment>
+            </SidebarItem>
+            <SidebarItem
+                label="How To Play"
+                href="/how-to-play"
+                on:click={navOnClick("/how-to-play")}
+            >
+                <svelte:fragment slot="icon">
+                    <BookOutline class={iconClass} />
+                </svelte:fragment>
+            </SidebarItem>
+            <SidebarItem
+                label="About"
+                href="/about"
+                on:click={navOnClick("/about")}
+            >
+                <svelte:fragment slot="icon">
+                    <QuestionCircleOutline class={iconClass} />
+                </svelte:fragment>
+            </SidebarItem>
+            <SidebarGroup border={true}>
+                <SidebarItem
+                    label="Taggr &nearr;"
+                    target="_blank"
+                    href="https://github.com/edjcase/daoball"
+                >
+                    <svelte:fragment slot="icon">
+                        <GithubSolid class={iconClass} />
+                    </svelte:fragment>
+                </SidebarItem>
+                <SidebarItem
+                    label="Github &nearr;"
+                    target="_blank"
+                    href="https://github.com/edjcase/daoball"
+                >
+                    <svelte:fragment slot="icon">
+                        <GithubSolid class={iconClass} />
+                    </svelte:fragment>
+                </SidebarItem>
+                <SidebarItem
+                    label="Twitter &nearr;"
+                    target="_blank"
+                    href="https://twitter.com/daoballxyz"
+                >
+                    <svelte:fragment slot="icon">
+                        <TwitterSolid class={iconClass} />
+                    </svelte:fragment>
+                </SidebarItem>
+                <SidebarItem
+                    label="Blog &nearr;"
+                    target="_blank"
+                    href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
+                >
+                    <svelte:fragment slot="icon">
+                        <TwitterSolid class={iconClass} />
+                    </svelte:fragment>
+                </SidebarItem>
+            </SidebarGroup>
+        </SidebarGroup>
+        {#if isBdfnOrBdfnOpen}
+            <SidebarGroup border={true}>
+                <SidebarItem
+                    label="Admin"
+                    href="/admin"
+                    on:click={navOnClick("/admin")}
+                >
+                    <svelte:fragment slot="icon">
+                        <UserCircleSolid class={iconClass} />
+                    </svelte:fragment>
+                </SidebarItem>
+            </SidebarGroup>
+        {/if}
+    </Sidebar>
+</Drawer>
