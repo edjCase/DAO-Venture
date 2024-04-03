@@ -77,7 +77,9 @@
     {:else if "executed" in lastStatus}
         <div class="text-xl">Proposal Executed</div>
     {:else if "failedToExecute" in lastStatus}
-        <div class="text-xl">Proposal Failed To Execute</div>
+        <div class="text-xl">
+            Proposal Failed To Execute: {lastStatus.failedToExecute.error}
+        </div>
     {:else if "rejected" in lastStatus}
         <div class="text-xl">Proposal Rejected</div>
     {:else}
