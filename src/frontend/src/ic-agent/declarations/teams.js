@@ -18,21 +18,33 @@ export const idlFactory = ({ IDL }) => {
     'centerField' : IDL.Null,
     'firstBase' : IDL.Null,
   });
+  const TrainContent = IDL.Record({
+    'skill' : Skill,
+    'position' : FieldPosition,
+  });
+  const ChangeLogoContent = IDL.Record({ 'logoUrl' : IDL.Text });
+  const ChangeNameContent = IDL.Record({ 'name' : IDL.Text });
+  const ChangeMottoContent = IDL.Record({ 'motto' : IDL.Text });
+  const ChangeColorContent = IDL.Record({
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+  });
+  const AddLinkContent = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
+  const SwapPlayerPositionsContent = IDL.Record({
+    'position1' : FieldPosition,
+    'position2' : FieldPosition,
+  });
+  const RemoveLinkContent = IDL.Record({ 'name' : IDL.Text });
+  const ChangeDescriptionContent = IDL.Record({ 'description' : IDL.Text });
   const ProposalContent = IDL.Variant({
-    'train' : IDL.Record({ 'skill' : Skill, 'position' : FieldPosition }),
-    'changeLogo' : IDL.Record({ 'logoUrl' : IDL.Text }),
-    'changeName' : IDL.Record({ 'name' : IDL.Text }),
-    'changeMotto' : IDL.Record({ 'motto' : IDL.Text }),
-    'changeColor' : IDL.Record({
-      'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
-    }),
-    'addLink' : IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text }),
-    'swapPlayerPositions' : IDL.Record({
-      'position1' : FieldPosition,
-      'position2' : FieldPosition,
-    }),
-    'removeLink' : IDL.Record({ 'name' : IDL.Text }),
-    'changeDescription' : IDL.Record({ 'description' : IDL.Text }),
+    'train' : TrainContent,
+    'changeLogo' : ChangeLogoContent,
+    'changeName' : ChangeNameContent,
+    'changeMotto' : ChangeMottoContent,
+    'changeColor' : ChangeColorContent,
+    'addLink' : AddLinkContent,
+    'swapPlayerPositions' : SwapPlayerPositionsContent,
+    'removeLink' : RemoveLinkContent,
+    'changeDescription' : ChangeDescriptionContent,
   });
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
   const CreateProposalResult = IDL.Variant({

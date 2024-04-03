@@ -2,6 +2,12 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface AddLinkContent { 'url' : string, 'name' : string }
+export interface ChangeColorContent { 'color' : [number, number, number] }
+export interface ChangeDescriptionContent { 'description' : string }
+export interface ChangeLogoContent { 'logoUrl' : string }
+export interface ChangeMottoContent { 'motto' : string }
+export interface ChangeNameContent { 'name' : string }
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
   { 'notAuthorized' : null } |
@@ -61,28 +67,22 @@ export interface Proposal {
   'proposer' : Principal,
   'timeEnd' : bigint,
 }
-export type ProposalContent = {
-    'train' : { 'skill' : Skill, 'position' : FieldPosition }
-  } |
-  { 'changeLogo' : { 'logoUrl' : string } } |
-  { 'changeName' : { 'name' : string } } |
-  { 'changeMotto' : { 'motto' : string } } |
-  { 'changeColor' : { 'color' : [number, number, number] } } |
-  { 'addLink' : { 'url' : string, 'name' : string } } |
-  {
-    'swapPlayerPositions' : {
-      'position1' : FieldPosition,
-      'position2' : FieldPosition,
-    }
-  } |
-  { 'removeLink' : { 'name' : string } } |
-  { 'changeDescription' : { 'description' : string } };
+export type ProposalContent = { 'train' : TrainContent } |
+  { 'changeLogo' : ChangeLogoContent } |
+  { 'changeName' : ChangeNameContent } |
+  { 'changeMotto' : ChangeMottoContent } |
+  { 'changeColor' : ChangeColorContent } |
+  { 'addLink' : AddLinkContent } |
+  { 'swapPlayerPositions' : SwapPlayerPositionsContent } |
+  { 'removeLink' : RemoveLinkContent } |
+  { 'changeDescription' : ChangeDescriptionContent };
 export type ProposalStatusLogEntry = {
     'failedToExecute' : { 'time' : Time, 'error' : string }
   } |
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
+export interface RemoveLinkContent { 'name' : string }
 export interface ScenarioTeamVotingResult {
   'option' : bigint,
   'teamId' : bigint,
@@ -99,7 +99,12 @@ export type Skill = { 'battingAccuracy' : null } |
   { 'battingPower' : null } |
   { 'defense' : null } |
   { 'throwingPower' : null };
+export interface SwapPlayerPositionsContent {
+  'position1' : FieldPosition,
+  'position2' : FieldPosition,
+}
 export type Time = bigint;
+export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export interface VoteOnProposalRequest {
   'vote' : boolean,

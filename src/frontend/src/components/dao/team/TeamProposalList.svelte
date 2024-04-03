@@ -5,7 +5,7 @@
     import { teamsAgentFactory } from "../../../ic-agent/Teams";
     import GenericProposalList from "../GenericProposalList.svelte";
     import { ProposalType } from "../GenericProposal.svelte";
-    import TeamProposalDetails from "./TeamProposalDetails.svelte";
+    import TeamProposalDetails from "./TeamProposalView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
 
     export let teamId: bigint;

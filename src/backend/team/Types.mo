@@ -48,36 +48,54 @@ module {
     public type Proposal = Dao.Proposal<ProposalContent>;
 
     public type ProposalContent = {
-        #changeName : {
-            name : Text;
-        };
-        #train : {
-            position : FieldPosition.FieldPosition;
-            skill : Skill.Skill;
-        };
-        #swapPlayerPositions : {
-            position1 : FieldPosition.FieldPosition;
-            position2 : FieldPosition.FieldPosition;
-        };
-        #changeColor : {
-            color : (Nat8, Nat8, Nat8);
-        };
-        #changeLogo : {
-            logoUrl : Text;
-        };
-        #changeMotto : {
-            motto : Text;
-        };
-        #changeDescription : {
-            description : Text;
-        };
-        #addLink : {
-            name : Text;
-            url : Text;
-        };
-        #removeLink : {
-            name : Text;
-        };
+        #changeName : ChangeNameContent;
+        #train : TrainContent;
+        #swapPlayerPositions : SwapPlayerPositionsContent;
+        #changeColor : ChangeColorContent;
+        #changeLogo : ChangeLogoContent;
+        #changeMotto : ChangeMottoContent;
+        #changeDescription : ChangeDescriptionContent;
+        #addLink : AddLinkContent;
+        #removeLink : RemoveLinkContent;
+    };
+
+    public type ChangeNameContent = {
+        name : Text;
+    };
+
+    public type TrainContent = {
+        position : FieldPosition.FieldPosition;
+        skill : Skill.Skill;
+    };
+
+    public type SwapPlayerPositionsContent = {
+        position1 : FieldPosition.FieldPosition;
+        position2 : FieldPosition.FieldPosition;
+    };
+
+    public type ChangeColorContent = {
+        color : (Nat8, Nat8, Nat8);
+    };
+
+    public type ChangeLogoContent = {
+        logoUrl : Text;
+    };
+
+    public type ChangeMottoContent = {
+        motto : Text;
+    };
+
+    public type ChangeDescriptionContent = {
+        description : Text;
+    };
+
+    public type AddLinkContent = {
+        name : Text;
+        url : Text;
+    };
+
+    public type RemoveLinkContent = {
+        name : Text;
     };
 
     public type CreateProposalRequest = {

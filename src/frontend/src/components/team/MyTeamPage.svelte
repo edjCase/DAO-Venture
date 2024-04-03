@@ -1,5 +1,5 @@
 <script lang="ts">
-    import TeamCreateProposal from "../dao/team/TeamCreateProposal.svelte";
+    import TeamProposalForm from "../dao/team/TeamProposalForm.svelte";
     import TeamProposalList from "../dao/team/TeamProposalList.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
     import { User } from "../../ic-agent/declarations/users";
@@ -63,7 +63,7 @@
                 </div>
                 {#if votingPower > 0}
                     <div class="mt-5">
-                        <TeamCreateProposal teamId={team.id} />
+                        <TeamProposalForm teamId={team.id} />
                     </div>
                 {/if}
             </TabItem>
