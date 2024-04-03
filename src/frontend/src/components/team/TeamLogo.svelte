@@ -13,6 +13,7 @@
   export let size: "xs" | "sm" | "md" | "lg" | undefined;
   export let border: boolean = true;
   export let padding: boolean = true;
+  export let name: "left" | "right" | undefined = undefined;
 
   $: logoUrl =
     "logoUrl" in team ? team.logoUrl : "/images/team-logos/unknown.png";
@@ -33,13 +34,19 @@
   let teamColor = "color" in team ? toRgbString(team.color) : "grey";
 </script>
 
-<div id={triggerId} class="flex justify-center">
+<div id={triggerId} class="flex items-center space-x-1">
+  {#if name == "left"}
+    <div class="text-center">{title}</div>
+  {/if}
   <img
     class="logo {padding ? `p-1` : ''} {size ? `size-${size}` : ''}"
     src={logoUrl}
     alt={title}
     style={border ? "border: 5px solid " + teamColor : ""}
   />
+  {#if name == "right"}
+    <div class="text-center">{title}</div>
+  {/if}
 </div>
 
 <style>
