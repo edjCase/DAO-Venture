@@ -18,6 +18,21 @@ module {
         onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
         onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
         onSeasonEnd() : async OnSeasonEndResult;
+        getLinks : query () -> async GetLinksResult;
+    };
+
+    public type Link = {
+        name : Text;
+        url : Text;
+    };
+
+    public type GetLinksResult = {
+        #ok : [TeamLinks];
+    };
+
+    public type TeamLinks = {
+        teamId : Nat;
+        links : [Link];
     };
 
     public type GetProposalResult = {

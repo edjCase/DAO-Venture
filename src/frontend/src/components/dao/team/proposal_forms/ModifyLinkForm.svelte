@@ -5,21 +5,25 @@
 
     export let teamId: bigint;
 
-    let motto: string | undefined;
+    let name: string | undefined;
+    let url: string | undefined;
 
     let generateProposal = (): ProposalContent | string => {
-        if (motto === undefined) {
-            return "No motto provided";
+        if (name === undefined) {
+            return "No name provided";
         }
         return {
-            changeMotto: {
-                motto: motto,
+            modifyLink: {
+                name: name,
+                url: !url || url.trim() === "" ? [] : [url],
             },
         };
     };
 </script>
 
 <FormTemplate {generateProposal} {teamId}>
-    <Label>Motto</Label>
-    <Input type="text" bind:value={motto} />
+    <Label>Link Name</Label>
+    <Input type="text" bind:value={name} />
+    <Label>Link Url</Label>
+    <Input type="url" bind:value={url} />
 </FormTemplate>

@@ -25,25 +25,26 @@ export const idlFactory = ({ IDL }) => {
   const ChangeLogoContent = IDL.Record({ 'logoUrl' : IDL.Text });
   const ChangeNameContent = IDL.Record({ 'name' : IDL.Text });
   const ChangeMottoContent = IDL.Record({ 'motto' : IDL.Text });
+  const ModifyLinkContent = IDL.Record({
+    'url' : IDL.Opt(IDL.Text),
+    'name' : IDL.Text,
+  });
   const ChangeColorContent = IDL.Record({
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
   });
-  const AddLinkContent = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
   const SwapPlayerPositionsContent = IDL.Record({
     'position1' : FieldPosition,
     'position2' : FieldPosition,
   });
-  const RemoveLinkContent = IDL.Record({ 'name' : IDL.Text });
   const ChangeDescriptionContent = IDL.Record({ 'description' : IDL.Text });
   const ProposalContent = IDL.Variant({
     'train' : TrainContent,
     'changeLogo' : ChangeLogoContent,
     'changeName' : ChangeNameContent,
     'changeMotto' : ChangeMottoContent,
+    'modifyLink' : ModifyLinkContent,
     'changeColor' : ChangeColorContent,
-    'addLink' : AddLinkContent,
     'swapPlayerPositions' : SwapPlayerPositionsContent,
-    'removeLink' : RemoveLinkContent,
     'changeDescription' : ChangeDescriptionContent,
   });
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
@@ -61,6 +62,9 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'notAuthorized' : IDL.Null,
   });
+  const Link = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
+  const TeamLinks = IDL.Record({ 'links' : IDL.Vec(Link), 'teamId' : IDL.Nat });
+  const GetLinksResult = IDL.Variant({ 'ok' : IDL.Vec(TeamLinks) });
   const Vote = IDL.Record({
     'value' : IDL.Opt(IDL.Bool),
     'votingPower' : IDL.Nat,
@@ -174,6 +178,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'createTeam' : IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
     'getCycles' : IDL.Func([], [GetCyclesResult], []),
+    'getLinks' : IDL.Func([], [GetLinksResult], ['query']),
     'getProposal' : IDL.Func(
         [IDL.Nat, IDL.Nat],
         [GetProposalResult],

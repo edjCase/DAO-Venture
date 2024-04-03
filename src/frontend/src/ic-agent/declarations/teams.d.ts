@@ -2,7 +2,6 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export interface AddLinkContent { 'url' : string, 'name' : string }
 export interface ChangeColorContent { 'color' : [number, number, number] }
 export interface ChangeDescriptionContent { 'description' : string }
 export interface ChangeLogoContent { 'logoUrl' : string }
@@ -25,6 +24,7 @@ export type FieldPosition = { 'rightField' : null } |
   { 'firstBase' : null };
 export type GetCyclesResult = { 'ok' : bigint } |
   { 'notAuthorized' : null };
+export type GetLinksResult = { 'ok' : Array<TeamLinks> };
 export type GetProposalResult = { 'ok' : Proposal } |
   { 'proposalNotFound' : null } |
   { 'teamNotFound' : null };
@@ -40,6 +40,8 @@ export interface GetScenarioVotingResultsRequest { 'scenarioId' : string }
 export type GetScenarioVotingResultsResult = { 'ok' : ScenarioVotingResults } |
   { 'notAuthorized' : null } |
   { 'scenarioNotFound' : null };
+export interface Link { 'url' : string, 'name' : string }
+export interface ModifyLinkContent { 'url' : [] | [string], 'name' : string }
 export interface OnNewScenarioRequest {
   'scenarioId' : string,
   'optionCount' : bigint,
@@ -71,10 +73,9 @@ export type ProposalContent = { 'train' : TrainContent } |
   { 'changeLogo' : ChangeLogoContent } |
   { 'changeName' : ChangeNameContent } |
   { 'changeMotto' : ChangeMottoContent } |
+  { 'modifyLink' : ModifyLinkContent } |
   { 'changeColor' : ChangeColorContent } |
-  { 'addLink' : AddLinkContent } |
   { 'swapPlayerPositions' : SwapPlayerPositionsContent } |
-  { 'removeLink' : RemoveLinkContent } |
   { 'changeDescription' : ChangeDescriptionContent };
 export type ProposalStatusLogEntry = {
     'failedToExecute' : { 'time' : Time, 'error' : string }
@@ -82,7 +83,6 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
-export interface RemoveLinkContent { 'name' : string }
 export interface ScenarioTeamVotingResult {
   'option' : bigint,
   'teamId' : bigint,
@@ -103,6 +103,7 @@ export interface SwapPlayerPositionsContent {
   'position1' : FieldPosition,
   'position2' : FieldPosition,
 }
+export interface TeamLinks { 'links' : Array<Link>, 'teamId' : bigint }
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
@@ -136,6 +137,7 @@ export interface _SERVICE {
   >,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'getCycles' : ActorMethod<[], GetCyclesResult>,
+  'getLinks' : ActorMethod<[], GetLinksResult>,
   'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
   'getScenarioVote' : ActorMethod<

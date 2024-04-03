@@ -5,21 +5,21 @@
 
     export let teamId: bigint;
 
-    let motto: string | undefined;
+    let description: string | undefined;
 
     let generateProposal = (): ProposalContent | string => {
-        if (motto === undefined) {
+        if (description === undefined) {
             return "No motto provided";
         }
         return {
-            changeMotto: {
-                motto: motto,
+            changeDescription: {
+                description: description,
             },
         };
     };
 </script>
 
 <FormTemplate {generateProposal} {teamId}>
-    <Label>Motto</Label>
-    <Input type="text" bind:value={motto} />
+    <Label>Description</Label>
+    <Input type="text" bind:value={description} />
 </FormTemplate>

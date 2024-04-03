@@ -11,11 +11,17 @@
     import TeamStats from "./TeamStats.svelte";
     import TeamGrid from "./TeamGrid.svelte";
     import PlayerRoster from "../player/PlayerRoster.svelte";
+    import { TeamLinks } from "../../ic-agent/declarations/teams";
 
     $: identity = $identityStore;
     $: teams = $teamStore;
 
     let user: User | undefined;
+
+    let allLinks: TeamLinks[] | undefined;
+    teamStore.subscribeTeamLinks((l) => {
+        allLinks = l;
+    });
 
     $: {
         if (identity.getPrincipal().isAnonymous()) {
@@ -26,6 +32,8 @@
             });
         }
     }
+    $: links =
+        allLinks?.find((l) => l.teamId == user?.team[0]?.id)?.links || [];
     $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: votingPower =
         user?.team[0]?.kind && "owner" in user.team[0].kind
@@ -39,6 +47,11 @@
             <TeamLogo {team} size="md" />
             <div class="text-3xl">{team.name}</div>
         </div>
+        {#each links as link}
+            <Button href={link.url} target="_blank" rel="noopener noreferrer">
+                {link.name}
+            </Button>
+        {/each}
         <div class="p-2">
             {#if votingPower <= 0}
                 <div>
@@ -49,13 +62,10 @@
                 <div class="text-center">Voting Power: {votingPower}</div>
             {/if}
         </div>
-        <Tabs>
+        <Tabs defaultClass="flex space-x-1 overflow-y-auto">
             <TabItem title="Summary" open>
                 <TeamStats teamId={team.id} />
                 <MatchHistory teamId={team.id} />
-            </TabItem>
-            <TabItem title="Roster">
-                <PlayerRoster teamId={team.id} />
             </TabItem>
             <TabItem title="Proposals">
                 <div class="mt-5">
@@ -66,6 +76,12 @@
                         <TeamProposalForm teamId={team.id} />
                     </div>
                 {/if}
+            </TabItem>
+            <TabItem title="Roster">
+                <PlayerRoster teamId={team.id} />
+            </TabItem>
+            <TabItem title="Matches">
+                <MatchHistory teamId={team.id} />
             </TabItem>
         </Tabs>
     {:else}

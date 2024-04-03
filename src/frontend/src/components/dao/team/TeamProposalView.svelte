@@ -3,6 +3,9 @@
     import ChangeColorView from "./proposal_views/ChangeColorView.svelte";
     import ChangeNameView from "./proposal_views/ChangeNameView.svelte";
     import ChangeLogoView from "./proposal_views/ChangeLogoView.svelte";
+    import ChangeMottoView from "./proposal_views/ChangeMottoView.svelte";
+    import ChangeDescriptionView from "./proposal_views/ChangeDescriptionView.svelte";
+    import ModifyLinkView from "./proposal_views/ModifyLinkView.svelte";
     import TrainPositionView from "./proposal_views/TrainPositionView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
 
@@ -13,6 +16,9 @@
         changeName: ChangeNameView,
         changeColor: ChangeColorView,
         changeLogo: ChangeLogoView,
+        changeMotto: ChangeMottoView,
+        changeDescription: ChangeDescriptionView,
+        modifyLink: ModifyLinkView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

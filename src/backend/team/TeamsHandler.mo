@@ -20,12 +20,7 @@ module {
         leagueId : Principal;
         teamId : Nat;
         dao : Dao.StableData<Types.ProposalContent>;
-        links : [Link];
-    };
-
-    public type Link = {
-        name : Text;
-        url : Text;
+        links : [Types.Link];
     };
 
     public class MultiHandler<system>(teams : [(Nat, StableData)]) {
@@ -54,6 +49,10 @@ module {
             handlers.get(teamId);
         };
 
+        public func getAll() : [(Nat, Handler)] {
+            Iter.toArray(handlers.entries());
+        };
+
         public func create(leagueId : Principal) : (Nat, Handler) {
             let teamId = nextTeamId;
             nextTeamId += 1;
@@ -78,7 +77,7 @@ module {
     public class Handler(stableData : StableData) {
         let leagueId = stableData.leagueId;
         let teamId = stableData.teamId;
-        let links = Buffer.fromArray<Link>(stableData.links);
+        let links = Buffer.fromArray<Types.Link>(stableData.links);
 
         func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Dao.OnExecuteResult {
             let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Dao.OnExecuteResult {
@@ -146,7 +145,7 @@ module {
                     await* createLeagueProposal(#changeTeamDescription({ teamId = teamId; description = changeDescription.description }));
                 };
                 case (#modifyLink(modifyLink)) {
-                    let index = IterTools.findIndex(links.vals(), func(link : Link) : Bool { link.name == modifyLink.name });
+                    let index = IterTools.findIndex(links.vals(), func(link : Types.Link) : Bool { link.name == modifyLink.name });
                     switch (index) {
                         case (?i) {
                             switch (modifyLink.url) {
@@ -208,6 +207,10 @@ module {
 
         public func createProposal<system>(caller : Principal, request : Types.CreateProposalRequest, members : [Dao.Member]) : Types.CreateProposalResult {
             dao.createProposal<system>(caller, request.content, members);
+        };
+
+        public func getLinks() : [Types.Link] {
+            Buffer.toArray(links);
         };
 
     };

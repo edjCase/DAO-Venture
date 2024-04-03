@@ -4,6 +4,9 @@
     import ChangeNameForm from "./proposal_forms/ChangeNameForm.svelte";
     import ChangeColorForm from "./proposal_forms/ChangeColorForm.svelte";
     import ChangeLogoForm from "./proposal_forms/ChangeLogoForm.svelte";
+    import ChangeMottoForm from "./proposal_forms/ChangeMottoForm.svelte";
+    import ChangeDescriptionForm from "./proposal_forms/ChangeDescriptionForm.svelte";
+    import ModifyLinkForm from "./proposal_forms/ModifyLinkForm.svelte";
 
     export let teamId: bigint;
 
@@ -43,11 +46,11 @@
             name: "Modify Team Link",
             component: ModifyLinkForm,
         },
-        {
-            value: "swapPlayerPositions",
-            name: "Swap Player Positions",
-            component: SwapPlayerPositionsForm,
-        },
+        // {
+        //     value: "swapPlayerPositions",
+        //     name: "Swap Player Positions",
+        //     component: SwapPlayerPositionsForm,
+        // },
     ];
     let selectedProposalType: string = proposalTypes[0].value;
 

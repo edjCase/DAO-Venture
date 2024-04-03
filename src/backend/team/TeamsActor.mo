@@ -167,6 +167,20 @@ actor TeamsActor : Types.Actor {
     #ok;
   };
 
+  public query func getLinks() : async Types.GetLinksResult {
+    let teamHandlers = multiTeamHandler.getAll();
+    let links = teamHandlers.vals()
+    |> Iter.map(
+      _,
+      func((teamId, handler) : (Nat, TeamsHandler.Handler)) : Types.TeamLinks = {
+        teamId = teamId;
+        links = handler.getLinks();
+      },
+    )
+    |> Iter.toArray(_);
+    #ok(links);
+  };
+
   public shared ({ caller }) func getCycles() : async Types.GetCyclesResult {
     let leagueId = switch (leagueIdOrNull) {
       case (null) Debug.trap("League not set");

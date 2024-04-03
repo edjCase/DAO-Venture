@@ -23,6 +23,14 @@
             title = "Swap Player Positions";
         } else if ("changeColor" in p.content) {
             title = "Change Team Color";
+        } else if ("changeLogo" in p.content) {
+            title = "Change Team Logo";
+        } else if ("changeMotto" in p.content) {
+            title = "Change Team Motto";
+        } else if ("changeDescription" in p.content) {
+            title = "Change Team Description";
+        } else if ("modifyLink" in p.content) {
+            title = "Modify Team Link";
         } else {
             title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }
