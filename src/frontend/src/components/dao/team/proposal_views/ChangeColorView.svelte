@@ -5,8 +5,5 @@
     export let content: ChangeColorContent;
 </script>
 
-<RgbColor
-    red={content.color[0]}
-    green={content.color[1]}
-    blue={content.color[2]}
-/>
+{content.color[0]},{content.color[1]},{content.color[2]}
+<RgbColor value={content.color} disabled />

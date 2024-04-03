@@ -14,35 +14,23 @@
     let genericProposals: ProposalType[] = [];
 
     $: genericProposals = proposals.map((p) => {
-        let title, description;
+        let title;
         if ("changeName" in p.content) {
             title = "Change Team Name to " + p.content.changeName.name;
-            description =
-                "Change the team name to " + p.content.changeName.name;
         } else if ("train" in p.content) {
             title = "Train Position " + p.content.train.position;
-            description =
-                "Train Position " +
-                p.content.train.position +
-                " in " +
-                toJsonString(p.content.train.skill);
         } else if ("swapPlayerPositions" in p.content) {
             title = "Swap Player Positions";
-            description =
-                "Swap the positions of " +
-                p.content.swapPlayerPositions.position1 +
-                " and " +
-                p.content.swapPlayerPositions.position2;
+        } else if ("changeColor" in p.content) {
+            title = "Change Team Color";
         } else {
-            title = "Not Implemented Proposal Type";
-            description = "Not Implemented Proposal Type";
+            title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }
         return {
             id: p.id,
             title: title,
             timeStart: p.timeStart,
             timeEnd: p.timeEnd,
-            description: description,
             votes: p.votes,
             statusLog: p.statusLog,
         };

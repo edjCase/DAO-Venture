@@ -7,7 +7,6 @@
     export interface ProposalType {
         id: bigint;
         title: string;
-        description: string;
         timeStart: bigint;
         timeEnd: bigint;
         votes: [Principal, Vote][];

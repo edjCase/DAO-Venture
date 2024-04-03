@@ -55,8 +55,7 @@ module {
         #changeLogo : ChangeLogoContent;
         #changeMotto : ChangeMottoContent;
         #changeDescription : ChangeDescriptionContent;
-        #addLink : AddLinkContent;
-        #removeLink : RemoveLinkContent;
+        #modifyLink : ModifyLinkContent;
     };
 
     public type ChangeNameContent = {
@@ -89,13 +88,9 @@ module {
         description : Text;
     };
 
-    public type AddLinkContent = {
+    public type ModifyLinkContent = {
         name : Text;
-        url : Text;
-    };
-
-    public type RemoveLinkContent = {
-        name : Text;
+        url : ?Text;
     };
 
     public type CreateProposalRequest = {

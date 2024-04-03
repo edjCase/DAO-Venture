@@ -1,37 +1,23 @@
 <script lang="ts">
     import { Input } from "flowbite-svelte";
-    import { teamsAgentFactory } from "../../../../ic-agent/Teams";
-    import { proposalStore } from "../../../../stores/ProposalStore";
-    import LoadingButton from "../../../common/LoadingButton.svelte";
+    import FormTemplate from "./FormTemplate.svelte";
+    import { ProposalContent } from "../../../../ic-agent/declarations/teams";
 
     export let teamId: bigint;
     let newName: string | undefined;
 
-    let createNewNameProposal = async () => {
+    let generateProposal = (): ProposalContent | string => {
         if (newName === undefined) {
-            console.log("No new name selected");
-            return;
+            return "No new name selected";
         }
-        let teamsAgent = await teamsAgentFactory();
-        let result = await teamsAgent.createProposal(teamId, {
-            content: {
-                changeName: {
-                    name: newName,
-                },
+        return {
+            changeName: {
+                name: newName,
             },
-        });
-        console.log("Create Proposal Result: ", result);
-        if ("ok" in result) {
-            proposalStore.refetchTeamProposal(teamId, result.ok);
-        } else {
-            console.error("Error creating proposal: ", result);
-        }
+        };
     };
 </script>
 
-<div>
+<FormTemplate {generateProposal} {teamId}>
     <Input type="text" placeholder="New Name" bind:value={newName} />
-    <LoadingButton onClick={createNewNameProposal}>
-        Create Proposal
-    </LoadingButton>
-</div>
+</FormTemplate>

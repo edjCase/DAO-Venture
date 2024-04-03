@@ -1,21 +1,27 @@
 <script lang="ts">
     import { Input } from "flowbite-svelte";
 
-    export let red: number;
-    export let green: number;
-    export let blue: number;
-    $: rgb = `#${red.toString(16).padStart(2, "0")}${green
-        .toString(16)
-        .padStart(2, "0")}${blue.toString(16).padStart(2, "0")}`;
+    export let value: [number, number, number] = [0, 0, 0];
+    export let disabled: boolean = false;
+    let stringRgb: string = `#${value[0].toString(16).padStart(2, "0")}${value[1].toString(16).padStart(2, "0")}${value[2].toString(16).padStart(2, "0")}`;
+
+    $: {
+        let red = parseInt(stringRgb.slice(1, 3), 16);
+        let green = parseInt(stringRgb.slice(3, 5), 16);
+        let blue = parseInt(stringRgb.slice(5, 7), 16);
+        value = [red, green, blue];
+    }
 </script>
 
 <div
     class="my-2"
     style="display: grid; grid-template-columns: auto auto; align-items: center; gap: 10px;"
 >
-    <span
-        class="mx-2"
-        style="width: 50px; height: 50px; background-color: {rgb};"
-    ></span>
-    <Input disabled type="text" value={rgb} />
+    <Input
+        {disabled}
+        type="color"
+        bind:value={stringRgb}
+        defaultClass="ml-5 h-16 w-16"
+    />
+    <Input {disabled} type="text" bind:value={stringRgb} />
 </div>

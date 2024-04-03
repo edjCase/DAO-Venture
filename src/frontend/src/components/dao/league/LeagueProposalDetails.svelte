@@ -13,11 +13,7 @@
 {:else if "changeTeamColor" in proposal.content}
     <div class="text-xl">Type: Change Color</div>
     <div>Team: {proposal.content.changeTeamColor.teamId}</div>
-    <RgbColor
-        red={proposal.content.changeTeamColor.color[0]}
-        green={proposal.content.changeTeamColor.color[1]}
-        blue={proposal.content.changeTeamColor.color[2]}
-    />
+    <RgbColor value={proposal.content.changeTeamColor.color} />
 {:else}
     Proposal Type Not Implemented {toJsonString(proposal.content)}
 {/if}

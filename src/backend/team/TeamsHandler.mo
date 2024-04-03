@@ -145,19 +145,32 @@ module {
                 case (#changeDescription(changeDescription)) {
                     await* createLeagueProposal(#changeTeamDescription({ teamId = teamId; description = changeDescription.description }));
                 };
-                case (#addLink(addLink)) {
-                    if (IterTools.any(links.vals(), func(link : Link) : Bool { link.name == addLink.name })) {
-                        return #err("Link with name '" # addLink.name # "' already exists");
+                case (#modifyLink(modifyLink)) {
+                    let index = IterTools.findIndex(links.vals(), func(link : Link) : Bool { link.name == modifyLink.name });
+                    switch (index) {
+                        case (?i) {
+                            switch (modifyLink.url) {
+                                case (?url) {
+                                    links.put(
+                                        i,
+                                        {
+                                            name = modifyLink.name;
+                                            url = url;
+                                        },
+                                    );
+                                };
+                                // Remove link if URL is null
+                                case (null) ignore links.remove(i);
+                            };
+                        };
+                        case (null) {
+                            let ?url = modifyLink.url else return #err("Link URL is required for adding a new link");
+                            links.add({
+                                name = modifyLink.name;
+                                url = url;
+                            });
+                        };
                     };
-                    links.add({
-                        name = addLink.name;
-                        url = addLink.url;
-                    });
-                    #ok;
-                };
-                case (#removeLink(removeLink)) {
-                    links.filterEntries(func(i : Nat, link : Link) : Bool { link.name != removeLink.name });
-                    // TODO do we care if the link was not found?
                     #ok;
                 };
             };

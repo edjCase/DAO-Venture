@@ -1,8 +1,9 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import TeamProposalTrain from "./proposal_forms/TrainPositionForm.svelte";
-    import TeamProposalChangeName from "./proposal_forms/ChangeNameForm.svelte";
-    import TeamProposalChangeColor from "./proposal_forms/ChangeColorForm.svelte";
+    import TrainPositionForm from "./proposal_forms/TrainPositionForm.svelte";
+    import ChangeNameForm from "./proposal_forms/ChangeNameForm.svelte";
+    import ChangeColorForm from "./proposal_forms/ChangeColorForm.svelte";
+    import ChangeLogoForm from "./proposal_forms/ChangeLogoForm.svelte";
 
     export let teamId: bigint;
 
@@ -10,30 +11,55 @@
         {
             value: "train",
             name: "Train Player",
-            component: TeamProposalTrain,
+            component: TrainPositionForm,
         },
         {
             value: "changeName",
             name: "Change Team Name",
-            component: TeamProposalChangeName,
+            component: ChangeNameForm,
         },
         {
             value: "changeColor",
             name: "Change Team Color",
-            component: TeamProposalChangeColor,
+            component: ChangeColorForm,
+        },
+        {
+            value: "changeLogo",
+            name: "Change Team Logo",
+            component: ChangeLogoForm,
+        },
+        {
+            value: "changeMotto",
+            name: "Change Team Motto",
+            component: ChangeMottoForm,
+        },
+        {
+            value: "changeDescription",
+            name: "Change Team Description",
+            component: ChangeDescriptionForm,
+        },
+        {
+            value: "Modify Link",
+            name: "Modify Team Link",
+            component: ModifyLinkForm,
+        },
+        {
+            value: "swapPlayerPositions",
+            name: "Swap Player Positions",
+            component: SwapPlayerPositionsForm,
         },
     ];
     let selectedProposalType: string = proposalTypes[0].value;
 
-    let SelectedComponent = proposalTypes[0].component;
+    let selectedProposal = proposalTypes[0];
     $: {
         let c = proposalTypes.find((pt) => pt.value === selectedProposalType);
         if (c) {
-            SelectedComponent = c.component;
+            selectedProposal = c;
         }
     }
 </script>
 
 <div class="text-3xl text-center">Create Proposal</div>
 <Select items={proposalTypes} bind:value={selectedProposalType} />
-<svelte:component this={SelectedComponent} {teamId} />
+<svelte:component this={selectedProposal.component} {teamId} />

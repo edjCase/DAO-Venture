@@ -1,12 +1,11 @@
 <script lang="ts">
     import { Input, Select } from "flowbite-svelte";
-    import LoadingButton from "../../../common/LoadingButton.svelte";
     import {
         FieldPosition,
         Skill,
     } from "../../../../ic-agent/declarations/players";
-    import { teamsAgentFactory } from "../../../../ic-agent/Teams";
-    import { proposalStore } from "../../../../stores/ProposalStore";
+    import FormTemplate from "./FormTemplate.svelte";
+    import { ProposalContent } from "../../../../ic-agent/declarations/teams";
 
     export let teamId: bigint;
     let skillTypes = [
@@ -42,12 +41,10 @@
     let selectedSkillId = skillTypes[0].value;
     let selectedPosition: string | undefined;
 
-    let createTrainPlayerProposal = async () => {
+    let generateProposal = (): ProposalContent | string => {
         if (selectedPosition === undefined) {
-            console.log("No position selected");
-            return;
+            return "No position selected";
         }
-        console.log("Creating train player proposal");
 
         let position: FieldPosition;
         // TODO auto-generate this?
@@ -106,29 +103,16 @@
             default:
                 throw new Error("Unknown skill type: " + selectedSkillId);
         }
-        let teamsAgent = await teamsAgentFactory();
-
-        let result = await teamsAgent.createProposal(teamId, {
-            content: {
-                train: {
-                    position: position,
-                    skill: skill,
-                },
+        return {
+            train: {
+                position: position,
+                skill: skill,
             },
-        });
-        console.log("Create Proposal Result: ", result);
-        if ("ok" in result) {
-            proposalStore.refetchTeamProposal(teamId, result.ok);
-        } else {
-            console.error("Error creating proposal: ", result);
-        }
+        };
     };
 </script>
 
-<div>
+<FormTemplate {generateProposal} {teamId}>
     <Select items={skillTypes} bind:value={selectedSkillId} />
     <Input type="text" placeholder="Position" bind:value={selectedPosition} />
-    <LoadingButton onClick={createTrainPlayerProposal}>
-        Create Proposal
-    </LoadingButton>
-</div>
+</FormTemplate>
