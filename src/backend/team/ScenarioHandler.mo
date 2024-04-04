@@ -5,20 +5,32 @@ import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
+import Option "mo:base/Option";
+import Array "mo:base/Array";
 import Types "Types";
+import IterTools "mo:itertools/Iter";
 
 module {
-    public type Vote = {
-        userId : Principal;
+
+    public type VoterInfo = {
         teamId : Nat;
-        option : Nat;
+        id : Principal;
         votingPower : Nat;
+    };
+
+    public type Vote = VoterInfo and {
+        option : ?Nat;
     };
 
     public type StableData = {
         scenarioId : Text;
         optionCount : Nat;
         votes : [Vote];
+    };
+
+    public type GetVoteResult = {
+        #ok : Vote;
+        #notEligible;
     };
 
     public class MultiHandler(data : [StableData]) {
@@ -33,11 +45,22 @@ module {
             handlers.get(scenarioId);
         };
 
-        public func add(scenarioId : Text, optionCount : Nat) {
+        public func add(scenarioId : Text, optionCount : Nat, eligibleVoters : [VoterInfo]) {
+            // TODO validate that no voter is repeated?
+            let votes = eligibleVoters.vals()
+            |> Iter.map(
+                _,
+                func(v : VoterInfo) : Vote = {
+                    v with
+                    option = null;
+                },
+            )
+            |> Iter.toArray(_);
+
             let data : StableData = {
                 scenarioId = scenarioId;
                 optionCount = optionCount;
-                votes = [];
+                votes = votes;
             };
             let null = handlers.get(scenarioId) else Debug.trap("Scenario already exists with id: " # scenarioId);
             handlers.put(scenarioId, Handler(data));
@@ -62,57 +85,78 @@ module {
         let userVotes = data.votes.vals()
         |> Iter.map<Vote, (Principal, Vote)>(
             _,
-            func(v : Vote) : (Principal, Vote) = (v.userId, v),
+            func(v : Vote) : (Principal, Vote) = (v.id, v),
         );
         let votes = HashMap.fromIter<Principal, Vote>(userVotes, data.votes.size(), Principal.equal, Principal.hash);
 
         public func vote(
             voterId : Principal,
-            teamId : Nat,
-            votingPower : Nat,
             option : Nat,
-        ) : { #ok; #invalidOption; #alreadyVoted } {
+        ) : { #ok; #invalidOption; #alreadyVoted; #notAuthorized } {
 
             let choiceExists = option < data.optionCount;
             if (not choiceExists) {
                 return #invalidOption;
             };
-            if (votes.get(voterId) != null) {
+            let ?vote = votes.get(voterId) else return #notAuthorized;
+            if (vote.option != null) {
                 return #alreadyVoted;
             };
             votes.put(
                 voterId,
                 {
-                    userId = voterId;
-                    teamId = teamId;
-                    option = option;
-                    votingPower = votingPower;
+                    vote with
+                    option = ?option;
                 },
             );
+            type Stats = {
+                teams : [{
+                    totalVotingPower : Nat;
+                    optionCounts : [Nat];
+                }];
+            };
+            let stats : Stats = Array.foldLeft(
+                votes.vals(),
+                {
+                    totalVotingPower = 0;
+                    optionCounts = Array.init<Nat>(data.optionCount, 0);
+                },
+                func(stats : Stats, vote : Vote) : Stats {
+                    let option = Option.get(vote.option, 0);
+                    {
+                        totalVotingPower = stats.totalVotingPower + vote.votingPower;
+                        optionCounts = Array.update(stats.optionCounts, option, stats.optionCounts[option] + vote.votingPower);
+                    };
+                },
+            );
+            let allTeamsHaveConsensus = IterTools.any(stats.optionCounts, func(c : Nat) : Bool = c > stats.totalVotingPower / 2);
+            if (allTeamsHaveConsensus) {
+                execute scenario;
+            };
             #ok;
         };
 
-        public func getVote(voterId : Principal) : ?Vote {
-            votes.get(voterId);
+        public func getVote(voterId : Principal) : {
+            #ok : { option : ?Nat; votingPower : Nat };
+            #notEligible;
+        } {
+            switch (votes.get(voterId)) {
+                case (null) #notEligible;
+                case (?v) #ok(v);
+            };
         };
 
         public func calculateResults() : Types.ScenarioVotingResults {
-            // TODO
-            // if (caller != leagueId) {
-            //     return #notAuthorized;
-            // };
             // TeamId + Scenario Option Id -> Vote Count
             let optionVotes = HashMap.HashMap<(Nat, Nat), Nat>(
                 data.optionCount,
                 func(a : (Nat, Nat), b : (Nat, Nat)) = a == b,
                 func(a : (Nat, Nat)) = Nat32.fromNat(a.0) + Nat32.fromNat(a.1), // TODO
             );
-            for ((userId, vote) in votes.entries()) {
-                let key = (vote.teamId, vote.option);
-                let currentVotes = switch (optionVotes.get(key)) {
-                    case (?v) v;
-                    case (null) 0;
-                };
+            label f for ((userId, vote) in votes.entries()) {
+                let ?option = vote.option else continue f;
+                let key = (vote.teamId, option);
+                let currentVotes = Option.get(optionVotes.get(key), 0);
                 optionVotes.put(key, currentVotes + vote.votingPower);
             };
             var teamWinningOptions : HashMap.HashMap<Nat, (Nat, Nat)> = HashMap.HashMap(6, Nat.equal, Nat32.fromNat);

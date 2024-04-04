@@ -8,6 +8,7 @@ import TeamsHandler "TeamsHandler";
 import ScenarioHandler "ScenarioHandler";
 import UsersActor "canister:users";
 import Dao "../Dao";
+import UserTypes "../users/Types";
 
 actor TeamsActor : Types.Actor {
 
@@ -31,6 +32,7 @@ actor TeamsActor : Types.Actor {
 
   system func postupgrade() {
     multiTeamHandler := TeamsHandler.MultiHandler<system>(stableData.teams);
+    scenarioMultiHandler := ScenarioHandler.MultiHandler(stableData.scenarios);
   };
 
   public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
@@ -59,24 +61,14 @@ actor TeamsActor : Types.Actor {
 
   };
 
-  public shared ({ caller }) func voteOnScenario(teamId : Nat, request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
+  public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
     let ?handler = scenarioMultiHandler.getHandler(request.scenarioId) else return #scenarioNotFound;
-    switch (await UsersActor.get(caller)) {
-      case (#ok(user)) {
-        let ?team = user.team else return #notAuthorized;
-        if (team.id != teamId) {
-          return #notAuthorized;
-        };
-        let #owner(o) = team.kind else return #notAuthorized;
-        handler.vote(caller, teamId, o.votingPower, request.option);
-      };
-      case (#notFound or #notAuthorized) #notAuthorized;
-    };
+    handler.vote(caller, request.option);
   };
 
   public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
     let ?handler = scenarioMultiHandler.getHandler(request.scenarioId) else return #scenarioNotFound;
-    #ok(handler.getVote(caller));
+    handler.getVote(caller);
   };
 
   public shared ({ caller }) func createProposal(teamId : Nat, request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
@@ -137,8 +129,22 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    scenarioMultiHandler.add(request.scenarioId, request.optionCount);
-    #ok;
+    switch (await UsersActor.getTeamOwners(#all)) {
+      case (#ok(members)) {
+        let eligibleVoters = members.vals()
+        |> Iter.map<UserTypes.UserVotingInfo, ScenarioHandler.VoterInfo>(
+          _,
+          func(member : UserTypes.UserVotingInfo) : ScenarioHandler.VoterInfo = {
+            id = member.id;
+            teamId = member.teamId;
+            votingPower = member.votingPower;
+          },
+        )
+        |> Iter.toArray(_);
+        scenarioMultiHandler.add(request.scenarioId, request.optionCount, eligibleVoters);
+        #ok;
+      };
+    };
   };
 
   public shared ({ caller }) func onScenarioVoteComplete(request : Types.OnScenarioVoteCompleteRequest) : async Types.OnScenarioVoteCompleteResult {

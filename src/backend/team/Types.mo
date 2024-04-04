@@ -9,7 +9,7 @@ module {
     public type Actor = actor {
         setLeague : (id : Principal) -> async SetLeagueResult;
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
-        voteOnScenario : (teamId : Nat, request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
+        voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
         createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
         getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
@@ -172,12 +172,12 @@ module {
     };
 
     public type GetScenarioVoteResult = {
-        #ok : ?{
-            option : Nat;
+        #ok : {
+            option : ?Nat;
             votingPower : Nat;
         };
         #scenarioNotFound;
-        #teamNotFound;
+        #notEligible;
     };
 
     public type GetScenarioVotingResultsRequest = {

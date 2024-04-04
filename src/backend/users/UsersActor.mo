@@ -87,6 +87,7 @@ actor : Types.Actor {
                 let #owner(o) = team.kind else return null;
                 ?{
                     id = userId;
+                    teamId = team.id;
                     votingPower = o.votingPower;
                 };
             },

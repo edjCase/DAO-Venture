@@ -64,6 +64,7 @@ module {
 
     public type UserVotingInfo = {
         id : Principal;
+        teamId : Nat;
         votingPower : Nat;
     };
 

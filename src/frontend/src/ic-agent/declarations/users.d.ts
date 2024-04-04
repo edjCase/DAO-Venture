@@ -47,7 +47,11 @@ export interface UserStats {
   'totalPoints' : bigint,
   'userCount' : bigint,
 }
-export interface UserVotingInfo { 'id' : Principal, 'votingPower' : bigint }
+export interface UserVotingInfo {
+  'id' : Principal,
+  'votingPower' : bigint,
+  'teamId' : bigint,
+}
 export interface _SERVICE {
   'addTeamOwner' : ActorMethod<[AddTeamOwnerRequest], AddTeamOwnerResult>,
   'awardPoints' : ActorMethod<[Array<AwardPointsRequest>], AwardPointsResult>,

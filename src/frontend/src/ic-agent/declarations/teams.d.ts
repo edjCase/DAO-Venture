@@ -32,9 +32,9 @@ export type GetProposalsResult = { 'ok' : PagedResult } |
   { 'teamNotFound' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : string }
 export type GetScenarioVoteResult = {
-    'ok' : [] | [{ 'option' : bigint, 'votingPower' : bigint }]
+    'ok' : { 'option' : [] | [bigint], 'votingPower' : bigint }
   } |
-  { 'teamNotFound' : null } |
+  { 'notEligible' : null } |
   { 'scenarioNotFound' : null };
 export interface GetScenarioVotingResultsRequest { 'scenarioId' : string }
 export type GetScenarioVotingResultsResult = { 'ok' : ScenarioVotingResults } |
@@ -159,10 +159,7 @@ export interface _SERVICE {
     [bigint, VoteOnProposalRequest],
     VoteOnProposalResult
   >,
-  'voteOnScenario' : ActorMethod<
-    [bigint, VoteOnScenarioRequest],
-    VoteOnScenarioResult
-  >,
+  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

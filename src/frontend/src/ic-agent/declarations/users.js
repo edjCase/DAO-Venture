@@ -54,6 +54,7 @@ export const idlFactory = ({ IDL }) => {
   const UserVotingInfo = IDL.Record({
     'id' : IDL.Principal,
     'votingPower' : IDL.Nat,
+    'teamId' : IDL.Nat,
   });
   const GetTeamOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
   const OnSeasonEndResult = IDL.Variant({

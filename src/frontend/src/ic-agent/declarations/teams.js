@@ -102,8 +102,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Text });
   const GetScenarioVoteResult = IDL.Variant({
-    'ok' : IDL.Opt(IDL.Record({ 'option' : IDL.Nat, 'votingPower' : IDL.Nat })),
-    'teamNotFound' : IDL.Null,
+    'ok' : IDL.Record({ 'option' : IDL.Opt(IDL.Nat), 'votingPower' : IDL.Nat }),
+    'notEligible' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
   });
   const GetScenarioVotingResultsRequest = IDL.Record({
@@ -217,7 +217,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'voteOnScenario' : IDL.Func(
-        [IDL.Nat, VoteOnScenarioRequest],
+        [VoteOnScenarioRequest],
         [VoteOnScenarioResult],
         [],
       ),
