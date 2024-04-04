@@ -5,10 +5,10 @@ import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
-import Option "mo:base/Option";
 import Array "mo:base/Array";
+import Buffer "mo:base/Buffer";
+import Prelude "mo:base/Prelude";
 import Types "Types";
-import IterTools "mo:itertools/Iter";
 
 module {
 
@@ -109,29 +109,11 @@ module {
                     option = ?option;
                 },
             );
-            type Stats = {
-                teams : [{
-                    totalVotingPower : Nat;
-                    optionCounts : [Nat];
-                }];
-            };
-            let stats : Stats = Array.foldLeft(
-                votes.vals(),
-                {
-                    totalVotingPower = 0;
-                    optionCounts = Array.init<Nat>(data.optionCount, 0);
-                },
-                func(stats : Stats, vote : Vote) : Stats {
-                    let option = Option.get(vote.option, 0);
-                    {
-                        totalVotingPower = stats.totalVotingPower + vote.votingPower;
-                        optionCounts = Array.update(stats.optionCounts, option, stats.optionCounts[option] + vote.votingPower);
-                    };
-                },
-            );
-            let allTeamsHaveConsensus = IterTools.any(stats.optionCounts, func(c : Nat) : Bool = c > stats.totalVotingPower / 2);
-            if (allTeamsHaveConsensus) {
-                execute scenario;
+            switch (calculateResultsInternal(false)) {
+                case (#noConsensus) ();
+                case (#consensus(_)) {
+                    // TODO close voting early
+                };
             };
             #ok;
         };
@@ -147,45 +129,64 @@ module {
         };
 
         public func calculateResults() : Types.ScenarioVotingResults {
-            // TeamId + Scenario Option Id -> Vote Count
-            let optionVotes = HashMap.HashMap<(Nat, Nat), Nat>(
-                data.optionCount,
-                func(a : (Nat, Nat), b : (Nat, Nat)) = a == b,
-                func(a : (Nat, Nat)) = Nat32.fromNat(a.0) + Nat32.fromNat(a.1), // TODO
-            );
-            label f for ((userId, vote) in votes.entries()) {
-                let ?option = vote.option else continue f;
-                let key = (vote.teamId, option);
-                let currentVotes = Option.get(optionVotes.get(key), 0);
-                optionVotes.put(key, currentVotes + vote.votingPower);
+            let #consensus(teamOptions) = calculateResultsInternal(true) else Prelude.unreachable();
+            {
+                teamOptions = teamOptions;
             };
-            var teamWinningOptions : HashMap.HashMap<Nat, (Nat, Nat)> = HashMap.HashMap(6, Nat.equal, Nat32.fromNat);
-            for (((teamId, option), voteCount) in optionVotes.entries()) {
-                switch (teamWinningOptions.get(teamId)) {
-                    case (null) teamWinningOptions.put(teamId, (option, voteCount));
-                    case (?currentWinner) {
-                        if (currentWinner.1 < voteCount) {
-                            teamWinningOptions.put(teamId, (option, voteCount));
+        };
+
+        private func calculateResultsInternal(votingClosed : Bool) : {
+            #consensus : [Types.ScenarioTeamVotingResult];
+            #noConsensus;
+        } {
+            type TeamStats = {
+                var totalVotingPower : Nat;
+                optionVotingPowers : [var Nat];
+            };
+            let teamStats = HashMap.HashMap<Nat, TeamStats>(0, Nat.equal, Nat32.fromNat);
+
+            for (vote in votes.vals()) {
+                let stats : TeamStats = switch (teamStats.get(vote.teamId)) {
+                    case (null) {
+                        let initStats : TeamStats = {
+                            var totalVotingPower = 0;
+                            optionVotingPowers = Array.init<Nat>(data.optionCount, 0);
                         };
-                        // TODO what to do if there is a tie?
+                        teamStats.put(vote.teamId, initStats);
+                        initStats;
                     };
+                    case (?voterTeamStats) voterTeamStats;
+                };
+                stats.totalVotingPower += vote.votingPower;
+                switch (vote.option) {
+                    case (?option) stats.optionVotingPowers[option] += vote.votingPower;
+                    case (null) ();
                 };
             };
-            let teamChoices = teamWinningOptions.entries()
-            |> Iter.map(
-                _,
-                func((teamId, (option, _)) : (Nat, (Nat, Nat))) : {
-                    teamId : Nat;
-                    option : Nat;
-                } = {
-                    option = option;
+            let teamResults = Buffer.Buffer<Types.ScenarioTeamVotingResult>(teamStats.size());
+            for ((teamId, stats) in teamStats.entries()) {
+                var optionWithMostVotes : (Nat, Nat) = (0, 0);
+                for (option in stats.optionVotingPowers.vals()) {
+                    if (option > optionWithMostVotes.1) {
+                        // TODO what to do in a tie?
+                        optionWithMostVotes := (option, optionWithMostVotes.1);
+                    };
+                };
+
+                if (not votingClosed) {
+                    // Validate that the majority has been reached, if voting is still active
+                    let majority = stats.totalVotingPower / 2;
+                    if (optionWithMostVotes.1 < majority) {
+                        return #noConsensus; // If any team hasnt reached a consensus, wait till its forced (end of voting period)
+                    };
+                };
+                teamResults.add({
                     teamId = teamId;
-                },
-            )
-            |> Iter.toArray(_);
-            {
-                teamOptions = teamChoices;
+                    option = optionWithMostVotes.0;
+                });
             };
+
+            #consensus(Buffer.toArray(teamResults));
         };
 
         public func toStableData() : StableData {
