@@ -73,8 +73,11 @@ actor LeagueActor : Types.LeagueActor {
                         true;
                     };
                     case (#energy(e)) {
-                        teamsHandler.updateTeamEnergy(e.teamId, e.delta);
-                        true;
+                        let result = await TeamsActor.updateTeamEnergy(e.teamId, e.delta);
+                        switch (result) {
+                            case (#ok) true;
+                            case (#notAuthorized or #teamNotFound) false;
+                        };
                     };
                     case (#skill(s)) {
                         let result = await PlayersActor.applyEffects([#skill(s)]); // TODO optimize with bulk call

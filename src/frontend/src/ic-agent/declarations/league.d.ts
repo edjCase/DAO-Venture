@@ -406,9 +406,7 @@ export interface TeamWithId {
   'name' : string,
   'color' : [number, number, number],
   'description' : string,
-  'entropy' : bigint,
   'logoUrl' : string,
-  'energy' : bigint,
 }
 export type Time = bigint;
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }

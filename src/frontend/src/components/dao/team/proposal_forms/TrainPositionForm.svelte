@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Input, Select } from "flowbite-svelte";
+    import { Select } from "flowbite-svelte";
     import {
         FieldPosition,
         Skill,
@@ -38,8 +38,42 @@
             name: "Throwing Power",
         },
     ];
+    let positions = [
+        {
+            value: "pitcher",
+            name: "Pitcher",
+        },
+        {
+            value: "firstBase",
+            name: "First Base",
+        },
+        {
+            value: "secondBase",
+            name: "Second Base",
+        },
+        {
+            value: "thirdBase",
+            name: "Third Base",
+        },
+        {
+            value: "shortStop",
+            name: "Short Stop",
+        },
+        {
+            value: "leftField",
+            name: "Left Field",
+        },
+        {
+            value: "centerField",
+            name: "Center Field",
+        },
+        {
+            value: "rightField",
+            name: "Right Field",
+        },
+    ];
     let selectedSkillId = skillTypes[0].value;
-    let selectedPosition: string | undefined;
+    let selectedPosition: string = "pitcher";
 
     let generateProposal = (): ProposalContent | string => {
         if (selectedPosition === undefined) {
@@ -114,5 +148,5 @@
 
 <FormTemplate {generateProposal} {teamId}>
     <Select items={skillTypes} bind:value={selectedSkillId} />
-    <Input type="text" placeholder="Position" bind:value={selectedPosition} />
+    <Select items={positions} bind:value={selectedPosition} />
 </FormTemplate>

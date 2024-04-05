@@ -9,6 +9,7 @@ import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Error "mo:base/Error";
 import Buffer "mo:base/Buffer";
+import Int "mo:base/Int";
 import CommonTypes "../Types";
 import PlayersActor "canister:players";
 import Scenario "../models/Scenario";
@@ -21,6 +22,7 @@ module {
         teamId : Nat;
         dao : Dao.StableData<Types.ProposalContent>;
         links : [Types.Link];
+        energy : Int;
     };
 
     public class MultiHandler<system>(teams : [(Nat, StableData)]) {
@@ -68,6 +70,7 @@ module {
                     });
                 };
                 links = [];
+                energy = 0;
             });
             handlers.put(teamId, handler);
             (teamId, handler);
@@ -78,6 +81,7 @@ module {
         let leagueId = stableData.leagueId;
         let teamId = stableData.teamId;
         let links = Buffer.fromArray<Types.Link>(stableData.links);
+        var energy = stableData.energy;
 
         func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Dao.OnExecuteResult {
             let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Dao.OnExecuteResult {
@@ -97,6 +101,11 @@ module {
             switch (proposal.content) {
                 case (#train(train)) {
                     try {
+                        let trainCost = 1; // TODO
+                        if (energy < trainCost) {
+                            return #err("Not enough energy to train player");
+                        };
+                        energy -= trainCost;
                         // TODO make the 'applyEffects' generic, not scenario specific
                         let trainSkillEffect : Scenario.PlayerEffectOutcome = #skill({
                             target = #positions([{
@@ -190,6 +199,7 @@ module {
                 teamId = teamId;
                 dao = dao.toStableData();
                 links = Buffer.toArray(links);
+                energy = energy;
             };
         };
 
@@ -211,6 +221,18 @@ module {
 
         public func getLinks() : [Types.Link] {
             Buffer.toArray(links);
+        };
+
+        public func updateEnergy(delta : Int, allowBelowZero : Bool) : {
+            #ok;
+            #notEnoughEnergy;
+        } {
+            let newEnergy = energy + delta;
+            if (not allowBelowZero and newEnergy < 0) {
+                return #notEnoughEnergy;
+            };
+            energy := newEnergy;
+            #ok;
         };
 
     };

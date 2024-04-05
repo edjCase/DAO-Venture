@@ -2,6 +2,7 @@ import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
 import Debug "mo:base/Debug";
 import Iter "mo:base/Iter";
+import Prelude "mo:base/Prelude";
 import { ic } "mo:ic";
 import Types "Types";
 import TeamsHandler "TeamsHandler";
@@ -58,7 +59,21 @@ actor TeamsActor : Types.Actor {
     #ok({
       id = id;
     });
+  };
 
+  public shared ({ caller }) func updateTeamEnergy(id : Nat, delta : Int) : async Types.UpdateTeamEnergyResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
+    switch (handler.updateEnergy(delta, true)) {
+      case (#ok) #ok;
+      case (#notEnoughEnergy) Prelude.unreachable(); // Only happens when 0 energy is min
+    };
   };
 
   public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
@@ -120,8 +135,8 @@ actor TeamsActor : Types.Actor {
     #ok(results);
   };
 
-  public shared ({ caller }) func onNewScenario(request : Types.OnNewScenarioRequest) : async Types.OnNewScenarioResult {
-    Debug.print("onNewScenario called: " # debug_show (request));
+  public shared ({ caller }) func onScenarioStart(request : Types.OnScenarioStartRequest) : async Types.OnScenarioStartResult {
+    Debug.print("OnScenarioStart called: " # debug_show (request));
     let leagueId = switch (leagueIdOrNull) {
       case (null) Debug.trap("League not set");
       case (?id) id;
@@ -147,7 +162,7 @@ actor TeamsActor : Types.Actor {
     };
   };
 
-  public shared ({ caller }) func onScenarioVoteComplete(request : Types.OnScenarioVoteCompleteRequest) : async Types.OnScenarioVoteCompleteResult {
+  public shared ({ caller }) func onScenarioEnd(request : Types.OnScenarioEndRequest) : async Types.OnScenarioEndResult {
     let leagueId = switch (leagueIdOrNull) {
       case (null) Debug.trap("League not set");
       case (?id) id;
@@ -156,7 +171,13 @@ actor TeamsActor : Types.Actor {
       return #notAuthorized;
     };
     switch (scenarioMultiHandler.remove(request.scenarioId)) {
-      case (#ok) #ok;
+      case (#ok) {
+        for ({ teamId; energy } in request.energyDividends.vals()) {
+          let ?handler = multiTeamHandler.get(teamId) else Debug.trap("Team not found: " # Nat.toText(teamId)); // TODO trap?
+          ignore handler.updateEnergy(energy, true);
+        };
+        #ok;
+      };
       case (#notFound) #scenarioNotFound;
     };
   };

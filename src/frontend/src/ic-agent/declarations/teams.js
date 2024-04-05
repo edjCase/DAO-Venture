@@ -121,19 +121,23 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
   });
-  const OnNewScenarioRequest = IDL.Record({
+  const EnergyDividend = IDL.Record({ 'teamId' : IDL.Nat, 'energy' : IDL.Nat });
+  const OnScenarioEndRequest = IDL.Record({
     'scenarioId' : IDL.Text,
-    'optionCount' : IDL.Nat,
+    'energyDividends' : IDL.Vec(EnergyDividend),
   });
-  const OnNewScenarioResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
-  });
-  const OnScenarioVoteCompleteRequest = IDL.Record({ 'scenarioId' : IDL.Text });
-  const OnScenarioVoteCompleteResult = IDL.Variant({
+  const OnScenarioEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
+  });
+  const OnScenarioStartRequest = IDL.Record({
+    'scenarioId' : IDL.Text,
+    'optionCount' : IDL.Nat,
+  });
+  const OnScenarioStartResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
   });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
@@ -142,6 +146,11 @@ export const idlFactory = ({ IDL }) => {
   const SetLeagueResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
+  });
+  const UpdateTeamEnergyResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
   });
   const VoteOnProposalRequest = IDL.Record({
     'vote' : IDL.Bool,
@@ -199,18 +208,23 @@ export const idlFactory = ({ IDL }) => {
         [GetScenarioVotingResultsResult],
         [],
       ),
-    'onNewScenario' : IDL.Func(
-        [OnNewScenarioRequest],
-        [OnNewScenarioResult],
+    'onScenarioEnd' : IDL.Func(
+        [OnScenarioEndRequest],
+        [OnScenarioEndResult],
         [],
       ),
-    'onScenarioVoteComplete' : IDL.Func(
-        [OnScenarioVoteCompleteRequest],
-        [OnScenarioVoteCompleteResult],
+    'onScenarioStart' : IDL.Func(
+        [OnScenarioStartRequest],
+        [OnScenarioStartResult],
         [],
       ),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
+    'updateTeamEnergy' : IDL.Func(
+        [IDL.Nat, IDL.Int],
+        [UpdateTeamEnergyResult],
+        [],
+      ),
     'voteOnProposal' : IDL.Func(
         [IDL.Nat, VoteOnProposalRequest],
         [VoteOnProposalResult],

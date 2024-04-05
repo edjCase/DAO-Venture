@@ -15,8 +15,6 @@ module {
         motto : Text;
         description : Text;
         color : (Nat8, Nat8, Nat8);
-        entropy : Nat;
-        energy : Int;
     };
 
     public type TeamWithId = Team and {

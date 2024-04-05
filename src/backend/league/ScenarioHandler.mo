@@ -21,6 +21,7 @@ import TextX "mo:xtended-text/TextX";
 import TeamTypes "../team/Types";
 import TeamsActor "canister:teams";
 import IterTools "mo:itertools/Iter";
+
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
@@ -156,11 +157,11 @@ module {
                             })
                         },
                     );
-                    let onNewScenarioRequest = {
+                    let onScenarioStartRequest = {
                         scenarioId = scenarioId;
                         optionCount = scenario.options.size();
                     };
-                    switch (await TeamsActor.onNewScenario(onNewScenarioRequest)) {
+                    switch (await TeamsActor.onScenarioStart(onScenarioStartRequest)) {
                         case (#ok) ();
                         case (#notAuthorized) Debug.print("ERROR: Not authorized to start scenario for teams");
                     };
@@ -378,6 +379,29 @@ module {
                 option = option;
             });
         };
+
+        let energyDividends = scenario.teamIds.vals()
+        |> Iter.map<Nat, TeamTypes.EnergyDividend>(
+            _,
+            func(teamId : Nat) : TeamTypes.EnergyDividend {
+                let energy = 5; // TODO
+                {
+                    teamId = teamId;
+                    energy = energy;
+                };
+            },
+        )
+        |> Iter.toArray(_);
+        let onScenarioEndRequest = {
+            scenarioId = scenario.id;
+            energyDividends = energyDividends;
+        };
+        switch (await TeamsActor.onScenarioEnd(onScenarioEndRequest)) {
+            case (#ok) ();
+            case (#notAuthorized) Debug.print("ERROR: Not authorized to end scenario for teams");
+            case (#scenarioNotFound) Debug.print("ERROR: Scenario not found");
+        };
+
         Buffer.toArray(teamScenarioData);
     };
 

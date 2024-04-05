@@ -50,7 +50,7 @@
             request,
         );
         let teamsAgent = await teamsAgentFactory();
-        let result = await teamsAgent.voteOnScenario(teamId, request);
+        let result = await teamsAgent.voteOnScenario(request);
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
             teamStore.refetch();
@@ -65,11 +65,11 @@
             let teamsAgent = await teamsAgentFactory();
             let result = await teamsAgent.getScenarioVote({ scenarioId });
             if ("ok" in result) {
-                if (result.ok[0] === undefined) {
+                if (result.ok.option[0] === undefined) {
                     selectedChoice = undefined;
                     voted = false;
                 } else {
-                    selectedChoice = Number(result.ok[0].option);
+                    selectedChoice = Number(result.ok.option[0]);
                     voted = true;
                 }
             } else {

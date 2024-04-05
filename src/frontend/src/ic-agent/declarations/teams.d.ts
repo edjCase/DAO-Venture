@@ -14,6 +14,7 @@ export type CreateProposalResult = { 'ok' : bigint } |
 export type CreateTeamRequest = {};
 export type CreateTeamResult = { 'ok' : { 'id' : bigint } } |
   { 'notAuthorized' : null };
+export interface EnergyDividend { 'teamId' : bigint, 'energy' : bigint }
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -42,16 +43,19 @@ export type GetScenarioVotingResultsResult = { 'ok' : ScenarioVotingResults } |
   { 'scenarioNotFound' : null };
 export interface Link { 'url' : string, 'name' : string }
 export interface ModifyLinkContent { 'url' : [] | [string], 'name' : string }
-export interface OnNewScenarioRequest {
+export interface OnScenarioEndRequest {
+  'scenarioId' : string,
+  'energyDividends' : Array<EnergyDividend>,
+}
+export type OnScenarioEndResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'scenarioNotFound' : null };
+export interface OnScenarioStartRequest {
   'scenarioId' : string,
   'optionCount' : bigint,
 }
-export type OnNewScenarioResult = { 'ok' : null } |
+export type OnScenarioStartResult = { 'ok' : null } |
   { 'notAuthorized' : null };
-export interface OnScenarioVoteCompleteRequest { 'scenarioId' : string }
-export type OnScenarioVoteCompleteResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'scenarioNotFound' : null };
 export type OnSeasonEndResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface PagedResult {
@@ -106,6 +110,9 @@ export interface SwapPlayerPositionsContent {
 export interface TeamLinks { 'links' : Array<Link>, 'teamId' : bigint }
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
+export type UpdateTeamEnergyResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export interface VoteOnProposalRequest {
   'vote' : boolean,
@@ -148,13 +155,14 @@ export interface _SERVICE {
     [GetScenarioVotingResultsRequest],
     GetScenarioVotingResultsResult
   >,
-  'onNewScenario' : ActorMethod<[OnNewScenarioRequest], OnNewScenarioResult>,
-  'onScenarioVoteComplete' : ActorMethod<
-    [OnScenarioVoteCompleteRequest],
-    OnScenarioVoteCompleteResult
+  'onScenarioEnd' : ActorMethod<[OnScenarioEndRequest], OnScenarioEndResult>,
+  'onScenarioStart' : ActorMethod<
+    [OnScenarioStartRequest],
+    OnScenarioStartResult
   >,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
+  'updateTeamEnergy' : ActorMethod<[bigint, bigint], UpdateTeamEnergyResult>,
   'voteOnProposal' : ActorMethod<
     [bigint, VoteOnProposalRequest],
     VoteOnProposalResult

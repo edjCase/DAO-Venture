@@ -388,9 +388,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'description' : IDL.Text,
-    'entropy' : IDL.Nat,
     'logoUrl' : IDL.Text,
-    'energy' : IDL.Int,
   });
   const PlayerId = IDL.Nat32;
   const PlayerMatchStatsWithId = IDL.Record({

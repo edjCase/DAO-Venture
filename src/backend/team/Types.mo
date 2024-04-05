@@ -15,10 +15,18 @@ module {
         getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
         voteOnProposal : (teamId : Nat, request : VoteOnProposalRequest) -> async VoteOnProposalResult;
         getScenarioVotingResults : (request : GetScenarioVotingResultsRequest) -> async GetScenarioVotingResultsResult;
-        onNewScenario : (request : OnNewScenarioRequest) -> async OnNewScenarioResult;
-        onScenarioVoteComplete : (request : OnScenarioVoteCompleteRequest) -> async OnScenarioVoteCompleteResult;
+        onScenarioStart : (request : OnScenarioStartRequest) -> async OnScenarioStartResult;
+        onScenarioEnd : (request : OnScenarioEndRequest) -> async OnScenarioEndResult;
         onSeasonEnd() : async OnSeasonEndResult;
         getLinks : query () -> async GetLinksResult;
+        createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
+        updateTeamEnergy : (teamId : Nat, delta : Int) -> async UpdateTeamEnergyResult;
+    };
+
+    public type UpdateTeamEnergyResult = {
+        #ok;
+        #notAuthorized;
+        #teamNotFound;
     };
 
     public type Link = {
@@ -118,22 +126,28 @@ module {
         #teamNotFound;
     };
 
-    public type OnScenarioVoteCompleteRequest = {
+    public type OnScenarioEndRequest = {
         scenarioId : Text;
+        energyDividends : [EnergyDividend];
     };
 
-    public type OnScenarioVoteCompleteResult = {
+    public type EnergyDividend = {
+        teamId : Nat;
+        energy : Nat;
+    };
+
+    public type OnScenarioEndResult = {
         #ok;
         #scenarioNotFound;
         #notAuthorized;
     };
 
-    public type OnNewScenarioRequest = {
+    public type OnScenarioStartRequest = {
         scenarioId : Text;
         optionCount : Nat;
     };
 
-    public type OnNewScenarioResult = {
+    public type OnScenarioStartResult = {
         #ok;
         #notAuthorized;
     };

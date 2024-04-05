@@ -34,7 +34,7 @@
   let teamColor = "color" in team ? toRgbString(team.color) : "grey";
 </script>
 
-<div id={triggerId} class="flex items-center space-x-1">
+<div id={triggerId} class="flex justify-center items-center space-x-1">
   {#if name == "left"}
     <div class="text-center">{title}</div>
   {/if}
