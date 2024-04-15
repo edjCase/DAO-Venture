@@ -21,7 +21,7 @@
     let id = "S1";
 
     let initialStart = new Date();
-    let initialEnd = new Date(initialStart.getTime() + 1000 * 60);
+    let initialEnd = new Date(initialStart.getTime() + 1000 * 60 * 5);
 
     let formatDateTimeLocal = (date: Date) => {
         let year = date.getFullYear();

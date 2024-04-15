@@ -6,14 +6,14 @@
     import { navigate } from "svelte-routing";
     import TeamLogo from "../team/TeamLogo.svelte";
     import { teamStore } from "../../stores/TeamStore";
-    import { TeamWithId } from "../../ic-agent/declarations/league";
+    import { Team } from "../../ic-agent/declarations/league";
 
     $: teams = $teamStore;
 
     let nextMatchGroupDate: Date | undefined;
     let matchGroupInProgress: bigint | undefined;
     let seasonChampionId: bigint | undefined;
-    let seasonChampion: TeamWithId | undefined;
+    let seasonChampion: Team | undefined;
     scheduleStore.subscribeMatchGroups((matchGroups) => {
         let now = new Date();
         nextMatchGroupDate = undefined;
@@ -46,8 +46,6 @@
     }
 </script>
 
-<div class="text-3xl text-center">Season 0</div>
-<div class="text-xl text-center mb-5">The Awakening</div>
 <div class="flex justify-around">
     <div>
         {#if matchGroupInProgress}

@@ -1,10 +1,7 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { teamsAgentFactory } from "../../ic-agent/Teams";
-    import {
-        ScenarioOption,
-        TeamWithId,
-    } from "../../ic-agent/declarations/league";
+    import { ScenarioOption, Team } from "../../ic-agent/declarations/league";
     import { VoteOnScenarioRequest } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
@@ -20,7 +17,7 @@
     let voted: boolean = false;
     let teamId: bigint | undefined;
     let isOwner: boolean = false;
-    let team: TeamWithId | undefined;
+    let team: Team | undefined;
     $: {
         let teamIdIsDefined = teamId !== undefined;
         teamId = userContext?.team[0]?.id;

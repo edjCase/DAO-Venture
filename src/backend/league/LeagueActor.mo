@@ -25,7 +25,7 @@ import Dao "../Dao";
 import StadiumActor "canister:stadium";
 
 actor LeagueActor : Types.LeagueActor {
-    type TeamWithId = Team.TeamWithId;
+    type Team = Team.Team;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var stableData = {
@@ -218,7 +218,7 @@ actor LeagueActor : Types.LeagueActor {
         benevolentDictator;
     };
 
-    public query func getTeams() : async [TeamWithId] {
+    public query func getTeams() : async [Team] {
         teamsHandler.getAll();
     };
 

@@ -77,7 +77,7 @@ module {
             stadiumId : Principal,
             startTime : Time.Time,
             weekDays : [Components.DayOfWeek],
-            teams : [Team.TeamWithId],
+            teams : [Team.Team],
             players : [Player.Player],
         ) : async* StartSeasonResult {
             switch (seasonStatus) {
@@ -93,7 +93,7 @@ module {
 
             let teamIdsBuffer = teams
             |> Iter.fromArray(_)
-            |> Iter.map(_, func(t : Team.TeamWithId) : Nat = t.id)
+            |> Iter.map(_, func(t : Team.Team) : Nat = t.id)
             |> Buffer.fromIter<Nat>(_);
 
             prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
@@ -137,7 +137,7 @@ module {
             |> Iter.fromArray(_)
             |> Iter.map(
                 _,
-                func(t : Team.TeamWithId) : Season.TeamInfo {
+                func(t : Team.Team) : Season.TeamInfo {
                     buildTeamInitData(t, players);
                 },
             )
@@ -807,7 +807,7 @@ module {
     };
 
     private func buildTeamInitData(
-        team : Team.TeamWithId,
+        team : Team.Team,
         allPlayers : [Player.Player],
     ) : Season.TeamInfo {
 

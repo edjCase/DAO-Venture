@@ -1,75 +1,102 @@
 <script lang="ts">
-    import { Button } from "flowbite-svelte";
-    import { navigate } from "svelte-routing";
     import { teamStore } from "../../stores/TeamStore";
-    import { TeamWithId } from "../../ic-agent/declarations/league";
+    import { Team } from "../../ic-agent/declarations/league";
     import TeamLogo from "../team/TeamLogo.svelte";
-    interface TopTeams {
-        mostWins: {
-            team: TeamWithId;
-            wins: number;
-        };
-        mostEnergy: {
-            team: TeamWithId;
-            energy: bigint;
-        };
-        leastEntropy: {
-            team: TeamWithId;
-            entropy: bigint;
-        };
-    }
 
-    let topTeams: TopTeams | undefined;
-    teamStore.subscribe((teams) => {
-        if (!teams || teams.length < 3) {
+    let teams: Team[] = [];
+    let maxEntropy = 0;
+    let totalEntropy = 0;
+    const entropyMaxThreshold = 20; // TODO
+
+    teamStore.subscribe((t) => {
+        if (!t) {
             return;
         }
-        // TODO
-        topTeams = {
-            mostWins: {
-                team: teams[0],
-                wins: 1,
-            },
-            mostEnergy: {
-                team: teams[1],
-                energy: teams[1].energy,
-            },
-            leastEntropy: {
-                team: teams[2],
-                entropy: teams[2].entropy,
-            },
-        };
+        teams = t;
+        teams.sort((a, b) => Number(b.entropy) - Number(a.entropy));
+        maxEntropy = Math.max(...teams.map((team) => Number(team.entropy)));
+        totalEntropy = teams.reduce(
+            (sum, team) => sum + Number(team.entropy),
+            0,
+        );
     });
+
+    function getEntropyPercentage(entropy: number): number {
+        if (entropy === 0) {
+            return 0;
+        }
+        return (entropy / maxEntropy) * 100;
+    }
+    $: leagueEntropyPerecentage = (totalEntropy / entropyMaxThreshold) * 100;
 </script>
 
-{#if topTeams !== undefined}
-    <div>
-        <div class="text-3xl text-center p-5">Top Teams</div>
-        <div class="flex items-center">
-            <div class="flex-1">
-                <div class="text-lg text-center">Most Wins</div>
-                <TeamLogo team={topTeams.mostWins.team} size="md" />
-                <div class="text-lg text-center">
-                    {topTeams.mostWins.team.name}
-                </div>
-            </div>
-            <div class="flex-1">
-                <div class="text-lg text-center">Most Energy</div>
-                <TeamLogo team={topTeams.mostEnergy.team} size="md" />
-                <div class="text-lg text-center">
-                    {topTeams.mostEnergy.team.name}
-                </div>
-            </div>
-            <div class="flex-1">
-                <div class="text-lg text-center">Least Entropy</div>
-                <TeamLogo team={topTeams.leastEntropy.team} size="md" />
-                <div class="text-lg text-center">
-                    {topTeams.leastEntropy.team.name}
-                </div>
+<div>League Entropy: {totalEntropy}</div>
+<div>Collapse Threshold: {entropyMaxThreshold}</div>
+<div class="total-entropy-bar">
+    <div
+        class="total-entropy-fill"
+        style="width: {leagueEntropyPerecentage}%;"
+    ></div>
+</div>
+
+{#each teams as team}
+    <div class="flex justify-center items-center">
+        <div>
+            <TeamLogo {team} size="md" />
+            <div class="text-lg text-center">
+                {team.name}
             </div>
         </div>
-        <div class="flex justify-center m-5">
-            <Button on:click={() => navigate("/teams")}>View All Teams</Button>
+        <div class="flex-grow mx-5">
+            <div class="entropy-bar">
+                <div
+                    class="entropy-fill"
+                    style="width: {getEntropyPercentage(
+                        Number(team.entropy),
+                    )}%;"
+                ></div>
+            </div>
+            <div class="text-sm text-center">
+                Entropy: {team.entropy}
+            </div>
         </div>
     </div>
-{/if}
+{/each}
+
+<style>
+    .total-entropy-bar {
+        width: 100%;
+        height: 20px;
+        background-color: #f0f0f0;
+        border-radius: 10px;
+        position: relative;
+        margin-bottom: 20px;
+    }
+
+    .total-entropy-fill {
+        height: 100%;
+        background-color: #ff3300;
+        border-radius: 10px;
+    }
+
+    .loss-threshold {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background-color: #000;
+    }
+
+    .entropy-bar {
+        width: 100%;
+        height: 10px;
+        background-color: rgb(0, 119, 255);
+        border-radius: 5px;
+    }
+
+    .entropy-fill {
+        height: 100%;
+        background-color: #ff3300;
+        border-radius: 5px;
+    }
+</style>

@@ -1,9 +1,6 @@
 <script lang="ts">
-  import {
-    BaseState,
-    PlayerStateWithId,
-  } from "../../ic-agent/declarations/stadium";
-  import { FieldPositionEnum, toEnum } from "../../models/FieldPosition";
+  import { PlayerStateWithId } from "../../ic-agent/declarations/stadium";
+  import { FieldPositionEnum } from "../../models/FieldPosition";
   import {
     LiveMatch,
     LiveMatchState,
@@ -12,7 +9,6 @@
   import FieldPlayer from "./FieldPlayer.svelte";
   import FieldBase from "./FieldBase.svelte";
   import { BaseEnum } from "../../models/Base";
-  import FieldBall from "./FieldBall.svelte";
 
   export let match: LiveMatch;
 
@@ -54,46 +50,47 @@
 
   let liveData: LiveData | undefined;
 
-  let ballLocations: { x: number; y: number; color: string }[] = [];
+  // TODO implement ball locations?
+  // let ballLocations: { x: number; y: number; color: string }[] = [];
 
-  let getPositionCoordinates = (
-    position: FieldPositionEnum,
-  ): { x: number; y: number } => {
-    switch (position) {
-      case FieldPositionEnum.FirstBase:
-        return firstBasePosition;
-      case FieldPositionEnum.CenterField:
-        return centerFieldPosition;
-      case FieldPositionEnum.LeftField:
-        return leftFieldPosition;
-      case FieldPositionEnum.RightField:
-        return rightFieldPosition;
-      case FieldPositionEnum.SecondBase:
-        return secondBasePosition;
-      case FieldPositionEnum.ShortStop:
-        return shortStopPosition;
-      case FieldPositionEnum.ThirdBase:
-        return thirdBasePosition;
-      default:
-        throw new Error("Not implemented position: " + position);
-    }
-  };
+  // let getPositionCoordinates = (
+  //   position: FieldPositionEnum,
+  // ): { x: number; y: number } => {
+  //   switch (position) {
+  //     case FieldPositionEnum.FirstBase:
+  //       return firstBasePosition;
+  //     case FieldPositionEnum.CenterField:
+  //       return centerFieldPosition;
+  //     case FieldPositionEnum.LeftField:
+  //       return leftFieldPosition;
+  //     case FieldPositionEnum.RightField:
+  //       return rightFieldPosition;
+  //     case FieldPositionEnum.SecondBase:
+  //       return secondBasePosition;
+  //     case FieldPositionEnum.ShortStop:
+  //       return shortStopPosition;
+  //     case FieldPositionEnum.ThirdBase:
+  //       return thirdBasePosition;
+  //     default:
+  //       throw new Error("Not implemented position: " + position);
+  //   }
+  // };
 
-  let getPlayerBaseCoordinates = (
-    playerId: number,
-    bases: BaseState,
-  ): { x: number; y: number } | undefined => {
-    if (playerId == bases.atBat) {
-      return homeBaseLocation;
-    } else if (bases.firstBase.length > 0 && playerId == bases.firstBase[0]) {
-      return firstBaseLocation;
-    } else if (bases.secondBase.length > 0 && playerId == bases.secondBase[0]) {
-      return secondBaseLocation;
-    } else if (bases.thirdBase.length > 0 && playerId == bases.thirdBase[0]) {
-      return thirdBaseLocation;
-    }
-    return undefined;
-  };
+  // let getPlayerBaseCoordinates = (
+  //   playerId: number,
+  //   bases: BaseState,
+  // ): { x: number; y: number } | undefined => {
+  //   if (playerId == bases.atBat) {
+  //     return homeBaseLocation;
+  //   } else if (bases.firstBase.length > 0 && playerId == bases.firstBase[0]) {
+  //     return firstBaseLocation;
+  //   } else if (bases.secondBase.length > 0 && playerId == bases.secondBase[0]) {
+  //     return secondBaseLocation;
+  //   } else if (bases.thirdBase.length > 0 && playerId == bases.thirdBase[0]) {
+  //     return thirdBaseLocation;
+  //   }
+  //   return undefined;
+  // };
 
   // let getPlayerFieldCoordinates = (
   //   playerId: number,
@@ -130,85 +127,85 @@
       offenseTeam = match.team2;
       defenseTeam = match.team1;
     }
-    ballLocations = [{ ...homeBaseLocation, color: "white" }];
-    if (match.log && match.log.rounds.length > 0) {
-      let currentRound = match.log.rounds[match.log.rounds.length - 1];
-      let lastTurn = currentRound.turns[currentRound.turns.length - 1];
-      if (lastTurn.events.length > 0) {
-        let swingEvent = lastTurn.events.find((e: any) => "swing" in e); // TODO how to return swing
-        if (swingEvent && "swing" in swingEvent) {
-          if ("foul" in swingEvent.swing.outcome) {
-            ballLocations.push({ x: 100, y: 110, color: "red" });
-          } else if ("hit" in swingEvent.swing.outcome) {
-            if ("stands" in swingEvent.swing.outcome.hit) {
-              // Homerun
-              ballLocations.push({ x: 45, y: -5, color: "blue" });
-            } else {
-              let ballLocation = getPositionCoordinates(
-                toEnum(swingEvent.swing.outcome.hit),
-              );
-              ballLocations.push({ ...ballLocation, color: "white" });
-              let throwEvent = lastTurn.events.find((e) => "throw" in e); // TODO how to return throw
-              if (throwEvent && "throw" in throwEvent) {
-                let or = <T,>(a: [T] | [], b: [T] | []) =>
-                  a.length > 0 ? a : b;
-                let fixedBases: BaseState = {
-                  // Add any outted players to the bases from previous turn
-                  atBat:
-                    liveData?.liveState?.bases.thirdBase[0] ??
-                    match.liveState.bases.atBat,
-                  firstBase: or(
-                    match.liveState.bases.firstBase,
-                    liveData?.liveState?.bases.atBat
-                      ? [liveData.liveState.bases.atBat]
-                      : [],
-                  ),
-                  secondBase: or(
-                    match.liveState.bases.secondBase,
-                    liveData?.liveState?.bases.firstBase ?? [],
-                  ),
-                  thirdBase: or(
-                    match.liveState.bases.thirdBase,
-                    liveData?.liveState?.bases.secondBase ?? [],
-                  ),
-                };
-                let position = getPlayerBaseCoordinates(
-                  throwEvent.throw.to,
-                  fixedBases,
-                );
-                if (position === undefined) {
-                  // TODO currently there is an issue where liveState hasn't been initialized yet, but there was an
-                  // out last turn, so the player is not on the field anymore and we dont have the last turn base state
-                  // Add out position? or something
-                  console.error(
-                    "Could not find position for player to throw to: " +
-                      throwEvent.throw.to,
-                  );
-                } else {
-                  let hitByBallEvent = lastTurn.events.find(
-                    (e) => "hitByBall" in e,
-                  ); // TODO how to return hitByBall
-                  let color: string;
-                  if (
-                    hitByBallEvent &&
-                    "hitByBall" in hitByBallEvent &&
-                    hitByBallEvent.hitByBall.playerId == throwEvent.throw.to
-                  ) {
-                    color = "green";
-                  } else {
-                    color = "red";
-                  }
-                  ballLocations.push({ ...position, color: color });
-                }
-              }
-            }
-          } else {
-            // Strike
-            ballLocations.push({ x: 45, y: 110, color: "red" });
-          }
-        }
-      }
-    }
+    // ballLocations = [{ ...homeBaseLocation, color: "white" }];
+    // if (match.log && match.log.rounds.length > 0) {
+    //   let currentRound = match.log.rounds[match.log.rounds.length - 1];
+    //   let lastTurn = currentRound.turns[currentRound.turns.length - 1];
+    //   if (lastTurn.events.length > 0) {
+    //     let swingEvent = lastTurn.events.find((e: any) => "swing" in e); // TODO how to return swing
+    //     if (swingEvent && "swing" in swingEvent) {
+    //       if ("foul" in swingEvent.swing.outcome) {
+    //         ballLocations.push({ x: 100, y: 110, color: "red" });
+    //       } else if ("hit" in swingEvent.swing.outcome) {
+    //         if ("stands" in swingEvent.swing.outcome.hit) {
+    //           // Homerun
+    //           ballLocations.push({ x: 45, y: -5, color: "blue" });
+    //         } else {
+    //           let ballLocation = getPositionCoordinates(
+    //             toEnum(swingEvent.swing.outcome.hit),
+    //           );
+    //           ballLocations.push({ ...ballLocation, color: "white" });
+    //           let throwEvent = lastTurn.events.find((e) => "throw" in e); // TODO how to return throw
+    //           if (throwEvent && "throw" in throwEvent) {
+    //             let or = <T,>(a: [T] | [], b: [T] | []) =>
+    //               a.length > 0 ? a : b;
+    //             let fixedBases: BaseState = {
+    //               // Add any outted players to the bases from previous turn
+    //               atBat:
+    //                 liveData?.liveState?.bases.thirdBase[0] ??
+    //                 match.liveState.bases.atBat,
+    //               firstBase: or(
+    //                 match.liveState.bases.firstBase,
+    //                 liveData?.liveState?.bases.atBat
+    //                   ? [liveData.liveState.bases.atBat]
+    //                   : [],
+    //               ),
+    //               secondBase: or(
+    //                 match.liveState.bases.secondBase,
+    //                 liveData?.liveState?.bases.firstBase ?? [],
+    //               ),
+    //               thirdBase: or(
+    //                 match.liveState.bases.thirdBase,
+    //                 liveData?.liveState?.bases.secondBase ?? [],
+    //               ),
+    //             };
+    //             let position = getPlayerBaseCoordinates(
+    //               throwEvent.throw.to,
+    //               fixedBases,
+    //             );
+    //             if (position === undefined) {
+    //               // TODO currently there is an issue where liveState hasn't been initialized yet, but there was an
+    //               // out last turn, so the player is not on the field anymore and we dont have the last turn base state
+    //               // Add out position? or something
+    //               console.error(
+    //                 "Could not find position for player to throw to: " +
+    //                   throwEvent.throw.to,
+    //               );
+    //             } else {
+    //               let hitByBallEvent = lastTurn.events.find(
+    //                 (e) => "hitByBall" in e,
+    //               ); // TODO how to return hitByBall
+    //               let color: string;
+    //               if (
+    //                 hitByBallEvent &&
+    //                 "hitByBall" in hitByBallEvent &&
+    //                 hitByBallEvent.hitByBall.playerId == throwEvent.throw.to
+    //               ) {
+    //                 color = "green";
+    //               } else {
+    //                 color = "red";
+    //               }
+    //               ballLocations.push({ ...position, color: color });
+    //             }
+    //           }
+    //         }
+    //       } else {
+    //         // Strike
+    //         ballLocations.push({ x: 45, y: 110, color: "red" });
+    //       }
+    //     }
+    //   }
+    // }
     liveData = {
       liveState: match.liveState,
       offenseTeam: offenseTeam,
@@ -326,7 +323,7 @@
       />
 
       <!-- Baseball -->
-      <FieldBall origin={pitcherPosition} locations={ballLocations} />
+      <!-- <FieldBall origin={pitcherPosition} locations={ballLocations} /> -->
 
       <!-- Text -->
       <text x={60} y={88} font-size={3} fill="white">

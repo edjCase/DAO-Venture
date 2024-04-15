@@ -2,9 +2,9 @@
   import PlayerRoster from "../player/PlayerRoster.svelte";
   import MatchHistory from "../match/MatchHistory.svelte";
   import { Button, TabItem, Tabs } from "flowbite-svelte";
-  import { TeamWithId } from "../../ic-agent/declarations/league";
+  import { Team } from "../../ic-agent/declarations/league";
   import TeamLogo from "./TeamLogo.svelte";
-  export let team: TeamWithId;
+  export let team: Team;
 
   let links: { name: string; url: string }[] = []; // TODO
 </script>

@@ -24,7 +24,7 @@ actor : Types.StadiumActor {
     type FieldPosition = FieldPosition.FieldPosition;
     type MatchAura = MatchAura.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
-    type TeamWithId = Team.TeamWithId;
+    type Team = Team.Team;
 
     type MatchGroupId = Nat;
 

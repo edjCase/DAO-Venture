@@ -10,7 +10,7 @@ import Components "mo:datetime/Components";
 
 module {
     public type LeagueActor = actor {
-        getTeams : query () -> async [Team.TeamWithId];
+        getTeams : query () -> async [Team.Team];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getTeamStandings : query () -> async GetTeamStandingsResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;

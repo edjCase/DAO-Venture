@@ -382,12 +382,13 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Vec(TeamStandingInfo),
     'notFound' : IDL.Null,
   });
-  const TeamWithId = IDL.Record({
+  const Team = IDL.Record({
     'id' : IDL.Nat,
     'motto' : IDL.Text,
     'name' : IDL.Text,
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'description' : IDL.Text,
+    'entropy' : IDL.Nat,
     'logoUrl' : IDL.Text,
   });
   const PlayerId = IDL.Nat32;
@@ -528,7 +529,7 @@ export const idlFactory = ({ IDL }) => {
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
     'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
-    'getTeams' : IDL.Func([], [IDL.Vec(TeamWithId)], ['query']),
+    'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
     'onMatchGroupComplete' : IDL.Func(
         [OnMatchGroupCompleteRequest],
         [OnMatchGroupCompleteResult],

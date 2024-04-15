@@ -10,14 +10,12 @@ module {
     public type TeamIdOrTie = TeamId or { #tie };
 
     public type Team = {
+        id : Nat;
         name : Text;
         logoUrl : Text;
         motto : Text;
         description : Text;
+        entropy : Nat;
         color : (Nat8, Nat8, Nat8);
-    };
-
-    public type TeamWithId = Team and {
-        id : Nat;
     };
 };

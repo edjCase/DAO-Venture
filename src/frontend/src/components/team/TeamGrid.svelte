@@ -7,7 +7,7 @@
   import { userStore } from "../../stores/UserStore";
   import { identityStore } from "../../stores/IdentityStore";
   import { User } from "../../ic-agent/declarations/users";
-  import { TeamWithId } from "../../ic-agent/declarations/league";
+  import { Team } from "../../ic-agent/declarations/league";
   import LoadingButton from "../common/LoadingButton.svelte";
 
   $: teams = $teamStore;
@@ -45,7 +45,7 @@
       console.error("Failed to set favorite team", result);
     }
   };
-  let selectedTeam: TeamWithId | undefined;
+  let selectedTeam: Team | undefined;
   $: selectedTeam = teams && teams[0];
 </script>
 

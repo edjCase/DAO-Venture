@@ -366,6 +366,15 @@ export interface TargetPosition {
   'position' : FieldPosition,
 }
 export type TargetTeam = { 'choosingTeam' : null };
+export interface Team {
+  'id' : bigint,
+  'motto' : string,
+  'name' : string,
+  'color' : [number, number, number],
+  'description' : string,
+  'entropy' : bigint,
+  'logoUrl' : string,
+}
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
   { 'seasonStandingIndex' : bigint };
@@ -400,14 +409,6 @@ export interface TeamStandingInfo {
   'losses' : bigint,
   'totalScore' : bigint,
 }
-export interface TeamWithId {
-  'id' : bigint,
-  'motto' : string,
-  'name' : string,
-  'color' : [number, number, number],
-  'description' : string,
-  'logoUrl' : string,
-}
 export type Time = bigint;
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export interface VoteOnProposalRequest {
@@ -440,7 +441,7 @@ export interface _SERVICE {
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
-  'getTeams' : ActorMethod<[], Array<TeamWithId>>,
+  'getTeams' : ActorMethod<[], Array<Team>>,
   'onMatchGroupComplete' : ActorMethod<
     [OnMatchGroupCompleteRequest],
     OnMatchGroupCompleteResult

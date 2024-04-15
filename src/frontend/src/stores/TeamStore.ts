@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { TeamStandingInfo, TeamWithId } from "../ic-agent/declarations/league";
+import { TeamStandingInfo, Team } from "../ic-agent/declarations/league";
 import { leagueAgentFactory } from "../ic-agent/League";
 import { TeamLinks } from "../ic-agent/declarations/teams";
 import { teamsAgentFactory } from "../ic-agent/Teams";
@@ -8,7 +8,7 @@ import { teamsAgentFactory } from "../ic-agent/Teams";
 
 
 export const teamStore = (() => {
-  const teamsStore = writable<TeamWithId[] | undefined>();
+  const teamsStore = writable<Team[] | undefined>();
   const teamStandingsWritable = writable<TeamStandingInfo[] | undefined>();
   const teamLinks = writable<TeamLinks[] | undefined>();
 
