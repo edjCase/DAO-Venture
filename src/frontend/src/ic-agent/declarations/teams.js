@@ -100,14 +100,18 @@ export const idlFactory = ({ IDL }) => {
     'ok' : PagedResult,
     'teamNotFound' : IDL.Null,
   });
-  const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Text });
+  const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
+  const ScenarioVote = IDL.Record({
+    'option' : IDL.Opt(IDL.Nat),
+    'votingPower' : IDL.Nat,
+  });
   const GetScenarioVoteResult = IDL.Variant({
-    'ok' : IDL.Record({ 'option' : IDL.Opt(IDL.Nat), 'votingPower' : IDL.Nat }),
+    'ok' : ScenarioVote,
     'notEligible' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
   });
   const GetScenarioVotingResultsRequest = IDL.Record({
-    'scenarioId' : IDL.Text,
+    'scenarioId' : IDL.Nat,
   });
   const ScenarioTeamVotingResult = IDL.Record({
     'option' : IDL.Nat,
@@ -123,7 +127,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EnergyDividend = IDL.Record({ 'teamId' : IDL.Nat, 'energy' : IDL.Nat });
   const OnScenarioEndRequest = IDL.Record({
-    'scenarioId' : IDL.Text,
+    'scenarioId' : IDL.Nat,
     'energyDividends' : IDL.Vec(EnergyDividend),
   });
   const OnScenarioEndResult = IDL.Variant({
@@ -132,7 +136,7 @@ export const idlFactory = ({ IDL }) => {
     'scenarioNotFound' : IDL.Null,
   });
   const OnScenarioStartRequest = IDL.Record({
-    'scenarioId' : IDL.Text,
+    'scenarioId' : IDL.Nat,
     'optionCount' : IDL.Nat,
   });
   const OnScenarioStartResult = IDL.Variant({
@@ -165,7 +169,7 @@ export const idlFactory = ({ IDL }) => {
     'teamNotFound' : IDL.Null,
   });
   const VoteOnScenarioRequest = IDL.Record({
-    'scenarioId' : IDL.Text,
+    'scenarioId' : IDL.Nat,
     'option' : IDL.Nat,
   });
   const VoteOnScenarioResult = IDL.Variant({

@@ -18,7 +18,6 @@
     $: teams = $teamStore;
 
     let selectedIndex = 0;
-    let id = "S1";
 
     let initialStart = new Date();
     let initialEnd = new Date(initialStart.getTime() + 1000 * 60 * 5);
@@ -41,7 +40,6 @@
             return;
         }
         let request: AddScenarioRequest = {
-            id: id,
             startTime: dateToNanoseconds(new Date(startTime)),
             endTime: dateToNanoseconds(new Date(endTime)),
             title: scenarios[selectedIndex].title,
@@ -53,17 +51,20 @@
         let leagueAgent = await leagueAgentFactory();
         let result = await leagueAgent.addScenario(request);
         if ("ok" in result) {
-            console.log("Created scenario: ", id);
+            console.log("Created scenario: ", scenarios[selectedIndex].title);
             scenarioStore.refetch();
         } else {
-            console.error("Failed to make scenario: ", id, result);
+            console.error(
+                "Failed to make scenario: ",
+                scenarios[selectedIndex].title,
+                result,
+            );
         }
     };
 </script>
 
 <Select {items} bind:value={selectedIndex} />
 
-<Input type="text" bind:value={id} />
 <Input type="datetime-local" bind:value={startTime} />
 <Input type="datetime-local" bind:value={endTime} />
 

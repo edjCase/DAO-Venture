@@ -23,7 +23,7 @@ module {
     };
 
     public type StableData = {
-        scenarioId : Text;
+        scenarioId : Nat;
         optionCount : Nat;
         votes : [Vote];
     };
@@ -35,17 +35,17 @@ module {
 
     public class MultiHandler(data : [StableData]) {
         let iter = data.vals()
-        |> Iter.map<StableData, (Text, Handler)>(
+        |> Iter.map<StableData, (Nat, Handler)>(
             _,
-            func(d : StableData) : (Text, Handler) = (d.scenarioId, Handler(d)),
+            func(d : StableData) : (Nat, Handler) = (d.scenarioId, Handler(d)),
         );
-        let handlers = HashMap.fromIter<Text, Handler>(iter, data.size(), Text.equal, Text.hash);
+        let handlers = HashMap.fromIter<Nat, Handler>(iter, data.size(), Nat.equal, Nat32.fromNat);
 
-        public func getHandler(scenarioId : Text) : ?Handler {
+        public func getHandler(scenarioId : Nat) : ?Handler {
             handlers.get(scenarioId);
         };
 
-        public func add(scenarioId : Text, optionCount : Nat, eligibleVoters : [VoterInfo]) {
+        public func add(scenarioId : Nat, optionCount : Nat, eligibleVoters : [VoterInfo]) {
             // TODO validate that no voter is repeated?
             let votes = eligibleVoters.vals()
             |> Iter.map(
@@ -62,20 +62,20 @@ module {
                 optionCount = optionCount;
                 votes = votes;
             };
-            let null = handlers.get(scenarioId) else Debug.trap("Scenario already exists with id: " # scenarioId);
+            let null = handlers.get(scenarioId) else Debug.trap("Scenario already exists with id: " # Nat.toText(scenarioId));
             handlers.put(scenarioId, Handler(data));
         };
 
-        public func remove(scenarioId : Text) : { #ok; #notFound } {
+        public func remove(scenarioId : Nat) : { #ok; #notFound } {
             let ?_ = handlers.remove(scenarioId) else return #notFound;
             #ok;
         };
 
         public func toStableData() : [StableData] {
             handlers.entries()
-            |> Iter.map<(Text, Handler), StableData>(
+            |> Iter.map<(Nat, Handler), StableData>(
                 _,
-                func(e : (Text, Handler)) : StableData = e.1.toStableData(),
+                func(e : (Nat, Handler)) : StableData = e.1.toStableData(),
             )
             |> Iter.toArray(_);
         };

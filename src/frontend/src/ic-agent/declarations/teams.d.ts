@@ -31,27 +31,25 @@ export type GetProposalResult = { 'ok' : Proposal } |
   { 'teamNotFound' : null };
 export type GetProposalsResult = { 'ok' : PagedResult } |
   { 'teamNotFound' : null };
-export interface GetScenarioVoteRequest { 'scenarioId' : string }
-export type GetScenarioVoteResult = {
-    'ok' : { 'option' : [] | [bigint], 'votingPower' : bigint }
-  } |
+export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
+export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
   { 'notEligible' : null } |
   { 'scenarioNotFound' : null };
-export interface GetScenarioVotingResultsRequest { 'scenarioId' : string }
+export interface GetScenarioVotingResultsRequest { 'scenarioId' : bigint }
 export type GetScenarioVotingResultsResult = { 'ok' : ScenarioVotingResults } |
   { 'notAuthorized' : null } |
   { 'scenarioNotFound' : null };
 export interface Link { 'url' : string, 'name' : string }
 export interface ModifyLinkContent { 'url' : [] | [string], 'name' : string }
 export interface OnScenarioEndRequest {
-  'scenarioId' : string,
+  'scenarioId' : bigint,
   'energyDividends' : Array<EnergyDividend>,
 }
 export type OnScenarioEndResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'scenarioNotFound' : null };
 export interface OnScenarioStartRequest {
-  'scenarioId' : string,
+  'scenarioId' : bigint,
   'optionCount' : bigint,
 }
 export type OnScenarioStartResult = { 'ok' : null } |
@@ -91,6 +89,10 @@ export interface ScenarioTeamVotingResult {
   'option' : bigint,
   'teamId' : bigint,
 }
+export interface ScenarioVote {
+  'option' : [] | [bigint],
+  'votingPower' : bigint,
+}
 export interface ScenarioVotingResults {
   'teamOptions' : Array<ScenarioTeamVotingResult>,
 }
@@ -125,7 +127,7 @@ export type VoteOnProposalResult = { 'ok' : null } |
   { 'votingClosed' : null } |
   { 'teamNotFound' : null };
 export interface VoteOnScenarioRequest {
-  'scenarioId' : string,
+  'scenarioId' : bigint,
   'option' : bigint,
 }
 export type VoteOnScenarioResult = { 'ok' : null } |

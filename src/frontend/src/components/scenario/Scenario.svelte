@@ -20,11 +20,19 @@
       }
     })();
   }
+  let stateLabel: string;
+  if ("resolved" in scenario.state) {
+    stateLabel = "Complete";
+  } else if ("inProgress" in scenario.state) {
+    stateLabel = "In Progress";
+  } else {
+    stateLabel = "Upcoming";
+  }
 </script>
 
 <div>
   <div class="text-3xl p-5">
-    {scenario.title}
+    {stateLabel}: {scenario.title}
   </div>
   <div class="p-5 pt-0">
     {@html scenario.description}
@@ -42,8 +50,6 @@
         options={scenario.options}
         userContext={user}
       />
-    {:else if "notStarted" in scenario.state}
-      Not Started
     {/if}
   </div>
 </div>

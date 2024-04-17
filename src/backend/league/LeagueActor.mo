@@ -274,19 +274,17 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    public query func getScenario(scenarioId : Text) : async Types.GetScenarioResult {
+    public query func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
         switch (scenarioHandler.getScenario(scenarioId)) {
             case (null) #notFound;
             case (?scenario) {
-                #ok(mapScenario(scenario));
+                #ok(scenario);
             };
         };
     };
 
     public query func getScenarios() : async Types.GetScenariosResult {
-        let openScenarios = scenarioHandler.getScenarios(false).vals()
-        |> Iter.map(_, mapScenario)
-        |> Iter.toArray(_);
+        let openScenarios = scenarioHandler.getScenarios(false);
         #ok(openScenarios);
     };
 
@@ -294,7 +292,6 @@ actor LeagueActor : Types.LeagueActor {
         if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
-        Debug.print("Adding scenario: " # scenario.id);
         switch (scenarioHandler.add<system>(scenario)) {
             case (#ok) #ok;
             case (#invalid(errors)) return #invalid(errors);
@@ -439,29 +436,6 @@ actor LeagueActor : Types.LeagueActor {
         };
         if (not anyAwards) {
             Debug.print("No user points to award, skipping...");
-        };
-    };
-
-    private func mapScenario(scenario : Scenario.Scenario) : Types.Scenario {
-        let options : [Scenario.ScenarioOption] = scenario.options
-        |> Iter.fromArray(_)
-        |> IterTools.mapEntries(
-            _,
-            func(i : Nat, option : Scenario.ScenarioOptionWithEffect) : Scenario.ScenarioOption {
-                {
-                    id = i;
-                    title = option.title;
-                    description = option.description;
-                };
-            },
-        )
-        |> Iter.toArray(_);
-        {
-            id = scenario.id;
-            title = scenario.title;
-            description = scenario.description;
-            options = options;
-            state = scenario.state;
         };
     };
 

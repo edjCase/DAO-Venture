@@ -24,7 +24,7 @@ module {
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (Nat) -> async GetProposalResult;
         getProposals : query (count : Nat, offset : Nat) -> async GetProposalsResult;
-        getScenario : query (Text) -> async GetScenarioResult;
+        getScenario : query (Nat) -> async GetScenarioResult;
         getScenarios : query () -> async GetScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
         clearTeams : () -> async (); // TODO remove
@@ -101,33 +101,13 @@ module {
     };
 
     public type GetScenarioResult = {
-        #ok : Scenario;
+        #ok : Scenario.Scenario;
         #notFound;
         #notStarted;
     };
 
     public type GetScenariosResult = {
-        #ok : [Scenario];
-    };
-
-    public type ScenarioStateResolved = {
-        teamChoices : [{
-            teamId : Nat;
-            option : Nat;
-        }];
-    };
-
-    public type Scenario = {
-        id : Text;
-        title : Text;
-        description : Text;
-        options : [Scenario.ScenarioOption];
-        state : {
-            #notStarted;
-            #inProgress;
-            #resolved : ScenarioStateResolved;
-        };
-
+        #ok : [Scenario.Scenario];
     };
 
     public type BenevolentDictatorState = {
@@ -210,7 +190,6 @@ module {
     };
 
     public type AddScenarioRequest = {
-        id : Text;
         startTime : Time.Time;
         endTime : Time.Time;
         title : Text;

@@ -46,6 +46,7 @@
     }
 </script>
 
+<div class="text-3xl text-center">Season</div>
 <div class="flex justify-around">
     <div>
         {#if matchGroupInProgress}
@@ -54,7 +55,7 @@
             <div class="text-xl text-center">
                 Next Matches in <Countdown date={nextMatchGroupDate} />
             </div>
-            <div class="flex justify-center">
+            <div class="flex justify-center mt-2">
                 <Button on:click={() => navigate("/season")}>
                     Make your predictions
                 </Button>
@@ -66,8 +67,5 @@
 
             <TeamLogo team={seasonChampion} size="md" />
         {/if}
-    </div>
-    <div class="flex items-center">
-        <Button on:click={() => navigate("/season")}>Details =></Button>
     </div>
 </div>

@@ -127,7 +127,7 @@ module {
     };
 
     public type OnScenarioEndRequest = {
-        scenarioId : Text;
+        scenarioId : Nat;
         energyDividends : [EnergyDividend];
     };
 
@@ -143,7 +143,7 @@ module {
     };
 
     public type OnScenarioStartRequest = {
-        scenarioId : Text;
+        scenarioId : Nat;
         optionCount : Nat;
     };
 
@@ -182,20 +182,22 @@ module {
     };
 
     public type GetScenarioVoteRequest = {
-        scenarioId : Text;
+        scenarioId : Nat;
+    };
+
+    public type ScenarioVote = {
+        option : ?Nat;
+        votingPower : Nat;
     };
 
     public type GetScenarioVoteResult = {
-        #ok : {
-            option : ?Nat;
-            votingPower : Nat;
-        };
+        #ok : ScenarioVote;
         #scenarioNotFound;
         #notEligible;
     };
 
     public type GetScenarioVotingResultsRequest = {
-        scenarioId : Text;
+        scenarioId : Nat;
     };
 
     public type ScenarioTeamVotingResult = {
@@ -219,7 +221,7 @@ module {
     };
 
     public type VoteOnScenarioRequest = {
-        scenarioId : Text;
+        scenarioId : Nat;
         option : Nat;
     };
 

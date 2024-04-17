@@ -2,7 +2,6 @@ import { MetaEffect, ScenarioOptionWithEffect } from "../ic-agent/declarations/l
 
 
 export interface Scenario {
-    'id': string,
     'title': string,
     'description': string,
     'metaEffect': MetaEffect,
@@ -12,7 +11,6 @@ export interface Scenario {
 
 export let scenarios: Scenario[] = [
     {
-        id: "ENERGY_CONTRIBUTION",
         title: "Energy Required",
         description: "The league needs at least 4 more energy for operations or the whole league will gain entropy.",
         options: [
@@ -87,7 +85,6 @@ export let scenarios: Scenario[] = [
         },
     },
     {
-        id: "TRAINING_BID",
         title: "Training bid",
         description: "Bid to boost your pitcher's throwing power through specialized training. The amount of training each pitcher receives will be proportional to their bid's size relative to the total bids placed.",
         options: [
@@ -155,7 +152,6 @@ export let scenarios: Scenario[] = [
         },
     },
     {
-        id: "TRAINING_LOTTERY",
         title: "Training lottery",
         description: "Enter the lottery to win +3 speed training for your first baseman. The more tickets you buy, the higher your chances of winning the training boost.",
         options: [
@@ -223,7 +219,6 @@ export let scenarios: Scenario[] = [
         },
     },
     {
-        id: "SCAVENGE",
         title: "Scavenge",
         description: "Scavenge for resources to improve your team.",
         options: [

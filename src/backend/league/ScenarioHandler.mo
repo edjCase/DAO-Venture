@@ -50,7 +50,7 @@ module {
     };
 
     type ScenarioData = {
-        id : Text;
+        id : Nat;
         title : Text;
         description : Text;
         options : [Scenario.ScenarioOptionWithEffect];
@@ -82,7 +82,8 @@ module {
     };
 
     public class Handler<system>(data : StableData, processEffectOutcomes : (outcomes : [Scenario.EffectOutcome]) -> async* ProcessEffectOutcomesResult) {
-        let scenarios : HashMap.HashMap<Text, ScenarioData> = toHashMap(data.scenarios);
+        let scenarios : HashMap.HashMap<Nat, ScenarioData> = toHashMap(data.scenarios);
+        var nextScenarioId = scenarios.size(); // TODO max id + 1
 
         public func toStableData() : StableData {
             {
@@ -91,7 +92,7 @@ module {
             };
         };
 
-        public func getScenario(id : Text) : ?Scenario.Scenario {
+        public func getScenario(id : Nat) : ?Scenario.Scenario {
             do ? {
                 let data = scenarios.get(id)!;
                 mapScenarioDataToScenario(data);
@@ -119,15 +120,14 @@ module {
                 case (#ok) {};
                 case (#invalid(errors)) return #invalid(errors);
             };
-            if (scenarios.get(scenario.id) != null) {
-                return #invalid(["Scenario with id '" #scenario.id # "' already exists"]);
-            };
-            let startTimerId = createStartTimer<system>(scenario.id, scenario.startTime);
+            let scenarioId = nextScenarioId;
+            nextScenarioId += 1;
+            let startTimerId = createStartTimer<system>(scenarioId, scenario.startTime);
             scenarios.put(
-                scenario.id,
+                scenarioId,
                 {
 
-                    id = scenario.id;
+                    id = scenarioId;
                     title = scenario.title;
                     description = scenario.description;
                     options = scenario.options;
@@ -143,7 +143,7 @@ module {
             #ok;
         };
 
-        private func start(scenarioId : Text) : async* StartScenarioResult {
+        private func start(scenarioId : Nat) : async* StartScenarioResult {
             let ?scenario = scenarios.get(scenarioId) else return #notFound;
             switch (scenario.state) {
                 case (#notStarted({ startTimerId })) {
@@ -172,7 +172,7 @@ module {
             };
         };
 
-        private func end(scenarioId : Text) : async* {
+        private func end(scenarioId : Nat) : async* {
             #ok;
             #scenarioNotFound;
         } {
@@ -227,11 +227,11 @@ module {
         };
 
         private func resolve(
-            scenarioId : Text,
+            scenarioId : Nat,
             scenarioTeams : [TeamScenarioData],
             prng : Prng,
         ) : ScenarioStateResolved {
-            let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # scenarioId);
+            let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
             resolveScenario(
                 prng,
                 scenario,
@@ -239,28 +239,28 @@ module {
             );
         };
 
-        private func createStartTimer<system>(scenarioId : Text, startTime : Time.Time) : Nat {
+        private func createStartTimer<system>(scenarioId : Nat, startTime : Time.Time) : Nat {
             createTimer<system>(
                 startTime,
                 func() : async* () {
-                    Debug.print("Starting scenario with timer. Scenario id: " # scenarioId);
+                    Debug.print("Starting scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     switch (await* start(scenarioId)) {
                         case (#ok) ();
-                        case (#alreadyStarted) Debug.trap("Scenario already started: " # scenarioId);
-                        case (#notFound) Debug.trap("Scenario not found: " # scenarioId);
+                        case (#alreadyStarted) Debug.trap("Scenario already started: " # Nat.toText(scenarioId));
+                        case (#notFound) Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
                     };
                 },
             );
         };
 
-        private func createEndTimer<system>(scenarioId : Text, endTime : Time.Time) : Nat {
+        private func createEndTimer<system>(scenarioId : Nat, endTime : Time.Time) : Nat {
             createTimer<system>(
                 endTime,
                 func() : async* () {
-                    Debug.print("Ending scenario with timer. Scenario id: " # scenarioId);
+                    Debug.print("Ending scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     switch (await* end(scenarioId)) {
                         case (#ok) ();
-                        case (#scenarioNotFound) Debug.trap("Scenario not found: " # scenarioId);
+                        case (#scenarioNotFound) Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
                     };
                 },
             );
@@ -320,7 +320,6 @@ module {
             case (#notStarted(_)) #notStarted;
             case (#inProgress(_)) #inProgress;
             case (#resolved(resolved)) #resolved({
-                resolved with
                 teamChoices = resolved.teamChoices.vals()
                 |> Iter.map(
                     _,
@@ -344,6 +343,8 @@ module {
         {
             id = data.id;
             title = data.title;
+            startTime = data.startTime;
+            endTime = data.endTime;
             description = data.description;
             options = data.options;
             metaEffect = data.metaEffect;
@@ -363,7 +364,7 @@ module {
         };
         let teamResults = switch (scenarioResults) {
             case (#ok(o)) o;
-            case (#scenarioNotFound) return Debug.trap("Scenario not found: " # scenario.id);
+            case (#scenarioNotFound) return Debug.trap("Scenario not found: " # Nat.toText(scenario.id));
             case (#notAuthorized) return Debug.trap("League is not authorized to get scenario results");
         };
 
@@ -422,9 +423,6 @@ module {
 
     public func validateScenario(scenario : Types.AddScenarioRequest) : ValidateScenarioResult {
         let errors = Buffer.Buffer<Text>(0);
-        if (TextX.isEmptyOrWhitespace(scenario.id)) {
-            errors.add("Scenario must have an id");
-        };
         if (TextX.isEmptyOrWhitespace(scenario.title)) {
             errors.add("Scenario must have a title");
         };
@@ -433,6 +431,9 @@ module {
         };
         if (scenario.options.size() < 2) {
             errors.add("Scenario must have at least 2 options");
+        };
+        if (scenario.teamIds.size() < 1) {
+            errors.add("Scenario must have at least 1 team");
         };
         var index = 0;
         for (option in Iter.fromArray(scenario.options)) {
@@ -713,14 +714,14 @@ module {
         };
     };
 
-    private func toHashMap(scenarios : [ScenarioData]) : HashMap.HashMap<Text, ScenarioData> {
+    private func toHashMap(scenarios : [ScenarioData]) : HashMap.HashMap<Nat, ScenarioData> {
         scenarios
         |> Iter.fromArray(_)
-        |> Iter.map<ScenarioData, (Text, ScenarioData)>(
+        |> Iter.map<ScenarioData, (Nat, ScenarioData)>(
             _,
-            func(scenario : ScenarioData) : (Text, ScenarioData) = (scenario.id, scenario),
+            func(scenario : ScenarioData) : (Nat, ScenarioData) = (scenario.id, scenario),
         )
-        |> HashMap.fromIter<Text, ScenarioData>(_, scenarios.size(), Text.equal, Text.hash);
+        |> HashMap.fromIter<Nat, ScenarioData>(_, scenarios.size(), Nat.equal, Nat32.fromNat);
 
     };
 };

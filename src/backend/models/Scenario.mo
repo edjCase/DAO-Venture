@@ -99,9 +99,11 @@ module {
     };
 
     public type Scenario = {
-        id : Text;
+        id : Nat;
         title : Text;
         description : Text;
+        startTime : Int;
+        endTime : Int;
         options : [ScenarioOptionWithEffect];
         metaEffect : MetaEffect;
         state : ScenarioState;

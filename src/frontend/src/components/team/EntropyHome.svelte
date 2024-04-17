@@ -30,6 +30,7 @@
     $: leagueEntropyPerecentage = (totalEntropy / entropyMaxThreshold) * 100;
 </script>
 
+<div class="text-3xl text-center">Entropy</div>
 <div>League Entropy: {totalEntropy}</div>
 <div>Collapse Threshold: {entropyMaxThreshold}</div>
 <div class="total-entropy-bar">

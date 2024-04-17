@@ -3,7 +3,6 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AddScenarioRequest {
-  'id' : string,
   'startTime' : Time,
   'title' : string,
   'endTime' : Time,
@@ -89,6 +88,19 @@ export type Effect = { 'allOf' : Array<Effect> } |
   } |
   { 'injury' : { 'target' : Target, 'injury' : Injury } } |
   { 'energy' : { 'value' : { 'flat' : bigint }, 'team' : TargetTeam } };
+export type EffectOutcome = {
+    'entropy' : { 'teamId' : bigint, 'delta' : bigint }
+  } |
+  {
+    'skill' : {
+      'duration' : Duration,
+      'skill' : Skill,
+      'target' : TargetInstance,
+      'delta' : bigint,
+    }
+  } |
+  { 'injury' : { 'target' : TargetInstance, 'injury' : Injury } } |
+  { 'energy' : { 'teamId' : bigint, 'delta' : bigint } };
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -289,22 +301,26 @@ export type ProposalStatusLogEntry = {
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
 export interface Scenario {
-  'id' : string,
+  'id' : bigint,
+  'startTime' : bigint,
   'title' : string,
+  'endTime' : bigint,
+  'metaEffect' : MetaEffect,
   'description' : string,
-  'state' : { 'notStarted' : null } |
-    { 'resolved' : ScenarioStateResolved } |
-    { 'inProgress' : null },
-  'options' : Array<ScenarioOption>,
+  'state' : ScenarioState,
+  'options' : Array<ScenarioOptionWithEffect>,
 }
-export interface ScenarioOption { 'title' : string, 'description' : string }
 export interface ScenarioOptionWithEffect {
   'title' : string,
   'description' : string,
   'effect' : Effect,
 }
+export type ScenarioState = { 'notStarted' : null } |
+  { 'resolved' : ScenarioStateResolved } |
+  { 'inProgress' : null };
 export interface ScenarioStateResolved {
   'teamChoices' : Array<{ 'option' : bigint, 'teamId' : bigint }>,
+  'effectOutcomes' : Array<EffectOutcome>,
 }
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
@@ -361,8 +377,15 @@ export type StartSeasonResult = { 'ok' : null } |
 export type Target = { 'teams' : Array<TargetTeam> } |
   { 'league' : null } |
   { 'positions' : Array<TargetPosition> };
+export type TargetInstance = { 'teams' : Array<bigint> } |
+  { 'league' : null } |
+  { 'positions' : Array<TargetPositionInstance> };
 export interface TargetPosition {
   'teamId' : TargetTeam,
+  'position' : FieldPosition,
+}
+export interface TargetPositionInstance {
+  'teamId' : bigint,
   'position' : FieldPosition,
 }
 export type TargetTeam = { 'choosingTeam' : null };
@@ -437,7 +460,7 @@ export interface _SERVICE {
   >,
   'getProposal' : ActorMethod<[bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[bigint, bigint], GetProposalsResult>,
-  'getScenario' : ActorMethod<[string], GetScenarioResult>,
+  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,

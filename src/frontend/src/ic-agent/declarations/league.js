@@ -102,7 +102,6 @@ export const idlFactory = ({ IDL }) => {
     'effect' : Effect,
   });
   const AddScenarioRequest = IDL.Record({
-    'id' : IDL.Text,
     'startTime' : Time,
     'title' : IDL.Text,
     'endTime' : Time,
@@ -206,25 +205,46 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const GetProposalsResult = IDL.Variant({ 'ok' : PagedResult });
+  const TargetPositionInstance = IDL.Record({
+    'teamId' : IDL.Nat,
+    'position' : FieldPosition,
+  });
+  const TargetInstance = IDL.Variant({
+    'teams' : IDL.Vec(IDL.Nat),
+    'league' : IDL.Null,
+    'positions' : IDL.Vec(TargetPositionInstance),
+  });
+  const EffectOutcome = IDL.Variant({
+    'entropy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
+    'skill' : IDL.Record({
+      'duration' : Duration,
+      'skill' : Skill,
+      'target' : TargetInstance,
+      'delta' : IDL.Int,
+    }),
+    'injury' : IDL.Record({ 'target' : TargetInstance, 'injury' : Injury }),
+    'energy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
+  });
   const ScenarioStateResolved = IDL.Record({
     'teamChoices' : IDL.Vec(
       IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
     ),
+    'effectOutcomes' : IDL.Vec(EffectOutcome),
   });
-  const ScenarioOption = IDL.Record({
-    'title' : IDL.Text,
-    'description' : IDL.Text,
+  const ScenarioState = IDL.Variant({
+    'notStarted' : IDL.Null,
+    'resolved' : ScenarioStateResolved,
+    'inProgress' : IDL.Null,
   });
   const Scenario = IDL.Record({
-    'id' : IDL.Text,
+    'id' : IDL.Nat,
+    'startTime' : IDL.Int,
     'title' : IDL.Text,
+    'endTime' : IDL.Int,
+    'metaEffect' : MetaEffect,
     'description' : IDL.Text,
-    'state' : IDL.Variant({
-      'notStarted' : IDL.Null,
-      'resolved' : ScenarioStateResolved,
-      'inProgress' : IDL.Null,
-    }),
-    'options' : IDL.Vec(ScenarioOption),
+    'state' : ScenarioState,
+    'options' : IDL.Vec(ScenarioOptionWithEffect),
   });
   const GetScenarioResult = IDL.Variant({
     'ok' : Scenario,
@@ -525,7 +545,7 @@ export const idlFactory = ({ IDL }) => {
         [GetProposalsResult],
         ['query'],
       ),
-    'getScenario' : IDL.Func([IDL.Text], [GetScenarioResult], ['query']),
+    'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
     'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),

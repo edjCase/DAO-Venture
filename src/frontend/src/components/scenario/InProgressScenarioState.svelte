@@ -1,30 +1,29 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { teamsAgentFactory } from "../../ic-agent/Teams";
-    import { ScenarioOption, Team } from "../../ic-agent/declarations/league";
+    import {
+        ScenarioOptionWithEffect,
+        Team,
+    } from "../../ic-agent/declarations/league";
     import { VoteOnScenarioRequest } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
     import LoadingButton from "../common/LoadingButton.svelte";
+    import { scenarioStore } from "../../stores/ScenarioStore";
 
-    export let scenarioId: string;
-    export let options: ScenarioOption[];
+    export let scenarioId: bigint;
+    export let options: ScenarioOptionWithEffect[];
     export let userContext: User | undefined;
 
     $: teams = $teamStore;
 
     let selectedChoice: number | undefined;
-    let voted: boolean = false;
+    let votedOrIneligible: boolean | undefined = undefined;
     let teamId: bigint | undefined;
     let isOwner: boolean = false;
     let team: Team | undefined;
     $: {
-        let teamIdIsDefined = teamId !== undefined;
         teamId = userContext?.team[0]?.id;
-        if (!teamIdIsDefined && teamId !== undefined) {
-            // If teamId was not defined, but now it is, refresh the vote
-            refreshVote();
-        }
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
         team = teams?.find((team) => team.id === teamId);
     }
@@ -51,73 +50,67 @@
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
             teamStore.refetch();
-            refreshVote();
+            scenarioStore.refetchVotes([scenarioId]);
         } else {
             console.error("Failed to vote for match: ", result);
         }
     };
-
-    let refreshVote = async () => {
-        if (teamId !== undefined) {
-            let teamsAgent = await teamsAgentFactory();
-            let result = await teamsAgent.getScenarioVote({ scenarioId });
-            if ("ok" in result) {
-                if (result.ok.option[0] === undefined) {
-                    selectedChoice = undefined;
-                    voted = false;
-                } else {
-                    selectedChoice = Number(result.ok.option[0]);
-                    voted = true;
-                }
+    scenarioStore.subscribeVotes((votes) => {
+        if (votes[Number(scenarioId)] !== undefined) {
+            let chosenOption = votes[Number(scenarioId)].option[0];
+            if (chosenOption === undefined) {
+                votedOrIneligible = false;
+                selectedChoice = undefined;
             } else {
-                console.error("Failed to get scenario vote: ", result);
+                votedOrIneligible = true;
+                selectedChoice = Number(chosenOption);
             }
+        } else {
+            votedOrIneligible = undefined;
+            selectedChoice = undefined;
         }
-    };
+    });
 </script>
 
 {#each options as { description }, index}
-    {#if !voted}
-        <div
-            class="border border-gray-300 p-4 rounded-lg flex-1 cursor-pointer text-left text-base text-white"
-            class:bg-gray-500={selectedChoice === index}
-            class:border-gray-500={selectedChoice === index}
-            class:bg-gray-800={selectedChoice !== index}
-            on:click={() => {
-                if (!voted) {
-                    selectedChoice = index;
-                }
-            }}
-            on:keypress={() => {}}
-            role="button"
-            tabindex={index}
-        >
-            <div class="">
+    <div
+        class="border border-gray-300 p-4 rounded-lg flex-1text-left text-base text-white"
+        class:bg-gray-500={selectedChoice === index}
+        class:border-gray-500={selectedChoice === index}
+        class:bg-gray-800={selectedChoice !== index}
+    >
+        {#if votedOrIneligible === false}
+            <div
+                class="w-full h-full flex items-center justify-center cursor-pointer"
+                on:click={() => {
+                    if (votedOrIneligible === false) {
+                        selectedChoice = index;
+                    }
+                }}
+                on:keypress={() => {}}
+                role="button"
+                tabindex={index}
+            >
                 {@html description}
             </div>
-        </div>
-    {:else}
-        <div
-            class="border border-gray-300 p-4 rounded-lg flex-1 text-left text-base text-white"
-            class:bg-gray-500={selectedChoice === index}
-            class:border-gray-500={selectedChoice === index}
-            class:bg-gray-800={selectedChoice !== index}
-        >
-            <div class="">
+        {:else}
+            <div>
                 {@html description}
             </div>
-        </div>
-    {/if}
+        {/if}
+    </div>
 {/each}
-{#if userContext && isOwner}
-    {#if !voted}
-        <div class="flex justify-center p-5">
-            <LoadingButton onClick={register}>
-                Submit Vote for Team {team?.name}
-            </LoadingButton>
-        </div>
+
+{#if votedOrIneligible === undefined}
+    Ineligible to vote
+    {#if !userContext || !isOwner}
+        <div>Want to participate in scenarios?</div>
+        <Button>Become a Team co-owner</Button>
     {/if}
-{:else}
-    <div>Want to participate in scenarios?</div>
-    <Button>Become a Team co-owner</Button>
+{:else if votedOrIneligible === false}
+    <div class="flex justify-center p-5">
+        <LoadingButton onClick={register}>
+            Submit Vote for Team {team?.name}
+        </LoadingButton>
+    </div>
 {/if}
