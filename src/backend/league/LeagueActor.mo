@@ -1,5 +1,4 @@
 import Principal "mo:base/Principal";
-import IterTools "mo:itertools/Iter";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Buffer "mo:base/Buffer";
@@ -332,7 +331,7 @@ actor LeagueActor : Types.LeagueActor {
             return #notAuthorized;
         };
         let leagueId = Principal.fromActor(LeagueActor);
-        await* teamsHandler.create(leagueId, request);
+        await* TeamsActor.create(leagueId, request);
     };
 
     public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {

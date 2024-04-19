@@ -3,6 +3,7 @@ import Dao "../Dao";
 import Skill "../models/Skill";
 import CommonTypes "../Types";
 import FieldPosition "../models/FieldPosition";
+import Team "../models/Team";
 
 module {
 
@@ -163,13 +164,17 @@ module {
     };
 
     public type CreateTeamRequest = {
-
+        name : Text;
+        logoUrl : Text;
+        motto : Text;
+        description : Text;
+        color : (Nat8, Nat8, Nat8);
     };
 
     public type CreateTeamResult = {
-        #ok : {
-            id : Nat;
-        };
+        #ok : Team.Team;
+        #nameTaken;
+        #populateTeamRosterCallError : Text;
         #notAuthorized;
     };
 
