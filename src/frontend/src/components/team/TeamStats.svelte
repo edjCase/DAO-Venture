@@ -6,6 +6,7 @@
     let wins: bigint | undefined;
     let losses: bigint | undefined;
     let entropy: bigint | undefined;
+    let energy: bigint | undefined;
 
     teamStore.subscribe((teams) => {
         const team = teams?.find((t) => t.id == teamId);
@@ -32,7 +33,7 @@
 </script>
 
 <div>
-    <div>Wins: {emptyOrValue(wins)}</div>
-    <div>Losses: {emptyOrValue(losses)}</div>
+    <div>Win/Loss: {emptyOrValue(wins)}/{emptyOrValue(losses)}</div>
+    <div>Energy: {emptyOrValue(energy)}</div>
     <div>Entropy: {emptyOrValue(entropy)}</div>
 </div>

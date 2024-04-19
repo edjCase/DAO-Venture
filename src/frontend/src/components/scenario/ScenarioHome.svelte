@@ -33,7 +33,6 @@
         votingStatus: string;
     })[] = [];
 
-    // Reactive statement that updates activeScenariosWithVotingStatus whenever activeScenarios or votes changes
     $: activeScenariosWithVotingStatus = activeScenarios.map((scenario) => ({
         ...scenario,
         votingStatus: getVotingStatus(scenario.id),

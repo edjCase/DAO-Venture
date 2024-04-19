@@ -19,10 +19,10 @@
   import Footer from "./components/common/Footer.svelte";
 </script>
 
-<main class="p-5 max-w-xl mx-auto h-screen">
+<main class="p-5 max-w-xl mx-auto h-screen mb-14">
   <Router>
     <Header />
-    <div class="mb-14">
+    <div>
       <Route path="/" component={Home} />
       <Route path="/scenarios" component={Scenarios} />
       <Route path="/season" component={Season} />
