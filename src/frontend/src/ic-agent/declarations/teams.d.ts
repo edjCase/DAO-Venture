@@ -11,8 +11,15 @@ export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
   { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
-export type CreateTeamRequest = {};
-export type CreateTeamResult = { 'ok' : { 'id' : bigint } } |
+export interface CreateTeamRequest {
+  'motto' : string,
+  'name' : string,
+  'color' : [number, number, number],
+  'description' : string,
+  'logoUrl' : string,
+}
+export type CreateTeamResult = { 'ok' : bigint } |
+  { 'nameTaken' : null } |
   { 'notAuthorized' : null };
 export interface EnergyDividend { 'teamId' : bigint, 'energy' : bigint }
 export type FieldPosition = { 'rightField' : null } |
@@ -109,10 +116,39 @@ export interface SwapPlayerPositionsContent {
   'position1' : FieldPosition,
   'position2' : FieldPosition,
 }
+export interface Team {
+  'id' : bigint,
+  'motto' : string,
+  'name' : string,
+  'color' : [number, number, number],
+  'description' : string,
+  'entropy' : bigint,
+  'logoUrl' : string,
+  'energy' : bigint,
+}
 export interface TeamLinks { 'links' : Array<Link>, 'teamId' : bigint }
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
+export type UpdateTeamColorResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
+export type UpdateTeamDescriptionResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
 export type UpdateTeamEnergyResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
+export type UpdateTeamEntropyResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
+export type UpdateTeamLogoResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
+export type UpdateTeamMottoResult = { 'ok' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
+export type UpdateTeamNameResult = { 'ok' : null } |
+  { 'nameTaken' : null } |
   { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
@@ -157,6 +193,7 @@ export interface _SERVICE {
     [GetScenarioVotingResultsRequest],
     GetScenarioVotingResultsResult
   >,
+  'getTeams' : ActorMethod<[], Array<Team>>,
   'onScenarioEnd' : ActorMethod<[OnScenarioEndRequest], OnScenarioEndResult>,
   'onScenarioStart' : ActorMethod<
     [OnScenarioStartRequest],
@@ -164,7 +201,19 @@ export interface _SERVICE {
   >,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
+  'updateTeamColor' : ActorMethod<
+    [bigint, [number, number, number]],
+    UpdateTeamColorResult
+  >,
+  'updateTeamDescription' : ActorMethod<
+    [bigint, string],
+    UpdateTeamDescriptionResult
+  >,
   'updateTeamEnergy' : ActorMethod<[bigint, bigint], UpdateTeamEnergyResult>,
+  'updateTeamEntropy' : ActorMethod<[bigint, bigint], UpdateTeamEntropyResult>,
+  'updateTeamLogo' : ActorMethod<[bigint, string], UpdateTeamLogoResult>,
+  'updateTeamMotto' : ActorMethod<[bigint, string], UpdateTeamMottoResult>,
+  'updateTeamName' : ActorMethod<[bigint, string], UpdateTeamNameResult>,
   'voteOnProposal' : ActorMethod<
     [bigint, VoteOnProposalRequest],
     VoteOnProposalResult

@@ -14,15 +14,22 @@ import CommonTypes "../Types";
 import PlayersActor "canister:players";
 import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
+import Team "../models/Team";
 
 module {
 
     public type StableData = {
+        id : Nat;
         leagueId : Principal;
-        teamId : Nat;
+        energy : Int;
+        name : Text;
+        logoUrl : Text;
+        motto : Text;
+        description : Text;
+        entropy : Nat;
+        color : (Nat8, Nat8, Nat8);
         dao : Dao.StableData<Types.ProposalContent>;
         links : [Types.Link];
-        energy : Int;
     };
 
     public class MultiHandler<system>(teams : [(Nat, StableData)]) {
@@ -55,12 +62,43 @@ module {
             Iter.toArray(handlers.entries());
         };
 
-        public func create(leagueId : Principal) : (Nat, Handler) {
+        public func getTeams() : [Team.Team] {
+            handlers.vals()
+            |> Iter.map<Handler, Team.Team>(
+                _,
+                func(handler : Handler) : Team.Team = handler.get(),
+            )
+            |> Iter.toArray(_);
+        };
+
+        public func create(
+            leagueId : Principal, // TODO this should be part of the data, but we don't have a way to pass it in yet
+            request : Types.CreateTeamRequest,
+        ) : async* Types.CreateTeamResult {
+            let nameAlreadyTaken = handlers.entries()
+            |> IterTools.any(
+                _,
+                func((_, v) : (Nat, Handler)) : Bool = v.get().name == request.name,
+            );
+
+            if (nameAlreadyTaken) {
+                return #nameTaken;
+            };
             let teamId = nextTeamId;
             nextTeamId += 1;
+            let team : Team.Team = {
+                id = teamId;
+                name = request.name;
+                logoUrl = request.logoUrl;
+                motto = request.motto;
+                description = request.description;
+                color = request.color;
+                entropy = 0; // TODO?
+                energy = 0;
+            };
             let handler = Handler({
+                team with
                 leagueId = leagueId;
-                teamId = teamId;
                 dao = {
                     proposals = [];
                     proposalDuration = #days(3);
@@ -70,18 +108,41 @@ module {
                     });
                 };
                 links = [];
-                energy = 0;
             });
             handlers.put(teamId, handler);
-            (teamId, handler);
+
+            // TODO add retry populating team roster
+
+            try {
+                let populateResult = await PlayersActor.populateTeamRoster(teamId);
+
+                switch (populateResult) {
+                    case (#ok(_)) {};
+                    case (#notAuthorized) {
+                        Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Nat.toText(teamId));
+                    };
+                    case (#missingFluff) {
+                        Debug.print("Error populating team roster: No unused player fluff available");
+                    };
+                };
+            } catch (err) {
+                Debug.print("Error populating team roster: " # Error.message(err));
+            };
+            return #ok(teamId);
         };
     };
 
     public class Handler(stableData : StableData) {
         let leagueId = stableData.leagueId;
-        let teamId = stableData.teamId;
+        let teamId = stableData.id;
         let links = Buffer.fromArray<Types.Link>(stableData.links);
         var energy = stableData.energy;
+        var entropy = stableData.entropy;
+        var name = stableData.name;
+        var logoUrl = stableData.logoUrl;
+        var motto = stableData.motto;
+        var description = stableData.description;
+        var color = stableData.color;
 
         func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Dao.OnExecuteResult {
             let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Dao.OnExecuteResult {
@@ -196,9 +257,27 @@ module {
         public func toStableData() : StableData {
             {
                 leagueId = leagueId;
-                teamId = teamId;
+                id = teamId;
                 dao = dao.toStableData();
                 links = Buffer.toArray(links);
+                energy = energy;
+                entropy = entropy;
+                name = name;
+                logoUrl = logoUrl;
+                motto = motto;
+                description = description;
+                color = color;
+            };
+        };
+        public func get() : Team.Team {
+            {
+                id = teamId;
+                name = name;
+                logoUrl = logoUrl;
+                motto = motto;
+                description = description;
+                color = color;
+                entropy = entropy;
                 energy = energy;
             };
         };
@@ -235,5 +314,35 @@ module {
             #ok;
         };
 
+        public func updateName(newName : Text) : () {
+            name := newName;
+        };
+
+        public func updateColor(newColor : (Nat8, Nat8, Nat8)) : () {
+            color := newColor;
+        };
+
+        public func updateLogo(newLogoUrl : Text) : () {
+            logoUrl := newLogoUrl;
+        };
+
+        public func updateMotto(newMotto : Text) : () {
+            motto := newMotto;
+        };
+
+        public func updateDescription(newDescription : Text) : () {
+            description := newDescription;
+        };
+
+        public func updateEntropy(delta : Int) : () {
+            let newEntropyInt : Int = entropy + delta;
+            let newEntropyNat : Nat = if (newEntropyInt <= 0) {
+                // Entropy cant be negative
+                0;
+            } else {
+                Int.abs(newEntropyInt);
+            };
+            entropy := newEntropyNat;
+        };
     };
 };

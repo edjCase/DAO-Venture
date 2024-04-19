@@ -152,10 +152,8 @@ export const idlFactory = ({ IDL }) => {
   const CreateTeamResult = IDL.Variant({
     'ok' : IDL.Nat,
     'nameTaken' : IDL.Null,
-    'noStadiumsExist' : IDL.Null,
     'notAuthorized' : IDL.Null,
     'teamsCallError' : IDL.Text,
-    'populateTeamRosterCallError' : IDL.Text,
   });
   const BenevolentDictatorState = IDL.Variant({
     'open' : IDL.Null,
@@ -402,15 +400,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Vec(TeamStandingInfo),
     'notFound' : IDL.Null,
   });
-  const Team = IDL.Record({
-    'id' : IDL.Nat,
-    'motto' : IDL.Text,
-    'name' : IDL.Text,
-    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
-    'description' : IDL.Text,
-    'entropy' : IDL.Nat,
-    'logoUrl' : IDL.Text,
-  });
   const PlayerId = IDL.Nat32;
   const PlayerMatchStatsWithId = IDL.Record({
     'playerId' : PlayerId,
@@ -496,7 +485,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const StartSeasonResult = IDL.Variant({
     'ok' : IDL.Null,
-    'noStadiumsExist' : IDL.Null,
     'notAuthorized' : IDL.Null,
     'seedGenerationError' : IDL.Text,
     'alreadyStarted' : IDL.Null,
@@ -521,7 +509,6 @@ export const idlFactory = ({ IDL }) => {
         [ClaimBenevolentDictatorRoleResult],
         [],
       ),
-    'clearTeams' : IDL.Func([], [], []),
     'closeSeason' : IDL.Func([], [CloseSeasonResult], []),
     'createProposal' : IDL.Func(
         [CreateProposalRequest],
@@ -549,7 +536,6 @@ export const idlFactory = ({ IDL }) => {
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
     'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
-    'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
     'onMatchGroupComplete' : IDL.Func(
         [OnMatchGroupCompleteRequest],
         [OnMatchGroupCompleteResult],

@@ -3,11 +3,12 @@ import Dao "../Dao";
 import Skill "../models/Skill";
 import CommonTypes "../Types";
 import FieldPosition "../models/FieldPosition";
-
+import Team "../models/Team";
 module {
 
     public type Actor = actor {
         setLeague : (id : Principal) -> async SetLeagueResult;
+        getTeams : query () -> async [Team.Team];
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
         createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
@@ -21,10 +22,53 @@ module {
         getLinks : query () -> async GetLinksResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         updateTeamEnergy : (teamId : Nat, delta : Int) -> async UpdateTeamEnergyResult;
+        updateTeamEntropy : (teamId : Nat, delta : Int) -> async UpdateTeamEntropyResult;
+        updateTeamMotto : (teamId : Nat, motto : Text) -> async UpdateTeamMottoResult;
+        updateTeamDescription : (teamId : Nat, description : Text) -> async UpdateTeamDescriptionResult;
+        updateTeamLogo : (teamId : Nat, logoUrl : Text) -> async UpdateTeamLogoResult;
+        updateTeamColor : (teamId : Nat, color : (Nat8, Nat8, Nat8)) -> async UpdateTeamColorResult;
+        updateTeamName : (teamId : Nat, name : Text) -> async UpdateTeamNameResult;
     };
 
     public type UpdateTeamEnergyResult = {
         #ok;
+        #notAuthorized;
+        #teamNotFound;
+    };
+
+    public type UpdateTeamEntropyResult = {
+        #ok;
+        #notAuthorized;
+        #teamNotFound;
+    };
+
+    public type UpdateTeamMottoResult = {
+        #ok;
+        #notAuthorized;
+        #teamNotFound;
+    };
+
+    public type UpdateTeamDescriptionResult = {
+        #ok;
+        #notAuthorized;
+        #teamNotFound;
+    };
+
+    public type UpdateTeamLogoResult = {
+        #ok;
+        #notAuthorized;
+        #teamNotFound;
+    };
+
+    public type UpdateTeamColorResult = {
+        #ok;
+        #notAuthorized;
+        #teamNotFound;
+    };
+
+    public type UpdateTeamNameResult = {
+        #ok;
+        #nameTaken;
         #notAuthorized;
         #teamNotFound;
     };
@@ -163,13 +207,16 @@ module {
     };
 
     public type CreateTeamRequest = {
-
+        name : Text;
+        logoUrl : Text;
+        motto : Text;
+        description : Text;
+        color : (Nat8, Nat8, Nat8);
     };
 
     public type CreateTeamResult = {
-        #ok : {
-            id : Nat;
-        };
+        #ok : Nat;
+        #nameTaken;
         #notAuthorized;
     };
 

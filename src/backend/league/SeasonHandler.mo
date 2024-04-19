@@ -36,7 +36,6 @@ module {
     public type StartSeasonResult = {
         #ok;
         #alreadyStarted;
-        #noStadiumsExist;
         #invalidArgs : Text;
     };
 
