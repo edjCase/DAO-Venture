@@ -2,13 +2,13 @@ import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
-import Text "mo:base/Text";
 import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
 import Array "mo:base/Array";
 import Buffer "mo:base/Buffer";
 import Prelude "mo:base/Prelude";
 import Types "Types";
+import IterTools "mo:itertools/Iter";
 
 module {
 
@@ -166,10 +166,11 @@ module {
             let teamResults = Buffer.Buffer<Types.ScenarioTeamVotingResult>(teamStats.size());
             for ((teamId, stats) in teamStats.entries()) {
                 var optionWithMostVotes : (Nat, Nat) = (0, 0);
-                for (option in stats.optionVotingPowers.vals()) {
-                    if (option > optionWithMostVotes.1) {
+
+                for ((option, optionVotingPower) in IterTools.enumerate(stats.optionVotingPowers.vals())) {
+                    if (optionVotingPower > optionWithMostVotes.1) {
                         // TODO what to do in a tie?
-                        optionWithMostVotes := (option, optionWithMostVotes.1);
+                        optionWithMostVotes := (option, optionVotingPower);
                     };
                 };
 

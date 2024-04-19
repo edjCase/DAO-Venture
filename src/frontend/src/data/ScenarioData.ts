@@ -99,7 +99,7 @@ export let scenarios: Scenario[] = [
                 effect: {
                     energy: {
                         team: { choosingTeam: null },
-                        value: { flat: BigInt(1) },
+                        value: { flat: BigInt(-1) },
                     }
                 },
             },
@@ -109,7 +109,7 @@ export let scenarios: Scenario[] = [
                 effect: {
                     energy: {
                         team: { choosingTeam: null },
-                        value: { flat: BigInt(2) },
+                        value: { flat: BigInt(-2) },
                     }
                 },
             },
@@ -119,7 +119,7 @@ export let scenarios: Scenario[] = [
                 effect: {
                     energy: {
                         team: { choosingTeam: null },
-                        value: { flat: BigInt(3) },
+                        value: { flat: BigInt(-3) },
                     }
                 },
             },
