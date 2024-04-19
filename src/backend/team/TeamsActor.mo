@@ -10,6 +10,7 @@ import ScenarioHandler "ScenarioHandler";
 import UsersActor "canister:users";
 import Dao "../Dao";
 import UserTypes "../users/Types";
+import Team "../models/Team";
 
 actor TeamsActor : Types.Actor {
 
@@ -46,7 +47,11 @@ actor TeamsActor : Types.Actor {
     #notAuthorized;
   };
 
-  public shared ({ caller }) func createTeam(_ : Types.CreateTeamRequest) : async Types.CreateTeamResult {
+  public shared query func getTeams() : async [Team.Team] {
+    multiTeamHandler.getTeams();
+  };
+
+  public shared ({ caller }) func createTeam(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
     let leagueId = switch (leagueIdOrNull) {
       case (null) Debug.trap("League not set");
       case (?id) id;
@@ -55,10 +60,7 @@ actor TeamsActor : Types.Actor {
     if (leagueId != caller) {
       return #notAuthorized;
     };
-    let (id, _) = multiTeamHandler.create(leagueId);
-    #ok({
-      id = id;
-    });
+    await* multiTeamHandler.create(leagueId, request);
   };
 
   public shared ({ caller }) func updateTeamEnergy(id : Nat, delta : Int) : async Types.UpdateTeamEnergyResult {
@@ -74,6 +76,84 @@ actor TeamsActor : Types.Actor {
       case (#ok) #ok;
       case (#notEnoughEnergy) Prelude.unreachable(); // Only happens when 0 energy is min
     };
+  };
+
+  public shared ({ caller }) func updateTeamEntropy(id : Nat, delta : Int) : async Types.UpdateTeamEntropyResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
+    handler.updateEntropy(delta);
+    #ok;
+  };
+
+  public shared ({ caller }) func updateTeamMotto(id : Nat, motto : Text) : async Types.UpdateTeamMottoResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
+    handler.updateMotto(motto);
+    #ok;
+  };
+
+  public shared ({ caller }) func updateTeamDescription(id : Nat, description : Text) : async Types.UpdateTeamDescriptionResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
+    handler.updateDescription(description);
+    #ok;
+  };
+
+  public shared ({ caller }) func updateTeamLogo(id : Nat, logoUrl : Text) : async Types.UpdateTeamLogoResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
+    handler.updateLogo(logoUrl);
+    #ok;
+  };
+
+  public shared ({ caller }) func updateTeamColor(id : Nat, color : (Nat8, Nat8, Nat8)) : async Types.UpdateTeamColorResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
+    handler.updateColor(color);
+    #ok;
+  };
+
+  public shared ({ caller }) func updateTeamName(id : Nat, name : Text) : async Types.UpdateTeamNameResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #notAuthorized;
+    };
+    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
+    handler.updateName(name);
+    #ok;
   };
 
   public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {

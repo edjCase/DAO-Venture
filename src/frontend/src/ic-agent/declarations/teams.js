@@ -53,9 +53,16 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
-  const CreateTeamRequest = IDL.Record({});
+  const CreateTeamRequest = IDL.Record({
+    'motto' : IDL.Text,
+    'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    'description' : IDL.Text,
+    'logoUrl' : IDL.Text,
+  });
   const CreateTeamResult = IDL.Variant({
-    'ok' : IDL.Record({ 'id' : IDL.Nat }),
+    'ok' : IDL.Nat,
+    'nameTaken' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
   const GetCyclesResult = IDL.Variant({
@@ -125,6 +132,16 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
   });
+  const Team = IDL.Record({
+    'id' : IDL.Nat,
+    'motto' : IDL.Text,
+    'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    'description' : IDL.Text,
+    'entropy' : IDL.Nat,
+    'logoUrl' : IDL.Text,
+    'energy' : IDL.Int,
+  });
   const EnergyDividend = IDL.Record({ 'teamId' : IDL.Nat, 'energy' : IDL.Nat });
   const OnScenarioEndRequest = IDL.Record({
     'scenarioId' : IDL.Nat,
@@ -151,8 +168,39 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
+  const UpdateTeamColorResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const UpdateTeamDescriptionResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
   const UpdateTeamEnergyResult = IDL.Variant({
     'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const UpdateTeamEntropyResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const UpdateTeamLogoResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const UpdateTeamMottoResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const UpdateTeamNameResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'nameTaken' : IDL.Null,
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
@@ -212,6 +260,7 @@ export const idlFactory = ({ IDL }) => {
         [GetScenarioVotingResultsResult],
         [],
       ),
+    'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
     'onScenarioEnd' : IDL.Func(
         [OnScenarioEndRequest],
         [OnScenarioEndResult],
@@ -224,9 +273,39 @@ export const idlFactory = ({ IDL }) => {
       ),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
+    'updateTeamColor' : IDL.Func(
+        [IDL.Nat, IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)],
+        [UpdateTeamColorResult],
+        [],
+      ),
+    'updateTeamDescription' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [UpdateTeamDescriptionResult],
+        [],
+      ),
     'updateTeamEnergy' : IDL.Func(
         [IDL.Nat, IDL.Int],
         [UpdateTeamEnergyResult],
+        [],
+      ),
+    'updateTeamEntropy' : IDL.Func(
+        [IDL.Nat, IDL.Int],
+        [UpdateTeamEntropyResult],
+        [],
+      ),
+    'updateTeamLogo' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [UpdateTeamLogoResult],
+        [],
+      ),
+    'updateTeamMotto' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [UpdateTeamMottoResult],
+        [],
+      ),
+    'updateTeamName' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [UpdateTeamNameResult],
         [],
       ),
     'voteOnProposal' : IDL.Func(

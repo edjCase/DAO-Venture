@@ -16,6 +16,7 @@ module {
         motto : Text;
         description : Text;
         entropy : Nat;
+        energy : Int;
         color : (Nat8, Nat8, Nat8);
     };
 };

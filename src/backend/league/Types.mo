@@ -10,7 +10,6 @@ import Components "mo:datetime/Components";
 
 module {
     public type LeagueActor = actor {
-        getTeams : query () -> async [Team.Team];
         getSeasonStatus : query () -> async Season.SeasonStatus;
         getTeamStandings : query () -> async GetTeamStandingsResult;
         startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
@@ -27,7 +26,6 @@ module {
         getScenario : query (Nat) -> async GetScenarioResult;
         getScenarios : query () -> async GetScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
-        clearTeams : () -> async (); // TODO remove
 
         claimBenevolentDictatorRole : () -> async ClaimBenevolentDictatorRoleResult;
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
@@ -209,7 +207,6 @@ module {
         #ok;
         #alreadyStarted;
         #idTaken;
-        #noStadiumsExist;
         #seedGenerationError : Text;
         #invalidArgs : Text;
         #notAuthorized;
@@ -255,9 +252,7 @@ module {
     public type CreateTeamResult = {
         #ok : Nat;
         #nameTaken;
-        #noStadiumsExist;
         #teamsCallError : Text;
         #notAuthorized;
-        #populateTeamRosterCallError : Text;
     };
 };

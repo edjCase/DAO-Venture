@@ -1,7 +1,7 @@
 import { writable } from "svelte/store";
-import { TeamStandingInfo, Team } from "../ic-agent/declarations/league";
+import { TeamStandingInfo } from "../ic-agent/declarations/league";
 import { leagueAgentFactory } from "../ic-agent/League";
-import { TeamLinks } from "../ic-agent/declarations/teams";
+import { Team, TeamLinks } from "../ic-agent/declarations/teams";
 import { teamsAgentFactory } from "../ic-agent/Teams";
 
 
@@ -13,8 +13,8 @@ export const teamStore = (() => {
   const teamLinks = writable<TeamLinks[] | undefined>();
 
   const refetch = async () => {
-    let leagueAgent = await leagueAgentFactory();
-    let teams = await leagueAgent.getTeams();
+    let teamsAgent = await teamsAgentFactory();
+    let teams = await teamsAgent.getTeams();
     teamsStore.set(teams);
   };
 

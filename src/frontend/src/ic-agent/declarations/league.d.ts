@@ -61,10 +61,8 @@ export interface CreateTeamRequest {
 }
 export type CreateTeamResult = { 'ok' : bigint } |
   { 'nameTaken' : null } |
-  { 'noStadiumsExist' : null } |
   { 'notAuthorized' : null } |
-  { 'teamsCallError' : string } |
-  { 'populateTeamRosterCallError' : string };
+  { 'teamsCallError' : string };
 export type DayOfWeek = { 'tuesday' : null } |
   { 'wednesday' : null } |
   { 'saturday' : null } |
@@ -368,7 +366,6 @@ export interface StartSeasonRequest {
   'weekDays' : Array<DayOfWeek>,
 }
 export type StartSeasonResult = { 'ok' : null } |
-  { 'noStadiumsExist' : null } |
   { 'notAuthorized' : null } |
   { 'seedGenerationError' : string } |
   { 'alreadyStarted' : null } |
@@ -389,15 +386,6 @@ export interface TargetPositionInstance {
   'position' : FieldPosition,
 }
 export type TargetTeam = { 'choosingTeam' : null };
-export interface Team {
-  'id' : bigint,
-  'motto' : string,
-  'name' : string,
-  'color' : [number, number, number],
-  'description' : string,
-  'entropy' : bigint,
-  'logoUrl' : string,
-}
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
   { 'seasonStandingIndex' : bigint };
@@ -449,7 +437,6 @@ export interface _SERVICE {
     [],
     ClaimBenevolentDictatorRoleResult
   >,
-  'clearTeams' : ActorMethod<[], undefined>,
   'closeSeason' : ActorMethod<[], CloseSeasonResult>,
   'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
@@ -464,7 +451,6 @@ export interface _SERVICE {
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
-  'getTeams' : ActorMethod<[], Array<Team>>,
   'onMatchGroupComplete' : ActorMethod<
     [OnMatchGroupCompleteRequest],
     OnMatchGroupCompleteResult

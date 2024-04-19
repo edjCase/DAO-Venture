@@ -62,6 +62,15 @@ module {
             Iter.toArray(handlers.entries());
         };
 
+        public func getTeams() : [Team.Team] {
+            handlers.vals()
+            |> Iter.map<Handler, Team.Team>(
+                _,
+                func(handler : Handler) : Team.Team = handler.get(),
+            )
+            |> Iter.toArray(_);
+        };
+
         public func create(
             leagueId : Principal, // TODO this should be part of the data, but we don't have a way to pass it in yet
             request : Types.CreateTeamRequest,
@@ -77,8 +86,18 @@ module {
             };
             let teamId = nextTeamId;
             nextTeamId += 1;
-            let handler = Handler({
+            let team : Team.Team = {
                 id = teamId;
+                name = request.name;
+                logoUrl = request.logoUrl;
+                motto = request.motto;
+                description = request.description;
+                color = request.color;
+                entropy = 0; // TODO?
+                energy = 0;
+            };
+            let handler = Handler({
+                team with
                 leagueId = leagueId;
                 dao = {
                     proposals = [];
@@ -89,31 +108,27 @@ module {
                     });
                 };
                 links = [];
-                energy = 0;
-                name = request.name;
-                logoUrl = request.logoUrl;
-                motto = request.motto;
-                description = request.description;
-                entropy = 0; // TODO?
-                color = request.color;
             });
             handlers.put(teamId, handler);
 
-            let populateResult = try {
-                await PlayersActor.populateTeamRoster(teamId);
+            // TODO add retry populating team roster
+
+            try {
+                let populateResult = await PlayersActor.populateTeamRoster(teamId);
+
+                switch (populateResult) {
+                    case (#ok(_)) {};
+                    case (#notAuthorized) {
+                        Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Nat.toText(teamId));
+                    };
+                    case (#missingFluff) {
+                        Debug.print("Error populating team roster: No unused player fluff available");
+                    };
+                };
             } catch (err) {
-                return #populateTeamRosterCallError(Error.message(err));
+                Debug.print("Error populating team roster: " # Error.message(err));
             };
-            switch (populateResult) {
-                case (#ok(_)) {};
-                case (#notAuthorized) {
-                    Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Nat.toText(teamInfo.id));
-                };
-                case (#missingFluff) {
-                    Debug.print("Error populating team roster: No unused player fluff available");
-                };
-            };
-            return #ok({ id = teamId });
+            return #ok(teamId);
         };
     };
 

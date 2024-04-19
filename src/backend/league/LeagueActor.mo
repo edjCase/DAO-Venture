@@ -10,25 +10,23 @@ import Bool "mo:base/Bool";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "Types";
 import UsersActor "canister:users";
-import Team "../models/Team";
 import Season "../models/Season";
 import UserTypes "../users/Types";
 import Scenario "../models/Scenario";
 import SeasonHandler "SeasonHandler";
 import PredictionHandler "PredictionHandler";
 import ScenarioHandler "ScenarioHandler";
-import TeamsHandler "TeamsHandler";
 import PlayersActor "canister:players";
 import TeamsActor "canister:teams";
 import Dao "../Dao";
 import StadiumActor "canister:stadium";
 
 actor LeagueActor : Types.LeagueActor {
-    type Team = Team.Team;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var stableData = {
         stadiumInitialized = false;
+        teamsInitialized = false;
         benevolentDictator : Types.BenevolentDictatorState = #open;
         season : SeasonHandler.StableData = {
             seasonStatus = #notStarted;
@@ -40,10 +38,6 @@ actor LeagueActor : Types.LeagueActor {
         };
         scenarios : ScenarioHandler.StableData = {
             scenarios = [];
-        };
-        teams : TeamsHandler.StableData = {
-            teams = [];
-            teamsInitialized = false;
         };
         dao : Dao.StableData<Types.ProposalContent> = {
             proposalDuration = #days(3);
@@ -68,8 +62,11 @@ actor LeagueActor : Types.LeagueActor {
                         };
                     };
                     case (#entropy(entropyEffect)) {
-                        teamsHandler.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
-                        true;
+                        let result = await TeamsActor.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
+                        switch (result) {
+                            case (#ok) true;
+                            case (#notAuthorized or #teamNotFound) false;
+                        };
                     };
                     case (#energy(e)) {
                         let result = await TeamsActor.updateTeamEnergy(e.teamId, e.delta);
@@ -102,9 +99,9 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     var stadiumInitialized = stableData.stadiumInitialized;
+    var teamsInitialized = stableData.teamsInitialized;
     var benevolentDictator : Types.BenevolentDictatorState = stableData.benevolentDictator;
     var predictionHandler = PredictionHandler.Handler(stableData.predictions);
-    var teamsHandler = TeamsHandler.Handler(stableData.teams);
     var scenarioHandler = ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
 
     let seasonEventHandler : SeasonHandler.EventHandler = {
@@ -123,6 +120,15 @@ actor LeagueActor : Types.LeagueActor {
             Debug.print("Season complete, clearing season data");
             predictionHandler.clear();
             // TODO teams reset energy/entropy? or is that a scenario thing
+
+            try {
+                switch (await TeamsActor.onSeasonEnd()) {
+                    case (#ok) ();
+                    case (#notAuthorized) Debug.print("Error: League is not authorized to notify team of season completion");
+                };
+            } catch (err) {
+                Debug.print("Failed to notify team of season completion: " # Error.message(err));
+            };
 
             // TODO handle failures
             try {
@@ -147,26 +153,53 @@ actor LeagueActor : Types.LeagueActor {
     var seasonHandler = SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
 
     func onExecuted(proposal : Types.Proposal) : async* Dao.OnExecuteResult {
+        // TODO change league proposal for team data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
             case (#changeTeamName(c)) {
-                teamsHandler.updateTeamName(c.teamId, c.name);
-                #ok;
+                let result = await TeamsActor.updateTeamName(c.teamId, c.name);
+                let error = switch (result) {
+                    case (#ok) return #ok;
+                    case (#notAuthorized) "League is not authorized";
+                    case (#teamNotFound) "Team not found";
+                    case (#nameTaken) "Name is already taken";
+                };
+                #err("Failed to update team name: " # error);
             };
             case (#changeTeamColor(c)) {
-                teamsHandler.updateTeamColor(c.teamId, c.color);
-                #ok;
+                let result = await TeamsActor.updateTeamColor(c.teamId, c.color);
+                let error = switch (result) {
+                    case (#ok) return #ok;
+                    case (#notAuthorized) "League is not authorized";
+                    case (#teamNotFound) "Team not found";
+                };
+                #err("Failed to update team color: " # error);
             };
             case (#changeTeamLogo(c)) {
-                teamsHandler.updateTeamLogo(c.teamId, c.logoUrl);
-                #ok;
+                let result = await TeamsActor.updateTeamLogo(c.teamId, c.logoUrl);
+                let error = switch (result) {
+                    case (#ok) return #ok;
+                    case (#notAuthorized) "League is not authorized";
+                    case (#teamNotFound) "Team not found";
+                };
+                #err("Failed to update team logo: " # error);
             };
             case (#changeTeamMotto(c)) {
-                teamsHandler.updateTeamMotto(c.teamId, c.motto);
-                #ok;
+                let result = await TeamsActor.updateTeamMotto(c.teamId, c.motto);
+                let error = switch (result) {
+                    case (#ok) return #ok;
+                    case (#notAuthorized) "League is not authorized";
+                    case (#teamNotFound) "Team not found";
+                };
+                #err("Failed to update team motto: " # error);
             };
             case (#changeTeamDescription(c)) {
-                teamsHandler.updateTeamDescription(c.teamId, c.description);
-                #ok;
+                let result = await TeamsActor.updateTeamDescription(c.teamId, c.description);
+                let error = switch (result) {
+                    case (#ok) return #ok;
+                    case (#notAuthorized) "League is not authorized";
+                    case (#teamNotFound) "Team not found";
+                };
+                #err("Failed to update team description: " # error);
             };
         };
     };
@@ -177,22 +210,22 @@ actor LeagueActor : Types.LeagueActor {
     system func preupgrade() {
         stableData := {
             stadiumInitialized = stadiumInitialized;
+            teamsInitialized = teamsInitialized;
             benevolentDictator = benevolentDictator;
             season = seasonHandler.toStableData();
             predictions = predictionHandler.toStableData();
             scenarios = scenarioHandler.toStableData();
-            teams = teamsHandler.toStableData();
             dao = dao.toStableData();
         };
     };
 
     system func postupgrade() {
         stadiumInitialized := stableData.stadiumInitialized;
+        teamsInitialized := stableData.teamsInitialized;
         benevolentDictator := stableData.benevolentDictator;
         seasonHandler := SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
         predictionHandler := PredictionHandler.Handler(stableData.predictions);
         scenarioHandler := ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
-        teamsHandler := TeamsHandler.Handler(stableData.teams);
         dao := Dao.Dao(stableData.dao, onExecuted, onRejected);
         dao.resetEndTimers<system>(); // TODO move into DAO
     };
@@ -215,21 +248,6 @@ actor LeagueActor : Types.LeagueActor {
 
     public query func getBenevolentDictatorState() : async Types.BenevolentDictatorState {
         benevolentDictator;
-    };
-
-    public query func getTeams() : async [Team] {
-        teamsHandler.getAll();
-    };
-
-    // TODO REMOVE ALL DELETING METHODS
-    public shared ({ caller }) func clearTeams() : async () {
-        if (not isLeagueOrDictator(caller)) {
-            Debug.trap("Not authorized to clear teams");
-        };
-        teamsHandler := TeamsHandler.Handler({
-            teamsInitialized = stableData.teams.teamsInitialized;
-            teams = [];
-        });
     };
 
     public query func getSeasonStatus() : async Season.SeasonStatus {
@@ -308,8 +326,9 @@ actor LeagueActor : Types.LeagueActor {
             return #seedGenerationError(Error.message(err));
         };
         await* initStadium(); // Hack to init stadium for calling
+        await* initTeams(); // Hack to init teams for calling
         let stadiumId = Principal.fromActor(StadiumActor);
-        let teamsArray = teamsHandler.getAll();
+        let teamsArray = await TeamsActor.getTeams();
 
         let allPlayers = await PlayersActor.getAllPlayers();
 
@@ -330,8 +349,12 @@ actor LeagueActor : Types.LeagueActor {
         if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
-        let leagueId = Principal.fromActor(LeagueActor);
-        await* TeamsActor.create(leagueId, request);
+        await* initTeams(); // Hack to init teams for calling
+        try {
+            await TeamsActor.createTeam(request);
+        } catch (err) {
+            return #teamsCallError(Error.message(err));
+        };
     };
 
     public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {
@@ -382,7 +405,6 @@ actor LeagueActor : Types.LeagueActor {
             return #notAuthorized;
         };
         let result = await* seasonHandler.close();
-        await* teamsHandler.onSeasonEnd();
         result;
     };
 
@@ -454,6 +476,13 @@ actor LeagueActor : Types.LeagueActor {
         if (not stadiumInitialized) {
             let #ok = await StadiumActor.setLeague(Principal.fromActor(LeagueActor)) else Debug.trap("Failed to set league on stadium");
             stadiumInitialized := true;
+        };
+    };
+
+    private func initTeams() : async* () {
+        if (not teamsInitialized) {
+            let #ok = await TeamsActor.setLeague(Principal.fromActor(LeagueActor)) else Debug.trap("Failed to set league on teams");
+            teamsInitialized := true;
         };
     };
 };
