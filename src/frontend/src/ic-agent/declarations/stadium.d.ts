@@ -233,7 +233,8 @@ export interface TeamState {
   'logoUrl' : string,
   'positions' : TeamPositions,
 }
-export type TickMatchGroupResult = { 'completed' : null } |
+export type TickMatchGroupResult = { 'notAuthorized' : null } |
+  { 'completed' : null } |
   { 'matchGroupNotFound' : null } |
   {
     'onStartCallbackError' : { 'notAuthorized' : null } |
@@ -256,6 +257,7 @@ export interface _SERVICE {
     [CancelMatchGroupRequest],
     CancelMatchGroupResult
   >,
+  'finishMatchGroup' : ActorMethod<[bigint], undefined>,
   'getMatchGroup' : ActorMethod<[bigint], [] | [MatchGroupWithId]>,
   'getMatchGroups' : ActorMethod<[], Array<MatchGroupWithId>>,
   'resetTickTimer' : ActorMethod<[bigint], ResetTickTimerResult>,

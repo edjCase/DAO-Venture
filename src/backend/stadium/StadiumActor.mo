@@ -19,7 +19,7 @@ import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
 import Season "../models/Season";
 
-actor : Types.StadiumActor {
+actor StadiumActor : Types.StadiumActor {
     type PlayerState = Types.PlayerState;
     type FieldPosition = FieldPosition.FieldPosition;
     type MatchAura = MatchAura.MatchAura;
@@ -132,9 +132,36 @@ actor : Types.StadiumActor {
         };
     };
 
-    public shared func tickMatchGroup(matchGroupId : Nat) : async Types.TickMatchGroupResult {
+    // TODO remove
+    public shared func finishMatchGroup(id : Nat) : async () {
+        // TODO check BDFN
+        let ?matchGroupz = getMatchGroupOrNull(id) else Debug.trap("Match group not found");
+        var matchGroup = matchGroupz;
+        var prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
+        label l loop {
+            switch (tickMatches(prng, matchGroup.matches)) {
+                case (#completed(_)) break l;
+                case (#inProgress(newMatches)) {
+                    addOrUpdateMatchGroup({
+                        matchGroup with
+                        id = id;
+                        matches = newMatches;
+                        currentSeed = prng.getCurrentSeed();
+                    });
+                    let ?newMG = getMatchGroupOrNull(id) else Debug.trap("Match group not found");
+                    matchGroup := newMG;
+                    prng := PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
+                };
+            };
+        };
+    };
+
+    public shared ({ caller }) func tickMatchGroup(id : Nat) : async Types.TickMatchGroupResult {
+        if (caller != Principal.fromActor(StadiumActor)) {
+            return #notAuthorized;
+        };
         let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
-        let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return #matchGroupNotFound;
+        let ?matchGroup = getMatchGroupOrNull(id) else return #matchGroupNotFound;
         let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
 
         switch (tickMatches(prng, matchGroup.matches)) {
@@ -164,7 +191,7 @@ actor : Types.StadiumActor {
                 Timer.cancelTimer(matchGroup.tickTimerId);
                 let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
                 let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
-                    id = matchGroupId;
+                    id = id;
                     matches = completedMatches;
                     playerStats = playerStats;
                 };
@@ -177,13 +204,13 @@ actor : Types.StadiumActor {
                 let errorMessage = switch (result) {
                     case (#ok) {
                         // Remove match group if successfully passed info to the league
-                        let matchGroupKey = buildMatchGroupKey(matchGroupId);
+                        let matchGroupKey = buildMatchGroupKey(id);
                         let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
                         matchGroups := newMatchGroups;
                         return #completed;
                     };
                     case (#notAuthorized) "Failed: Not authorized to complete match group";
-                    case (#matchGroupNotFound) "Failed: Match group not found - " # Nat.toText(matchGroupId);
+                    case (#matchGroupNotFound) "Failed: Match group not found - " # Nat.toText(id);
                     case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
                     case (#seasonNotOpen) "Failed: Season not open";
                     case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
@@ -196,7 +223,7 @@ actor : Types.StadiumActor {
             case (#inProgress(newMatches)) {
                 addOrUpdateMatchGroup({
                     matchGroup with
-                    id = matchGroupId;
+                    id = id;
                     matches = newMatches;
                     currentSeed = prng.getCurrentSeed();
                 });
@@ -241,6 +268,7 @@ actor : Types.StadiumActor {
         let message = try {
             switch (await tickMatchGroup(matchGroupId)) {
                 case (#matchGroupNotFound) "Match Group not found";
+                case (#notAuthorized) "Not authorized to tick match group";
                 case (#onStartCallbackError(err)) "On start callback error: " # debug_show (err);
                 case (#completed(_)) "Match Group completed";
                 case (#inProgress(_)) return (); // Dont log normal tick

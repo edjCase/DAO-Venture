@@ -16,6 +16,7 @@ module {
         setLeague : (id : Principal) -> async SetLeagueResult;
         getMatchGroup : query (id : Nat) -> async ?MatchGroupWithId;
         tickMatchGroup : (id : Nat) -> async TickMatchGroupResult;
+        finishMatchGroup : (id : Nat) -> async (); // TODO remove
         resetTickTimer : (matchGroupId : Nat) -> async ResetTickTimerResult;
         startMatchGroup : (request : StartMatchGroupRequest) -> async StartMatchGroupResult;
         cancelMatchGroup : (request : CancelMatchGroupRequest) -> async CancelMatchGroupResult;
@@ -279,6 +280,7 @@ module {
             #matchGroupNotFound;
         };
         #completed;
+        #notAuthorized;
     };
 
     public type Player = {

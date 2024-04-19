@@ -265,6 +265,7 @@ export const idlFactory = ({ IDL }) => {
     'noMatchesSpecified' : IDL.Null,
   });
   const TickMatchGroupResult = IDL.Variant({
+    'notAuthorized' : IDL.Null,
     'completed' : IDL.Null,
     'matchGroupNotFound' : IDL.Null,
     'onStartCallbackError' : IDL.Variant({
@@ -282,6 +283,7 @@ export const idlFactory = ({ IDL }) => {
         [CancelMatchGroupResult],
         [],
       ),
+    'finishMatchGroup' : IDL.Func([IDL.Nat], [], []),
     'getMatchGroup' : IDL.Func(
         [IDL.Nat],
         [IDL.Opt(MatchGroupWithId)],

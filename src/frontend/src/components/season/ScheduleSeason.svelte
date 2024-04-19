@@ -8,11 +8,11 @@
     InProgressSeasonMatchGroupVariant,
     SeasonStatus,
   } from "../../ic-agent/declarations/league";
+  import { stadiumAgentFactory } from "../../ic-agent/Stadium";
 
   let now = new Date();
   let dayOfWeek = now.getDay();
   let initialDateValue = new Date(now.getTime() + 2 * 60 * 1000); // TODO
-
   let startTime: bigint = dateToNanoseconds(initialDateValue);
 
   let sunday: boolean = dayOfWeek === 0;
@@ -111,10 +111,25 @@
 
       if ("ok" in result) {
         console.log("Forced start next match group");
+
         scheduleStore.refetch();
       } else {
         console.error("Failed to force start next match group", result);
       }
+    };
+
+  const finishMatchGroup =
+    (matchGroups: InProgressSeasonMatchGroupVariant[]) => async () => {
+      let liveMatchId = matchGroups.findIndex(
+        (matchGroup) => "inProgress" in matchGroup,
+      );
+      if (liveMatchId < 0) {
+        console.error("No live match group");
+        return;
+      }
+      let stadiumAgent = await stadiumAgentFactory();
+      await stadiumAgent.finishMatchGroup(BigInt(liveMatchId));
+      console.log("Finished match group");
     };
 </script>
 
@@ -125,6 +140,9 @@
         on:click={forceStartNextMatchGroup(
           scheduleStatus.inProgress.matchGroups,
         )}>Force Start Next Match Group</Button
+      >
+      <Button on:click={finishMatchGroup(scheduleStatus.inProgress.matchGroups)}
+        >Finish Match Group</Button
       >
     {/if}
     <Button on:click={closeSeason}>Close Season</Button>
