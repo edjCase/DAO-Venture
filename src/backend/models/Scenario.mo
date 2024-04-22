@@ -15,6 +15,11 @@ module {
         position : FieldPosition.FieldPosition;
     };
 
+    public type LeagueOrTeamsTarget = {
+        #league;
+        #teams : [TargetTeam];
+    };
+
     public type Target = {
         #league;
         #teams : [TargetTeam];
@@ -38,7 +43,7 @@ module {
             injury : Player.Injury;
         };
         #entropy : {
-            team : TargetTeam;
+            target : LeagueOrTeamsTarget;
             delta : Int;
         };
         #energy : {

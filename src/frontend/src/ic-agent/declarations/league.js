@@ -2,6 +2,10 @@ export const idlFactory = ({ IDL }) => {
   const Effect = IDL.Rec();
   const Time = IDL.Int;
   const TargetTeam = IDL.Variant({ 'choosingTeam' : IDL.Null });
+  const LeagueOrTeamsTarget = IDL.Variant({
+    'teams' : IDL.Vec(TargetTeam),
+    'league' : IDL.Null,
+  });
   const Duration = IDL.Variant({
     'matches' : IDL.Nat,
     'indefinite' : IDL.Null,
@@ -45,7 +49,10 @@ export const idlFactory = ({ IDL }) => {
       'allOf' : IDL.Vec(Effect),
       'noEffect' : IDL.Null,
       'oneOf' : IDL.Vec(IDL.Tuple(IDL.Nat, Effect)),
-      'entropy' : IDL.Record({ 'team' : TargetTeam, 'delta' : IDL.Int }),
+      'entropy' : IDL.Record({
+        'target' : LeagueOrTeamsTarget,
+        'delta' : IDL.Int,
+      }),
       'skill' : IDL.Record({
         'duration' : Duration,
         'skill' : Skill,

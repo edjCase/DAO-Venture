@@ -20,7 +20,7 @@
     let selectedIndex = 0;
 
     let initialStart = new Date();
-    let initialEnd = new Date(initialStart.getTime() + 1000 * 60 * 5);
+    let initialEnd = new Date(initialStart.getTime() + 1000 * 60 * 2);
 
     let formatDateTimeLocal = (date: Date) => {
         let year = date.getFullYear();

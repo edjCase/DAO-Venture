@@ -21,7 +21,7 @@ export let scenarios: Scenario[] = [
                     allOf: [
                         {
                             entropy: {
-                                team: { choosingTeam: null },
+                                target: { teams: [{ choosingTeam: null }] },
                                 delta: BigInt(-1), // Lower entropy as aligning with league values
                             }
                         },
@@ -41,7 +41,7 @@ export let scenarios: Scenario[] = [
                 description: "Give no energy.",
                 effect: {
                     entropy: {
-                        team: { choosingTeam: null },
+                        target: { teams: [{ choosingTeam: null }] },
                         delta: BigInt(1), // Increase entropy from not contributing
                     }
                 },
@@ -59,13 +59,13 @@ export let scenarios: Scenario[] = [
                 threshold: BigInt(4), // Total energy contribution threshold
                 over: {
                     entropy: {
-                        team: { choosingTeam: null },
+                        target: { league: null },
                         delta: BigInt(-1), // Additional decrease in entropy for contributing teams if threshold is met
                     }
                 },
                 under: {
                     entropy: {
-                        team: { choosingTeam: null },
+                        target: { league: null },
                         delta: BigInt(1), // Increase in entropy for all teams if threshold is not met
                     }
                 },

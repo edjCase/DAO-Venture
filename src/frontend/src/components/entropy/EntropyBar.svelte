@@ -1,6 +1,6 @@
 <script lang="ts">
+    import { Team } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
-    import { Team } from "../../ic-agent/declarations/league";
     import { ChevronDownSolid } from "flowbite-svelte-icons";
     let teams: Team[] = [];
     let totalEntropy = 0;

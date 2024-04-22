@@ -179,10 +179,10 @@ module {
             let prng = PseudoRandomX.fromBlob(await Random.blob());
             let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
             let teamScenarioData = await* buildTeamScenarioData(scenario);
-            let resolvedScenarioState = resolve(
-                scenarioId,
-                teamScenarioData,
+            let resolvedScenarioState = resolveScenario(
                 prng,
+                scenario,
+                teamScenarioData,
             );
 
             let effectOutcomes = resolvedScenarioState.effectOutcomes.vals()
@@ -224,19 +224,6 @@ module {
                 },
             );
             #ok;
-        };
-
-        private func resolve(
-            scenarioId : Nat,
-            scenarioTeams : [TeamScenarioData],
-            prng : Prng,
-        ) : ScenarioStateResolved {
-            let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
-            resolveScenario(
-                prng,
-                scenario,
-                scenarioTeams,
-            );
         };
 
         private func createStartTimer<system>(scenarioId : Nat, startTime : Time.Time) : Nat {
@@ -360,12 +347,12 @@ module {
                 scenarioId = scenario.id;
             });
         } catch (err : Error.Error) {
-            return Debug.trap("Failed to get scenario voting results: " # Error.message(err));
+            Debug.trap("Failed to get scenario voting results: " # Error.message(err));
         };
         let teamResults = switch (scenarioResults) {
             case (#ok(o)) o;
-            case (#scenarioNotFound) return Debug.trap("Scenario not found: " # Nat.toText(scenario.id));
-            case (#notAuthorized) return Debug.trap("League is not authorized to get scenario results");
+            case (#scenarioNotFound) Debug.trap("Scenario not found: " # Nat.toText(scenario.id));
+            case (#notAuthorized) Debug.trap("League is not authorized to get scenario results");
         };
 
         for (teamId in Iter.fromArray(scenario.teamIds)) {
@@ -663,12 +650,20 @@ module {
                 resolveEffectInternal(prng, context, scenario, subEffect, outcomes);
             };
             case (#entropy(entropyEffect)) {
-                outcomes.add(
-                    #entropy({
-                        teamId = getTeamId(entropyEffect.team, context);
-                        delta = entropyEffect.delta;
-                    })
-                );
+                let teamIds : [Nat] = switch (entropyEffect.target) {
+                    case (#league) scenario.teamIds;
+                    case (#teams(teams)) teams.vals()
+                    |> Iter.map(_, func(team : Scenario.TargetTeam) : Nat = getTeamId(team, context))
+                    |> Iter.toArray(_);
+                };
+                for (teamId in teamIds.vals()) {
+                    outcomes.add(
+                        #entropy({
+                            teamId = teamId;
+                            delta = entropyEffect.delta;
+                        })
+                    );
+                };
             };
             case (#injury(injuryEffect)) {
                 outcomes.add(

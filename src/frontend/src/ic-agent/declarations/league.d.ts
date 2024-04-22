@@ -75,7 +75,7 @@ export type Duration = { 'matches' : bigint } |
 export type Effect = { 'allOf' : Array<Effect> } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<[bigint, Effect]> } |
-  { 'entropy' : { 'team' : TargetTeam, 'delta' : bigint } } |
+  { 'entropy' : { 'target' : LeagueOrTeamsTarget, 'delta' : bigint } } |
   {
     'skill' : {
       'duration' : Duration,
@@ -146,6 +146,8 @@ export type Injury = { 'twistedAnkle' : null } |
   { 'brokenArm' : null } |
   { 'brokenLeg' : null } |
   { 'concussion' : null };
+export type LeagueOrTeamsTarget = { 'teams' : Array<TargetTeam> } |
+  { 'league' : null };
 export type MatchAura = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
   { 'extraStrike' : null } |

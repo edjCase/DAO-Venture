@@ -7,6 +7,7 @@ import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Bool "mo:base/Bool";
+import Int "mo:base/Int";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "Types";
 import UsersActor "canister:users";
@@ -63,6 +64,7 @@ actor LeagueActor : Types.LeagueActor {
                     };
                     case (#entropy(entropyEffect)) {
                         let result = await TeamsActor.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
+                        Debug.print("Updating team entropy: " # Nat.toText(entropyEffect.teamId) # " " # Int.toText(entropyEffect.delta) # " " # debug_show (result));
                         switch (result) {
                             case (#ok) true;
                             case (#notAuthorized or #teamNotFound) false;
@@ -70,6 +72,7 @@ actor LeagueActor : Types.LeagueActor {
                     };
                     case (#energy(e)) {
                         let result = await TeamsActor.updateTeamEnergy(e.teamId, e.delta);
+                        Debug.print("Updating team energy: " # Nat.toText(e.teamId) # " " # Int.toText(e.delta) # " " # debug_show (result));
                         switch (result) {
                             case (#ok) true;
                             case (#notAuthorized or #teamNotFound) false;
@@ -77,6 +80,7 @@ actor LeagueActor : Types.LeagueActor {
                     };
                     case (#skill(s)) {
                         let result = await PlayersActor.applyEffects([#skill(s)]); // TODO optimize with bulk call
+                        Debug.print("Applying skill effect: " # debug_show (s) # " " # debug_show (result));
                         switch (result) {
                             case (#ok) true;
                             case (#notAuthorized) false;
