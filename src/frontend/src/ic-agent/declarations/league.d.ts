@@ -186,17 +186,18 @@ export type MetaEffect = {
       >,
     }
   } |
-  { 'pickASide' : { 'options' : Array<{ 'sideId' : string }> } } |
   {
     'proportionalBid' : {
       'prize' : {
-          'skill' : {
-            'total' : bigint,
-            'duration' : Duration,
-            'skill' : Skill,
-            'target' : { 'position' : FieldPosition },
-          }
-        },
+        'kind' : {
+            'skill' : {
+              'duration' : Duration,
+              'skill' : Skill,
+              'target' : { 'position' : FieldPosition },
+            }
+          },
+        'amount' : bigint,
+      },
       'options' : Array<{ 'bidValue' : bigint }>,
     }
   } |

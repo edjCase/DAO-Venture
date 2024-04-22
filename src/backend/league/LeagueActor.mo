@@ -332,8 +332,6 @@ actor LeagueActor : Types.LeagueActor {
 
         let allPlayers = await PlayersActor.getAllPlayers();
 
-        // TODO validate the scenarios are not used
-
         let prng = PseudoRandomX.fromBlob(seedBlob);
         await* seasonHandler.startSeason<system>(
             prng,

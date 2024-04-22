@@ -76,7 +76,7 @@ export let scenarios: Scenario[] = [
                         value: {
                             weightedChance: [
                                 [BigInt(1), BigInt(1)],
-                                [BigInt(1), BigInt(0)],
+                                [BigInt(0), BigInt(1)],
                             ]
                         }
                     },
@@ -127,11 +127,13 @@ export let scenarios: Scenario[] = [
         metaEffect: {
             proportionalBid: {
                 prize: {
-                    skill: {
-                        skill: { throwingPower: null },
-                        target: { position: { pitcher: null } },
-                        duration: { indefinite: null },
-                        total: BigInt(10),
+                    amount: BigInt(10),
+                    kind: {
+                        skill: {
+                            skill: { throwingPower: null },
+                            target: { position: { pitcher: null } },
+                            duration: { indefinite: null }
+                        }
                     }
                 },
                 options: [

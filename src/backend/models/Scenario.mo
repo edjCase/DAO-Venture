@@ -131,7 +131,7 @@ module {
             options : [{
                 value : {
                     #fixed : Int;
-                    #weightedChance : [(Nat, Int)];
+                    #weightedChance : [(Int, Nat)];
                 };
             }];
         };
@@ -140,11 +140,11 @@ module {
                 effect : Effect;
             }];
         };
-        #pickASide : {
-            options : [{
-                sideId : Text;
-            }];
-        };
+        // #pickASide : {
+        //     options : [{
+        //         sideId : Text;
+        //     }];
+        // };
         // #winnerTakeAllBid : {
         //     prize : Effect;
         //     options : [{
@@ -159,13 +159,15 @@ module {
         };
         #proportionalBid : {
             prize : {
-                #skill : {
-                    skill : Skill.Skill;
-                    target : {
-                        #position : FieldPosition.FieldPosition;
+                amount : Nat;
+                kind : {
+                    #skill : {
+                        skill : Skill.Skill;
+                        target : {
+                            #position : FieldPosition.FieldPosition;
+                        };
+                        duration : Duration;
                     };
-                    duration : Duration;
-                    total : Nat;
                 };
             };
             options : [{

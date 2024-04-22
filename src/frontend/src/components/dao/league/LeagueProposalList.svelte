@@ -58,9 +58,18 @@
         }
         throw new Error("Proposal not found: " + proposalId);
     };
+
+    let onRefresh = async () => {
+        await proposalStore.refetchLeagueProposals();
+    };
 </script>
 
-<GenericProposalList proposals={genericProposals} {onVote} let:proposalId>
+<GenericProposalList
+    proposals={genericProposals}
+    {onVote}
+    {onRefresh}
+    let:proposalId
+>
     <slot context="details">
         <LeagueProposalDetails proposal={getProposal(proposalId)} />
     </slot>

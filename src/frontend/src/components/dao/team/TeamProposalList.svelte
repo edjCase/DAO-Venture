@@ -73,9 +73,17 @@
             proposalStore.refetchTeamProposal(teamId, proposalId);
         }
     };
+    let onRefresh = async () => {
+        await proposalStore.refetchTeamProposals(teamId);
+    };
 </script>
 
-<GenericProposalList proposals={genericProposals} {onVote} let:proposalId>
+<GenericProposalList
+    proposals={genericProposals}
+    {onVote}
+    {onRefresh}
+    let:proposalId
+>
     <slot context="details">
         <TeamProposalDetails proposal={getProposal(proposalId)} />
     </slot>

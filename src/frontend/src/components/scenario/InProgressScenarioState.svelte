@@ -1,11 +1,11 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { teamsAgentFactory } from "../../ic-agent/Teams";
+    import { ScenarioOptionWithEffect } from "../../ic-agent/declarations/league";
     import {
-        ScenarioOptionWithEffect,
         Team,
-    } from "../../ic-agent/declarations/league";
-    import { VoteOnScenarioRequest } from "../../ic-agent/declarations/teams";
+        VoteOnScenarioRequest,
+    } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
     import LoadingButton from "../common/LoadingButton.svelte";

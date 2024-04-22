@@ -5,6 +5,8 @@
   import { userStore } from "../../stores/UserStore";
   import { User } from "../../ic-agent/declarations/users";
   import { getIdentity } from "../../stores/IdentityStore";
+  import Countdown from "../common/Countdown.svelte";
+  import { nanosecondsToDate } from "../../utils/DateUtils";
 
   export let scenario: Scenario;
 
@@ -50,6 +52,11 @@
         options={scenario.options}
         userContext={user}
       />
+      <div class="text-center text-xl">
+        Scenario ends in: <Countdown
+          date={nanosecondsToDate(scenario.endTime)}
+        />
+      </div>
     {/if}
   </div>
 </div>

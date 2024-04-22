@@ -418,7 +418,7 @@ module {
 
     type EffectContext = {
         #league;
-        #team : TeamScenarioData;
+        #team : Nat;
     };
 
     public func validateScenario(scenario : Types.AddScenarioRequest) : ValidateScenarioResult {
@@ -507,19 +507,14 @@ module {
     public func resolveScenario(
         prng : Prng,
         scenario : ScenarioData,
-        teams : [TeamScenarioData],
+        teamChoices : [TeamScenarioData],
     ) : ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
-        let teamChoices = Buffer.Buffer<TeamScenarioData>(0);
-        for (team in Iter.fromArray(teams)) {
-            let choice = scenario.options[team.option];
-            teamChoices.add({
-                id = team.id;
-                option = team.option;
-            });
+        for (teamData in Iter.fromArray(teamChoices)) {
+            let choice = scenario.options[teamData.option];
             resolveEffectInternal(
                 prng,
-                #team(team),
+                #team(teamData.id),
                 scenario,
                 choice.effect,
                 effectOutcomes,
@@ -528,25 +523,101 @@ module {
         switch (scenario.metaEffect) {
             case (#noEffect) ();
             case (#leagueChoice(leagueChoice)) {
-                let leagueOptionIndex = getMajorityOption(prng, teams);
+                let leagueOptionIndex = getMajorityOption(prng, teamChoices);
                 let leagueOption = leagueChoice.options[leagueOptionIndex];
                 resolveEffectInternal(prng, #league, scenario, leagueOption.effect, effectOutcomes);
             };
             case (#lottery(lottery)) {
-                // TODO
-            };
-            case (#pickASide(pickASide)) {
-                // TODO
+                let weightedTickets : [(Nat, Float)] = teamChoices.vals()
+                |> Iter.map<TeamScenarioData, (Nat, Float)>(
+                    _,
+                    func(teamData : TeamScenarioData) : (Nat, Float) = (teamData.id, Float.fromInt(lottery.options[teamData.option].tickets)),
+                )
+                |> Iter.toArray(_);
+                let winningTeamId = prng.nextArrayElementWeighted(weightedTickets);
+                resolveEffectInternal(prng, #team(winningTeamId), scenario, lottery.prize, effectOutcomes);
             };
             case (#proportionalBid(proportionalBid)) {
-                // TODO
+                let totalBid = Array.foldLeft(
+                    teamChoices,
+                    0,
+                    func(total : Nat, teamData : TeamScenarioData) : Nat = total + proportionalBid.options[teamData.option].bidValue,
+                );
+                for (teamData in teamChoices.vals()) {
+                    let percentOfPrize = Float.fromInt(proportionalBid.options[teamData.option].bidValue) / Float.fromInt(totalBid);
+                    let purpotionalValue = Float.toInt(percentOfPrize * Float.fromInt(proportionalBid.prize.amount)); // Round down
+                    if (purpotionalValue > 0) {
+
+                        let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {
+                            case (#skill(s)) {
+                                let target : Scenario.Target = switch (s.target) {
+                                    case (#position(p)) #positions([{
+                                        position = p;
+                                        teamId = #choosingTeam;
+                                    }]);
+                                };
+                                #skill({
+                                    delta = purpotionalValue;
+                                    duration = s.duration;
+                                    target = target;
+                                    skill = s.skill;
+                                });
+                            };
+                        };
+                        resolveEffectInternal(
+                            prng,
+                            #team(teamData.id),
+                            scenario,
+                            effect,
+                            effectOutcomes,
+                        );
+                    };
+                };
             };
             case (#threshold(threshold)) {
-                // TODO
+                type TeamValue = {
+                    teamId : Nat;
+                    value : Int;
+                };
+                let teamThresholdValues : [TeamValue] = teamChoices.vals()
+                |> Iter.map<TeamScenarioData, TeamValue>(
+                    _,
+                    func(teamData : TeamScenarioData) : TeamValue {
+                        let value : Int = switch (threshold.options[teamData.option].value) {
+                            case (#fixed(fixed)) fixed;
+                            case (#weightedChance(w)) {
+                                let wFloat : [(Int, Float)] = w.vals()
+                                |> Iter.map<(Int, Nat), (Int, Float)>(
+                                    _,
+                                    func((value, weight) : (Int, Nat)) : (Int, Float) = (value, Float.fromInt(weight)),
+                                )
+                                |> Iter.toArray(_);
+                                prng.nextArrayElementWeighted(wFloat);
+                            };
+                        };
+                        {
+                            teamId = teamData.id;
+                            value = value;
+                        };
+                    },
+                )
+                |> Iter.toArray(_);
+                let valueSum = Array.foldLeft(
+                    teamThresholdValues,
+                    0,
+                    func(total : Int, teamData : TeamValue) : Int = total + teamData.value,
+                );
+                let thresholdEffect = if (valueSum >= threshold.threshold) {
+                    threshold.over;
+                } else {
+                    threshold.under;
+                };
+
+                resolveEffectInternal(prng, #league, scenario, thresholdEffect, effectOutcomes);
             };
         };
         {
-            teamChoices = Buffer.toArray(teamChoices);
+            teamChoices = teamChoices;
             effectOutcomes = effectOutcomes.vals()
             |> Iter.map(
                 _,
@@ -678,7 +749,7 @@ module {
             case (#team(team)) team;
         };
         switch (team) {
-            case (#choosingTeam) choosingTeam.id;
+            case (#choosingTeam) choosingTeam;
         };
     };
 

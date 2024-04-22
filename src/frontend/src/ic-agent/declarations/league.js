@@ -73,22 +73,21 @@ export const idlFactory = ({ IDL }) => {
         IDL.Record({
           'value' : IDL.Variant({
             'fixed' : IDL.Int,
-            'weightedChance' : IDL.Vec(IDL.Tuple(IDL.Nat, IDL.Int)),
+            'weightedChance' : IDL.Vec(IDL.Tuple(IDL.Int, IDL.Nat)),
           }),
         })
       ),
     }),
-    'pickASide' : IDL.Record({
-      'options' : IDL.Vec(IDL.Record({ 'sideId' : IDL.Text })),
-    }),
     'proportionalBid' : IDL.Record({
-      'prize' : IDL.Variant({
-        'skill' : IDL.Record({
-          'total' : IDL.Nat,
-          'duration' : Duration,
-          'skill' : Skill,
-          'target' : IDL.Variant({ 'position' : FieldPosition }),
+      'prize' : IDL.Record({
+        'kind' : IDL.Variant({
+          'skill' : IDL.Record({
+            'duration' : Duration,
+            'skill' : Skill,
+            'target' : IDL.Variant({ 'position' : FieldPosition }),
+          }),
         }),
+        'amount' : IDL.Nat,
       }),
       'options' : IDL.Vec(IDL.Record({ 'bidValue' : IDL.Nat })),
     }),

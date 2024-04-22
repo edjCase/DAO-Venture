@@ -2,9 +2,12 @@
     import { Accordion, AccordionItem } from "flowbite-svelte";
     import { identityStore } from "../../stores/IdentityStore";
     import GenericProposal, { ProposalType } from "./GenericProposal.svelte";
+    import RefreshIcon from "../common/RefreshIcon.svelte";
+    import LoadingButton from "../common/LoadingButton.svelte";
 
     export let proposals: ProposalType[];
     export let onVote: (proposalId: bigint, vote: boolean) => Promise<void>;
+    export let onRefresh: () => Promise<void>;
 
     $: proposals = proposals.sort((a, b) => {
         return Number(b.timeStart - a.timeStart);
@@ -48,6 +51,11 @@
     };
 </script>
 
+<div class="flex justify-end">
+    <LoadingButton onClick={onRefresh}>
+        <RefreshIcon />
+    </LoadingButton>
+</div>
 <div class="flex justify-center">
     <div class="text-3xl text-center flex-grow">Recent Proposals</div>
 </div>
