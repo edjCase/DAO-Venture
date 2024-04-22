@@ -27,9 +27,41 @@ module {
         getScenarios : query () -> async GetScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
 
+        getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
+        voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
+
         claimBenevolentDictatorRole : () -> async ClaimBenevolentDictatorRoleResult;
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
+    };
+
+    public type GetScenarioVoteRequest = {
+        scenarioId : Nat;
+    };
+
+    public type ScenarioVote = {
+        option : ?Nat;
+        votingPower : Nat;
+    };
+
+    public type GetScenarioVoteResult = {
+        #ok : ScenarioVote;
+        #scenarioNotFound;
+        #notEligible;
+    };
+
+    public type VoteOnScenarioRequest = {
+        scenarioId : Nat;
+        option : Nat;
+    };
+
+    public type VoteOnScenarioResult = {
+        #ok;
+        #notEligible;
+        #scenarioNotFound;
+        #votingNotOpen;
+        #alreadyVoted;
+        #invalidOption;
     };
 
     public type ClaimBenevolentDictatorRoleResult = {

@@ -17,21 +17,18 @@ import Error "mo:base/Error";
 import Timer "mo:base/Timer";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
+import Prelude "mo:base/Prelude";
+import Principal "mo:base/Principal";
 import TextX "mo:xtended-text/TextX";
-import TeamTypes "../team/Types";
-import TeamsActor "canister:teams";
 import IterTools "mo:itertools/Iter";
+import UsersActor "canister:users";
+import UserTypes "../users/Types";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
         scenarios : [ScenarioData];
-    };
-
-    public type TeamScenarioData = {
-        id : Nat;
-        option : Nat;
     };
 
     public type AddScenarioResult = {
@@ -49,7 +46,17 @@ module {
         #ok : [EffectOutcomeData];
     };
 
-    type ScenarioData = {
+    public type VoterInfo = {
+        teamId : Nat;
+        id : Principal;
+        votingPower : Nat;
+    };
+
+    public type Vote = VoterInfo and {
+        option : ?Nat;
+    };
+
+    type ScenarioDataWithoutVotes = {
         id : Nat;
         title : Text;
         description : Text;
@@ -59,6 +66,14 @@ module {
         startTime : Time.Time;
         endTime : Time.Time;
         teamIds : [Nat];
+    };
+
+    public type ScenarioData = ScenarioDataWithoutVotes and {
+        votes : [Vote];
+    };
+
+    type MutableScenarioData = ScenarioDataWithoutVotes and {
+        votes : HashMap.HashMap<Principal, Vote>;
     };
 
     type ScenarioState = {
@@ -72,7 +87,7 @@ module {
     };
 
     public type ScenarioStateResolved = {
-        teamChoices : [TeamScenarioData];
+        teamChoices : [TeamVotingResult];
         effectOutcomes : [EffectOutcomeData];
     };
 
@@ -80,14 +95,27 @@ module {
         processed : Bool;
         outcome : Scenario.EffectOutcome;
     };
+    public type TeamVotingResult = {
+        id : Nat;
+        option : Nat;
+    };
 
-    public class Handler<system>(data : StableData, processEffectOutcomes : (outcomes : [Scenario.EffectOutcome]) -> async* ProcessEffectOutcomesResult) {
-        let scenarios : HashMap.HashMap<Nat, ScenarioData> = toHashMap(data.scenarios);
+    public class Handler<system>(
+        data : StableData,
+        processEffectOutcomes : (
+            outcomes : [Scenario.EffectOutcome]
+        ) -> async* ProcessEffectOutcomesResult,
+    ) {
+        let scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
         var nextScenarioId = scenarios.size(); // TODO max id + 1
 
         public func toStableData() : StableData {
             {
                 scenarios = scenarios.vals()
+                |> Iter.map<MutableScenarioData, ScenarioData>(
+                    _,
+                    toStableScenarioData,
+                )
                 |> Iter.toArray(_);
             };
         };
@@ -103,7 +131,7 @@ module {
             scenarios.vals()
             |> Iter.filter(
                 _,
-                func(scenario : ScenarioData) : Bool = switch (scenario.state) {
+                func(scenario : MutableScenarioData) : Bool = switch (scenario.state) {
                     case (#notStarted(_)) includeNotStarted;
                     case (#inProgress(_) or #resolved(_)) true;
                 },
@@ -115,11 +143,138 @@ module {
             |> Iter.toArray(_);
         };
 
-        public func add<system>(scenario : Types.AddScenarioRequest) : AddScenarioResult {
+        public func vote(
+            scenarioId : Nat,
+            voterId : Principal,
+            option : Nat,
+        ) : {
+            #ok;
+            #invalidOption;
+            #alreadyVoted;
+            #notEligible;
+            #scenarioNotFound;
+        } {
+
+            let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
+            let choiceExists = option < scenario.options.size();
+            if (not choiceExists) {
+                return #invalidOption;
+            };
+            let ?vote = scenario.votes.get(voterId) else return #notEligible;
+            if (vote.option != null) {
+                return #alreadyVoted;
+            };
+            scenario.votes.put(
+                voterId,
+                {
+                    vote with
+                    option = ?option;
+                },
+            );
+            switch (calculateResultsInternal(scenario, false)) {
+                case (#noConsensus) ();
+                case (#consensus(_)) {
+                    // TODO close voting early
+                };
+            };
+            #ok;
+        };
+
+        public func getVote(scenarioId : Nat, voterId : Principal) : {
+            #ok : { option : ?Nat; votingPower : Nat };
+            #notEligible;
+            #scenarioNotFound;
+        } {
+            let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
+            switch (scenario.votes.get(voterId)) {
+                case (null) #notEligible;
+                case (?v) #ok(v);
+            };
+        };
+
+        private func calculateResultsInternal(scenario : MutableScenarioData, votingClosed : Bool) : {
+            #consensus : [TeamVotingResult];
+            #noConsensus;
+        } {
+            type TeamStats = {
+                var totalVotingPower : Nat;
+                optionVotingPowers : [var Nat];
+            };
+            let teamStats = HashMap.HashMap<Nat, TeamStats>(0, Nat.equal, Nat32.fromNat);
+
+            for (vote in scenario.votes.vals()) {
+                let stats : TeamStats = switch (teamStats.get(vote.teamId)) {
+                    case (null) {
+                        let initStats : TeamStats = {
+                            var totalVotingPower = 0;
+                            optionVotingPowers = Array.init<Nat>(scenario.options.size(), 0);
+                        };
+                        teamStats.put(vote.teamId, initStats);
+                        initStats;
+                    };
+                    case (?voterTeamStats) voterTeamStats;
+                };
+                stats.totalVotingPower += vote.votingPower;
+                switch (vote.option) {
+                    case (?option) stats.optionVotingPowers[option] += vote.votingPower;
+                    case (null) ();
+                };
+            };
+            let teamResults = Buffer.Buffer<TeamVotingResult>(teamStats.size());
+            for ((teamId, stats) in teamStats.entries()) {
+                var optionWithMostVotes : (Nat, Nat) = (0, 0);
+
+                for ((option, optionVotingPower) in IterTools.enumerate(stats.optionVotingPowers.vals())) {
+                    if (optionVotingPower > optionWithMostVotes.1) {
+                        // TODO what to do in a tie?
+                        optionWithMostVotes := (option, optionVotingPower);
+                    };
+                };
+
+                if (not votingClosed) {
+                    // Validate that the majority has been reached, if voting is still active
+                    let majority = stats.totalVotingPower / 2;
+                    if (optionWithMostVotes.1 < majority) {
+                        return #noConsensus; // If any team hasnt reached a consensus, wait till its forced (end of voting period)
+                    };
+                };
+                teamResults.add({
+                    id = teamId;
+                    option = optionWithMostVotes.0;
+                });
+            };
+
+            #consensus(Buffer.toArray(teamResults));
+        };
+
+        public func add<system>(scenario : Types.AddScenarioRequest) : async* AddScenarioResult {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
                 case (#invalid(errors)) return #invalid(errors);
             };
+
+            let members = try {
+                switch (await UsersActor.getTeamOwners(#all)) {
+                    case (#ok(members)) members;
+                };
+            } catch (err) {
+                Debug.trap("Failed to get team owners from user canister: " # Error.message(err));
+            };
+            let votes = members.vals()
+            |> Iter.map<UserTypes.UserVotingInfo, (Principal, Vote)>(
+                _,
+                func(member : UserTypes.UserVotingInfo) : (Principal, Vote) = (
+                    member.id,
+                    {
+                        id = member.id;
+                        teamId = member.teamId;
+                        votingPower = member.votingPower;
+                        option = null;
+                    },
+                ),
+            )
+            |> HashMap.fromIter<Principal, Vote>(_, members.size(), Principal.equal, Principal.hash);
+
             let scenarioId = nextScenarioId;
             nextScenarioId += 1;
             let startTimerId = createStartTimer<system>(scenarioId, scenario.startTime);
@@ -138,6 +293,7 @@ module {
                     startTime = scenario.startTime;
                     endTime = scenario.endTime;
                     teamIds = scenario.teamIds;
+                    votes = votes;
                 },
             );
             #ok;
@@ -157,14 +313,6 @@ module {
                             })
                         },
                     );
-                    let onScenarioStartRequest = {
-                        scenarioId = scenarioId;
-                        optionCount = scenario.options.size();
-                    };
-                    switch (await TeamsActor.onScenarioStart(onScenarioStartRequest)) {
-                        case (#ok) ();
-                        case (#notAuthorized) Debug.print("ERROR: Not authorized to start scenario for teams");
-                    };
                     #ok;
                 };
                 case (#inProgress(_)) #alreadyStarted;
@@ -178,11 +326,14 @@ module {
         } {
             let prng = PseudoRandomX.fromBlob(await Random.blob());
             let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
-            let teamScenarioData = await* buildTeamScenarioData(scenario);
+            let teamVotingResult = switch (calculateResultsInternal(scenario, true)) {
+                case (#consensus(teamVotingResult)) teamVotingResult;
+                case (#noConsensus) Prelude.unreachable();
+            };
             let resolvedScenarioState = resolveScenario(
                 prng,
                 scenario,
-                teamScenarioData,
+                teamVotingResult,
             );
 
             let effectOutcomes = resolvedScenarioState.effectOutcomes.vals()
@@ -302,7 +453,7 @@ module {
         ignore resetTimers<system>();
     };
 
-    private func mapScenarioDataToScenario(data : ScenarioData) : Scenario.Scenario {
+    private func mapScenarioDataToScenario(data : MutableScenarioData) : Scenario.Scenario {
         let state : Scenario.ScenarioState = switch (data.state) {
             case (#notStarted(_)) #notStarted;
             case (#inProgress(_)) #inProgress;
@@ -310,7 +461,7 @@ module {
                 teamChoices = resolved.teamChoices.vals()
                 |> Iter.map(
                     _,
-                    func(team : TeamScenarioData) : {
+                    func(team : TeamVotingResult) : {
                         teamId : Nat;
                         option : Nat;
                     } = {
@@ -337,60 +488,6 @@ module {
             metaEffect = data.metaEffect;
             state = state;
         };
-    };
-
-    private func buildTeamScenarioData(scenario : ScenarioData) : async* [TeamScenarioData] {
-        let teamScenarioData = Buffer.Buffer<TeamScenarioData>(scenario.teamIds.size());
-
-        let scenarioResults = try {
-            await TeamsActor.getScenarioVotingResults({
-                scenarioId = scenario.id;
-            });
-        } catch (err : Error.Error) {
-            Debug.trap("Failed to get scenario voting results: " # Error.message(err));
-        };
-        let teamResults = switch (scenarioResults) {
-            case (#ok(o)) o;
-            case (#scenarioNotFound) Debug.trap("Scenario not found: " # Nat.toText(scenario.id));
-            case (#notAuthorized) Debug.trap("League is not authorized to get scenario results");
-        };
-
-        for (teamId in Iter.fromArray(scenario.teamIds)) {
-            let optionOrNull = IterTools.find(teamResults.teamOptions.vals(), func(o : TeamTypes.ScenarioTeamVotingResult) : Bool = o.teamId == teamId);
-            let option = switch (optionOrNull) {
-                case (?o) o.option;
-                case (null) 0; // TODO random if no votes?
-            };
-
-            teamScenarioData.add({
-                id = teamId;
-                option = option;
-            });
-        };
-
-        let energyDividends = scenario.teamIds.vals()
-        |> Iter.map<Nat, TeamTypes.EnergyDividend>(
-            _,
-            func(teamId : Nat) : TeamTypes.EnergyDividend {
-                let energy = 5; // TODO
-                {
-                    teamId = teamId;
-                    energy = energy;
-                };
-            },
-        )
-        |> Iter.toArray(_);
-        let onScenarioEndRequest = {
-            scenarioId = scenario.id;
-            energyDividends = energyDividends;
-        };
-        switch (await TeamsActor.onScenarioEnd(onScenarioEndRequest)) {
-            case (#ok) ();
-            case (#notAuthorized) Debug.print("ERROR: Not authorized to end scenario for teams");
-            case (#scenarioNotFound) Debug.print("ERROR: Scenario not found");
-        };
-
-        Buffer.toArray(teamScenarioData);
     };
 
     type ValidateScenarioResult = {
@@ -493,8 +590,8 @@ module {
 
     public func resolveScenario(
         prng : Prng,
-        scenario : ScenarioData,
-        teamChoices : [TeamScenarioData],
+        scenario : ScenarioDataWithoutVotes,
+        teamChoices : [TeamVotingResult],
     ) : ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
         for (teamData in Iter.fromArray(teamChoices)) {
@@ -516,9 +613,9 @@ module {
             };
             case (#lottery(lottery)) {
                 let weightedTickets : [(Nat, Float)] = teamChoices.vals()
-                |> Iter.map<TeamScenarioData, (Nat, Float)>(
+                |> Iter.map<TeamVotingResult, (Nat, Float)>(
                     _,
-                    func(teamData : TeamScenarioData) : (Nat, Float) = (teamData.id, Float.fromInt(lottery.options[teamData.option].tickets)),
+                    func(teamData : TeamVotingResult) : (Nat, Float) = (teamData.id, Float.fromInt(lottery.options[teamData.option].tickets)),
                 )
                 |> Iter.toArray(_);
                 let winningTeamId = prng.nextArrayElementWeighted(weightedTickets);
@@ -528,7 +625,7 @@ module {
                 let totalBid = Array.foldLeft(
                     teamChoices,
                     0,
-                    func(total : Nat, teamData : TeamScenarioData) : Nat = total + proportionalBid.options[teamData.option].bidValue,
+                    func(total : Nat, teamData : TeamVotingResult) : Nat = total + proportionalBid.options[teamData.option].bidValue,
                 );
                 for (teamData in teamChoices.vals()) {
                     let percentOfPrize = Float.fromInt(proportionalBid.options[teamData.option].bidValue) / Float.fromInt(totalBid);
@@ -567,9 +664,9 @@ module {
                     value : Int;
                 };
                 let teamThresholdValues : [TeamValue] = teamChoices.vals()
-                |> Iter.map<TeamScenarioData, TeamValue>(
+                |> Iter.map<TeamVotingResult, TeamValue>(
                     _,
-                    func(teamData : TeamScenarioData) : TeamValue {
+                    func(teamData : TeamVotingResult) : TeamValue {
                         let value : Int = switch (threshold.options[teamData.option].value) {
                             case (#fixed(fixed)) fixed;
                             case (#weightedChance(w)) {
@@ -620,7 +717,7 @@ module {
     public func resolveEffect(
         prng : Prng,
         context : EffectContext,
-        scenario : ScenarioData,
+        scenario : ScenarioDataWithoutVotes,
         effect : Scenario.Effect,
     ) : [Scenario.EffectOutcome] {
         let buffer = Buffer.Buffer<Scenario.EffectOutcome>(0);
@@ -631,7 +728,7 @@ module {
     private func resolveEffectInternal(
         prng : Prng,
         context : EffectContext,
-        scenario : ScenarioData,
+        scenario : ScenarioDataWithoutVotes,
         effect : Scenario.Effect,
         outcomes : Buffer.Buffer<Scenario.EffectOutcome>,
     ) {
@@ -700,7 +797,7 @@ module {
 
     private func getMajorityOption(
         prng : Prng,
-        teamChoices : [TeamScenarioData],
+        teamChoices : [TeamVotingResult],
     ) : Nat {
         if (teamChoices.size() < 1) {
             Debug.trap("No team choices");
@@ -780,14 +877,36 @@ module {
         };
     };
 
-    private func toHashMap(scenarios : [ScenarioData]) : HashMap.HashMap<Nat, ScenarioData> {
+    private func toHashMap(scenarios : [ScenarioData]) : HashMap.HashMap<Nat, MutableScenarioData> {
         scenarios
         |> Iter.fromArray(_)
-        |> Iter.map<ScenarioData, (Nat, ScenarioData)>(
+        |> Iter.map<ScenarioData, (Nat, MutableScenarioData)>(
             _,
-            func(scenario : ScenarioData) : (Nat, ScenarioData) = (scenario.id, scenario),
+            func(scenario : ScenarioData) : (Nat, MutableScenarioData) = (scenario.id, fromStableScenarioData(scenario)),
         )
-        |> HashMap.fromIter<Nat, ScenarioData>(_, scenarios.size(), Nat.equal, Nat32.fromNat);
+        |> HashMap.fromIter<Nat, MutableScenarioData>(_, scenarios.size(), Nat.equal, Nat32.fromNat);
 
+    };
+
+    private func fromStableScenarioData(scenario : ScenarioData) : MutableScenarioData {
+        let votes = scenario.votes.vals()
+        |> Iter.map<Vote, (Principal, Vote)>(
+            _,
+            func(vote : Vote) : (Principal, Vote) = (vote.id, vote),
+        )
+        |> HashMap.fromIter<Principal, Vote>(_, scenario.votes.size(), Principal.equal, Principal.hash);
+        {
+            scenario with
+            votes = votes;
+        };
+    };
+
+    private func toStableScenarioData(scenario : MutableScenarioData) : ScenarioData {
+        let votes = scenario.votes.vals()
+        |> Iter.toArray(_);
+        {
+            scenario with
+            votes = votes;
+        };
     };
 };

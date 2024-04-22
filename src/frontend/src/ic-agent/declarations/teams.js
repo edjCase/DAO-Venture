@@ -107,31 +107,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : PagedResult,
     'teamNotFound' : IDL.Null,
   });
-  const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
-  const ScenarioVote = IDL.Record({
-    'option' : IDL.Opt(IDL.Nat),
-    'votingPower' : IDL.Nat,
-  });
-  const GetScenarioVoteResult = IDL.Variant({
-    'ok' : ScenarioVote,
-    'notEligible' : IDL.Null,
-    'scenarioNotFound' : IDL.Null,
-  });
-  const GetScenarioVotingResultsRequest = IDL.Record({
-    'scenarioId' : IDL.Nat,
-  });
-  const ScenarioTeamVotingResult = IDL.Record({
-    'option' : IDL.Nat,
-    'teamId' : IDL.Nat,
-  });
-  const ScenarioVotingResults = IDL.Record({
-    'teamOptions' : IDL.Vec(ScenarioTeamVotingResult),
-  });
-  const GetScenarioVotingResultsResult = IDL.Variant({
-    'ok' : ScenarioVotingResults,
-    'notAuthorized' : IDL.Null,
-    'scenarioNotFound' : IDL.Null,
-  });
   const Team = IDL.Record({
     'id' : IDL.Nat,
     'motto' : IDL.Text,
@@ -141,24 +116,6 @@ export const idlFactory = ({ IDL }) => {
     'entropy' : IDL.Nat,
     'logoUrl' : IDL.Text,
     'energy' : IDL.Int,
-  });
-  const EnergyDividend = IDL.Record({ 'teamId' : IDL.Nat, 'energy' : IDL.Nat });
-  const OnScenarioEndRequest = IDL.Record({
-    'scenarioId' : IDL.Nat,
-    'energyDividends' : IDL.Vec(EnergyDividend),
-  });
-  const OnScenarioEndResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
-    'scenarioNotFound' : IDL.Null,
-  });
-  const OnScenarioStartRequest = IDL.Record({
-    'scenarioId' : IDL.Nat,
-    'optionCount' : IDL.Nat,
-  });
-  const OnScenarioStartResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
   });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
@@ -216,21 +173,6 @@ export const idlFactory = ({ IDL }) => {
     'votingClosed' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
-  const VoteOnScenarioRequest = IDL.Record({
-    'scenarioId' : IDL.Nat,
-    'option' : IDL.Nat,
-  });
-  const VoteOnScenarioResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'invalidOption' : IDL.Null,
-    'notAuthorized' : IDL.Null,
-    'alreadyVoted' : IDL.Null,
-    'seasonStatusFetchError' : IDL.Text,
-    'teamNotInScenario' : IDL.Null,
-    'votingNotOpen' : IDL.Null,
-    'teamNotFound' : IDL.Null,
-    'scenarioNotFound' : IDL.Null,
-  });
   return IDL.Service({
     'createProposal' : IDL.Func(
         [IDL.Nat, CreateProposalRequest],
@@ -250,27 +192,7 @@ export const idlFactory = ({ IDL }) => {
         [GetProposalsResult],
         ['query'],
       ),
-    'getScenarioVote' : IDL.Func(
-        [GetScenarioVoteRequest],
-        [GetScenarioVoteResult],
-        ['query'],
-      ),
-    'getScenarioVotingResults' : IDL.Func(
-        [GetScenarioVotingResultsRequest],
-        [GetScenarioVotingResultsResult],
-        [],
-      ),
     'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
-    'onScenarioEnd' : IDL.Func(
-        [OnScenarioEndRequest],
-        [OnScenarioEndResult],
-        [],
-      ),
-    'onScenarioStart' : IDL.Func(
-        [OnScenarioStartRequest],
-        [OnScenarioStartResult],
-        [],
-      ),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
     'updateTeamColor' : IDL.Func(
@@ -311,11 +233,6 @@ export const idlFactory = ({ IDL }) => {
     'voteOnProposal' : IDL.Func(
         [IDL.Nat, VoteOnProposalRequest],
         [VoteOnProposalResult],
-        [],
-      ),
-    'voteOnScenario' : IDL.Func(
-        [VoteOnScenarioRequest],
-        [VoteOnScenarioResult],
         [],
       ),
   });

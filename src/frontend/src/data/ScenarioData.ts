@@ -17,6 +17,7 @@ export let scenarios: Scenario[] = [
             {
                 title: "Give",
                 description: "Gives the league 1 energy but will cause sluggishness in the next match for your team.",
+                energyCost: BigInt(0),
                 effect: {
                     allOf: [
                         {
@@ -39,6 +40,7 @@ export let scenarios: Scenario[] = [
             {
                 title: "Conserve",
                 description: "Give no energy.",
+                energyCost: BigInt(0),
                 effect: {
                     entropy: {
                         target: { teams: [{ choosingTeam: null }] },
@@ -49,10 +51,17 @@ export let scenarios: Scenario[] = [
             {
                 title: "Try Optimizing",
                 description: "Give no energy but try to reduce energy consumption, but no guarentees.",
+                energyCost: BigInt(0),
                 effect: {
                     noEffect: null
                 },
             },
+            {
+                title: "Pay",
+                description: "Pay 1 energy to the league.",
+                energyCost: BigInt(1),
+                effect: { noEffect: null },
+            }
         ],
         metaEffect: {
             threshold: {
@@ -80,6 +89,7 @@ export let scenarios: Scenario[] = [
                             ]
                         }
                     },
+                    { value: { fixed: BigInt(1) } },
                 ],
             },
         },
@@ -91,37 +101,26 @@ export let scenarios: Scenario[] = [
             {
                 title: "No bid",
                 description: "No bid.",
+                energyCost: BigInt(0),
                 effect: { noEffect: null },
             },
             {
                 title: "Bid 1",
                 description: "Bid 1 energy",
-                effect: {
-                    energy: {
-                        team: { choosingTeam: null },
-                        value: { flat: BigInt(-1) },
-                    }
-                },
+                energyCost: BigInt(1),
+                effect: { noEffect: null },
             },
             {
                 title: "Bid 2",
                 description: "Bid 2 energy",
-                effect: {
-                    energy: {
-                        team: { choosingTeam: null },
-                        value: { flat: BigInt(-2) },
-                    }
-                },
+                energyCost: BigInt(2),
+                effect: { noEffect: null },
             },
             {
                 title: "Bid 3",
                 description: "Bid 3 energy",
-                effect: {
-                    energy: {
-                        team: { choosingTeam: null },
-                        value: { flat: BigInt(-3) },
-                    }
-                },
+                energyCost: BigInt(3),
+                effect: { noEffect: null },
             },
         ],
         metaEffect: {
@@ -160,37 +159,26 @@ export let scenarios: Scenario[] = [
             {
                 title: "No ticket",
                 description: "No ticket.",
+                energyCost: BigInt(0),
                 effect: { noEffect: null },
             },
             {
                 title: "1 ticket",
                 description: "1 ticket",
-                effect: {
-                    energy: {
-                        team: { choosingTeam: null },
-                        value: { flat: BigInt(-1) },
-                    }
-                },
+                energyCost: BigInt(1),
+                effect: { noEffect: null },
             },
             {
                 title: "2 tickets",
                 description: "2 tickets",
-                effect: {
-                    energy: {
-                        team: { choosingTeam: null },
-                        value: { flat: BigInt(-2) },
-                    }
-                },
+                energyCost: BigInt(2),
+                effect: { noEffect: null },
             },
             {
                 title: "3 tickets",
                 description: "3 tickets",
-                effect: {
-                    energy: {
-                        team: { choosingTeam: null },
-                        value: { flat: BigInt(-3) },
-                    }
-                },
+                energyCost: BigInt(3),
+                effect: { noEffect: null },
             },
         ],
         metaEffect: {
@@ -227,11 +215,13 @@ export let scenarios: Scenario[] = [
             {
                 title: "Play it safe",
                 description: "Don't scavenge, can't risk it.",
+                energyCost: BigInt(0),
                 effect: { noEffect: null },
             },
             {
                 title: "Scavenge",
                 description: "Scavenge for energy and knowledge but risk injury.",
+                energyCost: BigInt(0),
                 effect: {
                     oneOf: [
                         [

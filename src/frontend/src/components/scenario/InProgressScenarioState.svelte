@@ -1,15 +1,15 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
-    import { teamsAgentFactory } from "../../ic-agent/Teams";
-    import { ScenarioOptionWithEffect } from "../../ic-agent/declarations/league";
     import {
-        Team,
+        ScenarioOptionWithEffect,
         VoteOnScenarioRequest,
-    } from "../../ic-agent/declarations/teams";
+    } from "../../ic-agent/declarations/league";
+    import { Team } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
     import LoadingButton from "../common/LoadingButton.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
+    import { leagueAgentFactory } from "../../ic-agent/League";
 
     export let scenarioId: bigint;
     export let options: ScenarioOptionWithEffect[];
@@ -45,8 +45,8 @@
             `Voting for team ${teamId} and scenario ${scenarioId} with option ${selectedChoice}`,
             request,
         );
-        let teamsAgent = await teamsAgentFactory();
-        let result = await teamsAgent.voteOnScenario(request);
+        let leagueAgent = await leagueAgentFactory();
+        let result = await leagueAgent.voteOnScenario(request);
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
             teamStore.refetch();

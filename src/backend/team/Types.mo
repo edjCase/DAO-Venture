@@ -9,15 +9,10 @@ module {
     public type Actor = actor {
         setLeague : (id : Principal) -> async SetLeagueResult;
         getTeams : query () -> async [Team.Team];
-        getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
-        voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
         createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
         getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
         voteOnProposal : (teamId : Nat, request : VoteOnProposalRequest) -> async VoteOnProposalResult;
-        getScenarioVotingResults : (request : GetScenarioVotingResultsRequest) -> async GetScenarioVotingResultsResult;
-        onScenarioStart : (request : OnScenarioStartRequest) -> async OnScenarioStartResult;
-        onScenarioEnd : (request : OnScenarioEndRequest) -> async OnScenarioEndResult;
         onSeasonEnd() : async OnSeasonEndResult;
         getLinks : query () -> async GetLinksResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
@@ -170,32 +165,6 @@ module {
         #teamNotFound;
     };
 
-    public type OnScenarioEndRequest = {
-        scenarioId : Nat;
-        energyDividends : [EnergyDividend];
-    };
-
-    public type EnergyDividend = {
-        teamId : Nat;
-        energy : Nat;
-    };
-
-    public type OnScenarioEndResult = {
-        #ok;
-        #scenarioNotFound;
-        #notAuthorized;
-    };
-
-    public type OnScenarioStartRequest = {
-        scenarioId : Nat;
-        optionCount : Nat;
-    };
-
-    public type OnScenarioStartResult = {
-        #ok;
-        #notAuthorized;
-    };
-
     public type OnSeasonEndResult = {
         #ok;
         #notAuthorized;
@@ -224,63 +193,8 @@ module {
         votes : [Nat];
     };
 
-    public type ScenarioVoteResult = {
-        option : Nat;
-    };
-
-    public type GetScenarioVoteRequest = {
-        scenarioId : Nat;
-    };
-
-    public type ScenarioVote = {
-        option : ?Nat;
-        votingPower : Nat;
-    };
-
-    public type GetScenarioVoteResult = {
-        #ok : ScenarioVote;
-        #scenarioNotFound;
-        #notEligible;
-    };
-
-    public type GetScenarioVotingResultsRequest = {
-        scenarioId : Nat;
-    };
-
-    public type ScenarioTeamVotingResult = {
-        teamId : Nat;
-        option : Nat;
-    };
-
-    public type ScenarioVotingResults = {
-        teamOptions : [ScenarioTeamVotingResult];
-    };
-
-    public type GetScenarioVotingResultsResult = {
-        #ok : ScenarioVotingResults;
-        #notAuthorized;
-        #scenarioNotFound;
-    };
-
     public type GetCyclesResult = {
         #ok : Nat;
         #notAuthorized;
-    };
-
-    public type VoteOnScenarioRequest = {
-        scenarioId : Nat;
-        option : Nat;
-    };
-
-    public type VoteOnScenarioResult = {
-        #ok;
-        #notAuthorized;
-        #scenarioNotFound;
-        #votingNotOpen;
-        #teamNotInScenario;
-        #alreadyVoted;
-        #seasonStatusFetchError : Text;
-        #invalidOption;
-        #teamNotFound;
     };
 };

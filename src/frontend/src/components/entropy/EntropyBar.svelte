@@ -24,15 +24,18 @@
     const markerOffset = 7;
 </script>
 
-<div class="flex justify-between mb-2">
-    <div
-        class="flex flex-col items-center justify-center"
-        style="margin-left: calc({leagueEntropyPercentage}% - {totalEntropy +
-            markerOffset}px);"
-    >
-        {totalEntropy}
-        <ChevronDownSolid size="xs" />
-    </div>
+<div class="flex justify-between mb-2 w-full">
+    {#if totalEntropy < entropyMaxThreshold}
+        <div
+            class="flex flex-col items-center justify-center"
+            style="margin-left: calc({leagueEntropyPercentage}% - {markerOffset}px);"
+        >
+            {totalEntropy}
+            <ChevronDownSolid size="xs" />
+        </div>
+    {:else}
+        <div></div>
+    {/if}
     <div
         class="flex flex-col items-center justify-center"
         style="margin-right: -{markerOffset}px"
@@ -41,17 +44,25 @@
         <ChevronDownSolid size="xs" />
     </div>
 </div>
-<div class="bg-gray-200 rounded-lg mb-5 w-full h-5 relative">
-    {#each teams as team}
-        {#if Number(team.entropy) > 0}
-            <div
-                class="h-full rounded-lg"
-                style="width: {(Number(team.entropy) / totalEntropy) *
-                    leagueEntropyPercentage}%; background-color: {toRgbString(
-                    team.color,
-                )};"
-                title="{team.name}: {team.entropy}"
-            ></div>
-        {/if}
-    {/each}
+<div class="flex bg-gray-200 mb-5 w-full h-5">
+    {#if totalEntropy >= entropyMaxThreshold}
+        <div
+            class="h-full"
+            style="width: 100%; background-color: red;"
+            title="Entropy threshold exceeded"
+        ></div>
+    {:else}
+        {#each teams as team}
+            {#if Number(team.entropy) > 0}
+                <div
+                    class="h-full"
+                    style="width: {(Number(team.entropy) / totalEntropy) *
+                        leagueEntropyPercentage}%; background-color: {toRgbString(
+                        team.color,
+                    )};"
+                    title="{team.name}: {team.entropy}"
+                ></div>
+            {/if}
+        {/each}
+    {/if}
 </div>

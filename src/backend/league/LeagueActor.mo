@@ -64,7 +64,6 @@ actor LeagueActor : Types.LeagueActor {
                     };
                     case (#entropy(entropyEffect)) {
                         let result = await TeamsActor.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
-                        Debug.print("Updating team entropy: " # Nat.toText(entropyEffect.teamId) # " " # Int.toText(entropyEffect.delta) # " " # debug_show (result));
                         switch (result) {
                             case (#ok) true;
                             case (#notAuthorized or #teamNotFound) false;
@@ -72,7 +71,6 @@ actor LeagueActor : Types.LeagueActor {
                     };
                     case (#energy(e)) {
                         let result = await TeamsActor.updateTeamEnergy(e.teamId, e.delta);
-                        Debug.print("Updating team energy: " # Nat.toText(e.teamId) # " " # Int.toText(e.delta) # " " # debug_show (result));
                         switch (result) {
                             case (#ok) true;
                             case (#notAuthorized or #teamNotFound) false;
@@ -80,7 +78,6 @@ actor LeagueActor : Types.LeagueActor {
                     };
                     case (#skill(s)) {
                         let result = await PlayersActor.applyEffects([#skill(s)]); // TODO optimize with bulk call
-                        Debug.print("Applying skill effect: " # debug_show (s) # " " # debug_show (result));
                         switch (result) {
                             case (#ok) true;
                             case (#notAuthorized) false;
@@ -313,10 +310,22 @@ actor LeagueActor : Types.LeagueActor {
         if (not isLeagueOrDictator(caller)) {
             return #notAuthorized;
         };
-        switch (scenarioHandler.add<system>(scenario)) {
+        switch (await* scenarioHandler.add<system>(scenario)) {
             case (#ok) #ok;
             case (#invalid(errors)) return #invalid(errors);
         };
+    };
+
+    public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
+        switch (scenarioHandler.getVote(request.scenarioId, caller)) {
+            case (#ok(v)) #ok(v);
+            case (#notEligible) return #notEligible;
+            case (#scenarioNotFound) return #scenarioNotFound;
+        };
+    };
+
+    public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
+        scenarioHandler.vote(request.scenarioId, caller, request.option);
     };
 
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {

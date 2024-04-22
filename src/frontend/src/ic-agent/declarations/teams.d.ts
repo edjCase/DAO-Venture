@@ -21,7 +21,6 @@ export interface CreateTeamRequest {
 export type CreateTeamResult = { 'ok' : bigint } |
   { 'nameTaken' : null } |
   { 'notAuthorized' : null };
-export interface EnergyDividend { 'teamId' : bigint, 'energy' : bigint }
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -38,29 +37,8 @@ export type GetProposalResult = { 'ok' : Proposal } |
   { 'teamNotFound' : null };
 export type GetProposalsResult = { 'ok' : PagedResult } |
   { 'teamNotFound' : null };
-export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
-export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
-  { 'notEligible' : null } |
-  { 'scenarioNotFound' : null };
-export interface GetScenarioVotingResultsRequest { 'scenarioId' : bigint }
-export type GetScenarioVotingResultsResult = { 'ok' : ScenarioVotingResults } |
-  { 'notAuthorized' : null } |
-  { 'scenarioNotFound' : null };
 export interface Link { 'url' : string, 'name' : string }
 export interface ModifyLinkContent { 'url' : [] | [string], 'name' : string }
-export interface OnScenarioEndRequest {
-  'scenarioId' : bigint,
-  'energyDividends' : Array<EnergyDividend>,
-}
-export type OnScenarioEndResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'scenarioNotFound' : null };
-export interface OnScenarioStartRequest {
-  'scenarioId' : bigint,
-  'optionCount' : bigint,
-}
-export type OnScenarioStartResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
 export type OnSeasonEndResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface PagedResult {
@@ -92,17 +70,6 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
-export interface ScenarioTeamVotingResult {
-  'option' : bigint,
-  'teamId' : bigint,
-}
-export interface ScenarioVote {
-  'option' : [] | [bigint],
-  'votingPower' : bigint,
-}
-export interface ScenarioVotingResults {
-  'teamOptions' : Array<ScenarioTeamVotingResult>,
-}
 export type SetLeagueResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export type Skill = { 'battingAccuracy' : null } |
@@ -162,19 +129,6 @@ export type VoteOnProposalResult = { 'ok' : null } |
   { 'alreadyVoted' : null } |
   { 'votingClosed' : null } |
   { 'teamNotFound' : null };
-export interface VoteOnScenarioRequest {
-  'scenarioId' : bigint,
-  'option' : bigint,
-}
-export type VoteOnScenarioResult = { 'ok' : null } |
-  { 'invalidOption' : null } |
-  { 'notAuthorized' : null } |
-  { 'alreadyVoted' : null } |
-  { 'seasonStatusFetchError' : string } |
-  { 'teamNotInScenario' : null } |
-  { 'votingNotOpen' : null } |
-  { 'teamNotFound' : null } |
-  { 'scenarioNotFound' : null };
 export interface _SERVICE {
   'createProposal' : ActorMethod<
     [bigint, CreateProposalRequest],
@@ -185,20 +139,7 @@ export interface _SERVICE {
   'getLinks' : ActorMethod<[], GetLinksResult>,
   'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
-  'getScenarioVote' : ActorMethod<
-    [GetScenarioVoteRequest],
-    GetScenarioVoteResult
-  >,
-  'getScenarioVotingResults' : ActorMethod<
-    [GetScenarioVotingResultsRequest],
-    GetScenarioVotingResultsResult
-  >,
   'getTeams' : ActorMethod<[], Array<Team>>,
-  'onScenarioEnd' : ActorMethod<[OnScenarioEndRequest], OnScenarioEndResult>,
-  'onScenarioStart' : ActorMethod<
-    [OnScenarioStartRequest],
-    OnScenarioStartResult
-  >,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
   'updateTeamColor' : ActorMethod<
@@ -218,7 +159,6 @@ export interface _SERVICE {
     [bigint, VoteOnProposalRequest],
     VoteOnProposalResult
   >,
-  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

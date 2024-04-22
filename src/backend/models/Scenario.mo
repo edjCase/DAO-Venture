@@ -97,6 +97,7 @@ module {
     public type ScenarioOption = {
         title : Text;
         description : Text;
+        energyCost : Nat;
     };
 
     public type ScenarioOptionWithEffect = ScenarioOption and {

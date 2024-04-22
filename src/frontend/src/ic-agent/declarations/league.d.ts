@@ -117,6 +117,10 @@ export type GetProposalsResult = { 'ok' : PagedResult };
 export type GetScenarioResult = { 'ok' : Scenario } |
   { 'notStarted' : null } |
   { 'notFound' : null };
+export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
+export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
+  { 'notEligible' : null } |
+  { 'scenarioNotFound' : null };
 export type GetScenariosResult = { 'ok' : Array<Scenario> };
 export type GetTeamStandingsResult = { 'ok' : Array<TeamStandingInfo> } |
   { 'notFound' : null };
@@ -315,6 +319,7 @@ export interface ScenarioOptionWithEffect {
   'title' : string,
   'description' : string,
   'effect' : Effect,
+  'energyCost' : bigint,
 }
 export type ScenarioState = { 'notStarted' : null } |
   { 'resolved' : ScenarioStateResolved } |
@@ -322,6 +327,10 @@ export type ScenarioState = { 'notStarted' : null } |
 export interface ScenarioStateResolved {
   'teamChoices' : Array<{ 'option' : bigint, 'teamId' : bigint }>,
   'effectOutcomes' : Array<EffectOutcome>,
+}
+export interface ScenarioVote {
+  'option' : [] | [bigint],
+  'votingPower' : bigint,
 }
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
@@ -434,6 +443,16 @@ export type VoteOnProposalResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'alreadyVoted' : null } |
   { 'votingClosed' : null };
+export interface VoteOnScenarioRequest {
+  'scenarioId' : bigint,
+  'option' : bigint,
+}
+export type VoteOnScenarioResult = { 'ok' : null } |
+  { 'invalidOption' : null } |
+  { 'alreadyVoted' : null } |
+  { 'votingNotOpen' : null } |
+  { 'notEligible' : null } |
+  { 'scenarioNotFound' : null };
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
   'claimBenevolentDictatorRole' : ActorMethod<
@@ -451,6 +470,10 @@ export interface _SERVICE {
   'getProposal' : ActorMethod<[bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[bigint, bigint], GetProposalsResult>,
   'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
+  'getScenarioVote' : ActorMethod<
+    [GetScenarioVoteRequest],
+    GetScenarioVoteResult
+  >,
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
   'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
@@ -469,6 +492,7 @@ export interface _SERVICE {
   'startMatchGroup' : ActorMethod<[bigint], StartMatchGroupResult>,
   'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,
   'voteOnProposal' : ActorMethod<[VoteOnProposalRequest], VoteOnProposalResult>,
+  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
 }
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

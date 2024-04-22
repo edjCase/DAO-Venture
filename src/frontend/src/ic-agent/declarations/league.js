@@ -106,6 +106,7 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'description' : IDL.Text,
     'effect' : Effect,
+    'energyCost' : IDL.Nat,
   });
   const AddScenarioRequest = IDL.Record({
     'startTime' : Time,
@@ -254,6 +255,16 @@ export const idlFactory = ({ IDL }) => {
     'ok' : Scenario,
     'notStarted' : IDL.Null,
     'notFound' : IDL.Null,
+  });
+  const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
+  const ScenarioVote = IDL.Record({
+    'option' : IDL.Opt(IDL.Nat),
+    'votingPower' : IDL.Nat,
+  });
+  const GetScenarioVoteResult = IDL.Variant({
+    'ok' : ScenarioVote,
+    'notEligible' : IDL.Null,
+    'scenarioNotFound' : IDL.Null,
   });
   const GetScenariosResult = IDL.Variant({ 'ok' : IDL.Vec(Scenario) });
   const TeamPositions = IDL.Record({
@@ -508,6 +519,18 @@ export const idlFactory = ({ IDL }) => {
     'alreadyVoted' : IDL.Null,
     'votingClosed' : IDL.Null,
   });
+  const VoteOnScenarioRequest = IDL.Record({
+    'scenarioId' : IDL.Nat,
+    'option' : IDL.Nat,
+  });
+  const VoteOnScenarioResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'invalidOption' : IDL.Null,
+    'alreadyVoted' : IDL.Null,
+    'votingNotOpen' : IDL.Null,
+    'notEligible' : IDL.Null,
+    'scenarioNotFound' : IDL.Null,
+  });
   return IDL.Service({
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
     'claimBenevolentDictatorRole' : IDL.Func(
@@ -539,6 +562,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
+    'getScenarioVote' : IDL.Func(
+        [GetScenarioVoteRequest],
+        [GetScenarioVoteResult],
+        ['query'],
+      ),
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
     'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
@@ -562,6 +590,11 @@ export const idlFactory = ({ IDL }) => {
     'voteOnProposal' : IDL.Func(
         [VoteOnProposalRequest],
         [VoteOnProposalResult],
+        [],
+      ),
+    'voteOnScenario' : IDL.Func(
+        [VoteOnScenarioRequest],
+        [VoteOnScenarioResult],
         [],
       ),
   });
