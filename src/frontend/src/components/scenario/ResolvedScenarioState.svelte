@@ -2,10 +2,8 @@
     import {
         Duration,
         EffectOutcome,
-        FieldPosition,
         ScenarioOptionWithEffect,
         ScenarioStateResolved,
-        Skill,
         TargetInstance,
         TargetPositionInstance,
     } from "../../ic-agent/declarations/league";
@@ -18,6 +16,8 @@
     import { teamStore } from "../../stores/TeamStore";
     import { toJsonString } from "../../utils/StringUtil";
     import TeamLogo from "../team/TeamLogo.svelte";
+    import { skillToText } from "../../models/Skill";
+    import { positionToString } from "../../models/FieldPosition";
 
     export let state: ScenarioStateResolved;
     export let options: ScenarioOptionWithEffect[];
@@ -60,37 +60,9 @@
         return teams?.find((team) => team.id === teamId)?.name ?? "???";
     };
 
-    const getFieldPositionText = (fieldPosition: FieldPosition) => {
-        if ("leftField" in fieldPosition) {
-            return "Left Field";
-        }
-        if ("centerField" in fieldPosition) {
-            return "Center Field";
-        }
-        if ("rightField" in fieldPosition) {
-            return "Right Field";
-        }
-        if ("pitcher" in fieldPosition) {
-            return "Pitcher";
-        }
-        if ("firstBase" in fieldPosition) {
-            return "First Base";
-        }
-        if ("secondBase" in fieldPosition) {
-            return "Second Base";
-        }
-        if ("thirdBase" in fieldPosition) {
-            return "Third Base";
-        }
-        if ("shortStop" in fieldPosition) {
-            return "Short Stop";
-        }
-        return "NOT IMPLEMENTED: " + toJsonString(fieldPosition);
-    };
-
     const getPositionText = (position: TargetPositionInstance) => {
-        let positionText = getFieldPositionText(position.position);
-        return positionText + "for Team " + getTeamName(position.teamId);
+        let positionText = positionToString(position.position);
+        return positionText + " for Team " + getTeamName(position.teamId);
     };
 
     const getTargetText = (target: TargetInstance) => {
@@ -132,28 +104,6 @@
         }
     };
 
-    const getSkillText = (skill: Skill) => {
-        if ("speed" in skill) {
-            return "Speed";
-        }
-        if ("battingAccuracy" in skill) {
-            return "Batting Accuracy";
-        }
-        if ("battingPower" in skill) {
-            return "Batting Power";
-        }
-        if ("catching" in skill) {
-            return "Catching";
-        }
-        if ("throwingAccuracy" in skill) {
-            return "Throwing Accuracy";
-        }
-        if ("throwingPower" in skill) {
-            return "Throwing Power";
-        }
-        return "NOT IMPLEMENTED: " + toJsonString(skill);
-    };
-
     const getOutcomeText = (outcome: EffectOutcome) => {
         if ("energy" in outcome) {
             let teamName = getTeamName(outcome.energy.teamId);
@@ -171,7 +121,7 @@
             );
         } else if ("skill" in outcome) {
             let targetName = getTargetText(outcome.skill.target);
-            let skillName = getSkillText(outcome.skill.skill);
+            let skillName = skillToText(outcome.skill.skill);
             let duration = getDurationText(outcome.skill.duration);
             return getGainOrLossOutcomeText(
                 targetName,

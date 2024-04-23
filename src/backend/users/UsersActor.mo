@@ -180,7 +180,7 @@ actor : Types.Actor {
         if (not isLeague(caller)) {
             return #notAuthorized;
         };
-        users := Trie.empty();
+        // TODO
         #ok;
     };
 

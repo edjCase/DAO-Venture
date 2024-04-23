@@ -23,6 +23,9 @@
                 matchGroupInProgress = matchGroup.id;
                 break;
             }
+            if (matchGroup.state != "Scheduled") {
+                continue;
+            }
             let date = nanosecondsToDate(matchGroup.time);
             if (date > now) {
                 nextMatchGroupDate = date;

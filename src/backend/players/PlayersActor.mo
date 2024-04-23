@@ -135,7 +135,7 @@ actor : Types.PlayerActor {
         if (not isLeague(caller)) {
             return #notAuthorized;
         };
-        // TODO
+        // TODO archive?
         stats := Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
         #ok;
     };

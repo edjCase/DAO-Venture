@@ -10,22 +10,36 @@
     let proposals: Proposal[] = [];
     let genericProposals: ProposalType[] = [];
 
+    // <!-- 'changeTeamColor' : {
+    //     'color' : [number, number, number],
+    //     'teamId' : bigint,
+    //   }
+    // } |
+    // { 'changeTeamDescription' : { 'description' : string, 'teamId' : bigint } } |
+    // { 'changeTeamLogo' : { 'logoUrl' : string, 'teamId' : bigint } } |
+    // { 'changeTeamName' : { 'name' : string, 'teamId' : bigint } } |
+    // { 'changeTeamMotto' : { 'motto' : string, 'teamId' : bigint } }; -->
+
     $: genericProposals = proposals.map((p) => {
-        let title, description;
+        let title;
         if ("changeTeamName" in p.content) {
-            title = "Change Team Name to " + p.content.changeTeamName.name;
-            description =
-                "Change the team name to " + p.content.changeTeamName.name;
+            title = "Change Team Name ";
+        } else if ("changeTeamColor" in p.content) {
+            title = "Change Team Color";
+        } else if ("changeTeamDescription" in p.content) {
+            title = "Change Team Description";
+        } else if ("changeTeamLogo" in p.content) {
+            title = "Change Team Logo";
+        } else if ("changeTeamMotto" in p.content) {
+            title = "Change Team Motto";
         } else {
             title = "Not Implemented Proposal Type";
-            description = "Not Implemented Proposal Type";
         }
         return {
             id: p.id,
             title: title,
             timeStart: p.timeStart,
             timeEnd: p.timeEnd,
-            description: description,
             votes: p.votes,
             statusLog: p.statusLog,
         };
