@@ -31,7 +31,6 @@ export type FieldPosition = { 'rightField' : null } |
   { 'firstBase' : null };
 export type GetCyclesResult = { 'ok' : bigint } |
   { 'notAuthorized' : null };
-export type GetLinksResult = { 'ok' : Array<TeamLinks> };
 export type GetProposalResult = { 'ok' : Proposal } |
   { 'proposalNotFound' : null } |
   { 'teamNotFound' : null };
@@ -89,11 +88,11 @@ export interface Team {
   'name' : string,
   'color' : [number, number, number],
   'description' : string,
+  'links' : Array<Link>,
   'entropy' : bigint,
   'logoUrl' : string,
   'energy' : bigint,
 }
-export interface TeamLinks { 'links' : Array<Link>, 'teamId' : bigint }
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
 export type UpdateTeamColorResult = { 'ok' : null } |
@@ -136,7 +135,6 @@ export interface _SERVICE {
   >,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'getCycles' : ActorMethod<[], GetCyclesResult>,
-  'getLinks' : ActorMethod<[], GetLinksResult>,
   'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
   'getTeams' : ActorMethod<[], Array<Team>>,

@@ -69,9 +69,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'notAuthorized' : IDL.Null,
   });
-  const Link = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
-  const TeamLinks = IDL.Record({ 'links' : IDL.Vec(Link), 'teamId' : IDL.Nat });
-  const GetLinksResult = IDL.Variant({ 'ok' : IDL.Vec(TeamLinks) });
   const Vote = IDL.Record({
     'value' : IDL.Opt(IDL.Bool),
     'votingPower' : IDL.Nat,
@@ -107,12 +104,14 @@ export const idlFactory = ({ IDL }) => {
     'ok' : PagedResult,
     'teamNotFound' : IDL.Null,
   });
+  const Link = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
   const Team = IDL.Record({
     'id' : IDL.Nat,
     'motto' : IDL.Text,
     'name' : IDL.Text,
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'description' : IDL.Text,
+    'links' : IDL.Vec(Link),
     'entropy' : IDL.Nat,
     'logoUrl' : IDL.Text,
     'energy' : IDL.Int,
@@ -181,7 +180,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'createTeam' : IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
     'getCycles' : IDL.Func([], [GetCyclesResult], []),
-    'getLinks' : IDL.Func([], [GetLinksResult], ['query']),
     'getProposal' : IDL.Func(
         [IDL.Nat, IDL.Nat],
         [GetProposalResult],

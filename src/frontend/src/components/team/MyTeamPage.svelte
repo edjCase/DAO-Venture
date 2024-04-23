@@ -11,17 +11,11 @@
     import TeamStats from "./TeamStats.svelte";
     import TeamGrid from "./TeamGrid.svelte";
     import PlayerRoster from "../player/PlayerRoster.svelte";
-    import { TeamLinks } from "../../ic-agent/declarations/teams";
 
     $: identity = $identityStore;
     $: teams = $teamStore;
 
     let user: User | undefined;
-
-    let allLinks: TeamLinks[] | undefined;
-    teamStore.subscribeTeamLinks((l) => {
-        allLinks = l;
-    });
 
     $: {
         if (identity.getPrincipal().isAnonymous()) {
@@ -32,8 +26,7 @@
             });
         }
     }
-    $: links =
-        allLinks?.find((l) => l.teamId == user?.team[0]?.id)?.links || [];
+    $: links = teams?.find((l) => l.id == user?.team[0]?.id)?.links || [];
     $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: votingPower =
         user?.team[0]?.kind && "owner" in user.team[0].kind

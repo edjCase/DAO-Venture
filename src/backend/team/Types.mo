@@ -14,7 +14,6 @@ module {
         getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
         voteOnProposal : (teamId : Nat, request : VoteOnProposalRequest) -> async VoteOnProposalResult;
         onSeasonEnd() : async OnSeasonEndResult;
-        getLinks : query () -> async GetLinksResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         updateTeamEnergy : (teamId : Nat, delta : Int) -> async UpdateTeamEnergyResult;
         updateTeamEntropy : (teamId : Nat, delta : Int) -> async UpdateTeamEntropyResult;
@@ -71,10 +70,6 @@ module {
     public type Link = {
         name : Text;
         url : Text;
-    };
-
-    public type GetLinksResult = {
-        #ok : [TeamLinks];
     };
 
     public type TeamLinks = {

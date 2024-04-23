@@ -7,7 +7,6 @@ import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Bool "mo:base/Bool";
-import Int "mo:base/Int";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import Types "Types";
 import UsersActor "canister:users";

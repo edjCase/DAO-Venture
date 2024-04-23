@@ -13,21 +13,24 @@ import Team "../models/Team";
 actor TeamsActor : Types.Actor {
 
   stable var stableData = {
-    teams : [(Nat, TeamsHandler.StableData)] = [];
+    teams : TeamsHandler.StableData = {
+      entropyThreshold = 20;
+      teams = [];
+    };
   };
 
   stable var leagueIdOrNull : ?Principal = null;
 
-  var multiTeamHandler = TeamsHandler.MultiHandler<system>(stableData.teams);
+  var teamsHandler = TeamsHandler.Handler<system>(stableData.teams);
 
   system func preupgrade() {
     stableData := {
-      teams = multiTeamHandler.toStableData();
+      teams = teamsHandler.toStableData();
     };
   };
 
   system func postupgrade() {
-    multiTeamHandler := TeamsHandler.MultiHandler<system>(stableData.teams);
+    teamsHandler := TeamsHandler.Handler<system>(stableData.teams);
   };
 
   public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
@@ -41,7 +44,7 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared query func getTeams() : async [Team.Team] {
-    multiTeamHandler.getTeams();
+    teamsHandler.getAll();
   };
 
   public shared ({ caller }) func createTeam(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
@@ -53,7 +56,7 @@ actor TeamsActor : Types.Actor {
     if (leagueId != caller) {
       return #notAuthorized;
     };
-    await* multiTeamHandler.create(leagueId, request);
+    await* teamsHandler.create(leagueId, request);
   };
 
   public shared ({ caller }) func updateTeamEnergy(id : Nat, delta : Int) : async Types.UpdateTeamEnergyResult {
@@ -64,9 +67,9 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
-    switch (handler.updateEnergy(delta, true)) {
+    switch (teamsHandler.updateEnergy(id, delta, true)) {
       case (#ok) #ok;
+      case (#teamNotFound) #teamNotFound;
       case (#notEnoughEnergy) Prelude.unreachable(); // Only happens when 0 energy is min
     };
   };
@@ -79,9 +82,7 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
-    handler.updateEntropy(delta);
-    #ok;
+    await* teamsHandler.updateEntropy(id, delta);
   };
 
   public shared ({ caller }) func updateTeamMotto(id : Nat, motto : Text) : async Types.UpdateTeamMottoResult {
@@ -92,9 +93,7 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
-    handler.updateMotto(motto);
-    #ok;
+    teamsHandler.updateMotto(id, motto);
   };
 
   public shared ({ caller }) func updateTeamDescription(id : Nat, description : Text) : async Types.UpdateTeamDescriptionResult {
@@ -105,9 +104,7 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
-    handler.updateDescription(description);
-    #ok;
+    teamsHandler.updateDescription(id, description);
   };
 
   public shared ({ caller }) func updateTeamLogo(id : Nat, logoUrl : Text) : async Types.UpdateTeamLogoResult {
@@ -118,9 +115,7 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
-    handler.updateLogo(logoUrl);
-    #ok;
+    teamsHandler.updateLogo(id, logoUrl);
   };
 
   public shared ({ caller }) func updateTeamColor(id : Nat, color : (Nat8, Nat8, Nat8)) : async Types.UpdateTeamColorResult {
@@ -131,9 +126,7 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
-    handler.updateColor(color);
-    #ok;
+    teamsHandler.updateColor(id, color);
   };
 
   public shared ({ caller }) func updateTeamName(id : Nat, name : Text) : async Types.UpdateTeamNameResult {
@@ -144,9 +137,7 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #notAuthorized;
     };
-    let ?handler = multiTeamHandler.get(id) else return #teamNotFound;
-    handler.updateName(name);
-    #ok;
+    teamsHandler.updateName(id, name);
   };
 
   public shared ({ caller }) func createProposal(teamId : Nat, request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
@@ -163,26 +154,19 @@ actor TeamsActor : Types.Actor {
     if (not isAMember) {
       return #notAuthorized;
     };
-    let ?teamHandler = multiTeamHandler.get(teamId) else return #teamNotFound;
-    teamHandler.createProposal<system>(caller, request, members);
+    teamsHandler.createProposal<system>(teamId, caller, request, members);
   };
 
   public shared query func getProposal(teamId : Nat, id : Nat) : async Types.GetProposalResult {
-    let ?teamHandler = multiTeamHandler.get(teamId) else return #teamNotFound;
-    switch (teamHandler.getProposal(id)) {
-      case (null) #proposalNotFound;
-      case (?proposal) #ok(proposal);
-    };
+    teamsHandler.getProposal(teamId, id);
   };
 
   public shared query func getProposals(teamId : Nat, count : Nat, offset : Nat) : async Types.GetProposalsResult {
-    let ?teamHandler = multiTeamHandler.get(teamId) else return #teamNotFound;
-    #ok(teamHandler.getProposals(count, offset));
+    teamsHandler.getProposals(teamId, count, offset);
   };
 
   public shared ({ caller }) func voteOnProposal(teamId : Nat, request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {
-    let ?teamHandler = multiTeamHandler.get(teamId) else return #teamNotFound;
-    await* teamHandler.voteOnProposal(caller, request);
+    await* teamsHandler.voteOnProposal(teamId, caller, request);
   };
 
   public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
@@ -195,20 +179,6 @@ actor TeamsActor : Types.Actor {
     };
     // TODO
     #ok;
-  };
-
-  public query func getLinks() : async Types.GetLinksResult {
-    let teamHandlers = multiTeamHandler.getAll();
-    let links = teamHandlers.vals()
-    |> Iter.map(
-      _,
-      func((teamId, handler) : (Nat, TeamsHandler.Handler)) : Types.TeamLinks = {
-        teamId = teamId;
-        links = handler.getLinks();
-      },
-    )
-    |> Iter.toArray(_);
-    #ok(links);
   };
 
   public shared ({ caller }) func getCycles() : async Types.GetCyclesResult {

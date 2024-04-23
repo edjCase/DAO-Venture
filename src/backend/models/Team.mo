@@ -18,5 +18,11 @@ module {
         entropy : Nat;
         energy : Int;
         color : (Nat8, Nat8, Nat8);
+        links : [Link];
+    };
+
+    public type Link = {
+        name : Text;
+        url : Text;
     };
 };
