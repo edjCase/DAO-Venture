@@ -68,14 +68,15 @@
 <div class="flex justify-around">
     <div>
         {#if matchGroupInProgress}
-            <Button on:click={() => navigate("/season")}>View Live Match</Button
+            <Button on:click={() => navigate("/matches")}
+                >View Live Match</Button
             >
         {:else if nextMatchGroupDate}
             <div class="text-xl text-center">
                 Next Matches in <Countdown date={nextMatchGroupDate} />
             </div>
             <div class="flex justify-center mt-2">
-                <Button on:click={() => navigate("/season")}>
+                <Button on:click={() => navigate("/matches")}>
                     Make your predictions
                 </Button>
             </div>

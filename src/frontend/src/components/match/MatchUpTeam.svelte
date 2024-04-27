@@ -111,14 +111,14 @@
     }
 </script>
 
-<div class="flex">
+<div class="flex justify-between gap-2">
     <div class="flex flex-col justify-center items-center">
         <TeamLogo team={matchTeam} size="sm" />
         <div class="text-xs">
             {teamStats}
         </div>
     </div>
-    <div class="ml-2 mt-2 text-center">
+    <div class="flex flex-col items-center justify-center text-center">
         <div class="flex items-center">
             {#if matchPredictions?.yourVote === undefined}
                 <button class="text-3xl cursor-pointer" on:click={predict}>
@@ -127,15 +127,17 @@
             {:else}
                 <div class="text-3xl">🔮</div>
             {/if}
-            {#if predicting}
-                <Spinner size="5" />
-            {:else}
-                <div class="text-xs">{predictionIcon}</div>
-            {/if}
         </div>
         {#if matchPredictions !== undefined}
-            <div class="text-lg">
-                {(matchPredictions.teamPercentage * 100).toFixed(0)}%
+            <div class="flex items-center justify-center">
+                <div class="text-sm">
+                    {(matchPredictions.teamPercentage * 100).toFixed(0)}%
+                </div>
+                {#if predicting}
+                    <Spinner size="5" />
+                {:else}
+                    <div class="text-xs">{predictionIcon}</div>
+                {/if}
             </div>
         {/if}
     </div>
