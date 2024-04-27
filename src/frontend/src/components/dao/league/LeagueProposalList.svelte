@@ -6,19 +6,10 @@
     import { ProposalType } from "../GenericProposal.svelte";
     import LeagueProposalDetails from "./LeagueProposalDetails.svelte";
     import { Proposal } from "../../../ic-agent/declarations/league";
+    import { toJsonString } from "../../../utils/StringUtil";
 
     let proposals: Proposal[] = [];
     let genericProposals: ProposalType[] = [];
-
-    // <!-- 'changeTeamColor' : {
-    //     'color' : [number, number, number],
-    //     'teamId' : bigint,
-    //   }
-    // } |
-    // { 'changeTeamDescription' : { 'description' : string, 'teamId' : bigint } } |
-    // { 'changeTeamLogo' : { 'logoUrl' : string, 'teamId' : bigint } } |
-    // { 'changeTeamName' : { 'name' : string, 'teamId' : bigint } } |
-    // { 'changeTeamMotto' : { 'motto' : string, 'teamId' : bigint } }; -->
 
     $: genericProposals = proposals.map((p) => {
         let title;
@@ -33,7 +24,7 @@
         } else if ("changeTeamMotto" in p.content) {
             title = "Change Team Motto";
         } else {
-            title = "Not Implemented Proposal Type";
+            title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }
         return {
             id: p.id,

@@ -40,11 +40,17 @@
             <TeamLogo {team} size="md" />
             <div class="text-3xl">{team.name}</div>
         </div>
-        {#each links as link}
-            <Button href={link.url} target="_blank" rel="noopener noreferrer">
-                {link.name}
-            </Button>
-        {/each}
+        <div class="flex justify-around my-5">
+            {#each links as link}
+                <Button
+                    href={link.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                >
+                    {link.name}
+                </Button>
+            {/each}
+        </div>
         <div class="p-2">
             {#if votingPower <= 0}
                 <div>

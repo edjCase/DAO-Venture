@@ -1,6 +1,6 @@
 <script lang="ts">
     import UniqueAvatar from "../common/UniqueAvatar.svelte";
-    import { positionToString } from "../../models/FieldPosition";
+    import { fieldPositionToString } from "../../models/FieldPosition";
     import PlayerSkillChart from "./PlayerSkillChart.svelte";
     import {
         ChevronDoubleDownOutline,
@@ -15,7 +15,7 @@
 <div class="mt-2 border rounded p-2">
     <div class="flex justify-around">
         <div class="flex flex-col items-center justify-center">
-            <div class="text-2xl">{positionToString(player.position)}</div>
+            <div class="text-2xl">{fieldPositionToString(player.position)}</div>
 
             <UniqueAvatar
                 id={player.id}

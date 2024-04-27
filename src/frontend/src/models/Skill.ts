@@ -1,7 +1,7 @@
 import { Skill } from "../ic-agent/declarations/league";
 import { toJsonString } from "../utils/StringUtil";
 
-export const skillToText = (skill: Skill) => {
+export const skillToString = (skill: Skill) => {
     if ("speed" in skill) {
         return "Speed";
     }

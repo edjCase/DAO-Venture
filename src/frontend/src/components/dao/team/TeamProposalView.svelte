@@ -8,6 +8,7 @@
     import ModifyLinkView from "./proposal_views/ModifyLinkView.svelte";
     import TrainPositionView from "./proposal_views/TrainPositionView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
+    import SwapPositionsView from "./proposal_views/SwapPositionsView.svelte";
 
     export let proposal: Proposal;
 
@@ -19,6 +20,7 @@
         changeMotto: ChangeMottoView,
         changeDescription: ChangeDescriptionView,
         modifyLink: ModifyLinkView,
+        swapPlayerPositions: SwapPositionsView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

@@ -4,4 +4,10 @@
     export let content: ChangeLogoContent;
 </script>
 
-<div><img src={content.logoUrl} alt="New Logo" /></div>
+<div class="flex justify-center">
+    <img
+        style="width: 100px; height: 100px"
+        src={content.logoUrl}
+        alt="New Logo"
+    />
+</div>

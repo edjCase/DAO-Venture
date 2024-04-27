@@ -64,7 +64,7 @@ export function toEnum(position: FieldPosition): FieldPositionEnum {
 }
 
 
-export const positionToString = (position: FieldPosition): string => {
+export const fieldPositionToString = (position: FieldPosition): string => {
     if ("pitcher" in position) {
         return "Pitcher";
     } else if ("firstBase" in position) {

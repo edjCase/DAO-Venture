@@ -1,9 +1,9 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { navigate } from "svelte-routing";
-    import { Scenario } from "../../ic-agent/declarations/league";
+    import { Scenario, ScenarioVote } from "../../ic-agent/declarations/league";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import { ScenarioVote } from "../../ic-agent/declarations/teams";
+    import CollapsedOverview from "../common/CollapsedOverview.svelte";
 
     let activeScenarios: Scenario[] = [];
     let votes: Record<string, ScenarioVote> = {};
@@ -40,7 +40,26 @@
 </script>
 
 <div>
-    <div class="text-3xl text-center mb-5">Active Scenarios</div>
+    <CollapsedOverview title="Active Scenarios">
+        <ul class="list-disc list-inside text-sm space-y-1">
+            <li>
+                Scenarios are league events where each team makes a choice on
+                what to do
+            </li>
+            <li>
+                Team decisions are made by majority vote of the team owners
+                choice votes
+            </li>
+            <li>
+                Each choice will have its trade-offs affecting entropy, energy,
+                skills, etc...
+            </li>
+            <li>
+                Some choice outcomes will depend on what other teams choose
+                and/or randomness
+            </li>
+        </ul>
+    </CollapsedOverview>
     {#if activeScenariosWithVotingStatus.length == 0}
         <div class="text-xl text-center">No active scenarios</div>
     {:else}

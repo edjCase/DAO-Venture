@@ -16,9 +16,9 @@
     $: genericProposals = proposals.map((p) => {
         let title;
         if ("changeName" in p.content) {
-            title = "Change Team Name to " + p.content.changeName.name;
+            title = "Change Team Name";
         } else if ("train" in p.content) {
-            title = "Train Position " + p.content.train.position;
+            title = "Train Position ";
         } else if ("swapPlayerPositions" in p.content) {
             title = "Swap Player Positions";
         } else if ("changeColor" in p.content) {

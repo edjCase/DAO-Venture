@@ -16,8 +16,8 @@
     import { teamStore } from "../../stores/TeamStore";
     import { toJsonString } from "../../utils/StringUtil";
     import TeamLogo from "../team/TeamLogo.svelte";
-    import { skillToText } from "../../models/Skill";
-    import { positionToString } from "../../models/FieldPosition";
+    import { skillToString } from "../../models/Skill";
+    import { fieldPositionToString } from "../../models/FieldPosition";
 
     export let state: ScenarioStateResolved;
     export let options: ScenarioOptionWithEffect[];
@@ -61,7 +61,7 @@
     };
 
     const getPositionText = (position: TargetPositionInstance) => {
-        let positionText = positionToString(position.position);
+        let positionText = fieldPositionToString(position.position);
         return positionText + " for Team " + getTeamName(position.teamId);
     };
 
@@ -121,7 +121,7 @@
             );
         } else if ("skill" in outcome) {
             let targetName = getTargetText(outcome.skill.target);
-            let skillName = skillToText(outcome.skill.skill);
+            let skillName = skillToString(outcome.skill.skill);
             let duration = getDurationText(outcome.skill.duration);
             return getGainOrLossOutcomeText(
                 targetName,

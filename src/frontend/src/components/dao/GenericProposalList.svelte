@@ -49,6 +49,22 @@
         }
         return "Unknown";
     };
+
+    let getProposalStatusColor = (proposal: ProposalType) => {
+        let lastStatus = proposal.statusLog[proposal.statusLog.length - 1];
+        if (!lastStatus) {
+            return "";
+        } else if ("executed" in lastStatus) {
+            return "text-green-600";
+        } else if ("executing" in lastStatus) {
+            return "text-green-600";
+        } else if ("rejected" in lastStatus) {
+            return "text-red-600";
+        } else if ("failedToExecute" in lastStatus) {
+            return "text-red-600";
+        }
+        return "";
+    };
 </script>
 
 <div class="flex justify-end">
@@ -57,11 +73,11 @@
     </LoadingButton>
 </div>
 <div class="flex justify-center">
-    <div class="text-3xl text-center flex-grow">Recent Proposals</div>
+    <div class="text-3xl text-center flex-grow mb-5">Latest Proposals</div>
 </div>
 {#if proposals.length === 0}
     <div class="flex justify-center">
-        <div class="text-3xl text-center flex-grow">No proposals</div>
+        <div class="text-3xl text-center flex-grow">-</div>
     </div>
 {:else}
     <Accordion>
@@ -69,14 +85,18 @@
             <AccordionItem>
                 <span
                     slot="header"
-                    class="w-full flex justify-between items-center"
+                    class="w-full flex justify-between items-center px-5"
                 >
                     <div>
-                        <div>{proposal.title}</div>
-                        <div>{getVotingStatus(proposal)}</div>
+                        <div class="text-xl">
+                            #{proposal.id} - {proposal.title}
+                        </div>
+                        <div class="text-sm">{getVotingStatus(proposal)}</div>
                     </div>
                     <div>
-                        <div>{getProposalStatus(proposal)}</div>
+                        <div class={getProposalStatusColor(proposal)}>
+                            {getProposalStatus(proposal)}
+                        </div>
                     </div>
                 </span>
                 <GenericProposal {proposal} {onVote}>

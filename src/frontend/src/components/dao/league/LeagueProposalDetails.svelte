@@ -14,30 +14,26 @@
 </script>
 
 {#if "changeTeamName" in proposal.content}
-    <div class="text-xl">Type: Change Team Name</div>
     <div>Team: {toTeamName(proposal.content.changeTeamName.teamId)}</div>
     <div>New Name: {proposal.content.changeTeamName.name}</div>
 {:else if "changeTeamColor" in proposal.content}
-    <div class="text-xl">Type: Change Team Color</div>
     <div>Team: {toTeamName(proposal.content.changeTeamColor.teamId)}</div>
     <RgbColor value={proposal.content.changeTeamColor.color} />
 {:else if "changeTeamDescription" in proposal.content}
-    <div class="text-xl">Type: Change Team Description</div>
     <div>Team: {toTeamName(proposal.content.changeTeamDescription.teamId)}</div>
     <div>
         New Description: {proposal.content.changeTeamDescription.description}
     </div>
 {:else if "changeTeamLogo" in proposal.content}
-    <div class="text-xl">Type: Change Team Logo</div>
     <div>Team: {toTeamName(proposal.content.changeTeamLogo.teamId)}</div>
     <div>
         New Logo: <img
+            style="width: 100px; height: 100px; margin: auto"
             src={proposal.content.changeTeamLogo.logoUrl}
             alt="New Logo"
         />
     </div>
 {:else if "changeTeamMotto" in proposal.content}
-    <div class="text-xl">Type: Change Team Motto</div>
     <div>Team: {toTeamName(proposal.content.changeTeamMotto.teamId)}</div>
     <div>New Motto: {proposal.content.changeTeamMotto.motto}</div>
 {:else}

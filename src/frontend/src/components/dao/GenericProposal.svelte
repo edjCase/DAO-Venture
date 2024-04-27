@@ -43,46 +43,84 @@
         console.log("Voting on proposal", proposal.id, "vote", vote);
         await onVote(proposalId, vote);
     };
-    let lastStatus: ProposalStatusLogEntry | undefined =
-        proposal.statusLog[proposal.statusLog.length - 1];
+    $: lastStatus = proposal.statusLog[proposal.statusLog.length - 1];
+
+    $: adoptPercentage =
+        proposal.votes.length < 1
+            ? 0
+            : proposal.votes.filter(([_, v]) => v.value[0] === true).length /
+              proposal.votes.length;
+    $: rejectPercentage =
+        proposal.votes.length < 1
+            ? 0
+            : proposal.votes.filter(([_, v]) => v.value[0] === false).length /
+              proposal.votes.length;
 </script>
 
 <div class="border p-5">
-    <div class="text-3xl">Proposal: {proposal.id}</div>
-    <div>Created: {nanosecondsToDate(proposal.timeStart).toLocaleString()}</div>
-    <div>Ends: {nanosecondsToDate(proposal.timeEnd).toLocaleString()}</div>
-    <slot />
-    {#if !lastStatus}
-        <div class="text-2xl">Vote:</div>
-        {#if proposal.votes.some((v) => userId.toString() == v[0].toString())}
-            {#if yourVote === undefined}
-                <div class="mb-6">
-                    <LoadingButton onClick={() => vote(proposal.id, true)}>
-                        Adopt
-                    </LoadingButton>
-                    <LoadingButton onClick={() => vote(proposal.id, false)}>
-                        Reject
-                    </LoadingButton>
-                </div>
+    <div class="text-3xl text-center">#{proposal.id} - {proposal.title}</div>
+    <div class="p-5">
+        <slot />
+    </div>
+    <div
+        class="w-64 mx-auto h-5 flex justify-between bg-gray-300 bg-opacity-25"
+    >
+        <div
+            class="h-full bg-green-500"
+            style="width: {adoptPercentage * 100}%"
+        ></div>
+        <div
+            class="h-full bg-red-500"
+            style="width: {rejectPercentage * 100}%"
+        ></div>
+    </div>
+    <div class="my-5">
+        {#if !lastStatus}
+            {#if proposal.votes.some((v) => userId.toString() == v[0].toString())}
+                {#if yourVote === undefined}
+                    <div class="flex justify-center gap-5 mb-6">
+                        <LoadingButton onClick={() => vote(proposal.id, true)}>
+                            Adopt
+                        </LoadingButton>
+                        <LoadingButton onClick={() => vote(proposal.id, false)}>
+                            Reject
+                        </LoadingButton>
+                    </div>
+                {:else}
+                    <div class="text-xl text-center">
+                        You have voted: {yourVote ? "Adopt" : "Reject"}
+                    </div>
+                {/if}
             {:else}
-                <div class="text-xl">
-                    You have voted: {yourVote ? "Adopt" : "Reject"}
-                </div>
+                You are not eligible to vote
             {/if}
+        {:else if "executing" in lastStatus}
+            <div class="text-xl text-center text-green-600">
+                Proposal Executing
+            </div>
+        {:else if "executed" in lastStatus}
+            <div class="text-xl text-center text-green-600">
+                Proposal Executed
+            </div>
+        {:else if "failedToExecute" in lastStatus}
+            <div class="text-xl text-center text-red-500">
+                Proposal Failed To Execute
+            </div>
+            <div class="text-lg text-center text-red-600">
+                {lastStatus.failedToExecute.error}
+            </div>
+        {:else if "rejected" in lastStatus}
+            <div class="text-xl text-center text-red-600">
+                Proposal Rejected
+            </div>
         {:else}
-            You are not eligible to vote
+            NOT IMPLEMENTED: {toJsonString(lastStatus)}
         {/if}
-    {:else if "executing" in lastStatus}
-        <div class="text-xl">Proposal Executing</div>
-    {:else if "executed" in lastStatus}
-        <div class="text-xl">Proposal Executed</div>
-    {:else if "failedToExecute" in lastStatus}
-        <div class="text-xl">
-            Proposal Failed To Execute: {lastStatus.failedToExecute.error}
-        </div>
-    {:else if "rejected" in lastStatus}
-        <div class="text-xl">Proposal Rejected</div>
-    {:else}
-        NOT IMPLEMENTED: {toJsonString(lastStatus)}
-    {/if}
+    </div>
+    <div class="text-xs">
+        Created: {nanosecondsToDate(proposal.timeStart).toLocaleString()}
+    </div>
+    <div class="text-xs">
+        Ends: {nanosecondsToDate(proposal.timeEnd).toLocaleString()}
+    </div>
 </div>
