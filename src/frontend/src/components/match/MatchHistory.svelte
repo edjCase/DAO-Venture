@@ -27,7 +27,9 @@
 
 <div class="flex flex-col items-center">
   {#each matches as match}
-    <div>{nanosecondsToDate(match.time).toLocaleDateString()}</div>
-    <MatchCardCompact {match} liveMatch={undefined} />
+    <div>{nanosecondsToDate(match.time).toDateString()}</div>
+    <div>
+      <MatchCardCompact {match} liveMatch={undefined} />
+    </div>
   {/each}
 </div>

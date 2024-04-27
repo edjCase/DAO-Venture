@@ -70,7 +70,7 @@
         </div>
         <Helper helperClass="text-center">
           {getDateTimeString(
-            data.matchGroups[data.selectedMatchGroupIndex].time
+            data.matchGroups[data.selectedMatchGroupIndex].time,
           )}
         </Helper>
       </div>
@@ -100,7 +100,10 @@
       {/each}
     </Dropdown>
     <div class="flex justify-center">
-      <MatchGroup matchGroup={data.matchGroups[data.selectedMatchGroupIndex]} />
+      <MatchGroup
+        matchGroup={data.matchGroups[data.selectedMatchGroupIndex]}
+        lastMatchGroup={data.matchGroups[data.selectedMatchGroupIndex - 1]}
+      />
     </div>
   </div>
 {/if}

@@ -18,10 +18,10 @@
       if (seasonMatchGroups.length > 0) {
         matchGroup = seasonMatchGroups[matchGroupId];
       }
-    }
+    },
   );
 </script>
 
 {#if !!matchGroup}
-  <MatchGroup {matchGroup} />
+  <MatchGroup {matchGroup} lastMatchGroup={undefined} />
 {/if}

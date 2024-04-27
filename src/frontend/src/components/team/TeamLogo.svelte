@@ -42,6 +42,7 @@
     class="logo {padding ? `p-1` : ''} {size ? `size-${size}` : ''}"
     src={logoUrl}
     alt={title}
+    {title}
     style={border ? "border: 5px solid " + teamColor : ""}
   />
   {#if name == "right"}

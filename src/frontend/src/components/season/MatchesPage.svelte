@@ -47,7 +47,7 @@
     {:else if "completed" in seasonStatus}
         <SeasonWinners completedSeason={seasonStatus.completed} />
 
-        <div class="complete">
+        <div class="flex flex-wrap justify-evenly gap-2">
             <div class="teams">
                 <TeamStandings completedSeason={seasonStatus.completed} />
             </div>
@@ -62,7 +62,7 @@
             {:else if nextOrCurrentMatchGroup.state == "InProgress"}
                 <LiveMatchesOverview />
             {/if}
-            <MatchGroup matchGroup={nextOrCurrentMatchGroup} />
+            <MatchGroup matchGroup={nextOrCurrentMatchGroup} {lastMatchGroup} />
         {:else}
             Season in progress, but there is no upcoming match... <pre>{toJsonString(
                     seasonStatus.inProgress,
@@ -74,13 +74,6 @@
 {/if}
 
 <style>
-    .complete {
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
-        gap: 20px;
-    }
     .teams {
         max-width: 400px;
     }

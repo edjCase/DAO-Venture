@@ -44,11 +44,10 @@
         <ChevronDownSolid size="xs" />
     </div>
 </div>
-<div class="flex bg-gray-200 mb-5 w-full h-5">
+<div class="flex bg-gray-200 bg-opacity-25 mb-5 w-full h-5">
     {#if totalEntropy >= entropyMaxThreshold}
         <div
-            class="h-full"
-            style="width: 100%; background-color: red;"
+            class="h-full bg-red-500 w-full"
             title="Entropy threshold exceeded"
         ></div>
     {:else}

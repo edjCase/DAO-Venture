@@ -40,7 +40,7 @@
 </script>
 
 <div>
-    <CollapsedOverview title="Active Scenarios">
+    <CollapsedOverview title="Scenarios">
         <ul class="list-disc list-inside text-sm space-y-1">
             <li>
                 Scenarios are league events where each team makes a choice on

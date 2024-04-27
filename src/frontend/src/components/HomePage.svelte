@@ -3,14 +3,17 @@
     import ScenarioHome from "../components/scenario/ScenarioHome.svelte";
     import EntropyHome from "./entropy/EntropyHome.svelte";
     import MatchBanner from "../components/match/MatchBanner.svelte";
+    import { Hr } from "flowbite-svelte";
 </script>
 
 <div class="mt-2">
     <MatchBanner />
-    <hr class="mt-2 mb-5" />
+    <Hr classHr="w-48 h-1 mx-auto my-6 rounded" />
     <EntropyHome />
-    <hr class="my-5" />
+    <Hr classHr="w-48 h-1 mx-auto my-6 rounded" />
     <SeasonHome />
-    <hr class="my-5" />
+    <Hr classHr="w-48 h-1 mx-auto my-6 rounded" />
     <ScenarioHome />
+    <!-- <Hr classHr="w-48 h-1 mx-auto my-6 rounded" />
+    <PointsLeaderboard /> -->
 </div>

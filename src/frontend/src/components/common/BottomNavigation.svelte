@@ -96,9 +96,9 @@
         <BellRingSolid class={iconClass} />
     </BottomNavItem>
     <BottomNavItem
-        btnName="Season"
-        href="/season"
-        on:click={navOnClick("/season")}
+        btnName="Matches"
+        href="/matches"
+        on:click={navOnClick("/matches")}
     >
         <BullhornSolid class={iconClass} />
     </BottomNavItem>

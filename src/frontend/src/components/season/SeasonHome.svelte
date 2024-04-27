@@ -50,7 +50,7 @@
     }
 </script>
 
-<CollapsedOverview title="Season">
+<CollapsedOverview title="Matches">
     <ul class="list-disc list-inside text-sm space-y-1">
         <li>
             The season is a series of matches where teams compete to win the
@@ -68,7 +68,8 @@
 <div class="flex justify-around">
     <div>
         {#if matchGroupInProgress}
-            <Button on:click={() => navigate("/season")}>Match LIVE! =></Button>
+            <Button on:click={() => navigate("/season")}>View Live Match</Button
+            >
         {:else if nextMatchGroupDate}
             <div class="text-xl text-center">
                 Next Matches in <Countdown date={nextMatchGroupDate} />

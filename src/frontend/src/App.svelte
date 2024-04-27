@@ -11,7 +11,7 @@
   import About from "./routes/About.svelte";
   import HowToPlay from "./routes/HowToPlay.svelte";
   import Scenarios from "./routes/Scenarios.svelte";
-  import Season from "./routes/Season.svelte";
+  import Matches from "./routes/Matches.svelte";
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import MyTeam from "./routes/MyTeam.svelte";
@@ -25,7 +25,7 @@
     <div>
       <Route path="/" component={Home} />
       <Route path="/scenarios" component={Scenarios} />
-      <Route path="/season" component={Season} />
+      <Route path="/matches" component={Matches} />
       <Route path="/profile" component={UserProfile} />
       <Route path="/schedule" component={Schedule} />
       <Route path="/my-team" component={MyTeam} />
