@@ -2,7 +2,7 @@
     import { Timeline, TimelineItem } from "flowbite-svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import Scenario from "./Scenario.svelte";
-    import CollapsedOverview from "../common/CollapsedOverview.svelte";
+    import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { nanosecondsToDate } from "../../utils/DateUtils";
 
     $: scenarios = $scenarioStore;
@@ -15,8 +15,8 @@
     }
 </script>
 
-<CollapsedOverview title="Scenarios">
-    <section class="p-6">
+<SectionWithOverview title="Scenarios">
+    <section slot="details" class="p-6">
         <div class="bg-gray-700 p-4 rounded-lg shadow mb-6">
             <ul class="list-disc list-inside text-sm space-y-1">
                 <li>
@@ -42,14 +42,16 @@
             </ul>
         </div>
     </section>
-</CollapsedOverview>
 
-<Timeline>
-    {#each scenarios as scenario}
-        <TimelineItem
-            date={nanosecondsToDate(scenario.startTime).toDateString()}
-        >
-            <Scenario {scenario} />
-        </TimelineItem>
-    {/each}
-</Timeline>
+    <Timeline>
+        {#each scenarios as scenario}
+            <TimelineItem
+                date={nanosecondsToDate(scenario.startTime).toDateString()}
+            >
+                <div class="border-2 border-gray-700 p-2 pt-0 rounded">
+                    <Scenario {scenario} />
+                </div>
+            </TimelineItem>
+        {/each}
+    </Timeline>
+</SectionWithOverview>

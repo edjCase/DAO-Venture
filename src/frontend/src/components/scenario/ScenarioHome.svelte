@@ -3,7 +3,7 @@
     import { navigate } from "svelte-routing";
     import { Scenario, ScenarioVote } from "../../ic-agent/declarations/league";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import CollapsedOverview from "../common/CollapsedOverview.svelte";
+    import SectionWithOverview from "../common/SectionWithOverview.svelte";
 
     let activeScenarios: Scenario[] = [];
     let votes: Record<string, ScenarioVote> = {};
@@ -40,8 +40,8 @@
 </script>
 
 <div>
-    <CollapsedOverview title="Scenarios">
-        <ul class="list-disc list-inside text-sm space-y-1">
+    <SectionWithOverview title="Scenarios">
+        <ul slot="details" class="list-disc list-inside text-sm space-y-1">
             <li>
                 Scenarios are league events where each team makes a choice on
                 what to do
@@ -59,21 +59,23 @@
                 and/or randomness
             </li>
         </ul>
-    </CollapsedOverview>
-    {#if activeScenariosWithVotingStatus.length == 0}
-        <div class="text-xl text-center">No active scenarios</div>
-    {:else}
-        <div class="flex flex-col items-center">
-            <div class="mb-2">
-                {#each activeScenariosWithVotingStatus as scenario}
-                    <div class="text-xl text-center">
-                        {scenario.title} - {scenario.votingStatus}
+        <div class="border-2 rounded border-gray-700 p-4">
+            {#if activeScenariosWithVotingStatus.length == 0}
+                <div class="text-xl text-center">No active scenarios</div>
+            {:else}
+                <div class="flex flex-col items-center">
+                    <div class="mb-2">
+                        {#each activeScenariosWithVotingStatus as scenario}
+                            <div class="text-xl text-center">
+                                {scenario.title} - {scenario.votingStatus}
+                            </div>
+                        {/each}
                     </div>
-                {/each}
-            </div>
-            <Button on:click={() => navigate("/scenarios")}>
-                View Scenarios
-            </Button>
+                    <Button on:click={() => navigate("/scenarios")}>
+                        View Scenarios
+                    </Button>
+                </div>
+            {/if}
         </div>
-    {/if}
+    </SectionWithOverview>
 </div>

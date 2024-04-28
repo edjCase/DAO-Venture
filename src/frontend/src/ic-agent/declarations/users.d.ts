@@ -18,11 +18,21 @@ export type GetStatsResult = { 'ok' : UserStats };
 export type GetTeamOwnersRequest = { 'all' : null } |
   { 'team' : bigint };
 export type GetTeamOwnersResult = { 'ok' : Array<UserVotingInfo> };
+export interface GetUserLeaderboardRequest {
+  'count' : bigint,
+  'offset' : bigint,
+}
+export type GetUserLeaderboardResult = { 'ok' : PagedResult };
 export type GetUserResult = { 'ok' : User } |
   { 'notAuthorized' : null } |
   { 'notFound' : null };
 export type OnSeasonEndResult = { 'ok' : null } |
   { 'notAuthorized' : null };
+export interface PagedResult {
+  'data' : Array<User>,
+  'count' : bigint,
+  'offset' : bigint,
+}
 export type SetUserFavoriteTeamResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'alreadySet' : null } |
@@ -58,6 +68,10 @@ export interface _SERVICE {
   'get' : ActorMethod<[Principal], GetUserResult>,
   'getStats' : ActorMethod<[], GetStatsResult>,
   'getTeamOwners' : ActorMethod<[GetTeamOwnersRequest], GetTeamOwnersResult>,
+  'getUserLeaderboard' : ActorMethod<
+    [GetUserLeaderboardRequest],
+    GetUserLeaderboardResult
+  >,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'setFavoriteTeam' : ActorMethod<
     [Principal, bigint],

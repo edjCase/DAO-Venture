@@ -1,5 +1,6 @@
 import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
+import CommonTypes "../Types";
 
 module {
 
@@ -7,10 +8,20 @@ module {
         get : query (userId : Principal) -> async GetUserResult;
         getStats : query () -> async GetStatsResult;
         getTeamOwners : query (request : GetTeamOwnersRequest) -> async GetTeamOwnersResult;
+        getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
         setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
         awardPoints : (awards : [AwardPointsRequest]) -> async AwardPointsResult;
         onSeasonEnd : () -> async OnSeasonEndResult;
+    };
+
+    public type GetUserLeaderboardRequest = {
+        count : Nat;
+        offset : Nat;
+    };
+
+    public type GetUserLeaderboardResult = {
+        #ok : CommonTypes.PagedResult<User>;
     };
 
     public type GetStatsResult = {

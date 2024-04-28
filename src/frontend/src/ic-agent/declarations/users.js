@@ -57,6 +57,16 @@ export const idlFactory = ({ IDL }) => {
     'teamId' : IDL.Nat,
   });
   const GetTeamOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
+  const GetUserLeaderboardRequest = IDL.Record({
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const PagedResult = IDL.Record({
+    'data' : IDL.Vec(User),
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const GetUserLeaderboardResult = IDL.Variant({ 'ok' : PagedResult });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
@@ -80,6 +90,11 @@ export const idlFactory = ({ IDL }) => {
     'getTeamOwners' : IDL.Func(
         [GetTeamOwnersRequest],
         [GetTeamOwnersResult],
+        ['query'],
+      ),
+    'getUserLeaderboard' : IDL.Func(
+        [GetUserLeaderboardRequest],
+        [GetUserLeaderboardResult],
         ['query'],
       ),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),

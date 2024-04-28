@@ -74,10 +74,10 @@
 
 {#each options as { description }, index}
     <div
-        class="border border-gray-300 p-4 rounded-lg flex-1text-left text-base text-white"
-        class:bg-gray-500={selectedChoice === index}
-        class:border-gray-500={selectedChoice === index}
-        class:bg-gray-800={selectedChoice !== index}
+        class="border border-gray-300 p-4 rounded-lg flex-1 text-left text-base text-white"
+        class:bg-gray-900={selectedChoice === index}
+        class:border-gray-500={selectedChoice !== index}
+        class:bg-gray-700={selectedChoice !== index}
     >
         {#if votedOrIneligible === false}
             <div

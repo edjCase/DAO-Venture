@@ -32,11 +32,11 @@
   }
 </script>
 
-<div>
-  <div class="text-3xl p-5">
+<div class="p-6">
+  <div class="text-3xl">
     {stateLabel}: {scenario.title}
   </div>
-  <div class="p-5 pt-0">
+  <div class="my-6">
     {@html scenario.description}
   </div>
   <div class="flex flex-col items-center gap-2">

@@ -27,7 +27,7 @@
 </script>
 
 <div
-  class="bg-gray-800 text-gray-200 p-2 border rounded-lg w-full {borderColor}"
+  class="bg-gray-700 text-gray-200 p-2 border rounded-lg w-full {borderColor}"
 >
   <MatchCardHeader {team1} {team2} {winner} {prediction}>
     {#if match.state == "Error"}

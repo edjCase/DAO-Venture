@@ -84,7 +84,7 @@
     {onRefresh}
     let:proposalId
 >
-    <slot context="details">
+    <slot name="details">
         <TeamProposalDetails proposal={getProposal(proposalId)} />
     </slot>
 </GenericProposalList>

@@ -42,7 +42,7 @@
   };
 </script>
 
-<section class="bg-gray-800">
+<section>
   {#if matchGroup.state == "Scheduled"}
     <section>
       <h2 class="flex flex-col items-center justify-center">

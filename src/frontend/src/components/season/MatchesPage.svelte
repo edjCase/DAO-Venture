@@ -5,11 +5,10 @@
     import SeasonWinners from "./SeasonWinners.svelte";
     import { MatchGroupDetails } from "../../models/Match";
     import MatchGroup from "../match/MatchGroup.svelte";
-    import InBetweenMatchesOverview from "../match/InBetweenMatchesOverview.svelte";
-    import LiveMatchesOverview from "../match/LiveMatchesOverview.svelte";
     import { SeasonStatus } from "../../ic-agent/declarations/league";
     import { onDestroy } from "svelte";
     import { toJsonString } from "../../utils/StringUtil";
+    import SectionWithOverview from "../common/SectionWithOverview.svelte";
 
     let seasonStatus: SeasonStatus | undefined;
     let lastMatchGroup: MatchGroupDetails | undefined;
@@ -57,12 +56,42 @@
         </div>
     {:else if "inProgress" in seasonStatus}
         {#if nextOrCurrentMatchGroup}
-            {#if nextOrCurrentMatchGroup.state == "Scheduled"}
-                <InBetweenMatchesOverview />
-            {:else if nextOrCurrentMatchGroup.state == "InProgress"}
-                <LiveMatchesOverview />
-            {/if}
-            <MatchGroup matchGroup={nextOrCurrentMatchGroup} {lastMatchGroup} />
+            <SectionWithOverview title="Matches">
+                <div slot="details">
+                    <section class="p-2">
+                        <div class="bg-gray-700 p-4 rounded-lg shadow mb-2">
+                            {#if nextOrCurrentMatchGroup.state == "Scheduled"}
+                                <h3 class="text-xl font-semibold mb-2">
+                                    Predictions
+                                </h3>
+                                <ul
+                                    class="list-disc list-inside text-sm space-y-1"
+                                >
+                                    <li>
+                                        Make your mark by <strong
+                                            >predicting match outcomes</strong
+                                        >, competing with the community for
+                                        points and prestige
+                                    </li>
+                                </ul>
+                            {:else if nextOrCurrentMatchGroup.state == "InProgress"}
+                                <h3 class="text-xl font-semibold mb-2">
+                                    Live matches
+                                </h3>
+                                <ul
+                                    class="list-disc list-inside text-sm space-y-1"
+                                >
+                                    <li>TODO</li>
+                                </ul>
+                            {/if}
+                        </div>
+                    </section>
+                </div>
+                <MatchGroup
+                    matchGroup={nextOrCurrentMatchGroup}
+                    {lastMatchGroup}
+                />
+            </SectionWithOverview>
         {:else}
             Season in progress, but there is no upcoming match... <pre>{toJsonString(
                     seasonStatus.inProgress,

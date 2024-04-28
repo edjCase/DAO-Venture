@@ -4,7 +4,7 @@
   import UserMenu from "../user/UserMenu.svelte";
 </script>
 
-<Navbar rounded color="form">
+<Navbar rounded color="form" class="mb-2">
   <NavBrand>
     <Link to="/">
       <img src="/images/logo.png" class="h-16" alt="DAOball Logo" />

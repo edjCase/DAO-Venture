@@ -2,7 +2,6 @@
   import { Router, Route } from "svelte-routing";
   import Home from "./routes/Home.svelte";
   import NotFound from "./routes/NotFound.svelte";
-  import Header from "./components/common/Header.svelte";
   import MatchGroup from "./routes/MatchGroup.svelte";
   import Team from "./routes/Team.svelte";
   import Teams from "./routes/Teams.svelte";
@@ -17,11 +16,12 @@
   import MyTeam from "./routes/MyTeam.svelte";
   import League from "./routes/League.svelte";
   import Footer from "./components/common/Footer.svelte";
+  import Navbar from "./components/common/Navbar.svelte";
 </script>
 
 <main class="p-5 max-w-xl mx-auto h-screen mb-14">
   <Router>
-    <Header />
+    <Navbar />
     <div>
       <Route path="/" component={Home} />
       <Route path="/scenarios" component={Scenarios} />

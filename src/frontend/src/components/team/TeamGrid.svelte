@@ -7,8 +7,8 @@
   import { userStore } from "../../stores/UserStore";
   import { identityStore } from "../../stores/IdentityStore";
   import { User } from "../../ic-agent/declarations/users";
-  import { Team } from "../../ic-agent/declarations/league";
   import LoadingButton from "../common/LoadingButton.svelte";
+  import { Team } from "../../ic-agent/declarations/teams";
 
   $: teams = $teamStore;
   $: identity = $identityStore;
@@ -41,6 +41,7 @@
     );
     if ("ok" in result) {
       console.log("Favorite team set");
+      userStore.refetchUser(identity.getPrincipal());
     } else {
       console.error("Failed to set favorite team", result);
     }

@@ -57,15 +57,15 @@
     };
 </script>
 
-<!-- svelte-ignore a11y-no-static-element-interactions -->
-<!-- TODO a11y -->
 <div
-    class="flex overflow-x-auto hide-scrollbar"
+    class="flex overflow-x-auto hide-scrollbar bg-gray-900 py-4"
     bind:this={scrollContainer}
     on:mousedown={dragStart}
     on:mousemove={dragAction}
     on:mouseup={dragEnd}
     on:mouseleave={dragEnd}
+    role="button"
+    tabindex="0"
 >
     <div class="inline-flex">
         {#each matchGroups as matchGroup}

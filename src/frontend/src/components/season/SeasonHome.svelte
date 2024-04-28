@@ -6,7 +6,7 @@
     import { navigate } from "svelte-routing";
     import TeamLogo from "../team/TeamLogo.svelte";
     import { teamStore } from "../../stores/TeamStore";
-    import CollapsedOverview from "../common/CollapsedOverview.svelte";
+    import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { Team } from "../../ic-agent/declarations/teams";
 
     $: teams = $teamStore;
@@ -50,8 +50,8 @@
     }
 </script>
 
-<CollapsedOverview title="Matches">
-    <ul class="list-disc list-inside text-sm space-y-1">
+<SectionWithOverview title="Matches">
+    <ul slot="details" class="list-disc list-inside text-sm space-y-1">
         <li>
             The season is a series of matches where teams compete to win the
             championship
@@ -64,28 +64,29 @@
             the season
         </li>
     </ul>
-</CollapsedOverview>
-<div class="flex justify-around">
-    <div>
-        {#if matchGroupInProgress}
-            <Button on:click={() => navigate("/matches")}
-                >View Live Match</Button
-            >
-        {:else if nextMatchGroupDate}
-            <div class="text-xl text-center">
-                Next Matches in <Countdown date={nextMatchGroupDate} />
-            </div>
-            <div class="flex justify-center mt-2">
-                <Button on:click={() => navigate("/matches")}>
-                    Make your predictions
-                </Button>
-            </div>
-        {:else if seasonChampion !== undefined}
-            <div class="text-xl text-center">Season Complete</div>
-            <div class="text-xl text-center">Champions:</div>
-            <div class="text-xl text-center">{seasonChampion.name}</div>
 
-            <TeamLogo team={seasonChampion} size="md" />
-        {/if}
+    <div class="flex justify-around border-2 rounded border-gray-700 p-4">
+        <div>
+            {#if matchGroupInProgress}
+                <Button on:click={() => navigate("/matches")}
+                    >View Live Match</Button
+                >
+            {:else if nextMatchGroupDate}
+                <div class="text-xl text-center">
+                    Next Matches in <Countdown date={nextMatchGroupDate} />
+                </div>
+                <div class="flex justify-center mt-2">
+                    <Button on:click={() => navigate("/matches")}>
+                        Make your predictions
+                    </Button>
+                </div>
+            {:else if seasonChampion !== undefined}
+                <div class="text-xl text-center">Season Complete</div>
+                <div class="text-xl text-center">Champions:</div>
+                <div class="text-xl text-center">{seasonChampion.name}</div>
+
+                <TeamLogo team={seasonChampion} size="md" />
+            {/if}
+        </div>
     </div>
-</div>
+</SectionWithOverview>
