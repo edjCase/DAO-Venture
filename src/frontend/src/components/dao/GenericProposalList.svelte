@@ -67,13 +67,13 @@
     };
 </script>
 
-<div class="flex justify-end">
-    <LoadingButton onClick={onRefresh}>
-        <RefreshIcon />
-    </LoadingButton>
-</div>
-<div class="flex justify-center">
-    <div class="text-3xl text-center flex-grow mb-5">Latest Proposals</div>
+<div class="flex justify-between items-center mb-5">
+    <div class="text-3xl text-center w-full">Latest Proposals</div>
+    <div>
+        <LoadingButton onClick={onRefresh}>
+            <RefreshIcon />
+        </LoadingButton>
+    </div>
 </div>
 {#if proposals.length === 0}
     <div class="flex justify-center">

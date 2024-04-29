@@ -20,6 +20,8 @@
 </script>
 
 <FormTemplate {generateProposal} {teamId}>
+    <div class="p-2">Updates the description of the team.</div>
+    <div class="p-2">Requires a league approval vote.</div>
     <Label>Description</Label>
     <Input type="text" bind:value={description} />
 </FormTemplate>

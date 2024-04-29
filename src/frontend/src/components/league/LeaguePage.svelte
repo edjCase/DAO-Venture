@@ -17,30 +17,33 @@
 </script>
 
 <div class="text-3xl text-center my-5">League</div>
+<div class="text-center">
+    <div class="flex items-center justify-center">
+        <span class="mr-2">Teams:</span>
+        <LoadingValue value={teams?.length} />
+    </div>
+    <div class="flex items-center justify-center">
+        <span class="mr-2">Users:</span>
+        <LoadingValue value={userStats?.userCount} />
+    </div>
+    <div class="flex items-center justify-center">
+        <span class="mr-2">Team Owners:</span>
+        <LoadingValue value={userStats?.teamOwnerCount} />
+    </div>
+    <div class="flex items-center justify-center">
+        <span class="mr-2">Total User Points:</span>
+        <LoadingValue value={userStats?.totalPoints} />
+    </div>
+</div>
 <Tabs>
-    <TabItem title="Summary" open>
-        <div class="flex items-center">
-            <span class="mr-2">Team Count:</span>
-            <LoadingValue value={teams?.length} />
-        </div>
-        <div class="flex items-center">
-            <span class="mr-2">Total User Count:</span>
-            <LoadingValue value={userStats?.userCount} />
-        </div>
-        <div class="flex items-center">
-            <span class="mr-2">Total Team Owners Count:</span>
-            <LoadingValue value={userStats?.teamOwnerCount} />
-        </div>
-        <div class="flex items-center">
-            <span class="mr-2">Total User Points:</span>
-            <LoadingValue value={userStats?.totalPoints} />
-        </div>
+    <TabItem title="Proposals" open>
+        <LeagueProposalList />
     </TabItem>
     <TabItem title="Teams">
-        <div>
+        <div class="flex flex-col items-center">
             {#if teams}
                 {#each teams as team}
-                    <Card class="my-5">
+                    <Card class="my-2 w-full">
                         <div class="text-3xl text-center">
                             <LoadingValue value={team.name} />
                         </div>
@@ -70,8 +73,5 @@
                 {/each}
             {/if}
         </div>
-    </TabItem>
-    <TabItem title="Proposals">
-        <LeagueProposalList />
     </TabItem>
 </Tabs>

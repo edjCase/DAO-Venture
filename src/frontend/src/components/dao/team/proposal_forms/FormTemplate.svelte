@@ -29,5 +29,7 @@
 
 <div>
     <slot />
-    <LoadingButton onClick={createProposal}>Create Proposal</LoadingButton>
+    <div class="flex justify-center mt-5">
+        <LoadingButton onClick={createProposal}>Create</LoadingButton>
+    </div>
 </div>

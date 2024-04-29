@@ -22,8 +22,13 @@
 </script>
 
 <FormTemplate {generateProposal} {teamId}>
-    <Label>Link Name</Label>
+    <div class="p-2">Creates a new link for the team page</div>
+    <div class="p-2">
+        Specifying a name of an existing link, it will update the link. If the
+        link has no url specified, it will be deleted
+    </div>
+    <Label>Name</Label>
     <Input type="text" bind:value={name} />
-    <Label>Link Url</Label>
+    <Label>Url</Label>
     <Input type="url" bind:value={url} />
 </FormTemplate>

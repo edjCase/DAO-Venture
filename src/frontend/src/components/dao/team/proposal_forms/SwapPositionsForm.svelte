@@ -38,6 +38,7 @@
 </script>
 
 <FormTemplate {generateProposal} {teamId}>
+    <div class="p-2">Swaps the position of two players</div>
     <Label>Position 1</Label>
     <Select items={positions} bind:value={position1} />
     <Label>Position 2</Label>

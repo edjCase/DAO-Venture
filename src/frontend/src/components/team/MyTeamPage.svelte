@@ -8,17 +8,18 @@
     import { userStore } from "../../stores/UserStore";
     import { Badge, Button, TabItem, Tabs } from "flowbite-svelte";
     import MatchHistory from "../match/MatchHistory.svelte";
-    import TeamStats from "./TeamStats.svelte";
     import TeamGrid from "./TeamGrid.svelte";
     import PlayerRoster from "../player/PlayerRoster.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { navigate } from "svelte-routing";
     import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
+    import { TeamStandingInfo } from "../../ic-agent/declarations/league";
 
     $: identity = $identityStore;
     $: teams = $teamStore;
 
     let user: User | undefined;
+    let standings: TeamStandingInfo[] | undefined;
 
     $: {
         if (identity.getPrincipal().isAnonymous()) {
@@ -29,43 +30,59 @@
             });
         }
     }
+    teamStore.subscribeTeamStandings((s) => {
+        standings = s;
+    });
     $: links = teams?.find((l) => l.id == user?.team[0]?.id)?.links || [];
     $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: votingPower =
         user?.team[0]?.kind && "owner" in user.team[0].kind
             ? user.team[0].kind.owner.votingPower
             : 0;
-
-    let upgrade = () => {
-        navigate("/upgrade");
+    $: standing = standings?.find((s) => s.id == team?.id) || {
+        wins: 0,
+        losses: 0,
     };
 </script>
 
 {#if team}
     <SectionWithOverview title={team.name}>
         <TeamLogo slot="title-img" {team} size="md" />
-
-        <div class="p-2 flex justify-center items-center mb-4">
-            <div class="flex-grow text-center">
-                Level:
-                {#if votingPower <= 0}
-                    <span class="text-green-500 bold">FAN</span>
-                    <Badge
-                        rounded
-                        large
-                        title="Upgrade to Co-Owner"
-                        color="primary"
-                        class="ml-2 p-1 cursor-pointer"
-                    >
-                        <button type="button" on:click={upgrade}>
-                            <ChervonDoubleUpSolid size="xs" />
-                            <span class="sr-only">Upgrade</span>
-                        </button>
-                    </Badge>
-                {:else}
-                    <span class="text-blue-500 bold">
-                        CO-OWNER - Voting Power: {votingPower}
-                    </span>
+        <div class="flex w-full mb-4 text-center">
+            <div class="flex-grow">
+                <div class="text-xl">Team</div>
+                <div>Energy: {team.energy}</div>
+                <div>Entropy: {team.entropy}</div>
+                <div>Wins: {standing?.wins}</div>
+                <div>Losses: {standing?.losses}</div>
+            </div>
+            <div class="flex-grow">
+                <div class="text-xl">You</div>
+                <div>
+                    Level:
+                    {#if votingPower <= 0}
+                        <span class="text-green-500 bold">FAN</span>
+                        <a
+                            href="https://oc.app/community/cghnf-2qaaa-aaaar-baa6a-cai/channel/61170281920579717573386498610085170743"
+                            target="_blank"
+                        >
+                            <Badge
+                                rounded
+                                large
+                                title="Upgrade to Co-Owner"
+                                color="primary"
+                                class="ml-2 p-1 cursor-pointer"
+                            >
+                                <ChervonDoubleUpSolid size="xs" />
+                                <span class="sr-only">Upgrade</span>
+                            </Badge>
+                        </a>
+                    {:else}
+                        <span class="text-blue-500 bold"> CO-OWNER </span>
+                    {/if}
+                </div>
+                {#if votingPower > 0}
+                    <div>Voting Power: {votingPower}</div>
                 {/if}
             </div>
         </div>
@@ -75,11 +92,7 @@
             activeClasses="p-4 rounded-t-lg bg-gray-700 text-primary-500"
             contentClass="p-4 rounded-b-lg bg-gray-800 border-2 border-gray-700"
         >
-            <TabItem title="Summary" open>
-                <TeamStats teamId={team.id} />
-                <MatchHistory teamId={team.id} />
-            </TabItem>
-            <TabItem title="Proposals">
+            <TabItem title="Proposals" open>
                 <div class="mt-5">
                     <TeamProposalList teamId={team.id} />
                 </div>
@@ -88,6 +101,9 @@
                         <TeamProposalForm teamId={team.id} />
                     </div>
                 {/if}
+            </TabItem>
+            <TabItem title="Match History">
+                <MatchHistory teamId={team.id} />
             </TabItem>
             <TabItem title="Roster">
                 <PlayerRoster teamId={team.id} />

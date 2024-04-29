@@ -10,6 +10,11 @@
     import { Player } from "../../ic-agent/declarations/league";
 
     export let player: Player;
+
+    const totalSkillCount = Object.values(player.skills).reduce(
+        (acc, val) => acc + Number(val),
+        0,
+    );
 </script>
 
 <div class="mt-2 border rounded p-2">
@@ -29,6 +34,8 @@
             </div>
         </div>
         <div class="flex flex-col items-center justify-center">
+            <div>Skills</div>
+            <div>Total: {totalSkillCount}</div>
             <PlayerSkillChart skills={player.skills} />
         </div>
     </div>

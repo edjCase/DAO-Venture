@@ -21,7 +21,8 @@
           (m.team1.id == teamId || m.team2.id == teamId),
       )
       // Filter out the matches that haven't happened yet
-      .filter((m) => m.time < BigInt(Date.now() * 1000000));
+      .filter((m) => m.time < BigInt(Date.now() * 1000000))
+      .sort((a, b) => (a.time < b.time ? 1 : -1));
   });
 </script>
 

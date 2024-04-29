@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Select } from "flowbite-svelte";
+    import { Label, Select } from "flowbite-svelte";
     import {
         FieldPosition,
         Skill,
@@ -147,6 +147,10 @@
 </script>
 
 <FormTemplate {generateProposal} {teamId}>
+    <div class="p-2">Train the player in the position specified.</div>
+    <div class="p-2">Will increase skill by 1 point at a cost of 1 energy.</div>
+    <Label>Skill</Label>
     <Select items={skillTypes} bind:value={selectedSkillId} />
+    <Label>Position</Label>
     <Select items={positions} bind:value={selectedPosition} />
 </FormTemplate>

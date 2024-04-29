@@ -64,6 +64,8 @@
     }
 </script>
 
-<div class="text-3xl text-center">Create Proposal</div>
-<Select items={proposalTypes} bind:value={selectedProposalType} />
+<div class="text-3xl text-center mb-5">Create Proposal</div>
+<div class="mb-2">
+    <Select items={proposalTypes} bind:value={selectedProposalType} />
+</div>
 <svelte:component this={selectedProposal.component} {teamId} />

@@ -13,15 +13,16 @@
     }
 </script>
 
-<div
-    class="my-2"
-    style="display: grid; grid-template-columns: auto auto; align-items: center; gap: 10px;"
->
-    <Input
-        {disabled}
-        type="color"
-        bind:value={stringRgb}
-        defaultClass="ml-5 h-16 w-16"
-    />
-    <Input {disabled} type="text" bind:value={stringRgb} />
+<div class="my-2 flex items-center gap-4">
+    <div>
+        <Input
+            {disabled}
+            type="color"
+            bind:value={stringRgb}
+            defaultClass="ml-5 h-16 w-16"
+        />
+    </div>
+    <div class="flex-shrink">
+        <Input {disabled} type="text" bind:value={stringRgb} />
+    </div>
 </div>
