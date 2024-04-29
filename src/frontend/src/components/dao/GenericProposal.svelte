@@ -20,29 +20,35 @@
     import { Principal } from "@dfinity/principal";
     import { identityStore } from "../../stores/IdentityStore";
     import LoadingButton from "../common/LoadingButton.svelte";
+    import { Identity } from "@dfinity/agent";
 
     export let proposal: ProposalType;
     export let onVote: (proposalId: bigint, vote: boolean) => Promise<void>;
 
-    let userId: Principal = Principal.anonymous();
+    let identity: Identity | undefined;
     let yourVote: boolean | undefined;
 
     identityStore.subscribe((i) => {
-        userId = i.getPrincipal();
-        if (!userId.isAnonymous()) {
-            let v = proposal.votes.find(
-                ([memberId, _]) => memberId.compareTo(userId) == "eq",
-            )?.[1];
-            yourVote = v && v.value.length > 0 ? v.value[0] : undefined;
-        } else {
-            yourVote = undefined;
-        }
+        identity = i;
     });
 
     let vote = async (proposalId: bigint, vote: boolean) => {
         console.log("Voting on proposal", proposal.id, "vote", vote);
         await onVote(proposalId, vote);
     };
+
+    $: userId = identity?.getPrincipal() ?? Principal.anonymous();
+
+    $: if (!userId.isAnonymous()) {
+        let uId = userId;
+        let v = proposal.votes.find(
+            ([memberId, _]) => memberId.compareTo(uId) == "eq",
+        )?.[1];
+        yourVote = v && v.value.length > 0 ? v.value[0] : undefined;
+    } else {
+        yourVote = undefined;
+    }
+
     $: lastStatus = proposal.statusLog[proposal.statusLog.length - 1];
 
     $: adoptPercentage =

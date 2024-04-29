@@ -152,7 +152,7 @@ actor TeamsActor : Types.Actor {
     )
     |> _.next() != null;
     if (not isAMember) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     teamsHandler.createProposal<system>(teamId, caller, request, members);
   };

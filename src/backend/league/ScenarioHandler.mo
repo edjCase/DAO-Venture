@@ -147,7 +147,7 @@ module {
             scenarioId : Nat,
             voterId : Principal,
             option : Nat,
-        ) : {
+        ) : async* {
             #ok;
             #invalidOption;
             #alreadyVoted;
@@ -174,7 +174,7 @@ module {
             switch (calculateResultsInternal(scenario, false)) {
                 case (#noConsensus) ();
                 case (#consensus(_)) {
-                    // TODO close voting early
+                    await* end(scenario);
                 };
             };
             #ok;
@@ -224,6 +224,7 @@ module {
             for ((teamId, stats) in teamStats.entries()) {
                 var optionWithMostVotes : (Nat, Nat) = (0, 0);
 
+                // Calculate the option with the most votes
                 for ((option, optionVotingPower) in IterTools.enumerate(stats.optionVotingPowers.vals())) {
                     if (optionVotingPower > optionWithMostVotes.1) {
                         // TODO what to do in a tie?
@@ -231,10 +232,11 @@ module {
                     };
                 };
 
+                // If voting is not closed, check to see if there is a majority to end early or not
                 if (not votingClosed) {
                     // Validate that the majority has been reached, if voting is still active
-                    let majority = stats.totalVotingPower / 2;
-                    if (optionWithMostVotes.1 < majority) {
+                    let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(stats.totalVotingPower) / 2.) + 1));
+                    if (minMajorityVotingPower >= optionWithMostVotes.1) {
                         return #noConsensus; // If any team hasnt reached a consensus, wait till its forced (end of voting period)
                     };
                 };
@@ -320,12 +322,8 @@ module {
             };
         };
 
-        private func end(scenarioId : Nat) : async* {
-            #ok;
-            #scenarioNotFound;
-        } {
+        private func end(scenario : MutableScenarioData) : async* () {
             let prng = PseudoRandomX.fromBlob(await Random.blob());
-            let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
             let teamVotingResult = switch (calculateResultsInternal(scenario, true)) {
                 case (#consensus(teamVotingResult)) teamVotingResult;
                 case (#noConsensus) Prelude.unreachable();
@@ -368,13 +366,12 @@ module {
                 };
             };
             scenarios.put(
-                scenarioId,
+                scenario.id,
                 {
                     scenario with
                     state = #resolved(processedScenarioState);
                 },
             );
-            #ok;
         };
 
         private func createStartTimer<system>(scenarioId : Nat, startTime : Time.Time) : Nat {
@@ -396,10 +393,8 @@ module {
                 endTime,
                 func() : async* () {
                     Debug.print("Ending scenario with timer. Scenario id: " # Nat.toText(scenarioId));
-                    switch (await* end(scenarioId)) {
-                        case (#ok) ();
-                        case (#scenarioNotFound) Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
-                    };
+                    let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
+                    await* end(scenario);
                 },
             );
         };
@@ -450,7 +445,7 @@ module {
 
         };
 
-        ignore resetTimers<system>();
+        resetTimers<system>();
     };
 
     private func mapScenarioDataToScenario(data : MutableScenarioData) : Scenario.Scenario {

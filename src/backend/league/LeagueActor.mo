@@ -20,6 +20,7 @@ import PlayersActor "canister:players";
 import TeamsActor "canister:teams";
 import Dao "../Dao";
 import StadiumActor "canister:stadium";
+import Result "mo:base/Result";
 
 actor LeagueActor : Types.LeagueActor {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -152,7 +153,7 @@ actor LeagueActor : Types.LeagueActor {
 
     var seasonHandler = SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
 
-    func onExecuted(proposal : Types.Proposal) : async* Dao.OnExecuteResult {
+    func onExecuted(proposal : Types.Proposal) : async* Result.Result<(), Text> {
         // TODO change league proposal for team data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
             case (#changeTeamName(c)) {
@@ -204,8 +205,7 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
     func onRejected(_ : Types.Proposal) : async* () {}; // TODO
-    var dao = Dao.Dao(stableData.dao, onExecuted, onRejected);
-    dao.resetEndTimers<system>(); // TODO move into DAO
+    var dao = Dao.Dao<system, Types.ProposalContent>(stableData.dao, onExecuted, onRejected);
 
     system func preupgrade() {
         stableData := {
@@ -226,8 +226,7 @@ actor LeagueActor : Types.LeagueActor {
         seasonHandler := SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
         predictionHandler := PredictionHandler.Handler(stableData.predictions);
         scenarioHandler := ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
-        dao := Dao.Dao(stableData.dao, onExecuted, onRejected);
-        dao.resetEndTimers<system>(); // TODO move into DAO
+        dao := Dao.Dao<system, Types.ProposalContent>(stableData.dao, onExecuted, onRejected);
     };
 
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
@@ -262,7 +261,7 @@ actor LeagueActor : Types.LeagueActor {
             case (#changeTeamName(_) or #changeTeamColor(_) or #changeTeamLogo(_) or #changeTeamMotto(_) or #changeTeamDescription(_)) {
                 // Team is only one who can propose to change their name
                 if (caller != Principal.fromActor(TeamsActor)) {
-                    return #notAuthorized;
+                    return #err(#notAuthorized);
                 };
             };
         };
@@ -324,7 +323,7 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
-        scenarioHandler.vote(request.scenarioId, caller, request.option);
+        await* scenarioHandler.vote(request.scenarioId, caller, request.option);
     };
 
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {

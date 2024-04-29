@@ -7,10 +7,11 @@ export interface ChangeDescriptionContent { 'description' : string }
 export interface ChangeLogoContent { 'logoUrl' : string }
 export interface ChangeMottoContent { 'motto' : string }
 export interface ChangeNameContent { 'name' : string }
+export type CreateProposalError = { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
-  { 'notAuthorized' : null } |
-  { 'teamNotFound' : null };
+  { 'err' : CreateProposalError };
 export interface CreateTeamRequest {
   'motto' : string,
   'name' : string,
@@ -118,16 +119,17 @@ export type UpdateTeamNameResult = { 'ok' : null } |
   { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
+export type VoteOnProposalError = { 'proposalNotFound' : null } |
+  { 'notAuthorized' : null } |
+  { 'alreadyVoted' : null } |
+  { 'votingClosed' : null } |
+  { 'teamNotFound' : null };
 export interface VoteOnProposalRequest {
   'vote' : boolean,
   'proposalId' : bigint,
 }
 export type VoteOnProposalResult = { 'ok' : null } |
-  { 'proposalNotFound' : null } |
-  { 'notAuthorized' : null } |
-  { 'alreadyVoted' : null } |
-  { 'votingClosed' : null } |
-  { 'teamNotFound' : null };
+  { 'err' : VoteOnProposalError };
 export interface _SERVICE {
   'createProposal' : ActorMethod<
     [bigint, CreateProposalRequest],

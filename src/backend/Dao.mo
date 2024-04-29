@@ -13,6 +13,7 @@ import Error "mo:base/Error";
 import Order "mo:base/Order";
 import IterTools "mo:itertools/Iter";
 import CommonTypes "./Types";
+import Result "mo:base/Result";
 
 module {
     public type StableData<TProposalContent> = {
@@ -92,28 +93,21 @@ module {
         #alreadyExists;
     };
 
-    public type CreateProposalResult = {
-        #ok : Nat;
+    public type CreateProposalError = {
         #notAuthorized;
     };
 
-    public type VoteResult = {
-        #ok;
+    public type VoteError = {
         #notAuthorized;
         #alreadyVoted;
         #votingClosed;
         #proposalNotFound;
     };
 
-    public type OnExecuteResult = {
-        #ok;
-        #err : Text;
-    };
-
     // TODO add validate proposal method
-    public class Dao<TProposalContent>(
+    public class Dao<system, TProposalContent>(
         data : StableData<TProposalContent>,
-        onExecute : Proposal<TProposalContent> -> async* OnExecuteResult,
+        onExecute : Proposal<TProposalContent> -> async* Result.Result<(), Text>,
         onReject : Proposal<TProposalContent> -> async* (),
     ) {
         func hashNat(n : Nat) : Nat32 = Nat32.fromNat(n); // TODO
@@ -131,12 +125,12 @@ module {
         );
 
         var proposals = HashMap.fromIter<Nat, MutableProposal<TProposalContent>>(proposalsIter, 0, Nat.equal, hashNat);
-        var nextProposalId = data.proposals.size(); // TODO make last proposal + 1
+        var nextProposalId = data.proposals.size() + 1; // TODO make last proposal + 1
 
         var proposalDuration = data.proposalDuration;
         var votingThreshold = data.votingThreshold;
 
-        public func resetEndTimers<system>() {
+        private func resetEndTimers<system>() {
             for (proposal in proposals.vals()) {
                 switch (proposal.endTimerId) {
                     case (null) ();
@@ -189,16 +183,16 @@ module {
             };
         };
 
-        public func vote(proposalId : Nat, voterId : Principal, vote : Bool) : async* VoteResult {
-            let ?proposal = proposals.get(proposalId) else return #proposalNotFound;
+        public func vote(proposalId : Nat, voterId : Principal, vote : Bool) : async* Result.Result<(), VoteError> {
+            let ?proposal = proposals.get(proposalId) else return #err(#proposalNotFound);
             let now = Time.now();
             let currentStatus = getProposalStatus(proposal.statusLog);
             if (proposal.timeStart > now or proposal.timeEnd < now or currentStatus != #open) {
-                return #votingClosed;
+                return #err(#votingClosed);
             };
-            let ?existingVote = proposal.votes.get(voterId) else return #notAuthorized; // Only allow members to vote who existed when the proposal was created
+            let ?existingVote = proposal.votes.get(voterId) else return #err(#notAuthorized); // Only allow members to vote who existed when the proposal was created
             if (existingVote.value != null) {
-                return #alreadyVoted;
+                return #err(#alreadyVoted);
             };
             proposal.votes.put(
                 voterId,
@@ -229,7 +223,7 @@ module {
             proposer : Principal,
             content : TProposalContent,
             members : [Member],
-        ) : CreateProposalResult {
+        ) : Result.Result<Nat, CreateProposalError> {
             let now = Time.now();
             let votes = HashMap.HashMap<Principal, Vote>(0, Principal.equal, Principal.hash);
             // Take snapshot of members at the time of proposal creation
@@ -244,7 +238,8 @@ module {
             };
             let proposalId = nextProposalId;
             let proposalDurationNanoseconds = durationToNanoseconds(proposalDuration);
-            let endTimerId = createEndTimer<system>(proposalId, proposalDurationNanoseconds);
+            // let endTimerId = createEndTimer<system>(proposalId, proposalDurationNanoseconds);
+            let endTimerId = 1;
             let proposal : MutableProposal<TProposalContent> = {
                 id = proposalId;
                 proposer = proposer;
@@ -367,13 +362,20 @@ module {
                     };
                     // The proposal must reach the quorum threshold in any case
                     if (votedVotingPower >= quorumThreshold) {
-                        let voteThreshold = if (proposal.timeEnd >= Time.now()) {
+                        let hasEnded = proposal.timeEnd <= Time.now();
+                        let voteThreshold = if (hasEnded) {
                             // If the proposal has reached the end time, it passes if the votes are above the threshold of the VOTED voting power
                             let votedPercent = votedVotingPower / totalVotingPower;
                             calculateFromPercent(percent, votedVotingPower);
                         } else {
-                            // If the proposal has not reached the end time, it passes if votes are above the threshold of the TOTAL voting power
-                            calculateFromPercent(percent, totalVotingPower);
+                            // If the proposal has not reached the end time, it passes if votes are above the threshold (+1) of the TOTAL voting power
+                            let votingThreshold = calculateFromPercent(percent, totalVotingPower) + 1;
+                            if (votingThreshold >= totalVotingPower) {
+                                // Safety with low total voting power to make sure the proposal can pass
+                                totalVotingPower;
+                            } else {
+                                votingThreshold;
+                            };
                         };
                         if (proposal.votingSummary.yes > proposal.votingSummary.no and proposal.votingSummary.yes >= voteThreshold) {
                             return #passed;
@@ -385,6 +387,7 @@ module {
             };
             return #undetermined;
         };
+        resetEndTimers<system>();
 
     };
 

@@ -25,12 +25,13 @@ export const scenarioStore = (() => {
         let leagueAgent = await leagueAgentFactory();
         let result = await leagueAgent.getScenario(scenarioId);
         if ('ok' in result) {
+            let scenario = result.ok;
             update(scenarios => {
-                const index = scenarios.findIndex(scenario => scenario.id === scenarioId);
+                const index = scenarios.findIndex(s => s.id === scenarioId);
                 if (index !== -1) {
-                    scenarios[index] = result.ok;
+                    scenarios[index] = scenario;
                 } else {
-                    scenarios.push(result.ok);
+                    scenarios.push(scenario);
                 }
                 refreshEndTimers(scenarios);
                 return scenarios;
@@ -46,8 +47,9 @@ export const scenarioStore = (() => {
         const request = { scenarioId };
         let result = await leagueAgent.getScenarioVote(request);
         if ('ok' in result) {
+            let scenario = result.ok;
             votesWritable.update(votes => {
-                votes[Number(scenarioId)] = result.ok;
+                votes[Number(scenarioId)] = scenario;
                 return votes;
             });
         } else {

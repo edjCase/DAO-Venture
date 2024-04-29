@@ -16,6 +16,7 @@ import PlayersActor "canister:players";
 import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
 import Team "../models/Team";
+import Result "mo:base/Result";
 
 module {
 
@@ -179,12 +180,12 @@ module {
         };
 
         public func voteOnProposal(teamId : Nat, caller : Principal, request : Types.VoteOnProposalRequest) : async* Types.VoteOnProposalResult {
-            let ?dao = daos.get(teamId) else return #teamNotFound;
+            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
             await* dao.vote(request.proposalId, caller, request.vote);
         };
 
         public func createProposal<system>(teamId : Nat, caller : Principal, request : Types.CreateProposalRequest, members : [Dao.Member]) : Types.CreateProposalResult {
-            let ?dao = daos.get(teamId) else return #teamNotFound;
+            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
             dao.createProposal<system>(caller, request.content, members);
         };
 
@@ -364,8 +365,8 @@ module {
 
     private func buildDao<system>(data : Dao.StableData<Types.ProposalContent>, team : MutableTeamData) : Dao.Dao<Types.ProposalContent> {
 
-        func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Dao.OnExecuteResult {
-            let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Dao.OnExecuteResult {
+        func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Result.Result<(), Text> {
+            let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Result.Result<(), Text> {
                 let leagueActor = actor (Principal.toText(team.leagueId)) : LeagueTypes.LeagueActor;
                 try {
                     let result = await leagueActor.createProposal({
@@ -373,7 +374,7 @@ module {
                     });
                     switch (result) {
                         case (#ok(_)) #ok;
-                        case (#notAuthorized) #err("Not authorized to create change name proposal in league DAO");
+                        case (#err(#notAuthorized)) #err("Not authorized to create change name proposal in league DAO");
                     };
                 } catch (err) {
                     #err("Error creating change name proposal in league DAO: " # Error.message(err));
@@ -468,8 +469,7 @@ module {
         func onReject(proposal : Dao.Proposal<Types.ProposalContent>) : async* () {
             Debug.print("Rejected proposal: " # debug_show (proposal));
         };
-        let dao = Dao.Dao<Types.ProposalContent>(data, onExecute, onReject);
-        dao.resetEndTimers<system>(); // TODO move into DAO
+        let dao = Dao.Dao<system, Types.ProposalContent>(data, onExecute, onReject);
         dao;
     };
 };

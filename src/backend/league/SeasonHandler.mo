@@ -802,7 +802,7 @@ module {
             #ok;
         };
 
-        ignore resetTimers<system>();
+        resetTimers<system>();
     };
 
     private func buildTeamInitData(

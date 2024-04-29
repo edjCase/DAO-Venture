@@ -145,9 +145,10 @@ export const idlFactory = ({ IDL }) => {
     'changeTeamMotto' : IDL.Record({ 'motto' : IDL.Text, 'teamId' : IDL.Nat }),
   });
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
+  const CreateProposalError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const CreateProposalResult = IDL.Variant({
     'ok' : IDL.Nat,
-    'notAuthorized' : IDL.Null,
+    'err' : CreateProposalError,
   });
   const CreateTeamRequest = IDL.Record({
     'motto' : IDL.Text,
@@ -512,12 +513,15 @@ export const idlFactory = ({ IDL }) => {
     'vote' : IDL.Bool,
     'proposalId' : IDL.Nat,
   });
-  const VoteOnProposalResult = IDL.Variant({
-    'ok' : IDL.Null,
+  const VoteOnProposalError = IDL.Variant({
     'proposalNotFound' : IDL.Null,
     'notAuthorized' : IDL.Null,
     'alreadyVoted' : IDL.Null,
     'votingClosed' : IDL.Null,
+  });
+  const VoteOnProposalResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : VoteOnProposalError,
   });
   const VoteOnScenarioRequest = IDL.Record({
     'scenarioId' : IDL.Nat,

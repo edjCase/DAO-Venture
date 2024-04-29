@@ -49,9 +49,10 @@ export interface CompletedSeasonTeam {
   'logoUrl' : string,
   'positions' : TeamPositions,
 }
+export type CreateProposalError = { 'notAuthorized' : null };
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
-  { 'notAuthorized' : null };
+  { 'err' : CreateProposalError };
 export interface CreateTeamRequest {
   'motto' : string,
   'name' : string,
@@ -434,15 +435,16 @@ export interface TeamStandingInfo {
 }
 export type Time = bigint;
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
+export type VoteOnProposalError = { 'proposalNotFound' : null } |
+  { 'notAuthorized' : null } |
+  { 'alreadyVoted' : null } |
+  { 'votingClosed' : null };
 export interface VoteOnProposalRequest {
   'vote' : boolean,
   'proposalId' : bigint,
 }
 export type VoteOnProposalResult = { 'ok' : null } |
-  { 'proposalNotFound' : null } |
-  { 'notAuthorized' : null } |
-  { 'alreadyVoted' : null } |
-  { 'votingClosed' : null };
+  { 'err' : VoteOnProposalError };
 export interface VoteOnScenarioRequest {
   'scenarioId' : bigint,
   'option' : bigint,

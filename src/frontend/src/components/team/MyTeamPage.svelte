@@ -11,7 +11,6 @@
     import TeamGrid from "./TeamGrid.svelte";
     import PlayerRoster from "../player/PlayerRoster.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
-    import { navigate } from "svelte-routing";
     import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
     import { TeamStandingInfo } from "../../ic-agent/declarations/league";
 
@@ -107,9 +106,6 @@
             </TabItem>
             <TabItem title="Roster">
                 <PlayerRoster teamId={team.id} />
-            </TabItem>
-            <TabItem title="Matches">
-                <MatchHistory teamId={team.id} />
             </TabItem>
             <TabItem title="Links">
                 {#if links.length == 0}

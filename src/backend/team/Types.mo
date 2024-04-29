@@ -4,6 +4,8 @@ import Skill "../models/Skill";
 import CommonTypes "../Types";
 import FieldPosition "../models/FieldPosition";
 import Team "../models/Team";
+import Result "mo:base/Result";
+
 module {
 
     public type Actor = actor {
@@ -93,8 +95,9 @@ module {
         vote : Bool;
     };
 
-    public type VoteOnProposalResult = {
-        #ok;
+    public type VoteOnProposalResult = Result.Result<(), VoteOnProposalError>;
+
+    public type VoteOnProposalError = {
         #notAuthorized;
         #proposalNotFound;
         #alreadyVoted;
@@ -154,8 +157,9 @@ module {
         content : ProposalContent;
     };
 
-    public type CreateProposalResult = {
-        #ok : Nat;
+    public type CreateProposalResult = Result.Result<Nat, CreateProposalError>;
+
+    public type CreateProposalError = {
         #notAuthorized;
         #teamNotFound;
     };
