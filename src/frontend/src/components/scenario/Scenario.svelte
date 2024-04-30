@@ -23,7 +23,7 @@
     })();
   }
   let stateLabel: string;
-  if ("resolved" in scenario.state) {
+  $: if ("resolved" in scenario.state) {
     stateLabel = "Complete";
   } else if ("inProgress" in scenario.state) {
     stateLabel = "In Progress";
@@ -33,11 +33,20 @@
 </script>
 
 <div class="p-6">
-  <div class="text-3xl">
-    {stateLabel}: {scenario.title}
+  <div class="text-3xl text-center">
+    {scenario.title}
+  </div>
+  <div class="text-xl text-center">
+    {#if "resolved" in scenario.state}
+      <span class="text-green-500">Resolved</span>
+    {:else if "inProgress" in scenario.state}
+      <span class="text-yellow-500">In Progress</span>
+    {:else if "upcoming" in scenario.state}
+      <span class="text-blue-500">Upcoming</span>
+    {/if}
   </div>
   <div class="my-6">
-    {@html scenario.description}
+    {scenario.description}
   </div>
   <div class="flex flex-col items-center gap-2">
     {#if "resolved" in scenario.state}

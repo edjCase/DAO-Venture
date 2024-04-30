@@ -15,14 +15,13 @@
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import MyTeam from "./routes/MyTeam.svelte";
   import League from "./routes/League.svelte";
-  import Footer from "./components/common/Footer.svelte";
   import Navbar from "./components/common/Navbar.svelte";
 </script>
 
-<main class="p-5 max-w-xl mx-auto h-screen mb-14">
+<main class="p-5 max-w-xl mx-auto h-screen">
   <Router>
     <Navbar />
-    <div>
+    <div class="pb-20">
       <Route path="/" component={Home} />
       <Route path="/scenarios" component={Scenarios} />
       <Route path="/matches" component={Matches} />
@@ -37,7 +36,6 @@
       <Route path="/about" component={About} />
       <Route path="/admin" component={Admin} />
       <Route path="*" component={NotFound} />
-      <Footer />
     </div>
     <BottomNavigation />
   </Router>

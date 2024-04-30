@@ -52,8 +52,8 @@
             value = Number(value);
         }
         let absValue = Math.abs(value);
-        let gainOrLoss = value >= 0 ? "gained" : "lost";
-        return `${prefix} ${gainOrLoss} ${absValue} ${suffix}`;
+        let gainOrLoss = value >= 0 ? "+" : "-";
+        return `${prefix}: ${gainOrLoss}${absValue} ${suffix}`;
     };
 
     const getTeamName = (teamId: bigint) => {
@@ -100,7 +100,7 @@
             return "indefinitely";
         }
         if ("matches" in duration) {
-            return `for ${duration.matches} matches`;
+            return `for ${duration.matches} ${duration.matches === BigInt(1) ? "match" : "matches"}`;
         }
     };
 
@@ -108,16 +108,16 @@
         if ("energy" in outcome) {
             let teamName = getTeamName(outcome.energy.teamId);
             return getGainOrLossOutcomeText(
-                `Team ${teamName}`,
+                `${teamName}`,
                 outcome.energy.delta,
-                "energy",
+                "💰",
             );
         } else if ("entropy" in outcome) {
             let teamName = getTeamName(outcome.entropy.teamId);
             return getGainOrLossOutcomeText(
-                `Team ${teamName}`,
+                `${teamName}`,
                 outcome.entropy.delta,
-                "entropy",
+                "🔥",
             );
         } else if ("skill" in outcome) {
             let targetName = getTargetText(outcome.skill.target);

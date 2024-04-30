@@ -22,10 +22,12 @@
     let teamId: bigint | undefined;
     let isOwner: boolean = false;
     let team: Team | undefined;
+    let teamEnergy: bigint;
     $: {
         teamId = userContext?.team[0]?.id;
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
         team = teams?.find((team) => team.id === teamId);
+        teamEnergy = team?.energy || BigInt(0);
     }
 
     let register = async function () {
@@ -72,32 +74,35 @@
     });
 </script>
 
-{#each options as { description }, index}
+{#each options as { description, title, energyCost }, index}
     <div
-        class="border border-gray-300 p-4 rounded-lg flex-1 text-left text-base text-white"
+        class="border border-gray-300 p-4 rounded-lg flex-1 text-left text-base text-white {votedOrIneligible ===
+            false && energyCost <= teamEnergy
+            ? 'cursor-pointer'
+            : ''} {energyCost > teamEnergy
+            ? 'opacity-50 cursor-not-allowed'
+            : ''}"
         class:bg-gray-900={selectedChoice === index}
         class:border-gray-500={selectedChoice !== index}
         class:bg-gray-700={selectedChoice !== index}
     >
-        {#if votedOrIneligible === false}
-            <div
-                class="w-full h-full flex items-center justify-center cursor-pointer"
-                on:click={() => {
-                    if (votedOrIneligible === false) {
-                        selectedChoice = index;
-                    }
-                }}
-                on:keypress={() => {}}
-                role="button"
-                tabindex={index}
-            >
-                {@html description}
-            </div>
-        {:else}
-            <div>
-                {@html description}
-            </div>
-        {/if}
+        <div
+            class="w-full h-full"
+            on:click={() => {
+                if (votedOrIneligible === false && energyCost <= teamEnergy) {
+                    selectedChoice = index;
+                }
+            }}
+            on:keypress={() => {}}
+            role="button"
+            tabindex={index}
+        >
+            <div class="text-center text-xl font-bold">{title}</div>
+            <div class="text-justify text-sm">{description}</div>
+            {#if energyCost > 0}
+                <div class="text-xl text-center">{energyCost} 💰</div>
+            {/if}
+        </div>
     </div>
 {/each}
 

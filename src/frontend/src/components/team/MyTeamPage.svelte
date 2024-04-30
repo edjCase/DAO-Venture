@@ -108,7 +108,7 @@
                 {#if links.length == 0}
                     <div class="text-center">No links</div>
                 {:else}
-                    <div class="flex justify-around">
+                    <div class="flex flex-col gap-2">
                         {#each links as link}
                             <Button
                                 href={link.url}

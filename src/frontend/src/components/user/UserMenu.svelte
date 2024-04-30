@@ -25,7 +25,7 @@
       <div>
         <UserPseudonym userId={identity.getPrincipal()} />
       </div>
-      <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+      <div class="text-center text-md font-bold">
         {#if user}
           {user.points} <span class="text-lg">🔮</span>
         {/if}
