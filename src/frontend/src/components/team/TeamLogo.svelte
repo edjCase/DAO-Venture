@@ -8,11 +8,20 @@
         id: bigint;
         color: [number, number, number];
       }
+    | {
+        logoUrl: string;
+        name: string;
+        id: bigint;
+        color: [number, number, number];
+        entropy: bigint;
+        energy: bigint;
+      }
     | { winnerOfMatch: number }
     | { seasonStandingIndex: number };
   export let size: "xxs" | "xs" | "sm" | "md" | "lg" | undefined;
   export let border: boolean = true;
   export let padding: boolean = true;
+  export let stats: boolean = false;
   export let name: "left" | "right" | undefined = undefined;
 
   $: logoUrl =
@@ -31,49 +40,59 @@
         ? "W" + team.winnerOfMatch
         : "S" + team.seasonStandingIndex);
 
-  let teamColor = "color" in team ? toRgbString(team.color) : "grey";
+  $: teamColor = "color" in team ? toRgbString(team.color) : "grey";
+  let imageWidth: number;
+  $: {
+    switch (size) {
+      case "xxs":
+        imageWidth = 25;
+        break;
+      case "xs":
+        imageWidth = 60;
+        break;
+      case "sm":
+        imageWidth = 75;
+        break;
+      case "md":
+        imageWidth = 100;
+        break;
+      case "lg":
+        imageWidth = 150;
+        break;
+      default:
+        imageWidth = 50;
+    }
+  }
 </script>
 
-<div id={triggerId} class="flex justify-center items-center space-x-1">
+<div id={triggerId} class="flex flex-col justify-center items-center space-x-1">
   {#if name == "left"}
     <div class="text-center">{title}</div>
   {/if}
-  <img
-    class="logo {padding ? `p-1` : ''} {size ? `size-${size}` : ''}"
-    src={logoUrl}
-    alt={title}
-    {title}
-    style={border ? "border: 5px solid " + teamColor : ""}
-  />
+
+  <div class="flex flex-col items-center justify-center">
+    <img
+      class="bg-gray-400 rounded-lg {padding ? `p-1` : ''}"
+      src={logoUrl}
+      alt={title}
+      {title}
+      style={`width: ${imageWidth}px; height: ${imageWidth}px; ` +
+        (border ? "border: 5px solid " + teamColor : "")}
+    />
+    {#if stats && "energy" in team}
+      <div class="flex items-center justify-center font-bold">
+        <div class="flex items-center justify-center mx-1">
+          <span class="">{team.energy}</span>
+          <span class="text-md">💰</span>
+        </div>
+        <div class="flex items-center justify-center">
+          <span class="">{team.entropy}</span>
+          <span class="text-md">🔥</span>
+        </div>
+      </div>
+    {/if}
+  </div>
   {#if name == "right"}
     <div class="text-center">{title}</div>
   {/if}
 </div>
-
-<style>
-  .logo {
-    background-color: rgba(120, 120, 120, 0.5);
-    border-radius: 25%;
-  }
-
-  .size-xxs {
-    width: 25px;
-    height: 25px;
-  }
-  .size-xs {
-    width: 50px;
-    height: 50px;
-  }
-  .size-sm {
-    width: 75px;
-    height: 75px;
-  }
-  .size-md {
-    width: 100px;
-    height: 100px;
-  }
-  .size-lg {
-    width: 150px;
-    height: 150px;
-  }
-</style>

@@ -15,7 +15,7 @@
         </li>
     </ul>
     <div class="border-2 rounded border-gray-700 p-4">
-        <div class="w-96 mx-auto">
+        <div class="mx-auto">
             <EntropyBar />
         </div>
     </div>

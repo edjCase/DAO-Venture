@@ -93,7 +93,7 @@
             let id = matchTeam.id;
             const standing = teamStandings?.find((s) => s.id == id);
             if (standing) {
-                teamStats = `(${standing.wins}-${standing.losses})`;
+                teamStats = `${standing.wins}-${standing.losses}`;
             }
         }
     }
@@ -101,7 +101,7 @@
     $: {
         if (matchPredictions !== undefined) {
             if (areTeamsEqual(matchPredictions.yourVote, teamId)) {
-                predictionIcon = "✅";
+                predictionIcon = "🟢";
             } else if (matchPredictions.yourVote !== undefined) {
                 predictionIcon = "";
             } else {
@@ -113,8 +113,8 @@
 
 <div class="flex justify-between gap-2">
     <div class="flex flex-col justify-center items-center">
-        <TeamLogo team={matchTeam} size="sm" />
-        <div class="text-xs">
+        <TeamLogo team={matchTeam} size="sm" stats={true} />
+        <div class="text-sm font-bold">
             {teamStats}
         </div>
     </div>

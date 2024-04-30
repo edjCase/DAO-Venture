@@ -47,8 +47,8 @@
         <div class="flex w-full mb-4 text-center">
             <div class="flex-grow">
                 <div class="text-xl">Team</div>
-                <div>Energy: {team.energy}</div>
-                <div>Entropy: {team.entropy}</div>
+                <div>{team.energy} 💰</div>
+                <div>{team.entropy} 🔥</div>
                 <div>Wins: {standing?.wins}</div>
                 <div>Losses: {standing?.losses}</div>
             </div>
@@ -98,7 +98,7 @@
                     </div>
                 {/if}
             </TabItem>
-            <TabItem title="Match History">
+            <TabItem title="Matches">
                 <MatchHistory teamId={team.id} />
             </TabItem>
             <TabItem title="Roster">

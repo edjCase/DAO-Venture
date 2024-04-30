@@ -24,22 +24,10 @@
         }
     }
     $: team = teams?.find((t) => t.id === user?.team[0]?.id);
-
-    $: standing = standings?.find((s) => s.id == team?.id) || {
-        wins: 0,
-        losses: 0,
-    };
 </script>
 
 {#if team}
-    <div class="text-xs text-center flex items-center jusity-center gap-2">
-        <TeamLogo {team} size="sm" />
-        <div>
-            <div>{standing.wins} - {standing.losses}</div>
-            <div>Energy: {team.energy}</div>
-            <div>Entropy: {team.entropy}</div>
-        </div>
-    </div>
+    <TeamLogo {team} size="xs" stats={true} />
 {:else}
     <div class="w-10 h-10" />
 {/if}

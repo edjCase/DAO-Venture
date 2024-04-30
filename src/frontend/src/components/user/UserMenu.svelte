@@ -21,13 +21,13 @@
 <div class="flex flex-col items-center">
   {#if !identity.getPrincipal().isAnonymous()}
     <UserAvatar userId={identity.getPrincipal()} size="lg" />
-    <div class="space-y-1 font-medium dark:text-white text-center">
+    <div class="font-medium text-center">
       <div>
         <UserPseudonym userId={identity.getPrincipal()} />
       </div>
       <div class="text-center text-sm text-gray-500 dark:text-gray-400">
         {#if user}
-          Points: {user.points}
+          {user.points} <span class="text-lg">🔮</span>
         {/if}
       </div>
     </div>

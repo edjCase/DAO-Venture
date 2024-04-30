@@ -25,7 +25,7 @@
     <TabItem title="Roster" open>
       <PlayerRoster teamId={team.id} />
     </TabItem>
-    <TabItem title="Match History">
+    <TabItem title="Matches">
       <MatchHistory teamId={team.id} />
     </TabItem>
     <TabItem title="Fluff">

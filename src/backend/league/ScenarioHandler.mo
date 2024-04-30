@@ -236,7 +236,7 @@ module {
                 if (not votingClosed) {
                     // Validate that the majority has been reached, if voting is still active
                     let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(stats.totalVotingPower) / 2.) + 1));
-                    if (minMajorityVotingPower >= optionWithMostVotes.1) {
+                    if (minMajorityVotingPower > optionWithMostVotes.1) {
                         return #noConsensus; // If any team hasnt reached a consensus, wait till its forced (end of voting period)
                     };
                 };
