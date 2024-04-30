@@ -25,9 +25,9 @@
             {#each group.matches as match}
               <li class="py-3">
                 <div class="flex items-center justify-center text-center">
-                  <TeamLogo team={match.team1} size="sm" name="left" />
+                  <TeamLogo team={match.team1} size="xs" name="left" />
                   <span class="text-gray-500 mx-1">vs</span>
-                  <TeamLogo team={match.team2} size="sm" name="right" />
+                  <TeamLogo team={match.team2} size="xs" name="right" />
                 </div>
               </li>
             {/each}

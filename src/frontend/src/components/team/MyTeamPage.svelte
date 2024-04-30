@@ -29,9 +29,6 @@
             });
         }
     }
-    teamStore.subscribeTeamStandings((s) => {
-        standings = s;
-    });
     $: links = teams?.find((l) => l.id == user?.team[0]?.id)?.links || [];
     $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: votingPower =

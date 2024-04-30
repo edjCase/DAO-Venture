@@ -10,7 +10,7 @@
       }
     | { winnerOfMatch: number }
     | { seasonStandingIndex: number };
-  export let size: "xs" | "sm" | "md" | "lg" | undefined;
+  export let size: "xxs" | "xs" | "sm" | "md" | "lg" | undefined;
   export let border: boolean = true;
   export let padding: boolean = true;
   export let name: "left" | "right" | undefined = undefined;
@@ -56,13 +56,17 @@
     border-radius: 25%;
   }
 
-  .size-xs {
+  .size-xxs {
     width: 25px;
     height: 25px;
   }
-  .size-sm {
+  .size-xs {
     width: 50px;
     height: 50px;
+  }
+  .size-sm {
+    width: 75px;
+    height: 75px;
   }
   .size-md {
     width: 100px;

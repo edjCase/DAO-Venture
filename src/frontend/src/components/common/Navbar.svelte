@@ -2,6 +2,7 @@
   import { Navbar, NavBrand } from "flowbite-svelte";
   import { Link } from "svelte-routing";
   import UserMenu from "../user/UserMenu.svelte";
+  import TeamNavSummary from "../team/TeamNavSummary.svelte";
 </script>
 
 <Navbar rounded color="form" class="mb-2">
@@ -12,5 +13,5 @@
   </NavBrand>
 
   <UserMenu />
-  <div class="w-10 h-10"></div>
+  <TeamNavSummary />
 </Navbar>

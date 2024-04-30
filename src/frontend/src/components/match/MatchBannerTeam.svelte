@@ -7,7 +7,7 @@
 </script>
 
 <div class="flex justify-between items-center mt-1">
-    <TeamLogo {team} size="xs" border={false} padding={false} />
+    <TeamLogo {team} size="xxs" border={false} padding={false} />
     {#if "id" in team}
         <div>{team.name.slice(0, 3)}</div>
         <div>{winLossRecord[Number(team.id)] || "(0-0)"}</div>
