@@ -10,6 +10,7 @@
     import LoadingButton from "../common/LoadingButton.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { leagueAgentFactory } from "../../ic-agent/League";
+    import ScenarioOption from "./ScenarioOption.svelte";
 
     export let scenarioId: bigint;
     export let options: ScenarioOptionWithEffect[];
@@ -18,16 +19,14 @@
     $: teams = $teamStore;
 
     let selectedChoice: number | undefined;
-    let votedOrIneligible: boolean | undefined = undefined;
+    let voteStatus: number | "notVoted" | "ineligible" = "notVoted";
     let teamId: bigint | undefined;
     let isOwner: boolean = false;
     let team: Team | undefined;
-    let teamEnergy: bigint;
     $: {
         teamId = userContext?.team[0]?.id;
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
         team = teams?.find((team) => team.id === teamId);
-        teamEnergy = team?.energy || BigInt(0);
     }
 
     let register = async function () {
@@ -61,58 +60,41 @@
         if (votes[Number(scenarioId)] !== undefined) {
             let chosenOption = votes[Number(scenarioId)].option[0];
             if (chosenOption === undefined) {
-                votedOrIneligible = false;
-                selectedChoice = undefined;
+                voteStatus = "notVoted";
             } else {
-                votedOrIneligible = true;
+                voteStatus = Number(chosenOption);
                 selectedChoice = Number(chosenOption);
             }
         } else {
-            votedOrIneligible = undefined;
+            voteStatus = "ineligible";
             selectedChoice = undefined;
         }
     });
 </script>
 
-{#each options as { description, title, energyCost }, index}
-    <div
-        class="border border-gray-300 p-4 rounded-lg flex-1 text-left text-base text-white {votedOrIneligible ===
-            false && energyCost <= teamEnergy
-            ? 'cursor-pointer'
-            : ''} {energyCost > teamEnergy
-            ? 'opacity-50 cursor-not-allowed'
-            : ''}"
-        class:bg-gray-900={selectedChoice === index}
-        class:border-gray-500={selectedChoice !== index}
-        class:bg-gray-700={selectedChoice !== index}
-    >
-        <div
-            class="w-full h-full"
-            on:click={() => {
-                if (votedOrIneligible === false && energyCost <= teamEnergy) {
+{#each options as option, index}
+    <ScenarioOption
+        {option}
+        selected={selectedChoice === index}
+        teamEnergy={team?.energy}
+        {voteStatus}
+        state={{
+            inProgress: {
+                onSelect: () => {
                     selectedChoice = index;
-                }
-            }}
-            on:keypress={() => {}}
-            role="button"
-            tabindex={index}
-        >
-            <div class="text-center text-xl font-bold">{title}</div>
-            <div class="text-justify text-sm">{description}</div>
-            {#if energyCost > 0}
-                <div class="text-xl text-center">{energyCost} 💰</div>
-            {/if}
-        </div>
-    </div>
+                },
+            },
+        }}
+    />
 {/each}
 
-{#if votedOrIneligible === undefined}
+{#if voteStatus === "ineligible"}
     Ineligible to vote
     {#if !userContext || !isOwner}
         <div>Want to participate in scenarios?</div>
         <Button>Become a Team co-owner</Button>
     {/if}
-{:else if votedOrIneligible === false}
+{:else if voteStatus === "notVoted"}
     <div class="flex justify-center p-5">
         <LoadingButton onClick={register}>
             Submit Vote for Team {team?.name}

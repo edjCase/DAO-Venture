@@ -15,9 +15,9 @@
     import { User } from "../../ic-agent/declarations/users";
     import { teamStore } from "../../stores/TeamStore";
     import { toJsonString } from "../../utils/StringUtil";
-    import TeamLogo from "../team/TeamLogo.svelte";
     import { skillToString } from "../../models/Skill";
     import { fieldPositionToString } from "../../models/FieldPosition";
+    import ScenarioOption from "./ScenarioOption.svelte";
 
     export let state: ScenarioStateResolved;
     export let options: ScenarioOptionWithEffect[];
@@ -35,13 +35,14 @@
 
     $: teams = $teamStore;
 
-    $: teamChoices = state.teamChoices.map((teamChoice) => {
-        let team = teams?.find((team) => team.id === teamChoice.teamId);
-        return {
-            team: team,
-            option: Number(teamChoice.option),
-        };
-    });
+    let optionTeamVotes: bigint[][] | undefined;
+    $: if (teams) {
+        optionTeamVotes = options.map((_, i) => {
+            return state.teamChoices
+                .filter((v) => v.option === BigInt(i))
+                .map((v) => v.teamId);
+        });
+    }
 
     const getGainOrLossOutcomeText = (
         prefix: string,
@@ -133,28 +134,19 @@
     };
 </script>
 
-{#each options as { description }, index}
-    <div
-        class="border-2 border-gray-300 p-4 rounded-lg flex-1 text-left text-base"
-        class:bg-gray-900={selectedChoice === index}
-        class:border-gray-500={selectedChoice !== index}
-        class:bg-gray-700={selectedChoice !== index}
-    >
-        <div>
-            {@html description}
-            <div class="flex items-center justify-center gap-2">
-                {#each teamChoices as teamChoice}
-                    {#if teamChoice.option === index && teamChoice.team}
-                        <TeamLogo
-                            team={teamChoice.team}
-                            size="sm"
-                            border={false}
-                        />
-                    {/if}
-                {/each}
-            </div>
-        </div>
-    </div>
+{#each options as option, index}
+    <ScenarioOption
+        {option}
+        selected={selectedChoice === index}
+        teamEnergy={teams?.find((team) => team.id === userContext?.team[0]?.id)
+            ?.energy}
+        voteStatus={selectedChoice === index ? index : "notVoted"}
+        state={{
+            resolved: {
+                teams: optionTeamVotes ? optionTeamVotes[index] : undefined,
+            },
+        }}
+    />
 {/each}
 <Accordion border={false} flush={true}>
     <AccordionItem
