@@ -5,7 +5,7 @@
 
     let numValue = Number(value);
 
-    $: value = BigInt(value);
+    $: value = BigInt(numValue);
 </script>
 
 <Input type="number" bind:value={numValue} />
