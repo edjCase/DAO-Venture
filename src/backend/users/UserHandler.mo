@@ -94,7 +94,7 @@ module {
             let orderedUsers = users.vals()
             |> IterTools.sort(
                 _,
-                func(u1 : User, u2 : User) : Order.Order = Int.compare(u1.points, u2.points),
+                func(u1 : User, u2 : User) : Order.Order = Int.compare(u2.points, u1.points),
             )
             |> IterTools.skip(_, offset)
             |> IterTools.take(_, count)
