@@ -11,7 +11,7 @@ module {
     };
 
     public type TargetPosition = {
-        teamId : TargetTeam;
+        team : TargetTeam;
         position : FieldPosition.FieldPosition;
     };
 

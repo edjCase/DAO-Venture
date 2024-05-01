@@ -632,7 +632,7 @@ module {
                                 let target : Scenario.Target = switch (s.target) {
                                     case (#position(p)) #positions([{
                                         position = p;
-                                        teamId = #choosingTeam;
+                                        team = #choosingTeam;
                                     }]);
                                 };
                                 #skill({
@@ -862,7 +862,7 @@ module {
                 |> Iter.map(
                     _,
                     func(target : Scenario.TargetPosition) : Scenario.TargetPositionInstance = {
-                        teamId = getTeamId(target.teamId, context);
+                        teamId = getTeamId(target.team, context);
                         position = target.position;
                     },
                 )

@@ -391,7 +391,7 @@ export type TargetInstance = { 'teams' : Array<bigint> } |
   { 'league' : null } |
   { 'positions' : Array<TargetPositionInstance> };
 export interface TargetPosition {
-  'teamId' : TargetTeam,
+  'team' : TargetTeam,
   'position' : FieldPosition,
 }
 export interface TargetPositionInstance {

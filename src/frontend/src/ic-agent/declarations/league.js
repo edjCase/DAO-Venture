@@ -30,7 +30,7 @@ export const idlFactory = ({ IDL }) => {
     'firstBase' : IDL.Null,
   });
   const TargetPosition = IDL.Record({
-    'teamId' : TargetTeam,
+    'team' : TargetTeam,
     'position' : FieldPosition,
   });
   const Target = IDL.Variant({
