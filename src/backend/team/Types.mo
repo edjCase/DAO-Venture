@@ -36,44 +36,51 @@ module {
         #notAuthorized;
     };
 
-    public type UpdateTeamEnergyResult = {
-        #ok;
+    public type UpdateTeamEnergyResult = Result.Result<(), UpdateTeamEnergyError>;
+
+    public type UpdateTeamEnergyError = {
         #notAuthorized;
         #teamNotFound;
     };
 
-    public type UpdateTeamEntropyResult = {
-        #ok;
+    public type UpdateTeamEntropyResult = Result.Result<(), UpdateTeamEntropyError>;
+
+    public type UpdateTeamEntropyError = {
         #notAuthorized;
         #teamNotFound;
     };
 
-    public type UpdateTeamMottoResult = {
-        #ok;
+    public type UpdateTeamMottoResult = Result.Result<(), UpdateTeamMottoError>;
+
+    public type UpdateTeamMottoError = {
         #notAuthorized;
         #teamNotFound;
     };
 
-    public type UpdateTeamDescriptionResult = {
-        #ok;
+    public type UpdateTeamDescriptionResult = Result.Result<(), UpdateTeamDescriptionError>;
+
+    public type UpdateTeamDescriptionError = {
         #notAuthorized;
         #teamNotFound;
     };
 
-    public type UpdateTeamLogoResult = {
-        #ok;
+    public type UpdateTeamLogoResult = Result.Result<(), UpdateTeamLogoError>;
+
+    public type UpdateTeamLogoError = {
         #notAuthorized;
         #teamNotFound;
     };
 
-    public type UpdateTeamColorResult = {
-        #ok;
+    public type UpdateTeamColorResult = Result.Result<(), UpdateTeamColorError>;
+
+    public type UpdateTeamColorError = {
         #notAuthorized;
         #teamNotFound;
     };
 
-    public type UpdateTeamNameResult = {
-        #ok;
+    public type UpdateTeamNameResult = Result.Result<(), UpdateTeamNameError>;
+
+    public type UpdateTeamNameError = {
         #nameTaken;
         #notAuthorized;
         #teamNotFound;
@@ -89,14 +96,16 @@ module {
         links : [Link];
     };
 
-    public type GetProposalResult = {
-        #ok : Proposal;
+    public type GetProposalResult = Result.Result<Proposal, GetProposalError>;
+
+    public type GetProposalError = {
         #proposalNotFound;
         #teamNotFound;
     };
 
-    public type GetProposalsResult = {
-        #ok : CommonTypes.PagedResult<Proposal>;
+    public type GetProposalsResult = Result.Result<CommonTypes.PagedResult<Proposal>, GetProposalsError>;
+
+    public type GetProposalsError = {
         #teamNotFound;
     };
 
@@ -174,13 +183,15 @@ module {
         #teamNotFound;
     };
 
-    public type OnSeasonEndResult = {
-        #ok;
+    public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
+
+    public type OnSeasonEndError = {
         #notAuthorized;
     };
 
-    public type SetLeagueResult = {
-        #ok;
+    public type SetLeagueResult = Result.Result<(), SetLeagueError>;
+
+    public type SetLeagueError = {
         #notAuthorized;
     };
 
@@ -192,8 +203,9 @@ module {
         color : (Nat8, Nat8, Nat8);
     };
 
-    public type CreateTeamResult = {
-        #ok : Nat;
+    public type CreateTeamResult = Result.Result<Nat, CreateTeamError>;
+
+    public type CreateTeamError = {
         #nameTaken;
         #notAuthorized;
     };
@@ -202,8 +214,9 @@ module {
         votes : [Nat];
     };
 
-    public type GetCyclesResult = {
-        #ok : Nat;
+    public type GetCyclesResult = Result.Result<Nat, GetCyclesError>;
+
+    public type GetCyclesError = {
         #notAuthorized;
     };
 };

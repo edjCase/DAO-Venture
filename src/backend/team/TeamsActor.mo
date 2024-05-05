@@ -41,7 +41,7 @@ actor TeamsActor : Types.Actor {
       leagueIdOrNull := ?id;
       return #ok;
     };
-    #notAuthorized;
+    #err(#notAuthorized);
   };
 
   public shared query func getTeams() : async [Team.Team] {
@@ -55,7 +55,7 @@ actor TeamsActor : Types.Actor {
     };
 
     if (leagueId != caller) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     await* teamsHandler.create(leagueId, request);
   };
@@ -66,12 +66,12 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     switch (teamsHandler.updateEnergy(id, delta, true)) {
       case (#ok) #ok;
-      case (#teamNotFound) #teamNotFound;
-      case (#notEnoughEnergy) Prelude.unreachable(); // Only happens when 0 energy is min
+      case (#err(#teamNotFound)) #err(#teamNotFound);
+      case (#err(#notEnoughEnergy)) Prelude.unreachable(); // Only happens when 0 energy is min
     };
   };
 
@@ -81,7 +81,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     await* teamsHandler.updateEntropy(id, delta);
   };
@@ -92,7 +92,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     teamsHandler.updateMotto(id, motto);
   };
@@ -103,7 +103,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     teamsHandler.updateDescription(id, description);
   };
@@ -114,7 +114,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     teamsHandler.updateLogo(id, logoUrl);
   };
@@ -125,7 +125,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     teamsHandler.updateColor(id, color);
   };
@@ -136,7 +136,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     teamsHandler.updateName(id, name);
   };
@@ -188,7 +188,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     // TODO
     #ok;
@@ -200,7 +200,7 @@ actor TeamsActor : Types.Actor {
       case (?id) id;
     };
     if (caller != leagueId) {
-      return #notAuthorized;
+      return #err(#notAuthorized);
     };
     let canisterStatus = await ic.canister_status({
       canister_id = Principal.fromActor(TeamsActor);

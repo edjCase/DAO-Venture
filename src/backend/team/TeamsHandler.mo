@@ -114,7 +114,7 @@ module {
             );
 
             if (nameAlreadyTaken) {
-                return #nameTaken;
+                return #err(#nameTaken);
             };
             let teamId = nextTeamId;
             nextTeamId += 1;
@@ -164,21 +164,14 @@ module {
             return #ok(teamId);
         };
 
-        public func getProposal(teamId : Nat, id : Nat) : {
-            #ok : Dao.Proposal<Types.ProposalContent>;
-            #teamNotFound;
-            #proposalNotFound;
-        } {
-            let ?dao = daos.get(teamId) else return #teamNotFound;
-            let ?proposal = dao.getProposal(id) else return #proposalNotFound;
+        public func getProposal(teamId : Nat, id : Nat) : Result.Result<Dao.Proposal<Types.ProposalContent>, { #teamNotFound; #proposalNotFound }> {
+            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
+            let ?proposal = dao.getProposal(id) else return #err(#proposalNotFound);
             #ok(proposal);
         };
 
-        public func getProposals(teamId : Nat, count : Nat, offset : Nat) : {
-            #ok : CommonTypes.PagedResult<Dao.Proposal<Types.ProposalContent>>;
-            #teamNotFound;
-        } {
-            let ?dao = daos.get(teamId) else return #teamNotFound;
+        public func getProposals(teamId : Nat, count : Nat, offset : Nat) : Result.Result<CommonTypes.PagedResult<Dao.Proposal<Types.ProposalContent>>, { #teamNotFound }> {
+            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
             let proposals = dao.getProposals(count, offset);
             #ok(proposals);
         };
@@ -188,83 +181,67 @@ module {
             await* dao.vote(request.proposalId, caller, request.vote);
         };
 
-        public func createProposal<system>(teamId : Nat, caller : Principal, request : Types.CreateProposalRequest, members : [Dao.Member]) : Types.CreateProposalResult {
+        public func createProposal<system>(
+            teamId : Nat,
+            caller : Principal,
+            request : Types.CreateProposalRequest,
+            members : [Dao.Member],
+        ) : Types.CreateProposalResult {
             let ?dao = daos.get(teamId) else return #err(#teamNotFound);
             dao.createProposal<system>(caller, request.content, members);
         };
 
-        public func getLinks(teamId : Nat) : {
-            #ok : [Types.Link];
-            #teamNotFound;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func getLinks(teamId : Nat) : Result.Result<[Types.Link], { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             #ok(Buffer.toArray(team.links));
         };
 
-        public func updateEnergy(teamId : Nat, delta : Int, allowBelowZero : Bool) : {
-            #ok;
-            #teamNotFound;
-            #notEnoughEnergy;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func updateEnergy(
+            teamId : Nat,
+            delta : Int,
+            allowBelowZero : Bool,
+        ) : Result.Result<(), { #teamNotFound; #notEnoughEnergy }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             let newEnergy = team.energy + delta;
             if (not allowBelowZero and newEnergy < 0) {
-                return #notEnoughEnergy;
+                return #err(#notEnoughEnergy);
             };
             team.energy := newEnergy;
             #ok;
         };
 
-        public func updateName(teamId : Nat, newName : Text) : {
-            #ok;
-            #teamNotFound;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func updateName(teamId : Nat, newName : Text) : Result.Result<(), { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             team.name := newName;
             #ok;
         };
 
-        public func updateColor(teamId : Nat, newColor : (Nat8, Nat8, Nat8)) : {
-            #ok;
-            #teamNotFound;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func updateColor(teamId : Nat, newColor : (Nat8, Nat8, Nat8)) : Result.Result<(), { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             team.color := newColor;
             #ok;
         };
 
-        public func updateLogo(teamId : Nat, newLogoUrl : Text) : {
-            #ok;
-            #teamNotFound;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func updateLogo(teamId : Nat, newLogoUrl : Text) : Result.Result<(), { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             team.logoUrl := newLogoUrl;
             #ok;
         };
 
-        public func updateMotto(teamId : Nat, newMotto : Text) : {
-            #ok;
-            #teamNotFound;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func updateMotto(teamId : Nat, newMotto : Text) : Result.Result<(), { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             team.motto := newMotto;
             #ok;
         };
 
-        public func updateDescription(teamId : Nat, newDescription : Text) : {
-            #ok;
-            #teamNotFound;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func updateDescription(teamId : Nat, newDescription : Text) : Result.Result<(), { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             team.description := newDescription;
             #ok;
         };
 
-        public func updateEntropy(teamId : Nat, delta : Int) : async* {
-            #ok;
-            #teamNotFound;
-        } {
-            let ?team = teams.get(teamId) else return #teamNotFound;
+        public func updateEntropy(teamId : Nat, delta : Int) : async* Result.Result<(), { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
             let newEntropyInt : Int = team.entropy + delta;
             let newEntropyNat : Nat = if (newEntropyInt <= 0) {
                 // Entropy cant be negative
