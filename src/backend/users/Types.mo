@@ -1,5 +1,6 @@
 import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
+import Result "mo:base/Result";
 import CommonTypes "../Types";
 
 module {
@@ -24,9 +25,7 @@ module {
         #ok : CommonTypes.PagedResult<User>;
     };
 
-    public type GetStatsResult = {
-        #ok : UserStats;
-    };
+    public type GetStatsResult = Result.Result<UserStats, ()>;
 
     public type UserStats = {
         totalPoints : Int;
@@ -41,16 +40,18 @@ module {
         userCount : Nat;
         ownerCount : Nat;
     };
-
-    public type OnSeasonEndResult = {
-        #ok;
+    public type OnSeasonEndError = {
         #notAuthorized;
     };
+
+    public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
 
     public type GetTeamOwnersRequest = {
         #team : Nat;
         #all;
     };
+
+    public type GetTeamOwnersError = {};
 
     public type GetTeamOwnersResult = {
         #ok : [UserVotingInfo];
@@ -85,34 +86,38 @@ module {
         votingPower : Nat;
     };
 
-    public type AddTeamOwnerResult = {
-        #ok;
+    public type AddTeamOwnerError = {
         #onOtherTeam : Nat;
         #teamNotFound;
         #notAuthorized;
     };
 
-    public type GetUserResult = {
-        #ok : User;
+    public type AddTeamOwnerResult = Result.Result<(), AddTeamOwnerError>;
+
+    public type GetUserError = {
         #notFound;
         #notAuthorized;
     };
+
+    public type GetUserResult = Result.Result<User, GetUserError>;
 
     public type AwardPointsRequest = {
         userId : Principal;
         points : Int;
     };
 
-    public type AwardPointsResult = {
-        #ok;
+    public type AwardPointsError = {
         #notAuthorized;
     };
 
-    public type SetUserFavoriteTeamResult = {
-        #ok;
+    public type AwardPointsResult = Result.Result<(), AwardPointsError>;
+
+    public type SetUserFavoriteTeamError = {
         #identityRequired;
         #teamNotFound;
         #notAuthorized;
         #alreadySet;
     };
+
+    public type SetUserFavoriteTeamResult = Result.Result<(), SetUserFavoriteTeamError>;
 };

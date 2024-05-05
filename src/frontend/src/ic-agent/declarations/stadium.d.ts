@@ -12,9 +12,10 @@ export interface BaseState {
   'secondBase' : [] | [PlayerId],
   'firstBase' : [] | [PlayerId],
 }
+export type CancelMatchGroupError = { 'matchGroupNotFound' : null };
 export interface CancelMatchGroupRequest { 'id' : bigint }
 export type CancelMatchGroupResult = { 'ok' : null } |
-  { 'matchGroupNotFound' : null };
+  { 'err' : CancelMatchGroupError };
 export type Effect = { 'skill' : { 'skill' : [] | [Skill], 'delta' : bigint } };
 export type Event = {
     'out' : { 'playerId' : PlayerId__1, 'reason' : OutReason }
@@ -165,11 +166,13 @@ export interface PlayerStateWithId {
   'skills' : Skills,
   'condition' : PlayerCondition,
 }
+export type ResetTickTimerError = { 'matchGroupNotFound' : null };
 export type ResetTickTimerResult = { 'ok' : null } |
-  { 'matchGroupNotFound' : null };
+  { 'err' : ResetTickTimerError };
 export interface RoundLog { 'turns' : Array<TurnLog> }
+export type SetLeagueError = { 'notAuthorized' : null };
 export type SetLeagueResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : SetLeagueError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -186,12 +189,13 @@ export interface Skills {
   'defense' : bigint,
   'throwingPower' : bigint,
 }
+export type StartMatchGroupError = { 'noMatchesSpecified' : null };
 export interface StartMatchGroupRequest {
   'id' : bigint,
   'matches' : Array<StartMatchRequest>,
 }
 export type StartMatchGroupResult = { 'ok' : null } |
-  { 'noMatchesSpecified' : null };
+  { 'err' : StartMatchGroupError };
 export interface StartMatchRequest {
   'team1' : StartMatchTeam,
   'team2' : StartMatchTeam,
@@ -233,8 +237,7 @@ export interface TeamState {
   'logoUrl' : string,
   'positions' : TeamPositions,
 }
-export type TickMatchGroupResult = { 'notAuthorized' : null } |
-  { 'completed' : null } |
+export type TickMatchGroupError = { 'notAuthorized' : null } |
   { 'matchGroupNotFound' : null } |
   {
     'onStartCallbackError' : { 'notAuthorized' : null } |
@@ -242,8 +245,12 @@ export type TickMatchGroupResult = { 'notAuthorized' : null } |
       { 'matchGroupNotFound' : null } |
       { 'alreadyStarted' : null } |
       { 'unknown' : string }
+  };
+export type TickMatchGroupResult = {
+    'ok' : { 'completed' : null } |
+      { 'inProgress' : null }
   } |
-  { 'inProgress' : null };
+  { 'err' : TickMatchGroupError };
 export interface TickResult { 'match' : Match, 'status' : MatchStatus }
 export interface Trait {
   'id' : string,

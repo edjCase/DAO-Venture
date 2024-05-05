@@ -1,8 +1,11 @@
 export const idlFactory = ({ IDL }) => {
   const CancelMatchGroupRequest = IDL.Record({ 'id' : IDL.Nat });
+  const CancelMatchGroupError = IDL.Variant({
+    'matchGroupNotFound' : IDL.Null,
+  });
   const CancelMatchGroupResult = IDL.Variant({
     'ok' : IDL.Null,
-    'matchGroupNotFound' : IDL.Null,
+    'err' : CancelMatchGroupError,
   });
   const PlayerId__1 = IDL.Nat32;
   const OutReason = IDL.Variant({
@@ -205,13 +208,15 @@ export const idlFactory = ({ IDL }) => {
     'currentSeed' : IDL.Nat32,
     'matches' : IDL.Vec(TickResult),
   });
+  const ResetTickTimerError = IDL.Variant({ 'matchGroupNotFound' : IDL.Null });
   const ResetTickTimerResult = IDL.Variant({
     'ok' : IDL.Null,
-    'matchGroupNotFound' : IDL.Null,
+    'err' : ResetTickTimerError,
   });
+  const SetLeagueError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const SetLeagueResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : SetLeagueError,
   });
   const FieldPosition = IDL.Variant({
     'rightField' : IDL.Null,
@@ -260,13 +265,13 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'matches' : IDL.Vec(StartMatchRequest),
   });
+  const StartMatchGroupError = IDL.Variant({ 'noMatchesSpecified' : IDL.Null });
   const StartMatchGroupResult = IDL.Variant({
     'ok' : IDL.Null,
-    'noMatchesSpecified' : IDL.Null,
+    'err' : StartMatchGroupError,
   });
-  const TickMatchGroupResult = IDL.Variant({
+  const TickMatchGroupError = IDL.Variant({
     'notAuthorized' : IDL.Null,
-    'completed' : IDL.Null,
     'matchGroupNotFound' : IDL.Null,
     'onStartCallbackError' : IDL.Variant({
       'notAuthorized' : IDL.Null,
@@ -275,7 +280,10 @@ export const idlFactory = ({ IDL }) => {
       'alreadyStarted' : IDL.Null,
       'unknown' : IDL.Text,
     }),
-    'inProgress' : IDL.Null,
+  });
+  const TickMatchGroupResult = IDL.Variant({
+    'ok' : IDL.Variant({ 'completed' : IDL.Null, 'inProgress' : IDL.Null }),
+    'err' : TickMatchGroupError,
   });
   return IDL.Service({
     'cancelMatchGroup' : IDL.Func(

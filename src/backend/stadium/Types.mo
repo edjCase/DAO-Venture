@@ -1,6 +1,7 @@
 import Principal "mo:base/Principal";
 import Player "../models/Player";
 import Nat "mo:base/Nat";
+import Result "mo:base/Result";
 import MatchAura "../models/MatchAura";
 import Base "../models/Base";
 import Team "../models/Team";
@@ -25,15 +26,18 @@ module {
     public type CancelMatchGroupRequest = {
         id : Nat;
     };
-    public type CancelMatchGroupResult = {
-        #ok;
+
+    public type CancelMatchGroupError = {
         #matchGroupNotFound;
     };
 
-    public type SetLeagueResult = {
-        #ok;
+    public type CancelMatchGroupResult = Result.Result<(), CancelMatchGroupError>;
+
+    public type SetLeagueError = {
         #notAuthorized;
     };
+
+    public type SetLeagueResult = Result.Result<(), SetLeagueError>;
 
     public type StadiumActorInfo = {};
 
@@ -41,10 +45,11 @@ module {
         id : Principal;
     };
 
-    public type CreateStadiumResult = {
-        #ok : Principal;
+    public type CreateStadiumError = {
         #stadiumCreationError : Text;
     };
+
+    public type CreateStadiumResult = Result.Result<Principal, CreateStadiumError>;
 
     public type StartMatchGroupRequest = {
         id : Nat;
@@ -85,9 +90,7 @@ module {
         #notEnoughPlayers : Team.TeamIdOrBoth;
     };
 
-    public type StartMatchGroupResult = StartMatchGroupError or {
-        #ok;
-    };
+    public type StartMatchGroupResult = Result.Result<(), StartMatchGroupError>;
 
     public type RoundLog = {
         turns : [TurnLog];
@@ -245,10 +248,11 @@ module {
         id : Nat;
     };
 
-    public type ResetTickTimerResult = {
-        #ok;
+    public type ResetTickTimerError = {
         #matchGroupNotFound;
     };
+
+    public type ResetTickTimerResult = Result.Result<(), ResetTickTimerError>;
 
     public type PlayerState = {
         name : Text;
@@ -269,8 +273,9 @@ module {
         thirdBase : ?PlayerId;
     };
 
-    public type TickMatchGroupResult = {
-        #inProgress;
+    public type TickMatchGroupResult = Result.Result<{ #inProgress; #completed }, TickMatchGroupError>;
+
+    public type TickMatchGroupError = {
         #matchGroupNotFound;
         #onStartCallbackError : {
             #unknown : Text;
@@ -279,7 +284,6 @@ module {
             #notAuthorized;
             #matchGroupNotFound;
         };
-        #completed;
         #notAuthorized;
     };
 

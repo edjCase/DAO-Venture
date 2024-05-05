@@ -50,7 +50,7 @@ actor StadiumActor : Types.StadiumActor {
             leagueIdOrNull := ?id;
             return #ok;
         };
-        #notAuthorized;
+        #err(#notAuthorized);
     };
 
     public query func getMatchGroup(id : Nat) : async ?Types.MatchGroupWithId {
@@ -103,7 +103,7 @@ actor StadiumActor : Types.StadiumActor {
             });
         };
         if (tickResults.size() == 0) {
-            return #noMatchesSpecified;
+            return #err(#noMatchesSpecified);
         };
 
         let matchGroup : Types.MatchGroupWithId = {
@@ -123,7 +123,7 @@ actor StadiumActor : Types.StadiumActor {
         let matchGroupKey = buildMatchGroupKey(request.id);
         let (newMatchGroups, matchGroup) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
         switch (matchGroup) {
-            case (null) return #matchGroupNotFound;
+            case (null) return #err(#matchGroupNotFound);
             case (?matchGroup) {
                 matchGroups := newMatchGroups;
                 Timer.cancelTimer(matchGroup.tickTimerId);
@@ -158,10 +158,10 @@ actor StadiumActor : Types.StadiumActor {
 
     public shared ({ caller }) func tickMatchGroup(id : Nat) : async Types.TickMatchGroupResult {
         if (caller != Principal.fromActor(StadiumActor)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
-        let ?matchGroup = getMatchGroupOrNull(id) else return #matchGroupNotFound;
+        let ?matchGroup = getMatchGroupOrNull(id) else return #err(#matchGroupNotFound);
         let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
 
         switch (tickMatches(prng, matchGroup.matches)) {
@@ -198,7 +198,7 @@ actor StadiumActor : Types.StadiumActor {
                 let result = try {
                     await leagueActor.onMatchGroupComplete(onCompleteRequest);
                 } catch (err) {
-                    #onCompleteCallbackError(Error.message(err));
+                    #err(#onCompleteCallbackError(Error.message(err)));
                 };
 
                 let errorMessage = switch (result) {
@@ -207,18 +207,18 @@ actor StadiumActor : Types.StadiumActor {
                         let matchGroupKey = buildMatchGroupKey(id);
                         let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
                         matchGroups := newMatchGroups;
-                        return #completed;
+                        return #ok(#completed);
                     };
-                    case (#notAuthorized) "Failed: Not authorized to complete match group";
-                    case (#matchGroupNotFound) "Failed: Match group not found - " # Nat.toText(id);
-                    case (#seedGenerationError(err)) "Failed: Seed generation error - " # err;
-                    case (#seasonNotOpen) "Failed: Season not open";
-                    case (#onCompleteCallbackError(err)) "Failed: On complete callback error - " # err;
-                    case (#matchGroupNotInProgress) "Failed: Match group not in progress";
+                    case (#err(#notAuthorized)) "Failed: Not authorized to complete match group";
+                    case (#err(#matchGroupNotFound)) "Failed: Match group not found - " # Nat.toText(id);
+                    case (#err(#seedGenerationError(err))) "Failed: Seed generation error - " # err;
+                    case (#err(#seasonNotOpen)) "Failed: Season not open";
+                    case (#err(#onCompleteCallbackError(err))) "Failed: On complete callback error - " # err;
+                    case (#err(#matchGroupNotInProgress)) "Failed: Match group not in progress";
                 };
                 Debug.print("On Match Group Complete Result - " # errorMessage);
                 // Stuck in a bad state. Can retry by a manual tick call
-                #completed;
+                #ok(#completed);
             };
             case (#inProgress(newMatches)) {
                 addOrUpdateMatchGroup({
@@ -228,7 +228,7 @@ actor StadiumActor : Types.StadiumActor {
                     currentSeed = prng.getCurrentSeed();
                 });
 
-                #inProgress;
+                #ok(#inProgress);
             };
         };
     };
@@ -267,11 +267,11 @@ actor StadiumActor : Types.StadiumActor {
     private func tickMatchGroupCallback(matchGroupId : Nat) : async () {
         let message = try {
             switch (await tickMatchGroup(matchGroupId)) {
-                case (#matchGroupNotFound) "Match Group not found";
-                case (#notAuthorized) "Not authorized to tick match group";
-                case (#onStartCallbackError(err)) "On start callback error: " # debug_show (err);
-                case (#completed(_)) "Match Group completed";
-                case (#inProgress(_)) return (); // Dont log normal tick
+                case (#err(#matchGroupNotFound)) "Match Group not found";
+                case (#err(#notAuthorized)) "Not authorized to tick match group";
+                case (#err(#onStartCallbackError(err))) "On start callback error: " # debug_show (err);
+                case (#ok(#completed(_))) "Match Group completed";
+                case (#ok(#inProgress(_))) return (); // Dont log normal tick
             };
         } catch (err) {
             "Failed to tick match group: " # Error.message(err);

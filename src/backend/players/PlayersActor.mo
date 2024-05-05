@@ -42,7 +42,7 @@ actor : Types.PlayerActor {
 
     public shared ({ caller }) func setTeamsCanisterId(canisterId : Principal) : async Types.SetTeamsCanisterIdResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         teamsCanisterId := ?canisterId;
         #ok;
@@ -50,7 +50,7 @@ actor : Types.PlayerActor {
 
     public shared ({ caller }) func addFluff(request : Types.CreatePlayerFluffRequest) : async Types.CreatePlayerFluffResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         playerHandler.addFluff(request);
     };
@@ -61,7 +61,7 @@ actor : Types.PlayerActor {
                 #ok(player);
             };
             case (null) {
-                #notFound;
+                #err(#notFound);
             };
         };
     };
@@ -76,14 +76,14 @@ actor : Types.PlayerActor {
 
     public shared ({ caller }) func populateTeamRoster(teamId : Nat) : async Types.PopulateTeamRosterResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         playerHandler.populateTeamRoster(teamId);
     };
 
     public shared ({ caller }) func applyEffects(request : Types.ApplyEffectsRequest) : async Types.ApplyEffectsResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         playerHandler.applyEffects(request);
     };
@@ -97,14 +97,14 @@ actor : Types.PlayerActor {
             Debug.trap("Teams canister ID is not set");
         };
         if (?caller != teamsCanisterId and not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         playerHandler.swapTeamPositions(teamId, position1, position2);
     };
 
     public shared ({ caller }) func addMatchStats(matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) : async Types.AddMatchStatsResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
 
         let matchGroupKey = {
@@ -133,7 +133,7 @@ actor : Types.PlayerActor {
 
     public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         // TODO archive?
         stats := Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();

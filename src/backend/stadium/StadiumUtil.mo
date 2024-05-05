@@ -1,4 +1,3 @@
-import Principal "mo:base/Principal";
 import Trie "mo:base/Trie";
 import TrieMap "mo:base/TrieMap";
 import Hash "mo:base/Hash";

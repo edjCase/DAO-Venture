@@ -80,7 +80,7 @@ actor LeagueActor : Types.LeagueActor {
                         let result = await PlayersActor.applyEffects([#skill(s)]); // TODO optimize with bulk call
                         switch (result) {
                             case (#ok) true;
-                            case (#notAuthorized) false;
+                            case (#err(_)) false;
                         };
                     };
                 };
@@ -456,7 +456,7 @@ actor LeagueActor : Types.LeagueActor {
                     let error : ?Text = try {
                         switch (await UsersActor.awardPoints(Buffer.toArray(awards))) {
                             case (#ok) null;
-                            case (#notAuthorized) ?"League is not authorized to award user points";
+                            case (#err(#notAuthorized)) ?"League is not authorized to award user points";
                         };
                     } catch (err) {
                         // TODO how to handle this?

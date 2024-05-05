@@ -4,19 +4,23 @@ export const idlFactory = ({ IDL }) => {
     'userId' : IDL.Principal,
     'teamId' : IDL.Nat,
   });
-  const AddTeamOwnerResult = IDL.Variant({
-    'ok' : IDL.Null,
+  const AddTeamOwnerError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'onOtherTeam' : IDL.Nat,
     'teamNotFound' : IDL.Null,
+  });
+  const AddTeamOwnerResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : AddTeamOwnerError,
   });
   const AwardPointsRequest = IDL.Record({
     'userId' : IDL.Principal,
     'points' : IDL.Int,
   });
+  const AwardPointsError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const AwardPointsResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : AwardPointsError,
   });
   const TeamAssociationKind = IDL.Variant({
     'fan' : IDL.Null,
@@ -29,11 +33,11 @@ export const idlFactory = ({ IDL }) => {
     ),
     'points' : IDL.Int,
   });
-  const GetUserResult = IDL.Variant({
-    'ok' : User,
+  const GetUserError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'notFound' : IDL.Null,
   });
+  const GetUserResult = IDL.Variant({ 'ok' : User, 'err' : GetUserError });
   const TeamStats = IDL.Record({
     'id' : IDL.Nat,
     'totalPoints' : IDL.Int,
@@ -46,7 +50,7 @@ export const idlFactory = ({ IDL }) => {
     'totalPoints' : IDL.Int,
     'userCount' : IDL.Nat,
   });
-  const GetStatsResult = IDL.Variant({ 'ok' : UserStats });
+  const GetStatsResult = IDL.Variant({ 'ok' : UserStats, 'err' : IDL.Null });
   const GetTeamOwnersRequest = IDL.Variant({
     'all' : IDL.Null,
     'team' : IDL.Nat,
@@ -67,16 +71,20 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const GetUserLeaderboardResult = IDL.Variant({ 'ok' : PagedResult });
+  const OnSeasonEndError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : OnSeasonEndError,
   });
-  const SetUserFavoriteTeamResult = IDL.Variant({
-    'ok' : IDL.Null,
+  const SetUserFavoriteTeamError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'alreadySet' : IDL.Null,
     'identityRequired' : IDL.Null,
     'teamNotFound' : IDL.Null,
+  });
+  const SetUserFavoriteTeamResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : SetUserFavoriteTeamError,
   });
   return IDL.Service({
     'addTeamOwner' : IDL.Func([AddTeamOwnerRequest], [AddTeamOwnerResult], []),

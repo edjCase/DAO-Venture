@@ -137,12 +137,12 @@ module {
             let userInfo = getUserInfoInternal(userId);
             switch (userInfo.team) {
                 case (?team) {
-                    return #alreadySet;
+                    return #err(#alreadySet);
                 };
                 case (null) {
                     let teamExists = true; // TODO get all team ids and check if teamId is in there
                     if (not teamExists) {
-                        return #teamNotFound;
+                        return #err(#teamNotFound);
                     };
                     updateUser(
                         userId,
@@ -164,13 +164,13 @@ module {
             switch (userInfo.team) {
                 case (?team) {
                     if (team.id != request.teamId) {
-                        return #onOtherTeam(team.id);
+                        return #err(#onOtherTeam(team.id));
                     };
                 };
                 case (null) {
                     let teamExists = true; // TODO get all team ids and check if teamId is in there
                     if (not teamExists) {
-                        return #teamNotFound;
+                        return #err(#teamNotFound);
                     };
                 };
             };

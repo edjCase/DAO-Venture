@@ -2,6 +2,8 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type AddScenarioError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> };
 export interface AddScenarioRequest {
   'startTime' : Time,
   'title' : string,
@@ -12,16 +14,17 @@ export interface AddScenarioRequest {
   'options' : Array<ScenarioOptionWithEffect>,
 }
 export type AddScenarioResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'invalid' : Array<string> };
+  { 'err' : AddScenarioError };
 export type BenevolentDictatorState = { 'open' : null } |
   { 'claimed' : Principal } |
   { 'disabled' : null };
+export type ClaimBenevolentDictatorRoleError = { 'notOpenToClaim' : null };
 export type ClaimBenevolentDictatorRoleResult = { 'ok' : null } |
-  { 'notOpenToClaim' : null };
-export type CloseSeasonResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+  { 'err' : ClaimBenevolentDictatorRoleError };
+export type CloseSeasonError = { 'notAuthorized' : null } |
   { 'seasonNotOpen' : null };
+export type CloseSeasonResult = { 'ok' : null } |
+  { 'err' : CloseSeasonError };
 export interface CompletedMatch {
   'team1' : CompletedMatchTeam,
   'team2' : CompletedMatchTeam,
@@ -53,6 +56,9 @@ export type CreateProposalError = { 'notAuthorized' : null };
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
   { 'err' : CreateProposalError };
+export type CreateTeamError = { 'nameTaken' : null } |
+  { 'notAuthorized' : null } |
+  { 'teamsCallError' : string };
 export interface CreateTeamRequest {
   'motto' : string,
   'name' : string,
@@ -61,9 +67,7 @@ export interface CreateTeamRequest {
   'logoUrl' : string,
 }
 export type CreateTeamResult = { 'ok' : bigint } |
-  { 'nameTaken' : null } |
-  { 'notAuthorized' : null } |
-  { 'teamsCallError' : string };
+  { 'err' : CreateTeamError };
 export type DayOfWeek = { 'tuesday' : null } |
   { 'wednesday' : null } |
   { 'saturday' : null } |
@@ -108,23 +112,28 @@ export type FieldPosition = { 'rightField' : null } |
   { 'shortStop' : null } |
   { 'centerField' : null } |
   { 'firstBase' : null };
+export type GetMatchGroupPredictionsError = { 'notFound' : null };
 export type GetMatchGroupPredictionsResult = {
     'ok' : MatchGroupPredictionSummary
   } |
-  { 'notFound' : null };
+  { 'err' : GetMatchGroupPredictionsError };
+export type GetProposalError = { 'proposalNotFound' : null };
 export type GetProposalResult = { 'ok' : Proposal } |
-  { 'proposalNotFound' : null };
+  { 'err' : GetProposalError };
 export type GetProposalsResult = { 'ok' : PagedResult };
-export type GetScenarioResult = { 'ok' : Scenario } |
-  { 'notStarted' : null } |
+export type GetScenarioError = { 'notStarted' : null } |
   { 'notFound' : null };
+export type GetScenarioResult = { 'ok' : Scenario } |
+  { 'err' : GetScenarioError };
+export type GetScenarioVoteError = { 'notEligible' : null } |
+  { 'scenarioNotFound' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
 export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
-  { 'notEligible' : null } |
-  { 'scenarioNotFound' : null };
+  { 'err' : GetScenarioVoteError };
 export type GetScenariosResult = { 'ok' : Array<Scenario> };
+export type GetTeamStandingsError = { 'notFound' : null };
 export type GetTeamStandingsResult = { 'ok' : Array<TeamStandingInfo> } |
-  { 'notFound' : null };
+  { 'err' : GetTeamStandingsError };
 export interface InProgressMatch {
   'team1' : InProgressTeam,
   'team2' : InProgressTeam,
@@ -217,17 +226,18 @@ export interface NotScheduledMatchGroup {
   'time' : Time,
   'matches' : Array<NotScheduledMatch>,
 }
+export type OnMatchGroupCompleteError = { 'notAuthorized' : null } |
+  { 'seedGenerationError' : string } |
+  { 'matchGroupNotFound' : null } |
+  { 'seasonNotOpen' : null } |
+  { 'matchGroupNotInProgress' : null };
 export interface OnMatchGroupCompleteRequest {
   'id' : bigint,
   'matches' : Array<CompletedMatch>,
   'playerStats' : Array<PlayerMatchStatsWithId>,
 }
 export type OnMatchGroupCompleteResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'seedGenerationError' : string } |
-  { 'matchGroupNotFound' : null } |
-  { 'seasonNotOpen' : null } |
-  { 'matchGroupNotInProgress' : null };
+  { 'err' : OnMatchGroupCompleteError };
 export interface PagedResult {
   'data' : Array<Proposal>,
   'count' : bigint,
@@ -271,15 +281,16 @@ export interface PlayerMatchStatsWithId {
     'successfulCatches' : bigint,
   },
 }
+export type PredictMatchOutcomeError = { 'predictionsClosed' : null } |
+  { 'matchNotFound' : null } |
+  { 'matchGroupNotFound' : null } |
+  { 'identityRequired' : null };
 export interface PredictMatchOutcomeRequest {
   'winner' : [] | [TeamId],
   'matchId' : bigint,
 }
 export type PredictMatchOutcomeResult = { 'ok' : null } |
-  { 'predictionsClosed' : null } |
-  { 'matchNotFound' : null } |
-  { 'matchGroupNotFound' : null } |
-  { 'identityRequired' : null };
+  { 'err' : PredictMatchOutcomeError };
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent,
@@ -349,8 +360,9 @@ export type SeasonStatus = { 'notStarted' : null } |
   { 'starting' : null } |
   { 'completed' : CompletedSeason } |
   { 'inProgress' : InProgressSeason };
+export type SetBenevolentDictatorStateError = { 'notAuthorized' : null };
 export type SetBenevolentDictatorStateResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : SetBenevolentDictatorStateError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -368,22 +380,24 @@ export interface Skills {
   'throwingPower' : bigint,
 }
 export type StartMatchError = { 'notEnoughPlayers' : TeamIdOrBoth };
-export type StartMatchGroupResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+export type StartMatchGroupError = { 'notAuthorized' : null } |
   { 'notScheduledYet' : null } |
   { 'matchGroupNotFound' : null } |
   { 'alreadyStarted' : null } |
   { 'matchErrors' : Array<{ 'error' : StartMatchError, 'matchId' : bigint }> };
+export type StartMatchGroupResult = { 'ok' : null } |
+  { 'err' : StartMatchGroupError };
+export type StartSeasonError = { 'notAuthorized' : null } |
+  { 'seedGenerationError' : string } |
+  { 'alreadyStarted' : null } |
+  { 'idTaken' : null } |
+  { 'invalidArgs' : string };
 export interface StartSeasonRequest {
   'startTime' : Time,
   'weekDays' : Array<DayOfWeek>,
 }
 export type StartSeasonResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'seedGenerationError' : string } |
-  { 'alreadyStarted' : null } |
-  { 'idTaken' : null } |
-  { 'invalidArgs' : string };
+  { 'err' : StartSeasonError };
 export type Target = { 'teams' : Array<TargetTeam> } |
   { 'league' : null } |
   { 'positions' : Array<TargetPosition> };
@@ -445,16 +459,17 @@ export interface VoteOnProposalRequest {
 }
 export type VoteOnProposalResult = { 'ok' : null } |
   { 'err' : VoteOnProposalError };
+export type VoteOnScenarioError = { 'invalidOption' : null } |
+  { 'alreadyVoted' : null } |
+  { 'votingNotOpen' : null } |
+  { 'notEligible' : null } |
+  { 'scenarioNotFound' : null };
 export interface VoteOnScenarioRequest {
   'scenarioId' : bigint,
   'option' : bigint,
 }
 export type VoteOnScenarioResult = { 'ok' : null } |
-  { 'invalidOption' : null } |
-  { 'alreadyVoted' : null } |
-  { 'votingNotOpen' : null } |
-  { 'notEligible' : null } |
-  { 'scenarioNotFound' : null };
+  { 'err' : VoteOnScenarioError };
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
   'claimBenevolentDictatorRole' : ActorMethod<

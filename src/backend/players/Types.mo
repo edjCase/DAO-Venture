@@ -1,6 +1,7 @@
 import Player "../models/Player";
 import Scenario "../models/Scenario";
 import FieldPosition "../models/FieldPosition";
+import Result "mo:base/Result";
 module {
 
     public type PlayerActor = actor {
@@ -19,40 +20,44 @@ module {
         addMatchStats : (matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) -> async AddMatchStatsResult;
         setTeamsCanisterId : (canisterId : Principal) -> async SetTeamsCanisterIdResult;
     };
-
-    public type SetTeamsCanisterIdResult = {
-        #ok;
+    public type SetTeamsCanisterIdError = {
         #notAuthorized;
     };
 
-    public type AddMatchStatsResult = {
-        #ok;
+    public type SetTeamsCanisterIdResult = Result.Result<(), SetTeamsCanisterIdError>;
+
+    public type AddMatchStatsError = {
         #notAuthorized;
     };
 
-    public type SwapPlayerPositionsResult = {
-        #ok;
+    public type AddMatchStatsResult = Result.Result<(), AddMatchStatsError>;
+
+    public type SwapPlayerPositionsError = {
         #notAuthorized;
     };
 
-    public type OnSeasonEndResult = {
-        #ok;
+    public type SwapPlayerPositionsResult = Result.Result<(), SwapPlayerPositionsError>;
+
+    public type OnSeasonEndError = {
         #notAuthorized;
     };
+
+    public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
 
     public type ApplyEffectsRequest = [Scenario.PlayerEffectOutcome];
 
-    public type ApplyEffectsResult = {
-        #ok;
+    public type ApplyEffectsError = {
         #notAuthorized;
     };
 
-    public type PopulateTeamRosterResult = {
-        #ok : [Player.Player];
+    public type ApplyEffectsResult = Result.Result<(), ApplyEffectsError>;
+
+    public type PopulateTeamRosterError = {
         #missingFluff;
         #notAuthorized;
-        // #teamNotFound; // TODO?
     };
+
+    public type PopulateTeamRosterResult = Result.Result<[Player.Player], PopulateTeamRosterError>;
 
     public type CreatePlayerFluffRequest = {
         name : Text;
@@ -68,20 +73,23 @@ module {
         #nameNotSpecified;
     };
 
-    public type CreatePlayerFluffResult = {
-        #ok;
+    public type CreatePlayerFluffError = {
         #notAuthorized;
         #invalid : [InvalidError];
     };
 
-    public type GetPlayerResult = {
-        #ok : Player.Player;
+    public type CreatePlayerFluffResult = Result.Result<(), CreatePlayerFluffError>;
+
+    public type GetPlayerError = {
         #notFound;
     };
 
-    public type SetPlayerTeamResult = {
-        #ok;
+    public type GetPlayerResult = Result.Result<Player.Player, GetPlayerError>;
+
+    public type SetPlayerTeamError = {
         #playerNotFound;
     };
+
+    public type SetPlayerTeamResult = Result.Result<(), SetPlayerTeamError>;
 
 };

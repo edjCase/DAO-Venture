@@ -7,6 +7,7 @@ import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Array "mo:base/Array";
+import Result "mo:base/Result";
 import TextX "mo:xtended-text/TextX";
 import Scenario "../models/Scenario";
 import FieldPosition "../models/FieldPosition";
@@ -68,11 +69,7 @@ module {
             };
         };
 
-        public func addFluff(fluff : Player.PlayerFluff) : {
-            #ok;
-            #invalid : [Types.InvalidError];
-        } {
-
+        public func addFluff(fluff : Player.PlayerFluff) : Result.Result<(), { #invalid : [Types.InvalidError] }> {
             let errors = Buffer.Buffer<Types.InvalidError>(0);
             if (TextX.isEmptyOrWhitespace(fluff.name)) {
                 errors.add(#nameNotSpecified);
@@ -81,7 +78,7 @@ module {
                 errors.add(#nameTaken);
             };
             if (errors.size() > 0) {
-                return #invalid(Buffer.toArray(errors));
+                return #err(#invalid(Buffer.toArray(errors)));
             };
 
             unusedFluff.add(fluff);
@@ -155,11 +152,7 @@ module {
             #ok;
         };
 
-        public func populateTeamRoster(teamId : Nat) : {
-            #ok : [PlayerInfo];
-            #missingFluff;
-        } {
-
+        public func populateTeamRoster(teamId : Nat) : Result.Result<[PlayerInfo], { #missingFluff }> {
             // TODO validate that the teamid is valid?
             let teamPlayers = getAll(?teamId);
             let allPositions : [FieldPosition.FieldPosition] = [
@@ -186,7 +179,7 @@ module {
                 if (positionIsFilled) {
                     continue l;
                 };
-                let ?playerFluff = unusedFluff.getOpt(0) else return #missingFluff; // TODO random or next?
+                let ?playerFluff = unusedFluff.getOpt(0) else return #err(#missingFluff); // TODO random or next?
 
                 // TODO randomize skills
                 let skills : Player.Skills = switch (position) {

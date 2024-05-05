@@ -2,42 +2,48 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type AddTeamOwnerError = { 'notAuthorized' : null } |
+  { 'onOtherTeam' : bigint } |
+  { 'teamNotFound' : null };
 export interface AddTeamOwnerRequest {
   'votingPower' : bigint,
   'userId' : Principal,
   'teamId' : bigint,
 }
 export type AddTeamOwnerResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'onOtherTeam' : bigint } |
-  { 'teamNotFound' : null };
+  { 'err' : AddTeamOwnerError };
+export type AwardPointsError = { 'notAuthorized' : null };
 export interface AwardPointsRequest { 'userId' : Principal, 'points' : bigint }
 export type AwardPointsResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
-export type GetStatsResult = { 'ok' : UserStats };
+  { 'err' : AwardPointsError };
+export type GetStatsResult = { 'ok' : UserStats } |
+  { 'err' : null };
 export type GetTeamOwnersRequest = { 'all' : null } |
   { 'team' : bigint };
 export type GetTeamOwnersResult = { 'ok' : Array<UserVotingInfo> };
+export type GetUserError = { 'notAuthorized' : null } |
+  { 'notFound' : null };
 export interface GetUserLeaderboardRequest {
   'count' : bigint,
   'offset' : bigint,
 }
 export type GetUserLeaderboardResult = { 'ok' : PagedResult };
 export type GetUserResult = { 'ok' : User } |
-  { 'notAuthorized' : null } |
-  { 'notFound' : null };
+  { 'err' : GetUserError };
+export type OnSeasonEndError = { 'notAuthorized' : null };
 export type OnSeasonEndResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : OnSeasonEndError };
 export interface PagedResult {
   'data' : Array<User>,
   'count' : bigint,
   'offset' : bigint,
 }
-export type SetUserFavoriteTeamResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+export type SetUserFavoriteTeamError = { 'notAuthorized' : null } |
   { 'alreadySet' : null } |
   { 'identityRequired' : null } |
   { 'teamNotFound' : null };
+export type SetUserFavoriteTeamResult = { 'ok' : null } |
+  { 'err' : SetUserFavoriteTeamError };
 export type TeamAssociationKind = { 'fan' : null } |
   { 'owner' : { 'votingPower' : bigint } };
 export interface TeamStats {

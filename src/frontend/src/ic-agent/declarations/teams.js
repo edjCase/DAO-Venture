@@ -63,14 +63,18 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'logoUrl' : IDL.Text,
   });
-  const CreateTeamResult = IDL.Variant({
-    'ok' : IDL.Nat,
+  const CreateTeamError = IDL.Variant({
     'nameTaken' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
+  const CreateTeamResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'err' : CreateTeamError,
+  });
+  const GetCyclesError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const GetCyclesResult = IDL.Variant({
     'ok' : IDL.Nat,
-    'notAuthorized' : IDL.Null,
+    'err' : GetCyclesError,
   });
   const Vote = IDL.Record({
     'value' : IDL.Opt(IDL.Bool),
@@ -93,19 +97,23 @@ export const idlFactory = ({ IDL }) => {
     'proposer' : IDL.Principal,
     'timeEnd' : IDL.Int,
   });
-  const GetProposalResult = IDL.Variant({
-    'ok' : Proposal,
+  const GetProposalError = IDL.Variant({
     'proposalNotFound' : IDL.Null,
     'teamNotFound' : IDL.Null,
+  });
+  const GetProposalResult = IDL.Variant({
+    'ok' : Proposal,
+    'err' : GetProposalError,
   });
   const PagedResult = IDL.Record({
     'data' : IDL.Vec(Proposal),
     'count' : IDL.Nat,
     'offset' : IDL.Nat,
   });
+  const GetProposalsError = IDL.Variant({ 'teamNotFound' : IDL.Null });
   const GetProposalsResult = IDL.Variant({
     'ok' : PagedResult,
-    'teamNotFound' : IDL.Null,
+    'err' : GetProposalsError,
   });
   const Link = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
   const Team = IDL.Record({
@@ -155,49 +163,72 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : OnMatchGroupCompleteError,
   });
+  const OnSeasonEndError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : OnSeasonEndError,
   });
+  const SetLeagueError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const SetLeagueResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : SetLeagueError,
+  });
+  const UpdateTeamColorError = IDL.Variant({
     'notAuthorized' : IDL.Null,
+    'teamNotFound' : IDL.Null,
   });
   const UpdateTeamColorResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : UpdateTeamColorError,
+  });
+  const UpdateTeamDescriptionError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
   const UpdateTeamDescriptionResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : UpdateTeamDescriptionError,
+  });
+  const UpdateTeamEnergyError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
   const UpdateTeamEnergyResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : UpdateTeamEnergyError,
+  });
+  const UpdateTeamEntropyError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
   const UpdateTeamEntropyResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : UpdateTeamEntropyError,
+  });
+  const UpdateTeamLogoError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
   const UpdateTeamLogoResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : UpdateTeamLogoError,
+  });
+  const UpdateTeamMottoError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
   const UpdateTeamMottoResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : UpdateTeamMottoError,
+  });
+  const UpdateTeamNameError = IDL.Variant({
+    'nameTaken' : IDL.Null,
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
   const UpdateTeamNameResult = IDL.Variant({
     'ok' : IDL.Null,
-    'nameTaken' : IDL.Null,
-    'notAuthorized' : IDL.Null,
-    'teamNotFound' : IDL.Null,
+    'err' : UpdateTeamNameError,
   });
   const VoteOnProposalRequest = IDL.Record({
     'vote' : IDL.Bool,

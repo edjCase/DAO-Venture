@@ -151,10 +151,10 @@ module {
 
                 switch (populateResult) {
                     case (#ok(_)) {};
-                    case (#notAuthorized) {
+                    case (#err(#notAuthorized)) {
                         Debug.print("Error populating team roster: League is not authorized to populate team roster for team: " # Nat.toText(teamId));
                     };
-                    case (#missingFluff) {
+                    case (#err(#missingFluff)) {
                         Debug.print("Error populating team roster: No unused player fluff available");
                     };
                 };
@@ -473,7 +473,7 @@ module {
                         });
                         switch (await PlayersActor.applyEffects([trainSkillEffect])) {
                             case (#ok) #ok;
-                            case (#notAuthorized) #err("Not authorized to train player in players actor");
+                            case (#err(#notAuthorized)) #err("Not authorized to train player in players actor");
                         };
                     } catch (err) {
                         #err("Error training player in players actor: " # Error.message(err));
@@ -490,7 +490,7 @@ module {
                     try {
                         switch (await PlayersActor.swapTeamPositions(team.id, swap.position1, swap.position2)) {
                             case (#ok) #ok;
-                            case (#notAuthorized) #err("Not authorized to swap player positions in players actor");
+                            case (#err(#notAuthorized)) #err("Not authorized to swap player positions in players actor");
                         };
                     } catch (err) {
                         #err("Error swapping player positions in players actor: " # Error.message(err));

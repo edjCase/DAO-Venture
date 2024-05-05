@@ -84,7 +84,9 @@ module {
 
     public type GetProposalResult = Result.Result<Proposal, GetProposalError>;
 
-    public type GetProposalsResult = Result.Result<CommonTypes.PagedResult<Proposal>, {}>;
+    public type GetProposalsResult = {
+        #ok : CommonTypes.PagedResult<Proposal>;
+    };
 
     public type Proposal = Dao.Proposal<ProposalContent>;
 
@@ -141,7 +143,9 @@ module {
 
     public type GetScenarioResult = Result.Result<Scenario.Scenario, GetScenarioError>;
 
-    public type GetScenariosResult = Result.Result<[Scenario.Scenario], {}>;
+    public type GetScenariosResult = {
+        #ok : [Scenario.Scenario];
+    };
 
     public type BenevolentDictatorState = {
         #open;

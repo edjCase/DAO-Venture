@@ -288,7 +288,7 @@ module {
             let errorOrNull : ?Text = try {
                 switch (await PlayersActor.addMatchStats(request.id, request.playerStats)) {
                     case (#ok) null;
-                    case (#notAuthorized) ?"League not authorized to award points";
+                    case (#err(#notAuthorized)) ?"League not authorized to award points";
                 };
             } catch (err) {
                 ?Error.message(err);
@@ -352,7 +352,7 @@ module {
                             // Cancel live match
                             let stadiumActor = actor (Principal.toText(inProgressMatchGroup.stadiumId)) : StadiumTypes.StadiumActor;
                             switch (await stadiumActor.cancelMatchGroup({ id = inProgressMatchGroup.matchGroupId })) {
-                                case (#ok or #matchGroupNotFound) ();
+                                case (#ok or #err(#matchGroupNotFound)) ();
                             };
                         };
                     };
@@ -753,7 +753,7 @@ module {
             try {
                 switch (await stadiumActor.startMatchGroup(startMatchGroupRequest)) {
                     case (#ok) ();
-                    case (#noMatchesSpecified) Debug.trap("No matches specified for match group " # Nat.toText(matchGroupId));
+                    case (#err(#noMatchesSpecified)) Debug.trap("No matches specified for match group " # Nat.toText(matchGroupId));
                 };
             } catch (err) {
                 Debug.trap("Failed to start match group in stadium: " # Error.message(err));

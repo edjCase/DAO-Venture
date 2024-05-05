@@ -23,6 +23,8 @@ export type CreateProposalError = { 'notAuthorized' : null } |
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
   { 'err' : CreateProposalError };
+export type CreateTeamError = { 'nameTaken' : null } |
+  { 'notAuthorized' : null };
 export interface CreateTeamRequest {
   'motto' : string,
   'name' : string,
@@ -31,8 +33,7 @@ export interface CreateTeamRequest {
   'logoUrl' : string,
 }
 export type CreateTeamResult = { 'ok' : bigint } |
-  { 'nameTaken' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : CreateTeamError };
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -41,13 +42,16 @@ export type FieldPosition = { 'rightField' : null } |
   { 'shortStop' : null } |
   { 'centerField' : null } |
   { 'firstBase' : null };
+export type GetCyclesError = { 'notAuthorized' : null };
 export type GetCyclesResult = { 'ok' : bigint } |
-  { 'notAuthorized' : null };
+  { 'err' : GetCyclesError };
+export type GetProposalError = { 'proposalNotFound' : null } |
+  { 'teamNotFound' : null };
 export type GetProposalResult = { 'ok' : Proposal } |
-  { 'proposalNotFound' : null } |
-  { 'teamNotFound' : null };
+  { 'err' : GetProposalError };
+export type GetProposalsError = { 'teamNotFound' : null };
 export type GetProposalsResult = { 'ok' : PagedResult } |
-  { 'teamNotFound' : null };
+  { 'err' : GetProposalsError };
 export interface Link { 'url' : string, 'name' : string }
 export type MatchAura = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
@@ -64,8 +68,9 @@ export type OnMatchGroupCompleteError = { 'notAuthorized' : null };
 export interface OnMatchGroupCompleteRequest {
   'matchGroup' : CompletedMatchGroup,
 }
+export type OnSeasonEndError = { 'notAuthorized' : null };
 export type OnSeasonEndResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : OnSeasonEndError };
 export interface PagedResult {
   'data' : Array<Proposal>,
   'count' : bigint,
@@ -97,8 +102,9 @@ export type ProposalStatusLogEntry = {
   { 'executed' : { 'time' : Time } };
 export type Result = { 'ok' : null } |
   { 'err' : OnMatchGroupCompleteError };
+export type SetLeagueError = { 'notAuthorized' : null };
 export type SetLeagueResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : SetLeagueError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -126,28 +132,35 @@ export type TeamIdOrTie = { 'tie' : null } |
   { 'team2' : null };
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
+export type UpdateTeamColorError = { 'notAuthorized' : null } |
+  { 'teamNotFound' : null };
 export type UpdateTeamColorResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+  { 'err' : UpdateTeamColorError };
+export type UpdateTeamDescriptionError = { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export type UpdateTeamDescriptionResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+  { 'err' : UpdateTeamDescriptionError };
+export type UpdateTeamEnergyError = { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export type UpdateTeamEnergyResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+  { 'err' : UpdateTeamEnergyError };
+export type UpdateTeamEntropyError = { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export type UpdateTeamEntropyResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+  { 'err' : UpdateTeamEntropyError };
+export type UpdateTeamLogoError = { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export type UpdateTeamLogoResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
+  { 'err' : UpdateTeamLogoError };
+export type UpdateTeamMottoError = { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export type UpdateTeamMottoResult = { 'ok' : null } |
+  { 'err' : UpdateTeamMottoError };
+export type UpdateTeamNameError = { 'nameTaken' : null } |
   { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export type UpdateTeamNameResult = { 'ok' : null } |
-  { 'nameTaken' : null } |
-  { 'notAuthorized' : null } |
-  { 'teamNotFound' : null };
+  { 'err' : UpdateTeamNameError };
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export type VoteOnProposalError = { 'proposalNotFound' : null } |
   { 'notAuthorized' : null } |

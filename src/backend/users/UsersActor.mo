@@ -26,11 +26,11 @@ actor : Types.Actor {
 
     public shared query ({ caller }) func get(userId : Principal) : async Types.GetUserResult {
         if (caller != userId and not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         switch (userHandler.get(userId)) {
             case (?user) #ok(user);
-            case (null) #notFound;
+            case (null) #err(#notFound);
         };
     };
 
@@ -51,10 +51,10 @@ actor : Types.Actor {
 
     public shared ({ caller }) func setFavoriteTeam(userId : Principal, teamId : Nat) : async Types.SetUserFavoriteTeamResult {
         if (Principal.isAnonymous(userId)) {
-            return #identityRequired;
+            return #err(#identityRequired);
         };
         if (caller != userId and not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
 
         userHandler.setFavoriteTeam(userId, teamId);
@@ -62,7 +62,7 @@ actor : Types.Actor {
 
     public shared ({ caller }) func addTeamOwner(request : Types.AddTeamOwnerRequest) : async Types.AddTeamOwnerResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         userHandler.addTeamOwner(request);
     };
@@ -70,7 +70,7 @@ actor : Types.Actor {
     // TODO change to BoomDAO or ledger
     public shared ({ caller }) func awardPoints(awards : [Types.AwardPointsRequest]) : async Types.AwardPointsResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         userHandler.awardPoints(awards);
         #ok;
@@ -78,7 +78,7 @@ actor : Types.Actor {
 
     public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
         if (not isLeague(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         // TODO
         #ok;
