@@ -19,6 +19,7 @@ import Time "mo:base/Time";
 import Int "mo:base/Int";
 import Prelude "mo:base/Prelude";
 import Principal "mo:base/Principal";
+import Result "mo:base/Result";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import UsersActor "canister:users";
@@ -147,22 +148,16 @@ module {
             scenarioId : Nat,
             voterId : Principal,
             option : Nat,
-        ) : async* {
-            #ok;
-            #invalidOption;
-            #alreadyVoted;
-            #notEligible;
-            #scenarioNotFound;
-        } {
+        ) : async* Result.Result<(), { #invalidOption; #alreadyVoted; #notEligible; #scenarioNotFound }> {
 
-            let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
+            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let choiceExists = option < scenario.options.size();
             if (not choiceExists) {
-                return #invalidOption;
+                return #err(#invalidOption);
             };
-            let ?vote = scenario.votes.get(voterId) else return #notEligible;
+            let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
             if (vote.option != null) {
-                return #alreadyVoted;
+                return #err(#alreadyVoted);
             };
             scenario.votes.put(
                 voterId,

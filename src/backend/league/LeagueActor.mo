@@ -59,21 +59,21 @@ actor LeagueActor : Types.LeagueActor {
                         let result = await PlayersActor.applyEffects([#injury(injuryEffect)]); // TODO optimize with bulk call
                         switch (result) {
                             case (#ok) true;
-                            case (#notAuthorized) false;
+                            case (#err(_)) false;
                         };
                     };
                     case (#entropy(entropyEffect)) {
                         let result = await TeamsActor.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
                         switch (result) {
                             case (#ok) true;
-                            case (#notAuthorized or #teamNotFound) false;
+                            case (#err(_)) false;
                         };
                     };
                     case (#energy(e)) {
                         let result = await TeamsActor.updateTeamEnergy(e.teamId, e.delta);
                         switch (result) {
                             case (#ok) true;
-                            case (#notAuthorized or #teamNotFound) false;
+                            case (#err(_)) false;
                         };
                     };
                     case (#skill(s)) {
@@ -133,7 +133,7 @@ actor LeagueActor : Types.LeagueActor {
             try {
                 switch (await TeamsActor.onSeasonEnd()) {
                     case (#ok) ();
-                    case (#notAuthorized) Debug.print("Error: League is not authorized to notify team of season completion");
+                    case (#err(#notAuthorized)) Debug.print("Error: League is not authorized to notify team of season completion");
                 };
             } catch (err) {
                 Debug.print("Failed to notify team of season completion: " # Error.message(err));
@@ -143,7 +143,7 @@ actor LeagueActor : Types.LeagueActor {
             try {
                 switch (await UsersActor.onSeasonEnd()) {
                     case (#ok) ();
-                    case (#notAuthorized) Debug.print("League is not authorized to call users actor 'onSeasonEnd'");
+                    case (#err(#notAuthorized)) Debug.print("League is not authorized to call users actor 'onSeasonEnd'");
                 };
             } catch (err) {
                 Debug.print("Failed to call UsersActor.onSeasonEnd: " # Error.message(err));
@@ -151,7 +151,7 @@ actor LeagueActor : Types.LeagueActor {
             try {
                 switch (await PlayersActor.onSeasonEnd()) {
                     case (#ok) ();
-                    case (#notAuthorized) Debug.print("League is not authorized to call players actor 'onSeasonEnd'");
+                    case (#err(#notAuthorized)) Debug.print("League is not authorized to call players actor 'onSeasonEnd'");
                 };
             } catch (err) {
                 Debug.print("Failed to call PlayersActor.onSeasonEnd: " # Error.message(err));
@@ -168,9 +168,9 @@ actor LeagueActor : Types.LeagueActor {
                 let result = await TeamsActor.updateTeamName(c.teamId, c.name);
                 let error = switch (result) {
                     case (#ok) return #ok;
-                    case (#notAuthorized) "League is not authorized";
-                    case (#teamNotFound) "Team not found";
-                    case (#nameTaken) "Name is already taken";
+                    case (#err(#notAuthorized)) "League is not authorized";
+                    case (#err(#teamNotFound)) "Team not found";
+                    case (#err(#nameTaken)) "Name is already taken";
                 };
                 #err("Failed to update team name: " # error);
             };
@@ -178,8 +178,8 @@ actor LeagueActor : Types.LeagueActor {
                 let result = await TeamsActor.updateTeamColor(c.teamId, c.color);
                 let error = switch (result) {
                     case (#ok) return #ok;
-                    case (#notAuthorized) "League is not authorized";
-                    case (#teamNotFound) "Team not found";
+                    case (#err(#notAuthorized)) "League is not authorized";
+                    case (#err(#teamNotFound)) "Team not found";
                 };
                 #err("Failed to update team color: " # error);
             };
@@ -187,8 +187,8 @@ actor LeagueActor : Types.LeagueActor {
                 let result = await TeamsActor.updateTeamLogo(c.teamId, c.logoUrl);
                 let error = switch (result) {
                     case (#ok) return #ok;
-                    case (#notAuthorized) "League is not authorized";
-                    case (#teamNotFound) "Team not found";
+                    case (#err(#notAuthorized)) "League is not authorized";
+                    case (#err(#teamNotFound)) "Team not found";
                 };
                 #err("Failed to update team logo: " # error);
             };
@@ -196,8 +196,8 @@ actor LeagueActor : Types.LeagueActor {
                 let result = await TeamsActor.updateTeamMotto(c.teamId, c.motto);
                 let error = switch (result) {
                     case (#ok) return #ok;
-                    case (#notAuthorized) "League is not authorized";
-                    case (#teamNotFound) "Team not found";
+                    case (#err(#notAuthorized)) "League is not authorized";
+                    case (#err(#teamNotFound)) "Team not found";
                 };
                 #err("Failed to update team motto: " # error);
             };
@@ -205,8 +205,8 @@ actor LeagueActor : Types.LeagueActor {
                 let result = await TeamsActor.updateTeamDescription(c.teamId, c.description);
                 let error = switch (result) {
                     case (#ok) return #ok;
-                    case (#notAuthorized) "League is not authorized";
-                    case (#teamNotFound) "Team not found";
+                    case (#err(#notAuthorized)) "League is not authorized";
+                    case (#err(#teamNotFound)) "Team not found";
                 };
                 #err("Failed to update team description: " # error);
             };
@@ -239,7 +239,7 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
         if (benevolentDictator != #open) {
-            return #notOpenToClaim;
+            return #err(#notOpenToClaim);
         };
         benevolentDictator := #claimed(caller);
         #ok;
@@ -247,7 +247,7 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared ({ caller }) func setBenevolentDictatorState(state : Types.BenevolentDictatorState) : async Types.SetBenevolentDictatorStateResult {
         if (not isLeagueOrDictator(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         benevolentDictator := state;
         #ok;
@@ -279,7 +279,7 @@ actor LeagueActor : Types.LeagueActor {
     public shared query func getProposal(id : Nat) : async Types.GetProposalResult {
         switch (dao.getProposal(id)) {
             case (?proposal) return #ok(proposal);
-            case (null) return #proposalNotFound;
+            case (null) return #err(#proposalNotFound);
         };
     };
 
@@ -294,13 +294,13 @@ actor LeagueActor : Types.LeagueActor {
     public query func getTeamStandings() : async Types.GetTeamStandingsResult {
         switch (seasonHandler.teamStandings) {
             case (?standings) return #ok(Buffer.toArray(standings));
-            case (null) return #notFound;
+            case (null) return #err(#notFound);
         };
     };
 
     public query func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
         switch (scenarioHandler.getScenario(scenarioId)) {
-            case (null) #notFound;
+            case (null) #err(#notFound);
             case (?scenario) {
                 #ok(scenario);
             };
@@ -314,19 +314,19 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared ({ caller }) func addScenario(scenario : Types.AddScenarioRequest) : async Types.AddScenarioResult {
         if (not isLeagueOrDictator(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         switch (await* scenarioHandler.add<system>(scenario)) {
             case (#ok) #ok;
-            case (#invalid(errors)) return #invalid(errors);
+            case (#invalid(errors)) return #err(#invalid(errors));
         };
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
         switch (scenarioHandler.getVote(request.scenarioId, caller)) {
             case (#ok(v)) #ok(v);
-            case (#notEligible) return #notEligible;
-            case (#scenarioNotFound) return #scenarioNotFound;
+            case (#notEligible) return #err(#notEligible);
+            case (#scenarioNotFound) return #err(#scenarioNotFound);
         };
     };
 
@@ -336,13 +336,13 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {
         if (not isLeagueOrDictator(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         Debug.print("Starting season");
         let seedBlob = try {
             await Random.blob();
         } catch (err) {
-            return #seedGenerationError(Error.message(err));
+            return #err(#seedGenerationError(Error.message(err)));
         };
         await* initStadium(); // Hack to init stadium for calling
         await* initTeams(); // Hack to init teams for calling
@@ -364,18 +364,18 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared ({ caller }) func createTeam(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
         if (not isLeagueOrDictator(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         await* initTeams(); // Hack to init teams for calling
         try {
             await TeamsActor.createTeam(request);
         } catch (err) {
-            return #teamsCallError(Error.message(err));
+            return #err(#teamsCallError(Error.message(err)));
         };
     };
 
     public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {
-        let ?nextScheduled = seasonHandler.getNextScheduledMatchGroup() else return #predictionsClosed;
+        let ?nextScheduled = seasonHandler.getNextScheduledMatchGroup() else return #err(#predictionsClosed);
         predictionHandler.predictMatchOutcome(
             nextScheduled.matchGroupId,
             request.matchId,
@@ -390,7 +390,7 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared ({ caller }) func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
         if (not isLeagueOrDictator(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
 
         await* seasonHandler.startMatchGroup(matchGroupId);
@@ -402,13 +402,13 @@ actor LeagueActor : Types.LeagueActor {
     ) : async Types.OnMatchGroupCompleteResult {
         Debug.print("On Match group complete called for: " # Nat.toText(request.id));
         if (caller != Principal.fromActor(StadiumActor)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
 
         let prng = try {
             PseudoRandomX.fromBlob(await Random.blob());
         } catch (err) {
-            return #seedGenerationError(Error.message(err));
+            return #err(#seedGenerationError(Error.message(err)));
         };
 
         let result = await* seasonHandler.onMatchGroupComplete(request, prng);
@@ -419,7 +419,7 @@ actor LeagueActor : Types.LeagueActor {
 
     public shared ({ caller }) func closeSeason() : async Types.CloseSeasonResult {
         if (not isLeagueOrDictator(caller)) {
-            return #notAuthorized;
+            return #err(#notAuthorized);
         };
         let result = await* seasonHandler.close();
         result;

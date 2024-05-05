@@ -71,13 +71,13 @@ module {
             prediction : ?Team.TeamId,
         ) : Types.PredictMatchOutcomeResult {
             if (Principal.isAnonymous(caller)) {
-                return #identityRequired;
+                return #err(#identityRequired);
             };
-            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return #predictionsClosed;
+            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return #err(#predictionsClosed);
             if (not matchGroupInfo.isOpen) {
-                return #predictionsClosed;
+                return #err(#predictionsClosed);
             };
-            let ?matchPredictions = matchGroupInfo.matchPredictions.getOpt(matchId) else return #matchNotFound;
+            let ?matchPredictions = matchGroupInfo.matchPredictions.getOpt(matchId) else return #err(#matchNotFound);
 
             switch (prediction) {
                 case (null) ignore matchPredictions.remove(caller);
@@ -92,7 +92,7 @@ module {
         };
 
         public func getMatchGroupSummary(matchGroupId : Nat, userContext : ?Principal) : Types.GetMatchGroupPredictionsResult {
-            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return #notFound;
+            let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return #err(#notFound);
             let predictionSummaryBuffer = Buffer.Buffer<Types.MatchPredictionSummary>(matchGroupInfo.matchPredictions.size());
 
             for (matchPredictions in matchGroupInfo.matchPredictions.vals()) {

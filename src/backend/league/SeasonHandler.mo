@@ -15,6 +15,7 @@ import Timer "mo:base/Timer";
 import Debug "mo:base/Debug";
 import Error "mo:base/Error";
 import Order "mo:base/Order";
+import Result "mo:base/Result";
 import ScheduleBuilder "ScheduleBuilder";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import StadiumTypes "../stadium/Types";
@@ -33,8 +34,9 @@ module {
         seasonStatus : Season.SeasonStatus;
         teamStandings : ?[Types.TeamStandingInfo]; // First team to last team
     };
-    public type StartSeasonResult = {
-        #ok;
+    public type StartSeasonResult = Result.Result<(), StartSeasonError>;
+
+    public type StartSeasonError = {
         #alreadyStarted;
         #invalidArgs : Text;
     };
@@ -81,8 +83,8 @@ module {
         ) : async* StartSeasonResult {
             switch (seasonStatus) {
                 case (#notStarted) {};
-                case (#starting) return #alreadyStarted;
-                case (#inProgress(_)) return #alreadyStarted;
+                case (#starting) return #err(#alreadyStarted);
+                case (#inProgress(_)) return #err(#alreadyStarted);
                 case (#completed(completedSeason)) {
                     // TODO archive completed season?
                 };
@@ -107,7 +109,7 @@ module {
                 case (#ok(schedule)) schedule;
                 case (#err(#invalidArgs(err))) {
                     seasonStatus := #notStarted;
-                    return #invalidArgs(err);
+                    return #err(#invalidArgs(err));
                 };
             };
 
@@ -238,15 +240,15 @@ module {
             prng : Prng,
         ) : async* Types.OnMatchGroupCompleteResult {
 
-            let #inProgress(season) = seasonStatus else return #seasonNotOpen;
+            let #inProgress(season) = seasonStatus else return #err(#seasonNotOpen);
             // Get current match group
             let ?matchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
                 season.matchGroups,
                 request.id,
-            ) else return #matchGroupNotFound;
+            ) else return #err(#matchGroupNotFound);
             let inProgressMatchGroup = switch (matchGroup) {
                 case (#inProgress(matchGroupState)) matchGroupState;
-                case (_) return #matchGroupNotInProgress;
+                case (_) return #err(#matchGroupNotInProgress);
             };
 
             // Update status to completed
@@ -259,7 +261,7 @@ module {
                 season.matchGroups,
                 request.id,
                 #completed(updatedMatchGroup),
-            ) else return #matchGroupNotFound;
+            ) else return #err(#matchGroupNotFound);
 
             let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(season.matchGroups.size());
             label f for (matchGroup in Iter.fromArray(newMatchGroups)) {
@@ -338,7 +340,7 @@ module {
                 seasonStatus := #notStarted;
                 return #ok;
             };
-            let #inProgress(inProgressSeason) = seasonStatus else return #seasonNotOpen;
+            let #inProgress(inProgressSeason) = seasonStatus else return #err(#seasonNotOpen);
             let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
                 case (#ok(completedMatchGroups)) completedMatchGroups;
                 case (#matchGroupsNotComplete(inProgressMatchGroup)) {
@@ -475,11 +477,11 @@ module {
                     };
                     let message = switch (result) {
                         case (#ok) "Match group started";
-                        case (#matchGroupNotFound) "Match group not found";
-                        case (#notAuthorized) "Not authorized";
-                        case (#notScheduledYet) "Match group not scheduled yet";
-                        case (#alreadyStarted) "Match group already started";
-                        case (#matchErrors(errors)) "Match group errors: " # debug_show (errors);
+                        case (#err(#matchGroupNotFound)) "Match group not found";
+                        case (#err(#notAuthorized)) "Not authorized";
+                        case (#err(#notScheduledYet)) "Match group not scheduled yet";
+                        case (#err(#alreadyStarted)) "Match group already started";
+                        case (#err(#matchErrors(errors))) "Match group errors: " # debug_show (errors);
                     };
                     Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback: " # message);
                 },
@@ -692,18 +694,18 @@ module {
         public func startMatchGroup(
             matchGroupId : Nat
         ) : async* Types.StartMatchGroupResult {
-            let #inProgress(season) = seasonStatus else return #matchGroupNotFound;
+            let #inProgress(season) = seasonStatus else return #err(#matchGroupNotFound);
 
             // Get current match group
             let ?matchGroupVariant = Util.arrayGetSafe(
                 season.matchGroups,
                 matchGroupId,
-            ) else return #matchGroupNotFound;
+            ) else return #err(#matchGroupNotFound);
 
             let scheduledMatchGroup : Season.ScheduledMatchGroup = switch (matchGroupVariant) {
-                case (#notScheduled(_)) return #notScheduledYet;
-                case (#inProgress(_)) return #alreadyStarted;
-                case (#completed(_)) return #alreadyStarted;
+                case (#notScheduled(_)) return #err(#notScheduledYet);
+                case (#inProgress(_)) return #err(#alreadyStarted);
+                case (#completed(_)) return #err(#alreadyStarted);
                 case (#scheduled(d)) d;
             };
 
@@ -787,7 +789,7 @@ module {
                 season.matchGroups,
                 matchGroupId,
                 #inProgress(inProgressMatchGroup),
-            ) else return #matchGroupNotFound;
+            ) else return #err(#matchGroupNotFound);
             seasonStatus := #inProgress({
                 season with
                 matchGroups = newMatchGroups;

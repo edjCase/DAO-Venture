@@ -45,19 +45,19 @@ module {
         votingPower : Nat;
     };
 
-    public type GetScenarioVoteResult = {
-        #ok : ScenarioVote;
+    public type GetScenarioVoteError = {
         #scenarioNotFound;
         #notEligible;
     };
+
+    public type GetScenarioVoteResult = Result.Result<ScenarioVote, GetScenarioVoteError>;
 
     public type VoteOnScenarioRequest = {
         scenarioId : Nat;
         option : Nat;
     };
 
-    public type VoteOnScenarioResult = {
-        #ok;
+    public type VoteOnScenarioError = {
         #notEligible;
         #scenarioNotFound;
         #votingNotOpen;
@@ -65,24 +65,26 @@ module {
         #invalidOption;
     };
 
-    public type ClaimBenevolentDictatorRoleResult = {
-        #ok;
+    public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
+    public type ClaimBenevolentDictatorRoleError = {
         #notOpenToClaim;
     };
 
-    public type SetBenevolentDictatorStateResult = {
-        #ok;
+    public type ClaimBenevolentDictatorRoleResult = Result.Result<(), ClaimBenevolentDictatorRoleError>;
+
+    public type SetBenevolentDictatorStateError = {
         #notAuthorized;
     };
 
-    public type GetProposalResult = {
-        #ok : Proposal;
+    public type SetBenevolentDictatorStateResult = Result.Result<(), SetBenevolentDictatorStateError>;
+
+    public type GetProposalError = {
         #proposalNotFound;
     };
 
-    public type GetProposalsResult = {
-        #ok : CommonTypes.PagedResult<Proposal>;
-    };
+    public type GetProposalResult = Result.Result<Proposal, GetProposalError>;
+
+    public type GetProposalsResult = Result.Result<CommonTypes.PagedResult<Proposal>, {}>;
 
     public type Proposal = Dao.Proposal<ProposalContent>;
 
@@ -132,16 +134,14 @@ module {
     public type CreateProposalError = {
         #notAuthorized;
     };
-
-    public type GetScenarioResult = {
-        #ok : Scenario.Scenario;
+    public type GetScenarioError = {
         #notFound;
         #notStarted;
     };
 
-    public type GetScenariosResult = {
-        #ok : [Scenario.Scenario];
-    };
+    public type GetScenarioResult = Result.Result<Scenario.Scenario, GetScenarioError>;
+
+    public type GetScenariosResult = Result.Result<[Scenario.Scenario], {}>;
 
     public type BenevolentDictatorState = {
         #open;
@@ -155,26 +155,28 @@ module {
         losses : Nat;
         totalScore : Int;
     };
-
-    public type GetTeamStandingsResult = {
-        #ok : [TeamStandingInfo];
+    public type GetTeamStandingsError = {
         #notFound;
     };
+
+    public type GetTeamStandingsResult = Result.Result<[TeamStandingInfo], GetTeamStandingsError>;
 
     public type ProcessEffectOutcomesRequest = {
         outcomes : [Scenario.EffectOutcome];
     };
 
-    public type ProcessEffectOutcomesResult = {
-        #ok;
+    public type ProcessEffectOutcomesError = {
         #notAuthorized;
         #seasonNotInProgress;
     };
 
-    public type GetMatchGroupPredictionsResult = {
-        #ok : MatchGroupPredictionSummary;
+    public type ProcessEffectOutcomesResult = Result.Result<(), ProcessEffectOutcomesError>;
+
+    public type GetMatchGroupPredictionsError = {
         #notFound;
     };
+
+    public type GetMatchGroupPredictionsResult = Result.Result<MatchGroupPredictionSummary, GetMatchGroupPredictionsError>;
 
     public type MatchGroupPredictionSummary = {
         matches : [MatchPredictionSummary];
@@ -190,18 +192,16 @@ module {
         matchId : Nat;
         winner : ?Team.TeamId;
     };
-
-    public type PredictMatchOutcomeResult = {
-        #ok;
+    public type PredictMatchOutcomeError = {
         #matchGroupNotFound;
         #matchNotFound;
         #predictionsClosed;
         #identityRequired;
     };
 
-    // On start
-    public type StartMatchGroupResult = {
-        #ok;
+    public type PredictMatchOutcomeResult = Result.Result<(), PredictMatchOutcomeError>;
+
+    public type StartMatchGroupError = {
         #matchGroupNotFound;
         #notAuthorized;
         #notScheduledYet;
@@ -211,6 +211,8 @@ module {
             error : StartMatchError;
         }];
     };
+
+    public type StartMatchGroupResult = Result.Result<(), StartMatchGroupError>;
 
     public type StartMatchError = {
         #notEnoughPlayers : Team.TeamIdOrBoth;
@@ -231,15 +233,14 @@ module {
         metaEffect : Scenario.MetaEffect;
         teamIds : [Nat];
     };
-
-    public type AddScenarioResult = {
-        #ok;
+    public type AddScenarioError = {
         #invalid : [Text];
         #notAuthorized;
     };
 
-    public type StartSeasonResult = {
-        #ok;
+    public type AddScenarioResult = Result.Result<(), AddScenarioError>;
+
+    public type StartSeasonError = {
         #alreadyStarted;
         #idTaken;
         #seedGenerationError : Text;
@@ -247,11 +248,14 @@ module {
         #notAuthorized;
     };
 
-    public type CloseSeasonResult = {
-        #ok;
+    public type StartSeasonResult = Result.Result<(), StartSeasonError>;
+
+    public type CloseSeasonError = {
         #notAuthorized;
         #seasonNotOpen;
     };
+
+    public type CloseSeasonResult = Result.Result<(), CloseSeasonError>;
 
     // On complete
 
@@ -264,9 +268,7 @@ module {
     public type FailedMatchResult = {
         message : Text;
     };
-
-    public type OnMatchGroupCompleteResult = {
-        #ok;
+    public type OnMatchGroupCompleteError = {
         #seasonNotOpen;
         #matchGroupNotFound;
         #matchGroupNotInProgress;
@@ -274,7 +276,7 @@ module {
         #notAuthorized;
     };
 
-    // Create Team
+    public type OnMatchGroupCompleteResult = Result.Result<(), OnMatchGroupCompleteError>;
 
     public type CreateTeamRequest = {
         name : Text;
@@ -284,10 +286,11 @@ module {
         color : (Nat8, Nat8, Nat8);
     };
 
-    public type CreateTeamResult = {
-        #ok : Nat;
+    public type CreateTeamError = {
         #nameTaken;
         #teamsCallError : Text;
         #notAuthorized;
     };
+
+    public type CreateTeamResult = Result.Result<Nat, CreateTeamError>;
 };
