@@ -113,8 +113,16 @@ actor LeagueActor : Types.LeagueActor {
         onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : async* () {
             predictionHandler.closeMatchGroup(matchGroupId);
         };
-        onMatchGroupComplete = func(_ : Nat, _ : Season.CompletedMatchGroup) : async* () {
-
+        onMatchGroupComplete = func(matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) : async* () {
+            Debug.print("On match group complete event hook called for match group: " # Nat.toText(matchGroupId));
+            let result = await TeamsActor.onMatchGroupComplete({
+                matchGroup = matchGroup;
+            });
+            switch (result) {
+                case (#ok) ();
+                case (#err(#notAuthorized)) Debug.trap("League is not authorized to notify team of match group completion");
+            };
+            Debug.print("Match group complete event hook completed");
         };
         onSeasonEnd = func(_ : SeasonHandler.EndedSeasonVariant) : async* () {
             // TODO archive vs delete

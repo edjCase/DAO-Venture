@@ -20,7 +20,7 @@
         winLossRecords = standings.reduce(
             (acc, standing) => {
                 acc[Number(standing.id)] =
-                    `(${standing.wins}-${standing.losses})`;
+                    `${standing.wins}-${standing.losses}`;
                 return acc;
             },
             {} as Record<number, string>,
@@ -73,12 +73,16 @@
                 {getMatchGroupDate(matchGroup)}
             </div>
             {#each matchGroup.matches as match}
-                <div class="flex flex-col text-xs w-32 p-1 m-2 border rounded">
+                <div
+                    class="flex flex-col justify-around text-xs w-24 p-1 mx-2 border rounded gap-1"
+                >
                     <div class="text-center">
                         {#if match.state == "Played"}
-                            Final
+                            Completed
+                        {:else if match.state == "InProgress"}
+                            In Progress
                         {:else}
-                            {nanosecondsToDate(match.time).toLocaleTimeString()}
+                            Upcoming
                         {/if}
                     </div>
                     <MatchBannerTeam

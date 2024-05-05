@@ -17,6 +17,10 @@ import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
 import Team "../models/Team";
 import Result "mo:base/Result";
+import Float "mo:base/Float";
+import Prelude "mo:base/Prelude";
+import Array "mo:base/Array";
+import Season "../models/Season";
 
 module {
 
@@ -271,6 +275,98 @@ module {
             team.entropy := newEntropyNat;
             await* checkEntropy();
             #ok;
+        };
+
+        public func onMatchGroupComplete(matchGroup : Season.CompletedMatchGroup) {
+            // Give team X energy that is divided purpotionally to how much relative entropy
+            // (based on combined entropy of all teams) they have and +1 for each winning team
+            Debug.print("On match group complete event triggered for match group: " # debug_show (matchGroup));
+            type TeamInfo = {
+                id : Nat;
+                score : Int;
+                isWinner : Bool;
+                mutableData : MutableTeamData;
+            };
+
+            let playingTeams = matchGroup.matches.vals()
+            |> IterTools.fold(
+                _,
+                Buffer.Buffer<TeamInfo>(matchGroup.matches.size() * 2),
+                func(acc : Buffer.Buffer<TeamInfo>, match : Season.CompletedMatch) : Buffer.Buffer<TeamInfo> {
+                    let ?team1 = teams.get(match.team1.id) else Debug.trap("Team not found: " # Nat.toText(match.team1.id));
+                    let ?team2 = teams.get(match.team2.id) else Debug.trap("Team not found: " # Nat.toText(match.team2.id));
+                    acc.add({
+                        match.team1 with
+                        mutableData = team1;
+                        isWinner = match.winner == #team1;
+                    });
+                    acc.add({
+                        match.team2 with
+                        mutableData = team2;
+                        isWinner = match.winner == #team2;
+                    });
+                    return acc;
+                },
+            )
+            |> Buffer.toArray(_);
+            let energyToBeGiven = playingTeams.size() * 100; // TODO value?
+            let purportionalWeights = playingTeams.vals()
+            |> Iter.map<TeamInfo, Nat>(
+                _,
+                func(team : TeamInfo) : Nat = team.mutableData.entropy,
+            )
+            |> Iter.toArray(_)
+            |> getPurportionalEntropyWeights(_);
+
+            for ((team, energyWeight) in IterTools.zip(playingTeams.vals(), purportionalWeights.vals())) {
+                var newEnergy = energyToBeGiven * Float.toInt(Float.floor(energyWeight));
+                if (team.isWinner) {
+                    // Winning team gets +1 energy
+                    newEnergy += 1;
+                };
+                team.mutableData.energy += newEnergy;
+                Debug.print("Team " # Nat.toText(team.id) # " share of the energy is: " # Int.toText(team.mutableData.energy));
+            };
+        };
+        private func getPurportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
+            if (entropyValues.size() == 0) {
+                return [];
+            };
+            let ?maxEntropy = IterTools.max<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
+            let ?minEntropy = IterTools.min<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
+            let entropyRange : Nat = maxEntropy - minEntropy;
+
+            // If all entropy values are 0 or the total entropy is 0, return an array of equal weights
+            if (maxEntropy == 0) {
+                let equalWeight = 1.0 / Float.fromInt(entropyValues.size());
+                return Array.tabulate<Float>(entropyValues.size(), func(_ : Nat) : Float { equalWeight });
+            };
+
+            // Calculate inverse entropy weights
+            let inverseWeights = Iter.map<Nat, Float>(
+                entropyValues.vals(),
+                func(entropy : Nat) : Float {
+                    let relativeEntropy = Float.fromInt(maxEntropy - entropy) / Float.fromInt(entropyRange);
+                    return 1.0 - relativeEntropy;
+                },
+            )
+            |> Iter.toArray(_);
+
+            // Normalize weights
+            let totalWeight = IterTools.fold<Float, Float>(
+                inverseWeights.vals(),
+                0.0,
+                func(sum : Float, weight : Float) : Float {
+                    return sum + weight;
+                },
+            );
+            return Iter.map<Float, Float>(
+                inverseWeights.vals(),
+                func(weight : Float) : Float {
+                    return weight / totalWeight;
+                },
+            )
+            |> Iter.toArray(_);
         };
 
         private func checkEntropy() : async* () {

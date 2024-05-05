@@ -5,6 +5,7 @@ import CommonTypes "../Types";
 import FieldPosition "../models/FieldPosition";
 import Team "../models/Team";
 import Result "mo:base/Result";
+import Season "../models/Season";
 
 module {
 
@@ -15,6 +16,7 @@ module {
         getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
         getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
         voteOnProposal : (teamId : Nat, request : VoteOnProposalRequest) -> async VoteOnProposalResult;
+        onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async Result.Result<(), OnMatchGroupCompleteError>;
         onSeasonEnd() : async OnSeasonEndResult;
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         updateTeamEnergy : (teamId : Nat, delta : Int) -> async UpdateTeamEnergyResult;
@@ -24,6 +26,14 @@ module {
         updateTeamLogo : (teamId : Nat, logoUrl : Text) -> async UpdateTeamLogoResult;
         updateTeamColor : (teamId : Nat, color : (Nat8, Nat8, Nat8)) -> async UpdateTeamColorResult;
         updateTeamName : (teamId : Nat, name : Text) -> async UpdateTeamNameResult;
+    };
+
+    public type OnMatchGroupCompleteRequest = {
+        matchGroup : Season.CompletedMatchGroup;
+    };
+
+    public type OnMatchGroupCompleteError = {
+        #notAuthorized;
     };
 
     public type UpdateTeamEnergyResult = {

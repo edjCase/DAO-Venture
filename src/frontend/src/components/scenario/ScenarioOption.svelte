@@ -64,7 +64,7 @@
         {/if}
     </div>
     {#if "resolved" in state && teamsWithOption !== undefined}
-        <div>
+        <div class="flex">
             {#each teamsWithOption as team}
                 <TeamLogo {team} size="xs" />
             {/each}

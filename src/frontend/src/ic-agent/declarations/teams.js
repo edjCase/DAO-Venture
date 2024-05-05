@@ -119,6 +119,42 @@ export const idlFactory = ({ IDL }) => {
     'logoUrl' : IDL.Text,
     'energy' : IDL.Int,
   });
+  const CompletedMatchTeam = IDL.Record({ 'id' : IDL.Nat, 'score' : IDL.Int });
+  const MatchAura = IDL.Variant({
+    'foggy' : IDL.Null,
+    'moveBasesIn' : IDL.Null,
+    'extraStrike' : IDL.Null,
+    'moreBlessingsAndCurses' : IDL.Null,
+    'fastBallsHardHits' : IDL.Null,
+    'explodingBalls' : IDL.Null,
+    'lowGravity' : IDL.Null,
+    'doubleOrNothing' : IDL.Null,
+    'windy' : IDL.Null,
+    'rainy' : IDL.Null,
+  });
+  const TeamIdOrTie = IDL.Variant({
+    'tie' : IDL.Null,
+    'team1' : IDL.Null,
+    'team2' : IDL.Null,
+  });
+  const CompletedMatch = IDL.Record({
+    'team1' : CompletedMatchTeam,
+    'team2' : CompletedMatchTeam,
+    'aura' : MatchAura,
+    'winner' : TeamIdOrTie,
+  });
+  const CompletedMatchGroup = IDL.Record({
+    'time' : Time,
+    'matches' : IDL.Vec(CompletedMatch),
+  });
+  const OnMatchGroupCompleteRequest = IDL.Record({
+    'matchGroup' : CompletedMatchGroup,
+  });
+  const OnMatchGroupCompleteError = IDL.Variant({ 'notAuthorized' : IDL.Null });
+  const Result = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : OnMatchGroupCompleteError,
+  });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'notAuthorized' : IDL.Null,
@@ -197,6 +233,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
+    'onMatchGroupComplete' : IDL.Func(
+        [OnMatchGroupCompleteRequest],
+        [Result],
+        [],
+      ),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
     'updateTeamColor' : IDL.Func(

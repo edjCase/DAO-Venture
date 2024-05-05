@@ -50,8 +50,8 @@
   $: selectedTeam = teams && teams[0];
 </script>
 
-<div class="flex flex-col justify-between h-[80vh]">
-  <div class="flex-grow pb-10">
+<div class="flex flex-col justify-between">
+  <div class="pb-10">
     {#if selectedTeam}
       <div class="flex justify-center items-center">
         <div class="text-3xl text-center m-5">{selectedTeam.name}</div>

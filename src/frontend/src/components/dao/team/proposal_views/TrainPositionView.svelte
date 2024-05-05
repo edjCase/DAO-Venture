@@ -9,4 +9,4 @@
 <div>Position: {fieldPositionToString(content.position)}</div>
 <div>Skill: {skillToString(content.skill)}</div>
 <div>Amount: 1</div>
-<div>Cost: 1 Enegy</div>
+<div>Cost: 1 💰</div>

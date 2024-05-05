@@ -7,6 +7,17 @@ export interface ChangeDescriptionContent { 'description' : string }
 export interface ChangeLogoContent { 'logoUrl' : string }
 export interface ChangeMottoContent { 'motto' : string }
 export interface ChangeNameContent { 'name' : string }
+export interface CompletedMatch {
+  'team1' : CompletedMatchTeam,
+  'team2' : CompletedMatchTeam,
+  'aura' : MatchAura,
+  'winner' : TeamIdOrTie,
+}
+export interface CompletedMatchGroup {
+  'time' : Time,
+  'matches' : Array<CompletedMatch>,
+}
+export interface CompletedMatchTeam { 'id' : bigint, 'score' : bigint }
 export type CreateProposalError = { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export interface CreateProposalRequest { 'content' : ProposalContent }
@@ -38,7 +49,21 @@ export type GetProposalResult = { 'ok' : Proposal } |
 export type GetProposalsResult = { 'ok' : PagedResult } |
   { 'teamNotFound' : null };
 export interface Link { 'url' : string, 'name' : string }
+export type MatchAura = { 'foggy' : null } |
+  { 'moveBasesIn' : null } |
+  { 'extraStrike' : null } |
+  { 'moreBlessingsAndCurses' : null } |
+  { 'fastBallsHardHits' : null } |
+  { 'explodingBalls' : null } |
+  { 'lowGravity' : null } |
+  { 'doubleOrNothing' : null } |
+  { 'windy' : null } |
+  { 'rainy' : null };
 export interface ModifyLinkContent { 'url' : [] | [string], 'name' : string }
+export type OnMatchGroupCompleteError = { 'notAuthorized' : null };
+export interface OnMatchGroupCompleteRequest {
+  'matchGroup' : CompletedMatchGroup,
+}
 export type OnSeasonEndResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export interface PagedResult {
@@ -70,6 +95,8 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
+export type Result = { 'ok' : null } |
+  { 'err' : OnMatchGroupCompleteError };
 export type SetLeagueResult = { 'ok' : null } |
   { 'notAuthorized' : null };
 export type Skill = { 'battingAccuracy' : null } |
@@ -94,6 +121,9 @@ export interface Team {
   'logoUrl' : string,
   'energy' : bigint,
 }
+export type TeamIdOrTie = { 'tie' : null } |
+  { 'team1' : null } |
+  { 'team2' : null };
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
 export type UpdateTeamColorResult = { 'ok' : null } |
@@ -140,6 +170,7 @@ export interface _SERVICE {
   'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
   'getTeams' : ActorMethod<[], Array<Team>>,
+  'onMatchGroupComplete' : ActorMethod<[OnMatchGroupCompleteRequest], Result>,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
   'updateTeamColor' : ActorMethod<

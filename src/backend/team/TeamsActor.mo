@@ -9,6 +9,7 @@ import TeamsHandler "TeamsHandler";
 import UsersActor "canister:users";
 import Dao "../Dao";
 import Team "../models/Team";
+import Result "mo:base/Result";
 
 actor TeamsActor : Types.Actor {
 
@@ -167,6 +168,18 @@ actor TeamsActor : Types.Actor {
 
   public shared ({ caller }) func voteOnProposal(teamId : Nat, request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {
     await* teamsHandler.voteOnProposal(teamId, caller, request);
+  };
+
+  public shared ({ caller }) func onMatchGroupComplete(request : Types.OnMatchGroupCompleteRequest) : async Result.Result<(), Types.OnMatchGroupCompleteError> {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #err(#notAuthorized);
+    };
+    teamsHandler.onMatchGroupComplete(request.matchGroup);
+    #ok;
   };
 
   public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
