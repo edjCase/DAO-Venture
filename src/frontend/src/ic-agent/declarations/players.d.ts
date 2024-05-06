@@ -2,11 +2,15 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type AddMatchStatsError = { 'notAuthorized' : null };
 export type AddMatchStatsResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : AddMatchStatsError };
+export type ApplyEffectsError = { 'notAuthorized' : null };
 export type ApplyEffectsRequest = Array<PlayerEffectOutcome>;
 export type ApplyEffectsResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : ApplyEffectsError };
+export type CreatePlayerFluffError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<InvalidError> };
 export interface CreatePlayerFluffRequest {
   'title' : string,
   'name' : string,
@@ -16,8 +20,7 @@ export interface CreatePlayerFluffRequest {
   'dislikes' : Array<string>,
 }
 export type CreatePlayerFluffResult = { 'ok' : null } |
-  { 'notAuthorized' : null } |
-  { 'invalid' : Array<InvalidError> };
+  { 'err' : CreatePlayerFluffError };
 export type Duration = { 'matches' : bigint } |
   { 'indefinite' : null };
 export type FieldPosition = { 'rightField' : null } |
@@ -28,16 +31,18 @@ export type FieldPosition = { 'rightField' : null } |
   { 'shortStop' : null } |
   { 'centerField' : null } |
   { 'firstBase' : null };
+export type GetPlayerError = { 'notFound' : null };
 export type GetPlayerResult = { 'ok' : Player } |
-  { 'notFound' : null };
+  { 'err' : GetPlayerError };
 export type Injury = { 'twistedAnkle' : null } |
   { 'brokenArm' : null } |
   { 'brokenLeg' : null } |
   { 'concussion' : null };
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
+export type OnSeasonEndError = { 'notAuthorized' : null };
 export type OnSeasonEndResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : OnSeasonEndError };
 export interface Player {
   'id' : number,
   'title' : string,
@@ -85,11 +90,13 @@ export interface PlayerMatchStatsWithId {
     'successfulCatches' : bigint,
   },
 }
+export type PopulateTeamRosterError = { 'missingFluff' : null } |
+  { 'notAuthorized' : null };
 export type PopulateTeamRosterResult = { 'ok' : Array<Player> } |
-  { 'missingFluff' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : PopulateTeamRosterError };
+export type SetTeamsCanisterIdError = { 'notAuthorized' : null };
 export type SetTeamsCanisterIdResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : SetTeamsCanisterIdError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -106,8 +113,9 @@ export interface Skills {
   'defense' : bigint,
   'throwingPower' : bigint,
 }
+export type SwapPlayerPositionsError = { 'notAuthorized' : null };
 export type SwapPlayerPositionsResult = { 'ok' : null } |
-  { 'notAuthorized' : null };
+  { 'err' : SwapPlayerPositionsError };
 export type TargetInstance = { 'teams' : Array<bigint> } |
   { 'league' : null } |
   { 'positions' : Array<TargetPositionInstance> };

@@ -11,10 +11,13 @@ export const idlFactory = ({ IDL }) => {
     'nameTaken' : IDL.Null,
     'nameNotSpecified' : IDL.Null,
   });
-  const CreatePlayerFluffResult = IDL.Variant({
-    'ok' : IDL.Null,
+  const CreatePlayerFluffError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'invalid' : IDL.Vec(InvalidError),
+  });
+  const CreatePlayerFluffResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : CreatePlayerFluffError,
   });
   const PlayerId = IDL.Nat32;
   const PlayerMatchStatsWithId = IDL.Record({
@@ -42,9 +45,10 @@ export const idlFactory = ({ IDL }) => {
       'successfulCatches' : IDL.Nat,
     }),
   });
+  const AddMatchStatsError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const AddMatchStatsResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : AddMatchStatsError,
   });
   const Duration = IDL.Variant({
     'matches' : IDL.Nat,
@@ -94,9 +98,10 @@ export const idlFactory = ({ IDL }) => {
     'injury' : IDL.Record({ 'target' : TargetInstance, 'injury' : Injury }),
   });
   const ApplyEffectsRequest = IDL.Vec(PlayerEffectOutcome);
+  const ApplyEffectsError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const ApplyEffectsResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : ApplyEffectsError,
   });
   const Skills = IDL.Record({
     'battingAccuracy' : IDL.Int,
@@ -119,23 +124,33 @@ export const idlFactory = ({ IDL }) => {
     'dislikes' : IDL.Vec(IDL.Text),
     'skills' : Skills,
   });
-  const GetPlayerResult = IDL.Variant({ 'ok' : Player, 'notFound' : IDL.Null });
+  const GetPlayerError = IDL.Variant({ 'notFound' : IDL.Null });
+  const GetPlayerResult = IDL.Variant({
+    'ok' : Player,
+    'err' : GetPlayerError,
+  });
+  const OnSeasonEndError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
+    'err' : OnSeasonEndError,
+  });
+  const PopulateTeamRosterError = IDL.Variant({
+    'missingFluff' : IDL.Null,
     'notAuthorized' : IDL.Null,
   });
   const PopulateTeamRosterResult = IDL.Variant({
     'ok' : IDL.Vec(Player),
-    'missingFluff' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : PopulateTeamRosterError,
   });
+  const SetTeamsCanisterIdError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const SetTeamsCanisterIdResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : SetTeamsCanisterIdError,
   });
+  const SwapPlayerPositionsError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const SwapPlayerPositionsResult = IDL.Variant({
     'ok' : IDL.Null,
-    'notAuthorized' : IDL.Null,
+    'err' : SwapPlayerPositionsError,
   });
   return IDL.Service({
     'addFluff' : IDL.Func(
