@@ -55,6 +55,7 @@
 {:else if "entropy" in value}
     <Label>Amount</Label>
     <BigIntInput bind:value={value.entropy.delta} />
+    <TargetChooser bind:value={value.entropy.target} />
 {:else if "energy" in value}
     <Label>Amount</Label>
     <BigIntInput bind:value={value.energy.value.flat} />

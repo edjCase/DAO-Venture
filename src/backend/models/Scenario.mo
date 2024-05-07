@@ -121,12 +121,38 @@ module {
         #resolved : ScenarioStateResolved;
     };
 
+    public type ThresholdContribution = {
+        teamId : Nat;
+        amount : Int;
+    };
+
     public type ScenarioStateResolved = {
         teamChoices : [{
             teamId : Nat;
             option : Nat;
         }];
+        metaEffectOutcome : MetaEffectOutcome;
         effectOutcomes : [EffectOutcome];
+    };
+
+    public type MetaEffectOutcome = {
+        #threshold : {
+            contributions : [ThresholdContribution];
+            successful : Bool;
+        };
+        #leagueChoice : {
+            optionId : ?Nat;
+        };
+        #lottery : {
+            winningTeamId : ?Nat;
+        };
+        #proportionalBid : {
+            winningBids : [{
+                teamId : Nat;
+                amount : Nat;
+            }];
+        };
+        #noEffect;
     };
 
     public type MetaEffect = {

@@ -4,7 +4,7 @@
     import MetaEffectEditor from "./MetaEffectEditor.svelte";
 
     export let value: MetaEffect;
-    let selectedType = Object.keys(value)[0];
+    $: selectedType = Object.keys(value)[0];
     let onChange = (e: Event) => {
         selectedType = (e.target as HTMLSelectElement).value;
         if (selectedType === "threshold") {

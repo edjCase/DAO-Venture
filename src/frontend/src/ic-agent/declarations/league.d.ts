@@ -218,6 +218,22 @@ export type MetaEffect = {
     }
   } |
   { 'leagueChoice' : { 'options' : Array<{ 'effect' : Effect }> } };
+export type MetaEffectOutcome = {
+    'lottery' : { 'winningTeamId' : [] | [bigint] }
+  } |
+  { 'noEffect' : null } |
+  {
+    'threshold' : {
+      'contributions' : Array<ThresholdContribution>,
+      'successful' : boolean,
+    }
+  } |
+  {
+    'proportionalBid' : {
+      'winningBids' : Array<{ 'teamId' : bigint, 'amount' : bigint }>,
+    }
+  } |
+  { 'leagueChoice' : { 'optionId' : [] | [bigint] } };
 export interface NotScheduledMatch {
   'team1' : TeamAssignment,
   'team2' : TeamAssignment,
@@ -339,6 +355,7 @@ export type ScenarioState = { 'notStarted' : null } |
 export interface ScenarioStateResolved {
   'teamChoices' : Array<{ 'option' : bigint, 'teamId' : bigint }>,
   'effectOutcomes' : Array<EffectOutcome>,
+  'metaEffectOutcome' : MetaEffectOutcome,
 }
 export interface ScenarioVote {
   'option' : [] | [bigint],
@@ -447,6 +464,7 @@ export interface TeamStandingInfo {
   'losses' : bigint,
   'totalScore' : bigint,
 }
+export interface ThresholdContribution { 'teamId' : bigint, 'amount' : bigint }
 export type Time = bigint;
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export type VoteOnProposalError = { 'proposalNotFound' : null } |

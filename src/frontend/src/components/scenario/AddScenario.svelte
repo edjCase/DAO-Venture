@@ -74,8 +74,8 @@
             title: selectedScenario.title,
             description: selectedScenario.description,
             teamIds: [],
-            startTime: selectedScenario.startTime,
-            endTime: selectedScenario.endTime,
+            startTime: scenario.startTime, // Keep the same start time
+            endTime: scenario.endTime, // Keep the same end time
             options: selectedScenario.options,
             metaEffect: selectedScenario.metaEffect,
         };

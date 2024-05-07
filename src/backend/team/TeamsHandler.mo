@@ -287,15 +287,15 @@ module {
             )
             |> Buffer.toArray(_);
             let energyToBeGiven = playingTeams.size() * 100; // TODO value?
-            let purportionalWeights = playingTeams.vals()
+            let proportionalWeights = playingTeams.vals()
             |> Iter.map<TeamInfo, Nat>(
                 _,
                 func(team : TeamInfo) : Nat = team.mutableData.entropy,
             )
             |> Iter.toArray(_)
-            |> getPurportionalEntropyWeights(_);
+            |> getProportionalEntropyWeights(_);
 
-            for ((team, energyWeight) in IterTools.zip(playingTeams.vals(), purportionalWeights.vals())) {
+            for ((team, energyWeight) in IterTools.zip(playingTeams.vals(), proportionalWeights.vals())) {
                 var newEnergy = energyToBeGiven * Float.toInt(Float.floor(energyWeight));
                 if (team.isWinner) {
                     // Winning team gets +1 energy
@@ -305,7 +305,7 @@ module {
                 Debug.print("Team " # Nat.toText(team.id) # " share of the energy is: " # Int.toText(team.mutableData.energy));
             };
         };
-        private func getPurportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
+        private func getProportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
             if (entropyValues.size() == 0) {
                 return [];
             };

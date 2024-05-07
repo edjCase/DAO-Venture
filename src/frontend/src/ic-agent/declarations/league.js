@@ -245,11 +245,30 @@ export const idlFactory = ({ IDL }) => {
     'injury' : IDL.Record({ 'target' : TargetInstance, 'injury' : Injury }),
     'energy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
   });
+  const ThresholdContribution = IDL.Record({
+    'teamId' : IDL.Nat,
+    'amount' : IDL.Int,
+  });
+  const MetaEffectOutcome = IDL.Variant({
+    'lottery' : IDL.Record({ 'winningTeamId' : IDL.Opt(IDL.Nat) }),
+    'noEffect' : IDL.Null,
+    'threshold' : IDL.Record({
+      'contributions' : IDL.Vec(ThresholdContribution),
+      'successful' : IDL.Bool,
+    }),
+    'proportionalBid' : IDL.Record({
+      'winningBids' : IDL.Vec(
+        IDL.Record({ 'teamId' : IDL.Nat, 'amount' : IDL.Nat })
+      ),
+    }),
+    'leagueChoice' : IDL.Record({ 'optionId' : IDL.Opt(IDL.Nat) }),
+  });
   const ScenarioStateResolved = IDL.Record({
     'teamChoices' : IDL.Vec(
       IDL.Record({ 'option' : IDL.Nat, 'teamId' : IDL.Nat })
     ),
     'effectOutcomes' : IDL.Vec(EffectOutcome),
+    'metaEffectOutcome' : MetaEffectOutcome,
   });
   const ScenarioState = IDL.Variant({
     'notStarted' : IDL.Null,

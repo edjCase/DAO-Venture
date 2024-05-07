@@ -148,6 +148,33 @@
         }}
     />
 {/each}
+<div>
+    {#if "threshold" in state.metaEffectOutcome}
+        {#if state.metaEffectOutcome.threshold.successful}
+            <div class="text-xl text-center">Successful: Threshold Met</div>
+        {:else}
+            <div class="text-xl text-center">Failed: Threshold Not Met</div>
+        {/if}
+    {:else if "noEffect" in state.metaEffectOutcome}
+        <div></div>
+    {:else if "proportionalBid" in state.metaEffectOutcome}
+        {#each state.metaEffectOutcome.proportionalBid.winningBids as bid}
+            <div class="text-xl text-center">
+                {getTeamName(bid.teamId)} got {bid.amount}
+            </div>
+        {/each}
+    {:else if "lottery" in state.metaEffectOutcome}
+        <div class="text-xl text-center">
+            {#if !state.metaEffectOutcome.lottery.winningTeamId[0]}
+                No team won the lottery
+            {:else}
+                {getTeamName(state.metaEffectOutcome.lottery.winningTeamId[0])} won
+                the lottery
+            {/if}
+        </div>
+    {/if}
+</div>
+
 <Accordion border={false} flush={true}>
     <AccordionItem
         paddingFlush=""
