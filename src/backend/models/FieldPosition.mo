@@ -1,4 +1,5 @@
 import Hash "mo:base/Hash";
+import PseudoRandomX "mo:random/PseudoRandomX";
 
 module {
 
@@ -22,7 +23,7 @@ module {
         #leftField,
         #centerField,
         #rightField,
-    ];
+    ]; // TODO how to get this list from variant
 
     public type TeamPositions = {
         firstBase : Nat32;
@@ -46,6 +47,11 @@ module {
             case (#rightField) poistions.rightField;
             case (#pitcher) poistions.pitcher;
         };
+    };
+
+    public func getRandom(prng : PseudoRandomX.PseudoRandomGenerator) : FieldPosition {
+        let index = prng.nextNat(0, allPositions.size() - 1);
+        return allPositions[index];
     };
 
     public func equal(a : FieldPosition, b : FieldPosition) : Bool {

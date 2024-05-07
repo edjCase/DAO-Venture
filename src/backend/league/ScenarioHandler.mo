@@ -24,6 +24,8 @@ import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import UsersActor "canister:users";
 import UserTypes "../users/Types";
+import Skill "../models/Skill";
+import FieldPosition "../models/FieldPosition";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -890,16 +892,19 @@ module {
             case (#injury(injuryEffect)) {
                 outcomes.add(
                     #injury({
-                        target = getTargetInstance(context, injuryEffect.target);
-                        injury = injuryEffect.injury;
+                        target = getTargetInstance(prng, context, injuryEffect.target);
                     })
                 );
             };
             case (#skill(s)) {
+                let skill = switch (s.skill) {
+                    case (#random) Skill.getRandom(prng);
+                    case (#chosen(skill)) skill;
+                };
                 outcomes.add(
                     #skill({
-                        target = getTargetInstance(context, s.target);
-                        skill = s.skill;
+                        target = getTargetInstance(prng, context, s.target);
+                        skill = skill;
                         duration = s.duration;
                         delta = s.delta;
                     })
@@ -975,6 +980,7 @@ module {
     };
 
     private func getTargetInstance(
+        prng : Prng,
         context : EffectContext,
         target : Scenario.Target,
     ) : Scenario.TargetInstance {
@@ -995,9 +1001,15 @@ module {
                 |> Iter.fromArray(_)
                 |> Iter.map(
                     _,
-                    func(target : Scenario.TargetPosition) : Scenario.TargetPositionInstance = {
-                        teamId = getTeamId(target.team, context);
-                        position = target.position;
+                    func(target : Scenario.TargetPosition) : Scenario.TargetPositionInstance {
+                        let position = switch (target.position) {
+                            case (#random) FieldPosition.getRandom(prng);
+                            case (#chosen(p)) p;
+                        };
+                        {
+                            teamId = getTeamId(target.team, context);
+                            position = position;
+                        };
                     },
                 )
                 |> Iter.toArray(_);

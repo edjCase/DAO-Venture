@@ -956,13 +956,12 @@ module {
             #inProgress;
         };
 
-        private func injurePlayer({ playerId : Nat32; injury : Player.Injury }) {
+        private func injurePlayer({ playerId : Nat32 }) {
             let playerState = state.getPlayerState(playerId);
-            playerState.condition := #injured(injury);
+            playerState.condition := #injured;
             state.addEvent(
                 #injury({
                     playerId = playerId;
-                    injury = injury;
                 })
             );
         };
