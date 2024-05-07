@@ -21,10 +21,14 @@
         return `${year}-${month}-${day}T${hours}:${minutes}`;
     };
 
-    let startTime = formatDateTimeLocal(nanosecondsToDate(value.startTime));
+    let startTime = value.startTime[0]
+        ? formatDateTimeLocal(nanosecondsToDate(value.startTime[0]))
+        : undefined;
     let endTime = formatDateTimeLocal(nanosecondsToDate(value.endTime));
 
-    $: value.startTime = dateToNanoseconds(new Date(startTime));
+    $: value.startTime = startTime
+        ? [dateToNanoseconds(new Date(startTime))]
+        : [];
     $: value.endTime = dateToNanoseconds(new Date(endTime));
 
     let addOption = () => {
@@ -49,10 +53,20 @@
 <Input type="text" bind:value={value.title} />
 <Label>Description</Label>
 <Input type="text" bind:value={value.description} />
-<Label>Start Time</Label>
-<Input type="datetime-local" bind:value={startTime} />
+{#if !startTime}
+    <Button on:click={() => (startTime = formatDateTimeLocal(new Date()))}>
+        Delay Start
+    </Button>
+{:else}
+    <Label>Start Time</Label>
+    <Input type="datetime-local" bind:value={startTime} />
+{/if}
 <Label>End Time</Label>
 <Input type="datetime-local" bind:value={endTime} />
+
+<Label>Abstain Effect</Label>
+<ScenarioEffectChooser bind:value={value.abstainEffect} />
+
 <Label>Options</Label>
 <div class="ml-6 mb-4">
     {#each value.options as option, i}

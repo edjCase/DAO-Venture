@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Label } from "flowbite-svelte";
+    import { Button, Input, Label } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
     import ScenarioEffectEditor from "./ScenarioEffectEditor.svelte";
     import { MetaEffect } from "../../../ic-agent/declarations/league";
@@ -60,8 +60,11 @@
     <Label>Prize</Label>
     <ScenarioEffectEditor bind:value={value.lottery.prize} />
 {:else if "threshold" in value}
-    <Label>Threshold Value</Label>
-    <BigIntInput bind:value={value.threshold.threshold} />
+    <Label>Min Value</Label>
+    <BigIntInput bind:value={value.threshold.minAmount} />
+
+    <Label>Abstain Value</Label>
+    <ThresholdValueChooser bind:value={value.threshold.abstainAmount} />
 
     <div class="ml-4">
         {#each value.threshold.options as option, i}
@@ -73,13 +76,17 @@
         {/each}
         <Button on:click={addOption}>Add Option</Button>
     </div>
-    <Label>Over or Equal Effect</Label>
+    <Label>Success Effect</Label>
     <div class="ml-4">
-        <ScenarioEffectChooser bind:value={value.threshold.over} />
+        <Label>Description</Label>
+        <Input type="text" bind:value={value.threshold.success.description} />
+        <ScenarioEffectChooser bind:value={value.threshold.success.effect} />
     </div>
-    <Label>Under Effect</Label>
+    <Label>Failure Effect</Label>
     <div class="ml-4">
-        <ScenarioEffectChooser bind:value={value.threshold.under} />
+        <Label>Description</Label>
+        <Input type="text" bind:value={value.threshold.failure.description} />
+        <ScenarioEffectChooser bind:value={value.threshold.failure.effect} />
     </div>
 {:else if "proportionalBid" in value}
     <div class="ml-4">

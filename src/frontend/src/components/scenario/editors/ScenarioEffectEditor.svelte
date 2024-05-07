@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Label } from "flowbite-svelte";
+    import { Button, Input, Label } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
     import { Effect } from "../../../ic-agent/declarations/league";
     import { toJsonString } from "../../../utils/StringUtil";
@@ -17,7 +17,11 @@
             value.allOf.push({ noEffect: null });
             value.allOf = value.allOf;
         } else if ("oneOf" in value) {
-            value.oneOf.push([BigInt(1), { noEffect: null }]);
+            value.oneOf.push({
+                weight: BigInt(1),
+                effect: { noEffect: null },
+                description: "",
+            });
             value.oneOf = value.oneOf;
         }
     };
@@ -46,9 +50,11 @@
 {:else if "oneOf" in value}
     <div class="ml-6 border rounded">
         {#each value.oneOf as innerEffect}
+            <Label>Description</Label>
+            <Input type="text" bind:value={innerEffect.description} />
             <Label>Weight</Label>
-            <BigIntInput bind:value={innerEffect[0]} />
-            <ScenarioEffectChooser bind:value={innerEffect[1]} />
+            <BigIntInput bind:value={innerEffect.weight} />
+            <ScenarioEffectChooser bind:value={innerEffect.effect} />
         {/each}
         <Button on:click={addOption}>Add Option</Button>
     </div>

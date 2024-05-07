@@ -5,12 +5,13 @@ import type { IDL } from '@dfinity/candid';
 export type AddScenarioError = { 'notAuthorized' : null } |
   { 'invalid' : Array<string> };
 export interface AddScenarioRequest {
-  'startTime' : Time,
+  'startTime' : [] | [Time],
   'title' : string,
   'endTime' : Time,
   'metaEffect' : MetaEffect,
   'teamIds' : Array<bigint>,
   'description' : string,
+  'abstainEffect' : Effect,
   'options' : Array<ScenarioOptionWithEffect>,
 }
 export type AddScenarioResult = { 'ok' : null } |
@@ -79,7 +80,7 @@ export type Duration = { 'matches' : bigint } |
   { 'indefinite' : null };
 export type Effect = { 'allOf' : Array<Effect> } |
   { 'noEffect' : null } |
-  { 'oneOf' : Array<[bigint, Effect]> } |
+  { 'oneOf' : Array<WeightedEffect> } |
   { 'entropy' : { 'target' : LeagueOrTeamsTarget, 'delta' : bigint } } |
   {
     'skill' : {
@@ -191,15 +192,11 @@ export type MetaEffect = {
   { 'noEffect' : null } |
   {
     'threshold' : {
-      'threshold' : bigint,
-      'over' : Effect,
-      'under' : Effect,
-      'options' : Array<
-        {
-          'value' : { 'fixed' : bigint } |
-            { 'weightedChance' : Array<[bigint, bigint]> },
-        }
-      >,
+      'failure' : { 'description' : string, 'effect' : Effect },
+      'minAmount' : bigint,
+      'success' : { 'description' : string, 'effect' : Effect },
+      'options' : Array<{ 'value' : ThresholdOptionValue }>,
+      'abstainAmount' : ThresholdOptionValue,
     }
   } |
   {
@@ -340,6 +337,7 @@ export interface Scenario {
   'endTime' : bigint,
   'metaEffect' : MetaEffect,
   'description' : string,
+  'abstainEffect' : Effect,
   'state' : ScenarioState,
   'options' : Array<ScenarioOptionWithEffect>,
 }
@@ -353,7 +351,7 @@ export type ScenarioState = { 'notStarted' : null } |
   { 'resolved' : ScenarioStateResolved } |
   { 'inProgress' : null };
 export interface ScenarioStateResolved {
-  'teamChoices' : Array<{ 'option' : bigint, 'teamId' : bigint }>,
+  'teamChoices' : Array<{ 'option' : [] | [bigint], 'teamId' : bigint }>,
   'effectOutcomes' : Array<EffectOutcome>,
   'metaEffectOutcome' : MetaEffectOutcome,
 }
@@ -465,6 +463,12 @@ export interface TeamStandingInfo {
   'totalScore' : bigint,
 }
 export interface ThresholdContribution { 'teamId' : bigint, 'amount' : bigint }
+export type ThresholdOptionValue = { 'fixed' : bigint } |
+  {
+    'weightedChance' : Array<
+      { 'weight' : bigint, 'value' : bigint, 'description' : string }
+    >
+  };
 export type Time = bigint;
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export type VoteOnProposalError = { 'proposalNotFound' : null } |
@@ -488,6 +492,11 @@ export interface VoteOnScenarioRequest {
 }
 export type VoteOnScenarioResult = { 'ok' : null } |
   { 'err' : VoteOnScenarioError };
+export interface WeightedEffect {
+  'weight' : bigint,
+  'description' : string,
+  'effect' : Effect,
+}
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
   'claimBenevolentDictatorRole' : ActorMethod<

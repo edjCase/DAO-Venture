@@ -229,10 +229,11 @@ module {
     };
 
     public type AddScenarioRequest = {
-        startTime : Time.Time;
+        startTime : ?Time.Time;
         endTime : Time.Time;
         title : Text;
         description : Text;
+        abstainEffect : Scenario.Effect;
         options : [Scenario.ScenarioOptionWithEffect];
         metaEffect : Scenario.MetaEffect;
         teamIds : [Nat];

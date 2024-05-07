@@ -22,14 +22,6 @@
       }
     })();
   }
-  let stateLabel: string;
-  $: if ("resolved" in scenario.state) {
-    stateLabel = "Complete";
-  } else if ("inProgress" in scenario.state) {
-    stateLabel = "In Progress";
-  } else {
-    stateLabel = "Upcoming";
-  }
 </script>
 
 <div class="p-6">
@@ -51,6 +43,7 @@
   <div class="flex flex-col items-center gap-2">
     {#if "resolved" in scenario.state}
       <ResolvedScenarioState
+        {scenario}
         state={scenario.state.resolved}
         options={scenario.options}
         userContext={user}

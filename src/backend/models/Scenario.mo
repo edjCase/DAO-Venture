@@ -31,6 +31,12 @@ module {
         #matches : Nat;
     };
 
+    public type WeightedEffect = {
+        weight : Nat;
+        effect : Effect;
+        description : Text;
+    };
+
     public type Effect = {
         #skill : {
             target : Target;
@@ -52,7 +58,7 @@ module {
                 #flat : Int;
             };
         };
-        #oneOf : [(Nat, Effect)]; // Weighted choices
+        #oneOf : [WeightedEffect];
         #allOf : [Effect];
         #noEffect;
     };
@@ -110,6 +116,7 @@ module {
         description : Text;
         startTime : Int;
         endTime : Int;
+        abstainEffect : Effect;
         options : [ScenarioOptionWithEffect];
         metaEffect : MetaEffect;
         state : ScenarioState;
@@ -129,7 +136,7 @@ module {
     public type ScenarioStateResolved = {
         teamChoices : [{
             teamId : Nat;
-            option : Nat;
+            option : ?Nat;
         }];
         metaEffectOutcome : MetaEffectOutcome;
         effectOutcomes : [EffectOutcome];
@@ -155,16 +162,30 @@ module {
         #noEffect;
     };
 
+    public type ThresholdOptionValue = {
+        #fixed : Int;
+        #weightedChance : [{
+            value : Int;
+            weight : Nat;
+            description : Text;
+        }];
+    };
+
     public type MetaEffect = {
+        #noEffect;
         #threshold : {
-            threshold : Nat;
-            over : Effect;
-            under : Effect;
+            minAmount : Nat;
+            success : {
+                description : Text;
+                effect : Effect;
+            };
+            failure : {
+                description : Text;
+                effect : Effect;
+            };
+            abstainAmount : ThresholdOptionValue;
             options : [{
-                value : {
-                    #fixed : Int;
-                    #weightedChance : [(Int, Nat)];
-                };
+                value : ThresholdOptionValue;
             }];
         };
         #leagueChoice : {
@@ -206,7 +227,6 @@ module {
                 bidValue : Nat;
             }];
         };
-        #noEffect;
     };
 
 };

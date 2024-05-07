@@ -34,7 +34,7 @@ function createUserStore() {
         if ('ok' in result) {
             return result.ok;
         }
-        else if ('notFound' in result) {
+        else if ('err' in result && 'notFound' in result.err) {
             let emptyUser: User = {
                 id: userId,
                 points: BigInt(0),

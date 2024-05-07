@@ -61,6 +61,7 @@ module {
         id : Nat;
         title : Text;
         description : Text;
+        abstainEffect : Scenario.Effect;
         options : [Scenario.ScenarioOptionWithEffect];
         metaEffect : Scenario.MetaEffect;
         state : ScenarioState;
@@ -99,7 +100,7 @@ module {
     };
     public type TeamVotingResult = {
         id : Nat;
-        option : Nat;
+        option : ?Nat;
     };
 
     public class Handler<system>(
@@ -217,28 +218,52 @@ module {
                 };
             };
             let teamResults = Buffer.Buffer<TeamVotingResult>(teamStats.size());
-            for ((teamId, stats) in teamStats.entries()) {
-                var optionWithMostVotes : (Nat, Nat) = (0, 0);
+            let teamsWithVoters = teamStats.entries()
+            |> Iter.filter(
+                _,
+                func(entry : (Nat, TeamStats)) : Bool = entry.1.totalVotingPower > 0,
+            );
+            for ((teamId, stats) in teamsWithVoters) {
+                var optionsWithMostVotes : Buffer.Buffer<(Nat, Nat)> = Buffer.Buffer<(Nat, Nat)>(0);
 
-                // Calculate the option with the most votes
+                // Calculate the options with the most votes
                 for ((option, optionVotingPower) in IterTools.enumerate(stats.optionVotingPowers.vals())) {
-                    if (optionVotingPower > optionWithMostVotes.1) {
-                        // TODO what to do in a tie?
-                        optionWithMostVotes := (option, optionVotingPower);
+                    if (optionsWithMostVotes.size() < 1) {
+                        optionsWithMostVotes.add((option, optionVotingPower));
+                    } else {
+                        let maxVotes = optionsWithMostVotes.get(0).1;
+                        if (optionVotingPower > maxVotes) {
+                            optionsWithMostVotes.clear(); // Reset options if a new max is found
+                        };
+                        optionsWithMostVotes.add((option, optionVotingPower));
                     };
+                };
+                let optionWithMostVotes = if (optionsWithMostVotes.size() == 1) {
+                    ?optionsWithMostVotes.get(0);
+                } else {
+                    null;
                 };
 
                 // If voting is not closed, check to see if there is a majority to end early or not
                 if (not votingClosed) {
-                    // Validate that the majority has been reached, if voting is still active
-                    let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(stats.totalVotingPower) / 2.) + 1));
-                    if (minMajorityVotingPower > optionWithMostVotes.1) {
-                        return #noConsensus; // If any team hasnt reached a consensus, wait till its forced (end of voting period)
+                    switch (optionWithMostVotes) {
+                        case (null) return #noConsensus;
+                        case (?o) {
+                            // Validate that the majority has been reached, if voting is still active
+                            let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(stats.totalVotingPower) / 2.) + 1));
+                            if (minMajorityVotingPower > o.1) {
+                                return #noConsensus;
+                            };
+                        };
                     };
+                };
+                let chosenOption : ?Nat = switch (optionWithMostVotes) {
+                    case (null) null;
+                    case (?o) ?o.0;
                 };
                 teamResults.add({
                     id = teamId;
-                    option = optionWithMostVotes.0;
+                    option = chosenOption;
                 });
             };
 
@@ -249,6 +274,10 @@ module {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
                 case (#invalid(errors)) return #invalid(errors);
+            };
+            let startTime = switch (scenario.startTime) {
+                case (null) Time.now();
+                case (?t) t;
             };
 
             let members = try {
@@ -275,7 +304,7 @@ module {
 
             let scenarioId = nextScenarioId;
             nextScenarioId += 1;
-            let startTimerId = createStartTimer<system>(scenarioId, scenario.startTime);
+            let startTimerId = createStartTimer<system>(scenarioId, startTime);
             scenarios.put(
                 scenarioId,
                 {
@@ -283,12 +312,13 @@ module {
                     id = scenarioId;
                     title = scenario.title;
                     description = scenario.description;
+                    abstainEffect = scenario.abstainEffect;
                     options = scenario.options;
                     metaEffect = scenario.metaEffect;
                     state = #notStarted({
                         startTimerId = startTimerId;
                     });
-                    startTime = scenario.startTime;
+                    startTime = startTime;
                     endTime = scenario.endTime;
                     teamIds = scenario.teamIds;
                     votes = votes;
@@ -459,6 +489,7 @@ module {
             startTime = data.startTime;
             endTime = data.endTime;
             description = data.description;
+            abstainEffect = data.abstainEffect;
             options = data.options;
             metaEffect = data.metaEffect;
             state = state;
@@ -471,7 +502,7 @@ module {
             _,
             func(team : TeamVotingResult) : {
                 teamId : Nat;
-                option : Nat;
+                option : ?Nat;
             } = {
                 teamId = team.id;
                 option = team.option;
@@ -509,14 +540,20 @@ module {
 
     public func validateScenario(scenario : Types.AddScenarioRequest) : ValidateScenarioResult {
         let errors = Buffer.Buffer<Text>(0);
-        if (scenario.startTime < Time.now()) {
-            errors.add("Scenario start time must be in the future");
+        let startTime = switch (scenario.startTime) {
+            case (null) Time.now();
+            case (?t) {
+                if (t < Time.now()) {
+                    errors.add("Scenario start time must be in the future");
+                };
+                t;
+            };
         };
-        if (scenario.endTime < scenario.startTime) {
+        if (scenario.endTime < startTime) {
             errors.add("Scenario end time must be after the start time");
         };
         let dayInNanos = 24 * 60 * 60 * 1000000000; // 24 hours in nanoseconds
-        if (scenario.endTime - scenario.startTime < dayInNanos) {
+        if (scenario.endTime - startTime < dayInNanos) {
             errors.add("Scenario duration must be at least 1 day");
         };
         if (TextX.isEmptyOrWhitespace(scenario.title)) {
@@ -572,11 +609,11 @@ module {
             };
             case (#oneOf(subEffects)) {
                 var index = 0;
-                for ((weight, subEffect) in Iter.fromArray(subEffects)) {
-                    if (weight < 1) {
+                for (subEffect in Iter.fromArray(subEffects)) {
+                    if (subEffect.weight < 1) {
                         errors.add("Weight must be at least 1");
                     };
-                    switch (validateEffect(subEffect)) {
+                    switch (validateEffect(subEffect.effect)) {
                         case (#ok) {};
                         case (#invalid(subEffectErrors)) {
                             for (subEffectError in Iter.fromArray(subEffectErrors)) {
@@ -607,12 +644,15 @@ module {
     ) : ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
         for (teamData in Iter.fromArray(teamChoices)) {
-            let choice = scenario.options[teamData.option];
+            let effect = switch (teamData.option) {
+                case (null) scenario.abstainEffect;
+                case (?option) scenario.options[option].effect;
+            };
             resolveEffectInternal(
                 prng,
                 #team(teamData.id),
                 scenario,
-                choice.effect,
+                effect,
                 effectOutcomes,
             );
         };
@@ -636,11 +676,22 @@ module {
                 let weightedTickets : [(Nat, Float)] = teamChoices.vals()
                 |> Iter.filter(
                     _,
-                    func(teamData : TeamVotingResult) : Bool = lottery.options[teamData.option].tickets > 0,
+                    func(teamData : TeamVotingResult) : Bool {
+                        switch (teamData.option) {
+                            case (null) false;
+                            case (?option) lottery.options[option].tickets > 0;
+                        };
+                    },
                 )
                 |> Iter.map<TeamVotingResult, (Nat, Float)>(
                     _,
-                    func(teamData : TeamVotingResult) : (Nat, Float) = (teamData.id, Float.fromInt(lottery.options[teamData.option].tickets)),
+                    func(teamData : TeamVotingResult) : (Nat, Float) {
+                        let ticketCount = switch (teamData.option) {
+                            case (null) Prelude.unreachable();
+                            case (?option) lottery.options[option].tickets;
+                        };
+                        (teamData.id, Float.fromInt(ticketCount));
+                    },
                 )
                 |> Iter.toArray(_);
 
@@ -664,11 +715,20 @@ module {
                 let totalBid = Array.foldLeft(
                     teamChoices,
                     0,
-                    func(total : Nat, teamData : TeamVotingResult) : Nat = total + proportionalBid.options[teamData.option].bidValue,
+                    func(total : Nat, teamData : TeamVotingResult) : Nat {
+                        let bidValue = switch (teamData.option) {
+                            case (null) 0;
+                            case (?option) proportionalBid.options[option].bidValue;
+                        };
+                        total + bidValue;
+                    },
                 );
                 let winningBids = Buffer.Buffer<{ teamId : Nat; amount : Nat }>(0);
                 label f for (teamData in teamChoices.vals()) {
-                    let teamBidValue = proportionalBid.options[teamData.option].bidValue;
+                    let teamBidValue = switch (teamData.option) {
+                        case (null) continue f;
+                        case (?option) proportionalBid.options[option].bidValue;
+                    };
                     if (teamBidValue < 1) {
                         continue f;
                     };
@@ -720,13 +780,18 @@ module {
                 |> Iter.map<TeamVotingResult, Scenario.ThresholdContribution>(
                     _,
                     func(teamData : TeamVotingResult) : Scenario.ThresholdContribution {
-                        let value : Int = switch (threshold.options[teamData.option].value) {
+
+                        let optionValue = switch (teamData.option) {
+                            case (null) threshold.abstainAmount;
+                            case (?option) threshold.options[option].value;
+                        };
+                        let value : Int = switch (optionValue) {
                             case (#fixed(fixed)) fixed;
                             case (#weightedChance(w)) {
                                 let wFloat : [(Int, Float)] = w.vals()
-                                |> Iter.map<(Int, Nat), (Int, Float)>(
+                                |> Iter.map<{ weight : Nat; value : Int }, (Int, Float)>(
                                     _,
-                                    func((value, weight) : (Int, Nat)) : (Int, Float) = (value, Float.fromInt(weight)),
+                                    func(w : { weight : Nat; value : Int }) : (Int, Float) = (w.value, Float.fromInt(w.weight)),
                                 )
                                 |> Iter.toArray(_);
                                 prng.nextArrayElementWeighted(wFloat);
@@ -744,11 +809,11 @@ module {
                     0,
                     func(total : Int, teamData : Scenario.ThresholdContribution) : Int = total + teamData.amount,
                 );
-                let successful = valueSum >= threshold.threshold;
+                let successful = valueSum >= threshold.minAmount;
                 let thresholdEffect = if (successful) {
-                    threshold.over;
+                    threshold.success.effect;
                 } else {
-                    threshold.under;
+                    threshold.failure.effect;
                 };
 
                 resolveEffectInternal(prng, #league, scenario, thresholdEffect, effectOutcomes);
@@ -799,9 +864,9 @@ module {
                 };
             };
             case (#oneOf(subEffects)) {
-                let weightedSubEffects = Array.map<(Nat, Scenario.Effect), (Scenario.Effect, Float)>(
+                let weightedSubEffects = Array.map<Scenario.WeightedEffect, (Scenario.Effect, Float)>(
                     subEffects,
-                    func((weight, effect) : (Nat, Scenario.Effect)) : (Scenario.Effect, Float) = (effect, Float.fromInt(weight)),
+                    func(wEffect : Scenario.WeightedEffect) : (Scenario.Effect, Float) = (wEffect.effect, Float.fromInt(wEffect.weight)),
                 );
                 let subEffect = prng.nextArrayElementWeighted(weightedSubEffects);
                 resolveEffectInternal(prng, context, scenario, subEffect, outcomes);
@@ -865,10 +930,14 @@ module {
         // Get the top choice(s), if there is a tie, choose randomly
         var choiceCounts = Trie.empty<Nat, Nat>();
         var maxCount = 0;
-        for (teamChoice in Iter.fromArray(teamChoices)) {
+        label f for (teamChoice in Iter.fromArray(teamChoices)) {
+            let option = switch (teamChoice.option) {
+                case (null) continue f;
+                case (?option) option;
+            };
             let choiceKey = {
-                key = teamChoice.option;
-                hash = Nat32.fromNat(teamChoice.option);
+                key = option;
+                hash = Nat32.fromNat(option);
             };
             let currentCount = Option.get(Trie.get(choiceCounts, choiceKey, Nat.equal), 0);
             let newCount = currentCount + 1;

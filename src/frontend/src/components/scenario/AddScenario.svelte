@@ -14,14 +14,19 @@
     $: teams = $teamStore;
     $: scenarios = $scenarioStore;
 
-    let initialStart = new Date();
-    let initialEnd = new Date(initialStart.getTime() + 1000 * 60 * 60 * 24);
+    let initialEnd = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3);
     let scenario: AddScenarioRequest = {
         title: "",
         description: "",
         teamIds: [],
-        startTime: dateToNanoseconds(initialStart),
+        startTime: [],
         endTime: dateToNanoseconds(initialEnd),
+        abstainEffect: {
+            entropy: {
+                target: { teams: [{ choosingTeam: null }] },
+                delta: BigInt(1),
+            },
+        },
         options: [
             {
                 title: "",
@@ -76,6 +81,7 @@
             teamIds: [],
             startTime: scenario.startTime, // Keep the same start time
             endTime: scenario.endTime, // Keep the same end time
+            abstainEffect: selectedScenario.abstainEffect,
             options: selectedScenario.options,
             metaEffect: selectedScenario.metaEffect,
         };

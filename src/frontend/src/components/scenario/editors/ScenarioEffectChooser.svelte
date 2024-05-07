@@ -18,12 +18,13 @@
         } else if (selectedType === "oneOf") {
             value = {
                 oneOf: [
-                    [
-                        BigInt(1),
-                        {
+                    {
+                        weight: BigInt(1),
+                        description: "",
+                        effect: {
                             noEffect: null,
                         },
-                    ],
+                    },
                 ],
             };
         } else if (selectedType === "entropy") {

@@ -2,6 +2,7 @@
     import {
         Duration,
         EffectOutcome,
+        Scenario,
         ScenarioOptionWithEffect,
         ScenarioStateResolved,
         TargetInstance,
@@ -19,6 +20,7 @@
     import { fieldPositionToString } from "../../models/FieldPosition";
     import ScenarioOption from "./ScenarioOption.svelte";
 
+    export let scenario: Scenario;
     export let state: ScenarioStateResolved;
     export let options: ScenarioOptionWithEffect[];
     export let userContext: User | undefined;
@@ -152,8 +154,14 @@
     {#if "threshold" in state.metaEffectOutcome}
         {#if state.metaEffectOutcome.threshold.successful}
             <div class="text-xl text-center">Successful: Threshold Met</div>
+            {#if "threshold" in scenario.metaEffect}
+                <div>{scenario.metaEffect.threshold.success.description}</div>
+            {/if}
         {:else}
             <div class="text-xl text-center">Failed: Threshold Not Met</div>
+            {#if "threshold" in scenario.metaEffect}
+                <div>{scenario.metaEffect.threshold.failure.description}</div>
+            {/if}
         {/if}
     {:else if "noEffect" in state.metaEffectOutcome}
         <div></div>
@@ -172,6 +180,13 @@
                 the lottery
             {/if}
         </div>
+    {:else if "leagueChoice" in state.metaEffectOutcome}
+        <div class="text-xl text-center">
+            The league has chosen option {state.metaEffectOutcome.leagueChoice
+                .optionId}
+        </div>
+    {:else}
+        NOT IMPLEMENTED {toJsonString(state.metaEffectOutcome)}
     {/if}
 </div>
 

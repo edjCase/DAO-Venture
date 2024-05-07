@@ -1,15 +1,25 @@
 <script lang="ts">
-    import { Button, Label } from "flowbite-svelte";
+    import { Button, Input, Label } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
 
     export let value:
         | { fixed: bigint }
-        | { weightedChance: [bigint, bigint][] };
+        | {
+              weightedChance: {
+                  weight: bigint;
+                  value: bigint;
+                  description: string;
+              }[];
+          };
 
     let add = () => {
         if ("weightedChance" in value) {
-            value.weightedChance.push([BigInt(1), BigInt(1)]);
+            value.weightedChance.push({
+                weight: BigInt(1),
+                value: BigInt(1),
+                description: "",
+            });
             value.weightedChance = value.weightedChance;
         }
     };
@@ -28,10 +38,12 @@
 {:else if "weightedChance" in value}
     <div class="ml-4">
         {#each value.weightedChance as weightedOption, i}
+            <Label>Description</Label>
+            <Input type="text" bind:value={weightedOption.description} />
             <Label>Weight</Label>
-            <BigIntInput bind:value={weightedOption[0]} />
+            <BigIntInput bind:value={weightedOption.weight} />
             <Label>Value</Label>
-            <BigIntInput bind:value={weightedOption[1]} />
+            <BigIntInput bind:value={weightedOption.value} />
             <button on:click={() => remove(i)}>
                 <TrashBinSolid size="sm" />
             </button>

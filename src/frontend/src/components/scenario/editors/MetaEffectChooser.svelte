@@ -10,10 +10,11 @@
         if (selectedType === "threshold") {
             value = {
                 threshold: {
+                    abstainAmount: { fixed: BigInt(0) },
                     options: [],
-                    over: { noEffect: null },
-                    under: { noEffect: null },
-                    threshold: BigInt(1),
+                    success: { effect: { noEffect: null }, description: "" },
+                    failure: { effect: { noEffect: null }, description: "" },
+                    minAmount: BigInt(1),
                 },
             };
         } else if (selectedType === "leagueChoice") {

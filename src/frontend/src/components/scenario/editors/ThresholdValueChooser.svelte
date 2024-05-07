@@ -4,7 +4,13 @@
 
     export let value:
         | { fixed: bigint }
-        | { weightedChance: [bigint, bigint][] };
+        | {
+              weightedChance: {
+                  weight: bigint;
+                  value: bigint;
+                  description: string;
+              }[];
+          };
     let selectedType = Object.keys(value)[0];
     let onChange = (e: Event) => {
         selectedType = (e.target as HTMLSelectElement).value;
@@ -14,7 +20,13 @@
             };
         } else if (selectedType === "weightedChance") {
             value = {
-                weightedChance: [[BigInt(1), BigInt(1)]],
+                weightedChance: [
+                    {
+                        weight: BigInt(1),
+                        value: BigInt(1),
+                        description: "",
+                    },
+                ],
             };
         } else {
             throw new Error(`Unknown threshold value type: ${selectedType}`);
