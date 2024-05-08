@@ -24,6 +24,10 @@ export const idlFactory = ({ IDL }) => {
     'defense' : IDL.Null,
     'throwingPower' : IDL.Null,
   });
+  const ChosenOrRandomSkill = IDL.Variant({
+    'random' : IDL.Null,
+    'chosen' : Skill,
+  });
   const FieldPosition = IDL.Variant({
     'rightField' : IDL.Null,
     'leftField' : IDL.Null,
@@ -34,20 +38,18 @@ export const idlFactory = ({ IDL }) => {
     'centerField' : IDL.Null,
     'firstBase' : IDL.Null,
   });
+  const ChosenOrRandomFieldPosition = IDL.Variant({
+    'random' : IDL.Null,
+    'chosen' : FieldPosition,
+  });
   const TargetPosition = IDL.Record({
     'team' : TargetTeam,
-    'position' : FieldPosition,
+    'position' : ChosenOrRandomFieldPosition,
   });
   const Target = IDL.Variant({
     'teams' : IDL.Vec(TargetTeam),
     'league' : IDL.Null,
     'positions' : IDL.Vec(TargetPosition),
-  });
-  const Injury = IDL.Variant({
-    'twistedAnkle' : IDL.Null,
-    'brokenArm' : IDL.Null,
-    'brokenLeg' : IDL.Null,
-    'concussion' : IDL.Null,
   });
   Effect.fill(
     IDL.Variant({
@@ -60,11 +62,11 @@ export const idlFactory = ({ IDL }) => {
       }),
       'skill' : IDL.Record({
         'duration' : Duration,
-        'skill' : Skill,
+        'skill' : ChosenOrRandomSkill,
         'target' : Target,
         'delta' : IDL.Int,
       }),
-      'injury' : IDL.Record({ 'target' : Target, 'injury' : Injury }),
+      'injury' : IDL.Record({ 'target' : Target }),
       'energy' : IDL.Record({
         'value' : IDL.Variant({ 'flat' : IDL.Int }),
         'team' : TargetTeam,
@@ -99,8 +101,10 @@ export const idlFactory = ({ IDL }) => {
         'kind' : IDL.Variant({
           'skill' : IDL.Record({
             'duration' : Duration,
-            'skill' : Skill,
-            'target' : IDL.Variant({ 'position' : FieldPosition }),
+            'skill' : ChosenOrRandomSkill,
+            'target' : IDL.Variant({
+              'position' : ChosenOrRandomFieldPosition,
+            }),
           }),
         }),
         'amount' : IDL.Nat,
@@ -252,7 +256,7 @@ export const idlFactory = ({ IDL }) => {
       'target' : TargetInstance,
       'delta' : IDL.Int,
     }),
-    'injury' : IDL.Record({ 'target' : TargetInstance, 'injury' : Injury }),
+    'injury' : IDL.Record({ 'target' : TargetInstance }),
     'energy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
   });
   const ThresholdContribution = IDL.Record({

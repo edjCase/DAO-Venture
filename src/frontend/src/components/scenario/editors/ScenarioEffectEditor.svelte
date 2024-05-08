@@ -3,13 +3,12 @@
     import BigIntInput from "./BigIntInput.svelte";
     import { Effect } from "../../../ic-agent/declarations/league";
     import { toJsonString } from "../../../utils/StringUtil";
-    import SkillChooser from "./SkillChooser.svelte";
     import TargetChooser from "./TargetChooser.svelte";
     import DurationChooser from "./DurationChooser.svelte";
-    import InjuryChooser from "./InjuryChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
     import TargetTeamChooser from "./TargetTeamChooser.svelte";
+    import ChosenOrRandomSkillChooser from "./ChosenOrRandomSkillChooser.svelte";
     export let value: Effect;
 
     let addOption = () => {
@@ -74,7 +73,7 @@
     </div>
     <Label>Skill</Label>
     <div class="ml-4">
-        <SkillChooser bind:value={value.skill.skill} />
+        <ChosenOrRandomSkillChooser bind:value={value.skill.skill} />
     </div>
     <Label>Duration</Label>
     <div class="ml-4">
@@ -86,10 +85,6 @@
     <Label>Target</Label>
     <div class="ml-4">
         <TargetChooser bind:value={value.injury.target} />
-    </div>
-    <Label>Injury</Label>
-    <div>
-        <InjuryChooser bind:value={value.injury.injury} />
     </div>
 {:else if "noEffect" in value}
     <div></div>

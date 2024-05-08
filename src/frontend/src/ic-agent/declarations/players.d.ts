@@ -34,10 +34,6 @@ export type FieldPosition = { 'rightField' : null } |
 export type GetPlayerError = { 'notFound' : null };
 export type GetPlayerResult = { 'ok' : Player } |
   { 'err' : GetPlayerError };
-export type Injury = { 'twistedAnkle' : null } |
-  { 'brokenArm' : null } |
-  { 'brokenLeg' : null } |
-  { 'concussion' : null };
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
 export type OnSeasonEndError = { 'notAuthorized' : null };
@@ -63,7 +59,7 @@ export type PlayerEffectOutcome = {
       'delta' : bigint,
     }
   } |
-  { 'injury' : { 'target' : TargetInstance, 'injury' : Injury } };
+  { 'injury' : { 'target' : TargetInstance } };
 export type PlayerId = number;
 export interface PlayerMatchStatsWithId {
   'playerId' : PlayerId,

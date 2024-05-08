@@ -9,14 +9,19 @@ module {
         #choosingTeam;
     };
 
-    public type ChosenOrRandom<T> = {
+    public type ChosenOrRandomFieldPosition = {
         #random;
-        #chosen : T;
+        #chosen : FieldPosition.FieldPosition;
+    };
+
+    public type ChosenOrRandomSkill = {
+        #random;
+        #chosen : Skill.Skill;
     };
 
     public type TargetPosition = {
         team : TargetTeam;
-        position : ChosenOrRandom<FieldPosition.FieldPosition>;
+        position : ChosenOrRandomFieldPosition;
     };
 
     public type LeagueOrTeamsTarget = {
@@ -44,7 +49,7 @@ module {
     public type Effect = {
         #skill : {
             target : Target;
-            skill : ChosenOrRandom<Skill.Skill>;
+            skill : ChosenOrRandomSkill;
             duration : Duration;
             delta : Int;
         };
@@ -217,9 +222,9 @@ module {
                 amount : Nat;
                 kind : {
                     #skill : {
-                        skill : Skill.Skill;
+                        skill : ChosenOrRandomSkill;
                         target : {
-                            #position : FieldPosition.FieldPosition;
+                            #position : ChosenOrRandomFieldPosition;
                         };
                         duration : Duration;
                     };

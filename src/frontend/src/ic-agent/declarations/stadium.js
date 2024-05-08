@@ -61,12 +61,6 @@ export const idlFactory = ({ IDL }) => {
     'centerField' : IDL.Null,
     'firstBase' : IDL.Null,
   });
-  const Injury = IDL.Variant({
-    'twistedAnkle' : IDL.Null,
-    'brokenArm' : IDL.Null,
-    'brokenLeg' : IDL.Null,
-    'concussion' : IDL.Null,
-  });
   const MatchEndReason = IDL.Variant({
     'noMoreRounds' : IDL.Null,
     'error' : IDL.Text,
@@ -103,7 +97,7 @@ export const idlFactory = ({ IDL }) => {
         'foul' : IDL.Null,
       }),
     }),
-    'injury' : IDL.Record({ 'playerId' : IDL.Nat32, 'injury' : Injury }),
+    'injury' : IDL.Record({ 'playerId' : IDL.Nat32 }),
     'pitch' : IDL.Record({
       'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
       'pitcherId' : PlayerId__1,
@@ -169,7 +163,7 @@ export const idlFactory = ({ IDL }) => {
   const PlayerCondition = IDL.Variant({
     'ok' : IDL.Null,
     'dead' : IDL.Null,
-    'injured' : Injury,
+    'injured' : IDL.Null,
   });
   const PlayerStateWithId = IDL.Record({
     'id' : PlayerId,
