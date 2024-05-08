@@ -16,7 +16,6 @@ export type CancelMatchGroupError = { 'matchGroupNotFound' : null };
 export interface CancelMatchGroupRequest { 'id' : bigint }
 export type CancelMatchGroupResult = { 'ok' : null } |
   { 'err' : CancelMatchGroupError };
-export type Effect = { 'skill' : { 'skill' : [] | [Skill], 'delta' : bigint } };
 export type Event = {
     'out' : { 'playerId' : PlayerId__1, 'reason' : OutReason }
   } |
@@ -169,13 +168,6 @@ export interface RoundLog { 'turns' : Array<TurnLog> }
 export type SetLeagueError = { 'notAuthorized' : null };
 export type SetLeagueResult = { 'ok' : null } |
   { 'err' : SetLeagueError };
-export type Skill = { 'battingAccuracy' : null } |
-  { 'throwingAccuracy' : null } |
-  { 'speed' : null } |
-  { 'catching' : null } |
-  { 'battingPower' : null } |
-  { 'defense' : null } |
-  { 'throwingPower' : null };
 export interface Skills {
   'battingAccuracy' : bigint,
   'throwingAccuracy' : bigint,
@@ -250,7 +242,6 @@ export type TickMatchGroupResult = {
 export interface TickResult { 'match' : Match, 'status' : MatchStatus }
 export interface Trait {
   'id' : string,
-  'effects' : Array<Effect>,
   'name' : string,
   'description' : string,
 }

@@ -26,6 +26,9 @@
                 .toString()}
         <div>Welcome Benevolent Dictator</div>
         <div>
+            <TempInitialize />
+        </div>
+        <div>
             <ScheduleSeason />
         </div>
         ---
@@ -35,10 +38,6 @@
         ---
         <div>
             <DaoAdmin />
-        </div>
-        ---
-        <div>
-            <TempInitialize />
         </div>
     {/if}
 {/if}

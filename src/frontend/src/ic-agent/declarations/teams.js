@@ -1,4 +1,14 @@
 export const idlFactory = ({ IDL }) => {
+  const AddTeamTraitOk = IDL.Record({ 'hadTrait' : IDL.Bool });
+  const AddTeamTraitError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'traitNotFound' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const AddTeamTraitResult = IDL.Variant({
+    'ok' : AddTeamTraitOk,
+    'err' : AddTeamTraitError,
+  });
   const Skill = IDL.Variant({
     'battingAccuracy' : IDL.Null,
     'throwingAccuracy' : IDL.Null,
@@ -115,10 +125,16 @@ export const idlFactory = ({ IDL }) => {
     'ok' : PagedResult,
     'err' : GetProposalsError,
   });
+  const Trait = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
   const Link = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
   const Team = IDL.Record({
     'id' : IDL.Nat,
     'motto' : IDL.Text,
+    'traits' : IDL.Vec(Trait),
     'name' : IDL.Text,
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'description' : IDL.Text,
@@ -167,6 +183,16 @@ export const idlFactory = ({ IDL }) => {
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
     'err' : OnSeasonEndError,
+  });
+  const RemoveTeamTraitOk = IDL.Record({ 'hadTrait' : IDL.Bool });
+  const RemoveTeamTraitError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'traitNotFound' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const RemoveTeamTraitResult = IDL.Variant({
+    'ok' : RemoveTeamTraitOk,
+    'err' : RemoveTeamTraitError,
   });
   const SetLeagueError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const SetLeagueResult = IDL.Variant({
@@ -246,6 +272,7 @@ export const idlFactory = ({ IDL }) => {
     'err' : VoteOnProposalError,
   });
   return IDL.Service({
+    'addTeamTrait' : IDL.Func([IDL.Nat, IDL.Text], [AddTeamTraitResult], []),
     'createProposal' : IDL.Func(
         [IDL.Nat, CreateProposalRequest],
         [CreateProposalResult],
@@ -270,6 +297,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
+    'removeTeamTrait' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [RemoveTeamTraitResult],
+        [],
+      ),
     'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
     'updateTeamColor' : IDL.Func(
         [IDL.Nat, IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)],

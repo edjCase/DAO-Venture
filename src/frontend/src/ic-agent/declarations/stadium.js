@@ -26,21 +26,8 @@ export const idlFactory = ({ IDL }) => {
     'windy' : IDL.Null,
     'rainy' : IDL.Null,
   });
-  const Skill = IDL.Variant({
-    'battingAccuracy' : IDL.Null,
-    'throwingAccuracy' : IDL.Null,
-    'speed' : IDL.Null,
-    'catching' : IDL.Null,
-    'battingPower' : IDL.Null,
-    'defense' : IDL.Null,
-    'throwingPower' : IDL.Null,
-  });
-  const Effect = IDL.Variant({
-    'skill' : IDL.Record({ 'skill' : IDL.Opt(Skill), 'delta' : IDL.Int }),
-  });
   const Trait = IDL.Record({
     'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect),
     'name' : IDL.Text,
     'description' : IDL.Text,
   });

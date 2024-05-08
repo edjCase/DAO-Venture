@@ -83,6 +83,14 @@ export type DayOfWeek = { 'tuesday' : null } |
 export type Duration = { 'matches' : bigint } |
   { 'indefinite' : null };
 export type Effect = { 'allOf' : Array<Effect> } |
+  {
+    'teamTrait' : {
+      'kind' : { 'add' : null } |
+        { 'remove' : null },
+      'team' : TargetTeam,
+      'traitId' : string,
+    }
+  } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<WeightedEffect> } |
   { 'entropy' : { 'target' : LeagueOrTeamsTarget, 'delta' : bigint } } |
@@ -97,8 +105,14 @@ export type Effect = { 'allOf' : Array<Effect> } |
   { 'injury' : { 'target' : Target } } |
   { 'energy' : { 'value' : { 'flat' : bigint }, 'team' : TargetTeam } };
 export type EffectOutcome = {
-    'entropy' : { 'teamId' : bigint, 'delta' : bigint }
+    'teamTrait' : {
+      'kind' : { 'add' : null } |
+        { 'remove' : null },
+      'traitId' : string,
+      'teamId' : bigint,
+    }
   } |
+  { 'entropy' : { 'teamId' : bigint, 'delta' : bigint } } |
   {
     'skill' : {
       'duration' : Duration,
@@ -345,6 +359,9 @@ export interface ScenarioOptionWithEffect {
   'title' : string,
   'description' : string,
   'effect' : Effect,
+  'traitRequirements' : Array<
+    { 'id' : string, 'kind' : { 'prohibited' : null } | { 'required' : null } }
+  >,
   'energyCost' : bigint,
 }
 export type ScenarioState = { 'notStarted' : null } |

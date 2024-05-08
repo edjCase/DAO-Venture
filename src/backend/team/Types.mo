@@ -26,7 +26,33 @@ module {
         updateTeamLogo : (teamId : Nat, logoUrl : Text) -> async UpdateTeamLogoResult;
         updateTeamColor : (teamId : Nat, color : (Nat8, Nat8, Nat8)) -> async UpdateTeamColorResult;
         updateTeamName : (teamId : Nat, name : Text) -> async UpdateTeamNameResult;
+        addTeamTrait : (teamId : Nat, traitId : Text) -> async AddTeamTraitResult;
+        removeTeamTrait : (teamId : Nat, traitId : Text) -> async RemoveTeamTraitResult;
     };
+
+    public type AddTeamTraitOk = {
+        hadTrait : Bool;
+    };
+
+    public type AddTeamTraitError = {
+        #notAuthorized;
+        #teamNotFound;
+        #traitNotFound;
+    };
+
+    public type AddTeamTraitResult = Result.Result<AddTeamTraitOk, AddTeamTraitError>;
+
+    public type RemoveTeamTraitOk = {
+        hadTrait : Bool;
+    };
+
+    public type RemoveTeamTraitError = {
+        #notAuthorized;
+        #teamNotFound;
+        #traitNotFound;
+    };
+
+    public type RemoveTeamTraitResult = Result.Result<RemoveTeamTraitOk, RemoveTeamTraitError>;
 
     public type OnMatchGroupCompleteRequest = {
         matchGroup : Season.CompletedMatchGroup;

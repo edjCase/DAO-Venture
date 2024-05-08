@@ -15,7 +15,8 @@ actor TeamsActor : Types.Actor {
 
   stable var stableData = {
     teams : TeamsHandler.StableData = {
-      entropyThreshold = 20;
+      entropyThreshold = 100;
+      traits = [];
       teams = [];
     };
   };
@@ -139,6 +140,28 @@ actor TeamsActor : Types.Actor {
       return #err(#notAuthorized);
     };
     teamsHandler.updateName(id, name);
+  };
+
+  public shared ({ caller }) func addTeamTrait(id : Nat, traitId : Text) : async Types.AddTeamTraitResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #err(#notAuthorized);
+    };
+    teamsHandler.addTrait(id, traitId);
+  };
+
+  public shared ({ caller }) func removeTeamTrait(id : Nat, traitId : Text) : async Types.RemoveTeamTraitResult {
+    let leagueId = switch (leagueIdOrNull) {
+      case (null) Debug.trap("League not set");
+      case (?id) id;
+    };
+    if (caller != leagueId) {
+      return #err(#notAuthorized);
+    };
+    teamsHandler.removeTrait(id, traitId);
   };
 
   public shared ({ caller }) func createProposal(teamId : Nat, request : Types.CreateProposalRequest) : async Types.CreateProposalResult {

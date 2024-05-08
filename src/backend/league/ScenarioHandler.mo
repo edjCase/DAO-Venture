@@ -632,6 +632,9 @@ module {
             case (#energy(e)) {
                 // TODO
             };
+            case (#teamTrait(t)) {
+                // TODO
+            };
             case (#entropy(_)) {};
             case (#injury(_)) {};
             case (#noEffect) {};
@@ -920,6 +923,9 @@ module {
                         delta = delta;
                     })
                 );
+            };
+            case (#teamTrait(t)) {
+                outcomes.add(#teamTrait({ teamId = getTeamId(t.team, context); traitId = t.traitId; kind = t.kind }));
             };
             case (#noEffect) ();
         };

@@ -47,6 +47,14 @@ module {
     };
 
     public type Effect = {
+        #teamTrait : {
+            team : TargetTeam;
+            traitId : Text;
+            kind : {
+                #add;
+                #remove;
+            };
+        };
         #skill : {
             target : Target;
             skill : ChosenOrRandomSkill;
@@ -92,6 +100,14 @@ module {
             teamId : Nat;
             delta : Int;
         };
+        #teamTrait : {
+            teamId : Nat;
+            traitId : Text;
+            kind : {
+                #add;
+                #remove;
+            };
+        };
     };
 
     public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome;
@@ -111,6 +127,13 @@ module {
         title : Text;
         description : Text;
         energyCost : Nat;
+        traitRequirements : [{
+            id : Text;
+            kind : {
+                #required;
+                #prohibited;
+            };
+        }];
     };
 
     public type ScenarioOptionWithEffect = ScenarioOption and {

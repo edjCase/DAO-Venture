@@ -7,7 +7,6 @@
   </header>
 
   <main class="container mx-auto px-4 py-8">
-    <!-- Section 1: DAOball Summary -->
     <section class="mb-8">
       <h2 class="text-xl font-semibold text-center">What is DAOball?</h2>
       <p class="text-gray-300">
@@ -15,7 +14,6 @@
       </p>
     </section>
 
-    <!-- Section 2: Playing as a Spectator -->
     <section class="mb-8">
       <div class="flex items-center mb-4">
         <img
@@ -30,10 +28,9 @@
       </p>
     </section>
 
-    <!-- Section 3: Playing as a Co-owner/Manager -->
     <section>
       <div class="flex items-center mb-4 rounded">
-        <h2 class="text-xl font-semibold">Playing as a Co-owner/Manager</h2>
+        <h2 class="text-xl font-semibold">Playing as a Team Owner</h2>
         <img
           src="images/how-to-play/voting.jpg"
           alt="Co-Ownership"

@@ -20,13 +20,16 @@ import Result "mo:base/Result";
 import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
 import Array "mo:base/Array";
+import Text "mo:base/Text";
 import Season "../models/Season";
+import Trait "../models/Trait";
 
 module {
 
     public type StableData = {
         entropyThreshold : Nat;
         teams : [StableTeamData];
+        traits : [Trait.Trait];
     };
 
     public type StableTeamData = {
@@ -40,6 +43,7 @@ module {
         entropy : Nat;
         color : (Nat8, Nat8, Nat8);
         dao : Dao.StableData<Types.ProposalContent>;
+        traitIds : [Text];
         links : [Types.Link];
     };
 
@@ -53,12 +57,14 @@ module {
         var description : Text;
         var entropy : Nat;
         var color : (Nat8, Nat8, Nat8);
+        traitIds : Buffer.Buffer<Text>;
         links : Buffer.Buffer<Types.Link>;
     };
 
     public class Handler<system>(data : StableData) {
         let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
         let daos : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> = toDaoHashMap<system>(data.teams, teams);
+        let traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
         var entropyThreshold = data.entropyThreshold;
 
         var nextTeamId = teams.size(); // TODO change to check for the largest team id in the list
@@ -76,11 +82,13 @@ module {
                 )
                 |> Iter.toArray(_);
                 entropyThreshold = entropyThreshold;
+                traits = traits.vals() |> Iter.toArray(_);
             };
         };
 
         public func get(teamId : Nat) : ?Team.Team {
             let ?team = teams.get(teamId) else return null;
+            let teamTraits = getTraits(team.traitIds.vals());
             ?{
                 id = team.id;
                 name = team.name;
@@ -90,6 +98,7 @@ module {
                 color = team.color;
                 entropy = team.entropy;
                 energy = team.energy;
+                traits = teamTraits;
                 links = Buffer.toArray(team.links);
             };
         };
@@ -129,6 +138,7 @@ module {
                 var entropy = 0; // TODO?
                 var energy = 0;
                 var leagueId = leagueId;
+                traitIds = Buffer.Buffer<Text>(0);
                 links = Buffer.Buffer<Types.Link>(0);
             };
             teams.put(teamId, teamData);
@@ -254,6 +264,32 @@ module {
             #ok;
         };
 
+        public func addTrait(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound; #traitNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
+            let ?_ = traits.get(traitId) else return #err(#traitNotFound);
+            let hadTrait = if (not IterTools.any(team.traitIds.vals(), func(id : Text) : Bool = id == traitId)) {
+                team.traitIds.add(traitId);
+                false;
+            } else {
+                true;
+            };
+            #ok({ hadTrait = hadTrait });
+        };
+
+        public func removeTrait(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound }> {
+            let ?team = teams.get(teamId) else return #err(#teamNotFound);
+
+            let index = IterTools.findIndex(team.traitIds.vals(), func(id : Text) : Bool = id == traitId);
+            let hadTrait = switch (index) {
+                case (?i) {
+                    ignore team.traitIds.remove(i);
+                    true;
+                };
+                case (null) false;
+            };
+            #ok({ hadTrait = hadTrait });
+        };
+
         public func onMatchGroupComplete(matchGroup : Season.CompletedMatchGroup) {
             // Give team X energy that is divided purpotionally to how much relative entropy
             // (based on combined entropy of all teams) they have and +1 for each winning team
@@ -369,6 +405,34 @@ module {
                 Debug.print("Entropy threshold reached");
             };
         };
+
+        private func getTraits(traitIds : Iter.Iter<Text>) : [Trait.Trait] {
+            traitIds
+            |> Iter.map(
+                _,
+                func(traitId : Text) : Trait.Trait {
+                    let ?trait = traits.get(traitId) else Debug.trap("Missing trait with ID: " # traitId);
+                    trait;
+                },
+            )
+            |> Iter.toArray(_);
+        };
+
+        private func toTeam(team : MutableTeamData) : Team.Team {
+            {
+                leagueId = team.leagueId;
+                id = team.id;
+                traits = getTraits(team.traitIds.vals());
+                links = Buffer.toArray(team.links);
+                energy = team.energy;
+                entropy = team.entropy;
+                name = team.name;
+                logoUrl = team.logoUrl;
+                motto = team.motto;
+                description = team.description;
+                color = team.color;
+            };
+        };
     };
 
     public func toTeamHashMap(teams : [StableTeamData]) : HashMap.HashMap<Nat, MutableTeamData> {
@@ -391,6 +455,7 @@ module {
             var description = stableData.description;
             var entropy = stableData.entropy;
             var color = stableData.color;
+            traitIds = Buffer.fromArray(stableData.traitIds);
             links = Buffer.fromArray(stableData.links);
         };
     };
@@ -400,21 +465,7 @@ module {
             leagueId = team.leagueId;
             id = team.id;
             dao = dao;
-            links = Buffer.toArray(team.links);
-            energy = team.energy;
-            entropy = team.entropy;
-            name = team.name;
-            logoUrl = team.logoUrl;
-            motto = team.motto;
-            description = team.description;
-            color = team.color;
-        };
-    };
-
-    private func toTeam(team : MutableTeamData) : Team.Team {
-        {
-            leagueId = team.leagueId;
-            id = team.id;
+            traitIds = Buffer.toArray(team.traitIds);
             links = Buffer.toArray(team.links);
             energy = team.energy;
             entropy = team.entropy;
@@ -434,6 +485,15 @@ module {
             daoMap.put(team.id, dao);
         };
         daoMap;
+    };
+
+    private func toTraitsHashMap(traits : [Trait.Trait]) : HashMap.HashMap<Text, Trait.Trait> {
+        traits.vals()
+        |> Iter.map<Trait.Trait, (Text, Trait.Trait)>(
+            _,
+            func(trait : Trait.Trait) : (Text, Trait.Trait) = (trait.id, trait),
+        )
+        |> HashMap.fromIter<Text, Trait.Trait>(_, traits.size(), Text.equal, Text.hash);
     };
 
     private func buildDao<system>(data : Dao.StableData<Types.ProposalContent>, team : MutableTeamData) : Dao.Dao<Types.ProposalContent> {

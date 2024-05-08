@@ -2,6 +2,12 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type AddTeamTraitError = { 'notAuthorized' : null } |
+  { 'traitNotFound' : null } |
+  { 'teamNotFound' : null };
+export interface AddTeamTraitOk { 'hadTrait' : boolean }
+export type AddTeamTraitResult = { 'ok' : AddTeamTraitOk } |
+  { 'err' : AddTeamTraitError };
 export interface ChangeColorContent { 'color' : [number, number, number] }
 export interface ChangeDescriptionContent { 'description' : string }
 export interface ChangeLogoContent { 'logoUrl' : string }
@@ -100,6 +106,12 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
+export type RemoveTeamTraitError = { 'notAuthorized' : null } |
+  { 'traitNotFound' : null } |
+  { 'teamNotFound' : null };
+export interface RemoveTeamTraitOk { 'hadTrait' : boolean }
+export type RemoveTeamTraitResult = { 'ok' : RemoveTeamTraitOk } |
+  { 'err' : RemoveTeamTraitError };
 export type Result = { 'ok' : null } |
   { 'err' : OnMatchGroupCompleteError };
 export type SetLeagueError = { 'notAuthorized' : null };
@@ -119,6 +131,7 @@ export interface SwapPlayerPositionsContent {
 export interface Team {
   'id' : bigint,
   'motto' : string,
+  'traits' : Array<Trait>,
   'name' : string,
   'color' : [number, number, number],
   'description' : string,
@@ -132,6 +145,11 @@ export type TeamIdOrTie = { 'tie' : null } |
   { 'team2' : null };
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
+export interface Trait {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
 export type UpdateTeamColorError = { 'notAuthorized' : null } |
   { 'teamNotFound' : null };
 export type UpdateTeamColorResult = { 'ok' : null } |
@@ -174,6 +192,7 @@ export interface VoteOnProposalRequest {
 export type VoteOnProposalResult = { 'ok' : null } |
   { 'err' : VoteOnProposalError };
 export interface _SERVICE {
+  'addTeamTrait' : ActorMethod<[bigint, string], AddTeamTraitResult>,
   'createProposal' : ActorMethod<
     [bigint, CreateProposalRequest],
     CreateProposalResult
@@ -185,6 +204,7 @@ export interface _SERVICE {
   'getTeams' : ActorMethod<[], Array<Team>>,
   'onMatchGroupComplete' : ActorMethod<[OnMatchGroupCompleteRequest], Result>,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
+  'removeTeamTrait' : ActorMethod<[bigint, string], RemoveTeamTraitResult>,
   'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
   'updateTeamColor' : ActorMethod<
     [bigint, [number, number, number]],

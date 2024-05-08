@@ -1,3 +1,4 @@
+import Trait "Trait";
 module {
 
     public type TeamId = {
@@ -18,6 +19,7 @@ module {
         entropy : Nat;
         energy : Int;
         color : (Nat8, Nat8, Nat8);
+        traits : [Trait.Trait];
         links : [Link];
     };
 
