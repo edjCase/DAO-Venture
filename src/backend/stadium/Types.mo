@@ -154,7 +154,6 @@ module {
         };
         #injury : {
             playerId : Nat32;
-            injury : Player.Injury;
         };
         #death : {
             playerId : Nat32;

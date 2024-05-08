@@ -82,12 +82,6 @@ export const idlFactory = ({ IDL }) => {
     'league' : IDL.Null,
     'positions' : IDL.Vec(TargetPositionInstance),
   });
-  const Injury = IDL.Variant({
-    'twistedAnkle' : IDL.Null,
-    'brokenArm' : IDL.Null,
-    'brokenLeg' : IDL.Null,
-    'concussion' : IDL.Null,
-  });
   const PlayerEffectOutcome = IDL.Variant({
     'skill' : IDL.Record({
       'duration' : Duration,
@@ -95,7 +89,7 @@ export const idlFactory = ({ IDL }) => {
       'target' : TargetInstance,
       'delta' : IDL.Int,
     }),
-    'injury' : IDL.Record({ 'target' : TargetInstance, 'injury' : Injury }),
+    'injury' : IDL.Record({ 'target' : TargetInstance }),
   });
   const ApplyEffectsRequest = IDL.Vec(PlayerEffectOutcome);
   const ApplyEffectsError = IDL.Variant({ 'notAuthorized' : IDL.Null });

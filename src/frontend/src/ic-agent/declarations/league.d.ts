@@ -19,6 +19,10 @@ export type AddScenarioResult = { 'ok' : null } |
 export type BenevolentDictatorState = { 'open' : null } |
   { 'claimed' : Principal } |
   { 'disabled' : null };
+export type ChosenOrRandomFieldPosition = { 'random' : null } |
+  { 'chosen' : FieldPosition };
+export type ChosenOrRandomSkill = { 'random' : null } |
+  { 'chosen' : Skill };
 export type ClaimBenevolentDictatorRoleError = { 'notOpenToClaim' : null };
 export type ClaimBenevolentDictatorRoleResult = { 'ok' : null } |
   { 'err' : ClaimBenevolentDictatorRoleError };
@@ -85,12 +89,12 @@ export type Effect = { 'allOf' : Array<Effect> } |
   {
     'skill' : {
       'duration' : Duration,
-      'skill' : Skill,
+      'skill' : ChosenOrRandomSkill,
       'target' : Target,
       'delta' : bigint,
     }
   } |
-  { 'injury' : { 'target' : Target, 'injury' : Injury } } |
+  { 'injury' : { 'target' : Target } } |
   { 'energy' : { 'value' : { 'flat' : bigint }, 'team' : TargetTeam } };
 export type EffectOutcome = {
     'entropy' : { 'teamId' : bigint, 'delta' : bigint }
@@ -103,7 +107,7 @@ export type EffectOutcome = {
       'delta' : bigint,
     }
   } |
-  { 'injury' : { 'target' : TargetInstance, 'injury' : Injury } } |
+  { 'injury' : { 'target' : TargetInstance } } |
   { 'energy' : { 'teamId' : bigint, 'delta' : bigint } };
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
@@ -157,10 +161,6 @@ export type InProgressSeasonMatchGroupVariant = {
   { 'inProgress' : InProgressMatchGroup } |
   { 'notScheduled' : NotScheduledMatchGroup };
 export interface InProgressTeam { 'id' : bigint }
-export type Injury = { 'twistedAnkle' : null } |
-  { 'brokenArm' : null } |
-  { 'brokenLeg' : null } |
-  { 'concussion' : null };
 export type LeagueOrTeamsTarget = { 'teams' : Array<TargetTeam> } |
   { 'league' : null };
 export type MatchAura = { 'foggy' : null } |
@@ -205,8 +205,8 @@ export type MetaEffect = {
         'kind' : {
             'skill' : {
               'duration' : Duration,
-              'skill' : Skill,
-              'target' : { 'position' : FieldPosition },
+              'skill' : ChosenOrRandomSkill,
+              'target' : { 'position' : ChosenOrRandomFieldPosition },
             }
           },
         'amount' : bigint,
@@ -421,7 +421,7 @@ export type TargetInstance = { 'teams' : Array<bigint> } |
   { 'positions' : Array<TargetPositionInstance> };
 export interface TargetPosition {
   'team' : TargetTeam,
-  'position' : FieldPosition,
+  'position' : ChosenOrRandomFieldPosition,
 }
 export interface TargetPositionInstance {
   'teamId' : bigint,

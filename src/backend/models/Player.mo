@@ -25,19 +25,11 @@ module {
         catching : Int;
         defense : Int;
         speed : Int;
-
-    };
-
-    public type Injury = {
-        #twistedAnkle;
-        #brokenLeg;
-        #brokenArm;
-        #concussion;
     };
 
     public type PlayerCondition = {
         #ok;
-        #injured : Injury;
+        #injured;
         #dead;
     };
 

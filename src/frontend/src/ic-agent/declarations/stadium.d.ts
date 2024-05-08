@@ -51,7 +51,7 @@ export type Event = {
         { 'foul' : null },
     }
   } |
-  { 'injury' : { 'playerId' : number, 'injury' : Injury } } |
+  { 'injury' : { 'playerId' : number } } |
   {
     'pitch' : {
       'roll' : { 'value' : bigint, 'crit' : boolean },
@@ -77,10 +77,6 @@ export type HitLocation = { 'rightField' : null } |
   { 'shortStop' : null } |
   { 'centerField' : null } |
   { 'firstBase' : null };
-export type Injury = { 'twistedAnkle' : null } |
-  { 'brokenArm' : null } |
-  { 'brokenLeg' : null } |
-  { 'concussion' : null };
 export interface Match {
   'log' : MatchLog,
   'team1' : TeamState,
@@ -131,7 +127,7 @@ export interface Player {
 }
 export type PlayerCondition = { 'ok' : null } |
   { 'dead' : null } |
-  { 'injured' : Injury };
+  { 'injured' : null };
 export type PlayerId = number;
 export type PlayerId__1 = number;
 export interface PlayerMatchStats {

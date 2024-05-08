@@ -4,7 +4,7 @@
     import ScenarioEffectEditor from "./ScenarioEffectEditor.svelte";
 
     export let value: Effect;
-    let selectedType = Object.keys(value)[0];
+    $: selectedType = Object.keys(value)[0];
     let onChange = (e: Event) => {
         selectedType = (e.target as HTMLSelectElement).value;
         if (selectedType === "allOf") {
@@ -45,7 +45,7 @@
             value = {
                 skill: {
                     target: { teams: [{ choosingTeam: null }] },
-                    skill: { speed: null },
+                    skill: { random: null },
                     duration: { matches: BigInt(1) },
                     delta: BigInt(0),
                 },
@@ -54,7 +54,6 @@
             value = {
                 injury: {
                     target: { teams: [{ choosingTeam: null }] },
-                    injury: { brokenArm: null },
                 },
             };
         } else if (selectedType === "noEffect") {

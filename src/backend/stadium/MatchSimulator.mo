@@ -1,4 +1,3 @@
-import Principal "mo:base/Principal";
 import Buffer "mo:base/Buffer";
 import Nat32 "mo:base/Nat32";
 import StadiumTypes "../stadium/Types";
@@ -197,19 +196,7 @@ module {
                 });
             };
 
-            // TODO divine intervention
-            // let roll = Hook.trigger(state, #divineInterventionRoll);
-            // let divineInterventionRoll = prng.nextNat(0, 999);
-            // let result = if (divineInterventionRoll <= 9) {
-            //     state.log.add({
-            //         message = "Divine intervention!";
-            //         isImportant = true;
-            //     });
-            //     let ?randomPlayerId = getRandomAvailablePlayer(null, null, false) else Prelude.unreachable();
-            //     blessOrCursePlayer(randomPlayerId);
-            // } else {
             let result = pitch();
-            // };
 
             buildTickResult(result);
         };
@@ -956,13 +943,12 @@ module {
             #inProgress;
         };
 
-        private func injurePlayer({ playerId : Nat32; injury : Player.Injury }) {
+        private func injurePlayer({ playerId : Nat32 }) {
             let playerState = state.getPlayerState(playerId);
-            playerState.condition := #injured(injury);
+            playerState.condition := #injured;
             state.addEvent(
                 #injury({
                     playerId = playerId;
-                    injury = injury;
                 })
             );
         };

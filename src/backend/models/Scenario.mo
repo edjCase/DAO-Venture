@@ -1,7 +1,6 @@
 import Skill "Skill";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
-import Player "Player";
 import FieldPosition "FieldPosition";
 
 module {
@@ -10,9 +9,19 @@ module {
         #choosingTeam;
     };
 
+    public type ChosenOrRandomFieldPosition = {
+        #random;
+        #chosen : FieldPosition.FieldPosition;
+    };
+
+    public type ChosenOrRandomSkill = {
+        #random;
+        #chosen : Skill.Skill;
+    };
+
     public type TargetPosition = {
         team : TargetTeam;
-        position : FieldPosition.FieldPosition;
+        position : ChosenOrRandomFieldPosition;
     };
 
     public type LeagueOrTeamsTarget = {
@@ -40,13 +49,12 @@ module {
     public type Effect = {
         #skill : {
             target : Target;
-            skill : Skill.Skill;
+            skill : ChosenOrRandomSkill;
             duration : Duration;
             delta : Int;
         };
         #injury : {
             target : Target;
-            injury : Player.Injury;
         };
         #entropy : {
             target : LeagueOrTeamsTarget;
@@ -72,7 +80,6 @@ module {
         };
         #injury : {
             target : TargetInstance;
-            injury : Player.Injury;
         };
     };
 
@@ -215,9 +222,9 @@ module {
                 amount : Nat;
                 kind : {
                     #skill : {
-                        skill : Skill.Skill;
+                        skill : ChosenOrRandomSkill;
                         target : {
-                            #position : FieldPosition.FieldPosition;
+                            #position : ChosenOrRandomFieldPosition;
                         };
                         duration : Duration;
                     };

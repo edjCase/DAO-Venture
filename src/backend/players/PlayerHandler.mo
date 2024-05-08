@@ -116,7 +116,7 @@ module {
                                     // TODO how to remove effect?
                                     {
                                         player with
-                                        injury = injuryEffect.injury;
+                                        condition = #injured;
                                     };
                                 },
                             );
