@@ -41,7 +41,7 @@
     $: if (teams) {
         optionTeamVotes = options.map((_, i) => {
             return state.teamChoices
-                .filter((v) => v.option === BigInt(i))
+                .filter((v) => v.option[0] === BigInt(i))
                 .map((v) => v.teamId);
         });
     }

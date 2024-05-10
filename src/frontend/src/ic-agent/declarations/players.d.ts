@@ -55,11 +55,11 @@ export type PlayerEffectOutcome = {
     'skill' : {
       'duration' : Duration,
       'skill' : Skill,
-      'target' : TargetInstance,
+      'target' : TargetPositionInstance,
       'delta' : bigint,
     }
   } |
-  { 'injury' : { 'target' : TargetInstance } };
+  { 'injury' : { 'target' : TargetPositionInstance } };
 export type PlayerId = number;
 export interface PlayerMatchStatsWithId {
   'playerId' : PlayerId,
@@ -112,9 +112,6 @@ export interface Skills {
 export type SwapPlayerPositionsError = { 'notAuthorized' : null };
 export type SwapPlayerPositionsResult = { 'ok' : null } |
   { 'err' : SwapPlayerPositionsError };
-export type TargetInstance = { 'teams' : Array<bigint> } |
-  { 'league' : null } |
-  { 'positions' : Array<TargetPositionInstance> };
 export interface TargetPositionInstance {
   'teamId' : bigint,
   'position' : FieldPosition,

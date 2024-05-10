@@ -753,16 +753,10 @@ module {
 
                         let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {
                             case (#skill(s)) {
-                                let target : Scenario.Target = switch (s.target) {
-                                    case (#position(p)) #positions([{
-                                        position = p;
-                                        team = #choosingTeam;
-                                    }]);
-                                };
                                 #skill({
                                     delta = purpotionalValue;
                                     duration = s.duration;
-                                    target = target;
+                                    target = s.target;
                                     skill = s.skill;
                                 });
                             };
@@ -877,25 +871,17 @@ module {
                 resolveEffectInternal(prng, context, scenario, subEffect, outcomes);
             };
             case (#entropy(entropyEffect)) {
-                let teamIds : [Nat] = switch (entropyEffect.target) {
-                    case (#league) scenario.teamIds;
-                    case (#teams(teams)) teams.vals()
-                    |> Iter.map(_, func(team : Scenario.TargetTeam) : Nat = getTeamId(team, context))
-                    |> Iter.toArray(_);
-                };
-                for (teamId in teamIds.vals()) {
-                    outcomes.add(
-                        #entropy({
-                            teamId = teamId;
-                            delta = entropyEffect.delta;
-                        })
-                    );
-                };
+                let teamId = getTeamIdFromTarget(prng, scenario.teamIds, entropyEffect.target, context);
+                let outcome = #entropy({
+                    teamId = teamId;
+                    delta = entropyEffect.delta;
+                });
+                outcomes.add(outcome);
             };
             case (#injury(injuryEffect)) {
                 outcomes.add(
                     #injury({
-                        target = getTargetInstance(prng, context, injuryEffect.target);
+                        target = getPositionFromTarget(prng, scenario.teamIds, injuryEffect.target, context);
                     })
                 );
             };
@@ -906,7 +892,7 @@ module {
                 };
                 outcomes.add(
                     #skill({
-                        target = getTargetInstance(prng, context, s.target);
+                        target = getPositionFromTarget(prng, scenario.teamIds, s.target, context);
                         skill = skill;
                         duration = s.duration;
                         delta = s.delta;
@@ -917,15 +903,21 @@ module {
                 let delta = switch (e.value) {
                     case (#flat(fixed)) fixed;
                 };
-                outcomes.add(
-                    #energy({
-                        teamId = getTeamId(e.team, context);
-                        delta = delta;
-                    })
-                );
+                let teamId = getTeamIdFromTarget(prng, scenario.teamIds, e.target, context);
+                let outcome = #energy({
+                    teamId = teamId;
+                    delta = delta;
+                });
+                outcomes.add(outcome);
             };
             case (#teamTrait(t)) {
-                outcomes.add(#teamTrait({ teamId = getTeamId(t.team, context); traitId = t.traitId; kind = t.kind }));
+                let teamId = getTeamIdFromTarget(prng, scenario.teamIds, t.target, context);
+                let outcome = #teamTrait({
+                    teamId = teamId;
+                    traitId = t.traitId;
+                    kind = t.kind;
+                });
+                outcomes.add(outcome);
             };
             case (#noEffect) ();
         };
@@ -972,55 +964,37 @@ module {
 
     };
 
-    private func getTeamId(
-        team : Scenario.TargetTeam,
+    private func getTeamIdFromTarget(
+        prng : Prng,
+        teamIds : [Nat],
+        target : Scenario.TargetTeam,
         context : EffectContext,
     ) : Nat {
-        let choosingTeam = switch (context) {
-            case (#league) Debug.trap("Cannot get team id for league context");
-            case (#team(team)) team;
-        };
-        switch (team) {
-            case (#choosingTeam) choosingTeam;
+        switch (target) {
+            case (#choosingTeam) switch (context) {
+                case (#league) Debug.trap("Cannot get team id for league context");
+                case (#team(team)) team;
+            };
+            case (#chosen(teamId)) teamId;
+            case (#random) {
+                prng.nextArrayElement(teamIds);
+            };
         };
     };
 
-    private func getTargetInstance(
+    private func getPositionFromTarget(
         prng : Prng,
+        teamIds : [Nat],
+        target : Scenario.TargetPosition,
         context : EffectContext,
-        target : Scenario.Target,
-    ) : Scenario.TargetInstance {
-        switch (target) {
-            case (#league) #league;
-            case (#teams(teams)) {
-                let teamIds = teams
-                |> Iter.fromArray(_)
-                |> Iter.map(
-                    _,
-                    func(team : Scenario.TargetTeam) : Nat = getTeamId(team, context),
-                )
-                |> Iter.toArray(_);
-                #teams(teamIds);
-            };
-            case (#positions(positions)) {
-                let mappedPositions = positions
-                |> Iter.fromArray(_)
-                |> Iter.map(
-                    _,
-                    func(target : Scenario.TargetPosition) : Scenario.TargetPositionInstance {
-                        let position = switch (target.position) {
-                            case (#random) FieldPosition.getRandom(prng);
-                            case (#chosen(p)) p;
-                        };
-                        {
-                            teamId = getTeamId(target.team, context);
-                            position = position;
-                        };
-                    },
-                )
-                |> Iter.toArray(_);
-                #positions(mappedPositions);
-            };
+    ) : Scenario.TargetPositionInstance {
+        let position = switch (target.position) {
+            case (#random) FieldPosition.getRandom(prng);
+            case (#chosen(p)) p;
+        };
+        {
+            teamId = getTeamIdFromTarget(prng, teamIds, target.team, context);
+            position = position;
         };
     };
 

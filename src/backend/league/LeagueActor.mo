@@ -85,8 +85,8 @@ actor LeagueActor : Types.LeagueActor {
                     };
                     case (#teamTrait(t)) {
                         let result = switch (t.kind) {
-                            case (#add) await TeamsActor.addTeamTrait(t.teamId, t.traitId);
-                            case (#remove) await TeamsActor.removeTeamTrait(t.teamId, t.traitId);
+                            case (#add) await TeamsActor.addTraitToTeam(t.teamId, t.traitId);
+                            case (#remove) await TeamsActor.removeTraitFromTeam(t.teamId, t.traitId);
                         };
                         switch (result) {
                             case (#ok(_)) true;

@@ -1,13 +1,13 @@
 export const idlFactory = ({ IDL }) => {
-  const AddTeamTraitOk = IDL.Record({ 'hadTrait' : IDL.Bool });
-  const AddTeamTraitError = IDL.Variant({
+  const AddTraitToTeamOk = IDL.Record({ 'hadTrait' : IDL.Bool });
+  const AddTraitToTeamError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'traitNotFound' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
-  const AddTeamTraitResult = IDL.Variant({
-    'ok' : AddTeamTraitOk,
-    'err' : AddTeamTraitError,
+  const AddTraitToTeamResult = IDL.Variant({
+    'ok' : AddTraitToTeamOk,
+    'err' : AddTraitToTeamError,
   });
   const Skill = IDL.Variant({
     'battingAccuracy' : IDL.Null,
@@ -80,6 +80,20 @@ export const idlFactory = ({ IDL }) => {
   const CreateTeamResult = IDL.Variant({
     'ok' : IDL.Nat,
     'err' : CreateTeamError,
+  });
+  const CreateTeamTraitRequest = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const CreateTeamTraitError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(IDL.Text),
+    'idTaken' : IDL.Null,
+  });
+  const CreateTeamTraitResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : CreateTeamTraitError,
   });
   const GetCyclesError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const GetCyclesResult = IDL.Variant({
@@ -184,15 +198,15 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : OnSeasonEndError,
   });
-  const RemoveTeamTraitOk = IDL.Record({ 'hadTrait' : IDL.Bool });
-  const RemoveTeamTraitError = IDL.Variant({
+  const RemoveTraitFromTeamOk = IDL.Record({ 'hadTrait' : IDL.Bool });
+  const RemoveTraitFromTeamError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'traitNotFound' : IDL.Null,
     'teamNotFound' : IDL.Null,
   });
-  const RemoveTeamTraitResult = IDL.Variant({
-    'ok' : RemoveTeamTraitOk,
-    'err' : RemoveTeamTraitError,
+  const RemoveTraitFromTeamResult = IDL.Variant({
+    'ok' : RemoveTraitFromTeamOk,
+    'err' : RemoveTraitFromTeamError,
   });
   const SetLeagueError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const SetLeagueResult = IDL.Variant({
@@ -272,13 +286,22 @@ export const idlFactory = ({ IDL }) => {
     'err' : VoteOnProposalError,
   });
   return IDL.Service({
-    'addTeamTrait' : IDL.Func([IDL.Nat, IDL.Text], [AddTeamTraitResult], []),
+    'addTraitToTeam' : IDL.Func(
+        [IDL.Nat, IDL.Text],
+        [AddTraitToTeamResult],
+        [],
+      ),
     'createProposal' : IDL.Func(
         [IDL.Nat, CreateProposalRequest],
         [CreateProposalResult],
         [],
       ),
     'createTeam' : IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
+    'createTeamTrait' : IDL.Func(
+        [CreateTeamTraitRequest],
+        [CreateTeamTraitResult],
+        [],
+      ),
     'getCycles' : IDL.Func([], [GetCyclesResult], []),
     'getProposal' : IDL.Func(
         [IDL.Nat, IDL.Nat],
@@ -291,15 +314,16 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
+    'getTraits' : IDL.Func([], [IDL.Vec(Trait)], ['query']),
     'onMatchGroupComplete' : IDL.Func(
         [OnMatchGroupCompleteRequest],
         [Result],
         [],
       ),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
-    'removeTeamTrait' : IDL.Func(
+    'removeTraitFromTeam' : IDL.Func(
         [IDL.Nat, IDL.Text],
-        [RemoveTeamTraitResult],
+        [RemoveTraitFromTeamResult],
         [],
       ),
     'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),

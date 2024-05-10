@@ -4,11 +4,11 @@
     import ScenarioEffectEditor from "./ScenarioEffectEditor.svelte";
     import { MetaEffect } from "../../../ic-agent/declarations/league";
     import { toJsonString } from "../../../utils/StringUtil";
-    import FieldPositionChooser from "./FieldPositionChooser.svelte";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
-    import SkillChooser from "./SkillChooser.svelte";
     import ThresholdValueChooser from "./ThresholdValueChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
+    import ChosenOrRandomSkillChooser from "./ChosenOrRandomSkillChooser.svelte";
+    import ChosenOrRandomFieldPositionChooser from "./ChosenOrRandomFieldPositionChooser.svelte";
     export let value: MetaEffect;
 
     let addOption = () => {
@@ -104,11 +104,11 @@
     <Label>Prize Effect</Label>
     {#if "skill" in value.proportionalBid.prize.kind}
         <div class="ml-4">
-            <SkillChooser
+            <ChosenOrRandomSkillChooser
                 bind:value={value.proportionalBid.prize.kind.skill.skill}
             />
         </div>
-        <FieldPositionChooser
+        <ChosenOrRandomFieldPositionChooser
             bind:value={value.proportionalBid.prize.kind.skill.target.position}
         />
     {:else}

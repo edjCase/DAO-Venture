@@ -4,9 +4,12 @@
   import { playerStore } from "../stores/PlayerStore";
   import { teams as teamData } from "../data/TeamData";
   import { players as playerData } from "../data/PlayerData";
+  import { teamTraits as traitData } from "../data/TeamTraitData";
   import { leagueAgentFactory } from "../ic-agent/League";
   import { playersAgentFactory } from "../ic-agent/Players";
   import LoadingButton from "./common/LoadingButton.svelte";
+  import { teamsAgentFactory } from "../ic-agent/Teams";
+  import { traitStore } from "../stores/TraitStore";
 
   $: teams = $teamStore;
   $: players = $playerStore;
@@ -59,10 +62,29 @@
     await Promise.all(promises);
   };
 
+  let createTeamTraits = async function () {
+    let teamsAgent = await teamsAgentFactory();
+    let promises = [];
+    for (let trait of traitData) {
+      let promise = teamsAgent.createTeamTrait(trait).then(async (result) => {
+        if ("ok" in result) {
+          let traitId = result.ok;
+          console.log("Created trait: ", traitId);
+        } else {
+          console.log("Failed to make trait: ", result);
+        }
+      });
+      promises.push(promise);
+    }
+    await Promise.all(promises);
+    await traitStore.refetch();
+  };
+
   let initialize = async function () {
     intializing = true;
     await createPlayers();
     await createTeams();
+    await createTeamTraits();
     intializing = false;
   };
 </script>

@@ -26,33 +26,48 @@ module {
         updateTeamLogo : (teamId : Nat, logoUrl : Text) -> async UpdateTeamLogoResult;
         updateTeamColor : (teamId : Nat, color : (Nat8, Nat8, Nat8)) -> async UpdateTeamColorResult;
         updateTeamName : (teamId : Nat, name : Text) -> async UpdateTeamNameResult;
-        addTeamTrait : (teamId : Nat, traitId : Text) -> async AddTeamTraitResult;
-        removeTeamTrait : (teamId : Nat, traitId : Text) -> async RemoveTeamTraitResult;
+        createTeamTrait : (request : CreateTeamTraitRequest) -> async CreateTeamTraitResult;
+        addTraitToTeam : (teamId : Nat, traitId : Text) -> async AddTraitToTeamResult;
+        removeTraitFromTeam : (teamId : Nat, traitId : Text) -> async RemoveTraitFromTeamResult;
     };
 
-    public type AddTeamTraitOk = {
+    public type CreateTeamTraitRequest = {
+        id : Text;
+        name : Text;
+        description : Text;
+    };
+
+    public type CreateTeamTraitError = {
+        #notAuthorized;
+        #idTaken;
+        #invalid : [Text];
+    };
+
+    public type CreateTeamTraitResult = Result.Result<(), CreateTeamTraitError>;
+
+    public type AddTraitToTeamOk = {
         hadTrait : Bool;
     };
 
-    public type AddTeamTraitError = {
+    public type AddTraitToTeamError = {
         #notAuthorized;
         #teamNotFound;
         #traitNotFound;
     };
 
-    public type AddTeamTraitResult = Result.Result<AddTeamTraitOk, AddTeamTraitError>;
+    public type AddTraitToTeamResult = Result.Result<AddTraitToTeamOk, AddTraitToTeamError>;
 
-    public type RemoveTeamTraitOk = {
+    public type RemoveTraitFromTeamOk = {
         hadTrait : Bool;
     };
 
-    public type RemoveTeamTraitError = {
+    public type RemoveTraitFromTeamError = {
         #notAuthorized;
         #teamNotFound;
         #traitNotFound;
     };
 
-    public type RemoveTeamTraitResult = Result.Result<RemoveTeamTraitOk, RemoveTeamTraitError>;
+    public type RemoveTraitFromTeamResult = Result.Result<RemoveTraitFromTeamOk, RemoveTraitFromTeamError>;
 
     public type OnMatchGroupCompleteRequest = {
         matchGroup : Season.CompletedMatchGroup;

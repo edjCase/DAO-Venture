@@ -10,6 +10,8 @@ import UsersActor "canister:users";
 import Dao "../Dao";
 import Team "../models/Team";
 import Result "mo:base/Result";
+import Trait "../models/Trait";
+import LeagueTypes "../league/Types";
 
 actor TeamsActor : Types.Actor {
 
@@ -50,23 +52,15 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared ({ caller }) func createTeam(request : Types.CreateTeamRequest) : async Types.CreateTeamResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-
-    if (leagueId != caller) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
+    let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
     await* teamsHandler.create(leagueId, request);
   };
 
   public shared ({ caller }) func updateTeamEnergy(id : Nat, delta : Int) : async Types.UpdateTeamEnergyResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     switch (teamsHandler.updateEnergy(id, delta, true)) {
@@ -77,83 +71,66 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared ({ caller }) func updateTeamEntropy(id : Nat, delta : Int) : async Types.UpdateTeamEntropyResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     await* teamsHandler.updateEntropy(id, delta);
   };
 
   public shared ({ caller }) func updateTeamMotto(id : Nat, motto : Text) : async Types.UpdateTeamMottoResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     teamsHandler.updateMotto(id, motto);
   };
 
   public shared ({ caller }) func updateTeamDescription(id : Nat, description : Text) : async Types.UpdateTeamDescriptionResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     teamsHandler.updateDescription(id, description);
   };
 
   public shared ({ caller }) func updateTeamLogo(id : Nat, logoUrl : Text) : async Types.UpdateTeamLogoResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     teamsHandler.updateLogo(id, logoUrl);
   };
 
   public shared ({ caller }) func updateTeamColor(id : Nat, color : (Nat8, Nat8, Nat8)) : async Types.UpdateTeamColorResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     teamsHandler.updateColor(id, color);
   };
 
   public shared ({ caller }) func updateTeamName(id : Nat, name : Text) : async Types.UpdateTeamNameResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     teamsHandler.updateName(id, name);
   };
 
-  public shared ({ caller }) func addTeamTrait(id : Nat, traitId : Text) : async Types.AddTeamTraitResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
-      return #err(#notAuthorized);
-    };
-    teamsHandler.addTrait(id, traitId);
+  public shared query func getTraits() : async [Trait.Trait] {
+    teamsHandler.getTraits();
   };
 
-  public shared ({ caller }) func removeTeamTrait(id : Nat, traitId : Text) : async Types.RemoveTeamTraitResult {
+  public shared ({ caller }) func createTeamTrait(request : Types.CreateTeamTraitRequest) : async Types.CreateTeamTraitResult {
+    if (not (await* isLeagueOrBDFN(caller))) {
+      return #err(#notAuthorized);
+    };
+    teamsHandler.createTrait(request);
+  };
+
+  public shared ({ caller }) func addTraitToTeam(teamId : Nat, traitId : Text) : async Types.AddTraitToTeamResult {
+    if (not (await* isLeagueOrBDFN(caller))) {
+      return #err(#notAuthorized);
+    };
+    teamsHandler.addTraitToTeam(teamId, traitId);
+  };
+
+  public shared ({ caller }) func removeTraitFromTeam(teamId : Nat, traitId : Text) : async Types.RemoveTraitFromTeamResult {
     let leagueId = switch (leagueIdOrNull) {
       case (null) Debug.trap("League not set");
       case (?id) id;
@@ -161,7 +138,7 @@ actor TeamsActor : Types.Actor {
     if (caller != leagueId) {
       return #err(#notAuthorized);
     };
-    teamsHandler.removeTrait(id, traitId);
+    teamsHandler.removeTraitFromTeam(teamId, traitId);
   };
 
   public shared ({ caller }) func createProposal(teamId : Nat, request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
@@ -193,12 +170,10 @@ actor TeamsActor : Types.Actor {
     await* teamsHandler.voteOnProposal(teamId, caller, request);
   };
 
-  public shared ({ caller }) func onMatchGroupComplete(request : Types.OnMatchGroupCompleteRequest) : async Result.Result<(), Types.OnMatchGroupCompleteError> {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+  public shared ({ caller }) func onMatchGroupComplete(
+    request : Types.OnMatchGroupCompleteRequest
+  ) : async Result.Result<(), Types.OnMatchGroupCompleteError> {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     teamsHandler.onMatchGroupComplete(request.matchGroup);
@@ -206,11 +181,7 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     // TODO
@@ -218,16 +189,25 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared ({ caller }) func getCycles() : async Types.GetCyclesResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     let canisterStatus = await ic.canister_status({
       canister_id = Principal.fromActor(TeamsActor);
     });
     return #ok(canisterStatus.cycles);
+  };
+
+  private func isLeagueOrBDFN(caller : Principal) : async* Bool {
+    let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
+    if (leagueId == caller) {
+      return true;
+    };
+    // TODO change to league push new bdfn vs fetch?
+    let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+    switch (await leagueActor.getBenevolentDictatorState()) {
+      case (#claimed(bdfnId)) caller == bdfnId;
+      case (#disabled or #open) false;
+    };
   };
 };

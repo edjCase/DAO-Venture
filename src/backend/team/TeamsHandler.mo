@@ -21,6 +21,7 @@ import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
 import Array "mo:base/Array";
 import Text "mo:base/Text";
+import TextX "mo:xtended-text/TextX";
 import Season "../models/Season";
 import Trait "../models/Trait";
 
@@ -88,7 +89,7 @@ module {
 
         public func get(teamId : Nat) : ?Team.Team {
             let ?team = teams.get(teamId) else return null;
-            let teamTraits = getTraits(team.traitIds.vals());
+            let teamTraits = getTraitsByIds(team.traitIds.vals());
             ?{
                 id = team.id;
                 name = team.name;
@@ -264,7 +265,26 @@ module {
             #ok;
         };
 
-        public func addTrait(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound; #traitNotFound }> {
+        public func createTrait(trait : Trait.Trait) : Result.Result<(), { #idTaken; #invalid : [Text] }> {
+            if (Option.isSome(traits.get(trait.id))) {
+                return #err(#idTaken);
+            };
+            let validationErrors = Buffer.Buffer<Text>(0);
+            if (TextX.isEmpty(trait.id)) {
+                validationErrors.add("Id is required");
+            };
+            if (validationErrors.size() > 0) {
+                return #err(#invalid(Buffer.toArray(validationErrors)));
+            };
+            traits.put(trait.id, trait);
+            #ok;
+        };
+
+        public func getTraits() : [Trait.Trait] {
+            traits.vals() |> Iter.toArray(_);
+        };
+
+        public func addTraitToTeam(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound; #traitNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
             let ?_ = traits.get(traitId) else return #err(#traitNotFound);
             let hadTrait = if (not IterTools.any(team.traitIds.vals(), func(id : Text) : Bool = id == traitId)) {
@@ -276,7 +296,7 @@ module {
             #ok({ hadTrait = hadTrait });
         };
 
-        public func removeTrait(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound }> {
+        public func removeTraitFromTeam(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
 
             let index = IterTools.findIndex(team.traitIds.vals(), func(id : Text) : Bool = id == traitId);
@@ -406,7 +426,7 @@ module {
             };
         };
 
-        private func getTraits(traitIds : Iter.Iter<Text>) : [Trait.Trait] {
+        private func getTraitsByIds(traitIds : Iter.Iter<Text>) : [Trait.Trait] {
             traitIds
             |> Iter.map(
                 _,
@@ -422,7 +442,7 @@ module {
             {
                 leagueId = team.leagueId;
                 id = team.id;
-                traits = getTraits(team.traitIds.vals());
+                traits = getTraitsByIds(team.traitIds.vals());
                 links = Buffer.toArray(team.links);
                 energy = team.energy;
                 entropy = team.entropy;
@@ -523,10 +543,10 @@ module {
                         team.energy -= trainCost;
                         // TODO make the 'applyEffects' generic, not scenario specific
                         let trainSkillEffect : Scenario.PlayerEffectOutcome = #skill({
-                            target = #positions([{
+                            target = {
                                 teamId = team.id;
                                 position = train.position;
-                            }]);
+                            };
                             delta = 1;
                             duration = #indefinite;
                             skill = train.skill;

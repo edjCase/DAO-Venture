@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Input, Label } from "flowbite-svelte";
+    import { Button, Input, Label, Select } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
     import MetaEffectChooser from "./MetaEffectChooser.svelte";
@@ -9,6 +9,7 @@
         nanosecondsToDate,
     } from "../../../utils/DateUtils";
     import { TrashBinSolid } from "flowbite-svelte-icons";
+    import TeamTraitEditor from "./TeamTraitEditor.svelte";
 
     export let value: AddScenarioRequest;
 
@@ -37,6 +38,7 @@
             title: "",
             description: "",
             energyCost: BigInt(0),
+            traitRequirements: [],
             effect: {
                 noEffect: null,
             },
@@ -47,6 +49,17 @@
         value.options.splice(index, 1);
         value.options = value.options;
     };
+
+    let requirementKindItems = [
+        {
+            value: "required",
+            name: "Required",
+        },
+        {
+            value: "prohibited",
+            name: "Prohibited",
+        },
+    ];
 </script>
 
 <Label>Title</Label>
@@ -83,6 +96,29 @@
             <Input type="text" bind:value={option.description} />
             <Label>Energy Cost</Label>
             <BigIntInput bind:value={option.energyCost} />
+            <Label>Trait Requirements</Label>
+            <div class="ml-4">
+                {#each option.traitRequirements as traitRequirement}
+                    <TeamTraitEditor bind:value={traitRequirement.id} />
+                    <Select
+                        items={requirementKindItems}
+                        bind:value={traitRequirement.kind}
+                    />
+                {/each}
+                <Button
+                    on:click={() => {
+                        option.traitRequirements = [
+                            ...option.traitRequirements,
+                            {
+                                id: "",
+                                kind: { required: null },
+                            },
+                        ];
+                    }}
+                >
+                    Add Requirement
+                </Button>
+            </div>
             <Label>Effect</Label>
             <div class="ml-4">
                 <ScenarioEffectChooser bind:value={option.effect} />

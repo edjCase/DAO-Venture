@@ -2,12 +2,12 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export type AddTeamTraitError = { 'notAuthorized' : null } |
+export type AddTraitToTeamError = { 'notAuthorized' : null } |
   { 'traitNotFound' : null } |
   { 'teamNotFound' : null };
-export interface AddTeamTraitOk { 'hadTrait' : boolean }
-export type AddTeamTraitResult = { 'ok' : AddTeamTraitOk } |
-  { 'err' : AddTeamTraitError };
+export interface AddTraitToTeamOk { 'hadTrait' : boolean }
+export type AddTraitToTeamResult = { 'ok' : AddTraitToTeamOk } |
+  { 'err' : AddTraitToTeamError };
 export interface ChangeColorContent { 'color' : [number, number, number] }
 export interface ChangeDescriptionContent { 'description' : string }
 export interface ChangeLogoContent { 'logoUrl' : string }
@@ -40,6 +40,16 @@ export interface CreateTeamRequest {
 }
 export type CreateTeamResult = { 'ok' : bigint } |
   { 'err' : CreateTeamError };
+export type CreateTeamTraitError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> } |
+  { 'idTaken' : null };
+export interface CreateTeamTraitRequest {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
+export type CreateTeamTraitResult = { 'ok' : null } |
+  { 'err' : CreateTeamTraitError };
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -106,12 +116,12 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
-export type RemoveTeamTraitError = { 'notAuthorized' : null } |
+export type RemoveTraitFromTeamError = { 'notAuthorized' : null } |
   { 'traitNotFound' : null } |
   { 'teamNotFound' : null };
-export interface RemoveTeamTraitOk { 'hadTrait' : boolean }
-export type RemoveTeamTraitResult = { 'ok' : RemoveTeamTraitOk } |
-  { 'err' : RemoveTeamTraitError };
+export interface RemoveTraitFromTeamOk { 'hadTrait' : boolean }
+export type RemoveTraitFromTeamResult = { 'ok' : RemoveTraitFromTeamOk } |
+  { 'err' : RemoveTraitFromTeamError };
 export type Result = { 'ok' : null } |
   { 'err' : OnMatchGroupCompleteError };
 export type SetLeagueError = { 'notAuthorized' : null };
@@ -192,19 +202,27 @@ export interface VoteOnProposalRequest {
 export type VoteOnProposalResult = { 'ok' : null } |
   { 'err' : VoteOnProposalError };
 export interface _SERVICE {
-  'addTeamTrait' : ActorMethod<[bigint, string], AddTeamTraitResult>,
+  'addTraitToTeam' : ActorMethod<[bigint, string], AddTraitToTeamResult>,
   'createProposal' : ActorMethod<
     [bigint, CreateProposalRequest],
     CreateProposalResult
   >,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
+  'createTeamTrait' : ActorMethod<
+    [CreateTeamTraitRequest],
+    CreateTeamTraitResult
+  >,
   'getCycles' : ActorMethod<[], GetCyclesResult>,
   'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
   'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
   'getTeams' : ActorMethod<[], Array<Team>>,
+  'getTraits' : ActorMethod<[], Array<Trait>>,
   'onMatchGroupComplete' : ActorMethod<[OnMatchGroupCompleteRequest], Result>,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
-  'removeTeamTrait' : ActorMethod<[bigint, string], RemoveTeamTraitResult>,
+  'removeTraitFromTeam' : ActorMethod<
+    [bigint, string],
+    RemoveTraitFromTeamResult
+  >,
   'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
   'updateTeamColor' : ActorMethod<
     [bigint, [number, number, number]],

@@ -6,7 +6,6 @@ import Nat "mo:base/Nat";
 import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import Array "mo:base/Array";
 import Result "mo:base/Result";
 import TextX "mo:xtended-text/TextX";
 import Scenario "../models/Scenario";
@@ -92,35 +91,31 @@ module {
             for (effect in effects.vals()) {
                 switch (effect) {
                     case (#skill(skillEffect)) {
-                        let targetPlayerIds = getTargetPlayerIds(skillEffect.target);
-                        for (playerId in Iter.fromArray(targetPlayerIds)) {
-                            updatePlayer(
-                                playerId,
-                                func(player) {
-                                    let newSkills = Skill.modify(player.skills, skillEffect.skill, skillEffect.delta);
+                        let targetPlayerId = getTargetPlayerId(skillEffect.target);
+                        updatePlayer(
+                            targetPlayerId,
+                            func(player) {
+                                let newSkills = Skill.modify(player.skills, skillEffect.skill, skillEffect.delta);
 
-                                    {
-                                        player with
-                                        skills = newSkills
-                                    };
-                                },
-                            );
-                        };
+                                {
+                                    player with
+                                    skills = newSkills
+                                };
+                            },
+                        );
                     };
                     case (#injury(injuryEffect)) {
-                        let targetPlayerIds = getTargetPlayerIds(injuryEffect.target);
-                        for (playerId in Iter.fromArray(targetPlayerIds)) {
-                            updatePlayer(
-                                playerId,
-                                func(player) {
-                                    // TODO how to remove effect?
-                                    {
-                                        player with
-                                        condition = #injured;
-                                    };
-                                },
-                            );
-                        };
+                        let targetPlayerId = getTargetPlayerId(injuryEffect.target);
+                        updatePlayer(
+                            targetPlayerId,
+                            func(player) {
+                                // TODO how to remove effect?
+                                {
+                                    player with
+                                    condition = #injured;
+                                };
+                            },
+                        );
                     };
                 };
             };
@@ -260,26 +255,12 @@ module {
             players.put(playerId, newPlayer);
         };
 
-        private func getTargetPlayerIds(target : Scenario.TargetInstance) : [Nat32] {
-            let filterFunc : PlayerInfo -> Bool = switch (target) {
-                case (#league) func(player : PlayerInfo) : Bool = true;
-                case (#teams(teamIds)) func(player : PlayerInfo) : Bool {
-                    Array.indexOf(player.teamId, teamIds, Nat.equal) != null;
-                };
-                case (#positions(positions)) func(player : PlayerInfo) : Bool {
-                    IterTools.any(positions.vals(), func(p : Scenario.TargetPositionInstance) : Bool = p.position == player.position and p.teamId == player.teamId);
-                };
-            };
-            players.vals()
-            |> Iter.filter<PlayerInfo>(
-                _,
-                filterFunc,
-            )
-            |> Iter.map(
-                _,
-                func(player : PlayerInfo) : Nat32 = player.id,
-            )
-            |> Iter.toArray(_);
+        private func getTargetPlayerId(target : Scenario.TargetPositionInstance) : Nat32 {
+            let ?player = IterTools.find(
+                players.vals(),
+                func(player : PlayerInfo) : Bool = player.teamId == target.teamId and player.position == target.position,
+            ) else Debug.trap("Player not found for team " # Nat.toText(target.teamId) # " and position " # debug_show (target.position));
+            player.id;
         };
 
         private func isNameTaken(name : Text) : Bool {

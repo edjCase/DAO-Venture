@@ -1,15 +1,15 @@
 export const idlFactory = ({ IDL }) => {
   const Effect = IDL.Rec();
   const Time = IDL.Int;
-  const TargetTeam = IDL.Variant({ 'choosingTeam' : IDL.Null });
+  const TargetTeam = IDL.Variant({
+    'random' : IDL.Null,
+    'chosen' : IDL.Nat,
+    'choosingTeam' : IDL.Null,
+  });
   const WeightedEffect = IDL.Record({
     'weight' : IDL.Nat,
     'description' : IDL.Text,
     'effect' : Effect,
-  });
-  const LeagueOrTeamsTarget = IDL.Variant({
-    'teams' : IDL.Vec(TargetTeam),
-    'league' : IDL.Null,
   });
   const Duration = IDL.Variant({
     'matches' : IDL.Nat,
@@ -46,35 +46,27 @@ export const idlFactory = ({ IDL }) => {
     'team' : TargetTeam,
     'position' : ChosenOrRandomFieldPosition,
   });
-  const Target = IDL.Variant({
-    'teams' : IDL.Vec(TargetTeam),
-    'league' : IDL.Null,
-    'positions' : IDL.Vec(TargetPosition),
-  });
   Effect.fill(
     IDL.Variant({
       'allOf' : IDL.Vec(Effect),
       'teamTrait' : IDL.Record({
         'kind' : IDL.Variant({ 'add' : IDL.Null, 'remove' : IDL.Null }),
-        'team' : TargetTeam,
+        'target' : TargetTeam,
         'traitId' : IDL.Text,
       }),
       'noEffect' : IDL.Null,
       'oneOf' : IDL.Vec(WeightedEffect),
-      'entropy' : IDL.Record({
-        'target' : LeagueOrTeamsTarget,
-        'delta' : IDL.Int,
-      }),
+      'entropy' : IDL.Record({ 'target' : TargetTeam, 'delta' : IDL.Int }),
       'skill' : IDL.Record({
         'duration' : Duration,
         'skill' : ChosenOrRandomSkill,
-        'target' : Target,
+        'target' : TargetPosition,
         'delta' : IDL.Int,
       }),
-      'injury' : IDL.Record({ 'target' : Target }),
+      'injury' : IDL.Record({ 'target' : TargetPosition }),
       'energy' : IDL.Record({
         'value' : IDL.Variant({ 'flat' : IDL.Int }),
-        'team' : TargetTeam,
+        'target' : TargetTeam,
       }),
     })
   );
@@ -107,9 +99,7 @@ export const idlFactory = ({ IDL }) => {
           'skill' : IDL.Record({
             'duration' : Duration,
             'skill' : ChosenOrRandomSkill,
-            'target' : IDL.Variant({
-              'position' : ChosenOrRandomFieldPosition,
-            }),
+            'target' : TargetPosition,
           }),
         }),
         'amount' : IDL.Nat,
@@ -257,11 +247,6 @@ export const idlFactory = ({ IDL }) => {
     'teamId' : IDL.Nat,
     'position' : FieldPosition,
   });
-  const TargetInstance = IDL.Variant({
-    'teams' : IDL.Vec(IDL.Nat),
-    'league' : IDL.Null,
-    'positions' : IDL.Vec(TargetPositionInstance),
-  });
   const EffectOutcome = IDL.Variant({
     'teamTrait' : IDL.Record({
       'kind' : IDL.Variant({ 'add' : IDL.Null, 'remove' : IDL.Null }),
@@ -272,10 +257,10 @@ export const idlFactory = ({ IDL }) => {
     'skill' : IDL.Record({
       'duration' : Duration,
       'skill' : Skill,
-      'target' : TargetInstance,
+      'target' : TargetPositionInstance,
       'delta' : IDL.Int,
     }),
-    'injury' : IDL.Record({ 'target' : TargetInstance }),
+    'injury' : IDL.Record({ 'target' : TargetPositionInstance }),
     'energy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
   });
   const ThresholdContribution = IDL.Record({

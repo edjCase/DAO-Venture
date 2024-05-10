@@ -7,6 +7,8 @@
     import { BenevolentDictatorState } from "../ic-agent/declarations/league";
     import { identityStore } from "../stores/IdentityStore";
     import { userStore } from "../stores/UserStore";
+    import { Accordion, AccordionItem } from "flowbite-svelte";
+    import AddTeamTrait from "./team/AddTeamTrait.svelte";
 
     $: identity = $identityStore;
 
@@ -28,16 +30,23 @@
         <div>
             <TempInitialize />
         </div>
-        <div>
-            <ScheduleSeason />
-        </div>
-        ---
-        <div>
-            <AddScenario />
-        </div>
-        ---
-        <div>
-            <DaoAdmin />
-        </div>
+        <Accordion>
+            <AccordionItem>
+                <span slot="header">Schedule Season</span>
+                <ScheduleSeason />
+            </AccordionItem>
+            <AccordionItem>
+                <span slot="header">Add Scenario</span>
+                <AddScenario />
+            </AccordionItem>
+            <AccordionItem>
+                <span slot="header">DAO Admin</span>
+                <DaoAdmin />
+            </AccordionItem>
+            <AccordionItem>
+                <span slot="header">Add Team Trait</span>
+                <AddTeamTrait />
+            </AccordionItem>
+        </Accordion>
     {/if}
 {/if}

@@ -87,23 +87,23 @@ export type Effect = { 'allOf' : Array<Effect> } |
     'teamTrait' : {
       'kind' : { 'add' : null } |
         { 'remove' : null },
-      'team' : TargetTeam,
+      'target' : TargetTeam,
       'traitId' : string,
     }
   } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<WeightedEffect> } |
-  { 'entropy' : { 'target' : LeagueOrTeamsTarget, 'delta' : bigint } } |
+  { 'entropy' : { 'target' : TargetTeam, 'delta' : bigint } } |
   {
     'skill' : {
       'duration' : Duration,
       'skill' : ChosenOrRandomSkill,
-      'target' : Target,
+      'target' : TargetPosition,
       'delta' : bigint,
     }
   } |
-  { 'injury' : { 'target' : Target } } |
-  { 'energy' : { 'value' : { 'flat' : bigint }, 'team' : TargetTeam } };
+  { 'injury' : { 'target' : TargetPosition } } |
+  { 'energy' : { 'value' : { 'flat' : bigint }, 'target' : TargetTeam } };
 export type EffectOutcome = {
     'teamTrait' : {
       'kind' : { 'add' : null } |
@@ -117,11 +117,11 @@ export type EffectOutcome = {
     'skill' : {
       'duration' : Duration,
       'skill' : Skill,
-      'target' : TargetInstance,
+      'target' : TargetPositionInstance,
       'delta' : bigint,
     }
   } |
-  { 'injury' : { 'target' : TargetInstance } } |
+  { 'injury' : { 'target' : TargetPositionInstance } } |
   { 'energy' : { 'teamId' : bigint, 'delta' : bigint } };
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
@@ -175,8 +175,6 @@ export type InProgressSeasonMatchGroupVariant = {
   { 'inProgress' : InProgressMatchGroup } |
   { 'notScheduled' : NotScheduledMatchGroup };
 export interface InProgressTeam { 'id' : bigint }
-export type LeagueOrTeamsTarget = { 'teams' : Array<TargetTeam> } |
-  { 'league' : null };
 export type MatchAura = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
   { 'extraStrike' : null } |
@@ -220,7 +218,7 @@ export type MetaEffect = {
             'skill' : {
               'duration' : Duration,
               'skill' : ChosenOrRandomSkill,
-              'target' : { 'position' : ChosenOrRandomFieldPosition },
+              'target' : TargetPosition,
             }
           },
         'amount' : bigint,
@@ -430,12 +428,6 @@ export interface StartSeasonRequest {
 }
 export type StartSeasonResult = { 'ok' : null } |
   { 'err' : StartSeasonError };
-export type Target = { 'teams' : Array<TargetTeam> } |
-  { 'league' : null } |
-  { 'positions' : Array<TargetPosition> };
-export type TargetInstance = { 'teams' : Array<bigint> } |
-  { 'league' : null } |
-  { 'positions' : Array<TargetPositionInstance> };
 export interface TargetPosition {
   'team' : TargetTeam,
   'position' : ChosenOrRandomFieldPosition,
@@ -444,7 +436,9 @@ export interface TargetPositionInstance {
   'teamId' : bigint,
   'position' : FieldPosition,
 }
-export type TargetTeam = { 'choosingTeam' : null };
+export type TargetTeam = { 'random' : null } |
+  { 'chosen' : bigint } |
+  { 'choosingTeam' : null };
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
   { 'seasonStandingIndex' : bigint };

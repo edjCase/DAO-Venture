@@ -11,7 +11,14 @@
             value = {
                 threshold: {
                     abstainAmount: { fixed: BigInt(0) },
-                    options: [],
+                    options: [
+                        {
+                            value: { fixed: BigInt(0) },
+                        },
+                        {
+                            value: { fixed: BigInt(1) },
+                        },
+                    ],
                     success: { effect: { noEffect: null }, description: "" },
                     failure: { effect: { noEffect: null }, description: "" },
                     minAmount: BigInt(1),
@@ -38,8 +45,11 @@
                         kind: {
                             skill: {
                                 duration: { matches: BigInt(1) },
-                                skill: { speed: null },
-                                target: { position: { centerField: null } },
+                                skill: { random: null },
+                                target: {
+                                    position: { random: null },
+                                    team: { choosingTeam: null },
+                                },
                             },
                         },
                         amount: BigInt(1),

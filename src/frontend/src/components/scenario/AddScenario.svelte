@@ -23,7 +23,7 @@
         endTime: dateToNanoseconds(initialEnd),
         abstainEffect: {
             entropy: {
-                target: { teams: [{ choosingTeam: null }] },
+                target: { choosingTeam: null },
                 delta: BigInt(1),
             },
         },
@@ -32,6 +32,7 @@
                 title: "",
                 description: "",
                 energyCost: BigInt(0),
+                traitRequirements: [],
                 effect: {
                     noEffect: null,
                 },
@@ -40,6 +41,7 @@
                 title: "",
                 description: "",
                 energyCost: BigInt(0),
+                traitRequirements: [],
                 effect: {
                     noEffect: null,
                 },

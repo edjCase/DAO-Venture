@@ -23,7 +23,7 @@ export const teamStore = (() => {
     let result = await leagueAgent.getTeamStandings();
     if ('ok' in result) {
       teamStandingsWritable.set(result.ok);
-    } else if ('notFound' in result) {
+    } else if ('err' in result && 'notFound' in result.err) {
       teamStandingsWritable.set(undefined);
     } else {
       console.error("Failed to get team standings: ", result);

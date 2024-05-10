@@ -4,9 +4,10 @@ import Text "mo:base/Text";
 import FieldPosition "FieldPosition";
 
 module {
-
     public type TargetTeam = {
         #choosingTeam;
+        #random;
+        #chosen : Nat;
     };
 
     public type ChosenOrRandomFieldPosition = {
@@ -24,17 +25,6 @@ module {
         position : ChosenOrRandomFieldPosition;
     };
 
-    public type LeagueOrTeamsTarget = {
-        #league;
-        #teams : [TargetTeam];
-    };
-
-    public type Target = {
-        #league;
-        #teams : [TargetTeam];
-        #positions : [TargetPosition];
-    };
-
     public type Duration = {
         #indefinite;
         #matches : Nat;
@@ -48,7 +38,7 @@ module {
 
     public type Effect = {
         #teamTrait : {
-            team : TargetTeam;
+            target : TargetTeam;
             traitId : Text;
             kind : {
                 #add;
@@ -56,20 +46,20 @@ module {
             };
         };
         #skill : {
-            target : Target;
+            target : TargetPosition;
             skill : ChosenOrRandomSkill;
             duration : Duration;
             delta : Int;
         };
         #injury : {
-            target : Target;
+            target : TargetPosition;
         };
         #entropy : {
-            target : LeagueOrTeamsTarget;
+            target : TargetTeam;
             delta : Int;
         };
         #energy : {
-            team : TargetTeam;
+            target : TargetTeam;
             value : {
                 #flat : Int;
             };
@@ -81,13 +71,13 @@ module {
 
     public type PlayerEffectOutcome = {
         #skill : {
-            target : TargetInstance;
+            target : TargetPositionInstance;
             skill : Skill.Skill;
             duration : Duration;
             delta : Int;
         };
         #injury : {
-            target : TargetInstance;
+            target : TargetPositionInstance;
         };
     };
 
@@ -111,12 +101,6 @@ module {
     };
 
     public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome;
-
-    public type TargetInstance = {
-        #league;
-        #teams : [Nat];
-        #positions : [TargetPositionInstance];
-    };
 
     public type TargetPositionInstance = {
         teamId : Nat;
@@ -246,9 +230,7 @@ module {
                 kind : {
                     #skill : {
                         skill : ChosenOrRandomSkill;
-                        target : {
-                            #position : ChosenOrRandomFieldPosition;
-                        };
+                        target : TargetPosition;
                         duration : Duration;
                     };
                 };
