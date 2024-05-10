@@ -1,6 +1,5 @@
 <script lang="ts">
   import { PlayerStateWithId } from "../../ic-agent/declarations/stadium";
-  import { FieldPositionEnum } from "../../models/FieldPosition";
   import {
     LiveMatch,
     LiveMatchState,
@@ -8,7 +7,6 @@
   } from "../../stores/LiveMatchGroupStore";
   import FieldPlayer from "./FieldPlayer.svelte";
   import FieldBase from "./FieldBase.svelte";
-  import { BaseEnum } from "../../models/Base";
 
   export let match: LiveMatch;
 
@@ -227,21 +225,18 @@
         y={leftFieldPosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.leftField)}
-        position={FieldPositionEnum.LeftField}
       />
       <FieldPlayer
         x={centerFieldPosition.x}
         y={centerFieldPosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.centerField)}
-        position={FieldPositionEnum.CenterField}
       />
       <FieldPlayer
         x={rightFieldPosition.x}
         y={rightFieldPosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.rightField)}
-        position={FieldPositionEnum.RightField}
       />
 
       <!-- Home base -->
@@ -250,7 +245,6 @@
         y={homeBaseLocation.y}
         teamColor={liveData.offenseTeam.color}
         player={getPlayer(liveData.liveState.bases.atBat)}
-        base={BaseEnum.HomeBase}
       />
 
       <!-- First base -->
@@ -259,7 +253,6 @@
         y={firstBaseLocation.y}
         teamColor={liveData.offenseTeam.color}
         player={getPlayerOrNull(liveData.liveState.bases.firstBase)}
-        base={BaseEnum.FirstBase}
       />
 
       <FieldPlayer
@@ -267,7 +260,6 @@
         y={firstBasePosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.firstBase)}
-        position={FieldPositionEnum.FirstBase}
       />
 
       <!-- Second base -->
@@ -276,7 +268,6 @@
         y={secondBaseLocation.y}
         teamColor={liveData.offenseTeam.color}
         player={getPlayerOrNull(liveData.liveState.bases.secondBase)}
-        base={BaseEnum.SecondBase}
       />
 
       <FieldPlayer
@@ -284,7 +275,6 @@
         y={secondBasePosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.secondBase)}
-        position={FieldPositionEnum.SecondBase}
       />
 
       <!-- Short stop -->
@@ -293,7 +283,6 @@
         y={shortStopPosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.shortStop)}
-        position={FieldPositionEnum.ShortStop}
       />
 
       <!-- Third base -->
@@ -302,7 +291,6 @@
         y={thirdBaseLocation.y}
         teamColor={liveData.offenseTeam.color}
         player={getPlayerOrNull(liveData.liveState.bases.thirdBase)}
-        base={BaseEnum.ThirdBase}
       />
 
       <FieldPlayer
@@ -310,7 +298,6 @@
         y={thirdBasePosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.thirdBase)}
-        position={FieldPositionEnum.ThirdBase}
       />
 
       <!-- Pitcher -->
@@ -319,7 +306,6 @@
         y={pitcherPosition.y}
         teamColor={liveData.defenseTeam.color}
         player={getPlayer(liveData.defenseTeam.positions.pitcher)}
-        position={FieldPositionEnum.Pitcher}
       />
 
       <!-- Baseball -->

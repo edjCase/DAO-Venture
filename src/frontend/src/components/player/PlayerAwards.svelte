@@ -1,9 +1,6 @@
 <script lang="ts">
   import { AtomOutline } from "flowbite-svelte-icons";
   import { Card } from "flowbite-svelte";
-  import { CompletedSeason } from "../../ic-agent/declarations/league";
-
-  export let completedSeason: CompletedSeason;
 
   // Define a new type for player awards
   type PlayerAward = {

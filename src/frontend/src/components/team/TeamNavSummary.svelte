@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { TeamStandingInfo } from "../../ic-agent/declarations/league";
     import { User } from "../../ic-agent/declarations/users";
     import { identityStore } from "../../stores/IdentityStore";
     import { teamStore } from "../../stores/TeamStore";
@@ -10,11 +9,6 @@
     $: teams = $teamStore;
 
     let user: User | undefined;
-    let standings: TeamStandingInfo[] | undefined;
-
-    teamStore.subscribeTeamStandings((s) => {
-        standings = s;
-    });
 
     $: {
         if (!identity.getPrincipal().isAnonymous()) {

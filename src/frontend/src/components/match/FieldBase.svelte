@@ -1,6 +1,5 @@
 <script lang="ts">
   import { PlayerStateWithId as PlayerState } from "../../ic-agent/declarations/stadium";
-  import { BaseEnum } from "../../models/Base";
   import { getFontSize } from "../../utils/FieldUtil";
   import { toRgbString } from "../../utils/StringUtil";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";
@@ -9,7 +8,6 @@
   export let y: number;
   export let player: PlayerState | undefined;
   export let teamColor: [number, number, number];
-  export let base: BaseEnum;
   let width = 10;
 
   let color = toRgbString(teamColor);

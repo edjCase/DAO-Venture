@@ -51,7 +51,7 @@
                 <TeamStandings completedSeason={seasonStatus.completed} />
             </div>
             <div class="players">
-                <PlayerAwards completedSeason={seasonStatus.completed} />
+                <PlayerAwards />
             </div>
         </div>
     {:else if "inProgress" in seasonStatus}

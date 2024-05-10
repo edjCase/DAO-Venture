@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { TurnLog } from "../../ic-agent/declarations/stadium";
   import { MatchDetails } from "../../models/Match";
 
   import { LiveMatch, LiveTeamDetails } from "../../stores/LiveMatchGroupStore";
@@ -9,9 +8,6 @@
   export let match: MatchDetails;
   export let liveMatch: LiveMatch;
 
-  let lastTurn: TurnLog = {
-    events: [],
-  };
   let offenseTeam: LiveTeamDetails | undefined;
   let defenseTeam: LiveTeamDetails | undefined;
   let winner: string | undefined;
@@ -32,10 +28,6 @@
       } else {
         winner = "Tie";
       }
-    }
-    if (liveMatch.log && liveMatch.log.rounds.length > 0) {
-      let currentRound = liveMatch.log.rounds[liveMatch.log.rounds.length - 1];
-      lastTurn = currentRound.turns[currentRound.turns.length - 1];
     }
     if (liveMatch.liveState) {
       if ("team1" in liveMatch.liveState.offenseTeamId) {

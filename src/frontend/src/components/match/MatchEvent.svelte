@@ -54,9 +54,7 @@
   <div>Round Over</div>
 {:else if "injury" in event}
   <div>
-    {getPlayerName(event.injury.playerId)} got injured: {variantKeyToString(
-      event.injury.injury,
-    )}
+    {getPlayerName(event.injury.playerId)} got injured
   </div>
 {:else if "death" in event}
   <div>Player '{getPlayerName(event.death.playerId)}' died</div>

@@ -14,8 +14,6 @@
   $: teams = $teamStore;
   $: players = $playerStore;
 
-  let intializing = false;
-
   let createTeams = async function (): Promise<void> {
     let leagueAgent = await leagueAgentFactory();
     let promises = [];
@@ -81,11 +79,9 @@
   };
 
   let initialize = async function () {
-    intializing = true;
     await createPlayers();
     await createTeams();
     await createTeamTraits();
-    intializing = false;
   };
 </script>
 

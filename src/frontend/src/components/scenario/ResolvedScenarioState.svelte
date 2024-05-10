@@ -5,7 +5,6 @@
         Scenario,
         ScenarioOptionWithEffect,
         ScenarioStateResolved,
-        TargetInstance,
         TargetPositionInstance,
     } from "../../ic-agent/declarations/league";
     import { Accordion, AccordionItem } from "flowbite-svelte";
@@ -68,36 +67,6 @@
         return positionText + " for Team " + getTeamName(position.teamId);
     };
 
-    const getTargetText = (target: TargetInstance) => {
-        if ("teams" in target) {
-            if (target.teams.length === 0) {
-                return `No Teams`;
-            }
-            if (target.teams.length === 1) {
-                return `Team ${getTeamName(target.teams[0])}`;
-            }
-            let teamsText = target.teams
-                .map((team) => getTeamName(team))
-                .join(", ");
-            return `Teams ${teamsText}`;
-        } else if ("positions" in target) {
-            if (target.positions.length === 0) {
-                return `No Positions`;
-            }
-            if (target.positions.length === 1) {
-                let positionText = getPositionText(target.positions[0]);
-                return `Position ${positionText}`;
-            }
-            let positionsText = target.positions
-                .map(getPositionText)
-                .join(", ");
-            return `Positions ${positionsText}`;
-        } else if ("league" in target) {
-            return "League";
-        }
-        return "NOT IMPLEMENTED: " + toJsonString(target);
-    };
-
     const getDurationText = (duration: Duration) => {
         if ("indefinite" in duration) {
             return "indefinitely";
@@ -123,7 +92,7 @@
                 "🔥",
             );
         } else if ("skill" in outcome) {
-            let targetName = getTargetText(outcome.skill.target);
+            let targetName = getPositionText(outcome.skill.target);
             let skillName = skillToString(outcome.skill.skill);
             let duration = getDurationText(outcome.skill.duration);
             return getGainOrLossOutcomeText(

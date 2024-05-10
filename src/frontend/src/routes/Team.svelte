@@ -1,7 +1,7 @@
 <script lang="ts">
   import { teamStore } from "../stores/TeamStore";
   import TeamPage from "../components/team/TeamPage.svelte";
-  import { Team } from "../ic-agent/declarations/league";
+  import { Team } from "../ic-agent/declarations/teams";
 
   export let teamIdString: string;
 

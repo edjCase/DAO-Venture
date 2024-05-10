@@ -1,12 +1,10 @@
 <script lang="ts">
   import { PlayerStateWithId } from "../../ic-agent/declarations/stadium";
-  import { FieldPositionEnum } from "../../models/FieldPosition";
   import { getFontSize } from "../../utils/FieldUtil";
   import { toRgbString } from "../../utils/StringUtil";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";
 
   export let player: PlayerStateWithId;
-  export let position: FieldPositionEnum;
   export let teamColor: [number, number, number];
   export let x: number;
   export let y: number;
