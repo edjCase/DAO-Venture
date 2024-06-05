@@ -129,7 +129,7 @@
             {/if}
         </div>
         {#if matchPredictions !== undefined}
-            <div class="flex items-center justify-center">
+            <div class="flex flex-col items-center justify-center">
                 <div class="text-sm">
                     {(matchPredictions.teamPercentage * 100).toFixed(0)}%
                 </div>

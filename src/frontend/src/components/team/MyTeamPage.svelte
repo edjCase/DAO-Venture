@@ -51,6 +51,9 @@
                 <div>{team.entropy} 🔥</div>
                 <div>Wins: {standing?.wins}</div>
                 <div>Losses: {standing?.losses}</div>
+                {#each team.traits as trait}
+                    <Badge>{trait.name}</Badge>
+                {/each}
             </div>
             <div class="flex-grow">
                 <div class="text-xl">You</div>

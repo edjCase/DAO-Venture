@@ -1,10 +1,19 @@
 export const idlFactory = ({ IDL }) => {
   const Effect = IDL.Rec();
   const Time = IDL.Int;
+  const TeamTraitEffectKind = IDL.Variant({
+    'add' : IDL.Null,
+    'remove' : IDL.Null,
+  });
   const TargetTeam = IDL.Variant({
     'random' : IDL.Null,
     'chosen' : IDL.Nat,
     'choosingTeam' : IDL.Null,
+  });
+  const TeamTraitEffect = IDL.Record({
+    'kind' : TeamTraitEffectKind,
+    'target' : TargetTeam,
+    'traitId' : IDL.Text,
   });
   const WeightedEffect = IDL.Record({
     'weight' : IDL.Nat,
@@ -49,11 +58,7 @@ export const idlFactory = ({ IDL }) => {
   Effect.fill(
     IDL.Variant({
       'allOf' : IDL.Vec(Effect),
-      'teamTrait' : IDL.Record({
-        'kind' : IDL.Variant({ 'add' : IDL.Null, 'remove' : IDL.Null }),
-        'target' : TargetTeam,
-        'traitId' : IDL.Text,
-      }),
+      'teamTrait' : TeamTraitEffect,
       'noEffect' : IDL.Null,
       'oneOf' : IDL.Vec(WeightedEffect),
       'entropy' : IDL.Record({ 'target' : TargetTeam, 'delta' : IDL.Int }),
@@ -110,19 +115,19 @@ export const idlFactory = ({ IDL }) => {
       'options' : IDL.Vec(IDL.Record({ 'effect' : Effect })),
     }),
   });
+  const TraitRequirementKind = IDL.Variant({
+    'prohibited' : IDL.Null,
+    'required' : IDL.Null,
+  });
+  const TraitRequirement = IDL.Record({
+    'id' : IDL.Text,
+    'kind' : TraitRequirementKind,
+  });
   const ScenarioOptionWithEffect = IDL.Record({
     'title' : IDL.Text,
     'description' : IDL.Text,
     'effect' : Effect,
-    'traitRequirements' : IDL.Vec(
-      IDL.Record({
-        'id' : IDL.Text,
-        'kind' : IDL.Variant({
-          'prohibited' : IDL.Null,
-          'required' : IDL.Null,
-        }),
-      })
-    ),
+    'traitRequirements' : IDL.Vec(TraitRequirement),
     'energyCost' : IDL.Nat,
   });
   const AddScenarioRequest = IDL.Record({

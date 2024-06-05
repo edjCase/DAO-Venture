@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Input, Label, Select } from "flowbite-svelte";
+    import { Button, Input, Label } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
     import { Effect } from "../../../ic-agent/declarations/league";
     import { toJsonString } from "../../../utils/StringUtil";
@@ -9,7 +9,7 @@
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
     import TargetTeamChooser from "./TargetTeamChooser.svelte";
     import ChosenOrRandomSkillChooser from "./ChosenOrRandomSkillChooser.svelte";
-    import TeamTraitEditor from "./TeamTraitEditor.svelte";
+    import TeamTraitEffectEditor from "./TeamTraitEffectEditor.svelte";
     export let value: Effect;
 
     let addOption = () => {
@@ -35,27 +35,6 @@
             value.oneOf = value.oneOf;
         }
     };
-    let selectedKind =
-        "teamTrait" in value ? Object.keys(value.teamTrait.kind)[0] : "add";
-    $: {
-        if ("teamTrait" in value) {
-            if (selectedKind == "add") {
-                value.teamTrait.kind = { add: null };
-            } else if (selectedKind == "remove") {
-                value.teamTrait.kind = { remove: null };
-            }
-        }
-    }
-    let traitKindItems = [
-        {
-            value: "add",
-            name: "Add",
-        },
-        {
-            value: "remove",
-            name: "Remove",
-        },
-    ];
 </script>
 
 {#if "allOf" in value}
@@ -109,11 +88,7 @@
         <TargetPositionEditor bind:value={value.injury.target} />
     </div>
 {:else if "teamTrait" in value}
-    <Label>Team</Label>
-    <TargetTeamChooser bind:value={value.teamTrait.target} />
-    <TeamTraitEditor bind:value={value.teamTrait.traitId} />
-    <Label>Kind</Label>
-    <Select items={traitKindItems} bind:value={selectedKind} />
+    <TeamTraitEffectEditor bind:value={value.teamTrait} />
 {:else if "noEffect" in value}
     <div></div>
 {:else}

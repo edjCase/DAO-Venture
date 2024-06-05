@@ -9,7 +9,8 @@
     import { dateToNanoseconds } from "../../utils/DateUtils";
     import LoadingButton from "../common/LoadingButton.svelte";
     import ScenarioEditor from "./editors/ScenarioEditor.svelte";
-    import { Button, Select } from "flowbite-svelte";
+    import { Button, Label, Select, Toggle } from "flowbite-svelte";
+    import { toJsonString } from "../../utils/StringUtil";
 
     $: teams = $teamStore;
     $: scenarios = $scenarioStore;
@@ -89,6 +90,8 @@
         };
     };
 
+    let showRaw = false;
+
     let selectedScenario: Scenario | undefined = undefined;
 
     $: scenarioItems =
@@ -98,10 +101,17 @@
                 name: scenario.title,
             };
         }) ?? [];
+
+    $: rawScenario = showRaw ? toJsonString(scenario, true) : "";
 </script>
 
 <Select items={scenarioItems} bind:value={selectedScenario} />
 <Button on:click={loadScenario}>Load Scenario</Button>
+<Label>Show Raw Scenario</Label>
+<Toggle bind:checked={showRaw} />
+{#if showRaw}
+    <pre>{rawScenario}</pre>
+{/if}
 
 <ScenarioEditor bind:value={scenario} />
 <div class="mt-4">

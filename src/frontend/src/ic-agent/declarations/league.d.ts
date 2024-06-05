@@ -83,14 +83,7 @@ export type DayOfWeek = { 'tuesday' : null } |
 export type Duration = { 'matches' : bigint } |
   { 'indefinite' : null };
 export type Effect = { 'allOf' : Array<Effect> } |
-  {
-    'teamTrait' : {
-      'kind' : { 'add' : null } |
-        { 'remove' : null },
-      'target' : TargetTeam,
-      'traitId' : string,
-    }
-  } |
+  { 'teamTrait' : TeamTraitEffect } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<WeightedEffect> } |
   { 'entropy' : { 'target' : TargetTeam, 'delta' : bigint } } |
@@ -357,9 +350,7 @@ export interface ScenarioOptionWithEffect {
   'title' : string,
   'description' : string,
   'effect' : Effect,
-  'traitRequirements' : Array<
-    { 'id' : string, 'kind' : { 'prohibited' : null } | { 'required' : null } }
-  >,
+  'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
 }
 export type ScenarioState = { 'notStarted' : null } |
@@ -473,6 +464,13 @@ export interface TeamStandingInfo {
   'losses' : bigint,
   'totalScore' : bigint,
 }
+export interface TeamTraitEffect {
+  'kind' : TeamTraitEffectKind,
+  'target' : TargetTeam,
+  'traitId' : string,
+}
+export type TeamTraitEffectKind = { 'add' : null } |
+  { 'remove' : null };
 export interface ThresholdContribution { 'teamId' : bigint, 'amount' : bigint }
 export type ThresholdOptionValue = { 'fixed' : bigint } |
   {
@@ -481,6 +479,12 @@ export type ThresholdOptionValue = { 'fixed' : bigint } |
     >
   };
 export type Time = bigint;
+export interface TraitRequirement {
+  'id' : string,
+  'kind' : TraitRequirementKind,
+}
+export type TraitRequirementKind = { 'prohibited' : null } |
+  { 'required' : null };
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export type VoteOnProposalError = { 'proposalNotFound' : null } |
   { 'notAuthorized' : null } |

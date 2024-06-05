@@ -18,6 +18,7 @@
     import { skillToString } from "../../models/Skill";
     import { fieldPositionToString } from "../../models/FieldPosition";
     import ScenarioOption from "./ScenarioOption.svelte";
+    import { traitStore } from "../../stores/TraitStore";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
@@ -35,6 +36,7 @@
     }
 
     $: teams = $teamStore;
+    $: traits = $traitStore;
 
     let optionTeamVotes: bigint[][] | undefined;
     $: if (teams) {
@@ -59,7 +61,11 @@
     };
 
     const getTeamName = (teamId: bigint) => {
-        return teams?.find((team) => team.id === teamId)?.name ?? "???";
+        return teams?.find((team) => team.id === teamId)?.name ?? "";
+    };
+
+    const getTraitName = (traitId: string) => {
+        return traits?.find((t) => t.id == traitId)?.name ?? "";
     };
 
     const getPositionText = (position: TargetPositionInstance) => {
@@ -100,6 +106,20 @@
                 outcome.skill.delta,
                 `'${skillName}' skill ${duration}`,
             );
+        } else if ("teamTrait" in outcome) {
+            let teamName = getTeamName(outcome.teamTrait.teamId);
+            let traitName = getTraitName(outcome.teamTrait.traitId);
+            let prefix: string;
+            if ("add" in outcome.teamTrait.kind) {
+                prefix = "+";
+            } else if ("remove" in outcome.teamTrait.kind) {
+                prefix = "-";
+            } else {
+                prefix =
+                    "NOT IMPLEMENTED TEAM TRAIT KIND: " +
+                    toJsonString(outcome.teamTrait.kind);
+            }
+            return `${teamName} ${prefix}${traitName}`;
         }
         return "NOT IMPLEMENTED: " + toJsonString(outcome);
     };
@@ -109,8 +129,8 @@
     <ScenarioOption
         {option}
         selected={selectedChoice === index}
-        teamEnergy={teams?.find((team) => team.id === userContext?.team[0]?.id)
-            ?.energy}
+        teamEnergy={undefined}
+        teamTraits={undefined}
         voteStatus={selectedChoice === index ? index : "notVoted"}
         state={{
             resolved: {

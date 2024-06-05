@@ -130,5 +130,5 @@
 {:else if "noEffect" in value}
     <div></div>
 {:else}
-    NOT IMPLEMENETED META EFFECT : {toJsonString(value)}
+    NOT IMPLEMENTED META EFFECT : {toJsonString(value)}
 {/if}

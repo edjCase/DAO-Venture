@@ -7,10 +7,13 @@
     import { BenevolentDictatorState } from "../ic-agent/declarations/league";
     import { identityStore } from "../stores/IdentityStore";
     import { userStore } from "../stores/UserStore";
-    import { Accordion, AccordionItem } from "flowbite-svelte";
+    import { Accordion, AccordionItem, Badge, Tooltip } from "flowbite-svelte";
     import AddTeamTrait from "./team/AddTeamTrait.svelte";
+    import { traitStore } from "../stores/TraitStore";
 
     $: identity = $identityStore;
+
+    $: traits = $traitStore;
 
     let bdfnState: BenevolentDictatorState | undefined;
     userStore.subscribeBdfnState((state) => {
@@ -44,7 +47,15 @@
                 <DaoAdmin />
             </AccordionItem>
             <AccordionItem>
-                <span slot="header">Add Team Trait</span>
+                <span slot="header">Team Traits</span>
+                <div class="text-3xl">Current</div>
+                {#if traits !== undefined}
+                    {#each traits as trait}
+                        <Badge large>{trait.name}</Badge>
+                        <Tooltip>{trait.description}</Tooltip>
+                    {/each}
+                {/if}
+                <div class="text-3xl mt-5">Add</div>
                 <AddTeamTrait />
             </AccordionItem>
         </Accordion>

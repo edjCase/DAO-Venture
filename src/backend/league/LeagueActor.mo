@@ -53,34 +53,34 @@ actor LeagueActor : Types.LeagueActor {
     private func processEffectOutcomes(effectOutcomes : [Scenario.EffectOutcome]) : async* ScenarioHandler.ProcessEffectOutcomesResult {
         let processedOutcomes = Buffer.Buffer<ScenarioHandler.EffectOutcomeData>(effectOutcomes.size());
         for (effectOutcome in Iter.fromArray(effectOutcomes)) {
-            let processed = try {
+            let processResult : Result.Result<(), Text> = try {
                 switch (effectOutcome) {
                     case (#injury(injuryEffect)) {
                         let result = await PlayersActor.applyEffects([#injury(injuryEffect)]); // TODO optimize with bulk call
                         switch (result) {
-                            case (#ok) true;
-                            case (#err(_)) false;
+                            case (#ok) #ok;
+                            case (#err(e)) #err(debug_show (e));
                         };
                     };
                     case (#entropy(entropyEffect)) {
                         let result = await TeamsActor.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
                         switch (result) {
-                            case (#ok) true;
-                            case (#err(_)) false;
+                            case (#ok) #ok;
+                            case (#err(e)) #err(debug_show (e));
                         };
                     };
                     case (#energy(e)) {
                         let result = await TeamsActor.updateTeamEnergy(e.teamId, e.delta);
                         switch (result) {
-                            case (#ok) true;
-                            case (#err(_)) false;
+                            case (#ok) #ok;
+                            case (#err(e)) #err(debug_show (e));
                         };
                     };
                     case (#skill(s)) {
                         let result = await PlayersActor.applyEffects([#skill(s)]); // TODO optimize with bulk call
                         switch (result) {
-                            case (#ok) true;
-                            case (#err(_)) false;
+                            case (#ok) #ok;
+                            case (#err(e)) #err(debug_show (e));
                         };
                     };
                     case (#teamTrait(t)) {
@@ -89,8 +89,8 @@ actor LeagueActor : Types.LeagueActor {
                             case (#remove) await TeamsActor.removeTraitFromTeam(t.teamId, t.traitId);
                         };
                         switch (result) {
-                            case (#ok(_)) true;
-                            case (#err(_)) false;
+                            case (#ok(_)) #ok;
+                            case (#err(e)) #err(debug_show (e));
                         };
                     };
                 };
@@ -98,8 +98,14 @@ actor LeagueActor : Types.LeagueActor {
             } catch (err) {
                 // TODO this should have rollback and whatnot, there shouldnt be an error but im not sure how to handle
                 // errors for now
-                Debug.print("Failed to process team effect outcomes: " # Error.message(err));
-                false;
+                #err(Error.message(err));
+            };
+            let processed = switch (processResult) {
+                case (#ok) true;
+                case (#err(e)) {
+                    Debug.print("Failed to process effect outcome: " # debug_show (effectOutcome) # ", Error: " # e);
+                    false;
+                };
             };
             processedOutcomes.add({
                 outcome = effectOutcome;

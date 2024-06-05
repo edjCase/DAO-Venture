@@ -77,6 +77,7 @@
         {option}
         selected={selectedChoice === index}
         teamEnergy={team?.energy}
+        teamTraits={team?.traits.map((t) => t.id)}
         {voteStatus}
         state={{
             inProgress: {

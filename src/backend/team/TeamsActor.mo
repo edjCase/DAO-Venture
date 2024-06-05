@@ -131,11 +131,7 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared ({ caller }) func removeTraitFromTeam(teamId : Nat, traitId : Text) : async Types.RemoveTraitFromTeamResult {
-    let leagueId = switch (leagueIdOrNull) {
-      case (null) Debug.trap("League not set");
-      case (?id) id;
-    };
-    if (caller != leagueId) {
+    if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
     teamsHandler.removeTraitFromTeam(teamId, traitId);

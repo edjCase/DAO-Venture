@@ -276,6 +276,7 @@ module {
             if (validationErrors.size() > 0) {
                 return #err(#invalid(Buffer.toArray(validationErrors)));
             };
+            Debug.print("Creating trait: " # debug_show (trait));
             traits.put(trait.id, trait);
             #ok;
         };
@@ -285,6 +286,7 @@ module {
         };
 
         public func addTraitToTeam(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound; #traitNotFound }> {
+            Debug.print("Adding trait " # traitId # " to team " # Nat.toText(teamId));
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
             let ?_ = traits.get(traitId) else return #err(#traitNotFound);
             let hadTrait = if (not IterTools.any(team.traitIds.vals(), func(id : Text) : Bool = id == traitId)) {
@@ -297,6 +299,7 @@ module {
         };
 
         public func removeTraitFromTeam(teamId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #teamNotFound }> {
+            Debug.print("Removing trait " # traitId # " from team " # Nat.toText(teamId));
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
 
             let index = IterTools.findIndex(team.traitIds.vals(), func(id : Text) : Bool = id == traitId);

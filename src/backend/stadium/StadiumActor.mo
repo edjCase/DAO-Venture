@@ -11,6 +11,8 @@ import Timer "mo:base/Timer";
 import MatchSimulator "MatchSimulator";
 import Random "mo:base/Random";
 import Error "mo:base/Error";
+import Result "mo:base/Result";
+import Bool "mo:base/Bool";
 import PseudoRandomX "mo:random/PseudoRandomX";
 import LeagueTypes "../league/Types";
 import IterTools "mo:itertools/Iter";
@@ -250,10 +252,21 @@ actor StadiumActor : Types.StadiumActor {
     };
 
     private func startTickTimer<system>(matchGroupId : Nat) : Timer.TimerId {
-        Timer.recurringTimer<system>(
+        Timer.setTimer<system>(
             #seconds(5),
             func() : async () {
-                await tickMatchGroupCallback(matchGroupId);
+                switch (await tickMatchGroupCallback(matchGroupId)) {
+                    case (#err(err)) {
+                        Debug.print("Failed to tick match group: " # Nat.toText(matchGroupId) # ", Error: " # err # ". Canceling tick timer. Reset with `resetTickTimer` method");
+                    };
+                    case (#ok(isComplete)) {
+                        if (not isComplete) {
+                            resetTickTimerInternal<system>(matchGroupId);
+                        } else {
+                            Debug.print("Match group complete: " # Nat.toText(matchGroupId));
+                        };
+                    };
+                };
             },
         );
     };
@@ -264,19 +277,18 @@ actor StadiumActor : Types.StadiumActor {
         matchGroups := newMatchGroups;
     };
 
-    private func tickMatchGroupCallback(matchGroupId : Nat) : async () {
-        let message = try {
+    private func tickMatchGroupCallback(matchGroupId : Nat) : async Result.Result<Bool, Text> {
+        try {
             switch (await tickMatchGroup(matchGroupId)) {
-                case (#err(#matchGroupNotFound)) "Match Group not found";
-                case (#err(#notAuthorized)) "Not authorized to tick match group";
-                case (#err(#onStartCallbackError(err))) "On start callback error: " # debug_show (err);
-                case (#ok(#completed(_))) "Match Group completed";
-                case (#ok(#inProgress(_))) return (); // Dont log normal tick
+                case (#ok(#inProgress(_))) #ok(false);
+                case (#err(#matchGroupNotFound)) #err("Match Group not found");
+                case (#err(#notAuthorized)) #err("Not authorized to tick match group");
+                case (#err(#onStartCallbackError(err))) #err("On start callback error: " # debug_show (err));
+                case (#ok(#completed(_))) #ok(true);
             };
         } catch (err) {
-            "Failed to tick match group: " # Error.message(err);
+            #err("Failed to tick match group: " # Error.message(err));
         };
-        Debug.print("Tick Match Group Callback Result - " # message);
     };
 
     private func tickMatches(prng : Prng, tickResults : [Types.TickResult]) : {

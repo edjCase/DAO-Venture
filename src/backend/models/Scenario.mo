@@ -36,15 +36,19 @@ module {
         description : Text;
     };
 
+    public type TeamTraitEffectKind = {
+        #add;
+        #remove;
+    };
+
+    public type TeamTraitEffect = {
+        target : TargetTeam;
+        traitId : Text;
+        kind : TeamTraitEffectKind;
+    };
+
     public type Effect = {
-        #teamTrait : {
-            target : TargetTeam;
-            traitId : Text;
-            kind : {
-                #add;
-                #remove;
-            };
-        };
+        #teamTrait : TeamTraitEffect;
         #skill : {
             target : TargetPosition;
             skill : ChosenOrRandomSkill;
@@ -107,17 +111,21 @@ module {
         position : FieldPosition.FieldPosition;
     };
 
+    public type TraitRequirement = {
+        id : Text;
+        kind : TraitRequirementKind;
+    };
+
+    public type TraitRequirementKind = {
+        #required;
+        #prohibited;
+    };
+
     public type ScenarioOption = {
         title : Text;
         description : Text;
         energyCost : Nat;
-        traitRequirements : [{
-            id : Text;
-            kind : {
-                #required;
-                #prohibited;
-            };
-        }];
+        traitRequirements : [TraitRequirement];
     };
 
     public type ScenarioOptionWithEffect = ScenarioOption and {

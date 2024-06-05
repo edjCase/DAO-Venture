@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Button, Input, Label, Select } from "flowbite-svelte";
+    import { Button, Input, Label } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
     import MetaEffectChooser from "./MetaEffectChooser.svelte";
@@ -9,7 +9,7 @@
         nanosecondsToDate,
     } from "../../../utils/DateUtils";
     import { TrashBinSolid } from "flowbite-svelte-icons";
-    import TeamTraitEditor from "./TeamTraitEditor.svelte";
+    import TraitRequirementEditor from "./TraitRequirementEditor.svelte";
 
     export let value: AddScenarioRequest;
 
@@ -49,17 +49,6 @@
         value.options.splice(index, 1);
         value.options = value.options;
     };
-
-    let requirementKindItems = [
-        {
-            value: "required",
-            name: "Required",
-        },
-        {
-            value: "prohibited",
-            name: "Prohibited",
-        },
-    ];
 </script>
 
 <Label>Title</Label>
@@ -99,11 +88,15 @@
             <Label>Trait Requirements</Label>
             <div class="ml-4">
                 {#each option.traitRequirements as traitRequirement}
-                    <TeamTraitEditor bind:value={traitRequirement.id} />
-                    <Select
-                        items={requirementKindItems}
-                        bind:value={traitRequirement.kind}
-                    />
+                    <TraitRequirementEditor bind:value={traitRequirement} />
+                    <button
+                        on:click={() => {
+                            option.traitRequirements =
+                                option.traitRequirements.slice(i, 1);
+                        }}
+                    >
+                        <TrashBinSolid size="sm" />
+                    </button>
                 {/each}
                 <Button
                     on:click={() => {

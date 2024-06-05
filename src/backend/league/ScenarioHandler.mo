@@ -163,6 +163,7 @@ module {
             if (vote.option != null) {
                 return #err(#alreadyVoted);
             };
+            Debug.print("Voter " # Principal.toText(voterId) # " voted for option " # Nat.toText(option) # " in scenario " # Nat.toText(scenarioId));
             scenario.votes.put(
                 voterId,
                 {
@@ -172,8 +173,8 @@ module {
             );
             switch (calculateResultsInternal(scenario, false)) {
                 case (#noConsensus) ();
-                case (#consensus(_)) {
-                    await* end(scenario);
+                case (#consensus(teamVotingResult)) {
+                    await* end(scenario, teamVotingResult);
                 };
             };
             #ok;
@@ -226,23 +227,38 @@ module {
                 func(entry : (Nat, TeamStats)) : Bool = entry.1.totalVotingPower > 0,
             );
             for ((teamId, stats) in teamsWithVoters) {
-                var optionsWithMostVotes : Buffer.Buffer<(Nat, Nat)> = Buffer.Buffer<(Nat, Nat)>(0);
+                var optionsWithMostVotes = Buffer.Buffer<{ option : Nat; votingPower : Nat }>(0);
 
                 // Calculate the options with the most votes
-                for ((option, optionVotingPower) in IterTools.enumerate(stats.optionVotingPowers.vals())) {
-                    if (optionsWithMostVotes.size() < 1) {
-                        optionsWithMostVotes.add((option, optionVotingPower));
+                label f for ((option, optionVotingPower) in IterTools.enumerate(stats.optionVotingPowers.vals())) {
+                    if (optionVotingPower < 1) {
+                        // Skip non votes
+                        continue f;
+                    };
+                    let add = if (optionsWithMostVotes.size() < 1) {
+                        // If there are no options with most votes, add this as the first
+                        true;
                     } else {
-                        let maxVotes = optionsWithMostVotes.get(0).1;
-                        if (optionVotingPower > maxVotes) {
+                        let maxVotingPower = optionsWithMostVotes.get(0).votingPower;
+                        let isNewOrSameMax = optionVotingPower >= maxVotingPower;
+                        if (optionVotingPower > maxVotingPower) {
                             optionsWithMostVotes.clear(); // Reset options if a new max is found
                         };
-                        optionsWithMostVotes.add((option, optionVotingPower));
+                        isNewOrSameMax;
+                    };
+                    if (add) {
+                        optionsWithMostVotes.add({
+                            option = option;
+                            votingPower = optionVotingPower;
+                        });
                     };
                 };
                 let optionWithMostVotes = if (optionsWithMostVotes.size() == 1) {
                     ?optionsWithMostVotes.get(0);
                 } else {
+                    if (optionsWithMostVotes.size() > 1) {
+                        Debug.print("Team " # Nat.toText(teamId) # " has a tie in option voting, no consensus was reached");
+                    };
                     null;
                 };
 
@@ -253,7 +269,7 @@ module {
                         case (?o) {
                             // Validate that the majority has been reached, if voting is still active
                             let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(stats.totalVotingPower) / 2.) + 1));
-                            if (minMajorityVotingPower > o.1) {
+                            if (minMajorityVotingPower > o.votingPower) {
                                 return #noConsensus;
                             };
                         };
@@ -261,7 +277,7 @@ module {
                 };
                 let chosenOption : ?Nat = switch (optionWithMostVotes) {
                     case (null) null;
-                    case (?o) ?o.0;
+                    case (?o) ?o.option;
                 };
                 teamResults.add({
                     id = teamId;
@@ -350,12 +366,9 @@ module {
             };
         };
 
-        private func end(scenario : MutableScenarioData) : async* () {
+        private func end(scenario : MutableScenarioData, teamVotingResult : [TeamVotingResult]) : async* () {
+            Debug.print("Ending scenario " # Nat.toText(scenario.id));
             let prng = PseudoRandomX.fromBlob(await Random.blob());
-            let teamVotingResult = switch (calculateResultsInternal(scenario, true)) {
-                case (#consensus(teamVotingResult)) teamVotingResult;
-                case (#noConsensus) Prelude.unreachable();
-            };
             let resolvedScenarioState = resolveScenario(
                 prng,
                 scenario,
@@ -422,7 +435,11 @@ module {
                 func() : async* () {
                     Debug.print("Ending scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
-                    await* end(scenario);
+                    let teamVotingResult = switch (calculateResultsInternal(scenario, true)) {
+                        case (#consensus(teamVotingResult)) teamVotingResult;
+                        case (#noConsensus) Prelude.unreachable();
+                    };
+                    await* end(scenario, teamVotingResult);
                 },
             );
         };
