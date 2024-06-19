@@ -758,6 +758,7 @@ module {
             } catch (err) {
                 Debug.trap("Failed to start match group in stadium: " # Error.message(err));
             };
+            Timer.cancelTimer(scheduledMatchGroup.timerId); // Cancel timer incase the match group was forced early
             // TODO this should better handled in case of failure to start the match
             let inProgressMatches = startMatchGroupRequest.matches
             |> Iter.fromArray(_)

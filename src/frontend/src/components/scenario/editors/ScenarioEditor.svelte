@@ -66,8 +66,8 @@
 <Label>End Time</Label>
 <Input type="datetime-local" bind:value={endTime} />
 
-<Label>Abstain Effect</Label>
-<ScenarioEffectChooser bind:value={value.abstainEffect} />
+<Label>Undecided Effect</Label>
+<ScenarioEffectChooser bind:value={value.undecidedEffect} />
 
 <Label>Options</Label>
 <div class="ml-6 mb-4">

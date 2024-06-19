@@ -2,6 +2,14 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type AddScenarioBidOptionError = { 'notAuthorized' : null } |
+  { 'duplicate' : null } |
+  { 'scenarioDoesntSupportBids' : null } |
+  { 'scenarioNotFound' : null };
+export interface AddScenarioBidOptionRequest {
+  'scenarioId' : bigint,
+  'value' : bigint,
+}
 export type AddScenarioError = { 'notAuthorized' : null } |
   { 'invalid' : Array<string> };
 export interface AddScenarioRequest {
@@ -11,7 +19,7 @@ export interface AddScenarioRequest {
   'metaEffect' : MetaEffect,
   'teamIds' : Array<bigint>,
   'description' : string,
-  'abstainEffect' : Effect,
+  'undecidedEffect' : Effect,
   'options' : Array<ScenarioOptionWithEffect>,
 }
 export type AddScenarioResult = { 'ok' : null } |
@@ -86,36 +94,25 @@ export type Effect = { 'allOf' : Array<Effect> } |
   { 'teamTrait' : TeamTraitEffect } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<WeightedEffect> } |
-  { 'entropy' : { 'target' : TargetTeam, 'delta' : bigint } } |
-  {
-    'skill' : {
-      'duration' : Duration,
-      'skill' : ChosenOrRandomSkill,
-      'target' : TargetPosition,
-      'delta' : bigint,
-    }
-  } |
-  { 'injury' : { 'target' : TargetPosition } } |
-  { 'energy' : { 'value' : { 'flat' : bigint }, 'target' : TargetTeam } };
-export type EffectOutcome = {
-    'teamTrait' : {
-      'kind' : { 'add' : null } |
-        { 'remove' : null },
-      'traitId' : string,
-      'teamId' : bigint,
-    }
-  } |
-  { 'entropy' : { 'teamId' : bigint, 'delta' : bigint } } |
-  {
-    'skill' : {
-      'duration' : Duration,
-      'skill' : Skill,
-      'target' : TargetPositionInstance,
-      'delta' : bigint,
-    }
-  } |
-  { 'injury' : { 'target' : TargetPositionInstance } } |
-  { 'energy' : { 'teamId' : bigint, 'delta' : bigint } };
+  { 'entropy' : EntropyEffect } |
+  { 'skill' : SkillEffect } |
+  { 'injury' : InjuryEffect } |
+  { 'energy' : EnergyEffect };
+export type EffectOutcome = { 'teamTrait' : TeamTraitTeamEffectOutcome } |
+  { 'entropy' : EntropyTeamEffectOutcome } |
+  { 'skill' : SkillPlayerEffectOutcome } |
+  { 'injury' : InjuryPlayerEffectOutcome } |
+  { 'energy' : EnergyTeamEffectOutcome };
+export interface EnergyEffect {
+  'value' : { 'flat' : bigint },
+  'target' : TargetTeam,
+}
+export interface EnergyTeamEffectOutcome { 'teamId' : bigint, 'delta' : bigint }
+export interface EntropyEffect { 'target' : TargetTeam, 'delta' : bigint }
+export interface EntropyTeamEffectOutcome {
+  'teamId' : bigint,
+  'delta' : bigint,
+}
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -168,6 +165,19 @@ export type InProgressSeasonMatchGroupVariant = {
   { 'inProgress' : InProgressMatchGroup } |
   { 'notScheduled' : NotScheduledMatchGroup };
 export interface InProgressTeam { 'id' : bigint }
+export interface InjuryEffect { 'target' : TargetPosition }
+export interface InjuryPlayerEffectOutcome { 'target' : TargetPositionInstance }
+export interface LeagueChoiceMetaEffect {
+  'options' : Array<LeagueChoiceMetaOption>,
+}
+export interface LeagueChoiceMetaEffectOutcome { 'optionId' : [] | [bigint] }
+export interface LeagueChoiceMetaOption { 'effect' : Effect }
+export interface LotteryMetaEffect {
+  'prize' : Effect,
+  'options' : Array<LotteryMetaOption>,
+}
+export interface LotteryMetaEffectOutcome { 'winningTeamId' : [] | [bigint] }
+export interface LotteryMetaOption { 'tickets' : bigint }
 export type MatchAura = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
   { 'extraStrike' : null } |
@@ -191,51 +201,16 @@ export interface MatchPredictionSummary {
   'team2' : bigint,
   'yourVote' : [] | [TeamId],
 }
-export type MetaEffect = {
-    'lottery' : { 'prize' : Effect, 'options' : Array<{ 'tickets' : bigint }> }
-  } |
+export type MetaEffect = { 'lottery' : LotteryMetaEffect } |
   { 'noEffect' : null } |
-  {
-    'threshold' : {
-      'failure' : { 'description' : string, 'effect' : Effect },
-      'minAmount' : bigint,
-      'success' : { 'description' : string, 'effect' : Effect },
-      'options' : Array<{ 'value' : ThresholdOptionValue }>,
-      'abstainAmount' : ThresholdOptionValue,
-    }
-  } |
-  {
-    'proportionalBid' : {
-      'prize' : {
-        'kind' : {
-            'skill' : {
-              'duration' : Duration,
-              'skill' : ChosenOrRandomSkill,
-              'target' : TargetPosition,
-            }
-          },
-        'amount' : bigint,
-      },
-      'options' : Array<{ 'bidValue' : bigint }>,
-    }
-  } |
-  { 'leagueChoice' : { 'options' : Array<{ 'effect' : Effect }> } };
-export type MetaEffectOutcome = {
-    'lottery' : { 'winningTeamId' : [] | [bigint] }
-  } |
+  { 'threshold' : ThresholdMetaEffect } |
+  { 'proportionalBid' : ProportionalBidMetaEffect } |
+  { 'leagueChoice' : LeagueChoiceMetaEffect };
+export type MetaEffectOutcome = { 'lottery' : LotteryMetaEffectOutcome } |
   { 'noEffect' : null } |
-  {
-    'threshold' : {
-      'contributions' : Array<ThresholdContribution>,
-      'successful' : boolean,
-    }
-  } |
-  {
-    'proportionalBid' : {
-      'winningBids' : Array<{ 'teamId' : bigint, 'amount' : bigint }>,
-    }
-  } |
-  { 'leagueChoice' : { 'optionId' : [] | [bigint] } };
+  { 'threshold' : ThresholdMetaEffectOutcome } |
+  { 'proportionalBid' : ProportionalBidMetaEffectOutcome } |
+  { 'leagueChoice' : LeagueChoiceMetaEffectOutcome };
 export interface NotScheduledMatch {
   'team1' : TeamAssignment,
   'team2' : TeamAssignment,
@@ -309,6 +284,24 @@ export interface PredictMatchOutcomeRequest {
 }
 export type PredictMatchOutcomeResult = { 'ok' : null } |
   { 'err' : PredictMatchOutcomeError };
+export interface ProportionalBidMetaEffect {
+  'prize' : {
+    'kind' : {
+        'skill' : {
+          'duration' : Duration,
+          'skill' : ChosenOrRandomSkill,
+          'target' : TargetPosition,
+        }
+      },
+    'amount' : bigint,
+  },
+  'options' : Array<ProportionalBidMetaOption>,
+}
+export interface ProportionalBidMetaEffectOutcome {
+  'winningBids' : Array<ProportionalWinningBid>,
+}
+export interface ProportionalBidMetaOption { 'bidValue' : bigint }
+export interface ProportionalWinningBid { 'teamId' : bigint, 'amount' : bigint }
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent,
@@ -335,6 +328,8 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
+export type Result = { 'ok' : null } |
+  { 'err' : AddScenarioBidOptionError };
 export interface Scenario {
   'id' : bigint,
   'startTime' : bigint,
@@ -342,7 +337,7 @@ export interface Scenario {
   'endTime' : bigint,
   'metaEffect' : MetaEffect,
   'description' : string,
-  'abstainEffect' : Effect,
+  'undecidedEffect' : Effect,
   'state' : ScenarioState,
   'options' : Array<ScenarioOptionWithEffect>,
 }
@@ -357,9 +352,13 @@ export type ScenarioState = { 'notStarted' : null } |
   { 'resolved' : ScenarioStateResolved } |
   { 'inProgress' : null };
 export interface ScenarioStateResolved {
-  'teamChoices' : Array<{ 'option' : [] | [bigint], 'teamId' : bigint }>,
+  'teamChoices' : Array<ScenarioTeamChoice>,
   'effectOutcomes' : Array<EffectOutcome>,
   'metaEffectOutcome' : MetaEffectOutcome,
+}
+export interface ScenarioTeamChoice {
+  'option' : [] | [bigint],
+  'teamId' : bigint,
 }
 export interface ScenarioVote {
   'option' : [] | [bigint],
@@ -391,6 +390,18 @@ export type Skill = { 'battingAccuracy' : null } |
   { 'battingPower' : null } |
   { 'defense' : null } |
   { 'throwingPower' : null };
+export interface SkillEffect {
+  'duration' : Duration,
+  'skill' : ChosenOrRandomSkill,
+  'target' : TargetPosition,
+  'delta' : bigint,
+}
+export interface SkillPlayerEffectOutcome {
+  'duration' : Duration,
+  'skill' : Skill,
+  'target' : TargetPositionInstance,
+  'delta' : bigint,
+}
 export interface Skills {
   'battingAccuracy' : bigint,
   'throwingAccuracy' : bigint,
@@ -471,7 +482,24 @@ export interface TeamTraitEffect {
 }
 export type TeamTraitEffectKind = { 'add' : null } |
   { 'remove' : null };
+export interface TeamTraitTeamEffectOutcome {
+  'kind' : TeamTraitEffectKind,
+  'traitId' : string,
+  'teamId' : bigint,
+}
 export interface ThresholdContribution { 'teamId' : bigint, 'amount' : bigint }
+export interface ThresholdMetaEffect {
+  'failure' : { 'description' : string, 'effect' : Effect },
+  'minAmount' : bigint,
+  'success' : { 'description' : string, 'effect' : Effect },
+  'options' : Array<ThresholdMetaOption>,
+  'undecidedAmount' : ThresholdOptionValue,
+}
+export interface ThresholdMetaEffectOutcome {
+  'contributions' : Array<ThresholdContribution>,
+  'successful' : boolean,
+}
+export interface ThresholdMetaOption { 'value' : ThresholdOptionValue }
 export type ThresholdOptionValue = { 'fixed' : bigint } |
   {
     'weightedChance' : Array<
@@ -514,6 +542,7 @@ export interface WeightedEffect {
 }
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
+  'addScenarioBidOption' : ActorMethod<[AddScenarioBidOptionRequest], Result>,
   'claimBenevolentDictatorRole' : ActorMethod<
     [],
     ClaimBenevolentDictatorRoleResult

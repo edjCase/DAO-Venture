@@ -1,19 +1,18 @@
 <script lang="ts">
-    import { Button } from "flowbite-svelte";
+    import { Button, Input } from "flowbite-svelte";
     import {
-        ScenarioOptionWithEffect,
+        Scenario,
         VoteOnScenarioRequest,
     } from "../../ic-agent/declarations/league";
     import { Team } from "../../ic-agent/declarations/teams";
     import { teamStore } from "../../stores/TeamStore";
     import { User } from "../../ic-agent/declarations/users";
-    import LoadingButton from "../common/LoadingButton.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { leagueAgentFactory } from "../../ic-agent/League";
     import ScenarioOption from "./ScenarioOption.svelte";
+    import LoadingButton from "../common/LoadingButton.svelte";
 
-    export let scenarioId: bigint;
-    export let options: ScenarioOptionWithEffect[];
+    export let scenario: Scenario;
     export let userContext: User | undefined;
 
     $: teams = $teamStore;
@@ -23,6 +22,7 @@
     let teamId: bigint | undefined;
     let isOwner: boolean = false;
     let team: Team | undefined;
+    let bid: number | undefined;
     $: {
         teamId = userContext?.team[0]?.id;
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
@@ -39,11 +39,11 @@
             return;
         }
         let request: VoteOnScenarioRequest = {
-            scenarioId: scenarioId,
+            scenarioId: scenario.id,
             option: BigInt(selectedChoice),
         };
         console.log(
-            `Voting for team ${teamId} and scenario ${scenarioId} with option ${selectedChoice}`,
+            `Voting for team ${teamId} and scenario ${scenario.id} with option ${selectedChoice}`,
             request,
         );
         let leagueAgent = await leagueAgentFactory();
@@ -51,14 +51,33 @@
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
             teamStore.refetch();
-            scenarioStore.refetchVotes([scenarioId]);
+            scenarioStore.refetchVotes([scenario.id]);
         } else {
             console.error("Failed to vote for match: ", result);
         }
     };
+
+    let addBid = async function () {
+        if (bid === undefined) {
+            console.error("No bid amount specified");
+            return;
+        }
+        let leagueAgent = await leagueAgentFactory();
+        let result = await leagueAgent.addScenarioBidOption({
+            scenarioId: scenario.id,
+            value: BigInt(bid),
+        });
+        if ("ok" in result) {
+            console.log("Added bid for scenario", scenario.id);
+            scenarioStore.refetchById(scenario.id);
+        } else {
+            console.error("Failed to add bid for scenario: ", result);
+        }
+    };
+
     scenarioStore.subscribeVotes((votes) => {
-        if (votes[Number(scenarioId)] !== undefined) {
-            let chosenOption = votes[Number(scenarioId)].option[0];
+        if (votes[Number(scenario.id)] !== undefined) {
+            let chosenOption = votes[Number(scenario.id)].option[0];
             if (chosenOption === undefined) {
                 voteStatus = "notVoted";
             } else {
@@ -72,22 +91,27 @@
     });
 </script>
 
-{#each options as option, index}
-    <ScenarioOption
-        {option}
-        selected={selectedChoice === index}
-        teamEnergy={team?.energy}
-        teamTraits={team?.traits.map((t) => t.id)}
-        {voteStatus}
-        state={{
-            inProgress: {
-                onSelect: () => {
-                    selectedChoice = index;
+{#if scenario.options.length < 1}
+    No options available
+{:else}
+    {#each scenario.options as option, index}
+        <ScenarioOption
+            {option}
+            selected={selectedChoice === index}
+            teamEnergy={team?.energy}
+            teamTraits={team?.traits.map((t) => t.id)}
+            {voteStatus}
+            state={{
+                inProgress: {
+                    onSelect: () => {
+                        selectedChoice = index;
+                        register();
+                    },
                 },
-            },
-        }}
-    />
-{/each}
+            }}
+        />
+    {/each}
+{/if}
 
 {#if voteStatus === "ineligible"}
     Ineligible to vote
@@ -95,10 +119,16 @@
         <div>Want to participate in scenarios?</div>
         <Button>Become a Team co-owner</Button>
     {/if}
-{:else if voteStatus === "notVoted"}
-    <div class="flex justify-center p-5">
-        <LoadingButton onClick={register}>
-            Submit Vote for Team {team?.name}
-        </LoadingButton>
+{:else if "lottery" in scenario.metaEffect}
+    <div>
+        Add Ticket Count
+        <Input type="number" bind:value={bid} />
+        <LoadingButton onClick={addBid}>Submit</LoadingButton>
+    </div>
+{:else if "proportionalBid" in scenario.metaEffect}
+    <div>
+        Add Bid
+        <Input type="number" bind:value={bid} />
+        <LoadingButton onClick={addBid}>Submit</LoadingButton>
     </div>
 {/if}

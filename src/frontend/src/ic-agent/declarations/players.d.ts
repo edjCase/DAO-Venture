@@ -34,6 +34,7 @@ export type FieldPosition = { 'rightField' : null } |
 export type GetPlayerError = { 'notFound' : null };
 export type GetPlayerResult = { 'ok' : Player } |
   { 'err' : GetPlayerError };
+export interface InjuryPlayerEffectOutcome { 'target' : TargetPositionInstance }
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
 export type OnSeasonEndError = { 'notAuthorized' : null };
@@ -51,15 +52,8 @@ export interface Player {
   'dislikes' : Array<string>,
   'skills' : Skills,
 }
-export type PlayerEffectOutcome = {
-    'skill' : {
-      'duration' : Duration,
-      'skill' : Skill,
-      'target' : TargetPositionInstance,
-      'delta' : bigint,
-    }
-  } |
-  { 'injury' : { 'target' : TargetPositionInstance } };
+export type PlayerEffectOutcome = { 'skill' : SkillPlayerEffectOutcome } |
+  { 'injury' : InjuryPlayerEffectOutcome };
 export type PlayerId = number;
 export interface PlayerMatchStatsWithId {
   'playerId' : PlayerId,
@@ -100,6 +94,12 @@ export type Skill = { 'battingAccuracy' : null } |
   { 'battingPower' : null } |
   { 'defense' : null } |
   { 'throwingPower' : null };
+export interface SkillPlayerEffectOutcome {
+  'duration' : Duration,
+  'skill' : Skill,
+  'target' : TargetPositionInstance,
+  'delta' : bigint,
+}
 export interface Skills {
   'battingAccuracy' : bigint,
   'throwingAccuracy' : bigint,

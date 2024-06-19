@@ -1,7 +1,6 @@
 <script lang="ts">
     import { Button, Input, Label } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
-    import ScenarioEffectEditor from "./ScenarioEffectEditor.svelte";
     import { MetaEffect } from "../../../ic-agent/declarations/league";
     import { toJsonString } from "../../../utils/StringUtil";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
@@ -58,13 +57,13 @@
         <Button on:click={addOption}>Add Option</Button>
     </div>
     <Label>Prize</Label>
-    <ScenarioEffectEditor bind:value={value.lottery.prize} />
+    <ScenarioEffectChooser bind:value={value.lottery.prize} />
 {:else if "threshold" in value}
     <Label>Min Value</Label>
     <BigIntInput bind:value={value.threshold.minAmount} />
 
-    <Label>Abstain Value</Label>
-    <ThresholdValueChooser bind:value={value.threshold.abstainAmount} />
+    <Label>Undecided Value</Label>
+    <ThresholdValueChooser bind:value={value.threshold.undecidedAmount} />
 
     <div class="ml-4">
         {#each value.threshold.options as option, i}
@@ -104,13 +103,16 @@
     <Label>Prize Effect</Label>
     {#if "skill" in value.proportionalBid.prize.kind}
         <div class="ml-4">
+            <Label>Skill</Label>
             <ChosenOrRandomSkillChooser
                 bind:value={value.proportionalBid.prize.kind.skill.skill}
             />
+            <Label>Position</Label>
+            <ChosenOrRandomFieldPositionChooser
+                bind:value={value.proportionalBid.prize.kind.skill.target
+                    .position}
+            />
         </div>
-        <ChosenOrRandomFieldPositionChooser
-            bind:value={value.proportionalBid.prize.kind.skill.target.position}
-        />
     {:else}
         NOT IMPLEMENTED PRIZE KIND : {toJsonString(
             value.proportionalBid.prize.kind,

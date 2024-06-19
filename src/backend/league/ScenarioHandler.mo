@@ -63,7 +63,7 @@ module {
         id : Nat;
         title : Text;
         description : Text;
-        abstainEffect : Scenario.Effect;
+        undecidedEffect : Scenario.Effect;
         options : [Scenario.ScenarioOptionWithEffect];
         metaEffect : Scenario.MetaEffect;
         state : ScenarioState;
@@ -180,16 +180,76 @@ module {
             #ok;
         };
 
-        public func getVote(scenarioId : Nat, voterId : Principal) : {
-            #ok : { option : ?Nat; votingPower : Nat };
-            #notEligible;
-            #scenarioNotFound;
-        } {
-            let ?scenario = scenarios.get(scenarioId) else return #scenarioNotFound;
+        public func getVote(scenarioId : Nat, voterId : Principal) : Result.Result<{ option : ?Nat; votingPower : Nat }, { #notEligible; #scenarioNotFound }> {
+            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             switch (scenario.votes.get(voterId)) {
-                case (null) #notEligible;
+                case (null) #err(#notEligible);
                 case (?v) #ok(v);
             };
+        };
+
+        public func addBidOption(scenarioId : Nat, value : Nat) : Result.Result<(), { #scenarioNotFound; #scenarioDoesntSupportBids; #duplicate }> {
+            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+            let (updatedMetaEffect, newOption) : (Scenario.MetaEffect, Scenario.ScenarioOptionWithEffect) = switch (scenario.metaEffect) {
+                case (#lottery(lottery)) {
+                    if (IterTools.any(lottery.options.vals(), func(option : Scenario.LotteryMetaOption) : Bool = option.tickets == value)) {
+                        return #err(#duplicate);
+                    };
+                    let newMetaOptions = Buffer.fromArray<Scenario.LotteryMetaOption>(lottery.options);
+                    newMetaOptions.add({
+                        tickets = value;
+                    });
+                    let updatedMetaEffect = #lottery({
+                        lottery with
+                        options = Buffer.toArray(newMetaOptions)
+                    });
+                    let newOption : Scenario.ScenarioOptionWithEffect = {
+                        title = "Buy " # Nat.toText(value) # " tickets";
+                        description = "Buy " # Nat.toText(value) # " tickets";
+                        energyCost = value;
+                        traitRequirements = [];
+                        effect = #noEffect;
+                    };
+                    (updatedMetaEffect, newOption);
+                };
+                case (#proportionalBid(proportionalBid)) {
+                    if (IterTools.any(proportionalBid.options.vals(), func(option : Scenario.ProportionalBidMetaOption) : Bool = option.bidValue == value)) {
+                        return #err(#duplicate);
+                    };
+                    let newMetaOptions = Buffer.fromArray<Scenario.ProportionalBidMetaOption>(proportionalBid.options);
+                    newMetaOptions.add({
+                        bidValue = value;
+                    });
+                    let updatedMetaEffect = #proportionalBid({
+                        proportionalBid with
+                        options = Buffer.toArray(newMetaOptions)
+                    });
+                    let newOption : Scenario.ScenarioOptionWithEffect = {
+                        title = "Bid " # Nat.toText(value);
+                        description = "Bid " # Nat.toText(value);
+                        energyCost = value;
+                        traitRequirements = [];
+                        effect = #noEffect;
+                    };
+                    (updatedMetaEffect, newOption);
+                };
+                case (_) {
+                    return #err(#scenarioDoesntSupportBids);
+                };
+            };
+
+            let newOptions = Buffer.fromArray<Scenario.ScenarioOptionWithEffect>(scenario.options);
+            newOptions.add(newOption);
+
+            scenarios.put(
+                scenarioId,
+                {
+                    scenario with
+                    options = Buffer.toArray(newOptions);
+                    metaEffect = updatedMetaEffect;
+                },
+            );
+            #ok;
         };
 
         private func calculateResultsInternal(scenario : MutableScenarioData, votingClosed : Bool) : {
@@ -330,7 +390,7 @@ module {
                     id = scenarioId;
                     title = scenario.title;
                     description = scenario.description;
-                    abstainEffect = scenario.abstainEffect;
+                    undecidedEffect = scenario.undecidedEffect;
                     options = scenario.options;
                     metaEffect = scenario.metaEffect;
                     state = #notStarted({
@@ -508,7 +568,7 @@ module {
             startTime = data.startTime;
             endTime = data.endTime;
             description = data.description;
-            abstainEffect = data.abstainEffect;
+            undecidedEffect = data.undecidedEffect;
             options = data.options;
             metaEffect = data.metaEffect;
             state = state;
@@ -582,7 +642,28 @@ module {
             errors.add("Scenario must have a description");
         };
         if (scenario.options.size() < 2) {
-            errors.add("Scenario must have at least 2 options");
+            let isDynamic = switch (scenario.metaEffect) {
+                case (#lottery(_) or #proportionalBid(_)) true;
+                case (_) false;
+            };
+            if (not isDynamic) {
+                errors.add("Scenario must have at least 2 options");
+            };
+        };
+        let metaOptionCount : ?Nat = switch (scenario.metaEffect) {
+            case (#lottery(lottery)) ?lottery.options.size();
+            case (#proportionalBid(proportionalBid)) ?proportionalBid.options.size();
+            case (#noEffect) null;
+            case (#leagueChoice(leagueChoice)) ?leagueChoice.options.size();
+            case (#threshold(threshold)) ?threshold.options.size();
+        };
+        switch (metaOptionCount) {
+            case (null) {};
+            case (?count) {
+                if (count != scenario.options.size()) {
+                    errors.add("Meta effect options count (" #Nat.toText(count) # ") must match the scenario options count (" #Nat.toText(scenario.options.size()) # ")");
+                };
+            };
         };
         if (scenario.teamIds.size() < 1) {
             errors.add("Scenario must have at least 1 team");
@@ -667,7 +748,7 @@ module {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
         for (teamData in Iter.fromArray(teamChoices)) {
             let effect = switch (teamData.option) {
-                case (null) scenario.abstainEffect;
+                case (null) scenario.undecidedEffect;
                 case (?option) scenario.options[option].effect;
             };
             resolveEffectInternal(
@@ -798,7 +879,7 @@ module {
                     func(teamData : TeamVotingResult) : Scenario.ThresholdContribution {
 
                         let optionValue = switch (teamData.option) {
-                            case (null) threshold.abstainAmount;
+                            case (null) threshold.undecidedAmount;
                             case (?option) threshold.options[option].value;
                         };
                         let value : Int = switch (optionValue) {

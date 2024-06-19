@@ -20,6 +20,10 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'effect' : Effect,
   });
+  const EntropyEffect = IDL.Record({
+    'target' : TargetTeam,
+    'delta' : IDL.Int,
+  });
   const Duration = IDL.Variant({
     'matches' : IDL.Nat,
     'indefinite' : IDL.Null,
@@ -55,26 +59,34 @@ export const idlFactory = ({ IDL }) => {
     'team' : TargetTeam,
     'position' : ChosenOrRandomFieldPosition,
   });
+  const SkillEffect = IDL.Record({
+    'duration' : Duration,
+    'skill' : ChosenOrRandomSkill,
+    'target' : TargetPosition,
+    'delta' : IDL.Int,
+  });
+  const InjuryEffect = IDL.Record({ 'target' : TargetPosition });
+  const EnergyEffect = IDL.Record({
+    'value' : IDL.Variant({ 'flat' : IDL.Int }),
+    'target' : TargetTeam,
+  });
   Effect.fill(
     IDL.Variant({
       'allOf' : IDL.Vec(Effect),
       'teamTrait' : TeamTraitEffect,
       'noEffect' : IDL.Null,
       'oneOf' : IDL.Vec(WeightedEffect),
-      'entropy' : IDL.Record({ 'target' : TargetTeam, 'delta' : IDL.Int }),
-      'skill' : IDL.Record({
-        'duration' : Duration,
-        'skill' : ChosenOrRandomSkill,
-        'target' : TargetPosition,
-        'delta' : IDL.Int,
-      }),
-      'injury' : IDL.Record({ 'target' : TargetPosition }),
-      'energy' : IDL.Record({
-        'value' : IDL.Variant({ 'flat' : IDL.Int }),
-        'target' : TargetTeam,
-      }),
+      'entropy' : EntropyEffect,
+      'skill' : SkillEffect,
+      'injury' : InjuryEffect,
+      'energy' : EnergyEffect,
     })
   );
+  const LotteryMetaOption = IDL.Record({ 'tickets' : IDL.Nat });
+  const LotteryMetaEffect = IDL.Record({
+    'prize' : Effect,
+    'options' : IDL.Vec(LotteryMetaOption),
+  });
   const ThresholdOptionValue = IDL.Variant({
     'fixed' : IDL.Int,
     'weightedChance' : IDL.Vec(
@@ -85,35 +97,38 @@ export const idlFactory = ({ IDL }) => {
       })
     ),
   });
-  const MetaEffect = IDL.Variant({
-    'lottery' : IDL.Record({
-      'prize' : Effect,
-      'options' : IDL.Vec(IDL.Record({ 'tickets' : IDL.Nat })),
-    }),
-    'noEffect' : IDL.Null,
-    'threshold' : IDL.Record({
-      'failure' : IDL.Record({ 'description' : IDL.Text, 'effect' : Effect }),
-      'minAmount' : IDL.Nat,
-      'success' : IDL.Record({ 'description' : IDL.Text, 'effect' : Effect }),
-      'options' : IDL.Vec(IDL.Record({ 'value' : ThresholdOptionValue })),
-      'abstainAmount' : ThresholdOptionValue,
-    }),
-    'proportionalBid' : IDL.Record({
-      'prize' : IDL.Record({
-        'kind' : IDL.Variant({
-          'skill' : IDL.Record({
-            'duration' : Duration,
-            'skill' : ChosenOrRandomSkill,
-            'target' : TargetPosition,
-          }),
+  const ThresholdMetaOption = IDL.Record({ 'value' : ThresholdOptionValue });
+  const ThresholdMetaEffect = IDL.Record({
+    'failure' : IDL.Record({ 'description' : IDL.Text, 'effect' : Effect }),
+    'minAmount' : IDL.Nat,
+    'success' : IDL.Record({ 'description' : IDL.Text, 'effect' : Effect }),
+    'options' : IDL.Vec(ThresholdMetaOption),
+    'undecidedAmount' : ThresholdOptionValue,
+  });
+  const ProportionalBidMetaOption = IDL.Record({ 'bidValue' : IDL.Nat });
+  const ProportionalBidMetaEffect = IDL.Record({
+    'prize' : IDL.Record({
+      'kind' : IDL.Variant({
+        'skill' : IDL.Record({
+          'duration' : Duration,
+          'skill' : ChosenOrRandomSkill,
+          'target' : TargetPosition,
         }),
-        'amount' : IDL.Nat,
       }),
-      'options' : IDL.Vec(IDL.Record({ 'bidValue' : IDL.Nat })),
+      'amount' : IDL.Nat,
     }),
-    'leagueChoice' : IDL.Record({
-      'options' : IDL.Vec(IDL.Record({ 'effect' : Effect })),
-    }),
+    'options' : IDL.Vec(ProportionalBidMetaOption),
+  });
+  const LeagueChoiceMetaOption = IDL.Record({ 'effect' : Effect });
+  const LeagueChoiceMetaEffect = IDL.Record({
+    'options' : IDL.Vec(LeagueChoiceMetaOption),
+  });
+  const MetaEffect = IDL.Variant({
+    'lottery' : LotteryMetaEffect,
+    'noEffect' : IDL.Null,
+    'threshold' : ThresholdMetaEffect,
+    'proportionalBid' : ProportionalBidMetaEffect,
+    'leagueChoice' : LeagueChoiceMetaEffect,
   });
   const TraitRequirementKind = IDL.Variant({
     'prohibited' : IDL.Null,
@@ -137,7 +152,7 @@ export const idlFactory = ({ IDL }) => {
     'metaEffect' : MetaEffect,
     'teamIds' : IDL.Vec(IDL.Nat),
     'description' : IDL.Text,
-    'abstainEffect' : Effect,
+    'undecidedEffect' : Effect,
     'options' : IDL.Vec(ScenarioOptionWithEffect),
   });
   const AddScenarioError = IDL.Variant({
@@ -147,6 +162,20 @@ export const idlFactory = ({ IDL }) => {
   const AddScenarioResult = IDL.Variant({
     'ok' : IDL.Null,
     'err' : AddScenarioError,
+  });
+  const AddScenarioBidOptionRequest = IDL.Record({
+    'scenarioId' : IDL.Nat,
+    'value' : IDL.Nat,
+  });
+  const AddScenarioBidOptionError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'duplicate' : IDL.Null,
+    'scenarioDoesntSupportBids' : IDL.Null,
+    'scenarioNotFound' : IDL.Null,
+  });
+  const Result = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : AddScenarioBidOptionError,
   });
   const ClaimBenevolentDictatorRoleError = IDL.Variant({
     'notOpenToClaim' : IDL.Null,
@@ -248,48 +277,73 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const GetProposalsResult = IDL.Variant({ 'ok' : PagedResult });
+  const ScenarioTeamChoice = IDL.Record({
+    'option' : IDL.Opt(IDL.Nat),
+    'teamId' : IDL.Nat,
+  });
+  const TeamTraitTeamEffectOutcome = IDL.Record({
+    'kind' : TeamTraitEffectKind,
+    'traitId' : IDL.Text,
+    'teamId' : IDL.Nat,
+  });
+  const EntropyTeamEffectOutcome = IDL.Record({
+    'teamId' : IDL.Nat,
+    'delta' : IDL.Int,
+  });
   const TargetPositionInstance = IDL.Record({
     'teamId' : IDL.Nat,
     'position' : FieldPosition,
   });
+  const SkillPlayerEffectOutcome = IDL.Record({
+    'duration' : Duration,
+    'skill' : Skill,
+    'target' : TargetPositionInstance,
+    'delta' : IDL.Int,
+  });
+  const InjuryPlayerEffectOutcome = IDL.Record({
+    'target' : TargetPositionInstance,
+  });
+  const EnergyTeamEffectOutcome = IDL.Record({
+    'teamId' : IDL.Nat,
+    'delta' : IDL.Int,
+  });
   const EffectOutcome = IDL.Variant({
-    'teamTrait' : IDL.Record({
-      'kind' : IDL.Variant({ 'add' : IDL.Null, 'remove' : IDL.Null }),
-      'traitId' : IDL.Text,
-      'teamId' : IDL.Nat,
-    }),
-    'entropy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
-    'skill' : IDL.Record({
-      'duration' : Duration,
-      'skill' : Skill,
-      'target' : TargetPositionInstance,
-      'delta' : IDL.Int,
-    }),
-    'injury' : IDL.Record({ 'target' : TargetPositionInstance }),
-    'energy' : IDL.Record({ 'teamId' : IDL.Nat, 'delta' : IDL.Int }),
+    'teamTrait' : TeamTraitTeamEffectOutcome,
+    'entropy' : EntropyTeamEffectOutcome,
+    'skill' : SkillPlayerEffectOutcome,
+    'injury' : InjuryPlayerEffectOutcome,
+    'energy' : EnergyTeamEffectOutcome,
+  });
+  const LotteryMetaEffectOutcome = IDL.Record({
+    'winningTeamId' : IDL.Opt(IDL.Nat),
   });
   const ThresholdContribution = IDL.Record({
     'teamId' : IDL.Nat,
     'amount' : IDL.Int,
   });
+  const ThresholdMetaEffectOutcome = IDL.Record({
+    'contributions' : IDL.Vec(ThresholdContribution),
+    'successful' : IDL.Bool,
+  });
+  const ProportionalWinningBid = IDL.Record({
+    'teamId' : IDL.Nat,
+    'amount' : IDL.Nat,
+  });
+  const ProportionalBidMetaEffectOutcome = IDL.Record({
+    'winningBids' : IDL.Vec(ProportionalWinningBid),
+  });
+  const LeagueChoiceMetaEffectOutcome = IDL.Record({
+    'optionId' : IDL.Opt(IDL.Nat),
+  });
   const MetaEffectOutcome = IDL.Variant({
-    'lottery' : IDL.Record({ 'winningTeamId' : IDL.Opt(IDL.Nat) }),
+    'lottery' : LotteryMetaEffectOutcome,
     'noEffect' : IDL.Null,
-    'threshold' : IDL.Record({
-      'contributions' : IDL.Vec(ThresholdContribution),
-      'successful' : IDL.Bool,
-    }),
-    'proportionalBid' : IDL.Record({
-      'winningBids' : IDL.Vec(
-        IDL.Record({ 'teamId' : IDL.Nat, 'amount' : IDL.Nat })
-      ),
-    }),
-    'leagueChoice' : IDL.Record({ 'optionId' : IDL.Opt(IDL.Nat) }),
+    'threshold' : ThresholdMetaEffectOutcome,
+    'proportionalBid' : ProportionalBidMetaEffectOutcome,
+    'leagueChoice' : LeagueChoiceMetaEffectOutcome,
   });
   const ScenarioStateResolved = IDL.Record({
-    'teamChoices' : IDL.Vec(
-      IDL.Record({ 'option' : IDL.Opt(IDL.Nat), 'teamId' : IDL.Nat })
-    ),
+    'teamChoices' : IDL.Vec(ScenarioTeamChoice),
     'effectOutcomes' : IDL.Vec(EffectOutcome),
     'metaEffectOutcome' : MetaEffectOutcome,
   });
@@ -305,7 +359,7 @@ export const idlFactory = ({ IDL }) => {
     'endTime' : IDL.Int,
     'metaEffect' : MetaEffect,
     'description' : IDL.Text,
-    'abstainEffect' : Effect,
+    'undecidedEffect' : Effect,
     'state' : ScenarioState,
     'options' : IDL.Vec(ScenarioOptionWithEffect),
   });
@@ -619,6 +673,11 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
+    'addScenarioBidOption' : IDL.Func(
+        [AddScenarioBidOptionRequest],
+        [Result],
+        [],
+      ),
     'claimBenevolentDictatorRole' : IDL.Func(
         [],
         [ClaimBenevolentDictatorRoleResult],

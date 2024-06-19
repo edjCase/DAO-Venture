@@ -22,7 +22,7 @@
         teamIds: [],
         startTime: [],
         endTime: dateToNanoseconds(initialEnd),
-        abstainEffect: {
+        undecidedEffect: {
             entropy: {
                 target: { choosingTeam: null },
                 delta: BigInt(1),
@@ -84,7 +84,7 @@
             teamIds: [],
             startTime: scenario.startTime, // Keep the same start time
             endTime: scenario.endTime, // Keep the same end time
-            abstainEffect: selectedScenario.abstainEffect,
+            undecidedEffect: selectedScenario.undecidedEffect,
             options: selectedScenario.options,
             metaEffect: selectedScenario.metaEffect,
         };

@@ -10,7 +10,7 @@
         if (selectedType === "threshold") {
             value = {
                 threshold: {
-                    abstainAmount: { fixed: BigInt(0) },
+                    undecidedAmount: { fixed: BigInt(0) },
                     options: [
                         {
                             value: { fixed: BigInt(0) },

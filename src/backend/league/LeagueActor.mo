@@ -338,12 +338,17 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
+    public shared ({ caller }) func addScenarioBidOption(request : Types.AddScenarioBidOptionRequest) : async Result.Result<(), Types.AddScenarioBidOptionError> {
         switch (scenarioHandler.getVote(request.scenarioId, caller)) {
-            case (#ok(v)) #ok(v);
-            case (#notEligible) return #err(#notEligible);
-            case (#scenarioNotFound) return #err(#scenarioNotFound);
+            case (#ok(vote)) ();
+            case (#err(#notEligible)) return #err(#notAuthorized); // Only voters can suggest
+            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
         };
+        scenarioHandler.addBidOption(request.scenarioId, request.value);
+    };
+
+    public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
+        scenarioHandler.getVote(request.scenarioId, caller);
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {

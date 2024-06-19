@@ -68,7 +68,7 @@
     <Label>Team</Label>
     <TargetTeamChooser bind:value={value.energy.target} />
 {:else if "skill" in value}
-    <Label>Target</Label>
+    <Label>Target Position</Label>
     <div class="ml-4">
         <TargetPositionEditor bind:value={value.skill.target} />
     </div>
