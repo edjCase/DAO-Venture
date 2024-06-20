@@ -54,6 +54,13 @@ module {
             players.get(id);
         };
 
+        public func getPosition(teamId : Nat, position : FieldPosition.FieldPosition) : ?PlayerInfo {
+            IterTools.find(
+                players.vals(),
+                func(player : PlayerInfo) : Bool = player.teamId == teamId and player.position == position,
+            );
+        };
+
         public func getAll(teamId : ?Nat) : [PlayerInfo] {
             switch (teamId) {
                 case (null) Iter.toArray(players.vals());

@@ -24,6 +24,7 @@ import Text "mo:base/Text";
 import TextX "mo:xtended-text/TextX";
 import Season "../models/Season";
 import Trait "../models/Trait";
+import Skill "../models/Skill";
 
 module {
 
@@ -539,7 +540,12 @@ module {
             switch (proposal.content) {
                 case (#train(train)) {
                     try {
-                        let trainCost = 1; // TODO
+                        // TODO atomic operation
+                        let player = switch (await PlayersActor.getPosition(team.id, train.position)) {
+                            case (#ok(player)) player;
+                            case (#err(e)) return #err("Error getting player in players actor: " # debug_show (e));
+                        };
+                        let trainCost = Skill.get(player.skills, train.skill);
                         if (team.energy < trainCost) {
                             return #err("Not enough energy to train player");
                         };

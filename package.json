@@ -4,7 +4,7 @@
         "build_frontend": "cd src/frontend && npm install && npm run build",
         "build_static_frontend": "cd src/static-site && npm install && npm run build",
         "reset": "dfx deploy stadium --mode reinstall -y && dfx deploy teams --mode reinstall -y && dfx deploy users --mode reinstall -y && dfx deploy players --mode reinstall -y && dfx deploy league --mode reinstall -y",
-        "reset_prod": "dfx deploy stadium --ic --mode reinstall -y && dfx deploy teams --ic --mode reinstall -y && dfx deploy users --ic --mode reinstall -y && dfx deploy players --ic --mode reinstall -y && dfx deploy league --ic --mode reinstall -y && dfx deploy frontend --ic --mode reinstall -y",
+        "reset_prod": "dfx deploy stadium --ic --mode reinstall -y && dfx deploy players --ic --mode reinstall -y && dfx deploy teams --ic --mode reinstall -y && dfx deploy users --ic --mode reinstall -y && dfx deploy league --ic --mode reinstall -y && dfx deploy frontend --ic --mode reinstall -y",
         "single_motoko": "node motoko_to_single_file.js"
     }
 }

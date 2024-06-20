@@ -148,7 +148,10 @@
 
 <FormTemplate {generateProposal} {teamId}>
     <div class="p-2">Train the player in the position specified.</div>
-    <div class="p-2">Will increase skill by 1 point at a cost of 1 energy.</div>
+    <div class="p-2">
+        Increases skill to the next level at the cost of energy equal to the new
+        level.
+    </div>
     <Label>Skill</Label>
     <Select items={skillTypes} bind:value={selectedSkillId} />
     <Label>Position</Label>

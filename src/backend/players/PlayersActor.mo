@@ -7,6 +7,7 @@ import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
 import Bool "mo:base/Bool";
+import Result "mo:base/Result";
 import Types "Types";
 import FieldPosition "../models/FieldPosition";
 import PlayerHandler "PlayerHandler";
@@ -63,6 +64,13 @@ actor : Types.PlayerActor {
             case (null) {
                 #err(#notFound);
             };
+        };
+    };
+
+    public query func getPosition(teamId : Nat, position : FieldPosition.FieldPosition) : async Result.Result<Player.Player, Types.GetPositionError> {
+        switch (playerHandler.getPosition(teamId, position)) {
+            case (?player) #ok(player);
+            case (null) #err(#teamNotFound);
         };
     };
 

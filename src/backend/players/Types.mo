@@ -7,6 +7,7 @@ module {
     public type PlayerActor = actor {
         addFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
         getPlayer : query (id : Nat32) -> async GetPlayerResult;
+        getPosition : query (teamId : Nat, position : FieldPosition.FieldPosition) -> async Result.Result<Player.Player, GetPositionError>;
         getTeamPlayers : query (teamId : Nat) -> async [Player.Player];
         getAllPlayers : query () -> async [Player.Player];
         populateTeamRoster : (teamId : Nat) -> async PopulateTeamRosterResult;
@@ -20,6 +21,11 @@ module {
         addMatchStats : (matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) -> async AddMatchStatsResult;
         setTeamsCanisterId : (canisterId : Principal) -> async SetTeamsCanisterIdResult;
     };
+
+    public type GetPositionError = {
+        #teamNotFound;
+    };
+
     public type SetTeamsCanisterIdError = {
         #notAuthorized;
     };
