@@ -145,7 +145,7 @@ module {
     };
 
     public type ScenarioOptionWithEffect = ScenarioOption and {
-        effect : Effect;
+        teamEffect : Effect;
     };
 
     public type Scenario = {
@@ -155,9 +155,75 @@ module {
         startTime : Int;
         endTime : Int;
         undecidedEffect : Effect;
-        options : [ScenarioOptionWithEffect];
-        metaEffect : MetaEffect;
+        kind : ScenarioKind;
         state : ScenarioState;
+    };
+
+    public type ScenarioKind = {
+        #noLeagueEffect : NoLeagueEffectScenario;
+        #threshold : ThresholdScenario;
+        #leagueChoice : LeagueChoiceScenario;
+        #lottery : LotteryScenario;
+        #proportionalBid : ProportionalBidScenario;
+    };
+
+    public type NoLeagueEffectScenario = {
+        options : [ScenarioOptionWithEffect];
+    };
+
+    public type ThresholdScenario = {
+        minAmount : Nat;
+        success : {
+            description : Text;
+            effect : Effect;
+        };
+        failure : {
+            description : Text;
+            effect : Effect;
+        };
+        undecidedAmount : ThresholdValue;
+        options : [ThresholdScenarioOption];
+    };
+
+    public type ThresholdScenarioOption = ScenarioOptionWithEffect and {
+        value : ThresholdValue;
+    };
+
+    public type ThresholdValue = {
+        #fixed : Int;
+        #weightedChance : [{
+            value : Int;
+            weight : Nat;
+            description : Text;
+        }];
+    };
+
+    public type LeagueChoiceScenario = {
+        options : [LeagueChoiceScenarioOption];
+    };
+
+    public type LeagueChoiceScenarioOption = ScenarioOptionWithEffect and {
+        leagueEffect : Effect;
+    };
+
+    public type LotteryScenario = {
+        prize : Effect;
+        minBid : Nat;
+    };
+
+    public type ProportionalBidScenario = {
+        prize : ProportionalBidPrize;
+    };
+
+    public type ProportionalBidPrize = {
+        amount : Nat;
+        kind : {
+            #skill : {
+                skill : ChosenOrRandomSkill;
+                target : TargetPosition;
+                duration : Duration;
+            };
+        };
     };
 
     public type ScenarioState = {
@@ -210,77 +276,6 @@ module {
     public type ProportionalWinningBid = {
         teamId : Nat;
         amount : Nat;
-    };
-
-    public type MetaEffect = {
-        #noEffect;
-        #threshold : ThresholdMetaEffect;
-        #leagueChoice : LeagueChoiceMetaEffect;
-        // TODO bidding with entropy along with energy?
-        #lottery : LotteryMetaEffect;
-        #proportionalBid : ProportionalBidMetaEffect;
-    };
-
-    public type ThresholdMetaEffect = {
-        minAmount : Nat;
-        success : {
-            description : Text;
-            effect : Effect;
-        };
-        failure : {
-            description : Text;
-            effect : Effect;
-        };
-        undecidedAmount : ThresholdOptionValue;
-        options : [ThresholdMetaOption];
-    };
-
-    public type LeagueChoiceMetaEffect = {
-        options : [LeagueChoiceMetaOption];
-    };
-
-    public type LotteryMetaEffect = {
-        prize : Effect;
-        options : [LotteryMetaOption];
-    };
-
-    public type ProportionalBidMetaEffect = {
-        prize : {
-            amount : Nat;
-            kind : {
-                #skill : {
-                    skill : ChosenOrRandomSkill;
-                    target : TargetPosition;
-                    duration : Duration;
-                };
-            };
-        };
-        options : [ProportionalBidMetaOption];
-    };
-
-    public type LotteryMetaOption = {
-        tickets : Nat;
-    };
-
-    public type ProportionalBidMetaOption = {
-        bidValue : Nat;
-    };
-
-    public type LeagueChoiceMetaOption = {
-        effect : Effect;
-    };
-
-    public type ThresholdMetaOption = {
-        value : ThresholdOptionValue;
-    };
-
-    public type ThresholdOptionValue = {
-        #fixed : Int;
-        #weightedChance : [{
-            value : Int;
-            weight : Nat;
-            description : Text;
-        }];
     };
 
 };

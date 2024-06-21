@@ -30,21 +30,22 @@ module {
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
-        addScenarioBidOption : (request : AddScenarioBidOptionRequest) -> async Result.Result<(), AddScenarioBidOptionError>;
+        addScenarioCustomTeamOption : (request : AddScenarioCustomTeamOptionRequest) -> async Result.Result<(), AddScenarioCustomTeamOptionError>;
 
         claimBenevolentDictatorRole : () -> async ClaimBenevolentDictatorRoleResult;
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
     };
 
-    public type AddScenarioBidOptionRequest = {
+    public type AddScenarioCustomTeamOptionRequest = {
         scenarioId : Nat;
-        value : Nat;
+        value : { #nat : Nat };
     };
 
-    public type AddScenarioBidOptionError = {
+    public type AddScenarioCustomTeamOptionError = {
         #scenarioNotFound;
-        #scenarioDoesntSupportBids;
+        #invalidValueType;
+        #customOptionNotAllowed;
         #duplicate;
         #notAuthorized;
     };
@@ -55,6 +56,7 @@ module {
 
     public type ScenarioVote = {
         option : ?Nat;
+        teamId : Nat;
         votingPower : Nat;
         optionVotingPowersForTeam : [Nat];
     };
@@ -248,8 +250,7 @@ module {
         title : Text;
         description : Text;
         undecidedEffect : Scenario.Effect;
-        options : [Scenario.ScenarioOptionWithEffect];
-        metaEffect : Scenario.MetaEffect;
+        kind : Scenario.ScenarioKind;
         teamIds : [Nat];
     };
     public type AddScenarioError = {

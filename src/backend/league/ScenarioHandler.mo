@@ -64,12 +64,27 @@ module {
         title : Text;
         description : Text;
         undecidedEffect : Scenario.Effect;
-        options : [Scenario.ScenarioOptionWithEffect];
-        metaEffect : Scenario.MetaEffect;
+        kind : ScenarioKind;
         state : ScenarioState;
         startTime : Time.Time;
         endTime : Time.Time;
         teamIds : [Nat];
+    };
+
+    type ScenarioKind = {
+        #noLeagueEffect : Scenario.NoLeagueEffectScenario;
+        #threshold : Scenario.ThresholdScenario;
+        #leagueChoice : Scenario.LeagueChoiceScenario;
+        #lottery : LotteryScenario;
+        #proportionalBid : ProportionalBidScenario;
+    };
+
+    type LotteryScenario = Scenario.LotteryScenario and {
+        teamTicketOptions : HashMap.HashMap<Nat, [Nat]>;
+    };
+
+    type ProportionalBidScenario = Scenario.ProportionalBidScenario and {
+        teamBidOptions : HashMap.HashMap<Nat, [Nat]>;
     };
 
     public type ScenarioData = ScenarioDataWithoutVotes and {
@@ -78,6 +93,10 @@ module {
 
     type MutableScenarioData = ScenarioDataWithoutVotes and {
         votes : HashMap.HashMap<Principal, Vote>;
+    };
+
+    type AvailableOption = {
+
     };
 
     type ScenarioState = {
@@ -155,13 +174,14 @@ module {
         ) : async* Result.Result<(), { #invalidOption; #alreadyVoted; #notEligible; #scenarioNotFound }> {
 
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let choiceExists = option < scenario.options.size();
-            if (not choiceExists) {
-                return #err(#invalidOption);
-            };
             let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
             if (vote.option != null) {
                 return #err(#alreadyVoted);
+            };
+
+            let ?optionCount = getOptionCount(scenario, vote.teamId) else return #err(#invalidOption);
+            if (option >= optionCount) {
+                return #err(#invalidOption);
             };
             Debug.print("Voter " # Principal.toText(voterId) # " voted for option " # Nat.toText(option) # " in scenario " # Nat.toText(scenarioId));
             scenario.votes.put(
@@ -180,13 +200,34 @@ module {
             #ok;
         };
 
+        private func getOptionCount(scenario : MutableScenarioData, teamId : Nat) : ?Nat {
+            switch (scenario.kind) {
+                case (#lottery(lottery)) {
+                    let ?ticketOptions = lottery.teamTicketOptions.get(teamId) else return null;
+                    ?ticketOptions.size();
+                };
+                case (#proportionalBid(proportionalBid)) {
+                    let ?bidOptions = proportionalBid.teamBidOptions.get(teamId) else return null;
+                    ?bidOptions.size();
+                };
+                case (#leagueChoice(leagueChoice)) ?leagueChoice.options.size();
+                case (#threshold(threshold)) ?threshold.options.size();
+                case (#noLeagueEffect(noLeague)) ?noLeague.options.size();
+            };
+        };
+
         public func getVote(scenarioId : Nat, voterId : Principal) : Result.Result<Types.ScenarioVote, { #notEligible; #scenarioNotFound }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
-            let optionVotingPowersForTeam : [Nat] = scenario.options.vals()
-            |> IterTools.mapEntries(
+
+            let optionCount = switch (getOptionCount(scenario, vote.teamId)) {
+                case (null) 0;
+                case (?count) count;
+            };
+            let optionVotingPowersForTeam : [Nat] = IterTools.range(0, optionCount)
+            |> Iter.map(
                 _,
-                func(i : Nat, _ : Scenario.ScenarioOptionWithEffect) : Nat {
+                func(i : Nat) : Nat {
                     let optionVotingPowerForTeam : ?Nat = scenario.votes.vals()
                     |> Iter.filter(
                         _,
@@ -211,70 +252,43 @@ module {
                 option = vote.option;
                 votingPower = vote.votingPower;
                 optionVotingPowersForTeam = optionVotingPowersForTeam;
+                teamId = vote.teamId;
             });
         };
 
-        public func addBidOption(scenarioId : Nat, value : Nat) : Result.Result<(), { #scenarioNotFound; #scenarioDoesntSupportBids; #duplicate }> {
+        public func addCustomTeamOption(scenarioId : Nat, teamId : Nat, value : { #nat : Nat }) : Result.Result<(), { #scenarioNotFound; #invalidValueType; #customOptionNotAllowed; #duplicate }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let (updatedMetaEffect, newOption) : (Scenario.MetaEffect, Scenario.ScenarioOptionWithEffect) = switch (scenario.metaEffect) {
+            switch (scenario.kind) {
                 case (#lottery(lottery)) {
-                    if (IterTools.any(lottery.options.vals(), func(option : Scenario.LotteryMetaOption) : Bool = option.tickets == value)) {
+                    let #nat(natValue) = value else return #err(#invalidValueType);
+                    let ticketOptions = Option.get(lottery.teamTicketOptions.get(teamId), []);
+                    if (IterTools.any(ticketOptions.vals(), func(tickets : Nat) : Bool = tickets == natValue)) {
                         return #err(#duplicate);
                     };
-                    let newMetaOptions = Buffer.fromArray<Scenario.LotteryMetaOption>(lottery.options);
-                    newMetaOptions.add({
-                        tickets = value;
-                    });
-                    let updatedMetaEffect = #lottery({
-                        lottery with
-                        options = Buffer.toArray(newMetaOptions)
-                    });
-                    let newOption : Scenario.ScenarioOptionWithEffect = {
-                        title = "Buy " # Nat.toText(value) # " tickets";
-                        description = "Buy " # Nat.toText(value) # " tickets";
-                        energyCost = value;
-                        traitRequirements = [];
-                        effect = #noEffect;
-                    };
-                    (updatedMetaEffect, newOption);
+                    let newTicketOptions = Buffer.fromArray<Nat>(ticketOptions);
+                    newTicketOptions.add(natValue);
+                    lottery.teamTicketOptions.put(
+                        teamId,
+                        Buffer.toArray(newTicketOptions),
+                    );
                 };
                 case (#proportionalBid(proportionalBid)) {
-                    if (IterTools.any(proportionalBid.options.vals(), func(option : Scenario.ProportionalBidMetaOption) : Bool = option.bidValue == value)) {
+                    let #nat(natValue) = value else return #err(#invalidValueType);
+                    let bidOptions = Option.get(proportionalBid.teamBidOptions.get(teamId), []);
+                    if (IterTools.any(bidOptions.vals(), func(tickets : Nat) : Bool = tickets == natValue)) {
                         return #err(#duplicate);
                     };
-                    let newMetaOptions = Buffer.fromArray<Scenario.ProportionalBidMetaOption>(proportionalBid.options);
-                    newMetaOptions.add({
-                        bidValue = value;
-                    });
-                    let updatedMetaEffect = #proportionalBid({
-                        proportionalBid with
-                        options = Buffer.toArray(newMetaOptions)
-                    });
-                    let newOption : Scenario.ScenarioOptionWithEffect = {
-                        title = "Bid " # Nat.toText(value);
-                        description = "Bid " # Nat.toText(value);
-                        energyCost = value;
-                        traitRequirements = [];
-                        effect = #noEffect;
-                    };
-                    (updatedMetaEffect, newOption);
+                    let newBidOptions = Buffer.fromArray<Nat>(bidOptions);
+                    newBidOptions.add(natValue);
+                    proportionalBid.teamBidOptions.put(
+                        teamId,
+                        Buffer.toArray(newBidOptions),
+                    );
                 };
                 case (_) {
-                    return #err(#scenarioDoesntSupportBids);
+                    return #err(#customOptionNotAllowed);
                 };
             };
-
-            let newOptions = Buffer.fromArray<Scenario.ScenarioOptionWithEffect>(scenario.options);
-            newOptions.add(newOption);
-
-            scenarios.put(
-                scenarioId,
-                {
-                    scenario with
-                    options = Buffer.toArray(newOptions);
-                    metaEffect = updatedMetaEffect;
-                },
-            );
             #ok;
         };
 
@@ -284,7 +298,7 @@ module {
         } {
             type TeamStats = {
                 var totalVotingPower : Nat;
-                optionVotingPowers : [var Nat];
+                optionVotingPowers : Buffer.Buffer<Nat>;
             };
             let teamStats = HashMap.HashMap<Nat, TeamStats>(0, Nat.equal, Nat32.fromNat);
 
@@ -293,7 +307,7 @@ module {
                     case (null) {
                         let initStats : TeamStats = {
                             var totalVotingPower = 0;
-                            optionVotingPowers = Array.init<Nat>(scenario.options.size(), 0);
+                            optionVotingPowers = Buffer.Buffer<Nat>(0);
                         };
                         teamStats.put(vote.teamId, initStats);
                         initStats;
@@ -302,7 +316,10 @@ module {
                 };
                 stats.totalVotingPower += vote.votingPower;
                 switch (vote.option) {
-                    case (?option) stats.optionVotingPowers[option] += vote.votingPower;
+                    case (?option) {
+                        let currentVotingPower = Option.get(stats.optionVotingPowers.getOpt(option), 0);
+                        stats.optionVotingPowers.put(option, currentVotingPower + vote.votingPower);
+                    };
                     case (null) ();
                 };
             };
@@ -409,6 +426,24 @@ module {
             let scenarioId = nextScenarioId;
             nextScenarioId += 1;
             let startTimerId = createStartTimer<system>(scenarioId, startTime);
+
+            let kind : ScenarioKind = switch (scenario.kind) {
+                case (#noLeagueEffect(noLeague)) #noLeagueEffect(noLeague);
+                case (#threshold(threshold)) #threshold(threshold);
+                case (#leagueChoice(leagueChoice)) #leagueChoice(leagueChoice);
+                case (#lottery(lottery)) {
+                    #lottery({
+                        lottery with
+                        teamTicketOptions = HashMap.HashMap<Nat, [Nat]>(0, Nat.equal, Nat32.fromNat);
+                    });
+                };
+                case (#proportionalBid(proportionalBid)) {
+                    #proportionalBid({
+                        prize = proportionalBid.prize;
+                        teamBidOptions = HashMap.HashMap<Nat, [Nat]>(0, Nat.equal, Nat32.fromNat);
+                    });
+                };
+            };
             scenarios.put(
                 scenarioId,
                 {
@@ -417,8 +452,7 @@ module {
                     title = scenario.title;
                     description = scenario.description;
                     undecidedEffect = scenario.undecidedEffect;
-                    options = scenario.options;
-                    metaEffect = scenario.metaEffect;
+                    kind = kind;
                     state = #notStarted({
                         startTimerId = startTimerId;
                     });
@@ -595,8 +629,7 @@ module {
             endTime = data.endTime;
             description = data.description;
             undecidedEffect = data.undecidedEffect;
-            options = data.options;
-            metaEffect = data.metaEffect;
+            kind = data.kind;
             state = state;
         };
     };
@@ -667,52 +700,66 @@ module {
         if (TextX.isEmptyOrWhitespace(scenario.description)) {
             errors.add("Scenario must have a description");
         };
-        if (scenario.options.size() < 2) {
-            let isDynamic = switch (scenario.metaEffect) {
-                case (#lottery(_) or #proportionalBid(_)) true;
-                case (_) false;
+        switch (scenario.kind) {
+            case (#lottery(lottery)) {
+
             };
-            if (not isDynamic) {
-                errors.add("Scenario must have at least 2 options");
-            };
-        };
-        let metaOptionCount : ?Nat = switch (scenario.metaEffect) {
-            case (#lottery(lottery)) ?lottery.options.size();
-            case (#proportionalBid(proportionalBid)) ?proportionalBid.options.size();
-            case (#noEffect) null;
-            case (#leagueChoice(leagueChoice)) ?leagueChoice.options.size();
-            case (#threshold(threshold)) ?threshold.options.size();
-        };
-        switch (metaOptionCount) {
-            case (null) {};
-            case (?count) {
-                if (count != scenario.options.size()) {
-                    errors.add("Meta effect options count (" #Nat.toText(count) # ") must match the scenario options count (" #Nat.toText(scenario.options.size()) # ")");
+            case (#proportionalBid(proportionalBid)) {};
+            case (#noLeagueEffect(noLeagueEffect)) {
+                if (noLeagueEffect.options.size() < 2) {
+                    errors.add("Scenario must have at least 2 options");
                 };
+                validateGenericOptions(noLeagueEffect.options, errors);
+            };
+            case (#leagueChoice(leagueChoice)) {
+                if (leagueChoice.options.size() < 2) {
+                    errors.add("Scenario must have at least 2 options");
+                };
+                validateGenericOptions(leagueChoice.options, errors);
+            };
+            case (#threshold(threshold)) {
+                if (threshold.options.size() < 2) {
+                    errors.add("Scenario must have at least 2 options");
+                };
+                validateGenericOptions(threshold.options, errors);
             };
         };
         if (scenario.teamIds.size() < 1) {
             errors.add("Scenario must have at least 1 team");
         };
-        var index = 0;
-        for (option in Iter.fromArray(scenario.options)) {
-            if (TextX.isEmptyOrWhitespace(option.description)) {
-                errors.add("Option " # Nat.toText(index) # " must have a description");
-            };
-            switch (validateEffect(option.effect)) {
-                case (#ok) {};
-                case (#invalid(effectErrors)) {
-                    for (effectError in Iter.fromArray(effectErrors)) {
-                        errors.add("Option " # Nat.toText(index) # " has an invalid effect: " # effectError);
-                    };
-                };
-            };
-            index += 1;
-        };
         if (errors.size() > 0) {
             #invalid(Buffer.toArray(errors));
         } else {
             #ok;
+        };
+    };
+
+    private func validateGenericOptions(
+        options : [Scenario.ScenarioOptionWithEffect],
+        errors : Buffer.Buffer<Text>,
+    ) {
+        var index = 0;
+        for (option in Iter.fromArray(options)) {
+            validateGenericOption(option, index, errors);
+            index += 1;
+        };
+    };
+
+    private func validateGenericOption(
+        option : Scenario.ScenarioOptionWithEffect,
+        index : Nat,
+        errors : Buffer.Buffer<Text>,
+    ) {
+        if (TextX.isEmptyOrWhitespace(option.description)) {
+            errors.add("Option with index " # Nat.toText(index) # " must have a description");
+        };
+        switch (validateEffect(option.teamEffect)) {
+            case (#ok) {};
+            case (#invalid(effectErrors)) {
+                for (effectError in Iter.fromArray(effectErrors)) {
+                    errors.add("Option with index " # Nat.toText(index) # " has an invalid effect: " # effectError);
+                };
+            };
         };
     };
 
@@ -773,20 +820,26 @@ module {
     ) : ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
         for (teamData in Iter.fromArray(teamChoices)) {
-            let effect = switch (teamData.option) {
+            let teamEffect : Scenario.Effect = switch (teamData.option) {
                 case (null) scenario.undecidedEffect;
-                case (?option) scenario.options[option].effect;
+                case (?option) switch (scenario.kind) {
+                    case (#noLeagueEffect(noLeagueEffect)) noLeagueEffect.options[option].teamEffect;
+                    case (#leagueChoice(leagueChoice)) leagueChoice.options[option].teamEffect;
+                    case (#threshold(threshold)) threshold.options[option].teamEffect;
+                    case (#lottery(lottery)) #noEffect;
+                    case (#proportionalBid(proportionalBid)) #noEffect;
+                };
             };
             resolveEffectInternal(
                 prng,
                 #team(teamData.id),
                 scenario,
-                effect,
+                teamEffect,
                 effectOutcomes,
             );
         };
-        let metaEffectOutcome : Scenario.MetaEffectOutcome = switch (scenario.metaEffect) {
-            case (#noEffect) #noEffect;
+        let metaEffectOutcome : Scenario.MetaEffectOutcome = switch (scenario.kind) {
+            case (#noLeagueEffect(noLeagueEffect)) #noEffect;
             case (#leagueChoice(leagueChoice)) {
                 let leagueOptionId = getMajorityOption(prng, teamChoices);
                 switch (leagueOptionId) {
@@ -794,7 +847,7 @@ module {
                     case (?leagueOptionId) {
                         // Resolve the league choice effect if there is a majority
                         let leagueOption = leagueChoice.options[leagueOptionId];
-                        resolveEffectInternal(prng, #league, scenario, leagueOption.effect, effectOutcomes);
+                        resolveEffectInternal(prng, #league, scenario, leagueOption.leagueEffect, effectOutcomes);
                     };
                 };
                 #leagueChoice({
@@ -808,7 +861,12 @@ module {
                     func(teamData : TeamVotingResult) : Bool {
                         switch (teamData.option) {
                             case (null) false;
-                            case (?option) lottery.options[option].tickets > 0;
+                            case (?option) {
+                                switch (lottery.teamTicketOptions.get(teamData.id)) {
+                                    case (null) false;
+                                    case (?ticketOptions) ticketOptions[option] > 0;
+                                };
+                            };
                         };
                     },
                 )
@@ -817,7 +875,12 @@ module {
                     func(teamData : TeamVotingResult) : (Nat, Float) {
                         let ticketCount = switch (teamData.option) {
                             case (null) Prelude.unreachable();
-                            case (?option) lottery.options[option].tickets;
+                            case (?option) {
+                                switch (lottery.teamTicketOptions.get(teamData.id)) {
+                                    case (null) 0;
+                                    case (?ticketOptions) ticketOptions[option];
+                                };
+                            };
                         };
                         (teamData.id, Float.fromInt(ticketCount));
                     },
@@ -847,7 +910,12 @@ module {
                     func(total : Nat, teamData : TeamVotingResult) : Nat {
                         let bidValue = switch (teamData.option) {
                             case (null) 0;
-                            case (?option) proportionalBid.options[option].bidValue;
+                            case (?option) {
+                                switch (proportionalBid.teamBidOptions.get(teamData.id)) {
+                                    case (null) 0;
+                                    case (?bidOptions) bidOptions[option];
+                                };
+                            };
                         };
                         total + bidValue;
                     },
@@ -856,7 +924,12 @@ module {
                 label f for (teamData in teamChoices.vals()) {
                     let teamBidValue = switch (teamData.option) {
                         case (null) continue f;
-                        case (?option) proportionalBid.options[option].bidValue;
+                        case (?option) {
+                            switch (proportionalBid.teamBidOptions.get(teamData.id)) {
+                                case (null) 0;
+                                case (?bidOptions) bidOptions[option];
+                            };
+                        };
                     };
                     if (teamBidValue < 1) {
                         continue f;

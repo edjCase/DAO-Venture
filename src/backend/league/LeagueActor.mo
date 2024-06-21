@@ -338,13 +338,13 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    public shared ({ caller }) func addScenarioBidOption(request : Types.AddScenarioBidOptionRequest) : async Result.Result<(), Types.AddScenarioBidOptionError> {
-        switch (scenarioHandler.getVote(request.scenarioId, caller)) {
-            case (#ok(vote)) ();
+    public shared ({ caller }) func addScenarioCustomTeamOption(request : Types.AddScenarioCustomTeamOptionRequest) : async Result.Result<(), Types.AddScenarioCustomTeamOptionError> {
+        let teamId = switch (scenarioHandler.getVote(request.scenarioId, caller)) {
+            case (#ok(vote)) vote.teamId;
             case (#err(#notEligible)) return #err(#notAuthorized); // Only voters can suggest
             case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
         };
-        scenarioHandler.addBidOption(request.scenarioId, request.value);
+        scenarioHandler.addCustomTeamOption(request.scenarioId, teamId, request.value);
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
