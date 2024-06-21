@@ -13,7 +13,9 @@
     <div></div>
 {:else if "chosen" in value}
     <Select items={teamItems} bind:value={value.chosen} />
-{:else if "choosingTeam" in value}
+{:else if "contextual" in value}
+    <div></div>
+{:else if "all" in value}
     <div></div>
 {:else}
     NOT IMPLEMENTED : {JSON.stringify(value)}

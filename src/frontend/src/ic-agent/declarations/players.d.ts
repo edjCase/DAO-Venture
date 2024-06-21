@@ -34,6 +34,7 @@ export type FieldPosition = { 'rightField' : null } |
 export type GetPlayerError = { 'notFound' : null };
 export type GetPlayerResult = { 'ok' : Player } |
   { 'err' : GetPlayerError };
+export type GetPositionError = { 'teamNotFound' : null };
 export interface InjuryPlayerEffectOutcome { 'target' : TargetPositionInstance }
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
@@ -84,6 +85,8 @@ export type PopulateTeamRosterError = { 'missingFluff' : null } |
   { 'notAuthorized' : null };
 export type PopulateTeamRosterResult = { 'ok' : Array<Player> } |
   { 'err' : PopulateTeamRosterError };
+export type Result = { 'ok' : Player } |
+  { 'err' : GetPositionError };
 export type SetTeamsCanisterIdError = { 'notAuthorized' : null };
 export type SetTeamsCanisterIdResult = { 'ok' : null } |
   { 'err' : SetTeamsCanisterIdError };
@@ -125,6 +128,7 @@ export interface _SERVICE {
   'applyEffects' : ActorMethod<[ApplyEffectsRequest], ApplyEffectsResult>,
   'getAllPlayers' : ActorMethod<[], Array<Player>>,
   'getPlayer' : ActorMethod<[number], GetPlayerResult>,
+  'getPosition' : ActorMethod<[bigint, FieldPosition], Result>,
   'getTeamPlayers' : ActorMethod<[bigint], Array<Player>>,
   'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
   'populateTeamRoster' : ActorMethod<[bigint], PopulateTeamRosterResult>,

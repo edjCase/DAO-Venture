@@ -55,20 +55,11 @@
 <Input type="text" bind:value={value.title} />
 <Label>Description</Label>
 <Input type="text" bind:value={value.description} />
-{#if !startTime}
-    <Button on:click={() => (startTime = formatDateTimeLocal(new Date()))}>
-        Delay Start
-    </Button>
-{:else}
-    <Label>Start Time</Label>
-    <Input type="datetime-local" bind:value={startTime} />
-{/if}
-<Label>End Time</Label>
-<Input type="datetime-local" bind:value={endTime} />
+<hr />
+<Label>Meta Effect</Label>
+<MetaEffectChooser bind:value={value.metaEffect} />
 
-<Label>Undecided Effect</Label>
-<ScenarioEffectChooser bind:value={value.undecidedEffect} />
-
+<hr />
 <Label>Options</Label>
 <div class="ml-6 mb-4">
     {#each value.options as option, i}
@@ -120,5 +111,20 @@
     {/each}
     <Button on:click={addOption}>Add Option</Button>
 </div>
-<Label>Meta Effect</Label>
-<MetaEffectChooser bind:value={value.metaEffect} />
+<hr />
+
+<Label>Undecided Effect</Label>
+<ScenarioEffectChooser bind:value={value.undecidedEffect} />
+<hr />
+
+{#if !startTime}
+    <Button on:click={() => (startTime = formatDateTimeLocal(new Date()))}>
+        Delay Start
+    </Button>
+{:else}
+    <Label>Start Time</Label>
+    <Input type="datetime-local" bind:value={startTime} />
+{/if}
+
+<Label>End Time</Label>
+<Input type="datetime-local" bind:value={endTime} />

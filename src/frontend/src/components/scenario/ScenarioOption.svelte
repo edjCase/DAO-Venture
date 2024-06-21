@@ -1,6 +1,9 @@
 <script lang="ts">
     import { Badge } from "flowbite-svelte";
-    import { ScenarioOptionWithEffect } from "../../ic-agent/declarations/league";
+    import {
+        ScenarioOptionWithEffect,
+        ScenarioVote,
+    } from "../../ic-agent/declarations/league";
     import { teamStore } from "../../stores/TeamStore";
     import { traitStore } from "../../stores/TraitStore";
     import { toJsonString } from "../../utils/StringUtil";
@@ -23,19 +26,21 @@
               };
           };
 
+    export let optionId: number;
     export let option: ScenarioOptionWithEffect;
     export let teamEnergy: bigint | undefined; // Undefined used for loading but also for resolved scenarios
     export let teamTraits: string[] | undefined; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
-    export let voteStatus: number | "notVoted" | "ineligible";
+    export let yourVote: ScenarioVote | "ineligible";
     export let state: State;
 
     let badTraits: Map<string, boolean> = new Map();
     $: {
         badTraits.clear();
         if (teamTraits) {
+            let traits = teamTraits;
             option.traitRequirements.forEach((r) => {
-                let hasTrait = teamTraits.indexOf(r.id) >= 0;
+                let hasTrait = traits.indexOf(r.id) >= 0;
                 if ("required" in r.kind) {
                     if (!hasTrait) {
                         badTraits.set(r.id, true);
@@ -59,7 +64,7 @@
 
     $: selectable =
         "inProgress" in state &&
-        voteStatus === "notVoted" &&
+        yourVote !== "ineligible" &&
         meetsEnergyRequirements &&
         badTraits.size < 1;
 
@@ -133,6 +138,13 @@
         <div class="text-justify text-sm">{option.description}</div>
         {#if option.energyCost > 0}
             <div class="text-xl text-center">{option.energyCost} 💰</div>
+        {/if}
+        {#if yourVote === "ineligible"}
+            <div></div>
+        {:else}
+            <div>
+                Team Votes: {yourVote.optionVotingPowersForTeam[optionId]}
+            </div>
         {/if}
         {#each traitRequirements as { name, icon, color }}
             <Badge {color}>

@@ -9,8 +9,8 @@
 
     $: if (scenarios.length > 0) {
         scenarioStore.refetchVotes(
-            scenarios.filter((s) => "inProgress" in s.state).map((s) => s.id),
-        ); // TODO better way?
+            scenarios.map((s) => s.id), // TODO only do recent scenarios? that are on the page
+        );
         scenarios.sort((s1, s2) => Number(s2.startTime) - Number(s1.startTime)); // Order by start time
     }
 </script>

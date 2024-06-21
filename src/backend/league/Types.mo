@@ -56,6 +56,7 @@ module {
     public type ScenarioVote = {
         option : ?Nat;
         votingPower : Nat;
+        optionVotingPowersForTeam : [Nat];
     };
 
     public type GetScenarioVoteError = {

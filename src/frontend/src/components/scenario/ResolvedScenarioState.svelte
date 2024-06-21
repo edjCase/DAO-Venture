@@ -2,6 +2,7 @@
     import {
         Scenario,
         ScenarioStateResolved,
+        ScenarioVote,
     } from "../../ic-agent/declarations/league";
     import { Accordion, AccordionItem } from "flowbite-svelte";
     import {
@@ -19,12 +20,14 @@
     import LotteryResolvedScenarioState from "./resolved_states/LotteryResolvedScenarioState.svelte";
     import LeagueChoiceResolvedScenarioState from "./resolved_states/LeagueChoiceResolvedScenarioState.svelte";
     import ScenarioEffectOutcome from "./ScenarioEffectOutcome.svelte";
+    import { scenarioStore } from "../../stores/ScenarioStore";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
     export let userContext: User | undefined;
 
     let selectedChoice: number | undefined;
+    let yourVote: ScenarioVote | "ineligible" = "ineligible";
     $: {
         let vote = state.teamChoices.find(
             (v) => v.teamId === userContext?.team[0]?.id,
@@ -45,6 +48,15 @@
                 .map((v) => v.teamId);
         });
     }
+    scenarioStore.subscribeVotes((votes) => {
+        console.log("Votes", votes);
+        if (votes[Number(scenario.id)] !== undefined) {
+            yourVote = votes[Number(scenario.id)];
+        } else {
+            yourVote = "ineligible";
+            selectedChoice = undefined;
+        }
+    });
 </script>
 
 {#if teams !== undefined && traits !== undefined}
@@ -53,11 +65,12 @@
     {:else}
         {#each scenario.options as option, index}
             <ScenarioOption
+                optionId={index}
                 {option}
                 selected={selectedChoice === index}
                 teamEnergy={undefined}
                 teamTraits={undefined}
-                voteStatus={selectedChoice === index ? index : "notVoted"}
+                {yourVote}
                 state={{
                     resolved: {
                         teams: optionTeamVotes

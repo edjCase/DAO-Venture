@@ -122,6 +122,8 @@ export const idlFactory = ({ IDL }) => {
     'ok' : Player,
     'err' : GetPlayerError,
   });
+  const GetPositionError = IDL.Variant({ 'teamNotFound' : IDL.Null });
+  const Result = IDL.Variant({ 'ok' : Player, 'err' : GetPositionError });
   const OnSeasonEndError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const OnSeasonEndResult = IDL.Variant({
     'ok' : IDL.Null,
@@ -159,6 +161,7 @@ export const idlFactory = ({ IDL }) => {
     'applyEffects' : IDL.Func([ApplyEffectsRequest], [ApplyEffectsResult], []),
     'getAllPlayers' : IDL.Func([], [IDL.Vec(Player)], ['query']),
     'getPlayer' : IDL.Func([IDL.Nat32], [GetPlayerResult], ['query']),
+    'getPosition' : IDL.Func([IDL.Nat, FieldPosition], [Result], ['query']),
     'getTeamPlayers' : IDL.Func([IDL.Nat], [IDL.Vec(Player)], ['query']),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'populateTeamRoster' : IDL.Func([IDL.Nat], [PopulateTeamRosterResult], []),

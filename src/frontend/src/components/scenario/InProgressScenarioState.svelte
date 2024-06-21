@@ -2,6 +2,7 @@
     import { Button, Input } from "flowbite-svelte";
     import {
         Scenario,
+        ScenarioVote,
         VoteOnScenarioRequest,
     } from "../../ic-agent/declarations/league";
     import { Team } from "../../ic-agent/declarations/teams";
@@ -18,7 +19,7 @@
     $: teams = $teamStore;
 
     let selectedChoice: number | undefined;
-    let voteStatus: number | "notVoted" | "ineligible" = "notVoted";
+    let yourVote: ScenarioVote | "ineligible" = "ineligible";
     let teamId: bigint | undefined;
     let isOwner: boolean = false;
     let team: Team | undefined;
@@ -77,15 +78,9 @@
 
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
-            let chosenOption = votes[Number(scenario.id)].option[0];
-            if (chosenOption === undefined) {
-                voteStatus = "notVoted";
-            } else {
-                voteStatus = Number(chosenOption);
-                selectedChoice = Number(chosenOption);
-            }
+            yourVote = votes[Number(scenario.id)];
         } else {
-            voteStatus = "ineligible";
+            yourVote = "ineligible";
             selectedChoice = undefined;
         }
     });
@@ -96,11 +91,12 @@
 {:else}
     {#each scenario.options as option, index}
         <ScenarioOption
+            optionId={index}
             {option}
             selected={selectedChoice === index}
             teamEnergy={team?.energy}
             teamTraits={team?.traits.map((t) => t.id)}
-            {voteStatus}
+            {yourVote}
             state={{
                 inProgress: {
                     onSelect: () => {
@@ -113,7 +109,7 @@
     {/each}
 {/if}
 
-{#if voteStatus === "ineligible"}
+{#if yourVote === "ineligible"}
     Ineligible to vote
     {#if !userContext || !isOwner}
         <div>Want to participate in scenarios?</div>

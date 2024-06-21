@@ -363,6 +363,7 @@ export interface ScenarioTeamChoice {
 export interface ScenarioVote {
   'option' : [] | [bigint],
   'votingPower' : bigint,
+  'optionVotingPowersForTeam' : Array<bigint>,
 }
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
@@ -438,9 +439,10 @@ export interface TargetPositionInstance {
   'teamId' : bigint,
   'position' : FieldPosition,
 }
-export type TargetTeam = { 'random' : null } |
-  { 'chosen' : bigint } |
-  { 'choosingTeam' : null };
+export type TargetTeam = { 'all' : null } |
+  { 'contextual' : null } |
+  { 'random' : bigint } |
+  { 'chosen' : Array<bigint> };
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
   { 'seasonStandingIndex' : bigint };

@@ -6,9 +6,10 @@ export const idlFactory = ({ IDL }) => {
     'remove' : IDL.Null,
   });
   const TargetTeam = IDL.Variant({
-    'random' : IDL.Null,
-    'chosen' : IDL.Nat,
-    'choosingTeam' : IDL.Null,
+    'all' : IDL.Null,
+    'contextual' : IDL.Null,
+    'random' : IDL.Nat,
+    'chosen' : IDL.Vec(IDL.Nat),
   });
   const TeamTraitEffect = IDL.Record({
     'kind' : TeamTraitEffectKind,
@@ -375,6 +376,7 @@ export const idlFactory = ({ IDL }) => {
   const ScenarioVote = IDL.Record({
     'option' : IDL.Opt(IDL.Nat),
     'votingPower' : IDL.Nat,
+    'optionVotingPowersForTeam' : IDL.Vec(IDL.Nat),
   });
   const GetScenarioVoteError = IDL.Variant({
     'notEligible' : IDL.Null,

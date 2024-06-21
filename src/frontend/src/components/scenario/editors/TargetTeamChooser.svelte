@@ -8,9 +8,10 @@
     let selected = Object.keys(value)[0];
 
     let items = [
-        { value: "choosingTeam", name: "Choosing Team" },
+        { value: "contextual", name: "Contextual" },
         { value: "chosen", name: "Chosen Team" },
         { value: "random", name: "Random Team" },
+        { value: "all", name: "All Teams" },
     ];
 
     $: value = { [selected]: null } as TargetTeam;

@@ -48,7 +48,7 @@
                                 skill: { random: null },
                                 target: {
                                     position: { random: null },
-                                    team: { choosingTeam: null },
+                                    team: { contextual: null },
                                 },
                             },
                         },

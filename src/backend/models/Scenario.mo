@@ -5,9 +5,10 @@ import FieldPosition "FieldPosition";
 
 module {
     public type TargetTeam = {
-        #choosingTeam;
-        #random;
-        #chosen : Nat;
+        #contextual;
+        #random : Nat; // Number of random teams
+        #chosen : [Nat];
+        #all;
     };
 
     public type ChosenOrRandomFieldPosition = {
