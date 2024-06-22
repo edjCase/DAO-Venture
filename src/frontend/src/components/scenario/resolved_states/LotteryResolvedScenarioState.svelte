@@ -1,12 +1,12 @@
 <script lang="ts">
     import {
-        LotteryMetaEffect,
         LotteryMetaEffectOutcome,
+        LotteryScenario,
     } from "../../../ic-agent/declarations/league";
     import { Team } from "../../../ic-agent/declarations/teams";
     import { toJsonString } from "../../../utils/StringUtil";
 
-    export let effect: LotteryMetaEffect;
+    export let scenario: LotteryScenario;
     export let outcome: LotteryMetaEffectOutcome;
     export let teams: Team[];
 
@@ -20,6 +20,6 @@
     {#if winningTeamName === undefined}
         No team won the lottery
     {:else}
-        {winningTeamName} won the lottery of {toJsonString(effect.prize)}
+        {winningTeamName} won the lottery of {toJsonString(scenario.prize)}
     {/if}
 </div>

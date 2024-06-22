@@ -15,7 +15,7 @@
     import ScenarioOption from "./ScenarioOption.svelte";
     import { traitStore } from "../../stores/TraitStore";
     import ThresholdResolvedScenarioState from "./resolved_states/ThresholdResolvedScenarioState.svelte";
-    import NoEffectResolvedScenarioState from "./resolved_states/NoEffectResolvedScenarioState.svelte";
+    import NoEffectResolvedScenarioState from "./resolved_states/NoLeagueEffectResolvedScenarioState.svelte";
     import ProportionalBidResolvedScenarioState from "./resolved_states/ProportionalBidResolvedScenarioState.svelte";
     import LotteryResolvedScenarioState from "./resolved_states/LotteryResolvedScenarioState.svelte";
     import LeagueChoiceResolvedScenarioState from "./resolved_states/LeagueChoiceResolvedScenarioState.svelte";
@@ -27,13 +27,13 @@
     export let userContext: User | undefined;
 
     let selectedChoice: number | undefined;
-    let yourVote: ScenarioVote | "ineligible" = "ineligible";
+    let vote: ScenarioVote | "ineligible" = "ineligible";
     $: {
-        let vote = state.teamChoices.find(
+        let v = state.teamChoices.find(
             (v) => v.teamId === userContext?.team[0]?.id,
         );
-        if (vote) {
-            selectedChoice = Number(vote.option);
+        if (v) {
+            selectedChoice = Number(v.option);
         }
     }
 
@@ -51,26 +51,27 @@
     scenarioStore.subscribeVotes((votes) => {
         console.log("Votes", votes);
         if (votes[Number(scenario.id)] !== undefined) {
-            yourVote = votes[Number(scenario.id)];
+            vote = votes[Number(scenario.id)];
         } else {
-            yourVote = "ineligible";
+            vote = "ineligible";
             selectedChoice = undefined;
         }
     });
 </script>
 
 {#if teams !== undefined && traits !== undefined}
-    {#if scenario.options.length < 1}
+    {#if options.length < 1}
         No options available
     {:else}
-        {#each scenario.options as option, index}
+        {#each options as option, index}
             <ScenarioOption
+                scenarioId={scenario.id}
                 optionId={index}
                 {option}
                 selected={selectedChoice === index}
                 teamEnergy={undefined}
                 teamTraits={undefined}
-                {yourVote}
+                {vote}
                 state={{
                     resolved: {
                         teams: optionTeamVotes
@@ -82,28 +83,28 @@
         {/each}
     {/if}
     <div>
-        {#if "threshold" in state.metaEffectOutcome && "threshold" in scenario.metaEffect}
+        {#if "threshold" in state.metaEffectOutcome && "threshold" in scenario.kind}
             <ThresholdResolvedScenarioState
-                effect={scenario.metaEffect.threshold}
+                scenario={scenario.kind.threshold}
                 outcome={state.metaEffectOutcome.threshold}
             />
         {:else if "noEffect" in state.metaEffectOutcome}
             <NoEffectResolvedScenarioState />
-        {:else if "proportionalBid" in state.metaEffectOutcome && "proportionalBid" in scenario.metaEffect}
+        {:else if "proportionalBid" in state.metaEffectOutcome && "proportionalBid" in scenario.kind}
             <ProportionalBidResolvedScenarioState
-                effect={scenario.metaEffect.proportionalBid}
+                scenario={scenario.kind.proportionalBid}
                 outcome={state.metaEffectOutcome.proportionalBid}
                 {teams}
             />
-        {:else if "lottery" in state.metaEffectOutcome && "lottery" in scenario.metaEffect}
+        {:else if "lottery" in state.metaEffectOutcome && "lottery" in scenario.kind}
             <LotteryResolvedScenarioState
-                effect={scenario.metaEffect.lottery}
+                scenario={scenario.kind.lottery}
                 outcome={state.metaEffectOutcome.lottery}
                 {teams}
             />
-        {:else if "leagueChoice" in state.metaEffectOutcome && "leagueChoice" in scenario.metaEffect}
+        {:else if "leagueChoice" in state.metaEffectOutcome && "leagueChoice" in scenario.kind}
             <LeagueChoiceResolvedScenarioState
-                effect={scenario.metaEffect.leagueChoice}
+                scenario={scenario.kind.leagueChoice}
                 outcome={state.metaEffectOutcome.leagueChoice}
             />
         {:else}

@@ -1,12 +1,12 @@
 <script lang="ts">
     import {
-        ProportionalBidMetaEffect,
         ProportionalBidMetaEffectOutcome,
+        ProportionalBidScenario,
     } from "../../../ic-agent/declarations/league";
     import { Team } from "../../../ic-agent/declarations/teams";
     import { toJsonString } from "../../../utils/StringUtil";
 
-    export let effect: ProportionalBidMetaEffect;
+    export let scenario: ProportionalBidScenario;
     export let outcome: ProportionalBidMetaEffectOutcome;
     export let teams: Team[];
 
@@ -16,7 +16,7 @@
 </script>
 
 {#each outcome.winningBids as bid}
-    Prize: {effect.prize.amount} of {toJsonString(effect.prize.kind)}
+    Prize: {scenario.prize.amount} of {toJsonString(scenario.prize.kind)}
     <div class="text-xl text-center">
         {getTeamName(bid.teamId)} got {bid.amount}
     </div>

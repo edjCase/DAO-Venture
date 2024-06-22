@@ -31,7 +31,7 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
-        scenarios : [ScenarioData];
+        scenarios : [StableScenarioData];
     };
 
     public type AddScenarioResult = {
@@ -59,44 +59,62 @@ module {
         option : ?Nat;
     };
 
-    type ScenarioDataWithoutVotes = {
+    public type StableScenarioData = {
         id : Nat;
         title : Text;
         description : Text;
         undecidedEffect : Scenario.Effect;
-        kind : ScenarioKind;
+        kind : StableScenarioKind;
         state : ScenarioState;
         startTime : Time.Time;
         endTime : Time.Time;
         teamIds : [Nat];
-    };
-
-    type ScenarioKind = {
-        #noLeagueEffect : Scenario.NoLeagueEffectScenario;
-        #threshold : Scenario.ThresholdScenario;
-        #leagueChoice : Scenario.LeagueChoiceScenario;
-        #lottery : LotteryScenario;
-        #proportionalBid : ProportionalBidScenario;
-    };
-
-    type LotteryScenario = Scenario.LotteryScenario and {
-        teamTicketOptions : HashMap.HashMap<Nat, [Nat]>;
-    };
-
-    type ProportionalBidScenario = Scenario.ProportionalBidScenario and {
-        teamBidOptions : HashMap.HashMap<Nat, [Nat]>;
-    };
-
-    public type ScenarioData = ScenarioDataWithoutVotes and {
         votes : [Vote];
     };
 
-    type MutableScenarioData = ScenarioDataWithoutVotes and {
+    type StableScenarioKind = {
+        #noLeagueEffect : Scenario.NoLeagueEffectScenario;
+        #threshold : Scenario.ThresholdScenario;
+        #leagueChoice : Scenario.LeagueChoiceScenario;
+        #lottery : StableLotteryScenario;
+        #proportionalBid : StableProportionalBidScenario;
+    };
+
+    type StableLotteryScenario = Scenario.LotteryScenario and {
+        teamTicketOptions : [(Nat, [Nat])];
+    };
+
+    type StableProportionalBidScenario = Scenario.ProportionalBidScenario and {
+        teamBidOptions : [(Nat, [Nat])];
+    };
+
+    type MutableScenarioData = {
+        id : Nat;
+        title : Text;
+        description : Text;
+        undecidedEffect : Scenario.Effect;
+        kind : MutableScenarioKind;
+        state : ScenarioState;
+        startTime : Time.Time;
+        endTime : Time.Time;
+        teamIds : [Nat];
         votes : HashMap.HashMap<Principal, Vote>;
     };
 
-    type AvailableOption = {
+    type MutableScenarioKind = {
+        #noLeagueEffect : Scenario.NoLeagueEffectScenario;
+        #threshold : Scenario.ThresholdScenario;
+        #leagueChoice : Scenario.LeagueChoiceScenario;
+        #lottery : MutableLotteryScenario;
+        #proportionalBid : MutableProportionalBidScenario;
+    };
 
+    type MutableLotteryScenario = Scenario.LotteryScenario and {
+        teamTicketOptions : HashMap.HashMap<Nat, [Nat]>;
+    };
+
+    type MutableProportionalBidScenario = Scenario.ProportionalBidScenario and {
+        teamBidOptions : HashMap.HashMap<Nat, [Nat]>;
     };
 
     type ScenarioState = {
@@ -136,7 +154,7 @@ module {
         public func toStableData() : StableData {
             {
                 scenarios = scenarios.vals()
-                |> Iter.map<MutableScenarioData, ScenarioData>(
+                |> Iter.map<MutableScenarioData, StableScenarioData>(
                     _,
                     toStableScenarioData,
                 )
@@ -427,7 +445,7 @@ module {
             nextScenarioId += 1;
             let startTimerId = createStartTimer<system>(scenarioId, startTime);
 
-            let kind : ScenarioKind = switch (scenario.kind) {
+            let kind : MutableScenarioKind = switch (scenario.kind) {
                 case (#noLeagueEffect(noLeague)) #noLeagueEffect(noLeague);
                 case (#threshold(threshold)) #threshold(threshold);
                 case (#leagueChoice(leagueChoice)) #leagueChoice(leagueChoice);
@@ -815,7 +833,7 @@ module {
 
     public func resolveScenario(
         prng : Prng,
-        scenario : ScenarioDataWithoutVotes,
+        scenario : MutableScenarioData,
         teamChoices : [TeamVotingResult],
     ) : ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
@@ -1038,7 +1056,7 @@ module {
     public func resolveEffect(
         prng : Prng,
         context : EffectContext,
-        scenario : ScenarioDataWithoutVotes,
+        scenario : MutableScenarioData,
         effect : Scenario.Effect,
     ) : [Scenario.EffectOutcome] {
         let buffer = Buffer.Buffer<Scenario.EffectOutcome>(0);
@@ -1049,7 +1067,7 @@ module {
     private func resolveEffectInternal(
         prng : Prng,
         context : EffectContext,
-        scenario : ScenarioDataWithoutVotes,
+        scenario : MutableScenarioData,
         effect : Scenario.Effect,
         outcomes : Buffer.Buffer<Scenario.EffectOutcome>,
     ) {
@@ -1218,18 +1236,35 @@ module {
         |> Iter.toArray(_);
     };
 
-    private func toHashMap(scenarios : [ScenarioData]) : HashMap.HashMap<Nat, MutableScenarioData> {
+    private func toHashMap(scenarios : [StableScenarioData]) : HashMap.HashMap<Nat, MutableScenarioData> {
         scenarios
         |> Iter.fromArray(_)
-        |> Iter.map<ScenarioData, (Nat, MutableScenarioData)>(
+        |> Iter.map<StableScenarioData, (Nat, MutableScenarioData)>(
             _,
-            func(scenario : ScenarioData) : (Nat, MutableScenarioData) = (scenario.id, fromStableScenarioData(scenario)),
+            func(scenario : StableScenarioData) : (Nat, MutableScenarioData) = (scenario.id, fromStableScenarioData(scenario)),
         )
         |> HashMap.fromIter<Nat, MutableScenarioData>(_, scenarios.size(), Nat.equal, Nat32.fromNat);
 
     };
 
-    private func fromStableScenarioData(scenario : ScenarioData) : MutableScenarioData {
+    private func fromStableScenarioData(scenario : StableScenarioData) : MutableScenarioData {
+        let kind = switch (scenario.kind) {
+            case (#noLeagueEffect(noLeague)) #noLeagueEffect(noLeague);
+            case (#threshold(threshold)) #threshold(threshold);
+            case (#leagueChoice(leagueChoice)) #leagueChoice(leagueChoice);
+            case (#lottery(lottery)) {
+                #lottery({
+                    lottery with
+                    teamTicketOptions = HashMap.HashMap<Nat, [Nat]>(0, Nat.equal, Nat32.fromNat);
+                });
+            };
+            case (#proportionalBid(proportionalBid)) {
+                #proportionalBid({
+                    prize = proportionalBid.prize;
+                    teamBidOptions = HashMap.HashMap<Nat, [Nat]>(0, Nat.equal, Nat32.fromNat);
+                });
+            };
+        };
         let votes = scenario.votes.vals()
         |> Iter.map<Vote, (Principal, Vote)>(
             _,
@@ -1238,15 +1273,34 @@ module {
         |> HashMap.fromIter<Principal, Vote>(_, scenario.votes.size(), Principal.equal, Principal.hash);
         {
             scenario with
+            kind = kind;
             votes = votes;
         };
     };
 
-    private func toStableScenarioData(scenario : MutableScenarioData) : ScenarioData {
+    private func toStableScenarioData(scenario : MutableScenarioData) : StableScenarioData {
+        let kind : StableScenarioKind = switch (scenario.kind) {
+            case (#noLeagueEffect(noLeague)) #noLeagueEffect(noLeague);
+            case (#threshold(threshold)) #threshold(threshold);
+            case (#leagueChoice(leagueChoice)) #leagueChoice(leagueChoice);
+            case (#lottery(lottery)) {
+                #lottery({
+                    lottery with
+                    teamTicketOptions = Iter.toArray(lottery.teamTicketOptions.entries());
+                });
+            };
+            case (#proportionalBid(proportionalBid)) {
+                #proportionalBid({
+                    proportionalBid with
+                    teamBidOptions = Iter.toArray(proportionalBid.teamBidOptions.entries());
+                });
+            };
+        };
         let votes = scenario.votes.vals()
         |> Iter.toArray(_);
         {
             scenario with
+            kind = kind;
             votes = votes;
         };
     };
