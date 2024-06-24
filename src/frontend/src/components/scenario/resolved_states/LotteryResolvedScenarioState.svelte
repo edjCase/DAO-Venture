@@ -2,12 +2,18 @@
     import {
         LotteryMetaEffectOutcome,
         LotteryScenario,
+        ScenarioStateResolved,
+        ScenarioVote,
     } from "../../../ic-agent/declarations/league";
     import { Team } from "../../../ic-agent/declarations/teams";
     import { toJsonString } from "../../../utils/StringUtil";
+    import ResolvedScenarioBids from "../ResolvedScenarioBids.svelte";
 
+    export let scenarioId: bigint;
     export let scenario: LotteryScenario;
     export let outcome: LotteryMetaEffectOutcome;
+    export let state: ScenarioStateResolved;
+    export let vote: ScenarioVote | "ineligible";
     export let teams: Team[];
 
     $: winningTeamName = outcome.winningTeamId
@@ -23,3 +29,5 @@
         {winningTeamName} won the lottery of {toJsonString(scenario.prize)}
     {/if}
 </div>
+
+<ResolvedScenarioBids {scenarioId} {bids} {vote} />

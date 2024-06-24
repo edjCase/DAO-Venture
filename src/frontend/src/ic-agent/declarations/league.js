@@ -350,7 +350,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const MetaEffectOutcome = IDL.Variant({
     'lottery' : LotteryMetaEffectOutcome,
-    'noEffect' : IDL.Null,
+    'noLeagueEffect' : IDL.Null,
     'threshold' : ThresholdMetaEffectOutcome,
     'proportionalBid' : ProportionalBidMetaEffectOutcome,
     'leagueChoice' : LeagueChoiceMetaEffectOutcome,

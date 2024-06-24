@@ -253,7 +253,7 @@ module {
         #leagueChoice : LeagueChoiceMetaEffectOutcome;
         #lottery : LotteryMetaEffectOutcome;
         #proportionalBid : ProportionalBidMetaEffectOutcome;
-        #noEffect;
+        #noLeagueEffect;
     };
 
     public type ThresholdMetaEffectOutcome = {

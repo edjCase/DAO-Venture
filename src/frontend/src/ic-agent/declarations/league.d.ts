@@ -205,7 +205,7 @@ export interface MatchPredictionSummary {
   'yourVote' : [] | [TeamId],
 }
 export type MetaEffectOutcome = { 'lottery' : LotteryMetaEffectOutcome } |
-  { 'noEffect' : null } |
+  { 'noLeagueEffect' : null } |
   { 'threshold' : ThresholdMetaEffectOutcome } |
   { 'proportionalBid' : ProportionalBidMetaEffectOutcome } |
   { 'leagueChoice' : LeagueChoiceMetaEffectOutcome };

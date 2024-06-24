@@ -10,6 +10,7 @@
     export let scenarioId: bigint;
     export let scenario: ProportionalBidScenario;
     export let vote: ScenarioVote;
+    export let bids: bigint[];
 </script>
 
 <Label>Prize</Label>
@@ -20,4 +21,4 @@
     NOT IMPLEMENTED PRIZE: {toJsonString(scenario.prize.kind)}
 {/if}
 
-<InProgressScenarioBids {scenarioId} minBid={BigInt(0)} {vote} />
+<InProgressScenarioBids {scenarioId} minBid={BigInt(0)} {vote} {bids} />

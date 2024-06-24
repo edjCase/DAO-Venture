@@ -8,6 +8,7 @@
     export let scenarioId: bigint;
     export let scenario: LotteryScenario;
     export let vote: ScenarioVote;
+    export let bids: bigint[];
 </script>
 
-<InProgressScenarioBids {scenarioId} minBid={scenario.minBid} {vote} />
+<InProgressScenarioBids {scenarioId} minBid={scenario.minBid} {vote} {bids} />

@@ -9,10 +9,8 @@
         ChevronDoubleDownOutline,
         ChevronDoubleUpOutline,
     } from "flowbite-svelte-icons";
-    import { User } from "../../ic-agent/declarations/users";
     import { teamStore } from "../../stores/TeamStore";
     import { toJsonString } from "../../utils/StringUtil";
-    import ScenarioOption from "./ScenarioOption.svelte";
     import { traitStore } from "../../stores/TraitStore";
     import ThresholdResolvedScenarioState from "./resolved_states/ThresholdResolvedScenarioState.svelte";
     import NoEffectResolvedScenarioState from "./resolved_states/NoLeagueEffectResolvedScenarioState.svelte";
@@ -24,30 +22,13 @@
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
-    export let userContext: User | undefined;
 
     let selectedChoice: number | undefined;
     let vote: ScenarioVote | "ineligible" = "ineligible";
-    $: {
-        let v = state.teamChoices.find(
-            (v) => v.teamId === userContext?.team[0]?.id,
-        );
-        if (v) {
-            selectedChoice = Number(v.option);
-        }
-    }
 
     $: teams = $teamStore;
     $: traits = $traitStore;
 
-    let optionTeamVotes: bigint[][] | undefined;
-    $: if (teams) {
-        optionTeamVotes = scenario.options.map((_, i) => {
-            return state.teamChoices
-                .filter((v) => v.option[0] === BigInt(i))
-                .map((v) => v.teamId);
-        });
-    }
     scenarioStore.subscribeVotes((votes) => {
         console.log("Votes", votes);
         if (votes[Number(scenario.id)] !== undefined) {
@@ -60,52 +41,46 @@
 </script>
 
 {#if teams !== undefined && traits !== undefined}
-    {#if options.length < 1}
-        No options available
-    {:else}
-        {#each options as option, index}
-            <ScenarioOption
-                scenarioId={scenario.id}
-                optionId={index}
-                {option}
-                selected={selectedChoice === index}
-                teamEnergy={undefined}
-                teamTraits={undefined}
-                {vote}
-                state={{
-                    resolved: {
-                        teams: optionTeamVotes
-                            ? optionTeamVotes[index]
-                            : undefined,
-                    },
-                }}
-            />
-        {/each}
-    {/if}
     <div>
         {#if "threshold" in state.metaEffectOutcome && "threshold" in scenario.kind}
             <ThresholdResolvedScenarioState
+                scenarioId={scenario.id}
                 scenario={scenario.kind.threshold}
                 outcome={state.metaEffectOutcome.threshold}
+                {state}
+                {vote}
             />
-        {:else if "noEffect" in state.metaEffectOutcome}
-            <NoEffectResolvedScenarioState />
+        {:else if "noLeagueEffect" in state.metaEffectOutcome && "noLeagueEffect" in scenario.kind}
+            <NoEffectResolvedScenarioState
+                scenarioId={scenario.id}
+                scenario={scenario.kind.noLeagueEffect}
+                {state}
+                {vote}
+            />
         {:else if "proportionalBid" in state.metaEffectOutcome && "proportionalBid" in scenario.kind}
             <ProportionalBidResolvedScenarioState
+                scenarioId={scenario.id}
                 scenario={scenario.kind.proportionalBid}
                 outcome={state.metaEffectOutcome.proportionalBid}
                 {teams}
+                {vote}
             />
         {:else if "lottery" in state.metaEffectOutcome && "lottery" in scenario.kind}
             <LotteryResolvedScenarioState
+                scenarioId={scenario.id}
                 scenario={scenario.kind.lottery}
                 outcome={state.metaEffectOutcome.lottery}
                 {teams}
+                {state}
+                {vote}
             />
         {:else if "leagueChoice" in state.metaEffectOutcome && "leagueChoice" in scenario.kind}
             <LeagueChoiceResolvedScenarioState
+                scenarioId={scenario.id}
                 scenario={scenario.kind.leagueChoice}
                 outcome={state.metaEffectOutcome.leagueChoice}
+                {state}
+                {vote}
             />
         {:else}
             NOT IMPLEMENTED {toJsonString(state.metaEffectOutcome)}

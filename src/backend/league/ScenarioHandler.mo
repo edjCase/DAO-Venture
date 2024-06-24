@@ -857,7 +857,7 @@ module {
             );
         };
         let metaEffectOutcome : Scenario.MetaEffectOutcome = switch (scenario.kind) {
-            case (#noLeagueEffect(noLeagueEffect)) #noEffect;
+            case (#noLeagueEffect(noLeagueEffect)) #noLeagueEffect;
             case (#leagueChoice(leagueChoice)) {
                 let leagueOptionId = getMajorityOption(prng, teamChoices);
                 switch (leagueOptionId) {

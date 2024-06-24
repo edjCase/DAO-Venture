@@ -22,6 +22,8 @@
 
     let vote: ScenarioVote | "ineligible" = "ineligible";
 
+    let bids: bigint[] = []; // TODO
+
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
             vote = votes[Number(scenario.id)];
@@ -42,12 +44,14 @@
         scenarioId={scenario.id}
         scenario={scenario.kind.lottery}
         {vote}
+        {bids}
     />
 {:else if "proportionalBid" in scenario.kind}
     <ProportionalBidInProgressScenarioState
         scenarioId={scenario.id}
         scenario={scenario.kind.proportionalBid}
         {vote}
+        {bids}
     />
 {:else if "leagueChoice" in scenario.kind}
     <LeagueChoiceInProgressScenarioState
