@@ -1,16 +1,15 @@
 <script lang="ts">
     import {
-        ProportionalBidMetaEffectOutcome,
+        ProportionalBidScenarioOutcome,
         ProportionalBidScenario,
         ScenarioVote,
     } from "../../../ic-agent/declarations/league";
     import { Team } from "../../../ic-agent/declarations/teams";
     import { toJsonString } from "../../../utils/StringUtil";
-    import ResolvedScenarioBids from "../ResolvedScenarioBids.svelte";
 
     export let scenarioId: bigint;
     export let scenario: ProportionalBidScenario;
-    export let outcome: ProportionalBidMetaEffectOutcome;
+    export let outcome: ProportionalBidScenarioOutcome;
     export let vote: ScenarioVote | "ineligible";
     export let teams: Team[];
 
@@ -19,11 +18,9 @@
     };
 </script>
 
-{#each outcome.winningBids as bid}
+{#each outcome.bids as bid}
     Prize: {scenario.prize.amount} of {toJsonString(scenario.prize.kind)}
     <div class="text-xl text-center">
-        {getTeamName(bid.teamId)} got {bid.amount}
+        {getTeamName(bid.teamId)} got {bid.proportion}
     </div>
 {/each}
-
-<ResolvedScenarioBids {scenarioId} {bids} {vote} />

@@ -16,29 +16,22 @@ import PlayerHandler "PlayerHandler";
 actor : Types.PlayerActor {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    stable var stableData = {
-        players : PlayerHandler.StableData = {
-            players = [];
-            retiredPlayers = [];
-            unusedFluff = [];
-        };
-        teamsCanisterId : ?Principal = null;
+    stable var playerStableData : PlayerHandler.StableData = {
+        players = [];
+        retiredPlayers = [];
+        unusedFluff = [];
     };
-
-    var teamsCanisterId = stableData.teamsCanisterId;
-    var playerHandler = PlayerHandler.PlayerHandler(stableData.players);
+    stable var teamsCanisterId : ?Principal = null;
     stable var stats = Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
 
+    var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
+
     system func preupgrade() {
-        stableData := {
-            players = playerHandler.toStableData();
-            teamsCanisterId = teamsCanisterId;
-        };
+        playerStableData := playerHandler.toStableData();
     };
 
     system func postupgrade() {
-        teamsCanisterId := stableData.teamsCanisterId;
-        playerHandler := PlayerHandler.PlayerHandler(stableData.players);
+        playerHandler := PlayerHandler.PlayerHandler(playerStableData);
     };
 
     public shared ({ caller }) func setTeamsCanisterId(canisterId : Principal) : async Types.SetTeamsCanisterIdResult {

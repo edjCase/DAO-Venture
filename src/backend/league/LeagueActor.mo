@@ -25,29 +25,27 @@ import Result "mo:base/Result";
 actor LeagueActor : Types.LeagueActor {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    stable var stableData = {
-        stadiumInitialized = false;
-        teamsInitialized = false;
-        benevolentDictator : Types.BenevolentDictatorState = #open;
-        season : SeasonHandler.StableData = {
-            seasonStatus = #notStarted;
-            teamStandings = null;
-            predictions = [];
-        };
-        predictions : PredictionHandler.StableData = {
-            matchGroups = [];
-        };
-        scenarios : ScenarioHandler.StableData = {
-            scenarios = [];
-        };
-        dao : Dao.StableData<Types.ProposalContent> = {
-            proposalDuration = #days(3);
-            proposals = [];
-            votingThreshold = #percent({
-                percent = 50;
-                quorum = ?20;
-            });
-        };
+    stable var stadiumInitialized = false;
+    stable var teamsInitialized = false;
+    stable var benevolentDictator : Types.BenevolentDictatorState = #open;
+    stable var seasonStableData : SeasonHandler.StableData = {
+        seasonStatus = #notStarted;
+        teamStandings = null;
+        predictions = [];
+    };
+    stable var predictionStableData : PredictionHandler.StableData = {
+        matchGroups = [];
+    };
+    stable var scenarioStableData : ScenarioHandler.StableData = {
+        scenarios = [];
+    };
+    stable var daoStableData : Dao.StableData<Types.ProposalContent> = {
+        proposalDuration = #days(3);
+        proposals = [];
+        votingThreshold = #percent({
+            percent = 50;
+            quorum = ?20;
+        });
     };
 
     private func processEffectOutcomes(effectOutcomes : [Scenario.EffectOutcome]) : async* ScenarioHandler.ProcessEffectOutcomesResult {
@@ -115,11 +113,8 @@ actor LeagueActor : Types.LeagueActor {
         #ok(Buffer.toArray(processedOutcomes));
     };
 
-    var stadiumInitialized = stableData.stadiumInitialized;
-    var teamsInitialized = stableData.teamsInitialized;
-    var benevolentDictator : Types.BenevolentDictatorState = stableData.benevolentDictator;
-    var predictionHandler = PredictionHandler.Handler(stableData.predictions);
-    var scenarioHandler = ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
+    var predictionHandler = PredictionHandler.Handler(predictionStableData);
+    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcomes);
 
     let seasonEventHandler : SeasonHandler.EventHandler = {
         onSeasonStart = func(_ : Season.InProgressSeason) : async* () {};
@@ -175,7 +170,7 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    var seasonHandler = SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
+    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
 
     func onExecuted(proposal : Types.Proposal) : async* Result.Result<(), Text> {
         // TODO change league proposal for team data to be a simple approve w/ callback. Dont need to expose all the update routes
@@ -229,28 +224,20 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
     func onRejected(_ : Types.Proposal) : async* () {}; // TODO
-    var dao = Dao.Dao<system, Types.ProposalContent>(stableData.dao, onExecuted, onRejected);
+    var dao = Dao.Dao<system, Types.ProposalContent>(daoStableData, onExecuted, onRejected);
 
     system func preupgrade() {
-        stableData := {
-            stadiumInitialized = stadiumInitialized;
-            teamsInitialized = teamsInitialized;
-            benevolentDictator = benevolentDictator;
-            season = seasonHandler.toStableData();
-            predictions = predictionHandler.toStableData();
-            scenarios = scenarioHandler.toStableData();
-            dao = dao.toStableData();
-        };
+        seasonStableData := seasonHandler.toStableData();
+        predictionStableData := predictionHandler.toStableData();
+        scenarioStableData := scenarioHandler.toStableData();
+        daoStableData := dao.toStableData();
     };
 
     system func postupgrade() {
-        stadiumInitialized := stableData.stadiumInitialized;
-        teamsInitialized := stableData.teamsInitialized;
-        benevolentDictator := stableData.benevolentDictator;
-        seasonHandler := SeasonHandler.SeasonHandler<system>(stableData.season, seasonEventHandler);
-        predictionHandler := PredictionHandler.Handler(stableData.predictions);
-        scenarioHandler := ScenarioHandler.Handler<system>(stableData.scenarios, processEffectOutcomes);
-        dao := Dao.Dao<system, Types.ProposalContent>(stableData.dao, onExecuted, onRejected);
+        seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
+        predictionHandler := PredictionHandler.Handler(predictionStableData);
+        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcomes);
+        dao := Dao.Dao<system, Types.ProposalContent>(daoStableData, onExecuted, onRejected);
     };
 
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {

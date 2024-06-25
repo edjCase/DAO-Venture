@@ -69,6 +69,7 @@ module {
         energyCost : Nat;
         votingPower : Nat;
         value : ScenarioOptionValue;
+        traitRequirements : [Scenario.TraitRequirement];
     };
 
     public type ScenarioOptionValue = {

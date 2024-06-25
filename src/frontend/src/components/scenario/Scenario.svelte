@@ -42,11 +42,7 @@
   </div>
   <div class="flex flex-col items-center gap-2">
     {#if "resolved" in scenario.state}
-      <ResolvedScenarioState
-        {scenario}
-        state={scenario.state.resolved}
-        userContext={user}
-      />
+      <ResolvedScenarioState {scenario} state={scenario.state.resolved} />
     {:else if "inProgress" in scenario.state}
       <InProgressScenarioState {scenario} userContext={user} />
       <div class="text-center text-xl">

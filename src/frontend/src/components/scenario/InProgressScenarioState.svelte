@@ -9,20 +9,28 @@
     import NoLeagueEffectInProgressScenarioState from "./in_progress_states/NoLeagueEffectInProgressScenarioState.svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import ProportionalBidInProgressScenarioState from "./in_progress_states/ProportionalBidInProgressScenarioState.svelte";
+    import { teamStore } from "../../stores/TeamStore";
+    import { Team } from "../../ic-agent/declarations/teams";
+    import ScenarioOption from "./ScenarioOption.svelte";
 
     export let scenario: Scenario;
     export let userContext: User | undefined;
 
     let teamId: bigint | undefined;
+    let team: Team | undefined;
     let isOwner: boolean = false;
+
+    $: teams = $teamStore;
+
     $: {
         teamId = userContext?.team[0]?.id;
+        team = teams?.find((team) => team.id === teamId);
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
     }
 
     let vote: ScenarioVote | "ineligible" = "ineligible";
 
-    let bids: bigint[] = []; // TODO
+    let selectedChoice: number | undefined;
 
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
@@ -39,38 +47,59 @@
         <div>Want to participate in scenarios?</div>
         <Button>Become a Team co-owner</Button>
     {/if}
-{:else if "lottery" in scenario.kind}
-    <LotteryInProgressScenarioState
-        scenarioId={scenario.id}
-        scenario={scenario.kind.lottery}
-        {vote}
-        {bids}
-    />
-{:else if "proportionalBid" in scenario.kind}
-    <ProportionalBidInProgressScenarioState
-        scenarioId={scenario.id}
-        scenario={scenario.kind.proportionalBid}
-        {vote}
-        {bids}
-    />
-{:else if "leagueChoice" in scenario.kind}
-    <LeagueChoiceInProgressScenarioState
-        scenarioId={scenario.id}
-        scenario={scenario.kind.leagueChoice}
-        {vote}
-    />
-{:else if "threshold" in scenario.kind}
-    <ThresholdInProgressScenarioState
-        scenarioId={scenario.id}
-        scenario={scenario.kind.threshold}
-        {vote}
-    />
-{:else if "noLeagueEffect" in scenario.kind}
-    <NoLeagueEffectInProgressScenarioState
-        scenarioId={scenario.id}
-        scenario={scenario.kind.noLeagueEffect}
-        {vote}
-    />
 {:else}
-    NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
+    {#if "lottery" in scenario.kind}
+        <LotteryInProgressScenarioState
+            scenarioId={scenario.id}
+            scenario={scenario.kind.lottery}
+            {vote}
+        />
+    {:else if "proportionalBid" in scenario.kind}
+        <ProportionalBidInProgressScenarioState
+            scenarioId={scenario.id}
+            scenario={scenario.kind.proportionalBid}
+            {vote}
+        />
+    {:else if "leagueChoice" in scenario.kind}
+        <LeagueChoiceInProgressScenarioState
+            scenarioId={scenario.id}
+            scenario={scenario.kind.leagueChoice}
+            {vote}
+        />
+    {:else if "threshold" in scenario.kind}
+        <ThresholdInProgressScenarioState
+            scenarioId={scenario.id}
+            scenario={scenario.kind.threshold}
+            {vote}
+        />
+    {:else if "noLeagueEffect" in scenario.kind}
+        <NoLeagueEffectInProgressScenarioState
+            scenarioId={scenario.id}
+            scenario={scenario.kind.noLeagueEffect}
+            {vote}
+        />
+    {:else}
+        NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
+    {/if}
+    {#if vote.teamOptions.length < 1}
+        No options available
+    {:else}
+        {#each vote.teamOptions as option, index}
+            <ScenarioOption
+                optionId={index}
+                scenarioId={scenario.id}
+                {option}
+                selected={selectedChoice === index}
+                teamEnergy={team?.energy}
+                {vote}
+                state={{
+                    inProgress: {
+                        onSelect: () => {
+                            selectedChoice = index;
+                        },
+                    },
+                }}
+            />
+        {/each}
+    {/if}
 {/if}

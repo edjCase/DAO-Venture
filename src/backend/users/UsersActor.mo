@@ -6,22 +6,18 @@ import UserHandler "UserHandler";
 
 actor : Types.Actor {
 
-    stable var stableData = {
-        users : UserHandler.StableData = {
-            users = [];
-        };
+    stable var userStableData : UserHandler.StableData = {
+        users = [];
     };
 
-    var userHandler = UserHandler.UserHandler(stableData.users);
+    var userHandler = UserHandler.UserHandler(userStableData);
 
     system func preupgrade() {
-        stableData := {
-            users = userHandler.toStableData();
-        };
+        userStableData := userHandler.toStableData();
     };
 
     system func postupgrade() {
-        userHandler := UserHandler.UserHandler(stableData.users);
+        userHandler := UserHandler.UserHandler(userStableData);
     };
 
     public shared query ({ caller }) func get(userId : Principal) : async Types.GetUserResult {

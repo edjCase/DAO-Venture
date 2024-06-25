@@ -15,26 +15,22 @@ import LeagueTypes "../league/Types";
 
 actor TeamsActor : Types.Actor {
 
-  stable var stableData = {
-    teams : TeamsHandler.StableData = {
-      entropyThreshold = 100;
-      traits = [];
-      teams = [];
-    };
+  stable var teamStableData : TeamsHandler.StableData = {
+    entropyThreshold = 100;
+    traits = [];
+    teams = [];
   };
 
   stable var leagueIdOrNull : ?Principal = null;
 
-  var teamsHandler = TeamsHandler.Handler<system>(stableData.teams);
+  var teamsHandler = TeamsHandler.Handler<system>(teamStableData);
 
   system func preupgrade() {
-    stableData := {
-      teams = teamsHandler.toStableData();
-    };
+    teamStableData := teamsHandler.toStableData();
   };
 
   system func postupgrade() {
-    teamsHandler := TeamsHandler.Handler<system>(stableData.teams);
+    teamsHandler := TeamsHandler.Handler<system>(teamStableData);
   };
 
   public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {

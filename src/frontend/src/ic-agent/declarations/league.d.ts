@@ -18,7 +18,6 @@ export interface AddScenarioRequest {
   'title' : string,
   'endTime' : Time,
   'kind' : ScenarioKind,
-  'teamIds' : Array<bigint>,
   'description' : string,
   'undecidedEffect' : Effect,
 }
@@ -167,7 +166,6 @@ export type InProgressSeasonMatchGroupVariant = {
 export interface InProgressTeam { 'id' : bigint }
 export interface InjuryEffect { 'target' : TargetPosition }
 export interface InjuryPlayerEffectOutcome { 'target' : TargetPositionInstance }
-export interface LeagueChoiceMetaEffectOutcome { 'optionId' : [] | [bigint] }
 export interface LeagueChoiceScenario {
   'options' : Array<LeagueChoiceScenarioOption>,
 }
@@ -179,8 +177,9 @@ export interface LeagueChoiceScenarioOption {
   'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
 }
-export interface LotteryMetaEffectOutcome { 'winningTeamId' : [] | [bigint] }
+export interface LeagueChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
 export interface LotteryScenario { 'minBid' : bigint, 'prize' : Effect }
+export interface LotteryScenarioOutcome { 'winningTeamId' : [] | [bigint] }
 export type MatchAura = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
   { 'extraStrike' : null } |
@@ -204,14 +203,7 @@ export interface MatchPredictionSummary {
   'team2' : bigint,
   'yourVote' : [] | [TeamId],
 }
-export type MetaEffectOutcome = { 'lottery' : LotteryMetaEffectOutcome } |
-  { 'noLeagueEffect' : null } |
-  { 'threshold' : ThresholdMetaEffectOutcome } |
-  { 'proportionalBid' : ProportionalBidMetaEffectOutcome } |
-  { 'leagueChoice' : LeagueChoiceMetaEffectOutcome };
-export interface NoLeagueEffectScenario {
-  'options' : Array<ScenarioOptionWithEffect>,
-}
+export interface NoLeagueEffectScenario { 'options' : Array<ScenarioOption> }
 export interface NotScheduledMatch {
   'team1' : TeamAssignment,
   'team2' : TeamAssignment,
@@ -285,21 +277,18 @@ export interface PredictMatchOutcomeRequest {
 }
 export type PredictMatchOutcomeResult = { 'ok' : null } |
   { 'err' : PredictMatchOutcomeError };
-export interface ProportionalBidMetaEffectOutcome {
-  'winningBids' : Array<ProportionalWinningBid>,
-}
 export interface ProportionalBidPrize {
-  'kind' : {
-      'skill' : {
-        'duration' : Duration,
-        'skill' : ChosenOrRandomSkill,
-        'target' : TargetPosition,
-      }
-    },
+  'kind' : PropotionalBidPrizeKind,
   'amount' : bigint,
 }
 export interface ProportionalBidScenario { 'prize' : ProportionalBidPrize }
-export interface ProportionalWinningBid { 'teamId' : bigint, 'amount' : bigint }
+export interface ProportionalBidScenarioOutcome {
+  'bids' : Array<ProportionalWinningBid>,
+}
+export interface ProportionalWinningBid {
+  'proportion' : bigint,
+  'teamId' : bigint,
+}
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent,
@@ -326,6 +315,16 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
+export type PropotionalBidPrizeKind = { 'skill' : PropotionalBidPrizeSkill };
+export interface PropotionalBidPrizeSkill {
+  'duration' : Duration,
+  'skill' : ChosenOrRandomSkill,
+  'target' : TargetPosition,
+}
+export interface ResolvedTeamChoice {
+  'optionId' : [] | [bigint],
+  'teamId' : bigint,
+}
 export type Result = { 'ok' : null } |
   { 'err' : AddScenarioCustomTeamOptionError };
 export interface Scenario {
@@ -343,30 +342,43 @@ export type ScenarioKind = { 'lottery' : LotteryScenario } |
   { 'threshold' : ThresholdScenario } |
   { 'proportionalBid' : ProportionalBidScenario } |
   { 'leagueChoice' : LeagueChoiceScenario };
-export interface ScenarioOptionWithEffect {
+export interface ScenarioOption {
   'title' : string,
   'teamEffect' : Effect,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
 }
+export type ScenarioOptionValue = { 'nat' : bigint } |
+  { 'none' : null };
+export type ScenarioOutcome = { 'lottery' : LotteryScenarioOutcome } |
+  { 'noLeagueEffect' : null } |
+  { 'threshold' : ThresholdScenarioOutcome } |
+  { 'proportionalBid' : ProportionalBidScenarioOutcome } |
+  { 'leagueChoice' : LeagueChoiceScenarioOutcome };
 export type ScenarioState = { 'notStarted' : null } |
   { 'resolved' : ScenarioStateResolved } |
   { 'inProgress' : null };
 export interface ScenarioStateResolved {
-  'teamChoices' : Array<ScenarioTeamChoice>,
+  'teamChoices' : Array<ResolvedTeamChoice>,
+  'scenarioOutcome' : ScenarioOutcome,
   'effectOutcomes' : Array<EffectOutcome>,
-  'metaEffectOutcome' : MetaEffectOutcome,
 }
-export interface ScenarioTeamChoice {
-  'option' : [] | [bigint],
-  'teamId' : bigint,
+export interface ScenarioTeamOption {
+  'id' : bigint,
+  'title' : string,
+  'value' : ScenarioOptionValue,
+  'votingPower' : bigint,
+  'description' : string,
+  'traitRequirements' : Array<TraitRequirement>,
+  'energyCost' : bigint,
 }
 export interface ScenarioVote {
   'option' : [] | [bigint],
+  'teamOptions' : Array<ScenarioTeamOption>,
   'votingPower' : bigint,
-  'optionVotingPowersForTeam' : Array<bigint>,
   'teamId' : bigint,
+  'teamVotingPower' : bigint,
 }
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
@@ -493,10 +505,6 @@ export interface TeamTraitTeamEffectOutcome {
   'teamId' : bigint,
 }
 export interface ThresholdContribution { 'teamId' : bigint, 'amount' : bigint }
-export interface ThresholdMetaEffectOutcome {
-  'contributions' : Array<ThresholdContribution>,
-  'successful' : boolean,
-}
 export interface ThresholdScenario {
   'failure' : { 'description' : string, 'effect' : Effect },
   'minAmount' : bigint,
@@ -511,6 +519,10 @@ export interface ThresholdScenarioOption {
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
+}
+export interface ThresholdScenarioOutcome {
+  'contributions' : Array<ThresholdContribution>,
+  'successful' : boolean,
 }
 export type ThresholdValue = { 'fixed' : bigint } |
   {
@@ -537,7 +549,6 @@ export interface VoteOnProposalRequest {
 export type VoteOnProposalResult = { 'ok' : null } |
   { 'err' : VoteOnProposalError };
 export type VoteOnScenarioError = { 'invalidOption' : null } |
-  { 'alreadyVoted' : null } |
   { 'votingNotOpen' : null } |
   { 'notEligible' : null } |
   { 'scenarioNotFound' : null };

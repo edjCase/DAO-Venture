@@ -17,9 +17,8 @@
 
     let initialEnd = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3);
     let scenario: AddScenarioRequest = {
-        title: "",
-        description: "",
-        teamIds: [],
+        title: "Scenario 1",
+        description: "Scenario Description",
         startTime: [],
         endTime: dateToNanoseconds(initialEnd),
         undecidedEffect: {
@@ -28,28 +27,10 @@
                 delta: BigInt(1),
             },
         },
-        options: [
-            {
-                title: "",
-                description: "",
-                energyCost: BigInt(0),
-                traitRequirements: [],
-                effect: {
-                    noEffect: null,
-                },
+        kind: {
+            noLeagueEffect: {
+                options: [],
             },
-            {
-                title: "",
-                description: "",
-                energyCost: BigInt(0),
-                traitRequirements: [],
-                effect: {
-                    noEffect: null,
-                },
-            },
-        ],
-        metaEffect: {
-            noEffect: null,
         },
     };
 
@@ -83,8 +64,7 @@
             startTime: scenario.startTime, // Keep the same start time
             endTime: scenario.endTime, // Keep the same end time
             undecidedEffect: selectedScenario.undecidedEffect,
-            options: selectedScenario.options,
-            metaEffect: selectedScenario.metaEffect,
+            kind: selectedScenario.kind,
         };
     };
 

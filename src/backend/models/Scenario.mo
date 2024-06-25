@@ -249,14 +249,14 @@ module {
     };
 
     public type ScenarioOutcome = {
-        #threshold : ThresholdMetaEffectOutcome;
-        #leagueChoice : LeagueChoiceMetaEffectOutcome;
-        #lottery : LotteryMetaEffectOutcome;
-        #proportionalBid : ProportionalBidMetaEffectOutcome;
+        #threshold : ThresholdScenarioOutcome;
+        #leagueChoice : LeagueChoiceScenarioOutcome;
+        #lottery : LotteryScenarioOutcome;
+        #proportionalBid : ProportionalBidScenarioOutcome;
         #noLeagueEffect;
     };
 
-    public type ThresholdMetaEffectOutcome = {
+    public type ThresholdScenarioOutcome = {
         contributions : [ThresholdContribution];
         successful : Bool;
     };
@@ -266,15 +266,15 @@ module {
         amount : Int;
     };
 
-    public type LeagueChoiceMetaEffectOutcome = {
+    public type LeagueChoiceScenarioOutcome = {
         optionId : ?Nat;
     };
 
-    public type LotteryMetaEffectOutcome = {
+    public type LotteryScenarioOutcome = {
         winningTeamId : ?Nat;
     };
 
-    public type ProportionalBidMetaEffectOutcome = {
+    public type ProportionalBidScenarioOutcome = {
         bids : [ProportionalWinningBid];
     };
 

@@ -2,14 +2,13 @@
     import {
         ScenarioStateResolved,
         ScenarioVote,
-        ThresholdMetaEffectOutcome,
+        ThresholdScenarioOutcome,
         ThresholdScenario,
     } from "../../../ic-agent/declarations/league";
-    import ResolvedScenarioOptions from "../ResolvedScenarioOptions.svelte";
 
     export let scenarioId: bigint;
     export let scenario: ThresholdScenario;
-    export let outcome: ThresholdMetaEffectOutcome;
+    export let outcome: ThresholdScenarioOutcome;
     export let state: ScenarioStateResolved;
     export let vote: ScenarioVote | "ineligible";
 </script>
@@ -21,10 +20,3 @@
     <div class="text-xl text-center">Failed: Threshold Not Met</div>
     <div>{scenario.failure.description}</div>
 {/if}
-
-<ResolvedScenarioOptions
-    {scenarioId}
-    options={scenario.options}
-    {state}
-    {vote}
-/>

@@ -92,7 +92,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'kind' : TraitRequirementKind,
   });
-  const ScenarioOptionWithEffect = IDL.Record({
+  const ScenarioOption = IDL.Record({
     'title' : IDL.Text,
     'teamEffect' : Effect,
     'description' : IDL.Text,
@@ -100,7 +100,7 @@ export const idlFactory = ({ IDL }) => {
     'energyCost' : IDL.Nat,
   });
   const NoLeagueEffectScenario = IDL.Record({
-    'options' : IDL.Vec(ScenarioOptionWithEffect),
+    'options' : IDL.Vec(ScenarioOption),
   });
   const ThresholdValue = IDL.Variant({
     'fixed' : IDL.Int,
@@ -127,14 +127,16 @@ export const idlFactory = ({ IDL }) => {
     'options' : IDL.Vec(ThresholdScenarioOption),
     'undecidedAmount' : ThresholdValue,
   });
+  const PropotionalBidPrizeSkill = IDL.Record({
+    'duration' : Duration,
+    'skill' : ChosenOrRandomSkill,
+    'target' : TargetPosition,
+  });
+  const PropotionalBidPrizeKind = IDL.Variant({
+    'skill' : PropotionalBidPrizeSkill,
+  });
   const ProportionalBidPrize = IDL.Record({
-    'kind' : IDL.Variant({
-      'skill' : IDL.Record({
-        'duration' : Duration,
-        'skill' : ChosenOrRandomSkill,
-        'target' : TargetPosition,
-      }),
-    }),
+    'kind' : PropotionalBidPrizeKind,
     'amount' : IDL.Nat,
   });
   const ProportionalBidScenario = IDL.Record({
@@ -163,7 +165,6 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'endTime' : Time,
     'kind' : ScenarioKind,
-    'teamIds' : IDL.Vec(IDL.Nat),
     'description' : IDL.Text,
     'undecidedEffect' : Effect,
   });
@@ -290,9 +291,37 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const GetProposalsResult = IDL.Variant({ 'ok' : PagedResult });
-  const ScenarioTeamChoice = IDL.Record({
-    'option' : IDL.Opt(IDL.Nat),
+  const ResolvedTeamChoice = IDL.Record({
+    'optionId' : IDL.Opt(IDL.Nat),
     'teamId' : IDL.Nat,
+  });
+  const LotteryScenarioOutcome = IDL.Record({
+    'winningTeamId' : IDL.Opt(IDL.Nat),
+  });
+  const ThresholdContribution = IDL.Record({
+    'teamId' : IDL.Nat,
+    'amount' : IDL.Int,
+  });
+  const ThresholdScenarioOutcome = IDL.Record({
+    'contributions' : IDL.Vec(ThresholdContribution),
+    'successful' : IDL.Bool,
+  });
+  const ProportionalWinningBid = IDL.Record({
+    'proportion' : IDL.Nat,
+    'teamId' : IDL.Nat,
+  });
+  const ProportionalBidScenarioOutcome = IDL.Record({
+    'bids' : IDL.Vec(ProportionalWinningBid),
+  });
+  const LeagueChoiceScenarioOutcome = IDL.Record({
+    'optionId' : IDL.Opt(IDL.Nat),
+  });
+  const ScenarioOutcome = IDL.Variant({
+    'lottery' : LotteryScenarioOutcome,
+    'noLeagueEffect' : IDL.Null,
+    'threshold' : ThresholdScenarioOutcome,
+    'proportionalBid' : ProportionalBidScenarioOutcome,
+    'leagueChoice' : LeagueChoiceScenarioOutcome,
   });
   const TeamTraitTeamEffectOutcome = IDL.Record({
     'kind' : TeamTraitEffectKind,
@@ -327,38 +356,10 @@ export const idlFactory = ({ IDL }) => {
     'injury' : InjuryPlayerEffectOutcome,
     'energy' : EnergyTeamEffectOutcome,
   });
-  const LotteryMetaEffectOutcome = IDL.Record({
-    'winningTeamId' : IDL.Opt(IDL.Nat),
-  });
-  const ThresholdContribution = IDL.Record({
-    'teamId' : IDL.Nat,
-    'amount' : IDL.Int,
-  });
-  const ThresholdMetaEffectOutcome = IDL.Record({
-    'contributions' : IDL.Vec(ThresholdContribution),
-    'successful' : IDL.Bool,
-  });
-  const ProportionalWinningBid = IDL.Record({
-    'teamId' : IDL.Nat,
-    'amount' : IDL.Nat,
-  });
-  const ProportionalBidMetaEffectOutcome = IDL.Record({
-    'winningBids' : IDL.Vec(ProportionalWinningBid),
-  });
-  const LeagueChoiceMetaEffectOutcome = IDL.Record({
-    'optionId' : IDL.Opt(IDL.Nat),
-  });
-  const MetaEffectOutcome = IDL.Variant({
-    'lottery' : LotteryMetaEffectOutcome,
-    'noLeagueEffect' : IDL.Null,
-    'threshold' : ThresholdMetaEffectOutcome,
-    'proportionalBid' : ProportionalBidMetaEffectOutcome,
-    'leagueChoice' : LeagueChoiceMetaEffectOutcome,
-  });
   const ScenarioStateResolved = IDL.Record({
-    'teamChoices' : IDL.Vec(ScenarioTeamChoice),
+    'teamChoices' : IDL.Vec(ResolvedTeamChoice),
+    'scenarioOutcome' : ScenarioOutcome,
     'effectOutcomes' : IDL.Vec(EffectOutcome),
-    'metaEffectOutcome' : MetaEffectOutcome,
   });
   const ScenarioState = IDL.Variant({
     'notStarted' : IDL.Null,
@@ -384,11 +385,25 @@ export const idlFactory = ({ IDL }) => {
     'err' : GetScenarioError,
   });
   const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
+  const ScenarioOptionValue = IDL.Variant({
+    'nat' : IDL.Nat,
+    'none' : IDL.Null,
+  });
+  const ScenarioTeamOption = IDL.Record({
+    'id' : IDL.Nat,
+    'title' : IDL.Text,
+    'value' : ScenarioOptionValue,
+    'votingPower' : IDL.Nat,
+    'description' : IDL.Text,
+    'traitRequirements' : IDL.Vec(TraitRequirement),
+    'energyCost' : IDL.Nat,
+  });
   const ScenarioVote = IDL.Record({
     'option' : IDL.Opt(IDL.Nat),
+    'teamOptions' : IDL.Vec(ScenarioTeamOption),
     'votingPower' : IDL.Nat,
-    'optionVotingPowersForTeam' : IDL.Vec(IDL.Nat),
     'teamId' : IDL.Nat,
+    'teamVotingPower' : IDL.Nat,
   });
   const GetScenarioVoteError = IDL.Variant({
     'notEligible' : IDL.Null,
@@ -676,7 +691,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const VoteOnScenarioError = IDL.Variant({
     'invalidOption' : IDL.Null,
-    'alreadyVoted' : IDL.Null,
     'votingNotOpen' : IDL.Null,
     'notEligible' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
