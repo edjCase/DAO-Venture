@@ -25,7 +25,10 @@ import IterTools "mo:itertools/Iter";
 import UsersActor "canister:users";
 import UserTypes "../users/Types";
 import Skill "../models/Skill";
+import TeamsActor "canister:teams";
+import TeamTypes "../team/Types";
 import FieldPosition "../models/FieldPosition";
+import Trait "../models/Trait";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -93,28 +96,13 @@ module {
         title : Text;
         description : Text;
         undecidedEffect : Scenario.Effect;
-        kind : MutableScenarioKind;
+        kind : Scenario.ScenarioKind;
         state : ScenarioState;
         startTime : Time.Time;
         endTime : Time.Time;
         teamIds : [Nat];
         votes : HashMap.HashMap<Principal, Vote>;
-    };
-
-    type MutableScenarioKind = {
-        #noLeagueEffect : Scenario.NoLeagueEffectScenario;
-        #threshold : Scenario.ThresholdScenario;
-        #leagueChoice : Scenario.LeagueChoiceScenario;
-        #lottery : MutableLotteryScenario;
-        #proportionalBid : MutableProportionalBidScenario;
-    };
-
-    type MutableLotteryScenario = Scenario.LotteryScenario and {
-        teamTicketOptions : HashMap.HashMap<Nat, [Nat]>;
-    };
-
-    type MutableProportionalBidScenario = Scenario.ProportionalBidScenario and {
-        teamBidOptions : HashMap.HashMap<Nat, [Nat]>;
+        teamOptions : HashMap.HashMap<Nat, [Types.ScenarioTeamOption]>;
     };
 
     type ScenarioState = {
@@ -128,18 +116,14 @@ module {
     };
 
     public type ScenarioStateResolved = {
-        teamChoices : [TeamVotingResult];
-        metaEffectOutcome : Scenario.MetaEffectOutcome;
+        teamChoices : [Scenario.ResolvedTeamChoice];
+        scenarioOutcome : Scenario.ScenarioOutcome;
         effectOutcomes : [EffectOutcomeData];
     };
 
     public type EffectOutcomeData = {
         processed : Bool;
         outcome : Scenario.EffectOutcome;
-    };
-    public type TeamVotingResult = {
-        id : Nat;
-        option : ?Nat;
     };
 
     public class Handler<system>(
@@ -188,25 +172,25 @@ module {
         public func vote(
             scenarioId : Nat,
             voterId : Principal,
-            option : Nat,
-        ) : async* Result.Result<(), { #invalidOption; #alreadyVoted; #notEligible; #scenarioNotFound }> {
+            optionId : Nat,
+        ) : async* Result.Result<(), { #invalidOption; #notEligible; #scenarioNotFound }> {
 
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
-            if (vote.option != null) {
-                return #err(#alreadyVoted);
-            };
-
-            let ?optionCount = getOptionCount(scenario, vote.teamId) else return #err(#invalidOption);
-            if (option >= optionCount) {
+            let ?teamOptions = scenario.teamOptions.get(vote.teamId) else return #err(#notEligible);
+            let optionExists = IterTools.any(
+                teamOptions.vals(),
+                func(option : Types.ScenarioTeamOption) : Bool = option.id == optionId,
+            );
+            if (not optionExists) {
                 return #err(#invalidOption);
             };
-            Debug.print("Voter " # Principal.toText(voterId) # " voted for option " # Nat.toText(option) # " in scenario " # Nat.toText(scenarioId));
+            Debug.print("Voter " # Principal.toText(voterId) # " voted for option with id '" # Nat.toText(optionId) # "'' in scenario " # Nat.toText(scenarioId));
             scenario.votes.put(
                 voterId,
                 {
                     vote with
-                    option = ?option;
+                    optionId = ?optionId;
                 },
             );
             switch (calculateResultsInternal(scenario, false)) {
@@ -218,100 +202,63 @@ module {
             #ok;
         };
 
-        private func getOptionCount(scenario : MutableScenarioData, teamId : Nat) : ?Nat {
-            switch (scenario.kind) {
-                case (#lottery(lottery)) {
-                    let ?ticketOptions = lottery.teamTicketOptions.get(teamId) else return null;
-                    ?ticketOptions.size();
-                };
-                case (#proportionalBid(proportionalBid)) {
-                    let ?bidOptions = proportionalBid.teamBidOptions.get(teamId) else return null;
-                    ?bidOptions.size();
-                };
-                case (#leagueChoice(leagueChoice)) ?leagueChoice.options.size();
-                case (#threshold(threshold)) ?threshold.options.size();
-                case (#noLeagueEffect(noLeague)) ?noLeague.options.size();
-            };
-        };
-
         public func getVote(scenarioId : Nat, voterId : Principal) : Result.Result<Types.ScenarioVote, { #notEligible; #scenarioNotFound }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
-
-            let optionCount = switch (getOptionCount(scenario, vote.teamId)) {
-                case (null) 0;
-                case (?count) count;
-            };
-            let optionVotingPowersForTeam : [Nat] = IterTools.range(0, optionCount)
-            |> Iter.map(
-                _,
-                func(i : Nat) : Nat {
-                    let optionVotingPowerForTeam : ?Nat = scenario.votes.vals()
-                    |> Iter.filter(
-                        _,
-                        func(otherVote : Vote) : Bool = otherVote.option == ?i and otherVote.teamId == vote.teamId,
-                    )
-                    |> Iter.map(
-                        _,
-                        func(otherVote : Vote) : Nat = otherVote.votingPower,
-                    )
-                    |> IterTools.sum(
-                        _,
-                        func(x : Nat, y : Nat) : Nat = x + y,
-                    );
-                    switch (optionVotingPowerForTeam) {
-                        case (null) 0;
-                        case (?v) v;
-                    };
-                },
-            )
-            |> Iter.toArray(_);
+            let ?teamOptions = scenario.teamOptions.get(vote.teamId) else return #err(#notEligible);
+            let teamVotingPower = IterTools.fold<Vote, Nat>(
+                scenario.votes.vals(),
+                0,
+                func(total : Nat, option : Vote) : Nat = total + option.votingPower,
+            );
             #ok({
                 option = vote.option;
                 votingPower = vote.votingPower;
-                optionVotingPowersForTeam = optionVotingPowersForTeam;
+                teamVotingPower = teamVotingPower;
+                teamOptions = teamOptions;
                 teamId = vote.teamId;
             });
         };
 
         public func addCustomTeamOption(scenarioId : Nat, teamId : Nat, value : { #nat : Nat }) : Result.Result<(), { #scenarioNotFound; #invalidValueType; #customOptionNotAllowed; #duplicate }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+
+            let teamOptions = switch (scenario.teamOptions.get(teamId)) {
+                case (null) Buffer.Buffer<Types.ScenarioTeamOption>(1);
+                case (?options) Buffer.fromArray<Types.ScenarioTeamOption>(options);
+            };
             switch (scenario.kind) {
                 case (#lottery(lottery)) {
                     let #nat(natValue) = value else return #err(#invalidValueType);
-                    let ticketOptions = Option.get(lottery.teamTicketOptions.get(teamId), []);
-                    if (IterTools.any(ticketOptions.vals(), func(tickets : Nat) : Bool = tickets == natValue)) {
-                        return #err(#duplicate);
-                    };
-                    let newTicketOptions = Buffer.fromArray<Nat>(ticketOptions);
-                    newTicketOptions.add(natValue);
-                    lottery.teamTicketOptions.put(
-                        teamId,
-                        Buffer.toArray(newTicketOptions),
-                    );
+
+                    teamOptions.add({
+                        id = teamOptions.size();
+                        title = "Buy " # Nat.toText(natValue);
+                        description = "Buy " # Nat.toText(natValue) # " tickets";
+                        energyCost = natValue;
+                        votingPower = 0;
+                        value = #nat(natValue);
+                    });
                 };
                 case (#proportionalBid(proportionalBid)) {
                     let #nat(natValue) = value else return #err(#invalidValueType);
-                    let bidOptions = Option.get(proportionalBid.teamBidOptions.get(teamId), []);
-                    if (IterTools.any(bidOptions.vals(), func(tickets : Nat) : Bool = tickets == natValue)) {
-                        return #err(#duplicate);
-                    };
-                    let newBidOptions = Buffer.fromArray<Nat>(bidOptions);
-                    newBidOptions.add(natValue);
-                    proportionalBid.teamBidOptions.put(
-                        teamId,
-                        Buffer.toArray(newBidOptions),
-                    );
+
+                    teamOptions.add({
+                        id = teamOptions.size();
+                        title = "Bid " # Nat.toText(natValue);
+                        description = "Bid " # Nat.toText(natValue) # "💰";
+                        energyCost = natValue;
+                        votingPower = 0;
+                        value = #nat(natValue);
+                    });
                 };
-                case (_) {
-                    return #err(#customOptionNotAllowed);
-                };
+                case (_) return #err(#customOptionNotAllowed);
             };
             #ok;
         };
 
         private func calculateResultsInternal(scenario : MutableScenarioData, votingClosed : Bool) : {
-            #consensus : [TeamVotingResult];
+            #consensus : [Scenario.ResolvedTeamChoice];
             #noConsensus;
         } {
             type TeamStats = {
@@ -341,7 +288,7 @@ module {
                     case (null) ();
                 };
             };
-            let teamResults = Buffer.Buffer<TeamVotingResult>(teamStats.size());
+            let teamResults = Buffer.Buffer<Scenario.ResolvedTeamChoice>(teamStats.size());
             let teamsWithVoters = teamStats.entries()
             |> Iter.filter(
                 _,
@@ -401,8 +348,8 @@ module {
                     case (?o) ?o.option;
                 };
                 teamResults.add({
-                    id = teamId;
-                    option = chosenOption;
+                    teamId = teamId;
+                    optionId = chosenOption;
                 });
             };
 
@@ -426,42 +373,49 @@ module {
             } catch (err) {
                 Debug.trap("Failed to get team owners from user canister: " # Error.message(err));
             };
+
+            let teamIds = HashMap.HashMap<Nat, ()>(0, Nat.equal, Nat32.fromNat);
+
+            let allTeams : [TeamTypes.Team] = await TeamsActor.getTeams();
+
             let votes = members.vals()
             |> Iter.map<UserTypes.UserVotingInfo, (Principal, Vote)>(
                 _,
-                func(member : UserTypes.UserVotingInfo) : (Principal, Vote) = (
-                    member.id,
-                    {
-                        id = member.id;
-                        teamId = member.teamId;
-                        votingPower = member.votingPower;
-                        option = null;
-                    },
-                ),
+                func(member : UserTypes.UserVotingInfo) : (Principal, Vote) {
+                    teamIds.put(member.teamId, ());
+                    (
+                        member.id,
+                        {
+                            id = member.id;
+                            teamId = member.teamId;
+                            votingPower = member.votingPower;
+                            option = null;
+                        },
+                    );
+                },
             )
             |> HashMap.fromIter<Principal, Vote>(_, members.size(), Principal.equal, Principal.hash);
+
+            let teams = allTeams.vals()
+            |> Iter.filter(
+                _,
+                func(team : TeamTypes.Team) : Bool = teamIds.get(team.id) != null,
+            )
+            |> Iter.toArray(_);
+
+            let teamOptionsFunc = buildTeamOptionsFunc(scenario.kind);
+
+            let teamOptions = teams.vals()
+            |> Iter.map<TeamTypes.Team, (Nat, [Types.ScenarioTeamOption])>(
+                _,
+                func(team : TeamTypes.Team) : (Nat, [Types.ScenarioTeamOption]) = (team.id, teamOptionsFunc(team)),
+            )
+            |> HashMap.fromIter<Nat, [Types.ScenarioTeamOption]>(_, teams.size(), Nat.equal, Nat32.fromNat);
 
             let scenarioId = nextScenarioId;
             nextScenarioId += 1;
             let startTimerId = createStartTimer<system>(scenarioId, startTime);
 
-            let kind : MutableScenarioKind = switch (scenario.kind) {
-                case (#noLeagueEffect(noLeague)) #noLeagueEffect(noLeague);
-                case (#threshold(threshold)) #threshold(threshold);
-                case (#leagueChoice(leagueChoice)) #leagueChoice(leagueChoice);
-                case (#lottery(lottery)) {
-                    #lottery({
-                        lottery with
-                        teamTicketOptions = HashMap.HashMap<Nat, [Nat]>(0, Nat.equal, Nat32.fromNat);
-                    });
-                };
-                case (#proportionalBid(proportionalBid)) {
-                    #proportionalBid({
-                        prize = proportionalBid.prize;
-                        teamBidOptions = HashMap.HashMap<Nat, [Nat]>(0, Nat.equal, Nat32.fromNat);
-                    });
-                };
-            };
             scenarios.put(
                 scenarioId,
                 {
@@ -470,17 +424,107 @@ module {
                     title = scenario.title;
                     description = scenario.description;
                     undecidedEffect = scenario.undecidedEffect;
-                    kind = kind;
+                    kind = scenario.kind;
                     state = #notStarted({
                         startTimerId = startTimerId;
                     });
                     startTime = startTime;
                     endTime = scenario.endTime;
-                    teamIds = scenario.teamIds;
+                    teamIds = Iter.toArray(teamIds.keys());
                     votes = votes;
+                    teamOptions = teamOptions;
                 },
             );
             #ok;
+        };
+
+        private func buildTeamOptionsFunc(scenarioKind : Scenario.ScenarioKind) : (TeamTypes.Team) -> [Types.ScenarioTeamOption] {
+            switch (scenarioKind) {
+                case (#noLeagueEffect(noLeagueEffect)) func(team : TeamTypes.Team) : [Types.ScenarioTeamOption] {
+                    noLeagueEffect.options.vals()
+                    |> IterTools.enumerate(_)
+                    |> IterTools.mapFilter<(Nat, Scenario.ScenarioOption), Types.ScenarioTeamOption>(
+                        _,
+                        func((optionId, option) : (Nat, Scenario.ScenarioOption)) : ?Types.ScenarioTeamOption {
+                            let meetsRequirements = teamMeetsRequirements(team, option.traitRequirements);
+                            if (not meetsRequirements) {
+                                return null;
+                            };
+                            ?{
+                                id = optionId;
+                                title = option.description;
+                                description = option.description;
+                                energyCost = option.energyCost;
+                                votingPower = 0;
+                                value = #none;
+                            };
+                        },
+                    )
+                    |> Iter.toArray(_);
+                };
+                case (#leagueChoice(leagueChoice)) func(team : TeamTypes.Team) : [Types.ScenarioTeamOption] {
+                    leagueChoice.options.vals()
+                    |> IterTools.enumerate(_)
+                    |> IterTools.mapFilter<(Nat, Scenario.ScenarioOption), Types.ScenarioTeamOption>(
+                        _,
+                        func((optionId, option) : (Nat, Scenario.ScenarioOption)) : ?Types.ScenarioTeamOption {
+                            let meetsRequirements = teamMeetsRequirements(team, option.traitRequirements);
+                            if (not meetsRequirements) {
+                                return null;
+                            };
+                            ?{
+                                id = optionId;
+                                title = option.description;
+                                description = option.description;
+                                energyCost = option.energyCost;
+                                votingPower = 0;
+                                value = #none;
+                            };
+                        },
+                    )
+                    |> Iter.toArray(_);
+                };
+                case (#threshold(threshold)) func(team : TeamTypes.Team) : [Types.ScenarioTeamOption] {
+                    threshold.options.vals()
+                    |> IterTools.enumerate(_)
+                    |> IterTools.mapFilter<(Nat, Scenario.ScenarioOption), Types.ScenarioTeamOption>(
+                        _,
+                        func((optionId, option) : (Nat, Scenario.ScenarioOption)) : ?Types.ScenarioTeamOption {
+                            let meetsRequirements = teamMeetsRequirements(team, option.traitRequirements);
+                            if (not meetsRequirements) {
+                                return null;
+                            };
+                            ?{
+                                id = optionId;
+                                title = option.description;
+                                description = option.description;
+                                energyCost = option.energyCost;
+                                votingPower = 0;
+                                value = #none;
+                            };
+                        },
+                    )
+                    |> Iter.toArray(_);
+                };
+                case (#lottery(lottery)) func(team : TeamTypes.Team) : [Types.ScenarioTeamOption] {};
+                case (#proportionalBid(proportionalBid)) func(team : TeamTypes.Team) : [Types.ScenarioTeamOption] {};
+            };
+        };
+
+        private func teamMeetsRequirements(team : TeamTypes.Team, requirements : [Scenario.TraitRequirement]) : Bool {
+            IterTools.all<Scenario.TraitRequirement>(
+                requirements.vals(),
+                func(requirement : Scenario.TraitRequirement) : Bool {
+                    let teamHasTrait = IterTools.any<Trait.Trait>(
+                        team.traits.vals(),
+                        func(trait : Trait.Trait) : Bool = trait.id == requirement.id,
+                    );
+                    switch (requirement.kind) {
+                        case (#required) teamHasTrait;
+                        case (#prohibited) not teamHasTrait;
+                    };
+                },
+            );
         };
 
         private func start(scenarioId : Nat) : async* StartScenarioResult {
@@ -504,7 +548,7 @@ module {
             };
         };
 
-        private func end(scenario : MutableScenarioData, teamVotingResult : [TeamVotingResult]) : async* () {
+        private func end(scenario : MutableScenarioData, teamVotingResult : [Scenario.ResolvedTeamChoice]) : async* () {
             Debug.print("Ending scenario " # Nat.toText(scenario.id));
             let prng = PseudoRandomX.fromBlob(await Random.blob());
             let resolvedScenarioState = resolveScenario(
@@ -653,18 +697,6 @@ module {
     };
 
     private func mapResolvedScenarioState(resolved : ScenarioStateResolved) : Scenario.ScenarioStateResolved {
-        let teamChoices = resolved.teamChoices.vals()
-        |> Iter.map(
-            _,
-            func(team : TeamVotingResult) : {
-                teamId : Nat;
-                option : ?Nat;
-            } = {
-                teamId = team.id;
-                option = team.option;
-            },
-        )
-        |> Iter.toArray(_);
 
         let effectOutcomes = resolved.effectOutcomes.vals()
         |> Iter.map(
@@ -673,8 +705,8 @@ module {
         )
         |> Iter.toArray(_);
         {
-            teamChoices = teamChoices;
-            metaEffectOutcome = resolved.metaEffectOutcome;
+            teamChoices = resolved.teamChoices;
+            scenarioOutcome = resolved.scenarioOutcome;
             effectOutcomes = effectOutcomes;
         };
     };
@@ -753,7 +785,7 @@ module {
     };
 
     private func validateGenericOptions(
-        options : [Scenario.ScenarioOptionWithEffect],
+        options : [Scenario.ScenarioOption],
         errors : Buffer.Buffer<Text>,
     ) {
         var index = 0;
@@ -764,7 +796,7 @@ module {
     };
 
     private func validateGenericOption(
-        option : Scenario.ScenarioOptionWithEffect,
+        option : Scenario.ScenarioOption,
         index : Nat,
         errors : Buffer.Buffer<Text>,
     ) {
@@ -834,11 +866,11 @@ module {
     public func resolveScenario(
         prng : Prng,
         scenario : MutableScenarioData,
-        teamChoices : [TeamVotingResult],
+        teamChoices : [Scenario.ResolvedTeamChoice],
     ) : ScenarioStateResolved {
         let effectOutcomes = Buffer.Buffer<Scenario.EffectOutcome>(0);
         for (teamData in Iter.fromArray(teamChoices)) {
-            let teamEffect : Scenario.Effect = switch (teamData.option) {
+            let teamEffect : Scenario.Effect = switch (teamData.optionId) {
                 case (null) scenario.undecidedEffect;
                 case (?option) switch (scenario.kind) {
                     case (#noLeagueEffect(noLeagueEffect)) noLeagueEffect.options[option].teamEffect;
@@ -850,13 +882,13 @@ module {
             };
             resolveEffectInternal(
                 prng,
-                #team(teamData.id),
+                #team(teamData.teamId),
                 scenario,
                 teamEffect,
                 effectOutcomes,
             );
         };
-        let metaEffectOutcome : Scenario.MetaEffectOutcome = switch (scenario.kind) {
+        let scenarioOutcome : Scenario.ScenarioOutcome = switch (scenario.kind) {
             case (#noLeagueEffect(noLeagueEffect)) #noLeagueEffect;
             case (#leagueChoice(leagueChoice)) {
                 let leagueOptionId = getMajorityOption(prng, teamChoices);
@@ -876,11 +908,11 @@ module {
                 let weightedTickets : [(Nat, Float)] = teamChoices.vals()
                 |> Iter.filter(
                     _,
-                    func(teamData : TeamVotingResult) : Bool {
-                        switch (teamData.option) {
+                    func(teamData : Scenario.ResolvedTeamChoice) : Bool {
+                        switch (teamData.optionId) {
                             case (null) false;
                             case (?option) {
-                                switch (lottery.teamTicketOptions.get(teamData.id)) {
+                                switch (lottery.teamTicketOptions.get(teamData.teamId)) {
                                     case (null) false;
                                     case (?ticketOptions) ticketOptions[option] > 0;
                                 };
@@ -888,19 +920,19 @@ module {
                         };
                     },
                 )
-                |> Iter.map<TeamVotingResult, (Nat, Float)>(
+                |> Iter.map<Scenario.ResolvedTeamChoice, (Nat, Float)>(
                     _,
-                    func(teamData : TeamVotingResult) : (Nat, Float) {
-                        let ticketCount = switch (teamData.option) {
+                    func(teamData : Scenario.ResolvedTeamChoice) : (Nat, Float) {
+                        let ticketCount = switch (teamData.optionId) {
                             case (null) Prelude.unreachable();
                             case (?option) {
-                                switch (lottery.teamTicketOptions.get(teamData.id)) {
+                                switch (lottery.teamTicketOptions.get(teamData.teamId)) {
                                     case (null) 0;
                                     case (?ticketOptions) ticketOptions[option];
                                 };
                             };
                         };
-                        (teamData.id, Float.fromInt(ticketCount));
+                        (teamData.teamId, Float.fromInt(ticketCount));
                     },
                 )
                 |> Iter.toArray(_);
@@ -925,11 +957,11 @@ module {
                 let totalBid = Array.foldLeft(
                     teamChoices,
                     0,
-                    func(total : Nat, teamData : TeamVotingResult) : Nat {
-                        let bidValue = switch (teamData.option) {
+                    func(total : Nat, teamData : Scenario.ResolvedTeamChoice) : Nat {
+                        let bidValue = switch (teamData.optionId) {
                             case (null) 0;
                             case (?option) {
-                                switch (proportionalBid.teamBidOptions.get(teamData.id)) {
+                                switch (proportionalBid.teamBidOptions.get(teamData.teamId)) {
                                     case (null) 0;
                                     case (?bidOptions) bidOptions[option];
                                 };
@@ -938,12 +970,12 @@ module {
                         total + bidValue;
                     },
                 );
-                let winningBids = Buffer.Buffer<{ teamId : Nat; amount : Nat }>(0);
+                let winningBids = Buffer.Buffer<{ teamId : Nat; proportion : Nat }>(0);
                 label f for (teamData in teamChoices.vals()) {
-                    let teamBidValue = switch (teamData.option) {
+                    let teamBidValue = switch (teamData.optionId) {
                         case (null) continue f;
                         case (?option) {
-                            switch (proportionalBid.teamBidOptions.get(teamData.id)) {
+                            switch (proportionalBid.teamBidOptions.get(teamData.teamId)) {
                                 case (null) 0;
                                 case (?bidOptions) bidOptions[option];
                             };
@@ -953,23 +985,23 @@ module {
                         continue f;
                     };
                     let percentOfPrize = Float.fromInt(teamBidValue) / Float.fromInt(totalBid);
-                    let purpotionalValue = Float.toInt(percentOfPrize * Float.fromInt(proportionalBid.prize.amount)); // Round down
-                    let purpotionalValueNat = if (purpotionalValue < 0) {
+                    let proportionalValue = Float.toInt(percentOfPrize * Float.fromInt(proportionalBid.prize.amount)); // Round down
+                    let proportionalValueNat = if (proportionalValue < 0) {
                         0; // Cannot bid negative
                     } else {
-                        Int.abs(purpotionalValue);
+                        Int.abs(proportionalValue);
                     };
 
                     winningBids.add({
-                        teamId = teamData.id;
-                        amount = purpotionalValueNat;
+                        teamId = teamData.teamId;
+                        proportion = proportionalValueNat;
                     });
-                    if (purpotionalValue > 0) {
+                    if (proportionalValue > 0) {
 
                         let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {
                             case (#skill(s)) {
                                 #skill({
-                                    delta = purpotionalValue;
+                                    delta = proportionalValue;
                                     duration = s.duration;
                                     target = s.target;
                                     skill = s.skill;
@@ -978,7 +1010,7 @@ module {
                         };
                         resolveEffectInternal(
                             prng,
-                            #team(teamData.id),
+                            #team(teamData.teamId),
                             scenario,
                             effect,
                             effectOutcomes,
@@ -986,16 +1018,16 @@ module {
                     };
                 };
                 #proportionalBid({
-                    winningBids = Buffer.toArray(winningBids);
+                    bids = Buffer.toArray(winningBids);
                 });
             };
             case (#threshold(threshold)) {
                 let teamContributions : [Scenario.ThresholdContribution] = teamChoices.vals()
-                |> Iter.map<TeamVotingResult, Scenario.ThresholdContribution>(
+                |> Iter.map<Scenario.ResolvedTeamChoice, Scenario.ThresholdContribution>(
                     _,
-                    func(teamData : TeamVotingResult) : Scenario.ThresholdContribution {
+                    func(teamData : Scenario.ResolvedTeamChoice) : Scenario.ThresholdContribution {
 
-                        let optionValue = switch (teamData.option) {
+                        let optionValue = switch (teamData.optionId) {
                             case (null) threshold.undecidedAmount;
                             case (?option) threshold.options[option].value;
                         };
@@ -1012,7 +1044,7 @@ module {
                             };
                         };
                         {
-                            teamId = teamData.id;
+                            teamId = teamData.teamId;
                             amount = value;
                         };
                     },
@@ -1040,7 +1072,7 @@ module {
         };
         {
             teamChoices = teamChoices;
-            metaEffectOutcome = metaEffectOutcome;
+            scenarioOutcome = scenarioOutcome;
             effectOutcomes = effectOutcomes.vals()
             |> Iter.map(
                 _,
@@ -1151,7 +1183,7 @@ module {
 
     private func getMajorityOption(
         prng : Prng,
-        teamChoices : [TeamVotingResult],
+        teamChoices : [Scenario.ResolvedTeamChoice],
     ) : ?Nat {
         if (teamChoices.size() < 1) {
             return null;
@@ -1160,7 +1192,7 @@ module {
         var choiceCounts = Trie.empty<Nat, Nat>();
         var maxCount = 0;
         label f for (teamChoice in Iter.fromArray(teamChoices)) {
-            let option = switch (teamChoice.option) {
+            let option = switch (teamChoice.optionId) {
                 case (null) continue f;
                 case (?option) option;
             };

@@ -142,9 +142,6 @@ module {
         description : Text;
         energyCost : Nat;
         traitRequirements : [TraitRequirement];
-    };
-
-    public type ScenarioOptionWithEffect = ScenarioOption and {
         teamEffect : Effect;
     };
 
@@ -168,7 +165,7 @@ module {
     };
 
     public type NoLeagueEffectScenario = {
-        options : [ScenarioOptionWithEffect];
+        options : [ScenarioOption];
     };
 
     public type ThresholdScenario = {
@@ -185,7 +182,7 @@ module {
         options : [ThresholdScenarioOption];
     };
 
-    public type ThresholdScenarioOption = ScenarioOptionWithEffect and {
+    public type ThresholdScenarioOption = ScenarioOption and {
         value : ThresholdValue;
     };
 
@@ -202,7 +199,7 @@ module {
         options : [LeagueChoiceScenarioOption];
     };
 
-    public type LeagueChoiceScenarioOption = ScenarioOptionWithEffect and {
+    public type LeagueChoiceScenarioOption = ScenarioOption and {
         leagueEffect : Effect;
     };
 
@@ -217,13 +214,17 @@ module {
 
     public type ProportionalBidPrize = {
         amount : Nat;
-        kind : {
-            #skill : {
-                skill : ChosenOrRandomSkill;
-                target : TargetPosition;
-                duration : Duration;
-            };
-        };
+        kind : PropotionalBidPrizeKind;
+    };
+
+    public type PropotionalBidPrizeKind = {
+        #skill : PropotionalBidPrizeSkill;
+    };
+
+    public type PropotionalBidPrizeSkill = {
+        skill : ChosenOrRandomSkill;
+        target : TargetPosition;
+        duration : Duration;
     };
 
     public type ScenarioState = {
@@ -232,23 +233,22 @@ module {
         #resolved : ScenarioStateResolved;
     };
 
-    public type ThresholdContribution = {
-        teamId : Nat;
-        amount : Int;
+    public type ScenarioStateInProgress = {
+        optionsForTeam : [Nat];
     };
 
     public type ScenarioStateResolved = {
-        teamChoices : [ScenarioTeamChoice];
-        metaEffectOutcome : MetaEffectOutcome;
+        teamChoices : [ResolvedTeamChoice];
+        scenarioOutcome : ScenarioOutcome;
         effectOutcomes : [EffectOutcome];
     };
 
-    public type ScenarioTeamChoice = {
+    public type ResolvedTeamChoice = {
         teamId : Nat;
-        option : ?Nat;
+        optionId : ?Nat;
     };
 
-    public type MetaEffectOutcome = {
+    public type ScenarioOutcome = {
         #threshold : ThresholdMetaEffectOutcome;
         #leagueChoice : LeagueChoiceMetaEffectOutcome;
         #lottery : LotteryMetaEffectOutcome;
@@ -261,6 +261,11 @@ module {
         successful : Bool;
     };
 
+    public type ThresholdContribution = {
+        teamId : Nat;
+        amount : Int;
+    };
+
     public type LeagueChoiceMetaEffectOutcome = {
         optionId : ?Nat;
     };
@@ -270,12 +275,12 @@ module {
     };
 
     public type ProportionalBidMetaEffectOutcome = {
-        winningBids : [ProportionalWinningBid];
+        bids : [ProportionalWinningBid];
     };
 
     public type ProportionalWinningBid = {
         teamId : Nat;
-        amount : Nat;
+        proportion : Nat;
     };
 
 };

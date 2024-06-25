@@ -56,9 +56,24 @@ module {
 
     public type ScenarioVote = {
         option : ?Nat;
-        teamId : Nat;
         votingPower : Nat;
-        optionVotingPowersForTeam : [Nat];
+        teamId : Nat;
+        teamVotingPower : Nat;
+        teamOptions : [ScenarioTeamOption];
+    };
+
+    public type ScenarioTeamOption = {
+        id : Nat;
+        title : Text;
+        description : Text;
+        energyCost : Nat;
+        votingPower : Nat;
+        value : ScenarioOptionValue;
+    };
+
+    public type ScenarioOptionValue = {
+        #none;
+        #nat : Nat;
     };
 
     public type GetScenarioVoteError = {
@@ -77,7 +92,6 @@ module {
         #notEligible;
         #scenarioNotFound;
         #votingNotOpen;
-        #alreadyVoted;
         #invalidOption;
     };
 
@@ -251,7 +265,6 @@ module {
         description : Text;
         undecidedEffect : Scenario.Effect;
         kind : Scenario.ScenarioKind;
-        teamIds : [Nat];
     };
     public type AddScenarioError = {
         #invalid : [Text];

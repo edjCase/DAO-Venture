@@ -63,7 +63,6 @@
             return;
         }
         let leagueAgent = await leagueAgentFactory();
-        scenario.teamIds = teams.map((team) => team.id); // TODO
         let result = await leagueAgent.addScenario(scenario);
         if ("ok" in result) {
             console.log("Created scenario: ", scenario);
@@ -81,7 +80,6 @@
         scenario = {
             title: selectedScenario.title,
             description: selectedScenario.description,
-            teamIds: [],
             startTime: scenario.startTime, // Keep the same start time
             endTime: scenario.endTime, // Keep the same end time
             undecidedEffect: selectedScenario.undecidedEffect,

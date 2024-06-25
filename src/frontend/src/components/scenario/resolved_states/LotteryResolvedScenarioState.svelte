@@ -30,4 +30,4 @@
     {/if}
 </div>
 
-<ResolvedScenarioBids {scenarioId} {bids} {vote} />
+<ResolvedScenarioBids {scenarioId} {bids} {vote} {state} />

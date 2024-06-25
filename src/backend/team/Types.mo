@@ -11,7 +11,7 @@ module {
 
     public type Actor = actor {
         setLeague : (id : Principal) -> async SetLeagueResult;
-        getTeams : query () -> async [Team.Team];
+        getTeams : query () -> async [Team];
         createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
         getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
@@ -30,6 +30,8 @@ module {
         addTraitToTeam : (teamId : Nat, traitId : Text) -> async AddTraitToTeamResult;
         removeTraitFromTeam : (teamId : Nat, traitId : Text) -> async RemoveTraitFromTeamResult;
     };
+
+    public type Team = Team.Team;
 
     public type CreateTeamTraitRequest = {
         id : Text;
