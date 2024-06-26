@@ -1,21 +1,11 @@
 <script lang="ts">
-    import {
-        LotteryScenarioOutcome,
-        LotteryScenario,
-        ScenarioStateResolved,
-        ScenarioVote,
-    } from "../../../ic-agent/declarations/league";
+    import { LotteryScenarioOutcome } from "../../../ic-agent/declarations/league";
     import { Team } from "../../../ic-agent/declarations/teams";
-    import { toJsonString } from "../../../utils/StringUtil";
 
-    export let scenarioId: bigint;
-    export let scenario: LotteryScenario;
     export let outcome: LotteryScenarioOutcome;
-    export let state: ScenarioStateResolved;
-    export let vote: ScenarioVote | "ineligible";
     export let teams: Team[];
 
-    $: winningTeamName = outcome.winningTeamId
+    $: winningTeamName = outcome.winningTeamId[0]
         ? teams.find((team) => team.id === outcome.winningTeamId[0])?.name ||
           "Unknown"
         : undefined;
@@ -25,6 +15,6 @@
     {#if winningTeamName === undefined}
         No team won the lottery
     {:else}
-        {winningTeamName} won the lottery of {toJsonString(scenario.prize)}
+        {winningTeamName} won the lottery
     {/if}
 </div>

@@ -60,7 +60,7 @@ module {
     };
 
     public type Vote = VoterInfo and {
-        option : ?Nat;
+        optionId : ?Nat;
     };
 
     public type StableScenarioData = {
@@ -185,6 +185,7 @@ module {
                     await* end(scenario, teamVotingResult);
                 };
             };
+            Debug.print("Votes: " # debug_show (Iter.toArray(scenario.votes.vals())));
             #ok;
         };
 
@@ -204,7 +205,7 @@ module {
                 func(total : Nat, option : Vote) : Nat = total + option.votingPower,
             );
             #ok({
-                option = vote.option;
+                optionId = vote.optionId;
                 votingPower = vote.votingPower;
                 teamVotingPower = teamVotingPower;
                 teamOptions = orderedTeamOptions;
@@ -266,7 +267,7 @@ module {
         } {
             type TeamStats = {
                 var totalVotingPower : Nat;
-                optionVotingPowers : Buffer.Buffer<Nat>;
+                optionVotingPowers : HashMap.HashMap<Nat, Nat>;
             };
             let teamStats = HashMap.HashMap<Nat, TeamStats>(0, Nat.equal, Nat32.fromNat);
 
@@ -275,7 +276,7 @@ module {
                     case (null) {
                         let initStats : TeamStats = {
                             var totalVotingPower = 0;
-                            optionVotingPowers = Buffer.Buffer<Nat>(0);
+                            optionVotingPowers = HashMap.HashMap<Nat, Nat>(0, Nat.equal, Nat32.fromNat);
                         };
                         teamStats.put(vote.teamId, initStats);
                         initStats;
@@ -283,10 +284,10 @@ module {
                     case (?voterTeamStats) voterTeamStats;
                 };
                 stats.totalVotingPower += vote.votingPower;
-                switch (vote.option) {
-                    case (?option) {
-                        let currentVotingPower = Option.get(stats.optionVotingPowers.getOpt(option), 0);
-                        stats.optionVotingPowers.put(option, currentVotingPower + vote.votingPower);
+                switch (vote.optionId) {
+                    case (?optionId) {
+                        let currentVotingPower = Option.get(stats.optionVotingPowers.get(optionId), 0);
+                        stats.optionVotingPowers.put(optionId, currentVotingPower + vote.votingPower);
                     };
                     case (null) ();
                 };
@@ -392,7 +393,7 @@ module {
                             id = member.id;
                             teamId = member.teamId;
                             votingPower = member.votingPower;
-                            option = null;
+                            optionId = null;
                         },
                     );
                 },
@@ -673,7 +674,7 @@ module {
                         ?{
                             scenario with
                             state = #inProgress({
-                                endTimerId = createEndTimer<system>(scenario.id, scenario.startTime);
+                                endTimerId = createEndTimer<system>(scenario.id, scenario.endTime);
                             });
                         };
                     };

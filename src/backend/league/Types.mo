@@ -55,7 +55,7 @@ module {
     };
 
     public type ScenarioVote = {
-        option : ?Nat;
+        optionId : ?Nat;
         votingPower : Nat;
         teamId : Nat;
         teamVotingPower : Nat;

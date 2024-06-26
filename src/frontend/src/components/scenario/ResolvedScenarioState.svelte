@@ -31,7 +31,6 @@
     $: traits = $traitStore;
 
     scenarioStore.subscribeVotes((votes) => {
-        console.log("Votes", votes);
         if (votes[Number(scenario.id)] !== undefined) {
             vote = votes[Number(scenario.id)];
         } else {
@@ -51,92 +50,80 @@
     }
 </script>
 
-{#if vote === "ineligible"}
-    Ineligible to vote
-{:else if vote.teamOptions.length < 1}
-    No options available
-{:else}
-    {#if teams !== undefined && traits !== undefined}
-        <div>
-            {#if "threshold" in state.scenarioOutcome && "threshold" in scenario.kind}
-                <ThresholdResolvedScenarioState
-                    scenarioId={scenario.id}
-                    scenario={scenario.kind.threshold}
-                    outcome={state.scenarioOutcome.threshold}
-                    {state}
-                    {vote}
-                />
-            {:else if "noLeagueEffect" in state.scenarioOutcome && "noLeagueEffect" in scenario.kind}
-                <NoEffectResolvedScenarioState
-                    scenarioId={scenario.id}
-                    scenario={scenario.kind.noLeagueEffect}
-                    {state}
-                    {vote}
-                />
-            {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
-                <ProportionalBidResolvedScenarioState
-                    scenarioId={scenario.id}
-                    scenario={scenario.kind.proportionalBid}
-                    outcome={state.scenarioOutcome.proportionalBid}
-                    {teams}
-                    {vote}
-                />
-            {:else if "lottery" in state.scenarioOutcome && "lottery" in scenario.kind}
-                <LotteryResolvedScenarioState
-                    scenarioId={scenario.id}
-                    scenario={scenario.kind.lottery}
-                    outcome={state.scenarioOutcome.lottery}
-                    {teams}
-                    {state}
-                    {vote}
-                />
-            {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind}
-                <LeagueChoiceResolvedScenarioState
-                    scenarioId={scenario.id}
-                    scenario={scenario.kind.leagueChoice}
-                    outcome={state.scenarioOutcome.leagueChoice}
-                    {state}
-                    {vote}
-                />
-            {:else}
-                NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}
-            {/if}
-        </div>
-
-        <Accordion border={false} flush={true}>
-            <AccordionItem
-                paddingFlush=""
-                defaultClass="flex items-center font-medium w-full text-right justify-center gap-2"
-            >
-                <span slot="header">
-                    <div class="text-md text-right">Outcomes</div>
-                </span>
-                <span slot="arrowdown">
-                    <ChevronDoubleDownOutline size="xs" />
-                </span>
-                <div slot="arrowup">
-                    <ChevronDoubleUpOutline size="xs" />
-                </div>
-                {#each state.effectOutcomes as outcome}
-                    <ScenarioEffectOutcome {outcome} {teams} {traits} />
-                {/each}
-            </AccordionItem>
-        </Accordion>
+{#if teams !== undefined && traits !== undefined}
+    <div>
+        {#if "threshold" in state.scenarioOutcome && "threshold" in scenario.kind}
+            <ThresholdResolvedScenarioState
+                scenario={scenario.kind.threshold}
+                outcome={state.scenarioOutcome.threshold}
+            />
+        {:else if "noLeagueEffect" in state.scenarioOutcome && "noLeagueEffect" in scenario.kind}
+            <NoEffectResolvedScenarioState
+                scenarioId={scenario.id}
+                scenario={scenario.kind.noLeagueEffect}
+            />
+        {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
+            <ProportionalBidResolvedScenarioState
+                scenario={scenario.kind.proportionalBid}
+                outcome={state.scenarioOutcome.proportionalBid}
+                {teams}
+            />
+        {:else if "lottery" in state.scenarioOutcome && "lottery" in scenario.kind}
+            <LotteryResolvedScenarioState
+                outcome={state.scenarioOutcome.lottery}
+                {teams}
+            />
+        {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind}
+            <LeagueChoiceResolvedScenarioState
+                scenario={scenario.kind.leagueChoice}
+                outcome={state.scenarioOutcome.leagueChoice}
+            />
+        {:else}
+            NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}
+        {/if}
+    </div>
+    {#if vote === "ineligible"}
+        <!-- TODO use all options here vs vote options-->
+        You were ineligible to vote
+    {:else if vote.teamOptions.length < 1}
+        No options available
+    {:else}
+        {#each vote.teamOptions as option, index}
+            <ScenarioOption
+                scenarioId={scenario.id}
+                optionId={index}
+                {option}
+                selected={selectedChoice === index}
+                teamEnergy={undefined}
+                {vote}
+                state={{
+                    resolved: {
+                        teams: optionTeamVotes
+                            ? optionTeamVotes[index]
+                            : undefined,
+                    },
+                }}
+            />
+        {/each}
     {/if}
 
-    {#each vote.teamOptions as option, index}
-        <ScenarioOption
-            scenarioId={scenario.id}
-            optionId={index}
-            {option}
-            selected={selectedChoice === index}
-            teamEnergy={undefined}
-            {vote}
-            state={{
-                resolved: {
-                    teams: optionTeamVotes ? optionTeamVotes[index] : undefined,
-                },
-            }}
-        />
-    {/each}
+    <Accordion border={false} flush={true}>
+        <AccordionItem
+            paddingFlush=""
+            defaultClass="flex items-center font-medium w-full text-right justify-center gap-2"
+        >
+            <span slot="header">
+                <div class="text-md text-right">Outcomes</div>
+            </span>
+            <span slot="arrowdown">
+                <ChevronDoubleDownOutline size="xs" />
+            </span>
+            <div slot="arrowup">
+                <ChevronDoubleUpOutline size="xs" />
+            </div>
+            {#each state.effectOutcomes as outcome}
+                <ScenarioEffectOutcome {outcome} {teams} {traits} />
+            {/each}
+        </AccordionItem>
+    </Accordion>
 {/if}

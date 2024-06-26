@@ -1,16 +1,11 @@
 <script lang="ts">
     import {
-        ScenarioStateResolved,
-        ScenarioVote,
         ThresholdScenarioOutcome,
         ThresholdScenario,
     } from "../../../ic-agent/declarations/league";
 
-    export let scenarioId: bigint;
     export let scenario: ThresholdScenario;
     export let outcome: ThresholdScenarioOutcome;
-    export let state: ScenarioStateResolved;
-    export let vote: ScenarioVote | "ineligible";
 </script>
 
 {#if outcome.successful}

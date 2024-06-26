@@ -2,15 +2,12 @@
     import {
         ProportionalBidScenarioOutcome,
         ProportionalBidScenario,
-        ScenarioVote,
     } from "../../../ic-agent/declarations/league";
     import { Team } from "../../../ic-agent/declarations/teams";
     import { toJsonString } from "../../../utils/StringUtil";
 
-    export let scenarioId: bigint;
     export let scenario: ProportionalBidScenario;
     export let outcome: ProportionalBidScenarioOutcome;
-    export let vote: ScenarioVote | "ineligible";
     export let teams: Team[];
 
     const getTeamName = (teamId: bigint) => {

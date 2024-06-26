@@ -374,7 +374,7 @@ export interface ScenarioTeamOption {
   'energyCost' : bigint,
 }
 export interface ScenarioVote {
-  'option' : [] | [bigint],
+  'optionId' : [] | [bigint],
   'teamOptions' : Array<ScenarioTeamOption>,
   'votingPower' : bigint,
   'teamId' : bigint,

@@ -399,7 +399,7 @@ export const idlFactory = ({ IDL }) => {
     'energyCost' : IDL.Nat,
   });
   const ScenarioVote = IDL.Record({
-    'option' : IDL.Opt(IDL.Nat),
+    'optionId' : IDL.Opt(IDL.Nat),
     'teamOptions' : IDL.Vec(ScenarioTeamOption),
     'votingPower' : IDL.Nat,
     'teamId' : IDL.Nat,
