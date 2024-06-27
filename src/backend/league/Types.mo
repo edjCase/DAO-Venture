@@ -30,7 +30,6 @@ module {
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
-        addScenarioCustomTeamOption : (request : AddScenarioCustomTeamOptionRequest) -> async Result.Result<(), AddScenarioCustomTeamOptionError>;
 
         claimBenevolentDictatorRole : () -> async ClaimBenevolentDictatorRoleResult;
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
@@ -55,26 +54,35 @@ module {
     };
 
     public type ScenarioVote = {
-        optionId : ?Nat;
+        value : ?ScenarioOptionValue;
         votingPower : Nat;
         teamId : Nat;
         teamVotingPower : Nat;
-        teamOptions : [ScenarioTeamOption];
+        teamOptions : ScenarioTeamOptions;
     };
 
-    public type ScenarioTeamOption = {
+    public type ScenarioTeamOptions = {
+        #discrete : [ScenarioTeamOptionDiscrete];
+        #nat : [ScenarioTeamOptionNat];
+    };
+
+    public type ScenarioTeamOptionDiscrete = {
         id : Nat;
         title : Text;
         description : Text;
         energyCost : Nat;
-        votingPower : Nat;
-        value : ScenarioOptionValue;
+        currentVotingPower : Nat;
         traitRequirements : [Scenario.TraitRequirement];
     };
 
+    public type ScenarioTeamOptionNat = {
+        value : Nat;
+        currentVotingPower : Nat;
+    };
+
     public type ScenarioOptionValue = {
-        #none;
         #nat : Nat;
+        #id : Nat;
     };
 
     public type GetScenarioVoteError = {
@@ -86,14 +94,14 @@ module {
 
     public type VoteOnScenarioRequest = {
         scenarioId : Nat;
-        option : Nat;
+        value : ScenarioOptionValue;
     };
 
     public type VoteOnScenarioError = {
         #notEligible;
         #scenarioNotFound;
         #votingNotOpen;
-        #invalidOption;
+        #invalidValue;
     };
 
     public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
@@ -265,8 +273,64 @@ module {
         title : Text;
         description : Text;
         undecidedEffect : Scenario.Effect;
-        kind : Scenario.ScenarioKind;
+        kind : ScenarioKind;
     };
+
+    public type ScenarioKind = {
+        #noLeagueEffect : NoLeagueEffectScenario;
+        #threshold : ThresholdScenario;
+        #leagueChoice : LeagueChoiceScenario;
+        #lottery : Scenario.LotteryScenario;
+        #proportionalBid : Scenario.ProportionalBidScenario;
+    };
+
+    public type ScenarioOptionDiscrete = {
+        title : Text;
+        description : Text;
+        energyCost : Nat;
+        traitRequirements : [Scenario.TraitRequirement];
+        teamEffect : Scenario.Effect;
+    };
+
+    public type NoLeagueEffectScenario = {
+        options : [ScenarioOptionDiscrete];
+    };
+
+    public type ThresholdScenario = {
+        minAmount : Nat;
+        success : {
+            description : Text;
+            effect : Scenario.Effect;
+        };
+        failure : {
+            description : Text;
+            effect : Scenario.Effect;
+        };
+        undecidedAmount : ThresholdValue;
+        options : [ThresholdScenarioOption];
+    };
+
+    public type ThresholdScenarioOption = ScenarioOptionDiscrete and {
+        value : ThresholdValue;
+    };
+
+    public type ThresholdValue = {
+        #fixed : Int;
+        #weightedChance : [{
+            value : Int;
+            weight : Nat;
+            description : Text;
+        }];
+    };
+
+    public type LeagueChoiceScenario = {
+        options : [LeagueChoiceScenarioOption];
+    };
+
+    public type LeagueChoiceScenarioOption = ScenarioOptionDiscrete and {
+        leagueEffect : Scenario.Effect;
+    };
+
     public type AddScenarioError = {
         #invalid : [Text];
         #notAuthorized;

@@ -1,8 +1,9 @@
 <script lang="ts">
     import { Badge } from "flowbite-svelte";
     import {
-        ScenarioTeamOption,
+        ScenarioOptionValue,
         ScenarioVote,
+        TraitRequirement,
         VoteOnScenarioRequest,
     } from "../../ic-agent/declarations/league";
     import { teamStore } from "../../stores/TeamStore";
@@ -15,6 +16,7 @@
     } from "flowbite-svelte-icons";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { leagueAgentFactory } from "../../ic-agent/League";
+    import { Team } from "../../ic-agent/declarations/teams";
 
     type State =
         | {
@@ -24,20 +26,26 @@
           }
         | {
               resolved: {
-                  teams: bigint[] | undefined;
+                  seenByTeamIds: bigint[];
+                  chosenByTeamIds: bigint[];
               };
           };
 
-    export let optionId: number;
-    export let option: ScenarioTeamOption;
+    export let option: {
+        id: bigint;
+        title: string;
+        value: ScenarioOptionValue;
+        description: string;
+        traitRequirements: Array<TraitRequirement>;
+    };
     export let scenarioId: bigint;
-    export let teamEnergy: bigint | undefined; // Undefined used for loading but also for resolved scenarios
+    export let energy: { teamEnergy: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
     export let vote: ScenarioVote | "ineligible";
     export let state: State;
 
     $: meetsEnergyRequirements =
-        teamEnergy !== undefined && option.energyCost <= teamEnergy;
+        energy !== undefined && energy.cost <= energy.teamEnergy;
 
     $: selectable =
         "inProgress" in state &&
@@ -47,16 +55,19 @@
     $: cursorPointerClass = selectable ? "cursor-pointer" : "";
     $: disabledClass =
         "inProgress" in state &&
-        teamEnergy !== undefined &&
+        energy !== undefined &&
         !meetsEnergyRequirements
             ? "opacity-50 cursor-not-allowed"
             : "";
-    $: teams = $teamStore;
-    $: teamsWithOption = teams?.filter((t) => {
-        if ("resolved" in state && state.resolved.teams !== undefined) {
-            return state.resolved.teams.includes(t.id);
-        }
-        return false;
+
+    let teamsWithOption: Team[] | undefined = undefined;
+    teamStore.subscribe((teams) => {
+        teamsWithOption = teams?.filter((t) => {
+            if ("resolved" in state) {
+                return state.resolved.chosenByTeamIds.includes(t.id);
+            }
+            return false;
+        });
     });
 
     $: traits = $traitStore;
@@ -94,10 +105,10 @@
         }
         let request: VoteOnScenarioRequest = {
             scenarioId: scenarioId,
-            option: BigInt(optionId),
+            option: BigInt(option.id),
         };
         console.log(
-            `Voting for team ${vote.teamId} and scenario ${scenarioId} with option ${optionId}`,
+            `Voting for team ${vote.teamId} and scenario ${scenarioId} with option ${option.id}`,
             request,
         );
         let leagueAgent = await leagueAgentFactory();
@@ -111,10 +122,10 @@
         }
     };
 
-    let teamOption: ScenarioTeamOption | undefined =
+    $: teamOption =
         vote === "ineligible"
             ? undefined
-            : vote.teamOptions.find((v) => v.id === BigInt(optionId));
+            : vote.teamOptions.find((v) => v.id === BigInt(option.id));
 </script>
 
 <div
@@ -134,8 +145,8 @@
     <div class="w-full h-full">
         <div class="text-center text-xl font-bold">{option.title}</div>
         <div class="text-justify text-sm">{option.description}</div>
-        {#if option.energyCost > 0}
-            <div class="text-xl text-center">{option.energyCost} 💰</div>
+        {#if energy !== undefined && energy.cost > 0}
+            <div class="text-xl text-center">{energy.cost} 💰</div>
         {/if}
         {#if teamOption === undefined}
             <div class="text-center text-xl font-bold">Ineligible to vote</div>

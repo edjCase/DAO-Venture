@@ -137,14 +137,6 @@ module {
         #prohibited;
     };
 
-    public type ScenarioOption = {
-        title : Text;
-        description : Text;
-        energyCost : Nat;
-        traitRequirements : [TraitRequirement];
-        teamEffect : Effect;
-    };
-
     public type Scenario = {
         id : Nat;
         title : Text;
@@ -164,8 +156,17 @@ module {
         #proportionalBid : ProportionalBidScenario;
     };
 
+    public type ScenarioOptionDiscrete = {
+        title : Text;
+        description : Text;
+        energyCost : Nat;
+        traitRequirements : [TraitRequirement];
+        teamEffect : Effect;
+        allowedTeamIds : [Nat];
+    };
+
     public type NoLeagueEffectScenario = {
-        options : [ScenarioOption];
+        options : [ScenarioOptionDiscrete];
     };
 
     public type ThresholdScenario = {
@@ -182,7 +183,7 @@ module {
         options : [ThresholdScenarioOption];
     };
 
-    public type ThresholdScenarioOption = ScenarioOption and {
+    public type ThresholdScenarioOption = ScenarioOptionDiscrete and {
         value : ThresholdValue;
     };
 
@@ -199,7 +200,7 @@ module {
         options : [LeagueChoiceScenarioOption];
     };
 
-    public type LeagueChoiceScenarioOption = ScenarioOption and {
+    public type LeagueChoiceScenarioOption = ScenarioOptionDiscrete and {
         leagueEffect : Effect;
     };
 
@@ -238,14 +239,29 @@ module {
     };
 
     public type ScenarioStateResolved = {
-        teamChoices : [ResolvedTeamChoice];
         scenarioOutcome : ScenarioOutcome;
         effectOutcomes : [EffectOutcome];
+        options : ScenarioResolvedOptions;
     };
 
-    public type ResolvedTeamChoice = {
+    public type ScenarioResolvedOptions = {
+        #discrete : [ScenarioResolvedOptionDiscrete];
+        #nat : [ScenarioResolvedOptionNat];
+    };
+
+    public type ScenarioResolvedOptionDiscrete = {
+        optionId : Nat;
+        teams : [ScenarioResolvedOptionDiscreteTeam];
+    };
+
+    public type ScenarioResolvedOptionDiscreteTeam = {
         teamId : Nat;
-        optionId : ?Nat;
+        isChosen : Bool;
+    };
+
+    public type ScenarioResolvedOptionNat = {
+        value : Nat;
+        teamIds : [Nat];
     };
 
     public type ScenarioOutcome = {

@@ -325,21 +325,12 @@ actor LeagueActor : Types.LeagueActor {
         };
     };
 
-    public shared ({ caller }) func addScenarioCustomTeamOption(request : Types.AddScenarioCustomTeamOptionRequest) : async Result.Result<(), Types.AddScenarioCustomTeamOptionError> {
-        let teamId = switch (scenarioHandler.getVote(request.scenarioId, caller)) {
-            case (#ok(vote)) vote.teamId;
-            case (#err(#notEligible)) return #err(#notAuthorized); // Only voters can suggest
-            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
-        };
-        scenarioHandler.addCustomTeamOption(request.scenarioId, teamId, request.value);
-    };
-
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
         scenarioHandler.getVote(request.scenarioId, caller);
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
-        await* scenarioHandler.vote(request.scenarioId, caller, request.option);
+        await* scenarioHandler.vote(request.scenarioId, caller, request.value);
     };
 
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {

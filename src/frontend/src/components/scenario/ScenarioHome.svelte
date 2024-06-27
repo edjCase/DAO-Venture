@@ -23,7 +23,7 @@
         if (vote === undefined) {
             return "Ineligible to vote";
         }
-        if (vote.option.length === 0) {
+        if (vote.optionId.length === 0) {
             return "Not Voted";
         }
         return "Voted";

@@ -24,7 +24,7 @@
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
 
-    let selectedChoice: number | undefined;
+    let selectedChoice: bigint | undefined;
     let vote: ScenarioVote | "ineligible" = "ineligible";
 
     $: teams = $teamStore;
@@ -33,21 +33,14 @@
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
             vote = votes[Number(scenario.id)];
+            selectedChoice = vote.optionId[0];
         } else {
             vote = "ineligible";
             selectedChoice = undefined;
         }
     });
-
-    let optionTeamVotes: bigint[][] | undefined;
-    $: if (teams) {
-        optionTeamVotes = []; // TODO
-        // optionTeamVotes = options.map((_, i) => {
-        //     return state.teamChoices
-        //         .filter((v) => v.optionId[0] === BigInt(i))
-        //         .map((v) => v.teamId);
-        // });
-    }
+    console.log(scenario.id);
+    console.log(state);
 </script>
 
 {#if teams !== undefined && traits !== undefined}
@@ -82,31 +75,24 @@
             NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}
         {/if}
     </div>
-    {#if vote === "ineligible"}
-        <!-- TODO use all options here vs vote options-->
-        You were ineligible to vote
-    {:else if vote.teamOptions.length < 1}
-        No options available
-    {:else}
-        {#each vote.teamOptions as option, index}
-            <ScenarioOption
-                scenarioId={scenario.id}
-                optionId={index}
-                {option}
-                selected={selectedChoice === index}
-                teamEnergy={undefined}
-                {vote}
-                state={{
-                    resolved: {
-                        teams: optionTeamVotes
-                            ? optionTeamVotes[index]
-                            : undefined,
-                    },
-                }}
-            />
-        {/each}
+    {#if state.shownOptions !== undefined}
+        {#if state.shownOptions.length < 1}
+            No were shown to any team
+        {:else}
+            {#each state.shownOptions as shownOption}
+                <ScenarioOption
+                    scenarioId={scenario.id}
+                    option={shownOption}
+                    selected={selectedChoice === shownOption.id}
+                    energy={undefined}
+                    {vote}
+                    state={{
+                        resolved: shownOption,
+                    }}
+                />
+            {/each}
+        {/if}
     {/if}
-
     <Accordion border={false} flush={true}>
         <AccordionItem
             paddingFlush=""

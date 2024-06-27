@@ -30,13 +30,15 @@
 
     let vote: ScenarioVote | "ineligible" = "ineligible";
 
-    let selectedChoice: number | undefined;
+    let selectedChoice: bigint | undefined;
 
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
             vote = votes[Number(scenario.id)];
+            selectedChoice = vote.optionId[0];
         } else {
             vote = "ineligible";
+            selectedChoice = undefined;
         }
     });
 </script>
@@ -84,18 +86,19 @@
     {#if vote.teamOptions.length < 1}
         No options available
     {:else}
-        {#each vote.teamOptions as option, index}
+        {#each vote.teamOptions as option}
             <ScenarioOption
-                optionId={index}
                 scenarioId={scenario.id}
                 {option}
-                selected={selectedChoice === index}
-                teamEnergy={team?.energy}
+                selected={selectedChoice === option.id}
+                energy={team === undefined
+                    ? undefined
+                    : { cost: option.energyCost, teamEnergy: team.energy }}
                 {vote}
                 state={{
                     inProgress: {
                         onSelect: () => {
-                            selectedChoice = index;
+                            selectedChoice = option.id;
                         },
                     },
                 }}

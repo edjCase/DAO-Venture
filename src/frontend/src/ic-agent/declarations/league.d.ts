@@ -2,22 +2,13 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
-export type AddScenarioCustomTeamOptionError = { 'notAuthorized' : null } |
-  { 'duplicate' : null } |
-  { 'customOptionNotAllowed' : null } |
-  { 'invalidValueType' : null } |
-  { 'scenarioNotFound' : null };
-export interface AddScenarioCustomTeamOptionRequest {
-  'scenarioId' : bigint,
-  'value' : { 'nat' : bigint },
-}
 export type AddScenarioError = { 'notAuthorized' : null } |
   { 'invalid' : Array<string> };
 export interface AddScenarioRequest {
   'startTime' : [] | [Time],
   'title' : string,
   'endTime' : Time,
-  'kind' : ScenarioKind,
+  'kind' : ScenarioKind__1,
   'description' : string,
   'undecidedEffect' : Effect,
 }
@@ -176,8 +167,20 @@ export interface LeagueChoiceScenarioOption {
   'leagueEffect' : Effect,
   'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
+  'allowedTeamIds' : Array<bigint>,
+}
+export interface LeagueChoiceScenarioOption__1 {
+  'title' : string,
+  'teamEffect' : Effect,
+  'description' : string,
+  'leagueEffect' : Effect,
+  'traitRequirements' : Array<TraitRequirement>,
+  'energyCost' : bigint,
 }
 export interface LeagueChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
+export interface LeagueChoiceScenario__1 {
+  'options' : Array<LeagueChoiceScenarioOption__1>,
+}
 export interface LotteryScenario { 'minBid' : bigint, 'prize' : Effect }
 export interface LotteryScenarioOutcome { 'winningTeamId' : [] | [bigint] }
 export type MatchAura = { 'foggy' : null } |
@@ -203,7 +206,12 @@ export interface MatchPredictionSummary {
   'team2' : bigint,
   'yourVote' : [] | [TeamId],
 }
-export interface NoLeagueEffectScenario { 'options' : Array<ScenarioOption> }
+export interface NoLeagueEffectScenario {
+  'options' : Array<ScenarioOptionDiscrete>,
+}
+export interface NoLeagueEffectScenario__1 {
+  'options' : Array<ScenarioOptionDiscrete__1>,
+}
 export interface NotScheduledMatch {
   'team1' : TeamAssignment,
   'team2' : TeamAssignment,
@@ -321,12 +329,6 @@ export interface PropotionalBidPrizeSkill {
   'skill' : ChosenOrRandomSkill,
   'target' : TargetPosition,
 }
-export interface ResolvedTeamChoice {
-  'optionId' : [] | [bigint],
-  'teamId' : bigint,
-}
-export type Result = { 'ok' : null } |
-  { 'err' : AddScenarioCustomTeamOptionError };
 export interface Scenario {
   'id' : bigint,
   'startTime' : bigint,
@@ -342,40 +344,74 @@ export type ScenarioKind = { 'lottery' : LotteryScenario } |
   { 'threshold' : ThresholdScenario } |
   { 'proportionalBid' : ProportionalBidScenario } |
   { 'leagueChoice' : LeagueChoiceScenario };
-export interface ScenarioOption {
+export type ScenarioKind__1 = { 'lottery' : LotteryScenario } |
+  { 'noLeagueEffect' : NoLeagueEffectScenario__1 } |
+  { 'threshold' : ThresholdScenario__1 } |
+  { 'proportionalBid' : ProportionalBidScenario } |
+  { 'leagueChoice' : LeagueChoiceScenario__1 };
+export interface ScenarioOptionDiscrete {
+  'title' : string,
+  'teamEffect' : Effect,
+  'description' : string,
+  'traitRequirements' : Array<TraitRequirement>,
+  'energyCost' : bigint,
+  'allowedTeamIds' : Array<bigint>,
+}
+export interface ScenarioOptionDiscrete__1 {
   'title' : string,
   'teamEffect' : Effect,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
 }
-export type ScenarioOptionValue = { 'nat' : bigint } |
-  { 'none' : null };
+export type ScenarioOptionValue = { 'id' : bigint } |
+  { 'nat' : bigint };
 export type ScenarioOutcome = { 'lottery' : LotteryScenarioOutcome } |
   { 'noLeagueEffect' : null } |
   { 'threshold' : ThresholdScenarioOutcome } |
   { 'proportionalBid' : ProportionalBidScenarioOutcome } |
   { 'leagueChoice' : LeagueChoiceScenarioOutcome };
+export interface ScenarioResolvedOptionDiscrete {
+  'teams' : Array<ScenarioResolvedOptionDiscreteTeam>,
+  'optionId' : bigint,
+}
+export interface ScenarioResolvedOptionDiscreteTeam {
+  'isChosen' : boolean,
+  'teamId' : bigint,
+}
+export interface ScenarioResolvedOptionNat {
+  'value' : bigint,
+  'teamIds' : Array<bigint>,
+}
+export type ScenarioResolvedOptions = {
+    'nat' : Array<ScenarioResolvedOptionNat>
+  } |
+  { 'discrete' : Array<ScenarioResolvedOptionDiscrete> };
 export type ScenarioState = { 'notStarted' : null } |
   { 'resolved' : ScenarioStateResolved } |
   { 'inProgress' : null };
 export interface ScenarioStateResolved {
-  'teamChoices' : Array<ResolvedTeamChoice>,
   'scenarioOutcome' : ScenarioOutcome,
+  'options' : ScenarioResolvedOptions,
   'effectOutcomes' : Array<EffectOutcome>,
 }
-export interface ScenarioTeamOption {
+export interface ScenarioTeamOptionDiscrete {
   'id' : bigint,
   'title' : string,
-  'value' : ScenarioOptionValue,
-  'votingPower' : bigint,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
+  'currentVotingPower' : bigint,
 }
+export interface ScenarioTeamOptionNat {
+  'value' : bigint,
+  'currentVotingPower' : bigint,
+}
+export type ScenarioTeamOptions = { 'nat' : Array<ScenarioTeamOptionNat> } |
+  { 'discrete' : Array<ScenarioTeamOptionDiscrete> };
 export interface ScenarioVote {
-  'optionId' : [] | [bigint],
-  'teamOptions' : Array<ScenarioTeamOption>,
+  'value' : [] | [ScenarioOptionValue],
+  'teamOptions' : ScenarioTeamOptions,
   'votingPower' : bigint,
   'teamId' : bigint,
   'teamVotingPower' : bigint,
@@ -519,12 +555,34 @@ export interface ThresholdScenarioOption {
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
   'energyCost' : bigint,
+  'allowedTeamIds' : Array<bigint>,
+}
+export interface ThresholdScenarioOption__1 {
+  'title' : string,
+  'value' : ThresholdValue__1,
+  'teamEffect' : Effect,
+  'description' : string,
+  'traitRequirements' : Array<TraitRequirement>,
+  'energyCost' : bigint,
 }
 export interface ThresholdScenarioOutcome {
   'contributions' : Array<ThresholdContribution>,
   'successful' : boolean,
 }
+export interface ThresholdScenario__1 {
+  'failure' : { 'description' : string, 'effect' : Effect },
+  'minAmount' : bigint,
+  'success' : { 'description' : string, 'effect' : Effect },
+  'options' : Array<ThresholdScenarioOption__1>,
+  'undecidedAmount' : ThresholdValue__1,
+}
 export type ThresholdValue = { 'fixed' : bigint } |
+  {
+    'weightedChance' : Array<
+      { 'weight' : bigint, 'value' : bigint, 'description' : string }
+    >
+  };
+export type ThresholdValue__1 = { 'fixed' : bigint } |
   {
     'weightedChance' : Array<
       { 'weight' : bigint, 'value' : bigint, 'description' : string }
@@ -548,13 +606,13 @@ export interface VoteOnProposalRequest {
 }
 export type VoteOnProposalResult = { 'ok' : null } |
   { 'err' : VoteOnProposalError };
-export type VoteOnScenarioError = { 'invalidOption' : null } |
-  { 'votingNotOpen' : null } |
+export type VoteOnScenarioError = { 'votingNotOpen' : null } |
+  { 'invalidValue' : null } |
   { 'notEligible' : null } |
   { 'scenarioNotFound' : null };
 export interface VoteOnScenarioRequest {
   'scenarioId' : bigint,
-  'option' : bigint,
+  'value' : ScenarioOptionValue,
 }
 export type VoteOnScenarioResult = { 'ok' : null } |
   { 'err' : VoteOnScenarioError };
@@ -565,10 +623,6 @@ export interface WeightedEffect {
 }
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
-  'addScenarioCustomTeamOption' : ActorMethod<
-    [AddScenarioCustomTeamOptionRequest],
-    Result
-  >,
   'claimBenevolentDictatorRole' : ActorMethod<
     [],
     ClaimBenevolentDictatorRoleResult
