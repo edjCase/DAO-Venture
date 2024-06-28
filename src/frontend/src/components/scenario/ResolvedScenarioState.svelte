@@ -102,8 +102,10 @@
                 <div>{natOption.value} 💰</div>
                 <div class="flex">
                     {#each natOption.chosenByTeamIds as teamId}
+                        <!-- TODO Fix this team not found hack -->
                         <TeamLogo
-                            team={teams.find((t) => t.id == teamId)}
+                            team={teams.find((t) => t.id == teamId) ||
+                                teams[-1]}
                             size="xs"
                         />
                     {/each}

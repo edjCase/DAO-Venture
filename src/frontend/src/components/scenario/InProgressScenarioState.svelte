@@ -31,18 +31,24 @@
 
     let vote: ScenarioVote | "ineligible" = "ineligible";
 
-    let selectedChoice: bigint | undefined;
+    let selectedId: bigint | undefined;
+    let selectedNat: bigint | undefined;
 
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
             vote = votes[Number(scenario.id)];
-            selectedChoice =
+            selectedId =
+                vote.value[0] !== undefined && "id" in vote.value[0]
+                    ? vote.value[0].id
+                    : undefined;
+            selectedNat =
                 vote.value[0] !== undefined && "nat" in vote.value[0]
                     ? vote.value[0].nat
                     : undefined;
         } else {
             vote = "ineligible";
-            selectedChoice = undefined;
+            selectedId = undefined;
+            selectedNat = undefined;
         }
     });
 </script>
@@ -87,13 +93,14 @@
             teamId={vote.teamId}
             options={vote.teamOptions.nat}
             teamEnergy={team === undefined ? undefined : team.energy}
+            vote={selectedNat}
         />
     {:else if "discrete" in vote.teamOptions}
         {#each vote.teamOptions.discrete as option}
             <ScenarioOptionDiscrete
                 scenarioId={scenario.id}
                 {option}
-                selected={selectedChoice === option.id}
+                selected={selectedId === option.id}
                 energy={team === undefined
                     ? undefined
                     : { cost: option.energyCost, teamEnergy: team.energy }}
@@ -101,7 +108,7 @@
                 state={{
                     inProgress: {
                         onSelect: () => {
-                            selectedChoice = option.id;
+                            selectedId = option.id;
                         },
                     },
                 }}

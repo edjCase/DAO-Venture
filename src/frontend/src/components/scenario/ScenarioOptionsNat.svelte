@@ -14,10 +14,11 @@
     export let teamId: bigint;
     export let teamEnergy: bigint | undefined;
     export let options: ScenarioTeamOptionNat[];
+    export let vote: bigint | undefined;
 
-    let natValue: bigint | undefined;
+    let natValue: bigint | undefined = vote;
 
-    let vote = async function () {
+    let voteForNat = async function () {
         if (natValue === undefined) {
             console.error("No value selected");
             return;
@@ -52,7 +53,7 @@
             {teamEnergy}
             onSelect={() => {
                 natValue = option.value;
-                vote();
+                voteForNat();
             }}
         />
     {/each}
@@ -61,5 +62,5 @@
 <div>
     Propose Value
     <BigIntInput bind:value={natValue} />
-    <LoadingButton onClick={vote}>Submit</LoadingButton>
+    <LoadingButton onClick={voteForNat}>Submit</LoadingButton>
 </div>
