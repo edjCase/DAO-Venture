@@ -273,13 +273,13 @@ module {
         title : Text;
         description : Text;
         undecidedEffect : Scenario.Effect;
-        kind : ScenarioKind;
+        kind : ScenarioKindRequest;
     };
 
-    public type ScenarioKind = {
-        #noLeagueEffect : NoLeagueEffectScenario;
-        #threshold : ThresholdScenario;
-        #leagueChoice : LeagueChoiceScenario;
+    public type ScenarioKindRequest = {
+        #noLeagueEffect : NoLeagueEffectScenarioRequest;
+        #threshold : ThresholdScenarioRequest;
+        #leagueChoice : LeagueChoiceScenarioRequest;
         #lottery : Scenario.LotteryScenario;
         #proportionalBid : Scenario.ProportionalBidScenario;
     };
@@ -292,11 +292,11 @@ module {
         teamEffect : Scenario.Effect;
     };
 
-    public type NoLeagueEffectScenario = {
+    public type NoLeagueEffectScenarioRequest = {
         options : [ScenarioOptionDiscrete];
     };
 
-    public type ThresholdScenario = {
+    public type ThresholdScenarioRequest = {
         minAmount : Nat;
         success : {
             description : Text;
@@ -307,10 +307,10 @@ module {
             effect : Scenario.Effect;
         };
         undecidedAmount : ThresholdValue;
-        options : [ThresholdScenarioOption];
+        options : [ThresholdScenarioOptionRequest];
     };
 
-    public type ThresholdScenarioOption = ScenarioOptionDiscrete and {
+    public type ThresholdScenarioOptionRequest = ScenarioOptionDiscrete and {
         value : ThresholdValue;
     };
 
@@ -323,11 +323,11 @@ module {
         }];
     };
 
-    public type LeagueChoiceScenario = {
-        options : [LeagueChoiceScenarioOption];
+    public type LeagueChoiceScenarioRequest = {
+        options : [LeagueChoiceScenarioOptionRequest];
     };
 
-    public type LeagueChoiceScenarioOption = ScenarioOptionDiscrete and {
+    public type LeagueChoiceScenarioOptionRequest = ScenarioOptionDiscrete and {
         leagueEffect : Scenario.Effect;
     };
 

@@ -8,7 +8,7 @@ export interface AddScenarioRequest {
   'startTime' : [] | [Time],
   'title' : string,
   'endTime' : Time,
-  'kind' : ScenarioKind__1,
+  'kind' : ScenarioKindRequest,
   'description' : string,
   'undecidedEffect' : Effect,
 }
@@ -169,7 +169,7 @@ export interface LeagueChoiceScenarioOption {
   'energyCost' : bigint,
   'allowedTeamIds' : Array<bigint>,
 }
-export interface LeagueChoiceScenarioOption__1 {
+export interface LeagueChoiceScenarioOptionRequest {
   'title' : string,
   'teamEffect' : Effect,
   'description' : string,
@@ -178,8 +178,8 @@ export interface LeagueChoiceScenarioOption__1 {
   'energyCost' : bigint,
 }
 export interface LeagueChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
-export interface LeagueChoiceScenario__1 {
-  'options' : Array<LeagueChoiceScenarioOption__1>,
+export interface LeagueChoiceScenarioRequest {
+  'options' : Array<LeagueChoiceScenarioOptionRequest>,
 }
 export interface LotteryScenario { 'minBid' : bigint, 'prize' : Effect }
 export interface LotteryScenarioOutcome { 'winningTeamId' : [] | [bigint] }
@@ -209,7 +209,7 @@ export interface MatchPredictionSummary {
 export interface NoLeagueEffectScenario {
   'options' : Array<ScenarioOptionDiscrete>,
 }
-export interface NoLeagueEffectScenario__1 {
+export interface NoLeagueEffectScenarioRequest {
   'options' : Array<ScenarioOptionDiscrete__1>,
 }
 export interface NotScheduledMatch {
@@ -344,11 +344,11 @@ export type ScenarioKind = { 'lottery' : LotteryScenario } |
   { 'threshold' : ThresholdScenario } |
   { 'proportionalBid' : ProportionalBidScenario } |
   { 'leagueChoice' : LeagueChoiceScenario };
-export type ScenarioKind__1 = { 'lottery' : LotteryScenario } |
-  { 'noLeagueEffect' : NoLeagueEffectScenario__1 } |
-  { 'threshold' : ThresholdScenario__1 } |
+export type ScenarioKindRequest = { 'lottery' : LotteryScenario } |
+  { 'noLeagueEffect' : NoLeagueEffectScenarioRequest } |
+  { 'threshold' : ThresholdScenarioRequest } |
   { 'proportionalBid' : ProportionalBidScenario } |
-  { 'leagueChoice' : LeagueChoiceScenario__1 };
+  { 'leagueChoice' : LeagueChoiceScenarioRequest };
 export interface ScenarioOptionDiscrete {
   'title' : string,
   'teamEffect' : Effect,
@@ -372,16 +372,18 @@ export type ScenarioOutcome = { 'lottery' : LotteryScenarioOutcome } |
   { 'proportionalBid' : ProportionalBidScenarioOutcome } |
   { 'leagueChoice' : LeagueChoiceScenarioOutcome };
 export interface ScenarioResolvedOptionDiscrete {
-  'teams' : Array<ScenarioResolvedOptionDiscreteTeam>,
-  'optionId' : bigint,
-}
-export interface ScenarioResolvedOptionDiscreteTeam {
-  'isChosen' : boolean,
-  'teamId' : bigint,
+  'id' : bigint,
+  'title' : string,
+  'teamEffect' : Effect,
+  'seenByTeamIds' : Array<bigint>,
+  'description' : string,
+  'traitRequirements' : Array<TraitRequirement>,
+  'chosenByTeamIds' : Array<bigint>,
+  'energyCost' : bigint,
 }
 export interface ScenarioResolvedOptionNat {
   'value' : bigint,
-  'teamIds' : Array<bigint>,
+  'chosenByTeamIds' : Array<bigint>,
 }
 export type ScenarioResolvedOptions = {
     'nat' : Array<ScenarioResolvedOptionNat>
@@ -557,7 +559,7 @@ export interface ThresholdScenarioOption {
   'energyCost' : bigint,
   'allowedTeamIds' : Array<bigint>,
 }
-export interface ThresholdScenarioOption__1 {
+export interface ThresholdScenarioOptionRequest {
   'title' : string,
   'value' : ThresholdValue__1,
   'teamEffect' : Effect,
@@ -569,11 +571,11 @@ export interface ThresholdScenarioOutcome {
   'contributions' : Array<ThresholdContribution>,
   'successful' : boolean,
 }
-export interface ThresholdScenario__1 {
+export interface ThresholdScenarioRequest {
   'failure' : { 'description' : string, 'effect' : Effect },
   'minAmount' : bigint,
   'success' : { 'description' : string, 'effect' : Effect },
-  'options' : Array<ThresholdScenarioOption__1>,
+  'options' : Array<ThresholdScenarioOptionRequest>,
   'undecidedAmount' : ThresholdValue__1,
 }
 export type ThresholdValue = { 'fixed' : bigint } |

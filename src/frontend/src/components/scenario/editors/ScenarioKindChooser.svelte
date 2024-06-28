@@ -1,13 +1,13 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { ScenarioKind } from "../../../ic-agent/declarations/league";
+    import { ScenarioKindRequest } from "../../../ic-agent/declarations/league";
     import NoLeagueEffectScenarioKindEditor from "./scenarios/NoLeagueEffectScenarioEditor.svelte";
     import ProportionalBidScenarioKindEditor from "./scenarios/ProportionalBidScenarioEditor.svelte";
     import LotteryScenarioKindEditor from "./scenarios/LotteryScenarioEditor.svelte";
     import LeagueChoiceScenarioKindEditor from "./scenarios/LeagueChoiceScenarioEditor.svelte";
     import ThresholdScenarioKindEditor from "./scenarios/ThresholdScenarioEditor.svelte";
 
-    export let value: ScenarioKind;
+    export let value: ScenarioKindRequest;
     $: selectedType = Object.keys(value)[0];
     let onChange = (e: Event) => {
         selectedType = (e.target as HTMLSelectElement).value;

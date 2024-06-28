@@ -250,18 +250,19 @@ module {
     };
 
     public type ScenarioResolvedOptionDiscrete = {
-        optionId : Nat;
-        teams : [ScenarioResolvedOptionDiscreteTeam];
-    };
-
-    public type ScenarioResolvedOptionDiscreteTeam = {
-        teamId : Nat;
-        isChosen : Bool;
+        id : Nat;
+        title : Text;
+        description : Text;
+        energyCost : Nat;
+        traitRequirements : [TraitRequirement];
+        teamEffect : Effect;
+        seenByTeamIds : [Nat];
+        chosenByTeamIds : [Nat];
     };
 
     public type ScenarioResolvedOptionNat = {
         value : Nat;
-        teamIds : [Nat];
+        chosenByTeamIds : [Nat];
     };
 
     public type ScenarioOutcome = {

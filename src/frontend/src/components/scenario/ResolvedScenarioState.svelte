@@ -19,7 +19,8 @@
     import LeagueChoiceResolvedScenarioState from "./resolved_states/LeagueChoiceResolvedScenarioState.svelte";
     import ScenarioEffectOutcome from "./ScenarioEffectOutcome.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import ScenarioOption from "./ScenarioOption.svelte";
+    import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
+    import TeamLogo from "../team/TeamLogo.svelte";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
@@ -33,14 +34,15 @@
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
             vote = votes[Number(scenario.id)];
-            selectedChoice = vote.optionId[0];
+            selectedChoice =
+                vote.value[0] !== undefined && "id" in vote.value[0]
+                    ? vote.value[0].id
+                    : undefined;
         } else {
             vote = "ineligible";
             selectedChoice = undefined;
         }
     });
-    console.log(scenario.id);
-    console.log(state);
 </script>
 
 {#if teams !== undefined && traits !== undefined}
@@ -75,23 +77,41 @@
             NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}
         {/if}
     </div>
-    {#if state.shownOptions !== undefined}
-        {#if state.shownOptions.length < 1}
-            No were shown to any team
+    {#if "discrete" in state.options}
+        {#if state.options.discrete.length < 1}
+            No options were shown to any team
         {:else}
-            {#each state.shownOptions as shownOption}
-                <ScenarioOption
+            {#each state.options.discrete as discreteOption}
+                <ScenarioOptionDiscrete
                     scenarioId={scenario.id}
-                    option={shownOption}
-                    selected={selectedChoice === shownOption.id}
+                    option={discreteOption}
+                    selected={selectedChoice === discreteOption.id}
                     energy={undefined}
                     {vote}
                     state={{
-                        resolved: shownOption,
+                        resolved: {
+                            chosenByTeamIds: discreteOption.chosenByTeamIds,
+                        },
                     }}
                 />
             {/each}
         {/if}
+    {:else if "nat" in state.options}
+        {#each state.options.nat as natOption}
+            <div class="flex items-center justify-center">
+                <div>{natOption.value} 💰</div>
+                <div class="flex">
+                    {#each natOption.chosenByTeamIds as teamId}
+                        <TeamLogo
+                            team={teams.find((t) => t.id == teamId)}
+                            size="xs"
+                        />
+                    {/each}
+                </div>
+            </div>
+        {/each}
+    {:else}
+        NOT IMPLEMENTED OPTIONS KIND {toJsonString(state.options)}
     {/if}
     <Accordion border={false} flush={true}>
         <AccordionItem
@@ -107,9 +127,13 @@
             <div slot="arrowup">
                 <ChevronDoubleUpOutline size="xs" />
             </div>
-            {#each state.effectOutcomes as outcome}
-                <ScenarioEffectOutcome {outcome} {teams} {traits} />
-            {/each}
+            {#if state.effectOutcomes.length < 1}
+                Nothing happened...
+            {:else}
+                {#each state.effectOutcomes as outcome}
+                    <ScenarioEffectOutcome {outcome} {teams} {traits} />
+                {/each}
+            {/if}
         </AccordionItem>
     </Accordion>
 {/if}

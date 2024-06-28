@@ -3,10 +3,10 @@
     import BigIntInput from "../BigIntInput.svelte";
     import ScenarioEffectChooser from "../ScenarioEffectChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
-    import { ThresholdScenario } from "../../../../ic-agent/declarations/league";
+    import { ThresholdScenarioRequest } from "../../../../ic-agent/declarations/league";
     import ThresholdValueChooser from "../ThresholdValueChooser.svelte";
     import TraitRequirementsEditor from "../TraitRequirementsEditor.svelte";
-    export let value: ThresholdScenario;
+    export let value: ThresholdScenarioRequest;
 
     let addOption = () => {
         value.options.push({

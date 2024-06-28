@@ -1,7 +1,6 @@
 <script lang="ts">
     import { Badge } from "flowbite-svelte";
     import {
-        ScenarioOptionValue,
         ScenarioVote,
         TraitRequirement,
         VoteOnScenarioRequest,
@@ -26,7 +25,6 @@
           }
         | {
               resolved: {
-                  seenByTeamIds: bigint[];
                   chosenByTeamIds: bigint[];
               };
           };
@@ -34,9 +32,8 @@
     export let option: {
         id: bigint;
         title: string;
-        value: ScenarioOptionValue;
         description: string;
-        traitRequirements: Array<TraitRequirement>;
+        traitRequirements: TraitRequirement[];
     };
     export let scenarioId: bigint;
     export let energy: { teamEnergy: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
@@ -105,7 +102,7 @@
         }
         let request: VoteOnScenarioRequest = {
             scenarioId: scenarioId,
-            option: BigInt(option.id),
+            value: { id: BigInt(option.id) },
         };
         console.log(
             `Voting for team ${vote.teamId} and scenario ${scenarioId} with option ${option.id}`,
@@ -123,9 +120,9 @@
     };
 
     $: teamOption =
-        vote === "ineligible"
+        vote === "ineligible" || !("discrete" in vote.teamOptions)
             ? undefined
-            : vote.teamOptions.find((v) => v.id === BigInt(option.id));
+            : vote.teamOptions.discrete.find((v) => v.id === BigInt(option.id));
 </script>
 
 <div
@@ -152,7 +149,7 @@
             <div class="text-center text-xl font-bold">Ineligible to vote</div>
         {:else}
             <div>
-                Team Votes: {teamOption.votingPower}
+                Team Votes: {teamOption.currentVotingPower}
             </div>
         {/if}
         {#each requirements as { name, icon, color }}

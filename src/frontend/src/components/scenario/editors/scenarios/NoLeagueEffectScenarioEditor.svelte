@@ -1,11 +1,11 @@
 <script lang="ts">
     import { Button, Input, Label } from "flowbite-svelte";
-    import { NoLeagueEffectScenario } from "../../../../ic-agent/declarations/league";
+    import { NoLeagueEffectScenarioRequest } from "../../../../ic-agent/declarations/league";
     import ScenarioEffectChooser from "../ScenarioEffectChooser.svelte";
     import TraitRequirementsEditor from "../TraitRequirementsEditor.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
     import BigIntInput from "../BigIntInput.svelte";
-    export let value: NoLeagueEffectScenario;
+    export let value: NoLeagueEffectScenarioRequest;
 
     let addOption = () => {
         value.options.push({

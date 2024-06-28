@@ -165,6 +165,7 @@ module {
         ) : async* Result.Result<(), Types.VoteOnScenarioError> {
 
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+            let #inProgress(_) = scenario.state else return #err(#votingNotOpen);
             let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
             // Validate value/option
             switch (scenario.kind) {
@@ -474,9 +475,9 @@ module {
                 case (#leagueChoice(leagueChoice)) #leagueChoice({
                     leagueChoice with
                     options = leagueChoice.options.vals()
-                    |> Iter.map<Types.LeagueChoiceScenarioOption, Scenario.LeagueChoiceScenarioOption>(
+                    |> Iter.map<Types.LeagueChoiceScenarioOptionRequest, Scenario.LeagueChoiceScenarioOption>(
                         _,
-                        func(option : Types.LeagueChoiceScenarioOption) : Scenario.LeagueChoiceScenarioOption {
+                        func(option : Types.LeagueChoiceScenarioOptionRequest) : Scenario.LeagueChoiceScenarioOption {
                             let allowedTeamIds = allTeams.vals()
                             |> IterTools.mapFilter(
                                 _,
@@ -500,9 +501,9 @@ module {
                 case (#threshold(threshold)) #threshold({
                     threshold with
                     options = threshold.options.vals()
-                    |> Iter.map<Types.ThresholdScenarioOption, Scenario.ThresholdScenarioOption>(
+                    |> Iter.map<Types.ThresholdScenarioOptionRequest, Scenario.ThresholdScenarioOption>(
                         _,
-                        func(option : Types.ThresholdScenarioOption) : Scenario.ThresholdScenarioOption {
+                        func(option : Types.ThresholdScenarioOptionRequest) : Scenario.ThresholdScenarioOption {
                             let allowedTeamIds = allTeams.vals()
                             |> IterTools.mapFilter(
                                 _,
@@ -608,6 +609,7 @@ module {
         };
 
         private func end(scenario : MutableScenarioData, teamVotingResult : [ResolvedTeamChoice]) : async* () {
+            let #inProgress(_) = scenario.state else Debug.trap("Scenario not in progress, cannot end");
             Debug.print("Ending scenario " # Nat.toText(scenario.id));
             let prng = PseudoRandomX.fromBlob(await Random.blob());
             let resolvedScenarioState = resolveScenario(
@@ -961,10 +963,10 @@ module {
             |> IterTools.mapEntries(
                 _,
                 func(optionId : Nat, option : Scenario.ScenarioOptionDiscrete) : Scenario.ScenarioResolvedOptionDiscrete {
-                    let teams = option.allowedTeamIds.vals()
-                    |> Iter.map(
+                    let chosenByTeamIds = option.allowedTeamIds.vals()
+                    |> IterTools.mapFilter(
                         _,
-                        func(teamId : Nat) : Scenario.ScenarioResolvedOptionDiscreteTeam {
+                        func(teamId : Nat) : ?Nat {
                             let teamChoice = IterTools.find<ResolvedTeamChoice>(
                                 teamChoices.vals(),
                                 func(teamChoice : ResolvedTeamChoice) : Bool = teamChoice.teamId == teamId,
@@ -973,16 +975,15 @@ module {
                                 case (?teamChoice) teamChoice.value == ? #id(optionId);
                                 case (null) false;
                             };
-                            {
-                                teamId = teamId;
-                                isChosen = isChosen;
-                            };
+                            if (isChosen) ?teamId else null;
                         },
                     )
                     |> Iter.toArray(_);
                     {
-                        optionId = optionId;
-                        teams = teams;
+                        option with
+                        id = optionId;
+                        seenByTeamIds = option.allowedTeamIds;
+                        chosenByTeamIds = chosenByTeamIds;
                     };
                 },
             )
@@ -1024,7 +1025,7 @@ module {
                     func((value, teamIds) : (Nat, Buffer.Buffer<Nat>)) : Scenario.ScenarioResolvedOptionNat {
                         {
                             value = value;
-                            teamIds = Buffer.toArray(teamIds);
+                            chosenByTeamIds = Buffer.toArray(teamIds);
                         };
                     },
                 )

@@ -11,7 +11,8 @@
     import ProportionalBidInProgressScenarioState from "./in_progress_states/ProportionalBidInProgressScenarioState.svelte";
     import { teamStore } from "../../stores/TeamStore";
     import { Team } from "../../ic-agent/declarations/teams";
-    import ScenarioOption from "./ScenarioOption.svelte";
+    import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
+    import ScenarioOptionsNat from "./ScenarioOptionsNat.svelte";
 
     export let scenario: Scenario;
     export let userContext: User | undefined;
@@ -35,7 +36,10 @@
     scenarioStore.subscribeVotes((votes) => {
         if (votes[Number(scenario.id)] !== undefined) {
             vote = votes[Number(scenario.id)];
-            selectedChoice = vote.optionId[0];
+            selectedChoice =
+                vote.value[0] !== undefined && "nat" in vote.value[0]
+                    ? vote.value[0].nat
+                    : undefined;
         } else {
             vote = "ineligible";
             selectedChoice = undefined;
@@ -51,16 +55,10 @@
     {/if}
 {:else}
     {#if "lottery" in scenario.kind}
-        <LotteryInProgressScenarioState
-            scenarioId={scenario.id}
-            scenario={scenario.kind.lottery}
-            {vote}
-        />
+        <LotteryInProgressScenarioState scenario={scenario.kind.lottery} />
     {:else if "proportionalBid" in scenario.kind}
         <ProportionalBidInProgressScenarioState
-            scenarioId={scenario.id}
             scenario={scenario.kind.proportionalBid}
-            {vote}
         />
     {:else if "leagueChoice" in scenario.kind}
         <LeagueChoiceInProgressScenarioState
@@ -83,11 +81,16 @@
     {:else}
         NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
     {/if}
-    {#if vote.teamOptions.length < 1}
-        No options available
-    {:else}
-        {#each vote.teamOptions as option}
-            <ScenarioOption
+    {#if "nat" in vote.teamOptions}
+        <ScenarioOptionsNat
+            scenarioId={scenario.id}
+            teamId={vote.teamId}
+            options={vote.teamOptions.nat}
+            teamEnergy={team === undefined ? undefined : team.energy}
+        />
+    {:else if "discrete" in vote.teamOptions}
+        {#each vote.teamOptions.discrete as option}
+            <ScenarioOptionDiscrete
                 scenarioId={scenario.id}
                 {option}
                 selected={selectedChoice === option.id}
@@ -104,5 +107,7 @@
                 }}
             />
         {/each}
+    {:else}
+        NOT IMPLEMENTED TEAM OPTIONS KIND: {toJsonString(vote.teamOptions)}
     {/if}
 {/if}
