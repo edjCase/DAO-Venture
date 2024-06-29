@@ -9,6 +9,7 @@ export async function setup(ctx: GlobalSetupContext): Promise<void> {
     const url = pic.getUrl();
 
     (ctx as any).provide('PIC_URL', url);
+    process.env.LOCAL_NETWORK_PORT = url.split(':')[2].split('/')[0];
 }
 
 export async function teardown(): Promise<void> {

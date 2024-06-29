@@ -107,6 +107,7 @@ module {
     public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
     public type ClaimBenevolentDictatorRoleError = {
         #notOpenToClaim;
+        #notAuthenticated;
     };
 
     public type ClaimBenevolentDictatorRoleResult = Result.Result<(), ClaimBenevolentDictatorRoleError>;

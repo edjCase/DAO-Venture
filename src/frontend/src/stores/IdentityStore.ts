@@ -30,7 +30,7 @@ export const identityStore = (() => {
             identityProvider:
                 process.env.DFX_NETWORK === "ic"
                     ? `https://identity.ic0.app`
-                    : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
+                    : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:` + process.env.LOCAL_NETWORK_PORT,
             onSuccess: () => {
                 console.log("Logged in");
                 set(authClient.getIdentity());

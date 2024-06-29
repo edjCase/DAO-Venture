@@ -28,7 +28,7 @@ export const createActor = async <T>(
   canisterId: string | Principal,
   idlFactory: IDL.InterfaceFactory,
 ): Promise<ActorSubclass<T>> => {
-  const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:4943";
+  const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:" + process.env.LOCAL_NETWORK_PORT;
   const identity = getIdentity();
   const agent = new HttpAgent({ identity: identity, host });
 

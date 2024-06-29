@@ -38,6 +38,7 @@ export default defineConfig({
         replace({
             preventAssignment: true,
             "process.env.DFX_NETWORK": JSON.stringify(network),
+            "process.env.LOCAL_NETWORK_PORT": JSON.stringify("4943"),
             "process.env.NODE_ENV": JSON.stringify(production ? "production" : "development"),
             "process.env.LOG_LEVEL": JSON.stringify(production ? "info" : "debug"),
             ...UNDEFINED_CANISTER_IDS,

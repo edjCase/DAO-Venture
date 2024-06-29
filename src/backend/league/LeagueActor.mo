@@ -241,6 +241,9 @@ actor LeagueActor : Types.LeagueActor {
     };
 
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
+        if (Principal.isAnonymous(caller)) {
+            return #err(#notAuthenticated);
+        };
         if (benevolentDictator != #open) {
             return #err(#notOpenToClaim);
         };

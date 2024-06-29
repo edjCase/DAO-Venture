@@ -1,9 +1,9 @@
 import { describe, beforeEach, afterEach, it, expect, inject } from 'vitest';
-import { idlFactory, type _SERVICE } from '../../src/ic-agent/declarations/league';
-import { leagueAgentFactory } from '../../src/ic-agent/League';
-import { playersAgentFactory } from '../../src/ic-agent/Players';
-import { CreatePlayerFluffResult } from '../../src/ic-agent/declarations/players';
-import { teamsAgentFactory } from '../../src/ic-agent/Teams';
+import { idlFactory as leagueIdlFactory, type _SERVICE as LEAGUE_SERVICE } from '../../src/ic-agent/declarations/league';
+import { idlFactory as teamsIdlFactory, type _SERVICE as TEAMS_SERVICE } from '../../src/ic-agent/declarations/teams';
+import { idlFactory as playersIdlFactory, type _SERVICE as PLAYERS_SERVICE } from '../../src/ic-agent/declarations/players';
+import { idlFactory as usersIdlFactor, type _SERVICE as USERS_SERVICE } from '../../src/ic-agent/declarations/users';
+import { idlFactory as stadiumIdlFactory, type _SERVICE as STADIUM_SERVICE } from '../../src/ic-agent/declarations/stadium';
 import { teams as teamData } from "../../src/data/TeamData";
 import { players as playerData } from "../../src/data/PlayerData";
 import { teamTraits as traitData } from "../../src/data/TeamTraitData";
@@ -12,7 +12,7 @@ import { Actor, PocketIc } from '@hadronous/pic';
 
 
 // Define the path to your canister's WASM file using __dirname
-export const WASM_PATH = resolve(
+const basePath = resolve(
     __dirname,
     '..',
     '..',
@@ -20,10 +20,13 @@ export const WASM_PATH = resolve(
     '..',
     '.dfx',
     'local',
-    'canisters',
-    'league',
-    'league.wasm',
+    'canisters'
 );
+export const LEAGUE_WASM_PATH = resolve(basePath, "league", 'league.wasm');
+export const TEAMS_WASM_PATH = resolve(basePath, "teams", 'teams.wasm');
+export const PLAYERS_WASM_PATH = resolve(basePath, "players", 'players.wasm');
+export const STADIUM_WASM_PATH = resolve(basePath, "stadium", 'stadium.wasm');
+export const USERS_WASM_PATH = resolve(basePath, "users", 'users.wasm');
 
 
 // The `describe` function is used to group tests together
@@ -32,7 +35,11 @@ describe('Test suite name', () => {
     // Define variables to hold our PocketIC instance, canister ID,
     // and an actor to interact with our canister.
     let pic: PocketIc;
-    let actor: Actor<_SERVICE>;
+    let leagueActor: Actor<LEAGUE_SERVICE>;
+    let teamsActor: Actor<TEAMS_SERVICE>;
+    let playersActor: Actor<PLAYERS_SERVICE>;
+    let stadiumActor: Actor<STADIUM_SERVICE>;
+    let usersActor: Actor<USERS_SERVICE>;
 
     // The `beforeEach` hook runs before each test.
     //
@@ -40,26 +47,110 @@ describe('Test suite name', () => {
     // state between tests.
     beforeEach(async () => {
         // create a new PocketIC instance
-        pic = await PocketIc.create(inject('PIC_URL'));
+        let url = inject('PIC_URL');
+        pic = await PocketIc.create(url, {
+            application: 1
+        });
+
+        const appSubnetId = pic.getApplicationSubnets()[0].id;
 
         // Setup the canister and actor
-        const fixture = await pic.setupCanister<_SERVICE>({
-            idlFactory,
-            wasm: WASM_PATH,
+        const leagueFixture = await pic.setupCanister<LEAGUE_SERVICE>({
+            idlFactory: leagueIdlFactory,
+            wasm: LEAGUE_WASM_PATH,
+            targetSubnetId: appSubnetId
         });
 
         // Save the actor and canister ID for use in tests
-        actor = fixture.actor;
+        leagueActor = leagueFixture.actor;
+
+        console.log("League cansiter id ", leagueFixture.canisterId.toString());
 
 
-        const response = await actor.claimBenevolentDictatorRole();
+        const teamsFixture = await pic.setupCanister<TEAMS_SERVICE>({
+            idlFactory: teamsIdlFactory,
+            wasm: TEAMS_WASM_PATH,
+            targetSubnetId: appSubnetId
+        });
+
+        teamsActor = teamsFixture.actor;
+
+        console.log("Teams cansiter id ", teamsFixture.canisterId.toString());
+
+
+        const playersFixture = await pic.setupCanister<PLAYERS_SERVICE>({
+            idlFactory: playersIdlFactory,
+            wasm: PLAYERS_WASM_PATH,
+            targetSubnetId: appSubnetId
+        });
+
+        playersActor = playersFixture.actor;
+
+        console.log("Players cansiter id ", playersFixture.canisterId.toString());
+
+
+        const stadiumFixture = await pic.setupCanister<STADIUM_SERVICE>({
+            idlFactory: stadiumIdlFactory,
+            wasm: STADIUM_WASM_PATH,
+            targetSubnetId: appSubnetId
+        });
+
+        stadiumActor = stadiumFixture.actor;
+
+        console.log("Stadium cansiter id ", stadiumFixture.canisterId.toString());
+
+        const usersFixture = await pic.setupCanister<USERS_SERVICE>({
+            idlFactory: usersIdlFactor,
+            wasm: USERS_WASM_PATH,
+            targetSubnetId: appSubnetId
+        });
+
+        usersActor = usersFixture.actor;
+
+        console.log("Users cansiter id ", usersFixture.canisterId.toString());
+
+
+        const response = await leagueActor.claimBenevolentDictatorRole();
 
         expect(response).toEqual({ 'ok': null });
 
-        await createTeamTraits();
-        await createTeams();
         await createPlayers();
+        await createTeams();
+        await createTeamTraits();
     });
+
+    let createPlayers = async function () {
+        for (let i = 0; i < playerData.length; i++) {
+            let player = playerData[i];
+            let result = await playersActor
+                .addFluff({
+                    name: player.name,
+                    title: player.title,
+                    description: player.description,
+                    likes: player.likes,
+                    dislikes: player.dislikes,
+                    quirks: player.quirks,
+                });
+            expect(result).toEqual({ ok: null });
+        }
+    };
+
+    let createTeams = async function (): Promise<void> {
+        for (let i = 0; i < teamData.length; i++) {
+            let team = teamData[i];
+            let result = await leagueActor.createTeam(team);
+            expect(result).toEqual({ 'ok': BigInt(i) });
+        }
+    };
+
+
+    let createTeamTraits = async function () {
+        for (let i = 0; i < traitData.length; i++) {
+            let trait = traitData[i];
+            let result = await teamsActor.createTeamTrait(trait);
+            expect(result).toEqual({ 'ok': BigInt(i) });
+        }
+    };
 
     // The `afterEach` hook runs after each test.
     //
@@ -73,7 +164,7 @@ describe('Test suite name', () => {
     // The `it` function is used to define individual tests
     it('adds a scenario', async () => {
 
-        const scenarioResult = await actor.addScenario({
+        const scenarioResult = await leagueActor.addScenario({
             title: "Test Scenario",
             description: "A test scenario",
             startTime: [],
@@ -112,64 +203,3 @@ describe('Test suite name', () => {
     });
 });
 
-
-let createTeams = async function (): Promise<void> {
-    let leagueAgent = await leagueAgentFactory();
-    let promises: Promise<void>[] = [];
-    for (let i = 0; i < teamData.length; i++) {
-        let team = teamData[i];
-        let promise = leagueAgent.createTeam(team).then(async (result) => {
-            if ("ok" in result) {
-                let teamId = result.ok;
-                console.log("Created team: ", teamId);
-            } else {
-                console.log("Failed to make team: ", result);
-            }
-        });
-        promises.push(promise);
-    }
-    await Promise.all(promises);
-};
-
-let createPlayers = async function () {
-    let playersAgent = await playersAgentFactory();
-    let promises: Promise<void>[] = [];
-    // loop over count
-    for (let player of playerData) {
-        let promise = playersAgent
-            .addFluff({
-                name: player.name,
-                title: player.title,
-                description: player.description,
-                likes: player.likes,
-                dislikes: player.dislikes,
-                quirks: player.quirks,
-            })
-            .then((result: CreatePlayerFluffResult) => {
-                if ("ok" in result) {
-                    console.log("Added player fluff: ", player.name);
-                } else {
-                    console.error("Failed to add player fluff: ", player.name, result);
-                }
-            });
-        promises.push(promise);
-    }
-    await Promise.all(promises);
-};
-
-let createTeamTraits = async function () {
-    let teamsAgent = await teamsAgentFactory();
-    let promises: Promise<void>[] = [];
-    for (let trait of traitData) {
-        let promise = teamsAgent.createTeamTrait(trait).then(async (result) => {
-            if ("ok" in result) {
-                let traitId = result.ok;
-                console.log("Created trait: ", traitId);
-            } else {
-                console.log("Failed to make trait: ", result);
-            }
-        });
-        promises.push(promise);
-    }
-    await Promise.all(promises);
-};
