@@ -1,46 +1,19 @@
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { nodePolyfills } from 'vite-plugin-node-polyfills'
-import { resolve } from 'path'
 import inject from '@rollup/plugin-inject'
 import replace from '@rollup/plugin-replace'
-import fs from 'fs'
 import sveltePreprocess from 'svelte-preprocess';
-import tailWindCssPlugin from "tailwindcss";
-import autoprefixerPlugin from "autoprefixer";
+import { initCanisterIds } from './common.config';
 
 const production = process.env.NODE_ENV === 'production'
 
-function initCanisterIds() {
-    const network = process.env.DFX_NETWORK || (production ? "ic" : "local")
 
-    let localCanisters = {}
-    let prodCanisters = {}
-
-    try {
-        localCanisters = JSON.parse(fs.readFileSync(resolve("..", "..", ".dfx", "local", "canister_ids.json")).toString())
-    } catch (error) {
-        console.log("No local canister_ids.json found. Continuing production")
-    }
-
-    try {
-        prodCanisters = JSON.parse(fs.readFileSync(resolve("..", "..", "canister_ids.json")).toString())
-    } catch (error) {
-        console.log("No production canister_ids.json found. Continuing with local")
-    }
-
-    const canisterIds = network === "local" ? { ...(localCanisters || {}) } : prodCanisters
-
-    return { canisterIds, network }
-}
-
-const { canisterIds, network } = initCanisterIds()
+const { canisterIds, network } = initCanisterIds(production)
 
 // Fallback for undefined canister IDs
 const UNDEFINED_CANISTER_IDS = {
     "process.env.INTERNET_IDENTITY_CANISTER_ID": JSON.stringify("undefined"),
-    "process.env.BACKEND_CANISTER_ID": JSON.stringify("undefined"),
-    "process.env.FRONTEND_CANISTER_ID": JSON.stringify("undefined"),
 }
 
 export default defineConfig({

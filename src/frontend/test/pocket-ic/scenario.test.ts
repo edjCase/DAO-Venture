@@ -1,7 +1,5 @@
-// Import generated types for your canister
-import { Actor, PocketIc } from '@hadronous/pic';
+import { describe, beforeEach, afterEach, it, expect, inject } from 'vitest';
 import { idlFactory, type _SERVICE } from '../../src/ic-agent/declarations/league';
-import { resolve } from 'path';
 import { leagueAgentFactory } from '../../src/ic-agent/League';
 import { playersAgentFactory } from '../../src/ic-agent/Players';
 import { CreatePlayerFluffResult } from '../../src/ic-agent/declarations/players';
@@ -9,7 +7,8 @@ import { teamsAgentFactory } from '../../src/ic-agent/Teams';
 import { teams as teamData } from "../../src/data/TeamData";
 import { players as playerData } from "../../src/data/PlayerData";
 import { teamTraits as traitData } from "../../src/data/TeamTraitData";
-import { describe, expect, beforeEach, afterEach, it } from '@jest/globals';
+import { resolve } from 'path';
+import { Actor, PocketIc } from '@hadronous/pic';
 
 
 // Define the path to your canister's WASM file using __dirname
@@ -26,9 +25,10 @@ export const WASM_PATH = resolve(
     'league.wasm',
 );
 
+
 // The `describe` function is used to group tests together
 // and is completely optional.
-describe('Main', () => {
+describe('Test suite name', () => {
     // Define variables to hold our PocketIC instance, canister ID,
     // and an actor to interact with our canister.
     let pic: PocketIc;
@@ -40,7 +40,7 @@ describe('Main', () => {
     // state between tests.
     beforeEach(async () => {
         // create a new PocketIC instance
-        pic = await PocketIc.create(globalThis.PIC_URL);
+        pic = await PocketIc.create(inject('PIC_URL'));
 
         // Setup the canister and actor
         const fixture = await pic.setupCanister<_SERVICE>({
@@ -50,6 +50,7 @@ describe('Main', () => {
 
         // Save the actor and canister ID for use in tests
         actor = fixture.actor;
+
 
         const response = await actor.claimBenevolentDictatorRole();
 
@@ -70,7 +71,7 @@ describe('Main', () => {
     });
 
     // The `it` function is used to define individual tests
-    it('addScenario', async () => {
+    it('adds a scenario', async () => {
 
         const scenarioResult = await actor.addScenario({
             title: "Test Scenario",
