@@ -178,6 +178,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ClaimBenevolentDictatorRoleError = IDL.Variant({
     'notOpenToClaim' : IDL.Null,
+    'notAuthenticated' : IDL.Null,
   });
   const ClaimBenevolentDictatorRoleResult = IDL.Variant({
     'ok' : IDL.Null,

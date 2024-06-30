@@ -21,7 +21,8 @@ export type ChosenOrRandomFieldPosition = { 'random' : null } |
   { 'chosen' : FieldPosition };
 export type ChosenOrRandomSkill = { 'random' : null } |
   { 'chosen' : Skill };
-export type ClaimBenevolentDictatorRoleError = { 'notOpenToClaim' : null };
+export type ClaimBenevolentDictatorRoleError = { 'notOpenToClaim' : null } |
+  { 'notAuthenticated' : null };
 export type ClaimBenevolentDictatorRoleResult = { 'ok' : null } |
   { 'err' : ClaimBenevolentDictatorRoleError };
 export type CloseSeasonError = { 'notAuthorized' : null } |

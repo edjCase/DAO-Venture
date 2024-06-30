@@ -9,6 +9,7 @@ import { players as playerData } from "../../src/data/PlayerData";
 import { teamTraits as traitData } from "../../src/data/TeamTraitData";
 import { resolve } from 'path';
 import { Actor, PocketIc } from '@hadronous/pic';
+import { Principal } from '@dfinity/principal';
 
 
 // Define the path to your canister's WASM file using __dirname
@@ -41,6 +42,9 @@ describe('Test suite name', () => {
     let stadiumActor: Actor<STADIUM_SERVICE>;
     let usersActor: Actor<USERS_SERVICE>;
 
+    let bdfnPrincipal = Principal.fromText("zedmc-7yeiu-fmd5m-c7nun-r3unf-qap5y-drgdf-ozckp-gzuzn-wj4n4-6qe");
+    const oneDayInNanos = BigInt(60 * 60 * 24 * 1_000_000_000);
+
     // The `beforeEach` hook runs before each test.
     //
     // This can be replaced with a `beforeAll` hook to persist canister
@@ -51,61 +55,62 @@ describe('Test suite name', () => {
         pic = await PocketIc.create(url, {
             application: 1
         });
+        pic.setTime(0);
 
-        const appSubnetId = pic.getApplicationSubnets()[0].id;
 
         // Setup the canister and actor
         const leagueFixture = await pic.setupCanister<LEAGUE_SERVICE>({
             idlFactory: leagueIdlFactory,
-            wasm: LEAGUE_WASM_PATH,
-            targetSubnetId: appSubnetId
+            wasm: LEAGUE_WASM_PATH
         });
 
         // Save the actor and canister ID for use in tests
         leagueActor = leagueFixture.actor;
+        leagueActor.setPrincipal(bdfnPrincipal);
 
         console.log("League cansiter id ", leagueFixture.canisterId.toString());
 
-
+        pic
         const teamsFixture = await pic.setupCanister<TEAMS_SERVICE>({
             idlFactory: teamsIdlFactory,
-            wasm: TEAMS_WASM_PATH,
-            targetSubnetId: appSubnetId
+            wasm: TEAMS_WASM_PATH
         });
 
         teamsActor = teamsFixture.actor;
+        teamsActor.setPrincipal(bdfnPrincipal);
 
         console.log("Teams cansiter id ", teamsFixture.canisterId.toString());
 
 
         const playersFixture = await pic.setupCanister<PLAYERS_SERVICE>({
             idlFactory: playersIdlFactory,
-            wasm: PLAYERS_WASM_PATH,
-            targetSubnetId: appSubnetId
+            wasm: PLAYERS_WASM_PATH
         });
 
         playersActor = playersFixture.actor;
+        playersActor.setPrincipal(bdfnPrincipal);
 
         console.log("Players cansiter id ", playersFixture.canisterId.toString());
 
 
         const stadiumFixture = await pic.setupCanister<STADIUM_SERVICE>({
             idlFactory: stadiumIdlFactory,
-            wasm: STADIUM_WASM_PATH,
-            targetSubnetId: appSubnetId
+            wasm: STADIUM_WASM_PATH
+
         });
 
         stadiumActor = stadiumFixture.actor;
+        stadiumActor.setPrincipal(bdfnPrincipal);
 
         console.log("Stadium cansiter id ", stadiumFixture.canisterId.toString());
 
         const usersFixture = await pic.setupCanister<USERS_SERVICE>({
             idlFactory: usersIdlFactor,
-            wasm: USERS_WASM_PATH,
-            targetSubnetId: appSubnetId
+            wasm: USERS_WASM_PATH
         });
 
         usersActor = usersFixture.actor;
+        usersActor.setPrincipal(bdfnPrincipal);
 
         console.log("Users cansiter id ", usersFixture.canisterId.toString());
 
@@ -148,7 +153,7 @@ describe('Test suite name', () => {
         for (let i = 0; i < traitData.length; i++) {
             let trait = traitData[i];
             let result = await teamsActor.createTeamTrait(trait);
-            expect(result).toEqual({ 'ok': BigInt(i) });
+            expect(result).toEqual({ 'ok': null });
         }
     };
 
@@ -158,7 +163,7 @@ describe('Test suite name', () => {
     // a `beforeAll` hook instead of a `beforeEach` hook.
     afterEach(async () => {
         // tear down the PocketIC instance
-        await pic.tearDown();
+        await pic?.tearDown();
     });
 
     // The `it` function is used to define individual tests
@@ -168,7 +173,7 @@ describe('Test suite name', () => {
             title: "Test Scenario",
             description: "A test scenario",
             startTime: [],
-            endTime: BigInt(0),
+            endTime: BigInt(oneDayInNanos),
             undecidedEffect: {
                 entropy: {
                     delta: BigInt(1),
@@ -179,27 +184,46 @@ describe('Test suite name', () => {
             },
             kind: {
                 noLeagueEffect: {
-                    options: [{
-                        title: "Option 1",
-                        description: "Option 1",
-                        traitRequirements: [],
-                        energyCost: BigInt(0),
-                        teamEffect: {
-                            energy: {
-                                target: {
-                                    contextual: null
-                                },
-                                value: {
-                                    flat: BigInt(1)
+                    options: [
+                        {
+                            title: "Option 1",
+                            description: "Option 1",
+                            traitRequirements: [],
+                            energyCost: BigInt(0),
+                            teamEffect: {
+                                energy: {
+                                    target: {
+                                        contextual: null
+                                    },
+                                    value: {
+                                        flat: BigInt(1)
+                                    }
                                 }
                             }
+                        },
+                        {
+                            title: "Option 2",
+                            description: "Option 2",
+                            traitRequirements: [],
+                            energyCost: BigInt(0),
+                            teamEffect: {
+                                energy: {
+                                    target: {
+                                        contextual: null
+                                    },
+                                    value: {
+                                        flat: BigInt(1)
+                                    }
+                                }
+                            }
+
                         }
-                    }]
+                    ]
                 }
             }
         });
 
-        expect(scenarioResult).toEqual({ 'ok': BigInt(0) });
+        expect(scenarioResult).toEqual({ 'ok': null });
     });
 });
 
