@@ -2,9 +2,11 @@ import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
 import Types "./Types";
 import UserHandler "UserHandler";
-// import LeagueActor "canister:league"; TODO
+import LeagueTypes "../league/Types";
 
-actor : Types.Actor {
+actor class Users(
+    leagueCanisterId : Principal
+) : async Types.Actor = this {
 
     stable var userStableData : UserHandler.StableData = {
         users = [];
@@ -20,10 +22,7 @@ actor : Types.Actor {
         userHandler := UserHandler.UserHandler(userStableData);
     };
 
-    public shared query ({ caller }) func get(userId : Principal) : async Types.GetUserResult {
-        if (caller != userId and not isLeague(caller)) {
-            return #err(#notAuthorized);
-        };
+    public shared query func get(userId : Principal) : async Types.GetUserResult {
         switch (userHandler.get(userId)) {
             case (?user) #ok(user);
             case (null) #err(#notFound);
@@ -49,7 +48,7 @@ actor : Types.Actor {
         if (Principal.isAnonymous(userId)) {
             return #err(#identityRequired);
         };
-        if (caller != userId and not isLeague(caller)) {
+        if (caller != userId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
 
@@ -57,7 +56,7 @@ actor : Types.Actor {
     };
 
     public shared ({ caller }) func addTeamOwner(request : Types.AddTeamOwnerRequest) : async Types.AddTeamOwnerResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         userHandler.addTeamOwner(request);
@@ -65,7 +64,7 @@ actor : Types.Actor {
 
     // TODO change to BoomDAO or ledger
     public shared ({ caller }) func awardPoints(awards : [Types.AwardPointsRequest]) : async Types.AwardPointsResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         userHandler.awardPoints(awards);
@@ -73,16 +72,22 @@ actor : Types.Actor {
     };
 
     public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         // TODO
         #ok;
     };
 
-    private func isLeague(_ : Principal) : Bool {
-        // TODO
-        // return caller == Principal.fromActor(LeagueActor);
-        return true;
+    private func isLeagueOrBDFN(caller : Principal) : async* Bool {
+        if (leagueCanisterId == caller) {
+            return true;
+        };
+        // TODO change to league push new bdfn vs fetch?
+        let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
+        switch (await leagueActor.getBenevolentDictatorState()) {
+            case (#claimed(bdfnId)) caller == bdfnId;
+            case (#disabled or #open) false;
+        };
     };
 };

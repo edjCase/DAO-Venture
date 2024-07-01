@@ -227,7 +227,7 @@ module {
             let teamOptions = buildTeamOptions(scenario, vote.teamId);
 
             let teamVotingPower = IterTools.fold<Vote, Nat>(
-                scenario.votes.vals(),
+                scenario.votes.vals() |> Iter.filter(_, func(v : Vote) : Bool = v.teamId == vote.teamId),
                 0,
                 func(total : Nat, option : Vote) : Nat = total + option.votingPower,
             );
@@ -551,7 +551,15 @@ module {
 
             let scenarioId = nextScenarioId;
             nextScenarioId += 1;
-            let startTimerId = createStartTimer<system>(scenarioId, startTime);
+            let state = if (startTime <= Time.now()) {
+                #inProgress({
+                    endTimerId = createEndTimer<system>(scenarioId, scenario.endTime);
+                });
+            } else {
+                #notStarted({
+                    startTimerId = createStartTimer<system>(scenarioId, startTime);
+                });
+            };
 
             scenarios.put(
                 scenarioId,
@@ -562,9 +570,7 @@ module {
                     description = scenario.description;
                     undecidedEffect = scenario.undecidedEffect;
                     kind = kind;
-                    state = #notStarted({
-                        startTimerId = startTimerId;
-                    });
+                    state = state;
                     startTime = startTime;
                     endTime = scenario.endTime;
                     teamIds = Iter.toArray(teamIds.keys());

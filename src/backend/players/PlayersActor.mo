@@ -11,8 +11,11 @@ import Result "mo:base/Result";
 import Types "Types";
 import FieldPosition "../models/FieldPosition";
 import PlayerHandler "PlayerHandler";
+import LeagueTypes "../league/Types";
 
-actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = this {
+actor class Players(
+    leagueCanisterId : Principal
+) : async Types.PlayerActor = this {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var playerStableData : PlayerHandler.StableData = {
@@ -34,7 +37,7 @@ actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = th
     };
 
     public shared ({ caller }) func setTeamsCanisterId(canisterId : Principal) : async Types.SetTeamsCanisterIdResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         teamsCanisterId := ?canisterId;
@@ -42,7 +45,7 @@ actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = th
     };
 
     public shared ({ caller }) func addFluff(request : Types.CreatePlayerFluffRequest) : async Types.CreatePlayerFluffResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.addFluff(request);
@@ -75,14 +78,14 @@ actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = th
     };
 
     public shared ({ caller }) func populateTeamRoster(teamId : Nat) : async Types.PopulateTeamRosterResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.populateTeamRoster(teamId);
     };
 
     public shared ({ caller }) func applyEffects(request : Types.ApplyEffectsRequest) : async Types.ApplyEffectsResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.applyEffects(request);
@@ -96,14 +99,14 @@ actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = th
         if (teamsCanisterId == null) {
             Debug.trap("Teams canister ID is not set");
         };
-        if (?caller != teamsCanisterId and not isLeague(caller)) {
+        if (?caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.swapTeamPositions(teamId, position1, position2);
     };
 
     public shared ({ caller }) func addMatchStats(matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) : async Types.AddMatchStatsResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
 
@@ -132,7 +135,7 @@ actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = th
     };
 
     public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         // TODO archive?
@@ -140,7 +143,15 @@ actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = th
         #ok;
     };
 
-    private func isLeague(caller : Principal) : Bool {
-        caller == leagueCanisterId;
+    private func isLeagueOrBDFN(caller : Principal) : async* Bool {
+        if (leagueCanisterId == caller) {
+            return true;
+        };
+        // TODO change to league push new bdfn vs fetch?
+        let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
+        switch (await leagueActor.getBenevolentDictatorState()) {
+            case (#claimed(bdfnId)) caller == bdfnId;
+            case (#disabled or #open) false;
+        };
     };
 };
