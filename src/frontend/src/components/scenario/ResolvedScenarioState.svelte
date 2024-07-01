@@ -99,7 +99,7 @@
     {:else if "nat" in state.options}
         {#each state.options.nat as natOption}
             <div class="flex items-center justify-center">
-                <div>{natOption.value} 💰</div>
+                <div>{natOption.value} 🎟️</div>
                 <div class="flex">
                     {#each natOption.chosenByTeamIds as teamId}
                         <!-- TODO Fix this team not found hack -->

@@ -75,7 +75,6 @@ endef
 # Deploy target for local development
 deploy:
 	@$(call deploy_commands,--identity anonymous,$(LOCAL_ARG_FILE))
-	dfx deps deploy --identity anonymous
 
 # Deploy target for production (IC network)
 deploy_prod:
