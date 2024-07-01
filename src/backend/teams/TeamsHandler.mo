@@ -12,7 +12,6 @@ import Buffer "mo:base/Buffer";
 import Int "mo:base/Int";
 import Option "mo:base/Option";
 import CommonTypes "../Types";
-import PlayersActor "canister:players";
 import Scenario "../models/Scenario";
 import IterTools "mo:itertools/Iter";
 import Team "../models/Team";
@@ -25,6 +24,7 @@ import TextX "mo:xtended-text/TextX";
 import Season "../models/Season";
 import Trait "../models/Trait";
 import Skill "../models/Skill";
+import PlayerTypes "../players/Types";
 
 module {
 
@@ -61,9 +61,13 @@ module {
         links : Buffer.Buffer<Types.Link>;
     };
 
-    public class Handler<system>(data : StableData, leagueCanisterId : Principal) {
+    public class Handler<system>(data : StableData, leagueCanisterId : Principal, playersCanisterId : Principal) {
+
+        let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
+        let playersActor = actor (Principal.toText(playersCanisterId)) : PlayerTypes.PlayerActor;
+
         let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
-        let daos : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> = toDaoHashMap<system>(data.teams, teams, leagueCanisterId);
+        let daos : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> = toDaoHashMap<system>(data.teams, teams, leagueActor, playersActor);
         let traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
         var entropyThreshold = data.entropyThreshold;
 
@@ -149,13 +153,13 @@ module {
                     quorum = ?20;
                 });
             };
-            let dao = buildDao<system>(daoData, teamData, leagueCanisterId);
+            let dao = buildDao<system>(daoData, teamData, leagueActor, playersActor);
             daos.put(teamId, dao);
 
             // TODO add retry populating team roster
 
             try {
-                let populateResult = await PlayersActor.populateTeamRoster(teamId);
+                let populateResult = await playersActor.populateTeamRoster(teamId);
 
                 switch (populateResult) {
                     case (#ok(_)) {};
@@ -497,12 +501,13 @@ module {
     private func toDaoHashMap<system>(
         teams : [StableTeamData],
         mutableTeams : HashMap.HashMap<Nat, MutableTeamData>,
-        leagueCanisterId : Principal,
+        leagueActor : LeagueTypes.LeagueActor,
+        playersActor : PlayerTypes.PlayerActor,
     ) : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> {
         let daoMap = HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>>(0, Nat.equal, Nat32.fromNat);
         for (team in teams.vals()) {
             let ?mutableTeam = mutableTeams.get(team.id) else Debug.trap("Missing mutable team data for team ID: " # Nat.toText(team.id));
-            let dao = buildDao<system>(team.dao, mutableTeam, leagueCanisterId);
+            let dao = buildDao<system>(team.dao, mutableTeam, leagueActor, playersActor);
             daoMap.put(team.id, dao);
         };
         daoMap;
@@ -520,12 +525,12 @@ module {
     private func buildDao<system>(
         data : Dao.StableData<Types.ProposalContent>,
         team : MutableTeamData,
-        leagueCanisterId : Principal,
+        leagueActor : LeagueTypes.LeagueActor,
+        playersActor : PlayerTypes.PlayerActor,
     ) : Dao.Dao<Types.ProposalContent> {
 
         func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Result.Result<(), Text> {
             let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Result.Result<(), Text> {
-                let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
                 try {
                     let result = await leagueActor.createProposal({
                         content = content;
@@ -542,7 +547,7 @@ module {
                 case (#train(train)) {
                     try {
                         // TODO atomic operation
-                        let player = switch (await PlayersActor.getPosition(team.id, train.position)) {
+                        let player = switch (await playersActor.getPosition(team.id, train.position)) {
                             case (#ok(player)) player;
                             case (#err(e)) return #err("Error getting player in players actor: " # debug_show (e));
                         };
@@ -561,7 +566,7 @@ module {
                             duration = #indefinite;
                             skill = train.skill;
                         });
-                        switch (await PlayersActor.applyEffects([trainSkillEffect])) {
+                        switch (await playersActor.applyEffects([trainSkillEffect])) {
                             case (#ok) #ok;
                             case (#err(#notAuthorized)) #err("Not authorized to train player in players actor");
                         };
@@ -578,7 +583,7 @@ module {
                 };
                 case (#swapPlayerPositions(swap)) {
                     try {
-                        switch (await PlayersActor.swapTeamPositions(team.id, swap.position1, swap.position2)) {
+                        switch (await playersActor.swapTeamPositions(team.id, swap.position1, swap.position2)) {
                             case (#ok) #ok;
                             case (#err(#notAuthorized)) #err("Not authorized to swap player positions in players actor");
                         };

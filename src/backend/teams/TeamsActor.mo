@@ -15,6 +15,7 @@ import UserTypes "../users/Types";
 actor class TeamsActor(
   leagueCanisterId : Principal,
   usersCanisterId : Principal,
+  playersCanisterId : Principal,
 ) : async Types.Actor = this {
 
   let usersActor = actor (Principal.toText(usersCanisterId)) : UserTypes.Actor;
@@ -25,14 +26,14 @@ actor class TeamsActor(
     teams = [];
   };
 
-  var teamsHandler = TeamsHandler.Handler<system>(teamStableData, leagueCanisterId);
+  var teamsHandler = TeamsHandler.Handler<system>(teamStableData, leagueCanisterId, playersCanisterId);
 
   system func preupgrade() {
     teamStableData := teamsHandler.toStableData();
   };
 
   system func postupgrade() {
-    teamsHandler := TeamsHandler.Handler<system>(teamStableData, leagueCanisterId);
+    teamsHandler := TeamsHandler.Handler<system>(teamStableData, leagueCanisterId, playersCanisterId);
   };
 
   public shared query func getTeams() : async [Team.Team] {
