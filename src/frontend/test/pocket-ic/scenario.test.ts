@@ -442,7 +442,7 @@ describe('Test suite name', () => {
                 },
                 "startTime": 0n,
                 "state": {
-                    "notStarted": null
+                    "resolved": null
                 },
                 "title": "Test Scenario",
                 "undecidedEffect": {
