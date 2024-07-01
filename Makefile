@@ -56,6 +56,14 @@ define read_json_arg
 	$(shell jq -r '.$(1) // empty' $(2))
 endef
 
+# Function to generate deploy commands with environment-specific arguments
+define deploy_commands
+	$(foreach canister,$(CANISTERS),\
+		dfx deploy $(canister) $(1) -y \
+		$(if $(call read_json_arg,$(canister),$(2)),--argument '$(call read_json_arg,$(canister),$(2))') &&\
+	) true
+endef
+
 # Function to generate reinstall commands with environment-specific arguments
 define reinstall_commands
 	$(foreach canister,$(CANISTERS),\
@@ -64,11 +72,20 @@ define reinstall_commands
 	) true
 endef
 
+# Deploy target for local development
+deploy:
+	@$(call deploy_commands,--identity anonymous,$(LOCAL_ARG_FILE))
+	dfx deps deploy --identity anonymous
+
+# Deploy target for production (IC network)
+deploy_prod:
+	@$(call deploy_commands,--ic,$(PROD_ARG_FILE))
+	dfx deploy frontend --ic -y
+
 # Reinstall target for local development
 reinstall:
 	@$(call reinstall_commands,--identity anonymous,$(LOCAL_ARG_FILE))
 	dfx deps deploy --identity anonymous
-
 
 # Reinstall target for production (IC network)
 reinstall_prod:
@@ -79,4 +96,4 @@ reinstall_prod:
 generate: $(DIDC) build_league process_did_files compile_did_files
 
 # Phony targets
-.PHONY: generate clean build_league process_did_files compile_did_files reinstall reinstall_prod
+.PHONY: generate clean build_league process_did_files compile_did_files deploy deploy_prod reinstall reinstall_prod
