@@ -36,7 +36,6 @@ module {
 
     public type StableTeamData = {
         id : Nat;
-        leagueId : Principal;
         energy : Int;
         name : Text;
         logoUrl : Text;
@@ -51,7 +50,6 @@ module {
 
     type MutableTeamData = {
         id : Nat;
-        var leagueId : Principal;
         var energy : Int;
         var name : Text;
         var logoUrl : Text;
@@ -63,9 +61,9 @@ module {
         links : Buffer.Buffer<Types.Link>;
     };
 
-    public class Handler<system>(data : StableData) {
+    public class Handler<system>(data : StableData, leagueCanisterId : Principal) {
         let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
-        let daos : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> = toDaoHashMap<system>(data.teams, teams);
+        let daos : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> = toDaoHashMap<system>(data.teams, teams, leagueCanisterId);
         let traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
         var entropyThreshold = data.entropyThreshold;
 
@@ -115,8 +113,7 @@ module {
         };
 
         public func create<system>(
-            leagueId : Principal, // TODO this should be part of the data, but we don't have a way to pass it in yet
-            request : Types.CreateTeamRequest,
+            request : Types.CreateTeamRequest
         ) : async* Types.CreateTeamResult {
             let nameAlreadyTaken = teams.entries()
             |> IterTools.any(
@@ -139,7 +136,6 @@ module {
                 var color = request.color;
                 var entropy = 0; // TODO?
                 var energy = 0;
-                var leagueId = leagueId;
                 traitIds = Buffer.Buffer<Text>(0);
                 links = Buffer.Buffer<Types.Link>(0);
             };
@@ -153,7 +149,7 @@ module {
                     quorum = ?20;
                 });
             };
-            let dao = buildDao<system>(daoData, teamData);
+            let dao = buildDao<system>(daoData, teamData, leagueCanisterId);
             daos.put(teamId, dao);
 
             // TODO add retry populating team roster
@@ -444,7 +440,6 @@ module {
 
         private func toTeam(team : MutableTeamData) : Team.Team {
             {
-                leagueId = team.leagueId;
                 id = team.id;
                 traits = getTraitsByIds(team.traitIds.vals());
                 links = Buffer.toArray(team.links);
@@ -471,7 +466,6 @@ module {
     private func toMutableTeamData(stableData : StableTeamData) : MutableTeamData {
         {
             id = stableData.id;
-            var leagueId = stableData.leagueId;
             var energy = stableData.energy;
             var name = stableData.name;
             var logoUrl = stableData.logoUrl;
@@ -486,7 +480,6 @@ module {
 
     private func toStableTeamData(team : MutableTeamData, dao : Dao.StableData<Types.ProposalContent>) : StableTeamData {
         {
-            leagueId = team.leagueId;
             id = team.id;
             dao = dao;
             traitIds = Buffer.toArray(team.traitIds);
@@ -501,11 +494,15 @@ module {
         };
     };
 
-    private func toDaoHashMap<system>(teams : [StableTeamData], mutableTeams : HashMap.HashMap<Nat, MutableTeamData>) : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> {
+    private func toDaoHashMap<system>(
+        teams : [StableTeamData],
+        mutableTeams : HashMap.HashMap<Nat, MutableTeamData>,
+        leagueCanisterId : Principal,
+    ) : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> {
         let daoMap = HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>>(0, Nat.equal, Nat32.fromNat);
         for (team in teams.vals()) {
             let ?mutableTeam = mutableTeams.get(team.id) else Debug.trap("Missing mutable team data for team ID: " # Nat.toText(team.id));
-            let dao = buildDao<system>(team.dao, mutableTeam);
+            let dao = buildDao<system>(team.dao, mutableTeam, leagueCanisterId);
             daoMap.put(team.id, dao);
         };
         daoMap;
@@ -520,11 +517,15 @@ module {
         |> HashMap.fromIter<Text, Trait.Trait>(_, traits.size(), Text.equal, Text.hash);
     };
 
-    private func buildDao<system>(data : Dao.StableData<Types.ProposalContent>, team : MutableTeamData) : Dao.Dao<Types.ProposalContent> {
+    private func buildDao<system>(
+        data : Dao.StableData<Types.ProposalContent>,
+        team : MutableTeamData,
+        leagueCanisterId : Principal,
+    ) : Dao.Dao<Types.ProposalContent> {
 
         func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Result.Result<(), Text> {
             let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Result.Result<(), Text> {
-                let leagueActor = actor (Principal.toText(team.leagueId)) : LeagueTypes.LeagueActor;
+                let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
                 try {
                     let result = await leagueActor.createProposal({
                         content = content;

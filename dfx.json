@@ -38,7 +38,7 @@
       "dependencies": [
         "players"
       ],
-      "main": "src/backend/team/TeamsActor.mo",
+      "main": "src/backend/teams/TeamsActor.mo",
       "type": "motoko"
     },
     "stadium": {

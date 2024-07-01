@@ -23,11 +23,9 @@ import Result "mo:base/Result";
 import Order "mo:base/Order";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
-import UsersActor "canister:users";
 import UserTypes "../users/Types";
 import Skill "../models/Skill";
-import TeamsActor "canister:teams";
-import TeamTypes "../team/Types";
+import TeamTypes "../teams/Types";
 import FieldPosition "../models/FieldPosition";
 import Trait "../models/Trait";
 
@@ -120,7 +118,12 @@ module {
         processEffectOutcomes : (
             outcomes : [Scenario.EffectOutcome]
         ) -> async* ProcessEffectOutcomesResult,
+        usersCanisterId : Principal,
+        teamsCanisterId : Principal,
     ) {
+        let usersActor = actor (Principal.toText(usersCanisterId)) : UserTypes.Actor;
+        let teamsActor = actor (Principal.toText(teamsCanisterId)) : TeamTypes.Actor;
+
         let scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
         var nextScenarioId = scenarios.size(); // TODO max id + 1
 
@@ -433,7 +436,7 @@ module {
             };
 
             let members = try {
-                switch (await UsersActor.getTeamOwners(#all)) {
+                switch (await usersActor.getTeamOwners(#all)) {
                     case (#ok(members)) members;
                 };
             } catch (err) {
@@ -442,7 +445,7 @@ module {
 
             let teamIds = HashMap.HashMap<Nat, ()>(0, Nat.equal, Nat32.fromNat);
 
-            let allTeams : [TeamTypes.Team] = await TeamsActor.getTeams();
+            let allTeams : [TeamTypes.Team] = await teamsActor.getTeams();
 
             // TODO refactor the duplication
             let kind : Scenario.ScenarioKind = switch (scenario.kind) {

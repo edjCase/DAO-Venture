@@ -22,10 +22,10 @@ import StadiumTypes "../stadium/Types";
 import Util "../Util";
 import MatchAura "../models/MatchAura";
 import IterTools "mo:itertools/Iter";
-import PlayersActor "canister:players";
 import Player "../models/Player";
 import FieldPosition "../models/FieldPosition";
 import Components "mo:datetime/Components";
+import PlayerTypes "../players/Types";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -54,7 +54,10 @@ module {
         #completed : Season.CompletedSeason;
     };
 
-    public class SeasonHandler<system>(data : StableData, eventHandler : EventHandler) {
+    public class SeasonHandler<system>(data : StableData, eventHandler : EventHandler, playersCanisterId : Principal) {
+
+        let playersActor = actor (Principal.toText(playersCanisterId)) : PlayerTypes.PlayerActor;
+
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
 
         // First team to last team
@@ -286,7 +289,7 @@ module {
                 // TODO handle error
             };
             let errorOrNull : ?Text = try {
-                switch (await PlayersActor.addMatchStats(request.id, request.playerStats)) {
+                switch (await playersActor.addMatchStats(request.id, request.playerStats)) {
                     case (#ok) null;
                     case (#err(#notAuthorized)) ?"League not authorized to award points";
                 };

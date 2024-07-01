@@ -11,9 +11,8 @@ import Result "mo:base/Result";
 import Types "Types";
 import FieldPosition "../models/FieldPosition";
 import PlayerHandler "PlayerHandler";
-// import LeagueActor "canister:league"; TODO
 
-actor : Types.PlayerActor {
+actor class Players(leagueCanisterId : Principal) : async Types.PlayerActor = this {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var playerStableData : PlayerHandler.StableData = {
@@ -141,9 +140,7 @@ actor : Types.PlayerActor {
         #ok;
     };
 
-    private func isLeague(_ : Principal) : Bool {
-        // TODO
-        // caller == Principal.fromActor(LeagueActor);
-        true;
+    private func isLeague(caller : Principal) : Bool {
+        caller == leagueCanisterId;
     };
 };
