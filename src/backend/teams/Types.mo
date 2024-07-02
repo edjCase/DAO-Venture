@@ -222,6 +222,7 @@ module {
     public type CreateProposalError = {
         #notAuthorized;
         #teamNotFound;
+        #invalid : [Text];
     };
 
     public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;

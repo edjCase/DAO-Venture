@@ -95,6 +95,7 @@ module {
 
     public type CreateProposalError = {
         #notAuthorized;
+        #invalid : [Text];
     };
 
     public type VoteError = {
@@ -104,11 +105,11 @@ module {
         #proposalNotFound;
     };
 
-    // TODO add validate proposal method
     public class Dao<system, TProposalContent>(
         data : StableData<TProposalContent>,
         onExecute : Proposal<TProposalContent> -> async* Result.Result<(), Text>,
         onReject : Proposal<TProposalContent> -> async* (),
+        onValidate : TProposalContent -> async* Result.Result<(), [Text]>,
     ) {
         func hashNat(n : Nat) : Nat32 = Nat32.fromNat(n); // TODO
 
@@ -194,28 +195,7 @@ module {
             if (existingVote.value != null) {
                 return #err(#alreadyVoted);
             };
-            proposal.votes.put(
-                voterId,
-                {
-                    existingVote with
-                    value = ?vote;
-                },
-            );
-            proposal.votingSummary.notVoted -= existingVote.votingPower;
-            if (vote) {
-                proposal.votingSummary.yes += existingVote.votingPower;
-            } else {
-                proposal.votingSummary.no += existingVote.votingPower;
-            };
-            switch (calculateVoteStatus(proposal)) {
-                case (#passed) {
-                    await* executeOrRejectProposal(proposal, true);
-                };
-                case (#rejected) {
-                    await* executeOrRejectProposal(proposal, false);
-                };
-                case (#undetermined) ();
-            };
+            await* voteInternal(proposal, voterId, vote, existingVote.votingPower);
             #ok;
         };
 
@@ -223,7 +203,15 @@ module {
             proposer : Principal,
             content : TProposalContent,
             members : [Member],
-        ) : Result.Result<Nat, CreateProposalError> {
+        ) : async* Result.Result<Nat, CreateProposalError> {
+
+            switch (await* onValidate(content)) {
+                case (#ok) ();
+                case (#err(errors)) {
+                    return #err(#invalid(errors));
+                };
+            };
+
             let now = Time.now();
             let votes = HashMap.HashMap<Principal, Vote>(0, Principal.equal, Principal.hash);
             // Take snapshot of members at the time of proposal creation
@@ -231,15 +219,14 @@ module {
                 votes.put(
                     member.id,
                     {
-                        value = null; // Not voted
+                        value = null;
                         votingPower = member.votingPower;
                     },
                 );
             };
             let proposalId = nextProposalId;
             let proposalDurationNanoseconds = durationToNanoseconds(proposalDuration);
-            // let endTimerId = createEndTimer<system>(proposalId, proposalDurationNanoseconds);
-            let endTimerId = 1;
+            let endTimerId = createEndTimer<system>(proposalId, proposalDurationNanoseconds);
             let proposal : MutableProposal<TProposalContent> = {
                 id = proposalId;
                 proposer = proposer;
@@ -253,7 +240,45 @@ module {
             };
             proposals.put(nextProposalId, proposal);
             nextProposalId += 1;
+            // Automatically vote yes for the proposer
+            switch (IterTools.find(members.vals(), func(m : Member) : Bool { m.id == proposer })) {
+                case (null) (); // Skip if proposer is not a member
+                case (?proposerMember) {
+                    // Vote yes for proposer
+                    await* voteInternal(proposal, proposer, true, proposerMember.votingPower);
+                };
+            };
             #ok(proposalId);
+        };
+
+        private func voteInternal(
+            proposal : MutableProposal<TProposalContent>,
+            voterId : Principal,
+            vote : Bool,
+            votingPower : Nat,
+        ) : async* () {
+            proposal.votes.put(
+                voterId,
+                {
+                    value = ?vote;
+                    votingPower = votingPower;
+                },
+            );
+            proposal.votingSummary.notVoted -= votingPower;
+            if (vote) {
+                proposal.votingSummary.yes += votingPower;
+            } else {
+                proposal.votingSummary.no += votingPower;
+            };
+            switch (calculateVoteStatus(proposal)) {
+                case (#passed) {
+                    await* executeOrRejectProposal(proposal, true);
+                };
+                case (#rejected) {
+                    await* executeOrRejectProposal(proposal, false);
+                };
+                case (#undetermined) ();
+            };
         };
 
         private func durationToNanoseconds(duration : Duration) : Nat {

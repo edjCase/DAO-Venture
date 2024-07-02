@@ -57,7 +57,7 @@ export const scenarioStore = (() => {
         }
     };
 
-    const refetchVotes = (scenarioIds: bigint[]) => {
+    const refetchVotes = async (scenarioIds: bigint[]) => {
         for (let scenarioId of scenarioIds) {
             fetchVote(scenarioId);
         }

@@ -175,6 +175,7 @@ module {
 
     public type CreateProposalError = {
         #notAuthorized;
+        #invalid : [Text];
     };
     public type GetScenarioError = {
         #notFound;

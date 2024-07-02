@@ -2,6 +2,6 @@
     "stadium": "(principal \"bd3sg-teaaa-aaaaa-qaaba-cai\")",
     "teams": "(principal \"bd3sg-teaaa-aaaaa-qaaba-cai\", principal \"b77ix-eeaaa-aaaaa-qaada-cai\", principal \"be2us-64aaa-aaaaa-qaabq-cai\")",
     "users": "(principal \"bd3sg-teaaa-aaaaa-qaaba-cai\")",
-    "players": "(principal \"bd3sg-teaaa-aaaaa-qaaba-cai\")",
+    "players": "(principal \"bd3sg-teaaa-aaaaa-qaaba-cai\", principal \"bw4dl-smaaa-aaaaa-qaacq-cai\")",
     "league": "(principal \"b77ix-eeaaa-aaaaa-qaada-cai\", principal \"bw4dl-smaaa-aaaaa-qaacq-cai\", principal \"be2us-64aaa-aaaaa-qaabq-cai\", principal \"br5f7-7uaaa-aaaaa-qaaca-cai\")"
 }

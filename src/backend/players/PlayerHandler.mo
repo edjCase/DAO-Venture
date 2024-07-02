@@ -76,6 +76,7 @@ module {
         };
 
         public func addFluff(fluff : Player.PlayerFluff) : Result.Result<(), { #invalid : [Types.InvalidError] }> {
+            Debug.print("Adding player fluff: " # debug_show (fluff));
             let errors = Buffer.Buffer<Types.InvalidError>(0);
             if (TextX.isEmptyOrWhitespace(fluff.name)) {
                 errors.add(#nameNotSpecified);
@@ -155,6 +156,7 @@ module {
         };
 
         public func populateTeamRoster(teamId : Nat) : Result.Result<[PlayerInfo], { #missingFluff }> {
+            Debug.print("Populating team roster for team " # Nat.toText(teamId));
             // TODO validate that the teamid is valid?
             let teamPlayers = getAll(?teamId);
             let allPositions : [FieldPosition.FieldPosition] = [

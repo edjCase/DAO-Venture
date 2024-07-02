@@ -14,7 +14,8 @@ import PlayerHandler "PlayerHandler";
 import LeagueTypes "../league/Types";
 
 actor class Players(
-    leagueCanisterId : Principal
+    leagueCanisterId : Principal,
+    teamsCanisterId : Principal,
 ) : async Types.PlayerActor = this {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
@@ -23,7 +24,6 @@ actor class Players(
         retiredPlayers = [];
         unusedFluff = [];
     };
-    stable var teamsCanisterId : ?Principal = null;
     stable var stats = Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
 
     var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
@@ -34,14 +34,6 @@ actor class Players(
 
     system func postupgrade() {
         playerHandler := PlayerHandler.PlayerHandler(playerStableData);
-    };
-
-    public shared ({ caller }) func setTeamsCanisterId(canisterId : Principal) : async Types.SetTeamsCanisterIdResult {
-        if (not (await* isLeagueOrBDFN(caller))) {
-            return #err(#notAuthorized);
-        };
-        teamsCanisterId := ?canisterId;
-        #ok;
     };
 
     public shared ({ caller }) func addFluff(request : Types.CreatePlayerFluffRequest) : async Types.CreatePlayerFluffResult {
@@ -78,14 +70,14 @@ actor class Players(
     };
 
     public shared ({ caller }) func populateTeamRoster(teamId : Nat) : async Types.PopulateTeamRosterResult {
-        if (not (await* isLeagueOrBDFN(caller))) {
+        if (caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.populateTeamRoster(teamId);
     };
 
     public shared ({ caller }) func applyEffects(request : Types.ApplyEffectsRequest) : async Types.ApplyEffectsResult {
-        if (not (await* isLeagueOrBDFN(caller))) {
+        if (caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.applyEffects(request);
@@ -96,10 +88,7 @@ actor class Players(
         position1 : FieldPosition.FieldPosition,
         position2 : FieldPosition.FieldPosition,
     ) : async Types.SwapPlayerPositionsResult {
-        if (teamsCanisterId == null) {
-            Debug.trap("Teams canister ID is not set");
-        };
-        if (?caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
+        if (caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.swapTeamPositions(teamId, position1, position2);

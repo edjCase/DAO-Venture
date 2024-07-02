@@ -18,25 +18,30 @@
     scenarioStore.subscribeVotes((v) => {
         votes = v;
     });
-    const getVotingStatus = (scenarioId: bigint) => {
-        let vote = votes[Number(scenarioId)];
-        if (vote === undefined) {
-            return "Ineligible to vote";
-        }
-        if (vote.value.length === 0) {
-            return "Not Voted";
-        }
-        return "Voted";
-    };
 
     let activeScenariosWithVotingStatus: (Scenario & {
         votingStatus: string;
     })[] = [];
 
-    $: activeScenariosWithVotingStatus = activeScenarios.map((scenario) => ({
-        ...scenario,
-        votingStatus: getVotingStatus(scenario.id),
-    }));
+    $: activeScenariosWithVotingStatus = activeScenarios.map((scenario) => {
+        let votingStatus: string;
+        if (Object.keys(votes).length === 0) {
+            votingStatus = "Loading...";
+        } else {
+            let vote = votes[Number(scenario.id)];
+            if (vote === undefined) {
+                votingStatus = "Ineligible to vote";
+            } else if (vote.value.length === 0) {
+                votingStatus = "Not Voted";
+            } else {
+                votingStatus = "Voted";
+            }
+        }
+        return {
+            ...scenario,
+            votingStatus: votingStatus,
+        };
+    });
 </script>
 
 <div>

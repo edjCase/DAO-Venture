@@ -177,7 +177,7 @@ actor class LeagueActor(
 
     var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler, playersCanisterId);
 
-    func onExecuted(proposal : Types.Proposal) : async* Result.Result<(), Text> {
+    func onExecute(proposal : Types.Proposal) : async* Result.Result<(), Text> {
         // TODO change league proposal for team data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
             case (#changeTeamName(c)) {
@@ -228,8 +228,11 @@ actor class LeagueActor(
             };
         };
     };
-    func onRejected(_ : Types.Proposal) : async* () {}; // TODO
-    var dao = Dao.Dao<system, Types.ProposalContent>(daoStableData, onExecuted, onRejected);
+    func onReject(_ : Types.Proposal) : async* () {}; // TODO
+    func onValidate(_ : Types.ProposalContent) : async* Result.Result<(), [Text]> {
+        #ok; // TODO
+    };
+    var dao = Dao.Dao<system, Types.ProposalContent>(daoStableData, onExecute, onReject, onValidate);
 
     system func preupgrade() {
         seasonStableData := seasonHandler.toStableData();
@@ -242,7 +245,7 @@ actor class LeagueActor(
         seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler, playersCanisterId);
         predictionHandler := PredictionHandler.Handler(predictionStableData);
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcomes, userCanisterId, teamsCanisterId);
-        dao := Dao.Dao<system, Types.ProposalContent>(daoStableData, onExecuted, onRejected);
+        dao := Dao.Dao<system, Types.ProposalContent>(daoStableData, onExecute, onReject, onValidate);
     };
 
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
@@ -284,7 +287,7 @@ actor class LeagueActor(
                 };
             };
         };
-        dao.createProposal<system>(caller, request.content, members);
+        await* dao.createProposal<system>(caller, request.content, members);
     };
 
     public shared query func getProposal(id : Nat) : async Types.GetProposalResult {

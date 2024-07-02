@@ -139,7 +139,7 @@ actor class TeamsActor(
     if (not isAMember) {
       return #err(#notAuthorized);
     };
-    teamsHandler.createProposal<system>(teamId, caller, request, members);
+    await* teamsHandler.createProposal<system>(teamId, caller, request, members);
   };
 
   public shared query func getProposal(teamId : Nat, id : Nat) : async Types.GetProposalResult {

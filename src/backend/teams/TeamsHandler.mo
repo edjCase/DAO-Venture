@@ -119,6 +119,7 @@ module {
         public func create<system>(
             request : Types.CreateTeamRequest
         ) : async* Types.CreateTeamResult {
+            Debug.print("Creating new team with name " # request.name);
             let nameAlreadyTaken = teams.entries()
             |> IterTools.any(
                 _,
@@ -198,9 +199,9 @@ module {
             caller : Principal,
             request : Types.CreateProposalRequest,
             members : [Dao.Member],
-        ) : Types.CreateProposalResult {
+        ) : async* Types.CreateProposalResult {
             let ?dao = daos.get(teamId) else return #err(#teamNotFound);
-            dao.createProposal<system>(caller, request.content, members);
+            await* dao.createProposal<system>(caller, request.content, members);
         };
 
         public func getLinks(teamId : Nat) : Result.Result<[Types.Link], { #teamNotFound }> {
@@ -538,9 +539,18 @@ module {
                     switch (result) {
                         case (#ok(_)) #ok;
                         case (#err(#notAuthorized)) #err("Not authorized to create change name proposal in league DAO");
+                        case (#err(#invalid(errors))) {
+                            let errorText = errors.vals()
+                            |> IterTools.fold(
+                                _,
+                                "",
+                                func(acc : Text, error : Text) : Text = acc # error # "\n",
+                            );
+                            #err("Invalid proposal:\n" # errorText);
+                        };
                     };
                 } catch (err) {
-                    #err("Error creating change name proposal in league DAO: " # Error.message(err));
+                    #err("Error creating proposal in league DAO: " # Error.message(err));
                 };
             };
             switch (proposal.content) {
@@ -637,7 +647,10 @@ module {
         func onReject(proposal : Dao.Proposal<Types.ProposalContent>) : async* () {
             Debug.print("Rejected proposal: " # debug_show (proposal));
         };
-        let dao = Dao.Dao<system, Types.ProposalContent>(data, onExecute, onReject);
+        func onValidate(_ : Types.ProposalContent) : async* Result.Result<(), [Text]> {
+            #ok; // TODO
+        };
+        let dao = Dao.Dao<system, Types.ProposalContent>(data, onExecute, onReject, onValidate);
         dao;
     };
 };
