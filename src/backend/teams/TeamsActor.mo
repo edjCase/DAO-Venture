@@ -36,6 +36,10 @@ actor class TeamsActor(
     teamsHandler := TeamsHandler.Handler<system>(teamStableData, leagueCanisterId, playersCanisterId);
   };
 
+  public shared query func getEntropyThreshold() : async Nat {
+    teamsHandler.getEntropyThreshold();
+  };
+
   public shared query func getTeams() : async [Team.Team] {
     teamsHandler.getAll();
   };

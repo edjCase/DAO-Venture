@@ -13,8 +13,13 @@ CANISTERS := stadium teams users players league
 LOCAL_ARG_FILE := args.local.json
 PROD_ARG_FILE := args.prod.json
 
-build_league:
-	dfx build league
+build:
+	dfx build league --identity anonymous
+	dfx build players --identity anonymous
+	dfx build stadium --identity anonymous
+	dfx build teams --identity anonymous
+	dfx build users --identity anonymous
+
 
 process_did_files:
 	@mkdir -p $(DID_TEMP_DIR)
@@ -92,7 +97,7 @@ reinstall_prod:
 	dfx deploy frontend --ic --mode reinstall -y
 
 # Default target
-generate: $(DIDC) build_league process_did_files compile_did_files
+generate: $(DIDC) build process_did_files compile_did_files
 
 # Phony targets
-.PHONY: generate clean build_league process_did_files compile_did_files deploy deploy_prod reinstall reinstall_prod
+.PHONY: generate clean build process_did_files compile_did_files deploy deploy_prod reinstall reinstall_prod

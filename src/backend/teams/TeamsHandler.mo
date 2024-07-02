@@ -90,6 +90,10 @@ module {
             };
         };
 
+        public func getEntropyThreshold() : Nat {
+            entropyThreshold;
+        };
+
         public func get(teamId : Nat) : ?Team.Team {
             let ?team = teams.get(teamId) else return null;
             let teamTraits = getTraitsByIds(team.traitIds.vals());
@@ -201,6 +205,7 @@ module {
             members : [Dao.Member],
         ) : async* Types.CreateProposalResult {
             let ?dao = daos.get(teamId) else return #err(#teamNotFound);
+            Debug.print("Creating proposal for team " # Nat.toText(teamId) # " with content: " # debug_show (request.content));
             await* dao.createProposal<system>(caller, request.content, members);
         };
 
@@ -219,42 +224,49 @@ module {
             if (not allowBelowZero and newEnergy < 0) {
                 return #err(#notEnoughEnergy);
             };
+            Debug.print("Updating energy for team " # Nat.toText(teamId) # " by " # Int.toText(delta));
             team.energy := newEnergy;
             #ok;
         };
 
         public func updateName(teamId : Nat, newName : Text) : Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
+            Debug.print("Updating name for team " # Nat.toText(teamId) # " to: " # newName);
             team.name := newName;
             #ok;
         };
 
         public func updateColor(teamId : Nat, newColor : (Nat8, Nat8, Nat8)) : Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
+            Debug.print("Updating color for team " # Nat.toText(teamId) # " to: " # debug_show (newColor));
             team.color := newColor;
             #ok;
         };
 
         public func updateLogo(teamId : Nat, newLogoUrl : Text) : Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
+            Debug.print("Updating logo for team " # Nat.toText(teamId) # " to: " # newLogoUrl);
             team.logoUrl := newLogoUrl;
             #ok;
         };
 
         public func updateMotto(teamId : Nat, newMotto : Text) : Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
+            Debug.print("Updating motto for team " # Nat.toText(teamId) # " to: " # newMotto);
             team.motto := newMotto;
             #ok;
         };
 
         public func updateDescription(teamId : Nat, newDescription : Text) : Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
+            Debug.print("Updating description for team " # Nat.toText(teamId) # " to: " # newDescription);
             team.description := newDescription;
             #ok;
         };
 
         public func updateEntropy(teamId : Nat, delta : Int) : async* Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
+            Debug.print("Updating entropy for team " # Nat.toText(teamId) # " by " # Int.toText(delta));
             let newEntropyInt : Int = team.entropy + delta;
             let newEntropyNat : Nat = if (newEntropyInt <= 0) {
                 // Entropy cant be negative
@@ -414,20 +426,14 @@ module {
                 func(team : MutableTeamData) : Nat = team.entropy,
             )
             |> IterTools.sum(_, func(x : Nat, y : Nat) : Nat = x + y);
+            Debug.print("Total entropy: " # Nat.toText(Option.get(totalEntropy, 0)));
             if (Option.get(totalEntropy, 0) >= entropyThreshold) {
-
-                // let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
-                // try {
-                //     let result = await leagueActor.onEntropy();
-                //     switch (result) {
-                //         case (#ok(_)) #ok;
-                //         case (#notAuthorized) #err("Not authorized to create change name proposal in league DAO");
-                //     };
-                // } catch (err) {
-                //     #err("Error creating change name proposal in league DAO: " # Error.message(err));
-                // };
-                // TODO implement
-                Debug.print("Entropy threshold reached");
+                Debug.print("Entropy threshold reached, triggering league collapse");
+                try {
+                    let #ok = (await leagueActor.onLeagueCollapse()) else Debug.trap("Not authorized to collapse league");
+                } catch (err) {
+                    Debug.trap("Failed to trigger league collapse: " # Error.message(err));
+                };
             };
         };
 

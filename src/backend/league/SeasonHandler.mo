@@ -76,6 +76,15 @@ module {
             };
         };
 
+        public func onLeagueCollapse() : async* () {
+            // TODO
+            Debug.print("Season ending due to league collapse");
+            switch (await* close()) {
+                case (#ok) ();
+                case (#err(err)) Debug.print("Failed to close season: " # debug_show (err));
+            };
+        };
+
         public func startSeason<system>(
             prng : Prng,
             stadiumId : Principal,

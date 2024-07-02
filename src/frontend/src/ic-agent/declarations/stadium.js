@@ -194,11 +194,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : ResetTickTimerError,
   });
-  const SetLeagueError = IDL.Variant({ 'notAuthorized' : IDL.Null });
-  const SetLeagueResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : SetLeagueError,
-  });
   const FieldPosition = IDL.Variant({
     'rightField' : IDL.Null,
     'leftField' : IDL.Null,
@@ -266,7 +261,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Variant({ 'completed' : IDL.Null, 'inProgress' : IDL.Null }),
     'err' : TickMatchGroupError,
   });
-  return IDL.Service({
+  const StadiumActor = IDL.Service({
     'cancelMatchGroup' : IDL.Func(
         [CancelMatchGroupRequest],
         [CancelMatchGroupResult],
@@ -280,7 +275,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getMatchGroups' : IDL.Func([], [IDL.Vec(MatchGroupWithId)], ['query']),
     'resetTickTimer' : IDL.Func([IDL.Nat], [ResetTickTimerResult], []),
-    'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
     'startMatchGroup' : IDL.Func(
         [StartMatchGroupRequest],
         [StartMatchGroupResult],
@@ -288,5 +282,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'tickMatchGroup' : IDL.Func([IDL.Nat], [TickMatchGroupResult], []),
   });
+  return StadiumActor;
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => { return [IDL.Principal]; };

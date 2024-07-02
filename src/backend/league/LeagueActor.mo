@@ -248,6 +248,16 @@ actor class LeagueActor(
         dao := Dao.Dao<system, Types.ProposalContent>(daoStableData, onExecute, onReject, onValidate);
     };
 
+    public shared ({ caller }) func onLeagueCollapse() : async Types.OnLeagueCollapseResult {
+        if (caller != teamsCanisterId and not isLeagueOrDictator(caller)) {
+            return #err(#notAuthorized);
+        };
+        Debug.print("League collapsing...");
+        await* seasonHandler.onLeagueCollapse();
+        await* scenarioHandler.onLeagueCollapse();
+        #ok;
+    };
+
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
         if (Principal.isAnonymous(caller)) {
             return #err(#notAuthenticated);

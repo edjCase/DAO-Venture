@@ -34,6 +34,14 @@ module {
         claimBenevolentDictatorRole : () -> async ClaimBenevolentDictatorRoleResult;
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
+
+        onLeagueCollapse : () -> async OnLeagueCollapseResult;
+    };
+
+    public type OnLeagueCollapseResult = Result.Result<(), OnLeagueCollapseError>;
+
+    public type OnLeagueCollapseError = {
+        #notAuthorized;
     };
 
     public type AddScenarioCustomTeamOptionRequest = {

@@ -81,15 +81,30 @@ export interface PlayerMatchStatsWithId {
     'successfulCatches' : bigint,
   },
 }
+export interface Players {
+  'addFluff' : ActorMethod<[CreatePlayerFluffRequest], CreatePlayerFluffResult>,
+  'addMatchStats' : ActorMethod<
+    [bigint, Array<PlayerMatchStatsWithId>],
+    AddMatchStatsResult
+  >,
+  'applyEffects' : ActorMethod<[ApplyEffectsRequest], ApplyEffectsResult>,
+  'getAllPlayers' : ActorMethod<[], Array<Player>>,
+  'getPlayer' : ActorMethod<[number], GetPlayerResult>,
+  'getPosition' : ActorMethod<[bigint, FieldPosition], Result>,
+  'getTeamPlayers' : ActorMethod<[bigint], Array<Player>>,
+  'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
+  'populateTeamRoster' : ActorMethod<[bigint], PopulateTeamRosterResult>,
+  'swapTeamPositions' : ActorMethod<
+    [bigint, FieldPosition, FieldPosition],
+    SwapPlayerPositionsResult
+  >,
+}
 export type PopulateTeamRosterError = { 'missingFluff' : null } |
   { 'notAuthorized' : null };
 export type PopulateTeamRosterResult = { 'ok' : Array<Player> } |
   { 'err' : PopulateTeamRosterError };
 export type Result = { 'ok' : Player } |
   { 'err' : GetPositionError };
-export type SetTeamsCanisterIdError = { 'notAuthorized' : null };
-export type SetTeamsCanisterIdResult = { 'ok' : null } |
-  { 'err' : SetTeamsCanisterIdError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -119,24 +134,6 @@ export interface TargetPositionInstance {
   'teamId' : bigint,
   'position' : FieldPosition,
 }
-export interface _SERVICE {
-  'addFluff' : ActorMethod<[CreatePlayerFluffRequest], CreatePlayerFluffResult>,
-  'addMatchStats' : ActorMethod<
-    [bigint, Array<PlayerMatchStatsWithId>],
-    AddMatchStatsResult
-  >,
-  'applyEffects' : ActorMethod<[ApplyEffectsRequest], ApplyEffectsResult>,
-  'getAllPlayers' : ActorMethod<[], Array<Player>>,
-  'getPlayer' : ActorMethod<[number], GetPlayerResult>,
-  'getPosition' : ActorMethod<[bigint, FieldPosition], Result>,
-  'getTeamPlayers' : ActorMethod<[bigint], Array<Player>>,
-  'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
-  'populateTeamRoster' : ActorMethod<[bigint], PopulateTeamRosterResult>,
-  'setTeamsCanisterId' : ActorMethod<[Principal], SetTeamsCanisterIdResult>,
-  'swapTeamPositions' : ActorMethod<
-    [bigint, FieldPosition, FieldPosition],
-    SwapPlayerPositionsResult
-  >,
-}
+export interface _SERVICE extends Players {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

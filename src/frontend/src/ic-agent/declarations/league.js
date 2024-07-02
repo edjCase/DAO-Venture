@@ -206,7 +206,10 @@ export const idlFactory = ({ IDL }) => {
     'changeTeamMotto' : IDL.Record({ 'motto' : IDL.Text, 'teamId' : IDL.Nat }),
   });
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
-  const CreateProposalError = IDL.Variant({ 'notAuthorized' : IDL.Null });
+  const CreateProposalError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(IDL.Text),
+  });
   const CreateProposalResult = IDL.Variant({
     'ok' : IDL.Nat,
     'err' : CreateProposalError,
@@ -420,6 +423,7 @@ export const idlFactory = ({ IDL }) => {
   const ScenarioState = IDL.Variant({
     'notStarted' : IDL.Null,
     'resolved' : ScenarioStateResolved,
+    'resolving' : IDL.Null,
     'inProgress' : IDL.Null,
   });
   const Scenario = IDL.Record({
@@ -625,6 +629,11 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Vec(TeamStandingInfo),
     'err' : GetTeamStandingsError,
   });
+  const OnLeagueCollapseError = IDL.Variant({ 'notAuthorized' : IDL.Null });
+  const OnLeagueCollapseResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : OnLeagueCollapseError,
+  });
   const PlayerId = IDL.Nat32;
   const PlayerMatchStatsWithId = IDL.Record({
     'playerId' : PlayerId,
@@ -759,7 +768,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : VoteOnScenarioError,
   });
-  return IDL.Service({
+  const LeagueActor = IDL.Service({
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
     'claimBenevolentDictatorRole' : IDL.Func(
         [],
@@ -798,6 +807,7 @@ export const idlFactory = ({ IDL }) => {
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
     'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
+    'onLeagueCollapse' : IDL.Func([], [OnLeagueCollapseResult], []),
     'onMatchGroupComplete' : IDL.Func(
         [OnMatchGroupCompleteRequest],
         [OnMatchGroupCompleteResult],
@@ -826,5 +836,8 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
   });
+  return LeagueActor;
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  return [IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal];
+};

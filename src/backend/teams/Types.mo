@@ -9,6 +9,7 @@ import Season "../models/Season";
 module {
 
     public type Actor = actor {
+        getEntropyThreshold : query () -> async Nat;
         getTeams : query () -> async [Team];
         createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;

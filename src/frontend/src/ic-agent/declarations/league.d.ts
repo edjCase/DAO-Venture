@@ -56,7 +56,8 @@ export interface CompletedSeasonTeam {
   'logoUrl' : string,
   'positions' : TeamPositions,
 }
-export type CreateProposalError = { 'notAuthorized' : null };
+export type CreateProposalError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> };
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
   { 'err' : CreateProposalError };
@@ -158,6 +159,48 @@ export type InProgressSeasonMatchGroupVariant = {
 export interface InProgressTeam { 'id' : bigint }
 export interface InjuryEffect { 'target' : TargetPosition }
 export interface InjuryPlayerEffectOutcome { 'target' : TargetPositionInstance }
+export interface LeagueActor {
+  'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
+  'claimBenevolentDictatorRole' : ActorMethod<
+    [],
+    ClaimBenevolentDictatorRoleResult
+  >,
+  'closeSeason' : ActorMethod<[], CloseSeasonResult>,
+  'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
+  'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
+  'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
+  'getMatchGroupPredictions' : ActorMethod<
+    [bigint],
+    GetMatchGroupPredictionsResult
+  >,
+  'getProposal' : ActorMethod<[bigint], GetProposalResult>,
+  'getProposals' : ActorMethod<[bigint, bigint], GetProposalsResult>,
+  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
+  'getScenarioVote' : ActorMethod<
+    [GetScenarioVoteRequest],
+    GetScenarioVoteResult
+  >,
+  'getScenarios' : ActorMethod<[], GetScenariosResult>,
+  'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
+  'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
+  'onLeagueCollapse' : ActorMethod<[], OnLeagueCollapseResult>,
+  'onMatchGroupComplete' : ActorMethod<
+    [OnMatchGroupCompleteRequest],
+    OnMatchGroupCompleteResult
+  >,
+  'predictMatchOutcome' : ActorMethod<
+    [PredictMatchOutcomeRequest],
+    PredictMatchOutcomeResult
+  >,
+  'setBenevolentDictatorState' : ActorMethod<
+    [BenevolentDictatorState],
+    SetBenevolentDictatorStateResult
+  >,
+  'startMatchGroup' : ActorMethod<[bigint], StartMatchGroupResult>,
+  'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,
+  'voteOnProposal' : ActorMethod<[VoteOnProposalRequest], VoteOnProposalResult>,
+  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
+}
 export interface LeagueChoiceScenario {
   'options' : Array<LeagueChoiceScenarioOption>,
 }
@@ -221,6 +264,9 @@ export interface NotScheduledMatchGroup {
   'time' : Time,
   'matches' : Array<NotScheduledMatch>,
 }
+export type OnLeagueCollapseError = { 'notAuthorized' : null };
+export type OnLeagueCollapseResult = { 'ok' : null } |
+  { 'err' : OnLeagueCollapseError };
 export type OnMatchGroupCompleteError = { 'notAuthorized' : null } |
   { 'seedGenerationError' : string } |
   { 'matchGroupNotFound' : null } |
@@ -392,6 +438,7 @@ export type ScenarioResolvedOptions = {
   { 'discrete' : Array<ScenarioResolvedOptionDiscrete> };
 export type ScenarioState = { 'notStarted' : null } |
   { 'resolved' : ScenarioStateResolved } |
+  { 'resolving' : null } |
   { 'inProgress' : null };
 export interface ScenarioStateResolved {
   'scenarioOutcome' : ScenarioOutcome,
@@ -624,46 +671,6 @@ export interface WeightedEffect {
   'description' : string,
   'effect' : Effect,
 }
-export interface _SERVICE {
-  'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
-  'claimBenevolentDictatorRole' : ActorMethod<
-    [],
-    ClaimBenevolentDictatorRoleResult
-  >,
-  'closeSeason' : ActorMethod<[], CloseSeasonResult>,
-  'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
-  'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
-  'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
-  'getMatchGroupPredictions' : ActorMethod<
-    [bigint],
-    GetMatchGroupPredictionsResult
-  >,
-  'getProposal' : ActorMethod<[bigint], GetProposalResult>,
-  'getProposals' : ActorMethod<[bigint, bigint], GetProposalsResult>,
-  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
-  'getScenarioVote' : ActorMethod<
-    [GetScenarioVoteRequest],
-    GetScenarioVoteResult
-  >,
-  'getScenarios' : ActorMethod<[], GetScenariosResult>,
-  'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
-  'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
-  'onMatchGroupComplete' : ActorMethod<
-    [OnMatchGroupCompleteRequest],
-    OnMatchGroupCompleteResult
-  >,
-  'predictMatchOutcome' : ActorMethod<
-    [PredictMatchOutcomeRequest],
-    PredictMatchOutcomeResult
-  >,
-  'setBenevolentDictatorState' : ActorMethod<
-    [BenevolentDictatorState],
-    SetBenevolentDictatorStateResult
-  >,
-  'startMatchGroup' : ActorMethod<[bigint], StartMatchGroupResult>,
-  'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,
-  'voteOnProposal' : ActorMethod<[VoteOnProposalRequest], VoteOnProposalResult>,
-  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
-}
+export interface _SERVICE extends LeagueActor {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

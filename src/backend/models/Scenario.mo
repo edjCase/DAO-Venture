@@ -231,6 +231,7 @@ module {
     public type ScenarioState = {
         #notStarted;
         #inProgress;
+        #resolving;
         #resolved : ScenarioStateResolved;
     };
 

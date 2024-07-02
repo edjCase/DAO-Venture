@@ -165,9 +165,6 @@ export type ResetTickTimerError = { 'matchGroupNotFound' : null };
 export type ResetTickTimerResult = { 'ok' : null } |
   { 'err' : ResetTickTimerError };
 export interface RoundLog { 'turns' : Array<TurnLog> }
-export type SetLeagueError = { 'notAuthorized' : null };
-export type SetLeagueResult = { 'ok' : null } |
-  { 'err' : SetLeagueError };
 export interface Skills {
   'battingAccuracy' : bigint,
   'throwingAccuracy' : bigint,
@@ -176,6 +173,21 @@ export interface Skills {
   'battingPower' : bigint,
   'defense' : bigint,
   'throwingPower' : bigint,
+}
+export interface StadiumActor {
+  'cancelMatchGroup' : ActorMethod<
+    [CancelMatchGroupRequest],
+    CancelMatchGroupResult
+  >,
+  'finishMatchGroup' : ActorMethod<[bigint], undefined>,
+  'getMatchGroup' : ActorMethod<[bigint], [] | [MatchGroupWithId]>,
+  'getMatchGroups' : ActorMethod<[], Array<MatchGroupWithId>>,
+  'resetTickTimer' : ActorMethod<[bigint], ResetTickTimerResult>,
+  'startMatchGroup' : ActorMethod<
+    [StartMatchGroupRequest],
+    StartMatchGroupResult
+  >,
+  'tickMatchGroup' : ActorMethod<[bigint], TickMatchGroupResult>,
 }
 export type StartMatchGroupError = { 'noMatchesSpecified' : null };
 export interface StartMatchGroupRequest {
@@ -246,21 +258,6 @@ export interface Trait {
   'description' : string,
 }
 export interface TurnLog { 'events' : Array<Event> }
-export interface _SERVICE {
-  'cancelMatchGroup' : ActorMethod<
-    [CancelMatchGroupRequest],
-    CancelMatchGroupResult
-  >,
-  'finishMatchGroup' : ActorMethod<[bigint], undefined>,
-  'getMatchGroup' : ActorMethod<[bigint], [] | [MatchGroupWithId]>,
-  'getMatchGroups' : ActorMethod<[], Array<MatchGroupWithId>>,
-  'resetTickTimer' : ActorMethod<[bigint], ResetTickTimerResult>,
-  'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
-  'startMatchGroup' : ActorMethod<
-    [StartMatchGroupRequest],
-    StartMatchGroupResult
-  >,
-  'tickMatchGroup' : ActorMethod<[bigint], TickMatchGroupResult>,
-}
+export interface _SERVICE extends StadiumActor {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];
