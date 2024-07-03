@@ -14,8 +14,13 @@ import Scenario "../models/Scenario";
 import SeasonHandler "../handlers/SeasonHandler";
 import PredictionHandler "../handlers/PredictionHandler";
 import ScenarioHandler "../handlers/ScenarioHandler";
+import PlayerHandler "../handlers/PlayerHandler";
+import TeamsHandler "../handlers/TeamsHandler";
+import UserHandler "../handlers/UserHandler";
+import SimulationHandler "../handlers/SimulationHandler";
 import Dao "../Dao";
 import Result "mo:base/Result";
+import Player "../models/Player";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -495,58 +500,13 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_);
     };
 
-    public shared ({ caller }) func startMatchGroup(
-        request : Types.StartMatchGroupRequest
-    ) : async Types.StartMatchGroupResult {
-        assertLeague(caller);
-
-        let prng = PseudoRandomX.fromBlob(await Random.blob());
-        let tickTimerId = startTickTimer<system>(request.id);
-
-        let tickResults = Buffer.Buffer<Types.TickResult>(request.matches.size());
-        label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
-
-            let team1IsOffense = prng.nextCoin();
-            let initState = MatchSimulator.initState(
-                match.aura,
-                match.team1,
-                match.team2,
-                team1IsOffense,
-                prng,
-            );
-            tickResults.add({
-                match = initState;
-                status = #inProgress;
-            });
-        };
-        if (tickResults.size() == 0) {
-            return #err(#noMatchesSpecified);
-        };
-
-        let matchGroup : Types.MatchGroupWithId = {
-            id = request.id;
-            matches = Buffer.toArray(tickResults);
-            tickTimerId = tickTimerId;
-            currentSeed = prng.getCurrentSeed();
-        };
-        addOrUpdateMatchGroup(matchGroup);
-        #ok;
-    };
-
     public shared ({ caller }) func cancelMatchGroup(
         request : Types.CancelMatchGroupRequest
     ) : async Types.CancelMatchGroupResult {
-        assertLeague(caller);
-        let matchGroupKey = buildMatchGroupKey(request.id);
-        let (newMatchGroups, matchGroup) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
-        switch (matchGroup) {
-            case (null) return #err(#matchGroupNotFound);
-            case (?matchGroup) {
-                matchGroups := newMatchGroups;
-                Timer.cancelTimer(matchGroup.tickTimerId);
-                #ok;
-            };
+        if (not isLeagueOrBDFN(caller)) {
+            return #err(#notAuthorized);
         };
+        simulationHandler.cancelMatchGroup(request.id);
     };
 
     // TODO remove

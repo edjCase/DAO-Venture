@@ -1,14 +1,14 @@
-import Player "Player";
-import Team "Team";
+import Player "models/Player";
+import Team "models/Team";
 import TrieMap "mo:base/TrieMap";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import StadiumTypes "../stadium/Types";
-import FieldPosition "FieldPosition";
-import Skill "Skill";
-import Base "Base";
+import FieldPosition "models/FieldPosition";
+import Skill "models/Skill";
+import Base "models/Base";
+import Types "actors/Types";
 
 module {
 
@@ -40,7 +40,7 @@ module {
     };
 
     public type MutableTurnLog = {
-        events : Buffer.Buffer<StadiumTypes.Event>;
+        events : Buffer.Buffer<Types.Event>;
     };
 
     public type MutableRoundLog = {
@@ -51,9 +51,9 @@ module {
         rounds : Buffer.Buffer<MutableRoundLog>;
     };
 
-    public class MutableMatchState(immutableState : StadiumTypes.Match) = {
+    public class MutableMatchState(immutableState : Types.Match) = {
 
-        private func toMutableTeam(team : StadiumTypes.TeamState) : MutableTeamState {
+        private func toMutableTeam(team : Types.TeamState) : MutableTeamState {
             {
                 id = team.id;
                 name = team.name;
@@ -77,15 +77,15 @@ module {
             };
         };
 
-        private func toMutableTurnLog(turn : StadiumTypes.TurnLog) : MutableTurnLog {
+        private func toMutableTurnLog(turn : Types.TurnLog) : MutableTurnLog {
             {
                 events = turn.events
                 |> Iter.fromArray(_)
-                |> Buffer.fromIter<StadiumTypes.Event>(_);
+                |> Buffer.fromIter<Types.Event>(_);
             };
         };
 
-        private func toMutableRoundLog(round : StadiumTypes.RoundLog) : MutableRoundLog {
+        private func toMutableRoundLog(round : Types.RoundLog) : MutableRoundLog {
             {
                 turns = round.turns
                 |> Iter.fromArray(_)
@@ -94,7 +94,7 @@ module {
             };
         };
 
-        private func toMutableLog(log : StadiumTypes.MatchLog) : MutableMatchLog {
+        private func toMutableLog(log : Types.MatchLog) : MutableMatchLog {
             {
                 rounds = log.rounds
                 |> Iter.fromArray(_)
@@ -117,9 +117,9 @@ module {
         public var outs = immutableState.outs;
         public var strikes = immutableState.strikes;
         public var players = immutableState.players.vals()
-        |> Iter.map<StadiumTypes.PlayerStateWithId, (Nat32, MutablePlayerStateWithId)>(
+        |> Iter.map<Types.PlayerStateWithId, (Nat32, MutablePlayerStateWithId)>(
             _,
-            func(player : StadiumTypes.PlayerStateWithId) : (Nat32, MutablePlayerStateWithId) {
+            func(player : Types.PlayerStateWithId) : (Nat32, MutablePlayerStateWithId) {
                 let state : MutablePlayerStateWithId = {
                     id = player.id;
                     name = player.name;
@@ -264,14 +264,14 @@ module {
             };
         };
 
-        public func addEvent(event : StadiumTypes.Event) {
+        public func addEvent(event : Types.Event) {
             if (log.rounds.size() == 0) {
                 addNewRound();
             };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             if (currentRound.turns.size() == 0) {
                 currentRound.turns.add({
-                    events = Buffer.Buffer<StadiumTypes.Event>(0);
+                    events = Buffer.Buffer<Types.Event>(0);
                 });
             };
             let currentTurn = currentRound.turns.get(currentRound.turns.size() - 1);
@@ -284,7 +284,7 @@ module {
             };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             currentRound.turns.add({
-                events = Buffer.Buffer<StadiumTypes.Event>(0);
+                events = Buffer.Buffer<Types.Event>(0);
             });
         };
 
@@ -295,7 +295,7 @@ module {
         private func addNewRound() {
             let turns = Buffer.Buffer<MutableTurnLog>(0);
             turns.add({
-                events = Buffer.Buffer<StadiumTypes.Event>(0);
+                events = Buffer.Buffer<Types.Event>(0);
             });
             log.rounds.add({
                 turns = Buffer.Buffer<MutableTurnLog>(0);

@@ -1,8 +1,263 @@
 import Result "mo:base/Result";
+import Timer "mo:base/Timer";
+import Player "../models/Player";
+import MatchAura "../models/MatchAura";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
+import Season "../models/Season";
+import FieldPosition "../models/FieldPosition";
 
 module {
+    type Prng = PseudoRandomX.PseudoRandomGenerator;
+
+    public type StartMatchGroupRequest = {
+        id : Nat;
+        matches : [StartMatchRequest];
+    };
+
+    public type Team = {
+        id : Nat;
+        name : Text;
+        logoUrl : Text;
+        color : (Nat8, Nat8, Nat8);
+    };
+
+    public type StartMatchTeam = Team and {
+        positions : {
+            firstBase : Player.Player;
+            secondBase : Player.Player;
+            thirdBase : Player.Player;
+            shortStop : Player.Player;
+            pitcher : Player.Player;
+            leftField : Player.Player;
+            centerField : Player.Player;
+            rightField : Player.Player;
+        };
+    };
+
+    public type StartMatchRequest = {
+        team1 : StartMatchTeam;
+        team2 : StartMatchTeam;
+        aura : MatchAura.MatchAura;
+    };
+
+    public type CancelMatchGroupError = {
+        #matchGroupNotFound;
+    };
+
+    public type MatchGroupTickResult = {
+        #completed;
+        #inProgress;
+    };
+
+    public type MatchGroupTickError = {};
+
+    public type RoundLog = {
+        turns : [TurnLog];
+    };
+
+    public type TurnLog = {
+        events : [Event];
+    };
+
+    public type HitLocation = FieldPosition.FieldPosition or {
+        #stands;
+    };
+
+    public type Event = {
+        #traitTrigger : {
+            id : Trait.Trait;
+            playerId : Player.PlayerId;
+            description : Text;
+        };
+        #auraTrigger : {
+            id : MatchAura.MatchAura;
+            description : Text;
+        };
+        #pitch : {
+            pitcherId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+        };
+        #swing : {
+            playerId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+            pitchRoll : {
+                value : Int;
+                crit : Bool;
+            };
+            outcome : {
+                #foul;
+                #strike;
+                #hit : HitLocation;
+            };
+        };
+        #catch_ : {
+            playerId : Player.PlayerId;
+            roll : {
+                value : Int;
+                crit : Bool;
+            };
+            difficulty : {
+                value : Int;
+                crit : Bool;
+            };
+        };
+        #teamSwap : {
+            offenseTeamId : Team.TeamId;
+            atBatPlayerId : Player.PlayerId;
+        };
+        #injury : {
+            playerId : Nat32;
+        };
+        #death : {
+            playerId : Nat32;
+        };
+        #score : {
+            teamId : Team.TeamId;
+            amount : Int;
+        };
+        #newBatter : {
+            playerId : Player.PlayerId;
+        };
+        #out : {
+            playerId : Player.PlayerId;
+            reason : OutReason;
+        };
+        #matchEnd : {
+            reason : MatchEndReason;
+        };
+        #safeAtBase : {
+            playerId : Player.PlayerId;
+            base : Base.Base;
+        };
+        #throw_ : {
+            from : Player.PlayerId;
+            to : Player.PlayerId;
+        };
+        #hitByBall : {
+            playerId : Player.PlayerId;
+        };
+    };
+
+    public type MatchEndReason = {
+        #noMoreRounds;
+        #error : Text;
+    };
+
+    public type OutReason = {
+        #ballCaught;
+        #strikeout;
+        #hitByBall;
+    };
+
+    public type MatchLog = {
+        rounds : [RoundLog];
+    };
+
+    public type Match = {
+        team1 : TeamState;
+        team2 : TeamState;
+        offenseTeamId : Team.TeamId;
+        aura : MatchAura.MatchAura;
+        players : [PlayerStateWithId];
+        bases : BaseState;
+        log : MatchLog;
+        outs : Nat;
+        strikes : Nat;
+    };
+
+    public type PlayerExpectedOnFieldError = {
+        id : Player.PlayerId;
+        onOffense : Bool;
+        description : Text;
+    };
+
+    public type BrokenStateError = {
+        #playerNotFound : Player.PlayerId;
+        #playerExpectedOnField : PlayerExpectedOnFieldError;
+    };
+
+    public type TickResult = {
+        match : Match;
+        status : MatchStatus;
+    };
+
+    public type MatchStatus = {
+        #inProgress;
+        #completed : MatchStatusCompleted;
+    };
+
+    public type MatchStatusCompleted = {
+        reason : MatchEndReason;
+    };
+
+    public type MatchGroup = {
+        matches : [TickResult];
+        tickTimerId : Nat;
+        currentSeed : Nat32;
+    };
+
+    public type MatchGroupWithId = MatchGroup and {
+        id : Nat;
+    };
+
     public class Handler() {
-        public func tickMatchGroup(matchGroupId : Nat) : Result.Result<MatchGroupTickResult, SimulationError> {
+        public func startMatchGroup(prng : Prng) {
+
+            let prng = PseudoRandomX.fromBlob(await Random.blob());
+            let tickTimerId = startTickTimer<system>(request.id);
+
+            let tickResults = Buffer.Buffer<Types.TickResult>(request.matches.size());
+            label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
+
+                let team1IsOffense = prng.nextCoin();
+                let initState = MatchSimulator.initState(
+                    match.aura,
+                    match.team1,
+                    match.team2,
+                    team1IsOffense,
+                    prng,
+                );
+                tickResults.add({
+                    match = initState;
+                    status = #inProgress;
+                });
+            };
+            if (tickResults.size() == 0) {
+                return #err(#noMatchesSpecified);
+            };
+
+            let matchGroup : Types.MatchGroupWithId = {
+                id = request.id;
+                matches = Buffer.toArray(tickResults);
+                tickTimerId = tickTimerId;
+                currentSeed = prng.getCurrentSeed();
+            };
+            addOrUpdateMatchGroup(matchGroup);
+        };
+
+        public func cancelMatchGroup(
+            matchGroupId : Nat
+        ) : Result.Result<(), CancelMatchGroupError> {
+            assertLeague(caller);
+            let matchGroupKey = buildMatchGroupKey(request.id);
+            let (newMatchGroups, matchGroup) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
+            switch (matchGroup) {
+                case (null) return #err(#matchGroupNotFound);
+                case (?matchGroup) {
+                    matchGroups := newMatchGroups;
+                    Timer.cancelTimer(matchGroup.tickTimerId);
+                    #ok;
+                };
+            };
+        };
+
+        public func tickMatchGroup(matchGroupId : Nat) : Result.Result<MatchGroupTickResult, MatchGroupTickError> {
 
             let ?matchGroup = getMatchGroupOrNull(id) else return #err(#matchGroupNotFound);
             let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
@@ -186,9 +441,9 @@ module {
             };
         };
 
-        private func tickMatches(prng : Prng, tickResults : [Types.TickResult]) : {
+        private func tickMatches(prng : Prng, tickResults : [TickResult]) : {
             #completed : [CompletedMatchResult];
-            #inProgress : [Types.TickResult];
+            #inProgress : [TickResult];
         } {
             let completedMatches = Buffer.Buffer<(Types.Match, Types.MatchStatusCompleted)>(tickResults.size());
             let updatedTickResults = Buffer.Buffer<Types.TickResult>(tickResults.size());

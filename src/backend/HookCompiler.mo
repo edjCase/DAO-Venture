@@ -1,5 +1,5 @@
-import StadiumTypes "Types";
-import Hook "../models/Hook";
+import Types "actors/Types";
+import Hook "models/Hook";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Iter "mo:base/Iter";
 
@@ -18,7 +18,7 @@ module {
         onCatch : ?Hook.Hook<Hook.SkillTestContext>;
     };
 
-    public func compile(_ : StadiumTypes.Match) : Hook.CompiledHooks {
+    public func compile(_ : Types.Match) : Hook.CompiledHooks {
         let allHooks = [
             // fromAura(state.aura)
         ];

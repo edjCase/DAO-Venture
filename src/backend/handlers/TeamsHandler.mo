@@ -59,10 +59,7 @@ module {
         links : Buffer.Buffer<Types.Link>;
     };
 
-    public class Handler<system>(data : StableData, leagueCanisterId : Principal, playersCanisterId : Principal) {
-
-        let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
-        let playersActor = actor (Principal.toText(playersCanisterId)) : PlayerTypes.PlayerActor;
+    public class Handler<system>(data : StableData) {
 
         let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
         let daos : HashMap.HashMap<Nat, Dao.Dao<Types.ProposalContent>> = toDaoHashMap<system>(data.teams, teams, leagueActor, playersActor);

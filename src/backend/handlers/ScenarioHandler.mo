@@ -20,6 +20,7 @@ import Prelude "mo:base/Prelude";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Order "mo:base/Order";
+import Error "mo:base/Error";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Skill "../models/Skill";
@@ -57,6 +58,12 @@ module {
 
     public type Vote = VoterInfo and {
         value : ?Types.ScenarioOptionValue;
+    };
+
+    public type ScenarioMember = {
+        id : Principal;
+        teamId : Nat;
+        votingPower : Nat;
     };
 
     public type StableScenarioData = {
@@ -133,7 +140,7 @@ module {
             };
         };
 
-        public func onLeagueCollapse() : () {
+        public func onLeagueCollapse() : async* () {
             // TODO
             Debug.print("Scenarios ending due to league collapse");
             let allScenarios = scenarios.vals();
@@ -143,7 +150,7 @@ module {
                         Timer.cancelTimer(startTimerId);
                     };
                     case (#inProgress({ endTimerId })) {
-                        end(scenario, []);
+                        await* end(scenario, []);
                     };
                     case (#resolving) ();
                     case (#resolved(_)) ();
@@ -178,7 +185,7 @@ module {
             scenarioId : Nat,
             voterId : Principal,
             value : Types.ScenarioOptionValue,
-        ) : Result.Result<(), Types.VoteOnScenarioError> {
+        ) : async* Result.Result<(), Types.VoteOnScenarioError> {
 
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let #inProgress(_) = scenario.state else return #err(#votingNotOpen);
@@ -227,7 +234,7 @@ module {
             switch (calculateResultsInternal(scenario, false)) {
                 case (#noConsensus) ();
                 case (#consensus(teamVotingResult)) {
-                    end(scenario, teamVotingResult);
+                    await* end(scenario, teamVotingResult);
                 };
             };
             #ok;
@@ -253,7 +260,11 @@ module {
             });
         };
 
-        public func add<system>(scenario : Types.AddScenarioRequest) : AddScenarioResult {
+        public func add<system>(
+            scenario : Types.AddScenarioRequest,
+            members : [ScenarioMember],
+            allTeams : [Team.Team],
+        ) : AddScenarioResult {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
                 case (#invalid(errors)) return #invalid(errors);
@@ -263,17 +274,7 @@ module {
                 case (?t) t;
             };
 
-            let members = try {
-                switch (usersHandler.getTeamOwners(#all)) {
-                    case (#ok(members)) members;
-                };
-            } catch (err) {
-                Debug.trap("Failed to get team owners from user canister: " # Error.message(err));
-            };
-
             let teamIds = HashMap.HashMap<Nat, ()>(0, Nat.equal, Nat32.fromNat);
-
-            let allTeams : [Team.Team] = teamsHandler.getTeams();
 
             // TODO refactor the duplication
             let kind : Scenario.ScenarioKind = switch (scenario.kind) {
@@ -286,7 +287,7 @@ module {
                             let allowedTeamIds = allTeams.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(team : TeamTypes.Team) : ?Nat {
+                                func(team : Team.Team) : ?Nat {
                                     if (teamMeetsRequirements(team, option.traitRequirements)) {
                                         ?team.id;
                                     } else {
@@ -312,7 +313,7 @@ module {
                             let allowedTeamIds = allTeams.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(team : TeamTypes.Team) : ?Nat {
+                                func(team : Team.Team) : ?Nat {
                                     if (teamMeetsRequirements(team, option.traitRequirements)) {
                                         ?team.id;
                                     } else {
@@ -338,7 +339,7 @@ module {
                             let allowedTeamIds = allTeams.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(team : TeamTypes.Team) : ?Nat {
+                                func(team : Team.Team) : ?Nat {
                                     if (teamMeetsRequirements(team, option.traitRequirements)) {
                                         ?team.id;
                                     } else {
@@ -360,9 +361,9 @@ module {
             };
 
             let votes = members.vals()
-            |> Iter.map<UserTypes.UserVotingInfo, (Principal, Vote)>(
+            |> Iter.map<ScenarioMember, (Principal, Vote)>(
                 _,
-                func(member : UserTypes.UserVotingInfo) : (Principal, Vote) {
+                func(member : ScenarioMember) : (Principal, Vote) {
                     teamIds.put(member.teamId, ());
                     (
                         member.id,
@@ -634,8 +635,12 @@ module {
         private func end(
             scenario : MutableScenarioData,
             teamVotingResult : [ResolvedTeamChoice],
-        ) : () {
-            let prng = PseudoRandomX.fromBlob(await Random.blob());
+        ) : async* () {
+            let prng = try {
+                PseudoRandomX.fromBlob(await Random.blob());
+            } catch (err) {
+                Debug.trap("Failed to end scenario, unable to get random entropy. Error: " # Error.message(err));
+            };
             switch (scenario.state) {
                 case (#inProgress(state)) ();
                 case (#resolving) return; // already being resolved
@@ -700,7 +705,7 @@ module {
         private func createStartTimer<system>(scenarioId : Nat, startTime : Time.Time) : Nat {
             createTimer<system>(
                 startTime,
-                func<system>() : () {
+                func<system>() : async* () {
                     Debug.print("Starting scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     switch (start<system>(scenarioId)) {
                         case (#ok) ();
@@ -714,19 +719,19 @@ module {
         private func createEndTimer<system>(scenarioId : Nat, endTime : Time.Time) : Nat {
             createTimer<system>(
                 endTime,
-                func<system>() : () {
+                func<system>() : async* () {
                     Debug.print("Ending scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
                     let teamVotingResult = switch (calculateResultsInternal(scenario, true)) {
                         case (#consensus(teamVotingResult)) teamVotingResult;
                         case (#noConsensus) Prelude.unreachable();
                     };
-                    end(scenario, teamVotingResult);
+                    await* end(scenario, teamVotingResult);
                 },
             );
         };
 
-        private func createTimer<system>(time : Time.Time, func_ : <system>() -> ()) : Nat {
+        private func createTimer<system>(time : Time.Time, func_ : <system>() -> async* ()) : Nat {
             let durationNanos = time - Time.now();
             let durationNanosNat = if (durationNanos < 0) {
                 0;
@@ -736,7 +741,7 @@ module {
             Timer.setTimer<system>(
                 #nanoseconds(durationNanosNat),
                 func() : async () {
-                    func_<system>();
+                    await* func_<system>();
                 },
             );
         };

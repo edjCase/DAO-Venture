@@ -1,15 +1,7 @@
-import StadiumTypes "../stadium/Types";
-import Buffer "mo:base/Buffer";
-import Debug "mo:base/Debug";
-import Trie "mo:base/Trie";
-import Iter "mo:base/Iter";
-import FieldPosition "FieldPosition";
-import IterTools "mo:itertools/Iter";
 import Skill "Skill";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Player "Player";
-import Team "Team";
-import MutableState "MutableState";
+import MutableState "../MutableMatchState";
 
 module {
 

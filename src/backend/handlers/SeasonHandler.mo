@@ -1,5 +1,4 @@
 import Season "../models/Season";
-import Types "../actors/Types";
 import Team "../models/Team";
 import HashMap "mo:base/HashMap";
 import Buffer "mo:base/Buffer";
@@ -13,7 +12,6 @@ import Time "mo:base/Time";
 import Int "mo:base/Int";
 import Timer "mo:base/Timer";
 import Debug "mo:base/Debug";
-import Error "mo:base/Error";
 import Order "mo:base/Order";
 import Result "mo:base/Result";
 import ScheduleBuilder "../ScheduleBuilder";
@@ -28,9 +26,46 @@ import Components "mo:datetime/Components";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
+    public type StartMatchGroupError = {
+        #matchGroupNotFound;
+        #notScheduledYet;
+        #alreadyStarted;
+        #matchErrors : [{
+            matchId : Nat;
+            error : StartMatchError;
+        }];
+    };
+
+    public type StartMatchError = {
+        #notEnoughPlayers : Team.TeamIdOrBoth;
+    };
+
+    public type StartMatchGroupResult = Result.Result<(), StartMatchGroupError>;
+
+    public type CloseSeasonError = {
+        #seasonNotOpen;
+    };
+
+    public type CloseSeasonResult = Result.Result<(), CloseSeasonError>;
+
+    public type OnMatchGroupCompleteResult = Result.Result<(), OnMatchGroupCompleteError>;
+
+    public type OnMatchGroupCompleteError = {
+        #seasonNotOpen;
+        #matchGroupNotFound;
+        #matchGroupNotInProgress;
+    };
+
+    public type TeamStandingInfo = {
+        id : Nat;
+        wins : Nat;
+        losses : Nat;
+        totalScore : Int;
+    };
+
     public type StableData = {
         seasonStatus : Season.SeasonStatus;
-        teamStandings : ?[Types.TeamStandingInfo]; // First team to last team
+        teamStandings : ?[TeamStandingInfo]; // First team to last team
     };
     public type StartSeasonResult = Result.Result<(), StartSeasonError>;
 
@@ -39,12 +74,49 @@ module {
         #invalidArgs : Text;
     };
 
+    public type AddMatchStatsError = {
+
+    };
+
+    public type CancelMatchGroupError = {
+        #matchGroupNotFound;
+    };
+
+    public type Team = {
+        id : Nat;
+        name : Text;
+        logoUrl : Text;
+        color : (Nat8, Nat8, Nat8);
+    };
+
+    public type StartMatchTeam = Team and {
+        positions : {
+            firstBase : Player.Player;
+            secondBase : Player.Player;
+            thirdBase : Player.Player;
+            shortStop : Player.Player;
+            pitcher : Player.Player;
+            leftField : Player.Player;
+            centerField : Player.Player;
+            rightField : Player.Player;
+        };
+    };
+
+    public type StartMatchRequest = {
+        team1 : StartMatchTeam;
+        team2 : StartMatchTeam;
+        aura : MatchAura.MatchAura;
+    };
+
     public type EventHandler = {
         onSeasonStart : (season : Season.InProgressSeason) -> ();
         onMatchGroupSchedule : (matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> ();
         onMatchGroupStart : (matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) -> ();
         onMatchGroupComplete : (matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) -> ();
         onSeasonEnd : (season : EndedSeasonVariant) -> ();
+        addMatchGroupStats : (matchGroupId : Nat, playerStats : [Player.PlayerMatchStats]) -> Result.Result<(), AddMatchStatsError>;
+        cancelMatchGroup : (matchGroupId : Nat) -> Result.Result<(), CancelMatchGroupError>;
+        startMatchGroup : (id : Nat, matches : [StartMatchRequest]) -> Result.Result<(), StartMatchGroupError>;
     };
 
     public type EndedSeasonVariant = {
@@ -52,14 +124,15 @@ module {
         #completed : Season.CompletedSeason;
     };
 
-    public class SeasonHandler<system>(data : StableData, eventHandler : EventHandler, playersCanisterId : Principal) {
-
-        let playersActor = actor (Principal.toText(playersCanisterId)) : PlayerTypes.PlayerActor;
+    public class SeasonHandler<system>(
+        data : StableData,
+        eventHandler : EventHandler,
+    ) {
 
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
 
         // First team to last team
-        public var teamStandings : ?Buffer.Buffer<Types.TeamStandingInfo> = switch (data.teamStandings) {
+        public var teamStandings : ?Buffer.Buffer<TeamStandingInfo> = switch (data.teamStandings) {
             case (null) null;
             case (?standings) ?Buffer.fromArray(standings);
         };
@@ -163,12 +236,7 @@ module {
 
             teamStandings := null; // No standings yet
             seasonStatus := #inProgress(inProgressSeason);
-            try {
-                eventHandler.onSeasonStart(inProgressSeason);
-            } catch (err) {
-                Debug.print("onSeasonStart hook failed: " # Error.message(err));
-                // TODO handle error
-            };
+            eventHandler.onSeasonStart(inProgressSeason);
             // Get first match group to open
             let #notScheduled(firstMatchGroup) = notScheduledMatchGroups[0] else Prelude.unreachable();
 
@@ -246,15 +314,17 @@ module {
         };
 
         public func onMatchGroupComplete<system>(
-            request : Types.OnMatchGroupCompleteRequest,
             prng : Prng,
-        ) : Types.OnMatchGroupCompleteResult {
+            matchGroupId : Nat,
+            matches : [Season.CompletedMatch],
+            playerStats : [Player.PlayerMatchStats],
+        ) : OnMatchGroupCompleteResult {
 
             let #inProgress(season) = seasonStatus else return #err(#seasonNotOpen);
             // Get current match group
             let ?matchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
                 season.matchGroups,
-                request.id,
+                matchGroupId,
             ) else return #err(#matchGroupNotFound);
             let inProgressMatchGroup = switch (matchGroup) {
                 case (#inProgress(matchGroupState)) matchGroupState;
@@ -264,12 +334,12 @@ module {
             // Update status to completed
             let updatedMatchGroup : Season.CompletedMatchGroup = {
                 time = inProgressMatchGroup.time;
-                matches = request.matches;
+                matches = matches;
             };
 
             let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
                 season.matchGroups,
-                request.id,
+                matchGroupId,
                 #completed(updatedMatchGroup),
             ) else return #err(#matchGroupNotFound);
 
@@ -281,7 +351,7 @@ module {
                 };
             };
 
-            let updatedTeamStandings : Buffer.Buffer<Types.TeamStandingInfo> = calculateTeamStandings(Buffer.toArray(completedMatchGroups));
+            let updatedTeamStandings : Buffer.Buffer<TeamStandingInfo> = calculateTeamStandings(Buffer.toArray(completedMatchGroups));
 
             let updatedSeason = {
                 season with
@@ -289,38 +359,21 @@ module {
             };
             teamStandings := ?updatedTeamStandings;
             seasonStatus := #inProgress(updatedSeason);
-            try {
-                eventHandler.onMatchGroupComplete(request.id, updatedMatchGroup);
-            } catch (err) {
-                Debug.print("onMatchGroupComplete hook failed for match group " # Nat.toText(request.id) # ". Error: " # Error.message(err));
-                // TODO handle error
-            };
-            let errorOrNull : ?Text = try {
-                switch (playersActor.addMatchStats(request.id, request.playerStats)) {
-                    case (#ok) null;
-                    case (#err(#notAuthorized)) ?"League not authorized to award points";
-                };
-            } catch (err) {
-                ?Error.message(err);
-            };
-            switch (errorOrNull) {
-                case (null) ();
-                case (?error) Debug.print("Failed to award user points: " # error # "\nRequest: " # debug_show (request.playerStats));
+
+            eventHandler.onMatchGroupComplete(matchGroupId, updatedMatchGroup);
+            switch (eventHandler.addMatchGroupStats(matchGroupId, playerStats)) {
+                case (#ok) ();
+                case (#err(error)) Debug.trap("Failed to add match group stats" # debug_show (error));
             };
 
             // Get next match group to schedule
-            let nextMatchGroupId = request.id + 1;
+            let nextMatchGroupId = matchGroupId + 1;
             let ?nextMatchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
                 updatedSeason.matchGroups,
                 nextMatchGroupId,
             ) else {
                 // Season is over because cant find more match groups
-                try {
-                    ignore close(); // TODO how to not await this?
-                } catch (err) {
-                    Debug.print("Failed to close season: " # Error.message(err));
-                };
-                return #ok;
+                return close();
             };
             switch (nextMatchGroup) {
                 case (#notScheduled(matchGroup)) {
@@ -343,7 +396,7 @@ module {
             #ok;
         };
 
-        public func close() : Types.CloseSeasonResult {
+        public func close() : CloseSeasonResult {
 
             if (seasonStatus == #starting) {
                 // TODO how to handle this?
@@ -360,7 +413,7 @@ module {
                         case (null) ();
                         case (?inProgressMatchGroup) {
                             // Cancel live match
-                            switch (stadiumHandler.cancelMatchGroup({ id = inProgressMatchGroup.matchGroupId })) {
+                            switch (eventHandler.cancelMatchGroup(inProgressMatchGroup.matchGroupId)) {
                                 case (#ok or #err(#matchGroupNotFound)) ();
                             };
                         };
@@ -376,7 +429,7 @@ module {
                 _,
                 func(t : Season.TeamInfo) : Season.CompletedSeasonTeam {
                     let ?standingIndex = finalTeamStandings.vals()
-                    |> IterTools.findIndex(_, func(s : Types.TeamStandingInfo) : Bool = s.id == t.id) else Debug.trap("Team not found in standings: " # Nat.toText(t.id));
+                    |> IterTools.findIndex(_, func(s : TeamStandingInfo) : Bool = s.id == t.id) else Debug.trap("Team not found in standings: " # Nat.toText(t.id));
                     let standingInfo = finalTeamStandings.get(standingIndex);
 
                     {
@@ -400,7 +453,7 @@ module {
                 case (#tie) {
                     // Break tie by their win/loss ratio
                     let getTeamStanding = func(teamId : Nat) : Nat {
-                        let ?teamStanding = IterTools.findIndex(finalTeamStandings.vals(), func(s : Types.TeamStandingInfo) : Bool = s.id == teamId) else Debug.trap("Team not found in standings: " # Nat.toText(teamId));
+                        let ?teamStanding = IterTools.findIndex(finalTeamStandings.vals(), func(s : TeamStandingInfo) : Bool = s.id == teamId) else Debug.trap("Team not found in standings: " # Nat.toText(teamId));
                         teamStanding;
                     };
                     let team1Standing = getTeamStanding(finalMatch.team1.id);
@@ -422,12 +475,7 @@ module {
                 matchGroups = completedMatchGroups;
             };
             seasonStatus := #completed(completedSeason);
-            try {
-                eventHandler.onSeasonEnd(#completed(completedSeason));
-            } catch (err) {
-                Debug.print("onSeasonEnd hook failed. Error: " # Error.message(err));
-                // TODO handle error
-            };
+            eventHandler.onSeasonEnd(#completed(completedSeason));
             #ok;
         };
 
@@ -478,16 +526,9 @@ module {
             Timer.setTimer<system>(
                 duration,
                 func() : async () {
-                    let result = try {
-                        startMatchGroup<system>(matchGroupId);
-                    } catch (err) {
-                        Debug.print("Match group '" # Nat.toText(matchGroupId) # "' start callback failed: " # Error.message(err));
-                        return;
-                    };
-                    let message = switch (result) {
+                    let message = switch (startMatchGroup(matchGroupId)) {
                         case (#ok) "Match group started";
                         case (#err(#matchGroupNotFound)) "Match group not found";
-                        case (#err(#notAuthorized)) "Not authorized";
                         case (#err(#notScheduledYet)) "Match group not scheduled yet";
                         case (#err(#alreadyStarted)) "Match group already started";
                         case (#err(#matchErrors(errors))) "Match group errors: " # debug_show (errors);
@@ -571,13 +612,7 @@ module {
                 inProgressSeason with
                 matchGroups = newMatchGroups;
             });
-            try {
-                eventHandler.onMatchGroupSchedule(matchGroupId, scheduledMatchGroup);
-            } catch (err) {
-                Debug.print("onMatchGroupSchedule hook failed for match group " # Nat.toText(matchGroupId) # ". Error: " # Error.message(err));
-                // TODO handle error
-            };
-
+            eventHandler.onMatchGroupSchedule(matchGroupId, scheduledMatchGroup);
         };
 
         private func buildCompletedMatchGroups(
@@ -611,8 +646,8 @@ module {
 
         private func calculateTeamStandings(
             matchGroups : [Season.CompletedMatchGroup]
-        ) : Buffer.Buffer<Types.TeamStandingInfo> {
-            var teamScores = Trie.empty<Nat, Types.TeamStandingInfo>();
+        ) : Buffer.Buffer<TeamStandingInfo> {
+            var teamScores = Trie.empty<Nat, TeamStandingInfo>();
             let updateTeamScore = func(
                 teamId : Nat,
                 score : Int,
@@ -641,7 +676,7 @@ module {
                 };
 
                 // Update with +1
-                let (newTeamScores, _) = Trie.put<Nat, Types.TeamStandingInfo>(
+                let (newTeamScores, _) = Trie.put<Nat, TeamStandingInfo>(
                     teamScores,
                     teamKey,
                     Nat.equal,
@@ -671,11 +706,11 @@ module {
             |> Trie.iter(_)
             |> Iter.map(
                 _,
-                func((_, v) : (Nat, Types.TeamStandingInfo)) : Types.TeamStandingInfo = v,
+                func((_, v) : (Nat, TeamStandingInfo)) : TeamStandingInfo = v,
             )
             |> IterTools.sort(
                 _,
-                func(a : Types.TeamStandingInfo, b : Types.TeamStandingInfo) : Order.Order {
+                func(a : TeamStandingInfo, b : TeamStandingInfo) : Order.Order {
                     if (a.wins > b.wins) {
                         #greater;
                     } else if (a.wins < b.wins) {
@@ -702,7 +737,7 @@ module {
 
         public func startMatchGroup(
             matchGroupId : Nat
-        ) : Types.StartMatchGroupResult {
+        ) : StartMatchGroupResult {
             let #inProgress(season) = seasonStatus else return #err(#matchGroupNotFound);
 
             // Get current match group
@@ -718,9 +753,9 @@ module {
                 case (#scheduled(d)) d;
             };
 
-            let matchStartRequestBuffer = Buffer.Buffer<StadiumTypes.StartMatchRequest>(scheduledMatchGroup.matches.size());
+            let matchStartRequestBuffer = Buffer.Buffer<StartMatchRequest>(scheduledMatchGroup.matches.size());
 
-            let teamDataMap = HashMap.HashMap<Nat, StadiumTypes.StartMatchTeam>(0, Nat.equal, Nat32.fromNat);
+            let teamDataMap = HashMap.HashMap<Nat, StartMatchTeam>(0, Nat.equal, Nat32.fromNat);
 
             let getPlayer = func(playerId : Nat32) : Player.Player {
                 let ?player = season.players
@@ -729,7 +764,7 @@ module {
                 player;
             };
             for (team in season.teams.vals()) {
-                let teamData : StadiumTypes.StartMatchTeam = {
+                let teamData : StartMatchTeam = {
                     team with
                     positions = {
                         pitcher = getPlayer(team.positions.pitcher);
@@ -754,27 +789,20 @@ module {
                     aura = match.aura.aura;
                 });
             };
-            let startMatchGroupRequest : StadiumTypes.StartMatchGroupRequest = {
-                id = matchGroupId;
-                matches = Buffer.toArray(matchStartRequestBuffer);
-            };
-            try {
-                switch (stadiumHandler.startMatchGroup(startMatchGroupRequest)) {
-                    case (#ok) ();
-                    case (#err(#noMatchesSpecified)) Debug.trap("No matches specified for match group " # Nat.toText(matchGroupId));
-                };
-            } catch (err) {
-                Debug.trap("Failed to start match group in stadium: " # Error.message(err));
+            let matches = Buffer.toArray(matchStartRequestBuffer);
+            switch (eventHandler.startMatchGroup(matchGroupId, matches)) {
+                case (#ok) ();
+                case (#err(error)) return #err(error);
             };
             Timer.cancelTimer(scheduledMatchGroup.timerId); // Cancel timer incase the match group was forced early
             // TODO this should better handled in case of failure to start the match
-            let inProgressMatches = startMatchGroupRequest.matches
+            let inProgressMatches = matches
             |> Iter.fromArray(_)
             |> IterTools.mapEntries(
                 _,
-                func(matchId : Nat, match : StadiumTypes.StartMatchRequest) : Season.InProgressMatch {
+                func(matchId : Nat, match : StartMatchRequest) : Season.InProgressMatch {
                     let mapTeam = func(
-                        teamData : StadiumTypes.StartMatchTeam
+                        teamData : StartMatchTeam
                     ) : Season.InProgressTeam {
                         {
                             id = teamData.id;
@@ -803,12 +831,7 @@ module {
                 season with
                 matchGroups = newMatchGroups;
             });
-            try {
-                eventHandler.onMatchGroupStart(matchGroupId, inProgressMatchGroup);
-            } catch (err) {
-                Debug.print("onMatchGroupStart hook failed for match group " #Nat.toText(matchGroupId) # ". Error: " # Error.message(err));
-                // TODO handle error
-            };
+            eventHandler.onMatchGroupStart(matchGroupId, inProgressMatchGroup);
 
             #ok;
         };
