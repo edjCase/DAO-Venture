@@ -1,4 +1,4 @@
-import Types "./Types";
+import Types "../actors/Types";
 import IterTools "mo:itertools/Iter";
 import HashMap "mo:base/HashMap";
 import Principal "mo:base/Principal";

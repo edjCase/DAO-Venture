@@ -1,6 +1,6 @@
 import StadiumTypes "Types";
 import Hook "../models/Hook";
-import PseudoRandomX "mo:random/PseudoRandomX";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Iter "mo:base/Iter";
 
 module {

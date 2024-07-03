@@ -2,8 +2,8 @@ import Scenario "../models/Scenario";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Text "mo:base/Text";
-import Types "Types";
-import PseudoRandomX "mo:random/PseudoRandomX";
+import Types "../actors/Types";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Buffer "mo:base/Buffer";
 import Debug "mo:base/Debug";
 import Array "mo:base/Array";
@@ -13,7 +13,6 @@ import Trie "mo:base/Trie";
 import Option "mo:base/Option";
 import Nat32 "mo:base/Nat32";
 import Random "mo:base/Random";
-import Error "mo:base/Error";
 import Timer "mo:base/Timer";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
@@ -23,11 +22,10 @@ import Result "mo:base/Result";
 import Order "mo:base/Order";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
-import UserTypes "../users/Types";
 import Skill "../models/Skill";
-import TeamTypes "../teams/Types";
 import FieldPosition "../models/FieldPosition";
 import Trait "../models/Trait";
+import Team "../models/Team";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -118,12 +116,8 @@ module {
         data : StableData,
         processEffectOutcomes : (
             outcomes : [Scenario.EffectOutcome]
-        ) -> async* ProcessEffectOutcomesResult,
-        usersCanisterId : Principal,
-        teamsCanisterId : Principal,
+        ) -> ProcessEffectOutcomesResult,
     ) {
-        let usersActor = actor (Principal.toText(usersCanisterId)) : UserTypes.Actor;
-        let teamsActor = actor (Principal.toText(teamsCanisterId)) : TeamTypes.Actor;
 
         let scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
         var nextScenarioId = scenarios.size(); // TODO max id + 1
@@ -139,7 +133,7 @@ module {
             };
         };
 
-        public func onLeagueCollapse() : async* () {
+        public func onLeagueCollapse() : () {
             // TODO
             Debug.print("Scenarios ending due to league collapse");
             let allScenarios = scenarios.vals();
@@ -149,7 +143,7 @@ module {
                         Timer.cancelTimer(startTimerId);
                     };
                     case (#inProgress({ endTimerId })) {
-                        await* end(scenario, []);
+                        end(scenario, []);
                     };
                     case (#resolving) ();
                     case (#resolved(_)) ();
@@ -184,7 +178,7 @@ module {
             scenarioId : Nat,
             voterId : Principal,
             value : Types.ScenarioOptionValue,
-        ) : async* Result.Result<(), Types.VoteOnScenarioError> {
+        ) : Result.Result<(), Types.VoteOnScenarioError> {
 
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let #inProgress(_) = scenario.state else return #err(#votingNotOpen);
@@ -233,7 +227,7 @@ module {
             switch (calculateResultsInternal(scenario, false)) {
                 case (#noConsensus) ();
                 case (#consensus(teamVotingResult)) {
-                    await* end(scenario, teamVotingResult);
+                    end(scenario, teamVotingResult);
                 };
             };
             #ok;
@@ -259,7 +253,7 @@ module {
             });
         };
 
-        public func add<system>(scenario : Types.AddScenarioRequest) : async* AddScenarioResult {
+        public func add<system>(scenario : Types.AddScenarioRequest) : AddScenarioResult {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
                 case (#invalid(errors)) return #invalid(errors);
@@ -270,7 +264,7 @@ module {
             };
 
             let members = try {
-                switch (await usersActor.getTeamOwners(#all)) {
+                switch (usersHandler.getTeamOwners(#all)) {
                     case (#ok(members)) members;
                 };
             } catch (err) {
@@ -279,7 +273,7 @@ module {
 
             let teamIds = HashMap.HashMap<Nat, ()>(0, Nat.equal, Nat32.fromNat);
 
-            let allTeams : [TeamTypes.Team] = await teamsActor.getTeams();
+            let allTeams : [Team.Team] = teamsHandler.getTeams();
 
             // TODO refactor the duplication
             let kind : Scenario.ScenarioKind = switch (scenario.kind) {
@@ -599,7 +593,7 @@ module {
             #consensus(Buffer.toArray(teamResults));
         };
 
-        private func teamMeetsRequirements(team : TeamTypes.Team, requirements : [Scenario.TraitRequirement]) : Bool {
+        private func teamMeetsRequirements(team : Team.Team, requirements : [Scenario.TraitRequirement]) : Bool {
             IterTools.all<Scenario.TraitRequirement>(
                 requirements.vals(),
                 func(requirement : Scenario.TraitRequirement) : Bool {
@@ -615,7 +609,7 @@ module {
             );
         };
 
-        private func start(scenarioId : Nat) : async* StartScenarioResult {
+        private func start<system>(scenarioId : Nat) : StartScenarioResult {
             let ?scenario = scenarios.get(scenarioId) else return #notFound;
             switch (scenario.state) {
                 case (#notStarted({ startTimerId })) {
@@ -637,7 +631,10 @@ module {
             };
         };
 
-        private func end(scenario : MutableScenarioData, teamVotingResult : [ResolvedTeamChoice]) : async* () {
+        private func end(
+            scenario : MutableScenarioData,
+            teamVotingResult : [ResolvedTeamChoice],
+        ) : () {
             let prng = PseudoRandomX.fromBlob(await Random.blob());
             switch (scenario.state) {
                 case (#inProgress(state)) ();
@@ -669,18 +666,7 @@ module {
             )
             |> Iter.toArray(_);
 
-            let processResult = try {
-                await* processEffectOutcomes(effectOutcomes);
-            } catch (err) {
-                scenarios.put(
-                    scenario.id,
-                    {
-                        scenario with
-                        state = scenario.state; // Reset state
-                    },
-                );
-                Debug.trap("Failed to process effect outcomes: " # Error.message(err));
-            };
+            let processResult = processEffectOutcomes(effectOutcomes);
 
             // TODO how to reproccess them?
             let processedScenarioState : ScenarioStateResolved = switch (processResult) {
@@ -714,9 +700,9 @@ module {
         private func createStartTimer<system>(scenarioId : Nat, startTime : Time.Time) : Nat {
             createTimer<system>(
                 startTime,
-                func() : async* () {
+                func<system>() : () {
                     Debug.print("Starting scenario with timer. Scenario id: " # Nat.toText(scenarioId));
-                    switch (await* start(scenarioId)) {
+                    switch (start<system>(scenarioId)) {
                         case (#ok) ();
                         case (#alreadyStarted) Debug.trap("Scenario already started: " # Nat.toText(scenarioId));
                         case (#notFound) Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
@@ -728,19 +714,19 @@ module {
         private func createEndTimer<system>(scenarioId : Nat, endTime : Time.Time) : Nat {
             createTimer<system>(
                 endTime,
-                func() : async* () {
+                func<system>() : () {
                     Debug.print("Ending scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
                     let teamVotingResult = switch (calculateResultsInternal(scenario, true)) {
                         case (#consensus(teamVotingResult)) teamVotingResult;
                         case (#noConsensus) Prelude.unreachable();
                     };
-                    await* end(scenario, teamVotingResult);
+                    end(scenario, teamVotingResult);
                 },
             );
         };
 
-        private func createTimer<system>(time : Time.Time, func_ : () -> async* ()) : Nat {
+        private func createTimer<system>(time : Time.Time, func_ : <system>() -> ()) : Nat {
             let durationNanos = time - Time.now();
             let durationNanosNat = if (durationNanos < 0) {
                 0;
@@ -750,7 +736,7 @@ module {
             Timer.setTimer<system>(
                 #nanoseconds(durationNanosNat),
                 func() : async () {
-                    await* func_();
+                    func_<system>();
                 },
             );
         };

@@ -6,7 +6,7 @@ import Iter "mo:base/Iter";
 import FieldPosition "FieldPosition";
 import IterTools "mo:itertools/Iter";
 import Skill "Skill";
-import PseudoRandomX "mo:random/PseudoRandomX";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Player "Player";
 import Team "Team";
 import MutableState "MutableState";

@@ -8,6 +8,11 @@ import Dao "../Dao";
 import CommonTypes "../Types";
 import Components "mo:datetime/Components";
 import Result "mo:base/Result";
+import FieldPosition "../models/FieldPosition";
+import MatchAura "../models/MatchAura";
+import Trait "../models/Trait";
+import Base "../models/Base";
+import Skill "../models/Skill";
 
 module {
     public type Actor = actor {
@@ -18,8 +23,6 @@ module {
         createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
         getMatchGroupPredictions : query (matchGroupId : Nat) -> async GetMatchGroupPredictionsResult;
-        startMatchGroup : (id : Nat) -> async StartMatchGroupResult;
-        onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async OnMatchGroupCompleteResult;
 
         createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (Nat) -> async GetProposalResult;
@@ -35,64 +38,35 @@ module {
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
 
-        onLeagueCollapse : () -> async OnLeagueCollapseResult;
-
         addFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
         getPlayer : query (id : Nat32) -> async GetPlayerResult;
         getPosition : query (teamId : Nat, position : FieldPosition.FieldPosition) -> async Result.Result<Player.Player, GetPositionError>;
         getTeamPlayers : query (teamId : Nat) -> async [Player.Player];
         getAllPlayers : query () -> async [Player.Player];
-        populateTeamRoster : (teamId : Nat) -> async PopulateTeamRosterResult;
-        applyEffects : (request : ApplyEffectsRequest) -> async ApplyEffectsResult;
-        onSeasonEnd : () -> async OnSeasonEndResult;
-        swapTeamPositions : (
-            teamId : Nat,
-            position1 : FieldPosition.FieldPosition,
-            position2 : FieldPosition.FieldPosition,
-        ) -> async SwapPlayerPositionsResult;
-        addMatchStats : (matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) -> async AddMatchStatsResult;
 
         getMatchGroup : query (id : Nat) -> async ?MatchGroupWithId;
-        tickMatchGroup : (id : Nat) -> async TickMatchGroupResult;
         finishMatchGroup : (id : Nat) -> async (); // TODO remove
-        resetTickTimer : (matchGroupId : Nat) -> async ResetTickTimerResult;
         startMatchGroup : (request : StartMatchGroupRequest) -> async StartMatchGroupResult;
         cancelMatchGroup : (request : CancelMatchGroupRequest) -> async CancelMatchGroupResult;
 
         getEntropyThreshold : query () -> async Nat;
         getTeams : query () -> async [Team];
-        createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
-        getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
-        getProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetProposalsResult;
-        voteOnProposal : (teamId : Nat, request : VoteOnProposalRequest) -> async VoteOnProposalResult;
-        onMatchGroupComplete : (request : OnMatchGroupCompleteRequest) -> async Result.Result<(), OnMatchGroupCompleteError>;
-        onSeasonEnd() : async OnSeasonEndResult;
-        createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
-        updateTeamEnergy : (teamId : Nat, delta : Int) -> async UpdateTeamEnergyResult;
-        updateTeamEntropy : (teamId : Nat, delta : Int) -> async UpdateTeamEntropyResult;
-        updateTeamMotto : (teamId : Nat, motto : Text) -> async UpdateTeamMottoResult;
-        updateTeamDescription : (teamId : Nat, description : Text) -> async UpdateTeamDescriptionResult;
-        updateTeamLogo : (teamId : Nat, logoUrl : Text) -> async UpdateTeamLogoResult;
-        updateTeamColor : (teamId : Nat, color : (Nat8, Nat8, Nat8)) -> async UpdateTeamColorResult;
-        updateTeamName : (teamId : Nat, name : Text) -> async UpdateTeamNameResult;
+        createTeamProposal : (teamId : Nat, request : CreateTeamProposalRequest) -> async CreateProposalResult;
+        getTeamProposal : query (teamId : Nat, id : Nat) -> async GetTeamProposalResult;
+        getTeamProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetTeamProposalsResult;
+        voteOnTeamProposal : (teamId : Nat, request : VoteOnTeamProposalRequest) -> async VoteOnTeamProposalResult;
         createTeamTrait : (request : CreateTeamTraitRequest) -> async CreateTeamTraitResult;
-        addTraitToTeam : (teamId : Nat, traitId : Text) -> async AddTraitToTeamResult;
-        removeTraitFromTeam : (teamId : Nat, traitId : Text) -> async RemoveTraitFromTeamResult;
 
-        get : query (userId : Principal) -> async GetUserResult;
-        getStats : query () -> async GetStatsResult;
+        getUser : query (userId : Principal) -> async GetUserResult;
+        getUserStats : query () -> async GetUserStatsResult;
         getTeamOwners : query (request : GetTeamOwnersRequest) -> async GetTeamOwnersResult;
         getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
         setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
-        awardPoints : (awards : [AwardPointsRequest]) -> async AwardPointsResult;
-        onSeasonEnd : () -> async OnSeasonEndResult;
     };
 
-    public type OnLeagueCollapseResult = Result.Result<(), OnLeagueCollapseError>;
-
-    public type OnLeagueCollapseError = {
-        #notAuthorized;
+    public type GetPositionError = {
+        #teamNotFound;
     };
 
     public type AddScenarioCustomTeamOptionRequest = {
@@ -427,35 +401,6 @@ module {
     public type FailedMatchResult = {
         message : Text;
     };
-    public type OnMatchGroupCompleteError = {
-        #seasonNotOpen;
-        #matchGroupNotFound;
-        #matchGroupNotInProgress;
-        #seedGenerationError : Text;
-        #notAuthorized;
-    };
-
-    public type OnMatchGroupCompleteResult = Result.Result<(), OnMatchGroupCompleteError>;
-
-    public type CreateTeamRequest = {
-        name : Text;
-        logoUrl : Text;
-        motto : Text;
-        description : Text;
-        color : (Nat8, Nat8, Nat8);
-    };
-
-    public type CreateTeamError = {
-        #nameTaken;
-        #teamsCallError : Text;
-        #notAuthorized;
-    };
-
-    public type CreateTeamResult = Result.Result<Nat, CreateTeamError>;
-
-    public type GetPositionError = {
-        #teamNotFound;
-    };
 
     public type AddMatchStatsError = {
         #notAuthorized;
@@ -523,10 +468,6 @@ module {
 
     public type SetPlayerTeamResult = Result.Result<(), SetPlayerTeamError>;
 
-    type FieldPosition = FieldPosition.FieldPosition;
-    type Base = Base.Base;
-    type PlayerId = Player.PlayerId;
-
     public type CancelMatchGroupRequest = {
         id : Nat;
     };
@@ -579,16 +520,6 @@ module {
         team2 : StartMatchTeam;
         aura : MatchAura.MatchAura;
     };
-
-    public type StartMatchGroupError = {
-        #noMatchesSpecified;
-    };
-
-    public type StartMatchError = {
-        #notEnoughPlayers : Team.TeamIdOrBoth;
-    };
-
-    public type StartMatchGroupResult = Result.Result<(), StartMatchGroupError>;
 
     public type RoundLog = {
         turns : [TurnLog];
@@ -711,13 +642,13 @@ module {
     };
 
     public type PlayerExpectedOnFieldError = {
-        id : PlayerId;
+        id : Player.PlayerId;
         onOffense : Bool;
         description : Text;
     };
 
     public type BrokenStateError = {
-        #playerNotFound : PlayerId;
+        #playerNotFound : Player.PlayerId;
         #playerExpectedOnField : PlayerExpectedOnFieldError;
     };
 
@@ -760,14 +691,14 @@ module {
     };
 
     public type PlayerStateWithId = PlayerState and {
-        id : PlayerId;
+        id : Player.PlayerId;
     };
 
     public type BaseState = {
-        atBat : PlayerId;
-        firstBase : ?PlayerId;
-        secondBase : ?PlayerId;
-        thirdBase : ?PlayerId;
+        atBat : Player.PlayerId;
+        firstBase : ?Player.PlayerId;
+        secondBase : ?Player.PlayerId;
+        thirdBase : ?Player.PlayerId;
     };
 
     public type TickMatchGroupResult = Result.Result<{ #inProgress; #completed }, TickMatchGroupError>;
@@ -785,7 +716,7 @@ module {
     };
 
     public type Player = {
-        id : PlayerId;
+        id : Player.PlayerId;
         name : Text;
     };
 
@@ -793,8 +724,6 @@ module {
         score : Int;
         positions : FieldPosition.TeamPositions;
     };
-
-    public type Team = Team.Team;
 
     public type CreateTeamTraitRequest = {
         id : Text;
@@ -833,14 +762,6 @@ module {
     };
 
     public type RemoveTraitFromTeamResult = Result.Result<RemoveTraitFromTeamOk, RemoveTraitFromTeamError>;
-
-    public type OnMatchGroupCompleteRequest = {
-        matchGroup : Season.CompletedMatchGroup;
-    };
-
-    public type OnMatchGroupCompleteError = {
-        #notAuthorized;
-    };
 
     public type UpdateTeamEnergyResult = Result.Result<(), UpdateTeamEnergyError>;
 
@@ -902,27 +823,27 @@ module {
         links : [Link];
     };
 
-    public type GetProposalResult = Result.Result<Proposal, GetProposalError>;
+    public type GetTeamProposalResult = Result.Result<Proposal, GetTeamProposalError>;
 
-    public type GetProposalError = {
+    public type GetTeamProposalError = {
         #proposalNotFound;
         #teamNotFound;
     };
 
-    public type GetProposalsResult = Result.Result<CommonTypes.PagedResult<Proposal>, GetProposalsError>;
+    public type GetTeamProposalsResult = Result.Result<CommonTypes.PagedResult<Proposal>, GetTeamProposalsError>;
 
-    public type GetProposalsError = {
+    public type GetTeamProposalsError = {
         #teamNotFound;
     };
 
-    public type VoteOnProposalRequest = {
+    public type VoteOnTeamProposalRequest = {
         proposalId : Nat;
         vote : Bool;
     };
 
-    public type VoteOnProposalResult = Result.Result<(), VoteOnProposalError>;
+    public type VoteOnTeamProposalResult = Result.Result<(), VoteOnTeamProposalError>;
 
-    public type VoteOnProposalError = {
+    public type VoteOnTeamProposalError = {
         #notAuthorized;
         #proposalNotFound;
         #alreadyVoted;
@@ -930,20 +851,20 @@ module {
         #teamNotFound;
     };
 
-    public type Proposal = Dao.Proposal<ProposalContent>;
+    public type TeamProposal = Dao.Proposal<TeamProposalContent>;
 
-    public type ProposalContent = {
-        #changeName : ChangeNameContent;
+    public type TeamProposalContent = {
+        #changeName : ChangeTeamNameContent;
         #train : TrainContent;
         #swapPlayerPositions : SwapPlayerPositionsContent;
-        #changeColor : ChangeColorContent;
-        #changeLogo : ChangeLogoContent;
-        #changeMotto : ChangeMottoContent;
-        #changeDescription : ChangeDescriptionContent;
-        #modifyLink : ModifyLinkContent;
+        #changeColor : ChangeTeamColorContent;
+        #changeLogo : ChangeTeamLogoContent;
+        #changeMotto : ChangeTeamMottoContent;
+        #changeDescription : ChangeTeamDescriptionContent;
+        #modifyLink : ModifyTeamLinkContent;
     };
 
-    public type ChangeNameContent = {
+    public type ChangeTeamNameContent = {
         name : Text;
     };
 
@@ -957,43 +878,37 @@ module {
         position2 : FieldPosition.FieldPosition;
     };
 
-    public type ChangeColorContent = {
+    public type ChangeTeamColorContent = {
         color : (Nat8, Nat8, Nat8);
     };
 
-    public type ChangeLogoContent = {
+    public type ChangeTeamLogoContent = {
         logoUrl : Text;
     };
 
-    public type ChangeMottoContent = {
+    public type ChangeTeamMottoContent = {
         motto : Text;
     };
 
-    public type ChangeDescriptionContent = {
+    public type ChangeTeamDescriptionContent = {
         description : Text;
     };
 
-    public type ModifyLinkContent = {
+    public type ModifyTeamLinkContent = {
         name : Text;
         url : ?Text;
     };
 
-    public type CreateProposalRequest = {
+    public type CreateTeamProposalRequest = {
         content : ProposalContent;
     };
 
-    public type CreateProposalResult = Result.Result<Nat, CreateProposalError>;
+    public type CreateTeamProposalResult = Result.Result<Nat, CreateTeamProposalError>;
 
-    public type CreateProposalError = {
+    public type CreateTeamProposalError = {
         #notAuthorized;
         #teamNotFound;
         #invalid : [Text];
-    };
-
-    public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
-
-    public type OnSeasonEndError = {
-        #notAuthorized;
     };
 
     public type CreateTeamRequest = {
@@ -1030,7 +945,7 @@ module {
         #ok : CommonTypes.PagedResult<User>;
     };
 
-    public type GetStatsResult = Result.Result<UserStats, ()>;
+    public type GetUserStatsResult = Result.Result<UserStats, ()>;
 
     public type UserStats = {
         totalPoints : Int;
@@ -1045,11 +960,6 @@ module {
         userCount : Nat;
         ownerCount : Nat;
     };
-    public type OnSeasonEndError = {
-        #notAuthorized;
-    };
-
-    public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
 
     public type GetTeamOwnersRequest = {
         #team : Nat;

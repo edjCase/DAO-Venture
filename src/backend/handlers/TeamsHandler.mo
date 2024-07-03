@@ -1,6 +1,5 @@
 import Dao "../Dao";
-import Types "Types";
-import LeagueTypes "../league/Types";
+import Types "../actors/Types";
 import Principal "mo:base/Principal";
 import Debug "mo:base/Debug";
 import Iter "mo:base/Iter";
@@ -24,7 +23,6 @@ import TextX "mo:xtended-text/TextX";
 import Season "../models/Season";
 import Trait "../models/Trait";
 import Skill "../models/Skill";
-import PlayerTypes "../players/Types";
 
 module {
 
@@ -122,7 +120,7 @@ module {
 
         public func create<system>(
             request : Types.CreateTeamRequest
-        ) : async* Types.CreateTeamResult {
+        ) : Types.CreateTeamResult {
             Debug.print("Creating new team with name " # request.name);
             let nameAlreadyTaken = teams.entries()
             |> IterTools.any(
@@ -164,7 +162,7 @@ module {
             // TODO add retry populating team roster
 
             try {
-                let populateResult = await playersActor.populateTeamRoster(teamId);
+                let populateResult = playerHandler.populateTeamRoster(teamId);
 
                 switch (populateResult) {
                     case (#ok(_)) {};
@@ -193,9 +191,9 @@ module {
             #ok(proposals);
         };
 
-        public func voteOnProposal(teamId : Nat, caller : Principal, request : Types.VoteOnProposalRequest) : async* Types.VoteOnProposalResult {
+        public func voteOnProposal(teamId : Nat, caller : Principal, request : Types.VoteOnProposalRequest) : Types.VoteOnProposalResult {
             let ?dao = daos.get(teamId) else return #err(#teamNotFound);
-            await* dao.vote(request.proposalId, caller, request.vote);
+            dao.vote(request.proposalId, caller, request.vote);
         };
 
         public func createProposal<system>(
@@ -203,10 +201,10 @@ module {
             caller : Principal,
             request : Types.CreateProposalRequest,
             members : [Dao.Member],
-        ) : async* Types.CreateProposalResult {
+        ) : Types.CreateProposalResult {
             let ?dao = daos.get(teamId) else return #err(#teamNotFound);
             Debug.print("Creating proposal for team " # Nat.toText(teamId) # " with content: " # debug_show (request.content));
-            await* dao.createProposal<system>(caller, request.content, members);
+            dao.createProposal<system>(caller, request.content, members);
         };
 
         public func getLinks(teamId : Nat) : Result.Result<[Types.Link], { #teamNotFound }> {
@@ -264,7 +262,7 @@ module {
             #ok;
         };
 
-        public func updateEntropy(teamId : Nat, delta : Int) : async* Result.Result<(), { #teamNotFound }> {
+        public func updateEntropy(teamId : Nat, delta : Int) : Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
             Debug.print("Updating entropy for team " # Nat.toText(teamId) # " by " # Int.toText(delta));
             let newEntropyInt : Int = team.entropy + delta;
@@ -275,7 +273,7 @@ module {
                 Int.abs(newEntropyInt);
             };
             team.entropy := newEntropyNat;
-            await* checkEntropy();
+            checkEntropy();
             #ok;
         };
 
@@ -419,7 +417,7 @@ module {
             |> Iter.toArray(_);
         };
 
-        private func checkEntropy() : async* () {
+        private func checkEntropy() : () {
             let totalEntropy = teams.vals()
             |> Iter.map<MutableTeamData, Nat>(
                 _,
@@ -429,11 +427,8 @@ module {
             Debug.print("Total entropy: " # Nat.toText(Option.get(totalEntropy, 0)));
             if (Option.get(totalEntropy, 0) >= entropyThreshold) {
                 Debug.print("Entropy threshold reached, triggering league collapse");
-                try {
-                    let #ok = (await leagueActor.onLeagueCollapse()) else Debug.trap("Not authorized to collapse league");
-                } catch (err) {
-                    Debug.trap("Failed to trigger league collapse: " # Error.message(err));
-                };
+                seasonHandler.onLeagueCollapse();
+                scenarioHandler.onLeagueCollapse();
             };
         };
 
@@ -532,14 +527,12 @@ module {
     private func buildDao<system>(
         data : Dao.StableData<Types.ProposalContent>,
         team : MutableTeamData,
-        leagueActor : LeagueTypes.LeagueActor,
-        playersActor : PlayerTypes.PlayerActor,
     ) : Dao.Dao<Types.ProposalContent> {
 
-        func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : async* Result.Result<(), Text> {
-            let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : async* Result.Result<(), Text> {
+        func onExecute(proposal : Dao.Proposal<Types.ProposalContent>) : Result.Result<(), Text> {
+            let createLeagueProposal = func(content : LeagueTypes.ProposalContent) : Result.Result<(), Text> {
                 try {
-                    let result = await leagueActor.createProposal({
+                    let result = leagueHandler.createProposal({
                         content = content;
                     });
                     switch (result) {
@@ -563,7 +556,7 @@ module {
                 case (#train(train)) {
                     try {
                         // TODO atomic operation
-                        let player = switch (await playersActor.getPosition(team.id, train.position)) {
+                        let player = switch (playersHandler.getPosition(team.id, train.position)) {
                             case (#ok(player)) player;
                             case (#err(e)) return #err("Error getting player in players actor: " # debug_show (e));
                         };
@@ -582,7 +575,7 @@ module {
                             duration = #indefinite;
                             skill = train.skill;
                         });
-                        switch (await playersActor.applyEffects([trainSkillEffect])) {
+                        switch (playersHandler.applyEffects([trainSkillEffect])) {
                             case (#ok) #ok;
                             case (#err(#notAuthorized)) #err("Not authorized to train player in players actor");
                         };
@@ -595,11 +588,11 @@ module {
                         teamId = team.id;
                         name = n.name;
                     });
-                    await* createLeagueProposal(leagueProposal);
+                    createLeagueProposal(leagueProposal);
                 };
                 case (#swapPlayerPositions(swap)) {
                     try {
-                        switch (await playersActor.swapTeamPositions(team.id, swap.position1, swap.position2)) {
+                        switch (playersHandler.swapTeamPositions(team.id, swap.position1, swap.position2)) {
                             case (#ok) #ok;
                             case (#err(#notAuthorized)) #err("Not authorized to swap player positions in players actor");
                         };
@@ -608,16 +601,16 @@ module {
                     };
                 };
                 case (#changeColor(changeColor)) {
-                    await* createLeagueProposal(#changeTeamColor({ teamId = team.id; color = changeColor.color }));
+                    createLeagueProposal(#changeTeamColor({ teamId = team.id; color = changeColor.color }));
                 };
                 case (#changeLogo(changeLogo)) {
-                    await* createLeagueProposal(#changeTeamLogo({ teamId = team.id; logoUrl = changeLogo.logoUrl }));
+                    createLeagueProposal(#changeTeamLogo({ teamId = team.id; logoUrl = changeLogo.logoUrl }));
                 };
                 case (#changeMotto(changeMotto)) {
-                    await* createLeagueProposal(#changeTeamMotto({ teamId = team.id; motto = changeMotto.motto }));
+                    createLeagueProposal(#changeTeamMotto({ teamId = team.id; motto = changeMotto.motto }));
                 };
                 case (#changeDescription(changeDescription)) {
-                    await* createLeagueProposal(#changeTeamDescription({ teamId = team.id; description = changeDescription.description }));
+                    createLeagueProposal(#changeTeamDescription({ teamId = team.id; description = changeDescription.description }));
                 };
                 case (#modifyLink(modifyLink)) {
                     let index = IterTools.findIndex(team.links.vals(), func(link : Types.Link) : Bool { link.name == modifyLink.name });
@@ -650,10 +643,10 @@ module {
             };
         };
 
-        func onReject(proposal : Dao.Proposal<Types.ProposalContent>) : async* () {
+        func onReject(proposal : Dao.Proposal<Types.ProposalContent>) : () {
             Debug.print("Rejected proposal: " # debug_show (proposal));
         };
-        func onValidate(_ : Types.ProposalContent) : async* Result.Result<(), [Text]> {
+        func onValidate(_ : Types.ProposalContent) : Result.Result<(), [Text]> {
             #ok; // TODO
         };
         let dao = Dao.Dao<system, Types.ProposalContent>(data, onExecute, onReject, onValidate);

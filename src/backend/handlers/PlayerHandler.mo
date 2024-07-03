@@ -1,5 +1,5 @@
 import Player "../models/Player";
-import Types "./Types";
+import Types "../actors/Types";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
@@ -15,12 +15,30 @@ import Skill "../models/Skill";
 
 module {
 
-    type PlayerInfo = Player.PlayerFluff and {
+    public type PublicPlayerInfo = Player.PlayerFluff and {
         id : Nat32;
         teamId : Nat;
         position : FieldPosition.FieldPosition;
         skills : Player.Skills;
         condition : Player.PlayerCondition;
+    };
+
+    type StablePlayerInfo = Player.PlayerFluff and {
+        id : Nat32;
+        teamId : Nat;
+        position : FieldPosition.FieldPosition;
+        skills : Player.Skills;
+        condition : Player.PlayerCondition;
+        matchStats : [(Nat32, Player.PlayerMatchStats)];
+    };
+
+    type MutablePlayerInfo = Player.PlayerFluff and {
+        id : Nat32;
+        teamId : Nat;
+        position : FieldPosition.FieldPosition;
+        skills : Player.Skills;
+        condition : Player.PlayerCondition;
+        matchStats : HashMap.HashMap<Nat32, Player.PlayerMatchStats>;
     };
 
     type RetiredPlayer = Player.PlayerFluff and {
@@ -32,13 +50,13 @@ module {
     };
 
     public type StableData = {
-        players : [PlayerInfo];
+        players : [StablePlayerInfo];
         retiredPlayers : [RetiredPlayer];
         unusedFluff : [Player.PlayerFluff];
     };
 
     public class PlayerHandler(stableData : StableData) {
-        let players : HashMap.HashMap<Nat32, PlayerInfo> = buildPlayerMap(stableData.players);
+        let players : HashMap.HashMap<Nat32, MutablePlayerInfo> = buildPlayerMap(stableData.players);
         let retiredPlayers : HashMap.HashMap<Nat32, RetiredPlayer> = buildRetiredPlayerMap(stableData.retiredPlayers);
         let unusedFluff : Buffer.Buffer<Player.PlayerFluff> = Buffer.fromArray(stableData.unusedFluff);
 
@@ -50,18 +68,18 @@ module {
             };
         };
 
-        public func get(id : Nat32) : ?PlayerInfo {
+        public func get(id : Nat32) : ?PublicPlayerInfo {
             players.get(id);
         };
 
-        public func getPosition(teamId : Nat, position : FieldPosition.FieldPosition) : ?PlayerInfo {
+        public func getPosition(teamId : Nat, position : FieldPosition.FieldPosition) : ?PublicPlayerInfo {
             IterTools.find(
                 players.vals(),
                 func(player : PlayerInfo) : Bool = player.teamId == teamId and player.position == position,
             );
         };
 
-        public func getAll(teamId : ?Nat) : [PlayerInfo] {
+        public func getAll(teamId : ?Nat) : [PublicPlayerInfo] {
             switch (teamId) {
                 case (null) Iter.toArray(players.vals());
                 case (?teamId) {
@@ -89,6 +107,17 @@ module {
             };
 
             unusedFluff.add(fluff);
+            #ok;
+        };
+
+        public func addMatchStats(matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) : Types.AddMatchStatsResult {
+            for (playerStat in Iter.fromArray(playerStats)) {
+                let ?player = get(playerStat.playerId) else return #err(#playerNotFound(playerStat.playerId));
+                if (player.matchStats.vals() |> IterTools.any(_, func(p : (Nat32, Player.PlayerMatchStats)) : Bool = p.0 == matchGroupId)) {
+                    return #err(#matchStatsExist(playerStat.playerId, matchGroupId));
+                };
+                player.matchStats := Array.append(player.matchStats, [(matchGroupId, playerStat.stats)]);
+            };
             #ok;
         };
 
@@ -155,7 +184,7 @@ module {
             #ok;
         };
 
-        public func populateTeamRoster(teamId : Nat) : Result.Result<[PlayerInfo], { #missingFluff }> {
+        public func populateTeamRoster(teamId : Nat) : Result.Result<[PublicPlayerInfo], { #missingFluff }> {
             Debug.print("Populating team roster for team " # Nat.toText(teamId));
             // TODO validate that the teamid is valid?
             let teamPlayers = getAll(?teamId);

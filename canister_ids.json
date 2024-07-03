@@ -5,24 +5,8 @@
     "static_frontend": {
         "ic": "dtwn5-4iaaa-aaaag-aa6da-cai"
     },
-    "league": {
+    "main": {
         "local": "bd3sg-teaaa-aaaaa-qaaba-cai",
         "ic": "sctyd-5qaaa-aaaag-aa5lq-cai"
-    },
-    "players": {
-        "local": "be2us-64aaa-aaaaa-qaabq-cai",
-        "ic": "oblw4-zaaaa-aaaag-ahlkq-cai"
-    },
-    "stadium": {
-        "local": "br5f7-7uaaa-aaaaa-qaaca-cai",
-        "ic": "pd7ra-qiaaa-aaaan-qltsq-cai"
-    },
-    "teams": {
-        "local": "bw4dl-smaaa-aaaaa-qaacq-cai",
-        "ic": "hcjhv-viaaa-aaaak-qdcxa-cai"
-    },
-    "users": {
-        "local": "b77ix-eeaaa-aaaaa-qaada-cai",
-        "ic": "sflgi-byaaa-aaaak-afolq-cai"
     }
 }

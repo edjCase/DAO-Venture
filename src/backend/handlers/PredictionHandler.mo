@@ -7,7 +7,7 @@ import Nat32 "mo:base/Nat32";
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import Team "../models/Team";
-import Types "Types";
+import Types "../actors/Types";
 
 module {
     public type StableData = {

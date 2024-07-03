@@ -9,7 +9,7 @@ import Iter "mo:base/Iter";
 import Text "mo:base/Text";
 import Order "mo:base/Order";
 import Bool "mo:base/Bool";
-import PseudoRandomX "mo:random/PseudoRandomX";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import MatchAura "../models/MatchAura";
 import Base "../models/Base";
 import Team "../models/Team";
