@@ -67,23 +67,11 @@
             scenario={scenario.kind.proportionalBid}
         />
     {:else if "leagueChoice" in scenario.kind}
-        <LeagueChoiceInProgressScenarioState
-            scenarioId={scenario.id}
-            scenario={scenario.kind.leagueChoice}
-            {vote}
-        />
+        <LeagueChoiceInProgressScenarioState />
     {:else if "threshold" in scenario.kind}
-        <ThresholdInProgressScenarioState
-            scenarioId={scenario.id}
-            scenario={scenario.kind.threshold}
-            {vote}
-        />
+        <ThresholdInProgressScenarioState scenario={scenario.kind.threshold} />
     {:else if "noLeagueEffect" in scenario.kind}
-        <NoLeagueEffectInProgressScenarioState
-            scenarioId={scenario.id}
-            scenario={scenario.kind.noLeagueEffect}
-            {vote}
-        />
+        <NoLeagueEffectInProgressScenarioState />
     {:else}
         NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
     {/if}

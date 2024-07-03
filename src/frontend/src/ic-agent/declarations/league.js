@@ -83,7 +83,14 @@ export const idlFactory = ({ IDL }) => {
       'energy' : EnergyEffect,
     })
   );
-  const LotteryScenario = IDL.Record({ 'minBid' : IDL.Nat, 'prize' : Effect });
+  const LotteryPrize = IDL.Record({
+    'description' : IDL.Text,
+    'effect' : Effect,
+  });
+  const LotteryScenario = IDL.Record({
+    'minBid' : IDL.Nat,
+    'prize' : LotteryPrize,
+  });
   const TraitRequirementKind = IDL.Variant({
     'prohibited' : IDL.Null,
     'required' : IDL.Null,
@@ -137,6 +144,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ProportionalBidPrize = IDL.Record({
     'kind' : PropotionalBidPrizeKind,
+    'description' : IDL.Text,
     'amount' : IDL.Nat,
   });
   const ProportionalBidScenario = IDL.Record({

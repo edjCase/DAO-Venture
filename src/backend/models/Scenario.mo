@@ -205,8 +205,13 @@ module {
     };
 
     public type LotteryScenario = {
-        prize : Effect;
+        prize : LotteryPrize;
         minBid : Nat;
+    };
+
+    public type LotteryPrize = {
+        description : Text;
+        effect : Effect;
     };
 
     public type ProportionalBidScenario = {
@@ -215,6 +220,7 @@ module {
 
     public type ProportionalBidPrize = {
         amount : Nat;
+        description : Text;
         kind : PropotionalBidPrizeKind;
     };
 

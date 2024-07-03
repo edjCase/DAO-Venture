@@ -5,7 +5,9 @@
     export let value: LotteryScenario;
 </script>
 
-<Label>Prize</Label>
-<ScenarioEffectChooser bind:value={value.prize} />
+<Label>Prize Description</Label>
+<Input type="text" bind:value={value.prize.description} />
+<Label>Prize Effect</Label>
+<ScenarioEffectChooser bind:value={value.prize.effect} />
 <Label>Min Bid</Label>
 <Input type="number" bind:value={value.minBid} />

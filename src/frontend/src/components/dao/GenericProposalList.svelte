@@ -29,7 +29,9 @@
 {:else}
     <Accordion>
         {#each proposals as proposal}
-            <GenericProposalAccordianItem {proposal} {onVote} />
+            <GenericProposalAccordianItem {proposal} {onVote} let:proposalId>
+                <slot {proposalId} />
+            </GenericProposalAccordianItem>
         {/each}
     </Accordion>
 {/if}

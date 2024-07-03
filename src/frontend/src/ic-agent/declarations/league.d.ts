@@ -225,7 +225,8 @@ export interface LeagueChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
 export interface LeagueChoiceScenarioRequest {
   'options' : Array<LeagueChoiceScenarioOptionRequest>,
 }
-export interface LotteryScenario { 'minBid' : bigint, 'prize' : Effect }
+export interface LotteryPrize { 'description' : string, 'effect' : Effect }
+export interface LotteryScenario { 'minBid' : bigint, 'prize' : LotteryPrize }
 export interface LotteryScenarioOutcome { 'winningTeamId' : [] | [bigint] }
 export type MatchAura = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
@@ -334,6 +335,7 @@ export type PredictMatchOutcomeResult = { 'ok' : null } |
   { 'err' : PredictMatchOutcomeError };
 export interface ProportionalBidPrize {
   'kind' : PropotionalBidPrizeKind,
+  'description' : string,
   'amount' : bigint,
 }
 export interface ProportionalBidScenario { 'prize' : ProportionalBidPrize }

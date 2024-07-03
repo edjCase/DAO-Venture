@@ -1271,7 +1271,7 @@ module {
                     case (null) ();
                     case (?id) {
                         // Resolve the prize effect if there is a winner
-                        resolveEffectInternal(prng, #team(id), scenario, lottery.prize, effectOutcomes);
+                        resolveEffectInternal(prng, #team(id), scenario, lottery.prize.effect, effectOutcomes);
                     };
                 };
                 #lottery({

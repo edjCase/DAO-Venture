@@ -54,13 +54,23 @@
             value = {
                 lottery: {
                     minBid: BigInt(0),
-                    prize: { noEffect: null },
+                    prize: {
+                        description: "+10 💰",
+                        effect: {
+                            energy: {
+                                target: { contextual: null },
+                                value: { flat: BigInt(10) },
+                            },
+                        },
+                    },
                 },
             };
         } else if (selectedType === "proportionalBid") {
             value = {
                 proportionalBid: {
                     prize: {
+                        description:
+                            "+1 random skill for 1 match to a random player on the team",
                         kind: {
                             skill: {
                                 duration: { matches: BigInt(1) },

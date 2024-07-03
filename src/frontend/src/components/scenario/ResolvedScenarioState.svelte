@@ -53,10 +53,7 @@
                 outcome={state.scenarioOutcome.threshold}
             />
         {:else if "noLeagueEffect" in state.scenarioOutcome && "noLeagueEffect" in scenario.kind}
-            <NoEffectResolvedScenarioState
-                scenarioId={scenario.id}
-                scenario={scenario.kind.noLeagueEffect}
-            />
+            <NoEffectResolvedScenarioState />
         {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
             <ProportionalBidResolvedScenarioState
                 scenario={scenario.kind.proportionalBid}
