@@ -5,7 +5,7 @@
     export let scenario: ThresholdScenario;
 </script>
 
-<Label>On Sucess</Label>
+<Label>On Success</Label>
 <div>
     {scenario.success.description}
 </div>

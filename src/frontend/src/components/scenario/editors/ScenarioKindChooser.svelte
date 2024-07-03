@@ -17,16 +17,28 @@
                     undecidedAmount: { fixed: BigInt(0) },
                     options: [
                         {
-                            title: "Option 1",
-                            description: "Description 1",
+                            title: "Contribute",
+                            description:
+                                "Contribute 1 to the threshold, but -1 random skill to a random player on the team for a match.",
                             energyCost: BigInt(0),
                             traitRequirements: [],
-                            value: { fixed: BigInt(0) },
-                            teamEffect: { noEffect: null },
+                            value: { fixed: BigInt(1) },
+                            teamEffect: {
+                                skill: {
+                                    duration: { matches: BigInt(1) },
+                                    skill: { random: null },
+                                    target: {
+                                        position: { random: null },
+                                        team: { contextual: null },
+                                    },
+                                    delta: BigInt(-1),
+                                },
+                            },
                         },
                         {
-                            title: "Option 2",
-                            description: "Description 2",
+                            title: "Don't Contribute",
+                            description:
+                                "Don't contribute to the threshold, but no negative effect.",
                             energyCost: BigInt(0),
                             traitRequirements: [],
                             value: { fixed: BigInt(0) },
@@ -34,12 +46,22 @@
                         },
                     ],
                     success: {
-                        effect: { noEffect: null },
-                        description: "Success",
+                        effect: {
+                            energy: {
+                                target: { contextual: null },
+                                value: { flat: BigInt(10) },
+                            },
+                        },
+                        description: "+10 💰 for each team",
                     },
                     failure: {
-                        effect: { noEffect: null },
-                        description: "Failure",
+                        effect: {
+                            entropy: {
+                                target: { contextual: null },
+                                delta: BigInt(1),
+                            },
+                        },
+                        description: "+1 🔥 for each team",
                     },
                     minAmount: BigInt(1),
                 },

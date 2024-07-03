@@ -1,11 +1,10 @@
 <script lang="ts">
-    import { Label } from "flowbite-svelte";
     import { LotteryScenario } from "../../../ic-agent/declarations/league";
 
     export let scenario: LotteryScenario;
 </script>
 
-<Label>Minimum Bid</Label>
-<div>{scenario.minBid}</div>
-<Label>Prize</Label>
-<div>{scenario.prize.description}</div>
+<div>Prize: {scenario.prize.description}</div>
+{#if scenario.minBid > 0}
+    <div>Minimum Bid: {scenario.minBid}</div>
+{/if}
