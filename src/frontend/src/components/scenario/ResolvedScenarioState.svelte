@@ -67,7 +67,6 @@
             />
         {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind}
             <LeagueChoiceResolvedScenarioState
-                scenario={scenario.kind.leagueChoice}
                 outcome={state.scenarioOutcome.leagueChoice}
             />
         {:else}

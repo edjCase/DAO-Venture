@@ -4,7 +4,6 @@
         ProportionalBidScenario,
     } from "../../../ic-agent/declarations/league";
     import { Team } from "../../../ic-agent/declarations/teams";
-    import { toJsonString } from "../../../utils/StringUtil";
 
     export let scenario: ProportionalBidScenario;
     export let outcome: ProportionalBidScenarioOutcome;
@@ -16,7 +15,7 @@
 </script>
 
 {#each outcome.bids as bid}
-    Prize: {scenario.prize.amount} of {toJsonString(scenario.prize.kind)}
+    Prize: {scenario.prize.description}
     <div class="text-xl text-center">
         {getTeamName(bid.teamId)} got {bid.proportion}
     </div>
