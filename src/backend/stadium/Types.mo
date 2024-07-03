@@ -14,7 +14,6 @@ module {
     type PlayerId = Player.PlayerId;
 
     public type StadiumActor = actor {
-        setLeague : (id : Principal) -> async SetLeagueResult;
         getMatchGroup : query (id : Nat) -> async ?MatchGroupWithId;
         tickMatchGroup : (id : Nat) -> async TickMatchGroupResult;
         finishMatchGroup : (id : Nat) -> async (); // TODO remove
@@ -32,12 +31,6 @@ module {
     };
 
     public type CancelMatchGroupResult = Result.Result<(), CancelMatchGroupError>;
-
-    public type SetLeagueError = {
-        #notAuthorized;
-    };
-
-    public type SetLeagueResult = Result.Result<(), SetLeagueError>;
 
     public type StadiumActorInfo = {};
 

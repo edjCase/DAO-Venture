@@ -1,0 +1,7 @@
+{
+    "stadium": "(principal \"sctyd-5qaaa-aaaag-aa5lq-cai\")",
+    "teams": "(principal \"sctyd-5qaaa-aaaag-aa5lq-cai\", principal \"sflgi-byaaa-aaaak-afolq-cai\", principal \"oblw4-zaaaa-aaaag-ahlkq-cai\")",
+    "users": "(principal \"sctyd-5qaaa-aaaag-aa5lq-cai\")",
+    "players": "(principal \"sctyd-5qaaa-aaaag-aa5lq-cai\", principal \"hcjhv-viaaa-aaaak-qdcxa-cai\")",
+    "league": "(principal \"sflgi-byaaa-aaaak-afolq-cai\", principal \"hcjhv-viaaa-aaaak-qdcxa-cai\", principal \"oblw4-zaaaa-aaaag-ahlkq-cai\", principal \"pd7ra-qiaaa-aaaan-qltsq-cai\")"
+}

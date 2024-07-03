@@ -37,6 +37,14 @@
         <BigIntInput bind:value={option.energyCost} />
         <Label>Team Effect</Label>
         <ScenarioEffectChooser bind:value={option.teamEffect} />
+        <Label>On Success Description</Label>
+        <Input type="text" bind:value={value.success.description} />
+        <Label>On Success Effect</Label>
+        <ScenarioEffectChooser bind:value={value.success.effect} />
+        <Label>On Failure Description</Label>
+        <Input type="text" bind:value={value.failure.description} />
+        <Label>On Failure Effect</Label>
+        <ScenarioEffectChooser bind:value={value.failure.effect} />
         <Label>Threshold Delta</Label>
         <ThresholdValueChooser bind:value={option.value} />
         <Label>Trait Requirements</Label>

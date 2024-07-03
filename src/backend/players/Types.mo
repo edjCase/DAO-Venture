@@ -19,18 +19,11 @@ module {
             position2 : FieldPosition.FieldPosition,
         ) -> async SwapPlayerPositionsResult;
         addMatchStats : (matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) -> async AddMatchStatsResult;
-        setTeamsCanisterId : (canisterId : Principal) -> async SetTeamsCanisterIdResult;
     };
 
     public type GetPositionError = {
         #teamNotFound;
     };
-
-    public type SetTeamsCanisterIdError = {
-        #notAuthorized;
-    };
-
-    public type SetTeamsCanisterIdResult = Result.Result<(), SetTeamsCanisterIdError>;
 
     public type AddMatchStatsError = {
         #notAuthorized;

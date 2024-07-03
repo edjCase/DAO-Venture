@@ -53,10 +53,7 @@
                 outcome={state.scenarioOutcome.threshold}
             />
         {:else if "noLeagueEffect" in state.scenarioOutcome && "noLeagueEffect" in scenario.kind}
-            <NoEffectResolvedScenarioState
-                scenarioId={scenario.id}
-                scenario={scenario.kind.noLeagueEffect}
-            />
+            <NoEffectResolvedScenarioState />
         {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
             <ProportionalBidResolvedScenarioState
                 scenario={scenario.kind.proportionalBid}
@@ -70,7 +67,6 @@
             />
         {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind}
             <LeagueChoiceResolvedScenarioState
-                scenario={scenario.kind.leagueChoice}
                 outcome={state.scenarioOutcome.leagueChoice}
             />
         {:else}
@@ -99,7 +95,7 @@
     {:else if "nat" in state.options}
         {#each state.options.nat as natOption}
             <div class="flex items-center justify-center">
-                <div>{natOption.value} 💰</div>
+                <div>{natOption.value} 🎟️</div>
                 <div class="flex">
                     {#each natOption.chosenByTeamIds as teamId}
                         <!-- TODO Fix this team not found hack -->

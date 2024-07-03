@@ -11,9 +11,12 @@ import Result "mo:base/Result";
 import Types "Types";
 import FieldPosition "../models/FieldPosition";
 import PlayerHandler "PlayerHandler";
-// import LeagueActor "canister:league"; TODO
+import LeagueTypes "../league/Types";
 
-actor : Types.PlayerActor {
+actor class Players(
+    leagueCanisterId : Principal,
+    teamsCanisterId : Principal,
+) : async Types.PlayerActor = this {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     stable var playerStableData : PlayerHandler.StableData = {
@@ -21,7 +24,6 @@ actor : Types.PlayerActor {
         retiredPlayers = [];
         unusedFluff = [];
     };
-    stable var teamsCanisterId : ?Principal = null;
     stable var stats = Trie.empty<Nat32, Trie.Trie<Nat, Player.PlayerMatchStats>>();
 
     var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
@@ -34,16 +36,8 @@ actor : Types.PlayerActor {
         playerHandler := PlayerHandler.PlayerHandler(playerStableData);
     };
 
-    public shared ({ caller }) func setTeamsCanisterId(canisterId : Principal) : async Types.SetTeamsCanisterIdResult {
-        if (not isLeague(caller)) {
-            return #err(#notAuthorized);
-        };
-        teamsCanisterId := ?canisterId;
-        #ok;
-    };
-
     public shared ({ caller }) func addFluff(request : Types.CreatePlayerFluffRequest) : async Types.CreatePlayerFluffResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.addFluff(request);
@@ -76,14 +70,14 @@ actor : Types.PlayerActor {
     };
 
     public shared ({ caller }) func populateTeamRoster(teamId : Nat) : async Types.PopulateTeamRosterResult {
-        if (not isLeague(caller)) {
+        if (caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.populateTeamRoster(teamId);
     };
 
     public shared ({ caller }) func applyEffects(request : Types.ApplyEffectsRequest) : async Types.ApplyEffectsResult {
-        if (not isLeague(caller)) {
+        if (caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.applyEffects(request);
@@ -94,17 +88,14 @@ actor : Types.PlayerActor {
         position1 : FieldPosition.FieldPosition,
         position2 : FieldPosition.FieldPosition,
     ) : async Types.SwapPlayerPositionsResult {
-        if (teamsCanisterId == null) {
-            Debug.trap("Teams canister ID is not set");
-        };
-        if (?caller != teamsCanisterId and not isLeague(caller)) {
+        if (caller != teamsCanisterId and not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         playerHandler.swapTeamPositions(teamId, position1, position2);
     };
 
     public shared ({ caller }) func addMatchStats(matchGroupId : Nat, playerStats : [Player.PlayerMatchStatsWithId]) : async Types.AddMatchStatsResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
 
@@ -133,7 +124,7 @@ actor : Types.PlayerActor {
     };
 
     public shared ({ caller }) func onSeasonEnd() : async Types.OnSeasonEndResult {
-        if (not isLeague(caller)) {
+        if (not (await* isLeagueOrBDFN(caller))) {
             return #err(#notAuthorized);
         };
         // TODO archive?
@@ -141,9 +132,15 @@ actor : Types.PlayerActor {
         #ok;
     };
 
-    private func isLeague(_ : Principal) : Bool {
-        // TODO
-        // caller == Principal.fromActor(LeagueActor);
-        true;
+    private func isLeagueOrBDFN(caller : Principal) : async* Bool {
+        if (leagueCanisterId == caller) {
+            return true;
+        };
+        // TODO change to league push new bdfn vs fetch?
+        let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
+        switch (await leagueActor.getBenevolentDictatorState()) {
+            case (#claimed(bdfnId)) caller == bdfnId;
+            case (#disabled or #open) false;
+        };
     };
 };

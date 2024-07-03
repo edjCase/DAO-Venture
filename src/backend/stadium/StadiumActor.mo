@@ -21,7 +21,9 @@ import Team "../models/Team";
 import FieldPosition "../models/FieldPosition";
 import Season "../models/Season";
 
-actor StadiumActor : Types.StadiumActor {
+actor class StadiumActor(
+    leagueCanisterId : Principal
+) : async Types.StadiumActor = this {
     type PlayerState = Types.PlayerState;
     type FieldPosition = FieldPosition.FieldPosition;
     type MatchAura = MatchAura.MatchAura;
@@ -36,23 +38,12 @@ actor StadiumActor : Types.StadiumActor {
     };
 
     stable var matchGroups = Trie.empty<Nat, Types.MatchGroup>();
-    stable var leagueIdOrNull : ?Principal = null;
 
     system func postupgrade() {
         // Restart the timers for any match groups that were in progress
         for ((matchGroupId, matchGroup) in Trie.iter(matchGroups)) {
             resetTickTimerInternal<system>(matchGroupId);
         };
-    };
-
-    public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
-        // TODO how to get the league id vs manual set
-        // Set if the league is not set or if the caller is the league
-        if (leagueIdOrNull == null or leagueIdOrNull == ?caller) {
-            leagueIdOrNull := ?id;
-            return #ok;
-        };
-        #err(#notAuthorized);
     };
 
     public query func getMatchGroup(id : Nat) : async ?Types.MatchGroupWithId {
@@ -159,10 +150,9 @@ actor StadiumActor : Types.StadiumActor {
     };
 
     public shared ({ caller }) func tickMatchGroup(id : Nat) : async Types.TickMatchGroupResult {
-        if (caller != Principal.fromActor(StadiumActor)) {
+        if (caller != Principal.fromActor(this)) {
             return #err(#notAuthorized);
         };
-        let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
         let ?matchGroup = getMatchGroupOrNull(id) else return #err(#matchGroupNotFound);
         let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
 
@@ -191,7 +181,7 @@ actor StadiumActor : Types.StadiumActor {
                 |> Iter.toArray(_);
 
                 Timer.cancelTimer(matchGroup.tickTimerId);
-                let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+                let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
                 let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
                     id = id;
                     matches = completedMatches;
@@ -405,8 +395,7 @@ actor StadiumActor : Types.StadiumActor {
     };
 
     private func assertLeague(caller : Principal) {
-        let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
-        if (caller != leagueId) {
+        if (caller != leagueCanisterId) {
             Debug.trap("Only the league can schedule matches");
         };
     };

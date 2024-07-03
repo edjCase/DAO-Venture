@@ -25,6 +25,7 @@ export interface CompletedMatchGroup {
 }
 export interface CompletedMatchTeam { 'id' : bigint, 'score' : bigint }
 export type CreateProposalError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> } |
   { 'teamNotFound' : null };
 export interface CreateProposalRequest { 'content' : ProposalContent }
 export type CreateProposalResult = { 'ok' : bigint } |
@@ -124,9 +125,6 @@ export type RemoveTraitFromTeamResult = { 'ok' : RemoveTraitFromTeamOk } |
   { 'err' : RemoveTraitFromTeamError };
 export type Result = { 'ok' : null } |
   { 'err' : OnMatchGroupCompleteError };
-export type SetLeagueError = { 'notAuthorized' : null };
-export type SetLeagueResult = { 'ok' : null } |
-  { 'err' : SetLeagueError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -153,6 +151,47 @@ export interface Team {
 export type TeamIdOrTie = { 'tie' : null } |
   { 'team1' : null } |
   { 'team2' : null };
+export interface TeamsActor {
+  'addTraitToTeam' : ActorMethod<[bigint, string], AddTraitToTeamResult>,
+  'createProposal' : ActorMethod<
+    [bigint, CreateProposalRequest],
+    CreateProposalResult
+  >,
+  'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
+  'createTeamTrait' : ActorMethod<
+    [CreateTeamTraitRequest],
+    CreateTeamTraitResult
+  >,
+  'getCycles' : ActorMethod<[], GetCyclesResult>,
+  'getEntropyThreshold' : ActorMethod<[], bigint>,
+  'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
+  'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
+  'getTeams' : ActorMethod<[], Array<Team>>,
+  'getTraits' : ActorMethod<[], Array<Trait>>,
+  'onMatchGroupComplete' : ActorMethod<[OnMatchGroupCompleteRequest], Result>,
+  'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
+  'removeTraitFromTeam' : ActorMethod<
+    [bigint, string],
+    RemoveTraitFromTeamResult
+  >,
+  'updateTeamColor' : ActorMethod<
+    [bigint, [number, number, number]],
+    UpdateTeamColorResult
+  >,
+  'updateTeamDescription' : ActorMethod<
+    [bigint, string],
+    UpdateTeamDescriptionResult
+  >,
+  'updateTeamEnergy' : ActorMethod<[bigint, bigint], UpdateTeamEnergyResult>,
+  'updateTeamEntropy' : ActorMethod<[bigint, bigint], UpdateTeamEntropyResult>,
+  'updateTeamLogo' : ActorMethod<[bigint, string], UpdateTeamLogoResult>,
+  'updateTeamMotto' : ActorMethod<[bigint, string], UpdateTeamMottoResult>,
+  'updateTeamName' : ActorMethod<[bigint, string], UpdateTeamNameResult>,
+  'voteOnProposal' : ActorMethod<
+    [bigint, VoteOnProposalRequest],
+    VoteOnProposalResult
+  >,
+}
 export type Time = bigint;
 export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
 export interface Trait {
@@ -201,46 +240,6 @@ export interface VoteOnProposalRequest {
 }
 export type VoteOnProposalResult = { 'ok' : null } |
   { 'err' : VoteOnProposalError };
-export interface _SERVICE {
-  'addTraitToTeam' : ActorMethod<[bigint, string], AddTraitToTeamResult>,
-  'createProposal' : ActorMethod<
-    [bigint, CreateProposalRequest],
-    CreateProposalResult
-  >,
-  'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
-  'createTeamTrait' : ActorMethod<
-    [CreateTeamTraitRequest],
-    CreateTeamTraitResult
-  >,
-  'getCycles' : ActorMethod<[], GetCyclesResult>,
-  'getProposal' : ActorMethod<[bigint, bigint], GetProposalResult>,
-  'getProposals' : ActorMethod<[bigint, bigint, bigint], GetProposalsResult>,
-  'getTeams' : ActorMethod<[], Array<Team>>,
-  'getTraits' : ActorMethod<[], Array<Trait>>,
-  'onMatchGroupComplete' : ActorMethod<[OnMatchGroupCompleteRequest], Result>,
-  'onSeasonEnd' : ActorMethod<[], OnSeasonEndResult>,
-  'removeTraitFromTeam' : ActorMethod<
-    [bigint, string],
-    RemoveTraitFromTeamResult
-  >,
-  'setLeague' : ActorMethod<[Principal], SetLeagueResult>,
-  'updateTeamColor' : ActorMethod<
-    [bigint, [number, number, number]],
-    UpdateTeamColorResult
-  >,
-  'updateTeamDescription' : ActorMethod<
-    [bigint, string],
-    UpdateTeamDescriptionResult
-  >,
-  'updateTeamEnergy' : ActorMethod<[bigint, bigint], UpdateTeamEnergyResult>,
-  'updateTeamEntropy' : ActorMethod<[bigint, bigint], UpdateTeamEntropyResult>,
-  'updateTeamLogo' : ActorMethod<[bigint, string], UpdateTeamLogoResult>,
-  'updateTeamMotto' : ActorMethod<[bigint, string], UpdateTeamMottoResult>,
-  'updateTeamName' : ActorMethod<[bigint, string], UpdateTeamNameResult>,
-  'voteOnProposal' : ActorMethod<
-    [bigint, VoteOnProposalRequest],
-    VoteOnProposalResult
-  >,
-}
+export interface _SERVICE extends TeamsActor {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

@@ -17,8 +17,9 @@
 
     let initialEnd = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3);
     let scenario: AddScenarioRequest = {
-        title: "Scenario 1",
-        description: "Scenario Description",
+        title: "",
+        description:
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed sem velit, eleifend vitae suscipit quis, convallis in libero. Vestibulum nec ullamcorper ligula. In nec sapien et sem porttitor congue sed sed felis. Etiam id ligula in metus rutrum tempor. Nunc eu laoreet eros, eget venenatis libero. Integer et nulla vel ante scelerisque tempus. Suspendisse ullamcorper lectus libero.",
         startTime: [],
         endTime: dateToNanoseconds(initialEnd),
         undecidedEffect: {

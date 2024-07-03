@@ -1,15 +1,16 @@
 import { describe, beforeEach, afterEach, it, expect, inject } from 'vitest';
-import { idlFactory as leagueIdlFactory, type _SERVICE as LEAGUE_SERVICE } from '../../src/ic-agent/declarations/league';
-import { idlFactory as teamsIdlFactory, type _SERVICE as TEAMS_SERVICE } from '../../src/ic-agent/declarations/teams';
-import { idlFactory as playersIdlFactory, type _SERVICE as PLAYERS_SERVICE } from '../../src/ic-agent/declarations/players';
-import { idlFactory as usersIdlFactor, type _SERVICE as USERS_SERVICE } from '../../src/ic-agent/declarations/users';
-import { idlFactory as stadiumIdlFactory, type _SERVICE as STADIUM_SERVICE } from '../../src/ic-agent/declarations/stadium';
+import { init as leagueInit, idlFactory as leagueIdlFactory, type _SERVICE as LEAGUE_SERVICE, VoteOnScenarioResult } from '../../src/ic-agent/declarations/league';
+import { init as teamsInit, idlFactory as teamsIdlFactory, type _SERVICE as TEAMS_SERVICE } from '../../src/ic-agent/declarations/teams';
+import { init as playersInit, idlFactory as playersIdlFactory, type _SERVICE as PLAYERS_SERVICE } from '../../src/ic-agent/declarations/players';
+import { init as usersInit, idlFactory as usersIdlFactory, type _SERVICE as USERS_SERVICE, AddTeamOwnerResult } from '../../src/ic-agent/declarations/users';
+import { init as stadiumInit, idlFactory as stadiumIdlFactory, type _SERVICE as STADIUM_SERVICE } from '../../src/ic-agent/declarations/stadium';
 import { teams as teamData } from "../../src/data/TeamData";
 import { players as playerData } from "../../src/data/PlayerData";
 import { teamTraits as traitData } from "../../src/data/TeamTraitData";
 import { resolve } from 'path';
-import { Actor, PocketIc } from '@hadronous/pic';
+import { Actor, PocketIc, generateRandomIdentity } from '@hadronous/pic';
 import { Principal } from '@dfinity/principal';
+import { IDL } from '@dfinity/candid';
 
 
 // Define the path to your canister's WASM file using __dirname
@@ -42,6 +43,10 @@ describe('Test suite name', () => {
     let stadiumActor: Actor<STADIUM_SERVICE>;
     let usersActor: Actor<USERS_SERVICE>;
 
+    const usersPerTeam = 10;
+
+    let teams: { userIds: Principal[] }[] = [];
+
     let bdfnPrincipal = Principal.fromText("zedmc-7yeiu-fmd5m-c7nun-r3unf-qap5y-drgdf-ozckp-gzuzn-wj4n4-6qe");
     const oneDayInNanos = BigInt(60 * 60 * 24 * 1_000_000_000);
 
@@ -52,67 +57,68 @@ describe('Test suite name', () => {
     beforeEach(async () => {
         // create a new PocketIC instance
         let url = inject('PIC_URL');
-        pic = await PocketIc.create(url, {
-            application: 1
-        });
+        pic = await PocketIc.create(url);
         pic.setTime(0);
 
+        // Create empty canisters
+        const leagueCanisterId = await pic.createCanister();
+        const teamsCanisterId = await pic.createCanister();
+        const playersCanisterId = await pic.createCanister();
+        const stadiumCanisterId = await pic.createCanister();
+        const usersCanisterId = await pic.createCanister();
 
-        // Setup the canister and actor
-        const leagueFixture = await pic.setupCanister<LEAGUE_SERVICE>({
-            idlFactory: leagueIdlFactory,
+        // Install League canister
+        await pic.installCode({
+            arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal], [usersCanisterId, teamsCanisterId, playersCanisterId, stadiumCanisterId]),
+            canisterId: leagueCanisterId,
             wasm: LEAGUE_WASM_PATH
-        });
-
-        // Save the actor and canister ID for use in tests
-        leagueActor = leagueFixture.actor;
+        })
+        leagueActor = await pic.createActor(leagueIdlFactory, leagueCanisterId);
         leagueActor.setPrincipal(bdfnPrincipal);
 
-        console.log("League cansiter id ", leagueFixture.canisterId.toString());
 
-        pic
-        const teamsFixture = await pic.setupCanister<TEAMS_SERVICE>({
-            idlFactory: teamsIdlFactory,
+        // Install Teams canisterq
+        await pic.installCode({
+            arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal], [leagueCanisterId, usersCanisterId, playersCanisterId]),
+            canisterId: teamsCanisterId,
             wasm: TEAMS_WASM_PATH
         });
 
-        teamsActor = teamsFixture.actor;
+        teamsActor = await pic.createActor(teamsIdlFactory, teamsCanisterId);
         teamsActor.setPrincipal(bdfnPrincipal);
 
-        console.log("Teams cansiter id ", teamsFixture.canisterId.toString());
 
-
-        const playersFixture = await pic.setupCanister<PLAYERS_SERVICE>({
-            idlFactory: playersIdlFactory,
+        // Install Players canister
+        await pic.installCode({
+            arg: IDL.encode([IDL.Principal, IDL.Principal], [leagueCanisterId, teamsCanisterId]),
+            canisterId: playersCanisterId,
             wasm: PLAYERS_WASM_PATH
         });
 
-        playersActor = playersFixture.actor;
+        playersActor = await pic.createActor(playersIdlFactory, playersCanisterId);
         playersActor.setPrincipal(bdfnPrincipal);
 
-        console.log("Players cansiter id ", playersFixture.canisterId.toString());
 
-
-        const stadiumFixture = await pic.setupCanister<STADIUM_SERVICE>({
-            idlFactory: stadiumIdlFactory,
+        // Install Stadium canister
+        await pic.installCode({
+            arg: IDL.encode([IDL.Principal], [leagueCanisterId]),
+            canisterId: stadiumCanisterId,
             wasm: STADIUM_WASM_PATH
-
         });
 
-        stadiumActor = stadiumFixture.actor;
+        stadiumActor = await pic.createActor(stadiumIdlFactory, stadiumCanisterId);
         stadiumActor.setPrincipal(bdfnPrincipal);
 
-        console.log("Stadium cansiter id ", stadiumFixture.canisterId.toString());
 
-        const usersFixture = await pic.setupCanister<USERS_SERVICE>({
-            idlFactory: usersIdlFactor,
+        // Install Users canister
+        await pic.installCode({
+            arg: IDL.encode([IDL.Principal], [leagueCanisterId]),
+            canisterId: usersCanisterId,
             wasm: USERS_WASM_PATH
         });
 
-        usersActor = usersFixture.actor;
+        usersActor = await pic.createActor(usersIdlFactory, usersCanisterId);
         usersActor.setPrincipal(bdfnPrincipal);
-
-        console.log("Users cansiter id ", usersFixture.canisterId.toString());
 
 
         const response = await leagueActor.claimBenevolentDictatorRole();
@@ -145,6 +151,19 @@ describe('Test suite name', () => {
             let team = teamData[i];
             let result = await leagueActor.createTeam(team);
             expect(result).toEqual({ 'ok': BigInt(i) });
+
+            let userIds: Principal[] = [];
+            for (let j = 0; j < usersPerTeam; j++) {
+                let userIdentity = generateRandomIdentity();
+                let userResult = await usersActor.addTeamOwner({
+                    teamId: BigInt(i),
+                    userId: userIdentity.getPrincipal(),
+                    votingPower: BigInt(1)
+                });
+                expect(userResult).toEqual({ 'ok': null });
+                userIds.push(userIdentity.getPrincipal());
+            }
+            teams.push({ userIds });
         }
     };
 
@@ -166,12 +185,11 @@ describe('Test suite name', () => {
         await pic?.tearDown();
     });
 
-    // The `it` function is used to define individual tests
-    it('adds a scenario', async () => {
+    it('Scenario: No League Effect', async () => {
 
         const scenarioResult = await leagueActor.addScenario({
-            title: "Test Scenario",
-            description: "A test scenario",
+            title: "Scenario No League Effect",
+            description: "Scenario No League Effect",
             startTime: [],
             endTime: BigInt(oneDayInNanos),
             undecidedEffect: {
@@ -224,6 +242,560 @@ describe('Test suite name', () => {
         });
 
         expect(scenarioResult).toEqual({ 'ok': null });
+
+
+        let getScenarioResult = await leagueActor.getScenario(BigInt(0));
+
+        expect(getScenarioResult).toEqual({
+            "ok": {
+                "description": "Scenario No League Effect",
+                "endTime": 86400000000000n,
+                "id": 0n,
+                "kind": {
+                    "noLeagueEffect": {
+                        "options": [
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 1",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 1",
+                                "traitRequirements": []
+                            },
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 2",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 2",
+                                "traitRequirements": []
+                            }
+                        ]
+                    }
+                },
+                "startTime": 0n,
+                "state": {
+                    "inProgress": null
+                },
+                "title": "Scenario No League Effect",
+                "undecidedEffect": {
+                    "entropy": {
+                        "delta": 1n,
+                        "target": {
+                            "contextual": null
+                        }
+                    }
+                }
+            }
+        });
+
+
+        let hasOneOk = false;
+        for (let i = 0; i < teams.length; i++) {
+            let team = teams[i];
+            for (let j = 0; j < team.userIds.length; j++) {
+                let userId = team.userIds[j];
+                leagueActor.setPrincipal(userId);
+                let voteResult = await leagueActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
+
+                // Make sure its ok, or that the voting is not open due to the scenario ending from majority votes
+                expect(voteResult).toSatisfy<VoteOnScenarioResult>((r) => {
+                    if ('ok' in r) {
+                        hasOneOk = true;
+                        return true;
+                    }
+                    return hasOneOk && 'err' in r && 'votingNotOpen' in r.err;
+                });
+
+                let getVoteResult = await leagueActor.getScenarioVote({ scenarioId: BigInt(0) });
+
+                expect(getVoteResult).toEqual({
+                    "ok": {
+                        "teamId": BigInt(i),
+                        "teamOptions": {
+                            'discrete': [
+                                {
+                                    "currentVotingPower": BigInt(j + 1),
+                                    "description": "Option 1",
+                                    "energyCost": 0n,
+                                    "id": 0n,
+                                    "title": "Option 1",
+                                    "traitRequirements": [],
+                                },
+                                {
+                                    "currentVotingPower": 0n,
+                                    "description": "Option 2",
+                                    "energyCost": 0n,
+                                    "id": 1n,
+                                    "title": "Option 2",
+                                    "traitRequirements": [],
+                                }
+                            ]
+                        },
+                        "teamVotingPower": BigInt(usersPerTeam),
+                        "votingPower": BigInt(1),
+                        "value": [{ id: BigInt(0) }]
+                    }
+                });
+            };
+        }
+        leagueActor.setPrincipal(bdfnPrincipal);
+
+        await pic.advanceTime(Number(oneDayInNanos) / 1_000_000);
+        await pic.tick(3);
+
+        let getScenarioResult2 = await leagueActor.getScenario(BigInt(0));
+
+        expect(getScenarioResult2).toEqual({
+            "ok": {
+                "description": "Scenario No League Effect",
+                "endTime": 86400000000000n,
+                "id": 0n,
+                "kind": {
+                    "noLeagueEffect": {
+                        "options": [
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 1",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 1",
+                                "traitRequirements": []
+                            },
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 2",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 2",
+                                "traitRequirements": []
+                            }
+                        ]
+                    }
+                },
+                "startTime": 0n,
+                "state": {
+                    "resolved": {
+                        "scenarioOutcome": { "noLeagueEffect": null },
+                        "options": {
+                            "discrete": [
+                                {
+                                    "id": 0n,
+                                    "title": "Option 1",
+                                    "teamEffect": {
+                                        "energy": {
+                                            "value": { "flat": 1n },
+                                            "target": { "contextual": null }
+                                        }
+                                    },
+                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "description": "Option 1",
+                                    "traitRequirements": [],
+                                    "chosenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "energyCost": 0n
+                                },
+                                {
+                                    "id": 1n,
+                                    "title": "Option 2",
+                                    "teamEffect": {
+                                        "energy": {
+                                            "value": { "flat": 1n },
+                                            "target": { "contextual": null }
+                                        }
+                                    },
+                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "description": "Option 2",
+                                    "traitRequirements": [],
+                                    "chosenByTeamIds": [],
+                                    "energyCost": 0n
+                                }
+                            ]
+                        },
+                        "effectOutcomes": [
+                            { "energy": { "teamId": 0n, "delta": 1n } },
+                            { "energy": { "teamId": 1n, "delta": 1n } },
+                            { "energy": { "teamId": 2n, "delta": 1n } },
+                            { "energy": { "teamId": 3n, "delta": 1n } },
+                            { "energy": { "teamId": 4n, "delta": 1n } },
+                            { "energy": { "teamId": 5n, "delta": 1n } }
+                        ]
+                    }
+                },
+                "title": "Scenario No League Effect",
+                "undecidedEffect": {
+                    "entropy": {
+                        "delta": 1n,
+                        "target": {
+                            "contextual": null
+                        }
+                    }
+                }
+            }
+        });
+    });
+
+    it('Scenario: Lottery', async () => {
+
+        const scenarioResult = await leagueActor.addScenario({
+            title: "Lottery Scenario",
+            description: "Lottery Scenario",
+            startTime: [],
+            endTime: BigInt(oneDayInNanos),
+            undecidedEffect: {
+                entropy: {
+                    delta: BigInt(1),
+                    target: {
+                        contextual: null
+                    }
+                }
+            },
+            kind: {
+                lottery: {
+                    minBid: BigInt(0),
+                    prize: {
+                        allOf: [
+                            {
+                                energy: {
+                                    target: {
+                                        contextual: null
+                                    },
+                                    value: {
+                                        flat: BigInt(1)
+                                    }
+                                }
+                            },
+                            {
+                                entropy: {
+                                    target: {
+                                        contextual: null
+                                    },
+                                    delta: BigInt(-1)
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
+        });
+
+        expect(scenarioResult).toEqual({ 'ok': null });
+
+
+        let getScenarioResult = await leagueActor.getScenario(BigInt(0));
+
+        expect(getScenarioResult).toEqual({
+            "ok": {
+                "description": "Lottery Scenario",
+                "endTime": 86400000000000n,
+                "id": 0n,
+                "kind": {
+                    "noLeagueEffect": {
+                        "options": [
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 1",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 1",
+                                "traitRequirements": []
+                            },
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 2",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 2",
+                                "traitRequirements": []
+                            }
+                        ]
+                    }
+                },
+                "startTime": 0n,
+                "state": {
+                    "inProgress": null
+                },
+                "title": "Lottery Scenario",
+                "undecidedEffect": {
+                    "entropy": {
+                        "delta": 1n,
+                        "target": {
+                            "contextual": null
+                        }
+                    }
+                }
+            }
+        });
+
+        let hasOneOk = false;
+        for (let i = 0; i < teams.length; i++) {
+            let team = teams[i];
+            for (let j = 0; j < team.userIds.length; j++) {
+                let userId = team.userIds[j];
+                leagueActor.setPrincipal(userId);
+                let voteResult = await leagueActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
+
+                // Make sure its ok, or that the voting is not open due to the scenario ending from majority votes
+                expect(voteResult).toSatisfy<VoteOnScenarioResult>((r) => {
+                    if ('ok' in r) {
+                        hasOneOk = true;
+                        return true;
+                    }
+                    return hasOneOk && 'err' in r && 'votingNotOpen' in r.err;
+                });
+
+                let getVoteResult = await leagueActor.getScenarioVote({ scenarioId: BigInt(0) });
+
+                expect(getVoteResult).toEqual({
+                    "ok": {
+                        "teamId": BigInt(i),
+                        "teamOptions": {
+                            'discrete': [
+                                {
+                                    "currentVotingPower": BigInt(j + 1),
+                                    "description": "Option 1",
+                                    "energyCost": 0n,
+                                    "id": 0n,
+                                    "title": "Option 1",
+                                    "traitRequirements": [],
+                                },
+                                {
+                                    "currentVotingPower": 0n,
+                                    "description": "Option 2",
+                                    "energyCost": 0n,
+                                    "id": 1n,
+                                    "title": "Option 2",
+                                    "traitRequirements": [],
+                                }
+                            ]
+                        },
+                        "teamVotingPower": BigInt(usersPerTeam),
+                        "votingPower": BigInt(1),
+                        "value": [{ id: BigInt(0) }]
+                    }
+                });
+            };
+        }
+        leagueActor.setPrincipal(bdfnPrincipal);
+
+        await pic.advanceTime(60 * 60 * 24 * 1_000);
+        await pic.tick(1000);
+
+        let getScenarioResult2 = await leagueActor.getScenario(BigInt(0));
+
+        expect(getScenarioResult2).toEqual({
+            "ok": {
+                "description": "Lottery Scenario",
+                "endTime": 86400000000000n,
+                "id": 0n,
+                "kind": {
+                    "noLeagueEffect": {
+                        "options": [
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 1",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 1",
+                                "traitRequirements": []
+                            },
+                            {
+                                "allowedTeamIds": [
+                                    0n,
+                                    1n,
+                                    2n,
+                                    3n,
+                                    4n,
+                                    5n
+                                ],
+                                "description": "Option 2",
+                                "energyCost": 0n,
+                                "teamEffect": {
+                                    "energy": {
+                                        "target": {
+                                            "contextual": null
+                                        },
+                                        "value": {
+                                            "flat": 1n
+                                        }
+                                    }
+                                },
+                                "title": "Option 2",
+                                "traitRequirements": []
+                            }
+                        ]
+                    }
+                },
+                "startTime": 0n,
+                "state": {
+                    "resolved": {
+                        "scenarioOutcome": { "noLeagueEffect": null },
+                        "options": {
+                            "discrete": [
+                                {
+                                    "id": 0n,
+                                    "title": "Option 1",
+                                    "teamEffect": {
+                                        "energy": {
+                                            "value": { "flat": 1n },
+                                            "target": { "contextual": null }
+                                        }
+                                    },
+                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "description": "Option 1",
+                                    "traitRequirements": [],
+                                    "chosenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "energyCost": 0n
+                                },
+                                {
+                                    "id": 1n,
+                                    "title": "Option 2",
+                                    "teamEffect": {
+                                        "energy": {
+                                            "value": { "flat": 1n },
+                                            "target": { "contextual": null }
+                                        }
+                                    },
+                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "description": "Option 2",
+                                    "traitRequirements": [],
+                                    "chosenByTeamIds": [],
+                                    "energyCost": 0n
+                                }
+                            ]
+                        },
+                        "effectOutcomes": [
+                            { "energy": { "teamId": 0n, "delta": 1n } },
+                            { "energy": { "teamId": 1n, "delta": 1n } },
+                            { "energy": { "teamId": 2n, "delta": 1n } },
+                            { "energy": { "teamId": 3n, "delta": 1n } },
+                            { "energy": { "teamId": 4n, "delta": 1n } },
+                            { "energy": { "teamId": 5n, "delta": 1n } }
+                        ]
+                    }
+                },
+                "title": "Lottery Scenario",
+                "undecidedEffect": {
+                    "entropy": {
+                        "delta": 1n,
+                        "target": {
+                            "contextual": null
+                        }
+                    }
+                }
+            }
+        });
     });
 });
 

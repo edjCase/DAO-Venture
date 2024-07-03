@@ -68,7 +68,7 @@ export interface UserVotingInfo {
   'votingPower' : bigint,
   'teamId' : bigint,
 }
-export interface _SERVICE {
+export interface Users {
   'addTeamOwner' : ActorMethod<[AddTeamOwnerRequest], AddTeamOwnerResult>,
   'awardPoints' : ActorMethod<[Array<AwardPointsRequest>], AwardPointsResult>,
   'get' : ActorMethod<[Principal], GetUserResult>,
@@ -84,5 +84,6 @@ export interface _SERVICE {
     SetUserFavoriteTeamResult
   >,
 }
+export interface _SERVICE extends Users {}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

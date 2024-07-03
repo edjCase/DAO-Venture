@@ -86,7 +86,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : SetUserFavoriteTeamError,
   });
-  return IDL.Service({
+  const Users = IDL.Service({
     'addTeamOwner' : IDL.Func([AddTeamOwnerRequest], [AddTeamOwnerResult], []),
     'awardPoints' : IDL.Func(
         [IDL.Vec(AwardPointsRequest)],
@@ -112,5 +112,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
   });
+  return Users;
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => { return [IDL.Principal]; };

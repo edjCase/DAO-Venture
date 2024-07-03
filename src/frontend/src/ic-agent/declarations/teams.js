@@ -60,6 +60,7 @@ export const idlFactory = ({ IDL }) => {
   const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
   const CreateProposalError = IDL.Variant({
     'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(IDL.Text),
     'teamNotFound' : IDL.Null,
   });
   const CreateProposalResult = IDL.Variant({
@@ -208,11 +209,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : RemoveTraitFromTeamOk,
     'err' : RemoveTraitFromTeamError,
   });
-  const SetLeagueError = IDL.Variant({ 'notAuthorized' : IDL.Null });
-  const SetLeagueResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : SetLeagueError,
-  });
   const UpdateTeamColorError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'teamNotFound' : IDL.Null,
@@ -285,7 +281,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : VoteOnProposalError,
   });
-  return IDL.Service({
+  const TeamsActor = IDL.Service({
     'addTraitToTeam' : IDL.Func(
         [IDL.Nat, IDL.Text],
         [AddTraitToTeamResult],
@@ -303,6 +299,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getCycles' : IDL.Func([], [GetCyclesResult], []),
+    'getEntropyThreshold' : IDL.Func([], [IDL.Nat], ['query']),
     'getProposal' : IDL.Func(
         [IDL.Nat, IDL.Nat],
         [GetProposalResult],
@@ -326,7 +323,6 @@ export const idlFactory = ({ IDL }) => {
         [RemoveTraitFromTeamResult],
         [],
       ),
-    'setLeague' : IDL.Func([IDL.Principal], [SetLeagueResult], []),
     'updateTeamColor' : IDL.Func(
         [IDL.Nat, IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)],
         [UpdateTeamColorResult],
@@ -368,5 +364,8 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
   });
+  return TeamsActor;
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => {
+  return [IDL.Principal, IDL.Principal, IDL.Principal];
+};

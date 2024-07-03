@@ -1,4 +1,3 @@
-import Principal "mo:base/Principal";
 import Dao "../Dao";
 import Skill "../models/Skill";
 import CommonTypes "../Types";
@@ -10,7 +9,7 @@ import Season "../models/Season";
 module {
 
     public type Actor = actor {
-        setLeague : (id : Principal) -> async SetLeagueResult;
+        getEntropyThreshold : query () -> async Nat;
         getTeams : query () -> async [Team];
         createProposal : (teamId : Nat, request : CreateProposalRequest) -> async CreateProposalResult;
         getProposal : query (teamId : Nat, id : Nat) -> async GetProposalResult;
@@ -224,17 +223,12 @@ module {
     public type CreateProposalError = {
         #notAuthorized;
         #teamNotFound;
+        #invalid : [Text];
     };
 
     public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
 
     public type OnSeasonEndError = {
-        #notAuthorized;
-    };
-
-    public type SetLeagueResult = Result.Result<(), SetLeagueError>;
-
-    public type SetLeagueError = {
         #notAuthorized;
     };
 

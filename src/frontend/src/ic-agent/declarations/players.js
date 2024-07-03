@@ -137,17 +137,12 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Vec(Player),
     'err' : PopulateTeamRosterError,
   });
-  const SetTeamsCanisterIdError = IDL.Variant({ 'notAuthorized' : IDL.Null });
-  const SetTeamsCanisterIdResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : SetTeamsCanisterIdError,
-  });
   const SwapPlayerPositionsError = IDL.Variant({ 'notAuthorized' : IDL.Null });
   const SwapPlayerPositionsResult = IDL.Variant({
     'ok' : IDL.Null,
     'err' : SwapPlayerPositionsError,
   });
-  return IDL.Service({
+  const Players = IDL.Service({
     'addFluff' : IDL.Func(
         [CreatePlayerFluffRequest],
         [CreatePlayerFluffResult],
@@ -165,16 +160,12 @@ export const idlFactory = ({ IDL }) => {
     'getTeamPlayers' : IDL.Func([IDL.Nat], [IDL.Vec(Player)], ['query']),
     'onSeasonEnd' : IDL.Func([], [OnSeasonEndResult], []),
     'populateTeamRoster' : IDL.Func([IDL.Nat], [PopulateTeamRosterResult], []),
-    'setTeamsCanisterId' : IDL.Func(
-        [IDL.Principal],
-        [SetTeamsCanisterIdResult],
-        [],
-      ),
     'swapTeamPositions' : IDL.Func(
         [IDL.Nat, FieldPosition, FieldPosition],
         [SwapPlayerPositionsResult],
         [],
       ),
   });
+  return Players;
 };
-export const init = ({ IDL }) => { return []; };
+export const init = ({ IDL }) => { return [IDL.Principal, IDL.Principal]; };

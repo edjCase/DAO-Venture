@@ -1,10 +1,16 @@
 <script lang="ts">
-    import {
-        ScenarioVote,
-        ThresholdScenario,
-    } from "../../../ic-agent/declarations/league";
+    import { Label } from "flowbite-svelte";
+    import { ThresholdScenario } from "../../../ic-agent/declarations/league";
 
     export let scenario: ThresholdScenario;
-    export let scenarioId: bigint;
-    export let vote: ScenarioVote;
 </script>
+
+<Label>On Success</Label>
+<div>
+    {scenario.success.description}
+</div>
+
+<Label>On Failure</Label>
+<div>
+    {scenario.failure.description}
+</div>

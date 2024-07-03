@@ -1,19 +1,24 @@
 import Principal "mo:base/Principal";
 import Nat "mo:base/Nat";
-import Debug "mo:base/Debug";
 import Iter "mo:base/Iter";
 import Prelude "mo:base/Prelude";
 import { ic } "mo:ic";
 import Types "Types";
 import TeamsHandler "TeamsHandler";
-import UsersActor "canister:users";
 import Dao "../Dao";
 import Team "../models/Team";
 import Result "mo:base/Result";
 import Trait "../models/Trait";
 import LeagueTypes "../league/Types";
+import UserTypes "../users/Types";
 
-actor TeamsActor : Types.Actor {
+actor class TeamsActor(
+  leagueCanisterId : Principal,
+  usersCanisterId : Principal,
+  playersCanisterId : Principal,
+) : async Types.Actor = this {
+
+  let usersActor = actor (Principal.toText(usersCanisterId)) : UserTypes.Actor;
 
   stable var teamStableData : TeamsHandler.StableData = {
     entropyThreshold = 100;
@@ -21,26 +26,18 @@ actor TeamsActor : Types.Actor {
     teams = [];
   };
 
-  stable var leagueIdOrNull : ?Principal = null;
-
-  var teamsHandler = TeamsHandler.Handler<system>(teamStableData);
+  var teamsHandler = TeamsHandler.Handler<system>(teamStableData, leagueCanisterId, playersCanisterId);
 
   system func preupgrade() {
     teamStableData := teamsHandler.toStableData();
   };
 
   system func postupgrade() {
-    teamsHandler := TeamsHandler.Handler<system>(teamStableData);
+    teamsHandler := TeamsHandler.Handler<system>(teamStableData, leagueCanisterId, playersCanisterId);
   };
 
-  public shared ({ caller }) func setLeague(id : Principal) : async Types.SetLeagueResult {
-    // TODO how to get the league id vs manual set
-    // Set if the league is not set or if the caller is the league
-    if (leagueIdOrNull == null or leagueIdOrNull == ?caller) {
-      leagueIdOrNull := ?id;
-      return #ok;
-    };
-    #err(#notAuthorized);
+  public shared query func getEntropyThreshold() : async Nat {
+    teamsHandler.getEntropyThreshold();
   };
 
   public shared query func getTeams() : async [Team.Team] {
@@ -51,8 +48,7 @@ actor TeamsActor : Types.Actor {
     if (not (await* isLeagueOrBDFN(caller))) {
       return #err(#notAuthorized);
     };
-    let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
-    await* teamsHandler.create(leagueId, request);
+    await* teamsHandler.create(request);
   };
 
   public shared ({ caller }) func updateTeamEnergy(id : Nat, delta : Int) : async Types.UpdateTeamEnergyResult {
@@ -134,7 +130,7 @@ actor TeamsActor : Types.Actor {
   };
 
   public shared ({ caller }) func createProposal(teamId : Nat, request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
-    let members = switch (await UsersActor.getTeamOwners(#team(teamId))) {
+    let members = switch (await usersActor.getTeamOwners(#team(teamId))) {
       case (#ok(members)) members;
     };
     let isAMember = members
@@ -147,7 +143,7 @@ actor TeamsActor : Types.Actor {
     if (not isAMember) {
       return #err(#notAuthorized);
     };
-    teamsHandler.createProposal<system>(teamId, caller, request, members);
+    await* teamsHandler.createProposal<system>(teamId, caller, request, members);
   };
 
   public shared query func getProposal(teamId : Nat, id : Nat) : async Types.GetProposalResult {
@@ -185,18 +181,17 @@ actor TeamsActor : Types.Actor {
       return #err(#notAuthorized);
     };
     let canisterStatus = await ic.canister_status({
-      canister_id = Principal.fromActor(TeamsActor);
+      canister_id = Principal.fromActor(this);
     });
     return #ok(canisterStatus.cycles);
   };
 
   private func isLeagueOrBDFN(caller : Principal) : async* Bool {
-    let ?leagueId = leagueIdOrNull else Debug.trap("League not set");
-    if (leagueId == caller) {
+    if (leagueCanisterId == caller) {
       return true;
     };
     // TODO change to league push new bdfn vs fetch?
-    let leagueActor = actor (Principal.toText(leagueId)) : LeagueTypes.LeagueActor;
+    let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
     switch (await leagueActor.getBenevolentDictatorState()) {
       case (#claimed(bdfnId)) caller == bdfnId;
       case (#disabled or #open) false;
