@@ -6,8 +6,8 @@ import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
+import Result "mo:base/Result";
 import Team "../models/Team";
-import Types "../actors/Types";
 
 module {
     public type StableData = {
@@ -18,6 +18,16 @@ module {
         matchGroupId : Nat;
         isOpen : Bool;
         matchPredictions : [[(Principal, Team.TeamId)]];
+    };
+
+    public type MatchGroupSummary = {
+        matches : [MatchPredictionSummary];
+    };
+
+    public type MatchPredictionSummary = {
+        team1 : Nat;
+        team2 : Nat;
+        yourVote : ?Team.TeamId;
     };
 
     type MatchGroupPredictionInfo = {
@@ -69,7 +79,7 @@ module {
             matchId : Nat,
             caller : Principal,
             prediction : ?Team.TeamId,
-        ) : Types.PredictMatchOutcomeResult {
+        ) : Result.Result<(), { #identityRequired; #predictionsClosed; #matchNotFound }> {
             if (Principal.isAnonymous(caller)) {
                 return #err(#identityRequired);
             };
@@ -91,9 +101,12 @@ module {
             ?mapMatchPredictions(matchGroupInfo.matchPredictions);
         };
 
-        public func getMatchGroupSummary(matchGroupId : Nat, userContext : ?Principal) : Types.GetMatchGroupPredictionsResult {
+        public func getMatchGroupSummary(
+            matchGroupId : Nat,
+            userContext : ?Principal,
+        ) : Result.Result<MatchGroupSummary, { #notFound }> {
             let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else return #err(#notFound);
-            let predictionSummaryBuffer = Buffer.Buffer<Types.MatchPredictionSummary>(matchGroupInfo.matchPredictions.size());
+            let predictionSummaryBuffer = Buffer.Buffer<MatchPredictionSummary>(matchGroupInfo.matchPredictions.size());
 
             for (matchPredictions in matchGroupInfo.matchPredictions.vals()) {
                 let matchPredictionSummary = {

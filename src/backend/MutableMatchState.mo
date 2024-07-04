@@ -8,7 +8,7 @@ import Debug "mo:base/Debug";
 import FieldPosition "models/FieldPosition";
 import Skill "models/Skill";
 import Base "models/Base";
-import Types "actors/Types";
+import LiveState "models/LiveState";
 
 module {
 
@@ -40,7 +40,7 @@ module {
     };
 
     public type MutableTurnLog = {
-        events : Buffer.Buffer<Types.Event>;
+        events : Buffer.Buffer<LiveState.MatchEvent>;
     };
 
     public type MutableRoundLog = {
@@ -51,9 +51,9 @@ module {
         rounds : Buffer.Buffer<MutableRoundLog>;
     };
 
-    public class MutableMatchState(immutableState : Types.Match) = {
+    public class MutableMatchState(immutableState : LiveState.LiveMatchState) = {
 
-        private func toMutableTeam(team : Types.TeamState) : MutableTeamState {
+        private func toMutableTeam(team : LiveState.LiveMatchTeam) : MutableTeamState {
             {
                 id = team.id;
                 name = team.name;
@@ -77,15 +77,15 @@ module {
             };
         };
 
-        private func toMutableTurnLog(turn : Types.TurnLog) : MutableTurnLog {
+        private func toMutableTurnLog(turn : LiveState.TurnLog) : MutableTurnLog {
             {
                 events = turn.events
                 |> Iter.fromArray(_)
-                |> Buffer.fromIter<Types.Event>(_);
+                |> Buffer.fromIter<LiveState.MatchEvent>(_);
             };
         };
 
-        private func toMutableRoundLog(round : Types.RoundLog) : MutableRoundLog {
+        private func toMutableRoundLog(round : LiveState.RoundLog) : MutableRoundLog {
             {
                 turns = round.turns
                 |> Iter.fromArray(_)
@@ -94,7 +94,7 @@ module {
             };
         };
 
-        private func toMutableLog(log : Types.MatchLog) : MutableMatchLog {
+        private func toMutableLog(log : LiveState.MatchLog) : MutableMatchLog {
             {
                 rounds = log.rounds
                 |> Iter.fromArray(_)
@@ -103,6 +103,7 @@ module {
             };
         };
 
+        public let id = immutableState.id;
         public var offenseTeamId = immutableState.offenseTeamId;
         public var team1 = toMutableTeam(immutableState.team1);
         public var team2 = toMutableTeam(immutableState.team2);
@@ -117,10 +118,10 @@ module {
         public var outs = immutableState.outs;
         public var strikes = immutableState.strikes;
         public var players = immutableState.players.vals()
-        |> Iter.map<Types.PlayerStateWithId, (Nat32, MutablePlayerStateWithId)>(
+        |> Iter.map<LiveState.LivePlayerState, (Nat32, MutablePlayerState)>(
             _,
-            func(player : Types.PlayerStateWithId) : (Nat32, MutablePlayerStateWithId) {
-                let state : MutablePlayerStateWithId = {
+            func(player : LiveState.LivePlayerState) : (Nat32, MutablePlayerState) {
+                let state : MutablePlayerState = {
                     id = player.id;
                     name = player.name;
                     var teamId = player.teamId;
@@ -154,7 +155,7 @@ module {
                 (player.id, state);
             },
         )
-        |> TrieMap.fromEntries<Nat32, MutablePlayerStateWithId>(_, Nat32.equal, func(h : Nat32) : Nat32 = h);
+        |> TrieMap.fromEntries<Nat32, MutablePlayerState>(_, Nat32.equal, func(h : Nat32) : Nat32 = h);
 
         public func getTeamPlayers(teamId : Team.TeamId) : Iter.Iter<(Player.PlayerId, MutablePlayerState)> {
             players.entries()
@@ -165,7 +166,7 @@ module {
                 },
             );
         };
-        public func getPlayerState(playerId : Player.PlayerId) : MutablePlayerStateWithId {
+        public func getPlayerState(playerId : Player.PlayerId) : MutablePlayerState {
             let ?player = players.get(playerId) else Debug.trap("Player not found for 'getPlayerState': " # Nat32.toText(playerId));
             player;
         };
@@ -213,7 +214,7 @@ module {
             null;
         };
 
-        public func getPlayerAtBase(base : Base.Base) : ?MutablePlayerStateWithId {
+        public func getPlayerAtBase(base : Base.Base) : ?MutablePlayerState {
             let playerId = switch (base) {
                 case (#firstBase) bases.firstBase;
                 case (#secondBase) bases.secondBase;
@@ -264,14 +265,14 @@ module {
             };
         };
 
-        public func addEvent(event : Types.Event) {
+        public func addEvent(event : LiveState.MatchEvent) {
             if (log.rounds.size() == 0) {
                 addNewRound();
             };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             if (currentRound.turns.size() == 0) {
                 currentRound.turns.add({
-                    events = Buffer.Buffer<Types.Event>(0);
+                    events = Buffer.Buffer<LiveState.MatchEvent>(0);
                 });
             };
             let currentTurn = currentRound.turns.get(currentRound.turns.size() - 1);
@@ -284,7 +285,7 @@ module {
             };
             let currentRound = log.rounds.get(log.rounds.size() - 1);
             currentRound.turns.add({
-                events = Buffer.Buffer<Types.Event>(0);
+                events = Buffer.Buffer<LiveState.MatchEvent>(0);
             });
         };
 
@@ -295,7 +296,7 @@ module {
         private func addNewRound() {
             let turns = Buffer.Buffer<MutableTurnLog>(0);
             turns.add({
-                events = Buffer.Buffer<Types.Event>(0);
+                events = Buffer.Buffer<LiveState.MatchEvent>(0);
             });
             log.rounds.add({
                 turns = Buffer.Buffer<MutableTurnLog>(0);
@@ -339,15 +340,12 @@ module {
     };
 
     public type MutablePlayerState = {
+        id : Player.PlayerId;
         name : Text;
         var teamId : Team.TeamId;
         var condition : Player.PlayerCondition;
         skills : MutablePlayerSkills;
         matchStats : MutablePlayerMatchStats;
-    };
-
-    public type MutablePlayerStateWithId = MutablePlayerState and {
-        id : Player.PlayerId;
     };
 
     public func toMutableSkills(skills : Player.Skills) : MutablePlayerSkills {

@@ -1,10 +1,19 @@
 import Result "mo:base/Result";
 import Timer "mo:base/Timer";
+import Buffer "mo:base/Buffer";
+import Iter "mo:base/Iter";
+import HashMap "mo:base/HashMap";
 import Player "../models/Player";
 import MatchAura "../models/MatchAura";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Season "../models/Season";
 import FieldPosition "../models/FieldPosition";
+import Trait "../models/Trait";
+import Team "../models/Team";
+import Base "../models/Base";
+import MatchSimulator "../MatchSimulator";
+import LiveState "../models/LiveState";
+import IterTools "mo:itertools/Iter";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -14,14 +23,7 @@ module {
         matches : [StartMatchRequest];
     };
 
-    public type Team = {
-        id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
-    };
-
-    public type StartMatchTeam = Team and {
+    public type StartMatchTeam = MatchSimulator.Team and {
         positions : {
             firstBase : Player.Player;
             secondBase : Player.Player;
@@ -51,169 +53,26 @@ module {
 
     public type MatchGroupTickError = {};
 
-    public type RoundLog = {
-        turns : [TurnLog];
+    public type CompletedMatchResult = {
+        match : Season.CompletedMatch;
+        matchStats : [Player.PlayerMatchStatsWithId];
     };
 
-    public type TurnLog = {
-        events : [Event];
+    public type StableData = {
+        matchGroups : [LiveState.LiveMatchGroupState];
     };
 
-    public type HitLocation = FieldPosition.FieldPosition or {
-        #stands;
-    };
+    public class Handler(stableData : StableData) {
+        let matchGroupStates : HashMap.HashMap<Nat, LiveState.LiveMatchGroupState> = toMatchGroupStateMap(stableData.matchGroups);
+        public func startMatchGroup<system>(
+            prng : Prng,
+            id : Nat,
+            matches : [StartMatchRequest],
+        ) : Result.Result<(), { #noMatchesSpecified }> {
+            let tickTimerId = startTickTimer<system>(id);
 
-    public type Event = {
-        #traitTrigger : {
-            id : Trait.Trait;
-            playerId : Player.PlayerId;
-            description : Text;
-        };
-        #auraTrigger : {
-            id : MatchAura.MatchAura;
-            description : Text;
-        };
-        #pitch : {
-            pitcherId : Player.PlayerId;
-            roll : {
-                value : Int;
-                crit : Bool;
-            };
-        };
-        #swing : {
-            playerId : Player.PlayerId;
-            roll : {
-                value : Int;
-                crit : Bool;
-            };
-            pitchRoll : {
-                value : Int;
-                crit : Bool;
-            };
-            outcome : {
-                #foul;
-                #strike;
-                #hit : HitLocation;
-            };
-        };
-        #catch_ : {
-            playerId : Player.PlayerId;
-            roll : {
-                value : Int;
-                crit : Bool;
-            };
-            difficulty : {
-                value : Int;
-                crit : Bool;
-            };
-        };
-        #teamSwap : {
-            offenseTeamId : Team.TeamId;
-            atBatPlayerId : Player.PlayerId;
-        };
-        #injury : {
-            playerId : Nat32;
-        };
-        #death : {
-            playerId : Nat32;
-        };
-        #score : {
-            teamId : Team.TeamId;
-            amount : Int;
-        };
-        #newBatter : {
-            playerId : Player.PlayerId;
-        };
-        #out : {
-            playerId : Player.PlayerId;
-            reason : OutReason;
-        };
-        #matchEnd : {
-            reason : MatchEndReason;
-        };
-        #safeAtBase : {
-            playerId : Player.PlayerId;
-            base : Base.Base;
-        };
-        #throw_ : {
-            from : Player.PlayerId;
-            to : Player.PlayerId;
-        };
-        #hitByBall : {
-            playerId : Player.PlayerId;
-        };
-    };
-
-    public type MatchEndReason = {
-        #noMoreRounds;
-        #error : Text;
-    };
-
-    public type OutReason = {
-        #ballCaught;
-        #strikeout;
-        #hitByBall;
-    };
-
-    public type MatchLog = {
-        rounds : [RoundLog];
-    };
-
-    public type Match = {
-        team1 : TeamState;
-        team2 : TeamState;
-        offenseTeamId : Team.TeamId;
-        aura : MatchAura.MatchAura;
-        players : [PlayerStateWithId];
-        bases : BaseState;
-        log : MatchLog;
-        outs : Nat;
-        strikes : Nat;
-    };
-
-    public type PlayerExpectedOnFieldError = {
-        id : Player.PlayerId;
-        onOffense : Bool;
-        description : Text;
-    };
-
-    public type BrokenStateError = {
-        #playerNotFound : Player.PlayerId;
-        #playerExpectedOnField : PlayerExpectedOnFieldError;
-    };
-
-    public type TickResult = {
-        match : Match;
-        status : MatchStatus;
-    };
-
-    public type MatchStatus = {
-        #inProgress;
-        #completed : MatchStatusCompleted;
-    };
-
-    public type MatchStatusCompleted = {
-        reason : MatchEndReason;
-    };
-
-    public type MatchGroup = {
-        matches : [TickResult];
-        tickTimerId : Nat;
-        currentSeed : Nat32;
-    };
-
-    public type MatchGroupWithId = MatchGroup and {
-        id : Nat;
-    };
-
-    public class Handler() {
-        public func startMatchGroup(prng : Prng) {
-
-            let prng = PseudoRandomX.fromBlob(await Random.blob());
-            let tickTimerId = startTickTimer<system>(request.id);
-
-            let tickResults = Buffer.Buffer<Types.TickResult>(request.matches.size());
-            label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(request.matches))) {
+            let tickResults = Buffer.Buffer<MatchSimulator.TickResult>(matches.size());
+            label f for ((matchId, match) in IterTools.enumerate(Iter.fromArray(matches))) {
 
                 let team1IsOffense = prng.nextCoin();
                 let initState = MatchSimulator.initState(
@@ -232,13 +91,13 @@ module {
                 return #err(#noMatchesSpecified);
             };
 
-            let matchGroup : Types.MatchGroupWithId = {
-                id = request.id;
+            let matchGroup : LiveState.LiveMatchGroupState = {
+                id = id;
                 matches = Buffer.toArray(tickResults);
                 tickTimerId = tickTimerId;
                 currentSeed = prng.getCurrentSeed();
             };
-            addOrUpdateMatchGroup(matchGroup);
+            matchGroups.put(id, matchGroup);
         };
 
         public func cancelMatchGroup(
@@ -287,8 +146,8 @@ module {
                     |> Iter.toArray(_);
 
                     Timer.cancelTimer(matchGroup.tickTimerId);
-                    let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueTypes.LeagueActor;
-                    let onCompleteRequest : LeagueTypes.OnMatchGroupCompleteRequest = {
+                    let leagueActor = actor (Principal.toText(leagueCanisterId)) : LeagueLeagueActor;
+                    let onCompleteRequest : LeagueOnMatchGroupCompleteRequest = {
                         id = id;
                         matches = completedMatches;
                         playerStats = playerStats;
@@ -358,7 +217,7 @@ module {
         };
 
         private func resetTickTimer<system>(matchGroupId : Nat) : () {
-            let ?matchGroup = getMatchGroupOrNull(matchGroupId) else return;
+            let ?matchGroup = matchGroups.get(matchGroupId) else return;
             Timer.cancelTimer(matchGroup.tickTimerId);
             let newTickTimerId = startTickTimer<system>(matchGroupId);
             addOrUpdateMatchGroup({
@@ -398,7 +257,7 @@ module {
             let anyAwards = switch (predictionHandler.getMatchGroup(matchGroupId)) {
                 case (null) false;
                 case (?matchGroupPredictions) {
-                    let awards = Buffer.Buffer<UserTypes.AwardPointsRequest>(0);
+                    let awards = Buffer.Buffer<UserAwardPointsRequest>(0);
                     var i = 0;
                     for (match in Iter.fromArray(completedMatches)) {
                         if (i >= matchGroupPredictions.size()) {
@@ -441,12 +300,12 @@ module {
             };
         };
 
-        private func tickMatches(prng : Prng, tickResults : [TickResult]) : {
+        private func tickMatches(prng : Prng, tickResults : [MatchSimulator.TickResult]) : {
             #completed : [CompletedMatchResult];
-            #inProgress : [TickResult];
+            #inProgress : [MatchSimulator.TickResult];
         } {
-            let completedMatches = Buffer.Buffer<(Types.Match, Types.MatchStatusCompleted)>(tickResults.size());
-            let updatedTickResults = Buffer.Buffer<Types.TickResult>(tickResults.size());
+            let completedMatches = Buffer.Buffer<(LiveState.LiveMatchState, MatchSimulator.MatchStatusCompleted)>(tickResults.size());
+            let updatedTickResults = Buffer.Buffer<MatchSimulator.TickResult>(tickResults.size());
             for (tickResult in Iter.fromArray(tickResults)) {
                 let updatedTickResult = switch (tickResult.status) {
                     // Don't tick if completed
@@ -464,7 +323,7 @@ module {
                 let completedCompiledMatches = completedMatches.vals()
                 |> Iter.map(
                     _,
-                    func((match, status) : (Types.Match, Types.MatchStatusCompleted)) : CompletedMatchResult {
+                    func((match, status) : (LiveState.LiveMatchState, MatchSimulator.MatchStatusCompleted)) : CompletedMatchResult {
                         compileCompletedMatch(match, status);
                     },
                 )
@@ -475,7 +334,7 @@ module {
             };
         };
 
-        private func compileCompletedMatch(match : Types.Match, status : Types.MatchStatusCompleted) : CompletedMatchResult {
+        private func compileCompletedMatch(match : LiveState.LiveMatchState, status : MatchSimulator.MatchStatusCompleted) : CompletedMatchResult {
             let winner : Team.TeamIdOrTie = switch (status.reason) {
                 case (#noMoreRounds) {
                     if (match.team1.score > match.team2.score) {
@@ -486,7 +345,7 @@ module {
                         #team2;
                     };
                 };
-                case (#error(e)) #tie;
+                case (#stateBroken(e)) #tie;
             };
 
             let playerStats = buildPlayerStats(match);
@@ -504,11 +363,11 @@ module {
             };
         };
 
-        private func buildPlayerStats(match : Types.Match) : [Player.PlayerMatchStatsWithId] {
+        private func buildPlayerStats(match : LiveState.LiveMatchState) : [Player.PlayerMatchStatsWithId] {
             match.players.vals()
             |> Iter.map(
                 _,
-                func(player : Types.PlayerStateWithId) : Player.PlayerMatchStatsWithId {
+                func(player : MatchSimulator.PlayerState) : Player.PlayerMatchStatsWithId {
                     {
                         playerId = player.id;
                         battingStats = {
@@ -539,19 +398,5 @@ module {
             |> Iter.toArray(_);
         };
 
-        private func getMatchGroupOrNull(matchGroupId : Nat) : ?Types.MatchGroup {
-            let matchGroupKey = buildMatchGroupKey(matchGroupId);
-            Trie.get(matchGroups, matchGroupKey, Nat.equal);
-        };
-
-        private func buildMatchGroupKey(matchGroupId : Nat) : {
-            key : Nat;
-            hash : Nat32;
-        } {
-            {
-                hash = Nat32.fromNat(matchGroupId); // TODO better hash? shouldnt need more than 32 bits
-                key = matchGroupId;
-            };
-        };
     };
 };

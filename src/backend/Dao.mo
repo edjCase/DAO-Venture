@@ -12,7 +12,7 @@ import Buffer "mo:base/Buffer";
 import Error "mo:base/Error";
 import Order "mo:base/Order";
 import IterTools "mo:itertools/Iter";
-import CommonTypes "./Types";
+import CommonTypes "./CommonTypes";
 import Result "mo:base/Result";
 
 module {

@@ -307,4 +307,8 @@ module {
         proportion : Nat;
     };
 
+    public type ScenarioOptionValue = {
+        #nat : Nat;
+        #id : Nat;
+    };
 };

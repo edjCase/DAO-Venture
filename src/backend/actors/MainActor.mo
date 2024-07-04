@@ -8,7 +8,7 @@ import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Bool "mo:base/Bool";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Types "Types";
+import Types "MainActorTypes";
 import Season "../models/Season";
 import Scenario "../models/Scenario";
 import SeasonHandler "../handlers/SeasonHandler";
@@ -25,11 +25,6 @@ import Player "../models/Player";
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
     type Prng = PseudoRandomX.PseudoRandomGenerator;
-
-    type CompletedMatchResult = {
-        match : Season.CompletedMatch;
-        matchStats : [Player.PlayerMatchStatsWithId];
-    };
 
     // Stables ---------------------------------------------------------
 
@@ -87,14 +82,19 @@ actor MainActor : Types.Actor {
                         };
                     };
                     case (#entropy(entropyEffect)) {
-                        let result = await teamsHandler.updateTeamEntropy(entropyEffect.teamId, entropyEffect.delta);
-                        switch (result) {
+                        switch (teamsHandler.updateEntropy(entropyEffect.teamId, entropyEffect.delta)) {
                             case (#ok) #ok;
+                            case (#err(#overThreshold)) {
+                                Debug.print("Entropy threshold reached, triggering league collapse");
+                                seasonHandler.onLeagueCollapse();
+                                scenarioHandler.onLeagueCollapse();
+                                #err("Team has exceeded the entropy threshold");
+                            };
                             case (#err(e)) #err(debug_show (e));
                         };
                     };
                     case (#energy(e)) {
-                        let result = await teamsHandler.updateTeamEnergy(e.teamId, e.delta);
+                        let result = await teamsHandler.updateEnergy(e.teamId, e.delta);
                         switch (result) {
                             case (#ok) #ok;
                             case (#err(e)) #err(debug_show (e));
@@ -529,7 +529,8 @@ actor MainActor : Types.Actor {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
-        await* teamsHandler.create(request);
+        teamsHandler.create(request);
+        playerHandler.populateTeamRoster(teamId);
     };
 
     public shared ({ caller }) func updateTeamEnergy(id : Nat, delta : Int) : async Types.UpdateTeamEnergyResult {
@@ -541,41 +542,6 @@ actor MainActor : Types.Actor {
             case (#err(#teamNotFound)) #err(#teamNotFound);
             case (#err(#notEnoughEnergy)) Prelude.unreachable(); // Only happens when 0 energy is min
         };
-    };
-
-    public shared ({ caller }) func updateTeamEntropy(id : Nat, delta : Int) : async Types.UpdateTeamEntropyResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        await* teamsHandler.updateEntropy(id, delta);
-    };
-
-    public shared ({ caller }) func updateTeamMotto(id : Nat, motto : Text) : async Types.UpdateTeamMottoResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        teamsHandler.updateMotto(id, motto);
-    };
-
-    public shared ({ caller }) func updateTeamDescription(id : Nat, description : Text) : async Types.UpdateTeamDescriptionResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        teamsHandler.updateDescription(id, description);
-    };
-
-    public shared ({ caller }) func updateTeamLogo(id : Nat, logoUrl : Text) : async Types.UpdateTeamLogoResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        teamsHandler.updateLogo(id, logoUrl);
-    };
-
-    public shared ({ caller }) func updateTeamColor(id : Nat, color : (Nat8, Nat8, Nat8)) : async Types.UpdateTeamColorResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        teamsHandler.updateColor(id, color);
     };
 
     public shared ({ caller }) func updateTeamName(id : Nat, name : Text) : async Types.UpdateTeamNameResult {
@@ -662,7 +628,7 @@ actor MainActor : Types.Actor {
         if (caller != userId and not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
-
+        let ?_ = teamsHandler.get(teamId) else return #err(#teamNotFound);
         userHandler.setFavoriteTeam(userId, teamId);
     };
 
@@ -670,6 +636,7 @@ actor MainActor : Types.Actor {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
+        let ?_ = teamHandler.get(request.teamId) else return #err(#teamNotFound);
         userHandler.addTeamOwner(request);
     };
 

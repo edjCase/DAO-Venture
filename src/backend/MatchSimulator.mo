@@ -17,13 +17,74 @@ import Skill "models/Skill";
 import Hook "models/Hook";
 import MutableState "MutableMatchState";
 import HookCompiler "HookCompiler";
-import Types "actors/Types";
+import LiveState "models/LiveState";
 
 module {
 
     type PlayerId = Player.PlayerId;
     type MatchAura = MatchAura.MatchAura;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
+
+    public type Team = {
+        id : Nat;
+        name : Text;
+        logoUrl : Text;
+        color : (Nat8, Nat8, Nat8);
+    };
+
+    public type TeamState = Team and {
+        score : Int;
+        positions : FieldPosition.TeamPositions;
+    };
+
+    public type PlayerState = {
+        id : Player.PlayerId;
+        name : Text;
+        teamId : Team.TeamId;
+        condition : Player.PlayerCondition;
+        skills : Player.Skills;
+        matchStats : Player.PlayerMatchStats;
+    };
+
+    public type Match = {
+        team1 : TeamState;
+        team2 : TeamState;
+        offenseTeamId : Team.TeamId;
+        aura : MatchAura.MatchAura;
+        players : [PlayerState];
+        bases : BaseState;
+        log : LiveState.MatchLog;
+        outs : Nat;
+        strikes : Nat;
+    };
+
+    public type BaseState = {
+        atBat : Player.PlayerId;
+        firstBase : ?Player.PlayerId;
+        secondBase : ?Player.PlayerId;
+        thirdBase : ?Player.PlayerId;
+    };
+
+    public type TickResult = {
+        match : LiveState.LiveMatchState;
+        status : MatchStatus;
+    };
+
+    public type MatchStatus = {
+        #inProgress;
+        #completed : MatchStatusCompleted;
+    };
+
+    public type MatchStatusCompleted = {
+        reason : MatchEndReason;
+    };
+
+    public type MatchGroup = {
+        id : Nat;
+        matches : [TickResult];
+        tickTimerId : Nat;
+        currentSeed : Nat32;
+    };
 
     type SimulationResult = {
         #endMatch : MatchEndReason;
@@ -32,7 +93,18 @@ module {
 
     type MatchEndReason = {
         #noMoreRounds;
-        #stateBroken : Types.BrokenStateError;
+        #stateBroken : BrokenStateError;
+    };
+
+    type BrokenStateError = {
+        #playerNotFound : Player.PlayerId;
+        #playerExpectedOnField : PlayerExpectedOnFieldError;
+    };
+
+    type PlayerExpectedOnFieldError = {
+        id : Player.PlayerId;
+        onOffense : Bool;
+        description : Text;
     };
 
     public type TeamInitData = {
@@ -58,7 +130,7 @@ module {
         team2 : TeamInitData,
         team1StartOffense : Bool,
         prng : Prng,
-    ) : Types.Match {
+    ) : Match {
         let (team1State, team1Players) = buildTeamState(team1, #team1);
         let (team2State, team2Players) = buildTeamState(team2, #team2);
         let offensePlayers = if (team1StartOffense) {
@@ -73,8 +145,8 @@ module {
             team1Players,
             team2Players,
             func(
-                p1 : Types.PlayerStateWithId,
-                p2 : Types.PlayerStateWithId,
+                p1 : PlayerState,
+                p2 : PlayerState,
             ) : Order.Order = Nat32.compare(p1.id, p2.id),
         );
         {
@@ -101,9 +173,9 @@ module {
     private func buildTeamState(
         team : TeamInitData,
         teamId : Team.TeamId,
-    ) : (Types.TeamState, Buffer.Buffer<Types.PlayerStateWithId>) {
+    ) : (TeamState, Buffer.Buffer<PlayerState>) {
 
-        let mapPlayer = func(player : Player.Player) : Types.PlayerStateWithId = {
+        let mapPlayer = func(player : Player.Player) : PlayerState = {
             id = player.id;
             name = player.name;
             teamId = teamId;
@@ -135,7 +207,7 @@ module {
                 injuries = 0;
             };
         };
-        let playerStates = Buffer.Buffer<Types.PlayerStateWithId>(8);
+        let playerStates = Buffer.Buffer<PlayerState>(8);
         playerStates.add(mapPlayer(team.positions.pitcher));
         playerStates.add(mapPlayer(team.positions.firstBase));
         playerStates.add(mapPlayer(team.positions.secondBase));
@@ -145,7 +217,7 @@ module {
         playerStates.add(mapPlayer(team.positions.centerField));
         playerStates.add(mapPlayer(team.positions.rightField));
 
-        let teamState : Types.TeamState = {
+        let teamState : TeamState = {
             id = team.id;
             name = team.name;
             logoUrl = team.logoUrl;
@@ -165,21 +237,21 @@ module {
         (teamState, playerStates);
     };
 
-    public func tick(match : Types.Match, random : Prng) : Types.TickResult {
+    public func tick(match : LiveState.LiveMatchState, random : Prng) : TickResult {
         let compiledHooks = HookCompiler.compile(match);
         let simulation = MatchSimulation(match, random, compiledHooks);
         simulation.tick();
     };
 
     class MatchSimulation(
-        initialState : Types.Match,
+        initialState : LiveState.LiveMatchState,
         prng : Prng,
         compiledHooks : Hook.CompiledHooks,
     ) {
 
         let state : MutableState.MutableMatchState = MutableState.MutableMatchState(initialState);
 
-        public func tick() : Types.TickResult {
+        public func tick() : TickResult {
             state.startTurn();
             if (state.log.rounds.size() < 1) {
                 // Need to log first batter, others handled when batter switches
@@ -201,15 +273,15 @@ module {
             buildTickResult(result);
         };
 
-        private func buildTickResult(result : SimulationResult) : Types.TickResult {
-            let status : Types.MatchStatus = switch (result) {
+        private func buildTickResult(result : SimulationResult) : TickResult {
+            let status : MatchStatus = switch (result) {
                 case (#endMatch(reason)) {
                     let mappedReason = switch (reason) {
                         case (#noMoreRounds) #noMoreRounds;
                         case (#stateBroken(e)) #error(debug_show (e)); // TODO error format
                     };
                     state.addEvent(#matchEnd({ reason = mappedReason }));
-                    #completed({ reason = mappedReason });
+                    #completed({ reason = reason });
                 };
                 case (#inProgress) #inProgress;
             };
@@ -221,7 +293,7 @@ module {
 
         };
 
-        private func mapMutableTeam(team : MutableState.MutableTeamState) : Types.TeamState {
+        private func mapMutableTeam(team : MutableState.MutableTeamState) : TeamState {
             {
                 id = team.id;
                 name = team.name;
@@ -241,12 +313,12 @@ module {
             };
         };
 
-        private func buildLiveMatch() : Types.Match {
+        private func buildLiveMatch() : LiveState.LiveMatchState {
 
             let players = Iter.toArray(
                 Iter.map(
                     state.players.entries(),
-                    func(player : (Nat32, MutableState.MutablePlayerState)) : Types.PlayerStateWithId {
+                    func(player : (Nat32, MutableState.MutablePlayerState)) : PlayerState {
                         {
                             id = player.0;
                             name = player.1.name;
@@ -297,7 +369,7 @@ module {
                 secondBase = state.bases.secondBase;
                 thirdBase = state.bases.thirdBase;
             };
-            let log : Types.MatchLog = fromMutableLog(state.log);
+            let log : LiveState.MatchLog = fromMutableLog(state.log);
             {
                 team1 = mapMutableTeam(state.team1);
                 team2 = mapMutableTeam(state.team2);
@@ -312,7 +384,7 @@ module {
             };
         };
 
-        private func fromMutableLog(log : MutableState.MutableMatchLog) : Types.MatchLog {
+        private func fromMutableLog(log : MutableState.MutableMatchLog) : LiveState.MatchLog {
             {
                 rounds = log.rounds.vals()
                 |> Iter.map(_, fromMutableRoundLog)
@@ -320,7 +392,7 @@ module {
             };
         };
 
-        private func fromMutableRoundLog(log : MutableState.MutableRoundLog) : Types.RoundLog {
+        private func fromMutableRoundLog(log : MutableState.MutableRoundLog) : LiveState.RoundLog {
             {
                 turns = log.turns.vals()
                 |> Iter.map(_, fromMutableTurns)
@@ -328,7 +400,7 @@ module {
             };
         };
 
-        private func fromMutableTurns(log : MutableState.MutableTurnLog) : Types.TurnLog {
+        private func fromMutableTurns(log : MutableState.MutableTurnLog) : LiveState.TurnLog {
             {
                 events = Buffer.toArray(log.events);
             };
@@ -507,7 +579,7 @@ module {
             };
         };
 
-        private func getHitLocation() : Types.HitLocation {
+        private func getHitLocation() : LiveState.HitLocation {
             let hitPowerRoll = roll(
                 #d10,
                 state.bases.atBat,
@@ -816,7 +888,7 @@ module {
             };
         };
 
-        private func out(playerId : Nat32, reason : Types.OutReason) : SimulationResult {
+        private func out(playerId : Nat32, reason : LiveState.OutReason) : SimulationResult {
             state.strikes := 0;
             state.outs += 1;
             state.addEvent(

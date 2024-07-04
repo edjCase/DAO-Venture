@@ -5,14 +5,14 @@ import Team "../models/Team";
 import Season "../models/Season";
 import Scenario "../models/Scenario";
 import Dao "../Dao";
-import CommonTypes "../Types";
+import CommonTypes "../CommonTypes";
 import Components "mo:datetime/Components";
 import Result "mo:base/Result";
 import FieldPosition "../models/FieldPosition";
 import MatchAura "../models/MatchAura";
-import Trait "../models/Trait";
-import Base "../models/Base";
-import Skill "../models/Skill";
+import LiveState "../models/LiveState";
+import ScenarioHandler "../handlers/ScenarioHandler";
+import UserHandler "../handlers/UserHandler";
 
 module {
     public type Actor = actor {
@@ -44,7 +44,7 @@ module {
         getTeamPlayers : query (teamId : Nat) -> async [Player.Player];
         getAllPlayers : query () -> async [Player.Player];
 
-        getMatchGroup : query (id : Nat) -> async ?MatchGroupWithId;
+        getLiveMatchGroupState : query (id : Nat) -> async ?LiveState.LiveMatchGroupState;
         finishMatchGroup : (id : Nat) -> async (); // TODO remove
         startMatchGroup : (request : StartMatchGroupRequest) -> async StartMatchGroupResult;
         cancelMatchGroup : (request : CancelMatchGroupRequest) -> async CancelMatchGroupResult;
@@ -63,6 +63,13 @@ module {
         getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
         setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
+    };
+
+    public type Team = {
+        id : Nat;
+        name : Text;
+        logoUrl : Text;
+        color : (Nat8, Nat8, Nat8);
     };
 
     public type GetPositionError = {
@@ -86,48 +93,16 @@ module {
         scenarioId : Nat;
     };
 
-    public type ScenarioVote = {
-        value : ?ScenarioOptionValue;
-        votingPower : Nat;
-        teamId : Nat;
-        teamVotingPower : Nat;
-        teamOptions : ScenarioTeamOptions;
-    };
-
-    public type ScenarioTeamOptions = {
-        #discrete : [ScenarioTeamOptionDiscrete];
-        #nat : [ScenarioTeamOptionNat];
-    };
-
-    public type ScenarioTeamOptionDiscrete = {
-        id : Nat;
-        title : Text;
-        description : Text;
-        energyCost : Nat;
-        currentVotingPower : Nat;
-        traitRequirements : [Scenario.TraitRequirement];
-    };
-
-    public type ScenarioTeamOptionNat = {
-        value : Nat;
-        currentVotingPower : Nat;
-    };
-
-    public type ScenarioOptionValue = {
-        #nat : Nat;
-        #id : Nat;
-    };
-
     public type GetScenarioVoteError = {
         #scenarioNotFound;
         #notEligible;
     };
 
-    public type GetScenarioVoteResult = Result.Result<ScenarioVote, GetScenarioVoteError>;
+    public type GetScenarioVoteResult = Result.Result<ScenarioHandler.ScenarioVote, GetScenarioVoteError>;
 
     public type VoteOnScenarioRequest = {
         scenarioId : Nat;
-        value : ScenarioOptionValue;
+        value : Scenario.ScenarioOptionValue;
     };
 
     public type VoteOnScenarioError = {
@@ -302,70 +277,6 @@ module {
         weekDays : [Components.DayOfWeek];
     };
 
-    public type AddScenarioRequest = {
-        startTime : ?Time.Time;
-        endTime : Time.Time;
-        title : Text;
-        description : Text;
-        undecidedEffect : Scenario.Effect;
-        kind : ScenarioKindRequest;
-    };
-
-    public type ScenarioKindRequest = {
-        #noLeagueEffect : NoLeagueEffectScenarioRequest;
-        #threshold : ThresholdScenarioRequest;
-        #leagueChoice : LeagueChoiceScenarioRequest;
-        #lottery : Scenario.LotteryScenario;
-        #proportionalBid : Scenario.ProportionalBidScenario;
-    };
-
-    public type ScenarioOptionDiscrete = {
-        title : Text;
-        description : Text;
-        energyCost : Nat;
-        traitRequirements : [Scenario.TraitRequirement];
-        teamEffect : Scenario.Effect;
-    };
-
-    public type NoLeagueEffectScenarioRequest = {
-        options : [ScenarioOptionDiscrete];
-    };
-
-    public type ThresholdScenarioRequest = {
-        minAmount : Nat;
-        success : {
-            description : Text;
-            effect : Scenario.Effect;
-        };
-        failure : {
-            description : Text;
-            effect : Scenario.Effect;
-        };
-        undecidedAmount : ThresholdValue;
-        options : [ThresholdScenarioOptionRequest];
-    };
-
-    public type ThresholdScenarioOptionRequest = ScenarioOptionDiscrete and {
-        value : ThresholdValue;
-    };
-
-    public type ThresholdValue = {
-        #fixed : Int;
-        #weightedChance : [{
-            value : Int;
-            weight : Nat;
-            description : Text;
-        }];
-    };
-
-    public type LeagueChoiceScenarioRequest = {
-        options : [LeagueChoiceScenarioOptionRequest];
-    };
-
-    public type LeagueChoiceScenarioOptionRequest = ScenarioOptionDiscrete and {
-        leagueEffect : Scenario.Effect;
-    };
-
     public type AddScenarioError = {
         #invalid : [Text];
         #notAuthorized;
@@ -495,13 +406,6 @@ module {
         matches : [StartMatchRequest];
     };
 
-    public type Team = {
-        id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
-    };
-
     public type StartMatchTeam = Team and {
         positions : {
             firstBase : Player.Player;
@@ -527,25 +431,6 @@ module {
 
     public type ResetTickTimerResult = Result.Result<(), ResetTickTimerError>;
 
-    public type PlayerState = {
-        name : Text;
-        teamId : Team.TeamId;
-        condition : Player.PlayerCondition;
-        skills : Player.Skills;
-        matchStats : Player.PlayerMatchStats;
-    };
-
-    public type PlayerStateWithId = PlayerState and {
-        id : Player.PlayerId;
-    };
-
-    public type BaseState = {
-        atBat : Player.PlayerId;
-        firstBase : ?Player.PlayerId;
-        secondBase : ?Player.PlayerId;
-        thirdBase : ?Player.PlayerId;
-    };
-
     public type TickMatchGroupResult = Result.Result<{ #inProgress; #completed }, TickMatchGroupError>;
 
     public type TickMatchGroupError = {
@@ -563,11 +448,6 @@ module {
     public type Player = {
         id : Player.PlayerId;
         name : Text;
-    };
-
-    public type TeamState = Team and {
-        score : Int;
-        positions : FieldPosition.TeamPositions;
     };
 
     public type CreateTeamTraitRequest = {
@@ -658,16 +538,6 @@ module {
         #teamNotFound;
     };
 
-    public type Link = {
-        name : Text;
-        url : Text;
-    };
-
-    public type TeamLinks = {
-        teamId : Nat;
-        links : [Link];
-    };
-
     public type GetTeamProposalResult = Result.Result<Proposal, GetTeamProposalError>;
 
     public type GetTeamProposalError = {
@@ -694,54 +564,6 @@ module {
         #alreadyVoted;
         #votingClosed;
         #teamNotFound;
-    };
-
-    public type TeamProposal = Dao.Proposal<TeamProposalContent>;
-
-    public type TeamProposalContent = {
-        #changeName : ChangeTeamNameContent;
-        #train : TrainContent;
-        #swapPlayerPositions : SwapPlayerPositionsContent;
-        #changeColor : ChangeTeamColorContent;
-        #changeLogo : ChangeTeamLogoContent;
-        #changeMotto : ChangeTeamMottoContent;
-        #changeDescription : ChangeTeamDescriptionContent;
-        #modifyLink : ModifyTeamLinkContent;
-    };
-
-    public type ChangeTeamNameContent = {
-        name : Text;
-    };
-
-    public type TrainContent = {
-        position : FieldPosition.FieldPosition;
-        skill : Skill.Skill;
-    };
-
-    public type SwapPlayerPositionsContent = {
-        position1 : FieldPosition.FieldPosition;
-        position2 : FieldPosition.FieldPosition;
-    };
-
-    public type ChangeTeamColorContent = {
-        color : (Nat8, Nat8, Nat8);
-    };
-
-    public type ChangeTeamLogoContent = {
-        logoUrl : Text;
-    };
-
-    public type ChangeTeamMottoContent = {
-        motto : Text;
-    };
-
-    public type ChangeTeamDescriptionContent = {
-        description : Text;
-    };
-
-    public type ModifyTeamLinkContent = {
-        name : Text;
-        url : ?Text;
     };
 
     public type CreateTeamProposalRequest = {
@@ -787,24 +609,10 @@ module {
     };
 
     public type GetUserLeaderboardResult = {
-        #ok : CommonTypes.PagedResult<User>;
+        #ok : CommonTypes.PagedResult<UserHandler.User>;
     };
 
-    public type GetUserStatsResult = Result.Result<UserStats, ()>;
-
-    public type UserStats = {
-        totalPoints : Int;
-        userCount : Nat;
-        teamOwnerCount : Nat;
-        teams : [TeamStats];
-    };
-
-    public type TeamStats = {
-        id : Nat;
-        totalPoints : Int;
-        userCount : Nat;
-        ownerCount : Nat;
-    };
+    public type GetUserStatsResult = Result.Result<UserHandler.UserStats, ()>;
 
     public type GetTeamOwnersRequest = {
         #team : Nat;
@@ -814,30 +622,7 @@ module {
     public type GetTeamOwnersError = {};
 
     public type GetTeamOwnersResult = {
-        #ok : [UserVotingInfo];
-    };
-
-    public type TeamAssociationKind = {
-        #fan;
-        #owner : {
-            votingPower : Nat;
-        };
-    };
-
-    public type User = {
-        // TODO team association be in the season?
-        id : Principal;
-        team : ?{
-            id : Nat;
-            kind : TeamAssociationKind;
-        };
-        points : Int;
-    };
-
-    public type UserVotingInfo = {
-        id : Principal;
-        teamId : Nat;
-        votingPower : Nat;
+        #ok : [UserHandler.UserVotingInfo];
     };
 
     public type AddTeamOwnerRequest = {
@@ -859,7 +644,7 @@ module {
         #notAuthorized;
     };
 
-    public type GetUserResult = Result.Result<User, GetUserError>;
+    public type GetUserResult = Result.Result<UserHandler.User, GetUserError>;
 
     public type AwardPointsRequest = {
         userId : Principal;
