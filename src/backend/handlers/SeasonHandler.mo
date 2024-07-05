@@ -4,7 +4,6 @@ import HashMap "mo:base/HashMap";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Principal "mo:base/Principal";
 import Nat32 "mo:base/Nat32";
 import Trie "mo:base/Trie";
 import Prelude "mo:base/Prelude";
@@ -158,7 +157,6 @@ module {
 
         public func startSeason<system>(
             prng : Prng,
-            stadiumId : Principal,
             startTime : Time.Time,
             weekDays : [Components.DayOfWeek],
             teams : [Team.Team],
@@ -230,7 +228,6 @@ module {
             let inProgressSeason = {
                 teams = teamsWithPositions;
                 players = players;
-                stadiumId = stadiumId;
                 matchGroups = notScheduledMatchGroups;
             };
 
@@ -242,7 +239,6 @@ module {
 
             scheduleMatchGroup<system>(
                 0,
-                stadiumId,
                 firstMatchGroup,
                 inProgressSeason,
                 prng,
@@ -380,7 +376,6 @@ module {
                     // Schedule next match group
                     scheduleMatchGroup<system>(
                         nextMatchGroupId,
-                        inProgressMatchGroup.stadiumId,
                         matchGroup,
                         updatedSeason,
                         prng,
@@ -540,7 +535,6 @@ module {
 
         private func scheduleMatchGroup<system>(
             matchGroupId : Nat,
-            stadiumId : Principal,
             matchGroup : Season.NotScheduledMatchGroup,
             inProgressSeason : Season.InProgressSeason,
             prng : Prng,
@@ -583,7 +577,6 @@ module {
             let scheduledMatchGroup : Season.ScheduledMatchGroup = {
                 time = matchGroup.time;
                 timerId = timerId;
-                stadiumId = stadiumId;
                 matches = matchGroup.matches
                 |> Iter.fromArray(_)
                 |> Iter.map(
@@ -621,7 +614,6 @@ module {
             #ok : [Season.CompletedMatchGroup];
             #matchGroupsNotComplete : ?{
                 matchGroupId : Nat;
-                stadiumId : Principal;
             };
         } {
             let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(season.matchGroups.size());
@@ -631,10 +623,9 @@ module {
                     case (#completed(completedMatchGroup)) completedMatchGroup;
                     case (#notScheduled(_)) return #matchGroupsNotComplete(null);
                     case (#scheduled(_)) return #matchGroupsNotComplete(null);
-                    case (#inProgress(inProgressMatchGroup)) return #matchGroupsNotComplete(
+                    case (#inProgress(_)) return #matchGroupsNotComplete(
                         ?{
                             matchGroupId = matchGroupId;
-                            stadiumId = inProgressMatchGroup.stadiumId;
                         }
                     );
                 };
@@ -819,7 +810,6 @@ module {
 
             let inProgressMatchGroup = {
                 time = scheduledMatchGroup.time;
-                stadiumId = scheduledMatchGroup.stadiumId;
                 matches = inProgressMatches;
             };
             let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(

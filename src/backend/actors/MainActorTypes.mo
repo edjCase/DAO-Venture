@@ -30,6 +30,7 @@ module {
         getScenario : query (Nat) -> async GetScenarioResult;
         getScenarios : query () -> async GetScenariosResult;
         voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
+        addScenario : (scenario : AddScenarioRequest) -> async AddScenarioResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
@@ -44,9 +45,9 @@ module {
         getTeamPlayers : query (teamId : Nat) -> async [Player.Player];
         getAllPlayers : query () -> async [Player.Player];
 
-        getLiveMatchGroupState : query (id : Nat) -> async ?LiveState.LiveMatchGroupState;
-        finishMatchGroup : (id : Nat) -> async (); // TODO remove
-        startMatchGroup : (request : StartMatchGroupRequest) -> async StartMatchGroupResult;
+        getLiveMatchGroupState : query (matchGroupId : Nat) -> async Result.Result<LiveState.LiveMatchGroupState, GetLiveMatchGroupStateError>;
+        finishMatchGroup : (id : Nat) -> async FinishMatchGroupResult; // TODO remove
+        startMatchGroup : (matchGroupId : Nat) -> async StartMatchGroupResult;
         cancelMatchGroup : (request : CancelMatchGroupRequest) -> async CancelMatchGroupResult;
 
         getEntropyThreshold : query () -> async Nat;
@@ -63,6 +64,17 @@ module {
         getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
         setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
+    };
+
+    public type FinishMatchGroupResult = Result.Result<(), FinishMatchGroupError>;
+
+    public type FinishMatchGroupError = {
+        #notAuthorized;
+        #matchGroupNotFound;
+    };
+
+    public type GetLiveMatchGroupStateError = {
+        #matchGroupNotFound;
     };
 
     public type Team = {
@@ -138,28 +150,7 @@ module {
 
     public type Proposal = Dao.Proposal<ProposalContent>;
 
-    public type ProposalContent = {
-        #changeTeamName : {
-            teamId : Nat;
-            name : Text;
-        };
-        #changeTeamColor : {
-            teamId : Nat;
-            color : (Nat8, Nat8, Nat8);
-        };
-        #changeTeamLogo : {
-            teamId : Nat;
-            logoUrl : Text;
-        };
-        #changeTeamMotto : {
-            teamId : Nat;
-            motto : Text;
-        };
-        #changeTeamDescription : {
-            teamId : Nat;
-            description : Text;
-        };
-    };
+    public type ProposalContent = {};
 
     public type VoteOnProposalRequest = {
         proposalId : Nat;
@@ -277,6 +268,8 @@ module {
         weekDays : [Components.DayOfWeek];
     };
 
+    public type AddScenarioRequest = ScenarioHandler.AddScenarioRequest;
+
     public type AddScenarioError = {
         #invalid : [Text];
         #notAuthorized;
@@ -385,6 +378,7 @@ module {
 
     public type CancelMatchGroupError = {
         #matchGroupNotFound;
+        #notAuthorized;
     };
 
     public type CancelMatchGroupResult = Result.Result<(), CancelMatchGroupError>;

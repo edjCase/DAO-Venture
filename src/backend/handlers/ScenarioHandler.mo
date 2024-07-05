@@ -34,8 +34,9 @@ module {
         scenarios : [StableScenarioData];
     };
 
-    public type AddScenarioResult = {
-        #ok;
+    public type AddScenarioResult = Result.Result<(), { #invalid : [Text] }>;
+
+    public type AddScenarioError = {
         #invalid : [Text];
     };
 
@@ -43,10 +44,6 @@ module {
         #ok;
         #alreadyStarted;
         #notFound;
-    };
-
-    public type ProcessEffectOutcomesResult = {
-        #ok : [EffectOutcomeData];
     };
 
     public type VoterInfo = {
@@ -99,23 +96,12 @@ module {
             endTimerId : Nat;
         };
         #resolving;
-        #resolved : ScenarioStateResolved;
-    };
-
-    public type ScenarioStateResolved = {
-        scenarioOutcome : Scenario.ScenarioOutcome;
-        effectOutcomes : [EffectOutcomeData];
-        options : Scenario.ScenarioResolvedOptions;
+        #resolved : Scenario.ScenarioStateResolved;
     };
 
     type ResolvedTeamChoice = {
         teamId : Nat;
         value : ?Scenario.ScenarioOptionValue;
-    };
-
-    public type EffectOutcomeData = {
-        processed : Bool;
-        outcome : Scenario.EffectOutcome;
     };
 
     public type ScenarioVote = {
@@ -211,9 +197,9 @@ module {
 
     public class Handler<system>(
         data : StableData,
-        processEffectOutcomes : (
-            outcomes : [Scenario.EffectOutcome]
-        ) -> ProcessEffectOutcomesResult,
+        processEffectOutcome : (
+            outcome : Scenario.EffectOutcome
+        ) -> (),
     ) {
 
         let scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
@@ -230,7 +216,7 @@ module {
             };
         };
 
-        public func onLeagueCollapse() : async* () {
+        public func onLeagueCollapse() : () {
             // TODO
             Debug.print("Scenarios ending due to league collapse");
             let allScenarios = scenarios.vals();
@@ -240,7 +226,7 @@ module {
                         Timer.cancelTimer(startTimerId);
                     };
                     case (#inProgress({ endTimerId })) {
-                        await* end(scenario, []);
+                        end(scenario, []);
                     };
                     case (#resolving) ();
                     case (#resolved(_)) ();
@@ -275,7 +261,7 @@ module {
             scenarioId : Nat,
             voterId : Principal,
             value : Scenario.ScenarioOptionValue,
-        ) : async* Result.Result<(), { #notEligible; #invalidValue; #scenarioNotFound; #votingNotOpen }> {
+        ) : Result.Result<(), { #notEligible; #invalidValue; #scenarioNotFound; #votingNotOpen }> {
 
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let #inProgress(_) = scenario.state else return #err(#votingNotOpen);
@@ -324,7 +310,7 @@ module {
             switch (calculateResultsInternal(scenario, false)) {
                 case (#noConsensus) ();
                 case (#consensus(teamVotingResult)) {
-                    await* end(scenario, teamVotingResult);
+                    end(scenario, teamVotingResult);
                 };
             };
             #ok;
@@ -357,7 +343,7 @@ module {
         ) : AddScenarioResult {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
-                case (#invalid(errors)) return #invalid(errors);
+                case (#invalid(errors)) return #err(#invalid(errors));
             };
             let startTime = switch (scenario.startTime) {
                 case (null) Time.now();
@@ -725,12 +711,15 @@ module {
         private func end(
             scenario : MutableScenarioData,
             teamVotingResult : [ResolvedTeamChoice],
-        ) : async* () {
-            let prng = try {
-                PseudoRandomX.fromBlob(await Random.blob());
-            } catch (err) {
-                Debug.trap("Failed to end scenario, unable to get random entropy. Error: " # Error.message(err));
-            };
+        ) : () {
+            // let prng = try {
+            //     PseudoRandomX.fromBlob(await Random.blob());
+            // } catch (err) {
+            //     Debug.trap("Failed to end scenario, unable to get random entropy. Error: " # Error.message(err));
+            // };
+            // TODO get proper prng, async is complicating things
+            let prng = PseudoRandomX.fromSeed(0);
+
             switch (scenario.state) {
                 case (#inProgress(state)) ();
                 case (#resolving) return; // already being resolved
@@ -750,44 +739,15 @@ module {
                 teamVotingResult,
             );
 
-            let effectOutcomes = resolvedScenarioState.effectOutcomes.vals()
-            |> Iter.filter(
-                _,
-                func(outcome : EffectOutcomeData) : Bool = not outcome.processed,
-            )
-            |> Iter.map(
-                _,
-                func(outcome : EffectOutcomeData) : Scenario.EffectOutcome = outcome.outcome,
-            )
-            |> Iter.toArray(_);
-
-            let processResult = processEffectOutcomes(effectOutcomes);
-
-            // TODO how to reproccess them?
-            let processedScenarioState : ScenarioStateResolved = switch (processResult) {
-                case (#ok(updatedEffectOutcomes)) {
-
-                    // Rejoin already processed outcomes with the newly processed ones
-                    let processedOutcomes = resolvedScenarioState.effectOutcomes.vals()
-                    |> Iter.filter(
-                        _,
-                        func(outcome : EffectOutcomeData) : Bool = outcome.processed,
-                    )
-                    |> Buffer.fromIter<EffectOutcomeData>(_);
-
-                    processedOutcomes.append(Buffer.fromArray(updatedEffectOutcomes));
-
-                    {
-                        resolvedScenarioState with
-                        effectOutcomes = Buffer.toArray(processedOutcomes)
-                    };
-                };
+            for (effectOutcome in resolvedScenarioState.effectOutcomes.vals()) {
+                processEffectOutcome(effectOutcome);
             };
+
             scenarios.put(
                 scenario.id,
                 {
                     scenario with
-                    state = #resolved(processedScenarioState);
+                    state = #resolved(resolvedScenarioState);
                 },
             );
         };
@@ -816,7 +776,7 @@ module {
                         case (#consensus(teamVotingResult)) teamVotingResult;
                         case (#noConsensus) Prelude.unreachable();
                     };
-                    await* end(scenario, teamVotingResult);
+                    end(scenario, teamVotingResult);
                 },
             );
         };
@@ -876,10 +836,7 @@ module {
             case (#notStarted(_)) #notStarted;
             case (#inProgress(_)) #inProgress;
             case (#resolving) #resolving;
-            case (#resolved(resolved)) {
-                let resolvedData = mapResolvedScenarioState(resolved);
-                #resolved(resolvedData);
-            };
+            case (#resolved(resolved)) #resolved(resolved);
         };
         {
             id = data.id;
@@ -890,21 +847,6 @@ module {
             undecidedEffect = data.undecidedEffect;
             kind = data.kind;
             state = state;
-        };
-    };
-
-    private func mapResolvedScenarioState(resolved : ScenarioStateResolved) : Scenario.ScenarioStateResolved {
-
-        let effectOutcomes = resolved.effectOutcomes.vals()
-        |> Iter.map(
-            _,
-            func(outcome : EffectOutcomeData) : Scenario.EffectOutcome = outcome.outcome,
-        )
-        |> Iter.toArray(_);
-        {
-            options = resolved.options;
-            scenarioOutcome = resolved.scenarioOutcome;
-            effectOutcomes = effectOutcomes;
         };
     };
 
@@ -1061,7 +1003,7 @@ module {
         prng : Prng,
         scenario : MutableScenarioData,
         teamChoices : [ResolvedTeamChoice],
-    ) : ScenarioStateResolved {
+    ) : Scenario.ScenarioStateResolved {
         let teamEffectExtractor = switch (scenario.kind) {
             case (#noLeagueEffect(noLeagueEffect)) func(value : Scenario.ScenarioOptionValue) : Scenario.Effect {
                 let #id(optionId) = value else Debug.trap("Invalid vote value for no league effect. Expected #id, got " # debug_show (value));
@@ -1284,15 +1226,7 @@ module {
         {
             scenarioOutcome = scenarioOutcome;
             options = options;
-            effectOutcomes = effectOutcomes.vals()
-            |> Iter.map(
-                _,
-                func(outcome : Scenario.EffectOutcome) : EffectOutcomeData = {
-                    processed = false;
-                    outcome = outcome;
-                },
-            )
-            |> Iter.toArray(_);
+            effectOutcomes = Buffer.toArray(effectOutcomes);
         };
     };
 

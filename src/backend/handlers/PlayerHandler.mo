@@ -7,7 +7,6 @@ import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Result "mo:base/Result";
 import TextX "mo:xtended-text/TextX";
-import Scenario "../models/Scenario";
 import FieldPosition "../models/FieldPosition";
 import IterTools "mo:itertools/Iter";
 import Skill "../models/Skill";
@@ -135,23 +134,22 @@ module {
             #ok;
         };
 
-        public func applyEffects(effects : [Scenario.PlayerEffectOutcome]) : {
+        public func updateSkill(
+            playerId : Nat32,
+            skill : Skill.Skill,
+            delta : Nat,
+        ) : Result.Result<(), { #playerNotFound }> {
+            let ?player = players.get(playerId) else return #err(#playerNotFound);
+            player.skills := Skill.modify(player.skills, skill, delta);
             #ok;
-        } {
+        };
 
-            for (effect in effects.vals()) {
-                switch (effect) {
-                    case (#skill(skillEffect)) {
-                        let targetPlayer = getTargetPlayer(skillEffect.target);
-                        targetPlayer.skills := Skill.modify(targetPlayer.skills, skillEffect.skill, skillEffect.delta);
-                    };
-                    case (#injury(injuryEffect)) {
-                        let targetPlayer = getTargetPlayer(injuryEffect.target);
-                        // TODO how to remove effect?
-                        targetPlayer.condition := #injured;
-                    };
-                };
-            };
+        public func updateCondition(
+            playerId : Nat32,
+            condition : Player.PlayerCondition,
+        ) : Result.Result<(), { #playerNotFound : Nat32 }> {
+            let ?player = players.get(playerId) else return #err(#playerNotFound(playerId));
+            player.condition := condition;
             #ok;
         };
 
@@ -308,14 +306,6 @@ module {
                 };
             };
             nextId;
-        };
-
-        private func getTargetPlayer(target : Scenario.TargetPositionInstance) : MutablePlayerInfo {
-            let ?player = IterTools.find(
-                players.vals(),
-                func(player : MutablePlayerInfo) : Bool = player.teamId == target.teamId and player.position == target.position,
-            ) else Debug.trap("Player not found for team " # Nat.toText(target.teamId) # " and position " # debug_show (target.position));
-            player;
         };
 
         private func isNameTaken(name : Text) : Bool {

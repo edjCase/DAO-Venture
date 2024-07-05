@@ -1,5 +1,4 @@
 import Time "mo:base/Time";
-import Principal "mo:base/Principal";
 import MatchAura "MatchAura";
 import Team "Team";
 import Player "Player";
@@ -54,7 +53,6 @@ module {
     public type ScheduledMatchGroup = {
         time : Time.Time;
         timerId : Nat;
-        stadiumId : Principal;
         matches : [ScheduledMatch];
     };
 
@@ -68,7 +66,6 @@ module {
 
     public type InProgressMatchGroup = {
         time : Time.Time;
-        stadiumId : Principal;
         matches : [InProgressMatch];
     };
 

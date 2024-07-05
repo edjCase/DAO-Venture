@@ -103,7 +103,6 @@ module {
             };
         };
 
-        public let id = immutableState.id;
         public var offenseTeamId = immutableState.offenseTeamId;
         public var team1 = toMutableTeam(immutableState.team1);
         public var team2 = toMutableTeam(immutableState.team2);

@@ -8,11 +8,12 @@ module {
 
     public type LiveMatchGroupState = {
         id : Nat;
-        matches : [LiveMatchState];
+        matches : [LiveMatchStateWithStatus];
+        tickTimerId : Nat;
+        currentSeed : Nat32;
     };
 
     public type LiveMatchState = {
-        id : Nat;
         team1 : LiveMatchTeam;
         team2 : LiveMatchTeam;
         offenseTeamId : Team.TeamId;
@@ -22,6 +23,9 @@ module {
         log : MatchLog;
         outs : Nat;
         strikes : Nat;
+    };
+
+    public type LiveMatchStateWithStatus = LiveMatchState and {
         status : LiveMatchStatus;
     };
 
