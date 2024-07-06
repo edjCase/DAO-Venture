@@ -115,9 +115,11 @@ actor MainActor : Types.Actor {
             case (#entropy(entropyEffect)) {
                 switch (teamsHandler.updateEntropy(entropyEffect.teamId, entropyEffect.delta)) {
                     case (#ok({ overThreshold })) {
-                        Debug.print("Entropy threshold reached, triggering league collapse");
-                        seasonHandler.onLeagueCollapse();
-                        onLeagueCollapse();
+                        if (overThreshold) {
+                            Debug.print("Entropy threshold reached, triggering league collapse");
+                            seasonHandler.onLeagueCollapse();
+                            onLeagueCollapse();
+                        };
                     };
                     case (#err(e)) Debug.trap("Error updating team entropy: " # debug_show (e));
                 };
@@ -341,12 +343,17 @@ actor MainActor : Types.Actor {
         Dao.Dao<system, TeamDao.ProposalContent>(data, onProposalExecute, onProposalReject, onProposalValidate);
     };
 
-    var teamDaos = HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>>(teamDaoStableData.size(), Nat.equal, Nat32.fromNat);
+    private func buildTeamDaos<system>() : HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>> {
+        let daos = HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>>(teamDaoStableData.size(), Nat.equal, Nat32.fromNat);
 
-    for ((teamId, data) in teamDaoStableData.vals()) {
-        let teamDao = buildTeamDao<system>(teamId, data);
-        teamDaos.put(teamId, teamDao);
+        for ((teamId, data) in teamDaoStableData.vals()) {
+            let teamDao = buildTeamDao<system>(teamId, data);
+            daos.put(teamId, teamDao);
+        };
+        daos;
     };
+
+    var teamDaos = buildTeamDaos<system>();
 
     func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
 
@@ -380,6 +387,12 @@ actor MainActor : Types.Actor {
         teamStableData := teamsHandler.toStableData();
         userStableData := userHandler.toStableData();
         simulationStableData := simulationHandler.toStableData();
+        teamDaoStableData := teamDaos.entries()
+        |> Iter.map<(Nat, Dao.Dao<TeamDao.ProposalContent>), (Nat, Dao.StableData<TeamDao.ProposalContent>)>(
+            _,
+            func((id, d) : (Nat, Dao.Dao<TeamDao.ProposalContent>)) : (Nat, Dao.StableData<TeamDao.ProposalContent>) = (id, d.toStableData()),
+        )
+        |> Iter.toArray(_);
     };
 
     system func postupgrade() {
@@ -396,6 +409,7 @@ actor MainActor : Types.Actor {
         teamsHandler := TeamsHandler.Handler<system>(teamStableData);
         userHandler := UserHandler.UserHandler(userStableData);
         simulationHandler := SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
+        teamDaos := buildTeamDaos<system>();
     };
 
     // Public Methods ---------------------------------------------------------
@@ -652,6 +666,7 @@ actor MainActor : Types.Actor {
             });
         };
         let teamDao = buildTeamDao<system>(teamId, daoData);
+        Debug.print("Created team " # Nat.toText(teamId));
         teamDaos.put(teamId, teamDao);
 
         switch (playerHandler.populateTeamRoster(teamId)) {

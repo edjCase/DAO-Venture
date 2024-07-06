@@ -44,7 +44,7 @@
 </script>
 
 {#if options.length < 1}
-    No current bid proposals
+    <div>No current bid proposals</div>
 {:else}
     {#each options as option}
         <ScenarioOptionNat
