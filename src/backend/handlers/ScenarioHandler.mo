@@ -11,7 +11,6 @@ import Nat "mo:base/Nat";
 import Trie "mo:base/Trie";
 import Option "mo:base/Option";
 import Nat32 "mo:base/Nat32";
-import Random "mo:base/Random";
 import Timer "mo:base/Timer";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
@@ -19,7 +18,6 @@ import Prelude "mo:base/Prelude";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Order "mo:base/Order";
-import Error "mo:base/Error";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Skill "../models/Skill";
@@ -198,7 +196,8 @@ module {
     public class Handler<system>(
         data : StableData,
         processEffectOutcome : (
-            outcome : Scenario.EffectOutcome
+            onLeagueCollapse : () -> (),
+            outcome : Scenario.EffectOutcome,
         ) -> (),
     ) {
 
@@ -352,7 +351,7 @@ module {
 
             let teamIds = HashMap.HashMap<Nat, ()>(0, Nat.equal, Nat32.fromNat);
 
-            // TODO refactor the duplication
+            // TODO refactor the duplicatio
             let kind : Scenario.ScenarioKind = switch (scenario.kind) {
                 case (#noLeagueEffect(noLeagueEffect)) #noLeagueEffect({
                     noLeagueEffect with
@@ -740,7 +739,7 @@ module {
             );
 
             for (effectOutcome in resolvedScenarioState.effectOutcomes.vals()) {
-                processEffectOutcome(effectOutcome);
+                processEffectOutcome(onLeagueCollapse, effectOutcome);
             };
 
             scenarios.put(

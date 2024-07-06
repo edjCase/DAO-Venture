@@ -21,6 +21,7 @@ import SimulationHandler "../handlers/SimulationHandler";
 import Dao "../Dao";
 import Result "mo:base/Result";
 import Nat32 "mo:base/Nat32";
+import HashMap "mo:base/HashMap";
 import Player "../models/Player";
 import TeamDao "../models/TeamDao";
 import FieldPosition "../models/FieldPosition";
@@ -58,6 +59,8 @@ actor MainActor : Types.Actor {
         });
     };
 
+    stable var teamDaoStableData : [(Nat, Dao.StableData<TeamDao.ProposalContent>)] = [];
+
     stable var playerStableData : PlayerHandler.StableData = {
         players = [];
         retiredPlayers = [];
@@ -80,9 +83,26 @@ actor MainActor : Types.Actor {
 
     // Unstables ---------------------------------------------------------
 
+    var predictionHandler = PredictionHandler.Handler(predictionStableData);
+    let seasonEventHandler : SeasonHandler.EventHandler = {
+        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : () {
+            predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
+        };
+        onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : () {
+            predictionHandler.closeMatchGroup(matchGroupId);
+        };
+    };
+
+    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
+
+    var teamsHandler = TeamsHandler.Handler<system>(teamStableData);
+
     var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
 
-    private func processEffectOutcome(effectOutcome : Scenario.EffectOutcome) : () {
+    private func processEffectOutcome(
+        onLeagueCollapse : () -> (),
+        effectOutcome : Scenario.EffectOutcome,
+    ) {
         switch (effectOutcome) {
             case (#injury(injuryEffect)) {
                 let ?player = playerHandler.getPosition(injuryEffect.target.teamId, injuryEffect.target.position) else Debug.trap("Position " # debug_show (injuryEffect.target.position) # " not found in team " # Nat.toText(injuryEffect.target.teamId));
@@ -94,8 +114,11 @@ actor MainActor : Types.Actor {
             };
             case (#entropy(entropyEffect)) {
                 switch (teamsHandler.updateEntropy(entropyEffect.teamId, entropyEffect.delta)) {
-                    case (#ok) ();
-                    case (#err(#overThreshold)) (); // Will check for this after processing outcomes, ignore for now
+                    case (#ok({ overThreshold })) {
+                        Debug.print("Entropy threshold reached, triggering league collapse");
+                        seasonHandler.onLeagueCollapse();
+                        onLeagueCollapse();
+                    };
                     case (#err(e)) Debug.trap("Error updating team entropy: " # debug_show (e));
                 };
             };
@@ -128,19 +151,9 @@ actor MainActor : Types.Actor {
         };
     };
 
-    var predictionHandler = PredictionHandler.Handler(predictionStableData);
     var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome);
 
-    let seasonEventHandler : SeasonHandler.EventHandler = {
-        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : () {
-            predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
-        };
-        onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : () {
-            predictionHandler.closeMatchGroup(matchGroupId);
-        };
-    };
-
-    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
+    var userHandler = UserHandler.UserHandler(userStableData);
 
     func onLeagueProposalExecute(proposal : Dao.Proposal<LeagueDao.ProposalContent>) : async* Result.Result<(), Text> {
         // TODO change league proposal for team data to be a simple approve w/ callback. Dont need to expose all the update routes
@@ -198,6 +211,51 @@ actor MainActor : Types.Actor {
         onLeagueProposalReject,
         onLeagueProposalValidate,
     );
+
+    private func awardUserPoints(
+        matchGroupId : Nat,
+        completedMatches : [Season.CompletedMatch],
+    ) : () {
+
+        // Award users points for their predictions
+        let anyAwards = switch (predictionHandler.getMatchGroup(matchGroupId)) {
+            case (null) false;
+            case (?matchGroupPredictions) {
+                let awards = Buffer.Buffer<{ userId : Principal; points : Nat }>(0);
+                var i = 0;
+                for (match in Iter.fromArray(completedMatches)) {
+                    if (i >= matchGroupPredictions.size()) {
+                        Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
+                    };
+                    let matchPredictions = matchGroupPredictions[i];
+                    i += 1;
+                    for ((userId, teamId) in Iter.fromArray(matchPredictions)) {
+                        if (teamId == match.winner) {
+                            // Award points
+                            awards.add({
+                                userId = userId;
+                                points = 10; // TODO amount?
+                            });
+                        };
+                    };
+                };
+                if (awards.size() > 0) {
+                    for (award in awards.vals()) {
+                        switch (userHandler.awardPoints(award.userId, award.points)) {
+                            case (#ok) ();
+                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(award.userId));
+                        };
+                    };
+                    true;
+                } else {
+                    false;
+                };
+            };
+        };
+        if (not anyAwards) {
+            Debug.print("No user points to award, skipping...");
+        };
+    };
 
     func buildTeamDao<system>(
         teamId : Nat,
@@ -280,63 +338,14 @@ actor MainActor : Types.Actor {
         func onProposalValidate(_ : TeamDao.ProposalContent) : async* Result.Result<(), [Text]> {
             #ok; // TODO
         };
-        let dao = Dao.Dao<system, TeamDao.ProposalContent>(data, onProposalExecute, onProposalReject, onProposalValidate);
-        dao;
+        Dao.Dao<system, TeamDao.ProposalContent>(data, onProposalExecute, onProposalReject, onProposalValidate);
     };
 
-    func onLeagueCollapse() : () {
-        Debug.print("Entropy threshold reached, triggering league collapse");
-        seasonHandler.onLeagueCollapse();
-        scenarioHandler.onLeagueCollapse();
-    };
+    var teamDaos = HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>>(teamDaoStableData.size(), Nat.equal, Nat32.fromNat);
 
-    var teamsHandler = TeamsHandler.Handler<system>(teamStableData, buildTeamDao, onLeagueCollapse);
-
-    var userHandler = UserHandler.UserHandler(userStableData);
-
-    private func awardUserPoints(
-        matchGroupId : Nat,
-        completedMatches : [Season.CompletedMatch],
-    ) : () {
-
-        // Award users points for their predictions
-        let anyAwards = switch (predictionHandler.getMatchGroup(matchGroupId)) {
-            case (null) false;
-            case (?matchGroupPredictions) {
-                let awards = Buffer.Buffer<{ userId : Principal; points : Nat }>(0);
-                var i = 0;
-                for (match in Iter.fromArray(completedMatches)) {
-                    if (i >= matchGroupPredictions.size()) {
-                        Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
-                    };
-                    let matchPredictions = matchGroupPredictions[i];
-                    i += 1;
-                    for ((userId, teamId) in Iter.fromArray(matchPredictions)) {
-                        if (teamId == match.winner) {
-                            // Award points
-                            awards.add({
-                                userId = userId;
-                                points = 10; // TODO amount?
-                            });
-                        };
-                    };
-                };
-                if (awards.size() > 0) {
-                    for (award in awards.vals()) {
-                        switch (userHandler.awardPoints(award.userId, award.points)) {
-                            case (#ok) ();
-                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(award.userId));
-                        };
-                    };
-                    true;
-                } else {
-                    false;
-                };
-            };
-        };
-        if (not anyAwards) {
-            Debug.print("No user points to award, skipping...");
-        };
+    for ((teamId, data) in teamDaoStableData.vals()) {
+        let teamDao = buildTeamDao<system>(teamId, data);
+        teamDaos.put(teamId, teamDao);
     };
 
     func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
@@ -384,7 +393,7 @@ actor MainActor : Types.Actor {
             onLeagueProposalValidate,
         );
         playerHandler := PlayerHandler.PlayerHandler(playerStableData);
-        teamsHandler := TeamsHandler.Handler<system>(teamStableData, buildTeamDao, onLeagueCollapse);
+        teamsHandler := TeamsHandler.Handler<system>(teamStableData);
         userHandler := UserHandler.UserHandler(userStableData);
         simulationHandler := SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
     };
@@ -431,6 +440,40 @@ actor MainActor : Types.Actor {
 
     public shared ({ caller }) func voteOnLeagueProposal(request : Types.VoteOnLeagueProposalRequest) : async Types.VoteOnLeagueProposalResult {
         await* leagueDao.vote(request.proposalId, caller, request.vote);
+    };
+
+    public shared ({ caller }) func createTeamProposal(teamId : Nat, content : Types.CreateTeamProposalRequest) : async Types.CreateTeamProposalResult {
+        let members = userHandler.getTeamOwners(?teamId);
+        let isAMember = members
+        |> Iter.fromArray(_)
+        |> Iter.filter(
+            _,
+            func(member : Dao.Member) : Bool = member.id == caller,
+        )
+        |> _.next() != null;
+        if (not isAMember) {
+            return #err(#notAuthorized);
+        };
+        let ?dao = teamDaos.get(teamId) else return #err(#teamNotFound);
+        Debug.print("Creating proposal for team " # Nat.toText(teamId) # " with content: " # debug_show (content));
+        await* dao.createProposal<system>(caller, content, members);
+    };
+
+    public shared query func getTeamProposal(teamId : Nat, id : Nat) : async Types.GetTeamProposalResult {
+        let ?dao = teamDaos.get(teamId) else return #err(#teamNotFound);
+        let ?proposal = dao.getProposal(id) else return #err(#proposalNotFound);
+        #ok(proposal);
+    };
+
+    public shared query func getTeamProposals(teamId : Nat, count : Nat, offset : Nat) : async Types.GetTeamProposalsResult {
+        let ?dao = teamDaos.get(teamId) else return #err(#teamNotFound);
+        let proposals = dao.getProposals(count, offset);
+        #ok(proposals);
+    };
+
+    public shared ({ caller }) func voteOnTeamProposal(teamId : Nat, request : Types.VoteOnTeamProposalRequest) : async Types.VoteOnTeamProposalResult {
+        let ?dao = teamDaos.get(teamId) else return #err(#teamNotFound);
+        await* dao.vote(request.proposalId, caller, request.vote);
     };
 
     public query func getTeamStandings() : async Types.GetTeamStandingsResult {
@@ -599,6 +642,18 @@ actor MainActor : Types.Actor {
             case (#ok(teamId)) teamId;
             case (#err(#nameTaken)) return #err(#nameTaken);
         };
+
+        let daoData : Dao.StableData<TeamDao.ProposalContent> = {
+            proposals = [];
+            proposalDuration = #days(3);
+            votingThreshold = #percent({
+                percent = 50;
+                quorum = ?20;
+            });
+        };
+        let teamDao = buildTeamDao<system>(teamId, daoData);
+        teamDaos.put(teamId, teamDao);
+
         switch (playerHandler.populateTeamRoster(teamId)) {
             case (#ok(_)) #ok(teamId);
             case (#err(e)) Debug.trap("Error populating team roster: " # debug_show (e));
@@ -614,33 +669,6 @@ actor MainActor : Types.Actor {
             return #err(#notAuthorized);
         };
         teamsHandler.createTrait(request);
-    };
-
-    public shared ({ caller }) func createTeamProposal(teamId : Nat, request : Types.CreateTeamProposalRequest) : async Types.CreateTeamProposalResult {
-        let members = userHandler.getTeamOwners(?teamId);
-        let isAMember = members
-        |> Iter.fromArray(_)
-        |> Iter.filter(
-            _,
-            func(member : Dao.Member) : Bool = member.id == caller,
-        )
-        |> _.next() != null;
-        if (not isAMember) {
-            return #err(#notAuthorized);
-        };
-        await* teamsHandler.createProposal<system>(teamId, caller, request, members);
-    };
-
-    public shared query func getTeamProposal(teamId : Nat, id : Nat) : async Types.GetTeamProposalResult {
-        teamsHandler.getProposal(teamId, id);
-    };
-
-    public shared query func getTeamProposals(teamId : Nat, count : Nat, offset : Nat) : async Types.GetTeamProposalsResult {
-        teamsHandler.getProposals(teamId, count, offset);
-    };
-
-    public shared ({ caller }) func voteOnTeamProposal(teamId : Nat, request : Types.VoteOnTeamProposalRequest) : async Types.VoteOnTeamProposalResult {
-        await* teamsHandler.voteOnProposal(teamId, caller, request.proposalId, request.vote);
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {

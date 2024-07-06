@@ -1,5 +1,3 @@
-import Dao "../Dao";
-import Principal "mo:base/Principal";
 import Debug "mo:base/Debug";
 import Iter "mo:base/Iter";
 import HashMap "mo:base/HashMap";
@@ -8,7 +6,6 @@ import Nat32 "mo:base/Nat32";
 import Buffer "mo:base/Buffer";
 import Int "mo:base/Int";
 import Option "mo:base/Option";
-import CommonTypes "../CommonTypes";
 import IterTools "mo:itertools/Iter";
 import Team "../models/Team";
 import Result "mo:base/Result";
@@ -19,7 +16,6 @@ import Text "mo:base/Text";
 import TextX "mo:xtended-text/TextX";
 import Season "../models/Season";
 import Trait "../models/Trait";
-import TeamDao "../models/TeamDao";
 
 module {
 
@@ -38,7 +34,6 @@ module {
         description : Text;
         entropy : Nat;
         color : (Nat8, Nat8, Nat8);
-        dao : Dao.StableData<TeamDao.ProposalContent>;
         traitIds : [Text];
         links : [Team.Link];
     };
@@ -57,13 +52,10 @@ module {
     };
 
     public class Handler<system>(
-        data : StableData,
-        daoFactory : <system>(Nat, Dao.StableData<TeamDao.ProposalContent>) -> Dao.Dao<TeamDao.ProposalContent>,
-        onLeagueCollapse : () -> (),
+        data : StableData
     ) {
 
         let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
-        let daos : HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>> = toDaoHashMap<system>(data.teams, daoFactory);
         let traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
         var entropyThreshold = data.entropyThreshold;
 
@@ -74,11 +66,7 @@ module {
                 teams = teams.vals()
                 |> Iter.map<MutableTeamData, StableTeamData>(
                     _,
-                    func(team : MutableTeamData) : StableTeamData {
-                        let ?dao = daos.get(team.id) else Debug.trap("Missing DAO for team ID: " # Nat.toText(team.id));
-                        let daoData = dao.toStableData();
-                        toStableTeamData(team, daoData);
-                    },
+                    toStableTeamData,
                 )
                 |> Iter.toArray(_);
                 entropyThreshold = entropyThreshold;
@@ -160,51 +148,7 @@ module {
             };
             teams.put(teamId, teamData);
 
-            let daoData : Dao.StableData<TeamDao.ProposalContent> = {
-                proposals = [];
-                proposalDuration = #days(3);
-                votingThreshold = #percent({
-                    percent = 50;
-                    quorum = ?20;
-                });
-            };
-            let dao = daoFactory<system>(teamId, daoData);
-            daos.put(teamId, dao);
-
             return #ok(teamId);
-        };
-
-        public func getProposal(teamId : Nat, id : Nat) : Result.Result<Dao.Proposal<TeamDao.ProposalContent>, { #teamNotFound; #proposalNotFound }> {
-            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
-            let ?proposal = dao.getProposal(id) else return #err(#proposalNotFound);
-            #ok(proposal);
-        };
-
-        public func getProposals(teamId : Nat, count : Nat, offset : Nat) : Result.Result<CommonTypes.PagedResult<Dao.Proposal<TeamDao.ProposalContent>>, { #teamNotFound }> {
-            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
-            let proposals = dao.getProposals(count, offset);
-            #ok(proposals);
-        };
-
-        public func voteOnProposal(
-            teamId : Nat,
-            caller : Principal,
-            proposalId : Nat,
-            vote : Bool,
-        ) : async* Result.Result<(), Dao.VoteError or { #teamNotFound; #proposalNotFound }> {
-            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
-            await* dao.vote(proposalId, caller, vote);
-        };
-
-        public func createProposal<system>(
-            teamId : Nat,
-            caller : Principal,
-            content : TeamDao.ProposalContent,
-            members : [Dao.Member],
-        ) : async* Result.Result<Nat, Dao.CreateProposalError or { #teamNotFound }> {
-            let ?dao = daos.get(teamId) else return #err(#teamNotFound);
-            Debug.print("Creating proposal for team " # Nat.toText(teamId) # " with content: " # debug_show (content));
-            await* dao.createProposal<system>(caller, content, members);
         };
 
         public func getLinks(teamId : Nat) : Result.Result<[Team.Link], { #teamNotFound }> {
@@ -301,7 +245,7 @@ module {
             #ok;
         };
 
-        public func updateEntropy(teamId : Nat, delta : Int) : Result.Result<(), { #teamNotFound; #overThreshold }> {
+        public func updateEntropy(teamId : Nat, delta : Int) : Result.Result<{ overThreshold : Bool }, { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
             Debug.print("Updating entropy for team " # Nat.toText(teamId) # " by " # Int.toText(delta));
             let newEntropyInt : Int = team.entropy + delta;
@@ -313,10 +257,7 @@ module {
             };
             team.entropy := newEntropyNat;
 
-            if (isOverEntropyThreshold()) {
-                onLeagueCollapse();
-            };
-            #ok;
+            #ok({ overThreshold = isOverEntropyThreshold() });
         };
 
         public func createTrait(trait : Trait.Trait) : Result.Result<(), { #idTaken; #invalid : [Text] }> {
@@ -510,10 +451,9 @@ module {
         };
     };
 
-    private func toStableTeamData(team : MutableTeamData, dao : Dao.StableData<TeamDao.ProposalContent>) : StableTeamData {
+    private func toStableTeamData(team : MutableTeamData) : StableTeamData {
         {
             id = team.id;
-            dao = dao;
             traitIds = Buffer.toArray(team.traitIds);
             links = Buffer.toArray(team.links);
             energy = team.energy;
@@ -524,18 +464,6 @@ module {
             description = team.description;
             color = team.color;
         };
-    };
-
-    private func toDaoHashMap<system>(
-        teams : [StableTeamData],
-        daoFactory : <system>(Nat, Dao.StableData<TeamDao.ProposalContent>) -> Dao.Dao<TeamDao.ProposalContent>,
-    ) : HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>> {
-        let daoMap = HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>>(0, Nat.equal, Nat32.fromNat);
-        for (team in teams.vals()) {
-            let dao = daoFactory<system>(team.id, team.dao);
-            daoMap.put(team.id, dao);
-        };
-        daoMap;
     };
 
     private func toTraitsHashMap(traits : [Trait.Trait]) : HashMap.HashMap<Text, Trait.Trait> {
