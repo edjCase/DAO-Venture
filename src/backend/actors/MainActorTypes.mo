@@ -13,6 +13,8 @@ import MatchAura "../models/MatchAura";
 import LiveState "../models/LiveState";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";
+import TeamDao "../models/TeamDao";
+import LeagueDao "../models/LeagueDao";
 
 module {
     public type Actor = actor {
@@ -24,12 +26,11 @@ module {
         predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
         getMatchGroupPredictions : query (matchGroupId : Nat) -> async GetMatchGroupPredictionsResult;
 
-        createProposal : (request : CreateProposalRequest) -> async CreateProposalResult;
-        getProposal : query (Nat) -> async GetProposalResult;
-        getProposals : query (count : Nat, offset : Nat) -> async GetProposalsResult;
+        getLeagueProposal : query (Nat) -> async GetLeagueProposalResult;
+        getLeagueProposals : query (count : Nat, offset : Nat) -> async GetLeagueProposalsResult;
         getScenario : query (Nat) -> async GetScenarioResult;
         getScenarios : query () -> async GetScenariosResult;
-        voteOnProposal : VoteOnProposalRequest -> async VoteOnProposalResult;
+        voteOnLeagueProposal : VoteOnLeagueProposalRequest -> async VoteOnLeagueProposalResult;
         addScenario : (scenario : AddScenarioRequest) -> async AddScenarioResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
@@ -45,14 +46,13 @@ module {
         getTeamPlayers : query (teamId : Nat) -> async [Player.Player];
         getAllPlayers : query () -> async [Player.Player];
 
-        getLiveMatchGroupState : query (matchGroupId : Nat) -> async Result.Result<LiveState.LiveMatchGroupState, GetLiveMatchGroupStateError>;
-        finishMatchGroup : (id : Nat) -> async FinishMatchGroupResult; // TODO remove
-        startMatchGroup : (matchGroupId : Nat) -> async StartMatchGroupResult;
-        cancelMatchGroup : (request : CancelMatchGroupRequest) -> async CancelMatchGroupResult;
+        getLiveMatchGroupState : query () -> async ?LiveState.LiveMatchGroupState;
+        finishLiveMatchGroup : () -> async FinishMatchGroupResult; // TODO remove
+        startNextMatchGroup : () -> async StartMatchGroupResult;
 
         getEntropyThreshold : query () -> async Nat;
         getTeams : query () -> async [Team];
-        createTeamProposal : (teamId : Nat, request : CreateTeamProposalRequest) -> async CreateProposalResult;
+        createTeamProposal : (teamId : Nat, request : CreateTeamProposalRequest) -> async CreateTeamProposalResult;
         getTeamProposal : query (teamId : Nat, id : Nat) -> async GetTeamProposalResult;
         getTeamProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetTeamProposalsResult;
         voteOnTeamProposal : (teamId : Nat, request : VoteOnTeamProposalRequest) -> async VoteOnTeamProposalResult;
@@ -70,11 +70,7 @@ module {
 
     public type FinishMatchGroupError = {
         #notAuthorized;
-        #matchGroupNotFound;
-    };
-
-    public type GetLiveMatchGroupStateError = {
-        #matchGroupNotFound;
+        #noLiveMatchGroup;
     };
 
     public type Team = {
@@ -138,44 +134,34 @@ module {
 
     public type SetBenevolentDictatorStateResult = Result.Result<(), SetBenevolentDictatorStateError>;
 
-    public type GetProposalError = {
+    public type GetLeagueProposalError = {
         #proposalNotFound;
     };
 
-    public type GetProposalResult = Result.Result<Proposal, GetProposalError>;
+    public type GetLeagueProposalResult = Result.Result<LeagueProposal, GetLeagueProposalError>;
 
-    public type GetProposalsResult = {
-        #ok : CommonTypes.PagedResult<Proposal>;
+    public type GetLeagueProposalsResult = {
+        #ok : CommonTypes.PagedResult<LeagueProposal>;
     };
 
-    public type Proposal = Dao.Proposal<ProposalContent>;
+    public type LeagueProposal = Dao.Proposal<LeagueDao.ProposalContent>;
 
-    public type ProposalContent = {};
-
-    public type VoteOnProposalRequest = {
+    public type VoteOnLeagueProposalRequest = {
         proposalId : Nat;
         vote : Bool;
     };
 
-    public type VoteOnProposalResult = Result.Result<(), VoteOnProposalError>;
+    public type VoteOnLeagueProposalResult = Result.Result<(), VoteOnLeagueProposalError>;
 
-    public type VoteOnProposalError = {
+    public type VoteOnLeagueProposalError = {
         #notAuthorized;
         #proposalNotFound;
         #alreadyVoted;
         #votingClosed;
     };
 
-    public type CreateProposalRequest = {
-        content : ProposalContent;
-    };
+    public type CreateProposalResult = Result.Result<Nat, Dao.CreateProposalError>;
 
-    public type CreateProposalResult = Result.Result<Nat, CreateProposalError>;
-
-    public type CreateProposalError = {
-        #notAuthorized;
-        #invalid : [Text];
-    };
     public type GetScenarioError = {
         #notFound;
         #notStarted;
@@ -372,10 +358,6 @@ module {
 
     public type SetPlayerTeamResult = Result.Result<(), SetPlayerTeamError>;
 
-    public type CancelMatchGroupRequest = {
-        id : Nat;
-    };
-
     public type CancelMatchGroupError = {
         #matchGroupNotFound;
         #notAuthorized;
@@ -532,14 +514,14 @@ module {
         #teamNotFound;
     };
 
-    public type GetTeamProposalResult = Result.Result<Proposal, GetTeamProposalError>;
+    public type GetTeamProposalResult = Result.Result<Dao.Proposal<TeamDao.ProposalContent>, GetTeamProposalError>;
 
     public type GetTeamProposalError = {
         #proposalNotFound;
         #teamNotFound;
     };
 
-    public type GetTeamProposalsResult = Result.Result<CommonTypes.PagedResult<Proposal>, GetTeamProposalsError>;
+    public type GetTeamProposalsResult = Result.Result<CommonTypes.PagedResult<Dao.Proposal<TeamDao.ProposalContent>>, GetTeamProposalsError>;
 
     public type GetTeamProposalsError = {
         #teamNotFound;
@@ -560,9 +542,7 @@ module {
         #teamNotFound;
     };
 
-    public type CreateTeamProposalRequest = {
-        content : ProposalContent;
-    };
+    public type CreateTeamProposalRequest = TeamDao.ProposalContent;
 
     public type CreateTeamProposalResult = Result.Result<Nat, CreateTeamProposalError>;
 
@@ -628,6 +608,7 @@ module {
     public type AddTeamOwnerError = {
         #onOtherTeam : Nat;
         #teamNotFound;
+        #alreadyOwner;
         #notAuthorized;
     };
 

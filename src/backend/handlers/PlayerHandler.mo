@@ -123,21 +123,20 @@ module {
         public func addMatchStats(
             matchGroupId : Nat,
             playerStats : [Player.PlayerMatchStatsWithId],
-        ) : Result.Result<(), { #playerNotFound : Nat32; #matchGroupStatsExist : { playerId : Nat32; matchGroupId : Nat } }> {
+        ) {
             for (playerStat in Iter.fromArray(playerStats)) {
-                let ?player = players.get(playerStat.playerId) else return #err(#playerNotFound(playerStat.playerId));
+                let ?player = players.get(playerStat.playerId) else return Debug.trap("Player not found for id " # Nat32.toText(playerStat.playerId));
                 if (player.matchGroupStats.get(matchGroupId) != null) {
-                    return #err(#matchGroupStatsExist({ playerId = playerStat.playerId; matchGroupId }));
+                    Debug.trap("Match group stats already exist for player " # Nat32.toText(playerStat.playerId) # " and match group " # Nat.toText(matchGroupId));
                 };
                 player.matchGroupStats.put(matchGroupId, playerStat);
             };
-            #ok;
         };
 
         public func updateSkill(
             playerId : Nat32,
             skill : Skill.Skill,
-            delta : Nat,
+            delta : Int,
         ) : Result.Result<(), { #playerNotFound }> {
             let ?player = players.get(playerId) else return #err(#playerNotFound);
             player.skills := Skill.modify(player.skills, skill, delta);

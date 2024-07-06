@@ -2,7 +2,6 @@ import Result "mo:base/Result";
 import Timer "mo:base/Timer";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
-import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
@@ -46,7 +45,7 @@ module {
     };
 
     public type CancelMatchGroupError = {
-        #matchGroupNotFound;
+        #noLiveMatchGroup;
     };
 
     public type MatchGroupTickResult = {
@@ -63,7 +62,7 @@ module {
     };
 
     public type StableData = {
-        matchGroups : [LiveState.LiveMatchGroupState];
+        matchGroupState : ?LiveState.LiveMatchGroupState;
     };
 
     type MutableLiveMatchGroupState = {
@@ -74,39 +73,40 @@ module {
     };
 
     public type OnMatchGroupCompleteData = {
+        matchGroupId : Nat;
         matches : [Season.CompletedMatch];
         playerStats : [Player.PlayerMatchStatsWithId];
     };
 
     public class Handler<system>(
         stableData : StableData,
-        onMatchGroupComplete : (OnMatchGroupCompleteData) -> (),
+        onMatchGroupComplete : <system>(OnMatchGroupCompleteData) -> (),
     ) {
-        let matchGroupStates : HashMap.HashMap<Nat, MutableLiveMatchGroupState> = toMatchGroupStateMap(stableData.matchGroups);
+        var matchGroupStateOrNull : ?MutableLiveMatchGroupState = switch (stableData.matchGroupState) {
+            case (?s) ?toMutableMatchGroupState(s);
+            case (null) null;
+        };
 
         public func toStableData() : StableData {
             {
-                matchGroups = matchGroupStates.vals()
-                |> Iter.map<MutableLiveMatchGroupState, LiveState.LiveMatchGroupState>(
-                    _,
-                    func(matchGroup : MutableLiveMatchGroupState) : LiveState.LiveMatchGroupState {
-                        fromMutableMatchGroupState(matchGroup);
-                    },
-                )
-                |> Iter.toArray(_);
+                matchGroupState = switch (matchGroupStateOrNull) {
+                    case (?s) ?fromMutableMatchGroupState(s);
+                    case (null) null;
+                };
             };
         };
 
-        public func getLiveMatchGroupState(id : Nat) : Result.Result<LiveState.LiveMatchGroupState, { #matchGroupNotFound }> {
-            let ?matchGroupState = matchGroupStates.get(id) else return #err(#matchGroupNotFound);
-            #ok(fromMutableMatchGroupState(matchGroupState));
+        public func getLiveMatchGroupState() : ?LiveState.LiveMatchGroupState {
+            let ?matchGroupState = matchGroupStateOrNull else return null;
+            ?fromMutableMatchGroupState(matchGroupState);
         };
 
         public func startMatchGroup<system>(
             prng : Prng,
             id : Nat,
             matches : [StartMatchRequest],
-        ) : Result.Result<(), { #noMatchesSpecified }> {
+        ) : Result.Result<(), { #noMatchesSpecified; #matchGroupInProgress }> {
+            let null = matchGroupStateOrNull else return #err(#matchGroupInProgress);
             let tickTimerId = startTickTimer<system>(id);
 
             let tickResults = Buffer.Buffer<LiveState.LiveMatchStateWithStatus>(matches.size());
@@ -129,21 +129,18 @@ module {
                 return #err(#noMatchesSpecified);
             };
 
-            let matchGroup : MutableLiveMatchGroupState = {
+            matchGroupStateOrNull := ?{
                 id = id;
                 var matches = Buffer.toArray(tickResults);
                 var tickTimerId = tickTimerId;
                 var currentSeed = prng.getCurrentSeed();
             };
-            matchGroupStates.put(id, matchGroup);
             #ok;
         };
 
-        public func cancelMatchGroup(
-            matchGroupId : Nat
-        ) : Result.Result<(), CancelMatchGroupError> {
-            switch (matchGroupStates.remove(matchGroupId)) {
-                case (null) return #err(#matchGroupNotFound);
+        public func cancelMatchGroup() : Result.Result<(), CancelMatchGroupError> {
+            switch (matchGroupStateOrNull) {
+                case (null) return #err(#noLiveMatchGroup);
                 case (?matchGroup) {
                     Timer.cancelTimer(matchGroup.tickTimerId);
                     #ok;
@@ -151,11 +148,9 @@ module {
             };
         };
 
-        public func tickMatchGroup(
-            matchGroupId : Nat
-        ) : Result.Result<MatchGroupTickResult, { #matchGroupNotFound }> {
+        public func tickMatchGroup() : Result.Result<MatchGroupTickResult, { #noLiveMatchGroup }> {
 
-            let ?matchGroup = matchGroupStates.get(matchGroupId) else return #err(#matchGroupNotFound);
+            let ?matchGroup = matchGroupStateOrNull else return #err(#noLiveMatchGroup);
             let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
 
             switch (tickMatches(prng, matchGroup.matches)) {
@@ -197,10 +192,10 @@ module {
             };
         };
 
-        public func finishMatchGroup(matchGroupId : Nat) : Result.Result<(), { #matchGroupNotFound }> {
+        public func finishMatchGroup() : Result.Result<(), { #noLiveMatchGroup }> {
 
             label l loop {
-                switch (tickMatchGroup(matchGroupId)) {
+                switch (tickMatchGroup()) {
                     case (#ok(#completed(_))) break l;
                     case (#ok(#inProgress(_))) {
                         // Continue ticking
@@ -211,10 +206,10 @@ module {
             #ok;
         };
 
-        private func resetTickTimer<system>(matchGroupId : Nat) : () {
-            let ?matchGroup = matchGroupStates.get(matchGroupId) else return;
+        private func resetTickTimer<system>() : () {
+            let ?matchGroup = matchGroupStateOrNull else return;
             Timer.cancelTimer(matchGroup.tickTimerId);
-            let newTickTimerId = startTickTimer<system>(matchGroupId);
+            let newTickTimerId = startTickTimer<system>(matchGroup.id);
             matchGroup.tickTimerId := newTickTimerId;
         };
 
@@ -222,19 +217,21 @@ module {
             Timer.setTimer<system>(
                 #seconds(5),
                 func() : async () {
-                    switch (tickMatchGroup(matchGroupId)) {
+                    switch (tickMatchGroup()) {
                         case (#err(err)) {
                             Debug.print("Failed to tick match group: " # Nat.toText(matchGroupId) # ", Error: " # debug_show (err) # ". Canceling tick timer. Reset with `resetTickTimer` method");
                         };
                         case (#ok(#inProgress)) {
                             // If not complete, trigger again in 5 seconds
-                            resetTickTimer<system>(matchGroupId);
+                            resetTickTimer<system>();
                         };
                         case (#ok(#completed(c))) {
-                            Debug.print("Match group complete: " # Nat.toText(matchGroupId));
+                            Debug.print("Match group complete ");
                             // Remove match group if successfully passed info to the league
-                            ignore matchGroupStates.remove(matchGroupId);
-                            onMatchGroupComplete(c);
+                            matchGroupStateOrNull := null;
+                            onMatchGroupComplete<system>({
+                                c with matchGroupId = matchGroupId;
+                            });
                         };
                     };
                 },
@@ -343,10 +340,7 @@ module {
         };
 
         // Restart the timers for any match groups that were in progress
-        for (matchGroupId in matchGroupStates.keys()) {
-            resetTickTimer<system>(matchGroupId);
-        };
-
+        resetTickTimer<system>();
     };
 
     private func toMutableMatchGroupState(matchGroup : LiveState.LiveMatchGroupState) : MutableLiveMatchGroupState {
@@ -365,16 +359,5 @@ module {
             tickTimerId = matchGroup.tickTimerId;
             currentSeed = matchGroup.currentSeed;
         };
-    };
-
-    private func toMatchGroupStateMap(matchGroups : [LiveState.LiveMatchGroupState]) : HashMap.HashMap<Nat, MutableLiveMatchGroupState> {
-        matchGroups.vals()
-        |> Iter.map<LiveState.LiveMatchGroupState, (Nat, MutableLiveMatchGroupState)>(
-            _,
-            func(matchGroup : LiveState.LiveMatchGroupState) : (Nat, MutableLiveMatchGroupState) {
-                (matchGroup.id, toMutableMatchGroupState(matchGroup));
-            },
-        )
-        |> HashMap.fromIter<Nat, MutableLiveMatchGroupState>(_, matchGroups.size(), Nat.equal, Nat32.fromNat);
     };
 };

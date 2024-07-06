@@ -49,7 +49,7 @@ actor MainActor : Types.Actor {
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
     };
-    stable var daoStableData : Dao.StableData<LeagueDao.ProposalContent> = {
+    stable var leagueDaoStableData : Dao.StableData<LeagueDao.ProposalContent> = {
         proposalDuration = #days(3);
         proposals = [];
         votingThreshold = #percent({
@@ -75,7 +75,7 @@ actor MainActor : Types.Actor {
     };
 
     stable var simulationStableData : SimulationHandler.StableData = {
-        matchGroups = [];
+        matchGroupState = null;
     };
 
     // Unstables ---------------------------------------------------------
@@ -85,7 +85,7 @@ actor MainActor : Types.Actor {
     private func processEffectOutcome(effectOutcome : Scenario.EffectOutcome) : () {
         switch (effectOutcome) {
             case (#injury(injuryEffect)) {
-                let ?player = playerHandler.getPosition(injuryEffect.target.teamId, injuryEffect.target.position) else Debug.trap("Position " # FieldPosition.toText(injuryEffect.target.position) # " not found in team " # Nat.toText(injuryEffect.target.teamId));
+                let ?player = playerHandler.getPosition(injuryEffect.target.teamId, injuryEffect.target.position) else Debug.trap("Position " # debug_show (injuryEffect.target.position) # " not found in team " # Nat.toText(injuryEffect.target.teamId));
 
                 switch (playerHandler.updateCondition(player.id, #injured)) {
                     case (#ok) ();
@@ -100,25 +100,29 @@ actor MainActor : Types.Actor {
                 };
             };
             case (#energy(e)) {
-                switch (teamsHandler.updateEnergy(e.teamId, e.delta)) {
+                switch (teamsHandler.updateEnergy(e.teamId, e.delta, true)) {
                     case (#ok) ();
-                    case (#err(e)) #err(debug_show (e));
+                    case (#err(e)) Debug.trap("Error updating team energy: " # debug_show (e));
                 };
             };
             case (#skill(s)) {
-                switch (playerHandler.updateSkill(s.playerId, s.skill, s.delta)) {
+                let playerId = switch (playerHandler.getPosition(s.target.teamId, s.target.position)) {
+                    case (?player) player.id;
+                    case (null) Debug.trap("Position " # debug_show (s.target.position) # " not found in team " # Nat.toText(s.target.teamId));
+                };
+                switch (playerHandler.updateSkill(playerId, s.skill, s.delta)) {
                     case (#ok) ();
-                    case (#err(e)) #err(debug_show (e));
+                    case (#err(e)) Debug.trap("Error updating player skill: " # debug_show (e));
                 };
             };
             case (#teamTrait(t)) {
-                let result = switch (t.kind) {
-                    case (#add) teamsHandler.addTraitToTeam(t.teamId, t.traitId);
-                    case (#remove) teamsHandler.removeTraitFromTeam(t.teamId, t.traitId);
-                };
-                switch (result) {
-                    case (#ok(_)) ();
-                    case (#err(e)) #err(debug_show (e));
+                switch (t.kind) {
+                    case (#add) {
+                        ignore teamsHandler.addTraitToTeam(t.teamId, t.traitId);
+                    };
+                    case (#remove) {
+                        ignore teamsHandler.removeTraitFromTeam(t.teamId, t.traitId);
+                    };
                 };
             };
         };
@@ -128,37 +132,11 @@ actor MainActor : Types.Actor {
     var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome);
 
     let seasonEventHandler : SeasonHandler.EventHandler = {
-        onSeasonStart = func(_ : Season.InProgressSeason) : async* () {};
-        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : async* () {
+        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : () {
             predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
         };
-        onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : async* () {
+        onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : () {
             predictionHandler.closeMatchGroup(matchGroupId);
-        };
-        onMatchGroupComplete = func(matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) : async* () {
-            Debug.print("On match group complete event hook called for match group: " # Nat.toText(matchGroupId));
-            teamsHandler.onMatchGroupComplete(request.matchGroup);
-        };
-        onSeasonEnd = func(_ : SeasonHandler.EndedSeasonVariant) : async* () {
-            // TODO archive vs delete
-            Debug.print("Season complete, clearing season data");
-            predictionHandler.clear();
-            // TODO teams reset energy/entropy? or is that a scenario thing
-
-            switch (teamsHandler.onSeasonEnd()) {
-                case (#ok) ();
-                case (#err(#notAuthorized)) Debug.print("Error: League is not authorized to notify team of season completion");
-            };
-
-            switch (usersHandler.onSeasonEnd()) {
-                case (#ok) ();
-                case (#err(#notAuthorized)) Debug.print("League is not authorized to call users actor 'onSeasonEnd'");
-            };
-
-            switch (playersHandler.onSeasonEnd()) {
-                case (#ok) ();
-                case (#err(#notAuthorized)) Debug.print("League is not authorized to call players actor 'onSeasonEnd'");
-            };
         };
     };
 
@@ -215,7 +193,7 @@ actor MainActor : Types.Actor {
         #ok; // TODO
     };
     var leagueDao = Dao.Dao<system, LeagueDao.ProposalContent>(
-        daoStableData,
+        leagueDaoStableData,
         onLeagueProposalExecute,
         onLeagueProposalReject,
         onLeagueProposalValidate,
@@ -316,25 +294,68 @@ actor MainActor : Types.Actor {
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
+    private func awardUserPoints(
+        matchGroupId : Nat,
+        completedMatches : [Season.CompletedMatch],
+    ) : () {
+
+        // Award users points for their predictions
+        let anyAwards = switch (predictionHandler.getMatchGroup(matchGroupId)) {
+            case (null) false;
+            case (?matchGroupPredictions) {
+                let awards = Buffer.Buffer<{ userId : Principal; points : Nat }>(0);
+                var i = 0;
+                for (match in Iter.fromArray(completedMatches)) {
+                    if (i >= matchGroupPredictions.size()) {
+                        Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
+                    };
+                    let matchPredictions = matchGroupPredictions[i];
+                    i += 1;
+                    for ((userId, teamId) in Iter.fromArray(matchPredictions)) {
+                        if (teamId == match.winner) {
+                            // Award points
+                            awards.add({
+                                userId = userId;
+                                points = 10; // TODO amount?
+                            });
+                        };
+                    };
+                };
+                if (awards.size() > 0) {
+                    for (award in awards.vals()) {
+                        switch (userHandler.awardPoints(award.userId, award.points)) {
+                            case (#ok) ();
+                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(award.userId));
+                        };
+                    };
+                    true;
+                } else {
+                    false;
+                };
+            };
+        };
+        if (not anyAwards) {
+            Debug.print("No user points to award, skipping...");
+        };
+    };
+
     func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
 
-        let result = seasonHandler.onMatchGroupComplete<system>(data, prng);
+        // TODO real prng
+        let prng = PseudoRandomX.fromSeed(0);
+        let result = seasonHandler.onMatchGroupComplete<system>(prng, data.matchGroupId, data.matches);
 
-        let errorMessage = switch (result) {
-            case (#ok) {
-                // Remove match group if successfully passed info to the league
-                let matchGroupKey = buildMatchGroupKey(id);
-                let (newMatchGroups, _) = Trie.remove(matchGroups, matchGroupKey, Nat.equal);
-                matchGroups := newMatchGroups;
-                return #ok(#completed);
-            };
-            case (#err(#matchGroupNotFound)) "Failed: Match group not found - " # Nat.toText(id);
-            case (#err(#seasonNotOpen)) "Failed: Season not open";
-            case (#err(#matchGroupNotInProgress)) "Failed: Match group not in progress";
+        teamsHandler.onMatchGroupComplete(data.matches);
+        playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
+
+        switch (result) {
+            case (#ok) ();
+            case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
+            case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
+            case (#err(#matchGroupNotInProgress)) Debug.trap("OnMatchGroupComplete Failed: Match group not in progress");
         };
-        Debug.print("On Match Group Complete Result - " # errorMessage);
         // Award users points for their predictions
-        awardUserPoints(matchGroupId, completedMatches);
+        awardUserPoints(data.matchGroupId, data.matches);
     };
 
     var simulationHandler = SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
@@ -345,7 +366,7 @@ actor MainActor : Types.Actor {
         seasonStableData := seasonHandler.toStableData();
         predictionStableData := predictionHandler.toStableData();
         scenarioStableData := scenarioHandler.toStableData();
-        daoStableData := dao.toStableData();
+        leagueDaoStableData := leagueDao.toStableData();
         playerStableData := playerHandler.toStableData();
         teamStableData := teamsHandler.toStableData();
         userStableData := userHandler.toStableData();
@@ -356,8 +377,8 @@ actor MainActor : Types.Actor {
         seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
         predictionHandler := PredictionHandler.Handler(predictionStableData);
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome);
-        dao := Dao.Dao<system, Types.ProposalContent>(
-            daoStableData,
+        leagueDao := Dao.Dao<system, LeagueDao.ProposalContent>(
+            leagueDaoStableData,
             onLeagueProposalExecute,
             onLeagueProposalReject,
             onLeagueProposalValidate,
@@ -397,23 +418,18 @@ actor MainActor : Types.Actor {
         seasonHandler.seasonStatus;
     };
 
-    public shared ({ caller }) func createProposal(request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
-        let members = userHandler.getTeamOwners(null);
-        await* leagueDao.createProposal<system>(caller, request.content, members);
-    };
-
-    public shared query func getProposal(id : Nat) : async Types.GetProposalResult {
+    public shared query func getLeagueProposal(id : Nat) : async Types.GetLeagueProposalResult {
         switch (leagueDao.getProposal(id)) {
             case (?proposal) return #ok(proposal);
             case (null) return #err(#proposalNotFound);
         };
     };
 
-    public shared query func getProposals(count : Nat, offset : Nat) : async Types.GetProposalsResult {
+    public shared query func getLeagueProposals(count : Nat, offset : Nat) : async Types.GetLeagueProposalsResult {
         #ok(leagueDao.getProposals(count, offset));
     };
 
-    public shared ({ caller }) func voteOnProposal(request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {
+    public shared ({ caller }) func voteOnLeagueProposal(request : Types.VoteOnLeagueProposalRequest) : async Types.VoteOnLeagueProposalResult {
         await* leagueDao.vote(request.proposalId, caller, request.vote);
     };
 
@@ -488,16 +504,16 @@ actor MainActor : Types.Actor {
         predictionHandler.getMatchGroupSummary(matchGroupId, ?caller);
     };
 
-    public shared query func getLiveMatchGroupState(matchGroupId : Nat) : async Result.Result<LiveState.LiveMatchGroupState, Types.GetLiveMatchGroupStateError> {
-        simulationHandler.getLiveMatchGroupState(matchGroupId);
+    public shared query func getLiveMatchGroupState() : async ?LiveState.LiveMatchGroupState {
+        simulationHandler.getLiveMatchGroupState();
     };
 
-    public shared ({ caller }) func startMatchGroup(matchGroupId : Nat) : async Types.StartMatchGroupResult {
+    public shared ({ caller }) func startNextMatchGroup() : async Types.StartMatchGroupResult {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
 
-        seasonHandler.startMatchGroup(matchGroupId);
+        seasonHandler.startNextMatchGroup();
 
     };
 
@@ -505,7 +521,17 @@ actor MainActor : Types.Actor {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
-        seasonHandler.close();
+        Debug.print("Season complete, clearing season data");
+        switch (seasonHandler.close()) {
+            case (#ok) ();
+            case (#err(#seasonNotOpen)) return #err(#seasonNotOpen);
+        };
+        ignore simulationHandler.cancelMatchGroup();
+        predictionHandler.clear();
+
+        // TODO archive vs delete
+        // TODO teams reset energy/entropy? or is that a scenario thing
+        #ok;
     };
 
     public shared ({ caller }) func addFluff(request : Types.CreatePlayerFluffRequest) : async Types.CreatePlayerFluffResult {
@@ -541,21 +567,12 @@ actor MainActor : Types.Actor {
         playerHandler.getAll(null);
     };
 
-    public shared ({ caller }) func cancelMatchGroup(
-        request : Types.CancelMatchGroupRequest
-    ) : async Types.CancelMatchGroupResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        simulationHandler.cancelMatchGroup(request.id);
-    };
-
     // TODO remove
-    public shared ({ caller }) func finishMatchGroup(id : Nat) : async Types.FinishMatchGroupResult {
+    public shared ({ caller }) func finishLiveMatchGroup() : async Types.FinishMatchGroupResult {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
-        simulationHandler.finishMatchGroup(id);
+        simulationHandler.finishMatchGroup();
     };
 
     public shared query func getEntropyThreshold() : async Nat {
@@ -570,8 +587,22 @@ actor MainActor : Types.Actor {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
-        teamsHandler.create<system>(request);
-        playerHandler.populateTeamRoster(request.teamId);
+        let teamId = switch (
+            teamsHandler.create<system>(
+                request.name,
+                request.logoUrl,
+                request.motto,
+                request.description,
+                request.color,
+            )
+        ) {
+            case (#ok(teamId)) teamId;
+            case (#err(#nameTaken)) return #err(#nameTaken);
+        };
+        switch (playerHandler.populateTeamRoster(teamId)) {
+            case (#ok(_)) #ok(teamId);
+            case (#err(e)) Debug.trap("Error populating team roster: " # debug_show (e));
+        };
     };
 
     public shared query func getTraits() : async [Trait.Trait] {
@@ -585,10 +616,8 @@ actor MainActor : Types.Actor {
         teamsHandler.createTrait(request);
     };
 
-    public shared ({ caller }) func createTeamProposal(teamId : Nat, request : Types.CreateProposalRequest) : async Types.CreateProposalResult {
-        let members = switch (userHandler.getTeamOwners(?teamId)) {
-            case (#ok(members)) members;
-        };
+    public shared ({ caller }) func createTeamProposal(teamId : Nat, request : Types.CreateTeamProposalRequest) : async Types.CreateTeamProposalResult {
+        let members = userHandler.getTeamOwners(?teamId);
         let isAMember = members
         |> Iter.fromArray(_)
         |> Iter.filter(
@@ -602,16 +631,16 @@ actor MainActor : Types.Actor {
         await* teamsHandler.createProposal<system>(teamId, caller, request, members);
     };
 
-    public shared query func getTeamProposal(teamId : Nat, id : Nat) : async Types.GetProposalResult {
+    public shared query func getTeamProposal(teamId : Nat, id : Nat) : async Types.GetTeamProposalResult {
         teamsHandler.getProposal(teamId, id);
     };
 
-    public shared query func getTeamProposals(teamId : Nat, count : Nat, offset : Nat) : async Types.GetProposalsResult {
+    public shared query func getTeamProposals(teamId : Nat, count : Nat, offset : Nat) : async Types.GetTeamProposalsResult {
         teamsHandler.getProposals(teamId, count, offset);
     };
 
-    public shared ({ caller }) func voteOnTeamProposal(teamId : Nat, request : Types.VoteOnProposalRequest) : async Types.VoteOnProposalResult {
-        await* teamsHandler.voteOnProposal(teamId, caller, request);
+    public shared ({ caller }) func voteOnTeamProposal(teamId : Nat, request : Types.VoteOnTeamProposalRequest) : async Types.VoteOnTeamProposalResult {
+        await* teamsHandler.voteOnProposal(teamId, caller, request.proposalId, request.vote);
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
@@ -630,7 +659,11 @@ actor MainActor : Types.Actor {
     };
 
     public shared query func getTeamOwners(request : Types.GetTeamOwnersRequest) : async Types.GetTeamOwnersResult {
-        let owners = userHandler.getTeamOwners(request);
+        let teamId = switch (request) {
+            case (#team(teamId)) ?teamId;
+            case (#all) null;
+        };
+        let owners = userHandler.getTeamOwners(teamId);
         #ok(owners);
     };
 
@@ -650,55 +683,10 @@ actor MainActor : Types.Actor {
             return #err(#notAuthorized);
         };
         let ?_ = teamsHandler.get(request.teamId) else return #err(#teamNotFound);
-        userHandler.addTeamOwner(request);
+        userHandler.addTeamOwner(request.userId, request.teamId, request.votingPower);
     };
 
     // Private Methods ---------------------------------------------------------
-
-    private func awardUserPoints(
-        matchGroupId : Nat,
-        completedMatches : [Season.CompletedMatch],
-    ) : () {
-
-        // Award users points for their predictions
-        let anyAwards = switch (predictionHandler.getMatchGroup(matchGroupId)) {
-            case (null) false;
-            case (?matchGroupPredictions) {
-                let awards = Buffer.Buffer<{ userId : Principal; points : Nat }>(0);
-                var i = 0;
-                for (match in Iter.fromArray(completedMatches)) {
-                    if (i >= matchGroupPredictions.size()) {
-                        Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
-                    };
-                    let matchPredictions = matchGroupPredictions[i];
-                    i += 1;
-                    for ((userId, teamId) in Iter.fromArray(matchPredictions)) {
-                        if (teamId == match.winner) {
-                            // Award points
-                            awards.add({
-                                userId = userId;
-                                points = 10; // TODO amount?
-                            });
-                        };
-                    };
-                };
-                if (awards.size() > 0) {
-                    for (award in awards.vals()) {
-                        switch (userHandler.awardPoints(award.userId, award.points)) {
-                            case (#ok) ();
-                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(award.userId));
-                        };
-                    };
-                    true;
-                } else {
-                    false;
-                };
-            };
-        };
-        if (not anyAwards) {
-            Debug.print("No user points to award, skipping...");
-        };
-    };
 
     private func isLeagueOrBDFN(id : Principal) : Bool {
         if (id == Principal.fromActor(MainActor)) {

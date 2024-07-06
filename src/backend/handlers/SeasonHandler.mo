@@ -26,7 +26,6 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StartMatchGroupError = {
-        #matchGroupNotFound;
         #notScheduledYet;
         #alreadyStarted;
         #matchErrors : [{
@@ -38,8 +37,6 @@ module {
     public type StartMatchError = {
         #notEnoughPlayers : Team.TeamIdOrBoth;
     };
-
-    public type StartMatchGroupResult = Result.Result<(), StartMatchGroupError>;
 
     public type CloseSeasonError = {
         #seasonNotOpen;
@@ -108,14 +105,8 @@ module {
     };
 
     public type EventHandler = {
-        onSeasonStart : (season : Season.InProgressSeason) -> ();
         onMatchGroupSchedule : (matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> ();
         onMatchGroupStart : (matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) -> ();
-        onMatchGroupComplete : (matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) -> ();
-        onSeasonEnd : (season : EndedSeasonVariant) -> ();
-        addMatchGroupStats : (matchGroupId : Nat, playerStats : [Player.PlayerMatchStats]) -> Result.Result<(), AddMatchStatsError>;
-        cancelMatchGroup : (matchGroupId : Nat) -> Result.Result<(), CancelMatchGroupError>;
-        startMatchGroup : (id : Nat, matches : [StartMatchRequest]) -> Result.Result<(), StartMatchGroupError>;
     };
 
     public type EndedSeasonVariant = {
@@ -233,7 +224,6 @@ module {
 
             teamStandings := null; // No standings yet
             seasonStatus := #inProgress(inProgressSeason);
-            eventHandler.onSeasonStart(inProgressSeason);
             // Get first match group to open
             let #notScheduled(firstMatchGroup) = notScheduledMatchGroups[0] else Prelude.unreachable();
 
@@ -313,7 +303,6 @@ module {
             prng : Prng,
             matchGroupId : Nat,
             matches : [Season.CompletedMatch],
-            playerStats : [Player.PlayerMatchStats],
         ) : OnMatchGroupCompleteResult {
 
             let #inProgress(season) = seasonStatus else return #err(#seasonNotOpen);
@@ -356,12 +345,6 @@ module {
             teamStandings := ?updatedTeamStandings;
             seasonStatus := #inProgress(updatedSeason);
 
-            eventHandler.onMatchGroupComplete(matchGroupId, updatedMatchGroup);
-            switch (eventHandler.addMatchGroupStats(matchGroupId, playerStats)) {
-                case (#ok) ();
-                case (#err(error)) Debug.trap("Failed to add match group stats" # debug_show (error));
-            };
-
             // Get next match group to schedule
             let nextMatchGroupId = matchGroupId + 1;
             let ?nextMatchGroup = Util.arrayGetSafe<Season.InProgressSeasonMatchGroupVariant>(
@@ -401,19 +384,9 @@ module {
             let #inProgress(inProgressSeason) = seasonStatus else return #err(#seasonNotOpen);
             let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
                 case (#ok(completedMatchGroups)) completedMatchGroups;
-                case (#matchGroupsNotComplete(inProgressMatchGroup)) {
+                case (#matchGroupsNotComplete(_)) {
                     // TODO put in bad state vs delete
                     seasonStatus := #notStarted;
-                    switch (inProgressMatchGroup) {
-                        case (null) ();
-                        case (?inProgressMatchGroup) {
-                            // Cancel live match
-                            switch (eventHandler.cancelMatchGroup(inProgressMatchGroup.matchGroupId)) {
-                                case (#ok or #err(#matchGroupNotFound)) ();
-                            };
-                        };
-                    };
-                    eventHandler.onSeasonEnd(#incomplete(inProgressSeason));
                     return #ok;
                 };
             };
@@ -470,7 +443,6 @@ module {
                 matchGroups = completedMatchGroups;
             };
             seasonStatus := #completed(completedSeason);
-            eventHandler.onSeasonEnd(#completed(completedSeason));
             #ok;
         };
 
@@ -726,9 +698,20 @@ module {
             |> Buffer.fromIter(_);
         };
 
-        public func startMatchGroup(
+        public func startNextMatchGroup() : Result.Result<(), StartMatchGroupError> {
+            let ?nextMatchGroup = getNextScheduledMatchGroup() else return #err(#notScheduledYet);
+            switch (startMatchGroup(nextMatchGroup.matchGroupId)) {
+                case (#ok) #ok;
+                case (#err(#matchGroupNotFound)) Prelude.unreachable();
+                case (#err(#notScheduledYet)) #err(#notScheduledYet);
+                case (#err(#alreadyStarted)) #err(#alreadyStarted);
+                case (#err(#matchErrors(errors))) #err(#matchErrors(errors));
+            };
+        };
+
+        private func startMatchGroup(
             matchGroupId : Nat
-        ) : StartMatchGroupResult {
+        ) : Result.Result<(), StartMatchGroupError or { #matchGroupNotFound }> {
             let #inProgress(season) = seasonStatus else return #err(#matchGroupNotFound);
 
             // Get current match group
@@ -781,10 +764,6 @@ module {
                 });
             };
             let matches = Buffer.toArray(matchStartRequestBuffer);
-            switch (eventHandler.startMatchGroup(matchGroupId, matches)) {
-                case (#ok) ();
-                case (#err(error)) return #err(error);
-            };
             Timer.cancelTimer(scheduledMatchGroup.timerId); // Cancel timer incase the match group was forced early
             // TODO this should better handled in case of failure to start the match
             let inProgressMatches = matches

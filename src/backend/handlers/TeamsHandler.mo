@@ -58,7 +58,7 @@ module {
 
     public class Handler<system>(
         data : StableData,
-        daoFactory : (Nat, Dao.StableData<TeamDao.ProposalContent>) -> Dao.Dao<TeamDao.ProposalContent>,
+        daoFactory : <system>(Nat, Dao.StableData<TeamDao.ProposalContent>) -> Dao.Dao<TeamDao.ProposalContent>,
         onLeagueCollapse : () -> (),
     ) {
 
@@ -168,7 +168,7 @@ module {
                     quorum = ?20;
                 });
             };
-            let dao = daoFactory(teamId, daoData);
+            let dao = daoFactory<system>(teamId, daoData);
             daos.put(teamId, dao);
 
             return #ok(teamId);
@@ -367,10 +367,9 @@ module {
             #ok({ hadTrait = hadTrait });
         };
 
-        public func onMatchGroupComplete(matchGroup : Season.CompletedMatchGroup) {
+        public func onMatchGroupComplete(matches : [Season.CompletedMatch]) {
             // Give team X energy that is divided purpotionally to how much relative entropy
             // (based on combined entropy of all teams) they have and +1 for each winning team
-            Debug.print("On match group complete event triggered for match group: " # debug_show (matchGroup));
             type TeamInfo = {
                 id : Nat;
                 score : Int;
@@ -378,10 +377,10 @@ module {
                 mutableData : MutableTeamData;
             };
 
-            let playingTeams = matchGroup.matches.vals()
+            let playingTeams = matches.vals()
             |> IterTools.fold(
                 _,
-                Buffer.Buffer<TeamInfo>(matchGroup.matches.size() * 2),
+                Buffer.Buffer<TeamInfo>(matches.size() * 2),
                 func(acc : Buffer.Buffer<TeamInfo>, match : Season.CompletedMatch) : Buffer.Buffer<TeamInfo> {
                     let ?team1 = teams.get(match.team1.id) else Debug.trap("Team not found: " # Nat.toText(match.team1.id));
                     let ?team2 = teams.get(match.team2.id) else Debug.trap("Team not found: " # Nat.toText(match.team2.id));
@@ -529,11 +528,11 @@ module {
 
     private func toDaoHashMap<system>(
         teams : [StableTeamData],
-        daoFactory : (Nat, Dao.StableData<TeamDao.ProposalContent>) -> Dao.Dao<TeamDao.ProposalContent>,
+        daoFactory : <system>(Nat, Dao.StableData<TeamDao.ProposalContent>) -> Dao.Dao<TeamDao.ProposalContent>,
     ) : HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>> {
         let daoMap = HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>>(0, Nat.equal, Nat32.fromNat);
         for (team in teams.vals()) {
-            let dao = daoFactory(team.id, team.dao);
+            let dao = daoFactory<system>(team.id, team.dao);
             daoMap.put(team.id, dao);
         };
         daoMap;
