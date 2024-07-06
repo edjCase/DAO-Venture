@@ -1,8 +1,8 @@
 <script lang="ts">
     import { proposalStore } from "../../../stores/ProposalStore";
     import { onDestroy } from "svelte";
-    import { Proposal } from "../../../ic-agent/declarations/teams";
-    import { teamsAgentFactory } from "../../../ic-agent/Teams";
+    import { Proposal } from "../../../ic-agent/declarations/main";
+    import { mainAgentFactory } from "../../../ic-agent/Main";
     import GenericProposalList from "../GenericProposalList.svelte";
     import { ProposalType } from "../GenericProposal.svelte";
     import TeamProposalDetails from "./TeamProposalView.svelte";
@@ -63,8 +63,8 @@
     };
 
     let onVote = async (proposalId: bigint, vote: boolean) => {
-        let teamsAgent = await teamsAgentFactory();
-        let result = await teamsAgent.voteOnProposal(teamId, {
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.voteOnTeamProposal(teamId, {
             proposalId: proposalId,
             vote,
         });

@@ -4,7 +4,7 @@
     import { toJsonString } from "../../../../utils/StringUtil";
     import ChosenOrRandomSkillChooser from "../ChosenOrRandomSkillChooser.svelte";
     import ChosenOrRandomFieldPositionChooser from "../ChosenOrRandomFieldPositionChooser.svelte";
-    import { ProportionalBidScenario } from "../../../../ic-agent/declarations/league";
+    import { ProportionalBidScenario } from "../../../../ic-agent/declarations/main";
     export let value: ProportionalBidScenario;
 </script>
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { PlayerStateWithId } from "../../ic-agent/declarations/stadium";
+  import { LivePlayerState } from "../../ic-agent/declarations/main";
   import { getFontSize } from "../../utils/FieldUtil";
   import { toRgbString } from "../../utils/StringUtil";
   import UniqueAvatar from "../common/UniqueAvatar.svelte";
 
-  export let player: PlayerStateWithId;
+  export let player: LivePlayerState;
   export let teamColor: [number, number, number];
   export let x: number;
   export let y: number;

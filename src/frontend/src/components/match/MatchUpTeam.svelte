@@ -1,9 +1,6 @@
 <script lang="ts">
     import { Spinner } from "flowbite-svelte";
-    import {
-        TeamId,
-        TeamStandingInfo,
-    } from "../../ic-agent/declarations/league";
+    import { TeamId, TeamStandingInfo } from "../../ic-agent/declarations/main";
     import {
         MatchDetails,
         TeamDetailsOrUndetermined,

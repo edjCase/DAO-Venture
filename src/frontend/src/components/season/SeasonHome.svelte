@@ -7,7 +7,7 @@
     import TeamLogo from "../team/TeamLogo.svelte";
     import { teamStore } from "../../stores/TeamStore";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
-    import { Team } from "../../ic-agent/declarations/teams";
+    import { Team } from "../../ic-agent/declarations/main";
 
     $: teams = $teamStore;
 

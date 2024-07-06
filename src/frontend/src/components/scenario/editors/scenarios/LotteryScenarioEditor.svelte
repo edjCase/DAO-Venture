@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Input, Label } from "flowbite-svelte";
     import ScenarioEffectChooser from "../ScenarioEffectChooser.svelte";
-    import { LotteryScenario } from "../../../../ic-agent/declarations/league";
+    import { LotteryScenario } from "../../../../ic-agent/declarations/main";
     export let value: LotteryScenario;
 </script>
 

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button, Input, Label } from "flowbite-svelte";
-    import { NoLeagueEffectScenarioRequest } from "../../../../ic-agent/declarations/league";
+    import { NoLeagueEffectScenarioRequest } from "../../../../ic-agent/declarations/main";
     import ScenarioEffectChooser from "../ScenarioEffectChooser.svelte";
     import TraitRequirementsEditor from "../TraitRequirementsEditor.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";

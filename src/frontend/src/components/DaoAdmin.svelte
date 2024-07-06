@@ -11,7 +11,7 @@
     import { teamStore } from "../stores/TeamStore";
     import { Principal } from "@dfinity/principal";
     import MemberList from "./dao/MemberList.svelte";
-    import { usersAgentFactory } from "../ic-agent/Users";
+    import { mainAgentFactory } from "../ic-agent/Main";
     import { userStore } from "../stores/UserStore";
     $: teams = $teamStore;
 
@@ -40,8 +40,8 @@
         }
         console.log("Adding member", newMemberId);
         let userId = Principal.fromText(newMemberId);
-        let usersAgent = await usersAgentFactory();
-        let res = await usersAgent.addTeamOwner({
+        let mainAgent = await mainAgentFactory();
+        let res = await mainAgent.addTeamOwner({
             teamId: BigInt(selectedTeamId),
             userId: userId,
             votingPower: BigInt(1),

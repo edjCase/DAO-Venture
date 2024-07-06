@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { ChangeDescriptionContent } from "../../../../ic-agent/declarations/teams";
+    import { ChangeTeamDescriptionContent } from "../../../../ic-agent/declarations/main";
 
-    export let content: ChangeDescriptionContent;
+    export let content: ChangeTeamDescriptionContent;
 </script>
 
 <div>New Description: {content.description}</div>

@@ -4,7 +4,7 @@
     import AddScenario from "./scenario/AddScenario.svelte";
     import ScheduleSeason from "./season/ScheduleSeason.svelte";
     import TempInitialize from "./TempInitialize.svelte";
-    import { BenevolentDictatorState } from "../ic-agent/declarations/league";
+    import { BenevolentDictatorState } from "../ic-agent/declarations/main";
     import { identityStore } from "../stores/IdentityStore";
     import { userStore } from "../stores/UserStore";
     import { Accordion, AccordionItem, Badge, Tooltip } from "flowbite-svelte";

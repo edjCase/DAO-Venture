@@ -3,7 +3,7 @@
     import {
         ChosenOrRandomFieldPosition,
         FieldPosition,
-    } from "../../../ic-agent/declarations/league";
+    } from "../../../ic-agent/declarations/main";
     import FieldPositionChooser from "./FieldPositionChooser.svelte";
 
     export let value: ChosenOrRandomFieldPosition;

@@ -1,10 +1,9 @@
 import { Principal } from '@dfinity/principal';
 import { Writable, writable } from 'svelte/store';
-import { usersAgentFactory } from '../ic-agent/Users';
-import { GetUserResult, User, UserStats } from '../ic-agent/declarations/users';
+import { mainAgentFactory } from '../ic-agent/Main';
+import { GetUserResult, User, UserStats } from '../ic-agent/declarations/main';
 import { toJsonString } from '../utils/StringUtil';
-import { leagueAgentFactory } from '../ic-agent/League';
-import { BenevolentDictatorState } from '../ic-agent/declarations/league';
+import { BenevolentDictatorState } from '../ic-agent/declarations/main';
 
 function createUserStore() {
     const userStores = new Map<string, Writable<User>>();
@@ -29,8 +28,8 @@ function createUserStore() {
     };
 
     const get = async (userId: Principal) => {
-        let usersAgent = await usersAgentFactory();
-        let result: GetUserResult = await usersAgent.get(userId);
+        let mainAgent = await mainAgentFactory();
+        let result: GetUserResult = await mainAgent.getUser(userId);
         if ('ok' in result) {
             return result.ok;
         }
@@ -52,8 +51,8 @@ function createUserStore() {
     };
 
     const setFavoriteTeam = async (userId: Principal, teamId: bigint) => {
-        let usersAgent = await usersAgentFactory();
-        let result = await usersAgent.setFavoriteTeam(userId, teamId);
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.setFavoriteTeam(userId, teamId);
         if ('ok' in result) {
             refetchUser(userId);
         }
@@ -69,8 +68,8 @@ function createUserStore() {
     };
 
     const refetchStats = async () => {
-        let usersAgent = await usersAgentFactory();
-        let result = await usersAgent.getStats();
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.getUserStats();
         if ('ok' in result) {
             userStats.set(result.ok);
         } else {
@@ -79,8 +78,8 @@ function createUserStore() {
     };
 
     const refreshBdfnState = async () => {
-        let leagueAgent = await leagueAgentFactory();
-        let state = await leagueAgent.getBenevolentDictatorState();
+        let mainAgent = await mainAgentFactory();
+        let state = await mainAgent.getBenevolentDictatorState();
         bdfnState.set(state);
     }
 
@@ -89,8 +88,8 @@ function createUserStore() {
     };
 
     const claimBdfnRole = async () => {
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.claimBenevolentDictatorRole();
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.claimBenevolentDictatorRole();
         if ('ok' in result) {
             refreshBdfnState();
         } else {

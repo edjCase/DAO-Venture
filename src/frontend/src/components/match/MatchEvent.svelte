@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { Event, TeamId } from "../../ic-agent/declarations/stadium";
+  import { MatchEvent, TeamId } from "../../ic-agent/declarations/main";
   import { playerStore } from "../../stores/PlayerStore";
   import { teamStore } from "../../stores/TeamStore";
 
-  export let event: Event;
+  export let event: MatchEvent;
   export let team1Id: bigint;
   export let team2Id: bigint;
 

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Team } from "../../ic-agent/declarations/teams";
+    import { Team } from "../../ic-agent/declarations/main";
     import { teamStore } from "../../stores/TeamStore";
     import { entropyStore } from "../../stores/EntropyStore";
     import { ChevronDownSolid } from "flowbite-svelte-icons";

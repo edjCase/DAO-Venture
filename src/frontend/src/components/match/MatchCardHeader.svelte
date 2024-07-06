@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { TeamId, TeamIdOrTie } from "../../ic-agent/declarations/league";
+  import { TeamId, TeamIdOrTie } from "../../ic-agent/declarations/main";
   import { TeamDetailsOrUndetermined } from "../../models/Match";
   import TeamLogo from "../team/TeamLogo.svelte";
 

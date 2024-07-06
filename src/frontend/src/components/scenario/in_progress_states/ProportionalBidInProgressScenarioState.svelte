@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Label } from "flowbite-svelte";
-    import { ProportionalBidScenario } from "../../../ic-agent/declarations/league";
+    import { ProportionalBidScenario } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
 
     export let scenario: ProportionalBidScenario;

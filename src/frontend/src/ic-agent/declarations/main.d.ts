@@ -14,9 +14,29 @@ export interface AddScenarioRequest {
 }
 export type AddScenarioResult = { 'ok' : null } |
   { 'err' : AddScenarioError };
+export type AddTeamOwnerError = { 'notAuthorized' : null } |
+  { 'alreadyOwner' : null } |
+  { 'onOtherTeam' : bigint } |
+  { 'teamNotFound' : null };
+export interface AddTeamOwnerRequest {
+  'votingPower' : bigint,
+  'userId' : Principal,
+  'teamId' : bigint,
+}
+export type AddTeamOwnerResult = { 'ok' : null } |
+  { 'err' : AddTeamOwnerError };
+export type Base = { 'homeBase' : null } |
+  { 'thirdBase' : null } |
+  { 'secondBase' : null } |
+  { 'firstBase' : null };
 export type BenevolentDictatorState = { 'open' : null } |
   { 'claimed' : Principal } |
   { 'disabled' : null };
+export interface ChangeTeamColorContent { 'color' : [number, number, number] }
+export interface ChangeTeamDescriptionContent { 'description' : string }
+export interface ChangeTeamLogoContent { 'logoUrl' : string }
+export interface ChangeTeamMottoContent { 'motto' : string }
+export interface ChangeTeamNameContent { 'name' : string }
 export type ChosenOrRandomFieldPosition = { 'random' : null } |
   { 'chosen' : FieldPosition };
 export type ChosenOrRandomSkill = { 'random' : null } |
@@ -56,14 +76,25 @@ export interface CompletedSeasonTeam {
   'logoUrl' : string,
   'positions' : TeamPositions,
 }
-export type CreateProposalError = { 'notAuthorized' : null } |
-  { 'invalid' : Array<string> };
-export interface CreateProposalRequest { 'content' : ProposalContent }
-export type CreateProposalResult = { 'ok' : bigint } |
-  { 'err' : CreateProposalError };
+export type CreatePlayerFluffError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<InvalidError> };
+export interface CreatePlayerFluffRequest {
+  'title' : string,
+  'name' : string,
+  'description' : string,
+  'likes' : Array<string>,
+  'quirks' : Array<string>,
+  'dislikes' : Array<string>,
+}
+export type CreatePlayerFluffResult = { 'ok' : null } |
+  { 'err' : CreatePlayerFluffError };
 export type CreateTeamError = { 'nameTaken' : null } |
-  { 'notAuthorized' : null } |
-  { 'teamsCallError' : string };
+  { 'notAuthorized' : null };
+export type CreateTeamProposalError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> } |
+  { 'teamNotFound' : null };
+export type CreateTeamProposalResult = { 'ok' : bigint } |
+  { 'err' : CreateTeamProposalError };
 export interface CreateTeamRequest {
   'motto' : string,
   'name' : string,
@@ -73,6 +104,16 @@ export interface CreateTeamRequest {
 }
 export type CreateTeamResult = { 'ok' : bigint } |
   { 'err' : CreateTeamError };
+export type CreateTeamTraitError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> } |
+  { 'idTaken' : null };
+export interface CreateTeamTraitRequest {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
+export type CreateTeamTraitResult = { 'ok' : null } |
+  { 'err' : CreateTeamTraitError };
 export type DayOfWeek = { 'tuesday' : null } |
   { 'wednesday' : null } |
   { 'saturday' : null } |
@@ -113,15 +154,23 @@ export type FieldPosition = { 'rightField' : null } |
   { 'shortStop' : null } |
   { 'centerField' : null } |
   { 'firstBase' : null };
+export type FinishMatchGroupError = { 'notAuthorized' : null } |
+  { 'noLiveMatchGroup' : null };
+export type FinishMatchGroupResult = { 'ok' : null } |
+  { 'err' : FinishMatchGroupError };
+export type GetLeagueProposalError = { 'proposalNotFound' : null };
+export type GetLeagueProposalResult = { 'ok' : LeagueProposal } |
+  { 'err' : GetLeagueProposalError };
+export type GetLeagueProposalsResult = { 'ok' : PagedResult_2 };
 export type GetMatchGroupPredictionsError = { 'notFound' : null };
 export type GetMatchGroupPredictionsResult = {
     'ok' : MatchGroupPredictionSummary
   } |
   { 'err' : GetMatchGroupPredictionsError };
-export type GetProposalError = { 'proposalNotFound' : null };
-export type GetProposalResult = { 'ok' : Proposal } |
-  { 'err' : GetProposalError };
-export type GetProposalsResult = { 'ok' : PagedResult };
+export type GetPlayerError = { 'notFound' : null };
+export type GetPlayerResult = { 'ok' : Player } |
+  { 'err' : GetPlayerError };
+export type GetPositionError = { 'teamNotFound' : null };
 export type GetScenarioError = { 'notStarted' : null } |
   { 'notFound' : null };
 export type GetScenarioResult = { 'ok' : Scenario } |
@@ -132,16 +181,45 @@ export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
 export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
   { 'err' : GetScenarioVoteError };
 export type GetScenariosResult = { 'ok' : Array<Scenario> };
+export type GetTeamOwnersRequest = { 'all' : null } |
+  { 'team' : bigint };
+export type GetTeamOwnersResult = { 'ok' : Array<UserVotingInfo> };
+export type GetTeamProposalError = { 'proposalNotFound' : null } |
+  { 'teamNotFound' : null };
+export type GetTeamProposalResult = { 'ok' : TeamProposal } |
+  { 'err' : GetTeamProposalError };
+export type GetTeamProposalsError = { 'teamNotFound' : null };
+export type GetTeamProposalsResult = { 'ok' : PagedResult_1 } |
+  { 'err' : GetTeamProposalsError };
 export type GetTeamStandingsError = { 'notFound' : null };
 export type GetTeamStandingsResult = { 'ok' : Array<TeamStandingInfo> } |
   { 'err' : GetTeamStandingsError };
+export type GetUserError = { 'notAuthorized' : null } |
+  { 'notFound' : null };
+export interface GetUserLeaderboardRequest {
+  'count' : bigint,
+  'offset' : bigint,
+}
+export type GetUserLeaderboardResult = { 'ok' : PagedResult };
+export type GetUserResult = { 'ok' : User } |
+  { 'err' : GetUserError };
+export type GetUserStatsResult = { 'ok' : UserStats } |
+  { 'err' : null };
+export type HitLocation = { 'rightField' : null } |
+  { 'stands' : null } |
+  { 'leftField' : null } |
+  { 'thirdBase' : null } |
+  { 'pitcher' : null } |
+  { 'secondBase' : null } |
+  { 'shortStop' : null } |
+  { 'centerField' : null } |
+  { 'firstBase' : null };
 export interface InProgressMatch {
   'team1' : InProgressTeam,
   'team2' : InProgressTeam,
   'aura' : MatchAura,
 }
 export interface InProgressMatchGroup {
-  'stadiumId' : Principal,
   'time' : Time,
   'matches' : Array<InProgressMatch>,
 }
@@ -159,48 +237,8 @@ export type InProgressSeasonMatchGroupVariant = {
 export interface InProgressTeam { 'id' : bigint }
 export interface InjuryEffect { 'target' : TargetPosition }
 export interface InjuryPlayerEffectOutcome { 'target' : TargetPositionInstance }
-export interface LeagueActor {
-  'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
-  'claimBenevolentDictatorRole' : ActorMethod<
-    [],
-    ClaimBenevolentDictatorRoleResult
-  >,
-  'closeSeason' : ActorMethod<[], CloseSeasonResult>,
-  'createProposal' : ActorMethod<[CreateProposalRequest], CreateProposalResult>,
-  'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
-  'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
-  'getMatchGroupPredictions' : ActorMethod<
-    [bigint],
-    GetMatchGroupPredictionsResult
-  >,
-  'getProposal' : ActorMethod<[bigint], GetProposalResult>,
-  'getProposals' : ActorMethod<[bigint, bigint], GetProposalsResult>,
-  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
-  'getScenarioVote' : ActorMethod<
-    [GetScenarioVoteRequest],
-    GetScenarioVoteResult
-  >,
-  'getScenarios' : ActorMethod<[], GetScenariosResult>,
-  'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
-  'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
-  'onLeagueCollapse' : ActorMethod<[], OnLeagueCollapseResult>,
-  'onMatchGroupComplete' : ActorMethod<
-    [OnMatchGroupCompleteRequest],
-    OnMatchGroupCompleteResult
-  >,
-  'predictMatchOutcome' : ActorMethod<
-    [PredictMatchOutcomeRequest],
-    PredictMatchOutcomeResult
-  >,
-  'setBenevolentDictatorState' : ActorMethod<
-    [BenevolentDictatorState],
-    SetBenevolentDictatorStateResult
-  >,
-  'startMatchGroup' : ActorMethod<[bigint], StartMatchGroupResult>,
-  'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,
-  'voteOnProposal' : ActorMethod<[VoteOnProposalRequest], VoteOnProposalResult>,
-  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
-}
+export type InvalidError = { 'nameTaken' : null } |
+  { 'nameNotSpecified' : null };
 export interface LeagueChoiceScenario {
   'options' : Array<LeagueChoiceScenarioOption>,
 }
@@ -225,6 +263,60 @@ export interface LeagueChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
 export interface LeagueChoiceScenarioRequest {
   'options' : Array<LeagueChoiceScenarioOptionRequest>,
 }
+export interface LeagueProposal {
+  'id' : bigint,
+  'content' : ProposalContent__1,
+  'timeStart' : bigint,
+  'votes' : Array<[Principal, Vote]>,
+  'statusLog' : Array<ProposalStatusLogEntry>,
+  'endTimerId' : [] | [bigint],
+  'timeEnd' : bigint,
+  'proposerId' : Principal,
+}
+export interface Link { 'url' : string, 'name' : string }
+export interface LiveBaseState {
+  'atBat' : PlayerId,
+  'thirdBase' : [] | [PlayerId],
+  'secondBase' : [] | [PlayerId],
+  'firstBase' : [] | [PlayerId],
+}
+export interface LiveMatchGroupState {
+  'id' : bigint,
+  'tickTimerId' : bigint,
+  'currentSeed' : number,
+  'matches' : Array<LiveMatchStateWithStatus>,
+}
+export interface LiveMatchStateWithStatus {
+  'log' : MatchLog,
+  'status' : LiveMatchStatus,
+  'team1' : LiveMatchTeam,
+  'team2' : LiveMatchTeam,
+  'aura' : MatchAura,
+  'outs' : bigint,
+  'offenseTeamId' : TeamId,
+  'players' : Array<LivePlayerState>,
+  'bases' : LiveBaseState,
+  'strikes' : bigint,
+}
+export type LiveMatchStatus = { 'completed' : LiveMatchStatusCompleted } |
+  { 'inProgress' : null };
+export interface LiveMatchStatusCompleted { 'reason' : MatchEndReason }
+export interface LiveMatchTeam {
+  'id' : bigint,
+  'name' : string,
+  'color' : [number, number, number],
+  'score' : bigint,
+  'logoUrl' : string,
+  'positions' : TeamPositions,
+}
+export interface LivePlayerState {
+  'id' : PlayerId,
+  'name' : string,
+  'matchStats' : PlayerMatchStats,
+  'teamId' : TeamId,
+  'skills' : Skills,
+  'condition' : PlayerCondition,
+}
 export interface LotteryPrize { 'description' : string, 'effect' : Effect }
 export interface LotteryScenario { 'minBid' : bigint, 'prize' : LotteryPrize }
 export interface LotteryScenarioOutcome { 'winningTeamId' : [] | [bigint] }
@@ -243,13 +335,63 @@ export interface MatchAuraWithMetaData {
   'name' : string,
   'description' : string,
 }
+export type MatchEndReason = { 'noMoreRounds' : null } |
+  { 'error' : string };
+export type MatchEvent = {
+    'out' : { 'playerId' : PlayerId, 'reason' : OutReason }
+  } |
+  { 'throw' : { 'to' : PlayerId, 'from' : PlayerId } } |
+  { 'newBatter' : { 'playerId' : PlayerId } } |
+  { 'teamSwap' : { 'atBatPlayerId' : PlayerId, 'offenseTeamId' : TeamId } } |
+  { 'hitByBall' : { 'playerId' : PlayerId } } |
+  {
+    'catch' : {
+      'difficulty' : { 'value' : bigint, 'crit' : boolean },
+      'playerId' : PlayerId,
+      'roll' : { 'value' : bigint, 'crit' : boolean },
+    }
+  } |
+  { 'auraTrigger' : { 'id' : MatchAura, 'description' : string } } |
+  {
+    'traitTrigger' : {
+      'id' : Trait,
+      'playerId' : PlayerId,
+      'description' : string,
+    }
+  } |
+  { 'safeAtBase' : { 'base' : Base, 'playerId' : PlayerId } } |
+  { 'score' : { 'teamId' : TeamId, 'amount' : bigint } } |
+  {
+    'swing' : {
+      'pitchRoll' : { 'value' : bigint, 'crit' : boolean },
+      'playerId' : PlayerId,
+      'roll' : { 'value' : bigint, 'crit' : boolean },
+      'outcome' : { 'hit' : HitLocation } |
+        { 'strike' : null } |
+        { 'foul' : null },
+    }
+  } |
+  { 'injury' : { 'playerId' : number } } |
+  {
+    'pitch' : {
+      'roll' : { 'value' : bigint, 'crit' : boolean },
+      'pitcherId' : PlayerId,
+    }
+  } |
+  { 'matchEnd' : { 'reason' : MatchEndReason } } |
+  { 'death' : { 'playerId' : number } };
 export interface MatchGroupPredictionSummary {
   'matches' : Array<MatchPredictionSummary>,
 }
+export interface MatchLog { 'rounds' : Array<RoundLog> }
 export interface MatchPredictionSummary {
   'team1' : bigint,
   'team2' : bigint,
   'yourVote' : [] | [TeamId],
+}
+export interface ModifyTeamLinkContent {
+  'url' : [] | [string],
+  'name' : string,
 }
 export interface NoLeagueEffectScenario {
   'options' : Array<ScenarioOptionDiscrete>,
@@ -265,23 +407,21 @@ export interface NotScheduledMatchGroup {
   'time' : Time,
   'matches' : Array<NotScheduledMatch>,
 }
-export type OnLeagueCollapseError = { 'notAuthorized' : null };
-export type OnLeagueCollapseResult = { 'ok' : null } |
-  { 'err' : OnLeagueCollapseError };
-export type OnMatchGroupCompleteError = { 'notAuthorized' : null } |
-  { 'seedGenerationError' : string } |
-  { 'matchGroupNotFound' : null } |
-  { 'seasonNotOpen' : null } |
-  { 'matchGroupNotInProgress' : null };
-export interface OnMatchGroupCompleteRequest {
-  'id' : bigint,
-  'matches' : Array<CompletedMatch>,
-  'playerStats' : Array<PlayerMatchStatsWithId>,
-}
-export type OnMatchGroupCompleteResult = { 'ok' : null } |
-  { 'err' : OnMatchGroupCompleteError };
+export type OutReason = { 'strikeout' : null } |
+  { 'ballCaught' : null } |
+  { 'hitByBall' : null };
 export interface PagedResult {
+  'data' : Array<User>,
+  'count' : bigint,
+  'offset' : bigint,
+}
+export interface PagedResult_1 {
   'data' : Array<Proposal>,
+  'count' : bigint,
+  'offset' : bigint,
+}
+export interface PagedResult_2 {
+  'data' : Array<LeagueProposal>,
   'count' : bigint,
   'offset' : bigint,
 }
@@ -297,9 +437,11 @@ export interface Player {
   'dislikes' : Array<string>,
   'skills' : Skills,
 }
+export type PlayerCondition = { 'ok' : null } |
+  { 'dead' : null } |
+  { 'injured' : null };
 export type PlayerId = number;
-export interface PlayerMatchStatsWithId {
-  'playerId' : PlayerId,
+export interface PlayerMatchStats {
   'battingStats' : {
     'homeRuns' : bigint,
     'hits' : bigint,
@@ -353,10 +495,18 @@ export interface Proposal {
   'votes' : Array<[Principal, Vote]>,
   'statusLog' : Array<ProposalStatusLogEntry>,
   'endTimerId' : [] | [bigint],
-  'proposer' : Principal,
   'timeEnd' : bigint,
+  'proposerId' : Principal,
 }
-export type ProposalContent = {
+export type ProposalContent = { 'train' : TrainContent } |
+  { 'changeLogo' : ChangeTeamLogoContent } |
+  { 'changeName' : ChangeTeamNameContent } |
+  { 'changeMotto' : ChangeTeamMottoContent } |
+  { 'modifyLink' : ModifyTeamLinkContent } |
+  { 'changeColor' : ChangeTeamColorContent } |
+  { 'swapPlayerPositions' : SwapPlayerPositionsContent } |
+  { 'changeDescription' : ChangeTeamDescriptionContent };
+export type ProposalContent__1 = {
     'changeTeamColor' : {
       'color' : [number, number, number],
       'teamId' : bigint,
@@ -378,6 +528,9 @@ export interface PropotionalBidPrizeSkill {
   'skill' : ChosenOrRandomSkill,
   'target' : TargetPosition,
 }
+export type Result = { 'ok' : Player } |
+  { 'err' : GetPositionError };
+export interface RoundLog { 'turns' : Array<TurnLog> }
 export interface Scenario {
   'id' : bigint,
   'startTime' : bigint,
@@ -474,7 +627,6 @@ export interface ScheduledMatch {
   'aura' : MatchAuraWithMetaData,
 }
 export interface ScheduledMatchGroup {
-  'stadiumId' : Principal,
   'time' : Time,
   'matches' : Array<ScheduledMatch>,
   'timerId' : bigint,
@@ -487,6 +639,12 @@ export type SeasonStatus = { 'notStarted' : null } |
 export type SetBenevolentDictatorStateError = { 'notAuthorized' : null };
 export type SetBenevolentDictatorStateResult = { 'ok' : null } |
   { 'err' : SetBenevolentDictatorStateError };
+export type SetUserFavoriteTeamError = { 'notAuthorized' : null } |
+  { 'alreadySet' : null } |
+  { 'identityRequired' : null } |
+  { 'teamNotFound' : null };
+export type SetUserFavoriteTeamResult = { 'ok' : null } |
+  { 'err' : SetUserFavoriteTeamError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -534,6 +692,10 @@ export interface StartSeasonRequest {
 }
 export type StartSeasonResult = { 'ok' : null } |
   { 'err' : StartSeasonError };
+export interface SwapPlayerPositionsContent {
+  'position1' : FieldPosition,
+  'position2' : FieldPosition,
+}
 export interface TargetPosition {
   'team' : TargetTeam,
   'position' : ChosenOrRandomFieldPosition,
@@ -546,9 +708,24 @@ export type TargetTeam = { 'all' : null } |
   { 'contextual' : null } |
   { 'random' : bigint } |
   { 'chosen' : Array<bigint> };
+export interface Team {
+  'id' : bigint,
+  'motto' : string,
+  'traits' : Array<Trait>,
+  'name' : string,
+  'color' : [number, number, number],
+  'description' : string,
+  'links' : Array<Link>,
+  'entropy' : bigint,
+  'logoUrl' : string,
+  'energy' : bigint,
+}
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
   { 'seasonStandingIndex' : bigint };
+export interface TeamAssociation { 'id' : bigint, 'kind' : TeamAssociationKind }
+export type TeamAssociationKind = { 'fan' : null } |
+  { 'owner' : { 'votingPower' : bigint } };
 export type TeamId = { 'team1' : null } |
   { 'team2' : null };
 export type TeamIdOrBoth = { 'team1' : null } |
@@ -574,11 +751,35 @@ export interface TeamPositions {
   'centerField' : number,
   'firstBase' : number,
 }
+export interface TeamProposal {
+  'id' : bigint,
+  'content' : ProposalContent,
+  'timeStart' : bigint,
+  'votes' : Array<[Principal, Vote]>,
+  'statusLog' : Array<ProposalStatusLogEntry>,
+  'endTimerId' : [] | [bigint],
+  'timeEnd' : bigint,
+  'proposerId' : Principal,
+}
+export type TeamProposalContent = { 'train' : TrainContent } |
+  { 'changeLogo' : ChangeTeamLogoContent } |
+  { 'changeName' : ChangeTeamNameContent } |
+  { 'changeMotto' : ChangeTeamMottoContent } |
+  { 'modifyLink' : ModifyTeamLinkContent } |
+  { 'changeColor' : ChangeTeamColorContent } |
+  { 'swapPlayerPositions' : SwapPlayerPositionsContent } |
+  { 'changeDescription' : ChangeTeamDescriptionContent };
 export interface TeamStandingInfo {
   'id' : bigint,
   'wins' : bigint,
   'losses' : bigint,
   'totalScore' : bigint,
+}
+export interface TeamStats {
+  'id' : bigint,
+  'totalPoints' : bigint,
+  'ownerCount' : bigint,
+  'userCount' : bigint,
 }
 export interface TeamTraitEffect {
   'kind' : TeamTraitEffectKind,
@@ -641,23 +842,46 @@ export type ThresholdValue__1 = { 'fixed' : bigint } |
     >
   };
 export type Time = bigint;
+export interface TrainContent { 'skill' : Skill, 'position' : FieldPosition }
+export interface Trait {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
 export interface TraitRequirement {
   'id' : string,
   'kind' : TraitRequirementKind,
 }
 export type TraitRequirementKind = { 'prohibited' : null } |
   { 'required' : null };
+export interface TurnLog { 'events' : Array<MatchEvent> }
+export interface User {
+  'id' : Principal,
+  'team' : [] | [TeamAssociation],
+  'points' : bigint,
+}
+export interface UserStats {
+  'teams' : Array<TeamStats>,
+  'teamOwnerCount' : bigint,
+  'totalPoints' : bigint,
+  'userCount' : bigint,
+}
+export interface UserVotingInfo {
+  'id' : Principal,
+  'votingPower' : bigint,
+  'teamId' : bigint,
+}
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
-export type VoteOnProposalError = { 'proposalNotFound' : null } |
+export type VoteOnLeagueProposalError = { 'proposalNotFound' : null } |
   { 'notAuthorized' : null } |
   { 'alreadyVoted' : null } |
   { 'votingClosed' : null };
-export interface VoteOnProposalRequest {
+export interface VoteOnLeagueProposalRequest {
   'vote' : boolean,
   'proposalId' : bigint,
 }
-export type VoteOnProposalResult = { 'ok' : null } |
-  { 'err' : VoteOnProposalError };
+export type VoteOnLeagueProposalResult = { 'ok' : null } |
+  { 'err' : VoteOnLeagueProposalError };
 export type VoteOnScenarioError = { 'votingNotOpen' : null } |
   { 'invalidValue' : null } |
   { 'notEligible' : null } |
@@ -668,11 +892,102 @@ export interface VoteOnScenarioRequest {
 }
 export type VoteOnScenarioResult = { 'ok' : null } |
   { 'err' : VoteOnScenarioError };
+export type VoteOnTeamProposalError = { 'proposalNotFound' : null } |
+  { 'notAuthorized' : null } |
+  { 'alreadyVoted' : null } |
+  { 'votingClosed' : null } |
+  { 'teamNotFound' : null };
+export interface VoteOnTeamProposalRequest {
+  'vote' : boolean,
+  'proposalId' : bigint,
+}
+export type VoteOnTeamProposalResult = { 'ok' : null } |
+  { 'err' : VoteOnTeamProposalError };
 export interface WeightedEffect {
   'weight' : bigint,
   'description' : string,
   'effect' : Effect,
 }
-export interface _SERVICE extends LeagueActor {}
+export interface _SERVICE {
+  'addFluff' : ActorMethod<[CreatePlayerFluffRequest], CreatePlayerFluffResult>,
+  'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
+  'addTeamOwner' : ActorMethod<[AddTeamOwnerRequest], AddTeamOwnerResult>,
+  'claimBenevolentDictatorRole' : ActorMethod<
+    [],
+    ClaimBenevolentDictatorRoleResult
+  >,
+  'closeSeason' : ActorMethod<[], CloseSeasonResult>,
+  'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
+  'createTeamProposal' : ActorMethod<
+    [bigint, TeamProposalContent],
+    CreateTeamProposalResult
+  >,
+  'createTeamTrait' : ActorMethod<
+    [CreateTeamTraitRequest],
+    CreateTeamTraitResult
+  >,
+  'finishLiveMatchGroup' : ActorMethod<[], FinishMatchGroupResult>,
+  'getAllPlayers' : ActorMethod<[], Array<Player>>,
+  'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
+  'getEntropyThreshold' : ActorMethod<[], bigint>,
+  'getLeagueProposal' : ActorMethod<[bigint], GetLeagueProposalResult>,
+  'getLeagueProposals' : ActorMethod<
+    [bigint, bigint],
+    GetLeagueProposalsResult
+  >,
+  'getLiveMatchGroupState' : ActorMethod<[], [] | [LiveMatchGroupState]>,
+  'getMatchGroupPredictions' : ActorMethod<
+    [bigint],
+    GetMatchGroupPredictionsResult
+  >,
+  'getPlayer' : ActorMethod<[number], GetPlayerResult>,
+  'getPosition' : ActorMethod<[bigint, FieldPosition], Result>,
+  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
+  'getScenarioVote' : ActorMethod<
+    [GetScenarioVoteRequest],
+    GetScenarioVoteResult
+  >,
+  'getScenarios' : ActorMethod<[], GetScenariosResult>,
+  'getSeasonStatus' : ActorMethod<[], SeasonStatus>,
+  'getTeamOwners' : ActorMethod<[GetTeamOwnersRequest], GetTeamOwnersResult>,
+  'getTeamPlayers' : ActorMethod<[bigint], Array<Player>>,
+  'getTeamProposal' : ActorMethod<[bigint, bigint], GetTeamProposalResult>,
+  'getTeamProposals' : ActorMethod<
+    [bigint, bigint, bigint],
+    GetTeamProposalsResult
+  >,
+  'getTeamStandings' : ActorMethod<[], GetTeamStandingsResult>,
+  'getTeams' : ActorMethod<[], Array<Team>>,
+  'getTraits' : ActorMethod<[], Array<Trait>>,
+  'getUser' : ActorMethod<[Principal], GetUserResult>,
+  'getUserLeaderboard' : ActorMethod<
+    [GetUserLeaderboardRequest],
+    GetUserLeaderboardResult
+  >,
+  'getUserStats' : ActorMethod<[], GetUserStatsResult>,
+  'predictMatchOutcome' : ActorMethod<
+    [PredictMatchOutcomeRequest],
+    PredictMatchOutcomeResult
+  >,
+  'setBenevolentDictatorState' : ActorMethod<
+    [BenevolentDictatorState],
+    SetBenevolentDictatorStateResult
+  >,
+  'setFavoriteTeam' : ActorMethod<
+    [Principal, bigint],
+    SetUserFavoriteTeamResult
+  >,
+  'startNextMatchGroup' : ActorMethod<[], StartMatchGroupResult>,
+  'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,
+  'voteOnLeagueProposal' : ActorMethod<
+    [VoteOnLeagueProposalRequest],
+    VoteOnLeagueProposalResult
+  >,
+  'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
+  'voteOnTeamProposal' : ActorMethod<
+    [bigint, VoteOnTeamProposalRequest],
+    VoteOnTeamProposalResult
+  >,
+}
 export declare const idlFactory: IDL.InterfaceFactory;
 export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

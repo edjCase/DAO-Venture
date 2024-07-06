@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Card } from "flowbite-svelte";
-  import { CompletedSeason } from "../../ic-agent/declarations/league";
+  import { CompletedSeason } from "../../ic-agent/declarations/main";
 
   export let completedSeason: CompletedSeason;
 

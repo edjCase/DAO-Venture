@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { ChangeNameContent } from "../../../../ic-agent/declarations/teams";
+    import { ChangeTeamNameContent } from "../../../../ic-agent/declarations/main";
 
-    export let content: ChangeNameContent;
+    export let content: ChangeTeamNameContent;
 </script>
 
 <div>New Name: {content.name}</div>

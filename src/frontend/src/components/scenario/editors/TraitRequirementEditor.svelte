@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { TraitRequirement } from "../../../ic-agent/declarations/league";
+    import { TraitRequirement } from "../../../ic-agent/declarations/main";
     import TeamTraitEditor from "./TeamTraitEditor.svelte";
     export let value: TraitRequirement;
     let requirementKindItems = [

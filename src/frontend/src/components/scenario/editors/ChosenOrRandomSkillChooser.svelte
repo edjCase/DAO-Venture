@@ -3,7 +3,7 @@
     import {
         ChosenOrRandomSkill,
         Skill,
-    } from "../../../ic-agent/declarations/league";
+    } from "../../../ic-agent/declarations/main";
     import SkillChooser from "./SkillChooser.svelte";
 
     export let value: ChosenOrRandomSkill;

@@ -2,13 +2,8 @@
   import { Button, Checkbox, Input, Label } from "flowbite-svelte";
   import { scheduleStore } from "../../stores/ScheduleStore";
   import { dateToNanoseconds } from "../../utils/DateUtils";
-  import { leagueAgentFactory } from "../../ic-agent/League";
-  import {
-    DayOfWeek,
-    InProgressSeasonMatchGroupVariant,
-    SeasonStatus,
-  } from "../../ic-agent/declarations/league";
-  import { stadiumAgentFactory } from "../../ic-agent/Stadium";
+  import { mainAgentFactory } from "../../ic-agent/Main";
+  import { DayOfWeek, SeasonStatus } from "../../ic-agent/declarations/main";
 
   let now = new Date();
   let dayOfWeek = now.getDay();
@@ -30,7 +25,7 @@
     }
     console.log("Scheduling season", startTime);
 
-    let leagueAgent = await leagueAgentFactory();
+    let mainAgent = await mainAgentFactory();
     let weekDays: DayOfWeek[] = [];
     if (sunday) {
       weekDays.push({ sunday: null });
@@ -54,7 +49,7 @@
       weekDays.push({ saturday: null });
     }
 
-    let result = await leagueAgent.startSeason({
+    let result = await mainAgent.startSeason({
       startTime: startTime,
       weekDays: weekDays,
     });
@@ -66,8 +61,8 @@
     }
   };
   let closeSeason = async () => {
-    let leagueAgent = await leagueAgentFactory();
-    let result = await leagueAgent.closeSeason();
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.closeSeason();
 
     if ("ok" in result) {
       console.log("Closed season");
@@ -97,53 +92,38 @@
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
-  const forceStartNextMatchGroup =
-    (matchGroups: InProgressSeasonMatchGroupVariant[]) => async () => {
-      let leagueAgent = await leagueAgentFactory();
-      let nextMatchGroupId = matchGroups.findIndex(
-        (matchGroup) => "scheduled" in matchGroup,
-      );
-      if (nextMatchGroupId < 0) {
-        console.error("No next match group");
-        return;
-      }
-      let result = await leagueAgent.startMatchGroup(BigInt(nextMatchGroupId));
+  const forceStartNextMatchGroup = async () => {
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.startNextMatchGroup();
 
-      if ("ok" in result) {
-        console.log("Forced start next match group");
+    if ("ok" in result) {
+      console.log("Forced start next match group");
 
-        scheduleStore.refetch();
-      } else {
-        console.error("Failed to force start next match group", result);
-      }
-    };
+      scheduleStore.refetch();
+    } else {
+      console.error("Failed to force start next match group", result);
+    }
+  };
 
-  const finishMatchGroup =
-    (matchGroups: InProgressSeasonMatchGroupVariant[]) => async () => {
-      let liveMatchId = matchGroups.findIndex(
-        (matchGroup) => "inProgress" in matchGroup,
-      );
-      if (liveMatchId < 0) {
-        console.error("No live match group");
-        return;
-      }
-      let stadiumAgent = await stadiumAgentFactory();
-      await stadiumAgent.finishMatchGroup(BigInt(liveMatchId));
+  const finishMatchGroup = async () => {
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.finishLiveMatchGroup();
+    if ("ok" in result) {
       console.log("Finished match group");
-    };
+      scheduleStore.refetch();
+    } else {
+      console.error("Failed to finish match group", result);
+    }
+  };
 </script>
 
 <div class="container">
   {#if scheduleStatus && ("inProgress" in scheduleStatus || "starting" in scheduleStatus)}
     {#if "inProgress" in scheduleStatus}
-      <Button
-        on:click={forceStartNextMatchGroup(
-          scheduleStatus.inProgress.matchGroups,
-        )}>Force Start Next Match Group</Button
+      <Button on:click={forceStartNextMatchGroup}
+        >Force Start Next Match Group</Button
       >
-      <Button on:click={finishMatchGroup(scheduleStatus.inProgress.matchGroups)}
-        >Finish Match Group</Button
-      >
+      <Button on:click={finishMatchGroup}>Finish Match Group</Button>
     {/if}
     <Button on:click={closeSeason}>Close Season</Button>
   {:else}

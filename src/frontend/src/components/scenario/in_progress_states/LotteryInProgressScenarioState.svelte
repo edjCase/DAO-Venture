@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { LotteryScenario } from "../../../ic-agent/declarations/league";
+    import { LotteryScenario } from "../../../ic-agent/declarations/main";
 
     export let scenario: LotteryScenario;
 </script>

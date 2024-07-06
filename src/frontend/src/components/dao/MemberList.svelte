@@ -2,16 +2,16 @@
     import { onMount } from "svelte";
     import UserAvatar from "../user/UserAvatar.svelte";
     import UserPseudonym from "../user/UserPseudonym.svelte";
-    import { UserVotingInfo } from "../../ic-agent/declarations/users";
-    import { usersAgentFactory } from "../../ic-agent/Users";
+    import { UserVotingInfo } from "../../ic-agent/declarations/main";
+    import { mainAgentFactory } from "../../ic-agent/Main";
 
     export let teamId: bigint;
 
     let members: UserVotingInfo[] = [];
 
     let getUsers = async () => {
-        let usersAgent = await usersAgentFactory();
-        let result = await usersAgent.getTeamOwners({ team: teamId });
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.getTeamOwners({ team: teamId });
         if ("ok" in result) {
             members = result.ok;
         } else {

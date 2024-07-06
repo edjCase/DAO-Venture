@@ -52,7 +52,7 @@ module {
 
         getEntropyThreshold : query () -> async Nat;
         getTeams : query () -> async [Team];
-        createTeamProposal : (teamId : Nat, request : CreateTeamProposalRequest) -> async CreateTeamProposalResult;
+        createTeamProposal : (teamId : Nat, request : TeamProposalContent) -> async CreateTeamProposalResult;
         getTeamProposal : query (teamId : Nat, id : Nat) -> async GetTeamProposalResult;
         getTeamProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetTeamProposalsResult;
         voteOnTeamProposal : (teamId : Nat, request : VoteOnTeamProposalRequest) -> async VoteOnTeamProposalResult;
@@ -514,7 +514,9 @@ module {
         #teamNotFound;
     };
 
-    public type GetTeamProposalResult = Result.Result<Dao.Proposal<TeamDao.ProposalContent>, GetTeamProposalError>;
+    public type TeamProposal = Dao.Proposal<TeamDao.ProposalContent>;
+
+    public type GetTeamProposalResult = Result.Result<TeamProposal, GetTeamProposalError>;
 
     public type GetTeamProposalError = {
         #proposalNotFound;
@@ -542,7 +544,7 @@ module {
         #teamNotFound;
     };
 
-    public type CreateTeamProposalRequest = TeamDao.ProposalContent;
+    public type TeamProposalContent = TeamDao.ProposalContent;
 
     public type CreateTeamProposalResult = Result.Result<Nat, CreateTeamProposalError>;
 

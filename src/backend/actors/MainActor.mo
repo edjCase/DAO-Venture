@@ -442,7 +442,7 @@ actor MainActor : Types.Actor {
         await* leagueDao.vote(request.proposalId, caller, request.vote);
     };
 
-    public shared ({ caller }) func createTeamProposal(teamId : Nat, content : Types.CreateTeamProposalRequest) : async Types.CreateTeamProposalResult {
+    public shared ({ caller }) func createTeamProposal(teamId : Nat, content : Types.TeamProposalContent) : async Types.CreateTeamProposalResult {
         let members = userHandler.getTeamOwners(?teamId);
         let isAMember = members
         |> Iter.fromArray(_)

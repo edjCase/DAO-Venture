@@ -1,8 +1,7 @@
 import { writable } from "svelte/store";
-import { TeamStandingInfo } from "../ic-agent/declarations/league";
-import { leagueAgentFactory } from "../ic-agent/League";
-import { teamsAgentFactory } from "../ic-agent/Teams";
-import { Team } from "../ic-agent/declarations/teams";
+import { TeamStandingInfo } from "../ic-agent/declarations/main";
+import { mainAgentFactory } from "../ic-agent/Main";
+import { Team } from "../ic-agent/declarations/main";
 
 
 
@@ -12,15 +11,15 @@ export const teamStore = (() => {
   const teamStandingsWritable = writable<TeamStandingInfo[] | undefined>();
 
   const refetch = async () => {
-    let teamsAgent = await teamsAgentFactory();
-    let teams = await teamsAgent.getTeams();
+    let mainAgent = await mainAgentFactory();
+    let teams = await mainAgent.getTeams();
     teamsStore.set(teams);
   };
 
 
   const refetchTeamStandings = async () => {
-    let leagueAgent = await leagueAgentFactory();
-    let result = await leagueAgent.getTeamStandings();
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.getTeamStandings();
     if ('ok' in result) {
       teamStandingsWritable.set(result.ok);
     } else if ('err' in result && 'notFound' in result.err) {

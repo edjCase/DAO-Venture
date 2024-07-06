@@ -1,5 +1,25 @@
 export const idlFactory = ({ IDL }) => {
   const Effect = IDL.Rec();
+  const CreatePlayerFluffRequest = IDL.Record({
+    'title' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'likes' : IDL.Vec(IDL.Text),
+    'quirks' : IDL.Vec(IDL.Text),
+    'dislikes' : IDL.Vec(IDL.Text),
+  });
+  const InvalidError = IDL.Variant({
+    'nameTaken' : IDL.Null,
+    'nameNotSpecified' : IDL.Null,
+  });
+  const CreatePlayerFluffError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(InvalidError),
+  });
+  const CreatePlayerFluffResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : CreatePlayerFluffError,
+  });
   const Time = IDL.Int;
   const TeamTraitEffectKind = IDL.Variant({
     'add' : IDL.Null,
@@ -184,6 +204,21 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : AddScenarioError,
   });
+  const AddTeamOwnerRequest = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'userId' : IDL.Principal,
+    'teamId' : IDL.Nat,
+  });
+  const AddTeamOwnerError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'alreadyOwner' : IDL.Null,
+    'onOtherTeam' : IDL.Nat,
+    'teamNotFound' : IDL.Null,
+  });
+  const AddTeamOwnerResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : AddTeamOwnerError,
+  });
   const ClaimBenevolentDictatorRoleError = IDL.Variant({
     'notOpenToClaim' : IDL.Null,
     'notAuthenticated' : IDL.Null,
@@ -200,7 +235,108 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : CloseSeasonError,
   });
-  const ProposalContent = IDL.Variant({
+  const CreateTeamRequest = IDL.Record({
+    'motto' : IDL.Text,
+    'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    'description' : IDL.Text,
+    'logoUrl' : IDL.Text,
+  });
+  const CreateTeamError = IDL.Variant({
+    'nameTaken' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+  });
+  const CreateTeamResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'err' : CreateTeamError,
+  });
+  const TrainContent = IDL.Record({
+    'skill' : Skill,
+    'position' : FieldPosition,
+  });
+  const ChangeTeamLogoContent = IDL.Record({ 'logoUrl' : IDL.Text });
+  const ChangeTeamNameContent = IDL.Record({ 'name' : IDL.Text });
+  const ChangeTeamMottoContent = IDL.Record({ 'motto' : IDL.Text });
+  const ModifyTeamLinkContent = IDL.Record({
+    'url' : IDL.Opt(IDL.Text),
+    'name' : IDL.Text,
+  });
+  const ChangeTeamColorContent = IDL.Record({
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+  });
+  const SwapPlayerPositionsContent = IDL.Record({
+    'position1' : FieldPosition,
+    'position2' : FieldPosition,
+  });
+  const ChangeTeamDescriptionContent = IDL.Record({ 'description' : IDL.Text });
+  const TeamProposalContent = IDL.Variant({
+    'train' : TrainContent,
+    'changeLogo' : ChangeTeamLogoContent,
+    'changeName' : ChangeTeamNameContent,
+    'changeMotto' : ChangeTeamMottoContent,
+    'modifyLink' : ModifyTeamLinkContent,
+    'changeColor' : ChangeTeamColorContent,
+    'swapPlayerPositions' : SwapPlayerPositionsContent,
+    'changeDescription' : ChangeTeamDescriptionContent,
+  });
+  const CreateTeamProposalError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(IDL.Text),
+    'teamNotFound' : IDL.Null,
+  });
+  const CreateTeamProposalResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'err' : CreateTeamProposalError,
+  });
+  const CreateTeamTraitRequest = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const CreateTeamTraitError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(IDL.Text),
+    'idTaken' : IDL.Null,
+  });
+  const CreateTeamTraitResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : CreateTeamTraitError,
+  });
+  const FinishMatchGroupError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'noLiveMatchGroup' : IDL.Null,
+  });
+  const FinishMatchGroupResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : FinishMatchGroupError,
+  });
+  const Skills = IDL.Record({
+    'battingAccuracy' : IDL.Int,
+    'throwingAccuracy' : IDL.Int,
+    'speed' : IDL.Int,
+    'catching' : IDL.Int,
+    'battingPower' : IDL.Int,
+    'defense' : IDL.Int,
+    'throwingPower' : IDL.Int,
+  });
+  const Player = IDL.Record({
+    'id' : IDL.Nat32,
+    'title' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'likes' : IDL.Vec(IDL.Text),
+    'teamId' : IDL.Nat,
+    'position' : FieldPosition,
+    'quirks' : IDL.Vec(IDL.Text),
+    'dislikes' : IDL.Vec(IDL.Text),
+    'skills' : Skills,
+  });
+  const BenevolentDictatorState = IDL.Variant({
+    'open' : IDL.Null,
+    'claimed' : IDL.Principal,
+    'disabled' : IDL.Null,
+  });
+  const ProposalContent__1 = IDL.Variant({
     'changeTeamColor' : IDL.Record({
       'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
       'teamId' : IDL.Nat,
@@ -213,37 +349,209 @@ export const idlFactory = ({ IDL }) => {
     'changeTeamName' : IDL.Record({ 'name' : IDL.Text, 'teamId' : IDL.Nat }),
     'changeTeamMotto' : IDL.Record({ 'motto' : IDL.Text, 'teamId' : IDL.Nat }),
   });
-  const CreateProposalRequest = IDL.Record({ 'content' : ProposalContent });
-  const CreateProposalError = IDL.Variant({
-    'notAuthorized' : IDL.Null,
-    'invalid' : IDL.Vec(IDL.Text),
+  const Vote = IDL.Record({
+    'value' : IDL.Opt(IDL.Bool),
+    'votingPower' : IDL.Nat,
   });
-  const CreateProposalResult = IDL.Variant({
-    'ok' : IDL.Nat,
-    'err' : CreateProposalError,
+  const ProposalStatusLogEntry = IDL.Variant({
+    'failedToExecute' : IDL.Record({ 'time' : Time, 'error' : IDL.Text }),
+    'rejected' : IDL.Record({ 'time' : Time }),
+    'executing' : IDL.Record({ 'time' : Time }),
+    'executed' : IDL.Record({ 'time' : Time }),
   });
-  const CreateTeamRequest = IDL.Record({
-    'motto' : IDL.Text,
-    'name' : IDL.Text,
-    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
-    'description' : IDL.Text,
-    'logoUrl' : IDL.Text,
+  const LeagueProposal = IDL.Record({
+    'id' : IDL.Nat,
+    'content' : ProposalContent__1,
+    'timeStart' : IDL.Int,
+    'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
+    'statusLog' : IDL.Vec(ProposalStatusLogEntry),
+    'endTimerId' : IDL.Opt(IDL.Nat),
+    'timeEnd' : IDL.Int,
+    'proposerId' : IDL.Principal,
   });
-  const CreateTeamError = IDL.Variant({
-    'nameTaken' : IDL.Null,
-    'notAuthorized' : IDL.Null,
-    'teamsCallError' : IDL.Text,
+  const GetLeagueProposalError = IDL.Variant({ 'proposalNotFound' : IDL.Null });
+  const GetLeagueProposalResult = IDL.Variant({
+    'ok' : LeagueProposal,
+    'err' : GetLeagueProposalError,
   });
-  const CreateTeamResult = IDL.Variant({
-    'ok' : IDL.Nat,
-    'err' : CreateTeamError,
+  const PagedResult_2 = IDL.Record({
+    'data' : IDL.Vec(LeagueProposal),
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
   });
-  const BenevolentDictatorState = IDL.Variant({
-    'open' : IDL.Null,
-    'claimed' : IDL.Principal,
-    'disabled' : IDL.Null,
+  const GetLeagueProposalsResult = IDL.Variant({ 'ok' : PagedResult_2 });
+  const PlayerId = IDL.Nat32;
+  const OutReason = IDL.Variant({
+    'strikeout' : IDL.Null,
+    'ballCaught' : IDL.Null,
+    'hitByBall' : IDL.Null,
   });
   const TeamId = IDL.Variant({ 'team1' : IDL.Null, 'team2' : IDL.Null });
+  const MatchAura = IDL.Variant({
+    'foggy' : IDL.Null,
+    'moveBasesIn' : IDL.Null,
+    'extraStrike' : IDL.Null,
+    'moreBlessingsAndCurses' : IDL.Null,
+    'fastBallsHardHits' : IDL.Null,
+    'explodingBalls' : IDL.Null,
+    'lowGravity' : IDL.Null,
+    'doubleOrNothing' : IDL.Null,
+    'windy' : IDL.Null,
+    'rainy' : IDL.Null,
+  });
+  const Trait = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Base = IDL.Variant({
+    'homeBase' : IDL.Null,
+    'thirdBase' : IDL.Null,
+    'secondBase' : IDL.Null,
+    'firstBase' : IDL.Null,
+  });
+  const HitLocation = IDL.Variant({
+    'rightField' : IDL.Null,
+    'stands' : IDL.Null,
+    'leftField' : IDL.Null,
+    'thirdBase' : IDL.Null,
+    'pitcher' : IDL.Null,
+    'secondBase' : IDL.Null,
+    'shortStop' : IDL.Null,
+    'centerField' : IDL.Null,
+    'firstBase' : IDL.Null,
+  });
+  const MatchEndReason = IDL.Variant({
+    'noMoreRounds' : IDL.Null,
+    'error' : IDL.Text,
+  });
+  const MatchEvent = IDL.Variant({
+    'out' : IDL.Record({ 'playerId' : PlayerId, 'reason' : OutReason }),
+    'throw' : IDL.Record({ 'to' : PlayerId, 'from' : PlayerId }),
+    'newBatter' : IDL.Record({ 'playerId' : PlayerId }),
+    'teamSwap' : IDL.Record({
+      'atBatPlayerId' : PlayerId,
+      'offenseTeamId' : TeamId,
+    }),
+    'hitByBall' : IDL.Record({ 'playerId' : PlayerId }),
+    'catch' : IDL.Record({
+      'difficulty' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
+      'playerId' : PlayerId,
+      'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
+    }),
+    'auraTrigger' : IDL.Record({ 'id' : MatchAura, 'description' : IDL.Text }),
+    'traitTrigger' : IDL.Record({
+      'id' : Trait,
+      'playerId' : PlayerId,
+      'description' : IDL.Text,
+    }),
+    'safeAtBase' : IDL.Record({ 'base' : Base, 'playerId' : PlayerId }),
+    'score' : IDL.Record({ 'teamId' : TeamId, 'amount' : IDL.Int }),
+    'swing' : IDL.Record({
+      'pitchRoll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
+      'playerId' : PlayerId,
+      'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
+      'outcome' : IDL.Variant({
+        'hit' : HitLocation,
+        'strike' : IDL.Null,
+        'foul' : IDL.Null,
+      }),
+    }),
+    'injury' : IDL.Record({ 'playerId' : IDL.Nat32 }),
+    'pitch' : IDL.Record({
+      'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
+      'pitcherId' : PlayerId,
+    }),
+    'matchEnd' : IDL.Record({ 'reason' : MatchEndReason }),
+    'death' : IDL.Record({ 'playerId' : IDL.Nat32 }),
+  });
+  const TurnLog = IDL.Record({ 'events' : IDL.Vec(MatchEvent) });
+  const RoundLog = IDL.Record({ 'turns' : IDL.Vec(TurnLog) });
+  const MatchLog = IDL.Record({ 'rounds' : IDL.Vec(RoundLog) });
+  const LiveMatchStatusCompleted = IDL.Record({ 'reason' : MatchEndReason });
+  const LiveMatchStatus = IDL.Variant({
+    'completed' : LiveMatchStatusCompleted,
+    'inProgress' : IDL.Null,
+  });
+  const TeamPositions = IDL.Record({
+    'rightField' : IDL.Nat32,
+    'leftField' : IDL.Nat32,
+    'thirdBase' : IDL.Nat32,
+    'pitcher' : IDL.Nat32,
+    'secondBase' : IDL.Nat32,
+    'shortStop' : IDL.Nat32,
+    'centerField' : IDL.Nat32,
+    'firstBase' : IDL.Nat32,
+  });
+  const LiveMatchTeam = IDL.Record({
+    'id' : IDL.Nat,
+    'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    'score' : IDL.Int,
+    'logoUrl' : IDL.Text,
+    'positions' : TeamPositions,
+  });
+  const PlayerMatchStats = IDL.Record({
+    'battingStats' : IDL.Record({
+      'homeRuns' : IDL.Nat,
+      'hits' : IDL.Nat,
+      'runs' : IDL.Nat,
+      'strikeouts' : IDL.Nat,
+      'atBats' : IDL.Nat,
+    }),
+    'injuries' : IDL.Nat,
+    'pitchingStats' : IDL.Record({
+      'homeRuns' : IDL.Nat,
+      'pitches' : IDL.Nat,
+      'hits' : IDL.Nat,
+      'runs' : IDL.Nat,
+      'strikeouts' : IDL.Nat,
+      'strikes' : IDL.Nat,
+    }),
+    'catchingStats' : IDL.Record({
+      'missedCatches' : IDL.Nat,
+      'throwOuts' : IDL.Nat,
+      'throws' : IDL.Nat,
+      'successfulCatches' : IDL.Nat,
+    }),
+  });
+  const PlayerCondition = IDL.Variant({
+    'ok' : IDL.Null,
+    'dead' : IDL.Null,
+    'injured' : IDL.Null,
+  });
+  const LivePlayerState = IDL.Record({
+    'id' : PlayerId,
+    'name' : IDL.Text,
+    'matchStats' : PlayerMatchStats,
+    'teamId' : TeamId,
+    'skills' : Skills,
+    'condition' : PlayerCondition,
+  });
+  const LiveBaseState = IDL.Record({
+    'atBat' : PlayerId,
+    'thirdBase' : IDL.Opt(PlayerId),
+    'secondBase' : IDL.Opt(PlayerId),
+    'firstBase' : IDL.Opt(PlayerId),
+  });
+  const LiveMatchStateWithStatus = IDL.Record({
+    'log' : MatchLog,
+    'status' : LiveMatchStatus,
+    'team1' : LiveMatchTeam,
+    'team2' : LiveMatchTeam,
+    'aura' : MatchAura,
+    'outs' : IDL.Nat,
+    'offenseTeamId' : TeamId,
+    'players' : IDL.Vec(LivePlayerState),
+    'bases' : LiveBaseState,
+    'strikes' : IDL.Nat,
+  });
+  const LiveMatchGroupState = IDL.Record({
+    'id' : IDL.Nat,
+    'tickTimerId' : IDL.Nat,
+    'currentSeed' : IDL.Nat32,
+    'matches' : IDL.Vec(LiveMatchStateWithStatus),
+  });
   const MatchPredictionSummary = IDL.Record({
     'team1' : IDL.Nat,
     'team2' : IDL.Nat,
@@ -257,37 +565,13 @@ export const idlFactory = ({ IDL }) => {
     'ok' : MatchGroupPredictionSummary,
     'err' : GetMatchGroupPredictionsError,
   });
-  const Vote = IDL.Record({
-    'value' : IDL.Opt(IDL.Bool),
-    'votingPower' : IDL.Nat,
+  const GetPlayerError = IDL.Variant({ 'notFound' : IDL.Null });
+  const GetPlayerResult = IDL.Variant({
+    'ok' : Player,
+    'err' : GetPlayerError,
   });
-  const ProposalStatusLogEntry = IDL.Variant({
-    'failedToExecute' : IDL.Record({ 'time' : Time, 'error' : IDL.Text }),
-    'rejected' : IDL.Record({ 'time' : Time }),
-    'executing' : IDL.Record({ 'time' : Time }),
-    'executed' : IDL.Record({ 'time' : Time }),
-  });
-  const Proposal = IDL.Record({
-    'id' : IDL.Nat,
-    'content' : ProposalContent,
-    'timeStart' : IDL.Int,
-    'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
-    'statusLog' : IDL.Vec(ProposalStatusLogEntry),
-    'endTimerId' : IDL.Opt(IDL.Nat),
-    'proposer' : IDL.Principal,
-    'timeEnd' : IDL.Int,
-  });
-  const GetProposalError = IDL.Variant({ 'proposalNotFound' : IDL.Null });
-  const GetProposalResult = IDL.Variant({
-    'ok' : Proposal,
-    'err' : GetProposalError,
-  });
-  const PagedResult = IDL.Record({
-    'data' : IDL.Vec(Proposal),
-    'count' : IDL.Nat,
-    'offset' : IDL.Nat,
-  });
-  const GetProposalsResult = IDL.Variant({ 'ok' : PagedResult });
+  const GetPositionError = IDL.Variant({ 'teamNotFound' : IDL.Null });
+  const Result = IDL.Variant({ 'ok' : Player, 'err' : GetPositionError });
   const ScenarioOptionDiscrete = IDL.Record({
     'title' : IDL.Text,
     'teamEffect' : Effect,
@@ -486,16 +770,6 @@ export const idlFactory = ({ IDL }) => {
     'err' : GetScenarioVoteError,
   });
   const GetScenariosResult = IDL.Variant({ 'ok' : IDL.Vec(Scenario) });
-  const TeamPositions = IDL.Record({
-    'rightField' : IDL.Nat32,
-    'leftField' : IDL.Nat32,
-    'thirdBase' : IDL.Nat32,
-    'pitcher' : IDL.Nat32,
-    'secondBase' : IDL.Nat32,
-    'shortStop' : IDL.Nat32,
-    'centerField' : IDL.Nat32,
-    'firstBase' : IDL.Nat32,
-  });
   const CompletedSeasonTeam = IDL.Record({
     'id' : IDL.Nat,
     'name' : IDL.Text,
@@ -507,18 +781,6 @@ export const idlFactory = ({ IDL }) => {
     'positions' : TeamPositions,
   });
   const CompletedMatchTeam = IDL.Record({ 'id' : IDL.Nat, 'score' : IDL.Int });
-  const MatchAura = IDL.Variant({
-    'foggy' : IDL.Null,
-    'moveBasesIn' : IDL.Null,
-    'extraStrike' : IDL.Null,
-    'moreBlessingsAndCurses' : IDL.Null,
-    'fastBallsHardHits' : IDL.Null,
-    'explodingBalls' : IDL.Null,
-    'lowGravity' : IDL.Null,
-    'doubleOrNothing' : IDL.Null,
-    'windy' : IDL.Null,
-    'rainy' : IDL.Null,
-  });
   const TeamIdOrTie = IDL.Variant({
     'tie' : IDL.Null,
     'team1' : IDL.Null,
@@ -547,27 +809,6 @@ export const idlFactory = ({ IDL }) => {
     'logoUrl' : IDL.Text,
     'positions' : TeamPositions,
   });
-  const Skills = IDL.Record({
-    'battingAccuracy' : IDL.Int,
-    'throwingAccuracy' : IDL.Int,
-    'speed' : IDL.Int,
-    'catching' : IDL.Int,
-    'battingPower' : IDL.Int,
-    'defense' : IDL.Int,
-    'throwingPower' : IDL.Int,
-  });
-  const Player = IDL.Record({
-    'id' : IDL.Nat32,
-    'title' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'likes' : IDL.Vec(IDL.Text),
-    'teamId' : IDL.Nat,
-    'position' : FieldPosition,
-    'quirks' : IDL.Vec(IDL.Text),
-    'dislikes' : IDL.Vec(IDL.Text),
-    'skills' : Skills,
-  });
   const ScheduledTeamInfo = IDL.Record({ 'id' : IDL.Nat });
   const MatchAuraWithMetaData = IDL.Record({
     'aura' : MatchAura,
@@ -580,7 +821,6 @@ export const idlFactory = ({ IDL }) => {
     'aura' : MatchAuraWithMetaData,
   });
   const ScheduledMatchGroup = IDL.Record({
-    'stadiumId' : IDL.Principal,
     'time' : Time,
     'matches' : IDL.Vec(ScheduledMatch),
     'timerId' : IDL.Nat,
@@ -592,7 +832,6 @@ export const idlFactory = ({ IDL }) => {
     'aura' : MatchAura,
   });
   const InProgressMatchGroup = IDL.Record({
-    'stadiumId' : IDL.Principal,
     'time' : Time,
     'matches' : IDL.Vec(InProgressMatch),
   });
@@ -626,6 +865,64 @@ export const idlFactory = ({ IDL }) => {
     'completed' : CompletedSeason,
     'inProgress' : InProgressSeason,
   });
+  const GetTeamOwnersRequest = IDL.Variant({
+    'all' : IDL.Null,
+    'team' : IDL.Nat,
+  });
+  const UserVotingInfo = IDL.Record({
+    'id' : IDL.Principal,
+    'votingPower' : IDL.Nat,
+    'teamId' : IDL.Nat,
+  });
+  const GetTeamOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
+  const ProposalContent = IDL.Variant({
+    'train' : TrainContent,
+    'changeLogo' : ChangeTeamLogoContent,
+    'changeName' : ChangeTeamNameContent,
+    'changeMotto' : ChangeTeamMottoContent,
+    'modifyLink' : ModifyTeamLinkContent,
+    'changeColor' : ChangeTeamColorContent,
+    'swapPlayerPositions' : SwapPlayerPositionsContent,
+    'changeDescription' : ChangeTeamDescriptionContent,
+  });
+  const TeamProposal = IDL.Record({
+    'id' : IDL.Nat,
+    'content' : ProposalContent,
+    'timeStart' : IDL.Int,
+    'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
+    'statusLog' : IDL.Vec(ProposalStatusLogEntry),
+    'endTimerId' : IDL.Opt(IDL.Nat),
+    'timeEnd' : IDL.Int,
+    'proposerId' : IDL.Principal,
+  });
+  const GetTeamProposalError = IDL.Variant({
+    'proposalNotFound' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const GetTeamProposalResult = IDL.Variant({
+    'ok' : TeamProposal,
+    'err' : GetTeamProposalError,
+  });
+  const Proposal = IDL.Record({
+    'id' : IDL.Nat,
+    'content' : ProposalContent,
+    'timeStart' : IDL.Int,
+    'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
+    'statusLog' : IDL.Vec(ProposalStatusLogEntry),
+    'endTimerId' : IDL.Opt(IDL.Nat),
+    'timeEnd' : IDL.Int,
+    'proposerId' : IDL.Principal,
+  });
+  const PagedResult_1 = IDL.Record({
+    'data' : IDL.Vec(Proposal),
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const GetTeamProposalsError = IDL.Variant({ 'teamNotFound' : IDL.Null });
+  const GetTeamProposalsResult = IDL.Variant({
+    'ok' : PagedResult_1,
+    'err' : GetTeamProposalsError,
+  });
   const TeamStandingInfo = IDL.Record({
     'id' : IDL.Nat,
     'wins' : IDL.Nat,
@@ -637,52 +934,62 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Vec(TeamStandingInfo),
     'err' : GetTeamStandingsError,
   });
-  const OnLeagueCollapseError = IDL.Variant({ 'notAuthorized' : IDL.Null });
-  const OnLeagueCollapseResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : OnLeagueCollapseError,
-  });
-  const PlayerId = IDL.Nat32;
-  const PlayerMatchStatsWithId = IDL.Record({
-    'playerId' : PlayerId,
-    'battingStats' : IDL.Record({
-      'homeRuns' : IDL.Nat,
-      'hits' : IDL.Nat,
-      'runs' : IDL.Nat,
-      'strikeouts' : IDL.Nat,
-      'atBats' : IDL.Nat,
-    }),
-    'injuries' : IDL.Nat,
-    'pitchingStats' : IDL.Record({
-      'homeRuns' : IDL.Nat,
-      'pitches' : IDL.Nat,
-      'hits' : IDL.Nat,
-      'runs' : IDL.Nat,
-      'strikeouts' : IDL.Nat,
-      'strikes' : IDL.Nat,
-    }),
-    'catchingStats' : IDL.Record({
-      'missedCatches' : IDL.Nat,
-      'throwOuts' : IDL.Nat,
-      'throws' : IDL.Nat,
-      'successfulCatches' : IDL.Nat,
-    }),
-  });
-  const OnMatchGroupCompleteRequest = IDL.Record({
+  const Link = IDL.Record({ 'url' : IDL.Text, 'name' : IDL.Text });
+  const Team = IDL.Record({
     'id' : IDL.Nat,
-    'matches' : IDL.Vec(CompletedMatch),
-    'playerStats' : IDL.Vec(PlayerMatchStatsWithId),
+    'motto' : IDL.Text,
+    'traits' : IDL.Vec(Trait),
+    'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    'description' : IDL.Text,
+    'links' : IDL.Vec(Link),
+    'entropy' : IDL.Nat,
+    'logoUrl' : IDL.Text,
+    'energy' : IDL.Int,
   });
-  const OnMatchGroupCompleteError = IDL.Variant({
+  const TeamAssociationKind = IDL.Variant({
+    'fan' : IDL.Null,
+    'owner' : IDL.Record({ 'votingPower' : IDL.Nat }),
+  });
+  const TeamAssociation = IDL.Record({
+    'id' : IDL.Nat,
+    'kind' : TeamAssociationKind,
+  });
+  const User = IDL.Record({
+    'id' : IDL.Principal,
+    'team' : IDL.Opt(TeamAssociation),
+    'points' : IDL.Int,
+  });
+  const GetUserError = IDL.Variant({
     'notAuthorized' : IDL.Null,
-    'seedGenerationError' : IDL.Text,
-    'matchGroupNotFound' : IDL.Null,
-    'seasonNotOpen' : IDL.Null,
-    'matchGroupNotInProgress' : IDL.Null,
+    'notFound' : IDL.Null,
   });
-  const OnMatchGroupCompleteResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : OnMatchGroupCompleteError,
+  const GetUserResult = IDL.Variant({ 'ok' : User, 'err' : GetUserError });
+  const GetUserLeaderboardRequest = IDL.Record({
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const PagedResult = IDL.Record({
+    'data' : IDL.Vec(User),
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const GetUserLeaderboardResult = IDL.Variant({ 'ok' : PagedResult });
+  const TeamStats = IDL.Record({
+    'id' : IDL.Nat,
+    'totalPoints' : IDL.Int,
+    'ownerCount' : IDL.Nat,
+    'userCount' : IDL.Nat,
+  });
+  const UserStats = IDL.Record({
+    'teams' : IDL.Vec(TeamStats),
+    'teamOwnerCount' : IDL.Nat,
+    'totalPoints' : IDL.Int,
+    'userCount' : IDL.Nat,
+  });
+  const GetUserStatsResult = IDL.Variant({
+    'ok' : UserStats,
+    'err' : IDL.Null,
   });
   const PredictMatchOutcomeRequest = IDL.Record({
     'winner' : IDL.Opt(TeamId),
@@ -704,6 +1011,16 @@ export const idlFactory = ({ IDL }) => {
   const SetBenevolentDictatorStateResult = IDL.Variant({
     'ok' : IDL.Null,
     'err' : SetBenevolentDictatorStateError,
+  });
+  const SetUserFavoriteTeamError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'alreadySet' : IDL.Null,
+    'identityRequired' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const SetUserFavoriteTeamResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : SetUserFavoriteTeamError,
   });
   const TeamIdOrBoth = IDL.Variant({
     'team1' : IDL.Null,
@@ -748,19 +1065,19 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : StartSeasonError,
   });
-  const VoteOnProposalRequest = IDL.Record({
+  const VoteOnLeagueProposalRequest = IDL.Record({
     'vote' : IDL.Bool,
     'proposalId' : IDL.Nat,
   });
-  const VoteOnProposalError = IDL.Variant({
+  const VoteOnLeagueProposalError = IDL.Variant({
     'proposalNotFound' : IDL.Null,
     'notAuthorized' : IDL.Null,
     'alreadyVoted' : IDL.Null,
     'votingClosed' : IDL.Null,
   });
-  const VoteOnProposalResult = IDL.Variant({
+  const VoteOnLeagueProposalResult = IDL.Variant({
     'ok' : IDL.Null,
-    'err' : VoteOnProposalError,
+    'err' : VoteOnLeagueProposalError,
   });
   const VoteOnScenarioRequest = IDL.Record({
     'scenarioId' : IDL.Nat,
@@ -776,23 +1093,67 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : VoteOnScenarioError,
   });
-  const LeagueActor = IDL.Service({
+  const VoteOnTeamProposalRequest = IDL.Record({
+    'vote' : IDL.Bool,
+    'proposalId' : IDL.Nat,
+  });
+  const VoteOnTeamProposalError = IDL.Variant({
+    'proposalNotFound' : IDL.Null,
+    'notAuthorized' : IDL.Null,
+    'alreadyVoted' : IDL.Null,
+    'votingClosed' : IDL.Null,
+    'teamNotFound' : IDL.Null,
+  });
+  const VoteOnTeamProposalResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : VoteOnTeamProposalError,
+  });
+  return IDL.Service({
+    'addFluff' : IDL.Func(
+        [CreatePlayerFluffRequest],
+        [CreatePlayerFluffResult],
+        [],
+      ),
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
+    'addTeamOwner' : IDL.Func([AddTeamOwnerRequest], [AddTeamOwnerResult], []),
     'claimBenevolentDictatorRole' : IDL.Func(
         [],
         [ClaimBenevolentDictatorRoleResult],
         [],
       ),
     'closeSeason' : IDL.Func([], [CloseSeasonResult], []),
-    'createProposal' : IDL.Func(
-        [CreateProposalRequest],
-        [CreateProposalResult],
+    'createTeam' : IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
+    'createTeamProposal' : IDL.Func(
+        [IDL.Nat, TeamProposalContent],
+        [CreateTeamProposalResult],
         [],
       ),
-    'createTeam' : IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
+    'createTeamTrait' : IDL.Func(
+        [CreateTeamTraitRequest],
+        [CreateTeamTraitResult],
+        [],
+      ),
+    'finishLiveMatchGroup' : IDL.Func([], [FinishMatchGroupResult], []),
+    'getAllPlayers' : IDL.Func([], [IDL.Vec(Player)], ['query']),
     'getBenevolentDictatorState' : IDL.Func(
         [],
         [BenevolentDictatorState],
+        ['query'],
+      ),
+    'getEntropyThreshold' : IDL.Func([], [IDL.Nat], ['query']),
+    'getLeagueProposal' : IDL.Func(
+        [IDL.Nat],
+        [GetLeagueProposalResult],
+        ['query'],
+      ),
+    'getLeagueProposals' : IDL.Func(
+        [IDL.Nat, IDL.Nat],
+        [GetLeagueProposalsResult],
+        ['query'],
+      ),
+    'getLiveMatchGroupState' : IDL.Func(
+        [],
+        [IDL.Opt(LiveMatchGroupState)],
         ['query'],
       ),
     'getMatchGroupPredictions' : IDL.Func(
@@ -800,12 +1161,8 @@ export const idlFactory = ({ IDL }) => {
         [GetMatchGroupPredictionsResult],
         ['query'],
       ),
-    'getProposal' : IDL.Func([IDL.Nat], [GetProposalResult], ['query']),
-    'getProposals' : IDL.Func(
-        [IDL.Nat, IDL.Nat],
-        [GetProposalsResult],
-        ['query'],
-      ),
+    'getPlayer' : IDL.Func([IDL.Nat32], [GetPlayerResult], ['query']),
+    'getPosition' : IDL.Func([IDL.Nat, FieldPosition], [Result], ['query']),
     'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
@@ -814,13 +1171,32 @@ export const idlFactory = ({ IDL }) => {
       ),
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getSeasonStatus' : IDL.Func([], [SeasonStatus], ['query']),
-    'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
-    'onLeagueCollapse' : IDL.Func([], [OnLeagueCollapseResult], []),
-    'onMatchGroupComplete' : IDL.Func(
-        [OnMatchGroupCompleteRequest],
-        [OnMatchGroupCompleteResult],
-        [],
+    'getTeamOwners' : IDL.Func(
+        [GetTeamOwnersRequest],
+        [GetTeamOwnersResult],
+        ['query'],
       ),
+    'getTeamPlayers' : IDL.Func([IDL.Nat], [IDL.Vec(Player)], ['query']),
+    'getTeamProposal' : IDL.Func(
+        [IDL.Nat, IDL.Nat],
+        [GetTeamProposalResult],
+        ['query'],
+      ),
+    'getTeamProposals' : IDL.Func(
+        [IDL.Nat, IDL.Nat, IDL.Nat],
+        [GetTeamProposalsResult],
+        ['query'],
+      ),
+    'getTeamStandings' : IDL.Func([], [GetTeamStandingsResult], ['query']),
+    'getTeams' : IDL.Func([], [IDL.Vec(Team)], ['query']),
+    'getTraits' : IDL.Func([], [IDL.Vec(Trait)], ['query']),
+    'getUser' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
+    'getUserLeaderboard' : IDL.Func(
+        [GetUserLeaderboardRequest],
+        [GetUserLeaderboardResult],
+        ['query'],
+      ),
+    'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
     'predictMatchOutcome' : IDL.Func(
         [PredictMatchOutcomeRequest],
         [PredictMatchOutcomeResult],
@@ -831,11 +1207,16 @@ export const idlFactory = ({ IDL }) => {
         [SetBenevolentDictatorStateResult],
         [],
       ),
-    'startMatchGroup' : IDL.Func([IDL.Nat], [StartMatchGroupResult], []),
+    'setFavoriteTeam' : IDL.Func(
+        [IDL.Principal, IDL.Nat],
+        [SetUserFavoriteTeamResult],
+        [],
+      ),
+    'startNextMatchGroup' : IDL.Func([], [StartMatchGroupResult], []),
     'startSeason' : IDL.Func([StartSeasonRequest], [StartSeasonResult], []),
-    'voteOnProposal' : IDL.Func(
-        [VoteOnProposalRequest],
-        [VoteOnProposalResult],
+    'voteOnLeagueProposal' : IDL.Func(
+        [VoteOnLeagueProposalRequest],
+        [VoteOnLeagueProposalResult],
         [],
       ),
     'voteOnScenario' : IDL.Func(
@@ -843,9 +1224,11 @@ export const idlFactory = ({ IDL }) => {
         [VoteOnScenarioResult],
         [],
       ),
+    'voteOnTeamProposal' : IDL.Func(
+        [IDL.Nat, VoteOnTeamProposalRequest],
+        [VoteOnTeamProposalResult],
+        [],
+      ),
   });
-  return LeagueActor;
 };
-export const init = ({ IDL }) => {
-  return [IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal];
-};
+export const init = ({ IDL }) => { return []; };

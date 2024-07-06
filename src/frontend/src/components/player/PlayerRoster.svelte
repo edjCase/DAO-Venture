@@ -1,6 +1,6 @@
 <script lang="ts">
   import { playerStore } from "../../stores/PlayerStore";
-  import { Player } from "../../ic-agent/declarations/players";
+  import { Player } from "../../ic-agent/declarations/main";
   import PlayerCard from "./PlayerCard.svelte";
 
   export let teamId: bigint;

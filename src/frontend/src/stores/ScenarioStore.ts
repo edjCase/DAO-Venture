@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
-import { Scenario, ScenarioVote } from "../ic-agent/declarations/league";
-import { leagueAgentFactory } from "../ic-agent/League";
+import { Scenario, ScenarioVote } from "../ic-agent/declarations/main";
+import { mainAgentFactory } from "../ic-agent/Main";
 import { Subscriber } from "svelte/motion";
 import { nanosecondsToDate } from "../utils/DateUtils";
 
@@ -11,8 +11,8 @@ export const scenarioStore = (() => {
     const votesWritable = writable<Record<number, ScenarioVote>>({});
 
     const refetch = async () => {
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.getScenarios();
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.getScenarios();
         if ('ok' in result) {
             set(result.ok);
             refreshEndTimers(result.ok);
@@ -22,8 +22,8 @@ export const scenarioStore = (() => {
     };
 
     const refetchById = async (scenarioId: bigint) => {
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.getScenario(scenarioId);
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.getScenario(scenarioId);
         if ('ok' in result) {
             let scenario = result.ok;
             update(scenarios => {
@@ -43,9 +43,9 @@ export const scenarioStore = (() => {
 
 
     const fetchVote = async (scenarioId: bigint) => {
-        let leagueAgent = await leagueAgentFactory();
+        let mainAgent = await mainAgentFactory();
         const request = { scenarioId };
-        let result = await leagueAgent.getScenarioVote(request);
+        let result = await mainAgent.getScenarioVote(request);
         if ('ok' in result) {
             let scenario = result.ok;
             votesWritable.update(votes => {

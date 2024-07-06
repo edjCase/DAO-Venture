@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { SwapPlayerPositionsContent } from "../../../../ic-agent/declarations/teams";
+    import { SwapPlayerPositionsContent } from "../../../../ic-agent/declarations/main";
     import { fieldPositionToString } from "../../../../models/FieldPosition";
 
     export let content: SwapPlayerPositionsContent;

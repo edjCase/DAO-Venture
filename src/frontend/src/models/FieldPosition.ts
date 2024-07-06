@@ -1,4 +1,4 @@
-import { FieldPosition } from "../ic-agent/declarations/players";
+import { FieldPosition } from "../ic-agent/declarations/main";
 import { toJsonString } from "../utils/StringUtil";
 
 export enum FieldPositionEnum {

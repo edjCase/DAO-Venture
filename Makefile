@@ -6,6 +6,8 @@ MOC := $(shell dfx cache show)/moc
 MOPS_SOURCES := $(shell mops sources)
 DIDC := didc
 
+build:
+	dfx build main --identity anonymous
 
 process_did_files:
 	@mkdir -p $(DID_TEMP_DIR)

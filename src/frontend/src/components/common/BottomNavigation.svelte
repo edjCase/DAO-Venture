@@ -24,7 +24,7 @@
     import { onMount } from "svelte";
     import { navigate, useLocation } from "svelte-routing";
     import { userStore } from "../../stores/UserStore";
-    import { BenevolentDictatorState } from "../../ic-agent/declarations/league";
+    import { BenevolentDictatorState } from "../../ic-agent/declarations/main";
     import { identityStore } from "../../stores/IdentityStore";
     import UserAvatar from "../user/UserAvatar.svelte";
 

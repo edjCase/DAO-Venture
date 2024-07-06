@@ -3,7 +3,7 @@
         Scenario,
         ScenarioStateResolved,
         ScenarioVote,
-    } from "../../ic-agent/declarations/league";
+    } from "../../ic-agent/declarations/main";
     import { Accordion, AccordionItem } from "flowbite-svelte";
     import {
         ChevronDoubleDownOutline,

@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { TargetTeam } from "../../../ic-agent/declarations/league";
+    import { TargetTeam } from "../../../ic-agent/declarations/main";
     import { teamStore } from "../../../stores/TeamStore";
 
     export let value: TargetTeam;

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { EffectOutcome } from "../../ic-agent/declarations/league";
-    import { Team, Trait } from "../../ic-agent/declarations/teams";
+    import { EffectOutcome } from "../../ic-agent/declarations/main";
+    import { Team, Trait } from "../../ic-agent/declarations/main";
     import { toJsonString } from "../../utils/StringUtil";
     import EnergyOutcome from "./effect_outcomes/EnergyOutcome.svelte";
     import EntropyOutcome from "./effect_outcomes/EntropyOutcome.svelte";

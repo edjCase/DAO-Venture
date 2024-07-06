@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { Skill } from "../../../ic-agent/declarations/players";
+    import { Skill } from "../../../ic-agent/declarations/main";
 
     export let value: Skill;
 

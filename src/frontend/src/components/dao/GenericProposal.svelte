@@ -2,7 +2,7 @@
     import {
         ProposalStatusLogEntry,
         Vote,
-    } from "../../ic-agent/declarations/league";
+    } from "../../ic-agent/declarations/main";
 
     export interface ProposalType {
         id: bigint;

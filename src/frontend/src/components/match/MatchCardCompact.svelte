@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MatchGroupPredictionSummary } from "../../ic-agent/declarations/league";
+  import { MatchGroupPredictionSummary } from "../../ic-agent/declarations/main";
   import { MatchDetails } from "../../models/Match";
   import { LiveMatch } from "../../stores/LiveMatchGroupStore";
   import { predictionStore } from "../../stores/PredictionsStore";

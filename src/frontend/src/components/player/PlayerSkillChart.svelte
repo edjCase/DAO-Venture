@@ -10,7 +10,7 @@
         ChartData,
     } from "chart.js";
 
-    import { Skills } from "../../ic-agent/declarations/players";
+    import { Skills } from "../../ic-agent/declarations/main";
 
     export let skills: Skills;
 

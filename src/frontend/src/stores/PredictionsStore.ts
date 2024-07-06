@@ -1,6 +1,6 @@
 import { Writable, writable } from "svelte/store";
-import { leagueAgentFactory } from "../ic-agent/League";
-import { MatchGroupPredictionSummary, TeamId } from "../ic-agent/declarations/league";
+import { mainAgentFactory } from "../ic-agent/Main";
+import { MatchGroupPredictionSummary, TeamId } from "../ic-agent/declarations/main";
 import { Subscriber } from "svelte/motion";
 
 
@@ -21,8 +21,8 @@ export const predictionStore = (() => {
     const refetchMatchGroup = async (matchGroupId: bigint) => {
         let { set } = getOrCreateMatchGroupStore(matchGroupId);
 
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent
             .getMatchGroupPredictions(matchGroupId);
         if ('ok' in result) {
             const matchPredictions = result.ok;
@@ -39,8 +39,8 @@ export const predictionStore = (() => {
     };
 
     const predictMatchOutcome = async (matchGroupId: bigint, matchId: bigint, team: TeamId) => {
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.predictMatchOutcome({
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.predictMatchOutcome({
             matchId: matchId,
             winner: team ? [team] : [],
         });

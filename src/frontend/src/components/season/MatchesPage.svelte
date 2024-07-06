@@ -5,7 +5,7 @@
     import SeasonWinners from "./SeasonWinners.svelte";
     import { MatchGroupDetails } from "../../models/Match";
     import MatchGroup from "../match/MatchGroup.svelte";
-    import { SeasonStatus } from "../../ic-agent/declarations/league";
+    import { SeasonStatus } from "../../ic-agent/declarations/main";
     import { onDestroy } from "svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";

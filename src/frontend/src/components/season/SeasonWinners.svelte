@@ -2,7 +2,7 @@
   import {
     CompletedSeason,
     CompletedSeasonTeam,
-  } from "../../ic-agent/declarations/league";
+  } from "../../ic-agent/declarations/main";
 
   export let completedSeason: CompletedSeason;
 

@@ -6,9 +6,9 @@
   import { StarOutline, StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
   import { identityStore } from "../../stores/IdentityStore";
-  import { User } from "../../ic-agent/declarations/users";
+  import { User } from "../../ic-agent/declarations/main";
   import LoadingButton from "../common/LoadingButton.svelte";
-  import { Team } from "../../ic-agent/declarations/teams";
+  import { Team } from "../../ic-agent/declarations/main";
 
   $: teams = $teamStore;
   $: identity = $identityStore;

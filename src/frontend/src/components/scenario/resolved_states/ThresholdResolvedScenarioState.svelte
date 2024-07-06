@@ -2,7 +2,7 @@
     import {
         ThresholdScenarioOutcome,
         ThresholdScenario,
-    } from "../../../ic-agent/declarations/league";
+    } from "../../../ic-agent/declarations/main";
 
     export let scenario: ThresholdScenario;
     export let outcome: ThresholdScenarioOutcome;

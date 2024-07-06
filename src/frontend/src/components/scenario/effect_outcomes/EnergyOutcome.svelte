@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { EnergyTeamEffectOutcome } from "../../../ic-agent/declarations/league";
-    import { Team } from "../../../ic-agent/declarations/teams";
+    import { EnergyTeamEffectOutcome } from "../../../ic-agent/declarations/main";
+    import { Team } from "../../../ic-agent/declarations/main";
 
     export let value: EnergyTeamEffectOutcome;
     export let teams: Team[];

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { Proposal } from "../../../ic-agent/declarations/league";
+    import { LeagueProposal } from "../../../ic-agent/declarations/main";
     import { teamStore } from "../../../stores/TeamStore";
     import { toJsonString } from "../../../utils/StringUtil";
     import RgbColor from "../../common/RgbColor.svelte";
 
-    export let proposal: Proposal;
+    export let proposal: LeagueProposal;
 
     $: teams = $teamStore;
 
