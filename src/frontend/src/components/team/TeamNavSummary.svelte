@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { User } from "../../ic-agent/declarations/users";
+    import { User } from "../../ic-agent/declarations/main";
     import { identityStore } from "../../stores/IdentityStore";
     import { teamStore } from "../../stores/TeamStore";
     import { userStore } from "../../stores/UserStore";

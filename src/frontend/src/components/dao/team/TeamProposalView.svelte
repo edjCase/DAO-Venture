@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Proposal } from "../../../ic-agent/declarations/teams";
+    import { Proposal } from "../../../ic-agent/declarations/main";
     import ChangeColorView from "./proposal_views/ChangeColorView.svelte";
     import ChangeNameView from "./proposal_views/ChangeNameView.svelte";
     import ChangeLogoView from "./proposal_views/ChangeLogoView.svelte";

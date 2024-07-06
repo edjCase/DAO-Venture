@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Label, Select } from "flowbite-svelte";
-    import { ProposalContent } from "../../../../ic-agent/declarations/teams";
+    import { ProposalContent } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
     import {
         FieldPositionEnum,

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { leagueAgentFactory } from "../../ic-agent/League";
+    import { mainAgentFactory } from "../../ic-agent/Main";
     import {
         AddScenarioRequest,
         Scenario,
-    } from "../../ic-agent/declarations/league";
+    } from "../../ic-agent/declarations/main";
     import { teamStore } from "../../stores/TeamStore";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { dateToNanoseconds } from "../../utils/DateUtils";
@@ -44,8 +44,8 @@
             console.error("Teams have not loaded. Cannot add scenario.");
             return;
         }
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.addScenario(scenario);
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.addScenario(scenario);
         if ("ok" in result) {
             console.log("Created scenario: ", scenario);
             scenarioStore.refetch();

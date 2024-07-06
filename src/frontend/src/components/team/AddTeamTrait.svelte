@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Input, Label } from "flowbite-svelte";
-    import { teamsAgentFactory } from "../../ic-agent/Teams";
-    import { CreateTeamTraitRequest } from "../../ic-agent/declarations/teams";
+    import { mainAgentFactory } from "../../ic-agent/Main";
+    import { CreateTeamTraitRequest } from "../../ic-agent/declarations/main";
     import LoadingButton from "../common/LoadingButton.svelte";
     import { traitStore } from "../../stores/TraitStore";
 
@@ -16,8 +16,8 @@
             console.error("Trait not loaded. Cannot add.");
             return;
         }
-        let teamsAgent = await teamsAgentFactory();
-        let result = await teamsAgent.createTeamTrait(trait);
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.createTeamTrait(trait);
         if ("ok" in result) {
             console.log("Created trait: ", trait);
             traitStore.refetch();

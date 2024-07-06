@@ -1,5 +1,5 @@
 import Player "Player";
-import PseudoRandomX "mo:random/PseudoRandomX";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 
 module {
 

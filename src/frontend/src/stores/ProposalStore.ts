@@ -1,8 +1,6 @@
 import { Writable, writable } from "svelte/store";
-import { Proposal as TeamProposal } from "../ic-agent/declarations/teams";
-import { Proposal as LeagueProposal } from "../ic-agent/declarations/league";
-import { teamsAgentFactory } from "../ic-agent/Teams";
-import { leagueAgentFactory } from "../ic-agent/League";
+import { LeagueProposal, TeamProposal } from "../ic-agent/declarations/main";
+import { mainAgentFactory } from "../ic-agent/Main";
 import { toJsonString } from "../utils/StringUtil";
 
 
@@ -13,8 +11,8 @@ export const proposalStore = (() => {
 
 
     const refetchLeagueProposal = async (proposalId: bigint) => {
-        let leagueAgent = await leagueAgentFactory();
-        let proposalResult = await leagueAgent.getProposal(proposalId);
+        let mainAgent = await mainAgentFactory();
+        let proposalResult = await mainAgent.getLeagueProposal(proposalId);
         let proposal: LeagueProposal;
         if ('ok' in proposalResult) {
             proposal = proposalResult.ok;
@@ -33,8 +31,8 @@ export const proposalStore = (() => {
     }
 
     const refetchLeagueProposals = async () => {
-        let leagueAgent = await leagueAgentFactory();
-        let proposalsResult = await leagueAgent.getProposals(BigInt(999), BigInt(0)); // TODO
+        let mainAgent = await mainAgentFactory();
+        let proposalsResult = await mainAgent.getLeagueProposals(BigInt(999), BigInt(0)); // TODO
         if ('ok' in proposalsResult) {
             leagueStore.set(proposalsResult.ok.data);
         } else {
@@ -58,9 +56,9 @@ export const proposalStore = (() => {
 
     const refetchTeamProposal = async (teamId: bigint, proposalId: bigint) => {
         let store = getOrCreateTeamStore(teamId);
-        let teamsAgent = await teamsAgentFactory();
-        let proposalResult = await teamsAgent
-            .getProposal(teamId, proposalId);
+        let mainAgent = await mainAgentFactory();
+        let proposalResult = await mainAgent
+            .getTeamProposal(teamId, proposalId);
         if ('ok' in proposalResult) {
             let proposal = proposalResult.ok;
             store.update((current) => {
@@ -79,9 +77,9 @@ export const proposalStore = (() => {
 
     const refetchTeamProposals = async (teamId: bigint) => {
         let store = getOrCreateTeamStore(teamId);
-        let teamsAgent = await teamsAgentFactory();
-        let proposals = await teamsAgent
-            .getProposals(teamId, BigInt(999), BigInt(0)); // TODO
+        let mainAgent = await mainAgentFactory();
+        let proposals = await mainAgent
+            .getTeamProposals(teamId, BigInt(999), BigInt(0)); // TODO
         if ('ok' in proposals) {
             store.set(proposals.ok.data);
         } else {

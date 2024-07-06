@@ -1,4 +1,4 @@
-import { TeamIdOrTie } from "../ic-agent/declarations/league";
+import { TeamIdOrTie } from "../ic-agent/declarations/main";
 
 
 export type MatchGroupDetails = {

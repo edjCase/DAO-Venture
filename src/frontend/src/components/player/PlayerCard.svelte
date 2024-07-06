@@ -7,7 +7,7 @@
         ChevronDoubleUpOutline,
     } from "flowbite-svelte-icons";
     import { Accordion, AccordionItem } from "flowbite-svelte";
-    import { Player } from "../../ic-agent/declarations/league";
+    import { Player } from "../../ic-agent/declarations/main";
 
     export let player: Player;
 

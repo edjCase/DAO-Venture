@@ -13,30 +13,10 @@
       ],
       "type": "assets"
     },
-    "league": {
-      "main": "src/backend/league/LeagueActor.mo",
+    "main": {
+      "main": "src/backend/actors/MainActor.mo",
       "type": "motoko",
       "specified_id": "bd3sg-teaaa-aaaaa-qaaba-cai"
-    },
-    "players": {
-      "main": "src/backend/players/PlayersActor.mo",
-      "type": "motoko",
-      "specified_id": "be2us-64aaa-aaaaa-qaabq-cai"
-    },
-    "users": {
-      "main": "src/backend/users/UsersActor.mo",
-      "type": "motoko",
-      "specified_id": "b77ix-eeaaa-aaaaa-qaada-cai"
-    },
-    "teams": {
-      "main": "src/backend/teams/TeamsActor.mo",
-      "type": "motoko",
-      "specified_id": "bw4dl-smaaa-aaaaa-qaacq-cai"
-    },
-    "stadium": {
-      "main": "src/backend/stadium/StadiumActor.mo",
-      "type": "motoko",
-      "specified_id": "br5f7-7uaaa-aaaaa-qaaca-cai"
     },
     "internet_identity": {
       "type": "pull",

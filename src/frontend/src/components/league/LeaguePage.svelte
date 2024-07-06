@@ -4,7 +4,7 @@
     import { teamStore } from "../../stores/TeamStore";
     import { userStore } from "../../stores/UserStore";
     import LoadingValue from "../common/LoadingValue.svelte";
-    import { UserStats } from "../../ic-agent/declarations/users";
+    import { UserStats } from "../../ic-agent/declarations/main";
 
     let userStats: UserStats | undefined;
 

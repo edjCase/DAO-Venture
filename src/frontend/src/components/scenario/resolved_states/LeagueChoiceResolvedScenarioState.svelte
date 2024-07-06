@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { LeagueChoiceScenarioOutcome } from "../../../ic-agent/declarations/league";
+    import { LeagueChoiceScenarioOutcome } from "../../../ic-agent/declarations/main";
 
     export let outcome: LeagueChoiceScenarioOutcome;
 </script>

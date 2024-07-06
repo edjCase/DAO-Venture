@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Duration } from "../../ic-agent/declarations/league";
+    import { Duration } from "../../ic-agent/declarations/main";
 
     export let duration: Duration;
 </script>

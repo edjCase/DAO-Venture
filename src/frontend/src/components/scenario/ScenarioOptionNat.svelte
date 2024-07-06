@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { ScenarioTeamOptionNat } from "../../ic-agent/declarations/league";
+    import { ScenarioTeamOptionNat } from "../../ic-agent/declarations/main";
 
     export let option: ScenarioTeamOptionNat;
     export let teamEnergy: bigint | undefined; // Undefined used for loading but also for resolved scenarios

@@ -1,7 +1,7 @@
 <script lang="ts">
     import RgbColor from "../../../common/RgbColor.svelte";
     import FormTemplate from "./FormTemplate.svelte";
-    import { ProposalContent } from "../../../../ic-agent/declarations/teams";
+    import { ProposalContent } from "../../../../ic-agent/declarations/main";
     import { Label } from "flowbite-svelte";
 
     export let teamId: bigint;

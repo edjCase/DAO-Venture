@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { ChangeColorContent } from "../../../../ic-agent/declarations/teams";
+    import { ChangeTeamColorContent } from "../../../../ic-agent/declarations/main";
     import RgbColor from "../../../common/RgbColor.svelte";
 
-    export let content: ChangeColorContent;
+    export let content: ChangeTeamColorContent;
 </script>
 
 <RgbColor value={content.color} disabled />

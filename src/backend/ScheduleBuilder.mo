@@ -1,4 +1,4 @@
-import PseudoRandomX "mo:random/PseudoRandomX";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Time "mo:base/Time";
 import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
@@ -12,7 +12,7 @@ import Float "mo:base/Float";
 import Int "mo:base/Int";
 import IterTools "mo:itertools/Iter";
 import DateTime "mo:datetime/DateTime";
-import Season "../models/Season";
+import Season "models/Season";
 import Components "mo:datetime/Components";
 
 module {

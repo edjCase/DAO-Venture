@@ -1,4 +1,4 @@
-import PseudoRandomX "mo:random/PseudoRandomX";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";

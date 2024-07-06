@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Input, Label } from "flowbite-svelte";
-    import { ProposalContent } from "../../../../ic-agent/declarations/teams";
+    import { ProposalContent } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
 
     export let teamId: bigint;

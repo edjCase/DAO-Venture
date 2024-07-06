@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { EntropyTeamEffectOutcome } from "../../../ic-agent/declarations/league";
-    import { Team } from "../../../ic-agent/declarations/teams";
+    import { EntropyTeamEffectOutcome } from "../../../ic-agent/declarations/main";
+    import { Team } from "../../../ic-agent/declarations/main";
 
     export let value: EntropyTeamEffectOutcome;
     export let teams: Team[];

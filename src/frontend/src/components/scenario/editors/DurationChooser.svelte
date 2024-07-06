@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { Duration } from "../../../ic-agent/declarations/league";
+    import { Duration } from "../../../ic-agent/declarations/main";
     import DurationEditor from "./DurationEditor.svelte";
 
     export let value: Duration;

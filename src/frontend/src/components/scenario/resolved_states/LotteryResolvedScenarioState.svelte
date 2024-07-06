@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { LotteryScenarioOutcome } from "../../../ic-agent/declarations/league";
-    import { Team } from "../../../ic-agent/declarations/teams";
+    import { LotteryScenarioOutcome } from "../../../ic-agent/declarations/main";
+    import { Team } from "../../../ic-agent/declarations/main";
     import TeamLogo from "../../team/TeamLogo.svelte";
 
     export let outcome: LotteryScenarioOutcome;

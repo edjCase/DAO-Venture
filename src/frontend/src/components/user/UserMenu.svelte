@@ -4,7 +4,7 @@
   import UserAvatar from "./UserAvatar.svelte";
   import UserPseudonym from "./UserPseudonym.svelte";
   import { identityStore } from "../../stores/IdentityStore";
-  import { User } from "../../ic-agent/declarations/users";
+  import { User } from "../../ic-agent/declarations/main";
 
   $: identity = $identityStore;
 

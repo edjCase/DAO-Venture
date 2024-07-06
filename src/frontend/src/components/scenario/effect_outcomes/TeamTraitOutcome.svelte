@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { TeamTraitTeamEffectOutcome } from "../../../ic-agent/declarations/league";
-    import { Team, Trait } from "../../../ic-agent/declarations/teams";
+    import { TeamTraitTeamEffectOutcome } from "../../../ic-agent/declarations/main";
+    import { Team, Trait } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
 
     export let value: TeamTraitTeamEffectOutcome;

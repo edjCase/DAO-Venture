@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { PlayerStateWithId } from "../../ic-agent/declarations/stadium";
+  import { LivePlayerState } from "../../ic-agent/declarations/main";
   import {
     LiveMatch,
     LiveMatchState,
@@ -12,13 +12,13 @@
 
   let getPlayerOrNull = (
     playerId: [number] | [],
-  ): PlayerStateWithId | undefined => {
+  ): LivePlayerState | undefined => {
     if (playerId.length == 0) return undefined;
     let id = playerId[0];
     return match.liveState?.players.find((p) => p.id == id) || undefined;
   };
 
-  let getPlayer = (playerId: number): PlayerStateWithId => {
+  let getPlayer = (playerId: number): LivePlayerState => {
     let playerOrNull = getPlayerOrNull([playerId]);
     if (!playerOrNull) {
       throw new Error("Player not found");

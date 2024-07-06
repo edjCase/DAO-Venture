@@ -4,7 +4,7 @@
         ScenarioVote,
         TraitRequirement,
         VoteOnScenarioRequest,
-    } from "../../ic-agent/declarations/league";
+    } from "../../ic-agent/declarations/main";
     import { teamStore } from "../../stores/TeamStore";
     import { traitStore } from "../../stores/TraitStore";
     import TeamLogo from "../team/TeamLogo.svelte";
@@ -14,8 +14,8 @@
         ThumbsUpSolid,
     } from "flowbite-svelte-icons";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import { leagueAgentFactory } from "../../ic-agent/League";
-    import { Team } from "../../ic-agent/declarations/teams";
+    import { mainAgentFactory } from "../../ic-agent/Main";
+    import { Team } from "../../ic-agent/declarations/main";
 
     type State =
         | {
@@ -108,8 +108,8 @@
             `Voting for team ${vote.teamId} and scenario ${scenarioId} with option ${option.id}`,
             request,
         );
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.voteOnScenario(request);
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.voteOnScenario(request);
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
             teamStore.refetch();

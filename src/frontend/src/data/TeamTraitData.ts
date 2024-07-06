@@ -1,4 +1,4 @@
-import { Trait } from "../ic-agent/declarations/teams";
+import { Trait } from "../ic-agent/declarations/main";
 
 export const teamTraits: Trait[] = [
     {

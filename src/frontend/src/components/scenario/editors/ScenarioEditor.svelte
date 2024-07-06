@@ -2,7 +2,7 @@
     import { Button, Input, Label } from "flowbite-svelte";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
     import ScenarioKindChooser from "./ScenarioKindChooser.svelte";
-    import { AddScenarioRequest } from "../../../ic-agent/declarations/league";
+    import { AddScenarioRequest } from "../../../ic-agent/declarations/main";
     import {
         dateToNanoseconds,
         nanosecondsToDate,

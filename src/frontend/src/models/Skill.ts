@@ -1,4 +1,4 @@
-import { Skill } from "../ic-agent/declarations/league";
+import { Skill } from "../ic-agent/declarations/main";
 import { toJsonString } from "../utils/StringUtil";
 
 export const skillToString = (skill: Skill) => {

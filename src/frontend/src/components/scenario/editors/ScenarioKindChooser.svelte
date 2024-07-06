@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { ScenarioKindRequest } from "../../../ic-agent/declarations/league";
+    import { ScenarioKindRequest } from "../../../ic-agent/declarations/main";
     import NoLeagueEffectScenarioKindEditor from "./scenarios/NoLeagueEffectScenarioEditor.svelte";
     import ProportionalBidScenarioKindEditor from "./scenarios/ProportionalBidScenarioEditor.svelte";
     import LotteryScenarioKindEditor from "./scenarios/LotteryScenarioEditor.svelte";

@@ -3,9 +3,9 @@
     import {
         FieldPosition,
         Skill,
-    } from "../../../../ic-agent/declarations/players";
+    } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
-    import { ProposalContent } from "../../../../ic-agent/declarations/teams";
+    import { ProposalContent } from "../../../../ic-agent/declarations/main";
 
     export let teamId: bigint;
     let skillTypes = [

@@ -1,25 +1,23 @@
 <script lang="ts">
-  import { CreatePlayerFluffResult } from "../ic-agent/declarations/players";
+  import { CreatePlayerFluffResult } from "../ic-agent/declarations/main";
   import { teamStore } from "../stores/TeamStore";
   import { playerStore } from "../stores/PlayerStore";
   import { teams as teamData } from "../data/TeamData";
   import { players as playerData } from "../data/PlayerData";
   import { teamTraits as traitData } from "../data/TeamTraitData";
-  import { leagueAgentFactory } from "../ic-agent/League";
-  import { playersAgentFactory } from "../ic-agent/Players";
+  import { mainAgentFactory } from "../ic-agent/Main";
   import LoadingButton from "./common/LoadingButton.svelte";
-  import { teamsAgentFactory } from "../ic-agent/Teams";
   import { traitStore } from "../stores/TraitStore";
 
   $: teams = $teamStore;
   $: players = $playerStore;
 
   let createTeams = async function (): Promise<void> {
-    let leagueAgent = await leagueAgentFactory();
+    let mainAgent = await mainAgentFactory();
     let promises = [];
     for (let i = 0; i < teamData.length; i++) {
       let team = teamData[i];
-      let promise = leagueAgent.createTeam(team).then(async (result) => {
+      let promise = mainAgent.createTeam(team).then(async (result) => {
         if ("ok" in result) {
           let teamId = result.ok;
           console.log("Created team: ", teamId);
@@ -35,11 +33,11 @@
   };
 
   let createPlayers = async function () {
-    let playersAgent = await playersAgentFactory();
+    let mainAgent = await mainAgentFactory();
     let promises = [];
     // loop over count
     for (let player of playerData) {
-      let promise = playersAgent
+      let promise = mainAgent
         .addFluff({
           name: player.name,
           title: player.title,
@@ -61,10 +59,10 @@
   };
 
   let createTeamTraits = async function () {
-    let teamsAgent = await teamsAgentFactory();
+    let mainAgent = await mainAgentFactory();
     let promises = [];
     for (let trait of traitData) {
-      let promise = teamsAgent.createTeamTrait(trait).then(async (result) => {
+      let promise = mainAgent.createTeamTrait(trait).then(async (result) => {
         if ("ok" in result) {
           let traitId = result.ok;
           console.log("Created trait: ", traitId);

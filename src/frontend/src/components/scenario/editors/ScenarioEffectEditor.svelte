@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Button, Input, Label } from "flowbite-svelte";
     import BigIntInput from "./BigIntInput.svelte";
-    import { Effect } from "../../../ic-agent/declarations/league";
+    import { Effect } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
     import TargetPositionEditor from "./TargetPositionEditor.svelte";
     import DurationChooser from "./DurationChooser.svelte";

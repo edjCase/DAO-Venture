@@ -1,7 +1,7 @@
 <script lang="ts">
     import { CheckSolid, FileCopyOutline } from "flowbite-svelte-icons";
     import LoginButton from "../../components/common/LoginButton.svelte";
-    import { User } from "../../ic-agent/declarations/users";
+    import { User } from "../../ic-agent/declarations/main";
     import { identityStore } from "../../stores/IdentityStore";
     import { userStore } from "../../stores/UserStore";
     import { teamStore } from "../../stores/TeamStore";

@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { teamsAgentFactory } from "../../../../ic-agent/Teams";
+    import { mainAgentFactory } from "../../../../ic-agent/Main";
     import { proposalStore } from "../../../../stores/ProposalStore";
     import LoadingButton from "../../../common/LoadingButton.svelte";
-    import { ProposalContent } from "../../../../ic-agent/declarations/teams";
+    import { TeamProposalContent } from "../../../../ic-agent/declarations/main";
 
     export let teamId: bigint;
-    export let generateProposal: () => ProposalContent | string;
+    export let generateProposal: () => TeamProposalContent | string;
 
     let createProposal = async () => {
         let proposal = generateProposal();
@@ -14,10 +14,8 @@
             return;
         }
         console.log("Creating proposal: ", proposal);
-        let teamsAgent = await teamsAgentFactory();
-        let result = await teamsAgent.createProposal(teamId, {
-            content: proposal,
-        });
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.createTeamProposal(teamId, proposal);
         if ("ok" in result) {
             console.log(`Created Team Proposal: `, result.ok);
             proposalStore.refetchTeamProposal(teamId, result.ok);

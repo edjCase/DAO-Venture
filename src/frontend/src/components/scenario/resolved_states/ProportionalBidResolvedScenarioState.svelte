@@ -2,8 +2,8 @@
     import {
         ProportionalBidScenarioOutcome,
         ProportionalBidScenario,
-    } from "../../../ic-agent/declarations/league";
-    import { Team } from "../../../ic-agent/declarations/teams";
+    } from "../../../ic-agent/declarations/main";
+    import { Team } from "../../../ic-agent/declarations/main";
 
     export let scenario: ProportionalBidScenario;
     export let outcome: ProportionalBidScenarioOutcome;

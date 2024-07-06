@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { FieldPosition } from "../../../ic-agent/declarations/league";
+    import { FieldPosition } from "../../../ic-agent/declarations/main";
 
     export let value: FieldPosition;
 

@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { SkillPlayerEffectOutcome } from "../../../ic-agent/declarations/league";
-    import { Team } from "../../../ic-agent/declarations/teams";
+    import { SkillPlayerEffectOutcome } from "../../../ic-agent/declarations/main";
+    import { Team } from "../../../ic-agent/declarations/main";
     import { fieldPositionToString } from "../../../models/FieldPosition";
     import { skillToString } from "../../../models/Skill";
     import { toJsonString } from "../../../utils/StringUtil";

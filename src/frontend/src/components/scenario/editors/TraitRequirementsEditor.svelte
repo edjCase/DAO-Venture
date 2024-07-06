@@ -1,6 +1,6 @@
 <script lang="ts">
     import { TrashBinSolid } from "flowbite-svelte-icons";
-    import { TraitRequirement } from "../../../ic-agent/declarations/league";
+    import { TraitRequirement } from "../../../ic-agent/declarations/main";
     import TraitRequirementEditor from "./TraitRequirementEditor.svelte";
     import { Button } from "flowbite-svelte";
     export let value: TraitRequirement[];

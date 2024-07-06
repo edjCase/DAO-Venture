@@ -1,16 +1,17 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import { User } from "../../ic-agent/declarations/users";
+    import { User } from "../../ic-agent/declarations/main";
     import UserAvatar from "./UserAvatar.svelte";
-    import { usersAgentFactory } from "../../ic-agent/Users";
+
     import UserPseudonym from "./UserPseudonym.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
+    import { mainAgentFactory } from "../../ic-agent/Main";
 
     let users: User[] = [];
 
     let getTopUsers = async () => {
-        let userAgent = await usersAgentFactory();
-        let result = await userAgent.getUserLeaderboard({
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.getUserLeaderboard({
             count: BigInt(10),
             offset: BigInt(0),
         }); // TODO paging

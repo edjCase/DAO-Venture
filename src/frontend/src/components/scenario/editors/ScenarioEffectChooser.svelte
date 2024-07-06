@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { Effect } from "../../../ic-agent/declarations/league";
+    import { Effect } from "../../../ic-agent/declarations/main";
     import ScenarioEffectEditor from "./ScenarioEffectEditor.svelte";
 
     export let value: Effect;

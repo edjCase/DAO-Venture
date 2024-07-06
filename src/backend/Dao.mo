@@ -12,7 +12,7 @@ import Buffer "mo:base/Buffer";
 import Error "mo:base/Error";
 import Order "mo:base/Order";
 import IterTools "mo:itertools/Iter";
-import CommonTypes "./Types";
+import CommonTypes "./CommonTypes";
 import Result "mo:base/Result";
 
 module {
@@ -40,7 +40,7 @@ module {
 
     public type Proposal<TProposalContent> = {
         id : Nat;
-        proposer : Principal;
+        proposerId : Principal;
         timeStart : Int;
         timeEnd : Int;
         endTimerId : ?Nat;
@@ -72,7 +72,7 @@ module {
 
     type MutableProposal<TProposalContent> = {
         id : Nat;
-        proposer : Principal;
+        proposerId : Principal;
         timeStart : Int;
         timeEnd : Int;
         var endTimerId : ?Nat;
@@ -107,9 +107,9 @@ module {
 
     public class Dao<system, TProposalContent>(
         data : StableData<TProposalContent>,
-        onExecute : Proposal<TProposalContent> -> async* Result.Result<(), Text>,
-        onReject : Proposal<TProposalContent> -> async* (),
-        onValidate : TProposalContent -> async* Result.Result<(), [Text]>,
+        onProposalExecute : Proposal<TProposalContent> -> async* Result.Result<(), Text>,
+        onProposalReject : Proposal<TProposalContent> -> async* (),
+        onProposalValidate : TProposalContent -> async* Result.Result<(), [Text]>,
     ) {
         func hashNat(n : Nat) : Nat32 = Nat32.fromNat(n); // TODO
 
@@ -200,12 +200,12 @@ module {
         };
 
         public func createProposal<system>(
-            proposer : Principal,
+            proposerId : Principal,
             content : TProposalContent,
             members : [Member],
         ) : async* Result.Result<Nat, CreateProposalError> {
 
-            switch (await* onValidate(content)) {
+            switch (await* onProposalValidate(content)) {
                 case (#ok) ();
                 case (#err(errors)) {
                     return #err(#invalid(errors));
@@ -229,7 +229,7 @@ module {
             let endTimerId = createEndTimer<system>(proposalId, proposalDurationNanoseconds);
             let proposal : MutableProposal<TProposalContent> = {
                 id = proposalId;
-                proposer = proposer;
+                proposerId = proposerId;
                 content = content;
                 timeStart = now;
                 timeEnd = now + proposalDurationNanoseconds;
@@ -241,11 +241,11 @@ module {
             proposals.put(nextProposalId, proposal);
             nextProposalId += 1;
             // Automatically vote yes for the proposer
-            switch (IterTools.find(members.vals(), func(m : Member) : Bool { m.id == proposer })) {
+            switch (IterTools.find(members.vals(), func(m : Member) : Bool { m.id == proposerId })) {
                 case (null) (); // Skip if proposer is not a member
                 case (?proposerMember) {
                     // Vote yes for proposer
-                    await* voteInternal(proposal, proposer, true, proposerMember.votingPower);
+                    await* voteInternal(proposal, proposerId, true, proposerMember.votingPower);
                 };
             };
             #ok(proposalId);
@@ -350,7 +350,7 @@ module {
                 mutableProposal.statusLog.add(#executing({ time = Time.now() }));
 
                 let newStatus : ProposalStatusLogEntry = try {
-                    switch (await* onExecute(proposal)) {
+                    switch (await* onProposalExecute(proposal)) {
                         case (#ok) #executed({
                             time = Time.now();
                         });
@@ -368,7 +368,7 @@ module {
                 mutableProposal.statusLog.add(newStatus);
             } else {
                 mutableProposal.statusLog.add(#rejected({ time = Time.now() }));
-                await* onReject(proposal);
+                await* onProposalReject(proposal);
             };
         };
 

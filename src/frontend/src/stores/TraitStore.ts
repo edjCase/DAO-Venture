@@ -1,6 +1,6 @@
 import { writable } from "svelte/store";
-import { Trait } from "../ic-agent/declarations/teams";
-import { teamsAgentFactory } from "../ic-agent/Teams";
+import { Trait } from "../ic-agent/declarations/main";
+import { mainAgentFactory } from "../ic-agent/Main";
 
 
 
@@ -8,8 +8,8 @@ export const traitStore = (() => {
     const { subscribe, set } = writable<Trait[] | undefined>();
 
     const refetch = async () => {
-        let teamsAgent = await teamsAgentFactory();
-        let traits = await teamsAgent.getTraits();
+        let mainAgent = await mainAgentFactory();
+        let traits = await mainAgent.getTraits();
         set(traits);
     };
     refetch();

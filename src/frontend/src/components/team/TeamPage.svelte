@@ -3,7 +3,7 @@
   import MatchHistory from "../match/MatchHistory.svelte";
   import { Button, TabItem, Tabs } from "flowbite-svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import { Team } from "../../ic-agent/declarations/teams";
+  import { Team } from "../../ic-agent/declarations/main";
   export let team: Team;
 
   let links: { name: string; url: string }[] = []; // TODO

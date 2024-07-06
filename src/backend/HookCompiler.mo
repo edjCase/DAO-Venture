@@ -1,7 +1,7 @@
-import StadiumTypes "Types";
-import Hook "../models/Hook";
-import PseudoRandomX "mo:random/PseudoRandomX";
+import Hook "models/Hook";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Iter "mo:base/Iter";
+import LiveState "models/LiveState";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -18,7 +18,7 @@ module {
         onCatch : ?Hook.Hook<Hook.SkillTestContext>;
     };
 
-    public func compile(_ : StadiumTypes.Match) : Hook.CompiledHooks {
+    public func compile(_ : LiveState.LiveMatchState) : Hook.CompiledHooks {
         let allHooks = [
             // fromAura(state.aura)
         ];

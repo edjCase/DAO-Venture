@@ -1,6 +1,6 @@
 <script lang="ts">
     import BigIntInput from "./BigIntInput.svelte";
-    import { Duration } from "../../../ic-agent/declarations/league";
+    import { Duration } from "../../../ic-agent/declarations/main";
 
     export let value: Duration;
 </script>

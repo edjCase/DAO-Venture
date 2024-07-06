@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { navigate } from "svelte-routing";
-    import { Scenario, ScenarioVote } from "../../ic-agent/declarations/league";
+    import { Scenario, ScenarioVote } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
 

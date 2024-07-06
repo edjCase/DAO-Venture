@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
-    import { Scenario, ScenarioVote } from "../../ic-agent/declarations/league";
-    import { User } from "../../ic-agent/declarations/users";
+    import { Scenario, ScenarioVote } from "../../ic-agent/declarations/main";
+    import { User } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import LotteryInProgressScenarioState from "./in_progress_states/LotteryInProgressScenarioState.svelte";
     import LeagueChoiceInProgressScenarioState from "./in_progress_states/LeagueChoiceInProgressScenarioState.svelte";
@@ -10,7 +10,7 @@
     import { toJsonString } from "../../utils/StringUtil";
     import ProportionalBidInProgressScenarioState from "./in_progress_states/ProportionalBidInProgressScenarioState.svelte";
     import { teamStore } from "../../stores/TeamStore";
-    import { Team } from "../../ic-agent/declarations/teams";
+    import { Team } from "../../ic-agent/declarations/main";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
     import ScenarioOptionsNat from "./ScenarioOptionsNat.svelte";
 

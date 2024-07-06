@@ -2,7 +2,7 @@
     import TeamProposalForm from "../dao/team/TeamProposalForm.svelte";
     import TeamProposalList from "../dao/team/TeamProposalList.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
-    import { User } from "../../ic-agent/declarations/users";
+    import { User } from "../../ic-agent/declarations/main";
     import { identityStore } from "../../stores/IdentityStore";
     import { teamStore } from "../../stores/TeamStore";
     import { userStore } from "../../stores/UserStore";
@@ -12,7 +12,7 @@
     import PlayerRoster from "../player/PlayerRoster.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
-    import { TeamStandingInfo } from "../../ic-agent/declarations/league";
+    import { TeamStandingInfo } from "../../ic-agent/declarations/main";
 
     $: identity = $identityStore;
     $: teams = $teamStore;

@@ -2,7 +2,7 @@
     import { Label, Select } from "flowbite-svelte";
     import TargetTeamChooser from "./TargetTeamChooser.svelte";
     import TeamTraitEditor from "./TeamTraitEditor.svelte";
-    import { TeamTraitEffect } from "../../../ic-agent/declarations/league";
+    import { TeamTraitEffect } from "../../../ic-agent/declarations/main";
 
     export let value: TeamTraitEffect;
 

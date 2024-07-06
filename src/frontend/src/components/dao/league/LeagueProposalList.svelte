@@ -2,13 +2,13 @@
     import GenericProposalList from "../GenericProposalList.svelte";
     import { proposalStore } from "../../../stores/ProposalStore";
     import { onDestroy } from "svelte";
-    import { leagueAgentFactory } from "../../../ic-agent/League";
+    import { mainAgentFactory } from "../../../ic-agent/Main";
     import { ProposalType } from "../GenericProposal.svelte";
     import LeagueProposalDetails from "./LeagueProposalDetails.svelte";
-    import { Proposal } from "../../../ic-agent/declarations/league";
+    import { LeagueProposal } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
 
-    let proposals: Proposal[] = [];
+    let proposals: LeagueProposal[] = [];
     let genericProposals: ProposalType[] = [];
 
     $: genericProposals = proposals.map((p) => {
@@ -46,8 +46,8 @@
     });
 
     let onVote = async (proposalId: bigint, vote: boolean) => {
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.voteOnProposal({
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.voteOnLeagueProposal({
             proposalId: proposalId,
             vote,
         });
@@ -56,7 +56,7 @@
             proposalStore.refetchLeagueProposal(proposalId);
         }
     };
-    let getProposal = (proposalId: bigint): Proposal => {
+    let getProposal = (proposalId: bigint): LeagueProposal => {
         let proposal = proposals.find((p) => p.id == proposalId);
         if (proposal) {
             return proposal;

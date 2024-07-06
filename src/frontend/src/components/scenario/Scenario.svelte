@@ -1,9 +1,9 @@
 <script lang="ts">
   import ResolvedScenarioState from "./ResolvedScenarioState.svelte";
   import InProgressScenarioState from "./InProgressScenarioState.svelte";
-  import { Scenario } from "../../ic-agent/declarations/league";
+  import { Scenario } from "../../ic-agent/declarations/main";
   import { userStore } from "../../stores/UserStore";
-  import { User } from "../../ic-agent/declarations/users";
+  import { User } from "../../ic-agent/declarations/main";
   import { getIdentity } from "../../stores/IdentityStore";
   import Countdown from "../common/Countdown.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";

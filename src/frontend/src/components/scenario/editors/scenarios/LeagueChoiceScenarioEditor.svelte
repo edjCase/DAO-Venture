@@ -2,7 +2,7 @@
     import { Button, Input, Label } from "flowbite-svelte";
     import ScenarioEffectChooser from "../ScenarioEffectChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
-    import { LeagueChoiceScenarioRequest } from "../../../../ic-agent/declarations/league";
+    import { LeagueChoiceScenarioRequest } from "../../../../ic-agent/declarations/main";
     import TraitRequirementsEditor from "../TraitRequirementsEditor.svelte";
     import BigIntInput from "../BigIntInput.svelte";
     export let value: LeagueChoiceScenarioRequest;

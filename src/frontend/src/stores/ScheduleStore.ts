@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { leagueAgentFactory } from "../ic-agent/League";
+import { mainAgentFactory } from "../ic-agent/Main";
 import {
     CompletedMatch,
     InProgressMatch,
@@ -8,7 +8,7 @@ import {
     ScheduledMatch,
     SeasonStatus,
     TeamAssignment,
-} from "../ic-agent/declarations/league";
+} from "../ic-agent/declarations/main";
 import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined, TeamDetailsWithScore } from "../models/Match";
 
 type MatchVariant =
@@ -140,8 +140,8 @@ export const scheduleStore = (() => {
     };
 
     const refetch = async () => {
-        let leagueAgent = await leagueAgentFactory();
-        let status = await leagueAgent
+        let mainAgent = await mainAgentFactory();
+        let status = await mainAgent
             .getSeasonStatus();
         setStatus(status);
         let matchGroups: MatchGroupDetails[] = [];

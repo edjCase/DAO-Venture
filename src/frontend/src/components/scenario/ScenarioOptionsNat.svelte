@@ -2,8 +2,8 @@
     import {
         ScenarioTeamOptionNat,
         VoteOnScenarioRequest,
-    } from "../../ic-agent/declarations/league";
-    import { leagueAgentFactory } from "../../ic-agent/League";
+    } from "../../ic-agent/declarations/main";
+    import { mainAgentFactory } from "../../ic-agent/Main";
     import { teamStore } from "../../stores/TeamStore";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionNat from "./ScenarioOptionNat.svelte";
@@ -31,8 +31,8 @@
             `Voting for team ${teamId} and scenario ${scenarioId} with nat value ${natValue}`,
             request,
         );
-        let leagueAgent = await leagueAgentFactory();
-        let result = await leagueAgent.voteOnScenario(request);
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.voteOnScenario(request);
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
             teamStore.refetch();
@@ -44,7 +44,7 @@
 </script>
 
 {#if options.length < 1}
-    No current bid proposals
+    <div>No current bid proposals</div>
 {:else}
     {#each options as option}
         <ScenarioOptionNat

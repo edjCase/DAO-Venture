@@ -1,5 +1,4 @@
 import Player "../models/Player";
-import Types "./Types";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
@@ -8,19 +7,35 @@ import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Result "mo:base/Result";
 import TextX "mo:xtended-text/TextX";
-import Scenario "../models/Scenario";
 import FieldPosition "../models/FieldPosition";
 import IterTools "mo:itertools/Iter";
 import Skill "../models/Skill";
 
 module {
-
-    type PlayerInfo = Player.PlayerFluff and {
+    // Public Types -------------------------------------------------------
+    public type PlayerInfo = Player.PlayerFluff and {
         id : Nat32;
         teamId : Nat;
         position : FieldPosition.FieldPosition;
         skills : Player.Skills;
         condition : Player.PlayerCondition;
+        matchGroupStats : [(Nat, Player.PlayerMatchStats)];
+    };
+
+    public type InvalidError = {
+        #nameTaken;
+        #nameNotSpecified;
+    };
+
+    // Private Types -------------------------------------------------------
+
+    type MutablePlayerInfo = Player.PlayerFluff and {
+        id : Nat32;
+        var teamId : Nat;
+        var position : FieldPosition.FieldPosition;
+        var skills : Player.Skills;
+        var condition : Player.PlayerCondition;
+        matchGroupStats : HashMap.HashMap<Nat, Player.PlayerMatchStats>;
     };
 
     type RetiredPlayer = Player.PlayerFluff and {
@@ -38,46 +53,59 @@ module {
     };
 
     public class PlayerHandler(stableData : StableData) {
-        let players : HashMap.HashMap<Nat32, PlayerInfo> = buildPlayerMap(stableData.players);
+        let players : HashMap.HashMap<Nat32, MutablePlayerInfo> = buildPlayerMap(stableData.players);
         let retiredPlayers : HashMap.HashMap<Nat32, RetiredPlayer> = buildRetiredPlayerMap(stableData.retiredPlayers);
         let unusedFluff : Buffer.Buffer<Player.PlayerFluff> = Buffer.fromArray(stableData.unusedFluff);
 
         public func toStableData() : StableData {
+            let stablePlayers = players.vals()
+            |> Iter.map(
+                _,
+                mapPlayerInfo,
+            )
+            |> Iter.toArray(_);
             {
-                players = Iter.toArray(players.vals());
+                players = stablePlayers;
                 retiredPlayers = Iter.toArray(retiredPlayers.vals());
                 unusedFluff = Buffer.toArray(unusedFluff);
             };
         };
 
         public func get(id : Nat32) : ?PlayerInfo {
-            players.get(id);
+            let ?player = players.get(id) else return null;
+            ?mapPlayerInfo(player);
         };
 
         public func getPosition(teamId : Nat, position : FieldPosition.FieldPosition) : ?PlayerInfo {
-            IterTools.find(
+            let ?player = IterTools.find(
                 players.vals(),
-                func(player : PlayerInfo) : Bool = player.teamId == teamId and player.position == position,
-            );
+                func(player : MutablePlayerInfo) : Bool = player.teamId == teamId and player.position == position,
+            ) else return null;
+            ?mapPlayerInfo(player);
         };
 
         public func getAll(teamId : ?Nat) : [PlayerInfo] {
-            switch (teamId) {
-                case (null) Iter.toArray(players.vals());
+            let allPlayers = switch (teamId) {
+                case (null) players.vals();
                 case (?teamId) {
                     players.vals()
                     |> Iter.filter(
                         _,
-                        func(player : PlayerInfo) : Bool = player.teamId == teamId,
-                    )
-                    |> Iter.toArray(_);
+                        func(player : MutablePlayerInfo) : Bool = player.teamId == teamId,
+                    );
                 };
             };
+            allPlayers
+            |> Iter.map(
+                _,
+                mapPlayerInfo,
+            )
+            |> Iter.toArray(_);
         };
 
-        public func addFluff(fluff : Player.PlayerFluff) : Result.Result<(), { #invalid : [Types.InvalidError] }> {
+        public func addFluff(fluff : Player.PlayerFluff) : Result.Result<(), { #invalid : [InvalidError] }> {
             Debug.print("Adding player fluff: " # debug_show (fluff));
-            let errors = Buffer.Buffer<Types.InvalidError>(0);
+            let errors = Buffer.Buffer<InvalidError>(0);
             if (TextX.isEmptyOrWhitespace(fluff.name)) {
                 errors.add(#nameNotSpecified);
             };
@@ -92,41 +120,35 @@ module {
             #ok;
         };
 
-        public func applyEffects(effects : [Scenario.PlayerEffectOutcome]) : {
-            #ok;
-        } {
-
-            for (effect in effects.vals()) {
-                switch (effect) {
-                    case (#skill(skillEffect)) {
-                        let targetPlayerId = getTargetPlayerId(skillEffect.target);
-                        updatePlayer(
-                            targetPlayerId,
-                            func(player) {
-                                let newSkills = Skill.modify(player.skills, skillEffect.skill, skillEffect.delta);
-
-                                {
-                                    player with
-                                    skills = newSkills
-                                };
-                            },
-                        );
-                    };
-                    case (#injury(injuryEffect)) {
-                        let targetPlayerId = getTargetPlayerId(injuryEffect.target);
-                        updatePlayer(
-                            targetPlayerId,
-                            func(player) {
-                                // TODO how to remove effect?
-                                {
-                                    player with
-                                    condition = #injured;
-                                };
-                            },
-                        );
-                    };
+        public func addMatchStats(
+            matchGroupId : Nat,
+            playerStats : [Player.PlayerMatchStatsWithId],
+        ) {
+            for (playerStat in Iter.fromArray(playerStats)) {
+                let ?player = players.get(playerStat.playerId) else return Debug.trap("Player not found for id " # Nat32.toText(playerStat.playerId));
+                if (player.matchGroupStats.get(matchGroupId) != null) {
+                    Debug.trap("Match group stats already exist for player " # Nat32.toText(playerStat.playerId) # " and match group " # Nat.toText(matchGroupId));
                 };
+                player.matchGroupStats.put(matchGroupId, playerStat);
             };
+        };
+
+        public func updateSkill(
+            playerId : Nat32,
+            skill : Skill.Skill,
+            delta : Int,
+        ) : Result.Result<(), { #playerNotFound }> {
+            let ?player = players.get(playerId) else return #err(#playerNotFound);
+            player.skills := Skill.modify(player.skills, skill, delta);
+            #ok;
+        };
+
+        public func updateCondition(
+            playerId : Nat32,
+            condition : Player.PlayerCondition,
+        ) : Result.Result<(), { #playerNotFound : Nat32 }> {
+            let ?player = players.get(playerId) else return #err(#playerNotFound(playerId));
+            player.condition := condition;
             #ok;
         };
 
@@ -137,10 +159,10 @@ module {
         ) : {
             #ok;
         } {
-            let getPlayerFromPosition = func(position : FieldPosition.FieldPosition) : PlayerInfo {
+            let getPlayerFromPosition = func(position : FieldPosition.FieldPosition) : MutablePlayerInfo {
                 let iter = Iter.filter(
                     players.vals(),
-                    func(player : PlayerInfo) : Bool = player.teamId == teamId and player.position == position,
+                    func(player : MutablePlayerInfo) : Bool = player.teamId == teamId and player.position == position,
                 );
                 let ?player = iter.next() else Debug.trap("Player not found for team " # Nat.toText(teamId) # " and position " # debug_show (position1));
                 return player;
@@ -148,9 +170,9 @@ module {
 
             let player1 = getPlayerFromPosition(position1);
             let player2 = getPlayerFromPosition(position2);
-
-            players.put(player1.id, { player1 with position = position2 });
-            players.put(player2.id, { player2 with position = position1 });
+            let temp = player1.position;
+            player1.position := player2.position;
+            player2.position := temp;
 
             #ok;
         };
@@ -158,7 +180,12 @@ module {
         public func populateTeamRoster(teamId : Nat) : Result.Result<[PlayerInfo], { #missingFluff }> {
             Debug.print("Populating team roster for team " # Nat.toText(teamId));
             // TODO validate that the teamid is valid?
-            let teamPlayers = getAll(?teamId);
+            let teamPlayers = players.vals()
+            |> Iter.filter(
+                _,
+                func(player : MutablePlayerInfo) : Bool = player.teamId == teamId,
+            )
+            |> Iter.toArray(_);
             let allPositions : [FieldPosition.FieldPosition] = [
                 #pitcher,
                 #firstBase,
@@ -176,14 +203,14 @@ module {
                 |> Iter.fromArray(_)
                 |> IterTools.any(
                     _,
-                    func(p : PlayerInfo) : Bool {
+                    func(p : MutablePlayerInfo) : Bool {
                         p.position == position;
                     },
                 );
                 if (positionIsFilled) {
                     continue l;
                 };
-                let ?playerFluff = unusedFluff.getOpt(0) else return #err(#missingFluff); // TODO random or next?
+                let ?playerFluff : ?Player.PlayerFluff = unusedFluff.getOpt(0) else return #err(#missingFluff); // TODO random or next?
 
                 // TODO randomize skills
                 let skills : Player.Skills = switch (position) {
@@ -221,24 +248,48 @@ module {
                         };
                     };
                 };
-                let newPlayer : PlayerInfo = {
-                    playerFluff with
+                let newPlayer : MutablePlayerInfo = {
                     id = nextPlayerId;
-                    skills = skills;
-                    position = position;
-                    teamId = teamId;
-                    condition = #ok;
+                    name = playerFluff.name;
+                    title = playerFluff.title;
+                    description = playerFluff.description;
+                    dislikes = playerFluff.dislikes;
+                    likes = playerFluff.likes;
+                    quirks = playerFluff.quirks;
+                    var skills = skills;
+                    var position = position;
+                    var teamId = teamId;
+                    var condition = #ok;
+                    matchGroupStats = HashMap.HashMap<Nat, Player.PlayerMatchStats>(0, Nat.equal, Nat32.fromNat);
                 };
-                newPlayersBuffer.add({
-                    newPlayer with
-                    teamId = teamId;
-                    id = nextPlayerId;
-                });
+                newPlayersBuffer.add(mapPlayerInfo(newPlayer));
                 players.put(newPlayer.id, newPlayer);
                 nextPlayerId += 1;
                 ignore unusedFluff.remove(0);
             };
             #ok(Buffer.toArray(newPlayersBuffer));
+        };
+
+        private func mapPlayerInfo(mutable : MutablePlayerInfo) : PlayerInfo {
+            let matchGroupStats = mutable.matchGroupStats.entries()
+            |> Iter.toArray(_);
+            {
+                mutable with
+                id = mutable.id;
+                teamId = mutable.teamId;
+                position = mutable.position;
+                skills = {
+                    battingAccuracy = mutable.skills.battingAccuracy;
+                    battingPower = mutable.skills.battingPower;
+                    throwingAccuracy = mutable.skills.throwingAccuracy;
+                    throwingPower = mutable.skills.throwingPower;
+                    catching = mutable.skills.catching;
+                    defense = mutable.skills.defense;
+                    speed = mutable.skills.speed;
+                };
+                condition = mutable.condition;
+                matchGroupStats = matchGroupStats;
+            };
         };
 
         private func getNextPlayerId() : Nat32 {
@@ -254,22 +305,6 @@ module {
                 };
             };
             nextId;
-        };
-
-        private func updatePlayer(playerId : Nat32, updateFunc : (player : PlayerInfo) -> PlayerInfo) {
-            let ?player = players.get(playerId) else Debug.trap("Player not found: " # Nat32.toText(playerId)); // TODO trap?
-
-            let newPlayer = updateFunc(player);
-
-            players.put(playerId, newPlayer);
-        };
-
-        private func getTargetPlayerId(target : Scenario.TargetPositionInstance) : Nat32 {
-            let ?player = IterTools.find(
-                players.vals(),
-                func(player : PlayerInfo) : Bool = player.teamId == target.teamId and player.position == target.position,
-            ) else Debug.trap("Player not found for team " # Nat.toText(target.teamId) # " and position " # debug_show (target.position));
-            player.id;
         };
 
         private func isNameTaken(name : Text) : Bool {
@@ -292,13 +327,30 @@ module {
         };
     };
 
-    private func buildPlayerMap(players : [PlayerInfo]) : HashMap.HashMap<Nat32, PlayerInfo> {
+    private func buildPlayerMap(players : [PlayerInfo]) : HashMap.HashMap<Nat32, MutablePlayerInfo> {
         players.vals()
-        |> Iter.map<PlayerInfo, (Nat32, PlayerInfo)>(
+        |> Iter.map<PlayerInfo, (Nat32, MutablePlayerInfo)>(
             _,
-            func(p : PlayerInfo) : (Nat32, PlayerInfo) { (p.id, p) },
+            func(p : PlayerInfo) : (Nat32, MutablePlayerInfo) {
+                let mutableMatchGroupStats = HashMap.fromIter<Nat, Player.PlayerMatchStats>(p.matchGroupStats.vals(), p.matchGroupStats.size(), Nat.equal, Nat32.fromNat);
+                let mutablePlayer : MutablePlayerInfo = {
+                    id = p.id;
+                    var teamId = p.teamId;
+                    name = p.name;
+                    title = p.title;
+                    description = p.description;
+                    dislikes = p.dislikes;
+                    likes = p.likes;
+                    quirks = p.quirks;
+                    var skills = p.skills;
+                    var position = p.position;
+                    var condition = p.condition;
+                    matchGroupStats = mutableMatchGroupStats;
+                };
+                (p.id, mutablePlayer);
+            },
         )
-        |> HashMap.fromIter<Nat32, PlayerInfo>(_, players.size(), Nat32.equal, func(x : Nat32) : Nat32 = x);
+        |> HashMap.fromIter<Nat32, MutablePlayerInfo>(_, players.size(), Nat32.equal, func(x : Nat32) : Nat32 = x);
     };
 
     private func buildRetiredPlayerMap(retiredPlayers : [RetiredPlayer]) : HashMap.HashMap<Nat32, RetiredPlayer> {

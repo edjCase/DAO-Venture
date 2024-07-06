@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { teamsAgentFactory } from "../ic-agent/Teams";
+import { mainAgentFactory } from "../ic-agent/Main";
 
 
 
@@ -8,8 +8,8 @@ export const entropyStore = (() => {
   const thresholdStore = writable<bigint | undefined>();
 
   const refetchThreshold = async () => {
-    let teamsAgent = await teamsAgentFactory();
-    let entropyThreshold = await teamsAgent.getEntropyThreshold();
+    let mainAgent = await mainAgentFactory();
+    let entropyThreshold = await mainAgent.getEntropyThreshold();
     thresholdStore.set(entropyThreshold);
   };
 

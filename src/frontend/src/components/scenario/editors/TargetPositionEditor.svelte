@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Label } from "flowbite-svelte";
-    import { TargetPosition } from "../../../ic-agent/declarations/league";
+    import { TargetPosition } from "../../../ic-agent/declarations/main";
     import ChosenOrRandomFieldPositionChooser from "./ChosenOrRandomFieldPositionChooser.svelte";
     import TargetTeamChooser from "./TargetTeamChooser.svelte";
 
