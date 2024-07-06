@@ -670,9 +670,16 @@ export const idlFactory = ({ IDL }) => {
     'chosenByTeamIds' : IDL.Vec(IDL.Nat),
     'energyCost' : IDL.Nat,
   });
-  const ScenarioResolvedOptions = IDL.Variant({
+  const ScenarioResolvedOptionsKind = IDL.Variant({
     'nat' : IDL.Vec(ScenarioResolvedOptionNat),
     'discrete' : IDL.Vec(ScenarioResolvedOptionDiscrete),
+  });
+  const ScenarioResolvedOptions = IDL.Record({
+    'undecidedOption' : IDL.Record({
+      'teamEffect' : Effect,
+      'chosenByTeamIds' : IDL.Vec(IDL.Nat),
+    }),
+    'kind' : ScenarioResolvedOptionsKind,
   });
   const TeamTraitTeamEffectOutcome = IDL.Record({
     'kind' : TeamTraitEffectKind,

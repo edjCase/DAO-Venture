@@ -587,7 +587,14 @@ export interface ScenarioResolvedOptionNat {
   'value' : bigint,
   'chosenByTeamIds' : Array<bigint>,
 }
-export type ScenarioResolvedOptions = {
+export interface ScenarioResolvedOptions {
+  'undecidedOption' : {
+    'teamEffect' : Effect,
+    'chosenByTeamIds' : Array<bigint>,
+  },
+  'kind' : ScenarioResolvedOptionsKind,
+}
+export type ScenarioResolvedOptionsKind = {
     'nat' : Array<ScenarioResolvedOptionNat>
   } |
   { 'discrete' : Array<ScenarioResolvedOptionDiscrete> };

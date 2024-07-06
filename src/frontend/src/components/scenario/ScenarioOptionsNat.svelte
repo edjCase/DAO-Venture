@@ -23,6 +23,10 @@
             console.error("No value selected");
             return;
         }
+        if (teamEnergy === undefined || natValue > teamEnergy) {
+            console.error("Value exceeds team energy");
+            return;
+        }
         let request: VoteOnScenarioRequest = {
             scenarioId: scenarioId,
             value: { nat: natValue },

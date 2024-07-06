@@ -252,6 +252,14 @@ module {
     };
 
     public type ScenarioResolvedOptions = {
+        undecidedOption : {
+            teamEffect : Effect;
+            chosenByTeamIds : [Nat];
+        };
+        kind : ScenarioResolvedOptionsKind;
+    };
+
+    public type ScenarioResolvedOptionsKind = {
         #discrete : [ScenarioResolvedOptionDiscrete];
         #nat : [ScenarioResolvedOptionNat];
     };

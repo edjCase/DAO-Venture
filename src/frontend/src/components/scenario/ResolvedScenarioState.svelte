@@ -73,11 +73,11 @@
             NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}
         {/if}
     </div>
-    {#if "discrete" in state.options}
-        {#if state.options.discrete.length < 1}
+    {#if "discrete" in state.options.kind}
+        {#if state.options.kind.discrete.length < 1}
             No options were shown to any team
         {:else}
-            {#each state.options.discrete as discreteOption}
+            {#each state.options.kind.discrete as discreteOption}
                 <ScenarioOptionDiscrete
                     scenarioId={scenario.id}
                     option={discreteOption}
@@ -92,8 +92,8 @@
                 />
             {/each}
         {/if}
-    {:else if "nat" in state.options}
-        {#each state.options.nat as natOption}
+    {:else if "nat" in state.options.kind}
+        {#each state.options.kind.nat as natOption}
             <div class="flex items-center justify-center">
                 <div>{natOption.value} 🎟️</div>
                 <div class="flex">
@@ -110,6 +110,20 @@
         {/each}
     {:else}
         NOT IMPLEMENTED OPTIONS KIND {toJsonString(state.options)}
+    {/if}
+    {#if state.options.undecidedOption.chosenByTeamIds.length > 0}
+        <div>
+            Undecided teams:
+            <div class="flex items-center justify-center">
+                {#each state.options.undecidedOption.chosenByTeamIds as teamId}
+                    <!-- TODO Fix this team not found hack -->
+                    <TeamLogo
+                        team={teams.find((t) => t.id == teamId) || teams[-1]}
+                        size="xs"
+                    />
+                {/each}
+            </div>
+        </div>
     {/if}
     <Accordion border={false} flush={true}>
         <AccordionItem

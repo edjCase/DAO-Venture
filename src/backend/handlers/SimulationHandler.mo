@@ -49,11 +49,14 @@ module {
     };
 
     public type MatchGroupTickResult = {
-        #completed : {
-            matches : [Season.CompletedMatch];
-            playerStats : [Player.PlayerMatchStatsWithId];
-        };
+        #completed;
         #inProgress;
+    };
+
+    public type OnMatchGroupCompleteData = {
+        matchGroupId : Nat;
+        matches : [Season.CompletedMatch];
+        playerStats : [Player.PlayerMatchStatsWithId];
     };
 
     public type CompletedMatchResult = {
@@ -70,12 +73,6 @@ module {
         var matches : [LiveState.LiveMatchStateWithStatus];
         var tickTimerId : Timer.TimerId;
         var currentSeed : Nat32;
-    };
-
-    public type OnMatchGroupCompleteData = {
-        matchGroupId : Nat;
-        matches : [Season.CompletedMatch];
-        playerStats : [Player.PlayerMatchStatsWithId];
     };
 
     public class Handler<system>(
@@ -105,7 +102,9 @@ module {
             prng : Prng,
             id : Nat,
             matches : [StartMatchRequest],
+            onMatchGroupComplete : <system>(OnMatchGroupCompleteData) -> (),
         ) : Result.Result<(), { #noMatchesSpecified; #matchGroupInProgress }> {
+            Debug.print("Starting match group: " # Nat.toText(id));
             let null = matchGroupStateOrNull else return #err(#matchGroupInProgress);
             let tickTimerId = startTickTimer<system>(id);
 
@@ -134,6 +133,7 @@ module {
                 var matches = Buffer.toArray(tickResults);
                 var tickTimerId = tickTimerId;
                 var currentSeed = prng.getCurrentSeed();
+                onMatchGroupComplete = onMatchGroupComplete;
             };
             #ok;
         };
@@ -143,12 +143,14 @@ module {
                 case (null) return #err(#noLiveMatchGroup);
                 case (?matchGroup) {
                     Timer.cancelTimer(matchGroup.tickTimerId);
+                    // TODO onMatchGroupComplete?
+                    matchGroupStateOrNull := null;
                     #ok;
                 };
             };
         };
 
-        public func tickMatchGroup() : Result.Result<MatchGroupTickResult, { #noLiveMatchGroup }> {
+        private func tickMatchGroup<system>() : Result.Result<MatchGroupTickResult, { #noLiveMatchGroup }> {
 
             let ?matchGroup = matchGroupStateOrNull else return #err(#noLiveMatchGroup);
             let prng = PseudoRandomX.LinearCongruentialGenerator(matchGroup.currentSeed);
@@ -179,8 +181,13 @@ module {
 
                     Timer.cancelTimer(matchGroup.tickTimerId);
 
-                    // Stuck in a bad state. Can retry by a manual tick call
-                    #ok(#completed({ matches = completedMatches; playerStats }));
+                    onMatchGroupComplete<system>({
+                        matchGroupId = matchGroup.id;
+                        matches = completedMatches;
+                        playerStats;
+                    });
+                    matchGroupStateOrNull := null;
+                    #ok(#completed);
                 };
                 case (#inProgress(newMatches)) {
 
@@ -192,11 +199,13 @@ module {
             };
         };
 
-        public func finishMatchGroup() : Result.Result<(), { #noLiveMatchGroup }> {
+        public func finishMatchGroup<system>() : Result.Result<(), { #noLiveMatchGroup }> {
 
             label l loop {
-                switch (tickMatchGroup()) {
-                    case (#ok(#completed(_))) break l;
+                switch (tickMatchGroup<system>()) {
+                    case (#ok(#completed)) {
+                        break l;
+                    };
                     case (#ok(#inProgress(_))) {
                         // Continue ticking
                     };
@@ -217,7 +226,7 @@ module {
             Timer.setTimer<system>(
                 #seconds(5),
                 func() : async () {
-                    switch (tickMatchGroup()) {
+                    switch (tickMatchGroup<system>()) {
                         case (#err(err)) {
                             Debug.print("Failed to tick match group: " # Nat.toText(matchGroupId) # ", Error: " # debug_show (err) # ". Canceling tick timer. Reset with `resetTickTimer` method");
                         };
@@ -225,13 +234,8 @@ module {
                             // If not complete, trigger again in 5 seconds
                             resetTickTimer<system>();
                         };
-                        case (#ok(#completed(c))) {
+                        case (#ok(#completed)) {
                             Debug.print("Match group complete ");
-                            // Remove match group if successfully passed info to the league
-                            matchGroupStateOrNull := null;
-                            onMatchGroupComplete<system>({
-                                c with matchGroupId = matchGroupId;
-                            });
                         };
                     };
                 },

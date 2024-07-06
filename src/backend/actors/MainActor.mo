@@ -88,8 +88,36 @@ actor MainActor : Types.Actor {
         onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : () {
             predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
         };
-        onMatchGroupStart = func(matchGroupId : Nat, _ : Season.InProgressMatchGroup) : () {
+        onMatchGroupStart = func(
+            matchGroupId : Nat,
+            _ : Season.InProgressMatchGroup,
+            onMatchGroupComplete : <system>(SimulationHandler.OnMatchGroupCompleteData) -> (),
+        ) : () {
             predictionHandler.closeMatchGroup(matchGroupId);
+
+            func f<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
+
+                // TODO real prng
+                let prng = PseudoRandomX.fromSeed(0);
+                let result = onMatchGroupComplete<system>(prng, data.matchGroupId, data.matches);
+
+                teamsHandler.onMatchGroupComplete(data.matches);
+                playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
+
+                switch (result) {
+                    case (#ok) ();
+                    case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
+                    case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
+                    case (#err(#matchGroupNotInProgress)) Debug.trap("OnMatchGroupComplete Failed: Match group not in progress");
+                };
+                // Award users points for their predictions
+                awardUserPoints(data.matchGroupId, data.matches);
+            };
+
+            simulationHandler.startMatchGroup<system>(matchGroupId, f);
+        };
+        onMatchGroupComplete = func() {
+
         };
     };
 
@@ -153,7 +181,18 @@ actor MainActor : Types.Actor {
         };
     };
 
-    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome);
+    private func chargeTeamEnergy(teamId : Nat, amount : Nat) : {
+        #ok;
+        #notEnoughEnergy;
+    } {
+        switch (teamsHandler.updateEnergy(teamId, -amount, false)) {
+            case (#ok) #ok;
+            case (#err(#notEnoughEnergy)) #notEnoughEnergy;
+            case (#err(#teamNotFound)) Debug.trap("Team not found: " # Nat.toText(teamId));
+        };
+    };
+
+    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamEnergy);
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
@@ -355,26 +394,7 @@ actor MainActor : Types.Actor {
 
     var teamDaos = buildTeamDaos<system>();
 
-    func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
-
-        // TODO real prng
-        let prng = PseudoRandomX.fromSeed(0);
-        let result = seasonHandler.onMatchGroupComplete<system>(prng, data.matchGroupId, data.matches);
-
-        teamsHandler.onMatchGroupComplete(data.matches);
-        playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
-
-        switch (result) {
-            case (#ok) ();
-            case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
-            case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
-            case (#err(#matchGroupNotInProgress)) Debug.trap("OnMatchGroupComplete Failed: Match group not in progress");
-        };
-        // Award users points for their predictions
-        awardUserPoints(data.matchGroupId, data.matches);
-    };
-
-    var simulationHandler = SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
+    var simulationHandler = SimulationHandler.Handler<system>(simulationStableData);
 
     // System Methods ---------------------------------------------------------
 
@@ -398,7 +418,7 @@ actor MainActor : Types.Actor {
     system func postupgrade() {
         seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
         predictionHandler := PredictionHandler.Handler(predictionStableData);
-        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome);
+        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamEnergy);
         leagueDao := Dao.Dao<system, LeagueDao.ProposalContent>(
             leagueDaoStableData,
             onLeagueProposalExecute,
@@ -629,7 +649,7 @@ actor MainActor : Types.Actor {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
-        simulationHandler.finishMatchGroup();
+        simulationHandler.finishMatchGroup<system>();
     };
 
     public shared query func getEntropyThreshold() : async Nat {
