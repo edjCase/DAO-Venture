@@ -31,20 +31,20 @@
             value = {
                 entropy: {
                     delta: BigInt(0),
-                    target: { contextual: null },
+                    team: { contextual: null },
                 },
             };
         } else if (selectedType === "energy") {
             value = {
                 energy: {
-                    target: { contextual: null },
+                    team: { contextual: null },
                     value: { flat: BigInt(1) },
                 },
             };
         } else if (selectedType === "skill") {
             value = {
                 skill: {
-                    target: {
+                    position: {
                         position: { random: null },
                         team: { contextual: null },
                     },
@@ -56,7 +56,7 @@
         } else if (selectedType === "injury") {
             value = {
                 injury: {
-                    target: {
+                    position: {
                         position: { random: null },
                         team: { contextual: null },
                     },
@@ -66,7 +66,7 @@
             value = {
                 teamTrait: {
                     kind: { add: null },
-                    target: { contextual: null },
+                    team: { contextual: null },
                     traitId: "",
                 },
             };

@@ -740,7 +740,7 @@
 //             round = 0;
 //             outs = 0;
 //             strikes = 0;
-//             aura = #lowGravity;
+//             anomoly = #lowGravity;
 //             log = { rounds = [] };
 //         };
 //         let iterations = 10;

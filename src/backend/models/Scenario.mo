@@ -2,7 +2,7 @@ import Skill "Skill";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import FieldPosition "FieldPosition";
-import MatchAura "MatchAura";
+import Anomoly "Anomoly";
 
 module {
     public type TargetTeam = {
@@ -33,7 +33,7 @@ module {
     };
 
     public type Effect = {
-        #matchAura : MatchAuraEffect;
+        #anomoly : AnomolyEffect;
         #teamTrait : TeamTraitEffect;
         #skill : SkillEffect;
         #injury : InjuryEffect;
@@ -44,10 +44,10 @@ module {
         #noEffect;
     };
 
-    public type MatchAuraEffect = {
+    public type AnomolyEffect = {
         team : TargetTeam;
         duration : Duration;
-        aura : MatchAura.MatchAura;
+        anomoly : Anomoly.Anomoly;
     };
 
     public type SkillEffect = {
@@ -129,12 +129,12 @@ module {
     };
 
     public type MatchEffectOutcome = {
-        #matchAura : MatchAuraMatchEffectOutcome;
+        #anomoly : AnomolyMatchEffectOutcome;
     };
 
-    public type MatchAuraMatchEffectOutcome = {
+    public type AnomolyMatchEffectOutcome = {
         teamId : Nat;
-        aura : MatchAura.MatchAura;
+        anomoly : Anomoly.Anomoly;
         duration : Duration;
     };
 

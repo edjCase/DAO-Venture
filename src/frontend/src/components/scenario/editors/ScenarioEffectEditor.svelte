@@ -61,16 +61,16 @@
 {:else if "entropy" in value}
     <Label>Amount</Label>
     <BigIntInput bind:value={value.entropy.delta} />
-    <TargetTeamChooser bind:value={value.entropy.target} />
+    <TargetTeamChooser bind:value={value.entropy.team} />
 {:else if "energy" in value}
     <Label>Amount</Label>
     <BigIntInput bind:value={value.energy.value.flat} />
     <Label>Team</Label>
-    <TargetTeamChooser bind:value={value.energy.target} />
+    <TargetTeamChooser bind:value={value.energy.team} />
 {:else if "skill" in value}
     <Label>Target Position</Label>
     <div class="ml-4">
-        <TargetPositionEditor bind:value={value.skill.target} />
+        <TargetPositionEditor bind:value={value.skill.position} />
     </div>
     <Label>Skill</Label>
     <div class="ml-4">
@@ -85,7 +85,7 @@
 {:else if "injury" in value}
     <Label>Target</Label>
     <div class="ml-4">
-        <TargetPositionEditor bind:value={value.injury.target} />
+        <TargetPositionEditor bind:value={value.injury.position} />
     </div>
 {:else if "teamTrait" in value}
     <TeamTraitEffectEditor bind:value={value.teamTrait} />

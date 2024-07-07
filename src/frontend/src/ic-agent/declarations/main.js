@@ -33,7 +33,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const TeamTraitEffect = IDL.Record({
     'kind' : TeamTraitEffectKind,
-    'target' : TargetTeam,
+    'team' : TargetTeam,
     'traitId' : IDL.Text,
   });
   const WeightedEffect = IDL.Record({
@@ -41,10 +41,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'effect' : Effect,
   });
-  const EntropyEffect = IDL.Record({
-    'target' : TargetTeam,
-    'delta' : IDL.Int,
-  });
+  const EntropyEffect = IDL.Record({ 'team' : TargetTeam, 'delta' : IDL.Int });
   const Duration = IDL.Variant({
     'matches' : IDL.Nat,
     'indefinite' : IDL.Null,
@@ -83,13 +80,30 @@ export const idlFactory = ({ IDL }) => {
   const SkillEffect = IDL.Record({
     'duration' : Duration,
     'skill' : ChosenOrRandomSkill,
-    'target' : TargetPosition,
+    'position' : TargetPosition,
     'delta' : IDL.Int,
   });
-  const InjuryEffect = IDL.Record({ 'target' : TargetPosition });
+  const InjuryEffect = IDL.Record({ 'position' : TargetPosition });
+  const Anomoly = IDL.Variant({
+    'foggy' : IDL.Null,
+    'moveBasesIn' : IDL.Null,
+    'extraStrike' : IDL.Null,
+    'moreBlessingsAndCurses' : IDL.Null,
+    'fastBallsHardHits' : IDL.Null,
+    'explodingBalls' : IDL.Null,
+    'lowGravity' : IDL.Null,
+    'doubleOrNothing' : IDL.Null,
+    'windy' : IDL.Null,
+    'rainy' : IDL.Null,
+  });
+  const AnomolyEffect = IDL.Record({
+    'duration' : Duration,
+    'team' : TargetTeam,
+    'anomoly' : Anomoly,
+  });
   const EnergyEffect = IDL.Record({
     'value' : IDL.Variant({ 'flat' : IDL.Int }),
-    'target' : TargetTeam,
+    'team' : TargetTeam,
   });
   Effect.fill(
     IDL.Variant({
@@ -100,6 +114,7 @@ export const idlFactory = ({ IDL }) => {
       'entropy' : EntropyEffect,
       'skill' : SkillEffect,
       'injury' : InjuryEffect,
+      'anomoly' : AnomolyEffect,
       'energy' : EnergyEffect,
     })
   );
@@ -157,7 +172,7 @@ export const idlFactory = ({ IDL }) => {
   const PropotionalBidPrizeSkill = IDL.Record({
     'duration' : Duration,
     'skill' : ChosenOrRandomSkill,
-    'target' : TargetPosition,
+    'position' : TargetPosition,
   });
   const PropotionalBidPrizeKind = IDL.Variant({
     'skill' : PropotionalBidPrizeSkill,
@@ -393,18 +408,6 @@ export const idlFactory = ({ IDL }) => {
     'hitByBall' : IDL.Null,
   });
   const TeamId = IDL.Variant({ 'team1' : IDL.Null, 'team2' : IDL.Null });
-  const MatchAura = IDL.Variant({
-    'foggy' : IDL.Null,
-    'moveBasesIn' : IDL.Null,
-    'extraStrike' : IDL.Null,
-    'moreBlessingsAndCurses' : IDL.Null,
-    'fastBallsHardHits' : IDL.Null,
-    'explodingBalls' : IDL.Null,
-    'lowGravity' : IDL.Null,
-    'doubleOrNothing' : IDL.Null,
-    'windy' : IDL.Null,
-    'rainy' : IDL.Null,
-  });
   const Trait = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
@@ -445,13 +448,13 @@ export const idlFactory = ({ IDL }) => {
       'playerId' : PlayerId,
       'roll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
     }),
-    'auraTrigger' : IDL.Record({ 'id' : MatchAura, 'description' : IDL.Text }),
     'traitTrigger' : IDL.Record({
       'id' : Trait,
       'playerId' : PlayerId,
       'description' : IDL.Text,
     }),
     'safeAtBase' : IDL.Record({ 'base' : Base, 'playerId' : PlayerId }),
+    'anomolyTrigger' : IDL.Record({ 'id' : Anomoly, 'description' : IDL.Text }),
     'score' : IDL.Record({ 'teamId' : TeamId, 'amount' : IDL.Int }),
     'swing' : IDL.Record({
       'pitchRoll' : IDL.Record({ 'value' : IDL.Int, 'crit' : IDL.Bool }),
@@ -545,11 +548,11 @@ export const idlFactory = ({ IDL }) => {
     'status' : LiveMatchStatus,
     'team1' : LiveMatchTeam,
     'team2' : LiveMatchTeam,
-    'aura' : MatchAura,
     'outs' : IDL.Nat,
     'offenseTeamId' : TeamId,
     'players' : IDL.Vec(LivePlayerState),
     'bases' : LiveBaseState,
+    'anomoly' : Anomoly,
     'strikes' : IDL.Nat,
   });
   const LiveMatchGroupState = IDL.Record({
@@ -703,11 +706,16 @@ export const idlFactory = ({ IDL }) => {
   const SkillPlayerEffectOutcome = IDL.Record({
     'duration' : Duration,
     'skill' : Skill,
-    'target' : TargetPositionInstance,
+    'position' : TargetPositionInstance,
     'delta' : IDL.Int,
   });
   const InjuryPlayerEffectOutcome = IDL.Record({
-    'target' : TargetPositionInstance,
+    'position' : TargetPositionInstance,
+  });
+  const AnomolyMatchEffectOutcome = IDL.Record({
+    'duration' : Duration,
+    'teamId' : IDL.Nat,
+    'anomoly' : Anomoly,
   });
   const EnergyTeamEffectOutcome = IDL.Record({
     'teamId' : IDL.Nat,
@@ -718,6 +726,7 @@ export const idlFactory = ({ IDL }) => {
     'entropy' : EntropyTeamEffectOutcome,
     'skill' : SkillPlayerEffectOutcome,
     'injury' : InjuryPlayerEffectOutcome,
+    'anomoly' : AnomolyMatchEffectOutcome,
     'energy' : EnergyTeamEffectOutcome,
   });
   const ScenarioStateResolved = IDL.Record({
@@ -802,8 +811,8 @@ export const idlFactory = ({ IDL }) => {
   const CompletedMatch = IDL.Record({
     'team1' : CompletedMatchTeam,
     'team2' : CompletedMatchTeam,
-    'aura' : MatchAura,
     'winner' : TeamIdOrTie,
+    'anomoly' : Anomoly,
   });
   const CompletedMatchGroup = IDL.Record({
     'time' : Time,
@@ -823,15 +832,15 @@ export const idlFactory = ({ IDL }) => {
     'positions' : TeamPositions,
   });
   const ScheduledTeamInfo = IDL.Record({ 'id' : IDL.Nat });
-  const MatchAuraWithMetaData = IDL.Record({
-    'aura' : MatchAura,
+  const AnomolyWithMetaData = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'anomoly' : Anomoly,
   });
   const ScheduledMatch = IDL.Record({
     'team1' : ScheduledTeamInfo,
     'team2' : ScheduledTeamInfo,
-    'aura' : MatchAuraWithMetaData,
+    'anomoly' : AnomolyWithMetaData,
   });
   const ScheduledMatchGroup = IDL.Record({
     'time' : Time,
@@ -842,7 +851,7 @@ export const idlFactory = ({ IDL }) => {
   const InProgressMatch = IDL.Record({
     'team1' : InProgressTeam,
     'team2' : InProgressTeam,
-    'aura' : MatchAura,
+    'anomoly' : Anomoly,
   });
   const InProgressMatchGroup = IDL.Record({
     'time' : Time,

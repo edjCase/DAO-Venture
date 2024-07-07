@@ -127,7 +127,7 @@ actor MainActor : Types.Actor {
     ) {
         switch (effectOutcome) {
             case (#injury(injuryEffect)) {
-                let ?player = playerHandler.getPosition(injuryEffect.target.teamId, injuryEffect.target.position) else Debug.trap("Position " # debug_show (injuryEffect.target.position) # " not found in team " # Nat.toText(injuryEffect.target.teamId));
+                let ?player = playerHandler.getPosition(injuryEffect.position.teamId, injuryEffect.position.position) else Debug.trap("Position " # debug_show (injuryEffect.position.position) # " not found in team " # Nat.toText(injuryEffect.position.teamId));
 
                 switch (playerHandler.updateCondition(player.id, #injured)) {
                     case (#ok) ();
@@ -153,9 +153,9 @@ actor MainActor : Types.Actor {
                 };
             };
             case (#skill(s)) {
-                let playerId = switch (playerHandler.getPosition(s.target.teamId, s.target.position)) {
+                let playerId = switch (playerHandler.getPosition(s.position.teamId, s.position.position)) {
                     case (?player) player.id;
-                    case (null) Debug.trap("Position " # debug_show (s.target.position) # " not found in team " # Nat.toText(s.target.teamId));
+                    case (null) Debug.trap("Position " # debug_show (s.position.position) # " not found in team " # Nat.toText(s.position.teamId));
                 };
                 switch (playerHandler.updateSkill(playerId, s.skill, s.delta)) {
                     case (#ok) ();
@@ -172,7 +172,7 @@ actor MainActor : Types.Actor {
                     };
                 };
             };
-            case (#matchAura(m)) {
+            case (#anomoly(m)) {
 
             };
         };
@@ -465,7 +465,7 @@ actor MainActor : Types.Actor {
                     {
                         team1 = getTeam(match.team1.id);
                         team2 = getTeam(match.team2.id);
-                        aura = match.aura;
+                        anomoly = match.anomoly;
                     };
                 },
             )

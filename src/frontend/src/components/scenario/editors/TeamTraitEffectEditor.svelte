@@ -29,7 +29,7 @@
 </script>
 
 <Label>Team</Label>
-<TargetTeamChooser bind:value={value.target} />
+<TargetTeamChooser bind:value={value.team} />
 <TeamTraitEditor bind:value={value.traitId} />
 <Label>Kind</Label>
 <Select items={traitKindItems} on:change={onChange} value={selectedKind} />

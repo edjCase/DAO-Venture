@@ -3,7 +3,7 @@ import { LiveBaseState, MatchLog, LivePlayerState, TeamId, LiveMatchStateWithSta
 import { nanosecondsToDate } from "../utils/DateUtils";
 import { scheduleStore } from "./ScheduleStore";
 import { TeamDetailsWithScore } from "../models/Match";
-import { MatchAura, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/main";
+import { Anomoly, SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/main";
 import { mainAgentFactory } from "../ic-agent/Main";
 
 export type LiveMatchGroup = {
@@ -18,7 +18,7 @@ export type LiveTeamDetails = TeamDetailsWithScore & {
 export type LiveMatch = {
   team1: LiveTeamDetails;
   team2: LiveTeamDetails;
-  aura: MatchAura;
+  anomoly: Anomoly;
   liveState: LiveMatchState | undefined
   log: MatchLog | undefined;
   winner: TeamIdOrTie | undefined;
@@ -72,7 +72,7 @@ export const liveMatchGroupStore = (() => {
       liveState: liveState,
       log: tickResult.log,
       winner: winner,
-      aura: tickResult.aura
+      anomoly: tickResult.anomoly
     };
   };
 

@@ -12,9 +12,9 @@
     let gainOrLoss = value.delta >= 0 ? "+" : "-";
 
     $: teamName =
-        teams.find((team) => team.id === value.target.teamId)?.name ?? "";
+        teams.find((team) => team.id === value.position.teamId)?.name ?? "";
 
-    $: positionText = fieldPositionToString(value.target.position);
+    $: positionText = fieldPositionToString(value.position.position);
 </script>
 
 <div>

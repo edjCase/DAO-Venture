@@ -24,7 +24,7 @@
         endTime: dateToNanoseconds(initialEnd),
         undecidedEffect: {
             entropy: {
-                target: { contextual: null },
+                team: { contextual: null },
                 delta: BigInt(1),
             },
         },

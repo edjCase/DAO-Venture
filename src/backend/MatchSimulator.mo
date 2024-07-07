@@ -9,7 +9,7 @@ import Text "mo:base/Text";
 import Order "mo:base/Order";
 import Bool "mo:base/Bool";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import MatchAura "models/MatchAura";
+import Anomoly "models/Anomoly";
 import Base "models/Base";
 import Team "models/Team";
 import FieldPosition "models/FieldPosition";
@@ -22,7 +22,7 @@ import LiveState "models/LiveState";
 module {
 
     type PlayerId = Player.PlayerId;
-    type MatchAura = MatchAura.MatchAura;
+    type Anomoly = Anomoly.Anomoly;
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     type SimulationResult = {
@@ -64,7 +64,7 @@ module {
     };
 
     public func initState(
-        aura : MatchAura.MatchAura,
+        anomoly : Anomoly.Anomoly,
         team1 : TeamInitData,
         team2 : TeamInitData,
         team1StartOffense : Bool,
@@ -92,7 +92,7 @@ module {
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = team1State;
             team2 = team2State;
-            aura = aura;
+            anomoly = anomoly;
             log = {
                 rounds = [];
             };
@@ -316,7 +316,7 @@ module {
                 log = log;
                 currentSeed = prng.getCurrentSeed();
                 offenseTeamId = state.offenseTeamId;
-                aura = state.aura;
+                anomoly = state.anomoly;
                 players = players;
                 bases = bases;
                 outs = state.outs;

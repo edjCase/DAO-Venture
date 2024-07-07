@@ -1,5 +1,5 @@
 import Time "mo:base/Time";
-import MatchAura "MatchAura";
+import Anomoly "Anomoly";
 import Team "Team";
 import Player "Player";
 import FieldPosition "FieldPosition";
@@ -61,7 +61,7 @@ module {
     public type ScheduledMatch = {
         team1 : ScheduledTeamInfo;
         team2 : ScheduledTeamInfo;
-        aura : MatchAura.MatchAuraWithMetaData;
+        anomoly : Anomoly.AnomolyWithMetaData;
     };
 
     public type InProgressMatchGroup = {
@@ -76,7 +76,7 @@ module {
     public type InProgressMatch = {
         team1 : InProgressTeam;
         team2 : InProgressTeam;
-        aura : MatchAura.MatchAura;
+        anomoly : Anomoly.Anomoly;
     };
 
     public type CompletedMatchTeam = {
@@ -87,7 +87,7 @@ module {
     public type CompletedMatch = {
         team1 : CompletedMatchTeam;
         team2 : CompletedMatchTeam;
-        aura : MatchAura.MatchAura;
+        anomoly : Anomoly.Anomoly;
         winner : Team.TeamIdOrTie;
     };
 

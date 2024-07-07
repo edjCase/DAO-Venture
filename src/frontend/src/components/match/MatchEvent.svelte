@@ -31,10 +31,10 @@
       event.traitTrigger.id,
     )}': {event.traitTrigger.description}
   </div>
-{:else if "auraTrigger" in event}
+{:else if "anomolyTrigger" in event}
   <div>
-    Aura '{variantKeyToString(event.auraTrigger.id)}' triggered: {event
-      .auraTrigger.description}
+    Aura '{variantKeyToString(event.anomolyTrigger.id)}' triggered: {event
+      .anomolyTrigger.description}
   </div>
 {:else if "pitch" in event}
   <div>

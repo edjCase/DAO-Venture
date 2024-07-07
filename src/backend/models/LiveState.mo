@@ -1,5 +1,5 @@
 import Team "Team";
-import MatchAura "MatchAura";
+import Anomoly "Anomoly";
 import FieldPosition "FieldPosition";
 import Player "Player";
 import Trait "Trait";
@@ -17,7 +17,7 @@ module {
         team1 : LiveMatchTeam;
         team2 : LiveMatchTeam;
         offenseTeamId : Team.TeamId;
-        aura : MatchAura.MatchAura;
+        anomoly : Anomoly.Anomoly;
         players : [LivePlayerState];
         bases : LiveBaseState;
         log : MatchLog;
@@ -80,8 +80,8 @@ module {
             playerId : Player.PlayerId;
             description : Text;
         };
-        #auraTrigger : {
-            id : MatchAura.MatchAura;
+        #anomolyTrigger : {
+            id : Anomoly.Anomoly;
             description : Text;
         };
         #pitch : {

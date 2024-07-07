@@ -1209,7 +1209,7 @@ module {
             case (#injury(_)) {
                 // TODO
             };
-            case (#matchAura(_)) {
+            case (#anomoly(_)) {
                 // TODO
             };
             case (#noEffect) {};
@@ -1497,13 +1497,13 @@ module {
                     outcomes.add(outcome);
                 };
             };
-            case (#matchAura(matchAuraEffect)) {
-                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, matchAuraEffect.team, context);
+            case (#anomoly(anomolyEffect)) {
+                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, anomolyEffect.team, context);
                 for (teamId in teamIds.vals()) {
-                    let outcome = #matchAura({
+                    let outcome = #anomoly({
                         teamId = teamId;
-                        aura = matchAuraEffect.aura;
-                        duration = matchAuraEffect.duration;
+                        anomoly = anomolyEffect.anomoly;
+                        duration = anomolyEffect.duration;
                     });
                     outcomes.add(outcome);
                 };

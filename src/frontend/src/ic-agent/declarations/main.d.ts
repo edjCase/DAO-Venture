@@ -25,6 +25,31 @@ export interface AddTeamOwnerRequest {
 }
 export type AddTeamOwnerResult = { 'ok' : null } |
   { 'err' : AddTeamOwnerError };
+export type Anomoly = { 'foggy' : null } |
+  { 'moveBasesIn' : null } |
+  { 'extraStrike' : null } |
+  { 'moreBlessingsAndCurses' : null } |
+  { 'fastBallsHardHits' : null } |
+  { 'explodingBalls' : null } |
+  { 'lowGravity' : null } |
+  { 'doubleOrNothing' : null } |
+  { 'windy' : null } |
+  { 'rainy' : null };
+export interface AnomolyEffect {
+  'duration' : Duration,
+  'team' : TargetTeam,
+  'anomoly' : Anomoly,
+}
+export interface AnomolyMatchEffectOutcome {
+  'duration' : Duration,
+  'teamId' : bigint,
+  'anomoly' : Anomoly,
+}
+export interface AnomolyWithMetaData {
+  'name' : string,
+  'description' : string,
+  'anomoly' : Anomoly,
+}
 export type Base = { 'homeBase' : null } |
   { 'thirdBase' : null } |
   { 'secondBase' : null } |
@@ -52,8 +77,8 @@ export type CloseSeasonResult = { 'ok' : null } |
 export interface CompletedMatch {
   'team1' : CompletedMatchTeam,
   'team2' : CompletedMatchTeam,
-  'aura' : MatchAura,
   'winner' : TeamIdOrTie,
+  'anomoly' : Anomoly,
 }
 export interface CompletedMatchGroup {
   'time' : Time,
@@ -130,15 +155,17 @@ export type Effect = { 'allOf' : Array<Effect> } |
   { 'entropy' : EntropyEffect } |
   { 'skill' : SkillEffect } |
   { 'injury' : InjuryEffect } |
+  { 'anomoly' : AnomolyEffect } |
   { 'energy' : EnergyEffect };
 export type EffectOutcome = { 'teamTrait' : TeamTraitTeamEffectOutcome } |
   { 'entropy' : EntropyTeamEffectOutcome } |
   { 'skill' : SkillPlayerEffectOutcome } |
   { 'injury' : InjuryPlayerEffectOutcome } |
+  { 'anomoly' : AnomolyMatchEffectOutcome } |
   { 'energy' : EnergyTeamEffectOutcome };
 export interface EnergyEffect {
   'value' : { 'flat' : bigint },
-  'target' : TargetTeam,
+  'team' : TargetTeam,
 }
 export interface EnergyTeamEffectOutcome { 'teamId' : bigint, 'delta' : bigint }
 export interface EntropyData {
@@ -147,7 +174,7 @@ export interface EntropyData {
   'currentEntropy' : bigint,
   'maxDividend' : bigint,
 }
-export interface EntropyEffect { 'target' : TargetTeam, 'delta' : bigint }
+export interface EntropyEffect { 'team' : TargetTeam, 'delta' : bigint }
 export interface EntropyTeamEffectOutcome {
   'teamId' : bigint,
   'delta' : bigint,
@@ -223,7 +250,7 @@ export type HitLocation = { 'rightField' : null } |
 export interface InProgressMatch {
   'team1' : InProgressTeam,
   'team2' : InProgressTeam,
-  'aura' : MatchAura,
+  'anomoly' : Anomoly,
 }
 export interface InProgressMatchGroup {
   'time' : Time,
@@ -241,8 +268,10 @@ export type InProgressSeasonMatchGroupVariant = {
   { 'inProgress' : InProgressMatchGroup } |
   { 'notScheduled' : NotScheduledMatchGroup };
 export interface InProgressTeam { 'id' : bigint }
-export interface InjuryEffect { 'target' : TargetPosition }
-export interface InjuryPlayerEffectOutcome { 'target' : TargetPositionInstance }
+export interface InjuryEffect { 'position' : TargetPosition }
+export interface InjuryPlayerEffectOutcome {
+  'position' : TargetPositionInstance,
+}
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
 export interface LeagueChoiceScenario {
@@ -297,11 +326,11 @@ export interface LiveMatchStateWithStatus {
   'status' : LiveMatchStatus,
   'team1' : LiveMatchTeam,
   'team2' : LiveMatchTeam,
-  'aura' : MatchAura,
   'outs' : bigint,
   'offenseTeamId' : TeamId,
   'players' : Array<LivePlayerState>,
   'bases' : LiveBaseState,
+  'anomoly' : Anomoly,
   'strikes' : bigint,
 }
 export type LiveMatchStatus = { 'completed' : LiveMatchStatusCompleted } |
@@ -326,21 +355,6 @@ export interface LivePlayerState {
 export interface LotteryPrize { 'description' : string, 'effect' : Effect }
 export interface LotteryScenario { 'minBid' : bigint, 'prize' : LotteryPrize }
 export interface LotteryScenarioOutcome { 'winningTeamId' : [] | [bigint] }
-export type MatchAura = { 'foggy' : null } |
-  { 'moveBasesIn' : null } |
-  { 'extraStrike' : null } |
-  { 'moreBlessingsAndCurses' : null } |
-  { 'fastBallsHardHits' : null } |
-  { 'explodingBalls' : null } |
-  { 'lowGravity' : null } |
-  { 'doubleOrNothing' : null } |
-  { 'windy' : null } |
-  { 'rainy' : null };
-export interface MatchAuraWithMetaData {
-  'aura' : MatchAura,
-  'name' : string,
-  'description' : string,
-}
 export type MatchEndReason = { 'noMoreRounds' : null } |
   { 'error' : string };
 export type MatchEvent = {
@@ -357,7 +371,6 @@ export type MatchEvent = {
       'roll' : { 'value' : bigint, 'crit' : boolean },
     }
   } |
-  { 'auraTrigger' : { 'id' : MatchAura, 'description' : string } } |
   {
     'traitTrigger' : {
       'id' : Trait,
@@ -366,6 +379,7 @@ export type MatchEvent = {
     }
   } |
   { 'safeAtBase' : { 'base' : Base, 'playerId' : PlayerId } } |
+  { 'anomolyTrigger' : { 'id' : Anomoly, 'description' : string } } |
   { 'score' : { 'teamId' : TeamId, 'amount' : bigint } } |
   {
     'swing' : {
@@ -532,7 +546,7 @@ export type PropotionalBidPrizeKind = { 'skill' : PropotionalBidPrizeSkill };
 export interface PropotionalBidPrizeSkill {
   'duration' : Duration,
   'skill' : ChosenOrRandomSkill,
-  'target' : TargetPosition,
+  'position' : TargetPosition,
 }
 export type Result = { 'ok' : Player } |
   { 'err' : GetPositionError };
@@ -637,7 +651,7 @@ export interface ScenarioVote {
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
   'team2' : ScheduledTeamInfo,
-  'aura' : MatchAuraWithMetaData,
+  'anomoly' : AnomolyWithMetaData,
 }
 export interface ScheduledMatchGroup {
   'time' : Time,
@@ -668,13 +682,13 @@ export type Skill = { 'battingAccuracy' : null } |
 export interface SkillEffect {
   'duration' : Duration,
   'skill' : ChosenOrRandomSkill,
-  'target' : TargetPosition,
+  'position' : TargetPosition,
   'delta' : bigint,
 }
 export interface SkillPlayerEffectOutcome {
   'duration' : Duration,
   'skill' : Skill,
-  'target' : TargetPositionInstance,
+  'position' : TargetPositionInstance,
   'delta' : bigint,
 }
 export interface Skills {
@@ -796,7 +810,7 @@ export interface TeamStats {
 }
 export interface TeamTraitEffect {
   'kind' : TeamTraitEffectKind,
-  'target' : TargetTeam,
+  'team' : TargetTeam,
   'traitId' : string,
 }
 export type TeamTraitEffectKind = { 'add' : null } |

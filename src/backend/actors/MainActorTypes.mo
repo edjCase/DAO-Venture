@@ -9,7 +9,7 @@ import CommonTypes "../CommonTypes";
 import Components "mo:datetime/Components";
 import Result "mo:base/Result";
 import FieldPosition "../models/FieldPosition";
-import MatchAura "../models/MatchAura";
+import Anomoly "../models/Anomoly";
 import LiveState "../models/LiveState";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";

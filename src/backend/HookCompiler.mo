@@ -20,7 +20,7 @@ module {
 
     public func compile(_ : LiveState.LiveMatchState) : Hook.CompiledHooks {
         let allHooks = [
-            // fromAura(state.aura)
+            // fromAura(state.anomoly)
         ];
 
         var matchStart : ?Hook.Hook<()> = null;

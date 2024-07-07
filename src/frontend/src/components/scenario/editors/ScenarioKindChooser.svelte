@@ -27,7 +27,7 @@
                                 skill: {
                                     duration: { matches: BigInt(1) },
                                     skill: { random: null },
-                                    target: {
+                                    position: {
                                         position: { random: null },
                                         team: { contextual: null },
                                     },
@@ -48,7 +48,7 @@
                     success: {
                         effect: {
                             energy: {
-                                target: { contextual: null },
+                                team: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
                         },
@@ -57,7 +57,7 @@
                     failure: {
                         effect: {
                             entropy: {
-                                target: { contextual: null },
+                                team: { contextual: null },
                                 delta: BigInt(1),
                             },
                         },
@@ -80,7 +80,7 @@
                         description: "+10 💰",
                         effect: {
                             energy: {
-                                target: { contextual: null },
+                                team: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
                         },
@@ -97,7 +97,7 @@
                             skill: {
                                 duration: { matches: BigInt(1) },
                                 skill: { random: null },
-                                target: {
+                                position: {
                                     position: { random: null },
                                     team: { contextual: null },
                                 },

@@ -17,7 +17,7 @@
         <ChosenOrRandomSkillChooser bind:value={value.prize.kind.skill.skill} />
         <Label>Position</Label>
         <ChosenOrRandomFieldPositionChooser
-            bind:value={value.prize.kind.skill.target.position}
+            bind:value={value.prize.kind.skill.position.position}
         />
     </div>
 {:else}

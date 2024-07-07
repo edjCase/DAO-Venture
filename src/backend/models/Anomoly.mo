@@ -1,6 +1,6 @@
 module {
 
-    public type MatchAura = {
+    public type Anomoly = {
         #lowGravity;
         #explodingBalls;
         #fastBallsHardHits;
@@ -13,16 +13,16 @@ module {
         #extraStrike;
     };
 
-    public type MatchAuraMetaData = {
+    public type AnomolyMetaData = {
         name : Text;
         description : Text;
     };
 
-    public type MatchAuraWithMetaData = MatchAuraMetaData and {
-        aura : MatchAura;
+    public type AnomolyWithMetaData = AnomolyMetaData and {
+        anomoly : Anomoly;
     };
 
-    public func hash(aura : MatchAura) : Nat32 = switch (aura) {
+    public func hash(anomoly : Anomoly) : Nat32 = switch (anomoly) {
         case (#lowGravity) 0;
         case (#explodingBalls) 1;
         case (#fastBallsHardHits) 2;
@@ -35,10 +35,10 @@ module {
         case (#extraStrike) 9;
     };
 
-    public func equal(a : MatchAura, b : MatchAura) : Bool = a == b;
+    public func equal(a : Anomoly, b : Anomoly) : Bool = a == b;
 
-    public func getMetaData(aura : MatchAura) : MatchAuraMetaData {
-        switch (aura) {
+    public func getMetaData(anomoly : Anomoly) : AnomolyMetaData {
+        switch (anomoly) {
             // Initial config change
             // AND? on hit event?
             case (#lowGravity) {

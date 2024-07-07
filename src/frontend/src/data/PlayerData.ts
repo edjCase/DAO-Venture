@@ -801,7 +801,7 @@ export const players: Player[] = [
         "name": "Sparkle",
         "title": "The Glistening Glint",
         "description": "Manifested from the sparkle of trophies and the twinkling of stars over night games, a dazzling beacon of hope.",
-        "quirks": ["Illuminates in moments of joy", "Shimmers with a captivating aura"],
+        "quirks": ["Illuminates in moments of joy", "Shimmers with a captivating anomoly"],
         "likes": ["Fireworks", "Stargazing"],
         "dislikes": ["Dullness", "Cloudy nights"]
     },
@@ -882,7 +882,7 @@ export const players: Player[] = [
         "name": "Pulse",
         "title": "The Vibrant Vibe",
         "description": "Manifested from the rhythmic heartbeat of the game, a pulsating presence of life and tempo.",
-        "quirks": ["Throbs in rhythm with nearby music", "Pulses with a colorful aura"],
+        "quirks": ["Throbs in rhythm with nearby music", "Pulses with a colorful anomoly"],
         "likes": ["Dance music", "Drum beats"],
         "dislikes": ["Irregular rhythms", "Silence"]
     },

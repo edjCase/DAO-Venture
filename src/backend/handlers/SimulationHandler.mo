@@ -6,7 +6,7 @@ import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Player "../models/Player";
-import MatchAura "../models/MatchAura";
+import Anomoly "../models/Anomoly";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Season "../models/Season";
 import Team "../models/Team";
@@ -41,7 +41,7 @@ module {
     public type StartMatchRequest = {
         team1 : StartMatchTeam;
         team2 : StartMatchTeam;
-        aura : MatchAura.MatchAura;
+        anomoly : Anomoly.Anomoly;
     };
 
     public type CancelMatchGroupError = {
@@ -112,7 +112,7 @@ module {
 
                 let team1IsOffense = prng.nextCoin();
                 let initState = MatchSimulator.initState(
-                    match.aura,
+                    match.anomoly,
                     match.team1,
                     match.team2,
                     team1IsOffense,
@@ -297,7 +297,7 @@ module {
                 match : Season.CompletedMatch = {
                     team1 = match.team1;
                     team2 = match.team2;
-                    aura = match.aura;
+                    anomoly = match.anomoly;
                     log = match.log;
                     winner = winner;
                     playerStats = playerStats;

@@ -16,7 +16,7 @@ import Result "mo:base/Result";
 import ScheduleBuilder "../ScheduleBuilder";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Util "../Util";
-import MatchAura "../models/MatchAura";
+import Anomoly "../models/Anomoly";
 import IterTools "mo:itertools/Iter";
 import Player "../models/Player";
 import FieldPosition "../models/FieldPosition";
@@ -101,7 +101,7 @@ module {
     public type StartMatchRequest = {
         team1 : StartMatchTeam;
         team2 : StartMatchTeam;
-        aura : MatchAura.MatchAura;
+        anomoly : Anomoly.Anomoly;
     };
 
     public type Events = {
@@ -578,7 +578,7 @@ module {
                         {
                             team1 = { id = team1Id };
                             team2 = { id = team2Id };
-                            aura = getRandomMatchAura(prng);
+                            anomoly = getRandomAnomoly(prng);
                         };
                     },
                 )
@@ -780,7 +780,7 @@ module {
                 matchStartRequestBuffer.add({
                     team1 = team1Data;
                     team2 = team2Data;
-                    aura = match.aura.aura;
+                    anomoly = match.anomoly.anomoly;
                 });
             };
             let matches = Buffer.toArray(matchStartRequestBuffer);
@@ -801,7 +801,7 @@ module {
                     {
                         team1 = mapTeam(match.team1);
                         team2 = mapTeam(match.team2);
-                        aura = match.aura;
+                        anomoly = match.anomoly;
                     };
                 },
             )
@@ -879,9 +879,9 @@ module {
         };
     };
 
-    private func getRandomMatchAura(prng : Prng) : MatchAura.MatchAuraWithMetaData {
+    private func getRandomAnomoly(prng : Prng) : Anomoly.AnomolyWithMetaData {
         // TODO
-        let auras = Buffer.fromArray<MatchAura.MatchAura>([
+        let anomolys = Buffer.fromArray<Anomoly.Anomoly>([
             #lowGravity,
             #explodingBalls,
             #fastBallsHardHits,
@@ -893,11 +893,11 @@ module {
             #foggy,
             #extraStrike,
         ]);
-        prng.shuffleBuffer(auras);
-        let aura = auras.get(0);
+        prng.shuffleBuffer(anomolys);
+        let anomoly = anomolys.get(0);
         {
-            MatchAura.getMetaData(aura) with
-            aura = aura;
+            Anomoly.getMetaData(anomoly) with
+            anomoly = anomoly;
         };
     };
 

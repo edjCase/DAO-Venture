@@ -106,7 +106,7 @@ module {
         public var offenseTeamId = immutableState.offenseTeamId;
         public var team1 = toMutableTeam(immutableState.team1);
         public var team2 = toMutableTeam(immutableState.team2);
-        public let aura = immutableState.aura;
+        public let anomoly = immutableState.anomoly;
         public var bases = {
             var atBat = immutableState.bases.atBat;
             var firstBase = immutableState.bases.firstBase;
