@@ -45,31 +45,29 @@ module {
     };
 
     public type MatchAuraEffect = {
-        target : {
-            #contextual;
-        };
+        team : TargetTeam;
         duration : Duration;
         aura : MatchAura.MatchAura;
     };
 
     public type SkillEffect = {
-        target : TargetPosition;
+        position : TargetPosition;
         skill : ChosenOrRandomSkill;
         duration : Duration;
         delta : Int;
     };
 
     public type InjuryEffect = {
-        target : TargetPosition;
+        position : TargetPosition;
     };
 
     public type EntropyEffect = {
-        target : TargetTeam;
+        team : TargetTeam;
         delta : Int;
     };
 
     public type EnergyEffect = {
-        target : TargetTeam;
+        team : TargetTeam;
         value : {
             #flat : Int;
         };
@@ -87,7 +85,7 @@ module {
     };
 
     public type TeamTraitEffect = {
-        target : TargetTeam;
+        team : TargetTeam;
         traitId : Text;
         kind : TeamTraitEffectKind;
     };
@@ -98,14 +96,14 @@ module {
     };
 
     public type SkillPlayerEffectOutcome = {
-        target : TargetPositionInstance;
+        position : TargetPositionInstance;
         skill : Skill.Skill;
         duration : Duration;
         delta : Int;
     };
 
     public type InjuryPlayerEffectOutcome = {
-        target : TargetPositionInstance;
+        position : TargetPositionInstance;
     };
 
     public type TeamEffectOutcome = {
@@ -130,7 +128,17 @@ module {
         kind : TeamTraitEffectKind;
     };
 
-    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome;
+    public type MatchEffectOutcome = {
+        #matchAura : MatchAuraMatchEffectOutcome;
+    };
+
+    public type MatchAuraMatchEffectOutcome = {
+        teamId : Nat;
+        aura : MatchAura.MatchAura;
+        duration : Duration;
+    };
+
+    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome or MatchEffectOutcome;
 
     public type TargetPositionInstance = {
         teamId : Nat;
@@ -240,7 +248,7 @@ module {
 
     public type PropotionalBidPrizeSkill = {
         skill : ChosenOrRandomSkill;
-        target : TargetPosition;
+        position : TargetPosition;
         duration : Duration;
     };
 

@@ -47,7 +47,7 @@ module {
         getAllPlayers : query () -> async [Player.Player];
 
         getLiveMatchGroupState : query () -> async ?LiveState.LiveMatchGroupState;
-        finishLiveMatchGroup : () -> async FinishMatchGroupResult; // TODO remove
+        finishLiveMatchGroup : () -> async FinishMatchGroupResult;
         startNextMatchGroup : () -> async StartMatchGroupResult;
 
         getEntropyData : query () -> async EntropyData;
@@ -91,19 +91,6 @@ module {
         #teamNotFound;
     };
 
-    public type AddScenarioCustomTeamOptionRequest = {
-        scenarioId : Nat;
-        value : { #nat : Nat };
-    };
-
-    public type AddScenarioCustomTeamOptionError = {
-        #scenarioNotFound;
-        #invalidValueType;
-        #customOptionNotAllowed;
-        #duplicate;
-        #notAuthorized;
-    };
-
     public type GetScenarioVoteRequest = {
         scenarioId : Nat;
     };
@@ -128,6 +115,7 @@ module {
     };
 
     public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
+
     public type ClaimBenevolentDictatorRoleError = {
         #notOpenToClaim;
         #notAuthenticated;
@@ -167,8 +155,6 @@ module {
         #votingClosed;
     };
 
-    public type CreateProposalResult = Result.Result<Nat, Dao.CreateProposalError>;
-
     public type GetScenarioError = {
         #notFound;
         #notStarted;
@@ -192,22 +178,12 @@ module {
         losses : Nat;
         totalScore : Int;
     };
+
     public type GetTeamStandingsError = {
         #notFound;
     };
 
     public type GetTeamStandingsResult = Result.Result<[TeamStandingInfo], GetTeamStandingsError>;
-
-    public type ProcessEffectOutcomesRequest = {
-        outcomes : [Scenario.EffectOutcome];
-    };
-
-    public type ProcessEffectOutcomesError = {
-        #notAuthorized;
-        #seasonNotInProgress;
-    };
-
-    public type ProcessEffectOutcomesResult = Result.Result<(), ProcessEffectOutcomesError>;
 
     public type GetMatchGroupPredictionsError = {
         #notFound;
@@ -229,6 +205,7 @@ module {
         matchId : Nat;
         winner : ?Team.TeamId;
     };
+
     public type PredictMatchOutcomeError = {
         #matchGroupNotFound;
         #matchNotFound;
@@ -255,7 +232,6 @@ module {
         #notEnoughPlayers : Team.TeamIdOrBoth;
     };
 
-    // Start season
     public type StartSeasonRequest = {
         startTime : Time.Time;
         weekDays : [Components.DayOfWeek];
@@ -287,45 +263,6 @@ module {
 
     public type CloseSeasonResult = Result.Result<(), CloseSeasonError>;
 
-    // On complete
-
-    public type OnMatchGroupCompleteRequest = {
-        id : Nat;
-        matches : [Season.CompletedMatch];
-        playerStats : [Player.PlayerMatchStatsWithId];
-    };
-
-    public type FailedMatchResult = {
-        message : Text;
-    };
-
-    public type AddMatchStatsError = {
-        #notAuthorized;
-    };
-
-    public type AddMatchStatsResult = Result.Result<(), AddMatchStatsError>;
-
-    public type SwapPlayerPositionsError = {
-        #notAuthorized;
-    };
-
-    public type SwapPlayerPositionsResult = Result.Result<(), SwapPlayerPositionsError>;
-
-    public type OnSeasonEndError = {
-        #notAuthorized;
-    };
-
-    public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
-
-    public type ApplyEffectsResult = Result.Result<(), ApplyEffectsError>;
-
-    public type PopulateTeamRosterError = {
-        #missingFluff;
-        #notAuthorized;
-    };
-
-    public type PopulateTeamRosterResult = Result.Result<[Player.Player], PopulateTeamRosterError>;
-
     public type CreatePlayerFluffRequest = {
         name : Text;
         title : Text;
@@ -353,80 +290,6 @@ module {
 
     public type GetPlayerResult = Result.Result<Player.Player, GetPlayerError>;
 
-    public type SetPlayerTeamError = {
-        #playerNotFound;
-    };
-
-    public type SetPlayerTeamResult = Result.Result<(), SetPlayerTeamError>;
-
-    public type CancelMatchGroupError = {
-        #matchGroupNotFound;
-        #notAuthorized;
-    };
-
-    public type CancelMatchGroupResult = Result.Result<(), CancelMatchGroupError>;
-
-    public type StadiumActorInfo = {};
-
-    public type StadiumActorInfoWithId = StadiumActorInfo and {
-        id : Principal;
-    };
-
-    public type CreateStadiumError = {
-        #stadiumCreationError : Text;
-    };
-
-    public type CreateStadiumResult = Result.Result<Principal, CreateStadiumError>;
-
-    public type StartMatchGroupRequest = {
-        id : Nat;
-        matches : [StartMatchRequest];
-    };
-
-    public type StartMatchTeam = Team and {
-        positions : {
-            firstBase : Player.Player;
-            secondBase : Player.Player;
-            thirdBase : Player.Player;
-            shortStop : Player.Player;
-            pitcher : Player.Player;
-            leftField : Player.Player;
-            centerField : Player.Player;
-            rightField : Player.Player;
-        };
-    };
-
-    public type StartMatchRequest = {
-        team1 : StartMatchTeam;
-        team2 : StartMatchTeam;
-        aura : MatchAura.MatchAura;
-    };
-
-    public type ResetTickTimerError = {
-        #matchGroupNotFound;
-    };
-
-    public type ResetTickTimerResult = Result.Result<(), ResetTickTimerError>;
-
-    public type TickMatchGroupResult = Result.Result<{ #inProgress; #completed }, TickMatchGroupError>;
-
-    public type TickMatchGroupError = {
-        #matchGroupNotFound;
-        #onStartCallbackError : {
-            #unknown : Text;
-            #notScheduledYet;
-            #alreadyStarted;
-            #notAuthorized;
-            #matchGroupNotFound;
-        };
-        #notAuthorized;
-    };
-
-    public type Player = {
-        id : Player.PlayerId;
-        name : Text;
-    };
-
     public type CreateTeamTraitRequest = {
         id : Text;
         name : Text;
@@ -440,80 +303,6 @@ module {
     };
 
     public type CreateTeamTraitResult = Result.Result<(), CreateTeamTraitError>;
-
-    public type AddTraitToTeamOk = {
-        hadTrait : Bool;
-    };
-
-    public type AddTraitToTeamError = {
-        #notAuthorized;
-        #teamNotFound;
-        #traitNotFound;
-    };
-
-    public type AddTraitToTeamResult = Result.Result<AddTraitToTeamOk, AddTraitToTeamError>;
-
-    public type RemoveTraitFromTeamOk = {
-        hadTrait : Bool;
-    };
-
-    public type RemoveTraitFromTeamError = {
-        #notAuthorized;
-        #teamNotFound;
-        #traitNotFound;
-    };
-
-    public type RemoveTraitFromTeamResult = Result.Result<RemoveTraitFromTeamOk, RemoveTraitFromTeamError>;
-
-    public type UpdateTeamEnergyResult = Result.Result<(), UpdateTeamEnergyError>;
-
-    public type UpdateTeamEnergyError = {
-        #notAuthorized;
-        #teamNotFound;
-    };
-
-    public type UpdateTeamEntropyResult = Result.Result<(), UpdateTeamEntropyError>;
-
-    public type UpdateTeamEntropyError = {
-        #notAuthorized;
-        #teamNotFound;
-    };
-
-    public type UpdateTeamMottoResult = Result.Result<(), UpdateTeamMottoError>;
-
-    public type UpdateTeamMottoError = {
-        #notAuthorized;
-        #teamNotFound;
-    };
-
-    public type UpdateTeamDescriptionResult = Result.Result<(), UpdateTeamDescriptionError>;
-
-    public type UpdateTeamDescriptionError = {
-        #notAuthorized;
-        #teamNotFound;
-    };
-
-    public type UpdateTeamLogoResult = Result.Result<(), UpdateTeamLogoError>;
-
-    public type UpdateTeamLogoError = {
-        #notAuthorized;
-        #teamNotFound;
-    };
-
-    public type UpdateTeamColorResult = Result.Result<(), UpdateTeamColorError>;
-
-    public type UpdateTeamColorError = {
-        #notAuthorized;
-        #teamNotFound;
-    };
-
-    public type UpdateTeamNameResult = Result.Result<(), UpdateTeamNameError>;
-
-    public type UpdateTeamNameError = {
-        #nameTaken;
-        #notAuthorized;
-        #teamNotFound;
-    };
 
     public type TeamProposal = Dao.Proposal<TeamDao.ProposalContent>;
 
@@ -570,16 +359,6 @@ module {
         #notAuthorized;
     };
 
-    public type MatchVoteResult = {
-        votes : [Nat];
-    };
-
-    public type GetCyclesResult = Result.Result<Nat, GetCyclesError>;
-
-    public type GetCyclesError = {
-        #notAuthorized;
-    };
-
     public type GetUserLeaderboardRequest = {
         count : Nat;
         offset : Nat;
@@ -595,8 +374,6 @@ module {
         #team : Nat;
         #all;
     };
-
-    public type GetTeamOwnersError = {};
 
     public type GetTeamOwnersResult = {
         #ok : [UserHandler.UserVotingInfo];
@@ -623,17 +400,6 @@ module {
     };
 
     public type GetUserResult = Result.Result<UserHandler.User, GetUserError>;
-
-    public type AwardPointsRequest = {
-        userId : Principal;
-        points : Int;
-    };
-
-    public type AwardPointsError = {
-        #notAuthorized;
-    };
-
-    public type AwardPointsResult = Result.Result<(), AwardPointsError>;
 
     public type SetUserFavoriteTeamError = {
         #identityRequired;

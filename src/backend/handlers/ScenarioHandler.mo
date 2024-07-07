@@ -1334,7 +1334,7 @@ module {
                                 #skill({
                                     delta = proportionalValue;
                                     duration = s.duration;
-                                    target = s.target;
+                                    position = s.position;
                                     skill = s.skill;
                                 });
                             };
@@ -1438,7 +1438,7 @@ module {
                 resolveEffectInternal(prng, context, scenario, subEffect, outcomes);
             };
             case (#entropy(entropyEffect)) {
-                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, entropyEffect.target, context);
+                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, entropyEffect.team, context);
                 for (teamId in teamIds.vals()) {
                     let outcome = #entropy({
                         teamId = teamId;
@@ -1448,16 +1448,16 @@ module {
                 };
             };
             case (#injury(injuryEffect)) {
-                let positions = getPositionsFromTarget(prng, scenario.teamIds, injuryEffect.target, context);
+                let positions = getPositionsFromTarget(prng, scenario.teamIds, injuryEffect.position, context);
                 for (position in positions.vals()) {
                     let outcome = #injury({
-                        target = position;
+                        position = position;
                     });
                     outcomes.add(outcome);
                 };
             };
             case (#skill(s)) {
-                let positions = getPositionsFromTarget(prng, scenario.teamIds, s.target, context);
+                let positions = getPositionsFromTarget(prng, scenario.teamIds, s.position, context);
                 for (position in positions.vals()) {
                     let skill = switch (s.skill) {
                         case (#random) Skill.getRandom(prng);
@@ -1465,7 +1465,7 @@ module {
                     };
                     outcomes.add(
                         #skill({
-                            target = position;
+                            position = position;
                             skill = skill;
                             duration = s.duration;
                             delta = s.delta;
@@ -1477,7 +1477,7 @@ module {
                 let delta = switch (e.value) {
                     case (#flat(fixed)) fixed;
                 };
-                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, e.target, context);
+                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, e.team, context);
                 for (teamId in teamIds.vals()) {
                     let outcome = #energy({
                         teamId = teamId;
@@ -1487,7 +1487,7 @@ module {
                 };
             };
             case (#teamTrait(t)) {
-                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, t.target, context);
+                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, t.team, context);
                 for (teamId in teamIds.vals()) {
                     let outcome = #teamTrait({
                         teamId = teamId;
@@ -1498,15 +1498,14 @@ module {
                 };
             };
             case (#matchAura(matchAuraEffect)) {
-                switch (context) {
-                    case (#league) {};
-                    case (#team(teamId)) {
-                        let outcome = #matchAura({
-                            teamId = teamId;
-                            aura = matchAuraEffect.aura;
-                        });
-                        outcomes.add(outcome);
-                    };
+                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, matchAuraEffect.team, context);
+                for (teamId in teamIds.vals()) {
+                    let outcome = #matchAura({
+                        teamId = teamId;
+                        aura = matchAuraEffect.aura;
+                        duration = matchAuraEffect.duration;
+                    });
+                    outcomes.add(outcome);
                 };
             };
             case (#noEffect) ();
