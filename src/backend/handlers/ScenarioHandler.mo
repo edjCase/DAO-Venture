@@ -1203,8 +1203,15 @@ module {
             case (#teamTrait(t)) {
                 // TODO
             };
-            case (#entropy(_)) {};
-            case (#injury(_)) {};
+            case (#entropy(_)) {
+                // TODO
+            };
+            case (#injury(_)) {
+                // TODO
+            };
+            case (#matchAura(_)) {
+                // TODO
+            };
             case (#noEffect) {};
         };
         #ok;
@@ -1488,6 +1495,18 @@ module {
                         kind = t.kind;
                     });
                     outcomes.add(outcome);
+                };
+            };
+            case (#matchAura(matchAuraEffect)) {
+                switch (context) {
+                    case (#league) {};
+                    case (#team(teamId)) {
+                        let outcome = #matchAura({
+                            teamId = teamId;
+                            aura = matchAuraEffect.aura;
+                        });
+                        outcomes.add(outcome);
+                    };
                 };
             };
             case (#noEffect) ();

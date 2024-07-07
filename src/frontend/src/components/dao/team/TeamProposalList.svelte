@@ -1,11 +1,14 @@
 <script lang="ts">
     import { proposalStore } from "../../../stores/ProposalStore";
     import { onDestroy } from "svelte";
-    import { Proposal } from "../../../ic-agent/declarations/main";
+    import {
+        Proposal,
+        TeamProposal,
+    } from "../../../ic-agent/declarations/main";
     import { mainAgentFactory } from "../../../ic-agent/Main";
     import GenericProposalList from "../GenericProposalList.svelte";
     import { ProposalType } from "../GenericProposal.svelte";
-    import TeamProposalDetails from "./TeamProposalView.svelte";
+    import TeamProposalView from "./TeamProposalView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
 
     export let teamId: bigint;
@@ -54,7 +57,7 @@
         unsubscribeToTeamProposals();
     });
 
-    let getProposal = (proposalId: bigint): Proposal => {
+    let getProposal = (proposalId: bigint): TeamProposal => {
         let proposal = proposals.find((p) => p.id == proposalId);
         if (proposal) {
             return proposal;
@@ -85,6 +88,6 @@
     let:proposalId
 >
     <slot name="details">
-        <TeamProposalDetails proposal={getProposal(proposalId)} />
+        <TeamProposalView proposal={getProposal(proposalId)} {teamId} />
     </slot>
 </GenericProposalList>

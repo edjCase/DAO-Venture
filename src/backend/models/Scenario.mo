@@ -2,6 +2,7 @@ import Skill "Skill";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import FieldPosition "FieldPosition";
+import MatchAura "MatchAura";
 
 module {
     public type TargetTeam = {
@@ -32,6 +33,7 @@ module {
     };
 
     public type Effect = {
+        #matchAura : MatchAuraEffect;
         #teamTrait : TeamTraitEffect;
         #skill : SkillEffect;
         #injury : InjuryEffect;
@@ -40,6 +42,14 @@ module {
         #oneOf : [WeightedEffect];
         #allOf : [Effect];
         #noEffect;
+    };
+
+    public type MatchAuraEffect = {
+        target : {
+            #contextual;
+        };
+        duration : Duration;
+        aura : MatchAura.MatchAura;
     };
 
     public type SkillEffect = {

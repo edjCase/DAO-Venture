@@ -317,7 +317,6 @@ actor MainActor : Types.Actor {
             };
             switch (proposal.content) {
                 case (#train(train)) {
-                    // TODO atomic operation
                     let player = switch (playerHandler.getPosition(teamId, train.position)) {
                         case (?player) player;
                         case (null) return #err("Player not found in position " # debug_show (train.position) # " for team " # Nat.toText(teamId));

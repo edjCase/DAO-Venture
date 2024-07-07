@@ -317,12 +317,6 @@ module {
 
     public type OnSeasonEndResult = Result.Result<(), OnSeasonEndError>;
 
-    public type ApplyEffectsRequest = [Scenario.PlayerEffectOutcome];
-
-    public type ApplyEffectsError = {
-        #notAuthorized;
-    };
-
     public type ApplyEffectsResult = Result.Result<(), ApplyEffectsError>;
 
     public type PopulateTeamRosterError = {
