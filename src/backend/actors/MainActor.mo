@@ -399,7 +399,22 @@ actor MainActor : Types.Actor {
             case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
             case (#err(#matchGroupNotInProgress)) Debug.trap("OnMatchGroupComplete Failed: Match group not in progress");
         };
-        teamsHandler.onMatchGroupComplete(data.matches);
+
+        // Give winners
+        for (match in data.matches.vals()) {
+            Debug.print("Reducing winning teams' entropy...");
+            switch (match.winner) {
+                case (#team1) {
+                    ignore teamsHandler.updateEntropy(match.team1.id, -1);
+                };
+                case (#team2) {
+                    ignore teamsHandler.updateEntropy(match.team2.id, -1);
+                };
+                case (#tie) ();
+            };
+        };
+
+        teamsHandler.disperseEnergyDividends();
         playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
         // Award users points for their predictions
         awardUserPoints(data.matchGroupId, data.matches);
@@ -721,8 +736,8 @@ actor MainActor : Types.Actor {
         simulationHandler.finishMatchGroup<system>();
     };
 
-    public shared query func getEntropyThreshold() : async Nat {
-        teamsHandler.getEntropyThreshold();
+    public shared query func getEntropyData() : async Types.EntropyData {
+        teamsHandler.getEntropyData();
     };
 
     public shared query func getTeams() : async [Team.Team] {

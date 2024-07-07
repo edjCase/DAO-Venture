@@ -1,26 +1,27 @@
 import { writable } from "svelte/store";
 import { mainAgentFactory } from "../ic-agent/Main";
+import { EntropyData } from "../ic-agent/declarations/main";
 
 
 
 
 export const entropyStore = (() => {
-  const thresholdStore = writable<bigint | undefined>();
+  const dataStore = writable<EntropyData | undefined>();
 
-  const refetchThreshold = async () => {
+  const refetchData = async () => {
     let mainAgent = await mainAgentFactory();
-    let entropyThreshold = await mainAgent.getEntropyThreshold();
-    thresholdStore.set(entropyThreshold);
+    let entropyData = await mainAgent.getEntropyData();
+    dataStore.set(entropyData);
   };
 
 
 
 
-  refetchThreshold();
+  refetchData();
 
 
   return {
-    subscribeThreshold: thresholdStore.subscribe,
-    refetchThreshold
+    subscribeData: dataStore.subscribe,
+    refetchData
   };
 })();

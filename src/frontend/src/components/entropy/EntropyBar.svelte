@@ -1,15 +1,10 @@
 <script lang="ts">
-    import { Team } from "../../ic-agent/declarations/main";
-    import { teamStore } from "../../stores/TeamStore";
+    import { EntropyData, Team } from "../../ic-agent/declarations/main";
     import { entropyStore } from "../../stores/EntropyStore";
     import { ChevronDownSolid } from "flowbite-svelte-icons";
+    import { teamStore } from "../../stores/TeamStore";
     let teams: Team[] = [];
-    let totalEntropy: bigint = BigInt(0);
-    let entropyMaxThreshold: bigint | undefined;
-
-    entropyStore.subscribeThreshold((threshold) => {
-        entropyMaxThreshold = threshold;
-    });
+    let entropyData: EntropyData | undefined;
 
     teamStore.subscribe((t) => {
         if (!t) {
@@ -17,31 +12,43 @@
         }
         teams = t;
         teams.sort((a, b) => Number(b.entropy) - Number(a.entropy));
-        totalEntropy = teams.reduce(
-            (sum, team) => sum + team.entropy,
-            BigInt(0),
-        );
     });
+
+    entropyStore.subscribeData((data) => {
+        entropyData = data;
+    });
+
     const toRgbString = (color: [number, number, number]) => {
         return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
     };
     $: leagueEntropyPercentage =
-        entropyMaxThreshold === undefined
-            ? BigInt(0)
-            : (totalEntropy / entropyMaxThreshold) * BigInt(100);
+        entropyData === undefined
+            ? 0
+            : (Number(entropyData.currentEntropy) /
+                  Number(entropyData.entropyThreshold)) *
+              100;
     const markerOffset = 7;
 </script>
 
-{#if !entropyMaxThreshold}
+{#if !entropyData}
     <div></div>
 {:else}
+    <div class="flex flex-col items-center">
+        <div>💰 Dividend (reduced by increased entropy)</div>
+        <div>
+            Max: {entropyData.maxDividend}
+        </div>
+        <div>
+            Current: {entropyData.currentDividend}
+        </div>
+    </div>
     <div class="flex justify-between mb-2 w-full">
-        {#if totalEntropy < entropyMaxThreshold}
+        {#if entropyData.currentEntropy < entropyData.entropyThreshold}
             <div
                 class="flex flex-col items-center justify-center"
                 style="margin-left: calc({leagueEntropyPercentage}% - {markerOffset}px);"
             >
-                {totalEntropy}
+                {entropyData.currentEntropy}
                 <ChevronDownSolid size="xs" />
             </div>
         {:else}
@@ -51,12 +58,12 @@
             class="flex flex-col items-center justify-center"
             style="margin-right: -{markerOffset}px"
         >
-            {entropyMaxThreshold}
+            {entropyData.entropyThreshold}
             <ChevronDownSolid size="xs" />
         </div>
     </div>
     <div class="flex bg-gray-200 bg-opacity-25 mb-5 w-full h-5">
-        {#if totalEntropy >= entropyMaxThreshold}
+        {#if entropyData.currentEntropy >= entropyData.entropyThreshold}
             <div
                 class="h-full bg-red-500 w-full"
                 title="Entropy threshold exceeded"
@@ -66,7 +73,8 @@
                 {#if Number(team.entropy) > 0}
                     <div
                         class="h-full"
-                        style="width: {(team.entropy / totalEntropy) *
+                        style="width: {(Number(team.entropy) /
+                            Number(entropyData.currentEntropy)) *
                             leagueEntropyPercentage}%; background-color: {toRgbString(
                             team.color,
                         )};"

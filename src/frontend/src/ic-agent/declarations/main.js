@@ -336,6 +336,12 @@ export const idlFactory = ({ IDL }) => {
     'claimed' : IDL.Principal,
     'disabled' : IDL.Null,
   });
+  const EntropyData = IDL.Record({
+    'currentDividend' : IDL.Nat,
+    'entropyThreshold' : IDL.Nat,
+    'currentEntropy' : IDL.Nat,
+    'maxDividend' : IDL.Nat,
+  });
   const ProposalContent__1 = IDL.Variant({
     'changeTeamColor' : IDL.Record({
       'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
@@ -1147,7 +1153,7 @@ export const idlFactory = ({ IDL }) => {
         [BenevolentDictatorState],
         ['query'],
       ),
-    'getEntropyThreshold' : IDL.Func([], [IDL.Nat], ['query']),
+    'getEntropyData' : IDL.Func([], [EntropyData], ['query']),
     'getLeagueProposal' : IDL.Func(
         [IDL.Nat],
         [GetLeagueProposalResult],

@@ -141,6 +141,12 @@ export interface EnergyEffect {
   'target' : TargetTeam,
 }
 export interface EnergyTeamEffectOutcome { 'teamId' : bigint, 'delta' : bigint }
+export interface EntropyData {
+  'currentDividend' : bigint,
+  'entropyThreshold' : bigint,
+  'currentEntropy' : bigint,
+  'maxDividend' : bigint,
+}
 export interface EntropyEffect { 'target' : TargetTeam, 'delta' : bigint }
 export interface EntropyTeamEffectOutcome {
   'teamId' : bigint,
@@ -936,7 +942,7 @@ export interface _SERVICE {
   'finishLiveMatchGroup' : ActorMethod<[], FinishMatchGroupResult>,
   'getAllPlayers' : ActorMethod<[], Array<Player>>,
   'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
-  'getEntropyThreshold' : ActorMethod<[], bigint>,
+  'getEntropyData' : ActorMethod<[], EntropyData>,
   'getLeagueProposal' : ActorMethod<[bigint], GetLeagueProposalResult>,
   'getLeagueProposals' : ActorMethod<
     [bigint, bigint],

@@ -50,7 +50,7 @@ module {
         finishLiveMatchGroup : () -> async FinishMatchGroupResult; // TODO remove
         startNextMatchGroup : () -> async StartMatchGroupResult;
 
-        getEntropyThreshold : query () -> async Nat;
+        getEntropyData : query () -> async EntropyData;
         getTeams : query () -> async [Team];
         createTeamProposal : (teamId : Nat, request : TeamProposalContent) -> async CreateTeamProposalResult;
         getTeamProposal : query (teamId : Nat, id : Nat) -> async GetTeamProposalResult;
@@ -64,6 +64,13 @@ module {
         getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
         setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
+    };
+
+    public type EntropyData = {
+        maxDividend : Nat;
+        currentDividend : Nat;
+        entropyThreshold : Nat;
+        currentEntropy : Nat;
     };
 
     public type FinishMatchGroupResult = Result.Result<(), FinishMatchGroupError>;
