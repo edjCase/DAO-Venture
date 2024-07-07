@@ -102,7 +102,6 @@ module {
         #inProgress : {
             endTimerId : Nat;
         };
-        #resolving;
         #resolved : Scenario.ScenarioStateResolved;
     };
 
@@ -204,8 +203,8 @@ module {
 
     public class Handler<system>(
         data : StableData,
-        processEffectOutcome : (
-            onLeagueCollapse : () -> (),
+        processEffectOutcome : <system>(
+            closeAllScenarios : <system>() -> (),
             outcome : Scenario.EffectOutcome,
         ) -> (),
         chargeTeamEnergy : (teamId : Nat, amount : Nat) -> {
@@ -228,19 +227,18 @@ module {
             };
         };
 
-        public func onLeagueCollapse() : () {
-            // TODO
-            Debug.print("Scenarios ending due to league collapse");
+        public func closeAllScenarios<system>() : () {
+            Debug.print("Closing all scenarios");
             let allScenarios = scenarios.vals();
             for (scenario in allScenarios) {
                 switch (scenario.state) {
                     case (#notStarted({ startTimerId })) {
                         Timer.cancelTimer(startTimerId);
+                        end<system>(scenario, []);
                     };
                     case (#inProgress({ endTimerId })) {
-                        end(scenario, []);
+                        end<system>(scenario, []);
                     };
-                    case (#resolving) ();
                     case (#resolved(_)) ();
                 };
             };
@@ -259,7 +257,7 @@ module {
                 _,
                 func(scenario : MutableScenarioData) : Bool = switch (scenario.state) {
                     case (#notStarted(_)) includeNotStarted;
-                    case (#inProgress(_) or #resolved(_) or #resolving) true;
+                    case (#inProgress(_) or #resolved(_)) true;
                 },
             )
             |> Iter.map(
@@ -269,7 +267,7 @@ module {
             |> Iter.toArray(_);
         };
 
-        public func vote(
+        public func vote<system>(
             scenarioId : Nat,
             voterId : Principal,
             value : Scenario.ScenarioOptionValue,
@@ -322,7 +320,7 @@ module {
             switch (calculateResultsInternal(scenario, false)) {
                 case (#noConsensus) ();
                 case (#consensus(teamVotingResult)) {
-                    end(scenario, teamVotingResult);
+                    end<system>(scenario, teamVotingResult);
                 };
             };
             #ok;
@@ -715,12 +713,11 @@ module {
                     #ok;
                 };
                 case (#inProgress(_)) #alreadyStarted;
-                case (#resolving) #alreadyStarted;
                 case (#resolved(_)) #alreadyStarted;
             };
         };
 
-        private func end(
+        private func end<system>(
             scenario : MutableScenarioData,
             teamVotingResult : [ResolvedTeamChoice],
         ) : () {
@@ -733,17 +730,14 @@ module {
             let prng = PseudoRandomX.fromSeed(0);
 
             switch (scenario.state) {
-                case (#inProgress(state)) ();
-                case (#resolving) return; // already being resolved
+                case (#notStarted(state)) {
+                    Timer.cancelTimer(state.startTimerId);
+                };
+                case (#inProgress(state)) {
+                    Timer.cancelTimer(state.endTimerId);
+                };
                 case (_) Debug.trap("Scenario not in progress, cannot end");
             };
-            scenarios.put(
-                scenario.id,
-                {
-                    scenario with
-                    state = #resolving;
-                },
-            );
             Debug.print("Ending scenario " # Nat.toText(scenario.id));
             let resolvedScenarioState = resolveScenario(
                 prng,
@@ -752,7 +746,7 @@ module {
             );
 
             for (effectOutcome in resolvedScenarioState.effectOutcomes.vals()) {
-                processEffectOutcome(onLeagueCollapse, effectOutcome);
+                processEffectOutcome<system>(closeAllScenarios, effectOutcome);
             };
 
             scenarios.put(
@@ -995,7 +989,7 @@ module {
                         case (#consensus(teamVotingResult)) teamVotingResult;
                         case (#noConsensus) Prelude.unreachable();
                     };
-                    end(scenario, teamVotingResult);
+                    end<system>(scenario, teamVotingResult);
                 },
             );
         };
@@ -1037,7 +1031,6 @@ module {
                         };
                     };
                     case (#resolved(_)) null;
-                    case (#resolving) null; // TODO?
                 };
                 switch (updatedScenario) {
                     case (?s) scenarios.put(scenario.id, s);
@@ -1054,7 +1047,6 @@ module {
         let state : Scenario.ScenarioState = switch (data.state) {
             case (#notStarted(_)) #notStarted;
             case (#inProgress(_)) #inProgress;
-            case (#resolving) #resolving;
             case (#resolved(resolved)) #resolved(resolved);
         };
         {

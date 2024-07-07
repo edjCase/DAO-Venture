@@ -104,10 +104,25 @@ module {
         aura : MatchAura.MatchAura;
     };
 
-    public type EventHandler = {
-        onMatchGroupSchedule : (matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> ();
-        onMatchGroupStart : (matchGroupId : Nat, matchGroup : Season.InProgressMatchGroup) -> ();
+    public type Events = {
+        onSeasonStart : Buffer.Buffer<OnSeasonStartEvent>;
+        onMatchGroupSchedule : Buffer.Buffer<OnMatchGroupScheduleEvent>;
+        onMatchGroupStart : Buffer.Buffer<OnMatchGroupStartEvent>;
+        onMatchGroupComplete : Buffer.Buffer<OnMatchGroupCompleteEvent>;
+        onSeasonComplete : Buffer.Buffer<OnSeasonCompleteEvent>;
     };
+
+    public type OnSeasonScheduleEvent = <system>(season : Season.InProgressSeason) -> ();
+    public type OnSeasonStartEvent = <system>(season : Season.InProgressSeason) -> ();
+    public type OnMatchGroupScheduleEvent = <system>(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> ();
+    public type OnMatchGroupStartEvent = <system>(
+        matchGroupId : Nat,
+        season : Season.InProgressSeason,
+        matchGroup : Season.InProgressMatchGroup,
+        matches : [Season.InProgressMatch],
+    ) -> ();
+    public type OnMatchGroupCompleteEvent = <system>(matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) -> ();
+    public type OnSeasonCompleteEvent = <system>(season : Season.CompletedSeason) -> ();
 
     public type EndedSeasonVariant = {
         #incomplete : Season.InProgressSeason;
@@ -116,7 +131,7 @@ module {
 
     public class SeasonHandler<system>(
         data : StableData,
-        eventHandler : EventHandler,
+        events : Events,
     ) {
 
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
@@ -134,15 +149,6 @@ module {
                     case (null) null;
                     case (?standings) ?Buffer.toArray(standings);
                 };
-            };
-        };
-
-        public func onLeagueCollapse() : () {
-            // TODO
-            Debug.print("Season ending due to league collapse");
-            switch (close()) {
-                case (#ok) ();
-                case (#err(err)) Debug.print("Failed to close season: " # debug_show (err));
             };
         };
 
@@ -224,6 +230,11 @@ module {
 
             teamStandings := null; // No standings yet
             seasonStatus := #inProgress(inProgressSeason);
+
+            for (event in events.onSeasonStart.vals()) {
+                event<system>(inProgressSeason);
+            };
+
             // Get first match group to open
             let #notScheduled(firstMatchGroup) = notScheduledMatchGroups[0] else Prelude.unreachable();
 
@@ -299,7 +310,7 @@ module {
             };
         };
 
-        public func onMatchGroupComplete<system>(
+        public func completeMatchGroup<system>(
             prng : Prng,
             matchGroupId : Nat,
             matches : [Season.CompletedMatch],
@@ -328,6 +339,10 @@ module {
                 #completed(updatedMatchGroup),
             ) else return #err(#matchGroupNotFound);
 
+            for (event in events.onMatchGroupComplete.vals()) {
+                event<system>(matchGroupId, updatedMatchGroup);
+            };
+
             let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(season.matchGroups.size());
             label f for (matchGroup in Iter.fromArray(newMatchGroups)) {
                 switch (matchGroup) {
@@ -352,7 +367,7 @@ module {
                 nextMatchGroupId,
             ) else {
                 // Season is over because cant find more match groups
-                return close();
+                return close<system>();
             };
             switch (nextMatchGroup) {
                 case (#notScheduled(matchGroup)) {
@@ -374,7 +389,7 @@ module {
             #ok;
         };
 
-        public func close() : CloseSeasonResult {
+        public func close<system>() : CloseSeasonResult {
 
             if (seasonStatus == #starting) {
                 // TODO how to handle this?
@@ -443,6 +458,9 @@ module {
                 matchGroups = completedMatchGroups;
             };
             seasonStatus := #completed(completedSeason);
+            for (event in events.onSeasonComplete.vals()) {
+                event<system>(completedSeason);
+            };
             #ok;
         };
 
@@ -493,7 +511,7 @@ module {
             Timer.setTimer<system>(
                 duration,
                 func() : async () {
-                    let message = switch (startMatchGroup(matchGroupId)) {
+                    let message = switch (startMatchGroup<system>(matchGroupId)) {
                         case (#ok) "Match group started";
                         case (#err(#matchGroupNotFound)) "Match group not found";
                         case (#err(#notScheduledYet)) "Match group not scheduled yet";
@@ -577,7 +595,9 @@ module {
                 inProgressSeason with
                 matchGroups = newMatchGroups;
             });
-            eventHandler.onMatchGroupSchedule(matchGroupId, scheduledMatchGroup);
+            for (event in events.onMatchGroupSchedule.vals()) {
+                event<system>(matchGroupId, scheduledMatchGroup);
+            };
         };
 
         private func buildCompletedMatchGroups(
@@ -698,9 +718,9 @@ module {
             |> Buffer.fromIter(_);
         };
 
-        public func startNextMatchGroup() : Result.Result<(), StartMatchGroupError> {
+        public func startNextMatchGroup<system>() : Result.Result<(), StartMatchGroupError> {
             let ?nextMatchGroup = getNextScheduledMatchGroup() else return #err(#notScheduledYet);
-            switch (startMatchGroup(nextMatchGroup.matchGroupId)) {
+            switch (startMatchGroup<system>(nextMatchGroup.matchGroupId)) {
                 case (#ok) #ok;
                 case (#err(#matchGroupNotFound)) Prelude.unreachable();
                 case (#err(#notScheduledYet)) #err(#notScheduledYet);
@@ -709,7 +729,7 @@ module {
             };
         };
 
-        private func startMatchGroup(
+        private func startMatchGroup<system>(
             matchGroupId : Nat
         ) : Result.Result<(), StartMatchGroupError or { #matchGroupNotFound }> {
             let #inProgress(season) = seasonStatus else return #err(#matchGroupNotFound);
@@ -800,7 +820,9 @@ module {
                 season with
                 matchGroups = newMatchGroups;
             });
-            eventHandler.onMatchGroupStart(matchGroupId, inProgressMatchGroup);
+            for (event in events.onMatchGroupStart.vals()) {
+                event<system>(matchGroupId, season, inProgressMatchGroup, inProgressMatches);
+            };
 
             #ok;
         };

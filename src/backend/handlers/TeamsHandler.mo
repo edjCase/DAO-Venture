@@ -339,7 +339,7 @@ module {
                 },
             )
             |> Buffer.toArray(_);
-            let energyToBeGiven = playingTeams.size() * 100; // TODO value?
+            let energyToBeGiven = playingTeams.size() * 5; // TODO value?
             let proportionalWeights = playingTeams.vals()
             |> Iter.map<TeamInfo, Nat>(
                 _,
@@ -348,16 +348,19 @@ module {
             |> Iter.toArray(_)
             |> getProportionalEntropyWeights(_);
 
+            Debug.print("Giving energy to teams based on entropy. Total energy: " # Int.toText(energyToBeGiven));
+
             for ((team, energyWeight) in IterTools.zip(playingTeams.vals(), proportionalWeights.vals())) {
-                var newEnergy = energyToBeGiven * Float.toInt(Float.floor(energyWeight));
+                var newEnergy = Float.toInt(Float.floor(Float.fromInt(energyToBeGiven) * energyWeight));
                 if (team.isWinner) {
                     // Winning team gets +1 energy
                     newEnergy += 1;
                 };
                 team.mutableData.energy += newEnergy;
-                Debug.print("Team " # Nat.toText(team.id) # " share of the energy is: " # Int.toText(team.mutableData.energy));
+                Debug.print("Team " # Nat.toText(team.id) # " share of the energy is: " # Int.toText(newEnergy) # " (weight: " # Float.toText(energyWeight) # ")");
             };
         };
+
         private func getProportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
             if (entropyValues.size() == 0) {
                 return [];
@@ -372,26 +375,24 @@ module {
                 return Array.tabulate<Float>(entropyValues.size(), func(_ : Nat) : Float { equalWeight });
             };
 
-            // Calculate inverse entropy weights
-            let inverseWeights = Iter.map<Nat, Float>(
+            let weights = Iter.map<Nat, Float>(
                 entropyValues.vals(),
                 func(entropy : Nat) : Float {
                     let relativeEntropy = Float.fromInt(maxEntropy - entropy) / Float.fromInt(entropyRange);
-                    return 1.0 - relativeEntropy;
+                    return relativeEntropy + 1.0;
                 },
             )
             |> Iter.toArray(_);
 
-            // Normalize weights
             let totalWeight = IterTools.fold<Float, Float>(
-                inverseWeights.vals(),
+                weights.vals(),
                 0.0,
                 func(sum : Float, weight : Float) : Float {
                     return sum + weight;
                 },
             );
             return Iter.map<Float, Float>(
-                inverseWeights.vals(),
+                weights.vals(),
                 func(weight : Float) : Float {
                     return weight / totalWeight;
                 },

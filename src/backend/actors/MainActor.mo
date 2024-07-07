@@ -84,51 +84,45 @@ actor MainActor : Types.Actor {
     // Unstables ---------------------------------------------------------
 
     var predictionHandler = PredictionHandler.Handler(predictionStableData);
-    let seasonEventHandler : SeasonHandler.EventHandler = {
-        onMatchGroupSchedule = func(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : () {
-            predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
-        };
-        onMatchGroupStart = func(
-            matchGroupId : Nat,
-            _ : Season.InProgressMatchGroup,
-            onMatchGroupComplete : <system>(SimulationHandler.OnMatchGroupCompleteData) -> (),
-        ) : () {
-            predictionHandler.closeMatchGroup(matchGroupId);
-
-            func f<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
-
-                // TODO real prng
-                let prng = PseudoRandomX.fromSeed(0);
-                let result = onMatchGroupComplete<system>(prng, data.matchGroupId, data.matches);
-
-                teamsHandler.onMatchGroupComplete(data.matches);
-                playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
-
-                switch (result) {
-                    case (#ok) ();
-                    case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
-                    case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
-                    case (#err(#matchGroupNotInProgress)) Debug.trap("OnMatchGroupComplete Failed: Match group not in progress");
-                };
-                // Award users points for their predictions
-                awardUserPoints(data.matchGroupId, data.matches);
-            };
-
-            simulationHandler.startMatchGroup<system>(matchGroupId, f);
-        };
-        onMatchGroupComplete = func() {
-
-        };
+    let seasonEvents : SeasonHandler.Events = {
+        onSeasonStart = Buffer.Buffer<SeasonHandler.OnSeasonStartEvent>(0);
+        onMatchGroupSchedule = Buffer.Buffer<SeasonHandler.OnMatchGroupScheduleEvent>(0);
+        onMatchGroupStart = Buffer.Buffer<SeasonHandler.OnMatchGroupStartEvent>(0);
+        onMatchGroupComplete = Buffer.Buffer<SeasonHandler.OnMatchGroupCompleteEvent>(0);
+        onSeasonComplete = Buffer.Buffer<SeasonHandler.OnSeasonCompleteEvent>(0);
     };
 
-    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
+    seasonEvents.onSeasonStart.add(
+        func<system>(_ : Season.InProgressSeason) : () {
+            predictionHandler.clear();
+        }
+    );
+
+    seasonEvents.onMatchGroupSchedule.add(
+        func<system>(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : () {
+            predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
+        }
+    );
+
+    seasonEvents.onMatchGroupStart.add(
+        func<system>(
+            matchGroupId : Nat,
+            _ : Season.InProgressSeason,
+            _ : Season.InProgressMatchGroup,
+            _ : [Season.InProgressMatch],
+        ) : () {
+            predictionHandler.closeMatchGroup(matchGroupId);
+        }
+    );
+
+    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents);
 
     var teamsHandler = TeamsHandler.Handler<system>(teamStableData);
 
     var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
 
-    private func processEffectOutcome(
-        onLeagueCollapse : () -> (),
+    private func processEffectOutcome<system>(
+        closeAllScenarios : <system>() -> (),
         effectOutcome : Scenario.EffectOutcome,
     ) {
         switch (effectOutcome) {
@@ -145,8 +139,8 @@ actor MainActor : Types.Actor {
                     case (#ok({ overThreshold })) {
                         if (overThreshold) {
                             Debug.print("Entropy threshold reached, triggering league collapse");
-                            seasonHandler.onLeagueCollapse();
-                            onLeagueCollapse();
+                            ignore seasonHandler.close<system>();
+                            closeAllScenarios<system>();
                         };
                     };
                     case (#err(e)) Debug.trap("Error updating team entropy: " # debug_show (e));
@@ -328,7 +322,7 @@ actor MainActor : Types.Actor {
                         case (?player) player;
                         case (null) return #err("Player not found in position " # debug_show (train.position) # " for team " # Nat.toText(teamId));
                     };
-                    let trainCost = Skill.get(player.skills, train.skill); // Cost is the current skill level
+                    let trainCost = Skill.get(player.skills, train.skill) + 1; // Cost is the next skill level
                     switch (teamsHandler.updateEnergy(teamId, -trainCost, false)) {
                         case (#ok) ();
                         case (#err(#notEnoughEnergy)) return #err("Not enough energy to train player");
@@ -394,7 +388,84 @@ actor MainActor : Types.Actor {
 
     var teamDaos = buildTeamDaos<system>();
 
-    var simulationHandler = SimulationHandler.Handler<system>(simulationStableData);
+    func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
+
+        // TODO real prng
+        let prng = PseudoRandomX.fromSeed(0);
+
+        switch (seasonHandler.completeMatchGroup<system>(prng, data.matchGroupId, data.matches)) {
+            case (#ok) ();
+            case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
+            case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
+            case (#err(#matchGroupNotInProgress)) Debug.trap("OnMatchGroupComplete Failed: Match group not in progress");
+        };
+        teamsHandler.onMatchGroupComplete(data.matches);
+        playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
+        // Award users points for their predictions
+        awardUserPoints(data.matchGroupId, data.matches);
+    };
+
+    var simulationHandler = SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
+
+    seasonEvents.onMatchGroupStart.add(
+        func<system>(
+            matchGroupId : Nat,
+            season : Season.InProgressSeason,
+            _ : Season.InProgressMatchGroup,
+            matches : [Season.InProgressMatch],
+        ) : () {
+            let prng = PseudoRandomX.fromSeed(0); // TODO fix seed to use random blob
+
+            let getPlayer = func(playerId : Nat32) : Player.Player {
+                switch (playerHandler.get(playerId)) {
+                    case (?player) player;
+                    case (null) Debug.trap("Player not found: " # Nat32.toText(playerId));
+                };
+            };
+
+            let getTeam = func(teamId : Nat) : SimulationHandler.StartMatchTeam {
+                let ?team = IterTools.find(
+                    season.teams.vals(),
+                    func(t : Season.TeamInfo) : Bool = t.id == teamId,
+                ) else Debug.trap("Team not found: " # Nat.toText(teamId));
+                {
+                    team with positions = {
+                        pitcher = getPlayer(team.positions.pitcher);
+                        firstBase = getPlayer(team.positions.firstBase);
+                        secondBase = getPlayer(team.positions.secondBase);
+                        thirdBase = getPlayer(team.positions.thirdBase);
+                        shortStop = getPlayer(team.positions.shortStop);
+                        leftField = getPlayer(team.positions.leftField);
+                        centerField = getPlayer(team.positions.centerField);
+                        rightField = getPlayer(team.positions.rightField);
+                    };
+                };
+            };
+            let matchRequests = matches.vals()
+            |> Iter.map<Season.InProgressMatch, SimulationHandler.StartMatchRequest>(
+                _,
+                func(match : Season.InProgressMatch) : SimulationHandler.StartMatchRequest {
+                    {
+                        team1 = getTeam(match.team1.id);
+                        team2 = getTeam(match.team2.id);
+                        aura = match.aura;
+                    };
+                },
+            )
+            |> Iter.toArray(_);
+            switch (simulationHandler.startMatchGroup<system>(prng, matchGroupId, matchRequests)) {
+                case (#ok) ();
+                case (#err(#noMatchesSpecified)) Debug.trap("seasonEvents.onMatchGroupStart No matches specified: " # Nat.toText(matchGroupId));
+                case (#err(#matchGroupInProgress)) Debug.trap("seasonEvents.onMatchGroupStart Match group already in progress: " # Nat.toText(matchGroupId));
+            };
+        }
+    );
+
+    seasonEvents.onMatchGroupComplete.add(
+        func<system>(_ : Nat, _ : Season.CompletedMatchGroup) : () {
+            ignore simulationHandler.cancelMatchGroup();
+        }
+    );
 
     // System Methods ---------------------------------------------------------
 
@@ -416,7 +487,7 @@ actor MainActor : Types.Actor {
     };
 
     system func postupgrade() {
-        seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEventHandler);
+        seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents);
         predictionHandler := PredictionHandler.Handler(predictionStableData);
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamEnergy);
         leagueDao := Dao.Dao<system, LeagueDao.ProposalContent>(
@@ -539,7 +610,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
-        scenarioHandler.vote(request.scenarioId, caller, request.value);
+        scenarioHandler.vote<system>(request.scenarioId, caller, request.value);
     };
 
     public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {
@@ -590,7 +661,7 @@ actor MainActor : Types.Actor {
             return #err(#notAuthorized);
         };
 
-        seasonHandler.startNextMatchGroup();
+        seasonHandler.startNextMatchGroup<system>();
 
     };
 
@@ -599,12 +670,10 @@ actor MainActor : Types.Actor {
             return #err(#notAuthorized);
         };
         Debug.print("Season complete, clearing season data");
-        switch (seasonHandler.close()) {
+        switch (seasonHandler.close<system>()) {
             case (#ok) ();
             case (#err(#seasonNotOpen)) return #err(#seasonNotOpen);
         };
-        ignore simulationHandler.cancelMatchGroup();
-        predictionHandler.clear();
 
         // TODO archive vs delete
         // TODO teams reset energy/entropy? or is that a scenario thing

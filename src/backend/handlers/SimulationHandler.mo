@@ -102,7 +102,6 @@ module {
             prng : Prng,
             id : Nat,
             matches : [StartMatchRequest],
-            onMatchGroupComplete : <system>(OnMatchGroupCompleteData) -> (),
         ) : Result.Result<(), { #noMatchesSpecified; #matchGroupInProgress }> {
             Debug.print("Starting match group: " # Nat.toText(id));
             let null = matchGroupStateOrNull else return #err(#matchGroupInProgress);
@@ -133,7 +132,6 @@ module {
                 var matches = Buffer.toArray(tickResults);
                 var tickTimerId = tickTimerId;
                 var currentSeed = prng.getCurrentSeed();
-                onMatchGroupComplete = onMatchGroupComplete;
             };
             #ok;
         };

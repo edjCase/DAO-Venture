@@ -57,10 +57,12 @@ module {
 
         // TODO archive vs delete
         public func clear() : () {
+            Debug.print("Clearing match group predictions");
             matchGroupPredictions := HashMap.HashMap<Nat, MatchGroupPredictionInfo>(0, Nat.equal, Nat32.fromNat);
         };
 
         public func addMatchGroup(matchGroupId : Nat, matchCount : Nat) : () {
+            Debug.print("Opening match predictions for match group " # Nat.toText(matchGroupId));
             let matchPredictions = Array.tabulate(matchCount, func(_ : Nat) : HashMap.HashMap<Principal, Team.TeamId> = HashMap.HashMap<Principal, Team.TeamId>(0, Principal.equal, Principal.hash));
             let matchGroupPredictionInfo : MatchGroupPredictionInfo = {
                 var isOpen = true;
@@ -70,6 +72,7 @@ module {
         };
 
         public func closeMatchGroup(matchGroupId : Nat) : () {
+            Debug.print("Closing match predictions for match group " # Nat.toText(matchGroupId));
             let ?matchGroupInfo = matchGroupPredictions.get(matchGroupId) else Debug.trap("Match group predictions not found for match group " # Nat.toText(matchGroupId));
             matchGroupInfo.isOpen := false;
         };
