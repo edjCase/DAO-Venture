@@ -83,8 +83,8 @@
         ctx.font = "bold 28px Arial";
         ctx.textAlign = "center";
         ctx.fillText(
-            entropyData.currentEntropy.toString(),
-            centerX,
+            entropyData.currentEntropy.toString() + "🔥",
+            centerX + 10,
             centerY + 40,
         );
 
