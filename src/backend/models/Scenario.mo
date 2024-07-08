@@ -32,6 +32,18 @@ module {
         #matches : Nat;
     };
 
+    public type ReverseEffect = {
+        #skill : {
+            playerId : Nat32;
+            skill : Skill.Skill;
+            deltaToRemove : Int;
+        };
+        #anomoly : {
+            teamId : Nat;
+            anomoly : Anomoly.Anomoly;
+        };
+    };
+
     public type Effect = {
         #anomoly : AnomolyEffect;
         #teamTrait : TeamTraitEffect;

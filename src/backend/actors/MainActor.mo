@@ -124,13 +124,13 @@ actor MainActor : Types.Actor {
     private func processEffectOutcome<system>(
         closeAllScenarios : <system>() -> (),
         effectOutcome : Scenario.EffectOutcome,
-    ) {
-        switch (effectOutcome) {
+    ) : () {
+        let result : ?{ matchCount : Nat; effect : Scenario.ReverseEffect } = switch (effectOutcome) {
             case (#injury(injuryEffect)) {
                 let ?player = playerHandler.getPosition(injuryEffect.position.teamId, injuryEffect.position.position) else Debug.trap("Position " # debug_show (injuryEffect.position.position) # " not found in team " # Nat.toText(injuryEffect.position.teamId));
 
                 switch (playerHandler.updateCondition(player.id, #injured)) {
-                    case (#ok) ();
+                    case (#ok) null;
                     case (#err(e)) Debug.trap("Error updating player condition: " # debug_show (e));
                 };
             };
@@ -142,13 +142,14 @@ actor MainActor : Types.Actor {
                             ignore seasonHandler.close<system>();
                             closeAllScenarios<system>();
                         };
+                        null;
                     };
                     case (#err(e)) Debug.trap("Error updating team entropy: " # debug_show (e));
                 };
             };
             case (#energy(e)) {
                 switch (teamsHandler.updateEnergy(e.teamId, e.delta, true)) {
-                    case (#ok) ();
+                    case (#ok) null;
                     case (#err(e)) Debug.trap("Error updating team energy: " # debug_show (e));
                 };
             };
@@ -161,6 +162,17 @@ actor MainActor : Types.Actor {
                     case (#ok) ();
                     case (#err(e)) Debug.trap("Error updating player skill: " # debug_show (e));
                 };
+                switch (s.duration) {
+                    case (#indefinite) null;
+                    case (#matches(matchCount)) {
+                        let effect = #skill({
+                            playerId = playerId;
+                            skill = s.skill;
+                            deltaToRemove = s.delta;
+                        });
+                        ?{ matchCount; effect };
+                    };
+                };
             };
             case (#teamTrait(t)) {
                 switch (t.kind) {
@@ -171,10 +183,26 @@ actor MainActor : Types.Actor {
                         ignore teamsHandler.removeTraitFromTeam(t.teamId, t.traitId);
                     };
                 };
+                null;
             };
             case (#anomoly(m)) {
-
+                switch (m.duration) {
+                    case (#indefinite) null;
+                    case (#matches(matchCount)) {
+                        let effect = #anomoly({
+                            teamId = m.teamId;
+                            anomoly = m.anomoly;
+                        });
+                        ?{ matchCount; effect };
+                    };
+                };
             };
+        };
+        switch (result) {
+            case (?{ matchCount; effect }) {
+                seasonHandler.scheduleReverseEffect(matchCount, effect);
+            };
+            case (null) ();
         };
     };
 

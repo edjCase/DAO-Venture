@@ -21,6 +21,7 @@ import IterTools "mo:itertools/Iter";
 import Player "../models/Player";
 import FieldPosition "../models/FieldPosition";
 import Components "mo:datetime/Components";
+import Scenario "../models/Scenario";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -273,6 +274,40 @@ module {
                     return null;
                 };
                 case (_) return null;
+            };
+        };
+
+        public func scheduleReverseEffect(
+            matchGroupDelay : Nat,
+            effect : Scenario.ReverseEffect,
+        ) {
+            switch (seasonStatus) {
+                case (#inProgress(inProgressSeason)) {
+                    label f for (matchGroup in inProgressSeason.matchGroups.vals()) {
+                        switch (matchGroup) {
+                            case (#completed(c)) continue f;
+                            case (#notStarted(ns)) {
+
+                            };
+                            case (#scheduled(s)) {
+                                let newTime = s.time - Time.durationFromNanoseconds(matchGroupDelay);
+                                let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
+                                    inProgressSeason.matchGroups,
+                                    matchGroup,
+                                    #scheduled({
+                                        s with
+                                        time = newTime;
+                                    }),
+                                ) else Debug.trap("Match group not found: " # Nat.toText(matchGroup));
+                                seasonStatus := #inProgress({
+                                    inProgressSeason with
+                                    matchGroups = newMatchGroups;
+                                });
+                            };
+                        };
+                    };
+                };
+                case (#notStarted or #starting or #completed(_)) #err(#seasonNotInProgress);
             };
         };
 
