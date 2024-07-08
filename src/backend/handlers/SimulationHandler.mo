@@ -109,7 +109,6 @@ module {
 
                 let team1IsOffense = prng.nextCoin();
                 let initState = MatchSimulator.initState(
-                    match.anomoly,
                     match.team1,
                     match.team2,
                     team1IsOffense,
@@ -294,7 +293,6 @@ module {
                 match : Season.CompletedMatch = {
                     team1 = match.team1;
                     team2 = match.team2;
-                    anomoly = match.anomoly;
                     log = match.log;
                     winner = winner;
                     playerStats = playerStats;

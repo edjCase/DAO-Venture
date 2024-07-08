@@ -308,7 +308,6 @@ module {
                 log = log;
                 currentSeed = prng.getCurrentSeed();
                 offenseTeamId = state.offenseTeamId;
-                anomoly = state.anomoly;
                 players = players;
                 bases = bases;
                 outs = state.outs;

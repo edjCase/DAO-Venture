@@ -1209,9 +1209,6 @@ module {
             case (#injury(_)) {
                 // TODO
             };
-            case (#anomoly(_)) {
-                // TODO
-            };
             case (#noEffect) {};
         };
         #ok;
@@ -1493,17 +1490,6 @@ module {
                         teamId = teamId;
                         traitId = t.traitId;
                         kind = t.kind;
-                    });
-                    outcomes.add(outcome);
-                };
-            };
-            case (#anomoly(anomolyEffect)) {
-                let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, anomolyEffect.team, context);
-                for (teamId in teamIds.vals()) {
-                    let outcome = #anomoly({
-                        teamId = teamId;
-                        anomoly = anomolyEffect.anomoly;
-                        duration = anomolyEffect.duration;
                     });
                     outcomes.add(outcome);
                 };

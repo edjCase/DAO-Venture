@@ -1,6 +1,5 @@
 import Season "../models/Season";
 import Team "../models/Team";
-import HashMap "mo:base/HashMap";
 import Buffer "mo:base/Buffer";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
@@ -19,7 +18,6 @@ import Util "../Util";
 import Anomoly "../models/Anomoly";
 import IterTools "mo:itertools/Iter";
 import Player "../models/Player";
-import FieldPosition "../models/FieldPosition";
 import Components "mo:datetime/Components";
 import Scenario "../models/Scenario";
 
@@ -89,17 +87,19 @@ module {
 
     public type StartMatchTeam = {
         id : Nat;
-        anomolies : [Anomoly.AnomolyWithMetaData];
-        positions : {
-            firstBase : Player.Player;
-            secondBase : Player.Player;
-            thirdBase : Player.Player;
-            shortStop : Player.Player;
-            pitcher : Player.Player;
-            leftField : Player.Player;
-            centerField : Player.Player;
-            rightField : Player.Player;
-        };
+        anomolies : [Anomoly.Anomoly];
+        positions : StartMatchTeamPositions;
+    };
+
+    public type StartMatchTeamPositions = {
+        firstBase : Player.Player;
+        secondBase : Player.Player;
+        thirdBase : Player.Player;
+        shortStop : Player.Player;
+        pitcher : Player.Player;
+        leftField : Player.Player;
+        centerField : Player.Player;
+        rightField : Player.Player;
     };
 
     public type StartMatchRequest = {
@@ -151,7 +151,7 @@ module {
     public class SeasonHandler<system>(
         data : StableData,
         events : Events,
-        getTeamData : (Nat) -> StartMatchTeam,
+        getTeamData : (Nat) -> Season.InProgressTeam,
     ) {
 
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
@@ -237,7 +237,6 @@ module {
                 0,
                 firstMatchGroup,
                 inProgressSeason,
-                prng,
             );
             #ok;
         };
@@ -441,7 +440,6 @@ module {
         };
 
         public func completeMatchGroup<system>(
-            prng : Prng,
             matchGroupId : Nat,
             matches : [Season.CompletedMatch],
         ) : OnMatchGroupCompleteResult {
@@ -524,7 +522,6 @@ module {
                         nextMatchGroupId,
                         matchGroup,
                         updatedSeason,
-                        prng,
                     );
                 };
                 case (_) {
@@ -672,7 +669,6 @@ module {
             matchGroupId : Nat,
             matchGroup : Season.NotScheduledMatchGroup,
             inProgressSeason : Season.InProgressSeason,
-            prng : Prng,
         ) : () {
             let timerId = createStartTimer<system>(matchGroupId, matchGroup.time);
 
@@ -723,7 +719,6 @@ module {
                         {
                             team1 = { id = team1Id };
                             team2 = { id = team2Id };
-                            anomoly = getRandomAnomoly(prng);
                         };
                     },
                 )
@@ -801,38 +796,20 @@ module {
                 case (#scheduled(d)) d;
             };
 
-            let matchStartRequestBuffer = Buffer.Buffer<StartMatchRequest>(scheduledMatchGroup.matches.size());
-
-            let teamDataMap = HashMap.HashMap<Nat, StartMatchTeam>(0, Nat.equal, Nat32.fromNat);
-
-            for (match in scheduledMatchGroup.matches.vals()) {
-                teamDataMap.put(match.team1.id, getTeamData(match.team1.id));
-                teamDataMap.put(match.team2.id, getTeamData(match.team2.id));
-            };
-
-            for (match in Iter.fromArray(scheduledMatchGroup.matches)) {
-                let ?team1Data = teamDataMap.get(match.team1.id) else Debug.trap("Team data not found: " # Nat.toText(match.team1.id));
-                let ?team2Data = teamDataMap.get(match.team2.id) else Debug.trap("Team data not found: " # Nat.toText(match.team2.id));
-                matchStartRequestBuffer.add({
-                    team1 = team1Data;
-                    team2 = team2Data;
-                });
-            };
-            let matches = Buffer.toArray(matchStartRequestBuffer);
-            Timer.cancelTimer(scheduledMatchGroup.timerId); // Cancel timer incase the match group was forced early
-            // TODO this should better handled in case of failure to start the match
-            let inProgressMatches = matches
-            |> Iter.fromArray(_)
-            |> IterTools.mapEntries(
+            let inProgressMatches = scheduledMatchGroup.matches.vals()
+            |> Iter.map(
                 _,
-                func(matchId : Nat, match : StartMatchRequest) : Season.InProgressMatch {
+                func(m : Season.ScheduledMatch) : Season.InProgressMatch {
+                    let team1Data = getTeamData(m.team1.id);
+                    let team2Data = getTeamData(m.team2.id);
                     {
-                        team1 = match.team1;
-                        team2 = match.team2;
+                        team1 = team1Data;
+                        team2 = team2Data;
                     };
                 },
             )
             |> Iter.toArray(_);
+            Timer.cancelTimer(scheduledMatchGroup.timerId); // Cancel timer incase the match group was forced early
 
             let inProgressMatchGroup = {
                 time = scheduledMatchGroup.time;
@@ -855,28 +832,6 @@ module {
         };
 
         resetTimers<system>();
-    };
-
-    private func getRandomAnomoly(prng : Prng) : Anomoly.AnomolyWithMetaData {
-        // TODO
-        let anomolys = Buffer.fromArray<Anomoly.Anomoly>([
-            #lowGravity,
-            #explodingBalls,
-            #fastBallsHardHits,
-            #moreBlessingsAndCurses,
-            #moveBasesIn,
-            #doubleOrNothing,
-            #windy,
-            #rainy,
-            #foggy,
-            #extraStrike,
-        ]);
-        prng.shuffleBuffer(anomolys);
-        let anomoly = anomolys.get(0);
-        {
-            Anomoly.getMetaData(anomoly) with
-            anomoly = anomoly;
-        };
     };
 
 };

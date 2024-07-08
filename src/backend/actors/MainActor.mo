@@ -116,12 +116,37 @@ actor MainActor : Types.Actor {
             predictionHandler.closeMatchGroup(matchGroupId);
         }
     );
+    var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
 
-    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents);
+    private func getTeamData(teamId : Nat) : Season.InProgressTeam {
+        let ?pitcher = playerHandler.getPosition(teamId, #pitcher) else Debug.trap("Pitcher not found in team " # Nat.toText(teamId));
+        let ?firstBase = playerHandler.getPosition(teamId, #firstBase) else Debug.trap("First base not found in team " # Nat.toText(teamId));
+        let ?secondBase = playerHandler.getPosition(teamId, #secondBase) else Debug.trap("Second base not found in team " # Nat.toText(teamId));
+        let ?thirdBase = playerHandler.getPosition(teamId, #thirdBase) else Debug.trap("Third base not found in team " # Nat.toText(teamId));
+        let ?shortStop = playerHandler.getPosition(teamId, #shortStop) else Debug.trap("Short stop not found in team " # Nat.toText(teamId));
+        let ?leftField = playerHandler.getPosition(teamId, #leftField) else Debug.trap("Left field not found in team " # Nat.toText(teamId));
+        let ?centerField = playerHandler.getPosition(teamId, #centerField) else Debug.trap("Center field not found in team " # Nat.toText(teamId));
+        let ?rightField = playerHandler.getPosition(teamId, #rightField) else Debug.trap("Right field not found in team " # Nat.toText(teamId));
+
+        {
+            id = teamId;
+            positions = {
+                pitcher = pitcher.id;
+                firstBase = firstBase.id;
+                secondBase = secondBase.id;
+                thirdBase = thirdBase.id;
+                shortStop = shortStop.id;
+                leftField = leftField.id;
+                centerField = centerField.id;
+                rightField = rightField.id;
+            };
+            anomolies = []; // TODO anomolies
+        };
+    };
+
+    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents, getTeamData);
 
     var teamsHandler = TeamsHandler.Handler<system>(teamStableData);
-
-    var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
 
     private func processEffectOutcome<system>(
         closeAllScenarios : <system>() -> (),
@@ -187,18 +212,6 @@ actor MainActor : Types.Actor {
                 };
                 null;
             };
-            case (#anomoly(m)) {
-                switch (m.duration) {
-                    case (#indefinite) null;
-                    case (#matches(matchCount)) {
-                        let effect = #anomoly({
-                            teamId = m.teamId;
-                            anomoly = m.anomoly;
-                        });
-                        ?{ matchCount; effect };
-                    };
-                };
-            };
         };
         switch (result) {
             case (?{ matchCount; effect }) {
@@ -229,12 +242,6 @@ actor MainActor : Types.Actor {
                         switch (playerHandler.updateSkill(s.playerId, s.skill, -s.deltaToRemove)) {
                             case (#ok) ();
                             case (#err(e)) Debug.trap("Error updating player skill: " # debug_show (e));
-                        };
-                    };
-                    case (#anomoly(m)) {
-                        switch (teamsHandler.removeAnomoly(m.teamId, m.anomoly)) {
-                            case (#ok) ();
-                            case (#err(e)) Debug.trap("Error removing anomoly: " # debug_show (e));
                         };
                     };
                 };
@@ -443,10 +450,7 @@ actor MainActor : Types.Actor {
 
     func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
 
-        // TODO real prng
-        let prng = PseudoRandomX.fromSeed(0);
-
-        switch (seasonHandler.completeMatchGroup<system>(prng, data.matchGroupId, data.matches)) {
+        switch (seasonHandler.completeMatchGroup<system>(data.matchGroupId, data.matches)) {
             case (#ok) ();
             case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
             case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
@@ -478,34 +482,32 @@ actor MainActor : Types.Actor {
     seasonEvents.onMatchGroupStart.add(
         func<system>(
             matchGroupId : Nat,
-            season : Season.InProgressSeason,
+            _ : Season.InProgressSeason,
             _ : Season.InProgressMatchGroup,
             matches : [Season.InProgressMatch],
         ) : () {
             let prng = PseudoRandomX.fromSeed(0); // TODO fix seed to use random blob
 
-            let getPlayer = func(playerId : Nat32) : Player.Player {
-                switch (playerHandler.get(playerId)) {
+            let getPlayer = func(teamId : Nat, position : FieldPosition.FieldPosition) : Player.Player {
+                switch (playerHandler.getPosition(teamId, position)) {
                     case (?player) player;
-                    case (null) Debug.trap("Player not found: " # Nat32.toText(playerId));
+                    case (null) Debug.trap("Player not found in position " # debug_show (position) # " for team " # Nat.toText(teamId));
                 };
             };
 
             let getTeam = func(teamId : Nat) : SimulationHandler.StartMatchTeam {
-                let ?team = IterTools.find(
-                    season.teams.vals(),
-                    func(t : Season.TeamInfo) : Bool = t.id == teamId,
-                ) else Debug.trap("Team not found: " # Nat.toText(teamId));
                 {
-                    team with positions = {
-                        pitcher = getPlayer(team.positions.pitcher);
-                        firstBase = getPlayer(team.positions.firstBase);
-                        secondBase = getPlayer(team.positions.secondBase);
-                        thirdBase = getPlayer(team.positions.thirdBase);
-                        shortStop = getPlayer(team.positions.shortStop);
-                        leftField = getPlayer(team.positions.leftField);
-                        centerField = getPlayer(team.positions.centerField);
-                        rightField = getPlayer(team.positions.rightField);
+                    id = teamId;
+                    anomolies = []; // TODO
+                    positions = {
+                        pitcher = getPlayer(teamId, #pitcher);
+                        firstBase = getPlayer(teamId, #firstBase);
+                        secondBase = getPlayer(teamId, #secondBase);
+                        thirdBase = getPlayer(teamId, #thirdBase);
+                        shortStop = getPlayer(teamId, #shortStop);
+                        leftField = getPlayer(teamId, #leftField);
+                        centerField = getPlayer(teamId, #centerField);
+                        rightField = getPlayer(teamId, #rightField);
                     };
                 };
             };
@@ -516,7 +518,6 @@ actor MainActor : Types.Actor {
                     {
                         team1 = getTeam(match.team1.id);
                         team2 = getTeam(match.team2.id);
-                        anomoly = match.anomoly;
                     };
                 },
             )
@@ -555,7 +556,7 @@ actor MainActor : Types.Actor {
     };
 
     system func postupgrade() {
-        seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents);
+        seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents, getTeamData);
         predictionHandler := PredictionHandler.Handler(predictionStableData);
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamEnergy);
         leagueDao := Dao.Dao<system, LeagueDao.ProposalContent>(
@@ -650,8 +651,8 @@ actor MainActor : Types.Actor {
     };
 
     public query func getTeamStandings() : async Types.GetTeamStandingsResult {
-        let ?standings = seasonHandler.teamStandings else return #err(#notFound);
-        #ok(Buffer.toArray(standings));
+        let ?standings = seasonHandler.getTeamStandings() else return #err(#notFound);
+        #ok(standings);
     };
 
     public query func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
@@ -692,17 +693,19 @@ actor MainActor : Types.Actor {
             return #err(#seedGenerationError(Error.message(err)));
         };
 
-        let teamsArray = teamsHandler.getAll();
-
-        let allPlayers = playerHandler.getAll(null);
+        let teamIds = teamsHandler.getAll().vals()
+        |> Iter.map<Team.Team, Nat>(
+            _,
+            func(team : Team.Team) : Nat = team.id,
+        )
+        |> Iter.toArray(_);
 
         let prng = PseudoRandomX.fromBlob(seedBlob);
         seasonHandler.startSeason<system>(
             prng,
             request.startTime,
             request.weekDays,
-            teamsArray,
-            allPlayers,
+            teamIds,
         );
     };
 

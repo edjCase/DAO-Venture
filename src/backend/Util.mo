@@ -1,7 +1,4 @@
-import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Blob "mo:base/Blob";
 import Buffer "mo:base/Buffer";
-import Iter "mo:base/Iter";
 module {
 
     public func arrayGetSafe<T>(array : [T], index : Nat) : ?T {

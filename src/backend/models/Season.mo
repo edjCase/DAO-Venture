@@ -1,7 +1,6 @@
 import Time "mo:base/Time";
 import Anomoly "Anomoly";
 import Team "Team";
-import Player "Player";
 import FieldPosition "FieldPosition";
 
 module {

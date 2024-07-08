@@ -2,7 +2,6 @@ import Skill "Skill";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import FieldPosition "FieldPosition";
-import Anomoly "Anomoly";
 
 module {
     public type TargetTeam = {
@@ -38,14 +37,16 @@ module {
             skill : Skill.Skill;
             deltaToRemove : Int;
         };
-        #anomoly : {
-            teamId : Nat;
-            anomoly : Anomoly.Anomoly;
-        };
+        // TODO anomoly
+        // #anomoly : {
+        //     teamId : Nat;
+        //     anomoly : Anomoly.Anomoly;
+        // };
     };
 
     public type Effect = {
-        #anomoly : AnomolyEffect;
+        // TODO anomoly
+        // #anomoly : AnomolyEffect;
         #teamTrait : TeamTraitEffect;
         #skill : SkillEffect;
         #injury : InjuryEffect;
@@ -56,11 +57,12 @@ module {
         #noEffect;
     };
 
-    public type AnomolyEffect = {
-        team : TargetTeam;
-        duration : Duration;
-        anomoly : Anomoly.Anomoly;
-    };
+    // TODO anomoly
+    // public type AnomolyEffect = {
+    //     team : TargetTeam;
+    //     duration : Duration;
+    //     anomoly : Anomoly.Anomoly;
+    // };
 
     public type SkillEffect = {
         position : TargetPosition;
@@ -140,17 +142,14 @@ module {
         kind : TeamTraitEffectKind;
     };
 
-    public type MatchEffectOutcome = {
-        #anomoly : AnomolyMatchEffectOutcome;
-    };
+    // TODO anomoly
+    // public type AnomolyMatchEffectOutcome = {
+    //     teamId : Nat;
+    //     anomoly : Anomoly.Anomoly;
+    //     duration : Duration;
+    // };
 
-    public type AnomolyMatchEffectOutcome = {
-        teamId : Nat;
-        anomoly : Anomoly.Anomoly;
-        duration : Duration;
-    };
-
-    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome or MatchEffectOutcome;
+    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome;
 
     public type TargetPositionInstance = {
         teamId : Nat;
