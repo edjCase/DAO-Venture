@@ -17,7 +17,6 @@ module {
         team1 : LiveMatchTeam;
         team2 : LiveMatchTeam;
         offenseTeamId : Team.TeamId;
-        anomoly : Anomoly.Anomoly;
         players : [LivePlayerState];
         bases : LiveBaseState;
         log : MatchLog;
@@ -40,11 +39,9 @@ module {
 
     public type LiveMatchTeam = {
         id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
         score : Int;
         positions : FieldPosition.TeamPositions;
+        anomolies : [Anomoly.Anomoly];
     };
 
     public type MatchLog = {

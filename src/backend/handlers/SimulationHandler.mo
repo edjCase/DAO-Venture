@@ -23,9 +23,6 @@ module {
     };
     public type StartMatchTeam = {
         id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
         positions : {
             firstBase : Player.Player;
             secondBase : Player.Player;
@@ -36,12 +33,12 @@ module {
             centerField : Player.Player;
             rightField : Player.Player;
         };
+        anomolies : [Anomoly.Anomoly];
     };
 
     public type StartMatchRequest = {
         team1 : StartMatchTeam;
         team2 : StartMatchTeam;
-        anomoly : Anomoly.Anomoly;
     };
 
     public type CancelMatchGroupError = {

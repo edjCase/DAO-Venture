@@ -9,6 +9,7 @@ import FieldPosition "models/FieldPosition";
 import Skill "models/Skill";
 import Base "models/Base";
 import LiveState "models/LiveState";
+import Anomoly "models/Anomoly";
 
 module {
 
@@ -25,11 +26,9 @@ module {
 
     public type MutableTeamState = {
         id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
         var score : Int;
         positions : MutableTeamPositions;
+        anomolies : [Anomoly.Anomoly];
     };
 
     public type MutableBaseState = {
@@ -56,11 +55,9 @@ module {
         private func toMutableTeam(team : LiveState.LiveMatchTeam) : MutableTeamState {
             {
                 id = team.id;
-                name = team.name;
-                logoUrl = team.logoUrl;
-                color = team.color;
                 var score = team.score;
                 positions = toMutableTeamPositions(team.positions);
+                anomolies = team.anomolies;
             };
         };
 
@@ -106,7 +103,6 @@ module {
         public var offenseTeamId = immutableState.offenseTeamId;
         public var team1 = toMutableTeam(immutableState.team1);
         public var team2 = toMutableTeam(immutableState.team2);
-        public let anomoly = immutableState.anomoly;
         public var bases = {
             var atBat = immutableState.bases.atBat;
             var firstBase = immutableState.bases.firstBase;

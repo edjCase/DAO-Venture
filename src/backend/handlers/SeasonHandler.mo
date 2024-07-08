@@ -60,9 +60,17 @@ module {
         totalScore : Int;
     };
 
+    public type ReverseEffect = {
+        after : {
+            #matchGroupId : Nat;
+            #season;
+        };
+        effect : Scenario.ReverseEffect;
+    };
+
     public type StableData = {
         seasonStatus : Season.SeasonStatus;
-        teamStandings : ?[TeamStandingInfo]; // First team to last team
+        reverseEffects : [ReverseEffect];
     };
     public type StartSeasonResult = Result.Result<(), StartSeasonError>;
 
@@ -79,14 +87,9 @@ module {
         #matchGroupNotFound;
     };
 
-    public type Team = {
+    public type StartMatchTeam = {
         id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
-    };
-
-    public type StartMatchTeam = Team and {
+        anomolies : [Anomoly.AnomolyWithMetaData];
         positions : {
             firstBase : Player.Player;
             secondBase : Player.Player;
@@ -102,7 +105,6 @@ module {
     public type StartMatchRequest = {
         team1 : StartMatchTeam;
         team2 : StartMatchTeam;
-        anomoly : Anomoly.Anomoly;
     };
 
     public type Events = {
@@ -111,19 +113,35 @@ module {
         onMatchGroupStart : Buffer.Buffer<OnMatchGroupStartEvent>;
         onMatchGroupComplete : Buffer.Buffer<OnMatchGroupCompleteEvent>;
         onSeasonComplete : Buffer.Buffer<OnSeasonCompleteEvent>;
+        onEffectReversal : Buffer.Buffer<OnEffectReversalEvent>;
     };
 
-    public type OnSeasonScheduleEvent = <system>(season : Season.InProgressSeason) -> ();
-    public type OnSeasonStartEvent = <system>(season : Season.InProgressSeason) -> ();
-    public type OnMatchGroupScheduleEvent = <system>(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) -> ();
+    public type OnSeasonScheduleEvent = <system>(
+        season : Season.InProgressSeason
+    ) -> ();
+    public type OnSeasonStartEvent = <system>(
+        season : Season.InProgressSeason
+    ) -> ();
+    public type OnMatchGroupScheduleEvent = <system>(
+        matchGroupId : Nat,
+        matchGroup : Season.ScheduledMatchGroup,
+    ) -> ();
     public type OnMatchGroupStartEvent = <system>(
         matchGroupId : Nat,
         season : Season.InProgressSeason,
         matchGroup : Season.InProgressMatchGroup,
         matches : [Season.InProgressMatch],
     ) -> ();
-    public type OnMatchGroupCompleteEvent = <system>(matchGroupId : Nat, matchGroup : Season.CompletedMatchGroup) -> ();
-    public type OnSeasonCompleteEvent = <system>(season : Season.CompletedSeason) -> ();
+    public type OnMatchGroupCompleteEvent = <system>(
+        matchGroupId : Nat,
+        matchGroup : Season.CompletedMatchGroup,
+    ) -> ();
+    public type OnSeasonCompleteEvent = <system>(
+        season : Season.CompletedSeason
+    ) -> ();
+    public type OnEffectReversalEvent = <system>(
+        effects : [Scenario.ReverseEffect]
+    ) -> ();
 
     public type EndedSeasonVariant = {
         #incomplete : Season.InProgressSeason;
@@ -133,23 +151,17 @@ module {
     public class SeasonHandler<system>(
         data : StableData,
         events : Events,
+        getTeamData : (Nat) -> StartMatchTeam,
     ) {
 
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
 
-        // First team to last team
-        public var teamStandings : ?Buffer.Buffer<TeamStandingInfo> = switch (data.teamStandings) {
-            case (null) null;
-            case (?standings) ?Buffer.fromArray(standings);
-        };
+        let reverseEffects = Buffer.fromArray<ReverseEffect>(data.reverseEffects);
 
         public func toStableData() : StableData {
             {
                 seasonStatus = seasonStatus;
-                teamStandings = switch (teamStandings) {
-                    case (null) null;
-                    case (?standings) ?Buffer.toArray(standings);
-                };
+                reverseEffects = Buffer.toArray(reverseEffects);
             };
         };
 
@@ -157,8 +169,7 @@ module {
             prng : Prng,
             startTime : Time.Time,
             weekDays : [Components.DayOfWeek],
-            teams : [Team.Team],
-            players : [Player.Player],
+            teamIds : [Nat],
         ) : StartSeasonResult {
             switch (seasonStatus) {
                 case (#notStarted) {};
@@ -168,13 +179,9 @@ module {
                     // TODO archive completed season?
                 };
             };
-            teamStandings := null;
             seasonStatus := #starting;
 
-            let teamIdsBuffer = teams
-            |> Iter.fromArray(_)
-            |> Iter.map(_, func(t : Team.Team) : Nat = t.id)
-            |> Buffer.fromIter<Nat>(_);
+            let teamIdsBuffer = Buffer.fromArray<Nat>(teamIds);
 
             prng.shuffleBuffer(teamIdsBuffer); // Randomize the team order
 
@@ -213,23 +220,10 @@ module {
             )
             |> Iter.toArray(_);
 
-            let teamsWithPositions = teams
-            |> Iter.fromArray(_)
-            |> Iter.map(
-                _,
-                func(t : Team.Team) : Season.TeamInfo {
-                    buildTeamInitData(t, players);
-                },
-            )
-            |> Iter.toArray(_);
-
             let inProgressSeason = {
-                teams = teamsWithPositions;
-                players = players;
                 matchGroups = notScheduledMatchGroups;
             };
 
-            teamStandings := null; // No standings yet
             seasonStatus := #inProgress(inProgressSeason);
 
             for (event in events.onSeasonStart.vals()) {
@@ -246,6 +240,118 @@ module {
                 prng,
             );
             #ok;
+        };
+
+        public func getTeamStandings() : ?[TeamStandingInfo] {
+            // Get all completed match groups
+            let completedMatchGroups = switch (seasonStatus) {
+                case (#notStarted or #starting) return null;
+                case (#inProgress(inProgressSeason)) {
+                    let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(0);
+                    label f for (matchGroup in Iter.fromArray(inProgressSeason.matchGroups)) {
+                        switch (matchGroup) {
+                            case (#completed(completedMatchGroup)) completedMatchGroups.add(completedMatchGroup);
+                            case (#notScheduled(_) or #scheduled(_) or #inProgress(_)) continue f;
+                        };
+                    };
+                    Buffer.toArray(completedMatchGroups);
+                };
+                case (#completed(completedSeason)) {
+                    completedSeason.matchGroups;
+                };
+            };
+            ?buildTeamStandingInfo(completedMatchGroups);
+        };
+
+        private func buildTeamStandingInfo(
+            matchGroups : [Season.CompletedMatchGroup]
+        ) : [TeamStandingInfo] {
+            var teamScores = Trie.empty<Nat, TeamStandingInfo>();
+            let updateTeamScore = func(
+                teamId : Nat,
+                score : Int,
+                state : { #win; #loss; #tie },
+            ) : () {
+
+                let teamKey = {
+                    key = teamId;
+                    hash = Nat32.fromNat(teamId);
+                };
+                let currentScore = switch (Trie.get(teamScores, teamKey, Nat.equal)) {
+                    case (null) {
+                        {
+                            wins = 0;
+                            losses = 0;
+                            totalScore = 0;
+                        };
+                    };
+                    case (?score) score;
+                };
+
+                let (wins, losses) = switch (state) {
+                    case (#win) (currentScore.wins + 1, currentScore.losses);
+                    case (#loss) (currentScore.wins, currentScore.losses + 1);
+                    case (#tie) (currentScore.wins, currentScore.losses);
+                };
+
+                // Update with +1
+                let (newTeamScores, _) = Trie.put<Nat, TeamStandingInfo>(
+                    teamScores,
+                    teamKey,
+                    Nat.equal,
+                    {
+                        id = teamId;
+                        wins = wins;
+                        losses = losses;
+                        totalScore = currentScore.totalScore + score;
+                    },
+                );
+                teamScores := newTeamScores;
+            };
+
+            // Populate scores
+            label f1 for (matchGroup in Iter.fromArray(matchGroups)) {
+                label f2 for (match in Iter.fromArray(matchGroup.matches)) {
+                    let (team1State, team2State) = switch (match.winner) {
+                        case (#team1) (#win, #loss);
+                        case (#team2) (#loss, #win);
+                        case (#tie) (#tie, #tie);
+                    };
+                    updateTeamScore(match.team1.id, match.team1.score, team1State);
+                    updateTeamScore(match.team2.id, match.team2.score, team2State);
+                };
+            };
+            teamScores
+            |> Trie.iter(_)
+            |> Iter.map(
+                _,
+                func((_, v) : (Nat, TeamStandingInfo)) : TeamStandingInfo = v,
+            )
+            |> IterTools.sort(
+                _,
+                func(a : TeamStandingInfo, b : TeamStandingInfo) : Order.Order {
+                    if (a.wins > b.wins) {
+                        #greater;
+                    } else if (a.wins < b.wins) {
+                        #less;
+                    } else {
+                        if (a.losses < b.losses) {
+                            #greater;
+                        } else if (a.losses > b.losses) {
+                            #less;
+                        } else {
+                            if (a.totalScore > b.totalScore) {
+                                #greater;
+                            } else if (a.totalScore < b.totalScore) {
+                                #less;
+                            } else {
+                                #equal;
+                            };
+                        };
+                    };
+                },
+            )
+            |> Iter.toArray(_);
         };
 
         public func getNextScheduledMatchGroup() : ?{
@@ -278,37 +384,26 @@ module {
         };
 
         public func scheduleReverseEffect(
-            matchGroupDelay : Nat,
+            matchCount : Nat,
             effect : Scenario.ReverseEffect,
-        ) {
-            switch (seasonStatus) {
-                case (#inProgress(inProgressSeason)) {
-                    label f for (matchGroup in inProgressSeason.matchGroups.vals()) {
-                        switch (matchGroup) {
-                            case (#completed(c)) continue f;
-                            case (#notStarted(ns)) {
-
-                            };
-                            case (#scheduled(s)) {
-                                let newTime = s.time - Time.durationFromNanoseconds(matchGroupDelay);
-                                let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(
-                                    inProgressSeason.matchGroups,
-                                    matchGroup,
-                                    #scheduled({
-                                        s with
-                                        time = newTime;
-                                    }),
-                                ) else Debug.trap("Match group not found: " # Nat.toText(matchGroup));
-                                seasonStatus := #inProgress({
-                                    inProgressSeason with
-                                    matchGroups = newMatchGroups;
-                                });
-                            };
-                        };
-                    };
-                };
-                case (#notStarted or #starting or #completed(_)) #err(#seasonNotInProgress);
+        ) : () {
+            if (matchCount == 0) {
+                Debug.trap("Match count must be greater than 0");
             };
+
+            let after = switch (getNextScheduledMatchGroup()) {
+                case (null) {
+                    #season; // No match groups to schedule after
+                };
+                case (?mg) {
+                    let afterMatchGroupId : Nat = mg.matchGroupId + matchCount - 1;
+                    #matchGroupId(afterMatchGroupId);
+                };
+            };
+            reverseEffects.add({
+                after;
+                effect;
+            });
         };
 
         public func getMatchGroup(matchGroupId : Nat) : ?{
@@ -378,6 +473,27 @@ module {
                 event<system>(matchGroupId, updatedMatchGroup);
             };
 
+            let filterReverseEffects = reverseEffects.vals()
+            |> Iter.filter(
+                _,
+                func(e : ReverseEffect) : Bool {
+                    // Only end of match group effects
+                    let #matchGroupId(afterMatchGroupId) = e.after else return false;
+                    afterMatchGroupId == matchGroupId;
+                },
+            )
+            |> Iter.map(
+                _,
+                func(e : ReverseEffect) : Scenario.ReverseEffect = e.effect,
+            )
+            |> Iter.toArray(_);
+
+            for (event in events.onEffectReversal.vals()) {
+                // TODO this feels weird to have potentially do multiple events, but it's the only
+                // way that I could find to handle the cyclical dependency
+                event<system>(filterReverseEffects);
+            };
+
             let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(season.matchGroups.size());
             label f for (matchGroup in Iter.fromArray(newMatchGroups)) {
                 switch (matchGroup) {
@@ -386,13 +502,10 @@ module {
                 };
             };
 
-            let updatedTeamStandings : Buffer.Buffer<TeamStandingInfo> = calculateTeamStandings(Buffer.toArray(completedMatchGroups));
-
             let updatedSeason = {
                 season with
                 matchGroups = newMatchGroups;
             };
-            teamStandings := ?updatedTeamStandings;
             seasonStatus := #inProgress(updatedSeason);
 
             // Get next match group to schedule
@@ -440,29 +553,7 @@ module {
                     return #ok;
                 };
             };
-            let finalTeamStandings = calculateTeamStandings(completedMatchGroups);
-            let completedTeams = inProgressSeason.teams
-            |> Iter.fromArray(_)
-            |> Iter.map(
-                _,
-                func(t : Season.TeamInfo) : Season.CompletedSeasonTeam {
-                    let ?standingIndex = finalTeamStandings.vals()
-                    |> IterTools.findIndex(_, func(s : TeamStandingInfo) : Bool = s.id == t.id) else Debug.trap("Team not found in standings: " # Nat.toText(t.id));
-                    let standingInfo = finalTeamStandings.get(standingIndex);
-
-                    {
-                        id = t.id;
-                        name = t.name;
-                        logoUrl = t.logoUrl;
-                        color = t.color;
-                        wins = standingInfo.wins;
-                        losses = standingInfo.losses;
-                        totalScore = standingInfo.totalScore;
-                        positions = t.positions;
-                    };
-                },
-            )
-            |> Iter.toArray(_);
+            let finalTeamStandings = buildTeamStandingInfo(completedMatchGroups);
 
             let finalMatch = completedMatchGroups[completedMatchGroups.size() - 1].matches[0];
             let (champion, runnerUp) = switch (finalMatch.winner) {
@@ -485,16 +576,35 @@ module {
                 };
             };
 
-            teamStandings := ?finalTeamStandings;
-            let completedSeason = {
+            let completedSeason : Season.CompletedSeason = {
                 championTeamId = champion.id;
                 runnerUpTeamId = runnerUp.id;
-                teams = completedTeams;
+                teams = finalTeamStandings;
                 matchGroups = completedMatchGroups;
             };
             seasonStatus := #completed(completedSeason);
             for (event in events.onSeasonComplete.vals()) {
                 event<system>(completedSeason);
+            };
+            let filterReverseEffects = reverseEffects.vals()
+            |> Iter.filter(
+                _,
+                func(e : ReverseEffect) : Bool {
+                    // Only end of season effects
+                    let #season = e.after else return false;
+                    true;
+                },
+            )
+            |> Iter.map(
+                _,
+                func(e : ReverseEffect) : Scenario.ReverseEffect = e.effect,
+            )
+            |> Iter.toArray(_);
+
+            for (event in events.onEffectReversal.vals()) {
+                // TODO this feels weird to have potentially do multiple events, but it's the only
+                // way that I could find to handle the cyclical dependency
+                event<system>(filterReverseEffects);
             };
             #ok;
         };
@@ -571,9 +681,9 @@ module {
                     case (#predetermined(teamId)) teamId;
                     case (#seasonStandingIndex(standingIndex)) {
                         // get team based on current season standing
-                        let ?standings = teamStandings else Debug.trap("Season standings not found. Match Group Id: " # Nat.toText(matchGroupId));
+                        let ?standings = getTeamStandings() else Debug.trap("Standings not found");
 
-                        let ?teamWithStanding = standings.getOpt(standingIndex) else Debug.trap("Standing not found. Standings: " # debug_show (Buffer.toArray(standings)) # " Standing index: " # Nat.toText(standingIndex));
+                        let ?teamWithStanding = Util.arrayGetSafe(standings, standingIndex) else Debug.trap("Standing not found. Standings: " # debug_show (standings) # " Standing index: " # Nat.toText(standingIndex));
 
                         teamWithStanding.id;
                     };
@@ -662,97 +772,6 @@ module {
             #ok(Buffer.toArray(completedMatchGroups));
         };
 
-        private func calculateTeamStandings(
-            matchGroups : [Season.CompletedMatchGroup]
-        ) : Buffer.Buffer<TeamStandingInfo> {
-            var teamScores = Trie.empty<Nat, TeamStandingInfo>();
-            let updateTeamScore = func(
-                teamId : Nat,
-                score : Int,
-                state : { #win; #loss; #tie },
-            ) : () {
-
-                let teamKey = {
-                    key = teamId;
-                    hash = Nat32.fromNat(teamId);
-                };
-                let currentScore = switch (Trie.get(teamScores, teamKey, Nat.equal)) {
-                    case (null) {
-                        {
-                            wins = 0;
-                            losses = 0;
-                            totalScore = 0;
-                        };
-                    };
-                    case (?score) score;
-                };
-
-                let (wins, losses) = switch (state) {
-                    case (#win) (currentScore.wins + 1, currentScore.losses);
-                    case (#loss) (currentScore.wins, currentScore.losses + 1);
-                    case (#tie) (currentScore.wins, currentScore.losses);
-                };
-
-                // Update with +1
-                let (newTeamScores, _) = Trie.put<Nat, TeamStandingInfo>(
-                    teamScores,
-                    teamKey,
-                    Nat.equal,
-                    {
-                        id = teamId;
-                        wins = wins;
-                        losses = losses;
-                        totalScore = currentScore.totalScore + score;
-                    },
-                );
-                teamScores := newTeamScores;
-            };
-
-            // Populate scores
-            label f1 for (matchGroup in Iter.fromArray(matchGroups)) {
-                label f2 for (match in Iter.fromArray(matchGroup.matches)) {
-                    let (team1State, team2State) = switch (match.winner) {
-                        case (#team1) (#win, #loss);
-                        case (#team2) (#loss, #win);
-                        case (#tie) (#tie, #tie);
-                    };
-                    updateTeamScore(match.team1.id, match.team1.score, team1State);
-                    updateTeamScore(match.team2.id, match.team2.score, team2State);
-                };
-            };
-            teamScores
-            |> Trie.iter(_)
-            |> Iter.map(
-                _,
-                func((_, v) : (Nat, TeamStandingInfo)) : TeamStandingInfo = v,
-            )
-            |> IterTools.sort(
-                _,
-                func(a : TeamStandingInfo, b : TeamStandingInfo) : Order.Order {
-                    if (a.wins > b.wins) {
-                        #greater;
-                    } else if (a.wins < b.wins) {
-                        #less;
-                    } else {
-                        if (a.losses < b.losses) {
-                            #greater;
-                        } else if (a.losses > b.losses) {
-                            #less;
-                        } else {
-                            if (a.totalScore > b.totalScore) {
-                                #greater;
-                            } else if (a.totalScore < b.totalScore) {
-                                #less;
-                            } else {
-                                #equal;
-                            };
-                        };
-                    };
-                },
-            )
-            |> Buffer.fromIter(_);
-        };
-
         public func startNextMatchGroup<system>() : Result.Result<(), StartMatchGroupError> {
             let ?nextMatchGroup = getNextScheduledMatchGroup() else return #err(#notScheduledYet);
             switch (startMatchGroup<system>(nextMatchGroup.matchGroupId)) {
@@ -786,27 +805,9 @@ module {
 
             let teamDataMap = HashMap.HashMap<Nat, StartMatchTeam>(0, Nat.equal, Nat32.fromNat);
 
-            let getPlayer = func(playerId : Nat32) : Player.Player {
-                let ?player = season.players
-                |> Iter.fromArray(_)
-                |> IterTools.find(_, func(p : Player.Player) : Bool = p.id == playerId) else Debug.trap("Player not found: " # Nat32.toText(playerId));
-                player;
-            };
-            for (team in season.teams.vals()) {
-                let teamData : StartMatchTeam = {
-                    team with
-                    positions = {
-                        pitcher = getPlayer(team.positions.pitcher);
-                        firstBase = getPlayer(team.positions.firstBase);
-                        secondBase = getPlayer(team.positions.secondBase);
-                        thirdBase = getPlayer(team.positions.thirdBase);
-                        shortStop = getPlayer(team.positions.shortStop);
-                        leftField = getPlayer(team.positions.leftField);
-                        centerField = getPlayer(team.positions.centerField);
-                        rightField = getPlayer(team.positions.rightField);
-                    };
-                };
-                teamDataMap.put(team.id, teamData);
+            for (match in scheduledMatchGroup.matches.vals()) {
+                teamDataMap.put(match.team1.id, getTeamData(match.team1.id));
+                teamDataMap.put(match.team2.id, getTeamData(match.team2.id));
             };
 
             for (match in Iter.fromArray(scheduledMatchGroup.matches)) {
@@ -815,7 +816,6 @@ module {
                 matchStartRequestBuffer.add({
                     team1 = team1Data;
                     team2 = team2Data;
-                    anomoly = match.anomoly.anomoly;
                 });
             };
             let matches = Buffer.toArray(matchStartRequestBuffer);
@@ -826,17 +826,9 @@ module {
             |> IterTools.mapEntries(
                 _,
                 func(matchId : Nat, match : StartMatchRequest) : Season.InProgressMatch {
-                    let mapTeam = func(
-                        teamData : StartMatchTeam
-                    ) : Season.InProgressTeam {
-                        {
-                            id = teamData.id;
-                        };
-                    };
                     {
-                        team1 = mapTeam(match.team1);
-                        team2 = mapTeam(match.team2);
-                        anomoly = match.anomoly;
+                        team1 = match.team1;
+                        team2 = match.team2;
                     };
                 },
             )
@@ -863,55 +855,6 @@ module {
         };
 
         resetTimers<system>();
-    };
-
-    private func buildTeamInitData(
-        team : Team.Team,
-        allPlayers : [Player.Player],
-    ) : Season.TeamInfo {
-
-        let teamPlayers = allPlayers
-        |> Iter.fromArray(_)
-        |> Iter.filter(
-            _,
-            func(p : Player.Player) : Bool = p.teamId == team.id,
-        )
-        |> Iter.toArray(_);
-
-        let getPosition = func(position : FieldPosition.FieldPosition) : Nat32 {
-            let playerOrNull = teamPlayers
-            |> Iter.fromArray(_)
-            |> IterTools.find(_, func(p : Player.Player) : Bool = p.position == position);
-            switch (playerOrNull) {
-                case (null) Debug.trap("Team " # Nat.toText(team.id) # " is missing a player in position: " # debug_show (position)); // TODO
-                case (?player) player.id;
-            };
-        };
-
-        let pitcher = getPosition(#pitcher);
-        let firstBase = getPosition(#firstBase);
-        let secondBase = getPosition(#secondBase);
-        let thirdBase = getPosition(#thirdBase);
-        let shortStop = getPosition(#shortStop);
-        let leftField = getPosition(#leftField);
-        let centerField = getPosition(#centerField);
-        let rightField = getPosition(#rightField);
-        {
-            id = team.id;
-            name = team.name;
-            logoUrl = team.logoUrl;
-            color = team.color;
-            positions = {
-                pitcher = pitcher;
-                firstBase = firstBase;
-                secondBase = secondBase;
-                thirdBase = thirdBase;
-                shortStop = shortStop;
-                leftField = leftField;
-                centerField = centerField;
-                rightField = rightField;
-            };
-        };
     };
 
     private func getRandomAnomoly(prng : Prng) : Anomoly.AnomolyWithMetaData {

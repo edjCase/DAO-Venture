@@ -43,6 +43,7 @@ actor MainActor : Types.Actor {
         seasonStatus = #notStarted;
         teamStandings = null;
         predictions = [];
+        reverseEffects = [];
     };
     stable var predictionStableData : PredictionHandler.StableData = {
         matchGroups = [];
@@ -90,6 +91,7 @@ actor MainActor : Types.Actor {
         onMatchGroupStart = Buffer.Buffer<SeasonHandler.OnMatchGroupStartEvent>(0);
         onMatchGroupComplete = Buffer.Buffer<SeasonHandler.OnMatchGroupCompleteEvent>(0);
         onSeasonComplete = Buffer.Buffer<SeasonHandler.OnSeasonCompleteEvent>(0);
+        onEffectReversal = Buffer.Buffer<SeasonHandler.OnEffectReversalEvent>(0);
     };
 
     seasonEvents.onSeasonStart.add(
@@ -218,6 +220,27 @@ actor MainActor : Types.Actor {
     };
 
     var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamEnergy);
+
+    seasonEvents.onEffectReversal.add(
+        func<system>(effects : [Scenario.ReverseEffect]) : () {
+            for (effect in Iter.fromArray(effects)) {
+                switch (effect) {
+                    case (#skill(s)) {
+                        switch (playerHandler.updateSkill(s.playerId, s.skill, -s.deltaToRemove)) {
+                            case (#ok) ();
+                            case (#err(e)) Debug.trap("Error updating player skill: " # debug_show (e));
+                        };
+                    };
+                    case (#anomoly(m)) {
+                        switch (teamsHandler.removeAnomoly(m.teamId, m.anomoly)) {
+                            case (#ok) ();
+                            case (#err(e)) Debug.trap("Error removing anomoly: " # debug_show (e));
+                        };
+                    };
+                };
+            };
+        }
+    );
 
     var userHandler = UserHandler.UserHandler(userStableData);
 

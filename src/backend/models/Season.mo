@@ -14,8 +14,6 @@ module {
     };
 
     public type InProgressSeason = {
-        teams : [TeamInfo];
-        players : [Player.Player];
         matchGroups : [InProgressSeasonMatchGroupVariant];
     };
 
@@ -24,14 +22,6 @@ module {
         #scheduled : ScheduledMatchGroup;
         #inProgress : InProgressMatchGroup;
         #completed : CompletedMatchGroup;
-    };
-
-    public type TeamInfo = {
-        id : Nat;
-        name : Text;
-        logoUrl : Text;
-        positions : FieldPosition.TeamPositions;
-        color : (Nat8, Nat8, Nat8);
     };
 
     public type NotScheduledMatchGroup = {
@@ -61,7 +51,6 @@ module {
     public type ScheduledMatch = {
         team1 : ScheduledTeamInfo;
         team2 : ScheduledTeamInfo;
-        anomoly : Anomoly.AnomolyWithMetaData;
     };
 
     public type InProgressMatchGroup = {
@@ -71,23 +60,25 @@ module {
 
     public type InProgressTeam = {
         id : Nat;
+        positions : FieldPosition.TeamPositions;
+        anomolies : [Anomoly.Anomoly];
     };
 
     public type InProgressMatch = {
         team1 : InProgressTeam;
         team2 : InProgressTeam;
-        anomoly : Anomoly.Anomoly;
     };
 
     public type CompletedMatchTeam = {
         id : Nat;
         score : Int;
+        positions : FieldPosition.TeamPositions;
+        anomolies : [Anomoly.Anomoly];
     };
 
     public type CompletedMatch = {
         team1 : CompletedMatchTeam;
         team2 : CompletedMatchTeam;
-        anomoly : Anomoly.Anomoly;
         winner : Team.TeamIdOrTie;
     };
 
@@ -104,7 +95,8 @@ module {
         matchGroups : [CompletedMatchGroup];
     };
 
-    public type CompletedSeasonTeam = TeamInfo and {
+    public type CompletedSeasonTeam = {
+        id : Nat;
         wins : Nat;
         losses : Nat;
         totalScore : Int;

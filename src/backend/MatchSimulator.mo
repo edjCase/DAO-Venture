@@ -48,9 +48,6 @@ module {
 
     public type TeamInitData = {
         id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
         positions : {
             firstBase : Player.Player;
             secondBase : Player.Player;
@@ -61,10 +58,10 @@ module {
             centerField : Player.Player;
             rightField : Player.Player;
         };
+        anomolies : [Anomoly.Anomoly];
     };
 
     public func initState(
-        anomoly : Anomoly.Anomoly,
         team1 : TeamInitData,
         team2 : TeamInitData,
         team1StartOffense : Bool,
@@ -92,7 +89,6 @@ module {
             offenseTeamId = if (team1StartOffense) #team1 else #team2;
             team1 = team1State;
             team2 = team2State;
-            anomoly = anomoly;
             log = {
                 rounds = [];
             };
@@ -159,9 +155,7 @@ module {
 
         let teamState : LiveState.LiveMatchTeam = {
             id = team.id;
-            name = team.name;
-            logoUrl = team.logoUrl;
-            color = team.color;
+            anomolies = team.anomolies;
             score = 0;
             positions = {
                 pitcher = team.positions.pitcher.id;
@@ -236,10 +230,8 @@ module {
         private func mapMutableTeam(team : MutableState.MutableTeamState) : LiveState.LiveMatchTeam {
             {
                 id = team.id;
-                name = team.name;
-                logoUrl = team.logoUrl;
                 score = team.score;
-                color = team.color;
+                anomolies = team.anomolies;
                 positions = {
                     pitcher = team.positions.pitcher;
                     firstBase = team.positions.firstBase;
