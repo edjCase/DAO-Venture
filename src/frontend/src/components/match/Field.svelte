@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import { LivePlayerState } from "../../ic-agent/declarations/main";
   import {
     LiveMatch,
@@ -219,7 +219,7 @@
     <svg class="" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
       <rect width="100%" height="100%" fill="#F5F5F5" opacity={0.1} />
 
-      <!-- Outfield -->
+       Outfield 
       <FieldPlayer
         x={leftFieldPosition.x}
         y={leftFieldPosition.y}
@@ -239,7 +239,7 @@
         player={getPlayer(liveData.defenseTeam.positions.rightField)}
       />
 
-      <!-- Home base -->
+       Home base 
       <FieldBase
         x={homeBaseLocation.x}
         y={homeBaseLocation.y}
@@ -247,7 +247,7 @@
         player={getPlayer(liveData.liveState.bases.atBat)}
       />
 
-      <!-- First base -->
+       First base 
       <FieldBase
         x={firstBaseLocation.x}
         y={firstBaseLocation.y}
@@ -262,7 +262,7 @@
         player={getPlayer(liveData.defenseTeam.positions.firstBase)}
       />
 
-      <!-- Second base -->
+       Second base 
       <FieldBase
         x={secondBaseLocation.x}
         y={secondBaseLocation.y}
@@ -277,7 +277,7 @@
         player={getPlayer(liveData.defenseTeam.positions.secondBase)}
       />
 
-      <!-- Short stop -->
+       Short stop 
       <FieldPlayer
         x={shortStopPosition.x}
         y={shortStopPosition.y}
@@ -285,7 +285,7 @@
         player={getPlayer(liveData.defenseTeam.positions.shortStop)}
       />
 
-      <!-- Third base -->
+       Third base 
       <FieldBase
         x={thirdBaseLocation.x}
         y={thirdBaseLocation.y}
@@ -300,7 +300,7 @@
         player={getPlayer(liveData.defenseTeam.positions.thirdBase)}
       />
 
-      <!-- Pitcher -->
+       Pitcher 
       <FieldPlayer
         x={pitcherPosition.x}
         y={pitcherPosition.y}
@@ -308,10 +308,10 @@
         player={getPlayer(liveData.defenseTeam.positions.pitcher)}
       />
 
-      <!-- Baseball -->
-      <!-- <FieldBall origin={pitcherPosition} locations={ballLocations} /> -->
+       Baseball 
+       <FieldBall origin={pitcherPosition} locations={ballLocations} /> 
 
-      <!-- Text -->
+       Text 
       <text x={60} y={88} font-size={3} fill="white">
         Strikes: {liveData.liveState.strikes}
       </text>
@@ -320,4 +320,4 @@
       </text>
     </svg>
   </div>
-{/if}
+{/if} -->

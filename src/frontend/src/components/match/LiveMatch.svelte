@@ -1,7 +1,8 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import { MatchDetails } from "../../models/Match";
 
   import { LiveMatch, LiveTeamDetails } from "../../stores/LiveMatchGroupStore";
+  import { teamStore } from "../../stores/TeamStore";
   import Field from "./Field.svelte";
   import TeamFieldInfo from "./TeamFieldInfo.svelte";
 
@@ -12,6 +13,8 @@
   let defenseTeam: LiveTeamDetails | undefined;
   let winner: string | undefined;
 
+  $: teams = $teamStore;
+
   $: {
     if ("score" in match.team1 && "score" in match.team2) {
       match.team1.score = liveMatch.team1.score;
@@ -20,11 +23,13 @@
     if (liveMatch) {
       match.winner = liveMatch.winner;
     }
-    if (match.winner && "name" in match.team1 && "name" in match.team2) {
+    if (match.winner && "id" in match.team1 && "id" in match.team2) {
+      let team1Id = match.team1.id;
+      let team2Id = match.team2.id;
       if ("team1" in match.winner) {
-        winner = match.team1.name;
+        winner = teams?.find((t) => t.id == team1Id)?.name;
       } else if ("team2" in match.winner) {
-        winner = match.team2.name;
+        winner = teams?.find((t) => t.id == team2Id)?.name;
       } else {
         winner = "Tie";
       }
@@ -46,7 +51,7 @@
     <div class="text-center text-3xl mb-5">
       Round {liveMatch.log?.rounds.length}
     </div>
-    <!-- <div class="absolute top-[300px] left-[5%]">
+    <div class="absolute top-[300px] left-[5%]">
         {#if "id" in match.team1 && "id" in match.team2}
           {#each lastTurn.events as e}
             <MatchEvent
@@ -56,7 +61,7 @@
             />
           {/each}
         {/if}
-      </div> -->
+      </div>
     {#if defenseTeam}
       <TeamFieldInfo team={defenseTeam} isOffense={false} />
     {/if}
@@ -72,3 +77,4 @@
     <div class="text-center text-3xl mb-5">No Live</div>
   {/if}
 </div>
+-->

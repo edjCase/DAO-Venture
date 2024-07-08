@@ -1,23 +1,8 @@
 <script lang="ts">
+  import { TeamOrUndetermined } from "../../models/Team";
   import { toRgbString } from "../../utils/StringUtil";
 
-  export let team:
-    | {
-        logoUrl: string;
-        name: string;
-        id: bigint;
-        color: [number, number, number];
-      }
-    | {
-        logoUrl: string;
-        name: string;
-        id: bigint;
-        color: [number, number, number];
-        entropy: bigint;
-        energy: bigint;
-      }
-    | { winnerOfMatch: number }
-    | { seasonStandingIndex: number };
+  export let team: TeamOrUndetermined;
   export let size: "xxs" | "xs" | "sm" | "md" | "lg" | undefined;
   export let border: boolean = true;
   export let padding: boolean = true;

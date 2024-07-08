@@ -21,14 +21,11 @@ export type MatchState = 'NotScheduled' | 'Scheduled' | 'InProgress' | 'Played' 
 
 export type TeamDetails = {
     id: bigint;
-    name: string;
-    logoUrl: string;
-    color: [number, number, number];
 };
 
 export type TeamDetailsWithScore = TeamDetails & { score: bigint | undefined };
 
 export type TeamDetailsOrUndetermined =
-    | TeamDetails
+    | TeamDetailsWithScore
     | { winnerOfMatch: number }
     | { seasonStandingIndex: number };

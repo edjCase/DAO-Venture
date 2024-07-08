@@ -1,13 +1,18 @@
 <script lang="ts">
     import { Spinner } from "flowbite-svelte";
-    import { TeamId, TeamStandingInfo } from "../../ic-agent/declarations/main";
     import {
-        MatchDetails,
-        TeamDetailsOrUndetermined,
-    } from "../../models/Match";
+        Team,
+        TeamId,
+        TeamStandingInfo,
+    } from "../../ic-agent/declarations/main";
+    import { MatchDetails } from "../../models/Match";
     import { predictionStore } from "../../stores/PredictionsStore";
     import { teamStore } from "../../stores/TeamStore";
     import TeamLogo from "../team/TeamLogo.svelte";
+    import {
+        mapTeamOrUndetermined,
+        TeamOrUndetermined,
+    } from "../../models/Team";
 
     type MatchPrediction = {
         teamTotal: number;
@@ -17,15 +22,16 @@
 
     export let match: MatchDetails;
     export let teamId: TeamId;
+    export let teams: Team[];
 
-    let matchTeam: TeamDetailsOrUndetermined;
+    let matchTeam: TeamOrUndetermined;
     let matchPredictions: MatchPrediction | undefined;
     let predicting = false;
 
     if ("team1" in teamId) {
-        matchTeam = match.team1;
+        matchTeam = mapTeamOrUndetermined(match.team1, teams);
     } else {
-        matchTeam = match.team2;
+        matchTeam = mapTeamOrUndetermined(match.team2, teams);
     }
 
     let teamStandings: TeamStandingInfo[] | undefined;
@@ -110,7 +116,7 @@
 
 <div class="flex justify-between gap-2">
     <div class="flex flex-col justify-center items-center">
-        <TeamLogo team={matchTeam} size="sm" stats={true} />
+        <TeamLogo team={matchTeam} size="sm" stats={false} />
         <div class="text-sm font-bold">
             {teamStats}
         </div>

@@ -1,6 +1,5 @@
 <script lang="ts">
   import { MatchDetails, MatchGroupDetails } from "../../models/Match";
-  import LiveMatchComponent from "./LiveMatch.svelte";
   import {
     LiveMatch,
     liveMatchGroupStore,
@@ -10,6 +9,7 @@
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import MatchUp from "./MatchUp.svelte";
   import { Hr } from "flowbite-svelte";
+  import { teamStore } from "../../stores/TeamStore";
 
   export let matchGroup: MatchGroupDetails;
   export let lastMatchGroup: MatchGroupDetails | undefined;
@@ -22,17 +22,13 @@
     liveMatches ? liveMatches[index] : undefined,
   ]);
   $: lastMatches = lastMatchGroup?.matches || [];
-  $: selectedMatch = matchGroup.matches[Number(selectedMatchId)];
-  $: selectedLiveMatch = liveMatches
-    ? liveMatches[Number(selectedMatchId)]
-    : undefined;
+
+  $: teams = $teamStore;
 
   liveMatchGroupStore.subscribe((liveMatchGroup) => {
     if (!liveMatchGroup || matchGroup.id != liveMatchGroup?.id) {
-      selectedLiveMatch = undefined;
       liveMatches = undefined;
     } else {
-      selectedLiveMatch = liveMatchGroup.matches[Number(selectedMatchId)];
       liveMatches = liveMatchGroup.matches;
     }
   });
@@ -53,9 +49,11 @@
       <div class="p-2">
         <div class="text-xl text-center mb-2">Predict Winners</div>
         <div class="flex justify-around flex-wrap gap-4">
-          {#each matchGroup.matches as match}
-            <MatchUp {match} />
-          {/each}
+          {#if teams}
+            {#each matchGroup.matches as match}
+              <MatchUp {match} {teams} />
+            {/each}
+          {/if}
         </div>
       </div>
     </section>
@@ -81,14 +79,14 @@
       {/each}
     </div>
     <div class="flex flex-col items-center justify-center">
-      {#if selectedLiveMatch}
+      <!-- {#if selectedLiveMatch}
         <div class="flex items-center justify-center w-screen sm:w-96">
           <LiveMatchComponent
             match={selectedMatch}
             liveMatch={selectedLiveMatch}
           />
         </div>
-      {/if}
+      {/if} -->
     </div>
   {/if}
   {#if lastMatchGroup}

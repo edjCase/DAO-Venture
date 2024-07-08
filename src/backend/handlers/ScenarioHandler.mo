@@ -110,6 +110,11 @@ module {
         value : ?Scenario.ScenarioOptionValue;
     };
 
+    public type VotingData = {
+        yourData : ?ScenarioVote;
+        teamIdsWithConsensus : [Nat];
+    };
+
     public type ScenarioVote = {
         value : ?Scenario.ScenarioOptionValue;
         votingPower : Nat;
@@ -317,7 +322,7 @@ module {
                     value = ?value;
                 },
             );
-            switch (calculateResultsInternal(scenario, false)) {
+            switch (calculateTeamConsensus(scenario, false)) {
                 case (#noConsensus) ();
                 case (#consensus(teamVotingResult)) {
                     end<system>(scenario, teamVotingResult);
@@ -326,7 +331,7 @@ module {
             #ok;
         };
 
-        public func getVote(scenarioId : Nat, voterId : Principal) : Result.Result<ScenarioVote, { #notEligible; #scenarioNotFound }> {
+        public func getVote(scenarioId : Nat, voterId : Principal) : Result.Result<VotingData, { #notEligible; #scenarioNotFound }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
 
@@ -337,12 +342,26 @@ module {
                 0,
                 func(total : Nat, option : Vote) : Nat = total + option.votingPower,
             );
+            let #consensus(teams) = calculateTeamConsensus(scenario, true) else Prelude.unreachable();
+            let teamIdWithConsensus = teams.vals()
+            |> Iter.filter(
+                _,
+                func(teamChoice : ResolvedTeamChoice) : Bool = teamChoice.value != null,
+            )
+            |> Iter.map(
+                _,
+                func(teamChoice : ResolvedTeamChoice) : Nat = teamChoice.teamId,
+            )
+            |> Iter.toArray(_);
             #ok({
-                value = vote.value;
-                votingPower = vote.votingPower;
-                teamVotingPower = teamVotingPower;
-                teamOptions = teamOptions;
-                teamId = vote.teamId;
+                teamIdsWithConsensus = teamIdWithConsensus;
+                yourData = ?{
+                    value = vote.value;
+                    votingPower = vote.votingPower;
+                    teamVotingPower = teamVotingPower;
+                    teamOptions = teamOptions;
+                    teamId = vote.teamId;
+                };
             });
         };
 
@@ -569,7 +588,7 @@ module {
             };
         };
 
-        private func calculateResultsInternal(scenario : MutableScenarioData, votingClosed : Bool) : {
+        private func calculateTeamConsensus(scenario : MutableScenarioData, votingClosed : Bool) : {
             #consensus : [ResolvedTeamChoice];
             #noConsensus;
         } {
@@ -985,7 +1004,7 @@ module {
                 func<system>() : async* () {
                     Debug.print("Ending scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
-                    let teamVotingResult = switch (calculateResultsInternal(scenario, true)) {
+                    let teamVotingResult = switch (calculateTeamConsensus(scenario, true)) {
                         case (#consensus(teamVotingResult)) teamVotingResult;
                         case (#noConsensus) Prelude.unreachable();
                     };

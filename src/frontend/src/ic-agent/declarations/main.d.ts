@@ -35,21 +35,6 @@ export type Anomoly = { 'foggy' : null } |
   { 'doubleOrNothing' : null } |
   { 'windy' : null } |
   { 'rainy' : null };
-export interface AnomolyEffect {
-  'duration' : Duration,
-  'team' : TargetTeam,
-  'anomoly' : Anomoly,
-}
-export interface AnomolyMatchEffectOutcome {
-  'duration' : Duration,
-  'teamId' : bigint,
-  'anomoly' : Anomoly,
-}
-export interface AnomolyWithMetaData {
-  'name' : string,
-  'description' : string,
-  'anomoly' : Anomoly,
-}
 export type Base = { 'homeBase' : null } |
   { 'thirdBase' : null } |
   { 'secondBase' : null } |
@@ -78,13 +63,17 @@ export interface CompletedMatch {
   'team1' : CompletedMatchTeam,
   'team2' : CompletedMatchTeam,
   'winner' : TeamIdOrTie,
-  'anomoly' : Anomoly,
 }
 export interface CompletedMatchGroup {
   'time' : Time,
   'matches' : Array<CompletedMatch>,
 }
-export interface CompletedMatchTeam { 'id' : bigint, 'score' : bigint }
+export interface CompletedMatchTeam {
+  'id' : bigint,
+  'anomolies' : Array<Anomoly>,
+  'score' : bigint,
+  'positions' : TeamPositions,
+}
 export interface CompletedSeason {
   'teams' : Array<CompletedSeasonTeam>,
   'runnerUpTeamId' : bigint,
@@ -93,13 +82,9 @@ export interface CompletedSeason {
 }
 export interface CompletedSeasonTeam {
   'id' : bigint,
-  'name' : string,
-  'color' : [number, number, number],
   'wins' : bigint,
   'losses' : bigint,
   'totalScore' : bigint,
-  'logoUrl' : string,
-  'positions' : TeamPositions,
 }
 export type CreatePlayerFluffError = { 'notAuthorized' : null } |
   { 'invalid' : Array<InvalidError> };
@@ -155,13 +140,11 @@ export type Effect = { 'allOf' : Array<Effect> } |
   { 'entropy' : EntropyEffect } |
   { 'skill' : SkillEffect } |
   { 'injury' : InjuryEffect } |
-  { 'anomoly' : AnomolyEffect } |
   { 'energy' : EnergyEffect };
 export type EffectOutcome = { 'teamTrait' : TeamTraitTeamEffectOutcome } |
   { 'entropy' : EntropyTeamEffectOutcome } |
   { 'skill' : SkillPlayerEffectOutcome } |
   { 'injury' : InjuryPlayerEffectOutcome } |
-  { 'anomoly' : AnomolyMatchEffectOutcome } |
   { 'energy' : EnergyTeamEffectOutcome };
 export interface EnergyEffect {
   'value' : { 'flat' : bigint },
@@ -211,7 +194,7 @@ export type GetScenarioResult = { 'ok' : Scenario } |
 export type GetScenarioVoteError = { 'notEligible' : null } |
   { 'scenarioNotFound' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
-export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
+export type GetScenarioVoteResult = { 'ok' : VotingData } |
   { 'err' : GetScenarioVoteError };
 export type GetScenariosResult = { 'ok' : Array<Scenario> };
 export type GetTeamOwnersRequest = { 'all' : null } |
@@ -250,15 +233,12 @@ export type HitLocation = { 'rightField' : null } |
 export interface InProgressMatch {
   'team1' : InProgressTeam,
   'team2' : InProgressTeam,
-  'anomoly' : Anomoly,
 }
 export interface InProgressMatchGroup {
   'time' : Time,
   'matches' : Array<InProgressMatch>,
 }
 export interface InProgressSeason {
-  'teams' : Array<TeamInfo>,
-  'players' : Array<Player>,
   'matchGroups' : Array<InProgressSeasonMatchGroupVariant>,
 }
 export type InProgressSeasonMatchGroupVariant = {
@@ -267,7 +247,11 @@ export type InProgressSeasonMatchGroupVariant = {
   { 'completed' : CompletedMatchGroup } |
   { 'inProgress' : InProgressMatchGroup } |
   { 'notScheduled' : NotScheduledMatchGroup };
-export interface InProgressTeam { 'id' : bigint }
+export interface InProgressTeam {
+  'id' : bigint,
+  'anomolies' : Array<Anomoly>,
+  'positions' : TeamPositions,
+}
 export interface InjuryEffect { 'position' : TargetPosition }
 export interface InjuryPlayerEffectOutcome {
   'position' : TargetPositionInstance,
@@ -330,7 +314,6 @@ export interface LiveMatchStateWithStatus {
   'offenseTeamId' : TeamId,
   'players' : Array<LivePlayerState>,
   'bases' : LiveBaseState,
-  'anomoly' : Anomoly,
   'strikes' : bigint,
 }
 export type LiveMatchStatus = { 'completed' : LiveMatchStatusCompleted } |
@@ -338,10 +321,8 @@ export type LiveMatchStatus = { 'completed' : LiveMatchStatusCompleted } |
 export interface LiveMatchStatusCompleted { 'reason' : MatchEndReason }
 export interface LiveMatchTeam {
   'id' : bigint,
-  'name' : string,
-  'color' : [number, number, number],
+  'anomolies' : Array<Anomoly>,
   'score' : bigint,
-  'logoUrl' : string,
   'positions' : TeamPositions,
 }
 export interface LivePlayerState {
@@ -651,7 +632,6 @@ export interface ScenarioVote {
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
   'team2' : ScheduledTeamInfo,
-  'anomoly' : AnomolyWithMetaData,
 }
 export interface ScheduledMatchGroup {
   'time' : Time,
@@ -761,13 +741,6 @@ export type TeamIdOrBoth = { 'team1' : null } |
 export type TeamIdOrTie = { 'tie' : null } |
   { 'team1' : null } |
   { 'team2' : null };
-export interface TeamInfo {
-  'id' : bigint,
-  'name' : string,
-  'color' : [number, number, number],
-  'logoUrl' : string,
-  'positions' : TeamPositions,
-}
 export interface TeamPositions {
   'rightField' : number,
   'leftField' : number,
@@ -930,6 +903,10 @@ export interface VoteOnTeamProposalRequest {
 }
 export type VoteOnTeamProposalResult = { 'ok' : null } |
   { 'err' : VoteOnTeamProposalError };
+export interface VotingData {
+  'teamIdsWithConsensus' : Array<bigint>,
+  'yourData' : [] | [ScenarioVote],
+}
 export interface WeightedEffect {
   'weight' : bigint,
   'description' : string,

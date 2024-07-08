@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
-    import { Scenario, ScenarioVote } from "../../ic-agent/declarations/main";
+    import { Scenario, VotingData } from "../../ic-agent/declarations/main";
     import { User } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import LotteryInProgressScenarioState from "./in_progress_states/LotteryInProgressScenarioState.svelte";
@@ -13,6 +13,7 @@
     import { Team } from "../../ic-agent/declarations/main";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
     import ScenarioOptionsNat from "./ScenarioOptionsNat.svelte";
+    import TeamLogo from "../team/TeamLogo.svelte";
 
     export let scenario: Scenario;
     export let userContext: User | undefined;
@@ -29,80 +30,101 @@
         isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
     }
 
-    let vote: ScenarioVote | "ineligible" = "ineligible";
+    let votingData: VotingData | undefined;
 
     let selectedId: bigint | undefined;
     let selectedNat: bigint | undefined;
 
-    scenarioStore.subscribeVotes((votes) => {
-        if (votes[Number(scenario.id)] !== undefined) {
-            vote = votes[Number(scenario.id)];
+    scenarioStore.subscribeVotingData((scenarioVotingData) => {
+        votingData = scenarioVotingData[Number(scenario.id)];
+        if (votingData?.yourData[0] !== undefined) {
             selectedId =
-                vote.value[0] !== undefined && "id" in vote.value[0]
-                    ? vote.value[0].id
+                votingData.yourData[0].value[0] !== undefined &&
+                "id" in votingData.yourData[0]?.value[0]
+                    ? votingData.yourData[0]?.value[0].id
                     : undefined;
             selectedNat =
-                vote.value[0] !== undefined && "nat" in vote.value[0]
-                    ? vote.value[0].nat
+                votingData.yourData[0]?.value[0] !== undefined &&
+                "nat" in votingData.yourData[0]?.value[0]
+                    ? votingData.yourData[0]?.value[0].nat
                     : undefined;
         } else {
-            vote = "ineligible";
             selectedId = undefined;
             selectedNat = undefined;
         }
     });
 </script>
 
-{#if vote === "ineligible"}
-    Ineligible to vote
-    {#if !userContext || !isOwner}
-        <div>Want to participate in scenarios?</div>
-        <Button>Become a Team co-owner</Button>
-    {/if}
-{:else}
-    {#if "lottery" in scenario.kind}
-        <LotteryInProgressScenarioState scenario={scenario.kind.lottery} />
-    {:else if "proportionalBid" in scenario.kind}
-        <ProportionalBidInProgressScenarioState
-            scenario={scenario.kind.proportionalBid}
-        />
-    {:else if "leagueChoice" in scenario.kind}
-        <LeagueChoiceInProgressScenarioState />
-    {:else if "threshold" in scenario.kind}
-        <ThresholdInProgressScenarioState scenario={scenario.kind.threshold} />
-    {:else if "noLeagueEffect" in scenario.kind}
-        <NoLeagueEffectInProgressScenarioState />
-    {:else}
-        NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
-    {/if}
-    {#if "nat" in vote.teamOptions}
-        <ScenarioOptionsNat
-            scenarioId={scenario.id}
-            teamId={vote.teamId}
-            options={vote.teamOptions.nat}
-            teamEnergy={team === undefined ? undefined : team.energy}
-            vote={selectedNat}
-        />
-    {:else if "discrete" in vote.teamOptions}
-        {#each vote.teamOptions.discrete as option}
-            <ScenarioOptionDiscrete
-                scenarioId={scenario.id}
-                {option}
-                selected={selectedId === option.id}
-                energy={team === undefined
-                    ? undefined
-                    : { cost: option.energyCost, teamEnergy: team.energy }}
-                {vote}
-                state={{
-                    inProgress: {
-                        onSelect: () => {
-                            selectedId = option.id;
-                        },
-                    },
-                }}
-            />
+{#if teams && votingData}
+    Teams with consensus on choice:
+    <div class="flex">
+        {#each teams as team}
+            <div
+                class={votingData.teamIdsWithConsensus.includes(team.id)
+                    ? ""
+                    : "opacity-25"}
+            >
+                <TeamLogo {team} size="xs" />
+            </div>
         {/each}
+    </div>
+{/if}
+{#if votingData}
+    {#if votingData.yourData[0] === undefined}
+        Ineligible to vote
+        {#if !userContext || !isOwner}
+            <div>Want to participate in scenarios?</div>
+            <Button>Become a Team co-owner</Button>
+        {/if}
     {:else}
-        NOT IMPLEMENTED TEAM OPTIONS KIND: {toJsonString(vote.teamOptions)}
+        {#if "lottery" in scenario.kind}
+            <LotteryInProgressScenarioState scenario={scenario.kind.lottery} />
+        {:else if "proportionalBid" in scenario.kind}
+            <ProportionalBidInProgressScenarioState
+                scenario={scenario.kind.proportionalBid}
+            />
+        {:else if "leagueChoice" in scenario.kind}
+            <LeagueChoiceInProgressScenarioState />
+        {:else if "threshold" in scenario.kind}
+            <ThresholdInProgressScenarioState
+                scenario={scenario.kind.threshold}
+            />
+        {:else if "noLeagueEffect" in scenario.kind}
+            <NoLeagueEffectInProgressScenarioState />
+        {:else}
+            NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
+        {/if}
+        {#if "nat" in votingData.yourData[0].teamOptions}
+            <ScenarioOptionsNat
+                scenarioId={scenario.id}
+                teamId={votingData.yourData[0].teamId}
+                options={votingData.yourData[0].teamOptions.nat}
+                teamEnergy={team === undefined ? undefined : team.energy}
+                vote={selectedNat}
+            />
+        {:else if "discrete" in votingData.yourData[0].teamOptions}
+            {#each votingData.yourData[0].teamOptions.discrete as option}
+                <ScenarioOptionDiscrete
+                    scenarioId={scenario.id}
+                    {option}
+                    selected={selectedId === option.id}
+                    energy={team === undefined
+                        ? undefined
+                        : { cost: option.energyCost, teamEnergy: team.energy }}
+                    vote={votingData.yourData[0]}
+                    state={{
+                        inProgress: {
+                            onSelect: () => {
+                                selectedId = option.id;
+                            },
+                        },
+                    }}
+                />
+            {/each}
+        {:else}
+            NOT IMPLEMENTED TEAM OPTIONS KIND: {toJsonString(
+                votingData.yourData[0].teamOptions,
+            )}
+        {/if}
     {/if}
 {/if}

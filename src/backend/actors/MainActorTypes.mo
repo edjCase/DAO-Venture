@@ -9,7 +9,6 @@ import CommonTypes "../CommonTypes";
 import Components "mo:datetime/Components";
 import Result "mo:base/Result";
 import FieldPosition "../models/FieldPosition";
-import Anomoly "../models/Anomoly";
 import LiveState "../models/LiveState";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";
@@ -100,7 +99,7 @@ module {
         #notEligible;
     };
 
-    public type GetScenarioVoteResult = Result.Result<ScenarioHandler.ScenarioVote, GetScenarioVoteError>;
+    public type GetScenarioVoteResult = Result.Result<ScenarioHandler.VotingData, GetScenarioVoteError>;
 
     public type VoteOnScenarioRequest = {
         scenarioId : Nat;

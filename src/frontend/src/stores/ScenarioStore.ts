@@ -1,5 +1,5 @@
 import { writable } from "svelte/store";
-import { Scenario, ScenarioVote } from "../ic-agent/declarations/main";
+import { Scenario, VotingData } from "../ic-agent/declarations/main";
 import { mainAgentFactory } from "../ic-agent/Main";
 import { Subscriber } from "svelte/motion";
 import { nanosecondsToDate } from "../utils/DateUtils";
@@ -8,7 +8,7 @@ import { nanosecondsToDate } from "../utils/DateUtils";
 export const scenarioStore = (() => {
     const { subscribe, set, update } = writable<Scenario[]>([]);
     let endTimers: NodeJS.Timeout[] = [];
-    const votesWritable = writable<Record<number, ScenarioVote>>({});
+    const votesWritable = writable<Record<number, VotingData>>({});
 
     const refetch = async () => {
         let mainAgent = await mainAgentFactory();
@@ -63,7 +63,7 @@ export const scenarioStore = (() => {
         }
     };
 
-    const subscribeVotes = async (run: Subscriber<Record<string, ScenarioVote>>) => {
+    const subscribeVotingData = async (run: Subscriber<Record<string, VotingData>>) => {
         return votesWritable.subscribe(run);
     };
 
@@ -95,7 +95,7 @@ export const scenarioStore = (() => {
         refetchById,
         subscribe,
         refetchVotes,
-        subscribeVotes
+        subscribeVotingData: subscribeVotingData
     };
 })();
 

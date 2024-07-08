@@ -1,12 +1,12 @@
 <script lang="ts">
     import { Button } from "flowbite-svelte";
     import { navigate } from "svelte-routing";
-    import { Scenario, ScenarioVote } from "../../ic-agent/declarations/main";
+    import { Scenario, VotingData } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
 
     let activeScenarios: Scenario[] = [];
-    let votes: Record<string, ScenarioVote> = {};
+    let votes: Record<string, VotingData> = {};
 
     scenarioStore.subscribe((scenarios) => {
         activeScenarios = scenarios.filter(
@@ -15,7 +15,7 @@
         scenarioStore.refetchVotes(activeScenarios.map((s) => s.id));
     });
 
-    scenarioStore.subscribeVotes((v) => {
+    scenarioStore.subscribeVotingData((v) => {
         votes = v;
     });
 
@@ -31,7 +31,7 @@
             let vote = votes[Number(scenario.id)];
             if (vote === undefined) {
                 votingStatus = "Ineligible to vote";
-            } else if (vote.value.length === 0) {
+            } else if (vote.yourData[0]?.value.length === 0) {
                 votingStatus = "Not Voted";
             } else {
                 votingStatus = "Voted";

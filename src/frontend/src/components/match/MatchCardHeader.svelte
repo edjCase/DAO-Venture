@@ -1,10 +1,12 @@
 <script lang="ts">
   import { TeamId, TeamIdOrTie } from "../../ic-agent/declarations/main";
-  import { TeamDetailsOrUndetermined } from "../../models/Match";
+  import { TeamOrUndetermined } from "../../models/Team";
   import TeamLogo from "../team/TeamLogo.svelte";
 
-  export let team1: TeamDetailsOrUndetermined;
-  export let team2: TeamDetailsOrUndetermined;
+  export let team1: TeamOrUndetermined;
+  export let team1Score: bigint | undefined;
+  export let team2: TeamOrUndetermined;
+  export let team2Score: bigint | undefined;
   export let winner: TeamIdOrTie | undefined;
   export let prediction: TeamId | undefined;
 
@@ -26,69 +28,26 @@
     return emojis.join(" ");
   };
 
-  let getScoreText = (team: TeamDetailsOrUndetermined) => {
-    if ("score" in team && team.score !== undefined) {
-      return team.score;
-    }
-    return "-";
-  };
-  $: team1Score = getScoreText(team1);
-  $: team2Score = getScoreText(team2);
   $: team1Emoji = getTeamEmojis(winner, "team1");
   $: team2Emoji = getTeamEmojis(winner, "team2");
 </script>
 
-<div class="header">
-  <div class="header-team team1">
+<div class="flex justify-between">
+  <div class="flex flex-row items-center">
     <TeamLogo team={team1} size="xs" />
-
-    <div class="score">
-      {team1Score}
-      <span class="emoji">{team1Emoji}</span>
+    <div class="text-4xl font-bold mx-4 flex items-center">
+      {team1Score || "-"}
+      <span class="text-base">{team1Emoji}</span>
     </div>
   </div>
-  <div class="header-center">
+  <div class="flex flex-col items-center justify-around">
     <slot />
   </div>
-  <div class="header-team team2">
-    <div class="score">
-      <span class="emoji">{team2Emoji}</span>
-      {team2Score}
+  <div class="flex flex-row items-center justify-end">
+    <div class="text-4xl font-bold mx-4 flex items-center">
+      <span class="text-base">{team2Emoji}</span>
+      {team2Score || "-"}
     </div>
     <TeamLogo team={team2} size="xs" />
   </div>
 </div>
-
-<style>
-  .header-team {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-  }
-  .header {
-    display: flex;
-    justify-content: space-between;
-  }
-
-  .header-center {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-around;
-  }
-
-  .team2 {
-    justify-content: right;
-  }
-
-  .score {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 0 1rem;
-    display: flex;
-    align-items: center;
-  }
-  .emoji {
-    font-size: 1rem;
-  }
-</style>

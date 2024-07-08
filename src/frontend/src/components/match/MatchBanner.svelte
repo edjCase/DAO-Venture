@@ -3,7 +3,7 @@
     import { scheduleStore } from "../../stores/ScheduleStore";
     import { teamStore } from "../../stores/TeamStore";
     import { nanosecondsToDate } from "../../utils/DateUtils";
-    import MatchBannerTeam from "./MatchBannerTeam.svelte";
+    import MatchBannerMatch from "./MatchBannerMatch.svelte";
 
     let matchGroups: MatchGroupDetails[] = [];
 
@@ -73,27 +73,7 @@
                 {getMatchGroupDate(matchGroup)}
             </div>
             {#each matchGroup.matches as match}
-                <div
-                    class="flex flex-col justify-around text-xs w-24 p-1 mx-2 border rounded gap-1"
-                >
-                    <div class="text-center">
-                        {#if match.state == "Played"}
-                            Completed
-                        {:else if match.state == "InProgress"}
-                            In Progress
-                        {:else}
-                            Upcoming
-                        {/if}
-                    </div>
-                    <MatchBannerTeam
-                        team={match.team1}
-                        winLossRecord={winLossRecords}
-                    />
-                    <MatchBannerTeam
-                        team={match.team2}
-                        winLossRecord={winLossRecords}
-                    />
-                </div>
+                <MatchBannerMatch {match} {winLossRecords} />
             {/each}
         {/each}
     </div>

@@ -84,23 +84,6 @@ export const idlFactory = ({ IDL }) => {
     'delta' : IDL.Int,
   });
   const InjuryEffect = IDL.Record({ 'position' : TargetPosition });
-  const Anomoly = IDL.Variant({
-    'foggy' : IDL.Null,
-    'moveBasesIn' : IDL.Null,
-    'extraStrike' : IDL.Null,
-    'moreBlessingsAndCurses' : IDL.Null,
-    'fastBallsHardHits' : IDL.Null,
-    'explodingBalls' : IDL.Null,
-    'lowGravity' : IDL.Null,
-    'doubleOrNothing' : IDL.Null,
-    'windy' : IDL.Null,
-    'rainy' : IDL.Null,
-  });
-  const AnomolyEffect = IDL.Record({
-    'duration' : Duration,
-    'team' : TargetTeam,
-    'anomoly' : Anomoly,
-  });
   const EnergyEffect = IDL.Record({
     'value' : IDL.Variant({ 'flat' : IDL.Int }),
     'team' : TargetTeam,
@@ -114,7 +97,6 @@ export const idlFactory = ({ IDL }) => {
       'entropy' : EntropyEffect,
       'skill' : SkillEffect,
       'injury' : InjuryEffect,
-      'anomoly' : AnomolyEffect,
       'energy' : EnergyEffect,
     })
   );
@@ -419,6 +401,18 @@ export const idlFactory = ({ IDL }) => {
     'secondBase' : IDL.Null,
     'firstBase' : IDL.Null,
   });
+  const Anomoly = IDL.Variant({
+    'foggy' : IDL.Null,
+    'moveBasesIn' : IDL.Null,
+    'extraStrike' : IDL.Null,
+    'moreBlessingsAndCurses' : IDL.Null,
+    'fastBallsHardHits' : IDL.Null,
+    'explodingBalls' : IDL.Null,
+    'lowGravity' : IDL.Null,
+    'doubleOrNothing' : IDL.Null,
+    'windy' : IDL.Null,
+    'rainy' : IDL.Null,
+  });
   const HitLocation = IDL.Variant({
     'rightField' : IDL.Null,
     'stands' : IDL.Null,
@@ -494,10 +488,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const LiveMatchTeam = IDL.Record({
     'id' : IDL.Nat,
-    'name' : IDL.Text,
-    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    'anomolies' : IDL.Vec(Anomoly),
     'score' : IDL.Int,
-    'logoUrl' : IDL.Text,
     'positions' : TeamPositions,
   });
   const PlayerMatchStats = IDL.Record({
@@ -552,7 +544,6 @@ export const idlFactory = ({ IDL }) => {
     'offenseTeamId' : TeamId,
     'players' : IDL.Vec(LivePlayerState),
     'bases' : LiveBaseState,
-    'anomoly' : Anomoly,
     'strikes' : IDL.Nat,
   });
   const LiveMatchGroupState = IDL.Record({
@@ -712,11 +703,6 @@ export const idlFactory = ({ IDL }) => {
   const InjuryPlayerEffectOutcome = IDL.Record({
     'position' : TargetPositionInstance,
   });
-  const AnomolyMatchEffectOutcome = IDL.Record({
-    'duration' : Duration,
-    'teamId' : IDL.Nat,
-    'anomoly' : Anomoly,
-  });
   const EnergyTeamEffectOutcome = IDL.Record({
     'teamId' : IDL.Nat,
     'delta' : IDL.Int,
@@ -726,7 +712,6 @@ export const idlFactory = ({ IDL }) => {
     'entropy' : EntropyTeamEffectOutcome,
     'skill' : SkillPlayerEffectOutcome,
     'injury' : InjuryPlayerEffectOutcome,
-    'anomoly' : AnomolyMatchEffectOutcome,
     'energy' : EnergyTeamEffectOutcome,
   });
   const ScenarioStateResolved = IDL.Record({
@@ -783,26 +768,31 @@ export const idlFactory = ({ IDL }) => {
     'teamId' : IDL.Nat,
     'teamVotingPower' : IDL.Nat,
   });
+  const VotingData = IDL.Record({
+    'teamIdsWithConsensus' : IDL.Vec(IDL.Nat),
+    'yourData' : IDL.Opt(ScenarioVote),
+  });
   const GetScenarioVoteError = IDL.Variant({
     'notEligible' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
   });
   const GetScenarioVoteResult = IDL.Variant({
-    'ok' : ScenarioVote,
+    'ok' : VotingData,
     'err' : GetScenarioVoteError,
   });
   const GetScenariosResult = IDL.Variant({ 'ok' : IDL.Vec(Scenario) });
   const CompletedSeasonTeam = IDL.Record({
     'id' : IDL.Nat,
-    'name' : IDL.Text,
-    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'wins' : IDL.Nat,
     'losses' : IDL.Nat,
     'totalScore' : IDL.Int,
-    'logoUrl' : IDL.Text,
+  });
+  const CompletedMatchTeam = IDL.Record({
+    'id' : IDL.Nat,
+    'anomolies' : IDL.Vec(Anomoly),
+    'score' : IDL.Int,
     'positions' : TeamPositions,
   });
-  const CompletedMatchTeam = IDL.Record({ 'id' : IDL.Nat, 'score' : IDL.Int });
   const TeamIdOrTie = IDL.Variant({
     'tie' : IDL.Null,
     'team1' : IDL.Null,
@@ -812,7 +802,6 @@ export const idlFactory = ({ IDL }) => {
     'team1' : CompletedMatchTeam,
     'team2' : CompletedMatchTeam,
     'winner' : TeamIdOrTie,
-    'anomoly' : Anomoly,
   });
   const CompletedMatchGroup = IDL.Record({
     'time' : Time,
@@ -824,34 +813,24 @@ export const idlFactory = ({ IDL }) => {
     'matchGroups' : IDL.Vec(CompletedMatchGroup),
     'championTeamId' : IDL.Nat,
   });
-  const TeamInfo = IDL.Record({
-    'id' : IDL.Nat,
-    'name' : IDL.Text,
-    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
-    'logoUrl' : IDL.Text,
-    'positions' : TeamPositions,
-  });
   const ScheduledTeamInfo = IDL.Record({ 'id' : IDL.Nat });
-  const AnomolyWithMetaData = IDL.Record({
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'anomoly' : Anomoly,
-  });
   const ScheduledMatch = IDL.Record({
     'team1' : ScheduledTeamInfo,
     'team2' : ScheduledTeamInfo,
-    'anomoly' : AnomolyWithMetaData,
   });
   const ScheduledMatchGroup = IDL.Record({
     'time' : Time,
     'matches' : IDL.Vec(ScheduledMatch),
     'timerId' : IDL.Nat,
   });
-  const InProgressTeam = IDL.Record({ 'id' : IDL.Nat });
+  const InProgressTeam = IDL.Record({
+    'id' : IDL.Nat,
+    'anomolies' : IDL.Vec(Anomoly),
+    'positions' : TeamPositions,
+  });
   const InProgressMatch = IDL.Record({
     'team1' : InProgressTeam,
     'team2' : InProgressTeam,
-    'anomoly' : Anomoly,
   });
   const InProgressMatchGroup = IDL.Record({
     'time' : Time,
@@ -877,8 +856,6 @@ export const idlFactory = ({ IDL }) => {
     'notScheduled' : NotScheduledMatchGroup,
   });
   const InProgressSeason = IDL.Record({
-    'teams' : IDL.Vec(TeamInfo),
-    'players' : IDL.Vec(Player),
     'matchGroups' : IDL.Vec(InProgressSeasonMatchGroupVariant),
   });
   const SeasonStatus = IDL.Variant({

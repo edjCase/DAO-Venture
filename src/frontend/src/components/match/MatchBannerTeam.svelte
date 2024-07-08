@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { TeamDetailsOrUndetermined } from "../../models/Match";
+    import { TeamOrUndetermined } from "../../models/Team";
     import TeamLogo from "../team/TeamLogo.svelte";
 
-    export let team: TeamDetailsOrUndetermined;
+    export let team: TeamOrUndetermined;
     export let winLossRecord: Record<number, string>;
 </script>
 

@@ -43,11 +43,8 @@ export const liveMatchGroupStore = (() => {
   const mapTeam = (team: LiveMatchTeam): LiveTeamDetails => {
     return {
       id: team.id,
-      name: team.name,
-      logoUrl: team.logoUrl,
       score: team.score,
-      positions: team.positions,
-      color: team.color
+      positions: team.positions
     }
   };
 

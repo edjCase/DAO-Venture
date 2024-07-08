@@ -1,4 +1,4 @@
-<script lang="ts">
+<!-- <script lang="ts">
   import { LiveTeamDetails } from "../../stores/LiveMatchGroupStore";
   import TeamLogo from "../team/TeamLogo.svelte";
 
@@ -25,4 +25,4 @@
   <div class="flex-1 flex text-7xl items-center justify-center">
     {team.score}
   </div>
-</div>
+</div> -->

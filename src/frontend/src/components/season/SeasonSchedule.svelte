@@ -1,14 +1,16 @@
 <script lang="ts">
   import { scheduleStore } from "../../stores/ScheduleStore";
   import SeasonScheduleOverview from "./SeasonScheduleOverview.svelte";
-  import TeamLogo from "../team/TeamLogo.svelte";
   import { MatchGroupDetails } from "../../models/Match";
   import { nanosecondsToDate } from "../../utils/DateUtils";
+  import MatchSchedule from "./MatchSchedule.svelte";
+  import { teamStore } from "../../stores/TeamStore";
 
   let matchGroups: MatchGroupDetails[] | undefined;
   scheduleStore.subscribeMatchGroups((groups) => {
     matchGroups = groups;
   });
+  $: teams = $teamStore;
 </script>
 
 <div class="mx-auto lg:max-w-2xl xl:max-w-3xl">
@@ -24,11 +26,9 @@
           <ul class="">
             {#each group.matches as match}
               <li class="py-3">
-                <div class="flex items-center justify-center text-center">
-                  <TeamLogo team={match.team1} size="xs" name="left" />
-                  <span class="text-gray-500 mx-1">vs</span>
-                  <TeamLogo team={match.team2} size="xs" name="right" />
-                </div>
+                {#if teams}
+                  <MatchSchedule {match} {teams} />
+                {/if}
               </li>
             {/each}
           </ul>

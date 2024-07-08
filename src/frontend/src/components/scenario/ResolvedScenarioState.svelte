@@ -31,16 +31,19 @@
     $: teams = $teamStore;
     $: traits = $traitStore;
 
-    scenarioStore.subscribeVotes((votes) => {
-        if (votes[Number(scenario.id)] !== undefined) {
-            vote = votes[Number(scenario.id)];
-            selectedChoice =
-                vote.value[0] !== undefined && "id" in vote.value[0]
-                    ? vote.value[0].id
-                    : undefined;
-        } else {
-            vote = "ineligible";
-            selectedChoice = undefined;
+    scenarioStore.subscribeVotingData((scenarioVotingData) => {
+        let votingData = scenarioVotingData[Number(scenario.id)];
+        if (votingData) {
+            if (votingData.yourData[0] !== undefined) {
+                vote = votingData.yourData[0];
+                selectedChoice =
+                    vote.value[0] !== undefined && "id" in vote.value[0]
+                        ? vote.value[0].id
+                        : undefined;
+            } else {
+                vote = "ineligible";
+                selectedChoice = undefined;
+            }
         }
     });
 </script>

@@ -9,7 +9,7 @@ import {
     SeasonStatus,
     TeamAssignment,
 } from "../ic-agent/declarations/main";
-import { MatchDetails, MatchGroupDetails, TeamDetails, TeamDetailsOrUndetermined, TeamDetailsWithScore } from "../models/Match";
+import { MatchDetails, MatchGroupDetails, TeamDetailsOrUndetermined, TeamDetailsWithScore } from "../models/Match";
 
 type MatchVariant =
     | { completed: CompletedMatch }
@@ -21,21 +21,11 @@ export const scheduleStore = (() => {
     const { subscribe: subscribeStatus, set: setStatus } = writable<SeasonStatus | undefined>();
     const { subscribe: subscribeMatchGroups, set: setMatchGroups } = writable<MatchGroupDetails[]>([]);
 
-    const getTeam = (id: bigint, teams: TeamDetails[]): TeamDetails => {
-        const foundTeam = teams.find((t) => t.id === id);
-        if (foundTeam) {
-            return foundTeam;
-        } else {
-            throw new Error('Team not found');
-        }
-    };
-
     const mapTeamAssignment = (
-        team: TeamAssignment,
-        teams: TeamDetails[]
+        team: TeamAssignment
     ): TeamDetailsOrUndetermined => {
         if ('predetermined' in team) {
-            return getTeam(team.predetermined, teams);
+            return mapTeam(team.predetermined, undefined);
         } else if ('winnerOfMatch' in team) {
             return { winnerOfMatch: Number(team.winnerOfMatch) };
         } else {
@@ -44,12 +34,10 @@ export const scheduleStore = (() => {
     };
     const mapTeam = (
         id: bigint,
-        score: bigint | undefined,
-        teams: TeamDetails[]
+        score: bigint | undefined
     ): TeamDetailsWithScore => {
-        let team = getTeam(id, teams);
         return {
-            ...team,
+            id: id,
             score: score
         };
     };
@@ -57,8 +45,7 @@ export const scheduleStore = (() => {
         index: number,
         matchGroupId: bigint,
         time: bigint,
-        match: MatchVariant,
-        teams: TeamDetails[]
+        match: MatchVariant
     ): MatchDetails => {
         let id = BigInt(index);
         if ('completed' in match) {
@@ -67,8 +54,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: "Played",
-                team1: mapTeam(match.completed.team1.id, match.completed.team1.score, teams),
-                team2: mapTeam(match.completed.team2.id, match.completed.team2.score, teams),
+                team1: mapTeam(match.completed.team1.id, match.completed.team1.score),
+                team2: mapTeam(match.completed.team2.id, match.completed.team2.score),
                 winner: match.completed.winner
             };
         } else if ('inProgress' in match) {
@@ -77,8 +64,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'InProgress',
-                team1: mapTeam(match.inProgress.team1.id, undefined, teams),
-                team2: mapTeam(match.inProgress.team2.id, undefined, teams),
+                team1: mapTeam(match.inProgress.team1.id, undefined),
+                team2: mapTeam(match.inProgress.team2.id, undefined),
                 winner: undefined,
             };
         }
@@ -88,8 +75,8 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'Scheduled',
-                team1: mapTeam(match.scheduled.team1.id, undefined, teams),
-                team2: mapTeam(match.scheduled.team2.id, undefined, teams),
+                team1: mapTeam(match.scheduled.team1.id, undefined),
+                team2: mapTeam(match.scheduled.team2.id, undefined),
                 winner: undefined
             };
         }
@@ -99,41 +86,41 @@ export const scheduleStore = (() => {
                 time: time,
                 matchGroupId: matchGroupId,
                 state: 'NotScheduled',
-                team1: mapTeamAssignment(match.notScheduled.team1, teams),
-                team2: mapTeamAssignment(match.notScheduled.team2, teams),
+                team1: mapTeamAssignment(match.notScheduled.team1),
+                team2: mapTeamAssignment(match.notScheduled.team2),
                 winner: undefined
             };
         }
     };
 
-    const mapMatchGroup = (matchGroupIndex: number, matchGroup: InProgressSeasonMatchGroupVariant, teams: TeamDetails[]): MatchGroupDetails => {
+    const mapMatchGroup = (matchGroupIndex: number, matchGroup: InProgressSeasonMatchGroupVariant): MatchGroupDetails => {
         let id = BigInt(matchGroupIndex);
         if ('completed' in matchGroup) {
             return {
                 id: id,
                 time: matchGroup.completed.time,
-                matches: matchGroup.completed.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.completed.time, { completed: match }, teams))),
+                matches: matchGroup.completed.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.completed.time, { completed: match }))),
                 state: 'Completed'
             };
         } else if ('inProgress' in matchGroup) {
             return {
                 id: id,
                 time: matchGroup.inProgress.time,
-                matches: matchGroup.inProgress.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.inProgress.time, { inProgress: match }, teams))),
+                matches: matchGroup.inProgress.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.inProgress.time, { inProgress: match }))),
                 state: 'InProgress'
             };
         } else if ('scheduled' in matchGroup) {
             return {
                 id: id,
                 time: matchGroup.scheduled.time,
-                matches: matchGroup.scheduled.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.scheduled.time, { scheduled: match }, teams))),
+                matches: matchGroup.scheduled.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.scheduled.time, { scheduled: match }))),
                 state: 'Scheduled'
             };
         } else {
             return {
                 id: id,
                 time: matchGroup.notScheduled.time,
-                matches: matchGroup.notScheduled.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.notScheduled.time, { notScheduled: match }, teams))),
+                matches: matchGroup.notScheduled.matches.map((match, matchIndex) => (mapMatch(matchIndex, id, matchGroup.notScheduled.time, { notScheduled: match }))),
                 state: 'NotScheduled'
             };
         }
@@ -146,14 +133,12 @@ export const scheduleStore = (() => {
         setStatus(status);
         let matchGroups: MatchGroupDetails[] = [];
         if ('inProgress' in status) {
-            let teams = status.inProgress.teams;
             matchGroups = status.inProgress.matchGroups.map((matchGroup, index) => {
-                return mapMatchGroup(index, matchGroup, teams);
+                return mapMatchGroup(index, matchGroup);
             });
         } else if ('completed' in status) {
-            let teams = status.completed.teams;
             matchGroups = status.completed.matchGroups.map((matchGroup, index) => {
-                return mapMatchGroup(index, { completed: matchGroup }, teams);
+                return mapMatchGroup(index, { completed: matchGroup });
             });
         } else {
             matchGroups = [];
