@@ -30,8 +30,8 @@
         const width = canvas.width;
         const height = canvas.height;
         const centerX = width / 2;
-        const centerY = height / 2 - 20;
-        const radius = Math.min(width, height / 2) - 50;
+        const centerY = height / 2 + 40;
+        const radius = Math.min(width, height / 1.3) - 50;
 
         ctx.clearRect(0, 0, width, height);
 
@@ -169,5 +169,5 @@
 </script>
 
 <div class="flex items-center justify-center">
-    <canvas bind:this={canvas} width="300" height="300"></canvas>
+    <canvas bind:this={canvas} width="300" height="180"></canvas>
 </div>
