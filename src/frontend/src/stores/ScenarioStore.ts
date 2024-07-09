@@ -6,7 +6,7 @@ import { nanosecondsToDate } from "../utils/DateUtils";
 
 
 export const scenarioStore = (() => {
-    const { subscribe, set, update } = writable<Scenario[]>();
+    const { subscribe, set, update } = writable<Scenario[] | undefined>();
     let endTimers: NodeJS.Timeout[] = [];
     const votesWritable = writable<Record<number, VotingData>>({});
 
@@ -27,11 +27,15 @@ export const scenarioStore = (() => {
         if ('ok' in result) {
             let scenario = result.ok;
             update(scenarios => {
-                const index = scenarios.findIndex(s => s.id === scenarioId);
-                if (index !== -1) {
-                    scenarios[index] = scenario;
+                if (!scenarios) {
+                    scenarios = [scenario];
                 } else {
-                    scenarios.push(scenario);
+                    const index = scenarios.findIndex(s => s.id === scenarioId);
+                    if (index !== -1) {
+                        scenarios[index] = scenario;
+                    } else {
+                        scenarios.push(scenario);
+                    }
                 }
                 refreshEndTimers(scenarios);
                 return scenarios;

@@ -168,16 +168,6 @@
     $: if (ctx && entropyData) drawGauge();
 </script>
 
-<div class="gauge-container">
-    <canvas bind:this={canvas} width="400" height="300"></canvas>
+<div class="flex items-center justify-center">
+    <canvas bind:this={canvas} width="300" height="300"></canvas>
 </div>
-
-<style>
-    .gauge-container {
-        width: 400px;
-        height: 200px;
-        margin: 0 auto;
-        /* Add a subtle background to enhance the gauge appearance */
-        /* background: linear-gradient(to bottom, #f5f5f5, #e0e0e0); */
-    }
-</style>

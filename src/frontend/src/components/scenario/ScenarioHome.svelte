@@ -9,6 +9,9 @@
     let votes: Record<string, VotingData> = {};
 
     scenarioStore.subscribe((scenarios) => {
+        if (scenarios === undefined) {
+            return;
+        }
         activeScenarios = scenarios.filter(
             (scenario) => "inProgress" in scenario.state,
         );
