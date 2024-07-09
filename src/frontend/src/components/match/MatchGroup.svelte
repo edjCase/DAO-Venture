@@ -1,9 +1,5 @@
 <script lang="ts">
-  import { MatchDetails, MatchGroupDetails } from "../../models/Match";
-  import {
-    LiveMatch,
-    liveMatchGroupStore,
-  } from "../../stores/LiveMatchGroupStore";
+  import { MatchGroupDetails } from "../../models/Match";
   import MatchCardCompact from "./MatchCardCompact.svelte";
   import Countdown from "../common/Countdown.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
@@ -15,23 +11,10 @@
   export let lastMatchGroup: MatchGroupDetails | undefined;
 
   let selectedMatchId = BigInt(0);
-  let liveMatches: LiveMatch[] | undefined = undefined;
-  let matches: [MatchDetails, LiveMatch | undefined][] = [];
-  $: matches = matchGroup.matches.map((match, index) => [
-    match,
-    liveMatches ? liveMatches[index] : undefined,
-  ]);
+  $: matches = matchGroup.matches;
   $: lastMatches = lastMatchGroup?.matches || [];
 
   $: teams = $teamStore;
-
-  liveMatchGroupStore.subscribe((liveMatchGroup) => {
-    if (!liveMatchGroup || matchGroup.id != liveMatchGroup?.id) {
-      liveMatches = undefined;
-    } else {
-      liveMatches = liveMatchGroup.matches;
-    }
-  });
 
   let selectMatch = (matchId: bigint) => () => {
     selectedMatchId = matchId;
@@ -61,7 +44,7 @@
     Not Scheduled TODO
   {:else}
     <div class="">
-      {#each matches as [match, liveMatch]}
+      {#each matches as match}
         <div
           class="cursor-pointer"
           on:click={selectMatch(match.id)}
@@ -72,7 +55,7 @@
         >
           <MatchCardCompact
             {match}
-            {liveMatch}
+            liveMatch={undefined}
             selected={match.id == selectedMatchId}
           />
         </div>

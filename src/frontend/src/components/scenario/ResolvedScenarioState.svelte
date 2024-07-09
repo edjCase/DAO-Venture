@@ -79,9 +79,10 @@
                 outcome={state.scenarioOutcome.lottery}
                 {teams}
             />
-        {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind}
+        {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind && "discrete" in state.options.kind}
             <LeagueChoiceResolvedScenarioState
                 outcome={state.scenarioOutcome.leagueChoice}
+                options={state.options.kind.discrete}
             />
         {:else}
             NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}

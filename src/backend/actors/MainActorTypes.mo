@@ -349,6 +349,7 @@ module {
         motto : Text;
         description : Text;
         color : (Nat8, Nat8, Nat8);
+        energy : Nat;
     };
 
     public type CreateTeamResult = Result.Result<Nat, CreateTeamError>;

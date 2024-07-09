@@ -1,4 +1,4 @@
-export type Team = {
+export type TeamInfo = {
     name: string;
     description: string;
     motto: string;
@@ -6,7 +6,7 @@ export type Team = {
     color: [number, number, number];
 };
 
-export const teams: Team[] = [
+export const teams: TeamInfo[] = [
     // {
     //     "name": "Paperclips",
     //     "description": "Originally a group of office supply enthusiasts, the Paperclips team is known for their ability to hold things together under pressure. Their ingenuity in strategy is as versatile as a paperclip's uses.",

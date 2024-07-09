@@ -69,7 +69,85 @@
         } else if (selectedType === "leagueChoice") {
             value = {
                 leagueChoice: {
-                    options: [],
+                    options: [
+                        {
+                            title: "Fast Start",
+                            description:
+                                "There is no time to wait, give us the 💰and crank up the 🔥. +10 💰+2 entropy per team",
+                            energyCost: BigInt(0),
+                            leagueEffect: {
+                                allOf: [
+                                    {
+                                        entropy: {
+                                            delta: BigInt(2),
+                                            team: {
+                                                contextual: null,
+                                            },
+                                        },
+                                    },
+                                    {
+                                        energy: {
+                                            team: {
+                                                contextual: null,
+                                            },
+                                            value: {
+                                                flat: BigInt(10),
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                            teamEffect: {
+                                noEffect: null,
+                            },
+                            traitRequirements: [],
+                        },
+                        {
+                            title: "Status Quo",
+                            description:
+                                "Things are in balance, lets not touch anything",
+                            energyCost: BigInt(0),
+                            leagueEffect: {
+                                noEffect: null,
+                            },
+                            teamEffect: {
+                                noEffect: null,
+                            },
+                            traitRequirements: [],
+                        },
+                        {
+                            title: "Cool Down",
+                            description:
+                                "Entropy is running too hot, lets cool it off by investing in our league. -5 💰-2 🔥 per team",
+                            energyCost: BigInt(0),
+                            leagueEffect: {
+                                allOf: [
+                                    {
+                                        entropy: {
+                                            delta: BigInt(-2),
+                                            team: {
+                                                contextual: null,
+                                            },
+                                        },
+                                    },
+                                    {
+                                        energy: {
+                                            team: {
+                                                contextual: null,
+                                            },
+                                            value: {
+                                                flat: BigInt(-5),
+                                            },
+                                        },
+                                    },
+                                ],
+                            },
+                            teamEffect: {
+                                noEffect: null,
+                            },
+                            traitRequirements: [],
+                        },
+                    ],
                 },
             };
         } else if (selectedType === "lottery") {

@@ -8,23 +8,33 @@
   import { mainAgentFactory } from "../ic-agent/Main";
   import LoadingButton from "./common/LoadingButton.svelte";
   import { traitStore } from "../stores/TraitStore";
+  import BigIntInput from "./scenario/editors/BigIntInput.svelte";
+  import { Label } from "flowbite-svelte";
 
   $: teams = $teamStore;
   $: players = $playerStore;
+
+  let initialEnergy = BigInt(10);
 
   let createTeams = async function (): Promise<void> {
     let mainAgent = await mainAgentFactory();
     let promises = [];
     for (let i = 0; i < teamData.length; i++) {
       let team = teamData[i];
-      let promise = mainAgent.createTeam(team).then(async (result) => {
-        if ("ok" in result) {
-          let teamId = result.ok;
-          console.log("Created team: ", teamId);
-        } else {
-          console.log("Failed to make team: ", result);
-        }
-      });
+
+      let promise = mainAgent
+        .createTeam({
+          ...team,
+          energy: initialEnergy,
+        })
+        .then(async (result) => {
+          if ("ok" in result) {
+            let teamId = result.ok;
+            console.log("Created team: ", teamId);
+          } else {
+            console.log("Failed to make team: ", result);
+          }
+        });
       promises.push(promise);
     }
     await Promise.all(promises);
@@ -84,6 +94,8 @@
 </script>
 
 {#if !teams || !players || players.length + teams.length <= 0}
+  <Label>Initial Team Energy</Label>
+  <BigIntInput bind:value={initialEnergy} />
   <LoadingButton onClick={initialize}>
     Initialize With Default Data
   </LoadingButton>

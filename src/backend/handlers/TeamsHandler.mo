@@ -19,7 +19,7 @@ import Trait "../models/Trait";
 module {
 
     public type StableData = {
-        entropyThreshold : Nat;
+        entropyThresholdPerTeam : Nat;
         teams : [StableTeamData];
         traits : [Trait.Trait];
     };
@@ -62,7 +62,7 @@ module {
 
         let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
         let traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
-        var entropyThreshold = data.entropyThreshold;
+        var entropyThresholdPerTeam = data.entropyThresholdPerTeam;
 
         var nextTeamId = teams.size(); // TODO change to check for the largest team id in the list
 
@@ -74,7 +74,7 @@ module {
                     toStableTeamData,
                 )
                 |> Iter.toArray(_);
-                entropyThreshold = entropyThreshold;
+                entropyThresholdPerTeam = entropyThresholdPerTeam;
                 traits = traits.vals() |> Iter.toArray(_);
             };
         };
@@ -89,7 +89,7 @@ module {
                 |> IterTools.sum(_, func(x : Nat, y : Nat) : Nat = x + y),
                 0,
             );
-
+            let entropyThreshold = entropyThresholdPerTeam * teams.size();
             let entropyLevel = Float.fromInt(currentEntropy) / Float.fromInt(entropyThreshold);
             let maxDividend = 30;
 
@@ -147,6 +147,7 @@ module {
             motto : Text,
             description : Text,
             color : (Nat8, Nat8, Nat8),
+            energy : Int,
         ) : Result.Result<Nat, { #nameTaken }> {
             Debug.print("Creating new team with name " # name);
             let nameAlreadyTaken = teams.entries()
@@ -168,8 +169,8 @@ module {
                 var motto = motto;
                 var description = description;
                 var color = color;
-                var entropy = 0; // TODO?
-                var energy = 0;
+                var entropy = entropyThresholdPerTeam / 2;
+                var energy = energy;
                 traitIds = Buffer.Buffer<Text>(0);
                 links = Buffer.Buffer<Team.Link>(0);
             };

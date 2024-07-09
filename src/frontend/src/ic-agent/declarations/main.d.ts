@@ -111,6 +111,7 @@ export interface CreateTeamRequest {
   'color' : [number, number, number],
   'description' : string,
   'logoUrl' : string,
+  'energy' : bigint,
 }
 export type CreateTeamResult = { 'ok' : bigint } |
   { 'err' : CreateTeamError };

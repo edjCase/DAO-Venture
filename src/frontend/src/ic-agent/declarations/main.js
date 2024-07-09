@@ -238,6 +238,7 @@ export const idlFactory = ({ IDL }) => {
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'description' : IDL.Text,
     'logoUrl' : IDL.Text,
+    'energy' : IDL.Nat,
   });
   const CreateTeamError = IDL.Variant({
     'nameTaken' : IDL.Null,

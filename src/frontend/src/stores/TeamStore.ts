@@ -30,6 +30,7 @@ export const teamStore = (() => {
   }
 
 
+  setInterval(refetch, 1000 * 10); // Refetch every 10 seconds
 
   refetch();
   refetchTeamStandings();

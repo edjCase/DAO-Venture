@@ -69,7 +69,7 @@ actor MainActor : Types.Actor {
     };
 
     stable var teamStableData : TeamsHandler.StableData = {
-        entropyThreshold = 100;
+        entropyThresholdPerTeam = 10;
         traits = [];
         teams = [];
     };
@@ -527,6 +527,7 @@ actor MainActor : Types.Actor {
                 case (#err(#noMatchesSpecified)) Debug.trap("seasonEvents.onMatchGroupStart No matches specified: " # Nat.toText(matchGroupId));
                 case (#err(#matchGroupInProgress)) Debug.trap("seasonEvents.onMatchGroupStart Match group already in progress: " # Nat.toText(matchGroupId));
             };
+            ignore simulationHandler.finishMatchGroup<system>(); // TODO remove after re-implement live matches
         }
     );
 
@@ -811,6 +812,7 @@ actor MainActor : Types.Actor {
                 request.motto,
                 request.description,
                 request.color,
+                request.energy,
             )
         ) {
             case (#ok(teamId)) teamId;

@@ -16,6 +16,7 @@ export const entropyStore = (() => {
 
 
 
+  setInterval(refetchData, 1000 * 10); // Refetch every 10 seconds
 
   refetchData();
 
