@@ -322,11 +322,10 @@ module {
                     value = ?value;
                 },
             );
-            switch (calculateTeamConsensus(scenario, false)) {
-                case (#noConsensus) ();
-                case (#consensus(teamVotingResult)) {
-                    end<system>(scenario, teamVotingResult);
-                };
+            let teams = resolveTeamChoices(scenario);
+            if (IterTools.all(teams.vals(), func(teamChoice : ResolvedTeamChoice) : Bool = teamChoice.value != null)) {
+                // End early if all teams have voted
+                end<system>(scenario, teams);
             };
             #ok;
         };
@@ -342,7 +341,7 @@ module {
                 0,
                 func(total : Nat, option : Vote) : Nat = total + option.votingPower,
             );
-            let #consensus(teams) = calculateTeamConsensus(scenario, true) else Prelude.unreachable();
+            let teams = resolveTeamChoices(scenario);
             let teamIdWithConsensus = teams.vals()
             |> Iter.filter(
                 _,
@@ -588,10 +587,7 @@ module {
             };
         };
 
-        private func calculateTeamConsensus(scenario : MutableScenarioData, votingClosed : Bool) : {
-            #consensus : [ResolvedTeamChoice];
-            #noConsensus;
-        } {
+        private func resolveTeamChoices(scenario : MutableScenarioData) : [ResolvedTeamChoice] {
             type TeamInfo = {
                 var total : Nat;
                 teams : HashMap.HashMap<Nat, Nat>;
@@ -673,22 +669,18 @@ module {
                     null;
                 };
 
-                // If voting is not closed, check to see if there is a majority to end early or not
-                if (not votingClosed) {
-                    switch (optionWithMostVotes) {
-                        case (null) return #noConsensus;
-                        case (?o) {
-                            // Validate that the majority has been reached, if voting is still active
-                            let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(votingPowerInfo.total) / 2.) + 1));
-                            if (minMajorityVotingPower > o.votingPower) {
-                                return #noConsensus;
-                            };
-                        };
-                    };
-                };
                 let chosenValueId : ?Scenario.ScenarioOptionValue = switch (optionWithMostVotes) {
                     case (null) null;
-                    case (?o) ?o.value;
+                    case (?o) {
+                        // Validate that the majority has been reached
+                        let teamVotingPower = Option.get(votingPowerInfo.teams.get(teamId), 0);
+                        let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(teamVotingPower) / 2.) + 1));
+                        if (minMajorityVotingPower > o.votingPower) {
+                            null; // No majority, so undecided
+                        } else {
+                            ?o.value;
+                        };
+                    };
                 };
                 teamResults.add({
                     teamId = teamId;
@@ -696,7 +688,7 @@ module {
                 });
             };
 
-            #consensus(Buffer.toArray(teamResults));
+            Buffer.toArray(teamResults);
         };
 
         private func teamMeetsRequirements(team : Team.Team, requirements : [Scenario.TraitRequirement]) : Bool {
@@ -1004,10 +996,7 @@ module {
                 func<system>() : async* () {
                     Debug.print("Ending scenario with timer. Scenario id: " # Nat.toText(scenarioId));
                     let ?scenario = scenarios.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
-                    let teamVotingResult = switch (calculateTeamConsensus(scenario, true)) {
-                        case (#consensus(teamVotingResult)) teamVotingResult;
-                        case (#noConsensus) Prelude.unreachable();
-                    };
+                    let teamVotingResult = resolveTeamChoices(scenario);
                     end<system>(scenario, teamVotingResult);
                 },
             );

@@ -47,10 +47,11 @@
     disabled={loading}
     on:click={onClickHandler}
 >
-    <slot />
     {#if loading}
         <div class="ml-2">
             <Spinner size="5" />
         </div>
+    {:else}
+        <slot />
     {/if}
 </Button>

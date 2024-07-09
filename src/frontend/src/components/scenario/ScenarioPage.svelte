@@ -1,18 +1,51 @@
 <script lang="ts">
     import { Timeline, TimelineItem } from "flowbite-svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import Scenario from "./Scenario.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { nanosecondsToDate } from "../../utils/DateUtils";
+    import { onDestroy } from "svelte";
+    import { Scenario } from "../../ic-agent/declarations/main";
+    import ScenarioComponent from "./Scenario.svelte";
 
-    $: scenarios = $scenarioStore;
+    let scenarios: Scenario[] | undefined;
 
-    $: if (scenarios.length > 0) {
-        scenarioStore.refetchVotes(
-            scenarios.map((s) => s.id), // TODO only do recent scenarios? that are on the page
-        );
-        scenarios.sort((s1, s2) => Number(s2.startTime) - Number(s1.startTime)); // Order by start time
-    }
+    let refreshVotes = (scenariosToRefresh: Scenario[]) => {
+        if (scenariosToRefresh && scenariosToRefresh.length > 0) {
+            scenarioStore.refetchVotes(
+                scenariosToRefresh.map((s) => s.id), // TODO only do recent scenarios? that are on the page
+            );
+        }
+    };
+
+    scenarioStore.subscribe((s) => {
+        if (s === undefined) {
+            return;
+        }
+        if (scenarios === undefined) {
+            refreshVotes(s); // Initial refresh
+        }
+        scenarios = s;
+        scenarios?.sort(
+            (s1, s2) => Number(s2.startTime) - Number(s1.startTime),
+        ); // Order by start time
+    });
+
+    $: activeScenarios = scenarios?.filter(
+        (scenario) => "inProgress" in scenario.state,
+    );
+
+    let interval: NodeJS.Timeout | undefined = setInterval(() => {
+        if (activeScenarios) {
+            refreshVotes(activeScenarios);
+        }
+        scenarioStore.refetch();
+    }, 3000); // Refetch votes every 3 seconds
+
+    onDestroy(() => {
+        if (interval) {
+            clearInterval(interval);
+        }
+    });
 </script>
 
 <SectionWithOverview title="Scenarios">
@@ -44,14 +77,16 @@
     </section>
 
     <Timeline>
-        {#each scenarios as scenario}
-            <TimelineItem
-                date={nanosecondsToDate(scenario.startTime).toDateString()}
-            >
-                <div class="border-2 border-gray-700 p-2 pt-0 rounded">
-                    <Scenario {scenario} />
-                </div>
-            </TimelineItem>
-        {/each}
+        {#if scenarios}
+            {#each scenarios as scenario}
+                <TimelineItem
+                    date={nanosecondsToDate(scenario.startTime).toDateString()}
+                >
+                    <div class="border-2 border-gray-700 p-2 pt-0 rounded">
+                        <ScenarioComponent {scenario} />
+                    </div>
+                </TimelineItem>
+            {/each}
+        {/if}
     </Timeline>
 </SectionWithOverview>

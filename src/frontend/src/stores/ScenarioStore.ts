@@ -6,7 +6,7 @@ import { nanosecondsToDate } from "../utils/DateUtils";
 
 
 export const scenarioStore = (() => {
-    const { subscribe, set, update } = writable<Scenario[]>([]);
+    const { subscribe, set, update } = writable<Scenario[]>();
     let endTimers: NodeJS.Timeout[] = [];
     const votesWritable = writable<Record<number, VotingData>>({});
 

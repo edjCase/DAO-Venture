@@ -15,6 +15,8 @@
     export let teamEnergy: bigint | undefined;
     export let options: ScenarioTeamOptionNat[];
     export let vote: bigint | undefined;
+    export let proposeName: string;
+    export let icon: string;
 
     let natValue: bigint | undefined = vote;
 
@@ -47,24 +49,35 @@
     };
 </script>
 
-{#if options.length < 1}
-    <div>No current bid proposals</div>
-{:else}
-    {#each options as option}
-        <ScenarioOptionNat
-            {option}
-            selected={natValue === option.value}
-            {teamEnergy}
-            onSelect={() => {
-                natValue = option.value;
-                voteForNat();
-            }}
-        />
-    {/each}
-{/if}
-
-<div>
-    Propose Value
-    <BigIntInput bind:value={natValue} />
-    <LoadingButton onClick={voteForNat}>Submit</LoadingButton>
+<div class="text-3xl">Proposed {proposeName}</div>
+<div
+    class="flex flex-col items-center justify-center border-2 border-gray-700 p-2 rounded"
+>
+    <div class="flex flex-col item-center justify-center min-h-48">
+        {#if options.length < 1}
+            <div>-</div>
+        {:else}
+            {#each options as option}
+                <ScenarioOptionNat
+                    {option}
+                    selected={vote === option.value}
+                    {teamEnergy}
+                    {icon}
+                    onSelect={() => {
+                        natValue = option.value;
+                        voteForNat();
+                    }}
+                />
+            {/each}
+        {/if}
+    </div>
+    <div class="flex flex-col items-center justify-center">
+        <div class="text-xl p-2">Propose {proposeName}</div>
+        <div class="flex gap-2">
+            <div class="w-20">
+                <BigIntInput bind:value={natValue} />
+            </div>
+            <LoadingButton onClick={voteForNat}>Propose</LoadingButton>
+        </div>
+    </div>
 </div>

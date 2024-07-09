@@ -53,6 +53,21 @@
             selectedNat = undefined;
         }
     });
+    let proposeName = "";
+    let icon = "";
+    $: {
+        if ("lottery" in scenario.kind) {
+            proposeName = "Ticket Count";
+            icon = "🎟️";
+        } else if ("proportionalBid" in scenario.kind) {
+            proposeName = "Bid";
+            icon = "💰";
+        } else {
+            proposeName =
+                "NOT IMPLEMENTED SCENARIO KIND: " + toJsonString(scenario.kind);
+            icon = "❓";
+        }
+    }
 </script>
 
 {#if teams && votingData}
@@ -101,6 +116,8 @@
                 options={votingData.yourData[0].teamOptions.nat}
                 teamEnergy={team === undefined ? undefined : team.energy}
                 vote={selectedNat}
+                {proposeName}
+                {icon}
             />
         {:else if "discrete" in votingData.yourData[0].teamOptions}
             {#each votingData.yourData[0].teamOptions.discrete as option}

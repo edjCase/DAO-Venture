@@ -46,6 +46,17 @@
             }
         }
     });
+
+    let icon = "";
+    $: {
+        if ("lottery" in scenario.kind) {
+            icon = "🎟️";
+        } else if ("proportionalBid" in scenario.kind) {
+            icon = "💰";
+        } else {
+            icon = "❓";
+        }
+    }
 </script>
 
 {#if teams !== undefined && traits !== undefined}
@@ -98,7 +109,7 @@
     {:else if "nat" in state.options.kind}
         {#each state.options.kind.nat as natOption}
             <div class="flex items-center justify-center">
-                <div>{natOption.value} 🎟️</div>
+                <div>{natOption.value} {icon}</div>
                 <div class="flex">
                     {#each natOption.chosenByTeamIds as teamId}
                         <!-- TODO Fix this team not found hack -->

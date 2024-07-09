@@ -4,6 +4,7 @@
     export let option: ScenarioTeamOptionNat;
     export let teamEnergy: bigint | undefined; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
+    export let icon: string;
     export let onSelect: () => void;
 
     $: meetsEnergyRequirements =
@@ -19,7 +20,7 @@
 </script>
 
 <div
-    class="border border-gray-300 p-4 rounded-lg flex-1 text-left text-base text-white {cursorPointerClass} {disabledClass}"
+    class="border border-gray-300 rounded-lg text-left text-base text-white {cursorPointerClass} {disabledClass} mb-2"
     class:bg-gray-900={selected}
     class:border-gray-500={!selected}
     class:bg-gray-700={!selected}
@@ -31,11 +32,13 @@
     on:keypress={() => {}}
     role={selectable ? "button" : ""}
 >
-    <div class="w-full h-full">
-        <div class="text-center text-xl font-bold">{option.value}</div>
-        <div class="text-xl text-center">{option.value} 💰</div>
-        <div>
-            Team Votes: {option.currentVotingPower}
+    <div class="flex items-center justify-between py-2">
+        <div class="text-center text-xl font-bold px-6">
+            {option.value}
+            {icon}
+        </div>
+        <div class="px-6">
+            Team: {option.currentVotingPower}
         </div>
     </div>
 </div>
