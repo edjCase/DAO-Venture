@@ -119,8 +119,13 @@ module {
         value : ?Scenario.ScenarioOptionValue;
         votingPower : Nat;
         teamId : Nat;
-        teamVotingPower : Nat;
+        teamVotingPower : TeamVotingPower;
         teamOptions : ScenarioTeamOptions;
+    };
+
+    public type TeamVotingPower = {
+        total : Nat;
+        voted : Nat;
     };
 
     public type ScenarioTeamOptions = {
@@ -336,10 +341,16 @@ module {
 
             let teamOptions = buildTeamOptions(scenario, vote.teamId);
 
-            let teamVotingPower = IterTools.fold<Vote, Nat>(
+            let teamVotingPower = IterTools.fold<Vote, TeamVotingPower>(
                 scenario.votes.vals() |> Iter.filter(_, func(v : Vote) : Bool = v.teamId == vote.teamId),
-                0,
-                func(total : Nat, option : Vote) : Nat = total + option.votingPower,
+                {
+                    total = 0;
+                    voted = 0;
+                },
+                func(tvp : TeamVotingPower, option : Vote) : TeamVotingPower = {
+                    total = tvp.total + option.votingPower;
+                    voted = tvp.voted + (if (option.value != null) option.votingPower else 0);
+                },
             );
             let teams = resolveTeamChoices(scenario);
             let teamIdWithConsensus = teams.vals()

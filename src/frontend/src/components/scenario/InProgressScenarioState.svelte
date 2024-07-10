@@ -143,5 +143,8 @@
                 votingData.yourData[0].teamOptions,
             )}
         {/if}
+        {(Number(votingData.yourData[0].teamVotingPower.voted) /
+            Number(votingData.yourData[0].teamVotingPower.total)) *
+            100}% of your team has voted
     {/if}
 {/if}

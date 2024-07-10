@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { MatchGroupDetails } from "../../models/Match";
+    import { InProgressSeasonMatchGroupVariant } from "../../ic-agent/declarations/main";
     import { scheduleStore } from "../../stores/ScheduleStore";
     import { teamStore } from "../../stores/TeamStore";
     import { nanosecondsToDate } from "../../utils/DateUtils";
     import MatchBannerMatch from "./MatchBannerMatch.svelte";
 
-    let matchGroups: MatchGroupDetails[] = [];
+    let matchGroups: InProgressSeasonMatchGroupVariant[] = [];
 
     let winLossRecords: Record<number, string> = {};
 
@@ -49,8 +49,18 @@
         scrollLeft = undefined;
     }
 
-    let getMatchGroupDate = (matchGroup: MatchGroupDetails) => {
-        let date = nanosecondsToDate(matchGroup.time);
+    let getMatchGroupDate = (matchGroup: InProgressSeasonMatchGroupVariant) => {
+        let time;
+        if ("scheduled" in matchGroup) {
+            time = matchGroup.scheduled.time;
+        } else if ("notScheduled" in matchGroup) {
+            time = matchGroup.notScheduled.time;
+        } else if ("inProgress" in matchGroup) {
+            time = matchGroup.inProgress.time;
+        } else {
+            time = matchGroup.completed.time;
+        }
+        let date = nanosecondsToDate(time);
         let monthString = date.toLocaleString("default", { month: "short" });
 
         return monthString + " " + date.getDate();
@@ -72,9 +82,35 @@
             <div class="flex items-center text-center">
                 {getMatchGroupDate(matchGroup)}
             </div>
-            {#each matchGroup.matches as match}
-                <MatchBannerMatch {match} {winLossRecords} />
-            {/each}
+            {#if "notScheduled" in matchGroup}
+                {#each matchGroup.notScheduled.matches as match}
+                    <MatchBannerMatch
+                        match={{ notScheduled: match }}
+                        {winLossRecords}
+                    />
+                {/each}
+            {:else if "scheduled" in matchGroup}
+                {#each matchGroup.scheduled.matches as match}
+                    <MatchBannerMatch
+                        match={{ scheduled: match }}
+                        {winLossRecords}
+                    />
+                {/each}
+            {:else if "inProgress" in matchGroup}
+                {#each matchGroup.inProgress.matches as match}
+                    <MatchBannerMatch
+                        match={{ inProgress: match }}
+                        {winLossRecords}
+                    />
+                {/each}
+            {:else}
+                {#each matchGroup.completed.matches as match}
+                    <MatchBannerMatch
+                        match={{ completed: match }}
+                        {winLossRecords}
+                    />
+                {/each}
+            {/if}
         {/each}
     </div>
 </div>

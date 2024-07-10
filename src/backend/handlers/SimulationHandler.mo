@@ -53,12 +53,11 @@ module {
     public type OnMatchGroupCompleteData = {
         matchGroupId : Nat;
         matches : [Season.CompletedMatch];
-        playerStats : [Player.PlayerMatchStatsWithId];
+        playerStats : [Player.PlayerMatchStats];
     };
 
     public type CompletedMatchResult = {
         match : Season.CompletedMatch;
-        matchStats : [Player.PlayerMatchStatsWithId];
     };
 
     public type StableData = {
@@ -166,11 +165,11 @@ module {
 
                     let playerStats = completedTickResults
                     |> Iter.fromArray(_)
-                    |> Iter.map(
+                    |> Iter.map<CompletedMatchResult, Iter.Iter<Player.PlayerMatchStats>>(
                         _,
-                        func(tickResult : CompletedMatchResult) : Iter.Iter<Player.PlayerMatchStatsWithId> = Iter.fromArray(tickResult.matchStats),
+                        func(tickResult : CompletedMatchResult) : Iter.Iter<Player.PlayerMatchStats> = IterTools.chain(tickResult.match.team1.playerStats.vals(), tickResult.match.team2.playerStats.vals()),
                     )
-                    |> IterTools.flatten<Player.PlayerMatchStatsWithId>(_)
+                    |> IterTools.flatten<Player.PlayerMatchStats>(_)
                     |> Iter.toArray(_);
 
                     Timer.cancelTimer(matchGroup.tickTimerId);
@@ -287,25 +286,31 @@ module {
                 case (#error(e)) #tie;
             };
 
-            let playerStats = buildPlayerStats(match);
-
             {
                 match : Season.CompletedMatch = {
-                    team1 = match.team1;
-                    team2 = match.team2;
+                    team1 = {
+                        match.team1 with playerStats = buildPlayerStats(#team1, match)
+                    };
+                    team2 = {
+                        match.team2 with playerStats = buildPlayerStats(#team2, match)
+                    };
                     log = match.log;
                     winner = winner;
-                    playerStats = playerStats;
                 };
-                matchStats = playerStats;
             };
         };
 
-        private func buildPlayerStats(match : LiveState.LiveMatchState) : [Player.PlayerMatchStatsWithId] {
+        private func buildPlayerStats(teamId : Team.TeamId, match : LiveState.LiveMatchState) : [Player.PlayerMatchStats] {
             match.players.vals()
+            |> Iter.filter(
+                _,
+                func(player : LiveState.LivePlayerState) : Bool {
+                    player.teamId == teamId;
+                },
+            )
             |> Iter.map(
                 _,
-                func(player : LiveState.LivePlayerState) : Player.PlayerMatchStatsWithId {
+                func(player : LiveState.LivePlayerState) : Player.PlayerMatchStats {
                     {
                         playerId = player.id;
                         battingStats = {

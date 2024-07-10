@@ -72,6 +72,7 @@ export interface CompletedMatchTeam {
   'id' : bigint,
   'anomolies' : Array<Anomoly>,
   'score' : bigint,
+  'playerStats' : Array<PlayerMatchStats>,
   'positions' : TeamPositions,
 }
 export interface CompletedSeason {
@@ -329,7 +330,7 @@ export interface LiveMatchTeam {
 export interface LivePlayerState {
   'id' : PlayerId,
   'name' : string,
-  'matchStats' : PlayerMatchStats,
+  'matchStats' : PlayerMatchStatsWithoutId,
   'teamId' : TeamId,
   'skills' : Skills,
   'condition' : PlayerCondition,
@@ -444,6 +445,31 @@ export type PlayerCondition = { 'ok' : null } |
   { 'injured' : null };
 export type PlayerId = number;
 export interface PlayerMatchStats {
+  'playerId' : PlayerId,
+  'battingStats' : {
+    'homeRuns' : bigint,
+    'hits' : bigint,
+    'runs' : bigint,
+    'strikeouts' : bigint,
+    'atBats' : bigint,
+  },
+  'injuries' : bigint,
+  'pitchingStats' : {
+    'homeRuns' : bigint,
+    'pitches' : bigint,
+    'hits' : bigint,
+    'runs' : bigint,
+    'strikeouts' : bigint,
+    'strikes' : bigint,
+  },
+  'catchingStats' : {
+    'missedCatches' : bigint,
+    'throwOuts' : bigint,
+    'throws' : bigint,
+    'successfulCatches' : bigint,
+  },
+}
+export interface PlayerMatchStatsWithoutId {
   'battingStats' : {
     'homeRuns' : bigint,
     'hits' : bigint,
@@ -628,7 +654,7 @@ export interface ScenarioVote {
   'teamOptions' : ScenarioTeamOptions,
   'votingPower' : bigint,
   'teamId' : bigint,
-  'teamVotingPower' : bigint,
+  'teamVotingPower' : TeamVotingPower,
 }
 export interface ScheduledMatch {
   'team1' : ScheduledTeamInfo,
@@ -794,6 +820,7 @@ export interface TeamTraitTeamEffectOutcome {
   'traitId' : string,
   'teamId' : bigint,
 }
+export interface TeamVotingPower { 'total' : bigint, 'voted' : bigint }
 export interface ThresholdContribution { 'teamId' : bigint, 'amount' : bigint }
 export interface ThresholdScenario {
   'failure' : { 'description' : string, 'effect' : Effect },

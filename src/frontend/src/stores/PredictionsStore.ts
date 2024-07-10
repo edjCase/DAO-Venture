@@ -18,7 +18,10 @@ export const predictionStore = (() => {
         return store;
     };
 
-    const refetchMatchGroup = async (matchGroupId: bigint) => {
+    const refetchMatchGroup = async (matchGroupId: bigint | number) => {
+        if (typeof matchGroupId === "number") {
+            matchGroupId = BigInt(matchGroupId);
+        }
         let { set } = getOrCreateMatchGroupStore(matchGroupId);
 
         let mainAgent = await mainAgentFactory();
@@ -33,12 +36,24 @@ export const predictionStore = (() => {
         }
     };
 
-    const subscribeToMatchGroup = (matchGroupId: bigint, callback: Subscriber<MatchGroupPredictionSummary>) => {
+    const subscribeToMatchGroup = (matchGroupId: bigint | number, callback: Subscriber<MatchGroupPredictionSummary>) => {
+        if (typeof matchGroupId === "number") {
+            matchGroupId = BigInt(matchGroupId);
+        }
         let { subscribe } = getOrCreateMatchGroupStore(matchGroupId);
         subscribe(callback);
     };
 
-    const predictMatchOutcome = async (matchGroupId: bigint, matchId: bigint, team: TeamId) => {
+    const predictMatchOutcome = async (matchGroupId: bigint | number, matchId: bigint | number, team: TeamId) => {
+        if (typeof matchGroupId === "number") {
+            matchGroupId = BigInt(matchGroupId);
+        }
+
+        if (typeof matchId === "number") {
+            matchId = BigInt(matchId);
+        }
+
+
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.predictMatchOutcome({
             matchId: matchId,

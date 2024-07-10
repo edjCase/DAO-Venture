@@ -442,6 +442,7 @@ module {
         public func completeMatchGroup<system>(
             matchGroupId : Nat,
             matches : [Season.CompletedMatch],
+            playerStats : [Player.PlayerMatchStats],
         ) : OnMatchGroupCompleteResult {
 
             let #inProgress(season) = seasonStatus else return #err(#seasonNotOpen);
@@ -459,6 +460,7 @@ module {
             let updatedMatchGroup : Season.CompletedMatchGroup = {
                 time = inProgressMatchGroup.time;
                 matches = matches;
+                playerStats = playerStats;
             };
 
             let ?newMatchGroups = Util.arrayUpdateElementSafe<Season.InProgressSeasonMatchGroupVariant>(

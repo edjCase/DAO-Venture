@@ -33,7 +33,7 @@ module {
         #dead;
     };
 
-    public type PlayerMatchStats = {
+    public type PlayerMatchStatsWithoutId = {
         battingStats : {
             atBats : Nat;
             hits : Nat;
@@ -58,7 +58,7 @@ module {
         injuries : Nat;
     };
 
-    public type PlayerMatchStatsWithId = PlayerMatchStats and {
+    public type PlayerMatchStats = PlayerMatchStatsWithoutId and {
         playerId : PlayerId;
     };
 };

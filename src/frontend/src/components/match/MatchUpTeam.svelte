@@ -1,18 +1,10 @@
 <script lang="ts">
     import { Spinner } from "flowbite-svelte";
-    import {
-        Team,
-        TeamId,
-        TeamStandingInfo,
-    } from "../../ic-agent/declarations/main";
-    import { MatchDetails } from "../../models/Match";
+    import { TeamId, TeamStandingInfo } from "../../ic-agent/declarations/main";
     import { predictionStore } from "../../stores/PredictionsStore";
     import { teamStore } from "../../stores/TeamStore";
     import TeamLogo from "../team/TeamLogo.svelte";
-    import {
-        mapTeamOrUndetermined,
-        TeamOrUndetermined,
-    } from "../../models/Team";
+    import { TeamOrUndetermined } from "../../models/Team";
 
     type MatchPrediction = {
         teamTotal: number;
@@ -20,19 +12,13 @@
         yourVote: TeamId | undefined;
     };
 
-    export let match: MatchDetails;
+    export let matchGroupId: number;
+    export let matchId: number;
+    export let team: TeamOrUndetermined;
     export let teamId: TeamId;
-    export let teams: Team[];
 
-    let matchTeam: TeamOrUndetermined;
     let matchPredictions: MatchPrediction | undefined;
     let predicting = false;
-
-    if ("team1" in teamId) {
-        matchTeam = mapTeamOrUndetermined(match.team1, teams);
-    } else {
-        matchTeam = mapTeamOrUndetermined(match.team2, teams);
-    }
 
     let teamStandings: TeamStandingInfo[] | undefined;
 
@@ -40,12 +26,12 @@
         teamStandings = standings;
     });
 
-    predictionStore.subscribeToMatchGroup(match.matchGroupId, (predictions) => {
+    predictionStore.subscribeToMatchGroup(matchGroupId, (predictions) => {
         if (!predictions) {
             matchPredictions = undefined;
-            predictionStore.refetchMatchGroup(match.matchGroupId);
+            predictionStore.refetchMatchGroup(matchGroupId);
         } else {
-            let matchPrediction = predictions.matches[Number(match.id)];
+            let matchPrediction = predictions.matches[Number(matchId)];
             let totalPredictions =
                 Number(matchPrediction.team1) + Number(matchPrediction.team2);
             let team =
@@ -66,8 +52,8 @@
     let predict = async function () {
         predicting = true;
         await predictionStore.predictMatchOutcome(
-            match.matchGroupId,
-            match.id,
+            matchGroupId,
+            matchId,
             teamId,
         );
         predicting = false;
@@ -92,8 +78,8 @@
     let teamStats: string;
     $: {
         teamStats = "";
-        if ("id" in matchTeam) {
-            let id = matchTeam.id;
+        if ("id" in team) {
+            let id = team.id;
             const standing = teamStandings?.find((s) => s.id == id);
             if (standing) {
                 teamStats = `${standing.wins}-${standing.losses}`;
@@ -116,7 +102,7 @@
 
 <div class="flex justify-between gap-2">
     <div class="flex flex-col justify-center items-center">
-        <TeamLogo team={matchTeam} size="sm" stats={false} />
+        <TeamLogo {team} size="sm" stats={false} />
         <div class="text-sm font-bold">
             {teamStats}
         </div>

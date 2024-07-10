@@ -76,35 +76,3 @@
     // Add more players and their awards
   ];
 </script>
-
-<div>
-  <div class="text-center text-3xl font-bold my-4">Player Awards</div>
-
-  <Card padding="none" size="xl" class="grid md:grid-cols-2">
-    {#each playerAwards as award}
-      <figure
-        class="flex flex-col justify-center items-center p-8 text-center bg-white rounded-lg border border-gray-200 dark:bg-gray-800 dark:border-gray-700"
-      >
-        <AtomOutline />
-        <blockquote
-          class="mx-auto mb-4 max-w-2xl text-gray-500 dark:text-gray-400"
-        >
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">
-            {award.award}
-          </h3>
-          <p class="my-4 font-light">{award.description}</p>
-        </blockquote>
-        <figcaption
-          class="flex justify-center items-center space-x-3 rtl:space-x-reverse"
-        >
-          <div class="space-y-0.5 font-medium dark:text-white text-left">
-            <div>{award.name}</div>
-            <div class="text-sm font-light text-gray-500 dark:text-gray-400">
-              {award.team}
-            </div>
-          </div>
-        </figcaption>
-      </figure>
-    {/each}
-  </Card>
-</div>

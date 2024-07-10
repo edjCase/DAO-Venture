@@ -12,26 +12,20 @@
     $: teams = $teamStore;
 
     let nextMatchGroupDate: Date | undefined;
-    let matchGroupInProgress: bigint | undefined;
+    let matchGroupInProgress: number | undefined;
     let seasonChampionId: bigint | undefined;
     let seasonChampion: Team | undefined;
     scheduleStore.subscribeMatchGroups((matchGroups) => {
-        let now = new Date();
-        nextMatchGroupDate = undefined;
-        matchGroupInProgress = undefined;
-        for (let matchGroup of matchGroups) {
-            if (matchGroup.state == "InProgress") {
-                matchGroupInProgress = matchGroup.id;
-                break;
-            }
-            if (matchGroup.state != "Scheduled") {
-                continue;
-            }
-            let date = nanosecondsToDate(matchGroup.time);
-            if (date > now) {
-                nextMatchGroupDate = date;
-                break;
-            }
+        matchGroupInProgress = matchGroups.findIndex(
+            (mg) => "inProgress" in mg,
+        );
+        let nextMatchGroup = matchGroups.find((mg) => "scheduled" in mg);
+        if (nextMatchGroup) {
+            nextMatchGroupDate = nanosecondsToDate(
+                nextMatchGroup?.scheduled.time,
+            );
+        } else {
+            nextMatchGroupDate = undefined;
         }
     });
     scheduleStore.subscribeStatus((status) => {

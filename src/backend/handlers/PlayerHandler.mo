@@ -122,7 +122,7 @@ module {
 
         public func addMatchStats(
             matchGroupId : Nat,
-            playerStats : [Player.PlayerMatchStatsWithId],
+            playerStats : [Player.PlayerMatchStats],
         ) {
             for (playerStat in Iter.fromArray(playerStats)) {
                 let ?player = players.get(playerStat.playerId) else return Debug.trap("Player not found for id " # Nat32.toText(playerStat.playerId));

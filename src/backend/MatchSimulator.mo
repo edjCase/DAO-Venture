@@ -119,6 +119,7 @@ module {
             skills = player.skills;
             position = player.position;
             matchStats = {
+                playerId = player.id;
                 battingStats = {
                     atBats = 0;
                     hits = 0;
@@ -266,6 +267,7 @@ module {
                                 speed = player.1.skills.speed;
                             };
                             matchStats = {
+                                playerId = player.0;
                                 battingStats = {
                                     atBats = player.1.matchStats.battingStats.atBats;
                                     hits = player.1.matchStats.battingStats.hits;

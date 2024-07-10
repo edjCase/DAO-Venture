@@ -8,35 +8,47 @@
     DropdownItem,
     Helper,
   } from "flowbite-svelte";
-  import { MatchGroupDetails } from "../../models/Match";
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import MatchGroup from "../match/MatchGroup.svelte";
   import { scheduleStore } from "../../stores/ScheduleStore";
+  import { InProgressSeasonMatchGroupVariant } from "../../ic-agent/declarations/main";
 
   let dropdownOpen = false;
   let data:
     | {
-        matchGroups: MatchGroupDetails[];
+        matchGroups: InProgressSeasonMatchGroupVariant[];
         selectedMatchGroupIndex: number;
       }
     | undefined;
 
-  scheduleStore.subscribeMatchGroups((matchGroups: MatchGroupDetails[]) => {
-    if (matchGroups.length == 0) return;
-    let selectedMatchGroupIndex = 0;
-    matchGroups.forEach((matchGroup: MatchGroupDetails, i: number) => {
-      if (
-        matchGroup.state == "InProgress" ||
-        matchGroup.state == "Scheduled" ||
-        matchGroup.state == "Completed"
-      ) {
-        // Select the last match group that is in progress or scheduled
-        selectedMatchGroupIndex = i;
-      }
-    });
-    data = { matchGroups, selectedMatchGroupIndex };
-  });
-  let getDateTimeString = (nanoseconds: bigint) => {
+  scheduleStore.subscribeMatchGroups(
+    (matchGroups: InProgressSeasonMatchGroupVariant[]) => {
+      if (matchGroups.length == 0) return;
+
+      // Select the last match group that is in progress or scheduled
+      let selectedMatchGroupIndex = matchGroups.findLastIndex(
+        (matchGroup: InProgressSeasonMatchGroupVariant) => {
+          return (
+            "inProgress" in matchGroup ||
+            "scheduled" in matchGroup ||
+            "completed" in matchGroup
+          );
+        },
+      );
+      data = { matchGroups, selectedMatchGroupIndex };
+    },
+  );
+  let getDateTimeString = (matchGroup: InProgressSeasonMatchGroupVariant) => {
+    let nanoseconds;
+    if ("inProgress" in matchGroup) {
+      nanoseconds = matchGroup.inProgress.time;
+    } else if ("scheduled" in matchGroup) {
+      nanoseconds = matchGroup.scheduled.time;
+    } else if ("completed" in matchGroup) {
+      nanoseconds = matchGroup.completed.time;
+    } else {
+      return "";
+    }
     const options: Intl.DateTimeFormatOptions = {
       month: "short",
       day: "numeric",
@@ -69,9 +81,7 @@
           <ArrowKeyDown />
         </div>
         <Helper helperClass="text-center">
-          {getDateTimeString(
-            data.matchGroups[data.selectedMatchGroupIndex].time,
-          )}
+          {getDateTimeString(data.matchGroups[data.selectedMatchGroupIndex])}
         </Helper>
       </div>
       <Button
@@ -88,21 +98,26 @@
       activeUrl={"#" + data.selectedMatchGroupIndex}
       bind:open={dropdownOpen}
     >
-      {#each data.matchGroups as matchGroup, i}
-        <DropdownItem href={"#" + i} on:click={selectMatchGroup(i)}>
+      {#each data.matchGroups as matchGroup, matchGroupId}
+        <DropdownItem
+          href={"#" + matchGroupId}
+          on:click={selectMatchGroup(matchGroupId)}
+        >
           <div class="text-center text-md font-bold">
-            Match Group {i + 1}
+            Match Group {matchGroupId + 1}
           </div>
           <Helper helperClass="text-center">
-            {getDateTimeString(matchGroup.time)}
+            {getDateTimeString(matchGroup)}
           </Helper>
         </DropdownItem>
       {/each}
     </Dropdown>
     <div class="flex justify-center">
       <MatchGroup
+        matchGroupId={data.selectedMatchGroupIndex}
         matchGroup={data.matchGroups[data.selectedMatchGroupIndex]}
-        lastMatchGroup={data.matchGroups[data.selectedMatchGroupIndex - 1]}
+        lastMatchGroup={data.matchGroups.findLast((mg) => "completed" in mg)
+          ?.completed}
       />
     </div>
   </div>

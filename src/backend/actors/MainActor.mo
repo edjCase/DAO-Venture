@@ -450,7 +450,7 @@ actor MainActor : Types.Actor {
 
     func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
 
-        switch (seasonHandler.completeMatchGroup<system>(data.matchGroupId, data.matches)) {
+        switch (seasonHandler.completeMatchGroup<system>(data.matchGroupId, data.matches, data.playerStats)) {
             case (#ok) ();
             case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
             case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");

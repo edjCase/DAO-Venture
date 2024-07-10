@@ -3,32 +3,43 @@
     import TeamStandings from "../team/TeamStandings.svelte";
     import PlayerAwards from "../player/PlayerAwards.svelte";
     import SeasonWinners from "./SeasonWinners.svelte";
-    import { MatchGroupDetails } from "../../models/Match";
     import MatchGroup from "../match/MatchGroup.svelte";
-    import { SeasonStatus } from "../../ic-agent/declarations/main";
+    import {
+        CompletedMatchGroup,
+        InProgressMatchGroup,
+        InProgressSeasonMatchGroupVariant,
+        ScheduledMatchGroup,
+        SeasonStatus,
+    } from "../../ic-agent/declarations/main";
     import { onDestroy } from "svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
 
     let seasonStatus: SeasonStatus | undefined;
-    let lastMatchGroup: MatchGroupDetails | undefined;
-    let nextOrCurrentMatchGroup: MatchGroupDetails | undefined;
+    let lastMatchGroup: CompletedMatchGroup | undefined;
+    let nextOrCurrentMatchGroup:
+        | { scheduled: ScheduledMatchGroup }
+        | { inProgress: InProgressMatchGroup }
+        | undefined;
+    let nextOrCurrentMatchGroupIndex: number | undefined;
 
     scheduleStore.subscribeStatus((status) => {
         seasonStatus = status;
     });
 
-    scheduleStore.subscribeMatchGroups((matchGroups: MatchGroupDetails[]) => {
-        lastMatchGroup = matchGroups
-            .slice()
-            .reverse()
-            .find((mg) => mg.state == "Completed");
-        nextOrCurrentMatchGroup = matchGroups.find(
-            (mg) =>
-                mg.id > (lastMatchGroup?.id || -1) &&
-                (mg.state == "InProgress" || mg.state == "Scheduled"),
-        );
-    });
+    scheduleStore.subscribeMatchGroups(
+        (matchGroups: InProgressSeasonMatchGroupVariant[]) => {
+            lastMatchGroup = matchGroups.findLast(
+                (mg) => "completed" in mg,
+            )?.completed;
+            nextOrCurrentMatchGroup = matchGroups.find(
+                (mg) => "scheduled" in mg || "inProgress" in mg,
+            );
+            nextOrCurrentMatchGroupIndex = matchGroups.findIndex(
+                (mg) => mg === nextOrCurrentMatchGroup,
+            );
+        },
+    );
     // TODO handle this better?
     const interval = setInterval(() => {
         scheduleStore.refetch();
@@ -60,7 +71,7 @@
                 <div slot="details">
                     <section class="p-2">
                         <div class="bg-gray-700 p-4 rounded-lg shadow mb-2">
-                            {#if nextOrCurrentMatchGroup.state == "Scheduled"}
+                            {#if "scheduled" in nextOrCurrentMatchGroup}
                                 <h3 class="text-xl font-semibold mb-2">
                                     Predictions
                                 </h3>
@@ -74,7 +85,7 @@
                                         points and prestige
                                     </li>
                                 </ul>
-                            {:else if nextOrCurrentMatchGroup.state == "InProgress"}
+                            {:else if "inProgress" in nextOrCurrentMatchGroup}
                                 <h3 class="text-xl font-semibold mb-2">
                                     Live matches
                                 </h3>
@@ -87,10 +98,13 @@
                         </div>
                     </section>
                 </div>
-                <MatchGroup
-                    matchGroup={nextOrCurrentMatchGroup}
-                    {lastMatchGroup}
-                />
+                {#if nextOrCurrentMatchGroup && nextOrCurrentMatchGroupIndex !== undefined && lastMatchGroup}
+                    <MatchGroup
+                        matchGroupId={nextOrCurrentMatchGroupIndex}
+                        matchGroup={nextOrCurrentMatchGroup}
+                        {lastMatchGroup}
+                    />
+                {/if}
             </SectionWithOverview>
         {:else}
             Season in progress, but there is no upcoming match... <pre>{toJsonString(

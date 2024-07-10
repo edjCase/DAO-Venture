@@ -493,7 +493,7 @@ export const idlFactory = ({ IDL }) => {
     'score' : IDL.Int,
     'positions' : TeamPositions,
   });
-  const PlayerMatchStats = IDL.Record({
+  const PlayerMatchStatsWithoutId = IDL.Record({
     'battingStats' : IDL.Record({
       'homeRuns' : IDL.Nat,
       'hits' : IDL.Nat,
@@ -525,7 +525,7 @@ export const idlFactory = ({ IDL }) => {
   const LivePlayerState = IDL.Record({
     'id' : PlayerId,
     'name' : IDL.Text,
-    'matchStats' : PlayerMatchStats,
+    'matchStats' : PlayerMatchStatsWithoutId,
     'teamId' : TeamId,
     'skills' : Skills,
     'condition' : PlayerCondition,
@@ -762,12 +762,13 @@ export const idlFactory = ({ IDL }) => {
     'nat' : IDL.Vec(ScenarioTeamOptionNat),
     'discrete' : IDL.Vec(ScenarioTeamOptionDiscrete),
   });
+  const TeamVotingPower = IDL.Record({ 'total' : IDL.Nat, 'voted' : IDL.Nat });
   const ScenarioVote = IDL.Record({
     'value' : IDL.Opt(ScenarioOptionValue),
     'teamOptions' : ScenarioTeamOptions,
     'votingPower' : IDL.Nat,
     'teamId' : IDL.Nat,
-    'teamVotingPower' : IDL.Nat,
+    'teamVotingPower' : TeamVotingPower,
   });
   const VotingData = IDL.Record({
     'teamIdsWithConsensus' : IDL.Vec(IDL.Nat),
@@ -788,10 +789,36 @@ export const idlFactory = ({ IDL }) => {
     'losses' : IDL.Nat,
     'totalScore' : IDL.Int,
   });
+  const PlayerMatchStats = IDL.Record({
+    'playerId' : PlayerId,
+    'battingStats' : IDL.Record({
+      'homeRuns' : IDL.Nat,
+      'hits' : IDL.Nat,
+      'runs' : IDL.Nat,
+      'strikeouts' : IDL.Nat,
+      'atBats' : IDL.Nat,
+    }),
+    'injuries' : IDL.Nat,
+    'pitchingStats' : IDL.Record({
+      'homeRuns' : IDL.Nat,
+      'pitches' : IDL.Nat,
+      'hits' : IDL.Nat,
+      'runs' : IDL.Nat,
+      'strikeouts' : IDL.Nat,
+      'strikes' : IDL.Nat,
+    }),
+    'catchingStats' : IDL.Record({
+      'missedCatches' : IDL.Nat,
+      'throwOuts' : IDL.Nat,
+      'throws' : IDL.Nat,
+      'successfulCatches' : IDL.Nat,
+    }),
+  });
   const CompletedMatchTeam = IDL.Record({
     'id' : IDL.Nat,
     'anomolies' : IDL.Vec(Anomoly),
     'score' : IDL.Int,
+    'playerStats' : IDL.Vec(PlayerMatchStats),
     'positions' : TeamPositions,
   });
   const TeamIdOrTie = IDL.Variant({

@@ -1,36 +1,51 @@
 <script lang="ts">
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import { scheduleStore } from "../../stores/ScheduleStore";
-  import { MatchDetails, MatchGroupDetails } from "../../models/Match";
-  import MatchCardCompact from "./MatchCardCompact.svelte";
+  import CompletedMatchCard from "./CompletedMatchCard.svelte";
+  import {
+    CompletedMatch,
+    InProgressSeasonMatchGroupVariant,
+  } from "../../ic-agent/declarations/main";
 
   export let teamId: bigint;
 
+  type MatchDetails = {
+    match: CompletedMatch;
+    time: bigint;
+    matchGroupId: number;
+    matchId: number;
+  };
   let matches: MatchDetails[] = [];
 
-  scheduleStore.subscribeMatchGroups((matchGroups: MatchGroupDetails[]) => {
-    matches = matchGroups
-      .flatMap((mg) => mg.matches)
-      // Filter to where the team is in the match
-      .filter(
-        (m) =>
-          m.team1 &&
-          m.team2 &&
-          "id" in m.team1 &&
-          "id" in m.team2 &&
-          (m.team1.id == teamId || m.team2.id == teamId),
-      )
-      // Filter out the matches that haven't happened yet
-      .filter((m) => m.time < BigInt(Date.now() * 1000000))
-      .sort((a, b) => (a.time < b.time ? 1 : -1));
-  });
+  scheduleStore.subscribeMatchGroups(
+    (matchGroups: InProgressSeasonMatchGroupVariant[]) => {
+      matches = matchGroups
+        .filter((mg) => "completed" in mg)
+        .flatMap((mg, matchGroupId) =>
+          mg.completed.matches.map<MatchDetails>((m, matchId) => ({
+            match: m,
+            time: mg.completed.time,
+            matchGroupId: matchGroupId,
+            matchId: matchId,
+          })),
+        )
+        // Filter to where the team is in the match
+        .filter(
+          (m) => m.match.team1.id == teamId || m.match.team2.id == teamId,
+        );
+    },
+  );
 </script>
 
 <div class="flex flex-col items-center">
   {#each matches as match}
     <div>{nanosecondsToDate(match.time).toDateString()}</div>
     <div>
-      <MatchCardCompact {match} liveMatch={undefined} />
+      <CompletedMatchCard
+        matchGroupId={match.matchGroupId}
+        matchId={match.matchId}
+        match={match.match}
+      />
     </div>
   {/each}
 </div>

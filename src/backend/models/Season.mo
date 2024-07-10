@@ -2,6 +2,7 @@ import Time "mo:base/Time";
 import Anomoly "Anomoly";
 import Team "Team";
 import FieldPosition "FieldPosition";
+import Player "Player";
 
 module {
 
@@ -73,6 +74,7 @@ module {
         score : Int;
         positions : FieldPosition.TeamPositions;
         anomolies : [Anomoly.Anomoly];
+        playerStats : [Player.PlayerMatchStats];
     };
 
     public type CompletedMatch = {

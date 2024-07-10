@@ -2,7 +2,7 @@
   import { navigate } from "svelte-routing";
   import MatchGroup from "../components/match/MatchGroup.svelte";
   import { scheduleStore } from "../stores/ScheduleStore";
-  import { MatchGroupDetails } from "../models/Match";
+  import { InProgressSeasonMatchGroupVariant } from "../ic-agent/declarations/main";
 
   export let matchGroupIdString: string;
 
@@ -12,9 +12,9 @@
     navigate("/404", { replace: true });
   }
 
-  var matchGroup: MatchGroupDetails | undefined;
+  var matchGroup: InProgressSeasonMatchGroupVariant | undefined;
   scheduleStore.subscribeMatchGroups(
-    (seasonMatchGroups: MatchGroupDetails[]) => {
+    (seasonMatchGroups: InProgressSeasonMatchGroupVariant[]) => {
       if (seasonMatchGroups.length > 0) {
         matchGroup = seasonMatchGroups[matchGroupId];
       }
@@ -23,5 +23,5 @@
 </script>
 
 {#if !!matchGroup}
-  <MatchGroup {matchGroup} lastMatchGroup={undefined} />
+  <MatchGroup {matchGroupId} {matchGroup} lastMatchGroup={undefined} />
 {/if}

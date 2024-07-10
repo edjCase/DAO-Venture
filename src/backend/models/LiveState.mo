@@ -62,7 +62,7 @@ module {
         teamId : Team.TeamId;
         condition : Player.PlayerCondition;
         skills : Player.Skills;
-        matchStats : Player.PlayerMatchStats;
+        matchStats : Player.PlayerMatchStatsWithoutId;
     };
     public type LiveBaseState = {
         atBat : Player.PlayerId;
