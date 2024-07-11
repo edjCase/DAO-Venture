@@ -94,7 +94,7 @@
                         </div>
                     </section>
                 </div>
-                {#if nextOrCurrentMatchGroup && nextOrCurrentMatchGroupIndex !== undefined && lastMatchGroup}
+                {#if nextOrCurrentMatchGroup && nextOrCurrentMatchGroupIndex !== undefined}
                     <MatchGroup
                         matchGroupId={nextOrCurrentMatchGroupIndex}
                         matchGroup={nextOrCurrentMatchGroup}
