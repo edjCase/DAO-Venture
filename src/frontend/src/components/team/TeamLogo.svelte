@@ -27,25 +27,32 @@
 
   $: teamColor = "color" in team ? toRgbString(team.color) : "grey";
   let imageWidth: number;
+  let borderSize: number;
   $: {
     switch (size) {
       case "xxs":
-        imageWidth = 25;
+        imageWidth = 35;
+        borderSize = 2;
         break;
       case "xs":
         imageWidth = 60;
+        borderSize = 5;
         break;
       case "sm":
         imageWidth = 75;
+        borderSize = 5;
         break;
       case "md":
         imageWidth = 100;
+        borderSize = 5;
         break;
       case "lg":
         imageWidth = 150;
+        borderSize = 5;
         break;
       default:
         imageWidth = 50;
+        borderSize = 5;
     }
   }
 </script>
@@ -62,7 +69,7 @@
       alt={title}
       {title}
       style={`width: ${imageWidth}px; height: ${imageWidth}px; ` +
-        (border ? "border: 5px solid " + teamColor : "")}
+        (border ? `border: ${borderSize}px solid ` + teamColor : "")}
     />
     {#if stats && "currency" in team}
       <div class="flex items-center justify-center font-bold">

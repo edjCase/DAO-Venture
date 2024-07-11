@@ -15,7 +15,6 @@
         | { scheduled: ScheduledMatch }
         | { inProgress: InProgressMatch }
         | { completed: CompletedMatch };
-    export let winLossRecords: Record<number, string>;
 
     $: teams = $teamStore;
 
@@ -47,22 +46,24 @@
             team2 = map(match.notScheduled.team2);
         }
     }
+
+    let team1Score: bigint | undefined;
+    let team2Score: bigint | undefined;
+    $: {
+        if ("completed" in match) {
+            team1Score = match.completed.team1.score;
+            team2Score = match.completed.team2.score;
+        } else {
+            team1Score = undefined;
+            team2Score = undefined;
+        }
+    }
 </script>
 
-<div
-    class="flex flex-col justify-around text-xs w-24 p-1 mx-2 border rounded gap-1"
->
-    <div class="text-center">
-        {#if "completed" in match}
-            Completed
-        {:else if "inProgress" in match}
-            In Progress
-        {:else}
-            Upcoming
-        {/if}
+{#if team1 && team2}
+    <div class="flex flex-col items-center w-16 mr-2 bg-gray-700 rounded py-1">
+        <MatchBannerTeam team={team1} score={team1Score} />
+        <div class="mb-2"></div>
+        <MatchBannerTeam team={team2} score={team2Score} />
     </div>
-    {#if team1 && team2}
-        <MatchBannerTeam team={team1} winLossRecord={winLossRecords} />
-        <MatchBannerTeam team={team2} winLossRecord={winLossRecords} />
-    {/if}
-</div>
+{/if}

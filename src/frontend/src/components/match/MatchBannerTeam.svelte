@@ -3,18 +3,14 @@
     import TeamLogo from "../team/TeamLogo.svelte";
 
     export let team: TeamOrUndetermined;
-    export let winLossRecord: Record<number, string>;
+    export let score: bigint | undefined;
 </script>
 
-<div class="flex justify-around items-center">
-    <TeamLogo {team} size="xxs" border={false} padding={false} />
-    {#if "id" in team}
-        <div>{winLossRecord[Number(team.id)] || "-"}</div>
-    {:else if "winnerOfMatch" in team}
-        <div>WoM {team.winnerOfMatch}</div>
-    {:else}
-        <div>
-            Standing: {team.seasonStandingIndex + 1}
-        </div>
-    {/if}
+<div class="flex items-center jusity-center">
+    <div class="mr-2">
+        <TeamLogo {team} size="xxs" border={true} padding={false} />
+    </div>
+    <div>
+        {score == undefined ? "-" : score.toString()}
+    </div>
 </div>

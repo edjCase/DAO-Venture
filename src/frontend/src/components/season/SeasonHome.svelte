@@ -1,13 +1,10 @@
 <script lang="ts">
-    import Countdown from "../common/Countdown.svelte";
     import { scheduleStore } from "../../stores/ScheduleStore";
     import { nanosecondsToDate } from "../../utils/DateUtils";
-    import { Button } from "flowbite-svelte";
-    import { navigate } from "svelte-routing";
-    import TeamLogo from "../team/TeamLogo.svelte";
     import { teamStore } from "../../stores/TeamStore";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { Team } from "../../ic-agent/declarations/main";
+    import MatchBanner from "../match/MatchBanner.svelte";
 
     $: teams = $teamStore;
 
@@ -59,28 +56,5 @@
         </li>
     </ul>
 
-    <div class="flex justify-around border-2 rounded border-gray-700 p-4">
-        <div>
-            {#if matchGroupInProgress}
-                <Button on:click={() => navigate("/matches")}
-                    >View Live Match</Button
-                >
-            {:else if nextMatchGroupDate}
-                <div class="text-xl text-center">
-                    Next Matches in <Countdown date={nextMatchGroupDate} />
-                </div>
-                <div class="flex justify-center mt-2">
-                    <Button on:click={() => navigate("/matches")}>
-                        Make your predictions
-                    </Button>
-                </div>
-            {:else if seasonChampion !== undefined}
-                <div class="text-xl text-center">Season Complete</div>
-                <div class="text-xl text-center">Champions:</div>
-                <div class="text-xl text-center">{seasonChampion.name}</div>
-
-                <TeamLogo team={seasonChampion} size="md" />
-            {/if}
-        </div>
-    </div>
+    <MatchBanner />
 </SectionWithOverview>
