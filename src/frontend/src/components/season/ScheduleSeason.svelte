@@ -104,26 +104,13 @@
       console.error("Failed to force start next match group", result);
     }
   };
-
-  const finishMatchGroup = async () => {
-    let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.finishLiveMatchGroup();
-    if ("ok" in result) {
-      console.log("Finished match group");
-      scheduleStore.refetch();
-    } else {
-      console.error("Failed to finish match group", result);
-    }
-  };
 </script>
 
 <div class="container">
   {#if scheduleStatus && ("inProgress" in scheduleStatus || "starting" in scheduleStatus)}
     {#if "inProgress" in scheduleStatus}
-      <Button on:click={forceStartNextMatchGroup}
-        >Force Start Next Match Group</Button
+      <Button on:click={forceStartNextMatchGroup}>Force Next Match Group</Button
       >
-      <Button on:click={finishMatchGroup}>Finish Match Group</Button>
     {/if}
     <Button on:click={closeSeason}>Close Season</Button>
   {:else}

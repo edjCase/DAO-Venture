@@ -9,9 +9,6 @@ import Option "mo:base/Option";
 import IterTools "mo:itertools/Iter";
 import Team "../models/Team";
 import Result "mo:base/Result";
-import Float "mo:base/Float";
-import Prelude "mo:base/Prelude";
-import Array "mo:base/Array";
 import Text "mo:base/Text";
 import TextX "mo:xtended-text/TextX";
 import Trait "../models/Trait";
@@ -19,14 +16,13 @@ import Trait "../models/Trait";
 module {
 
     public type StableData = {
-        entropyThresholdPerTeam : Nat;
         teams : [StableTeamData];
         traits : [Trait.Trait];
     };
 
     public type StableTeamData = {
         id : Nat;
-        energy : Int;
+        energy : Nat;
         name : Text;
         logoUrl : Text;
         motto : Text;
@@ -36,16 +32,10 @@ module {
         traitIds : [Text];
         links : [Team.Link];
     };
-    public type EntropyData = {
-        maxDividend : Nat;
-        currentDividend : Nat;
-        entropyThreshold : Nat;
-        currentEntropy : Nat;
-    };
 
     type MutableTeamData = {
         id : Nat;
-        var energy : Int;
+        var energy : Nat;
         var name : Text;
         var logoUrl : Text;
         var motto : Text;
@@ -62,7 +52,6 @@ module {
 
         let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
         let traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
-        var entropyThresholdPerTeam = data.entropyThresholdPerTeam;
 
         var nextTeamId = teams.size(); // TODO change to check for the largest team id in the list
 
@@ -74,13 +63,12 @@ module {
                     toStableTeamData,
                 )
                 |> Iter.toArray(_);
-                entropyThresholdPerTeam = entropyThresholdPerTeam;
                 traits = traits.vals() |> Iter.toArray(_);
             };
         };
 
-        public func getEntropyData() : EntropyData {
-            let currentEntropy = Option.get(
+        public func getCurrentEntropy() : Nat {
+            Option.get(
                 teams.vals()
                 |> Iter.map<MutableTeamData, Nat>(
                     _,
@@ -89,30 +77,6 @@ module {
                 |> IterTools.sum(_, func(x : Nat, y : Nat) : Nat = x + y),
                 0,
             );
-            let entropyThreshold = entropyThresholdPerTeam * teams.size();
-            let entropyLevel = Float.fromInt(currentEntropy) / Float.fromInt(entropyThreshold);
-            let maxDividend = 30;
-
-            let currentDividend = if (entropyLevel <= 0.25) {
-                maxDividend;
-            } else if (entropyLevel <= 0.5) {
-                Int.abs(Float.toInt(Float.fromInt(maxDividend) * 0.8));
-            } else if (entropyLevel <= 0.75) {
-                Int.abs(Float.toInt(Float.fromInt(maxDividend) * 0.5));
-            } else {
-                Int.abs(Float.toInt(Float.fromInt(maxDividend) * 0.3));
-            };
-            {
-                maxDividend = maxDividend;
-                currentDividend = currentDividend;
-                entropyThreshold = entropyThreshold;
-                currentEntropy = currentEntropy;
-            };
-        };
-
-        public func isOverEntropyThreshold() : Bool {
-            let data = getEntropyData();
-            data.currentEntropy >= data.entropyThreshold;
         };
 
         public func get(teamId : Nat) : ?Team.Team {
@@ -147,7 +111,8 @@ module {
             motto : Text,
             description : Text,
             color : (Nat8, Nat8, Nat8),
-            energy : Int,
+            entropy : Nat,
+            energy : Nat,
         ) : Result.Result<Nat, { #nameTaken }> {
             Debug.print("Creating new team with name " # name);
             let nameAlreadyTaken = teams.entries()
@@ -169,7 +134,7 @@ module {
                 var motto = motto;
                 var description = description;
                 var color = color;
-                var entropy = entropyThresholdPerTeam / 2;
+                var entropy = entropy;
                 var energy = energy;
                 traitIds = Buffer.Buffer<Text>(0);
                 links = Buffer.Buffer<Team.Link>(0);
@@ -220,13 +185,21 @@ module {
             delta : Int,
             allowBelowZero : Bool,
         ) : Result.Result<(), { #teamNotFound; #notEnoughEnergy }> {
+            if (delta == 0) {
+                return #ok;
+            };
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
             let newEnergy = team.energy + delta;
             if (not allowBelowZero and newEnergy < 0) {
                 return #err(#notEnoughEnergy);
             };
-            Debug.print("Updating energy for team " # Nat.toText(teamId) # " by " # Int.toText(delta));
-            team.energy := newEnergy;
+            let newEnergyNat = if (newEnergy <= 0) {
+                0;
+            } else {
+                Int.abs(newEnergy);
+            };
+            Debug.print("Updating energy for team " # Nat.toText(teamId) # " by " # Int.toText(delta) # " to " # Nat.toText(newEnergyNat));
+            team.energy := newEnergyNat;
             #ok;
         };
 
@@ -273,7 +246,7 @@ module {
             #ok;
         };
 
-        public func updateEntropy(teamId : Nat, delta : Int) : Result.Result<{ overThreshold : Bool }, { #teamNotFound }> {
+        public func updateEntropy(teamId : Nat, delta : Int) : Result.Result<(), { #teamNotFound }> {
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
             Debug.print("Updating entropy for team " # Nat.toText(teamId) # " by " # Int.toText(delta));
             let newEntropyInt : Int = team.entropy + delta;
@@ -285,7 +258,7 @@ module {
             };
             team.entropy := newEntropyNat;
 
-            #ok({ overThreshold = isOverEntropyThreshold() });
+            #ok;
         };
 
         public func createTrait(trait : Trait.Trait) : Result.Result<(), { #idTaken; #invalid : [Text] }> {
@@ -334,72 +307,6 @@ module {
                 case (null) false;
             };
             #ok({ hadTrait = hadTrait });
-        };
-
-        public func disperseEnergyDividends() {
-            // Give team X energy that is divided purpotionally to how much relative entropy
-            // (based on combined entropy of all teams) they have and +1 for each winning team
-            type TeamInfo = {
-                id : Nat;
-                mutableData : MutableTeamData;
-            };
-
-            let proportionalWeights = teams.vals()
-            |> Iter.map<MutableTeamData, Nat>(
-                _,
-                func(team : MutableTeamData) : Nat = team.entropy,
-            )
-            |> Iter.toArray(_)
-            |> getProportionalEntropyWeights(_);
-
-            let entropyData = getEntropyData();
-
-            Debug.print("Giving energy to teams based on entropy. Total energy: " # Nat.toText(entropyData.currentDividend));
-
-            for ((team, energyWeight) in IterTools.zip(teams.vals(), proportionalWeights.vals())) {
-                var newEnergy = Float.toInt(Float.floor(Float.fromInt(entropyData.currentDividend) * energyWeight));
-                team.energy += newEnergy;
-                Debug.print("Team " # Nat.toText(team.id) # " share of the energy is: " # Int.toText(newEnergy) # " (weight: " # Float.toText(energyWeight) # ")");
-            };
-        };
-
-        private func getProportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
-            if (entropyValues.size() == 0) {
-                return [];
-            };
-            let ?maxEntropy = IterTools.max<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
-            let ?minEntropy = IterTools.min<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
-            let entropyRange : Nat = maxEntropy - minEntropy;
-
-            // If all entropy values are 0 or the total entropy is 0, return an array of equal weights
-            if (maxEntropy == 0) {
-                let equalWeight = 1.0 / Float.fromInt(entropyValues.size());
-                return Array.tabulate<Float>(entropyValues.size(), func(_ : Nat) : Float { equalWeight });
-            };
-
-            let weights = Iter.map<Nat, Float>(
-                entropyValues.vals(),
-                func(entropy : Nat) : Float {
-                    let relativeEntropy = Float.fromInt(maxEntropy - entropy) / Float.fromInt(entropyRange);
-                    return relativeEntropy + 1.0;
-                },
-            )
-            |> Iter.toArray(_);
-
-            let totalWeight = IterTools.fold<Float, Float>(
-                weights.vals(),
-                0.0,
-                func(sum : Float, weight : Float) : Float {
-                    return sum + weight;
-                },
-            );
-            return Iter.map<Float, Float>(
-                weights.vals(),
-                func(weight : Float) : Float {
-                    return weight / totalWeight;
-                },
-            )
-            |> Iter.toArray(_);
         };
 
         private func getTraitsByIds(traitIds : Iter.Iter<Text>) : [Trait.Trait] {

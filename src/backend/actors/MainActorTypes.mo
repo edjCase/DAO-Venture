@@ -46,10 +46,9 @@ module {
         getAllPlayers : query () -> async [Player.Player];
 
         getLiveMatchGroupState : query () -> async ?LiveState.LiveMatchGroupState;
-        finishLiveMatchGroup : () -> async FinishMatchGroupResult;
         startNextMatchGroup : () -> async StartMatchGroupResult;
 
-        getEntropyData : query () -> async EntropyData;
+        getLeagueData : query () -> async LeagueData;
         getTeams : query () -> async [Team];
         createTeamProposal : (teamId : Nat, request : TeamProposalContent) -> async CreateTeamProposalResult;
         getTeamProposal : query (teamId : Nat, id : Nat) -> async GetTeamProposalResult;
@@ -65,9 +64,8 @@ module {
         addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
     };
 
-    public type EntropyData = {
-        maxDividend : Nat;
-        currentDividend : Nat;
+    public type LeagueData = {
+        leagueIncome : Nat;
         entropyThreshold : Nat;
         currentEntropy : Nat;
     };
@@ -349,6 +347,7 @@ module {
         motto : Text;
         description : Text;
         color : (Nat8, Nat8, Nat8);
+        entropy : Nat;
         energy : Nat;
     };
 

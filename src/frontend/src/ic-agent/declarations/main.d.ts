@@ -111,6 +111,7 @@ export interface CreateTeamRequest {
   'name' : string,
   'color' : [number, number, number],
   'description' : string,
+  'entropy' : bigint,
   'logoUrl' : string,
   'energy' : bigint,
 }
@@ -140,30 +141,30 @@ export type Effect = { 'allOf' : Array<Effect> } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<WeightedEffect> } |
   { 'entropy' : EntropyEffect } |
+  { 'entropyThreshold' : EntropyThresholdEffect } |
   { 'skill' : SkillEffect } |
   { 'injury' : InjuryEffect } |
+  { 'leagueIncome' : LeagueIncomeEffect } |
   { 'energy' : EnergyEffect };
 export type EffectOutcome = { 'teamTrait' : TeamTraitTeamEffectOutcome } |
   { 'entropy' : EntropyTeamEffectOutcome } |
+  { 'entropyThreshold' : EntropyThresholdEffectOutcome } |
   { 'skill' : SkillPlayerEffectOutcome } |
   { 'injury' : InjuryPlayerEffectOutcome } |
+  { 'leagueIncome' : LeagueIncomeEffectOutcome } |
   { 'energy' : EnergyTeamEffectOutcome };
 export interface EnergyEffect {
   'value' : { 'flat' : bigint },
   'team' : TargetTeam,
 }
 export interface EnergyTeamEffectOutcome { 'teamId' : bigint, 'delta' : bigint }
-export interface EntropyData {
-  'currentDividend' : bigint,
-  'entropyThreshold' : bigint,
-  'currentEntropy' : bigint,
-  'maxDividend' : bigint,
-}
 export interface EntropyEffect { 'team' : TargetTeam, 'delta' : bigint }
 export interface EntropyTeamEffectOutcome {
   'teamId' : bigint,
   'delta' : bigint,
 }
+export interface EntropyThresholdEffect { 'delta' : bigint }
+export interface EntropyThresholdEffectOutcome { 'delta' : bigint }
 export type FieldPosition = { 'rightField' : null } |
   { 'leftField' : null } |
   { 'thirdBase' : null } |
@@ -172,10 +173,6 @@ export type FieldPosition = { 'rightField' : null } |
   { 'shortStop' : null } |
   { 'centerField' : null } |
   { 'firstBase' : null };
-export type FinishMatchGroupError = { 'notAuthorized' : null } |
-  { 'noLiveMatchGroup' : null };
-export type FinishMatchGroupResult = { 'ok' : null } |
-  { 'err' : FinishMatchGroupError };
 export type GetLeagueProposalError = { 'proposalNotFound' : null };
 export type GetLeagueProposalResult = { 'ok' : LeagueProposal } |
   { 'err' : GetLeagueProposalError };
@@ -284,6 +281,13 @@ export interface LeagueChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
 export interface LeagueChoiceScenarioRequest {
   'options' : Array<LeagueChoiceScenarioOptionRequest>,
 }
+export interface LeagueData {
+  'entropyThreshold' : bigint,
+  'currentEntropy' : bigint,
+  'leagueIncome' : bigint,
+}
+export interface LeagueIncomeEffect { 'delta' : bigint }
+export interface LeagueIncomeEffectOutcome { 'delta' : bigint }
 export interface LeagueProposal {
   'id' : bigint,
   'content' : ProposalContent__1,
@@ -958,10 +962,9 @@ export interface _SERVICE {
     [CreateTeamTraitRequest],
     CreateTeamTraitResult
   >,
-  'finishLiveMatchGroup' : ActorMethod<[], FinishMatchGroupResult>,
   'getAllPlayers' : ActorMethod<[], Array<Player>>,
   'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
-  'getEntropyData' : ActorMethod<[], EntropyData>,
+  'getLeagueData' : ActorMethod<[], LeagueData>,
   'getLeagueProposal' : ActorMethod<[bigint], GetLeagueProposalResult>,
   'getLeagueProposals' : ActorMethod<
     [bigint, bigint],

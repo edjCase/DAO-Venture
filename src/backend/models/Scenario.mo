@@ -47,6 +47,8 @@ module {
     public type Effect = {
         // TODO anomoly
         // #anomoly : AnomolyEffect;
+        #entropyThreshold : EntropyThresholdEffect;
+        #leagueIncome : LeagueIncomeEffect;
         #teamTrait : TeamTraitEffect;
         #skill : SkillEffect;
         #injury : InjuryEffect;
@@ -63,6 +65,14 @@ module {
     //     duration : Duration;
     //     anomoly : Anomoly.Anomoly;
     // };
+
+    public type EntropyThresholdEffect = {
+        delta : Int;
+    };
+
+    public type LeagueIncomeEffect = {
+        delta : Int;
+    };
 
     public type SkillEffect = {
         position : TargetPosition;
@@ -142,6 +152,19 @@ module {
         kind : TeamTraitEffectKind;
     };
 
+    public type LeagueEffectOutcome = {
+        #leagueIncome : LeagueIncomeEffectOutcome;
+        #entropyThreshold : EntropyThresholdEffectOutcome;
+    };
+
+    public type LeagueIncomeEffectOutcome = {
+        delta : Int;
+    };
+
+    public type EntropyThresholdEffectOutcome = {
+        delta : Int;
+    };
+
     // TODO anomoly
     // public type AnomolyMatchEffectOutcome = {
     //     teamId : Nat;
@@ -149,7 +172,7 @@ module {
     //     duration : Duration;
     // };
 
-    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome;
+    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome or LeagueEffectOutcome;
 
     public type TargetPositionInstance = {
         teamId : Nat;

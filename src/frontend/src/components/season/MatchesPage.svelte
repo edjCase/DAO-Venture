@@ -1,7 +1,6 @@
 <script lang="ts">
     import { scheduleStore } from "../../stores/ScheduleStore";
     import TeamStandings from "../team/TeamStandings.svelte";
-    import PlayerAwards from "../player/PlayerAwards.svelte";
     import SeasonWinners from "./SeasonWinners.svelte";
     import MatchGroup from "../match/MatchGroup.svelte";
     import {
@@ -61,9 +60,6 @@
             <div class="teams">
                 <TeamStandings completedSeason={seasonStatus.completed} />
             </div>
-            <div class="players">
-                <PlayerAwards />
-            </div>
         </div>
     {:else if "inProgress" in seasonStatus}
         {#if nextOrCurrentMatchGroup}
@@ -119,8 +115,5 @@
 <style>
     .teams {
         max-width: 400px;
-    }
-    .players {
-        max-width: 600px;
     }
 </style>

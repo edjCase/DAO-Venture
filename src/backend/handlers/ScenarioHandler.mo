@@ -1228,6 +1228,12 @@ module {
             case (#injury(_)) {
                 // TODO
             };
+            case (#entropyThreshold(_)) {
+                // TODO
+            };
+            case (#leagueIncome(_)) {
+                // TODO
+            };
             case (#noEffect) {};
         };
         #ok;
@@ -1512,6 +1518,12 @@ module {
                     });
                     outcomes.add(outcome);
                 };
+            };
+            case (#entropyThreshold(e)) {
+                outcomes.add(#entropyThreshold(e));
+            };
+            case (#leagueIncome(income)) {
+                outcomes.add(#leagueIncome(income));
             };
             case (#noEffect) ();
         };

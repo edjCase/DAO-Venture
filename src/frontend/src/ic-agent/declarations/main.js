@@ -42,6 +42,7 @@ export const idlFactory = ({ IDL }) => {
     'effect' : Effect,
   });
   const EntropyEffect = IDL.Record({ 'team' : TargetTeam, 'delta' : IDL.Int });
+  const EntropyThresholdEffect = IDL.Record({ 'delta' : IDL.Int });
   const Duration = IDL.Variant({
     'matches' : IDL.Nat,
     'indefinite' : IDL.Null,
@@ -84,6 +85,7 @@ export const idlFactory = ({ IDL }) => {
     'delta' : IDL.Int,
   });
   const InjuryEffect = IDL.Record({ 'position' : TargetPosition });
+  const LeagueIncomeEffect = IDL.Record({ 'delta' : IDL.Int });
   const EnergyEffect = IDL.Record({
     'value' : IDL.Variant({ 'flat' : IDL.Int }),
     'team' : TargetTeam,
@@ -95,8 +97,10 @@ export const idlFactory = ({ IDL }) => {
       'noEffect' : IDL.Null,
       'oneOf' : IDL.Vec(WeightedEffect),
       'entropy' : EntropyEffect,
+      'entropyThreshold' : EntropyThresholdEffect,
       'skill' : SkillEffect,
       'injury' : InjuryEffect,
+      'leagueIncome' : LeagueIncomeEffect,
       'energy' : EnergyEffect,
     })
   );
@@ -237,6 +241,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'description' : IDL.Text,
+    'entropy' : IDL.Nat,
     'logoUrl' : IDL.Text,
     'energy' : IDL.Nat,
   });
@@ -300,14 +305,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : CreateTeamTraitError,
   });
-  const FinishMatchGroupError = IDL.Variant({
-    'notAuthorized' : IDL.Null,
-    'noLiveMatchGroup' : IDL.Null,
-  });
-  const FinishMatchGroupResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : FinishMatchGroupError,
-  });
   const Skills = IDL.Record({
     'battingAccuracy' : IDL.Int,
     'throwingAccuracy' : IDL.Int,
@@ -334,11 +331,10 @@ export const idlFactory = ({ IDL }) => {
     'claimed' : IDL.Principal,
     'disabled' : IDL.Null,
   });
-  const EntropyData = IDL.Record({
-    'currentDividend' : IDL.Nat,
+  const LeagueData = IDL.Record({
     'entropyThreshold' : IDL.Nat,
     'currentEntropy' : IDL.Nat,
-    'maxDividend' : IDL.Nat,
+    'leagueIncome' : IDL.Nat,
   });
   const ProposalContent__1 = IDL.Variant({
     'changeTeamColor' : IDL.Record({
@@ -691,6 +687,7 @@ export const idlFactory = ({ IDL }) => {
     'teamId' : IDL.Nat,
     'delta' : IDL.Int,
   });
+  const EntropyThresholdEffectOutcome = IDL.Record({ 'delta' : IDL.Int });
   const TargetPositionInstance = IDL.Record({
     'teamId' : IDL.Nat,
     'position' : FieldPosition,
@@ -704,6 +701,7 @@ export const idlFactory = ({ IDL }) => {
   const InjuryPlayerEffectOutcome = IDL.Record({
     'position' : TargetPositionInstance,
   });
+  const LeagueIncomeEffectOutcome = IDL.Record({ 'delta' : IDL.Int });
   const EnergyTeamEffectOutcome = IDL.Record({
     'teamId' : IDL.Nat,
     'delta' : IDL.Int,
@@ -711,8 +709,10 @@ export const idlFactory = ({ IDL }) => {
   const EffectOutcome = IDL.Variant({
     'teamTrait' : TeamTraitTeamEffectOutcome,
     'entropy' : EntropyTeamEffectOutcome,
+    'entropyThreshold' : EntropyThresholdEffectOutcome,
     'skill' : SkillPlayerEffectOutcome,
     'injury' : InjuryPlayerEffectOutcome,
+    'leagueIncome' : LeagueIncomeEffectOutcome,
     'energy' : EnergyTeamEffectOutcome,
   });
   const ScenarioStateResolved = IDL.Record({
@@ -1160,14 +1160,13 @@ export const idlFactory = ({ IDL }) => {
         [CreateTeamTraitResult],
         [],
       ),
-    'finishLiveMatchGroup' : IDL.Func([], [FinishMatchGroupResult], []),
     'getAllPlayers' : IDL.Func([], [IDL.Vec(Player)], ['query']),
     'getBenevolentDictatorState' : IDL.Func(
         [],
         [BenevolentDictatorState],
         ['query'],
       ),
-    'getEntropyData' : IDL.Func([], [EntropyData], ['query']),
+    'getLeagueData' : IDL.Func([], [LeagueData], ['query']),
     'getLeagueProposal' : IDL.Func(
         [IDL.Nat],
         [GetLeagueProposalResult],

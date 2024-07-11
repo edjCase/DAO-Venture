@@ -22,6 +22,10 @@ import Dao "../Dao";
 import Result "mo:base/Result";
 import Nat32 "mo:base/Nat32";
 import HashMap "mo:base/HashMap";
+import Int "mo:base/Int";
+import Float "mo:base/Float";
+import Prelude "mo:base/Prelude";
+import Array "mo:base/Array";
 import Player "../models/Player";
 import TeamDao "../models/TeamDao";
 import FieldPosition "../models/FieldPosition";
@@ -39,6 +43,9 @@ actor MainActor : Types.Actor {
     // Stables ---------------------------------------------------------
 
     stable var benevolentDictator : Types.BenevolentDictatorState = #open;
+    stable var leagueIncome : Nat = 10;
+    stable var entropyThreshold : Nat = 100;
+
     stable var seasonStableData : SeasonHandler.StableData = {
         seasonStatus = #notStarted;
         teamStandings = null;
@@ -69,7 +76,6 @@ actor MainActor : Types.Actor {
     };
 
     stable var teamStableData : TeamsHandler.StableData = {
-        entropyThresholdPerTeam = 10;
         traits = [];
         teams = [];
     };
@@ -163,8 +169,9 @@ actor MainActor : Types.Actor {
             };
             case (#entropy(entropyEffect)) {
                 switch (teamsHandler.updateEntropy(entropyEffect.teamId, entropyEffect.delta)) {
-                    case (#ok({ overThreshold })) {
-                        if (overThreshold) {
+                    case (#ok) {
+                        let thresholdReached = teamsHandler.getCurrentEntropy() >= entropyThreshold;
+                        if (thresholdReached) {
                             Debug.print("Entropy threshold reached, triggering league collapse");
                             ignore seasonHandler.close<system>();
                             closeAllScenarios<system>();
@@ -209,6 +216,24 @@ actor MainActor : Types.Actor {
                     case (#remove) {
                         ignore teamsHandler.removeTraitFromTeam(t.teamId, t.traitId);
                     };
+                };
+                null;
+            };
+            case (#leagueIncome(incomeEffect)) {
+                let newIncome : Int = leagueIncome + incomeEffect.delta;
+                if (newIncome <= 0) {
+                    leagueIncome := 0;
+                } else {
+                    leagueIncome := Int.abs(newIncome);
+                };
+                null;
+            };
+            case (#entropyThreshold(entropyThresholdEffect)) {
+                let newThreshold : Int = entropyThreshold + entropyThresholdEffect.delta;
+                if (newThreshold <= 0) {
+                    entropyThreshold := 0;
+                } else {
+                    entropyThreshold := Int.abs(newThreshold);
                 };
                 null;
             };
@@ -471,10 +496,74 @@ actor MainActor : Types.Actor {
             };
         };
 
-        teamsHandler.disperseEnergyDividends();
+        disperseEnergyDividends();
         playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
         // Award users points for their predictions
         awardUserPoints(data.matchGroupId, data.matches);
+    };
+
+    private func disperseEnergyDividends() {
+        // Give team X energy that is divided purpotionally to how much relative entropy
+        // (based on combined entropy of all teams) they have
+        let teams = teamsHandler.getAll();
+        let proportionalWeights = teams.vals()
+        |> Iter.map<Team.Team, Nat>(
+            _,
+            func(team : Team.Team) : Nat = team.entropy,
+        )
+        |> Iter.toArray(_)
+        |> getProportionalEntropyWeights(_);
+
+        Debug.print("Giving energy to teams based on entropy. League Income: " # Nat.toText(leagueIncome));
+
+        for ((team, energyWeight) in IterTools.zip(teams.vals(), proportionalWeights.vals())) {
+            var newEnergy = Float.toInt(Float.floor(Float.fromInt(leagueIncome) * energyWeight));
+            switch (teamsHandler.updateEnergy(team.id, newEnergy, false)) {
+                case (#ok) ();
+                case (#err(#teamNotFound)) Debug.trap("Team not found: " # Nat.toText(team.id));
+                case (#err(#notEnoughEnergy)) Debug.trap("Team " # Nat.toText(team.id) # " does not have enough energy to receive " # Int.toText(newEnergy) # " energy");
+            };
+            Debug.print("Team " # Nat.toText(team.id) # " share of the energy is: " # Int.toText(newEnergy) # " (weight: " # Float.toText(energyWeight) # ")");
+        };
+    };
+
+    private func getProportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
+        if (entropyValues.size() == 0) {
+            return [];
+        };
+        let ?maxEntropy = IterTools.max<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
+        let ?minEntropy = IterTools.min<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
+        let entropyRange : Nat = maxEntropy - minEntropy;
+
+        // If all entropy values are 0 or the total entropy is 0, return an array of equal weights
+        if (maxEntropy == 0) {
+            let equalWeight = 1.0 / Float.fromInt(entropyValues.size());
+            return Array.tabulate<Float>(entropyValues.size(), func(_ : Nat) : Float { equalWeight });
+        };
+
+        let weights = Iter.map<Nat, Float>(
+            entropyValues.vals(),
+            func(entropy : Nat) : Float {
+                let relativeEntropy = Float.fromInt(maxEntropy - entropy) / Float.fromInt(entropyRange);
+                return relativeEntropy + 1.0;
+            },
+        )
+        |> Iter.toArray(_);
+
+        let totalWeight = IterTools.fold<Float, Float>(
+            weights.vals(),
+            0.0,
+            func(sum : Float, weight : Float) : Float {
+                return sum + weight;
+            },
+        );
+        return Iter.map<Float, Float>(
+            weights.vals(),
+            func(weight : Float) : Float {
+                return weight / totalWeight;
+            },
+        )
+        |> Iter.toArray(_);
     };
 
     var simulationHandler = SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
@@ -785,16 +874,14 @@ actor MainActor : Types.Actor {
         playerHandler.getAll(null);
     };
 
-    // TODO remove
-    public shared ({ caller }) func finishLiveMatchGroup() : async Types.FinishMatchGroupResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        simulationHandler.finishMatchGroup<system>();
-    };
+    public shared query func getLeagueData() : async Types.LeagueData {
+        let currentEntropy = teamsHandler.getCurrentEntropy();
 
-    public shared query func getEntropyData() : async Types.EntropyData {
-        teamsHandler.getEntropyData();
+        {
+            entropyThreshold = entropyThreshold;
+            currentEntropy = currentEntropy;
+            leagueIncome = leagueIncome;
+        };
     };
 
     public shared query func getTeams() : async [Team.Team] {
@@ -812,6 +899,7 @@ actor MainActor : Types.Actor {
                 request.motto,
                 request.description,
                 request.color,
+                request.entropy,
                 request.energy,
             )
         ) {
