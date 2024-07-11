@@ -35,7 +35,7 @@
 //             id = 0;
 //             name = "Player 0";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #rightField;
 //             skills = {
@@ -76,7 +76,7 @@
 //             id = 1;
 //             name = "Player 1";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #centerField;
 //             skills = {
@@ -117,7 +117,7 @@
 //             id = 2;
 //             name = "Player 2";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #leftField;
 //             skills = {
@@ -158,7 +158,7 @@
 //             id = 3;
 //             name = "Player 3";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #shortStop;
 //             skills = {
@@ -199,7 +199,7 @@
 //             id = 4;
 //             name = "Player 4";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #thirdBase;
 //             skills = {
@@ -240,7 +240,7 @@
 //             id = 5;
 //             name = "Player 5";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #secondBase;
 //             skills = {
@@ -281,7 +281,7 @@
 //             id = 6;
 //             name = "Player 6";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #firstBase;
 //             skills = {
@@ -322,7 +322,7 @@
 //             id = 7;
 //             name = "Player 7";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team1;
 //             position = #pitcher;
 //             skills = {
@@ -363,7 +363,7 @@
 //             id = 8;
 //             name = "Player 8";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #centerField;
 //             skills = {
@@ -404,7 +404,7 @@
 //             id = 9;
 //             name = "Player 9";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #pitcher;
 //             skills = {
@@ -445,7 +445,7 @@
 //             id = 10;
 //             name = "Player 10";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #rightField;
 //             skills = {
@@ -486,7 +486,7 @@
 //             id = 11;
 //             name = "Player 11";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #firstBase;
 //             skills = {
@@ -527,7 +527,7 @@
 //             id = 12;
 //             name = "Player 12";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #secondBase;
 //             skills = {
@@ -568,7 +568,7 @@
 //             id = 13;
 //             name = "Player 13";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #thirdBase;
 //             skills = {
@@ -609,7 +609,7 @@
 //             id = 14;
 //             name = "Player 14";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #shortStop;
 //             skills = {
@@ -650,7 +650,7 @@
 //             id = 15;
 //             name = "Player 15";
 //             condition = #ok;
-//             energy = 100;
+//             currency = 100;
 //             teamId = #team2;
 //             position = #leftField;
 //             skills = {

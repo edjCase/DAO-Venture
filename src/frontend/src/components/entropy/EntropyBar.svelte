@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { EntropyData, Team } from "../../ic-agent/declarations/main";
-    import { entropyStore } from "../../stores/EntropyStore";
+    import { LeagueData, Team } from "../../ic-agent/declarations/main";
+    import { leagueStore } from "../../stores/LeagueStore";
     import { ChevronDownSolid } from "flowbite-svelte-icons";
     import { teamStore } from "../../stores/TeamStore";
     let teams: Team[] = [];
-    let entropyData: EntropyData | undefined;
+    let entropyData: LeagueData | undefined;
 
     teamStore.subscribe((t) => {
         if (!t) {
@@ -14,7 +14,7 @@
         teams.sort((a, b) => Number(b.entropy) - Number(a.entropy));
     });
 
-    entropyStore.subscribeData((data) => {
+    leagueStore.subscribeData((data) => {
         entropyData = data;
     });
 
@@ -33,15 +33,6 @@
 {#if !entropyData}
     <div></div>
 {:else}
-    <div class="flex flex-col items-center">
-        <div>💰 Dividend (reduced by increased entropy)</div>
-        <div>
-            Max: {entropyData.maxDividend}
-        </div>
-        <div>
-            Current: {entropyData.currentDividend}
-        </div>
-    </div>
     <div class="flex justify-between mb-2 w-full">
         {#if entropyData.currentEntropy < entropyData.entropyThreshold}
             <div

@@ -2,19 +2,19 @@
     import { ScenarioTeamOptionNat } from "../../ic-agent/declarations/main";
 
     export let option: ScenarioTeamOptionNat;
-    export let teamEnergy: bigint | undefined; // Undefined used for loading but also for resolved scenarios
+    export let teamCurrency: bigint | undefined; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
     export let icon: string;
     export let onSelect: () => void;
 
-    $: meetsEnergyRequirements =
-        teamEnergy !== undefined && option.value <= teamEnergy;
+    $: meetsCurrencyRequirements =
+        teamCurrency !== undefined && option.value <= teamCurrency;
 
-    $: selectable = meetsEnergyRequirements;
+    $: selectable = meetsCurrencyRequirements;
 
     $: cursorPointerClass = selectable ? "cursor-pointer" : "";
     $: disabledClass =
-        teamEnergy !== undefined && !meetsEnergyRequirements
+        teamCurrency !== undefined && !meetsCurrencyRequirements
             ? "opacity-50 cursor-not-allowed"
             : "";
 </script>

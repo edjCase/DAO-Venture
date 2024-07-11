@@ -1,18 +1,18 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import type { EntropyData } from "../../ic-agent/declarations/main";
+    import type { LeagueData } from "../../ic-agent/declarations/main";
 
-    export let entropyData: EntropyData;
+    export let leagueData: LeagueData;
     let percentage: number = 0;
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null;
 
     $: {
         percentage =
-            entropyData === undefined
+            leagueData === undefined
                 ? 0
-                : Number(entropyData.currentEntropy) /
-                  Number(entropyData.entropyThreshold);
+                : Number(leagueData.currentEntropy) /
+                  Number(leagueData.entropyThreshold);
     }
 
     onMount(() => {
@@ -25,7 +25,7 @@
         { percent: 1, color: "rgba(255, 0, 0, 0.9)" }, // Pure Red
     ];
     function drawGauge(): void {
-        if (!ctx || !entropyData) return;
+        if (!ctx || !leagueData) return;
 
         const width = canvas.width;
         const height = canvas.height;
@@ -83,13 +83,13 @@
         ctx.font = "bold 28px Arial";
         ctx.textAlign = "center";
         ctx.fillText(
-            entropyData.currentEntropy.toString() + "🔥",
+            leagueData.currentEntropy.toString() + "🔥",
             centerX + 10,
             centerY + 40,
         );
 
         // Draw labels (if needed)
-        drawLabels(centerX, centerY, radius, entropyData.entropyThreshold);
+        drawLabels(centerX, centerY, radius, leagueData.entropyThreshold);
     }
     function drawNeedle(
         centerX: number,
@@ -165,7 +165,7 @@
         drawLabel(1);
     }
 
-    $: if (ctx && entropyData) drawGauge();
+    $: if (ctx && leagueData) drawGauge();
 </script>
 
 <div class="flex items-center justify-center">

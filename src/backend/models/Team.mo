@@ -17,7 +17,7 @@ module {
         motto : Text;
         description : Text;
         entropy : Nat;
-        energy : Int;
+        currency : Int;
         color : (Nat8, Nat8, Nat8);
         traits : [Trait.Trait];
         links : [Link];

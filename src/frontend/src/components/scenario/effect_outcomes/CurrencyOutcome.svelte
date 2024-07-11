@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { EnergyTeamEffectOutcome } from "../../../ic-agent/declarations/main";
+    import { CurrencyTeamEffectOutcome } from "../../../ic-agent/declarations/main";
     import { Team } from "../../../ic-agent/declarations/main";
 
-    export let value: EnergyTeamEffectOutcome;
+    export let value: CurrencyTeamEffectOutcome;
     export let teams: Team[];
 
     let absDelta = Math.abs(Number(value.delta));

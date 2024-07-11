@@ -97,7 +97,7 @@
                     scenarioId={scenario.id}
                     option={discreteOption}
                     selected={selectedChoice === discreteOption.id}
-                    energy={undefined}
+                    currency={undefined}
                     {vote}
                     state={{
                         resolved: {

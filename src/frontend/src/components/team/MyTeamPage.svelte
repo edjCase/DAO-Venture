@@ -47,7 +47,7 @@
         <div class="flex w-full mb-4 text-center">
             <div class="flex-grow">
                 <div class="text-xl">Team</div>
-                <div>{team.energy} 💰</div>
+                <div>{team.currency} 💰</div>
                 <div>{team.entropy} 🔥</div>
                 <div>Wins: {standing?.wins}</div>
                 <div>Losses: {standing?.losses}</div>

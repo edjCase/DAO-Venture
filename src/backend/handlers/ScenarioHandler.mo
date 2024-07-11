@@ -137,7 +137,7 @@ module {
         id : Nat;
         title : Text;
         description : Text;
-        energyCost : Nat;
+        currencyCost : Nat;
         currentVotingPower : Nat;
         traitRequirements : [Scenario.TraitRequirement];
     };
@@ -167,7 +167,7 @@ module {
     public type ScenarioOptionDiscrete = {
         title : Text;
         description : Text;
-        energyCost : Nat;
+        currencyCost : Nat;
         traitRequirements : [Scenario.TraitRequirement];
         teamEffect : Scenario.Effect;
     };
@@ -217,9 +217,9 @@ module {
             closeAllScenarios : <system>() -> (),
             outcome : Scenario.EffectOutcome,
         ) -> (),
-        chargeTeamEnergy : (teamId : Nat, amount : Nat) -> {
+        chargeTeamCurrency : (teamId : Nat, amount : Nat) -> {
             #ok;
-            #notEnoughEnergy;
+            #notEnoughCurrency;
         },
     ) {
 
@@ -780,7 +780,7 @@ module {
             );
         };
 
-        private func isAllowedAndChargedFunc(teamId : Nat, option : { allowedTeamIds : [Nat]; energyCost : Nat }) : Bool {
+        private func isAllowedAndChargedFunc(teamId : Nat, option : { allowedTeamIds : [Nat]; currencyCost : Nat }) : Bool {
             let isAllowed = IterTools.any(
                 option.allowedTeamIds.vals(),
                 func(teamId : Nat) : Bool = teamId == teamId,
@@ -788,9 +788,9 @@ module {
             if (not isAllowed) {
                 return false;
             };
-            switch (chargeTeamEnergy(teamId, option.energyCost)) {
+            switch (chargeTeamCurrency(teamId, option.currencyCost)) {
                 case (#ok) true;
-                case (#notEnoughEnergy) false;
+                case (#notEnoughCurrency) false;
             };
         };
 
@@ -832,8 +832,8 @@ module {
                 };
                 case (#lottery(_) or #proportionalBid(_)) {
                     let #nat(natValue) = value else return null;
-                    switch (chargeTeamEnergy(teamChoice.teamId, natValue)) {
-                        case (#notEnoughEnergy) return null;
+                    switch (chargeTeamCurrency(teamChoice.teamId, natValue)) {
+                        case (#notEnoughCurrency) return null;
                         case (#ok) ?{
                             value = value;
                             teamEffect = #noEffect;
@@ -1216,7 +1216,7 @@ module {
             case (#skill(s)) {
                 // TODO
             };
-            case (#energy(e)) {
+            case (#currency(e)) {
                 // TODO
             };
             case (#teamTrait(t)) {
@@ -1495,13 +1495,13 @@ module {
                     );
                 };
             };
-            case (#energy(e)) {
+            case (#currency(e)) {
                 let delta = switch (e.value) {
                     case (#flat(fixed)) fixed;
                 };
                 let teamIds = getTeamIdsFromTarget(prng, scenario.teamIds, e.team, context);
                 for (teamId in teamIds.vals()) {
-                    let outcome = #energy({
+                    let outcome = #currency({
                         teamId = teamId;
                         delta = delta;
                     });

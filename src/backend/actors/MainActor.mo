@@ -181,10 +181,10 @@ actor MainActor : Types.Actor {
                     case (#err(e)) Debug.trap("Error updating team entropy: " # debug_show (e));
                 };
             };
-            case (#energy(e)) {
-                switch (teamsHandler.updateEnergy(e.teamId, e.delta, true)) {
+            case (#currency(e)) {
+                switch (teamsHandler.updateCurrency(e.teamId, e.delta, true)) {
                     case (#ok) null;
-                    case (#err(e)) Debug.trap("Error updating team energy: " # debug_show (e));
+                    case (#err(e)) Debug.trap("Error updating team currency: " # debug_show (e));
                 };
             };
             case (#skill(s)) {
@@ -246,18 +246,18 @@ actor MainActor : Types.Actor {
         };
     };
 
-    private func chargeTeamEnergy(teamId : Nat, amount : Nat) : {
+    private func chargeTeamCurrency(teamId : Nat, amount : Nat) : {
         #ok;
-        #notEnoughEnergy;
+        #notEnoughCurrency;
     } {
-        switch (teamsHandler.updateEnergy(teamId, -amount, false)) {
+        switch (teamsHandler.updateCurrency(teamId, -amount, false)) {
             case (#ok) #ok;
-            case (#err(#notEnoughEnergy)) #notEnoughEnergy;
+            case (#err(#notEnoughCurrency)) #notEnoughCurrency;
             case (#err(#teamNotFound)) Debug.trap("Team not found: " # Nat.toText(teamId));
         };
     };
 
-    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamEnergy);
+    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamCurrency);
 
     seasonEvents.onEffectReversal.add(
         func<system>(effects : [Scenario.ReverseEffect]) : () {
@@ -408,9 +408,9 @@ actor MainActor : Types.Actor {
                         case (null) return #err("Player not found in position " # debug_show (train.position) # " for team " # Nat.toText(teamId));
                     };
                     let trainCost = Skill.get(player.skills, train.skill) + 1; // Cost is the next skill level
-                    switch (teamsHandler.updateEnergy(teamId, -trainCost, false)) {
+                    switch (teamsHandler.updateCurrency(teamId, -trainCost, false)) {
                         case (#ok) ();
-                        case (#err(#notEnoughEnergy)) return #err("Not enough energy to train player");
+                        case (#err(#notEnoughCurrency)) return #err("Not enough currency to train player");
                         case (#err(#teamNotFound)) return #err("Team not found: " # Nat.toText(teamId));
                     };
                     switch (playerHandler.updateSkill(player.id, train.skill, 1)) {
@@ -496,14 +496,14 @@ actor MainActor : Types.Actor {
             };
         };
 
-        disperseEnergyDividends();
+        disperseCurrencyDividends();
         playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
         // Award users points for their predictions
         awardUserPoints(data.matchGroupId, data.matches);
     };
 
-    private func disperseEnergyDividends() {
-        // Give team X energy that is divided purpotionally to how much relative entropy
+    private func disperseCurrencyDividends() {
+        // Give team X currency that is divided purpotionally to how much relative entropy
         // (based on combined entropy of all teams) they have
         let teams = teamsHandler.getAll();
         let proportionalWeights = teams.vals()
@@ -514,16 +514,16 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_)
         |> getProportionalEntropyWeights(_);
 
-        Debug.print("Giving energy to teams based on entropy. League Income: " # Nat.toText(leagueIncome));
+        Debug.print("Giving currency to teams based on entropy. League Income: " # Nat.toText(leagueIncome));
 
-        for ((team, energyWeight) in IterTools.zip(teams.vals(), proportionalWeights.vals())) {
-            var newEnergy = Float.toInt(Float.floor(Float.fromInt(leagueIncome) * energyWeight));
-            switch (teamsHandler.updateEnergy(team.id, newEnergy, false)) {
+        for ((team, currencyWeight) in IterTools.zip(teams.vals(), proportionalWeights.vals())) {
+            var newCurrency = Float.toInt(Float.floor(Float.fromInt(leagueIncome) * currencyWeight));
+            switch (teamsHandler.updateCurrency(team.id, newCurrency, false)) {
                 case (#ok) ();
                 case (#err(#teamNotFound)) Debug.trap("Team not found: " # Nat.toText(team.id));
-                case (#err(#notEnoughEnergy)) Debug.trap("Team " # Nat.toText(team.id) # " does not have enough energy to receive " # Int.toText(newEnergy) # " energy");
+                case (#err(#notEnoughCurrency)) Debug.trap("Team " # Nat.toText(team.id) # " does not have enough currency to receive " # Int.toText(newCurrency) # " currency");
             };
-            Debug.print("Team " # Nat.toText(team.id) # " share of the energy is: " # Int.toText(newEnergy) # " (weight: " # Float.toText(energyWeight) # ")");
+            Debug.print("Team " # Nat.toText(team.id) # " share of the currency is: " # Int.toText(newCurrency) # " (weight: " # Float.toText(currencyWeight) # ")");
         };
     };
 
@@ -648,7 +648,7 @@ actor MainActor : Types.Actor {
     system func postupgrade() {
         seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents, getTeamData);
         predictionHandler := PredictionHandler.Handler(predictionStableData);
-        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamEnergy);
+        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamCurrency);
         leagueDao := Dao.Dao<system, LeagueDao.ProposalContent>(
             leagueDaoStableData,
             onLeagueProposalExecute,
@@ -837,7 +837,7 @@ actor MainActor : Types.Actor {
         };
 
         // TODO archive vs delete
-        // TODO teams reset energy/entropy? or is that a scenario thing
+        // TODO teams reset currency/entropy? or is that a scenario thing
         #ok;
     };
 
@@ -900,7 +900,7 @@ actor MainActor : Types.Actor {
                 request.description,
                 request.color,
                 request.entropy,
-                request.energy,
+                request.currency,
             )
         ) {
             case (#ok(teamId)) teamId;

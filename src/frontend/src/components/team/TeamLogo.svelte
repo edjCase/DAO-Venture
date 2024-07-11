@@ -64,10 +64,10 @@
       style={`width: ${imageWidth}px; height: ${imageWidth}px; ` +
         (border ? "border: 5px solid " + teamColor : "")}
     />
-    {#if stats && "energy" in team}
+    {#if stats && "currency" in team}
       <div class="flex items-center justify-center font-bold">
         <div class="flex items-center justify-center mx-1">
-          <span class="">{team.energy}</span>
+          <span class="">{team.currency}</span>
           <span class="text-md">💰</span>
         </div>
         <div class="flex items-center justify-center">

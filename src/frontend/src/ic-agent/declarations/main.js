@@ -85,11 +85,11 @@ export const idlFactory = ({ IDL }) => {
     'delta' : IDL.Int,
   });
   const InjuryEffect = IDL.Record({ 'position' : TargetPosition });
-  const LeagueIncomeEffect = IDL.Record({ 'delta' : IDL.Int });
-  const EnergyEffect = IDL.Record({
+  const CurrencyEffect = IDL.Record({
     'value' : IDL.Variant({ 'flat' : IDL.Int }),
     'team' : TargetTeam,
   });
+  const LeagueIncomeEffect = IDL.Record({ 'delta' : IDL.Int });
   Effect.fill(
     IDL.Variant({
       'allOf' : IDL.Vec(Effect),
@@ -100,8 +100,8 @@ export const idlFactory = ({ IDL }) => {
       'entropyThreshold' : EntropyThresholdEffect,
       'skill' : SkillEffect,
       'injury' : InjuryEffect,
+      'currency' : CurrencyEffect,
       'leagueIncome' : LeagueIncomeEffect,
-      'energy' : EnergyEffect,
     })
   );
   const LotteryPrize = IDL.Record({
@@ -125,7 +125,7 @@ export const idlFactory = ({ IDL }) => {
     'teamEffect' : Effect,
     'description' : IDL.Text,
     'traitRequirements' : IDL.Vec(TraitRequirement),
-    'energyCost' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
   });
   const NoLeagueEffectScenarioRequest = IDL.Record({
     'options' : IDL.Vec(ScenarioOptionDiscrete__1),
@@ -146,7 +146,7 @@ export const idlFactory = ({ IDL }) => {
     'teamEffect' : Effect,
     'description' : IDL.Text,
     'traitRequirements' : IDL.Vec(TraitRequirement),
-    'energyCost' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
   });
   const ThresholdScenarioRequest = IDL.Record({
     'failure' : IDL.Record({ 'description' : IDL.Text, 'effect' : Effect }),
@@ -177,7 +177,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'leagueEffect' : Effect,
     'traitRequirements' : IDL.Vec(TraitRequirement),
-    'energyCost' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
   });
   const LeagueChoiceScenarioRequest = IDL.Record({
     'options' : IDL.Vec(LeagueChoiceScenarioOptionRequest),
@@ -243,7 +243,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'entropy' : IDL.Nat,
     'logoUrl' : IDL.Text,
-    'energy' : IDL.Nat,
+    'currency' : IDL.Nat,
   });
   const CreateTeamError = IDL.Variant({
     'nameTaken' : IDL.Null,
@@ -574,7 +574,7 @@ export const idlFactory = ({ IDL }) => {
     'teamEffect' : Effect,
     'description' : IDL.Text,
     'traitRequirements' : IDL.Vec(TraitRequirement),
-    'energyCost' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
     'allowedTeamIds' : IDL.Vec(IDL.Nat),
   });
   const NoLeagueEffectScenario = IDL.Record({
@@ -596,7 +596,7 @@ export const idlFactory = ({ IDL }) => {
     'teamEffect' : Effect,
     'description' : IDL.Text,
     'traitRequirements' : IDL.Vec(TraitRequirement),
-    'energyCost' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
     'allowedTeamIds' : IDL.Vec(IDL.Nat),
   });
   const ThresholdScenario = IDL.Record({
@@ -612,7 +612,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'leagueEffect' : Effect,
     'traitRequirements' : IDL.Vec(TraitRequirement),
-    'energyCost' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
     'allowedTeamIds' : IDL.Vec(IDL.Nat),
   });
   const LeagueChoiceScenario = IDL.Record({
@@ -665,7 +665,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'traitRequirements' : IDL.Vec(TraitRequirement),
     'chosenByTeamIds' : IDL.Vec(IDL.Nat),
-    'energyCost' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
   });
   const ScenarioResolvedOptionsKind = IDL.Variant({
     'nat' : IDL.Vec(ScenarioResolvedOptionNat),
@@ -701,19 +701,19 @@ export const idlFactory = ({ IDL }) => {
   const InjuryPlayerEffectOutcome = IDL.Record({
     'position' : TargetPositionInstance,
   });
-  const LeagueIncomeEffectOutcome = IDL.Record({ 'delta' : IDL.Int });
-  const EnergyTeamEffectOutcome = IDL.Record({
+  const CurrencyTeamEffectOutcome = IDL.Record({
     'teamId' : IDL.Nat,
     'delta' : IDL.Int,
   });
+  const LeagueIncomeEffectOutcome = IDL.Record({ 'delta' : IDL.Int });
   const EffectOutcome = IDL.Variant({
     'teamTrait' : TeamTraitTeamEffectOutcome,
     'entropy' : EntropyTeamEffectOutcome,
     'entropyThreshold' : EntropyThresholdEffectOutcome,
     'skill' : SkillPlayerEffectOutcome,
     'injury' : InjuryPlayerEffectOutcome,
+    'currency' : CurrencyTeamEffectOutcome,
     'leagueIncome' : LeagueIncomeEffectOutcome,
-    'energy' : EnergyTeamEffectOutcome,
   });
   const ScenarioStateResolved = IDL.Record({
     'scenarioOutcome' : ScenarioOutcome,
@@ -755,8 +755,8 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'description' : IDL.Text,
     'traitRequirements' : IDL.Vec(TraitRequirement),
-    'energyCost' : IDL.Nat,
     'currentVotingPower' : IDL.Nat,
+    'currencyCost' : IDL.Nat,
   });
   const ScenarioTeamOptions = IDL.Variant({
     'nat' : IDL.Vec(ScenarioTeamOptionNat),
@@ -972,7 +972,7 @@ export const idlFactory = ({ IDL }) => {
     'links' : IDL.Vec(Link),
     'entropy' : IDL.Nat,
     'logoUrl' : IDL.Text,
-    'energy' : IDL.Int,
+    'currency' : IDL.Int,
   });
   const TeamAssociationKind = IDL.Variant({
     'fan' : IDL.Null,

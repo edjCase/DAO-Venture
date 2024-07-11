@@ -348,7 +348,7 @@ module {
         description : Text;
         color : (Nat8, Nat8, Nat8);
         entropy : Nat;
-        energy : Nat;
+        currency : Nat;
     };
 
     public type CreateTeamResult = Result.Result<Nat, CreateTeamError>;

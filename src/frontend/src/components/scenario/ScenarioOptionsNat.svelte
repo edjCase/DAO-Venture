@@ -12,7 +12,7 @@
 
     export let scenarioId: bigint;
     export let teamId: bigint;
-    export let teamEnergy: bigint | undefined;
+    export let teamCurrency: bigint | undefined;
     export let options: ScenarioTeamOptionNat[];
     export let vote: bigint | undefined;
     export let proposeName: string;
@@ -25,8 +25,8 @@
             console.error("No value selected");
             return;
         }
-        if (teamEnergy === undefined || natValue > teamEnergy) {
-            console.error("Value exceeds team energy");
+        if (teamCurrency === undefined || natValue > teamCurrency) {
+            console.error("Value exceeds team currency");
             return;
         }
         let request: VoteOnScenarioRequest = {
@@ -61,7 +61,7 @@
                 <ScenarioOptionNat
                     {option}
                     selected={vote === option.value}
-                    {teamEnergy}
+                    {teamCurrency}
                     {icon}
                     onSelect={() => {
                         natValue = option.value;

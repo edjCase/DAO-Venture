@@ -14,7 +14,8 @@
   $: teams = $teamStore;
   $: players = $playerStore;
 
-  let initialEnergy = BigInt(10);
+  let initialCurrency = BigInt(10);
+  let initialEntropy = BigInt(7);
 
   let createTeams = async function (): Promise<void> {
     let mainAgent = await mainAgentFactory();
@@ -25,7 +26,8 @@
       let promise = mainAgent
         .createTeam({
           ...team,
-          energy: initialEnergy,
+          entropy: initialEntropy,
+          currency: initialCurrency,
         })
         .then(async (result) => {
           if ("ok" in result) {
@@ -94,8 +96,10 @@
 </script>
 
 {#if !teams || !players || players.length + teams.length <= 0}
-  <Label>Initial Team Energy</Label>
-  <BigIntInput bind:value={initialEnergy} />
+  <Label>Initial Team Currency</Label>
+  <BigIntInput bind:value={initialCurrency} />
+  <Label>Initial Team Entropy</Label>
+  <BigIntInput bind:value={initialEntropy} />
   <LoadingButton onClick={initialize}>
     Initialize With Default Data
   </LoadingButton>

@@ -22,7 +22,7 @@ module {
 
     public type StableTeamData = {
         id : Nat;
-        energy : Nat;
+        currency : Nat;
         name : Text;
         logoUrl : Text;
         motto : Text;
@@ -35,7 +35,7 @@ module {
 
     type MutableTeamData = {
         id : Nat;
-        var energy : Nat;
+        var currency : Nat;
         var name : Text;
         var logoUrl : Text;
         var motto : Text;
@@ -90,7 +90,7 @@ module {
                 description = team.description;
                 color = team.color;
                 entropy = team.entropy;
-                energy = team.energy;
+                currency = team.currency;
                 traits = teamTraits;
                 links = Buffer.toArray(team.links);
             };
@@ -112,7 +112,7 @@ module {
             description : Text,
             color : (Nat8, Nat8, Nat8),
             entropy : Nat,
-            energy : Nat,
+            currency : Nat,
         ) : Result.Result<Nat, { #nameTaken }> {
             Debug.print("Creating new team with name " # name);
             let nameAlreadyTaken = teams.entries()
@@ -135,7 +135,7 @@ module {
                 var description = description;
                 var color = color;
                 var entropy = entropy;
-                var energy = energy;
+                var currency = currency;
                 traitIds = Buffer.Buffer<Text>(0);
                 links = Buffer.Buffer<Team.Link>(0);
             };
@@ -180,26 +180,26 @@ module {
             };
         };
 
-        public func updateEnergy(
+        public func updateCurrency(
             teamId : Nat,
             delta : Int,
             allowBelowZero : Bool,
-        ) : Result.Result<(), { #teamNotFound; #notEnoughEnergy }> {
+        ) : Result.Result<(), { #teamNotFound; #notEnoughCurrency }> {
             if (delta == 0) {
                 return #ok;
             };
             let ?team = teams.get(teamId) else return #err(#teamNotFound);
-            let newEnergy = team.energy + delta;
-            if (not allowBelowZero and newEnergy < 0) {
-                return #err(#notEnoughEnergy);
+            let newCurrency = team.currency + delta;
+            if (not allowBelowZero and newCurrency < 0) {
+                return #err(#notEnoughCurrency);
             };
-            let newEnergyNat = if (newEnergy <= 0) {
+            let newCurrencyNat = if (newCurrency <= 0) {
                 0;
             } else {
-                Int.abs(newEnergy);
+                Int.abs(newCurrency);
             };
-            Debug.print("Updating energy for team " # Nat.toText(teamId) # " by " # Int.toText(delta) # " to " # Nat.toText(newEnergyNat));
-            team.energy := newEnergyNat;
+            Debug.print("Updating currency for team " # Nat.toText(teamId) # " by " # Int.toText(delta) # " to " # Nat.toText(newCurrencyNat));
+            team.currency := newCurrencyNat;
             #ok;
         };
 
@@ -326,7 +326,7 @@ module {
                 id = team.id;
                 traits = getTraitsByIds(team.traitIds.vals());
                 links = Buffer.toArray(team.links);
-                energy = team.energy;
+                currency = team.currency;
                 entropy = team.entropy;
                 name = team.name;
                 logoUrl = team.logoUrl;
@@ -349,7 +349,7 @@ module {
     private func toMutableTeamData(stableData : StableTeamData) : MutableTeamData {
         {
             id = stableData.id;
-            var energy = stableData.energy;
+            var currency = stableData.currency;
             var name = stableData.name;
             var logoUrl = stableData.logoUrl;
             var motto = stableData.motto;
@@ -366,7 +366,7 @@ module {
             id = team.id;
             traitIds = Buffer.toArray(team.traitIds);
             links = Buffer.toArray(team.links);
-            energy = team.energy;
+            currency = team.currency;
             entropy = team.entropy;
             name = team.name;
             logoUrl = team.logoUrl;

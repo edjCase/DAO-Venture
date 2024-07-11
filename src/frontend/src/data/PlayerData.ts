@@ -102,7 +102,7 @@ export const players: Player[] = [
     {
         "name": "Lumos",
         "title": "The Flickering Beacon",
-        "description": "Formed from flickering stadium lights, embodying the erratic energy of forgotten games.",
+        "description": "Formed from flickering stadium lights, embodying the erratic currency of forgotten games.",
         "quirks": ["Brightness fluctuates with mood", "Has a constant, low-frequency hum"],
         "likes": ["Night games", "Attention"],
         "dislikes": ["Consistency", "Maintenance"]
@@ -142,7 +142,7 @@ export const players: Player[] = [
     {
         "name": "Q",
         "title": "The Aspiring Stoic",
-        "description": "The energy of the lingering frustration of entities waiting in line for the ladies' room.",
+        "description": "The currency of the lingering frustration of entities waiting in line for the ladies' room.",
         "quirks": ["Constantly engaging in small talk", "Occasionally emits a faint, frustrated sigh"],
         "likes": ["Off hours", "Empty mens rooms"],
         "dislikes": ["Tile floors", "Aged motion sensors"]
@@ -183,7 +183,7 @@ export const players: Player[] = [
     {
         "name": "Numm",
         "title": "The Still",
-        "description": "Blankets were possesed by the latent energy, borne from enduring countless hours of motionless sitting on a rigid seat in the piercing cold, amidst the prolonged nuclear winter.",
+        "description": "Blankets were possesed by the latent currency, borne from enduring countless hours of motionless sitting on a rigid seat in the piercing cold, amidst the prolonged nuclear winter.",
         "quirks": ["Always moving, but never going anywhere", "Cocooned in a blanket at all times"],
         "likes": ["Fast games", "Exothermic reactions"],
         "dislikes": ["Low thread count", "Slightly textured plastics"]
@@ -215,7 +215,7 @@ export const players: Player[] = [
     {
         "name": "Eddie",
         "title": "The Rolling",
-        "description": "A stadium wave that never ended, a perpetual motion of energy and excitement.",
+        "description": "A stadium wave that never ended, a perpetual motion of currency and excitement.",
         "quirks": ["Never sits still", "An instigator"],
         "likes": ["High frequencies", "Camaraderie"],
         "dislikes": ["Passive observers", "Low attendance"]
@@ -491,8 +491,8 @@ export const players: Player[] = [
     {
         "name": "Zippy",
         "title": "The Sparky Spectator",
-        "description": "Spawned from the collective static energy of thousands of excited fans shuffling on carpets.",
-        "quirks": ["Emits tiny sparks of excitement", "Humming with pent-up energy"],
+        "description": "Spawned from the collective static currency of thousands of excited fans shuffling on carpets.",
+        "quirks": ["Emits tiny sparks of excitement", "Humming with pent-up currency"],
         "likes": ["Balloon animals", "Thunderous applause"],
         "dislikes": ["Grounding wires", "Rubber-soled shoes"]
     },
@@ -638,7 +638,7 @@ export const players: Player[] = [
         "name": "Buzz",
         "title": "The Electric Enthusiast",
         "description": "A sparkling entity created from the buzzing neon lights of the stadium's heyday.",
-        "quirks": ["Humming with energy", "Flashes brightly in laughter"],
+        "quirks": ["Humming with currency", "Flashes brightly in laughter"],
         "likes": ["Retro diners", "Nightlife"],
         "dislikes": ["Power outages", "LED lights"]
     },
@@ -654,7 +654,7 @@ export const players: Player[] = [
         "name": "Boomer",
         "title": "The Resounding Roarer",
         "description": "Born from the echo of fans' cheers and boos, an auditory force of the stadium's soul.",
-        "quirks": ["Echos louder in empty spaces", "Resonates with the crowd's energy"],
+        "quirks": ["Echos louder in empty spaces", "Resonates with the crowd's currency"],
         "likes": ["Karaoke nights", "Amphitheaters"],
         "dislikes": ["Silence", "Muffled sounds"]
     },
@@ -679,7 +679,7 @@ export const players: Player[] = [
         "name": "Thrum",
         "title": "The Percussive Pacer",
         "description": "A rhythmic force emerging from the repeated drumming of excited feet on stadium bleachers.",
-        "quirks": ["Taps an infectious beat when idle", "Vibrates with the crowd's energy"],
+        "quirks": ["Taps an infectious beat when idle", "Vibrates with the crowd's currency"],
         "likes": ["Drum circles", "Dance-offs"],
         "dislikes": ["Quiet rooms", "Stillness"]
     },
@@ -857,9 +857,9 @@ export const players: Player[] = [
     {
         "name": "Gusto",
         "title": "The Vigorous Vanguard",
-        "description": "Emerging from the collective energy and enthusiasm of cheering fans, a force of unstoppable spirit.",
-        "quirks": ["Radiates an infectious zeal", "Moves with boundless energy"],
-        "likes": ["Pep rallies", "Energy drinks"],
+        "description": "Emerging from the collective currency and enthusiasm of cheering fans, a force of unstoppable spirit.",
+        "quirks": ["Radiates an infectious zeal", "Moves with boundless currency"],
+        "likes": ["Pep rallies", "Currency drinks"],
         "dislikes": ["Apathy", "Quiet audiences"]
     },
     {

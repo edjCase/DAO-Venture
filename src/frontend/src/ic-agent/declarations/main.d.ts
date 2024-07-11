@@ -113,7 +113,7 @@ export interface CreateTeamRequest {
   'description' : string,
   'entropy' : bigint,
   'logoUrl' : string,
-  'energy' : bigint,
+  'currency' : bigint,
 }
 export type CreateTeamResult = { 'ok' : bigint } |
   { 'err' : CreateTeamError };
@@ -127,6 +127,14 @@ export interface CreateTeamTraitRequest {
 }
 export type CreateTeamTraitResult = { 'ok' : null } |
   { 'err' : CreateTeamTraitError };
+export interface CurrencyEffect {
+  'value' : { 'flat' : bigint },
+  'team' : TargetTeam,
+}
+export interface CurrencyTeamEffectOutcome {
+  'teamId' : bigint,
+  'delta' : bigint,
+}
 export type DayOfWeek = { 'tuesday' : null } |
   { 'wednesday' : null } |
   { 'saturday' : null } |
@@ -144,20 +152,15 @@ export type Effect = { 'allOf' : Array<Effect> } |
   { 'entropyThreshold' : EntropyThresholdEffect } |
   { 'skill' : SkillEffect } |
   { 'injury' : InjuryEffect } |
-  { 'leagueIncome' : LeagueIncomeEffect } |
-  { 'energy' : EnergyEffect };
+  { 'currency' : CurrencyEffect } |
+  { 'leagueIncome' : LeagueIncomeEffect };
 export type EffectOutcome = { 'teamTrait' : TeamTraitTeamEffectOutcome } |
   { 'entropy' : EntropyTeamEffectOutcome } |
   { 'entropyThreshold' : EntropyThresholdEffectOutcome } |
   { 'skill' : SkillPlayerEffectOutcome } |
   { 'injury' : InjuryPlayerEffectOutcome } |
-  { 'leagueIncome' : LeagueIncomeEffectOutcome } |
-  { 'energy' : EnergyTeamEffectOutcome };
-export interface EnergyEffect {
-  'value' : { 'flat' : bigint },
-  'team' : TargetTeam,
-}
-export interface EnergyTeamEffectOutcome { 'teamId' : bigint, 'delta' : bigint }
+  { 'currency' : CurrencyTeamEffectOutcome } |
+  { 'leagueIncome' : LeagueIncomeEffectOutcome };
 export interface EntropyEffect { 'team' : TargetTeam, 'delta' : bigint }
 export interface EntropyTeamEffectOutcome {
   'teamId' : bigint,
@@ -266,7 +269,7 @@ export interface LeagueChoiceScenarioOption {
   'description' : string,
   'leagueEffect' : Effect,
   'traitRequirements' : Array<TraitRequirement>,
-  'energyCost' : bigint,
+  'currencyCost' : bigint,
   'allowedTeamIds' : Array<bigint>,
 }
 export interface LeagueChoiceScenarioOptionRequest {
@@ -275,7 +278,7 @@ export interface LeagueChoiceScenarioOptionRequest {
   'description' : string,
   'leagueEffect' : Effect,
   'traitRequirements' : Array<TraitRequirement>,
-  'energyCost' : bigint,
+  'currencyCost' : bigint,
 }
 export interface LeagueChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
 export interface LeagueChoiceScenarioRequest {
@@ -588,7 +591,7 @@ export interface ScenarioOptionDiscrete {
   'teamEffect' : Effect,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
-  'energyCost' : bigint,
+  'currencyCost' : bigint,
   'allowedTeamIds' : Array<bigint>,
 }
 export interface ScenarioOptionDiscrete__1 {
@@ -596,7 +599,7 @@ export interface ScenarioOptionDiscrete__1 {
   'teamEffect' : Effect,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
-  'energyCost' : bigint,
+  'currencyCost' : bigint,
 }
 export type ScenarioOptionValue = { 'id' : bigint } |
   { 'nat' : bigint };
@@ -613,7 +616,7 @@ export interface ScenarioResolvedOptionDiscrete {
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
   'chosenByTeamIds' : Array<bigint>,
-  'energyCost' : bigint,
+  'currencyCost' : bigint,
 }
 export interface ScenarioResolvedOptionNat {
   'value' : bigint,
@@ -644,8 +647,8 @@ export interface ScenarioTeamOptionDiscrete {
   'title' : string,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
-  'energyCost' : bigint,
   'currentVotingPower' : bigint,
+  'currencyCost' : bigint,
 }
 export interface ScenarioTeamOptionNat {
   'value' : bigint,
@@ -756,7 +759,7 @@ export interface Team {
   'links' : Array<Link>,
   'entropy' : bigint,
   'logoUrl' : string,
-  'energy' : bigint,
+  'currency' : bigint,
 }
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
@@ -839,7 +842,7 @@ export interface ThresholdScenarioOption {
   'teamEffect' : Effect,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
-  'energyCost' : bigint,
+  'currencyCost' : bigint,
   'allowedTeamIds' : Array<bigint>,
 }
 export interface ThresholdScenarioOptionRequest {
@@ -848,7 +851,7 @@ export interface ThresholdScenarioOptionRequest {
   'teamEffect' : Effect,
   'description' : string,
   'traitRequirements' : Array<TraitRequirement>,
-  'energyCost' : bigint,
+  'currencyCost' : bigint,
 }
 export interface ThresholdScenarioOutcome {
   'contributions' : Array<ThresholdContribution>,

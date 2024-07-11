@@ -62,11 +62,11 @@
     <Label>Amount</Label>
     <BigIntInput bind:value={value.entropy.delta} />
     <TargetTeamChooser bind:value={value.entropy.team} />
-{:else if "energy" in value}
+{:else if "currency" in value}
     <Label>Amount</Label>
-    <BigIntInput bind:value={value.energy.value.flat} />
+    <BigIntInput bind:value={value.currency.value.flat} />
     <Label>Team</Label>
-    <TargetTeamChooser bind:value={value.energy.team} />
+    <TargetTeamChooser bind:value={value.currency.team} />
 {:else if "skill" in value}
     <Label>Target Position</Label>
     <div class="ml-4">

@@ -53,7 +53,7 @@ module {
         #skill : SkillEffect;
         #injury : InjuryEffect;
         #entropy : EntropyEffect;
-        #energy : EnergyEffect;
+        #currency : CurrencyEffect;
         #oneOf : [WeightedEffect];
         #allOf : [Effect];
         #noEffect;
@@ -90,7 +90,7 @@ module {
         delta : Int;
     };
 
-    public type EnergyEffect = {
+    public type CurrencyEffect = {
         team : TargetTeam;
         value : {
             #flat : Int;
@@ -132,7 +132,7 @@ module {
 
     public type TeamEffectOutcome = {
         #entropy : EntropyTeamEffectOutcome;
-        #energy : EnergyTeamEffectOutcome;
+        #currency : CurrencyTeamEffectOutcome;
         #teamTrait : TeamTraitTeamEffectOutcome;
     };
 
@@ -141,7 +141,7 @@ module {
         delta : Int;
     };
 
-    public type EnergyTeamEffectOutcome = {
+    public type CurrencyTeamEffectOutcome = {
         teamId : Nat;
         delta : Int;
     };
@@ -211,7 +211,7 @@ module {
     public type ScenarioOptionDiscrete = {
         title : Text;
         description : Text;
-        energyCost : Nat;
+        currencyCost : Nat;
         traitRequirements : [TraitRequirement];
         teamEffect : Effect;
         allowedTeamIds : [Nat];
@@ -320,7 +320,7 @@ module {
         id : Nat;
         title : Text;
         description : Text;
-        energyCost : Nat;
+        currencyCost : Nat;
         traitRequirements : [TraitRequirement];
         teamEffect : Effect;
         seenByTeamIds : [Nat];

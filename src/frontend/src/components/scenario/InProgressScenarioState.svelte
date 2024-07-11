@@ -114,7 +114,7 @@
                 scenarioId={scenario.id}
                 teamId={votingData.yourData[0].teamId}
                 options={votingData.yourData[0].teamOptions.nat}
-                teamEnergy={team === undefined ? undefined : team.energy}
+                teamCurrency={team === undefined ? undefined : team.currency}
                 vote={selectedNat}
                 {proposeName}
                 {icon}
@@ -125,9 +125,12 @@
                     scenarioId={scenario.id}
                     {option}
                     selected={selectedId === option.id}
-                    energy={team === undefined
+                    currency={team === undefined
                         ? undefined
-                        : { cost: option.energyCost, teamEnergy: team.energy }}
+                        : {
+                              cost: option.currencyCost,
+                              teamCurrency: team.currency,
+                          }}
                     vote={votingData.yourData[0]}
                     state={{
                         inProgress: {

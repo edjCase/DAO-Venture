@@ -11,7 +11,7 @@
         value.options.push({
             title: "Option " + (value.options.length + 1),
             description: "Option " + (value.options.length + 1),
-            energyCost: BigInt(0),
+            currencyCost: BigInt(0),
             leagueEffect: { noEffect: null },
             teamEffect: { noEffect: null },
             traitRequirements: [],
@@ -32,8 +32,8 @@
         <Input type="text" bind:value={option.title} />
         <Label>Description</Label>
         <Input type="text" bind:value={option.description} />
-        <Label>Energy Cost</Label>
-        <BigIntInput bind:value={option.energyCost} />
+        <Label>Currency Cost</Label>
+        <BigIntInput bind:value={option.currencyCost} />
         <Label>Team Effect</Label>
         <ScenarioEffectChooser bind:value={option.teamEffect} />
         <Label>League Effect</Label>

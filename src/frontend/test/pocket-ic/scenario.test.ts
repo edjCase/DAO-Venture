@@ -207,9 +207,9 @@ describe('Test suite name', () => {
                             title: "Option 1",
                             description: "Option 1",
                             traitRequirements: [],
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             teamEffect: {
-                                energy: {
+                                currency: {
                                     target: {
                                         contextual: null
                                     },
@@ -223,9 +223,9 @@ describe('Test suite name', () => {
                             title: "Option 2",
                             description: "Option 2",
                             traitRequirements: [],
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             teamEffect: {
-                                energy: {
+                                currency: {
                                     target: {
                                         contextual: null
                                     },
@@ -264,9 +264,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 1",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -288,9 +288,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 2",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -349,7 +349,7 @@ describe('Test suite name', () => {
                                 {
                                     "currentVotingPower": BigInt(j + 1),
                                     "description": "Option 1",
-                                    "energyCost": 0n,
+                                    "currencyCost": 0n,
                                     "id": 0n,
                                     "title": "Option 1",
                                     "traitRequirements": [],
@@ -357,7 +357,7 @@ describe('Test suite name', () => {
                                 {
                                     "currentVotingPower": 0n,
                                     "description": "Option 2",
-                                    "energyCost": 0n,
+                                    "currencyCost": 0n,
                                     "id": 1n,
                                     "title": "Option 2",
                                     "traitRequirements": [],
@@ -396,9 +396,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 1",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -420,9 +420,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 2",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -447,7 +447,7 @@ describe('Test suite name', () => {
                                     "id": 0n,
                                     "title": "Option 1",
                                     "teamEffect": {
-                                        "energy": {
+                                        "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
@@ -456,13 +456,13 @@ describe('Test suite name', () => {
                                     "description": "Option 1",
                                     "traitRequirements": [],
                                     "chosenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
-                                    "energyCost": 0n
+                                    "currencyCost": 0n
                                 },
                                 {
                                     "id": 1n,
                                     "title": "Option 2",
                                     "teamEffect": {
-                                        "energy": {
+                                        "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
@@ -471,17 +471,17 @@ describe('Test suite name', () => {
                                     "description": "Option 2",
                                     "traitRequirements": [],
                                     "chosenByTeamIds": [],
-                                    "energyCost": 0n
+                                    "currencyCost": 0n
                                 }
                             ]
                         },
                         "effectOutcomes": [
-                            { "energy": { "teamId": 0n, "delta": 1n } },
-                            { "energy": { "teamId": 1n, "delta": 1n } },
-                            { "energy": { "teamId": 2n, "delta": 1n } },
-                            { "energy": { "teamId": 3n, "delta": 1n } },
-                            { "energy": { "teamId": 4n, "delta": 1n } },
-                            { "energy": { "teamId": 5n, "delta": 1n } }
+                            { "currency": { "teamId": 0n, "delta": 1n } },
+                            { "currency": { "teamId": 1n, "delta": 1n } },
+                            { "currency": { "teamId": 2n, "delta": 1n } },
+                            { "currency": { "teamId": 3n, "delta": 1n } },
+                            { "currency": { "teamId": 4n, "delta": 1n } },
+                            { "currency": { "teamId": 5n, "delta": 1n } }
                         ]
                     }
                 },
@@ -519,7 +519,7 @@ describe('Test suite name', () => {
                     prize: {
                         allOf: [
                             {
-                                energy: {
+                                currency: {
                                     target: {
                                         contextual: null
                                     },
@@ -565,9 +565,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 1",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -589,9 +589,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 2",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -649,7 +649,7 @@ describe('Test suite name', () => {
                                 {
                                     "currentVotingPower": BigInt(j + 1),
                                     "description": "Option 1",
-                                    "energyCost": 0n,
+                                    "currencyCost": 0n,
                                     "id": 0n,
                                     "title": "Option 1",
                                     "traitRequirements": [],
@@ -657,7 +657,7 @@ describe('Test suite name', () => {
                                 {
                                     "currentVotingPower": 0n,
                                     "description": "Option 2",
-                                    "energyCost": 0n,
+                                    "currencyCost": 0n,
                                     "id": 1n,
                                     "title": "Option 2",
                                     "traitRequirements": [],
@@ -696,9 +696,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 1",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -720,9 +720,9 @@ describe('Test suite name', () => {
                                     5n
                                 ],
                                 "description": "Option 2",
-                                "energyCost": 0n,
+                                "currencyCost": 0n,
                                 "teamEffect": {
-                                    "energy": {
+                                    "currency": {
                                         "target": {
                                             "contextual": null
                                         },
@@ -747,7 +747,7 @@ describe('Test suite name', () => {
                                     "id": 0n,
                                     "title": "Option 1",
                                     "teamEffect": {
-                                        "energy": {
+                                        "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
@@ -756,13 +756,13 @@ describe('Test suite name', () => {
                                     "description": "Option 1",
                                     "traitRequirements": [],
                                     "chosenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
-                                    "energyCost": 0n
+                                    "currencyCost": 0n
                                 },
                                 {
                                     "id": 1n,
                                     "title": "Option 2",
                                     "teamEffect": {
-                                        "energy": {
+                                        "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
@@ -771,17 +771,17 @@ describe('Test suite name', () => {
                                     "description": "Option 2",
                                     "traitRequirements": [],
                                     "chosenByTeamIds": [],
-                                    "energyCost": 0n
+                                    "currencyCost": 0n
                                 }
                             ]
                         },
                         "effectOutcomes": [
-                            { "energy": { "teamId": 0n, "delta": 1n } },
-                            { "energy": { "teamId": 1n, "delta": 1n } },
-                            { "energy": { "teamId": 2n, "delta": 1n } },
-                            { "energy": { "teamId": 3n, "delta": 1n } },
-                            { "energy": { "teamId": 4n, "delta": 1n } },
-                            { "energy": { "teamId": 5n, "delta": 1n } }
+                            { "currency": { "teamId": 0n, "delta": 1n } },
+                            { "currency": { "teamId": 1n, "delta": 1n } },
+                            { "currency": { "teamId": 2n, "delta": 1n } },
+                            { "currency": { "teamId": 3n, "delta": 1n } },
+                            { "currency": { "teamId": 4n, "delta": 1n } },
+                            { "currency": { "teamId": 5n, "delta": 1n } }
                         ]
                     }
                 },

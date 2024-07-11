@@ -34,9 +34,9 @@
                     team: { contextual: null },
                 },
             };
-        } else if (selectedType === "energy") {
+        } else if (selectedType === "currency") {
             value = {
-                energy: {
+                currency: {
                     team: { contextual: null },
                     value: { flat: BigInt(1) },
                 },
@@ -93,8 +93,8 @@
             value: "entropy",
         },
         {
-            name: "Energy",
-            value: "energy",
+            name: "Currency",
+            value: "currency",
         },
         {
             name: "Skill",

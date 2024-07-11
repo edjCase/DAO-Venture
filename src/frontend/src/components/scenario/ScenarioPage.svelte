@@ -58,7 +58,7 @@
                     > and influence the outcome of matches
                 </li>
                 <li>
-                    Each choice has a tradeoffs of entropy, energy, skills and
+                    Each choice has a tradeoffs of entropy, currency, skills and
                     more
                 </li>
                 <li>

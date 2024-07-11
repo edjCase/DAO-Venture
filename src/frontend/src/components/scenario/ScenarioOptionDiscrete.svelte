@@ -36,24 +36,24 @@
         traitRequirements: TraitRequirement[];
     };
     export let scenarioId: bigint;
-    export let energy: { teamEnergy: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
+    export let currency: { teamCurrency: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
     export let vote: ScenarioVote | "ineligible";
     export let state: State;
 
-    $: meetsEnergyRequirements =
-        energy !== undefined && energy.cost <= energy.teamEnergy;
+    $: meetsCurrencyRequirements =
+        currency !== undefined && currency.cost <= currency.teamCurrency;
 
     $: selectable =
         "inProgress" in state &&
         vote != "ineligible" &&
-        meetsEnergyRequirements;
+        meetsCurrencyRequirements;
 
     $: cursorPointerClass = selectable ? "cursor-pointer" : "";
     $: disabledClass =
         "inProgress" in state &&
-        energy !== undefined &&
-        !meetsEnergyRequirements
+        currency !== undefined &&
+        !meetsCurrencyRequirements
             ? "opacity-50 cursor-not-allowed"
             : "";
 
@@ -142,8 +142,8 @@
     <div class="w-full h-full">
         <div class="text-center text-xl font-bold">{option.title}</div>
         <div class="text-justify text-sm">{option.description}</div>
-        {#if energy !== undefined && energy.cost > 0}
-            <div class="text-xl text-center">{energy.cost} 💰</div>
+        {#if currency !== undefined && currency.cost > 0}
+            <div class="text-xl text-center">{currency.cost} 💰</div>
         {/if}
         {#if teamOption === undefined}
             <div class="text-center text-xl font-bold">Ineligible to vote</div>

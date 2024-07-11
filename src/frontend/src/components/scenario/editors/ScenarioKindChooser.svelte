@@ -20,7 +20,7 @@
                             title: "Contribute",
                             description:
                                 "Contribute 1 to the threshold, but -1 random skill to a random player on the team for a match.",
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             traitRequirements: [],
                             value: { fixed: BigInt(1) },
                             teamEffect: {
@@ -39,7 +39,7 @@
                             title: "Don't Contribute",
                             description:
                                 "Don't contribute to the threshold, but no negative effect.",
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             traitRequirements: [],
                             value: { fixed: BigInt(0) },
                             teamEffect: { noEffect: null },
@@ -47,7 +47,7 @@
                     ],
                     success: {
                         effect: {
-                            energy: {
+                            currency: {
                                 team: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
@@ -74,7 +74,7 @@
                             title: "Fast Start",
                             description:
                                 "There is no time to wait, give us the 💰and crank up the 🔥. +10 💰+2 entropy per team",
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             leagueEffect: {
                                 allOf: [
                                     {
@@ -86,7 +86,7 @@
                                         },
                                     },
                                     {
-                                        energy: {
+                                        currency: {
                                             team: {
                                                 contextual: null,
                                             },
@@ -106,7 +106,7 @@
                             title: "Status Quo",
                             description:
                                 "Things are in balance, lets not touch anything",
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             leagueEffect: {
                                 noEffect: null,
                             },
@@ -119,7 +119,7 @@
                             title: "Cool Down",
                             description:
                                 "Entropy is running too hot, lets cool it off by investing in our league. -5 💰-2 🔥 per team",
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             leagueEffect: {
                                 allOf: [
                                     {
@@ -131,7 +131,7 @@
                                         },
                                     },
                                     {
-                                        energy: {
+                                        currency: {
                                             team: {
                                                 contextual: null,
                                             },
@@ -157,7 +157,7 @@
                     prize: {
                         description: "+10 💰",
                         effect: {
-                            energy: {
+                            currency: {
                                 team: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
@@ -192,14 +192,14 @@
                         {
                             title: "Option 1",
                             description: "Description 1",
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             traitRequirements: [],
                             teamEffect: { noEffect: null },
                         },
                         {
                             title: "Option 2",
                             description: "Description 2",
-                            energyCost: BigInt(0),
+                            currencyCost: BigInt(0),
                             traitRequirements: [],
                             teamEffect: { noEffect: null },
                         },

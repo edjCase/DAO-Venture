@@ -59,8 +59,8 @@
                 choice votes
             </li>
             <li>
-                Each choice will have its trade-offs affecting entropy, energy,
-                skills, etc...
+                Each choice will have its trade-offs affecting entropy,
+                currency, skills, etc...
             </li>
             <li>
                 Some choice outcomes will depend on what other teams choose
