@@ -50,8 +50,8 @@ module {
         data : StableData
     ) {
 
-        let teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
-        let traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
+        var teams : HashMap.HashMap<Nat, MutableTeamData> = toTeamHashMap(data.teams);
+        var traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
 
         var nextTeamId = teams.size(); // TODO change to check for the largest team id in the list
 
@@ -307,6 +307,11 @@ module {
                 case (null) false;
             };
             #ok({ hadTrait = hadTrait });
+        };
+
+        public func clear() {
+            teams := HashMap.HashMap<Nat, MutableTeamData>(0, Nat.equal, Nat32.fromNat);
+            traits := HashMap.HashMap<Text, Trait.Trait>(0, Text.equal, Text.hash);
         };
 
         private func getTraitsByIds(traitIds : Iter.Iter<Text>) : [Trait.Trait] {

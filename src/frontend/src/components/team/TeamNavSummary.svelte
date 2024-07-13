@@ -1,22 +1,11 @@
 <script lang="ts">
-    import { User } from "../../ic-agent/declarations/main";
-    import { identityStore } from "../../stores/IdentityStore";
     import { teamStore } from "../../stores/TeamStore";
     import { userStore } from "../../stores/UserStore";
     import TeamLogo from "./TeamLogo.svelte";
 
-    $: identity = $identityStore;
+    $: user = $userStore;
     $: teams = $teamStore;
 
-    let user: User | undefined;
-
-    $: {
-        if (!identity.getPrincipal().isAnonymous()) {
-            userStore.subscribeUser(identity.getPrincipal(), (u) => {
-                user = u;
-            });
-        }
-    }
     $: team = teams?.find((t) => t.id === user?.team[0]?.id);
 </script>
 

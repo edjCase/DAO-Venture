@@ -1,16 +1,16 @@
 <script lang="ts">
     import { AccordionItem } from "flowbite-svelte";
     import GenericProposal, { ProposalType } from "./GenericProposal.svelte";
-    import { identityStore } from "../../stores/IdentityStore";
+    import { userStore } from "../../stores/UserStore";
 
     export let proposal: ProposalType;
     export let onVote: (proposalId: bigint, vote: boolean) => Promise<void>;
 
-    $: identity = $identityStore;
+    $: user = $userStore;
     $: votingStatus = (() => {
-        if (identity) {
+        if (user) {
             const vote = proposal.votes.find(
-                (v) => v[0].toString() === identity.getPrincipal().toString(),
+                (v) => v[0].toString() === user.id.toString(),
             );
             if (vote) {
                 const voteValue = vote[1].value[0];

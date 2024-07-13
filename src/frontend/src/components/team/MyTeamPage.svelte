@@ -2,8 +2,6 @@
     import TeamProposalForm from "../dao/team/TeamProposalForm.svelte";
     import TeamProposalList from "../dao/team/TeamProposalList.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
-    import { User } from "../../ic-agent/declarations/main";
-    import { identityStore } from "../../stores/IdentityStore";
     import { teamStore } from "../../stores/TeamStore";
     import { userStore } from "../../stores/UserStore";
     import { Badge, Button, TabItem, Tabs } from "flowbite-svelte";
@@ -14,21 +12,12 @@
     import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
     import { TeamStandingInfo } from "../../ic-agent/declarations/main";
 
-    $: identity = $identityStore;
     $: teams = $teamStore;
 
-    let user: User | undefined;
     let standings: TeamStandingInfo[] | undefined;
 
-    $: {
-        if (identity.getPrincipal().isAnonymous()) {
-            user = undefined;
-        } else {
-            userStore.subscribeUser(identity.getPrincipal(), (u) => {
-                user = u;
-            });
-        }
-    }
+    $: user = $userStore;
+
     $: links = teams?.find((l) => l.id == user?.team[0]?.id)?.links || [];
     $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: votingPower =

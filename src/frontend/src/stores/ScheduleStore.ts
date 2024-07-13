@@ -20,7 +20,7 @@ export const scheduleStore = (() => {
         if ('inProgress' in status) {
             matchGroups = status.inProgress.matchGroups;
         } else if ('completed' in status) {
-            matchGroups = status.completed.matchGroups.map((mg) => {
+            matchGroups = status.completed.completedMatchGroups.map((mg) => {
                 return { completed: mg };
             });
         } else {

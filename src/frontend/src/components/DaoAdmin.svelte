@@ -49,7 +49,7 @@
 
         if ("ok" in res) {
             console.log("Added member", res);
-            userStore.refetchUser(userId);
+            userStore.refetchCurrentUser();
         } else {
             console.log("Error adding member", res);
         }

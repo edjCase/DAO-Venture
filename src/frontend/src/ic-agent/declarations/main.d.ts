@@ -77,8 +77,18 @@ export interface CompletedMatchTeam {
 }
 export interface CompletedSeason {
   'teams' : Array<CompletedSeasonTeam>,
+  'completedMatchGroups' : Array<CompletedMatchGroup>,
+  'outcome' : CompletedSeasonOutcome,
+}
+export type CompletedSeasonOutcome = {
+    'failure' : CompletedSeasonOutcomeFailure
+  } |
+  { 'success' : CompletedSeasonOutcomeSuccess };
+export interface CompletedSeasonOutcomeFailure {
+  'incompleteMatchGroups' : Array<NotScheduledMatchGroup>,
+}
+export interface CompletedSeasonOutcomeSuccess {
   'runnerUpTeamId' : bigint,
-  'matchGroups' : Array<CompletedMatchGroup>,
   'championTeamId' : bigint,
 }
 export interface CompletedSeasonTeam {
@@ -674,7 +684,6 @@ export interface ScheduledMatchGroup {
 }
 export interface ScheduledTeamInfo { 'id' : bigint }
 export type SeasonStatus = { 'notStarted' : null } |
-  { 'starting' : null } |
   { 'completed' : CompletedSeason } |
   { 'inProgress' : InProgressSeason };
 export type SetBenevolentDictatorStateError = { 'notAuthorized' : null };

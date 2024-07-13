@@ -54,13 +54,22 @@
             Season Not Started
         </div>
     {:else if "completed" in seasonStatus}
-        <SeasonWinners completedSeason={seasonStatus.completed} />
+        {#if "success" in seasonStatus.completed.outcome}
+            <SeasonWinners
+                championTeamId={seasonStatus.completed.outcome.success
+                    .championTeamId}
+                runnerUpTeamId={seasonStatus.completed.outcome.success
+                    .runnerUpTeamId}
+            />
 
-        <div class="flex flex-wrap justify-evenly gap-2">
-            <div class="teams">
-                <TeamStandings completedSeason={seasonStatus.completed} />
+            <div class="flex flex-wrap justify-evenly gap-2">
+                <div class="teams">
+                    <TeamStandings completedSeason={seasonStatus.completed} />
+                </div>
             </div>
-        </div>
+        {:else}
+            Season failed
+        {/if}
     {:else if "inProgress" in seasonStatus}
         {#if nextOrCurrentMatchGroup}
             <SectionWithOverview title="Matches">

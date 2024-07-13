@@ -1,60 +1,57 @@
-import { Principal } from '@dfinity/principal';
-import { Writable, writable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { mainAgentFactory } from '../ic-agent/Main';
 import { GetUserResult, User, UserStats } from '../ic-agent/declarations/main';
 import { toJsonString } from '../utils/StringUtil';
 import { BenevolentDictatorState } from '../ic-agent/declarations/main';
+import { Principal } from '@dfinity/principal';
+import { getOrCreateAuthClient } from '../utils/AuthUtil';
+
+
 
 function createUserStore() {
-    const userStores = new Map<string, Writable<User>>();
+    let currentUserId: Principal | undefined = undefined;
+    const currentUser = writable<User | undefined>(undefined);
     const userStats = writable<UserStats>();
     const bdfnState = writable<BenevolentDictatorState>();
 
 
-    const refetchUser = async (userId: Principal) => {
-        let store = await getOrCreateStore(userId);
-        let user = await get(userId);
-        store.set(user);
-    };
-
-    const getOrCreateStore = async (userId: Principal) => {
-        if (!userStores.has(userId.toText())) {
-            let user = await get(userId);
-            if (user) {
-                userStores.set(userId.toText(), writable<User>(user));
-            }
+    const refetchCurrentUser = async () => {
+        if (!currentUserId) {
+            return; // No user to fetch
         }
-        return userStores.get(userId.toText())!;
-    };
-
-    const get = async (userId: Principal) => {
         let mainAgent = await mainAgentFactory();
-        let result: GetUserResult = await mainAgent.getUser(userId);
+        let result: GetUserResult = await mainAgent.getUser(currentUserId);
         if ('ok' in result) {
-            return result.ok;
+            currentUser.set(result.ok);
         }
         else if ('err' in result && 'notFound' in result.err) {
             let emptyUser: User = {
-                id: userId,
+                id: currentUserId,
                 points: BigInt(0),
                 team: []
             };
-            return emptyUser;
+            currentUser.set(emptyUser);
         } else {
-            throw new Error("Failed to get user: " + userId + " " + toJsonString(result));
+            throw new Error("Failed to get user: " + currentUserId + " " + toJsonString(result));
         }
-    }
-
-    const subscribeUser = async (userId: Principal, callback: (user: User) => void) => {
-        let store = await getOrCreateStore(userId);
-        return store.subscribe(callback);
     };
 
-    const setFavoriteTeam = async (userId: Principal, teamId: bigint) => {
+    const subscribeCurrentUser = async (callback: (user: User) => void) => {
+        return currentUser.subscribe(u => {
+            if (u) {
+                callback(u);
+            }
+        });
+    };
+
+    const setFavoriteTeam = async (teamId: bigint) => {
+        if (!currentUserId) {
+            throw new Error("Cannot set favorite team when not logged in");
+        }
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.setFavoriteTeam(userId, teamId);
+        let result = await mainAgent.setFavoriteTeam(currentUserId, teamId);
         if ('ok' in result) {
-            refetchUser(userId);
+            refetchCurrentUser();
         }
         return result;
     };
@@ -97,12 +94,53 @@ function createUserStore() {
         }
     }
 
+
+    const login = async () => {
+        let authClient = await getOrCreateAuthClient();
+        await authClient.login({
+            maxTimeToLive: BigInt(30) * BigInt(24) * BigInt(3_600_000_000_000), // 30 days
+            identityProvider:
+                process.env.DFX_NETWORK === "ic"
+                    ? `https://identity.ic0.app`
+                    : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:` + process.env.LOCAL_NETWORK_PORT,
+            onSuccess: async () => {
+                console.log("Logged in");
+                currentUserId = authClient.getIdentity().getPrincipal();
+                await refetchCurrentUser();
+            },
+            onError: (err) => {
+                console.error(err);
+            }
+        });
+    };
+
+    const logout = async () => {
+        let authClient = await getOrCreateAuthClient();
+        currentUserId = undefined;
+        await authClient.logout();
+        currentUser.set(undefined);
+    };
+
+    const checkForLogin = async () => {
+        let authClient = await getOrCreateAuthClient();
+        let identity = authClient.getIdentity();
+        if (!identity.getPrincipal().isAnonymous()) {
+            currentUserId = identity.getPrincipal();
+            await refetchCurrentUser();
+        } else {
+            currentUserId = undefined;
+        }
+    }
+
+    checkForLogin();
     refetchStats();
     refreshBdfnState();
 
     return {
-        subscribeUser,
-        refetchUser,
+        login,
+        logout,
+        subscribe: subscribeCurrentUser,
+        refetchCurrentUser,
         setFavoriteTeam,
         subscribeStats,
         refetchStats,

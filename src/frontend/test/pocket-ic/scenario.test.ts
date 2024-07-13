@@ -157,11 +157,11 @@ describe('Test suite name', () => {
                 let userIdentity = generateRandomIdentity();
                 let userResult = await usersActor.addTeamOwner({
                     teamId: BigInt(i),
-                    userId: userIdentity.getPrincipal(),
+                    userId: useruser.id,
                     votingPower: BigInt(1)
                 });
                 expect(userResult).toEqual({ 'ok': null });
-                userIds.push(userIdentity.getPrincipal());
+                userIds.push(useruser.id);
             }
             teams.push({ userIds });
         }

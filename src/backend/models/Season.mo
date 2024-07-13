@@ -8,7 +8,6 @@ module {
 
     public type SeasonStatus = {
         #notStarted;
-        #starting;
         #inProgress : InProgressSeason;
         #completed : CompletedSeason;
     };
@@ -90,10 +89,23 @@ module {
 
     // Completed Season
     public type CompletedSeason = {
+        teams : [CompletedSeasonTeam];
+        completedMatchGroups : [CompletedMatchGroup];
+        outcome : CompletedSeasonOutcome;
+    };
+
+    public type CompletedSeasonOutcome = {
+        #success : CompletedSeasonOutcomeSuccess;
+        #failure : CompletedSeasonOutcomeFailure;
+    };
+
+    public type CompletedSeasonOutcomeSuccess = {
         championTeamId : Nat;
         runnerUpTeamId : Nat;
-        teams : [CompletedSeasonTeam];
-        matchGroups : [CompletedMatchGroup];
+    };
+
+    public type CompletedSeasonOutcomeFailure = {
+        incompleteMatchGroups : [NotScheduledMatchGroup];
     };
 
     public type CompletedSeasonTeam = {

@@ -25,7 +25,6 @@
     import { navigate, useLocation } from "svelte-routing";
     import { userStore } from "../../stores/UserStore";
     import { BenevolentDictatorState } from "../../ic-agent/declarations/main";
-    import { identityStore } from "../../stores/IdentityStore";
     import UserAvatar from "../user/UserAvatar.svelte";
 
     let location = useLocation();
@@ -62,7 +61,7 @@
         });
     });
 
-    $: identity = $identityStore;
+    $: user = $userStore;
 
     let bdfnState: BenevolentDictatorState | undefined;
     let isBdfnOrBdfnOpen: Boolean = false;
@@ -72,8 +71,7 @@
                 isBdfnOrBdfnOpen = true;
             } else if ("claimed" in bdfnState) {
                 isBdfnOrBdfnOpen =
-                    bdfnState.claimed.toString() ==
-                    identity.getPrincipal().toString();
+                    bdfnState.claimed.toString() == user.id.toString();
             } else {
                 isBdfnOrBdfnOpen = false;
             }
@@ -134,18 +132,14 @@
 >
     <Sidebar asideClass="w-32" {activeUrl}>
         <SidebarGroup>
-            {#if identity && !identity.getPrincipal().isAnonymous()}
+            {#if user}
                 <SidebarItem
                     label="Profile"
                     href="/profile"
                     on:click={navOnClick("/profile")}
                 >
                     <svelte:fragment slot="icon">
-                        <UserAvatar
-                            userId={identity.getPrincipal()}
-                            border={false}
-                            size="md"
-                        />
+                        <UserAvatar userId={user.id} border={false} size="md" />
                     </svelte:fragment>
                 </SidebarItem>
             {/if}

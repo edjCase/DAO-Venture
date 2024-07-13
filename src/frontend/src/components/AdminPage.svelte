@@ -5,13 +5,12 @@
     import ScheduleSeason from "./season/ScheduleSeason.svelte";
     import TempInitialize from "./TempInitialize.svelte";
     import { BenevolentDictatorState } from "../ic-agent/declarations/main";
-    import { identityStore } from "../stores/IdentityStore";
     import { userStore } from "../stores/UserStore";
     import { Accordion, AccordionItem, Badge, Tooltip } from "flowbite-svelte";
     import AddTeamTrait from "./team/AddTeamTrait.svelte";
     import { traitStore } from "../stores/TraitStore";
 
-    $: identity = $identityStore;
+    $: user = $userStore;
 
     $: traits = $traitStore;
 
@@ -26,9 +25,7 @@
         <LoadingButton onClick={userStore.claimBdfnRole}
             >Claim BDFN</LoadingButton
         >
-    {:else if "claimed" in bdfnState && bdfnState.claimed.toString() == identity
-                .getPrincipal()
-                .toString()}
+    {:else if "claimed" in bdfnState && bdfnState.claimed.toString() == user.id.toString()}
         <div>Welcome Benevolent Dictator</div>
         <div>
             <TempInitialize />

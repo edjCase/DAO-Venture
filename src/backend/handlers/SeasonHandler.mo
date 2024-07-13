@@ -68,6 +68,7 @@ module {
 
     public type StableData = {
         seasonStatus : Season.SeasonStatus;
+        completedSeasons : [Season.CompletedSeason];
         reverseEffects : [ReverseEffect];
     };
     public type StartSeasonResult = Result.Result<(), StartSeasonError>;
@@ -156,11 +157,14 @@ module {
 
         public var seasonStatus : Season.SeasonStatus = data.seasonStatus;
 
+        let completedSeasons = Buffer.fromArray<Season.CompletedSeason>(data.completedSeasons);
+
         let reverseEffects = Buffer.fromArray<ReverseEffect>(data.reverseEffects);
 
         public func toStableData() : StableData {
             {
                 seasonStatus = seasonStatus;
+                completedSeasons = Buffer.toArray(completedSeasons);
                 reverseEffects = Buffer.toArray(reverseEffects);
             };
         };
@@ -173,13 +177,11 @@ module {
         ) : StartSeasonResult {
             switch (seasonStatus) {
                 case (#notStarted) {};
-                case (#starting) return #err(#alreadyStarted);
                 case (#inProgress(_)) return #err(#alreadyStarted);
                 case (#completed(completedSeason)) {
                     // TODO archive completed season?
                 };
             };
-            seasonStatus := #starting;
 
             let teamIdsBuffer = Buffer.fromArray<Nat>(teamIds);
 
@@ -244,7 +246,7 @@ module {
         public func getTeamStandings() : ?[TeamStandingInfo] {
             // Get all completed match groups
             let completedMatchGroups = switch (seasonStatus) {
-                case (#notStarted or #starting) return null;
+                case (#notStarted) return null;
                 case (#inProgress(inProgressSeason)) {
                     let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(0);
                     label f for (matchGroup in Iter.fromArray(inProgressSeason.matchGroups)) {
@@ -256,7 +258,10 @@ module {
                     Buffer.toArray(completedMatchGroups);
                 };
                 case (#completed(completedSeason)) {
-                    completedSeason.matchGroups;
+                    switch (completedSeason.outcome) {
+                        case (#failure(_)) return null;
+                        case (#success(_)) completedSeason.completedMatchGroups;
+                    };
                 };
             };
             ?buildTeamStandingInfo(completedMatchGroups);
@@ -415,7 +420,7 @@ module {
         } {
             // Get current match group by finding the next scheduled one
             switch (seasonStatus) {
-                case (#notStarted or #starting) null;
+                case (#notStarted) null;
                 case (#inProgress(inProgressSeason)) {
                     if (matchGroupId >= inProgressSeason.matchGroups.size()) {
                         return null;
@@ -427,12 +432,25 @@ module {
                     };
                 };
                 case (#completed(c)) {
-                    if (matchGroupId >= c.matchGroups.size()) {
+                    let allMatchGroups = Buffer.Buffer<Season.InProgressSeasonMatchGroupVariant>(0);
+                    for (completedMatchGroup in c.completedMatchGroups.vals()) {
+                        allMatchGroups.add(#completed(completedMatchGroup));
+                    };
+                    switch (c.outcome) {
+                        case (#failure(f)) {
+                            // Failed seasons have incomplete match groups
+                            for (incompleteMatchGroup in f.incompleteMatchGroups.vals()) {
+                                allMatchGroups.add(#notScheduled(incompleteMatchGroup));
+                            };
+                        };
+                        case (#success(_)) ();
+                    };
+                    if (matchGroupId >= allMatchGroups.size()) {
                         return null;
                     };
                     ?{
                         matchGroupId = matchGroupId;
-                        matchGroup = #completed(c.matchGroups[matchGroupId]);
+                        matchGroup = allMatchGroups.get(matchGroupId);
                         season = #completed(c);
                     };
                 };
@@ -537,49 +555,44 @@ module {
         };
 
         public func close<system>() : CloseSeasonResult {
-
-            if (seasonStatus == #starting) {
-                // TODO how to handle this?
-                seasonStatus := #notStarted;
-                return #ok;
-            };
             let #inProgress(inProgressSeason) = seasonStatus else return #err(#seasonNotOpen);
-            let completedMatchGroups = switch (buildCompletedMatchGroups(inProgressSeason)) {
-                case (#ok(completedMatchGroups)) completedMatchGroups;
-                case (#matchGroupsNotComplete(_)) {
-                    // TODO put in bad state vs delete
-                    seasonStatus := #notStarted;
-                    return #ok;
-                };
-            };
+            let { completedMatchGroups; incompleteMatchGroups } = buildCompletedMatchGroups(inProgressSeason);
             let finalTeamStandings = buildTeamStandingInfo(completedMatchGroups);
 
-            let finalMatch = completedMatchGroups[completedMatchGroups.size() - 1].matches[0];
-            let (champion, runnerUp) = switch (finalMatch.winner) {
-                case (#team1) (finalMatch.team1, finalMatch.team2);
-                case (#team2) (finalMatch.team2, finalMatch.team1);
-                case (#tie) {
-                    // Break tie by their win/loss ratio
-                    let getTeamStanding = func(teamId : Nat) : Nat {
-                        let ?teamStanding = IterTools.findIndex(finalTeamStandings.vals(), func(s : TeamStandingInfo) : Bool = s.id == teamId) else Debug.trap("Team not found in standings: " # Nat.toText(teamId));
-                        teamStanding;
-                    };
-                    let team1Standing = getTeamStanding(finalMatch.team1.id);
-                    let team2Standing = getTeamStanding(finalMatch.team2.id);
-                    // TODO how to communicate why the team with the higher standing is the champion?
-                    if (team1Standing > team2Standing) {
-                        (finalMatch.team1, finalMatch.team2);
-                    } else {
-                        (finalMatch.team2, finalMatch.team1);
+            let outcome : Season.CompletedSeasonOutcome = if (incompleteMatchGroups.size() > 0) {
+                #failure({ incompleteMatchGroups });
+            } else {
+
+                let finalMatch = completedMatchGroups[completedMatchGroups.size() - 1].matches[0];
+                let (champion, runnerUp) = switch (finalMatch.winner) {
+                    case (#team1) (finalMatch.team1, finalMatch.team2);
+                    case (#team2) (finalMatch.team2, finalMatch.team1);
+                    case (#tie) {
+                        // Break tie by their win/loss ratio
+                        let getTeamStanding = func(teamId : Nat) : Nat {
+                            let ?teamStanding = IterTools.findIndex(finalTeamStandings.vals(), func(s : TeamStandingInfo) : Bool = s.id == teamId) else Debug.trap("Team not found in standings: " # Nat.toText(teamId));
+                            teamStanding;
+                        };
+                        let team1Standing = getTeamStanding(finalMatch.team1.id);
+                        let team2Standing = getTeamStanding(finalMatch.team2.id);
+                        // TODO how to communicate why the team with the higher standing is the champion?
+                        if (team1Standing > team2Standing) {
+                            (finalMatch.team1, finalMatch.team2);
+                        } else {
+                            (finalMatch.team2, finalMatch.team1);
+                        };
                     };
                 };
+                #success({
+                    championTeamId = champion.id;
+                    runnerUpTeamId = runnerUp.id;
+                });
             };
 
             let completedSeason : Season.CompletedSeason = {
-                championTeamId = champion.id;
-                runnerUpTeamId = runnerUp.id;
                 teams = finalTeamStandings;
-                matchGroups = completedMatchGroups;
+                completedMatchGroups = completedMatchGroups;
+                outcome = outcome;
             };
             seasonStatus := #completed(completedSeason);
             for (event in events.onSeasonComplete.vals()) {
@@ -608,9 +621,15 @@ module {
             #ok;
         };
 
+        public func clear() {
+            seasonStatus := #notStarted;
+            completedSeasons.clear();
+            reverseEffects.clear();
+        };
+
         private func resetTimers<system>() {
             switch (seasonStatus) {
-                case (#notStarted or #starting) ();
+                case (#notStarted) ();
                 case (#inProgress(inProgressSeason)) {
                     for (i in Iter.range(0, inProgressSeason.matchGroups.size() - 1)) {
                         let matchGroup = inProgressSeason.matchGroups[i];
@@ -745,28 +764,49 @@ module {
         private func buildCompletedMatchGroups(
             season : Season.InProgressSeason
         ) : {
-            #ok : [Season.CompletedMatchGroup];
-            #matchGroupsNotComplete : ?{
-                matchGroupId : Nat;
-            };
+            completedMatchGroups : [Season.CompletedMatchGroup];
+            incompleteMatchGroups : [Season.NotScheduledMatchGroup];
         } {
             let completedMatchGroups = Buffer.Buffer<Season.CompletedMatchGroup>(season.matchGroups.size());
-            var matchGroupId = 0;
+            let incompleteMatchGroups = Buffer.Buffer<Season.NotScheduledMatchGroup>(0);
             for (matchGroup in Iter.fromArray(season.matchGroups)) {
                 let completedMatchGroup = switch (matchGroup) {
-                    case (#completed(completedMatchGroup)) completedMatchGroup;
-                    case (#notScheduled(_)) return #matchGroupsNotComplete(null);
-                    case (#scheduled(_)) return #matchGroupsNotComplete(null);
-                    case (#inProgress(_)) return #matchGroupsNotComplete(
-                        ?{
-                            matchGroupId = matchGroupId;
-                        }
-                    );
+                    case (#completed(completedMatchGroup)) {
+                        completedMatchGroups.add(completedMatchGroup);
+                    };
+                    case (#notScheduled(ns)) {
+                        incompleteMatchGroups.add(ns);
+                    };
+                    case (#scheduled(s)) {
+                        incompleteMatchGroups.add({
+                            time = s.time;
+                            matches = s.matches.vals() |> Iter.map(
+                                _,
+                                func(m : Season.ScheduledMatch) : Season.NotScheduledMatch = {
+                                    team1 = #predetermined(m.team1.id);
+                                    team2 = #predetermined(m.team2.id);
+                                },
+                            ) |> Iter.toArray(_);
+                        });
+                    };
+                    case (#inProgress(ip)) {
+                        incompleteMatchGroups.add({
+                            time = ip.time;
+                            matches = ip.matches.vals() |> Iter.map(
+                                _,
+                                func(m : Season.InProgressMatch) : Season.NotScheduledMatch = {
+                                    team1 = #predetermined(m.team1.id);
+                                    team2 = #predetermined(m.team2.id);
+                                },
+                            ) |> Iter.toArray(_);
+                        });
+                    };
                 };
-                matchGroupId += 1;
-                completedMatchGroups.add(completedMatchGroup);
             };
-            #ok(Buffer.toArray(completedMatchGroups));
+            {
+                completedMatchGroups = Buffer.toArray(completedMatchGroups);
+                incompleteMatchGroups = Buffer.toArray(incompleteMatchGroups);
+            };
         };
 
         public func startNextMatchGroup<system>() : Result.Result<(), StartMatchGroupError> {

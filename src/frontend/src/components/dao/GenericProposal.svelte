@@ -18,29 +18,23 @@
     import { toJsonString } from "../../utils/StringUtil";
     import { nanosecondsToDate } from "../../utils/DateUtils";
     import { Principal } from "@dfinity/principal";
-    import { identityStore } from "../../stores/IdentityStore";
     import LoadingButton from "../common/LoadingButton.svelte";
-    import { Identity } from "@dfinity/agent";
+    import { userStore } from "../../stores/UserStore";
 
     export let proposal: ProposalType;
     export let onVote: (proposalId: bigint, vote: boolean) => Promise<void>;
 
-    let identity: Identity | undefined;
     let yourVote: boolean | undefined;
-
-    identityStore.subscribe((i) => {
-        identity = i;
-    });
 
     let vote = async (proposalId: bigint, vote: boolean) => {
         console.log("Voting on proposal", proposal.id, "vote", vote);
         await onVote(proposalId, vote);
     };
 
-    $: userId = identity?.getPrincipal() ?? Principal.anonymous();
+    $: user = $userStore;
 
-    $: if (!userId.isAnonymous()) {
-        let uId = userId;
+    $: if (user) {
+        let uId = user.id;
         let v = proposal.votes.find(
             ([memberId, _]) => memberId.compareTo(uId) == "eq",
         )?.[1];
@@ -82,7 +76,7 @@
     </div>
     <div class="my-5">
         {#if !lastStatus}
-            {#if proposal.votes.some((v) => userId.toString() == v[0].toString())}
+            {#if proposal.votes.some((v) => user.id.toString() == v[0].toString())}
                 {#if yourVote === undefined}
                     <div class="flex justify-center gap-5 mb-6">
                         <LoadingButton onClick={() => vote(proposal.id, true)}>

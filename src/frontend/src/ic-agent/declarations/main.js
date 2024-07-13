@@ -835,11 +835,34 @@ export const idlFactory = ({ IDL }) => {
     'time' : Time,
     'matches' : IDL.Vec(CompletedMatch),
   });
+  const TeamAssignment = IDL.Variant({
+    'winnerOfMatch' : IDL.Nat,
+    'predetermined' : IDL.Nat,
+    'seasonStandingIndex' : IDL.Nat,
+  });
+  const NotScheduledMatch = IDL.Record({
+    'team1' : TeamAssignment,
+    'team2' : TeamAssignment,
+  });
+  const NotScheduledMatchGroup = IDL.Record({
+    'time' : Time,
+    'matches' : IDL.Vec(NotScheduledMatch),
+  });
+  const CompletedSeasonOutcomeFailure = IDL.Record({
+    'incompleteMatchGroups' : IDL.Vec(NotScheduledMatchGroup),
+  });
+  const CompletedSeasonOutcomeSuccess = IDL.Record({
+    'runnerUpTeamId' : IDL.Nat,
+    'championTeamId' : IDL.Nat,
+  });
+  const CompletedSeasonOutcome = IDL.Variant({
+    'failure' : CompletedSeasonOutcomeFailure,
+    'success' : CompletedSeasonOutcomeSuccess,
+  });
   const CompletedSeason = IDL.Record({
     'teams' : IDL.Vec(CompletedSeasonTeam),
-    'runnerUpTeamId' : IDL.Nat,
-    'matchGroups' : IDL.Vec(CompletedMatchGroup),
-    'championTeamId' : IDL.Nat,
+    'completedMatchGroups' : IDL.Vec(CompletedMatchGroup),
+    'outcome' : CompletedSeasonOutcome,
   });
   const ScheduledTeamInfo = IDL.Record({ 'id' : IDL.Nat });
   const ScheduledMatch = IDL.Record({
@@ -864,19 +887,6 @@ export const idlFactory = ({ IDL }) => {
     'time' : Time,
     'matches' : IDL.Vec(InProgressMatch),
   });
-  const TeamAssignment = IDL.Variant({
-    'winnerOfMatch' : IDL.Nat,
-    'predetermined' : IDL.Nat,
-    'seasonStandingIndex' : IDL.Nat,
-  });
-  const NotScheduledMatch = IDL.Record({
-    'team1' : TeamAssignment,
-    'team2' : TeamAssignment,
-  });
-  const NotScheduledMatchGroup = IDL.Record({
-    'time' : Time,
-    'matches' : IDL.Vec(NotScheduledMatch),
-  });
   const InProgressSeasonMatchGroupVariant = IDL.Variant({
     'scheduled' : ScheduledMatchGroup,
     'completed' : CompletedMatchGroup,
@@ -888,7 +898,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SeasonStatus = IDL.Variant({
     'notStarted' : IDL.Null,
-    'starting' : IDL.Null,
     'completed' : CompletedSeason,
     'inProgress' : InProgressSeason,
   });

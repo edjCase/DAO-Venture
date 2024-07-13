@@ -1,19 +1,16 @@
 <script lang="ts">
-  import { CompletedSeason, Team } from "../../ic-agent/declarations/main";
+  import { Team } from "../../ic-agent/declarations/main";
   import { teamStore } from "../../stores/TeamStore";
   import TeamLogo from "../team/TeamLogo.svelte";
 
-  export let completedSeason: CompletedSeason;
+  export let championTeamId: bigint;
+  export let runnerUpTeamId: bigint;
 
   let championTeam: Team | undefined;
   let runnerUpTeam: Team | undefined;
   teamStore.subscribe((teams) => {
-    championTeam = teams?.find(
-      (team) => team.id == completedSeason.championTeamId,
-    );
-    runnerUpTeam = teams?.find(
-      (team) => team.id == completedSeason.runnerUpTeamId,
-    );
+    championTeam = teams?.find((team) => team.id == championTeamId);
+    runnerUpTeam = teams?.find((team) => team.id == runnerUpTeamId);
   });
 </script>
 

@@ -214,7 +214,7 @@ module {
     public class Handler<system>(
         data : StableData,
         processEffectOutcome : <system>(
-            closeAllScenarios : <system>() -> (),
+            closeAndClearAllScenarios : <system>() -> (),
             outcome : Scenario.EffectOutcome,
         ) -> (),
         chargeTeamCurrency : (teamId : Nat, amount : Nat) -> {
@@ -223,7 +223,7 @@ module {
         },
     ) {
 
-        let scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
+        var scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
         var nextScenarioId = scenarios.size(); // TODO max id + 1
 
         public func toStableData() : StableData {
@@ -237,10 +237,9 @@ module {
             };
         };
 
-        public func closeAllScenarios<system>() : () {
-            Debug.print("Closing all scenarios");
-            let allScenarios = scenarios.vals();
-            for (scenario in allScenarios) {
+        private func closeAndClearAllScenarios<system>() : () {
+            Debug.print("Closing and clearning all scenarios");
+            for (scenario in scenarios.vals()) {
                 switch (scenario.state) {
                     case (#notStarted({ startTimerId })) {
                         Timer.cancelTimer(startTimerId);
@@ -252,6 +251,8 @@ module {
                     case (#resolved(_)) ();
                 };
             };
+            scenarios := HashMap.HashMap<Nat, MutableScenarioData>(0, Nat.equal, Nat32.fromNat);
+            nextScenarioId := 0;
         };
 
         public func getScenario(id : Nat) : ?Scenario.Scenario {
@@ -768,7 +769,7 @@ module {
             );
 
             for (effectOutcome in resolvedScenarioState.effectOutcomes.vals()) {
-                processEffectOutcome<system>(closeAllScenarios, effectOutcome);
+                processEffectOutcome<system>(closeAndClearAllScenarios, effectOutcome);
             };
 
             scenarios.put(

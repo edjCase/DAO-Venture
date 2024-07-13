@@ -1,35 +1,23 @@
 <script lang="ts">
     import { CheckSolid, FileCopyOutline } from "flowbite-svelte-icons";
     import LoginButton from "../../components/common/LoginButton.svelte";
-    import { User } from "../../ic-agent/declarations/main";
-    import { identityStore } from "../../stores/IdentityStore";
     import { userStore } from "../../stores/UserStore";
     import { teamStore } from "../../stores/TeamStore";
     import UserPseudonym from "./UserPseudonym.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
 
-    $: identity = $identityStore;
+    $: user = $userStore;
     $: teams = $teamStore;
 
-    let user: User | undefined;
     let idCopied = false;
 
-    $: {
-        if (identity.getPrincipal().isAnonymous()) {
-            user = undefined;
-        } else {
-            userStore.subscribeUser(identity.getPrincipal(), (u) => {
-                user = u;
-            });
-        }
-    }
     $: team = teams?.find((t) => t.id == user?.team[0]?.id);
     $: coOwner = user?.team[0]?.kind && "owner" in user.team[0].kind;
 
     let copyPrincipal = () => {
-        if (!identity.getPrincipal().isAnonymous()) {
+        if (user) {
             idCopied = true;
-            navigator.clipboard.writeText(identity.getPrincipal().toString());
+            navigator.clipboard.writeText(user.id.toString());
             setTimeout(() => {
                 idCopied = false;
             }, 2000); // wait for 2 seconds
@@ -51,7 +39,7 @@
                 <div class="font-bold text-xl mb-2">Id</div>
                 <div class="flex items-center mt-2">
                     <div class="text-sm text-center mr-2">
-                        {identity.getPrincipal().toString()}
+                        {user.id.toString()}
                     </div>
 
                     {#if idCopied}

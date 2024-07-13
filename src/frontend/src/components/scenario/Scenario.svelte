@@ -3,25 +3,12 @@
   import InProgressScenarioState from "./InProgressScenarioState.svelte";
   import { Scenario } from "../../ic-agent/declarations/main";
   import { userStore } from "../../stores/UserStore";
-  import { User } from "../../ic-agent/declarations/main";
-  import { getIdentity } from "../../stores/IdentityStore";
   import Countdown from "../common/Countdown.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
 
   export let scenario: Scenario;
 
-  let user: User | undefined;
-  $: {
-    (async () => {
-      let identity = await getIdentity();
-      let id = identity.getPrincipal();
-      if (!id.isAnonymous()) {
-        userStore.subscribeUser(id, (u) => {
-          user = u;
-        });
-      }
-    })();
-  }
+  $: user = $userStore;
 </script>
 
 <div class="p-6">

@@ -1,44 +1,6 @@
 <script lang="ts">
-    import { scheduleStore } from "../../stores/ScheduleStore";
-    import { nanosecondsToDate } from "../../utils/DateUtils";
-    import { teamStore } from "../../stores/TeamStore";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
-    import { Team } from "../../ic-agent/declarations/main";
     import MatchBanner from "../match/MatchBanner.svelte";
-
-    $: teams = $teamStore;
-
-    let nextMatchGroupDate: Date | undefined;
-    let matchGroupInProgress: number | undefined;
-    let seasonChampionId: bigint | undefined;
-    let seasonChampion: Team | undefined;
-    scheduleStore.subscribeMatchGroups((matchGroups) => {
-        matchGroupInProgress = matchGroups.findIndex(
-            (mg) => "inProgress" in mg,
-        );
-        let nextMatchGroup = matchGroups.find((mg) => "scheduled" in mg);
-        if (nextMatchGroup) {
-            nextMatchGroupDate = nanosecondsToDate(
-                nextMatchGroup?.scheduled.time,
-            );
-        } else {
-            nextMatchGroupDate = undefined;
-        }
-    });
-    scheduleStore.subscribeStatus((status) => {
-        if (status == undefined) {
-            return;
-        }
-        if ("completed" in status) {
-            seasonChampionId = status.completed.championTeamId;
-        } else {
-            seasonChampionId = undefined;
-        }
-    });
-
-    $: {
-        seasonChampion = teams?.find((t) => t.id == seasonChampionId);
-    }
 </script>
 
 <SectionWithOverview title="Matches">

@@ -7,7 +7,7 @@ import type {
 } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import type { IDL } from "@dfinity/candid";
-import { getIdentity } from "../stores/IdentityStore";
+import { getIdentity } from "../utils/AuthUtil";
 
 export declare interface CreateActorOptions {
   /**

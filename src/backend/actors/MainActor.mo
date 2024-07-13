@@ -42,14 +42,16 @@ actor MainActor : Types.Actor {
 
     // Stables ---------------------------------------------------------
 
+    let defaultLeagueIncome : Nat = 100;
+    let defaultEntropyThreshold : Nat = 100;
+
     stable var benevolentDictator : Types.BenevolentDictatorState = #open;
-    stable var leagueIncome : Nat = 10;
-    stable var entropyThreshold : Nat = 100;
+    stable var leagueIncome : Nat = defaultLeagueIncome;
+    stable var entropyThreshold : Nat = defaultEntropyThreshold;
 
     stable var seasonStableData : SeasonHandler.StableData = {
         seasonStatus = #notStarted;
-        teamStandings = null;
-        predictions = [];
+        completedSeasons = [];
         reverseEffects = [];
     };
     stable var predictionStableData : PredictionHandler.StableData = {
@@ -155,7 +157,7 @@ actor MainActor : Types.Actor {
     var teamsHandler = TeamsHandler.Handler<system>(teamStableData);
 
     private func processEffectOutcome<system>(
-        closeAllScenarios : <system>() -> (),
+        closeAndClearAllScenarios : <system>() -> (),
         effectOutcome : Scenario.EffectOutcome,
     ) : () {
         let result : ?{ matchCount : Nat; effect : Scenario.ReverseEffect } = switch (effectOutcome) {
@@ -173,8 +175,12 @@ actor MainActor : Types.Actor {
                         let thresholdReached = teamsHandler.getCurrentEntropy() >= entropyThreshold;
                         if (thresholdReached) {
                             Debug.print("Entropy threshold reached, triggering league collapse");
+                            // TODO archive data
                             ignore seasonHandler.close<system>();
-                            closeAllScenarios<system>();
+                            seasonHandler.clear();
+                            closeAndClearAllScenarios<system>();
+                            teamsHandler.clear();
+                            predictionHandler.clear();
                         };
                         null;
                     };

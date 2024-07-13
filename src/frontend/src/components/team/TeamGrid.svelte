@@ -5,29 +5,21 @@
   import TeamLogo from "./TeamLogo.svelte";
   import { StarOutline, StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
-  import { identityStore } from "../../stores/IdentityStore";
-  import { User } from "../../ic-agent/declarations/main";
   import LoadingButton from "../common/LoadingButton.svelte";
   import { Team } from "../../ic-agent/declarations/main";
 
   $: teams = $teamStore;
-  $: identity = $identityStore;
+  $: user = $userStore;
 
-  let user: User | undefined;
   let associatedTeamId: bigint | undefined;
   $: {
-    if (!identity.getPrincipal().isAnonymous()) {
-      userStore.subscribeUser(identity.getPrincipal(), (u) => {
-        user = u;
-        associatedTeamId = u?.team[0]?.id;
-      });
-    }
+    associatedTeamId = user?.team[0]?.id;
   }
 
   let confirmModal: boolean = false;
   let confirmFavoriteTeamId: bigint | undefined;
   let setFavoriteTeam = async () => {
-    if (identity.getPrincipal().isAnonymous()) {
+    if (!user) {
       console.error("User not logged in");
       return;
     }
@@ -35,13 +27,10 @@
       console.error("Favorite team not selected");
       return;
     }
-    let result = await userStore.setFavoriteTeam(
-      identity.getPrincipal(),
-      confirmFavoriteTeamId,
-    );
+    let result = await userStore.setFavoriteTeam(confirmFavoriteTeamId);
     if ("ok" in result) {
       console.log("Favorite team set");
-      userStore.refetchUser(identity.getPrincipal());
+      userStore.refetchCurrentUser();
     } else {
       console.error("Failed to set favorite team", result);
     }
