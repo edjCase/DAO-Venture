@@ -670,6 +670,12 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
+    public shared ({ caller }) func joinLeague() : async Result.Result<(), Types.JoinLeagueError> {
+        // TODO restrict to NFT?/TOken holders
+        let votingPower = 1; // TODO get voting power from token
+        userHandler.addLeagueMember(caller, votingPower);
+    };
+
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
         if (Principal.isAnonymous(caller)) {
             return #err(#notAuthenticated);
@@ -966,23 +972,12 @@ actor MainActor : Types.Actor {
         #ok(owners);
     };
 
-    public shared ({ caller }) func setFavoriteTeam(userId : Principal, teamId : Nat) : async Types.SetUserFavoriteTeamResult {
-        if (Principal.isAnonymous(userId)) {
-            return #err(#identityRequired);
-        };
-        if (caller != userId and not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        let ?_ = teamsHandler.get(teamId) else return #err(#teamNotFound);
-        userHandler.setFavoriteTeam(userId, teamId);
-    };
-
-    public shared ({ caller }) func addTeamOwner(request : Types.AddTeamOwnerRequest) : async Types.AddTeamOwnerResult {
+    public shared ({ caller }) func assignUserToTeam(request : Types.AssignUserToTeamRequest) : async Result.Result<(), Types.AssignUserToTeamError> {
         if (not isLeagueOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
         let ?_ = teamsHandler.get(request.teamId) else return #err(#teamNotFound);
-        userHandler.addTeamOwner(request.userId, request.teamId, request.votingPower);
+        userHandler.assignToTeam(request.userId, request.teamId);
     };
 
     // Private Methods ---------------------------------------------------------

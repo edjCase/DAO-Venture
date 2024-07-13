@@ -14,17 +14,6 @@ export interface AddScenarioRequest {
 }
 export type AddScenarioResult = { 'ok' : null } |
   { 'err' : AddScenarioError };
-export type AddTeamOwnerError = { 'notAuthorized' : null } |
-  { 'alreadyOwner' : null } |
-  { 'onOtherTeam' : bigint } |
-  { 'teamNotFound' : null };
-export interface AddTeamOwnerRequest {
-  'votingPower' : bigint,
-  'userId' : Principal,
-  'teamId' : bigint,
-}
-export type AddTeamOwnerResult = { 'ok' : null } |
-  { 'err' : AddTeamOwnerError };
 export type Anomoly = { 'foggy' : null } |
   { 'moveBasesIn' : null } |
   { 'extraStrike' : null } |
@@ -35,6 +24,14 @@ export type Anomoly = { 'foggy' : null } |
   { 'doubleOrNothing' : null } |
   { 'windy' : null } |
   { 'rainy' : null };
+export type AssignUserToTeamError = { 'notAuthorized' : null } |
+  { 'alreadyOnTeam' : null } |
+  { 'teamNotFound' : null } |
+  { 'notLeagueMember' : null };
+export interface AssignUserToTeamRequest {
+  'userId' : Principal,
+  'teamId' : bigint,
+}
 export type Base = { 'homeBase' : null } |
   { 'thirdBase' : null } |
   { 'secondBase' : null } |
@@ -270,6 +267,8 @@ export interface InjuryPlayerEffectOutcome {
 }
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
+export type JoinLeagueError = { 'notAuthorized' : null } |
+  { 'alreadyLeagueMember' : null };
 export interface LeagueChoiceScenario {
   'options' : Array<LeagueChoiceScenarioOption>,
 }
@@ -573,8 +572,12 @@ export interface PropotionalBidPrizeSkill {
   'skill' : ChosenOrRandomSkill,
   'position' : TargetPosition,
 }
-export type Result = { 'ok' : Player } |
+export type Result = { 'ok' : null } |
+  { 'err' : JoinLeagueError };
+export type Result_1 = { 'ok' : Player } |
   { 'err' : GetPositionError };
+export type Result_2 = { 'ok' : null } |
+  { 'err' : AssignUserToTeamError };
 export interface RoundLog { 'turns' : Array<TurnLog> }
 export interface Scenario {
   'id' : bigint,
@@ -689,12 +692,6 @@ export type SeasonStatus = { 'notStarted' : null } |
 export type SetBenevolentDictatorStateError = { 'notAuthorized' : null };
 export type SetBenevolentDictatorStateResult = { 'ok' : null } |
   { 'err' : SetBenevolentDictatorStateError };
-export type SetUserFavoriteTeamError = { 'notAuthorized' : null } |
-  { 'alreadySet' : null } |
-  { 'identityRequired' : null } |
-  { 'teamNotFound' : null };
-export type SetUserFavoriteTeamResult = { 'ok' : null } |
-  { 'err' : SetUserFavoriteTeamError };
 export type Skill = { 'battingAccuracy' : null } |
   { 'throwingAccuracy' : null } |
   { 'speed' : null } |
@@ -773,9 +770,6 @@ export interface Team {
 export type TeamAssignment = { 'winnerOfMatch' : bigint } |
   { 'predetermined' : bigint } |
   { 'seasonStandingIndex' : bigint };
-export interface TeamAssociation { 'id' : bigint, 'kind' : TeamAssociationKind }
-export type TeamAssociationKind = { 'fan' : null } |
-  { 'owner' : { 'votingPower' : bigint } };
 export type TeamId = { 'team1' : null } |
   { 'team2' : null };
 export type TeamIdOrBoth = { 'team1' : null } |
@@ -901,8 +895,12 @@ export type TraitRequirementKind = { 'prohibited' : null } |
 export interface TurnLog { 'events' : Array<MatchEvent> }
 export interface User {
   'id' : Principal,
-  'team' : [] | [TeamAssociation],
+  'membership' : [] | [UserMembership],
   'points' : bigint,
+}
+export interface UserMembership {
+  'votingPower' : bigint,
+  'teamId' : [] | [bigint],
 }
 export interface UserStats {
   'teams' : Array<TeamStats>,
@@ -959,7 +957,7 @@ export interface WeightedEffect {
 export interface _SERVICE {
   'addFluff' : ActorMethod<[CreatePlayerFluffRequest], CreatePlayerFluffResult>,
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
-  'addTeamOwner' : ActorMethod<[AddTeamOwnerRequest], AddTeamOwnerResult>,
+  'assignUserToTeam' : ActorMethod<[AssignUserToTeamRequest], Result_2>,
   'claimBenevolentDictatorRole' : ActorMethod<
     [],
     ClaimBenevolentDictatorRoleResult
@@ -988,7 +986,7 @@ export interface _SERVICE {
     GetMatchGroupPredictionsResult
   >,
   'getPlayer' : ActorMethod<[number], GetPlayerResult>,
-  'getPosition' : ActorMethod<[bigint, FieldPosition], Result>,
+  'getPosition' : ActorMethod<[bigint, FieldPosition], Result_1>,
   'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
@@ -1012,6 +1010,7 @@ export interface _SERVICE {
     GetUserLeaderboardResult
   >,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
+  'joinLeague' : ActorMethod<[], Result>,
   'predictMatchOutcome' : ActorMethod<
     [PredictMatchOutcomeRequest],
     PredictMatchOutcomeResult
@@ -1019,10 +1018,6 @@ export interface _SERVICE {
   'setBenevolentDictatorState' : ActorMethod<
     [BenevolentDictatorState],
     SetBenevolentDictatorStateResult
-  >,
-  'setFavoriteTeam' : ActorMethod<
-    [Principal, bigint],
-    SetUserFavoriteTeamResult
   >,
   'startNextMatchGroup' : ActorMethod<[], StartMatchGroupResult>,
   'startSeason' : ActorMethod<[StartSeasonRequest], StartSeasonResult>,

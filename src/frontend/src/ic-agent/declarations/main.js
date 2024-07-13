@@ -205,20 +205,19 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : AddScenarioError,
   });
-  const AddTeamOwnerRequest = IDL.Record({
-    'votingPower' : IDL.Nat,
+  const AssignUserToTeamRequest = IDL.Record({
     'userId' : IDL.Principal,
     'teamId' : IDL.Nat,
   });
-  const AddTeamOwnerError = IDL.Variant({
+  const AssignUserToTeamError = IDL.Variant({
     'notAuthorized' : IDL.Null,
-    'alreadyOwner' : IDL.Null,
-    'onOtherTeam' : IDL.Nat,
+    'alreadyOnTeam' : IDL.Null,
     'teamNotFound' : IDL.Null,
+    'notLeagueMember' : IDL.Null,
   });
-  const AddTeamOwnerResult = IDL.Variant({
+  const Result_2 = IDL.Variant({
     'ok' : IDL.Null,
-    'err' : AddTeamOwnerError,
+    'err' : AssignUserToTeamError,
   });
   const ClaimBenevolentDictatorRoleError = IDL.Variant({
     'notOpenToClaim' : IDL.Null,
@@ -568,7 +567,7 @@ export const idlFactory = ({ IDL }) => {
     'err' : GetPlayerError,
   });
   const GetPositionError = IDL.Variant({ 'teamNotFound' : IDL.Null });
-  const Result = IDL.Variant({ 'ok' : Player, 'err' : GetPositionError });
+  const Result_1 = IDL.Variant({ 'ok' : Player, 'err' : GetPositionError });
   const ScenarioOptionDiscrete = IDL.Record({
     'title' : IDL.Text,
     'teamEffect' : Effect,
@@ -983,17 +982,13 @@ export const idlFactory = ({ IDL }) => {
     'logoUrl' : IDL.Text,
     'currency' : IDL.Int,
   });
-  const TeamAssociationKind = IDL.Variant({
-    'fan' : IDL.Null,
-    'owner' : IDL.Record({ 'votingPower' : IDL.Nat }),
-  });
-  const TeamAssociation = IDL.Record({
-    'id' : IDL.Nat,
-    'kind' : TeamAssociationKind,
+  const UserMembership = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'teamId' : IDL.Opt(IDL.Nat),
   });
   const User = IDL.Record({
     'id' : IDL.Principal,
-    'team' : IDL.Opt(TeamAssociation),
+    'membership' : IDL.Opt(UserMembership),
     'points' : IDL.Int,
   });
   const GetUserError = IDL.Variant({
@@ -1027,6 +1022,11 @@ export const idlFactory = ({ IDL }) => {
     'ok' : UserStats,
     'err' : IDL.Null,
   });
+  const JoinLeagueError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'alreadyLeagueMember' : IDL.Null,
+  });
+  const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinLeagueError });
   const PredictMatchOutcomeRequest = IDL.Record({
     'winner' : IDL.Opt(TeamId),
     'matchId' : IDL.Nat,
@@ -1047,16 +1047,6 @@ export const idlFactory = ({ IDL }) => {
   const SetBenevolentDictatorStateResult = IDL.Variant({
     'ok' : IDL.Null,
     'err' : SetBenevolentDictatorStateError,
-  });
-  const SetUserFavoriteTeamError = IDL.Variant({
-    'notAuthorized' : IDL.Null,
-    'alreadySet' : IDL.Null,
-    'identityRequired' : IDL.Null,
-    'teamNotFound' : IDL.Null,
-  });
-  const SetUserFavoriteTeamResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : SetUserFavoriteTeamError,
   });
   const TeamIdOrBoth = IDL.Variant({
     'team1' : IDL.Null,
@@ -1151,7 +1141,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
-    'addTeamOwner' : IDL.Func([AddTeamOwnerRequest], [AddTeamOwnerResult], []),
+    'assignUserToTeam' : IDL.Func([AssignUserToTeamRequest], [Result_2], []),
     'claimBenevolentDictatorRole' : IDL.Func(
         [],
         [ClaimBenevolentDictatorRoleResult],
@@ -1197,7 +1187,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getPlayer' : IDL.Func([IDL.Nat32], [GetPlayerResult], ['query']),
-    'getPosition' : IDL.Func([IDL.Nat, FieldPosition], [Result], ['query']),
+    'getPosition' : IDL.Func([IDL.Nat, FieldPosition], [Result_1], ['query']),
     'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
@@ -1232,6 +1222,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
+    'joinLeague' : IDL.Func([], [Result], []),
     'predictMatchOutcome' : IDL.Func(
         [PredictMatchOutcomeRequest],
         [PredictMatchOutcomeResult],
@@ -1240,11 +1231,6 @@ export const idlFactory = ({ IDL }) => {
     'setBenevolentDictatorState' : IDL.Func(
         [BenevolentDictatorState],
         [SetBenevolentDictatorStateResult],
-        [],
-      ),
-    'setFavoriteTeam' : IDL.Func(
-        [IDL.Principal, IDL.Nat],
-        [SetUserFavoriteTeamResult],
         [],
       ),
     'startNextMatchGroup' : IDL.Func([], [StartMatchGroupResult], []),

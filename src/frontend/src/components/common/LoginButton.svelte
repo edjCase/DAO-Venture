@@ -1,7 +1,6 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
   import { userStore } from "../../stores/UserStore";
-  import { toJsonString } from "../../utils/StringUtil";
 
   $: user = $userStore;
 
@@ -11,10 +10,6 @@
   let logout = async () => {
     await userStore.logout();
   };
-
-  $: {
-    console.log("user", toJsonString(user));
-  }
 </script>
 
 {#if user}

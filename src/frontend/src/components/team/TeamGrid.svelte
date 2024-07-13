@@ -1,11 +1,10 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
   import { teamStore } from "../../stores/TeamStore";
-  import { Button, Modal } from "flowbite-svelte";
+  import { Button } from "flowbite-svelte";
   import TeamLogo from "./TeamLogo.svelte";
-  import { StarOutline, StarSolid } from "flowbite-svelte-icons";
+  import { StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
-  import LoadingButton from "../common/LoadingButton.svelte";
   import { Team } from "../../ic-agent/declarations/main";
 
   $: teams = $teamStore;
@@ -13,28 +12,9 @@
 
   let associatedTeamId: bigint | undefined;
   $: {
-    associatedTeamId = user?.team[0]?.id;
+    associatedTeamId = user?.membership[0]?.teamId[0];
   }
 
-  let confirmModal: boolean = false;
-  let confirmFavoriteTeamId: bigint | undefined;
-  let setFavoriteTeam = async () => {
-    if (!user) {
-      console.error("User not logged in");
-      return;
-    }
-    if (confirmFavoriteTeamId === undefined) {
-      console.error("Favorite team not selected");
-      return;
-    }
-    let result = await userStore.setFavoriteTeam(confirmFavoriteTeamId);
-    if ("ok" in result) {
-      console.log("Favorite team set");
-      userStore.refetchCurrentUser();
-    } else {
-      console.error("Failed to set favorite team", result);
-    }
-  };
   let selectedTeam: Team | undefined;
   $: selectedTeam = teams && teams[0];
 </script>
@@ -50,17 +30,6 @@
               {#if associatedTeamId == selectedTeam.id}
                 <StarSolid size="lg" />
               {/if}
-            {:else}
-              <StarOutline
-                size="lg"
-                role="button"
-                on:click={() => {
-                  if (selectedTeam) {
-                    confirmFavoriteTeamId = selectedTeam.id;
-                    confirmModal = true;
-                  }
-                }}
-              />
             {/if}
           {/if}
         </div>
@@ -93,18 +62,6 @@
           <TeamLogo {team} size="md" />
         </div>
       {/each}
-
-      <Modal bind:open={confirmModal} autoclose>
-        <div class="text-center">
-          <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
-            Setting your team is permanent for the season. Are you sure?
-          </h3>
-          <LoadingButton color="red" class="me-2" onClick={setFavoriteTeam}>
-            Yes, I'm sure
-          </LoadingButton>
-          <Button color="alternative">No, cancel</Button>
-        </div>
-      </Modal>
     </div>
   {/if}
 </div>

@@ -25,9 +25,9 @@
     $: teams = $teamStore;
 
     $: {
-        teamId = userContext?.team[0]?.id;
+        teamId = userContext?.membership[0]?.teamId[0];
         team = teams?.find((team) => team.id === teamId);
-        isOwner = teamId != undefined && "owner" in userContext!.team[0]!.kind;
+        isOwner = userContext?.membership[0] !== undefined;
     }
 
     let votingData: VotingData | undefined;

@@ -13,8 +13,13 @@ module {
 
     public type User = {
         id : Principal;
-        team : ?TeamAssociation;
+        membership : ?UserMembership;
         points : Int;
+    };
+
+    public type UserMembership = {
+        teamId : ?Nat;
+        votingPower : Nat;
     };
 
     public type TeamAssociation = {
@@ -54,7 +59,7 @@ module {
 
     type MutableUser = {
         id : Principal;
-        var team : ?TeamAssociation;
+        var membership : ?UserMembership;
         var points : Int;
     };
 
@@ -86,34 +91,37 @@ module {
             };
             let teamStats = HashMap.HashMap<Nat, TeamStats>(6, Nat.equal, Nat32.fromNat);
             for (user in users.vals()) {
-                switch (user.team) {
-                    case (?team) {
-                        let stats : TeamStats = switch (teamStats.get(team.id)) {
-                            case (?stats) stats;
-                            case (null) {
-                                {
-                                    id = team.id;
-                                    totalPoints = 0;
-                                    userCount = 0;
-                                    ownerCount = 0;
+                switch (user.membership) {
+                    case (?membership) {
+                        switch (membership.teamId) {
+                            case (?teamId) {
+                                let stats : TeamStats = switch (teamStats.get(teamId)) {
+                                    case (?stats) stats;
+                                    case (null) {
+                                        {
+                                            id = teamId;
+                                            totalPoints = 0;
+                                            userCount = 0;
+                                            ownerCount = 0;
+                                        };
+                                    };
                                 };
+
+                                let newStats : TeamStats = {
+                                    id = teamId;
+                                    totalPoints = stats.totalPoints + user.points;
+                                    userCount = stats.userCount + 1;
+                                    ownerCount = stats.ownerCount + 1;
+                                };
+                                teamStats.put(teamId, newStats);
+                                leagueStats.teamOwnerCount += 1;
                             };
+                            case (null) ();
                         };
-                        let isOwner = switch (team.kind) {
-                            case (#owner(_)) true;
-                            case (#fan) false;
-                        };
-                        let newStats : TeamStats = {
-                            id = team.id;
-                            totalPoints = stats.totalPoints + user.points;
-                            userCount = stats.userCount + 1;
-                            ownerCount = stats.ownerCount + (if (isOwner) 1 else 0);
-                        };
+
                         leagueStats.totalPoints += user.points;
                         leagueStats.userCount += 1;
-                        leagueStats.teamOwnerCount += (if (isOwner) 1 else 0);
 
-                        teamStats.put(team.id, newStats);
                     };
                     case (null) ();
                 };
@@ -144,25 +152,35 @@ module {
         };
 
         public func getTeamOwners(teamId : ?Nat) : [UserVotingInfo] {
+            let getMatchingTeamMembership = switch (teamId) {
+                case (?tId) func(membership : UserMembership) : ?Nat {
+                    // Filter to only the team we want
+                    if (membership.teamId == ?tId) {
+                        return ?tId;
+                    };
+                    return null;
+                };
+                case (null) func(membership : UserMembership) : ?Nat {
+                    membership.teamId;
+                };
+            };
+
             let owners = users.vals()
             |> IterTools.mapFilter(
                 _,
                 func(user : MutableUser) : ?UserVotingInfo {
-                    let ?team = user.team else return null;
-                    switch (teamId) {
+                    let ?membership = user.membership else return null;
+                    switch (getMatchingTeamMembership(membership)) {
                         case (?teamId) {
-                            // Filter to only the team we want
-                            if (team.id != teamId) {
-                                return null;
+                            ?{
+                                id = user.id;
+                                teamId = teamId;
+                                votingPower = membership.votingPower;
                             };
                         };
-                        case (null) (); // No filter
-                    };
-                    let #owner(o) = team.kind else return null;
-                    ?{
-                        id = user.id;
-                        teamId = team.id;
-                        votingPower = o.votingPower;
+                        case (null) {
+                            return null;
+                        };
                     };
                 },
             )
@@ -170,52 +188,43 @@ module {
             owners;
         };
 
-        public func setFavoriteTeam(
-            userId : Principal,
-            teamId : Nat,
-        ) : Result.Result<(), { #alreadySet }> {
+        public func addLeagueMember(userId : Principal, votingPower : Nat) : Result.Result<(), { #alreadyLeagueMember }> {
             let user = getOrCreateUser(userId);
-            switch (user.team) {
-                case (?team) {
-                    return #err(#alreadySet);
+            switch (user.membership) {
+                case (?membership) {
+                    return #err(#alreadyLeagueMember);
                 };
                 case (null) {
-                    user.team := ?{
-                        id = teamId;
-                        kind = #fan;
+                    user.membership := ?{
+                        teamId = null;
+                        votingPower = votingPower;
                     };
+                    #ok;
                 };
             };
-            #ok;
         };
 
-        public func addTeamOwner(
+        public func assignToTeam(
             userId : Principal,
             teamId : Nat,
-            votingPower : Nat,
-        ) : Result.Result<(), { #alreadyOwner; #onOtherTeam : Nat }> {
+        ) : Result.Result<(), { #alreadyOnTeam; #notLeagueMember }> {
             let user = getOrCreateUser(userId);
-            switch (user.team) {
-                case (?team) {
-                    if (team.id != teamId) {
-                        return #err(#onOtherTeam(team.id));
+            switch (user.membership) {
+                case (?membership) {
+                    if (membership.teamId != null) {
+                        return #err(#alreadyOnTeam);
                     };
-                    switch (team.kind) {
-                        case (#owner(_)) {
-                            return #err(#alreadyOwner);
-                        };
-                        case (#fan) (); // Upgrade to owner
+                    user.membership := ?{
+                        membership with
+                        teamId = ?teamId;
                     };
+                    #ok;
                 };
                 case (null) {
                     // Add as owner
+                    return #err(#notLeagueMember);
                 };
             };
-            user.team := ?{
-                id = teamId;
-                kind = #owner({ votingPower = votingPower });
-            };
-            #ok;
         };
 
         public func awardPoints(
@@ -233,7 +242,7 @@ module {
                 case (null) {
                     let newUser : MutableUser = {
                         id = userId;
-                        var team = null;
+                        var membership = null;
                         var points = 0;
                     };
                     users.put(userId, newUser);
@@ -247,7 +256,7 @@ module {
     private func toMutableUser(user : User) : MutableUser {
         {
             id = user.id;
-            var team = user.team;
+            var membership = user.membership;
             var points = user.points;
         };
     };
@@ -255,7 +264,7 @@ module {
     private func fromMutableUser(user : MutableUser) : User {
         {
             id = user.id;
-            team = user.team;
+            membership = user.membership;
             points = user.points;
         };
     };

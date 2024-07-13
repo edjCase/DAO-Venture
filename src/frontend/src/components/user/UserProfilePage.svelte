@@ -11,8 +11,8 @@
 
     let idCopied = false;
 
-    $: team = teams?.find((t) => t.id == user?.team[0]?.id);
-    $: coOwner = user?.team[0]?.kind && "owner" in user.team[0].kind;
+    $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId[0]);
+    $: coOwner = user?.membership[0] !== undefined;
 
     let copyPrincipal = () => {
         if (user) {

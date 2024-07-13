@@ -60,8 +60,13 @@ module {
         getUserStats : query () -> async GetUserStatsResult;
         getTeamOwners : query (request : GetTeamOwnersRequest) -> async GetTeamOwnersResult;
         getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
-        setFavoriteTeam : (userId : Principal, teamId : Nat) -> async SetUserFavoriteTeamResult;
-        addTeamOwner : (request : AddTeamOwnerRequest) -> async AddTeamOwnerResult;
+        assignUserToTeam : (request : AssignUserToTeamRequest) -> async Result.Result<(), AssignUserToTeamError>;
+        joinLeague : () -> async Result.Result<(), JoinLeagueError>;
+    };
+
+    public type JoinLeagueError = {
+        #notAuthorized;
+        #alreadyLeagueMember;
     };
 
     public type LeagueData = {
@@ -378,20 +383,17 @@ module {
         #ok : [UserHandler.UserVotingInfo];
     };
 
-    public type AddTeamOwnerRequest = {
+    public type AssignUserToTeamRequest = {
         userId : Principal;
         teamId : Nat;
-        votingPower : Nat;
     };
 
-    public type AddTeamOwnerError = {
-        #onOtherTeam : Nat;
+    public type AssignUserToTeamError = {
+        #alreadyOnTeam;
         #teamNotFound;
-        #alreadyOwner;
         #notAuthorized;
+        #notLeagueMember;
     };
-
-    public type AddTeamOwnerResult = Result.Result<(), AddTeamOwnerError>;
 
     public type GetUserError = {
         #notFound;
@@ -399,13 +401,4 @@ module {
     };
 
     public type GetUserResult = Result.Result<UserHandler.User, GetUserError>;
-
-    public type SetUserFavoriteTeamError = {
-        #identityRequired;
-        #teamNotFound;
-        #notAuthorized;
-        #alreadySet;
-    };
-
-    public type SetUserFavoriteTeamResult = Result.Result<(), SetUserFavoriteTeamError>;
 };

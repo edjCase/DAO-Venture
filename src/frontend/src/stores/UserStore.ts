@@ -28,7 +28,7 @@ function createUserStore() {
             let emptyUser: User = {
                 id: currentUserId,
                 points: BigInt(0),
-                team: []
+                membership: []
             };
             currentUser.set(emptyUser);
         } else {
@@ -36,24 +36,12 @@ function createUserStore() {
         }
     };
 
-    const subscribeCurrentUser = async (callback: (user: User) => void) => {
+    const subscribeCurrentUser = (callback: (user: User) => void) => {
         return currentUser.subscribe(u => {
             if (u) {
                 callback(u);
             }
         });
-    };
-
-    const setFavoriteTeam = async (teamId: bigint) => {
-        if (!currentUserId) {
-            throw new Error("Cannot set favorite team when not logged in");
-        }
-        let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.setFavoriteTeam(currentUserId, teamId);
-        if ('ok' in result) {
-            refetchCurrentUser();
-        }
-        return result;
     };
 
     const subscribeStats = async (callback: (stats: UserStats) => void) => {
@@ -141,7 +129,6 @@ function createUserStore() {
         logout,
         subscribe: subscribeCurrentUser,
         refetchCurrentUser,
-        setFavoriteTeam,
         subscribeStats,
         refetchStats,
         refreshBdfnState,
