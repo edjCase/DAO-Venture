@@ -12,7 +12,7 @@
     import { teamStore } from "../../stores/TeamStore";
     import { Team } from "../../ic-agent/declarations/main";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
-    import ScenarioOptionsNat from "./ScenarioOptionsNat.svelte";
+    import ScenarioOptionsRaw from "./ScenarioOptionsRaw.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
     import TextInputInProgressScenarioState from "./in_progress_states/TextInputInProgressScenarioState.svelte";
 
@@ -125,24 +125,31 @@
             NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
         {/if}
         {#if "nat" in votingData.yourData[0].teamOptions}
-            <ScenarioOptionsNat
+            <ScenarioOptionsRaw
                 scenarioId={scenario.id}
                 teamId={votingData.yourData[0].teamId}
-                options={votingData.yourData[0].teamOptions.nat}
-                teamCurrency={team === undefined ? undefined : team.currency}
-                vote={selectedNat}
+                kind={{
+                    nat: {
+                        options: votingData.yourData[0].teamOptions.nat,
+                        vote: selectedNat,
+                        teamCurrency:
+                            team === undefined ? undefined : team.currency,
+                        icon: icon,
+                    },
+                }}
                 {proposeName}
-                {icon}
             />
         {:else if "text" in votingData.yourData[0].teamOptions}
-            <ScenarioOptionsText
+            <ScenarioOptionsRaw
                 scenarioId={scenario.id}
                 teamId={votingData.yourData[0].teamId}
-                options={votingData.yourData[0].teamOptions.text}
-                teamCurrency={team === undefined ? undefined : team.currency}
-                vote={selectedNat}
+                kind={{
+                    text: {
+                        options: votingData.yourData[0].teamOptions.text,
+                        vote: selectedText,
+                    },
+                }}
                 {proposeName}
-                {icon}
             />
         {:else if "discrete" in votingData.yourData[0].teamOptions}
             {#each votingData.yourData[0].teamOptions.discrete as option}

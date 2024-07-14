@@ -21,7 +21,6 @@
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
-    import TextInputResolvedScenarioState from "./resolved_states/TextInputResolvedScenarioState.svelte";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
@@ -55,7 +54,8 @@
         } else if ("proportionalBid" in scenario.kind) {
             icon = "💰";
         } else {
-            icon = "❓";
+            //Green Check
+            icon = "✅";
         }
     }
 </script>
@@ -67,7 +67,7 @@
                 scenario={scenario.kind.threshold}
                 outcome={state.scenarioOutcome.threshold}
             />
-        {:else if "noLeagueEffect" in state.scenarioOutcome && "noLeagueEffect" in scenario.kind}
+        {:else if "noLeagueEffect" in state.scenarioOutcome}
             <NoLeagueEffectResolvedScenarioState />
         {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
             <ProportionalBidResolvedScenarioState
@@ -75,7 +75,7 @@
                 outcome={state.scenarioOutcome.proportionalBid}
                 {teams}
             />
-        {:else if "lottery" in state.scenarioOutcome && "lottery" in scenario.kind}
+        {:else if "lottery" in state.scenarioOutcome}
             <LotteryResolvedScenarioState
                 outcome={state.scenarioOutcome.lottery}
                 {teams}
@@ -85,12 +85,10 @@
                 outcome={state.scenarioOutcome.leagueChoice}
                 options={state.options.kind.discrete}
             />
-        {:else if "textInput" in state.scenarioOutcome && "textInput" in scenario.kind}
-            <TextInputResolvedScenarioState
-                outcome={state.scenarioOutcome.textInput}
-            />
         {:else}
-            NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}
+            NOT IMPLEMENTED SCENARIO OUTCOME {toJsonString(
+                state.scenarioOutcome,
+            )}
         {/if}
     </div>
     {#if "discrete" in state.options.kind}
@@ -118,6 +116,22 @@
                 <div>{natOption.value} {icon}</div>
                 <div class="flex">
                     {#each natOption.chosenByTeamIds as teamId}
+                        <!-- TODO Fix this team not found hack -->
+                        <TeamLogo
+                            team={teams.find((t) => t.id == teamId) ||
+                                teams[-1]}
+                            size="xs"
+                        />
+                    {/each}
+                </div>
+            </div>
+        {/each}
+    {:else if "text" in state.options.kind}
+        {#each state.options.kind.text as textOption}
+            <div class="flex items-center justify-center">
+                <div>{textOption.value} {icon}</div>
+                <div class="flex">
+                    {#each textOption.chosenByTeamIds as teamId}
                         <!-- TODO Fix this team not found hack -->
                         <TeamLogo
                             team={teams.find((t) => t.id == teamId) ||

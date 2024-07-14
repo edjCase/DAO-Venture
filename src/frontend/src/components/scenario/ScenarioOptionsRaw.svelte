@@ -11,42 +11,79 @@
     import ScenarioOptionNat from "./ScenarioOptionNat.svelte";
     import BigIntInput from "./editors/BigIntInput.svelte";
     import LoadingButton from "../common/LoadingButton.svelte";
-
+    import { toJsonString } from "../../utils/StringUtil";
+    import ScenarioOptionText from "./ScenarioOptionText.svelte";
+    import { Input } from "flowbite-svelte";
     export let scenarioId: bigint;
     export let teamId: bigint;
+    export let proposeName: string;
     export let kind:
         | {
               nat: {
                   options: ScenarioTeamOptionNat[];
-                  proposeName: string;
                   icon: string;
                   teamCurrency: bigint | undefined;
+                  vote: bigint | undefined;
               };
           }
         | {
               text: {
                   options: ScenarioTeamOptionText[];
+                  vote: string | undefined;
               };
           };
-    export let vote: ScenarioOptionValue | undefined;
 
-    let value: ScenarioOptionValue | undefined = vote;
+    let value: bigint | string | undefined;
+    if ("nat" in kind) {
+        value = kind.nat.vote;
+    } else if ("text" in kind) {
+        value = kind.text.vote;
+    } else {
+        throw new Error("Invalid scenario option kind: " + toJsonString(kind));
+    }
 
-    let voteForNat = async function () {
+    let voteForValue = async function () {
         if (value === undefined) {
             console.error("No value selected");
             return;
         }
-        if (teamCurrency === undefined || natValue > teamCurrency) {
-            console.error("Value exceeds team currency");
-            return;
+        let optionValue: ScenarioOptionValue;
+        if ("nat" in kind) {
+            if (typeof value !== "bigint") {
+                console.error("Invalid value. Expected nat value, got:", value);
+                return;
+            }
+            if (
+                kind.nat.teamCurrency === undefined ||
+                value > kind.nat.teamCurrency
+            ) {
+                console.error("Value exceeds team currency");
+                return;
+            }
+            optionValue = { nat: value };
+        } else if ("text" in kind) {
+            if (typeof value !== "string") {
+                console.error(
+                    "Invalid value. Expected text value, got:",
+                    value,
+                );
+                return;
+            }
+            if (!value || !value.trim()) {
+                console.error("Text value is empty");
+                return;
+            }
+            optionValue = { text: value };
+        } else {
+            throw new Error("Invalid kind: " + toJsonString(kind));
         }
         let request: VoteOnScenarioRequest = {
             scenarioId: scenarioId,
-            value: value,
+            value: optionValue,
         };
         console.log(
-            `Voting for team ${teamId} and scenario ${scenarioId} with nat value ${natValue}`,
+            `Voting for team ${teamId} and scenario ${scenarioId} with value:`,
+            value,
             request,
         );
         let mainAgent = await mainAgentFactory();
@@ -66,30 +103,63 @@
     class="flex flex-col items-center justify-center border-2 border-gray-700 p-2 rounded"
 >
     <div class="flex flex-col item-center justify-center min-h-48">
-        {#if options.length < 1}
-            <div>-</div>
+        {#if "nat" in kind}
+            {#if kind.nat.options.length < 1}
+                <div>-</div>
+            {:else}
+                {#each kind.nat.options as option}
+                    <ScenarioOptionNat
+                        {option}
+                        selected={kind.nat.vote === option.value}
+                        teamCurrency={kind.nat.teamCurrency}
+                        icon={kind.nat.icon}
+                        onSelect={() => {
+                            value = option.value;
+                            voteForValue();
+                        }}
+                    />
+                {/each}
+            {/if}
+        {:else if "text" in kind}
+            {#if kind.text.options.length < 1}
+                <div>-</div>
+            {:else}
+                {#each kind.text.options as option}
+                    <ScenarioOptionText
+                        {option}
+                        selected={kind.text.vote === option.value}
+                        onSelect={() => {
+                            value = option.value;
+                            voteForValue();
+                        }}
+                    />
+                {/each}
+            {/if}
         {:else}
-            {#each options as option}
-                <ScenarioOptionNat
-                    {option}
-                    selected={vote === option.value}
-                    {teamCurrency}
-                    {icon}
-                    onSelect={() => {
-                        natValue = option.value;
-                        voteForNat();
-                    }}
-                />
-            {/each}
+            NOT IMPLEMENTED SCENARIO OPTION KIND: {toJsonString(kind)}
         {/if}
     </div>
     <div class="flex flex-col items-center justify-center">
         <div class="text-xl p-2">Propose {proposeName}</div>
         <div class="flex gap-2">
             <div class="w-20">
-                <BigIntInput bind:value={natValue} />
+                {#if "nat" in kind}
+                    {#if typeof value !== "string"}
+                        <BigIntInput bind:value />
+                    {:else}
+                        BAD STATE VALUE: {toJsonString(value)}
+                    {/if}
+                {:else if "text" in kind}
+                    {#if typeof value !== "bigint"}
+                        <Input type="text" bind:value />
+                    {:else}
+                        BAD STATE VALUE: {toJsonString(value)}
+                    {/if}
+                {:else}
+                    NOT IMPLEMENTED SCENARIO OPTION KIND: {toJsonString(kind)}
+                {/if}
             </div>
-            <LoadingButton onClick={voteForNat}>Propose</LoadingButton>
+            <LoadingButton onClick={voteForValue}>Propose</LoadingButton>
         </div>
     </div>
 </div>
