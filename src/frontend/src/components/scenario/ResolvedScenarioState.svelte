@@ -13,7 +13,7 @@
     import { toJsonString } from "../../utils/StringUtil";
     import { traitStore } from "../../stores/TraitStore";
     import ThresholdResolvedScenarioState from "./resolved_states/ThresholdResolvedScenarioState.svelte";
-    import NoEffectResolvedScenarioState from "./resolved_states/NoLeagueEffectResolvedScenarioState.svelte";
+    import NoLeagueEffectResolvedScenarioState from "./resolved_states/NoLeagueEffectResolvedScenarioState.svelte";
     import ProportionalBidResolvedScenarioState from "./resolved_states/ProportionalBidResolvedScenarioState.svelte";
     import LotteryResolvedScenarioState from "./resolved_states/LotteryResolvedScenarioState.svelte";
     import LeagueChoiceResolvedScenarioState from "./resolved_states/LeagueChoiceResolvedScenarioState.svelte";
@@ -21,6 +21,7 @@
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
+    import TextInputResolvedScenarioState from "./resolved_states/TextInputResolvedScenarioState.svelte";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
@@ -67,7 +68,7 @@
                 outcome={state.scenarioOutcome.threshold}
             />
         {:else if "noLeagueEffect" in state.scenarioOutcome && "noLeagueEffect" in scenario.kind}
-            <NoEffectResolvedScenarioState />
+            <NoLeagueEffectResolvedScenarioState />
         {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
             <ProportionalBidResolvedScenarioState
                 scenario={scenario.kind.proportionalBid}
@@ -83,6 +84,10 @@
             <LeagueChoiceResolvedScenarioState
                 outcome={state.scenarioOutcome.leagueChoice}
                 options={state.options.kind.discrete}
+            />
+        {:else if "textInput" in state.scenarioOutcome && "textInput" in scenario.kind}
+            <TextInputResolvedScenarioState
+                outcome={state.scenarioOutcome.textInput}
             />
         {:else}
             NOT IMPLEMENTED {toJsonString(state.scenarioOutcome)}

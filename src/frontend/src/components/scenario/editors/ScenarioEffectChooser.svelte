@@ -74,6 +74,18 @@
             value = {
                 noEffect: null,
             };
+        } else if (selectedType === "entropyThreshold") {
+            value = {
+                entropyThreshold: {
+                    delta: BigInt(1),
+                },
+            };
+        } else if (selectedType === "leagueIncome") {
+            value = {
+                leagueIncome: {
+                    delta: BigInt(1),
+                },
+            };
         } else {
             throw new Error(`Unknown effect type: ${selectedType}`);
         }
@@ -107,6 +119,14 @@
         {
             name: "Team Trait",
             value: "teamTrait",
+        },
+        {
+            name: "Entropy Threshold",
+            value: "entropyThreshold",
+        },
+        {
+            name: "League Income",
+            value: "leagueIncome",
         },
         {
             name: "No Effect",

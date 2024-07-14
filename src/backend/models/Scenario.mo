@@ -206,6 +206,7 @@ module {
         #leagueChoice : LeagueChoiceScenario;
         #lottery : LotteryScenario;
         #proportionalBid : ProportionalBidScenario;
+        #textInput : TextInputScenario;
     };
 
     public type ScenarioOptionDiscrete = {
@@ -286,6 +287,10 @@ module {
         duration : Duration;
     };
 
+    public type TextInputScenario = {
+        description : Text;
+    };
+
     public type ScenarioState = {
         #notStarted;
         #inProgress;
@@ -313,7 +318,8 @@ module {
 
     public type ScenarioResolvedOptionsKind = {
         #discrete : [ScenarioResolvedOptionDiscrete];
-        #nat : [ScenarioResolvedOptionNat];
+        #nat : [ScenarioResolvedOptionRaw<Nat>];
+        #text : [ScenarioResolvedOptionRaw<Text>];
     };
 
     public type ScenarioResolvedOptionDiscrete = {
@@ -327,8 +333,8 @@ module {
         chosenByTeamIds : [Nat];
     };
 
-    public type ScenarioResolvedOptionNat = {
-        value : Nat;
+    public type ScenarioResolvedOptionRaw<T> = {
+        value : T;
         chosenByTeamIds : [Nat];
     };
 
@@ -337,6 +343,7 @@ module {
         #leagueChoice : LeagueChoiceScenarioOutcome;
         #lottery : LotteryScenarioOutcome;
         #proportionalBid : ProportionalBidScenarioOutcome;
+        #textInput : TextInputScenarioOutcome;
         #noLeagueEffect;
     };
 
@@ -362,6 +369,10 @@ module {
         bids : [ProportionalWinningBid];
     };
 
+    public type TextInputScenarioOutcome = {
+        text : Text;
+    };
+
     public type ProportionalWinningBid = {
         teamId : Nat;
         proportion : Nat;
@@ -370,5 +381,6 @@ module {
     public type ScenarioOptionValue = {
         #nat : Nat;
         #id : Nat;
+        #text : Text;
     };
 };

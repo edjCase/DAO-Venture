@@ -36,20 +36,12 @@ function createUserStore() {
         }
     };
 
-    const subscribeCurrentUser = (callback: (user: User) => void) => {
-        return currentUser.subscribe(u => {
-            if (u) {
-                callback(u);
-            }
-        });
+    const subscribeCurrentUser = (callback: (user: User | undefined) => void) => {
+        return currentUser.subscribe(callback);
     };
 
-    const subscribeStats = async (callback: (stats: UserStats) => void) => {
-        userStats.subscribe(s => {
-            if (s) {
-                callback(s);
-            }
-        });
+    const subscribeStats = async (callback: (stats: UserStats | undefined) => void) => {
+        userStats.subscribe(callback);
     };
 
     const refetchStats = async () => {

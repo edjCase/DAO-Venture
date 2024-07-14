@@ -71,7 +71,7 @@
                 isBdfnOrBdfnOpen = true;
             } else if ("claimed" in bdfnState) {
                 isBdfnOrBdfnOpen =
-                    bdfnState.claimed.toString() == user.id.toString();
+                    bdfnState.claimed.toString() == user?.id.toString();
             } else {
                 isBdfnOrBdfnOpen = false;
             }

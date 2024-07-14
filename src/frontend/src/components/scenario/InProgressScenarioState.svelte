@@ -14,6 +14,7 @@
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
     import ScenarioOptionsNat from "./ScenarioOptionsNat.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
+    import TextInputInProgressScenarioState from "./in_progress_states/TextInputInProgressScenarioState.svelte";
 
     export let scenario: Scenario;
     export let userContext: User | undefined;
@@ -34,6 +35,7 @@
 
     let selectedId: bigint | undefined;
     let selectedNat: bigint | undefined;
+    let selectedText: string | undefined;
 
     scenarioStore.subscribeVotingData((scenarioVotingData) => {
         votingData = scenarioVotingData[Number(scenario.id)];
@@ -48,9 +50,15 @@
                 "nat" in votingData.yourData[0]?.value[0]
                     ? votingData.yourData[0]?.value[0].nat
                     : undefined;
+            selectedText =
+                votingData.yourData[0]?.value[0] !== undefined &&
+                "text" in votingData.yourData[0]?.value[0]
+                    ? votingData.yourData[0]?.value[0].text
+                    : undefined;
         } else {
             selectedId = undefined;
             selectedNat = undefined;
+            selectedText = undefined;
         }
     });
     let proposeName = "";
@@ -62,6 +70,9 @@
         } else if ("proportionalBid" in scenario.kind) {
             proposeName = "Bid";
             icon = "💰";
+        } else if ("textInput" in scenario.kind) {
+            proposeName = "Text";
+            icon = "📝";
         } else {
             proposeName =
                 "NOT IMPLEMENTED SCENARIO KIND: " + toJsonString(scenario.kind);
@@ -104,6 +115,10 @@
             <ThresholdInProgressScenarioState
                 scenario={scenario.kind.threshold}
             />
+        {:else if "textInput" in scenario.kind}
+            <TextInputInProgressScenarioState
+                scenario={scenario.kind.textInput}
+            />
         {:else if "noLeagueEffect" in scenario.kind}
             <NoLeagueEffectInProgressScenarioState />
         {:else}
@@ -114,6 +129,16 @@
                 scenarioId={scenario.id}
                 teamId={votingData.yourData[0].teamId}
                 options={votingData.yourData[0].teamOptions.nat}
+                teamCurrency={team === undefined ? undefined : team.currency}
+                vote={selectedNat}
+                {proposeName}
+                {icon}
+            />
+        {:else if "text" in votingData.yourData[0].teamOptions}
+            <ScenarioOptionsText
+                scenarioId={scenario.id}
+                teamId={votingData.yourData[0].teamId}
+                options={votingData.yourData[0].teamOptions.text}
                 teamCurrency={team === undefined ? undefined : team.currency}
                 vote={selectedNat}
                 {proposeName}

@@ -1,11 +1,12 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
     import { ScenarioKindRequest } from "../../../ic-agent/declarations/main";
-    import NoLeagueEffectScenarioKindEditor from "./scenarios/NoLeagueEffectScenarioEditor.svelte";
-    import ProportionalBidScenarioKindEditor from "./scenarios/ProportionalBidScenarioEditor.svelte";
-    import LotteryScenarioKindEditor from "./scenarios/LotteryScenarioEditor.svelte";
-    import LeagueChoiceScenarioKindEditor from "./scenarios/LeagueChoiceScenarioEditor.svelte";
-    import ThresholdScenarioKindEditor from "./scenarios/ThresholdScenarioEditor.svelte";
+    import NoLeagueEffectScenarioEditor from "./scenarios/NoLeagueEffectScenarioEditor.svelte";
+    import ProportionalBidScenarioEditor from "./scenarios/ProportionalBidScenarioEditor.svelte";
+    import LotteryScenarioEditor from "./scenarios/LotteryScenarioEditor.svelte";
+    import LeagueChoiceScenarioEditor from "./scenarios/LeagueChoiceScenarioEditor.svelte";
+    import ThresholdScenarioEditor from "./scenarios/ThresholdScenarioEditor.svelte";
+    import TextInputScenarioEditor from "./scenarios/TextInputScenarioEditor.svelte";
 
     export let value: ScenarioKindRequest;
     $: selectedType = Object.keys(value)[0];
@@ -185,6 +186,12 @@
                     },
                 },
             };
+        } else if (selectedType === "textInput") {
+            value = {
+                textInput: {
+                    description: "Enter some text",
+                },
+            };
         } else if (selectedType === "noLeagueEffect") {
             value = {
                 noLeagueEffect: {
@@ -229,6 +236,10 @@
             value: "proportionalBid",
         },
         {
+            name: "Text Input",
+            value: "textInput",
+        },
+        {
             name: "No League Effect",
             value: "noLeagueEffect",
         },
@@ -237,15 +248,17 @@
 
 <Select items={types} on:change={onChange} value={selectedType} />
 {#if "threshold" in value}
-    <ThresholdScenarioKindEditor bind:value={value.threshold} />
+    <ThresholdScenarioEditor bind:value={value.threshold} />
 {:else if "leagueChoice" in value}
-    <LeagueChoiceScenarioKindEditor bind:value={value.leagueChoice} />
+    <LeagueChoiceScenarioEditor bind:value={value.leagueChoice} />
 {:else if "lottery" in value}
-    <LotteryScenarioKindEditor bind:value={value.lottery} />
+    <LotteryScenarioEditor bind:value={value.lottery} />
 {:else if "proportionalBid" in value}
-    <ProportionalBidScenarioKindEditor bind:value={value.proportionalBid} />
+    <ProportionalBidScenarioEditor bind:value={value.proportionalBid} />
+{:else if "textInput" in value}
+    <TextInputScenarioEditor bind:value={value.textInput} />
 {:else if "noLeagueEffect" in value}
-    <NoLeagueEffectScenarioKindEditor bind:value={value.noLeagueEffect} />
+    <NoLeagueEffectScenarioEditor bind:value={value.noLeagueEffect} />
 {:else}
     NOT IMPLEMENTED SCENARIO KIND : {selectedType}
 {/if}

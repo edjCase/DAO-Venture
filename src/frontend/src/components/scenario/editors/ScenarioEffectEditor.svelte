@@ -89,6 +89,12 @@
     </div>
 {:else if "teamTrait" in value}
     <TeamTraitEffectEditor bind:value={value.teamTrait} />
+{:else if "entropyThreshold" in value}
+    <Label>Delta</Label>
+    <BigIntInput bind:value={value.entropyThreshold.delta} />
+{:else if "leagueIncome" in value}
+    <Label>Delta</Label>
+    <BigIntInput bind:value={value.leagueIncome.delta} />
 {:else if "noEffect" in value}
     <div></div>
 {:else}

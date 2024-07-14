@@ -21,7 +21,7 @@
     $: links =
         teams?.find((l) => l.id == user?.membership[0]?.teamId[0])?.links || [];
     $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId[0]);
-    $: votingPower = user.membership[0]?.votingPower || 0;
+    $: votingPower = user?.membership[0]?.votingPower || 0;
     $: standing = standings?.find((s) => s.id == team?.id) || {
         wins: 0,
         losses: 0,

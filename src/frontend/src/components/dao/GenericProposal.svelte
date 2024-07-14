@@ -76,7 +76,7 @@
     </div>
     <div class="my-5">
         {#if !lastStatus}
-            {#if proposal.votes.some((v) => user.id.toString() == v[0].toString())}
+            {#if proposal.votes.some((v) => user?.id.toString() == v[0].toString())}
                 {#if yourVote === undefined}
                     <div class="flex justify-center gap-5 mb-6">
                         <LoadingButton onClick={() => vote(proposal.id, true)}>

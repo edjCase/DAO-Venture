@@ -25,7 +25,7 @@
         <LoadingButton onClick={userStore.claimBdfnRole}
             >Claim BDFN</LoadingButton
         >
-    {:else if "claimed" in bdfnState && bdfnState.claimed.toString() == user.id.toString()}
+    {:else if "claimed" in bdfnState && bdfnState.claimed.toString() == user?.id.toString()}
         <div>Welcome Benevolent Dictator</div>
         <div>
             <TempInitialize />
