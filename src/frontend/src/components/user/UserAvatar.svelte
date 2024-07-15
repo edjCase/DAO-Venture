@@ -29,6 +29,6 @@
     let userIdString = userId instanceof Principal ? userId.toString() : userId;
 </script>
 
-<div class="bg-gray-600 rounded-full {border ? 'border' : ''}">
+<div class="inline-block bg-gray-600 rounded-full {border ? 'border' : ''}">
     {@html toSvg(userIdString, pixelSize)}
 </div>

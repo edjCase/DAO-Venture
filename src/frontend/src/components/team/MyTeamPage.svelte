@@ -6,11 +6,12 @@
     import { userStore } from "../../stores/UserStore";
     import { Badge, Button, TabItem, Tabs } from "flowbite-svelte";
     import MatchHistory from "../match/MatchHistory.svelte";
-    import TeamGrid from "./TeamGrid.svelte";
     import PlayerRoster from "../player/PlayerRoster.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
     import { TeamStandingInfo } from "../../ic-agent/declarations/main";
+    import LoadingButton from "../common/LoadingButton.svelte";
+    import { mainAgentFactory } from "../../ic-agent/Main";
 
     $: teams = $teamStore;
 
@@ -19,12 +20,23 @@
     $: user = $userStore;
 
     $: links =
-        teams?.find((l) => l.id == user?.membership[0]?.teamId[0])?.links || [];
-    $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId[0]);
+        teams?.find((l) => l.id == user?.membership[0]?.teamId)?.links || [];
+    $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId);
     $: votingPower = user?.membership[0]?.votingPower || 0;
     $: standing = standings?.find((s) => s.id == team?.id) || {
         wins: 0,
         losses: 0,
+    };
+    let join = async () => {
+        let mainAgent = await mainAgentFactory();
+        let result = await mainAgent.joinLeague();
+        if ("ok" in result) {
+            console.log("Joined league", result);
+            userStore.refetchCurrentUser();
+            userStore.refetchStats();
+        } else {
+            console.log("Error joining league", result);
+        }
     };
 </script>
 
@@ -114,7 +126,9 @@
         </Tabs>
     </SectionWithOverview>
 {:else}
-    <SectionWithOverview title="Pick a Team">
-        <TeamGrid />
-    </SectionWithOverview>
+    <div>
+        Want to join in and participate in league governance? Join the league
+        and get assigned to a random team!
+    </div>
+    <LoadingButton onClick={join}>Join</LoadingButton>
 {/if}

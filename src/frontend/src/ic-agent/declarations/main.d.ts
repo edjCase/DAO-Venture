@@ -25,7 +25,6 @@ export type Anomoly = { 'foggy' : null } |
   { 'windy' : null } |
   { 'rainy' : null };
 export type AssignUserToTeamError = { 'notAuthorized' : null } |
-  { 'alreadyOnTeam' : null } |
   { 'teamNotFound' : null } |
   { 'notLeagueMember' : null };
 export interface AssignUserToTeamRequest {
@@ -268,6 +267,7 @@ export interface InjuryPlayerEffectOutcome {
 export type InvalidError = { 'nameTaken' : null } |
   { 'nameNotSpecified' : null };
 export type JoinLeagueError = { 'notAuthorized' : null } |
+  { 'noTeams' : null } |
   { 'alreadyLeagueMember' : null };
 export interface LeagueChoiceScenario {
   'options' : Array<LeagueChoiceScenarioOption>,
@@ -914,10 +914,7 @@ export interface User {
   'membership' : [] | [UserMembership],
   'points' : bigint,
 }
-export interface UserMembership {
-  'votingPower' : bigint,
-  'teamId' : [] | [bigint],
-}
+export interface UserMembership { 'votingPower' : bigint, 'teamId' : bigint }
 export interface UserStats {
   'teams' : Array<TeamStats>,
   'teamOwnerCount' : bigint,

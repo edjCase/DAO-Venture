@@ -54,7 +54,6 @@
         } else if ("proportionalBid" in scenario.kind) {
             icon = "💰";
         } else {
-            //Green Check
             icon = "✅";
         }
     }

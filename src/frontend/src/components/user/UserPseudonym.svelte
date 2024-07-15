@@ -12,9 +12,11 @@
     let userIdString = userId instanceof Principal ? userId.toString() : userId;
 </script>
 
-{uniqueNamesGenerator({
-    dictionaries: [adjectives, colors, animals],
-    separator: " ",
-    style: "capital",
-    seed: userIdString,
-})}
+<div>
+    {uniqueNamesGenerator({
+        dictionaries: [adjectives, colors, animals],
+        separator: " ",
+        style: "capital",
+        seed: userIdString,
+    })}
+</div>

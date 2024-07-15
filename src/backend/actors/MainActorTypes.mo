@@ -67,6 +67,7 @@ module {
     public type JoinLeagueError = {
         #notAuthorized;
         #alreadyLeagueMember;
+        #noTeams;
     };
 
     public type LeagueData = {
@@ -389,7 +390,6 @@ module {
     };
 
     public type AssignUserToTeamError = {
-        #alreadyOnTeam;
         #teamNotFound;
         #notAuthorized;
         #notLeagueMember;

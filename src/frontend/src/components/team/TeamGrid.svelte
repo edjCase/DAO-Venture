@@ -12,7 +12,7 @@
 
   let associatedTeamId: bigint | undefined;
   $: {
-    associatedTeamId = user?.membership[0]?.teamId[0];
+    associatedTeamId = user?.membership[0]?.teamId;
   }
 
   let selectedTeam: Team | undefined;

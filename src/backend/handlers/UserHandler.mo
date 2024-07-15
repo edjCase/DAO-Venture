@@ -18,21 +18,10 @@ module {
     };
 
     public type UserMembership = {
-        teamId : ?Nat;
+        teamId : Nat;
         votingPower : Nat;
     };
 
-    public type TeamAssociation = {
-        id : Nat;
-        kind : TeamAssociationKind;
-    };
-
-    public type TeamAssociationKind = {
-        #fan;
-        #owner : {
-            votingPower : Nat;
-        };
-    };
     public type UserStats = {
         totalPoints : Int;
         userCount : Nat;
@@ -93,31 +82,26 @@ module {
             for (user in users.vals()) {
                 switch (user.membership) {
                     case (?membership) {
-                        switch (membership.teamId) {
-                            case (?teamId) {
-                                let stats : TeamStats = switch (teamStats.get(teamId)) {
-                                    case (?stats) stats;
-                                    case (null) {
-                                        {
-                                            id = teamId;
-                                            totalPoints = 0;
-                                            userCount = 0;
-                                            ownerCount = 0;
-                                        };
-                                    };
+                        let stats : TeamStats = switch (teamStats.get(membership.teamId)) {
+                            case (?stats) stats;
+                            case (null) {
+                                {
+                                    id = membership.teamId;
+                                    totalPoints = 0;
+                                    userCount = 0;
+                                    ownerCount = 0;
                                 };
-
-                                let newStats : TeamStats = {
-                                    id = teamId;
-                                    totalPoints = stats.totalPoints + user.points;
-                                    userCount = stats.userCount + 1;
-                                    ownerCount = stats.ownerCount + 1;
-                                };
-                                teamStats.put(teamId, newStats);
-                                leagueStats.teamOwnerCount += 1;
                             };
-                            case (null) ();
                         };
+
+                        let newStats : TeamStats = {
+                            id = membership.teamId;
+                            totalPoints = stats.totalPoints + user.points;
+                            userCount = stats.userCount + 1;
+                            ownerCount = stats.ownerCount + 1;
+                        };
+                        teamStats.put(membership.teamId, newStats);
+                        leagueStats.teamOwnerCount += 1;
 
                         leagueStats.totalPoints += user.points;
                         leagueStats.userCount += 1;
@@ -155,13 +139,13 @@ module {
             let getMatchingTeamMembership = switch (teamId) {
                 case (?tId) func(membership : UserMembership) : ?Nat {
                     // Filter to only the team we want
-                    if (membership.teamId == ?tId) {
+                    if (membership.teamId == tId) {
                         return ?tId;
                     };
                     return null;
                 };
                 case (null) func(membership : UserMembership) : ?Nat {
-                    membership.teamId;
+                    ?membership.teamId;
                 };
             };
 
@@ -188,7 +172,11 @@ module {
             owners;
         };
 
-        public func addLeagueMember(userId : Principal, votingPower : Nat) : Result.Result<(), { #alreadyLeagueMember }> {
+        public func addLeagueMember(
+            userId : Principal,
+            teamId : Nat,
+            votingPower : Nat,
+        ) : Result.Result<(), { #alreadyLeagueMember }> {
             let user = getOrCreateUser(userId);
             switch (user.membership) {
                 case (?membership) {
@@ -196,7 +184,7 @@ module {
                 };
                 case (null) {
                     user.membership := ?{
-                        teamId = null;
+                        teamId = teamId;
                         votingPower = votingPower;
                     };
                     #ok;
@@ -204,19 +192,16 @@ module {
             };
         };
 
-        public func assignToTeam(
+        public func changeTeam(
             userId : Principal,
             teamId : Nat,
-        ) : Result.Result<(), { #alreadyOnTeam; #notLeagueMember }> {
+        ) : Result.Result<(), { #notLeagueMember }> {
             let user = getOrCreateUser(userId);
             switch (user.membership) {
                 case (?membership) {
-                    if (membership.teamId != null) {
-                        return #err(#alreadyOnTeam);
-                    };
                     user.membership := ?{
                         membership with
-                        teamId = ?teamId;
+                        teamId = teamId;
                     };
                     #ok;
                 };

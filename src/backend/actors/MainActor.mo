@@ -672,8 +672,21 @@ actor MainActor : Types.Actor {
 
     public shared ({ caller }) func joinLeague() : async Result.Result<(), Types.JoinLeagueError> {
         // TODO restrict to NFT?/TOken holders
+        let seedBlob = await Random.blob();
+        let prng = PseudoRandomX.fromBlob(seedBlob);
+        let teams = teamsHandler.getAll();
+        if (teams.size() <= 0) {
+            return #err(#noTeams);
+        };
+        let randomTeamId : Nat = teams.vals()
+        |> Iter.map<Team.Team, Nat>(
+            _,
+            func(team : Team.Team) : Nat = team.id,
+        )
+        |> Iter.toArray(_)
+        |> prng.nextArrayElement(_);
         let votingPower = 1; // TODO get voting power from token
-        userHandler.addLeagueMember(caller, votingPower);
+        userHandler.addLeagueMember(caller, randomTeamId, votingPower);
     };
 
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
@@ -977,7 +990,7 @@ actor MainActor : Types.Actor {
             return #err(#notAuthorized);
         };
         let ?_ = teamsHandler.get(request.teamId) else return #err(#teamNotFound);
-        userHandler.assignToTeam(request.userId, request.teamId);
+        userHandler.changeTeam(request.userId, request.teamId);
     };
 
     // Private Methods ---------------------------------------------------------

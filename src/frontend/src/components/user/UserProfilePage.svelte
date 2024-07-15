@@ -1,28 +1,16 @@
 <script lang="ts">
-    import { CheckSolid, FileCopyOutline } from "flowbite-svelte-icons";
     import LoginButton from "../../components/common/LoginButton.svelte";
     import { userStore } from "../../stores/UserStore";
     import { teamStore } from "../../stores/TeamStore";
     import UserPseudonym from "./UserPseudonym.svelte";
     import TeamLogo from "../team/TeamLogo.svelte";
+    import UserIdCopyButton from "./UserIdCopyButton.svelte";
 
     $: user = $userStore;
     $: teams = $teamStore;
 
-    let idCopied = false;
-
-    $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId[0]);
+    $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId);
     $: coOwner = user?.membership[0] !== undefined;
-
-    let copyPrincipal = () => {
-        if (user) {
-            idCopied = true;
-            navigator.clipboard.writeText(user.id.toString());
-            setTimeout(() => {
-                idCopied = false;
-            }, 2000); // wait for 2 seconds
-        }
-    };
 </script>
 
 <div class="bg-gray-800 p-4">
@@ -42,11 +30,7 @@
                         {user.id.toString()}
                     </div>
 
-                    {#if idCopied}
-                        <CheckSolid size="lg" />
-                    {:else}
-                        <FileCopyOutline on:click={copyPrincipal} size="lg" />
-                    {/if}
+                    <UserIdCopyButton userId={user.id} />
                 </div>
             </div>
             <div class="mb-4">

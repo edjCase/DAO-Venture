@@ -15,15 +15,15 @@
     import { userStore } from "../stores/UserStore";
     $: teams = $teamStore;
 
-    let teamItems: SelectOptionType<string>[] = [];
-    let selectedTeamId: string | undefined;
+    let teamItems: SelectOptionType<bigint>[] = [];
+    let selectedTeamId: bigint | undefined;
     let newMemberId: string = "";
 
     $: {
         if (teams && teams.length > 0) {
             teamItems = teams.map((team) => {
                 return {
-                    value: team.id.toString(),
+                    value: team.id,
                     name: team.name,
                 };
             });
@@ -33,12 +33,12 @@
         }
     }
 
-    let addMember = async () => {
+    let assignMember = async () => {
         if (!selectedTeamId) {
             console.log("No team selected");
             return;
         }
-        console.log("Adding member", newMemberId);
+        console.log("Assigning member to team", newMemberId, selectedTeamId);
         let userId = Principal.fromText(newMemberId);
         let mainAgent = await mainAgentFactory();
         let res = await mainAgent.assignUserToTeam({
@@ -47,10 +47,10 @@
         });
 
         if ("ok" in res) {
-            console.log("Added member", res);
+            console.log("Assigning member", res);
             userStore.refetchCurrentUser();
         } else {
-            console.log("Error adding member", res);
+            console.log("Error assigning member", res);
         }
     };
 </script>
@@ -61,16 +61,16 @@
     <div class="text-2xl">Team Context:</div>
     <Select items={teamItems} bind:value={selectedTeamId} />
 
-    {#if selectedTeamId}
+    {#if selectedTeamId !== undefined}
         <Tabs>
             <TabItem title="Members" open>
-                <MemberList teamId={BigInt(selectedTeamId)} />
-                <div class="text-2xl">Add a DAO member:</div>
+                <MemberList teamId={selectedTeamId} />
+                <div class="text-2xl">Assign User to Team</div>
                 <div class="mb-6">
                     <Label for="default-input" class="block mb-2">User Id</Label
                     >
                     <Input id="default-input" bind:value={newMemberId} />
-                    <Button on:click={addMember}>Add Member</Button>
+                    <Button on:click={assignMember}>Assign</Button>
                 </div>
             </TabItem>
         </Tabs>

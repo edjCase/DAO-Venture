@@ -213,7 +213,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const AssignUserToTeamError = IDL.Variant({
     'notAuthorized' : IDL.Null,
-    'alreadyOnTeam' : IDL.Null,
     'teamNotFound' : IDL.Null,
     'notLeagueMember' : IDL.Null,
   });
@@ -1003,7 +1002,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserMembership = IDL.Record({
     'votingPower' : IDL.Nat,
-    'teamId' : IDL.Opt(IDL.Nat),
+    'teamId' : IDL.Nat,
   });
   const User = IDL.Record({
     'id' : IDL.Principal,
@@ -1043,6 +1042,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const JoinLeagueError = IDL.Variant({
     'notAuthorized' : IDL.Null,
+    'noTeams' : IDL.Null,
     'alreadyLeagueMember' : IDL.Null,
   });
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinLeagueError });

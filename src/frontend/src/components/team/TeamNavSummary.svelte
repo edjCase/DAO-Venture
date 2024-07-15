@@ -6,7 +6,7 @@
     $: user = $userStore;
     $: teams = $teamStore;
 
-    $: team = teams?.find((t) => t.id === user?.membership[0]?.teamId[0]);
+    $: team = teams?.find((t) => t.id === user?.membership[0]?.teamId);
 </script>
 
 {#if team}
