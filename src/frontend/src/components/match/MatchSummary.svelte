@@ -47,7 +47,7 @@
 </script>
 
 {#if team1 && team2 && team1Stats && team2Stats}
-    <div class="w-full px-20">
+    <div class="w-full flex justify-around">
         <CompletedMatchCard
             {matchGroupId}
             {matchId}

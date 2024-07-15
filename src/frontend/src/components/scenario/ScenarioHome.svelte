@@ -1,9 +1,7 @@
 <script lang="ts">
-    import { Button } from "flowbite-svelte";
-    import { navigate } from "svelte-routing";
+    import { Card } from "flowbite-svelte";
     import { Scenario, VotingData } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import SectionWithOverview from "../common/SectionWithOverview.svelte";
 
     let activeScenarios: Scenario[] = [];
     let votes: Record<string, VotingData> = {};
@@ -47,43 +45,22 @@
     });
 </script>
 
-<div class="flex items-center justify-around">
-    <SectionWithOverview title="Scenarios">
-        <ul slot="details" class="list-disc list-inside text-sm space-y-1">
-            <li>
-                Scenarios are league events where each team makes a choice on
-                what to do
-            </li>
-            <li>
-                Team decisions are made by majority vote of the team owners
-                choice votes
-            </li>
-            <li>
-                Each choice will have its trade-offs affecting entropy,
-                currency, skills, etc...
-            </li>
-            <li>
-                Some choice outcomes will depend on what other teams choose
-                and/or randomness
-            </li>
-        </ul>
-    </SectionWithOverview>
+<div class="">
+    <div class="text-3xl text-center">Active Scenarios</div>
 
-    <div class="border-2 rounded border-gray-700 p-4">
+    <div class="border-2 rounded border-gray-700 p-4 m-2">
         {#if activeScenariosWithVotingStatus.length == 0}
-            <div class="text-xl text-center">No active scenarios</div>
+            <div class="text-xl text-center">None</div>
         {:else}
-            <div class="flex flex-col items-center">
-                <div class="mb-2">
-                    {#each activeScenariosWithVotingStatus as scenario}
+            <div class="flex items-center flex-wrap justify-around">
+                {#each activeScenariosWithVotingStatus as scenario}
+                    <Card class="max-w-48">
                         <div class="text-xl text-center">
-                            {scenario.title} - {scenario.votingStatus}
+                            {scenario.title}
                         </div>
-                    {/each}
-                </div>
-                <Button on:click={() => navigate("/scenarios")}>
-                    View Scenarios
-                </Button>
+                        <div>{scenario.votingStatus}</div>
+                    </Card>
+                {/each}
             </div>
         {/if}
     </div>

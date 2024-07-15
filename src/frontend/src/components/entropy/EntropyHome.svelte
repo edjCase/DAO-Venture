@@ -2,7 +2,6 @@
     import { LeagueData, Team } from "../../ic-agent/declarations/main";
     import { leagueStore } from "../../stores/LeagueStore";
     import { teamStore } from "../../stores/TeamStore";
-    import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import EntropyGauge from "./EntropyGauge.svelte";
 
     let teams: Team[] = [];
@@ -20,20 +19,8 @@
     });
 </script>
 
-<div class="flex justify-around items-center">
-    <SectionWithOverview title="Entropy">
-        <ul slot="details" class="list-disc list-inside text-sm space-y-1">
-            <li>Entropy is a measure of chaos in the league</li>
-            <li>
-                If the entropy gets too high, the league will collapse into
-                chaos
-            </li>
-            <li>
-                Each team has their own entropy metric. When the team is
-                collaborative the entropy goes down, when selfish it goes up
-            </li>
-        </ul>
-    </SectionWithOverview>
+<div class="flex flex-col justify-around items-center">
+    <div class="text-3xl text-center">Entropy</div>
     <div>
         {#if !leagueData}
             <div></div>

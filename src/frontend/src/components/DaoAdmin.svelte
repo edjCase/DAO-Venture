@@ -15,7 +15,7 @@
     import { userStore } from "../stores/UserStore";
     $: teams = $teamStore;
 
-    let teamItems: SelectOptionType<bigint>[] = [];
+    let teamItems: SelectOptionType<bigint>[] | undefined;
     let selectedTeamId: bigint | undefined;
     let newMemberId: string = "";
 
