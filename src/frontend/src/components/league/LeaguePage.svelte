@@ -5,6 +5,7 @@
     import { userStore } from "../../stores/UserStore";
     import LoadingValue from "../common/LoadingValue.svelte";
     import { UserStats } from "../../ic-agent/declarations/main";
+    import LeagueProposalForm from "../dao/league/LeagueProposalForm.svelte";
 
     let userStats: UserStats | undefined;
 
@@ -38,6 +39,7 @@
 <Tabs>
     <TabItem title="Proposals" open>
         <LeagueProposalList />
+        <LeagueProposalForm />
     </TabItem>
     <TabItem title="Teams">
         <div class="flex flex-col items-center">

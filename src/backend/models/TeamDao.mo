@@ -2,6 +2,7 @@ import FieldPosition "FieldPosition";
 import Skill "Skill";
 module {
     public type ProposalContent = {
+        #motion : MotionContent;
         #changeName : ChangeTeamNameContent;
         #train : TrainContent;
         #swapPlayerPositions : SwapPlayerPositionsContent;
@@ -10,6 +11,11 @@ module {
         #changeMotto : ChangeTeamMottoContent;
         #changeDescription : ChangeTeamDescriptionContent;
         #modifyLink : ModifyTeamLinkContent;
+    };
+
+    public type MotionContent = {
+        title : Text;
+        description : Text;
     };
 
     public type ChangeTeamNameContent = {

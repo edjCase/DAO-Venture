@@ -285,6 +285,10 @@ actor MainActor : Types.Actor {
     func onLeagueProposalExecute(proposal : Dao.Proposal<LeagueDao.ProposalContent>) : async* Result.Result<(), Text> {
         // TODO change league proposal for team data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
+            case (#motion(m)) {
+                // Do nothing
+                #ok;
+            };
             case (#changeTeamName(c)) {
                 let result = teamsHandler.updateName(c.teamId, c.name);
                 let error = switch (result) {
@@ -408,6 +412,10 @@ actor MainActor : Types.Actor {
                 };
             };
             switch (proposal.content) {
+                case (#motion(m)) {
+                    // Do nothing
+                    #ok;
+                };
                 case (#train(train)) {
                     let player = switch (playerHandler.getPosition(teamId, train.position)) {
                         case (?player) player;
@@ -725,6 +733,22 @@ actor MainActor : Types.Actor {
 
     public shared query func getLeagueProposals(count : Nat, offset : Nat) : async Types.GetLeagueProposalsResult {
         #ok(leagueDao.getProposals(count, offset));
+    };
+
+    public shared ({ caller }) func createLeagueProposal(request : Types.CreateLeagueProposalRequest) : async Types.CreateLeagueProposalResult {
+        let members = userHandler.getTeamOwners(null);
+        let isAMember = members
+        |> Iter.fromArray(_)
+        |> Iter.filter(
+            _,
+            func(member : Dao.Member) : Bool = member.id == caller,
+        )
+        |> _.next() != null;
+        if (not isAMember) {
+            return #err(#notAuthorized);
+        };
+        Debug.print("Creating proposal for league with content: " # debug_show (request));
+        await* leagueDao.createProposal<system>(caller, request, members);
     };
 
     public shared ({ caller }) func voteOnLeagueProposal(request : Types.VoteOnLeagueProposalRequest) : async Types.VoteOnLeagueProposalResult {

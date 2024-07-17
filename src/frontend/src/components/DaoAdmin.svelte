@@ -34,7 +34,7 @@
     }
 
     let assignMember = async () => {
-        if (!selectedTeamId) {
+        if (selectedTeamId === undefined) {
             console.log("No team selected");
             return;
         }

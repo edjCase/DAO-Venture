@@ -34,6 +34,8 @@
             title = "Change Team Description";
         } else if ("modifyLink" in p.content) {
             title = "Modify Team Link";
+        } else if ("motion" in p.content) {
+            title = p.content.motion.title;
         } else {
             title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }

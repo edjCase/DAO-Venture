@@ -8,10 +8,16 @@
     import ChangeDescriptionForm from "./proposal_forms/ChangeDescriptionForm.svelte";
     import ModifyLinkForm from "./proposal_forms/ModifyLinkForm.svelte";
     import SwapPositionsForm from "./proposal_forms/SwapPositionsForm.svelte";
+    import MotionForm from "./proposal_forms/MotionForm.svelte";
 
     export let teamId: bigint;
 
     let proposalTypes = [
+        {
+            value: "motion",
+            name: "Motion",
+            component: MotionForm,
+        },
         {
             value: "train",
             name: "Train Player",

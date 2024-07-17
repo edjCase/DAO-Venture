@@ -9,11 +9,13 @@
     import TrainPositionView from "./proposal_views/TrainPositionView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
     import SwapPositionsView from "./proposal_views/SwapPositionsView.svelte";
+    import MotionView from "./proposal_views/MotionView.svelte";
 
     export let proposal: TeamProposal;
     export let teamId: bigint;
 
     const components: Record<string, any> = {
+        motion: MotionView,
         train: TrainPositionView,
         changeName: ChangeNameView,
         changeColor: ChangeColorView,

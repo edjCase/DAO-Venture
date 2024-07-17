@@ -4,9 +4,9 @@
     import { onDestroy } from "svelte";
     import { mainAgentFactory } from "../../../ic-agent/Main";
     import { ProposalType } from "../GenericProposal.svelte";
-    import LeagueProposalDetails from "./LeagueProposalDetails.svelte";
     import { LeagueProposal } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
+    import LeagueProposalView from "./LeagueProposalView.svelte";
 
     let proposals: LeagueProposal[] = [];
     let genericProposals: ProposalType[] = [];
@@ -23,6 +23,8 @@
             title = "Change Team Logo";
         } else if ("changeTeamMotto" in p.content) {
             title = "Change Team Motto";
+        } else if ("motion" in p.content) {
+            title = p.content.motion.title;
         } else {
             title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }
@@ -76,6 +78,6 @@
     let:proposalId
 >
     <slot name="details">
-        <LeagueProposalDetails proposal={getProposal(proposalId)} />
+        <LeagueProposalView proposal={getProposal(proposalId)} />
     </slot>
 </GenericProposalList>

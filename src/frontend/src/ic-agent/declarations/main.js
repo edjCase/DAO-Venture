@@ -236,6 +236,46 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : CloseSeasonError,
   });
+  const ChangeTeamColorContent__1 = IDL.Record({
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+    'teamId' : IDL.Nat,
+  });
+  const ChangeTeamDescriptionContent__1 = IDL.Record({
+    'description' : IDL.Text,
+    'teamId' : IDL.Nat,
+  });
+  const ChangeTeamLogoContent__1 = IDL.Record({
+    'logoUrl' : IDL.Text,
+    'teamId' : IDL.Nat,
+  });
+  const ChangeTeamNameContent__1 = IDL.Record({
+    'name' : IDL.Text,
+    'teamId' : IDL.Nat,
+  });
+  const MotionContent__1 = IDL.Record({
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const ChangeTeamMottoContent__1 = IDL.Record({
+    'motto' : IDL.Text,
+    'teamId' : IDL.Nat,
+  });
+  const CreateLeagueProposalRequest = IDL.Variant({
+    'changeTeamColor' : ChangeTeamColorContent__1,
+    'changeTeamDescription' : ChangeTeamDescriptionContent__1,
+    'changeTeamLogo' : ChangeTeamLogoContent__1,
+    'changeTeamName' : ChangeTeamNameContent__1,
+    'motion' : MotionContent__1,
+    'changeTeamMotto' : ChangeTeamMottoContent__1,
+  });
+  const CreateLeagueProposalError = IDL.Variant({
+    'notAuthorized' : IDL.Null,
+    'invalid' : IDL.Vec(IDL.Text),
+  });
+  const CreateLeagueProposalResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'err' : CreateLeagueProposalError,
+  });
   const CreateTeamRequest = IDL.Record({
     'motto' : IDL.Text,
     'name' : IDL.Text,
@@ -271,6 +311,10 @@ export const idlFactory = ({ IDL }) => {
     'position1' : FieldPosition,
     'position2' : FieldPosition,
   });
+  const MotionContent = IDL.Record({
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+  });
   const ChangeTeamDescriptionContent = IDL.Record({ 'description' : IDL.Text });
   const TeamProposalContent = IDL.Variant({
     'train' : TrainContent,
@@ -280,6 +324,7 @@ export const idlFactory = ({ IDL }) => {
     'modifyLink' : ModifyTeamLinkContent,
     'changeColor' : ChangeTeamColorContent,
     'swapPlayerPositions' : SwapPlayerPositionsContent,
+    'motion' : MotionContent,
     'changeDescription' : ChangeTeamDescriptionContent,
   });
   const CreateTeamProposalError = IDL.Variant({
@@ -337,17 +382,12 @@ export const idlFactory = ({ IDL }) => {
     'leagueIncome' : IDL.Nat,
   });
   const ProposalContent__1 = IDL.Variant({
-    'changeTeamColor' : IDL.Record({
-      'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
-      'teamId' : IDL.Nat,
-    }),
-    'changeTeamDescription' : IDL.Record({
-      'description' : IDL.Text,
-      'teamId' : IDL.Nat,
-    }),
-    'changeTeamLogo' : IDL.Record({ 'logoUrl' : IDL.Text, 'teamId' : IDL.Nat }),
-    'changeTeamName' : IDL.Record({ 'name' : IDL.Text, 'teamId' : IDL.Nat }),
-    'changeTeamMotto' : IDL.Record({ 'motto' : IDL.Text, 'teamId' : IDL.Nat }),
+    'changeTeamColor' : ChangeTeamColorContent__1,
+    'changeTeamDescription' : ChangeTeamDescriptionContent__1,
+    'changeTeamLogo' : ChangeTeamLogoContent__1,
+    'changeTeamName' : ChangeTeamNameContent__1,
+    'motion' : MotionContent__1,
+    'changeTeamMotto' : ChangeTeamMottoContent__1,
   });
   const Vote = IDL.Record({
     'value' : IDL.Opt(IDL.Bool),
@@ -936,6 +976,7 @@ export const idlFactory = ({ IDL }) => {
     'modifyLink' : ModifyTeamLinkContent,
     'changeColor' : ChangeTeamColorContent,
     'swapPlayerPositions' : SwapPlayerPositionsContent,
+    'motion' : MotionContent,
     'changeDescription' : ChangeTeamDescriptionContent,
   });
   const TeamProposal = IDL.Record({
@@ -1167,6 +1208,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'closeSeason' : IDL.Func([], [CloseSeasonResult], []),
+    'createLeagueProposal' : IDL.Func(
+        [CreateLeagueProposalRequest],
+        [CreateLeagueProposalResult],
+        [],
+      ),
     'createTeam' : IDL.Func([CreateTeamRequest], [CreateTeamResult], []),
     'createTeamProposal' : IDL.Func(
         [IDL.Nat, TeamProposalContent],

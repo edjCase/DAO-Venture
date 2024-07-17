@@ -8,6 +8,7 @@
 
     let matchGroups: InProgressSeasonMatchGroupVariant[] = [];
     let scrollContainer: HTMLElement;
+    let matchBannerGroupIndex: number | undefined;
 
     scheduleStore.subscribeMatchGroups((mgs) => {
         matchGroups = mgs;
@@ -29,38 +30,28 @@
     }
 
     function scrollToNextMatchGroup(
+        scrollContainer: HTMLElement,
         matchGroups: InProgressSeasonMatchGroupVariant[],
     ) {
+        if (matchBannerGroupIndex !== undefined) return; // Already set, skip
         if (!scrollContainer || matchGroups.length === 0) return;
         const nextGroupIndex = findNextMatchGroupIndex();
         if (nextGroupIndex === -1) return;
-        const matchGroupWidth =
-            scrollContainer.querySelector(".match-group")?.clientWidth || 0;
-        scrollContainer.scrollLeft = nextGroupIndex * matchGroupWidth;
+        matchBannerGroupIndex = nextGroupIndex;
     }
 
-    $: scrollToNextMatchGroup(matchGroups);
+    $: scrollToNextMatchGroup(scrollContainer, matchGroups);
 
-    let startX: number | undefined;
-    let scrollLeft: number | undefined;
-
-    function dragStart(e: MouseEvent) {
-        startX = e.pageX - scrollContainer.offsetLeft;
-        scrollLeft = scrollContainer.scrollLeft;
+    function scrollToMatchGroup(matchBannerGroupIndex: number | undefined) {
+        if (matchBannerGroupIndex !== undefined && scrollContainer) {
+            const matchGroupWidth =
+                scrollContainer.querySelector(".match-group")?.clientWidth || 0;
+            scrollContainer.scrollLeft =
+                matchBannerGroupIndex * matchGroupWidth;
+        }
     }
 
-    function dragAction(e: MouseEvent) {
-        if (startX === undefined || scrollLeft === undefined) return;
-        e.preventDefault();
-        const x = e.pageX - scrollContainer.offsetLeft;
-        const walk = x - startX;
-        scrollContainer.scrollLeft = scrollLeft - walk;
-    }
-
-    function dragEnd() {
-        startX = undefined;
-        scrollLeft = undefined;
-    }
+    $: scrollToMatchGroup(matchBannerGroupIndex);
 
     function handleWheel(e: WheelEvent) {
         if (scrollContainer) {
@@ -87,13 +78,23 @@
 
     function scrollToLeft() {
         if (scrollContainer) {
-            scrollContainer.scrollBy({ left: -200, behavior: "smooth" });
+            if (
+                matchBannerGroupIndex !== undefined &&
+                matchBannerGroupIndex >= 1
+            ) {
+                matchBannerGroupIndex -= 1;
+            }
         }
     }
 
     function scrollToRight() {
         if (scrollContainer) {
-            scrollContainer.scrollBy({ left: 200, behavior: "smooth" });
+            if (
+                matchBannerGroupIndex !== undefined &&
+                matchBannerGroupIndex < matchGroups.length - 1
+            ) {
+                matchBannerGroupIndex += 1;
+            }
         }
     }
 
@@ -118,10 +119,6 @@
     <div
         class="flex-grow overflow-x-auto hide-scrollbar py-2 border border-gray-700"
         bind:this={scrollContainer}
-        on:mousedown={dragStart}
-        on:mousemove={dragAction}
-        on:mouseup={dragEnd}
-        on:mouseleave={dragEnd}
         on:wheel={handleWheel}
         on:keydown={handleKeydown}
         role="toolbar"

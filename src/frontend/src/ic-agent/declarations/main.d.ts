@@ -39,10 +39,27 @@ export type BenevolentDictatorState = { 'open' : null } |
   { 'claimed' : Principal } |
   { 'disabled' : null };
 export interface ChangeTeamColorContent { 'color' : [number, number, number] }
+export interface ChangeTeamColorContent__1 {
+  'color' : [number, number, number],
+  'teamId' : bigint,
+}
 export interface ChangeTeamDescriptionContent { 'description' : string }
+export interface ChangeTeamDescriptionContent__1 {
+  'description' : string,
+  'teamId' : bigint,
+}
 export interface ChangeTeamLogoContent { 'logoUrl' : string }
+export interface ChangeTeamLogoContent__1 {
+  'logoUrl' : string,
+  'teamId' : bigint,
+}
 export interface ChangeTeamMottoContent { 'motto' : string }
+export interface ChangeTeamMottoContent__1 {
+  'motto' : string,
+  'teamId' : bigint,
+}
 export interface ChangeTeamNameContent { 'name' : string }
+export interface ChangeTeamNameContent__1 { 'name' : string, 'teamId' : bigint }
 export type ChosenOrRandomFieldPosition = { 'random' : null } |
   { 'chosen' : FieldPosition };
 export type ChosenOrRandomSkill = { 'random' : null } |
@@ -93,6 +110,18 @@ export interface CompletedSeasonTeam {
   'losses' : bigint,
   'totalScore' : bigint,
 }
+export type CreateLeagueProposalError = { 'notAuthorized' : null } |
+  { 'invalid' : Array<string> };
+export type CreateLeagueProposalRequest = {
+    'changeTeamColor' : ChangeTeamColorContent__1
+  } |
+  { 'changeTeamDescription' : ChangeTeamDescriptionContent__1 } |
+  { 'changeTeamLogo' : ChangeTeamLogoContent__1 } |
+  { 'changeTeamName' : ChangeTeamNameContent__1 } |
+  { 'motion' : MotionContent__1 } |
+  { 'changeTeamMotto' : ChangeTeamMottoContent__1 };
+export type CreateLeagueProposalResult = { 'ok' : bigint } |
+  { 'err' : CreateLeagueProposalError };
 export type CreatePlayerFluffError = { 'notAuthorized' : null } |
   { 'invalid' : Array<InvalidError> };
 export interface CreatePlayerFluffRequest {
@@ -412,6 +441,8 @@ export interface ModifyTeamLinkContent {
   'url' : [] | [string],
   'name' : string,
 }
+export interface MotionContent { 'title' : string, 'description' : string }
+export interface MotionContent__1 { 'title' : string, 'description' : string }
 export interface NoLeagueEffectScenario {
   'options' : Array<ScenarioOptionDiscrete>,
 }
@@ -549,17 +580,16 @@ export type ProposalContent = { 'train' : TrainContent } |
   { 'modifyLink' : ModifyTeamLinkContent } |
   { 'changeColor' : ChangeTeamColorContent } |
   { 'swapPlayerPositions' : SwapPlayerPositionsContent } |
+  { 'motion' : MotionContent } |
   { 'changeDescription' : ChangeTeamDescriptionContent };
 export type ProposalContent__1 = {
-    'changeTeamColor' : {
-      'color' : [number, number, number],
-      'teamId' : bigint,
-    }
+    'changeTeamColor' : ChangeTeamColorContent__1
   } |
-  { 'changeTeamDescription' : { 'description' : string, 'teamId' : bigint } } |
-  { 'changeTeamLogo' : { 'logoUrl' : string, 'teamId' : bigint } } |
-  { 'changeTeamName' : { 'name' : string, 'teamId' : bigint } } |
-  { 'changeTeamMotto' : { 'motto' : string, 'teamId' : bigint } };
+  { 'changeTeamDescription' : ChangeTeamDescriptionContent__1 } |
+  { 'changeTeamLogo' : ChangeTeamLogoContent__1 } |
+  { 'changeTeamName' : ChangeTeamNameContent__1 } |
+  { 'motion' : MotionContent__1 } |
+  { 'changeTeamMotto' : ChangeTeamMottoContent__1 };
 export type ProposalStatusLogEntry = {
     'failedToExecute' : { 'time' : Time, 'error' : string }
   } |
@@ -819,6 +849,7 @@ export type TeamProposalContent = { 'train' : TrainContent } |
   { 'modifyLink' : ModifyTeamLinkContent } |
   { 'changeColor' : ChangeTeamColorContent } |
   { 'swapPlayerPositions' : SwapPlayerPositionsContent } |
+  { 'motion' : MotionContent } |
   { 'changeDescription' : ChangeTeamDescriptionContent };
 export interface TeamStandingInfo {
   'id' : bigint,
@@ -976,6 +1007,10 @@ export interface _SERVICE {
     ClaimBenevolentDictatorRoleResult
   >,
   'closeSeason' : ActorMethod<[], CloseSeasonResult>,
+  'createLeagueProposal' : ActorMethod<
+    [CreateLeagueProposalRequest],
+    CreateLeagueProposalResult
+  >,
   'createTeam' : ActorMethod<[CreateTeamRequest], CreateTeamResult>,
   'createTeamProposal' : ActorMethod<
     [bigint, TeamProposalContent],

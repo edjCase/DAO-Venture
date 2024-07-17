@@ -27,6 +27,7 @@ module {
 
         getLeagueProposal : query (Nat) -> async GetLeagueProposalResult;
         getLeagueProposals : query (count : Nat, offset : Nat) -> async GetLeagueProposalsResult;
+        createLeagueProposal : (request : CreateLeagueProposalRequest) -> async CreateLeagueProposalResult;
         getScenario : query (Nat) -> async GetScenarioResult;
         getScenarios : query () -> async GetScenariosResult;
         voteOnLeagueProposal : VoteOnLeagueProposalRequest -> async VoteOnLeagueProposalResult;
@@ -63,6 +64,17 @@ module {
         assignUserToTeam : (request : AssignUserToTeamRequest) -> async Result.Result<(), AssignUserToTeamError>;
         joinLeague : () -> async Result.Result<(), JoinLeagueError>;
     };
+
+    public type CreateLeagueProposalRequest = {
+        #motion : MotionContent;
+    };
+
+    public type CreateLeagueProposalError = {
+        #notAuthorized;
+        #invalid : [Text];
+    };
+
+    public type CreateLeagueProposalResult = Result.Result<Nat, CreateLeagueProposalError>;
 
     public type JoinLeagueError = {
         #notAuthorized;
