@@ -66,7 +66,7 @@ module {
     };
 
     public type CreateLeagueProposalRequest = {
-        #motion : MotionContent;
+        #motion : LeagueDao.MotionContent;
     };
 
     public type CreateLeagueProposalError = {
