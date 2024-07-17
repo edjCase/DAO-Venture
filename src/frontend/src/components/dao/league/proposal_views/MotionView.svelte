@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { MotionContent } from "../../../../ic-agent/declarations/main";
+    import { MotionContent__1 } from "../../../../ic-agent/declarations/main";
 
-    export let content: MotionContent;
+    export let content: MotionContent__1;
 </script>
 
 <div><pre>{content.description}</pre></div>
