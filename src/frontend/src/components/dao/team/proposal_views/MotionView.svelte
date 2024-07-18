@@ -4,4 +4,4 @@
     export let content: MotionContent;
 </script>
 
-<div><pre>{content.description}</pre></div>
+<div class="whitespace-pre-wrap break-words">{content.description}</div>

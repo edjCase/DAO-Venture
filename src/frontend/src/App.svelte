@@ -16,6 +16,7 @@
   import MyTeam from "./routes/MyTeam.svelte";
   import League from "./routes/League.svelte";
   import Navbar from "./components/common/Navbar.svelte";
+  import TopPredictors from "./routes/TopPredictors.svelte";
 </script>
 
 <main class="p-5 max-w-xl mx-auto h-screen">
@@ -31,6 +32,7 @@
       <Route path="/teams" component={Teams} />
       <Route path="/teams/:teamIdString" component={Team} />
       <Route path="/league" component={League} />
+      <Route path="top-predictors" component={TopPredictors} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/about" component={About} />

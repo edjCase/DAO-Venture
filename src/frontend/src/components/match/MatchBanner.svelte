@@ -6,7 +6,7 @@
     import MatchBannerMatch from "./MatchBannerMatch.svelte";
     import { Link } from "svelte-routing";
 
-    let matchGroups: InProgressSeasonMatchGroupVariant[] = [];
+    let matchGroups: InProgressSeasonMatchGroupVariant[] | undefined;
     let scrollContainer: HTMLElement;
     let matchBannerGroupIndex: number | undefined;
 
@@ -14,7 +14,9 @@
         matchGroups = mgs;
     });
 
-    function findNextMatchGroupIndex(): number {
+    function findNextMatchGroupIndex(
+        matchGroups: InProgressSeasonMatchGroupVariant[],
+    ): number {
         const now = Date.now();
         return matchGroups.findIndex((group) => {
             const groupTime =
@@ -31,11 +33,13 @@
 
     function scrollToNextMatchGroup(
         scrollContainer: HTMLElement,
-        matchGroups: InProgressSeasonMatchGroupVariant[],
+        matchGroups: InProgressSeasonMatchGroupVariant[] | undefined,
     ) {
         if (matchBannerGroupIndex !== undefined) return; // Already set, skip
-        if (!scrollContainer || matchGroups.length === 0) return;
-        const nextGroupIndex = findNextMatchGroupIndex();
+        if (!scrollContainer || !matchGroups || matchGroups.length === 0) {
+            return;
+        }
+        const nextGroupIndex = findNextMatchGroupIndex(matchGroups);
         if (nextGroupIndex === -1) return;
         matchBannerGroupIndex = nextGroupIndex;
     }
@@ -77,7 +81,7 @@
     }
 
     function scrollToLeft() {
-        if (scrollContainer) {
+        if (scrollContainer && matchGroups) {
             if (
                 matchBannerGroupIndex !== undefined &&
                 matchBannerGroupIndex >= 1
@@ -88,7 +92,7 @@
     }
 
     function scrollToRight() {
-        if (scrollContainer) {
+        if (scrollContainer && matchGroups) {
             if (
                 matchBannerGroupIndex !== undefined &&
                 matchBannerGroupIndex < matchGroups.length - 1
@@ -107,72 +111,88 @@
     }
 </script>
 
-<div class="relative flex bg-gray-900">
-    <button
-        class="flex-none w-10 bg-gray-800 text-white flex items-center justify-center border border-gray-700"
-        on:click={scrollToLeft}
-        aria-label="Scroll left"
-    >
-        &lt;
-    </button>
+{#if matchGroups && matchGroups.length > 0}
+    <div class="relative flex bg-gray-900">
+        <button
+            class="flex-none w-10 bg-gray-800 text-white flex items-center justify-center border border-gray-700"
+            on:click={scrollToLeft}
+            aria-label="Scroll left"
+        >
+            &lt;
+        </button>
 
-    <div
-        class="flex-grow overflow-x-auto hide-scrollbar py-2 border border-gray-700"
-        bind:this={scrollContainer}
-        on:wheel={handleWheel}
-        on:keydown={handleKeydown}
-        role="toolbar"
-        aria-label="Match schedule navigation"
-        tabindex="0"
-    >
-        <div class="flex">
-            {#each matchGroups as matchGroup, matchGroupId}
-                <div class="match-group inline-flex">
-                    <div class="flex items-center text-center">
-                        <Link to={"/match-groups/" + matchGroupId}>
-                            {getMatchGroupDate(matchGroup)}
-                            <div class="flex justify-center mt-2">
-                                <ArrowUpRightFromSquareOutline size="xs" />
-                            </div>
-                        </Link>
+        <div
+            class="flex-grow overflow-x-auto hide-scrollbar py-2 border border-gray-700"
+            bind:this={scrollContainer}
+            on:wheel={handleWheel}
+            on:keydown={handleKeydown}
+            role="toolbar"
+            aria-label="Match schedule navigation"
+            tabindex="0"
+        >
+            <div class="flex">
+                {#each matchGroups as matchGroup, matchGroupId}
+                    <div class="match-group inline-flex">
+                        <div class="flex items-center text-center">
+                            <Link to={"/match-groups/" + matchGroupId}>
+                                {getMatchGroupDate(matchGroup)}
+                                <div class="flex justify-center mt-2">
+                                    <ArrowUpRightFromSquareOutline size="xs" />
+                                </div>
+                            </Link>
+                        </div>
+                        {#if "notScheduled" in matchGroup}
+                            {#each matchGroup.notScheduled.matches as match}
+                                <MatchBannerMatch
+                                    match={{ notScheduled: match }}
+                                />
+                            {/each}
+                        {:else if "scheduled" in matchGroup}
+                            {#each matchGroup.scheduled.matches as match}
+                                <MatchBannerMatch
+                                    match={{ scheduled: match }}
+                                />
+                            {/each}
+                        {:else if "inProgress" in matchGroup}
+                            {#each matchGroup.inProgress.matches as match}
+                                <MatchBannerMatch
+                                    match={{ inProgress: match }}
+                                />
+                            {/each}
+                        {:else}
+                            {#each matchGroup.completed.matches as match}
+                                <MatchBannerMatch
+                                    match={{ completed: match }}
+                                />
+                            {/each}
+                        {/if}
                     </div>
-                    {#if "notScheduled" in matchGroup}
-                        {#each matchGroup.notScheduled.matches as match}
-                            <MatchBannerMatch match={{ notScheduled: match }} />
-                        {/each}
-                    {:else if "scheduled" in matchGroup}
-                        {#each matchGroup.scheduled.matches as match}
-                            <MatchBannerMatch match={{ scheduled: match }} />
-                        {/each}
-                    {:else if "inProgress" in matchGroup}
-                        {#each matchGroup.inProgress.matches as match}
-                            <MatchBannerMatch match={{ inProgress: match }} />
-                        {/each}
-                    {:else}
-                        {#each matchGroup.completed.matches as match}
-                            <MatchBannerMatch match={{ completed: match }} />
-                        {/each}
-                    {/if}
-                </div>
-            {/each}
+                {/each}
+            </div>
         </div>
+
+        <button
+            class="flex-none w-10 bg-gray-800 text-white flex items-center justify-center border border-gray-700"
+            on:click={scrollToRight}
+            aria-label="Scroll right"
+        >
+            &gt;
+        </button>
     </div>
 
-    <button
-        class="flex-none w-10 bg-gray-800 text-white flex items-center justify-center border border-gray-700"
-        on:click={scrollToRight}
-        aria-label="Scroll right"
+    <style>
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+{:else}
+    <div
+        class="text-xl text-center py-2 border border-gray-700 rounded border-2"
     >
-        &gt;
-    </button>
-</div>
-
-<style>
-    .hide-scrollbar::-webkit-scrollbar {
-        display: none;
-    }
-    .hide-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-    }
-</style>
+        No Upcoming Matches
+    </div>
+{/if}

@@ -2,6 +2,7 @@
     import { Card } from "flowbite-svelte";
     import { Scenario, VotingData } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
+    import { Link } from "svelte-routing";
 
     let activeScenarios: Scenario[] = [];
     let votes: Record<string, VotingData> = {};
@@ -48,18 +49,21 @@
 <div class="">
     <div class="text-3xl text-center">Active Scenarios</div>
 
-    <div class="border-2 rounded border-gray-700 p-4 m-2">
+    <div class="p-4 my-2">
         {#if activeScenariosWithVotingStatus.length == 0}
             <div class="text-xl text-center">None</div>
         {:else}
-            <div class="flex items-center flex-wrap justify-around">
+            <div class="flex flex-col items-center justify-between gap-2">
                 {#each activeScenariosWithVotingStatus as scenario}
-                    <Card class="max-w-48">
-                        <div class="text-xl text-center">
-                            {scenario.title}
-                        </div>
-                        <div>{scenario.votingStatus}</div>
-                    </Card>
+                    <!-- TODO link to specific one -->
+                    <Link to={`/scenarios`}>
+                        <Card class="w-48text-xl text-center">
+                            <div>
+                                {scenario.title}
+                            </div>
+                            <div>{scenario.votingStatus}</div>
+                        </Card>
+                    </Link>
                 {/each}
             </div>
         {/if}

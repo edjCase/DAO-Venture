@@ -19,9 +19,9 @@
     });
 </script>
 
-<div class="flex flex-col justify-around items-center">
+<div>
     <div class="text-3xl text-center">Entropy</div>
-    <div>
+    <div class="border border-2 rounded border-gray-700">
         {#if !leagueData}
             <div></div>
         {:else}

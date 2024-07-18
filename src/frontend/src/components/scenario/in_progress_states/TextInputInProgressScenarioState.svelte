@@ -4,4 +4,4 @@
     export let scenario: TextInputScenario;
 </script>
 
-<div>Descroption: {scenario.description}</div>
+<div>{scenario.description}</div>

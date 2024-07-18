@@ -22,6 +22,7 @@
     export let shadow: boolean | undefined = undefined;
     export let tag: string | undefined = undefined;
     export let checked: boolean | undefined = undefined;
+    export let disabled: boolean | undefined = undefined;
 
     let loading = false;
     let onClickHandler = async () => {
@@ -44,7 +45,7 @@
     {shadow}
     {tag}
     {checked}
-    disabled={loading}
+    disabled={disabled || loading}
     on:click={onClickHandler}
 >
     {#if loading}

@@ -8,15 +8,21 @@
     } from "unique-names-generator";
 
     export let userId: Principal | string;
+    export let maxWidth: string | undefined = undefined;
 
-    let userIdString = userId instanceof Principal ? userId.toString() : userId;
-</script>
+    $: userIdString = userId instanceof Principal ? userId.toString() : userId;
 
-<div>
-    {uniqueNamesGenerator({
+    $: pseudonym = uniqueNamesGenerator({
         dictionaries: [adjectives, colors, animals],
         separator: " ",
         style: "capital",
         seed: userIdString,
-    })}
+    });
+
+    $: truncateClass = maxWidth ? "truncate" : "";
+    $: style = maxWidth ? `max-width: ${maxWidth};` : "";
+</script>
+
+<div class={`inline-block ${truncateClass}`} {style} title={pseudonym}>
+    {pseudonym}
 </div>
