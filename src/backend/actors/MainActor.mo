@@ -18,7 +18,8 @@ import PlayerHandler "../handlers/PlayerHandler";
 import TeamsHandler "../handlers/TeamsHandler";
 import UserHandler "../handlers/UserHandler";
 import SimulationHandler "../handlers/SimulationHandler";
-import Dao "../Dao";
+import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
+import ProposalTypes "mo:dao-proposal-engine/Types";
 import Result "mo:base/Result";
 import Nat32 "mo:base/Nat32";
 import HashMap "mo:base/HashMap";
@@ -60,7 +61,7 @@ actor MainActor : Types.Actor {
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
     };
-    stable var leagueDaoStableData : Dao.StableData<LeagueDao.ProposalContent> = {
+    stable var leagueDaoStableData : ProposalTypes.StableData<LeagueDao.ProposalContent> = {
         proposalDuration = #days(3);
         proposals = [];
         votingThreshold = #percent({
@@ -69,7 +70,7 @@ actor MainActor : Types.Actor {
         });
     };
 
-    stable var teamDaoStableData : [(Nat, Dao.StableData<TeamDao.ProposalContent>)] = [];
+    stable var teamDaoStableData : [(Nat, ProposalTypes.StableData<TeamDao.ProposalContent>)] = [];
 
     stable var playerStableData : PlayerHandler.StableData = {
         players = [];
@@ -282,10 +283,10 @@ actor MainActor : Types.Actor {
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
-    func onLeagueProposalExecute(proposal : Dao.Proposal<LeagueDao.ProposalContent>) : async* Result.Result<(), Text> {
+    func onLeagueProposalExecute(proposal : ProposalTypes.Proposal<LeagueDao.ProposalContent>) : async* Result.Result<(), Text> {
         // TODO change league proposal for team data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
-            case (#motion(m)) {
+            case (#motion(_)) {
                 // Do nothing
                 #ok;
             };
@@ -332,11 +333,11 @@ actor MainActor : Types.Actor {
             };
         };
     };
-    func onLeagueProposalReject(_ : Dao.Proposal<LeagueDao.ProposalContent>) : async* () {}; // TODO
+    func onLeagueProposalReject(_ : ProposalTypes.Proposal<LeagueDao.ProposalContent>) : async* () {}; // TODO
     func onLeagueProposalValidate(_ : LeagueDao.ProposalContent) : async* Result.Result<(), [Text]> {
         #ok; // TODO
     };
-    var leagueDao = Dao.Dao<system, LeagueDao.ProposalContent>(
+    var leagueDao = ProposalEngine.ProposalEngine<system, LeagueDao.ProposalContent>(
         leagueDaoStableData,
         onLeagueProposalExecute,
         onLeagueProposalReject,
@@ -390,10 +391,10 @@ actor MainActor : Types.Actor {
 
     func buildTeamDao<system>(
         teamId : Nat,
-        data : Dao.StableData<TeamDao.ProposalContent>,
-    ) : Dao.Dao<TeamDao.ProposalContent> {
+        data : ProposalTypes.StableData<TeamDao.ProposalContent>,
+    ) : ProposalEngine.ProposalEngine<TeamDao.ProposalContent> {
 
-        func onProposalExecute(proposal : Dao.Proposal<TeamDao.ProposalContent>) : async* Result.Result<(), Text> {
+        func onProposalExecute(proposal : ProposalTypes.Proposal<TeamDao.ProposalContent>) : async* Result.Result<(), Text> {
             let createLeagueProposal = func(leagueProposalContent : LeagueDao.ProposalContent) : async* Result.Result<(), Text> {
                 let members = userHandler.getTeamOwners(null);
                 let result = await* leagueDao.createProposal(proposal.proposerId, leagueProposalContent, members);
@@ -412,7 +413,7 @@ actor MainActor : Types.Actor {
                 };
             };
             switch (proposal.content) {
-                case (#motion(m)) {
+                case (#motion(_)) {
                     // Do nothing
                     #ok;
                 };
@@ -466,17 +467,17 @@ actor MainActor : Types.Actor {
             };
         };
 
-        func onProposalReject(proposal : Dao.Proposal<TeamDao.ProposalContent>) : async* () {
+        func onProposalReject(proposal : ProposalTypes.Proposal<TeamDao.ProposalContent>) : async* () {
             Debug.print("Rejected proposal: " # debug_show (proposal));
         };
         func onProposalValidate(_ : TeamDao.ProposalContent) : async* Result.Result<(), [Text]> {
             #ok; // TODO
         };
-        Dao.Dao<system, TeamDao.ProposalContent>(data, onProposalExecute, onProposalReject, onProposalValidate);
+        ProposalEngine.ProposalEngine<system, TeamDao.ProposalContent>(data, onProposalExecute, onProposalReject, onProposalValidate);
     };
 
-    private func buildTeamDaos<system>() : HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>> {
-        let daos = HashMap.HashMap<Nat, Dao.Dao<TeamDao.ProposalContent>>(teamDaoStableData.size(), Nat.equal, Nat32.fromNat);
+    private func buildTeamDaos<system>() : HashMap.HashMap<Nat, ProposalEngine.ProposalEngine<TeamDao.ProposalContent>> {
+        let daos = HashMap.HashMap<Nat, ProposalEngine.ProposalEngine<TeamDao.ProposalContent>>(teamDaoStableData.size(), Nat.equal, Nat32.fromNat);
 
         for ((teamId, data) in teamDaoStableData.vals()) {
             let teamDao = buildTeamDao<system>(teamId, data);
@@ -652,9 +653,9 @@ actor MainActor : Types.Actor {
         userStableData := userHandler.toStableData();
         simulationStableData := simulationHandler.toStableData();
         teamDaoStableData := teamDaos.entries()
-        |> Iter.map<(Nat, Dao.Dao<TeamDao.ProposalContent>), (Nat, Dao.StableData<TeamDao.ProposalContent>)>(
+        |> Iter.map<(Nat, ProposalEngine.ProposalEngine<TeamDao.ProposalContent>), (Nat, ProposalTypes.StableData<TeamDao.ProposalContent>)>(
             _,
-            func((id, d) : (Nat, Dao.Dao<TeamDao.ProposalContent>)) : (Nat, Dao.StableData<TeamDao.ProposalContent>) = (id, d.toStableData()),
+            func((id, d) : (Nat, ProposalEngine.ProposalEngine<TeamDao.ProposalContent>)) : (Nat, ProposalTypes.StableData<TeamDao.ProposalContent>) = (id, d.toStableData()),
         )
         |> Iter.toArray(_);
     };
@@ -663,7 +664,7 @@ actor MainActor : Types.Actor {
         seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents, getTeamData);
         predictionHandler := PredictionHandler.Handler(predictionStableData);
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTeamCurrency);
-        leagueDao := Dao.Dao<system, LeagueDao.ProposalContent>(
+        leagueDao := ProposalEngine.ProposalEngine<system, LeagueDao.ProposalContent>(
             leagueDaoStableData,
             onLeagueProposalExecute,
             onLeagueProposalReject,
@@ -741,7 +742,7 @@ actor MainActor : Types.Actor {
         |> Iter.fromArray(_)
         |> Iter.filter(
             _,
-            func(member : Dao.Member) : Bool = member.id == caller,
+            func(member : ProposalTypes.Member) : Bool = member.id == caller,
         )
         |> _.next() != null;
         if (not isAMember) {
@@ -761,7 +762,7 @@ actor MainActor : Types.Actor {
         |> Iter.fromArray(_)
         |> Iter.filter(
             _,
-            func(member : Dao.Member) : Bool = member.id == caller,
+            func(member : ProposalTypes.Member) : Bool = member.id == caller,
         )
         |> _.next() != null;
         if (not isAMember) {
@@ -956,7 +957,7 @@ actor MainActor : Types.Actor {
             case (#err(#nameTaken)) return #err(#nameTaken);
         };
 
-        let daoData : Dao.StableData<TeamDao.ProposalContent> = {
+        let daoData : ProposalTypes.StableData<TeamDao.ProposalContent> = {
             proposals = [];
             proposalDuration = #days(3);
             votingThreshold = #percent({

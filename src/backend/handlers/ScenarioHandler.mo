@@ -251,7 +251,7 @@ module {
                         Timer.cancelTimer(startTimerId);
                         end<system>(scenario, []);
                     };
-                    case (#inProgress({ endTimerId })) {
+                    case (#inProgress(_)) {
                         end<system>(scenario, []);
                     };
                     case (#resolved(_)) ();

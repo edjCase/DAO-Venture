@@ -4,7 +4,7 @@ import Player "../models/Player";
 import Team "../models/Team";
 import Season "../models/Season";
 import Scenario "../models/Scenario";
-import Dao "../Dao";
+import ProposalTypes "mo:dao-proposal-engine/Types";
 import CommonTypes "../CommonTypes";
 import Components "mo:datetime/Components";
 import Result "mo:base/Result";
@@ -154,7 +154,7 @@ module {
         #ok : CommonTypes.PagedResult<LeagueProposal>;
     };
 
-    public type LeagueProposal = Dao.Proposal<LeagueDao.ProposalContent>;
+    public type LeagueProposal = ProposalTypes.Proposal<LeagueDao.ProposalContent>;
 
     public type VoteOnLeagueProposalRequest = {
         proposalId : Nat;
@@ -319,7 +319,7 @@ module {
 
     public type CreateTeamTraitResult = Result.Result<(), CreateTeamTraitError>;
 
-    public type TeamProposal = Dao.Proposal<TeamDao.ProposalContent>;
+    public type TeamProposal = ProposalTypes.Proposal<TeamDao.ProposalContent>;
 
     public type GetTeamProposalResult = Result.Result<TeamProposal, GetTeamProposalError>;
 
@@ -328,7 +328,7 @@ module {
         #teamNotFound;
     };
 
-    public type GetTeamProposalsResult = Result.Result<CommonTypes.PagedResult<Dao.Proposal<TeamDao.ProposalContent>>, GetTeamProposalsError>;
+    public type GetTeamProposalsResult = Result.Result<CommonTypes.PagedResult<ProposalTypes.Proposal<TeamDao.ProposalContent>>, GetTeamProposalsError>;
 
     public type GetTeamProposalsError = {
         #teamNotFound;
