@@ -1,25 +1,25 @@
 import { Writable, writable } from "svelte/store";
-import { LeagueProposal, TownProposal } from "../ic-agent/declarations/main";
+import { WorldProposal, TownProposal } from "../ic-agent/declarations/main";
 import { mainAgentFactory } from "../ic-agent/Main";
 import { toJsonString } from "../utils/StringUtil";
 
 
 export const proposalStore = (() => {
-    let leagueStore = writable<LeagueProposal[]>([]);
+    let worldStore = writable<WorldProposal[]>([]);
     let townStores = new Map<bigint, Writable<TownProposal[]>>();
 
 
 
-    const refetchLeagueProposal = async (proposalId: bigint) => {
+    const refetchWorldProposal = async (proposalId: bigint) => {
         let mainAgent = await mainAgentFactory();
-        let proposalResult = await mainAgent.getLeagueProposal(proposalId);
-        let proposal: LeagueProposal;
+        let proposalResult = await mainAgent.getWorldProposal(proposalId);
+        let proposal: WorldProposal;
         if ('ok' in proposalResult) {
             proposal = proposalResult.ok;
         } else {
             throw new Error("Error fetching proposal " + proposalId + ": " + toJsonString(proposalResult));
         }
-        leagueStore.update((current) => {
+        worldStore.update((current) => {
             let index = current.findIndex(p => p.id === proposalId);
             if (index >= 0) {
                 current[index] = proposal;
@@ -30,18 +30,18 @@ export const proposalStore = (() => {
         });
     }
 
-    const refetchLeagueProposals = async () => {
+    const refetchWorldProposals = async () => {
         let mainAgent = await mainAgentFactory();
-        let proposalsResult = await mainAgent.getLeagueProposals(BigInt(999), BigInt(0)); // TODO
+        let proposalsResult = await mainAgent.getWorldProposals(BigInt(999), BigInt(0)); // TODO
         if ('ok' in proposalsResult) {
-            leagueStore.set(proposalsResult.ok.data);
+            worldStore.set(proposalsResult.ok.data);
         } else {
             throw new Error("Error fetching proposals: " + toJsonString(proposalsResult));
         }
     };
 
-    const subscribeToLeague = (callback: (value: LeagueProposal[]) => void) => {
-        return leagueStore.subscribe(callback);
+    const subscribeToWorld = (callback: (value: WorldProposal[]) => void) => {
+        return worldStore.subscribe(callback);
     }
 
     const getOrCreateTownStore = (townId: bigint) => {
@@ -92,12 +92,12 @@ export const proposalStore = (() => {
         return store.subscribe(callback);
     }
 
-    refetchLeagueProposals();
+    refetchWorldProposals();
 
     return {
-        subscribeToLeague,
-        refetchLeagueProposals,
-        refetchLeagueProposal,
+        subscribeToWorld,
+        refetchWorldProposals,
+        refetchWorldProposal,
         subscribeToTown,
         refetchTownProposals,
         refetchTownProposal

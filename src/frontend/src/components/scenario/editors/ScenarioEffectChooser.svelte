@@ -80,9 +80,9 @@
                     delta: BigInt(1),
                 },
             };
-        } else if (selectedType === "leagueIncome") {
+        } else if (selectedType === "worldIncome") {
             value = {
-                leagueIncome: {
+                worldIncome: {
                     delta: BigInt(1),
                 },
             };
@@ -125,8 +125,8 @@
             value: "entropyThreshold",
         },
         {
-            name: "League Income",
-            value: "leagueIncome",
+            name: "World Income",
+            value: "worldIncome",
         },
         {
             name: "No Effect",

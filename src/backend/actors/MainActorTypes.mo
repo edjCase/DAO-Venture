@@ -1,22 +1,22 @@
-import Time "mo:base/Time";
 import Nat "mo:base/Nat";
 import Scenario "../models/Scenario";
 import ProposalTypes "mo:dao-proposal-engine/Types";
 import CommonTypes "../CommonTypes";
-import Components "mo:datetime/Components";
 import Result "mo:base/Result";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";
+import WorldDao "../models/WorldDao";
+import TownDao "../models/TownDao";
 
 module {
     public type Actor = actor {
 
-        getLeagueProposal : query (Nat) -> async GetLeagueProposalResult;
-        getLeagueProposals : query (count : Nat, offset : Nat) -> async GetLeagueProposalsResult;
-        createLeagueProposal : (request : CreateLeagueProposalRequest) -> async CreateLeagueProposalResult;
+        getWorldProposal : query (Nat) -> async GetWorldProposalResult;
+        getWorldProposals : query (count : Nat, offset : Nat) -> async GetWorldProposalsResult;
+        createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
         getScenario : query (Nat) -> async GetScenarioResult;
         getScenarios : query () -> async GetScenariosResult;
-        voteOnLeagueProposal : VoteOnLeagueProposalRequest -> async VoteOnLeagueProposalResult;
+        voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
         addScenario : (scenario : AddScenarioRequest) -> async AddScenarioResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
@@ -26,59 +26,41 @@ module {
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
 
-        addFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
-        getPlayer : query (id : Nat32) -> async GetPlayerResult;
-        getPosition : query (townId : Nat, position : FieldPosition.FieldPosition) -> async Result.Result<Player.Player, GetPositionError>;
-        getTownPlayers : query (townId : Nat) -> async [Player.Player];
-        getAllPlayers : query () -> async [Player.Player];
-
-        getLiveMatchGroupState : query () -> async ?LiveState.LiveMatchGroupState;
-        startNextMatchGroup : () -> async StartMatchGroupResult;
-
-        getLeagueData : query () -> async LeagueData;
+        getWorldData : query () -> async WorldData;
         getTowns : query () -> async [Town];
         createTownProposal : (townId : Nat, request : TownProposalContent) -> async CreateTownProposalResult;
         getTownProposal : query (townId : Nat, id : Nat) -> async GetTownProposalResult;
         getTownProposals : query (townId : Nat, count : Nat, offset : Nat) -> async GetTownProposalsResult;
         voteOnTownProposal : (townId : Nat, request : VoteOnTownProposalRequest) -> async VoteOnTownProposalResult;
-        createTownTrait : (request : CreateTownTraitRequest) -> async CreateTownTraitResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
         getTownOwners : query (request : GetTownOwnersRequest) -> async GetTownOwnersResult;
-        getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
         assignUserToTown : (request : AssignUserToTownRequest) -> async Result.Result<(), AssignUserToTownError>;
-        joinLeague : () -> async Result.Result<(), JoinLeagueError>;
+        joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
 
-    public type CreateLeagueProposalRequest = {
-        #motion : LeagueDao.MotionContent;
+    public type CreateWorldProposalRequest = {
+        #motion : WorldDao.MotionContent;
     };
 
-    public type CreateLeagueProposalError = {
+    public type CreateWorldProposalError = {
         #notAuthorized;
         #invalid : [Text];
     };
 
-    public type CreateLeagueProposalResult = Result.Result<Nat, CreateLeagueProposalError>;
+    public type CreateWorldProposalResult = Result.Result<Nat, CreateWorldProposalError>;
 
-    public type JoinLeagueError = {
+    public type JoinWorldError = {
         #notAuthorized;
-        #alreadyLeagueMember;
+        #alreadyWorldMember;
         #noTowns;
     };
 
-    public type LeagueData = {
-        leagueIncome : Nat;
+    public type WorldData = {
+        worldIncome : Nat;
         entropyThreshold : Nat;
         currentEntropy : Nat;
-    };
-
-    public type FinishMatchGroupResult = Result.Result<(), FinishMatchGroupError>;
-
-    public type FinishMatchGroupError = {
-        #notAuthorized;
-        #noLiveMatchGroup;
     };
 
     public type Town = {
@@ -130,26 +112,26 @@ module {
 
     public type SetBenevolentDictatorStateResult = Result.Result<(), SetBenevolentDictatorStateError>;
 
-    public type GetLeagueProposalError = {
+    public type GetWorldProposalError = {
         #proposalNotFound;
     };
 
-    public type GetLeagueProposalResult = Result.Result<LeagueProposal, GetLeagueProposalError>;
+    public type GetWorldProposalResult = Result.Result<WorldProposal, GetWorldProposalError>;
 
-    public type GetLeagueProposalsResult = {
-        #ok : CommonTypes.PagedResult<LeagueProposal>;
+    public type GetWorldProposalsResult = {
+        #ok : CommonTypes.PagedResult<WorldProposal>;
     };
 
-    public type LeagueProposal = ProposalTypes.Proposal<LeagueDao.ProposalContent>;
+    public type WorldProposal = ProposalTypes.Proposal<WorldDao.ProposalContent>;
 
-    public type VoteOnLeagueProposalRequest = {
+    public type VoteOnWorldProposalRequest = {
         proposalId : Nat;
         vote : Bool;
     };
 
-    public type VoteOnLeagueProposalResult = Result.Result<(), VoteOnLeagueProposalError>;
+    public type VoteOnWorldProposalResult = Result.Result<(), VoteOnWorldProposalError>;
 
-    public type VoteOnLeagueProposalError = {
+    public type VoteOnWorldProposalError = {
         #notAuthorized;
         #proposalNotFound;
         #alreadyVoted;
@@ -173,71 +155,6 @@ module {
         #disabled;
     };
 
-    public type TownStandingInfo = {
-        id : Nat;
-        wins : Nat;
-        losses : Nat;
-        totalScore : Int;
-    };
-
-    public type GetTownStandingsError = {
-        #notFound;
-    };
-
-    public type GetTownStandingsResult = Result.Result<[TownStandingInfo], GetTownStandingsError>;
-
-    public type GetMatchGroupPredictionsError = {
-        #notFound;
-    };
-
-    public type GetMatchGroupPredictionsResult = Result.Result<MatchGroupPredictionSummary, GetMatchGroupPredictionsError>;
-
-    public type MatchGroupPredictionSummary = {
-        matches : [MatchPredictionSummary];
-    };
-
-    public type MatchPredictionSummary = {
-        town1 : Nat;
-        town2 : Nat;
-        yourVote : ?Town.TownId;
-    };
-
-    public type PredictMatchOutcomeRequest = {
-        matchId : Nat;
-        winner : ?Town.TownId;
-    };
-
-    public type PredictMatchOutcomeError = {
-        #matchGroupNotFound;
-        #matchNotFound;
-        #predictionsClosed;
-        #identityRequired;
-    };
-
-    public type PredictMatchOutcomeResult = Result.Result<(), PredictMatchOutcomeError>;
-
-    public type StartMatchGroupError = {
-        #matchGroupNotFound;
-        #notAuthorized;
-        #notScheduledYet;
-        #alreadyStarted;
-        #matchErrors : [{
-            matchId : Nat;
-            error : StartMatchError;
-        }];
-    };
-
-    public type StartMatchGroupResult = Result.Result<(), StartMatchGroupError>;
-
-    public type StartMatchError = {
-        #notEnoughPlayers : Town.TownIdOrBoth;
-    };
-
-    public type StartSeasonRequest = {
-        startTime : Time.Time;
-        weekDays : [Components.DayOfWeek];
-    };
-
     public type AddScenarioRequest = ScenarioHandler.AddScenarioRequest;
 
     public type AddScenarioError = {
@@ -246,23 +163,6 @@ module {
     };
 
     public type AddScenarioResult = Result.Result<(), AddScenarioError>;
-
-    public type StartSeasonError = {
-        #alreadyStarted;
-        #idTaken;
-        #seedGenerationError : Text;
-        #invalidArgs : Text;
-        #notAuthorized;
-    };
-
-    public type StartSeasonResult = Result.Result<(), StartSeasonError>;
-
-    public type CloseSeasonError = {
-        #notAuthorized;
-        #seasonNotOpen;
-    };
-
-    public type CloseSeasonResult = Result.Result<(), CloseSeasonError>;
 
     public type CreatePlayerFluffRequest = {
         name : Text;
@@ -288,22 +188,6 @@ module {
     public type GetPlayerError = {
         #notFound;
     };
-
-    public type GetPlayerResult = Result.Result<Player.Player, GetPlayerError>;
-
-    public type CreateTownTraitRequest = {
-        id : Text;
-        name : Text;
-        description : Text;
-    };
-
-    public type CreateTownTraitError = {
-        #notAuthorized;
-        #idTaken;
-        #invalid : [Text];
-    };
-
-    public type CreateTownTraitResult = Result.Result<(), CreateTownTraitError>;
 
     public type TownProposal = ProposalTypes.Proposal<TownDao.ProposalContent>;
 
@@ -390,7 +274,7 @@ module {
     public type AssignUserToTownError = {
         #townNotFound;
         #notAuthorized;
-        #notLeagueMember;
+        #notWorldMember;
     };
 
     public type GetUserError = {

@@ -14,7 +14,7 @@
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import MyTown from "./routes/MyTown.svelte";
-  import League from "./routes/League.svelte";
+  import World from "./routes/World.svelte";
   import Navbar from "./components/common/Navbar.svelte";
   import TopPredictors from "./routes/TopPredictors.svelte";
 </script>
@@ -31,7 +31,7 @@
       <Route path="/my-town" component={MyTown} />
       <Route path="/towns" component={Towns} />
       <Route path="/towns/:townIdString" component={Town} />
-      <Route path="/league" component={League} />
+      <Route path="/world" component={World} />
       <Route path="top-predictors" component={TopPredictors} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />
       <Route path="/how-to-play" component={HowToPlay} />

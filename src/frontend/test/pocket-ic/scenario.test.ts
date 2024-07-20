@@ -1,5 +1,5 @@
 import { describe, beforeEach, afterEach, it, expect, inject } from 'vitest';
-import { init as leagueInit, idlFactory as leagueIdlFactory, type _SERVICE as LEAGUE_SERVICE, VoteOnScenarioResult } from '../../src/ic-agent/declarations/main';
+import { init as worldInit, idlFactory as worldIdlFactory, type _SERVICE as LEAGUE_SERVICE, VoteOnScenarioResult } from '../../src/ic-agent/declarations/main';
 import { init as townsInit, idlFactory as townsIdlFactory, type _SERVICE as TEAMS_SERVICE } from '../../src/ic-agent/declarations/main';
 import { init as playersInit, idlFactory as playersIdlFactory, type _SERVICE as PLAYERS_SERVICE } from '../../src/ic-agent/declarations/main';
 import { init as usersInit, idlFactory as usersIdlFactory, type _SERVICE as USERS_SERVICE, AddTownOwnerResult } from '../../src/ic-agent/declarations/main';
@@ -24,7 +24,7 @@ const basePath = resolve(
     'local',
     'canisters'
 );
-export const LEAGUE_WASM_PATH = resolve(basePath, "league", 'league.wasm');
+export const LEAGUE_WASM_PATH = resolve(basePath, "world", 'world.wasm');
 export const TEAMS_WASM_PATH = resolve(basePath, "towns", 'towns.wasm');
 export const PLAYERS_WASM_PATH = resolve(basePath, "players", 'players.wasm');
 export const STADIUM_WASM_PATH = resolve(basePath, "stadium", 'stadium.wasm');
@@ -37,7 +37,7 @@ describe('Test suite name', () => {
     // Define variables to hold our PocketIC instance, canister ID,
     // and an actor to interact with our canister.
     let pic: PocketIc;
-    let leagueActor: Actor<LEAGUE_SERVICE>;
+    let worldActor: Actor<LEAGUE_SERVICE>;
     let townsActor: Actor<TEAMS_SERVICE>;
     let playersActor: Actor<PLAYERS_SERVICE>;
     let stadiumActor: Actor<STADIUM_SERVICE>;
@@ -61,25 +61,25 @@ describe('Test suite name', () => {
         pic.setTime(0);
 
         // Create empty canisters
-        const leagueCanisterId = await pic.createCanister();
+        const worldCanisterId = await pic.createCanister();
         const townsCanisterId = await pic.createCanister();
         const playersCanisterId = await pic.createCanister();
         const stadiumCanisterId = await pic.createCanister();
         const usersCanisterId = await pic.createCanister();
 
-        // Install League canister
+        // Install World canister
         await pic.installCode({
             arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal], [usersCanisterId, townsCanisterId, playersCanisterId, stadiumCanisterId]),
-            canisterId: leagueCanisterId,
+            canisterId: worldCanisterId,
             wasm: LEAGUE_WASM_PATH
         })
-        leagueActor = await pic.createActor(leagueIdlFactory, leagueCanisterId);
-        leagueActor.setPrincipal(bdfnPrincipal);
+        worldActor = await pic.createActor(worldIdlFactory, worldCanisterId);
+        worldActor.setPrincipal(bdfnPrincipal);
 
 
         // Install Towns canisterq
         await pic.installCode({
-            arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal], [leagueCanisterId, usersCanisterId, playersCanisterId]),
+            arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal], [worldCanisterId, usersCanisterId, playersCanisterId]),
             canisterId: townsCanisterId,
             wasm: TEAMS_WASM_PATH
         });
@@ -90,7 +90,7 @@ describe('Test suite name', () => {
 
         // Install Players canister
         await pic.installCode({
-            arg: IDL.encode([IDL.Principal, IDL.Principal], [leagueCanisterId, townsCanisterId]),
+            arg: IDL.encode([IDL.Principal, IDL.Principal], [worldCanisterId, townsCanisterId]),
             canisterId: playersCanisterId,
             wasm: PLAYERS_WASM_PATH
         });
@@ -101,7 +101,7 @@ describe('Test suite name', () => {
 
         // Install Stadium canister
         await pic.installCode({
-            arg: IDL.encode([IDL.Principal], [leagueCanisterId]),
+            arg: IDL.encode([IDL.Principal], [worldCanisterId]),
             canisterId: stadiumCanisterId,
             wasm: STADIUM_WASM_PATH
         });
@@ -112,7 +112,7 @@ describe('Test suite name', () => {
 
         // Install Users canister
         await pic.installCode({
-            arg: IDL.encode([IDL.Principal], [leagueCanisterId]),
+            arg: IDL.encode([IDL.Principal], [worldCanisterId]),
             canisterId: usersCanisterId,
             wasm: USERS_WASM_PATH
         });
@@ -121,7 +121,7 @@ describe('Test suite name', () => {
         usersActor.setPrincipal(bdfnPrincipal);
 
 
-        const response = await leagueActor.claimBenevolentDictatorRole();
+        const response = await worldActor.claimBenevolentDictatorRole();
 
         expect(response).toEqual({ 'ok': null });
 
@@ -149,7 +149,7 @@ describe('Test suite name', () => {
     let createTowns = async function (): Promise<void> {
         for (let i = 0; i < townData.length; i++) {
             let town = townData[i];
-            let result = await leagueActor.createTown(town);
+            let result = await worldActor.createTown(town);
             expect(result).toEqual({ 'ok': BigInt(i) });
 
             let userIds: Principal[] = [];
@@ -185,11 +185,11 @@ describe('Test suite name', () => {
         await pic?.tearDown();
     });
 
-    it('Scenario: No League Effect', async () => {
+    it('Scenario: No World Effect', async () => {
 
-        const scenarioResult = await leagueActor.addScenario({
-            title: "Scenario No League Effect",
-            description: "Scenario No League Effect",
+        const scenarioResult = await worldActor.addScenario({
+            title: "Scenario No World Effect",
+            description: "Scenario No World Effect",
             startTime: [],
             endTime: BigInt(oneDayInNanos),
             undecidedEffect: {
@@ -201,7 +201,7 @@ describe('Test suite name', () => {
                 }
             },
             kind: {
-                noLeagueEffect: {
+                noWorldEffect: {
                     options: [
                         {
                             title: "Option 1",
@@ -244,15 +244,15 @@ describe('Test suite name', () => {
         expect(scenarioResult).toEqual({ 'ok': null });
 
 
-        let getScenarioResult = await leagueActor.getScenario(BigInt(0));
+        let getScenarioResult = await worldActor.getScenario(BigInt(0));
 
         expect(getScenarioResult).toEqual({
             "ok": {
-                "description": "Scenario No League Effect",
+                "description": "Scenario No World Effect",
                 "endTime": 86400000000000n,
                 "id": 0n,
                 "kind": {
-                    "noLeagueEffect": {
+                    "noWorldEffect": {
                         "options": [
                             {
                                 "allowedTownIds": [
@@ -309,7 +309,7 @@ describe('Test suite name', () => {
                 "state": {
                     "inProgress": null
                 },
-                "title": "Scenario No League Effect",
+                "title": "Scenario No World Effect",
                 "undecidedEffect": {
                     "entropy": {
                         "delta": 1n,
@@ -327,8 +327,8 @@ describe('Test suite name', () => {
             let town = towns[i];
             for (let j = 0; j < town.userIds.length; j++) {
                 let userId = town.userIds[j];
-                leagueActor.setPrincipal(userId);
-                let voteResult = await leagueActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
+                worldActor.setPrincipal(userId);
+                let voteResult = await worldActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
 
                 // Make sure its ok, or that the voting is not open due to the scenario ending from majority votes
                 expect(voteResult).toSatisfy<VoteOnScenarioResult>((r) => {
@@ -339,7 +339,7 @@ describe('Test suite name', () => {
                     return hasOneOk && 'err' in r && 'votingNotOpen' in r.err;
                 });
 
-                let getVoteResult = await leagueActor.getScenarioVote({ scenarioId: BigInt(0) });
+                let getVoteResult = await worldActor.getScenarioVote({ scenarioId: BigInt(0) });
 
                 expect(getVoteResult).toEqual({
                     "ok": {
@@ -371,20 +371,20 @@ describe('Test suite name', () => {
                 });
             };
         }
-        leagueActor.setPrincipal(bdfnPrincipal);
+        worldActor.setPrincipal(bdfnPrincipal);
 
         await pic.advanceTime(Number(oneDayInNanos) / 1_000_000);
         await pic.tick(3);
 
-        let getScenarioResult2 = await leagueActor.getScenario(BigInt(0));
+        let getScenarioResult2 = await worldActor.getScenario(BigInt(0));
 
         expect(getScenarioResult2).toEqual({
             "ok": {
-                "description": "Scenario No League Effect",
+                "description": "Scenario No World Effect",
                 "endTime": 86400000000000n,
                 "id": 0n,
                 "kind": {
-                    "noLeagueEffect": {
+                    "noWorldEffect": {
                         "options": [
                             {
                                 "allowedTownIds": [
@@ -440,7 +440,7 @@ describe('Test suite name', () => {
                 "startTime": 0n,
                 "state": {
                     "resolved": {
-                        "scenarioOutcome": { "noLeagueEffect": null },
+                        "scenarioOutcome": { "noWorldEffect": null },
                         "options": {
                             "discrete": [
                                 {
@@ -485,7 +485,7 @@ describe('Test suite name', () => {
                         ]
                     }
                 },
-                "title": "Scenario No League Effect",
+                "title": "Scenario No World Effect",
                 "undecidedEffect": {
                     "entropy": {
                         "delta": 1n,
@@ -500,7 +500,7 @@ describe('Test suite name', () => {
 
     it('Scenario: Lottery', async () => {
 
-        const scenarioResult = await leagueActor.addScenario({
+        const scenarioResult = await worldActor.addScenario({
             title: "Lottery Scenario",
             description: "Lottery Scenario",
             startTime: [],
@@ -545,7 +545,7 @@ describe('Test suite name', () => {
         expect(scenarioResult).toEqual({ 'ok': null });
 
 
-        let getScenarioResult = await leagueActor.getScenario(BigInt(0));
+        let getScenarioResult = await worldActor.getScenario(BigInt(0));
 
         expect(getScenarioResult).toEqual({
             "ok": {
@@ -553,7 +553,7 @@ describe('Test suite name', () => {
                 "endTime": 86400000000000n,
                 "id": 0n,
                 "kind": {
-                    "noLeagueEffect": {
+                    "noWorldEffect": {
                         "options": [
                             {
                                 "allowedTownIds": [
@@ -627,8 +627,8 @@ describe('Test suite name', () => {
             let town = towns[i];
             for (let j = 0; j < town.userIds.length; j++) {
                 let userId = town.userIds[j];
-                leagueActor.setPrincipal(userId);
-                let voteResult = await leagueActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
+                worldActor.setPrincipal(userId);
+                let voteResult = await worldActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
 
                 // Make sure its ok, or that the voting is not open due to the scenario ending from majority votes
                 expect(voteResult).toSatisfy<VoteOnScenarioResult>((r) => {
@@ -639,7 +639,7 @@ describe('Test suite name', () => {
                     return hasOneOk && 'err' in r && 'votingNotOpen' in r.err;
                 });
 
-                let getVoteResult = await leagueActor.getScenarioVote({ scenarioId: BigInt(0) });
+                let getVoteResult = await worldActor.getScenarioVote({ scenarioId: BigInt(0) });
 
                 expect(getVoteResult).toEqual({
                     "ok": {
@@ -671,12 +671,12 @@ describe('Test suite name', () => {
                 });
             };
         }
-        leagueActor.setPrincipal(bdfnPrincipal);
+        worldActor.setPrincipal(bdfnPrincipal);
 
         await pic.advanceTime(60 * 60 * 24 * 1_000);
         await pic.tick(1000);
 
-        let getScenarioResult2 = await leagueActor.getScenario(BigInt(0));
+        let getScenarioResult2 = await worldActor.getScenario(BigInt(0));
 
         expect(getScenarioResult2).toEqual({
             "ok": {
@@ -684,7 +684,7 @@ describe('Test suite name', () => {
                 "endTime": 86400000000000n,
                 "id": 0n,
                 "kind": {
-                    "noLeagueEffect": {
+                    "noWorldEffect": {
                         "options": [
                             {
                                 "allowedTownIds": [
@@ -740,7 +740,7 @@ describe('Test suite name', () => {
                 "startTime": 0n,
                 "state": {
                     "resolved": {
-                        "scenarioOutcome": { "noLeagueEffect": null },
+                        "scenarioOutcome": { "noWorldEffect": null },
                         "options": {
                             "discrete": [
                                 {

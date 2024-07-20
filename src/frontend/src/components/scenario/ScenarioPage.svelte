@@ -54,7 +54,7 @@
             <ul class="list-disc list-inside text-sm space-y-1">
                 <li>
                     Scenarios are a way to <strong
-                        >interact with the league</strong
+                        >interact with the world</strong
                     > and influence the outcome of matches
                 </li>
                 <li>
@@ -62,10 +62,10 @@
                     more
                 </li>
                 <li>
-                    🔥: The measure of chaos in the town and league. 0 is
+                    🔥: The measure of chaos in the town and world. 0 is
                     ordered and any additional value is more chaotic Too much
                     entropy can negatively affect the town and if the total
-                    entropy of the league exceeds the threshold, the league will
+                    entropy of the world exceeds the threshold, the world will
                     collapse
                 </li>
                 <li>

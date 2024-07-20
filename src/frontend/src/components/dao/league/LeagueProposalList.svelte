@@ -4,11 +4,11 @@
     import { onDestroy } from "svelte";
     import { mainAgentFactory } from "../../../ic-agent/Main";
     import { ProposalType } from "../GenericProposal.svelte";
-    import { LeagueProposal } from "../../../ic-agent/declarations/main";
+    import { WorldProposal } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
-    import LeagueProposalView from "./LeagueProposalView.svelte";
+    import WorldProposalView from "./WorldProposalView.svelte";
 
-    let proposals: LeagueProposal[] = [];
+    let proposals: WorldProposal[] = [];
     let genericProposals: ProposalType[] = [];
 
     $: genericProposals = proposals.map((p) => {
@@ -38,7 +38,7 @@
         };
     });
 
-    let unsubscribeToTownProposals = proposalStore.subscribeToLeague(
+    let unsubscribeToTownProposals = proposalStore.subscribeToWorld(
         (updatedProposals) => {
             proposals = updatedProposals;
         },
@@ -49,16 +49,16 @@
 
     let onVote = async (proposalId: bigint, vote: boolean) => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.voteOnLeagueProposal({
+        let result = await mainAgent.voteOnWorldProposal({
             proposalId: proposalId,
             vote,
         });
         console.log("Vote Result: ", result);
         if ("ok" in result) {
-            proposalStore.refetchLeagueProposal(proposalId);
+            proposalStore.refetchWorldProposal(proposalId);
         }
     };
-    let getProposal = (proposalId: bigint): LeagueProposal => {
+    let getProposal = (proposalId: bigint): WorldProposal => {
         let proposal = proposals.find((p) => p.id == proposalId);
         if (proposal) {
             return proposal;
@@ -67,7 +67,7 @@
     };
 
     let onRefresh = async () => {
-        await proposalStore.refetchLeagueProposals();
+        await proposalStore.refetchWorldProposals();
     };
 </script>
 
@@ -78,6 +78,6 @@
     let:proposalId
 >
     <slot name="details">
-        <LeagueProposalView proposal={getProposal(proposalId)} />
+        <WorldProposalView proposal={getProposal(proposalId)} />
     </slot>
 </GenericProposalList>

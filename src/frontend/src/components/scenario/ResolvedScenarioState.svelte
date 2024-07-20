@@ -13,10 +13,10 @@
     import { toJsonString } from "../../utils/StringUtil";
     import { traitStore } from "../../stores/TraitStore";
     import ThresholdResolvedScenarioState from "./resolved_states/ThresholdResolvedScenarioState.svelte";
-    import NoLeagueEffectResolvedScenarioState from "./resolved_states/NoLeagueEffectResolvedScenarioState.svelte";
+    import NoWorldEffectResolvedScenarioState from "./resolved_states/NoWorldEffectResolvedScenarioState.svelte";
     import ProportionalBidResolvedScenarioState from "./resolved_states/ProportionalBidResolvedScenarioState.svelte";
     import LotteryResolvedScenarioState from "./resolved_states/LotteryResolvedScenarioState.svelte";
-    import LeagueChoiceResolvedScenarioState from "./resolved_states/LeagueChoiceResolvedScenarioState.svelte";
+    import WorldChoiceResolvedScenarioState from "./resolved_states/WorldChoiceResolvedScenarioState.svelte";
     import ScenarioEffectOutcome from "./ScenarioEffectOutcome.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
@@ -66,8 +66,8 @@
                 scenario={scenario.kind.threshold}
                 outcome={state.scenarioOutcome.threshold}
             />
-        {:else if "noLeagueEffect" in state.scenarioOutcome}
-            <NoLeagueEffectResolvedScenarioState />
+        {:else if "noWorldEffect" in state.scenarioOutcome}
+            <NoWorldEffectResolvedScenarioState />
         {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
             <ProportionalBidResolvedScenarioState
                 scenario={scenario.kind.proportionalBid}
@@ -79,9 +79,9 @@
                 outcome={state.scenarioOutcome.lottery}
                 {towns}
             />
-        {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind && "discrete" in state.options.kind}
-            <LeagueChoiceResolvedScenarioState
-                outcome={state.scenarioOutcome.leagueChoice}
+        {:else if "worldChoice" in state.scenarioOutcome && "worldChoice" in scenario.kind && "discrete" in state.options.kind}
+            <WorldChoiceResolvedScenarioState
+                outcome={state.scenarioOutcome.worldChoice}
                 options={state.options.kind.discrete}
             />
         {:else}

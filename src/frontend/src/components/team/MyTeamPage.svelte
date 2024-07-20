@@ -29,13 +29,13 @@
     };
     let join = async () => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.joinLeague();
+        let result = await mainAgent.joinWorld();
         if ("ok" in result) {
-            console.log("Joined league", result);
+            console.log("Joined world", result);
             userStore.refetchCurrentUser();
             userStore.refetchStats();
         } else {
-            console.log("Error joining league", result);
+            console.log("Error joining world", result);
         }
     };
 </script>
@@ -127,8 +127,8 @@
     </SectionWithOverview>
 {:else}
     <div>
-        Want to join in and participate in league governance? Join the league
-        and get assigned to a random town!
+        Want to join in and participate in world governance? Join the world and
+        get assigned to a random town!
     </div>
     <LoadingButton onClick={join}>Join</LoadingButton>
 {/if}

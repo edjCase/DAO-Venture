@@ -1,11 +1,11 @@
 <script lang="ts">
     import { Card, TabItem, Tabs } from "flowbite-svelte";
-    import LeagueProposalList from "../dao/league/LeagueProposalList.svelte";
+    import WorldProposalList from "../dao/world/WorldProposalList.svelte";
     import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
     import LoadingValue from "../common/LoadingValue.svelte";
     import { UserStats } from "../../ic-agent/declarations/main";
-    import LeagueProposalForm from "../dao/league/LeagueProposalForm.svelte";
+    import WorldProposalForm from "../dao/world/WorldProposalForm.svelte";
 
     let userStats: UserStats | undefined;
 
@@ -17,7 +17,7 @@
     $: townStatsMap = new Map(userStats?.towns.map((town) => [town.id, town]));
 </script>
 
-<div class="text-3xl text-center my-5">League</div>
+<div class="text-3xl text-center my-5">World</div>
 <div class="text-center">
     <div class="flex items-center justify-center">
         <span class="mr-2">Towns:</span>
@@ -38,8 +38,8 @@
 </div>
 <Tabs>
     <TabItem title="Proposals" open>
-        <LeagueProposalList />
-        <LeagueProposalForm />
+        <WorldProposalList />
+        <WorldProposalForm />
     </TabItem>
     <TabItem title="Towns">
         <div class="flex flex-col items-center">

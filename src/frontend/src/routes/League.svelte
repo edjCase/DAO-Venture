@@ -1,5 +1,5 @@
 <script lang="ts">
-    import LeaguePage from "../components/league/LeaguePage.svelte";
+    import WorldPage from "../components/world/WorldPage.svelte";
 </script>
 
-<LeaguePage />
+<WorldPage />

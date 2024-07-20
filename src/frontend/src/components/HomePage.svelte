@@ -21,13 +21,13 @@
 
     let joinTown = async () => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.joinLeague();
+        let result = await mainAgent.joinWorld();
         if ("ok" in result) {
-            console.log("Joined league", result);
+            console.log("Joined world", result);
             userStore.refetchCurrentUser();
             userStore.refetchStats();
         } else {
-            console.log("Error joining league", result);
+            console.log("Error joining world", result);
         }
     };
 </script>
@@ -36,10 +36,10 @@
     {#if towns && userCount !== undefined}
         {#if towns.length <= 0}
             <div class="p-4 text-center">
-                <div class="text-3xl">League is in disarray</div>
+                <div class="text-3xl">World is in disarray</div>
                 <div>
                     Waiting for the Benevolent Dictator (For Now) to start the
-                    league
+                    world
                 </div>
             </div>
         {:else}
@@ -48,7 +48,7 @@
                     class="flex flex-col items-center justify-center gap-2 mb-4"
                 >
                     <div class="text-3xl text-center">
-                        Want to join the league?
+                        Want to join the world?
                     </div>
                     <Button on:click={joinTown}>Click Here</Button>
                 </div>

@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { LeagueData, Town } from "../../ic-agent/declarations/main";
-    import { leagueStore } from "../../stores/LeagueStore";
+    import { WorldData, Town } from "../../ic-agent/declarations/main";
+    import { worldStore } from "../../stores/WorldStore";
     import { ChevronDownSolid } from "flowbite-svelte-icons";
     import { townStore } from "../../stores/TownStore";
     let towns: Town[] = [];
-    let entropyData: LeagueData | undefined;
+    let entropyData: WorldData | undefined;
 
     townStore.subscribe((t) => {
         if (!t) {
@@ -14,14 +14,14 @@
         towns.sort((a, b) => Number(b.entropy) - Number(a.entropy));
     });
 
-    leagueStore.subscribeData((data) => {
+    worldStore.subscribeData((data) => {
         entropyData = data;
     });
 
     const toRgbString = (color: [number, number, number]) => {
         return `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
     };
-    $: leagueEntropyPercentage =
+    $: worldEntropyPercentage =
         entropyData === undefined
             ? 0
             : (Number(entropyData.currentEntropy) /
@@ -37,7 +37,7 @@
         {#if entropyData.currentEntropy < entropyData.entropyThreshold}
             <div
                 class="flex flex-col items-center justify-center"
-                style="margin-left: calc({leagueEntropyPercentage}% - {markerOffset}px);"
+                style="margin-left: calc({worldEntropyPercentage}% - {markerOffset}px);"
             >
                 {entropyData.currentEntropy}
                 <ChevronDownSolid size="xs" />
@@ -66,7 +66,7 @@
                         class="h-full"
                         style="width: {(Number(town.entropy) /
                             Number(entropyData.currentEntropy)) *
-                            leagueEntropyPercentage}%; background-color: {toRgbString(
+                            worldEntropyPercentage}%; background-color: {toRgbString(
                             town.color,
                         )};"
                         title="{town.name}: {town.entropy}"

@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { LeagueProposal } from "../../../ic-agent/declarations/main";
+    import { WorldProposal } from "../../../ic-agent/declarations/main";
     import ChangeTownColorView from "./proposal_views/ChangeTownColorView.svelte";
     import ChangeTownNameView from "./proposal_views/ChangeTownNameView.svelte";
     import ChangeTownLogoView from "./proposal_views/ChangeTownLogoView.svelte";
@@ -8,7 +8,7 @@
     import { toJsonString } from "../../../utils/StringUtil";
     import MotionView from "./proposal_views/MotionView.svelte";
 
-    export let proposal: LeagueProposal;
+    export let proposal: WorldProposal;
 
     const components: Record<string, any> = {
         motion: MotionView,

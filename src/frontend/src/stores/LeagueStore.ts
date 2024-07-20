@@ -1,16 +1,16 @@
 import { writable } from "svelte/store";
 import { mainAgentFactory } from "../ic-agent/Main";
-import { LeagueData } from "../ic-agent/declarations/main";
+import { WorldData } from "../ic-agent/declarations/main";
 
 
 
 
-export const leagueStore = (() => {
-  const dataStore = writable<LeagueData | undefined>();
+export const worldStore = (() => {
+  const dataStore = writable<WorldData | undefined>();
 
   const refetchData = async () => {
     let mainAgent = await mainAgentFactory();
-    let entropyData = await mainAgent.getLeagueData();
+    let entropyData = await mainAgent.getWorldData();
     dataStore.set(entropyData);
   };
 

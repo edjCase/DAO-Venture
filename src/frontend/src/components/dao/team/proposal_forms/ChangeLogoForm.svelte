@@ -21,7 +21,7 @@
 
 <FormTemplate {generateProposal} {townId}>
     <div class="p-2">Updates the logo of the town.</div>
-    <div class="p-2">Requires a league approval vote.</div>
+    <div class="p-2">Requires a world approval vote.</div>
     <Label>Logo Url</Label>
     <Input type="url" bind:value={logoUrl} />
 </FormTemplate>

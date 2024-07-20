@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
     import { ScenarioKindRequest } from "../../../ic-agent/declarations/main";
-    import NoLeagueEffectScenarioEditor from "./scenarios/NoLeagueEffectScenarioEditor.svelte";
+    import NoWorldEffectScenarioEditor from "./scenarios/NoWorldEffectScenarioEditor.svelte";
     import ProportionalBidScenarioEditor from "./scenarios/ProportionalBidScenarioEditor.svelte";
     import LotteryScenarioEditor from "./scenarios/LotteryScenarioEditor.svelte";
-    import LeagueChoiceScenarioEditor from "./scenarios/LeagueChoiceScenarioEditor.svelte";
+    import WorldChoiceScenarioEditor from "./scenarios/WorldChoiceScenarioEditor.svelte";
     import ThresholdScenarioEditor from "./scenarios/ThresholdScenarioEditor.svelte";
     import TextInputScenarioEditor from "./scenarios/TextInputScenarioEditor.svelte";
 
@@ -67,16 +67,16 @@
                     minAmount: BigInt(1),
                 },
             };
-        } else if (selectedType === "leagueChoice") {
+        } else if (selectedType === "worldChoice") {
             value = {
-                leagueChoice: {
+                worldChoice: {
                     options: [
                         {
                             title: "Fast Start",
                             description:
                                 "There is no time to wait, give us the 💰and crank up the 🔥. +10 💰+2 entropy per town",
                             currencyCost: BigInt(0),
-                            leagueEffect: {
+                            worldEffect: {
                                 allOf: [
                                     {
                                         entropy: {
@@ -108,7 +108,7 @@
                             description:
                                 "Things are in balance, lets not touch anything",
                             currencyCost: BigInt(0),
-                            leagueEffect: {
+                            worldEffect: {
                                 noEffect: null,
                             },
                             townEffect: {
@@ -119,9 +119,9 @@
                         {
                             title: "Cool Down",
                             description:
-                                "Entropy is running too hot, lets cool it off by investing in our league. -5 💰-2 🔥 per town",
+                                "Entropy is running too hot, lets cool it off by investing in our world. -5 💰-2 🔥 per town",
                             currencyCost: BigInt(0),
-                            leagueEffect: {
+                            worldEffect: {
                                 allOf: [
                                     {
                                         entropy: {
@@ -192,9 +192,9 @@
                     description: "Enter some text",
                 },
             };
-        } else if (selectedType === "noLeagueEffect") {
+        } else if (selectedType === "noWorldEffect") {
             value = {
-                noLeagueEffect: {
+                noWorldEffect: {
                     options: [
                         {
                             title: "Option 1",
@@ -224,8 +224,8 @@
             value: "threshold",
         },
         {
-            name: "League Choice",
-            value: "leagueChoice",
+            name: "World Choice",
+            value: "worldChoice",
         },
         {
             name: "Lottery",
@@ -240,8 +240,8 @@
             value: "textInput",
         },
         {
-            name: "No League Effect",
-            value: "noLeagueEffect",
+            name: "No World Effect",
+            value: "noWorldEffect",
         },
     ];
 </script>
@@ -249,16 +249,16 @@
 <Select items={types} on:change={onChange} value={selectedType} />
 {#if "threshold" in value}
     <ThresholdScenarioEditor bind:value={value.threshold} />
-{:else if "leagueChoice" in value}
-    <LeagueChoiceScenarioEditor bind:value={value.leagueChoice} />
+{:else if "worldChoice" in value}
+    <WorldChoiceScenarioEditor bind:value={value.worldChoice} />
 {:else if "lottery" in value}
     <LotteryScenarioEditor bind:value={value.lottery} />
 {:else if "proportionalBid" in value}
     <ProportionalBidScenarioEditor bind:value={value.proportionalBid} />
 {:else if "textInput" in value}
     <TextInputScenarioEditor bind:value={value.textInput} />
-{:else if "noLeagueEffect" in value}
-    <NoLeagueEffectScenarioEditor bind:value={value.noLeagueEffect} />
+{:else if "noWorldEffect" in value}
+    <NoWorldEffectScenarioEditor bind:value={value.noWorldEffect} />
 {:else}
     NOT IMPLEMENTED SCENARIO KIND : {selectedType}
 {/if}

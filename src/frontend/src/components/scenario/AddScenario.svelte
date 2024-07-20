@@ -29,7 +29,7 @@
             },
         },
         kind: {
-            noLeagueEffect: {
+            noWorldEffect: {
                 options: [],
             },
         },

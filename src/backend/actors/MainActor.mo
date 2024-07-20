@@ -22,6 +22,10 @@ import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
 import Array "mo:base/Array";
 import IterTools "mo:itertools/Iter";
+import WorldDao "../models/WorldDao";
+import TownDao "../models/TownDao";
+import TownsHandler "../handlers/TownsHandler";
+import Town "../models/Town";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -29,25 +33,17 @@ actor MainActor : Types.Actor {
 
     // Stables ---------------------------------------------------------
 
-    let defaultLeagueIncome : Nat = 100;
+    let defaultWorldIncome : Nat = 100;
     let defaultEntropyThreshold : Nat = 100;
 
     stable var benevolentDictator : Types.BenevolentDictatorState = #open;
-    stable var leagueIncome : Nat = defaultLeagueIncome;
+    stable var worldIncome : Nat = defaultWorldIncome;
     stable var entropyThreshold : Nat = defaultEntropyThreshold;
 
-    stable var seasonStableData : SeasonHandler.StableData = {
-        seasonStatus = #notStarted;
-        completedSeasons = [];
-        reverseEffects = [];
-    };
-    stable var predictionStableData : PredictionHandler.StableData = {
-        matchGroups = [];
-    };
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
     };
-    stable var leagueDaoStableData : ProposalTypes.StableData<LeagueDao.ProposalContent> = {
+    stable var worldDaoStableData : ProposalTypes.StableData<WorldDao.ProposalContent> = {
         proposalDuration = #days(3);
         proposals = [];
         votingThreshold = #percent({
@@ -58,14 +54,7 @@ actor MainActor : Types.Actor {
 
     stable var townDaoStableData : [(Nat, ProposalTypes.StableData<TownDao.ProposalContent>)] = [];
 
-    stable var playerStableData : PlayerHandler.StableData = {
-        players = [];
-        retiredPlayers = [];
-        unusedFluff = [];
-    };
-
     stable var townStableData : TownsHandler.StableData = {
-        traits = [];
         towns = [];
     };
 
@@ -73,73 +62,7 @@ actor MainActor : Types.Actor {
         users = [];
     };
 
-    stable var simulationStableData : SimulationHandler.StableData = {
-        matchGroupState = null;
-    };
-
     // Unstables ---------------------------------------------------------
-
-    var predictionHandler = PredictionHandler.Handler(predictionStableData);
-    let seasonEvents : SeasonHandler.Events = {
-        onSeasonStart = Buffer.Buffer<SeasonHandler.OnSeasonStartEvent>(0);
-        onMatchGroupSchedule = Buffer.Buffer<SeasonHandler.OnMatchGroupScheduleEvent>(0);
-        onMatchGroupStart = Buffer.Buffer<SeasonHandler.OnMatchGroupStartEvent>(0);
-        onMatchGroupComplete = Buffer.Buffer<SeasonHandler.OnMatchGroupCompleteEvent>(0);
-        onSeasonComplete = Buffer.Buffer<SeasonHandler.OnSeasonCompleteEvent>(0);
-        onEffectReversal = Buffer.Buffer<SeasonHandler.OnEffectReversalEvent>(0);
-    };
-
-    seasonEvents.onSeasonStart.add(
-        func<system>(_ : Season.InProgressSeason) : () {
-            predictionHandler.clear();
-        }
-    );
-
-    seasonEvents.onMatchGroupSchedule.add(
-        func<system>(matchGroupId : Nat, matchGroup : Season.ScheduledMatchGroup) : () {
-            predictionHandler.addMatchGroup(matchGroupId, matchGroup.matches.size());
-        }
-    );
-
-    seasonEvents.onMatchGroupStart.add(
-        func<system>(
-            matchGroupId : Nat,
-            _ : Season.InProgressSeason,
-            _ : Season.InProgressMatchGroup,
-            _ : [Season.InProgressMatch],
-        ) : () {
-            predictionHandler.closeMatchGroup(matchGroupId);
-        }
-    );
-    var playerHandler = PlayerHandler.PlayerHandler(playerStableData);
-
-    private func getTownData(townId : Nat) : Season.InProgressTown {
-        let ?pitcher = playerHandler.getPosition(townId, #pitcher) else Debug.trap("Pitcher not found in town " # Nat.toText(townId));
-        let ?firstBase = playerHandler.getPosition(townId, #firstBase) else Debug.trap("First base not found in town " # Nat.toText(townId));
-        let ?secondBase = playerHandler.getPosition(townId, #secondBase) else Debug.trap("Second base not found in town " # Nat.toText(townId));
-        let ?thirdBase = playerHandler.getPosition(townId, #thirdBase) else Debug.trap("Third base not found in town " # Nat.toText(townId));
-        let ?shortStop = playerHandler.getPosition(townId, #shortStop) else Debug.trap("Short stop not found in town " # Nat.toText(townId));
-        let ?leftField = playerHandler.getPosition(townId, #leftField) else Debug.trap("Left field not found in town " # Nat.toText(townId));
-        let ?centerField = playerHandler.getPosition(townId, #centerField) else Debug.trap("Center field not found in town " # Nat.toText(townId));
-        let ?rightField = playerHandler.getPosition(townId, #rightField) else Debug.trap("Right field not found in town " # Nat.toText(townId));
-
-        {
-            id = townId;
-            positions = {
-                pitcher = pitcher.id;
-                firstBase = firstBase.id;
-                secondBase = secondBase.id;
-                thirdBase = thirdBase.id;
-                shortStop = shortStop.id;
-                leftField = leftField.id;
-                centerField = centerField.id;
-                rightField = rightField.id;
-            };
-            anomolies = []; // TODO anomolies
-        };
-    };
-
-    var seasonHandler = SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents, getTownData);
 
     var townsHandler = TownsHandler.Handler<system>(townStableData);
 
@@ -161,7 +84,7 @@ actor MainActor : Types.Actor {
                     case (#ok) {
                         let thresholdReached = townsHandler.getCurrentEntropy() >= entropyThreshold;
                         if (thresholdReached) {
-                            Debug.print("Entropy threshold reached, triggering league collapse");
+                            Debug.print("Entropy threshold reached, triggering world collapse");
                             // TODO archive data
                             ignore seasonHandler.close<system>();
                             seasonHandler.clear();
@@ -180,44 +103,12 @@ actor MainActor : Types.Actor {
                     case (#err(e)) Debug.trap("Error updating town currency: " # debug_show (e));
                 };
             };
-            case (#skill(s)) {
-                let playerId = switch (playerHandler.getPosition(s.position.townId, s.position.position)) {
-                    case (?player) player.id;
-                    case (null) Debug.trap("Position " # debug_show (s.position.position) # " not found in town " # Nat.toText(s.position.townId));
-                };
-                switch (playerHandler.updateSkill(playerId, s.skill, s.delta)) {
-                    case (#ok) ();
-                    case (#err(e)) Debug.trap("Error updating player skill: " # debug_show (e));
-                };
-                switch (s.duration) {
-                    case (#indefinite) null;
-                    case (#matches(matchCount)) {
-                        let effect = #skill({
-                            playerId = playerId;
-                            skill = s.skill;
-                            deltaToRemove = s.delta;
-                        });
-                        ?{ matchCount; effect };
-                    };
-                };
-            };
-            case (#townTrait(t)) {
-                switch (t.kind) {
-                    case (#add) {
-                        ignore townsHandler.addTraitToTown(t.townId, t.traitId);
-                    };
-                    case (#remove) {
-                        ignore townsHandler.removeTraitFromTown(t.townId, t.traitId);
-                    };
-                };
-                null;
-            };
-            case (#leagueIncome(incomeEffect)) {
-                let newIncome : Int = leagueIncome + incomeEffect.delta;
+            case (#worldIncome(incomeEffect)) {
+                let newIncome : Int = worldIncome + incomeEffect.delta;
                 if (newIncome <= 0) {
-                    leagueIncome := 0;
+                    worldIncome := 0;
                 } else {
-                    leagueIncome := Int.abs(newIncome);
+                    worldIncome := Int.abs(newIncome);
                 };
                 null;
             };
@@ -269,8 +160,8 @@ actor MainActor : Types.Actor {
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
-    func onLeagueProposalExecute(proposal : ProposalTypes.Proposal<LeagueDao.ProposalContent>) : async* Result.Result<(), Text> {
-        // TODO change league proposal for town data to be a simple approve w/ callback. Dont need to expose all the update routes
+    func onWorldProposalExecute(proposal : ProposalTypes.Proposal<WorldDao.ProposalContent>) : async* Result.Result<(), Text> {
+        // TODO change world proposal for town data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
             case (#motion(_)) {
                 // Do nothing
@@ -319,61 +210,16 @@ actor MainActor : Types.Actor {
             };
         };
     };
-    func onLeagueProposalReject(_ : ProposalTypes.Proposal<LeagueDao.ProposalContent>) : async* () {}; // TODO
-    func onLeagueProposalValidate(_ : LeagueDao.ProposalContent) : async* Result.Result<(), [Text]> {
+    func onWorldProposalReject(_ : ProposalTypes.Proposal<WorldDao.ProposalContent>) : async* () {}; // TODO
+    func onWorldProposalValidate(_ : WorldDao.ProposalContent) : async* Result.Result<(), [Text]> {
         #ok; // TODO
     };
-    var leagueDao = ProposalEngine.ProposalEngine<system, LeagueDao.ProposalContent>(
-        leagueDaoStableData,
-        onLeagueProposalExecute,
-        onLeagueProposalReject,
-        onLeagueProposalValidate,
+    var worldDao = ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
+        worldDaoStableData,
+        onWorldProposalExecute,
+        onWorldProposalReject,
+        onWorldProposalValidate,
     );
-
-    private func awardUserPoints(
-        matchGroupId : Nat,
-        completedMatches : [Season.CompletedMatch],
-    ) : () {
-
-        // Award users points for their predictions
-        let anyAwards = switch (predictionHandler.getMatchGroup(matchGroupId)) {
-            case (null) false;
-            case (?matchGroupPredictions) {
-                let awards = Buffer.Buffer<{ userId : Principal; points : Nat }>(0);
-                var i = 0;
-                for (match in Iter.fromArray(completedMatches)) {
-                    if (i >= matchGroupPredictions.size()) {
-                        Debug.trap("Match group predictions and completed matches do not match in size. Invalid state. Matches: " # debug_show (completedMatches) # " Predictions: " # debug_show (matchGroupPredictions));
-                    };
-                    let matchPredictions = matchGroupPredictions[i];
-                    i += 1;
-                    for ((userId, townId) in Iter.fromArray(matchPredictions)) {
-                        if (townId == match.winner) {
-                            // Award points
-                            awards.add({
-                                userId = userId;
-                                points = 10; // TODO amount?
-                            });
-                        };
-                    };
-                };
-                if (awards.size() > 0) {
-                    for (award in awards.vals()) {
-                        switch (userHandler.awardPoints(award.userId, award.points)) {
-                            case (#ok) ();
-                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(award.userId));
-                        };
-                    };
-                    true;
-                } else {
-                    false;
-                };
-            };
-        };
-        if (not anyAwards) {
-            Debug.print("No user points to award, skipping...");
-        };
-    };
 
     func buildTownDao<system>(
         townId : Nat,
@@ -381,12 +227,12 @@ actor MainActor : Types.Actor {
     ) : ProposalEngine.ProposalEngine<TownDao.ProposalContent> {
 
         func onProposalExecute(proposal : ProposalTypes.Proposal<TownDao.ProposalContent>) : async* Result.Result<(), Text> {
-            let createLeagueProposal = func(leagueProposalContent : LeagueDao.ProposalContent) : async* Result.Result<(), Text> {
+            let createWorldProposal = func(worldProposalContent : WorldDao.ProposalContent) : async* Result.Result<(), Text> {
                 let members = userHandler.getTownOwners(null);
-                let result = await* leagueDao.createProposal(proposal.proposerId, leagueProposalContent, members);
+                let result = await* worldDao.createProposal(proposal.proposerId, worldProposalContent, members);
                 switch (result) {
                     case (#ok(_)) #ok;
-                    case (#err(#notAuthorized)) #err("Not authorized to create change name proposal in league DAO");
+                    case (#err(#notAuthorized)) #err("Not authorized to create change name proposal in world DAO");
                     case (#err(#invalid(errors))) {
                         let errorText = errors.vals()
                         |> IterTools.fold(
@@ -420,11 +266,11 @@ actor MainActor : Types.Actor {
                     };
                 };
                 case (#changeName(n)) {
-                    let leagueProposal = #changeTownName({
+                    let worldProposal = #changeTownName({
                         townId = townId;
                         name = n.name;
                     });
-                    await* createLeagueProposal(leagueProposal);
+                    await* createWorldProposal(worldProposal);
                 };
                 case (#swapPlayerPositions(swap)) {
                     switch (playerHandler.swapTownPositions(townId, swap.position1, swap.position2)) {
@@ -432,16 +278,16 @@ actor MainActor : Types.Actor {
                     };
                 };
                 case (#changeColor(changeColor)) {
-                    await* createLeagueProposal(#changeTownColor({ townId = townId; color = changeColor.color }));
+                    await* createWorldProposal(#changeTownColor({ townId = townId; color = changeColor.color }));
                 };
                 case (#changeLogo(changeLogo)) {
-                    await* createLeagueProposal(#changeTownLogo({ townId = townId; logoUrl = changeLogo.logoUrl }));
+                    await* createWorldProposal(#changeTownLogo({ townId = townId; logoUrl = changeLogo.logoUrl }));
                 };
                 case (#changeMotto(changeMotto)) {
-                    await* createLeagueProposal(#changeTownMotto({ townId = townId; motto = changeMotto.motto }));
+                    await* createWorldProposal(#changeTownMotto({ townId = townId; motto = changeMotto.motto }));
                 };
                 case (#changeDescription(changeDescription)) {
-                    await* createLeagueProposal(#changeTownDescription({ townId = townId; description = changeDescription.description }));
+                    await* createWorldProposal(#changeTownDescription({ townId = townId; description = changeDescription.description }));
                 };
                 case (#modifyLink(modifyLink)) {
                     switch (townsHandler.modifyLink(townId, modifyLink.name, modifyLink.url)) {
@@ -474,35 +320,6 @@ actor MainActor : Types.Actor {
 
     var townDaos = buildTownDaos<system>();
 
-    func onMatchGroupComplete<system>(data : SimulationHandler.OnMatchGroupCompleteData) : () {
-
-        switch (seasonHandler.completeMatchGroup<system>(data.matchGroupId, data.matches, data.playerStats)) {
-            case (#ok) ();
-            case (#err(#matchGroupNotFound)) Debug.trap("OnMatchGroupComplete Failed: Match group not found - " # Nat.toText(data.matchGroupId));
-            case (#err(#seasonNotOpen)) Debug.trap("OnMatchGroupComplete Failed: Season not open");
-            case (#err(#matchGroupNotInProgress)) Debug.trap("OnMatchGroupComplete Failed: Match group not in progress");
-        };
-
-        // Give winners
-        for (match in data.matches.vals()) {
-            Debug.print("Reducing winning towns' entropy...");
-            switch (match.winner) {
-                case (#town1) {
-                    ignore townsHandler.updateEntropy(match.town1.id, -1);
-                };
-                case (#town2) {
-                    ignore townsHandler.updateEntropy(match.town2.id, -1);
-                };
-                case (#tie) ();
-            };
-        };
-
-        disperseCurrencyDividends();
-        playerHandler.addMatchStats(data.matchGroupId, data.playerStats);
-        // Award users points for their predictions
-        awardUserPoints(data.matchGroupId, data.matches);
-    };
-
     private func disperseCurrencyDividends() {
         // Give town X currency that is divided purpotionally to how much relative entropy
         // (based on combined entropy of all towns) they have
@@ -515,10 +332,10 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_)
         |> getProportionalEntropyWeights(_);
 
-        Debug.print("Giving currency to towns based on entropy. League Income: " # Nat.toText(leagueIncome));
+        Debug.print("Giving currency to towns based on entropy. World Income: " # Nat.toText(worldIncome));
 
         for ((town, currencyWeight) in IterTools.zip(towns.vals(), proportionalWeights.vals())) {
-            var newCurrency = Float.toInt(Float.floor(Float.fromInt(leagueIncome) * currencyWeight));
+            var newCurrency = Float.toInt(Float.floor(Float.fromInt(worldIncome) * currencyWeight));
             switch (townsHandler.updateCurrency(town.id, newCurrency, false)) {
                 case (#ok) ();
                 case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
@@ -567,77 +384,13 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_);
     };
 
-    var simulationHandler = SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
-
-    seasonEvents.onMatchGroupStart.add(
-        func<system>(
-            matchGroupId : Nat,
-            _ : Season.InProgressSeason,
-            _ : Season.InProgressMatchGroup,
-            matches : [Season.InProgressMatch],
-        ) : () {
-            let prng = PseudoRandomX.fromSeed(0); // TODO fix seed to use random blob
-
-            let getPlayer = func(townId : Nat, position : FieldPosition.FieldPosition) : Player.Player {
-                switch (playerHandler.getPosition(townId, position)) {
-                    case (?player) player;
-                    case (null) Debug.trap("Player not found in position " # debug_show (position) # " for town " # Nat.toText(townId));
-                };
-            };
-
-            let getTown = func(townId : Nat) : SimulationHandler.StartMatchTown {
-                {
-                    id = townId;
-                    anomolies = []; // TODO
-                    positions = {
-                        pitcher = getPlayer(townId, #pitcher);
-                        firstBase = getPlayer(townId, #firstBase);
-                        secondBase = getPlayer(townId, #secondBase);
-                        thirdBase = getPlayer(townId, #thirdBase);
-                        shortStop = getPlayer(townId, #shortStop);
-                        leftField = getPlayer(townId, #leftField);
-                        centerField = getPlayer(townId, #centerField);
-                        rightField = getPlayer(townId, #rightField);
-                    };
-                };
-            };
-            let matchRequests = matches.vals()
-            |> Iter.map<Season.InProgressMatch, SimulationHandler.StartMatchRequest>(
-                _,
-                func(match : Season.InProgressMatch) : SimulationHandler.StartMatchRequest {
-                    {
-                        town1 = getTown(match.town1.id);
-                        town2 = getTown(match.town2.id);
-                    };
-                },
-            )
-            |> Iter.toArray(_);
-            switch (simulationHandler.startMatchGroup<system>(prng, matchGroupId, matchRequests)) {
-                case (#ok) ();
-                case (#err(#noMatchesSpecified)) Debug.trap("seasonEvents.onMatchGroupStart No matches specified: " # Nat.toText(matchGroupId));
-                case (#err(#matchGroupInProgress)) Debug.trap("seasonEvents.onMatchGroupStart Match group already in progress: " # Nat.toText(matchGroupId));
-            };
-            ignore simulationHandler.finishMatchGroup<system>(); // TODO remove after re-implement live matches
-        }
-    );
-
-    seasonEvents.onMatchGroupComplete.add(
-        func<system>(_ : Nat, _ : Season.CompletedMatchGroup) : () {
-            ignore simulationHandler.cancelMatchGroup();
-        }
-    );
-
     // System Methods ---------------------------------------------------------
 
     system func preupgrade() {
-        seasonStableData := seasonHandler.toStableData();
-        predictionStableData := predictionHandler.toStableData();
         scenarioStableData := scenarioHandler.toStableData();
-        leagueDaoStableData := leagueDao.toStableData();
-        playerStableData := playerHandler.toStableData();
+        worldDaoStableData := worldDao.toStableData();
         townStableData := townsHandler.toStableData();
         userStableData := userHandler.toStableData();
-        simulationStableData := simulationHandler.toStableData();
         townDaoStableData := townDaos.entries()
         |> Iter.map<(Nat, ProposalEngine.ProposalEngine<TownDao.ProposalContent>), (Nat, ProposalTypes.StableData<TownDao.ProposalContent>)>(
             _,
@@ -647,25 +400,21 @@ actor MainActor : Types.Actor {
     };
 
     system func postupgrade() {
-        seasonHandler := SeasonHandler.SeasonHandler<system>(seasonStableData, seasonEvents, getTownData);
-        predictionHandler := PredictionHandler.Handler(predictionStableData);
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownCurrency);
-        leagueDao := ProposalEngine.ProposalEngine<system, LeagueDao.ProposalContent>(
-            leagueDaoStableData,
-            onLeagueProposalExecute,
-            onLeagueProposalReject,
-            onLeagueProposalValidate,
+        worldDao := ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
+            worldDaoStableData,
+            onWorldProposalExecute,
+            onWorldProposalReject,
+            onWorldProposalValidate,
         );
-        playerHandler := PlayerHandler.PlayerHandler(playerStableData);
         townsHandler := TownsHandler.Handler<system>(townStableData);
         userHandler := UserHandler.UserHandler(userStableData);
-        simulationHandler := SimulationHandler.Handler<system>(simulationStableData, onMatchGroupComplete);
         townDaos := buildTownDaos<system>();
     };
 
     // Public Methods ---------------------------------------------------------
 
-    public shared ({ caller }) func joinLeague() : async Result.Result<(), Types.JoinLeagueError> {
+    public shared ({ caller }) func joinWorld() : async Result.Result<(), Types.JoinWorldError> {
         // TODO restrict to NFT?/TOken holders
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromBlob(seedBlob);
@@ -681,7 +430,7 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_)
         |> prng.nextArrayElement(_);
         let votingPower = 1; // TODO get voting power from token
-        userHandler.addLeagueMember(caller, randomTownId, votingPower);
+        userHandler.addWorldMember(caller, randomTownId, votingPower);
     };
 
     public shared ({ caller }) func claimBenevolentDictatorRole() : async Types.ClaimBenevolentDictatorRoleResult {
@@ -696,7 +445,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func setBenevolentDictatorState(state : Types.BenevolentDictatorState) : async Types.SetBenevolentDictatorStateResult {
-        if (not isLeagueOrBDFN(caller)) {
+        if (not isWorldOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
         benevolentDictator := state;
@@ -707,22 +456,18 @@ actor MainActor : Types.Actor {
         benevolentDictator;
     };
 
-    public query func getSeasonStatus() : async Season.SeasonStatus {
-        seasonHandler.seasonStatus;
-    };
-
-    public shared query func getLeagueProposal(id : Nat) : async Types.GetLeagueProposalResult {
-        switch (leagueDao.getProposal(id)) {
+    public shared query func getWorldProposal(id : Nat) : async Types.GetWorldProposalResult {
+        switch (worldDao.getProposal(id)) {
             case (?proposal) return #ok(proposal);
             case (null) return #err(#proposalNotFound);
         };
     };
 
-    public shared query func getLeagueProposals(count : Nat, offset : Nat) : async Types.GetLeagueProposalsResult {
-        #ok(leagueDao.getProposals(count, offset));
+    public shared query func getWorldProposals(count : Nat, offset : Nat) : async Types.GetWorldProposalsResult {
+        #ok(worldDao.getProposals(count, offset));
     };
 
-    public shared ({ caller }) func createLeagueProposal(request : Types.CreateLeagueProposalRequest) : async Types.CreateLeagueProposalResult {
+    public shared ({ caller }) func createWorldProposal(request : Types.CreateWorldProposalRequest) : async Types.CreateWorldProposalResult {
         let members = userHandler.getTownOwners(null);
         let isAMember = members
         |> Iter.fromArray(_)
@@ -734,12 +479,12 @@ actor MainActor : Types.Actor {
         if (not isAMember) {
             return #err(#notAuthorized);
         };
-        Debug.print("Creating proposal for league with content: " # debug_show (request));
-        await* leagueDao.createProposal<system>(caller, request, members);
+        Debug.print("Creating proposal for world with content: " # debug_show (request));
+        await* worldDao.createProposal<system>(caller, request, members);
     };
 
-    public shared ({ caller }) func voteOnLeagueProposal(request : Types.VoteOnLeagueProposalRequest) : async Types.VoteOnLeagueProposalResult {
-        await* leagueDao.vote(request.proposalId, caller, request.vote);
+    public shared ({ caller }) func voteOnWorldProposal(request : Types.VoteOnWorldProposalRequest) : async Types.VoteOnWorldProposalResult {
+        await* worldDao.vote(request.proposalId, caller, request.vote);
     };
 
     public shared ({ caller }) func createTownProposal(townId : Nat, content : Types.TownProposalContent) : async Types.CreateTownProposalResult {
@@ -776,11 +521,6 @@ actor MainActor : Types.Actor {
         await* dao.vote(request.proposalId, caller, request.vote);
     };
 
-    public query func getTownStandings() : async Types.GetTownStandingsResult {
-        let ?standings = seasonHandler.getTownStandings() else return #err(#notFound);
-        #ok(standings);
-    };
-
     public query func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
         let ?scenario = scenarioHandler.getScenario(scenarioId) else return #err(#notFound);
         #ok(scenario);
@@ -792,7 +532,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func addScenario(scenario : Types.AddScenarioRequest) : async Types.AddScenarioResult {
-        if (not isLeagueOrBDFN(caller)) {
+        if (not isWorldOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
         let members = userHandler.getTownOwners(null);
@@ -808,115 +548,13 @@ actor MainActor : Types.Actor {
         scenarioHandler.vote<system>(request.scenarioId, caller, request.value);
     };
 
-    public shared ({ caller }) func startSeason(request : Types.StartSeasonRequest) : async Types.StartSeasonResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        Debug.print("Starting season");
-        let seedBlob = try {
-            await Random.blob();
-        } catch (err) {
-            return #err(#seedGenerationError(Error.message(err)));
-        };
-
-        let townIds = townsHandler.getAll().vals()
-        |> Iter.map<Town.Town, Nat>(
-            _,
-            func(town : Town.Town) : Nat = town.id,
-        )
-        |> Iter.toArray(_);
-
-        let prng = PseudoRandomX.fromBlob(seedBlob);
-        seasonHandler.startSeason<system>(
-            prng,
-            request.startTime,
-            request.weekDays,
-            townIds,
-        );
-    };
-
-    public shared ({ caller }) func predictMatchOutcome(request : Types.PredictMatchOutcomeRequest) : async Types.PredictMatchOutcomeResult {
-        let ?nextScheduled = seasonHandler.getNextScheduledMatchGroup() else return #err(#predictionsClosed);
-        predictionHandler.predictMatchOutcome(
-            nextScheduled.matchGroupId,
-            request.matchId,
-            caller,
-            request.winner,
-        );
-    };
-
-    public shared query ({ caller }) func getMatchGroupPredictions(matchGroupId : Nat) : async Types.GetMatchGroupPredictionsResult {
-        predictionHandler.getMatchGroupSummary(matchGroupId, ?caller);
-    };
-
-    public shared query func getLiveMatchGroupState() : async ?LiveState.LiveMatchGroupState {
-        simulationHandler.getLiveMatchGroupState();
-    };
-
-    public shared ({ caller }) func startNextMatchGroup() : async Types.StartMatchGroupResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-
-        seasonHandler.startNextMatchGroup<system>();
-
-    };
-
-    public shared ({ caller }) func closeSeason() : async Types.CloseSeasonResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        Debug.print("Season complete, clearing season data");
-        switch (seasonHandler.close<system>()) {
-            case (#ok) ();
-            case (#err(#seasonNotOpen)) return #err(#seasonNotOpen);
-        };
-
-        // TODO archive vs delete
-        // TODO towns reset currency/entropy? or is that a scenario thing
-        #ok;
-    };
-
-    public shared ({ caller }) func addFluff(request : Types.CreatePlayerFluffRequest) : async Types.CreatePlayerFluffResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        playerHandler.addFluff(request);
-    };
-
-    public query func getPlayer(id : Nat32) : async Types.GetPlayerResult {
-        switch (playerHandler.get(id)) {
-            case (?player) {
-                #ok(player);
-            };
-            case (null) {
-                #err(#notFound);
-            };
-        };
-    };
-
-    public query func getPosition(townId : Nat, position : FieldPosition.FieldPosition) : async Result.Result<Player.Player, Types.GetPositionError> {
-        switch (playerHandler.getPosition(townId, position)) {
-            case (?player) #ok(player);
-            case (null) #err(#townNotFound);
-        };
-    };
-
-    public query func getTownPlayers(townId : Nat) : async [Player.Player] {
-        playerHandler.getAll(?townId);
-    };
-
-    public query func getAllPlayers() : async [Player.Player] {
-        playerHandler.getAll(null);
-    };
-
-    public shared query func getLeagueData() : async Types.LeagueData {
+    public shared query func getWorldData() : async Types.WorldData {
         let currentEntropy = townsHandler.getCurrentEntropy();
 
         {
             entropyThreshold = entropyThreshold;
             currentEntropy = currentEntropy;
-            leagueIncome = leagueIncome;
+            worldIncome = worldIncome;
         };
     };
 
@@ -925,7 +563,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func createTown(request : Types.CreateTownRequest) : async Types.CreateTownResult {
-        if (not isLeagueOrBDFN(caller)) {
+        if (not isWorldOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
         let townId = switch (
@@ -961,17 +599,6 @@ actor MainActor : Types.Actor {
         };
     };
 
-    public shared query func getTraits() : async [Trait.Trait] {
-        townsHandler.getTraits();
-    };
-
-    public shared ({ caller }) func createTownTrait(request : Types.CreateTownTraitRequest) : async Types.CreateTownTraitResult {
-        if (not isLeagueOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        townsHandler.createTrait(request);
-    };
-
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
         let ?user = userHandler.get(userId) else return #err(#notFound);
         #ok(user);
@@ -980,11 +607,6 @@ actor MainActor : Types.Actor {
     public shared query func getUserStats() : async Types.GetUserStatsResult {
         let stats = userHandler.getStats();
         #ok(stats);
-    };
-
-    public shared query func getUserLeaderboard(request : Types.GetUserLeaderboardRequest) : async Types.GetUserLeaderboardResult {
-        let topUsers = userHandler.getUserLeaderboard(request.count, request.offset);
-        #ok(topUsers);
     };
 
     public shared query func getTownOwners(request : Types.GetTownOwnersRequest) : async Types.GetTownOwnersResult {
@@ -997,7 +619,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func assignUserToTown(request : Types.AssignUserToTownRequest) : async Result.Result<(), Types.AssignUserToTownError> {
-        if (not isLeagueOrBDFN(caller)) {
+        if (not isWorldOrBDFN(caller)) {
             return #err(#notAuthorized);
         };
         let ?_ = townsHandler.get(request.townId) else return #err(#townNotFound);
@@ -1006,9 +628,9 @@ actor MainActor : Types.Actor {
 
     // Private Methods ---------------------------------------------------------
 
-    private func isLeagueOrBDFN(id : Principal) : Bool {
+    private func isWorldOrBDFN(id : Principal) : Bool {
         if (id == Principal.fromActor(MainActor)) {
-            // League is admin
+            // World is admin
             return true;
         };
         switch (benevolentDictator) {

@@ -1,11 +1,11 @@
 <script lang="ts">
-    import { LeagueData, Town } from "../../ic-agent/declarations/main";
-    import { leagueStore } from "../../stores/LeagueStore";
+    import { WorldData, Town } from "../../ic-agent/declarations/main";
+    import { worldStore } from "../../stores/WorldStore";
     import { townStore } from "../../stores/TownStore";
     import EntropyGauge from "./EntropyGauge.svelte";
 
     let towns: Town[] = [];
-    let leagueData: LeagueData | undefined;
+    let worldData: WorldData | undefined;
 
     townStore.subscribe((t) => {
         if (!t) {
@@ -14,18 +14,18 @@
         towns = t;
         towns.sort((a, b) => Number(b.entropy) - Number(a.entropy));
     });
-    leagueStore.subscribeData((data) => {
-        leagueData = data;
+    worldStore.subscribeData((data) => {
+        worldData = data;
     });
 </script>
 
 <div>
     <div class="text-3xl text-center">Entropy</div>
     <div class="border border-2 rounded border-gray-700">
-        {#if !leagueData}
+        {#if !worldData}
             <div></div>
         {:else}
-            <EntropyGauge {leagueData} />
+            <EntropyGauge {worldData} />
         {/if}
     </div>
 </div>

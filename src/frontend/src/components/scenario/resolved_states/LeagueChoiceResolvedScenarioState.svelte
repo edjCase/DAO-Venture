@@ -1,10 +1,10 @@
 <script lang="ts">
     import {
-        LeagueChoiceScenarioOutcome,
+        WorldChoiceScenarioOutcome,
         ScenarioResolvedOptionDiscrete,
     } from "../../../ic-agent/declarations/main";
 
-    export let outcome: LeagueChoiceScenarioOutcome;
+    export let outcome: WorldChoiceScenarioOutcome;
     export let options: ScenarioResolvedOptionDiscrete[];
 
     let optionName = options.find(
@@ -14,9 +14,9 @@
 
 <div class="text-xl text-center">
     {#if optionName === undefined}
-        The league was not able to reach a consensus on an option
+        The world was not able to reach a consensus on an option
     {:else}
-        The league has chosen option <div class="bold text-3xl">
+        The world has chosen option <div class="bold text-3xl">
             '{optionName}'
         </div>
     {/if}

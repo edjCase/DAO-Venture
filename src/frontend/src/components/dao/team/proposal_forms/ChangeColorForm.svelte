@@ -18,7 +18,7 @@
 
 <FormTemplate {generateProposal} {townId}>
     <div class="p-2">Updates the color of the town.</div>
-    <div class="p-2">Requires a league approval vote.</div>
+    <div class="p-2">Requires a world approval vote.</div>
     <Label>Color</Label>
     <RgbColor bind:value={rgb} />
 </FormTemplate>

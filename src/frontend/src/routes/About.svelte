@@ -18,7 +18,7 @@
         platforms.
       </p>
       <p>
-        Designed as a league, DAOBall includes a fixed number of towns, with
+        Designed as a world, DAOBall includes a fixed number of towns, with
         each one operated and funded by community members. What sets this
         approach apart is the collaborative nature of town management. Rather
         than individuals participating on their own, community members work

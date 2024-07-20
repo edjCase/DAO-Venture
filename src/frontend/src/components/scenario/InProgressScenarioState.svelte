@@ -4,9 +4,9 @@
     import { User } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import LotteryInProgressScenarioState from "./in_progress_states/LotteryInProgressScenarioState.svelte";
-    import LeagueChoiceInProgressScenarioState from "./in_progress_states/LeagueChoiceInProgressScenarioState.svelte";
+    import WorldChoiceInProgressScenarioState from "./in_progress_states/WorldChoiceInProgressScenarioState.svelte";
     import ThresholdInProgressScenarioState from "./in_progress_states/ThresholdInProgressScenarioState.svelte";
-    import NoLeagueEffectInProgressScenarioState from "./in_progress_states/NoLeagueEffectInProgressScenarioState.svelte";
+    import NoWorldEffectInProgressScenarioState from "./in_progress_states/NoWorldEffectInProgressScenarioState.svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import ProportionalBidInProgressScenarioState from "./in_progress_states/ProportionalBidInProgressScenarioState.svelte";
     import { townStore } from "../../stores/TownStore";
@@ -109,8 +109,8 @@
             <ProportionalBidInProgressScenarioState
                 scenario={scenario.kind.proportionalBid}
             />
-        {:else if "leagueChoice" in scenario.kind}
-            <LeagueChoiceInProgressScenarioState />
+        {:else if "worldChoice" in scenario.kind}
+            <WorldChoiceInProgressScenarioState />
         {:else if "threshold" in scenario.kind}
             <ThresholdInProgressScenarioState
                 scenario={scenario.kind.threshold}
@@ -119,8 +119,8 @@
             <TextInputInProgressScenarioState
                 scenario={scenario.kind.textInput}
             />
-        {:else if "noLeagueEffect" in scenario.kind}
-            <NoLeagueEffectInProgressScenarioState />
+        {:else if "noWorldEffect" in scenario.kind}
+            <NoWorldEffectInProgressScenarioState />
         {:else}
             NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
         {/if}

@@ -92,9 +92,9 @@
 {:else if "entropyThreshold" in value}
     <Label>Delta</Label>
     <BigIntInput bind:value={value.entropyThreshold.delta} />
-{:else if "leagueIncome" in value}
+{:else if "worldIncome" in value}
     <Label>Delta</Label>
-    <BigIntInput bind:value={value.leagueIncome.delta} />
+    <BigIntInput bind:value={value.worldIncome.delta} />
 {:else if "noEffect" in value}
     <div></div>
 {:else}

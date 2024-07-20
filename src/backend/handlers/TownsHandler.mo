@@ -11,6 +11,7 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import TextX "mo:xtended-text/TextX";
 import ImageFile "../models/ImageFile";
+import Town "../models/Town";
 
 module {
 
@@ -22,7 +23,7 @@ module {
         id : Nat;
         currency : Nat;
         name : Text;
-        image : ImageFile.ImageFile;
+        flagImage : ImageFile.ImageFile;
         motto : Text;
         entropy : Nat;
         links : [Town.Link];
@@ -30,14 +31,11 @@ module {
 
     type MutableTownData = {
         id : Nat;
-        var currency : Nat;
         var name : Text;
-        var logoUrl : Text;
+        var flagImage : ImageFile.ImageFile;
         var motto : Text;
-        var description : Text;
         var entropy : Nat;
-        var color : (Nat8, Nat8, Nat8);
-        traitIds : Buffer.Buffer<Text>;
+        var currency : Nat;
         links : Buffer.Buffer<Town.Link>;
     };
 
@@ -46,7 +44,6 @@ module {
     ) {
 
         var towns : HashMap.HashMap<Nat, MutableTownData> = toTownHashMap(data.towns);
-        var traits : HashMap.HashMap<Text, Trait.Trait> = toTraitsHashMap(data.traits);
 
         var nextTownId = towns.size(); // TODO change to check for the largest town id in the list
 
@@ -58,7 +55,6 @@ module {
                     toStableTownData,
                 )
                 |> Iter.toArray(_);
-                traits = traits.vals() |> Iter.toArray(_);
             };
         };
 
@@ -76,17 +72,13 @@ module {
 
         public func get(townId : Nat) : ?Town.Town {
             let ?town = towns.get(townId) else return null;
-            let townTraits = getTraitsByIds(town.traitIds.vals());
             ?{
                 id = town.id;
                 name = town.name;
-                logoUrl = town.logoUrl;
+                flagImage = town.flagImage;
                 motto = town.motto;
-                description = town.description;
-                color = town.color;
                 entropy = town.entropy;
                 currency = town.currency;
-                traits = townTraits;
                 links = Buffer.toArray(town.links);
             };
         };
@@ -102,10 +94,8 @@ module {
 
         public func create<system>(
             name : Text,
-            logoUrl : Text,
+            flagImage : ImageFile.ImageFile,
             motto : Text,
-            description : Text,
-            color : (Nat8, Nat8, Nat8),
             entropy : Nat,
             currency : Nat,
         ) : Result.Result<Nat, { #nameTaken }> {
@@ -125,13 +115,10 @@ module {
             let townData : MutableTownData = {
                 id = townId;
                 var name = name;
-                var logoUrl = logoUrl;
+                var flagImage = flagImage;
                 var motto = motto;
-                var description = description;
-                var color = color;
                 var entropy = entropy;
                 var currency = currency;
-                traitIds = Buffer.Buffer<Text>(0);
                 links = Buffer.Buffer<Town.Link>(0);
             };
             towns.put(townId, townData);
@@ -213,17 +200,10 @@ module {
             #ok;
         };
 
-        public func updateColor(townId : Nat, newColor : (Nat8, Nat8, Nat8)) : Result.Result<(), { #townNotFound }> {
+        public func updateFlag(townId : Nat, flagImage : ImageFile.ImageFile) : Result.Result<(), { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating color for town " # Nat.toText(townId) # " to: " # debug_show (newColor));
-            town.color := newColor;
-            #ok;
-        };
-
-        public func updateLogo(townId : Nat, newLogoUrl : Text) : Result.Result<(), { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating logo for town " # Nat.toText(townId) # " to: " # newLogoUrl);
-            town.logoUrl := newLogoUrl;
+            Debug.print("Updating flag image for town " # Nat.toText(townId));
+            town.flagImage := flagImage;
             #ok;
         };
 
@@ -231,13 +211,6 @@ module {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             Debug.print("Updating motto for town " # Nat.toText(townId) # " to: " # newMotto);
             town.motto := newMotto;
-            #ok;
-        };
-
-        public func updateDescription(townId : Nat, newDescription : Text) : Result.Result<(), { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating description for town " # Nat.toText(townId) # " to: " # newDescription);
-            town.description := newDescription;
             #ok;
         };
 
@@ -256,83 +229,19 @@ module {
             #ok;
         };
 
-        public func createTrait(trait : Trait.Trait) : Result.Result<(), { #idTaken; #invalid : [Text] }> {
-            if (Option.isSome(traits.get(trait.id))) {
-                return #err(#idTaken);
-            };
-            let validationErrors = Buffer.Buffer<Text>(0);
-            if (TextX.isEmpty(trait.id)) {
-                validationErrors.add("Id is required");
-            };
-            if (validationErrors.size() > 0) {
-                return #err(#invalid(Buffer.toArray(validationErrors)));
-            };
-            Debug.print("Creating trait: " # debug_show (trait));
-            traits.put(trait.id, trait);
-            #ok;
-        };
-
-        public func getTraits() : [Trait.Trait] {
-            traits.vals() |> Iter.toArray(_);
-        };
-
-        public func addTraitToTown(townId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #townNotFound; #traitNotFound }> {
-            Debug.print("Adding trait " # traitId # " to town " # Nat.toText(townId));
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let ?_ = traits.get(traitId) else return #err(#traitNotFound);
-            let hadTrait = if (not IterTools.any(town.traitIds.vals(), func(id : Text) : Bool = id == traitId)) {
-                town.traitIds.add(traitId);
-                false;
-            } else {
-                true;
-            };
-            #ok({ hadTrait = hadTrait });
-        };
-
-        public func removeTraitFromTown(townId : Nat, traitId : Text) : Result.Result<{ hadTrait : Bool }, { #townNotFound }> {
-            Debug.print("Removing trait " # traitId # " from town " # Nat.toText(townId));
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-
-            let index = IterTools.findIndex(town.traitIds.vals(), func(id : Text) : Bool = id == traitId);
-            let hadTrait = switch (index) {
-                case (?i) {
-                    ignore town.traitIds.remove(i);
-                    true;
-                };
-                case (null) false;
-            };
-            #ok({ hadTrait = hadTrait });
-        };
-
         public func clear() {
             towns := HashMap.HashMap<Nat, MutableTownData>(0, Nat.equal, Nat32.fromNat);
-            traits := HashMap.HashMap<Text, Trait.Trait>(0, Text.equal, Text.hash);
-        };
-
-        private func getTraitsByIds(traitIds : Iter.Iter<Text>) : [Trait.Trait] {
-            traitIds
-            |> Iter.map(
-                _,
-                func(traitId : Text) : Trait.Trait {
-                    let ?trait = traits.get(traitId) else Debug.trap("Missing trait with ID: " # traitId);
-                    trait;
-                },
-            )
-            |> Iter.toArray(_);
         };
 
         private func toTown(town : MutableTownData) : Town.Town {
             {
                 id = town.id;
-                traits = getTraitsByIds(town.traitIds.vals());
                 links = Buffer.toArray(town.links);
                 currency = town.currency;
                 entropy = town.entropy;
                 name = town.name;
-                logoUrl = town.logoUrl;
+                flagImage = town.flagImage;
                 motto = town.motto;
-                description = town.description;
-                color = town.color;
             };
         };
     };
@@ -351,12 +260,9 @@ module {
             id = stableData.id;
             var currency = stableData.currency;
             var name = stableData.name;
-            var logoUrl = stableData.logoUrl;
+            var flagImage = stableData.flagImage;
             var motto = stableData.motto;
-            var description = stableData.description;
             var entropy = stableData.entropy;
-            var color = stableData.color;
-            traitIds = Buffer.fromArray(stableData.traitIds);
             links = Buffer.fromArray(stableData.links);
         };
     };
@@ -364,25 +270,13 @@ module {
     private func toStableTownData(town : MutableTownData) : StableTownData {
         {
             id = town.id;
-            traitIds = Buffer.toArray(town.traitIds);
             links = Buffer.toArray(town.links);
             currency = town.currency;
             entropy = town.entropy;
             name = town.name;
-            logoUrl = town.logoUrl;
+            flagImage = town.flagImage;
             motto = town.motto;
-            description = town.description;
-            color = town.color;
         };
-    };
-
-    private func toTraitsHashMap(traits : [Trait.Trait]) : HashMap.HashMap<Text, Trait.Trait> {
-        traits.vals()
-        |> Iter.map<Trait.Trait, (Text, Trait.Trait)>(
-            _,
-            func(trait : Trait.Trait) : (Text, Trait.Trait) = (trait.id, trait),
-        )
-        |> HashMap.fromIter<Text, Trait.Trait>(_, traits.size(), Text.equal, Text.hash);
     };
 
 };

@@ -108,9 +108,9 @@
         <UsersSolid class={iconClass} />
     </BottomNavItem>
     <BottomNavItem
-        btnName="League"
-        href="/league"
-        on:click={navOnClick("/league")}
+        btnName="World"
+        href="/world"
+        on:click={navOnClick("/world")}
     >
         <GlobeSolid class={iconClass} />
     </BottomNavItem>

@@ -8,7 +8,7 @@ banner:
     enable: false
     coming_soon: true
     label: "Play now"
-    link: "https://league.daoball.xyz"
+    link: "https://world.daoball.xyz"
 
 # Features
 features:
@@ -26,7 +26,7 @@ features:
 
   - title: "Open Community Towns"
     image: "/images/stadium_spheres.png"
-    content: "In DAOball, each town operates through a collective decision-making model, where fans and members have a direct impact on town strategies and gameplay decisions. This model fosters a sense of shared ownership and collaboration, bringing fans closer to the towns they support. A town's co-owners give a town its personality by making key decisions that impact them and the league."
+    content: "In DAOball, each town operates through a collective decision-making model, where fans and members have a direct impact on town strategies and gameplay decisions. This model fosters a sense of shared ownership and collaboration, bringing fans closer to the towns they support. A town's co-owners give a town its personality by making key decisions that impact them and the world."
     bulletpoints:
       - "**Shared Ownership**: Town co-owners have a direct say in town management, from player recruitment to match strategies, fostering a sense of collective responsibility and shared success."
       - "**Open Town Model**: Towns are open to the community, with co-ownership opportunities available to anyone interested in participating."

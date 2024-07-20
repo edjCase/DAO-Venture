@@ -39,7 +39,7 @@ preloader = "" # use jpg, png, svg or gif format.
 enable = false
 coming_soon = true
 label = "Play Now"
-link = "https://league.daoball.xyz"
+link = "https://world.daoball.xyz"
 
 # search
 [search]

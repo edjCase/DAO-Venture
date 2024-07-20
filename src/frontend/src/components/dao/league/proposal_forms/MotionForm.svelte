@@ -1,12 +1,12 @@
 <script lang="ts">
     import { Input, Label, Textarea } from "flowbite-svelte";
-    import { CreateLeagueProposalRequest } from "../../../../ic-agent/declarations/main";
+    import { CreateWorldProposalRequest } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
 
     let title: string | undefined;
     let description: string | undefined;
 
-    let generateProposal = (): CreateLeagueProposalRequest | string => {
+    let generateProposal = (): CreateWorldProposalRequest | string => {
         if (description === undefined) {
             return "No motto provided";
         }

@@ -2,17 +2,17 @@
     import { Button, Input, Label } from "flowbite-svelte";
     import ScenarioEffectChooser from "../ScenarioEffectChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
-    import { LeagueChoiceScenarioRequest } from "../../../../ic-agent/declarations/main";
+    import { WorldChoiceScenarioRequest } from "../../../../ic-agent/declarations/main";
     import TraitRequirementsEditor from "../TraitRequirementsEditor.svelte";
     import BigIntInput from "../BigIntInput.svelte";
-    export let value: LeagueChoiceScenarioRequest;
+    export let value: WorldChoiceScenarioRequest;
 
     let addOption = () => {
         value.options.push({
             title: "Option " + (value.options.length + 1),
             description: "Option " + (value.options.length + 1),
             currencyCost: BigInt(0),
-            leagueEffect: { noEffect: null },
+            worldEffect: { noEffect: null },
             townEffect: { noEffect: null },
             traitRequirements: [],
         });
@@ -36,8 +36,8 @@
         <BigIntInput bind:value={option.currencyCost} />
         <Label>Town Effect</Label>
         <ScenarioEffectChooser bind:value={option.townEffect} />
-        <Label>League Effect</Label>
-        <ScenarioEffectChooser bind:value={option.leagueEffect} />
+        <Label>World Effect</Label>
+        <ScenarioEffectChooser bind:value={option.worldEffect} />
         <Label>Trait Requirements</Label>
         <TraitRequirementsEditor bind:value={option.traitRequirements} />
 

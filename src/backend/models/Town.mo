@@ -9,7 +9,7 @@ module {
         flagImage : ImageFile.ImageFile;
 
         entropy : Nat;
-        currency : Int;
+        currency : Nat;
         links : [Link];
     };
 

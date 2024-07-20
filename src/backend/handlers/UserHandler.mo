@@ -73,7 +73,7 @@ module {
         };
 
         public func getStats() : UserStats {
-            let leagueStats = {
+            let worldStats = {
                 var totalPoints : Int = 0;
                 var userCount = 0;
                 var townOwnerCount = 0;
@@ -101,19 +101,19 @@ module {
                             ownerCount = stats.ownerCount + 1;
                         };
                         townStats.put(membership.townId, newStats);
-                        leagueStats.townOwnerCount += 1;
+                        worldStats.townOwnerCount += 1;
 
-                        leagueStats.totalPoints += user.points;
-                        leagueStats.userCount += 1;
+                        worldStats.totalPoints += user.points;
+                        worldStats.userCount += 1;
 
                     };
                     case (null) ();
                 };
             };
             {
-                totalPoints = leagueStats.totalPoints;
-                userCount = leagueStats.userCount;
-                townOwnerCount = leagueStats.townOwnerCount;
+                totalPoints = worldStats.totalPoints;
+                userCount = worldStats.userCount;
+                townOwnerCount = worldStats.townOwnerCount;
                 towns = Iter.toArray<TownStats>(townStats.vals());
             };
         };
@@ -172,15 +172,15 @@ module {
             owners;
         };
 
-        public func addLeagueMember(
+        public func addWorldMember(
             userId : Principal,
             townId : Nat,
             votingPower : Nat,
-        ) : Result.Result<(), { #alreadyLeagueMember }> {
+        ) : Result.Result<(), { #alreadyWorldMember }> {
             let user = getOrCreateUser(userId);
             switch (user.membership) {
                 case (?membership) {
-                    return #err(#alreadyLeagueMember);
+                    return #err(#alreadyWorldMember);
                 };
                 case (null) {
                     user.membership := ?{
@@ -195,7 +195,7 @@ module {
         public func changeTown(
             userId : Principal,
             townId : Nat,
-        ) : Result.Result<(), { #notLeagueMember }> {
+        ) : Result.Result<(), { #notWorldMember }> {
             let user = getOrCreateUser(userId);
             switch (user.membership) {
                 case (?membership) {
@@ -207,7 +207,7 @@ module {
                 };
                 case (null) {
                     // Add as owner
-                    return #err(#notLeagueMember);
+                    return #err(#notWorldMember);
                 };
             };
         };

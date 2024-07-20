@@ -21,7 +21,7 @@ module {
         // TODO anomoly
         // #anomoly : AnomolyEffect;
         #entropyThreshold : EntropyThresholdEffect;
-        #leagueIncome : LeagueIncomeEffect;
+        #worldIncome : WorldIncomeEffect;
         #entropy : EntropyEffect;
         #currency : CurrencyEffect;
         #oneOf : [WeightedEffect];
@@ -40,7 +40,7 @@ module {
         delta : Int;
     };
 
-    public type LeagueIncomeEffect = {
+    public type WorldIncomeEffect = {
         delta : Int;
     };
 
@@ -77,12 +77,12 @@ module {
         delta : Int;
     };
 
-    public type LeagueEffectOutcome = {
-        #leagueIncome : LeagueIncomeEffectOutcome;
+    public type WorldEffectOutcome = {
+        #worldIncome : WorldIncomeEffectOutcome;
         #entropyThreshold : EntropyThresholdEffectOutcome;
     };
 
-    public type LeagueIncomeEffectOutcome = {
+    public type WorldIncomeEffectOutcome = {
         delta : Int;
     };
 
@@ -97,12 +97,14 @@ module {
     //     duration : Duration;
     // };
 
-    public type EffectOutcome = TownEffectOutcome or LeagueEffectOutcome;
+    public type EffectOutcome = TownEffectOutcome or WorldEffectOutcome;
 
     public type Requirement = {
         #size : RangeRequirement;
         #entropy : RangeRequirement;
         #age : RangeRequirement;
+        #population : RangeRequirement;
+        #currency : RangeRequirement;
     };
 
     public type RangeRequirement = {
@@ -122,9 +124,9 @@ module {
     };
 
     public type ScenarioKind = {
-        #noLeagueEffect : NoLeagueEffectScenario;
+        #noWorldEffect : NoWorldEffectScenario;
         #threshold : ThresholdScenario;
-        #leagueChoice : LeagueChoiceScenario;
+        #worldChoice : WorldChoiceScenario;
         #lottery : LotteryScenario;
         #proportionalBid : ProportionalBidScenario;
         #textInput : TextInputScenario;
@@ -139,7 +141,7 @@ module {
         allowedTownIds : [Nat];
     };
 
-    public type NoLeagueEffectScenario = {
+    public type NoWorldEffectScenario = {
         options : [ScenarioOptionDiscrete];
     };
 
@@ -170,12 +172,12 @@ module {
         }];
     };
 
-    public type LeagueChoiceScenario = {
-        options : [LeagueChoiceScenarioOption];
+    public type WorldChoiceScenario = {
+        options : [WorldChoiceScenarioOption];
     };
 
-    public type LeagueChoiceScenarioOption = ScenarioOptionDiscrete and {
-        leagueEffect : Effect;
+    public type WorldChoiceScenarioOption = ScenarioOptionDiscrete and {
+        worldEffect : Effect;
     };
 
     public type LotteryScenario = {
@@ -255,11 +257,11 @@ module {
 
     public type ScenarioOutcome = {
         #threshold : ThresholdScenarioOutcome;
-        #leagueChoice : LeagueChoiceScenarioOutcome;
+        #worldChoice : WorldChoiceScenarioOutcome;
         #lottery : LotteryScenarioOutcome;
         #proportionalBid : ProportionalBidScenarioOutcome;
         #textInput : TextInputScenarioOutcome;
-        #noLeagueEffect;
+        #noWorldEffect;
     };
 
     public type ThresholdScenarioOutcome = {
@@ -272,7 +274,7 @@ module {
         amount : Int;
     };
 
-    public type LeagueChoiceScenarioOutcome = {
+    public type WorldChoiceScenarioOutcome = {
         optionId : ?Nat;
     };
 

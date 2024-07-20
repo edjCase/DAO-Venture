@@ -21,7 +21,7 @@
 
 <FormTemplate {generateProposal} {townId}>
     <div class="p-2">Updates the motto of the town.</div>
-    <div class="p-2">Requires a league approval vote.</div>
+    <div class="p-2">Requires a world approval vote.</div>
     <Label>Motto</Label>
     <Input type="text" bind:value={motto} />
 </FormTemplate>

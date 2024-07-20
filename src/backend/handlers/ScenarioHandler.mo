@@ -159,9 +159,9 @@ module {
     };
 
     public type ScenarioKindRequest = {
-        #noLeagueEffect : NoLeagueEffectScenarioRequest;
+        #noWorldEffect : NoWorldEffectScenarioRequest;
         #threshold : ThresholdScenarioRequest;
-        #leagueChoice : LeagueChoiceScenarioRequest;
+        #worldChoice : WorldChoiceScenarioRequest;
         #lottery : Scenario.LotteryScenario;
         #proportionalBid : Scenario.ProportionalBidScenario;
         #textInput : Scenario.TextInputScenario;
@@ -175,7 +175,7 @@ module {
         townEffect : Scenario.Effect;
     };
 
-    public type NoLeagueEffectScenarioRequest = {
+    public type NoWorldEffectScenarioRequest = {
         options : [ScenarioOptionDiscrete];
     };
 
@@ -206,12 +206,20 @@ module {
         }];
     };
 
-    public type LeagueChoiceScenarioRequest = {
-        options : [LeagueChoiceScenarioOptionRequest];
+    public type WorldChoiceScenarioRequest = {
+        options : [WorldChoiceScenarioOptionRequest];
     };
 
-    public type LeagueChoiceScenarioOptionRequest = ScenarioOptionDiscrete and {
-        leagueEffect : Scenario.Effect;
+    public type WorldChoiceScenarioOptionRequest = ScenarioOptionDiscrete and {
+        worldEffect : Scenario.Effect;
+    };
+
+    public type TownWithStats = Town.Town and {
+        population : Nat;
+        size : Nat;
+        currency : Nat;
+        entropy : Nat;
+        age : Nat;
     };
 
     public class Handler<system>(
@@ -292,16 +300,16 @@ module {
             let ?vote = scenario.votes.get(voterId) else return #err(#notEligible);
             // Validate value/option
             switch (scenario.kind) {
-                case (#noLeagueEffect(noLeagueEffect)) {
+                case (#noWorldEffect(noWorldEffect)) {
                     let #id(optionId) = value else return #err(#invalidValue);
-                    let option = noLeagueEffect.options[optionId];
+                    let option = noWorldEffect.options[optionId];
                     if (not IterTools.any(option.allowedTownIds.vals(), func(townId : Nat) : Bool = townId == vote.townId)) {
                         return #err(#notEligible);
                     };
                 };
-                case (#leagueChoice(leagueChoice)) {
+                case (#worldChoice(worldChoice)) {
                     let #id(optionId) = value else return #err(#invalidValue);
-                    let option = leagueChoice.options[optionId];
+                    let option = worldChoice.options[optionId];
                     if (not IterTools.any(option.allowedTownIds.vals(), func(townId : Nat) : Bool = townId == vote.townId)) {
                         return #err(#notEligible);
                     };
@@ -385,7 +393,7 @@ module {
         public func add<system>(
             scenario : AddScenarioRequest,
             members : [ScenarioMember],
-            allTowns : [Town.Town],
+            allTowns : [TownWithStats],
         ) : AddScenarioResult {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
@@ -400,16 +408,16 @@ module {
 
             // TODO refactor the duplicatio
             let kind : Scenario.ScenarioKind = switch (scenario.kind) {
-                case (#noLeagueEffect(noLeagueEffect)) #noLeagueEffect({
-                    noLeagueEffect with
-                    options = noLeagueEffect.options.vals()
+                case (#noWorldEffect(noWorldEffect)) #noWorldEffect({
+                    noWorldEffect with
+                    options = noWorldEffect.options.vals()
                     |> Iter.map<ScenarioOptionDiscrete, Scenario.ScenarioOptionDiscrete>(
                         _,
                         func(option : ScenarioOptionDiscrete) : Scenario.ScenarioOptionDiscrete {
                             let allowedTownIds = allTowns.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(town : Town.Town) : ?Nat {
+                                func(town : TownWithStats) : ?Nat {
                                     if (townMeetsRequirements(town, option.requirements)) {
                                         ?town.id;
                                     } else {
@@ -426,16 +434,16 @@ module {
                     )
                     |> Iter.toArray(_);
                 });
-                case (#leagueChoice(leagueChoice)) #leagueChoice({
-                    leagueChoice with
-                    options = leagueChoice.options.vals()
-                    |> Iter.map<LeagueChoiceScenarioOptionRequest, Scenario.LeagueChoiceScenarioOption>(
+                case (#worldChoice(worldChoice)) #worldChoice({
+                    worldChoice with
+                    options = worldChoice.options.vals()
+                    |> Iter.map<WorldChoiceScenarioOptionRequest, Scenario.WorldChoiceScenarioOption>(
                         _,
-                        func(option : LeagueChoiceScenarioOptionRequest) : Scenario.LeagueChoiceScenarioOption {
+                        func(option : WorldChoiceScenarioOptionRequest) : Scenario.WorldChoiceScenarioOption {
                             let allowedTownIds = allTowns.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(town : Town.Town) : ?Nat {
+                                func(town : TownWithStats) : ?Nat {
                                     if (townMeetsRequirements(town, option.requirements)) {
                                         ?town.id;
                                     } else {
@@ -461,7 +469,7 @@ module {
                             let allowedTownIds = allTowns.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(town : Town.Town) : ?Nat {
+                                func(town : TownWithStats) : ?Nat {
                                     if (townMeetsRequirements(town, option.requirements)) {
                                         ?town.id;
                                     } else {
@@ -590,8 +598,8 @@ module {
             };
 
             switch (scenario.kind) {
-                case (#noLeagueEffect(noLeagueEffect)) mapDiscreteOptions(noLeagueEffect.options);
-                case (#leagueChoice(leagueChoice)) mapDiscreteOptions(leagueChoice.options);
+                case (#noWorldEffect(noWorldEffect)) mapDiscreteOptions(noWorldEffect.options);
+                case (#worldChoice(worldChoice)) mapDiscreteOptions(worldChoice.options);
                 case (#threshold(threshold)) mapDiscreteOptions(threshold.options);
                 case (#lottery(_) or #proportionalBid(_)) {
                     let values = mapRawOptions<Nat>(
@@ -725,17 +733,23 @@ module {
             Buffer.toArray(townResults);
         };
 
-        private func townMeetsRequirements(town : Town.Town, requirements : [Scenario.Requirement]) : Bool {
+        private func townMeetsRequirements(townStats : TownWithStats, requirements : [Scenario.Requirement]) : Bool {
+            let testRange = func(townValue : Int, range : Scenario.RangeRequirement) : Bool {
+                switch (range) {
+                    case (#above(value)) townValue > value;
+                    case (#below(value)) townValue < value;
+                };
+            };
+
             IterTools.all<Scenario.Requirement>(
                 requirements.vals(),
                 func(requirement : Scenario.Requirement) : Bool {
-                    let townHasTrait = IterTools.any<Trait.Trait>(
-                        town.traits.vals(),
-                        func(trait : Trait.Trait) : Bool = trait.id == requirement.id,
-                    );
-                    switch (requirement.kind) {
-                        case (#required) townHasTrait;
-                        case (#prohibited) not townHasTrait;
+                    switch (requirement) {
+                        case (#size(size)) testRange(townStats.size, size);
+                        case (#population(population)) testRange(townStats.population, population);
+                        case (#currency(currency)) testRange(townStats.currency, currency);
+                        case (#entropy(entropy)) testRange(townStats.entropy, entropy);
+                        case (#age(age)) testRange(townStats.age, age);
                     };
                 },
             );
@@ -823,9 +837,9 @@ module {
         ) : ?ValidatedChoice {
             let ?value = townChoice.value else return null;
             switch (scenarioKind) {
-                case (#noLeagueEffect(noLeagueEffect)) {
+                case (#noWorldEffect(noWorldEffect)) {
                     let #id(optionId) = value else return null;
-                    let option = noLeagueEffect.options[optionId];
+                    let option = noWorldEffect.options[optionId];
                     let true = isAllowedAndChargedFunc(townChoice.townId, option) else return null;
 
                     return ?{
@@ -833,9 +847,9 @@ module {
                         townEffect = option.townEffect;
                     };
                 };
-                case (#leagueChoice(leagueChoice)) {
+                case (#worldChoice(worldChoice)) {
                     let #id(optionId) = value else return null;
-                    let option = leagueChoice.options[optionId];
+                    let option = worldChoice.options[optionId];
                     let true = isAllowedAndChargedFunc(townChoice.townId, option) else return null;
 
                     return ?{
@@ -996,8 +1010,8 @@ module {
             };
 
             let options : Scenario.ScenarioResolvedOptionsKind = switch (scenario.kind) {
-                case (#noLeagueEffect(noLeagueEffect)) mapDiscrete(noLeagueEffect.options);
-                case (#leagueChoice(leagueChoice)) mapDiscrete(leagueChoice.options);
+                case (#noWorldEffect(noWorldEffect)) mapDiscrete(noWorldEffect.options);
+                case (#worldChoice(worldChoice)) mapDiscrete(worldChoice.options);
                 case (#threshold(threshold)) mapDiscrete(threshold.options);
                 case (#textInput(_)) {
                     let textValues = getValuesFromTownChoices<Text>(
@@ -1151,7 +1165,7 @@ module {
     };
 
     type EffectContext = {
-        #league;
+        #world;
         #town : Nat;
     };
 
@@ -1183,17 +1197,17 @@ module {
             case (#lottery(lottery)) ();
             case (#proportionalBid(proportionalBid)) ();
             case (#textInput(textInput)) ();
-            case (#noLeagueEffect(noLeagueEffect)) {
-                if (noLeagueEffect.options.size() < 2) {
+            case (#noWorldEffect(noWorldEffect)) {
+                if (noWorldEffect.options.size() < 2) {
                     errors.add("Scenario must have at least 2 options");
                 };
-                validateDiscreteOptions(noLeagueEffect.options, errors);
+                validateDiscreteOptions(noWorldEffect.options, errors);
             };
-            case (#leagueChoice(leagueChoice)) {
-                if (leagueChoice.options.size() < 2) {
+            case (#worldChoice(worldChoice)) {
+                if (worldChoice.options.size() < 2) {
                     errors.add("Scenario must have at least 2 options");
                 };
-                validateDiscreteOptions(leagueChoice.options, errors);
+                validateDiscreteOptions(worldChoice.options, errors);
             };
             case (#threshold(threshold)) {
                 if (threshold.options.size() < 2) {
@@ -1272,25 +1286,16 @@ module {
                     index += 1;
                 };
             };
-            case (#skill(s)) {
-                // TODO
-            };
             case (#currency(e)) {
-                // TODO
-            };
-            case (#townTrait(t)) {
                 // TODO
             };
             case (#entropy(_)) {
                 // TODO
             };
-            case (#injury(_)) {
-                // TODO
-            };
             case (#entropyThreshold(_)) {
                 // TODO
             };
-            case (#leagueIncome(_)) {
+            case (#worldIncome(_)) {
                 // TODO
             };
             case (#noEffect) {};
@@ -1305,21 +1310,21 @@ module {
         effectOutcomes : Buffer.Buffer<Scenario.EffectOutcome>,
     ) : Scenario.ScenarioOutcome {
         switch (scenario.kind) {
-            case (#noLeagueEffect(noLeagueEffect)) #noLeagueEffect;
-            case (#leagueChoice(leagueChoice)) {
-                let leagueOptionValue = getMajorityOption(prng, validatedTownChoices);
-                let leagueOptionId : ?Nat = switch (leagueOptionValue) {
+            case (#noWorldEffect(noWorldEffect)) #noWorldEffect;
+            case (#worldChoice(worldChoice)) {
+                let worldOptionValue = getMajorityOption(prng, validatedTownChoices);
+                let worldOptionId : ?Nat = switch (worldOptionValue) {
                     case (null) null;
-                    case (?leagueOptionValue) {
-                        let #id(leagueOptionId) = leagueOptionValue else Debug.trap("Invalid league option value, expected an id: " # debug_show (leagueOptionValue));
-                        // Resolve the league choice effect if there is a majority
-                        let leagueOption = leagueChoice.options[leagueOptionId];
-                        resolveEffectInternal(prng, #league, scenario, leagueOption.leagueEffect, effectOutcomes);
-                        ?leagueOptionId;
+                    case (?worldOptionValue) {
+                        let #id(worldOptionId) = worldOptionValue else Debug.trap("Invalid world option value, expected an id: " # debug_show (worldOptionValue));
+                        // Resolve the world choice effect if there is a majority
+                        let worldOption = worldChoice.options[worldOptionId];
+                        resolveEffectInternal(prng, #world, scenario, worldOption.worldEffect, effectOutcomes);
+                        ?worldOptionId;
                     };
                 };
-                #leagueChoice({
-                    optionId = leagueOptionId;
+                #worldChoice({
+                    optionId = worldOptionId;
                 });
             };
             case (#lottery(lottery)) {
@@ -1412,16 +1417,7 @@ module {
                     });
                     if (proportionalValue > 0) {
 
-                        let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {
-                            case (#skill(s)) {
-                                #skill({
-                                    delta = proportionalValue;
-                                    duration = s.duration;
-                                    position = s.position;
-                                    skill = s.skill;
-                                });
-                            };
-                        };
+                        let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {};
                         resolveEffectInternal(
                             prng,
                             #town(validateTownChoice.townId),
@@ -1478,7 +1474,7 @@ module {
                     threshold.failure.effect;
                 };
 
-                resolveEffectInternal(prng, #league, scenario, thresholdEffect, effectOutcomes);
+                resolveEffectInternal(prng, #world, scenario, thresholdEffect, effectOutcomes);
 
                 #threshold({
                     contributions = townContributions;
@@ -1486,7 +1482,7 @@ module {
                 });
             };
             case (#textInput(textInput)) {
-                #noLeagueEffect;
+                #noWorldEffect;
             };
         };
     };
@@ -1533,32 +1529,6 @@ module {
                     outcomes.add(outcome);
                 };
             };
-            case (#injury(injuryEffect)) {
-                let positions = getPositionsFromTarget(prng, scenario.townIds, injuryEffect.position, context);
-                for (position in positions.vals()) {
-                    let outcome = #injury({
-                        position = position;
-                    });
-                    outcomes.add(outcome);
-                };
-            };
-            case (#skill(s)) {
-                let positions = getPositionsFromTarget(prng, scenario.townIds, s.position, context);
-                for (position in positions.vals()) {
-                    let skill = switch (s.skill) {
-                        case (#random) Skill.getRandom(prng);
-                        case (#chosen(skill)) skill;
-                    };
-                    outcomes.add(
-                        #skill({
-                            position = position;
-                            skill = skill;
-                            duration = s.duration;
-                            delta = s.delta;
-                        })
-                    );
-                };
-            };
             case (#currency(e)) {
                 let delta = switch (e.value) {
                     case (#flat(fixed)) fixed;
@@ -1572,22 +1542,11 @@ module {
                     outcomes.add(outcome);
                 };
             };
-            case (#townTrait(t)) {
-                let townIds = getTownIdsFromTarget(prng, scenario.townIds, t.town, context);
-                for (townId in townIds.vals()) {
-                    let outcome = #townTrait({
-                        townId = townId;
-                        traitId = t.traitId;
-                        kind = t.kind;
-                    });
-                    outcomes.add(outcome);
-                };
-            };
             case (#entropyThreshold(e)) {
                 outcomes.add(#entropyThreshold(e));
             };
-            case (#leagueIncome(income)) {
-                outcomes.add(#leagueIncome(income));
+            case (#worldIncome(income)) {
+                outcomes.add(#worldIncome(income));
             };
             case (#noEffect) ();
         };
@@ -1642,7 +1601,7 @@ module {
     ) : [Nat] {
         switch (target) {
             case (#contextual) switch (context) {
-                case (#league) townIds;
+                case (#world) townIds;
                 case (#town(town)) [town];
             };
             case (#chosen(townIds)) townIds;
