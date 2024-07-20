@@ -1,3 +1,4 @@
+import Flag "Flag";
 module {
     public type ProposalContent = {
         #motion : MotionContent;
@@ -16,8 +17,7 @@ module {
     };
 
     public type ChangeTownFlagContent = {
-        format : { #jpg; #png; #webp };
-        data : Blob;
+        image : Flag.FlagImage;
     };
 
     public type ChangeTownMottoContent = {

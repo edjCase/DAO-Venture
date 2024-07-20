@@ -225,8 +225,7 @@ module {
     public class Handler<system>(
         data : StableData,
         processEffectOutcome : <system>(
-            closeAndClearAllScenarios : <system>() -> (),
-            outcome : Scenario.EffectOutcome,
+            outcome : Scenario.EffectOutcome
         ) -> (),
         chargeTownCurrency : (townId : Nat, amount : Nat) -> {
             #ok;
@@ -246,24 +245,6 @@ module {
                 )
                 |> Iter.toArray(_);
             };
-        };
-
-        private func closeAndClearAllScenarios<system>() : () {
-            Debug.print("Closing and clearning all scenarios");
-            for (scenario in scenarios.vals()) {
-                switch (scenario.state) {
-                    case (#notStarted({ startTimerId })) {
-                        Timer.cancelTimer(startTimerId);
-                        end<system>(scenario, []);
-                    };
-                    case (#inProgress(_)) {
-                        end<system>(scenario, []);
-                    };
-                    case (#resolved(_)) ();
-                };
-            };
-            scenarios := HashMap.HashMap<Nat, MutableScenarioData>(0, Nat.equal, Nat32.fromNat);
-            nextScenarioId := 0;
         };
 
         public func getScenario(id : Nat) : ?Scenario.Scenario {
@@ -805,7 +786,7 @@ module {
             );
 
             for (effectOutcome in resolvedScenarioState.effectOutcomes.vals()) {
-                processEffectOutcome<system>(closeAndClearAllScenarios, effectOutcome);
+                processEffectOutcome<system>(effectOutcome);
             };
 
             scenarios.put(
@@ -1417,7 +1398,9 @@ module {
                     });
                     if (proportionalValue > 0) {
 
-                        let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {};
+                        let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {
+
+                        };
                         resolveEffectInternal(
                             prng,
                             #town(validateTownChoice.townId),

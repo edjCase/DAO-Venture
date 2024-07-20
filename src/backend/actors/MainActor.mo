@@ -4,7 +4,6 @@ import Nat "mo:base/Nat";
 import Buffer "mo:base/Buffer";
 import Random "mo:base/Random";
 import Debug "mo:base/Debug";
-import Error "mo:base/Error";
 import Text "mo:base/Text";
 import Bool "mo:base/Bool";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
@@ -21,6 +20,8 @@ import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
 import Array "mo:base/Array";
+import Time "mo:base/Time";
+import Timer "mo:base/Timer";
 import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
@@ -31,14 +32,28 @@ actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
+    type ReverseEffectWithDuration = {
+        duration : Duration;
+        effect : Scenario.ReverseEffect;
+    };
+
+    type Duration = {
+        #days : Nat;
+    };
+
     // Stables ---------------------------------------------------------
 
     let defaultWorldIncome : Nat = 100;
     let defaultEntropyThreshold : Nat = 100;
 
+    stable let genesisTime : Time.Time = Time.now();
+    stable var daysProcessed : Nat = 0;
+
     stable var benevolentDictator : Types.BenevolentDictatorState = #open;
     stable var worldIncome : Nat = defaultWorldIncome;
     stable var entropyThreshold : Nat = defaultEntropyThreshold;
+
+    stable var reverseEffectStableData : [ReverseEffectWithDuration] = [];
 
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
@@ -64,13 +79,14 @@ actor MainActor : Types.Actor {
 
     // Unstables ---------------------------------------------------------
 
+    var reverseEffects = Buffer.fromIter<ReverseEffectWithDuration>(reverseEffectStableData.vals());
+
     var townsHandler = TownsHandler.Handler<system>(townStableData);
 
     private func processEffectOutcome<system>(
-        closeAndClearAllScenarios : <system>() -> (),
-        effectOutcome : Scenario.EffectOutcome,
+        effectOutcome : Scenario.EffectOutcome
     ) : () {
-        let result : ?{ matchCount : Nat; effect : Scenario.ReverseEffect } = switch (effectOutcome) {
+        let reverseEffectOrNull : ?ReverseEffectWithDuration = switch (effectOutcome) {
             case (#entropy(entropyEffect)) {
                 switch (townsHandler.updateEntropy(entropyEffect.townId, entropyEffect.delta)) {
                     case (#ok) {
@@ -105,9 +121,9 @@ actor MainActor : Types.Actor {
                 null;
             };
         };
-        switch (result) {
-            case (?{ matchCount; effect }) {
-                scheduleReverseEffect(matchCount, effect);
+        switch (reverseEffectOrNull) {
+            case (?reverseEffect) {
+                reverseEffects.add(reverseEffect);
             };
             case (null) ();
         };
@@ -125,21 +141,6 @@ actor MainActor : Types.Actor {
     };
 
     var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownCurrency);
-
-    onEffectReversal.add(
-        func<system>(effects : [Scenario.ReverseEffect]) : () {
-            for (effect in Iter.fromArray(effects)) {
-                switch (effect) {
-                    case (#skill(s)) {
-                        switch (playerHandler.updateSkill(s.playerId, s.skill, -s.deltaToRemove)) {
-                            case (#ok) ();
-                            case (#err(e)) Debug.trap("Error updating player skill: " # debug_show (e));
-                        };
-                    };
-                };
-            };
-        }
-    );
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
@@ -224,7 +225,7 @@ actor MainActor : Types.Actor {
                     await* createWorldProposal(worldProposal);
                 };
                 case (#changeFlag(changeFlag)) {
-                    await* createWorldProposal(#changeTownFlag({ townId = townId; flagImage = changeFlag.flagImage }));
+                    await* createWorldProposal(#changeTownFlag({ townId = townId; flagImage = changeFlag.image }));
                 };
                 case (#changeMotto(changeMotto)) {
                     await* createWorldProposal(#changeTownMotto({ townId = townId; motto = changeMotto.motto }));
@@ -317,9 +318,32 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_);
     };
 
+    private func getDayInfo() : { timeTillNextDay : Nat; currentDay : Nat } {
+        let timeElapsed = Time.now() - genesisTime;
+        if (timeElapsed < 0) {
+            Debug.trap("Time elapsed is negative: " # Int.toText(timeElapsed));
+        };
+        let timeElapsedNat : Nat = Int.abs(timeElapsed);
+        let dayInNanos : Nat = 60 * 60 * 24 * 1_000_000_000;
+        let timeTillNextDay : Nat = timeElapsedNat % dayInNanos;
+        let currentDay : Nat = timeElapsedNat / dayInNanos;
+        { timeTillNextDay = timeTillNextDay; currentDay = currentDay };
+    };
+
+    private func resetDayTimer<system>() {
+        let { timeTillNextDay } = getDayInfo();
+        ignore Timer.setTimer<system>(
+            #nanoseconds(timeTillNextDay),
+            func() : async () {
+                await* processDays();
+            },
+        );
+    };
+
     // System Methods ---------------------------------------------------------
 
     system func preupgrade() {
+        reverseEffectStableData := Buffer.toArray(reverseEffects);
         scenarioStableData := scenarioHandler.toStableData();
         worldDaoStableData := worldDao.toStableData();
         townStableData := townsHandler.toStableData();
@@ -333,6 +357,7 @@ actor MainActor : Types.Actor {
     };
 
     system func postupgrade() {
+        reverseEffects := Buffer.fromIter<ReverseEffectWithDuration>(reverseEffectStableData.vals());
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownCurrency);
         worldDao := ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
             worldDaoStableData,
@@ -471,6 +496,15 @@ actor MainActor : Types.Actor {
         let members = userHandler.getTownOwners(null);
         let towns = townsHandler.getAll();
         let townsWithStats : [ScenarioHandler.TownWithStats] = towns.vals()
+        |> Iter.map<Town.Town, ScenarioHandler.TownWithStats>(
+            _,
+            func(town : Town.Town) : ScenarioHandler.TownWithStats = {
+                town with
+                age = 1; // TODO
+                population = 1; // TODO
+                size = 1; // TODO
+            },
+        )
         |> Iter.toArray(_);
         scenarioHandler.add<system>(scenario, members, townsWithStats);
     };
@@ -525,6 +559,19 @@ actor MainActor : Types.Actor {
     };
 
     // Private Methods ---------------------------------------------------------
+
+    private func processDays() : async* () {
+        let { currentDay } = getDayInfo();
+        label l loop {
+            if (currentDay <= daysProcessed) {
+                break l;
+            };
+            disperseCurrencyDividends();
+            // TODO reverse effects
+            daysProcessed := daysProcessed + 1;
+        };
+        resetDayTimer<system>();
+    };
 
     private func isWorldOrBDFN(id : Principal) : Bool {
         if (id == Principal.fromActor(MainActor)) {
