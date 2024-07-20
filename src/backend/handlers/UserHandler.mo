@@ -179,7 +179,7 @@ module {
         ) : Result.Result<(), { #alreadyWorldMember }> {
             let user = getOrCreateUser(userId);
             switch (user.membership) {
-                case (?membership) {
+                case (?_) {
                     return #err(#alreadyWorldMember);
                 };
                 case (null) {

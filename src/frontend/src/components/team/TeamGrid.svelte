@@ -2,7 +2,7 @@
   import { Link } from "svelte-routing";
   import { townStore } from "../../stores/TownStore";
   import { Button } from "flowbite-svelte";
-  import TownLogo from "./TownLogo.svelte";
+  import TeamFlag from "./TeamFlag.svelte";
   import { StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
   import { Town } from "../../ic-agent/declarations/main";
@@ -34,7 +34,7 @@
           {/if}
         </div>
       </div>
-      <TownLogo town={selectedTown} size="lg" />
+      <TeamFlag town={selectedTown} size="lg" />
       <blockquote class="mx-auto mb-4 max-w-2xl">
         <div class="mt-5">
           <div class="text-lg town-info-text text-justify">
@@ -59,7 +59,7 @@
           on:keydown={() => {}}
           on:click={() => (selectedTown = town)}
         >
-          <TownLogo {town} size="md" />
+          <TeamFlag {town} size="md" />
         </div>
       {/each}
     </div>

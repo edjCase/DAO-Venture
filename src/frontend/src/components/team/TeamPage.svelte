@@ -2,11 +2,9 @@
   import PlayerRoster from "../player/PlayerRoster.svelte";
   import MatchHistory from "../match/MatchHistory.svelte";
   import { Button, TabItem, Tabs } from "flowbite-svelte";
-  import TownLogo from "./TownLogo.svelte";
+  import TownFlag from "./TownFlag.svelte";
   import { Town } from "../../ic-agent/declarations/main";
   export let town: Town;
-
-  let links: { name: string; url: string }[] = []; // TODO
 </script>
 
 <div class="text-center my-2 mx-auto p-1 border rounded">
@@ -14,11 +12,6 @@
     <div class="flex-1 flex justify-center items-center gap-2">
       <TownLogo {town} size="md" />
       <div class="text-3xl">{town.name}</div>
-    </div>
-    <div class="">
-      {#each links as link}
-        <Button href={link.url}>{link.name}</Button>
-      {/each}
     </div>
   </div>
   <Tabs>

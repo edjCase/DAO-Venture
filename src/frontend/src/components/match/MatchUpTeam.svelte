@@ -3,7 +3,7 @@
     import { TownId, TownStandingInfo } from "../../ic-agent/declarations/main";
     import { predictionStore } from "../../stores/PredictionsStore";
     import { townStore } from "../../stores/TownStore";
-    import TownLogo from "../town/TownLogo.svelte";
+    import TeamFlag from "../town/TeamFlag.svelte";
     import { TownOrUndetermined } from "../../models/Town";
 
     type MatchPrediction = {
@@ -102,7 +102,7 @@
 
 <div class="flex justify-between gap-2">
     <div class="flex flex-col justify-center items-center">
-        <TownLogo {town} size="sm" stats={false} />
+        <TeamFlag {town} size="sm" stats={false} />
         <div class="text-sm font-bold">
             {townStats}
         </div>

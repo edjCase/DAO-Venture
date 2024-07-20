@@ -1,6 +1,6 @@
 <script lang="ts">
     import { TownOrUndetermined } from "../../models/Town";
-    import TownLogo from "../town/TownLogo.svelte";
+    import TeamFlag from "../town/TeamFlag.svelte";
 
     export let town: TownOrUndetermined;
     export let score: bigint | undefined;
@@ -8,7 +8,7 @@
 
 <div class="flex items-center jusity-center">
     <div class="mr-2">
-        <TownLogo {town} size="xxs" border={true} padding={false} />
+        <TeamFlag {town} size="xxs" border={true} padding={false} />
     </div>
     <div>
         {score == undefined ? "-" : score.toString()}

@@ -7,6 +7,7 @@ import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
+import Town "../models/Town";
 
 module {
     public type Actor = actor {
@@ -27,7 +28,7 @@ module {
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
 
         getWorldData : query () -> async WorldData;
-        getTowns : query () -> async [Town];
+        getTowns : query () -> async [Town.Town];
         createTownProposal : (townId : Nat, request : TownProposalContent) -> async CreateTownProposalResult;
         getTownProposal : query (townId : Nat, id : Nat) -> async GetTownProposalResult;
         getTownProposals : query (townId : Nat, count : Nat, offset : Nat) -> async GetTownProposalsResult;
@@ -61,13 +62,6 @@ module {
         worldIncome : Nat;
         entropyThreshold : Nat;
         currentEntropy : Nat;
-    };
-
-    public type Town = {
-        id : Nat;
-        name : Text;
-        logoUrl : Text;
-        color : (Nat8, Nat8, Nat8);
     };
 
     public type GetPositionError = {

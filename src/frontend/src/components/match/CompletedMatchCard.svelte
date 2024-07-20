@@ -17,7 +17,7 @@
   } from "../../ic-agent/declarations/main";
   import { predictionStore } from "../../stores/PredictionsStore";
   import { townStore } from "../../stores/TownStore";
-  import TownLogo from "../town/TownLogo.svelte";
+  import TeamFlag from "../town/TeamFlag.svelte";
 
   export let matchGroupId: number;
   export let matchId: number;
@@ -74,7 +74,7 @@
   <div class="flex justify-between">
     <div class="flex flex-col">
       <div class="flex flex-row items-center">
-        <TownLogo town={town1} size="xs" />
+        <TeamFlag town={town1} size="xs" />
         <div class="text-4xl font-bold mx-4 flex items-center">
           {town1Score || "-"}
           <span class="text-base">{town1Emoji}</span>
@@ -100,7 +100,7 @@
           <span class="text-base">{town2Emoji}</span>
           {town2Score || "-"}
         </div>
-        <TownLogo town={town2} size="xs" />
+        <TeamFlag town={town2} size="xs" />
       </div>
       {#if town2Stats}
         <div class="flex justify-center mt-2">

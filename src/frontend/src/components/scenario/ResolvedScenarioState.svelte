@@ -20,7 +20,7 @@
     import ScenarioEffectOutcome from "./ScenarioEffectOutcome.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
-    import TownLogo from "../town/TownLogo.svelte";
+    import TeamFlag from "../town/TeamFlag.svelte";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
@@ -116,7 +116,7 @@
                 <div class="flex">
                     {#each natOption.chosenByTownIds as townId}
                         <!-- TODO Fix this town not found hack -->
-                        <TownLogo
+                        <TeamFlag
                             town={towns.find((t) => t.id == townId) ||
                                 towns[-1]}
                             size="xs"
@@ -132,7 +132,7 @@
                 <div class="flex">
                     {#each textOption.chosenByTownIds as townId}
                         <!-- TODO Fix this town not found hack -->
-                        <TownLogo
+                        <TeamFlag
                             town={towns.find((t) => t.id == townId) ||
                                 towns[-1]}
                             size="xs"
@@ -150,7 +150,7 @@
             <div class="flex items-center justify-center">
                 {#each state.options.undecidedOption.chosenByTownIds as townId}
                     <!-- TODO Fix this town not found hack -->
-                    <TownLogo
+                    <TeamFlag
                         town={towns.find((t) => t.id == townId) || towns[-1]}
                         size="xs"
                     />

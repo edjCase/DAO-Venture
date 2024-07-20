@@ -1,12 +1,11 @@
+import Flag "Flag";
 module {
 
     public type ProposalContent = {
         #motion : MotionContent;
         #changeTownName : ChangeTownNameContent;
-        #changeTownColor : ChangeTownColorContent;
-        #changeTownLogo : ChangeTownLogoContent;
+        #changeTownFlag : ChangeTownFlagContent;
         #changeTownMotto : ChangeTownMottoContent;
-        #changeTownDescription : ChangeTownDescriptionContent;
     };
 
     public type MotionContent = {
@@ -19,23 +18,13 @@ module {
         name : Text;
     };
 
-    public type ChangeTownColorContent = {
+    public type ChangeTownFlagContent = {
         townId : Nat;
-        color : (Nat8, Nat8, Nat8);
-    };
-
-    public type ChangeTownLogoContent = {
-        townId : Nat;
-        logoUrl : Text;
+        flagImage : Flag.FlagImage;
     };
 
     public type ChangeTownMottoContent = {
         townId : Nat;
         motto : Text;
-    };
-
-    public type ChangeTownDescriptionContent = {
-        townId : Nat;
-        description : Text;
     };
 };

@@ -1,10 +1,10 @@
 <script lang="ts">
     import TownProposalForm from "../dao/town/TownProposalForm.svelte";
     import TownProposalList from "../dao/town/TownProposalList.svelte";
-    import TownLogo from "../town/TownLogo.svelte";
+    import TeamFlag from "../town/TeamFlag.svelte";
     import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
-    import { Badge, Button, TabItem, Tabs } from "flowbite-svelte";
+    import { Badge, TabItem, Tabs } from "flowbite-svelte";
     import MatchHistory from "../match/MatchHistory.svelte";
     import PlayerRoster from "../player/PlayerRoster.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
@@ -19,8 +19,6 @@
 
     $: user = $userStore;
 
-    $: links =
-        towns?.find((l) => l.id == user?.membership[0]?.townId)?.links || [];
     $: town = towns?.find((t) => t.id == user?.membership[0]?.townId);
     $: votingPower = user?.membership[0]?.votingPower || 0;
     $: standing = standings?.find((s) => s.id == town?.id) || {
@@ -42,7 +40,7 @@
 
 {#if town}
     <SectionWithOverview title={town.name}>
-        <TownLogo slot="title-img" {town} size="md" />
+        <TeamFlag slot="title-img" {town} size="md" />
         <div class="flex w-full mb-4 text-center">
             <div class="flex-grow">
                 <div class="text-xl">Town</div>
@@ -105,23 +103,6 @@
             </TabItem>
             <TabItem title="Roster">
                 <PlayerRoster townId={town.id} />
-            </TabItem>
-            <TabItem title="Links">
-                {#if links.length == 0}
-                    <div class="text-center">No links</div>
-                {:else}
-                    <div class="flex flex-col gap-2">
-                        {#each links as link}
-                            <Button
-                                href={link.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                {link.name}
-                            </Button>
-                        {/each}
-                    </div>
-                {/if}
             </TabItem>
         </Tabs>
     </SectionWithOverview>

@@ -3,14 +3,12 @@ import Iter "mo:base/Iter";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
-import Buffer "mo:base/Buffer";
 import Int "mo:base/Int";
 import Option "mo:base/Option";
 import IterTools "mo:itertools/Iter";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
-import TextX "mo:xtended-text/TextX";
-import ImageFile "../models/ImageFile";
+import Flag "../models/Flag";
 import Town "../models/Town";
 
 module {
@@ -23,20 +21,18 @@ module {
         id : Nat;
         currency : Nat;
         name : Text;
-        flagImage : ImageFile.ImageFile;
+        flagImage : Flag.FlagImage;
         motto : Text;
         entropy : Nat;
-        links : [Town.Link];
     };
 
     type MutableTownData = {
         id : Nat;
         var name : Text;
-        var flagImage : ImageFile.ImageFile;
+        var flagImage : Flag.FlagImage;
         var motto : Text;
         var entropy : Nat;
         var currency : Nat;
-        links : Buffer.Buffer<Town.Link>;
     };
 
     public class Handler<system>(
@@ -79,7 +75,6 @@ module {
                 motto = town.motto;
                 entropy = town.entropy;
                 currency = town.currency;
-                links = Buffer.toArray(town.links);
             };
         };
 
@@ -94,7 +89,7 @@ module {
 
         public func create<system>(
             name : Text,
-            flagImage : ImageFile.ImageFile,
+            flagImage : Flag.FlagImage,
             motto : Text,
             entropy : Nat,
             currency : Nat,
@@ -119,47 +114,10 @@ module {
                 var motto = motto;
                 var entropy = entropy;
                 var currency = currency;
-                links = Buffer.Buffer<Town.Link>(0);
             };
             towns.put(townId, townData);
 
             return #ok(townId);
-        };
-
-        public func getLinks(townId : Nat) : Result.Result<[Town.Link], { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            #ok(Buffer.toArray(town.links));
-        };
-
-        public func modifyLink(townId : Nat, name : Text, urlOrRemove : ?Text) : Result.Result<(), { #townNotFound; #urlRequired }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let index = IterTools.findIndex(town.links.vals(), func(link : Town.Link) : Bool { link.name == name });
-            switch (index) {
-                case (?i) {
-                    switch (urlOrRemove) {
-                        case (?url) {
-                            town.links.put(
-                                i,
-                                {
-                                    name = name;
-                                    url = url;
-                                },
-                            );
-                        };
-                        // Remove link if URL is null
-                        case (null) ignore town.links.remove(i);
-                    };
-                    #ok;
-                };
-                case (null) {
-                    let ?url = urlOrRemove else return #err(#urlRequired);
-                    town.links.add({
-                        name = name;
-                        url = url;
-                    });
-                    #ok;
-                };
-            };
         };
 
         public func updateCurrency(
@@ -200,7 +158,7 @@ module {
             #ok;
         };
 
-        public func updateFlag(townId : Nat, flagImage : ImageFile.ImageFile) : Result.Result<(), { #townNotFound }> {
+        public func updateFlag(townId : Nat, flagImage : Flag.FlagImage) : Result.Result<(), { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             Debug.print("Updating flag image for town " # Nat.toText(townId));
             town.flagImage := flagImage;
@@ -236,7 +194,6 @@ module {
         private func toTown(town : MutableTownData) : Town.Town {
             {
                 id = town.id;
-                links = Buffer.toArray(town.links);
                 currency = town.currency;
                 entropy = town.entropy;
                 name = town.name;
@@ -263,14 +220,12 @@ module {
             var flagImage = stableData.flagImage;
             var motto = stableData.motto;
             var entropy = stableData.entropy;
-            links = Buffer.fromArray(stableData.links);
         };
     };
 
     private func toStableTownData(town : MutableTownData) : StableTownData {
         {
             id = town.id;
-            links = Buffer.toArray(town.links);
             currency = town.currency;
             entropy = town.entropy;
             name = town.name;

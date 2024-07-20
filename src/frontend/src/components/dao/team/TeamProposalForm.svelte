@@ -1,13 +1,8 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import TrainPositionForm from "./proposal_forms/TrainPositionForm.svelte";
     import ChangeNameForm from "./proposal_forms/ChangeNameForm.svelte";
-    import ChangeColorForm from "./proposal_forms/ChangeColorForm.svelte";
-    import ChangeLogoForm from "./proposal_forms/ChangeLogoForm.svelte";
+    import ChangeFlagForm from "./proposal_forms/ChangeFlagForm.svelte";
     import ChangeMottoForm from "./proposal_forms/ChangeMottoForm.svelte";
-    import ChangeDescriptionForm from "./proposal_forms/ChangeDescriptionForm.svelte";
-    import ModifyLinkForm from "./proposal_forms/ModifyLinkForm.svelte";
-    import SwapPositionsForm from "./proposal_forms/SwapPositionsForm.svelte";
     import MotionForm from "./proposal_forms/MotionForm.svelte";
 
     export let townId: bigint;
@@ -19,44 +14,19 @@
             component: MotionForm,
         },
         {
-            value: "train",
-            name: "Train Player",
-            component: TrainPositionForm,
-        },
-        {
             value: "changeName",
             name: "Change Town Name",
             component: ChangeNameForm,
         },
         {
-            value: "changeColor",
-            name: "Change Town Color",
-            component: ChangeColorForm,
-        },
-        {
-            value: "changeLogo",
-            name: "Change Town Logo",
-            component: ChangeLogoForm,
+            value: "changeFlag",
+            name: "Change Town Flag",
+            component: ChangeFlagForm,
         },
         {
             value: "changeMotto",
             name: "Change Town Motto",
             component: ChangeMottoForm,
-        },
-        {
-            value: "changeDescription",
-            name: "Change Town Description",
-            component: ChangeDescriptionForm,
-        },
-        {
-            value: "Modify Link",
-            name: "Modify Town Link",
-            component: ModifyLinkForm,
-        },
-        {
-            value: "swapPlayerPositions",
-            name: "Swap Positions",
-            component: SwapPositionsForm,
         },
     ];
     let selectedProposalType: string = proposalTypes[0].value;

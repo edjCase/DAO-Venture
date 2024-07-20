@@ -71,27 +71,10 @@ actor MainActor : Types.Actor {
         effectOutcome : Scenario.EffectOutcome,
     ) : () {
         let result : ?{ matchCount : Nat; effect : Scenario.ReverseEffect } = switch (effectOutcome) {
-            case (#injury(injuryEffect)) {
-                let ?player = playerHandler.getPosition(injuryEffect.position.townId, injuryEffect.position.position) else Debug.trap("Position " # debug_show (injuryEffect.position.position) # " not found in town " # Nat.toText(injuryEffect.position.townId));
-
-                switch (playerHandler.updateCondition(player.id, #injured)) {
-                    case (#ok) null;
-                    case (#err(e)) Debug.trap("Error updating player condition: " # debug_show (e));
-                };
-            };
             case (#entropy(entropyEffect)) {
                 switch (townsHandler.updateEntropy(entropyEffect.townId, entropyEffect.delta)) {
                     case (#ok) {
-                        let thresholdReached = townsHandler.getCurrentEntropy() >= entropyThreshold;
-                        if (thresholdReached) {
-                            Debug.print("Entropy threshold reached, triggering world collapse");
-                            // TODO archive data
-                            ignore seasonHandler.close<system>();
-                            seasonHandler.clear();
-                            closeAndClearAllScenarios<system>();
-                            townsHandler.clear();
-                            predictionHandler.clear();
-                        };
+                        // TODO check if entropy is above threshold
                         null;
                     };
                     case (#err(e)) Debug.trap("Error updating town entropy: " # debug_show (e));
@@ -124,7 +107,7 @@ actor MainActor : Types.Actor {
         };
         switch (result) {
             case (?{ matchCount; effect }) {
-                seasonHandler.scheduleReverseEffect(matchCount, effect);
+                scheduleReverseEffect(matchCount, effect);
             };
             case (null) ();
         };
@@ -143,7 +126,7 @@ actor MainActor : Types.Actor {
 
     var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownCurrency);
 
-    seasonEvents.onEffectReversal.add(
+    onEffectReversal.add(
         func<system>(effects : [Scenario.ReverseEffect]) : () {
             for (effect in Iter.fromArray(effects)) {
                 switch (effect) {
@@ -176,16 +159,8 @@ actor MainActor : Types.Actor {
                 };
                 #err("Failed to update town name: " # error);
             };
-            case (#changeTownColor(c)) {
-                let result = townsHandler.updateColor(c.townId, c.color);
-                let error = switch (result) {
-                    case (#ok) return #ok;
-                    case (#err(#townNotFound)) "Town not found";
-                };
-                #err("Failed to update town color: " # error);
-            };
-            case (#changeTownLogo(c)) {
-                let result = townsHandler.updateLogo(c.townId, c.logoUrl);
+            case (#changeTownFlag(c)) {
+                let result = townsHandler.updateFlag(c.townId, c.flagImage);
                 let error = switch (result) {
                     case (#ok) return #ok;
                     case (#err(#townNotFound)) "Town not found";
@@ -199,14 +174,6 @@ actor MainActor : Types.Actor {
                     case (#err(#townNotFound)) "Town not found";
                 };
                 #err("Failed to update town motto: " # error);
-            };
-            case (#changeTownDescription(c)) {
-                let result = townsHandler.updateDescription(c.townId, c.description);
-                let error = switch (result) {
-                    case (#ok) return #ok;
-                    case (#err(#townNotFound)) "Town not found";
-                };
-                #err("Failed to update town description: " # error);
             };
         };
     };
@@ -249,22 +216,6 @@ actor MainActor : Types.Actor {
                     // Do nothing
                     #ok;
                 };
-                case (#train(train)) {
-                    let player = switch (playerHandler.getPosition(townId, train.position)) {
-                        case (?player) player;
-                        case (null) return #err("Player not found in position " # debug_show (train.position) # " for town " # Nat.toText(townId));
-                    };
-                    let trainCost = Skill.get(player.skills, train.skill) + 1; // Cost is the next skill level
-                    switch (townsHandler.updateCurrency(townId, -trainCost, false)) {
-                        case (#ok) ();
-                        case (#err(#notEnoughCurrency)) return #err("Not enough currency to train player");
-                        case (#err(#townNotFound)) return #err("Town not found: " # Nat.toText(townId));
-                    };
-                    switch (playerHandler.updateSkill(player.id, train.skill, 1)) {
-                        case (#ok) #ok;
-                        case (#err(#playerNotFound)) #err("Player not found: " # Nat32.toText(player.id));
-                    };
-                };
                 case (#changeName(n)) {
                     let worldProposal = #changeTownName({
                         townId = townId;
@@ -272,29 +223,11 @@ actor MainActor : Types.Actor {
                     });
                     await* createWorldProposal(worldProposal);
                 };
-                case (#swapPlayerPositions(swap)) {
-                    switch (playerHandler.swapTownPositions(townId, swap.position1, swap.position2)) {
-                        case (#ok) #ok;
-                    };
-                };
-                case (#changeColor(changeColor)) {
-                    await* createWorldProposal(#changeTownColor({ townId = townId; color = changeColor.color }));
-                };
-                case (#changeLogo(changeLogo)) {
-                    await* createWorldProposal(#changeTownLogo({ townId = townId; logoUrl = changeLogo.logoUrl }));
+                case (#changeFlag(changeFlag)) {
+                    await* createWorldProposal(#changeTownFlag({ townId = townId; flagImage = changeFlag.flagImage }));
                 };
                 case (#changeMotto(changeMotto)) {
                     await* createWorldProposal(#changeTownMotto({ townId = townId; motto = changeMotto.motto }));
-                };
-                case (#changeDescription(changeDescription)) {
-                    await* createWorldProposal(#changeTownDescription({ townId = townId; description = changeDescription.description }));
-                };
-                case (#modifyLink(modifyLink)) {
-                    switch (townsHandler.modifyLink(townId, modifyLink.name, modifyLink.url)) {
-                        case (#ok) #ok;
-                        case (#err(#townNotFound)) #err("Town not found: " # Nat.toText(townId));
-                        case (#err(#urlRequired)) #err("URL is required when adding a new link");
-                    };
                 };
             };
         };
@@ -537,7 +470,9 @@ actor MainActor : Types.Actor {
         };
         let members = userHandler.getTownOwners(null);
         let towns = townsHandler.getAll();
-        scenarioHandler.add<system>(scenario, members, towns);
+        let townsWithStats : [ScenarioHandler.TownWithStats] = towns.vals()
+        |> Iter.toArray(_);
+        scenarioHandler.add<system>(scenario, members, townsWithStats);
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
@@ -560,43 +495,6 @@ actor MainActor : Types.Actor {
 
     public shared query func getTowns() : async [Town.Town] {
         townsHandler.getAll();
-    };
-
-    public shared ({ caller }) func createTown(request : Types.CreateTownRequest) : async Types.CreateTownResult {
-        if (not isWorldOrBDFN(caller)) {
-            return #err(#notAuthorized);
-        };
-        let townId = switch (
-            townsHandler.create<system>(
-                request.name,
-                request.logoUrl,
-                request.motto,
-                request.description,
-                request.color,
-                request.entropy,
-                request.currency,
-            )
-        ) {
-            case (#ok(townId)) townId;
-            case (#err(#nameTaken)) return #err(#nameTaken);
-        };
-
-        let daoData : ProposalTypes.StableData<TownDao.ProposalContent> = {
-            proposals = [];
-            proposalDuration = #days(3);
-            votingThreshold = #percent({
-                percent = 50;
-                quorum = ?20;
-            });
-        };
-        let townDao = buildTownDao<system>(townId, daoData);
-        Debug.print("Created town " # Nat.toText(townId));
-        townDaos.put(townId, townDao);
-
-        switch (playerHandler.populateTownRoster(townId)) {
-            case (#ok(_)) #ok(townId);
-            case (#err(e)) Debug.trap("Error populating town roster: " # debug_show (e));
-        };
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {

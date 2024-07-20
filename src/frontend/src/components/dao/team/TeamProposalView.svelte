@@ -1,14 +1,10 @@
 <script lang="ts">
     import { TownProposal } from "../../../ic-agent/declarations/main";
-    import ChangeColorView from "./proposal_views/ChangeColorView.svelte";
     import ChangeNameView from "./proposal_views/ChangeNameView.svelte";
-    import ChangeLogoView from "./proposal_views/ChangeLogoView.svelte";
+    import ChangeFlagView from "./proposal_views/ChangeFlagView.svelte";
     import ChangeMottoView from "./proposal_views/ChangeMottoView.svelte";
     import ChangeDescriptionView from "./proposal_views/ChangeDescriptionView.svelte";
-    import ModifyLinkView from "./proposal_views/ModifyLinkView.svelte";
-    import TrainPositionView from "./proposal_views/TrainPositionView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
-    import SwapPositionsView from "./proposal_views/SwapPositionsView.svelte";
     import MotionView from "./proposal_views/MotionView.svelte";
 
     export let proposal: TownProposal;
@@ -16,14 +12,10 @@
 
     const components: Record<string, any> = {
         motion: MotionView,
-        train: TrainPositionView,
         changeName: ChangeNameView,
-        changeColor: ChangeColorView,
-        changeLogo: ChangeLogoView,
+        changeFag: ChangeFlagView,
         changeMotto: ChangeMottoView,
         changeDescription: ChangeDescriptionView,
-        modifyLink: ModifyLinkView,
-        swapPlayerPositions: SwapPositionsView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

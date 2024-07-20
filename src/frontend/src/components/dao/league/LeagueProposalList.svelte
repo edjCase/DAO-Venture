@@ -19,7 +19,7 @@
             title = "Change Town Color";
         } else if ("changeTownDescription" in p.content) {
             title = "Change Town Description";
-        } else if ("changeTownLogo" in p.content) {
+        } else if ("changeTeamFlag" in p.content) {
             title = "Change Town Logo";
         } else if ("changeTownMotto" in p.content) {
             title = "Change Town Motto";

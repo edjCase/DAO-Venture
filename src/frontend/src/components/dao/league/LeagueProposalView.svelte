@@ -2,7 +2,7 @@
     import { WorldProposal } from "../../../ic-agent/declarations/main";
     import ChangeTownColorView from "./proposal_views/ChangeTownColorView.svelte";
     import ChangeTownNameView from "./proposal_views/ChangeTownNameView.svelte";
-    import ChangeTownLogoView from "./proposal_views/ChangeTownLogoView.svelte";
+    import ChangeTeamFlagView from "./proposal_views/ChangeTeamFlagView.svelte";
     import ChangeTownMottoView from "./proposal_views/ChangeTownMottoView.svelte";
     import ChangeTownDescriptionView from "./proposal_views/ChangeTownDescriptionView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
@@ -14,7 +14,7 @@
         motion: MotionView,
         changeName: ChangeTownNameView,
         changeColor: ChangeTownColorView,
-        changeLogo: ChangeTownLogoView,
+        changeLogo: ChangeTeamFlagView,
         changeMotto: ChangeTownMottoView,
         changeDescription: ChangeTownDescriptionView,
     };

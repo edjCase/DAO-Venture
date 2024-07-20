@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { ChangeTownLogoContent__1 } from "../../../../ic-agent/declarations/main";
+    import { ChangeTeamFlagContent__1 } from "../../../../ic-agent/declarations/main";
     import { townStore } from "../../../../stores/TownStore";
 
-    export let content: ChangeTownLogoContent__1;
+    export let content: ChangeTeamFlagContent__1;
     $: towns = $townStore;
 
     let town = towns?.find((town) => town.id === content.townId);

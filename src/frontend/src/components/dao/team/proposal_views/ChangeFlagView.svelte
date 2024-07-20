@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { ChangeTownLogoContent } from "../../../../ic-agent/declarations/main";
+    import { ChangeTownFlagContent } from "../../../../ic-agent/declarations/main";
 
-    export let content: ChangeTownLogoContent;
+    export let content: ChangeTownFlagContent;
 </script>
 
 <div class="flex justify-center">

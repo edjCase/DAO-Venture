@@ -1,7 +1,7 @@
 <script lang="ts">
     import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
-    import TownLogo from "./TownLogo.svelte";
+    import TeamFlag from "./TeamFlag.svelte";
 
     $: user = $userStore;
     $: towns = $townStore;
@@ -10,7 +10,7 @@
 </script>
 
 {#if town}
-    <TownLogo {town} size="xs" stats={true} />
+    <TeamFlag {town} size="xs" stats={true} />
 {:else}
     <div class="w-10 h-10" />
 {/if}

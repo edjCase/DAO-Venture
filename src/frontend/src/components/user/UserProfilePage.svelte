@@ -3,7 +3,7 @@
     import { userStore } from "../../stores/UserStore";
     import { townStore } from "../../stores/TownStore";
     import UserPseudonym from "./UserPseudonym.svelte";
-    import TownLogo from "../town/TownLogo.svelte";
+    import TeamFlag from "../town/TeamFlag.svelte";
     import UserIdCopyButton from "./UserIdCopyButton.svelte";
 
     $: user = $userStore;
@@ -36,7 +36,7 @@
             <div class="mb-4">
                 <div class="font-bold text-xl mb-2">Town</div>
                 {#if town}
-                    <TownLogo {town} size="md" />
+                    <TeamFlag {town} size="md" />
                     <div class="text-center">{town.name}</div>
                     <div class="text-center text-sm text-gray-400">
                         {coOwner ? "Co-Owner" : "Fan"}

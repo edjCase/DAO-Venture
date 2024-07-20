@@ -4,7 +4,7 @@
     CompletedSeasonTown,
     Town,
   } from "../../ic-agent/declarations/main";
-  import TownLogo from "./TownLogo.svelte";
+  import TeamFlag from "./TeamFlag.svelte";
   import { townStore } from "../../stores/TownStore";
 
   export let completedSeason: CompletedSeason;
@@ -26,7 +26,7 @@
     {#if townsWithS}
       {#each townsWithS as [c, town]}
         <div class="mb-1 mx-2">
-          <TownLogo {town} size="sm" />
+          <TeamFlag {town} size="sm" />
           <div class="w-full text-center">{c.wins} - {c.losses}</div>
         </div>
       {/each}

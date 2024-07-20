@@ -327,7 +327,7 @@ module {
                         return #err(#invalidValue);
                     };
                 };
-                case (#proportionalBid(proportionalBid)) {
+                case (#proportionalBid(_)) {
                     let #nat(_) = value else return #err(#invalidValue);
                 };
                 case (#textInput(_)) {
@@ -1194,9 +1194,9 @@ module {
             errors.add("Scenario must have a description");
         };
         switch (scenario.kind) {
-            case (#lottery(lottery)) ();
-            case (#proportionalBid(proportionalBid)) ();
-            case (#textInput(textInput)) ();
+            case (#lottery(_)) ();
+            case (#proportionalBid(_)) ();
+            case (#textInput(_)) ();
             case (#noWorldEffect(noWorldEffect)) {
                 if (noWorldEffect.options.size() < 2) {
                     errors.add("Scenario must have at least 2 options");
@@ -1286,7 +1286,7 @@ module {
                     index += 1;
                 };
             };
-            case (#currency(e)) {
+            case (#currency(_)) {
                 // TODO
             };
             case (#entropy(_)) {
@@ -1310,7 +1310,7 @@ module {
         effectOutcomes : Buffer.Buffer<Scenario.EffectOutcome>,
     ) : Scenario.ScenarioOutcome {
         switch (scenario.kind) {
-            case (#noWorldEffect(noWorldEffect)) #noWorldEffect;
+            case (#noWorldEffect(_)) #noWorldEffect;
             case (#worldChoice(worldChoice)) {
                 let worldOptionValue = getMajorityOption(prng, validatedTownChoices);
                 let worldOptionId : ?Nat = switch (worldOptionValue) {
@@ -1481,7 +1481,7 @@ module {
                     successful = successful;
                 });
             };
-            case (#textInput(textInput)) {
+            case (#textInput(_)) {
                 #noWorldEffect;
             };
         };

@@ -1,6 +1,6 @@
 <!-- <script lang="ts">
   import { LiveTownDetails } from "../../stores/LiveMatchGroupStore";
-  import TownLogo from "../town/TownLogo.svelte";
+  import TeamFlag from "../town/TeamFlag.svelte";
 
   export let town: LiveTownDetails;
   export let isOffense: boolean;
@@ -20,7 +20,7 @@
     </div>
   </div>
   <div class="flex-1 flex items-center justify-center">
-    <TownLogo {town} size="md" />
+    <TeamFlag {town} size="md" />
   </div>
   <div class="flex-1 flex text-7xl items-center justify-center">
     {town.score}

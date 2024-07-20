@@ -20,20 +20,10 @@
         let title;
         if ("changeName" in p.content) {
             title = "Change Town Name";
-        } else if ("train" in p.content) {
-            title = "Train Position ";
-        } else if ("swapPlayerPositions" in p.content) {
-            title = "Swap Player Positions";
-        } else if ("changeColor" in p.content) {
-            title = "Change Town Color";
-        } else if ("changeLogo" in p.content) {
-            title = "Change Town Logo";
+        } else if ("changeFlag" in p.content) {
+            title = "Change Town Flag";
         } else if ("changeMotto" in p.content) {
             title = "Change Town Motto";
-        } else if ("changeDescription" in p.content) {
-            title = "Change Town Description";
-        } else if ("modifyLink" in p.content) {
-            title = "Modify Town Link";
         } else if ("motion" in p.content) {
             title = p.content.motion.title;
         } else {

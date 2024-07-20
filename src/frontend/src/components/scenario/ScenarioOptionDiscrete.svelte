@@ -7,7 +7,7 @@
     } from "../../ic-agent/declarations/main";
     import { townStore } from "../../stores/TownStore";
     import { traitStore } from "../../stores/TraitStore";
-    import TownLogo from "../town/TownLogo.svelte";
+    import TeamFlag from "../town/TeamFlag.svelte";
     import {
         QuestionCircleSolid,
         ThumbsDownSolid,
@@ -162,7 +162,7 @@
     {#if "resolved" in state && townsWithOption !== undefined}
         <div class="flex items-center justify-center">
             {#each townsWithOption as town}
-                <TownLogo {town} size="xs" />
+                <TeamFlag {town} size="xs" />
             {/each}
         </div>
     {/if}

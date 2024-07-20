@@ -4,9 +4,6 @@ module {
         #changeName : ChangeTownNameContent;
         #changeFlag : ChangeTownFlagContent;
         #changeMotto : ChangeTownMottoContent;
-        #addLink : AddTownLinkContent;
-        #updateLink : UpdateTownLinkContent;
-        #removeLink : RemoveTownLinkContent;
     };
 
     public type MotionContent = {
@@ -25,19 +22,5 @@ module {
 
     public type ChangeTownMottoContent = {
         motto : Text;
-    };
-
-    public type AddTownLinkContent = {
-        name : Text;
-        url : Text;
-    };
-
-    public type UpdateTownLinkContent = {
-        name : Text;
-        url : Text;
-    };
-
-    public type RemoveTownLinkContent = {
-        name : Text;
     };
 };
