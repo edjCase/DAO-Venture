@@ -1,29 +1,29 @@
 <script lang="ts">
-    import TeamProposalForm from "../dao/team/TeamProposalForm.svelte";
-    import TeamProposalList from "../dao/team/TeamProposalList.svelte";
-    import TeamLogo from "../team/TeamLogo.svelte";
-    import { teamStore } from "../../stores/TeamStore";
+    import TownProposalForm from "../dao/town/TownProposalForm.svelte";
+    import TownProposalList from "../dao/town/TownProposalList.svelte";
+    import TownLogo from "../town/TownLogo.svelte";
+    import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
     import { Badge, Button, TabItem, Tabs } from "flowbite-svelte";
     import MatchHistory from "../match/MatchHistory.svelte";
     import PlayerRoster from "../player/PlayerRoster.svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
     import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
-    import { TeamStandingInfo } from "../../ic-agent/declarations/main";
+    import { TownStandingInfo } from "../../ic-agent/declarations/main";
     import LoadingButton from "../common/LoadingButton.svelte";
     import { mainAgentFactory } from "../../ic-agent/Main";
 
-    $: teams = $teamStore;
+    $: towns = $townStore;
 
-    let standings: TeamStandingInfo[] | undefined;
+    let standings: TownStandingInfo[] | undefined;
 
     $: user = $userStore;
 
     $: links =
-        teams?.find((l) => l.id == user?.membership[0]?.teamId)?.links || [];
-    $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId);
+        towns?.find((l) => l.id == user?.membership[0]?.townId)?.links || [];
+    $: town = towns?.find((t) => t.id == user?.membership[0]?.townId);
     $: votingPower = user?.membership[0]?.votingPower || 0;
-    $: standing = standings?.find((s) => s.id == team?.id) || {
+    $: standing = standings?.find((s) => s.id == town?.id) || {
         wins: 0,
         losses: 0,
     };
@@ -40,17 +40,17 @@
     };
 </script>
 
-{#if team}
-    <SectionWithOverview title={team.name}>
-        <TeamLogo slot="title-img" {team} size="md" />
+{#if town}
+    <SectionWithOverview title={town.name}>
+        <TownLogo slot="title-img" {town} size="md" />
         <div class="flex w-full mb-4 text-center">
             <div class="flex-grow">
-                <div class="text-xl">Team</div>
-                <div>{team.currency} 💰</div>
-                <div>{team.entropy} 🔥</div>
+                <div class="text-xl">Town</div>
+                <div>{town.currency} 💰</div>
+                <div>{town.entropy} 🔥</div>
                 <div>Wins: {standing?.wins}</div>
                 <div>Losses: {standing?.losses}</div>
-                {#each team.traits as trait}
+                {#each town.traits as trait}
                     <Badge>{trait.name}</Badge>
                 {/each}
             </div>
@@ -92,19 +92,19 @@
         >
             <TabItem title="Proposals" open>
                 <div class="mt-5">
-                    <TeamProposalList teamId={team.id} />
+                    <TownProposalList townId={town.id} />
                 </div>
                 {#if votingPower > 0}
                     <div class="mt-5">
-                        <TeamProposalForm teamId={team.id} />
+                        <TownProposalForm townId={town.id} />
                     </div>
                 {/if}
             </TabItem>
             <TabItem title="Matches">
-                <MatchHistory teamId={team.id} />
+                <MatchHistory townId={town.id} />
             </TabItem>
             <TabItem title="Roster">
-                <PlayerRoster teamId={team.id} />
+                <PlayerRoster townId={town.id} />
             </TabItem>
             <TabItem title="Links">
                 {#if links.length == 0}
@@ -128,7 +128,7 @@
 {:else}
     <div>
         Want to join in and participate in league governance? Join the league
-        and get assigned to a random team!
+        and get assigned to a random town!
     </div>
     <LoadingButton onClick={join}>Join</LoadingButton>
 {/if}

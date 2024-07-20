@@ -1,5 +1,5 @@
 <script lang="ts">
-    import MyTeamPage from "../components/team/MyTeamPage.svelte";
+    import MyTownPage from "../components/town/MyTownPage.svelte";
 </script>
 
-<MyTeamPage />
+<MyTownPage />

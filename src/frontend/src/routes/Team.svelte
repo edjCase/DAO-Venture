@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { teamStore } from "../stores/TeamStore";
-  import TeamPage from "../components/team/TeamPage.svelte";
-  import { Team } from "../ic-agent/declarations/main";
+  import { townStore } from "../stores/TownStore";
+  import TownPage from "../components/town/TownPage.svelte";
+  import { Town } from "../ic-agent/declarations/main";
 
-  export let teamIdString: string;
+  export let townIdString: string;
 
-  let team: Team | undefined;
-  teamStore.subscribe((teams) => {
-    team = teams?.find((t) => t.id.toString() === teamIdString);
+  let town: Town | undefined;
+  townStore.subscribe((towns) => {
+    town = towns?.find((t) => t.id.toString() === townIdString);
   });
 </script>
 
-{#if team}
-  <TeamPage {team} />
+{#if town}
+  <TownPage {town} />
 {/if}

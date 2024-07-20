@@ -1,29 +1,15 @@
 import Time "mo:base/Time";
 import Nat "mo:base/Nat";
-import Player "../models/Player";
-import Team "../models/Team";
-import Season "../models/Season";
 import Scenario "../models/Scenario";
 import ProposalTypes "mo:dao-proposal-engine/Types";
 import CommonTypes "../CommonTypes";
 import Components "mo:datetime/Components";
 import Result "mo:base/Result";
-import FieldPosition "../models/FieldPosition";
-import LiveState "../models/LiveState";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";
-import TeamDao "../models/TeamDao";
-import LeagueDao "../models/LeagueDao";
 
 module {
     public type Actor = actor {
-        getSeasonStatus : query () -> async Season.SeasonStatus;
-        getTeamStandings : query () -> async GetTeamStandingsResult;
-        startSeason : (request : StartSeasonRequest) -> async StartSeasonResult;
-        closeSeason : () -> async CloseSeasonResult;
-        createTeam : (request : CreateTeamRequest) -> async CreateTeamResult;
-        predictMatchOutcome : (request : PredictMatchOutcomeRequest) -> async PredictMatchOutcomeResult;
-        getMatchGroupPredictions : query (matchGroupId : Nat) -> async GetMatchGroupPredictionsResult;
 
         getLeagueProposal : query (Nat) -> async GetLeagueProposalResult;
         getLeagueProposals : query (count : Nat, offset : Nat) -> async GetLeagueProposalsResult;
@@ -42,26 +28,26 @@ module {
 
         addFluff : (request : CreatePlayerFluffRequest) -> async CreatePlayerFluffResult;
         getPlayer : query (id : Nat32) -> async GetPlayerResult;
-        getPosition : query (teamId : Nat, position : FieldPosition.FieldPosition) -> async Result.Result<Player.Player, GetPositionError>;
-        getTeamPlayers : query (teamId : Nat) -> async [Player.Player];
+        getPosition : query (townId : Nat, position : FieldPosition.FieldPosition) -> async Result.Result<Player.Player, GetPositionError>;
+        getTownPlayers : query (townId : Nat) -> async [Player.Player];
         getAllPlayers : query () -> async [Player.Player];
 
         getLiveMatchGroupState : query () -> async ?LiveState.LiveMatchGroupState;
         startNextMatchGroup : () -> async StartMatchGroupResult;
 
         getLeagueData : query () -> async LeagueData;
-        getTeams : query () -> async [Team];
-        createTeamProposal : (teamId : Nat, request : TeamProposalContent) -> async CreateTeamProposalResult;
-        getTeamProposal : query (teamId : Nat, id : Nat) -> async GetTeamProposalResult;
-        getTeamProposals : query (teamId : Nat, count : Nat, offset : Nat) -> async GetTeamProposalsResult;
-        voteOnTeamProposal : (teamId : Nat, request : VoteOnTeamProposalRequest) -> async VoteOnTeamProposalResult;
-        createTeamTrait : (request : CreateTeamTraitRequest) -> async CreateTeamTraitResult;
+        getTowns : query () -> async [Town];
+        createTownProposal : (townId : Nat, request : TownProposalContent) -> async CreateTownProposalResult;
+        getTownProposal : query (townId : Nat, id : Nat) -> async GetTownProposalResult;
+        getTownProposals : query (townId : Nat, count : Nat, offset : Nat) -> async GetTownProposalsResult;
+        voteOnTownProposal : (townId : Nat, request : VoteOnTownProposalRequest) -> async VoteOnTownProposalResult;
+        createTownTrait : (request : CreateTownTraitRequest) -> async CreateTownTraitResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
-        getTeamOwners : query (request : GetTeamOwnersRequest) -> async GetTeamOwnersResult;
+        getTownOwners : query (request : GetTownOwnersRequest) -> async GetTownOwnersResult;
         getUserLeaderboard : query (request : GetUserLeaderboardRequest) -> async GetUserLeaderboardResult;
-        assignUserToTeam : (request : AssignUserToTeamRequest) -> async Result.Result<(), AssignUserToTeamError>;
+        assignUserToTown : (request : AssignUserToTownRequest) -> async Result.Result<(), AssignUserToTownError>;
         joinLeague : () -> async Result.Result<(), JoinLeagueError>;
     };
 
@@ -79,7 +65,7 @@ module {
     public type JoinLeagueError = {
         #notAuthorized;
         #alreadyLeagueMember;
-        #noTeams;
+        #noTowns;
     };
 
     public type LeagueData = {
@@ -95,7 +81,7 @@ module {
         #noLiveMatchGroup;
     };
 
-    public type Team = {
+    public type Town = {
         id : Nat;
         name : Text;
         logoUrl : Text;
@@ -103,7 +89,7 @@ module {
     };
 
     public type GetPositionError = {
-        #teamNotFound;
+        #townNotFound;
     };
 
     public type GetScenarioVoteRequest = {
@@ -187,18 +173,18 @@ module {
         #disabled;
     };
 
-    public type TeamStandingInfo = {
+    public type TownStandingInfo = {
         id : Nat;
         wins : Nat;
         losses : Nat;
         totalScore : Int;
     };
 
-    public type GetTeamStandingsError = {
+    public type GetTownStandingsError = {
         #notFound;
     };
 
-    public type GetTeamStandingsResult = Result.Result<[TeamStandingInfo], GetTeamStandingsError>;
+    public type GetTownStandingsResult = Result.Result<[TownStandingInfo], GetTownStandingsError>;
 
     public type GetMatchGroupPredictionsError = {
         #notFound;
@@ -211,14 +197,14 @@ module {
     };
 
     public type MatchPredictionSummary = {
-        team1 : Nat;
-        team2 : Nat;
-        yourVote : ?Team.TeamId;
+        town1 : Nat;
+        town2 : Nat;
+        yourVote : ?Town.TownId;
     };
 
     public type PredictMatchOutcomeRequest = {
         matchId : Nat;
-        winner : ?Team.TeamId;
+        winner : ?Town.TownId;
     };
 
     public type PredictMatchOutcomeError = {
@@ -244,7 +230,7 @@ module {
     public type StartMatchGroupResult = Result.Result<(), StartMatchGroupError>;
 
     public type StartMatchError = {
-        #notEnoughPlayers : Team.TeamIdOrBoth;
+        #notEnoughPlayers : Town.TownIdOrBoth;
     };
 
     public type StartSeasonRequest = {
@@ -305,61 +291,61 @@ module {
 
     public type GetPlayerResult = Result.Result<Player.Player, GetPlayerError>;
 
-    public type CreateTeamTraitRequest = {
+    public type CreateTownTraitRequest = {
         id : Text;
         name : Text;
         description : Text;
     };
 
-    public type CreateTeamTraitError = {
+    public type CreateTownTraitError = {
         #notAuthorized;
         #idTaken;
         #invalid : [Text];
     };
 
-    public type CreateTeamTraitResult = Result.Result<(), CreateTeamTraitError>;
+    public type CreateTownTraitResult = Result.Result<(), CreateTownTraitError>;
 
-    public type TeamProposal = ProposalTypes.Proposal<TeamDao.ProposalContent>;
+    public type TownProposal = ProposalTypes.Proposal<TownDao.ProposalContent>;
 
-    public type GetTeamProposalResult = Result.Result<TeamProposal, GetTeamProposalError>;
+    public type GetTownProposalResult = Result.Result<TownProposal, GetTownProposalError>;
 
-    public type GetTeamProposalError = {
+    public type GetTownProposalError = {
         #proposalNotFound;
-        #teamNotFound;
+        #townNotFound;
     };
 
-    public type GetTeamProposalsResult = Result.Result<CommonTypes.PagedResult<ProposalTypes.Proposal<TeamDao.ProposalContent>>, GetTeamProposalsError>;
+    public type GetTownProposalsResult = Result.Result<CommonTypes.PagedResult<ProposalTypes.Proposal<TownDao.ProposalContent>>, GetTownProposalsError>;
 
-    public type GetTeamProposalsError = {
-        #teamNotFound;
+    public type GetTownProposalsError = {
+        #townNotFound;
     };
 
-    public type VoteOnTeamProposalRequest = {
+    public type VoteOnTownProposalRequest = {
         proposalId : Nat;
         vote : Bool;
     };
 
-    public type VoteOnTeamProposalResult = Result.Result<(), VoteOnTeamProposalError>;
+    public type VoteOnTownProposalResult = Result.Result<(), VoteOnTownProposalError>;
 
-    public type VoteOnTeamProposalError = {
+    public type VoteOnTownProposalError = {
         #notAuthorized;
         #proposalNotFound;
         #alreadyVoted;
         #votingClosed;
-        #teamNotFound;
+        #townNotFound;
     };
 
-    public type TeamProposalContent = TeamDao.ProposalContent;
+    public type TownProposalContent = TownDao.ProposalContent;
 
-    public type CreateTeamProposalResult = Result.Result<Nat, CreateTeamProposalError>;
+    public type CreateTownProposalResult = Result.Result<Nat, CreateTownProposalError>;
 
-    public type CreateTeamProposalError = {
+    public type CreateTownProposalError = {
         #notAuthorized;
-        #teamNotFound;
+        #townNotFound;
         #invalid : [Text];
     };
 
-    public type CreateTeamRequest = {
+    public type CreateTownRequest = {
         name : Text;
         logoUrl : Text;
         motto : Text;
@@ -369,9 +355,9 @@ module {
         currency : Nat;
     };
 
-    public type CreateTeamResult = Result.Result<Nat, CreateTeamError>;
+    public type CreateTownResult = Result.Result<Nat, CreateTownError>;
 
-    public type CreateTeamError = {
+    public type CreateTownError = {
         #nameTaken;
         #notAuthorized;
     };
@@ -387,22 +373,22 @@ module {
 
     public type GetUserStatsResult = Result.Result<UserHandler.UserStats, ()>;
 
-    public type GetTeamOwnersRequest = {
-        #team : Nat;
+    public type GetTownOwnersRequest = {
+        #town : Nat;
         #all;
     };
 
-    public type GetTeamOwnersResult = {
+    public type GetTownOwnersResult = {
         #ok : [UserHandler.UserVotingInfo];
     };
 
-    public type AssignUserToTeamRequest = {
+    public type AssignUserToTownRequest = {
         userId : Principal;
-        teamId : Nat;
+        townId : Nat;
     };
 
-    public type AssignUserToTeamError = {
-        #teamNotFound;
+    public type AssignUserToTownError = {
+        #townNotFound;
         #notAuthorized;
         #notLeagueMember;
     };

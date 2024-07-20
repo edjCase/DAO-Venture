@@ -1,6 +1,6 @@
 import { Writable, writable } from "svelte/store";
 import { mainAgentFactory } from "../ic-agent/Main";
-import { MatchGroupPredictionSummary, TeamId } from "../ic-agent/declarations/main";
+import { MatchGroupPredictionSummary, TownId } from "../ic-agent/declarations/main";
 import { Subscriber } from "svelte/motion";
 
 
@@ -44,7 +44,7 @@ export const predictionStore = (() => {
         subscribe(callback);
     };
 
-    const predictMatchOutcome = async (matchGroupId: bigint | number, matchId: bigint | number, team: TeamId) => {
+    const predictMatchOutcome = async (matchGroupId: bigint | number, matchId: bigint | number, town: TownId) => {
         if (typeof matchGroupId === "number") {
             matchGroupId = BigInt(matchGroupId);
         }
@@ -57,7 +57,7 @@ export const predictionStore = (() => {
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.predictMatchOutcome({
             matchId: matchId,
-            winner: team ? [team] : [],
+            winner: town ? [town] : [],
         });
         if ("ok" in result) {
             console.log("Predicted for match: ", matchId);

@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { ChangeTeamColorContent__1 } from "../../../../ic-agent/declarations/main";
-    import { teamStore } from "../../../../stores/TeamStore";
+    import { ChangeTownColorContent__1 } from "../../../../ic-agent/declarations/main";
+    import { townStore } from "../../../../stores/TownStore";
     import RgbColor from "../../../common/RgbColor.svelte";
 
-    export let content: ChangeTeamColorContent__1;
-    $: teams = $teamStore;
+    export let content: ChangeTownColorContent__1;
+    $: towns = $townStore;
 
-    let team = teams?.find((team) => team.id === content.teamId);
+    let town = towns?.find((town) => town.id === content.townId);
 </script>
 
-<div>Team Id: {content.teamId}</div>
-<div>Current Name: {team?.name}</div>
+<div>Town Id: {content.townId}</div>
+<div>Current Name: {town?.name}</div>
 
 <RgbColor value={content.color} disabled />

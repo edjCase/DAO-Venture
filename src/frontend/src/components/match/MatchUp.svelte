@@ -1,33 +1,33 @@
 <script lang="ts">
-  import { teamStore } from "../../stores/TeamStore";
-  import MatchUpTeam from "./MatchUpTeam.svelte";
+  import { townStore } from "../../stores/TownStore";
+  import MatchUpTown from "./MatchUpTown.svelte";
 
   export let matchGroupId: number;
   export let matchId: number;
-  export let team1Id: bigint;
-  export let team2Id: bigint;
+  export let town1Id: bigint;
+  export let town2Id: bigint;
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
 
-  $: team1 = teams?.find((t) => t.id == team1Id);
-  $: team2 = teams?.find((t) => t.id == team2Id);
+  $: town1 = towns?.find((t) => t.id == town1Id);
+  $: town2 = towns?.find((t) => t.id == town2Id);
 </script>
 
-{#if team1 && team2}
+{#if town1 && town2}
   <div class="bg-gray-700 rounded-lg p-4">
     <div class="flex flex-col gap-2">
-      <MatchUpTeam
+      <MatchUpTown
         {matchGroupId}
         {matchId}
-        team={team1}
-        teamId={{ team1: null }}
+        town={town1}
+        townId={{ town1: null }}
       />
       <div class="text-xs text-center">VS</div>
-      <MatchUpTeam
+      <MatchUpTown
         {matchGroupId}
         {matchId}
-        team={team2}
-        teamId={{ team2: null }}
+        town={town2}
+        townId={{ town2: null }}
       />
     </div>
   </div>

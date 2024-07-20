@@ -31,13 +31,13 @@
             value = {
                 entropy: {
                     delta: BigInt(0),
-                    team: { contextual: null },
+                    town: { contextual: null },
                 },
             };
         } else if (selectedType === "currency") {
             value = {
                 currency: {
-                    team: { contextual: null },
+                    town: { contextual: null },
                     value: { flat: BigInt(1) },
                 },
             };
@@ -46,7 +46,7 @@
                 skill: {
                     position: {
                         position: { random: null },
-                        team: { contextual: null },
+                        town: { contextual: null },
                     },
                     skill: { random: null },
                     duration: { matches: BigInt(1) },
@@ -58,15 +58,15 @@
                 injury: {
                     position: {
                         position: { random: null },
-                        team: { contextual: null },
+                        town: { contextual: null },
                     },
                 },
             };
-        } else if (selectedType === "teamTrait") {
+        } else if (selectedType === "townTrait") {
             value = {
-                teamTrait: {
+                townTrait: {
                     kind: { add: null },
-                    team: { contextual: null },
+                    town: { contextual: null },
                     traitId: "",
                 },
             };
@@ -117,8 +117,8 @@
             value: "injury",
         },
         {
-            name: "Team Trait",
-            value: "teamTrait",
+            name: "Town Trait",
+            value: "townTrait",
         },
         {
             name: "Entropy Threshold",

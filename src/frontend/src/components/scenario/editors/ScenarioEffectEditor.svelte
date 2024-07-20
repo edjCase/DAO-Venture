@@ -7,9 +7,9 @@
     import DurationChooser from "./DurationChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
-    import TargetTeamChooser from "./TargetTeamChooser.svelte";
+    import TargetTownChooser from "./TargetTownChooser.svelte";
     import ChosenOrRandomSkillChooser from "./ChosenOrRandomSkillChooser.svelte";
-    import TeamTraitEffectEditor from "./TeamTraitEffectEditor.svelte";
+    import TownTraitEffectEditor from "./TownTraitEffectEditor.svelte";
     export let value: Effect;
 
     let addOption = () => {
@@ -61,12 +61,12 @@
 {:else if "entropy" in value}
     <Label>Amount</Label>
     <BigIntInput bind:value={value.entropy.delta} />
-    <TargetTeamChooser bind:value={value.entropy.team} />
+    <TargetTownChooser bind:value={value.entropy.town} />
 {:else if "currency" in value}
     <Label>Amount</Label>
     <BigIntInput bind:value={value.currency.value.flat} />
-    <Label>Team</Label>
-    <TargetTeamChooser bind:value={value.currency.team} />
+    <Label>Town</Label>
+    <TargetTownChooser bind:value={value.currency.town} />
 {:else if "skill" in value}
     <Label>Target Position</Label>
     <div class="ml-4">
@@ -87,8 +87,8 @@
     <div class="ml-4">
         <TargetPositionEditor bind:value={value.injury.position} />
     </div>
-{:else if "teamTrait" in value}
-    <TeamTraitEffectEditor bind:value={value.teamTrait} />
+{:else if "townTrait" in value}
+    <TownTraitEffectEditor bind:value={value.townTrait} />
 {:else if "entropyThreshold" in value}
     <Label>Delta</Label>
     <BigIntInput bind:value={value.entropyThreshold.delta} />

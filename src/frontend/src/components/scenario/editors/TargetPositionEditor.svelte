@@ -2,12 +2,12 @@
     import { Label } from "flowbite-svelte";
     import { TargetPosition } from "../../../ic-agent/declarations/main";
     import ChosenOrRandomFieldPositionChooser from "./ChosenOrRandomFieldPositionChooser.svelte";
-    import TargetTeamChooser from "./TargetTeamChooser.svelte";
+    import TargetTownChooser from "./TargetTownChooser.svelte";
 
     export let value: TargetPosition;
 </script>
 
-<Label>Team</Label>
-<TargetTeamChooser bind:value={value.team} />
+<Label>Town</Label>
+<TargetTownChooser bind:value={value.town} />
 <Label>Position</Label>
 <ChosenOrRandomFieldPositionChooser bind:value={value.position} />

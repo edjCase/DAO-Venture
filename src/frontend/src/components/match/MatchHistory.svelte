@@ -7,7 +7,7 @@
     InProgressSeasonMatchGroupVariant,
   } from "../../ic-agent/declarations/main";
 
-  export let teamId: bigint;
+  export let townId: bigint;
 
   type MatchDetails = {
     match: CompletedMatch;
@@ -29,9 +29,9 @@
             matchId: matchId,
           })),
         )
-        // Filter to where the team is in the match
+        // Filter to where the town is in the match
         .filter(
-          (m) => m.match.team1.id == teamId || m.match.team2.id == teamId,
+          (m) => m.match.town1.id == townId || m.match.town2.id == townId,
         );
     },
   );

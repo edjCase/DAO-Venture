@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { ChangeTeamDescriptionContent__1 } from "../../../../ic-agent/declarations/main";
-    import { teamStore } from "../../../../stores/TeamStore";
+    import { ChangeTownDescriptionContent__1 } from "../../../../ic-agent/declarations/main";
+    import { townStore } from "../../../../stores/TownStore";
 
-    export let content: ChangeTeamDescriptionContent__1;
-    $: teams = $teamStore;
+    export let content: ChangeTownDescriptionContent__1;
+    $: towns = $townStore;
 
-    let team = teams?.find((team) => team.id === content.teamId);
+    let town = towns?.find((town) => town.id === content.townId);
 </script>
 
-<div>Team Id: {content.teamId}</div>
-<div>Current Name: {team?.name}</div>
+<div>Town Id: {content.townId}</div>
+<div>Current Name: {town?.name}</div>
 
 <div>New Description: {content.description}</div>

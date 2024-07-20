@@ -2,9 +2,9 @@
   import PlayerRoster from "../player/PlayerRoster.svelte";
   import MatchHistory from "../match/MatchHistory.svelte";
   import { Button, TabItem, Tabs } from "flowbite-svelte";
-  import TeamLogo from "./TeamLogo.svelte";
-  import { Team } from "../../ic-agent/declarations/main";
-  export let team: Team;
+  import TownLogo from "./TownLogo.svelte";
+  import { Town } from "../../ic-agent/declarations/main";
+  export let town: Town;
 
   let links: { name: string; url: string }[] = []; // TODO
 </script>
@@ -12,8 +12,8 @@
 <div class="text-center my-2 mx-auto p-1 border rounded">
   <div class="flex flex-col p-2 gap-2">
     <div class="flex-1 flex justify-center items-center gap-2">
-      <TeamLogo {team} size="md" />
-      <div class="text-3xl">{team.name}</div>
+      <TownLogo {town} size="md" />
+      <div class="text-3xl">{town.name}</div>
     </div>
     <div class="">
       {#each links as link}
@@ -23,27 +23,27 @@
   </div>
   <Tabs>
     <TabItem title="Roster" open>
-      <PlayerRoster teamId={team.id} />
+      <PlayerRoster townId={town.id} />
     </TabItem>
     <TabItem title="Matches">
-      <MatchHistory teamId={team.id} />
+      <MatchHistory townId={town.id} />
     </TabItem>
     <TabItem title="Fluff">
       <div class="flex-1 flex flex-col justify-center text-justify p-5 text-xl">
-        {team.description}
+        {town.description}
       </div>
       <div class="flex-1 flex flex-col justify-center text-left p-5 text-lg">
-        <div class="team-info">
-          <div class="team-info-title">Team Motto</div>
-          <div class="team-info-text">{team.motto}</div>
+        <div class="town-info">
+          <div class="town-info-title">Town Motto</div>
+          <div class="town-info-text">{town.motto}</div>
         </div>
-        <div class="team-info inline">
-          <div class="team-info-title">Managers:</div>
-          <div class="team-info-text">0</div>
+        <div class="town-info inline">
+          <div class="town-info-title">Managers:</div>
+          <div class="town-info-text">0</div>
         </div>
-        <div class="team-info inline">
-          <div class="team-info-title">Championship Seasons:</div>
-          <div class="team-info-text"></div>
+        <div class="town-info inline">
+          <div class="town-info-title">Championship Seasons:</div>
+          <div class="town-info-text"></div>
         </div>
       </div>
     </TabItem>
@@ -51,10 +51,10 @@
 </div>
 
 <style>
-  .team-info.inline div {
+  .town-info.inline div {
     display: inline;
   }
-  .team-info-title {
+  .town-info-title {
     font-weight: bold;
     font-size: larger;
   }

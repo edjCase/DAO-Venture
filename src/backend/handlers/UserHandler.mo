@@ -18,18 +18,18 @@ module {
     };
 
     public type UserMembership = {
-        teamId : Nat;
+        townId : Nat;
         votingPower : Nat;
     };
 
     public type UserStats = {
         totalPoints : Int;
         userCount : Nat;
-        teamOwnerCount : Nat;
-        teams : [TeamStats];
+        townOwnerCount : Nat;
+        towns : [TownStats];
     };
 
-    public type TeamStats = {
+    public type TownStats = {
         id : Nat;
         totalPoints : Int;
         userCount : Nat;
@@ -38,7 +38,7 @@ module {
 
     public type UserVotingInfo = {
         id : Principal;
-        teamId : Nat;
+        townId : Nat;
         votingPower : Nat;
     };
 
@@ -76,17 +76,17 @@ module {
             let leagueStats = {
                 var totalPoints : Int = 0;
                 var userCount = 0;
-                var teamOwnerCount = 0;
+                var townOwnerCount = 0;
             };
-            let teamStats = HashMap.HashMap<Nat, TeamStats>(6, Nat.equal, Nat32.fromNat);
+            let townStats = HashMap.HashMap<Nat, TownStats>(6, Nat.equal, Nat32.fromNat);
             for (user in users.vals()) {
                 switch (user.membership) {
                     case (?membership) {
-                        let stats : TeamStats = switch (teamStats.get(membership.teamId)) {
+                        let stats : TownStats = switch (townStats.get(membership.townId)) {
                             case (?stats) stats;
                             case (null) {
                                 {
-                                    id = membership.teamId;
+                                    id = membership.townId;
                                     totalPoints = 0;
                                     userCount = 0;
                                     ownerCount = 0;
@@ -94,14 +94,14 @@ module {
                             };
                         };
 
-                        let newStats : TeamStats = {
-                            id = membership.teamId;
+                        let newStats : TownStats = {
+                            id = membership.townId;
                             totalPoints = stats.totalPoints + user.points;
                             userCount = stats.userCount + 1;
                             ownerCount = stats.ownerCount + 1;
                         };
-                        teamStats.put(membership.teamId, newStats);
-                        leagueStats.teamOwnerCount += 1;
+                        townStats.put(membership.townId, newStats);
+                        leagueStats.townOwnerCount += 1;
 
                         leagueStats.totalPoints += user.points;
                         leagueStats.userCount += 1;
@@ -113,8 +113,8 @@ module {
             {
                 totalPoints = leagueStats.totalPoints;
                 userCount = leagueStats.userCount;
-                teamOwnerCount = leagueStats.teamOwnerCount;
-                teams = Iter.toArray<TeamStats>(teamStats.vals());
+                townOwnerCount = leagueStats.townOwnerCount;
+                towns = Iter.toArray<TownStats>(townStats.vals());
             };
         };
 
@@ -135,17 +135,17 @@ module {
             };
         };
 
-        public func getTeamOwners(teamId : ?Nat) : [UserVotingInfo] {
-            let getMatchingTeamMembership = switch (teamId) {
+        public func getTownOwners(townId : ?Nat) : [UserVotingInfo] {
+            let getMatchingTownMembership = switch (townId) {
                 case (?tId) func(membership : UserMembership) : ?Nat {
-                    // Filter to only the team we want
-                    if (membership.teamId == tId) {
+                    // Filter to only the town we want
+                    if (membership.townId == tId) {
                         return ?tId;
                     };
                     return null;
                 };
                 case (null) func(membership : UserMembership) : ?Nat {
-                    ?membership.teamId;
+                    ?membership.townId;
                 };
             };
 
@@ -154,11 +154,11 @@ module {
                 _,
                 func(user : MutableUser) : ?UserVotingInfo {
                     let ?membership = user.membership else return null;
-                    switch (getMatchingTeamMembership(membership)) {
-                        case (?teamId) {
+                    switch (getMatchingTownMembership(membership)) {
+                        case (?townId) {
                             ?{
                                 id = user.id;
-                                teamId = teamId;
+                                townId = townId;
                                 votingPower = membership.votingPower;
                             };
                         };
@@ -174,7 +174,7 @@ module {
 
         public func addLeagueMember(
             userId : Principal,
-            teamId : Nat,
+            townId : Nat,
             votingPower : Nat,
         ) : Result.Result<(), { #alreadyLeagueMember }> {
             let user = getOrCreateUser(userId);
@@ -184,7 +184,7 @@ module {
                 };
                 case (null) {
                     user.membership := ?{
-                        teamId = teamId;
+                        townId = townId;
                         votingPower = votingPower;
                     };
                     #ok;
@@ -192,16 +192,16 @@ module {
             };
         };
 
-        public func changeTeam(
+        public func changeTown(
             userId : Principal,
-            teamId : Nat,
+            townId : Nat,
         ) : Result.Result<(), { #notLeagueMember }> {
             let user = getOrCreateUser(userId);
             switch (user.membership) {
                 case (?membership) {
                     user.membership := ?{
                         membership with
-                        teamId = teamId;
+                        townId = townId;
                     };
                     #ok;
                 };

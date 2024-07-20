@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
     import { TraitRequirement } from "../../../ic-agent/declarations/main";
-    import TeamTraitEditor from "./TeamTraitEditor.svelte";
+    import TownTraitEditor from "./TownTraitEditor.svelte";
     export let value: TraitRequirement;
     let requirementKindItems = [
         {
@@ -36,7 +36,7 @@
     };
 </script>
 
-<TeamTraitEditor bind:value={value.id} />
+<TownTraitEditor bind:value={value.id} />
 <Select
     items={requirementKindItems}
     on:change={onRequirementKindChange}

@@ -1,7 +1,7 @@
-import { Team } from "../ic-agent/declarations/main";
+import { Town } from "../ic-agent/declarations/main";
 
-export type TeamOrUndetermined =
-    | Team
+export type TownOrUndetermined =
+    | Town
     | { winnerOfMatch: number }
     | { seasonStandingIndex: number };
 

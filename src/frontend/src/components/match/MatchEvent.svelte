@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { MatchEvent, TeamId } from "../../ic-agent/declarations/main";
+  import { MatchEvent, TownId } from "../../ic-agent/declarations/main";
   import { playerStore } from "../../stores/PlayerStore";
-  import { teamStore } from "../../stores/TeamStore";
+  import { townStore } from "../../stores/TownStore";
 
   export let event: MatchEvent;
-  export let team1Id: bigint;
-  export let team2Id: bigint;
+  export let town1Id: bigint;
+  export let town2Id: bigint;
 
   $: players = $playerStore;
-  $: teams = $teamStore;
+  $: towns = $townStore;
 
   const variantKeyToString = (trait: any): string => {
     return Object.keys(trait)[0];
@@ -16,12 +16,12 @@
   const getPlayerName = (playerId: number): string => {
     return players?.find((p) => p.id === playerId)?.name ?? "Unknown";
   };
-  const getTeamId = (teamId: TeamId): bigint => {
-    return "team1" in teamId ? team1Id : team2Id;
+  const getTownId = (townId: TownId): bigint => {
+    return "town1" in townId ? town1Id : town2Id;
   };
-  const getTeamName = (teamId: TeamId): string => {
-    let teamIdId = getTeamId(teamId);
-    return teams?.find((p) => p.id == teamIdId)?.name ?? "Unknown";
+  const getTownName = (townId: TownId): string => {
+    let townIdId = getTownId(townId);
+    return towns?.find((p) => p.id == townIdId)?.name ?? "Unknown";
   };
 </script>
 
@@ -60,7 +60,7 @@
   <div>Player '{getPlayerName(event.death.playerId)}' died</div>
 {:else if "score" in event}
   <div>
-    {getTeamName(event.score.teamId)} scored {event.score.amount} points!
+    {getTownName(event.score.townId)} scored {event.score.amount} points!
   </div>
 {:else if "newBatter" in event}
   <div>

@@ -1,59 +1,59 @@
 <script lang="ts">
     import {
         CompletedMatch,
-        CompletedMatchTeam,
+        CompletedMatchTown,
     } from "../../ic-agent/declarations/main";
-    import { teamStore } from "../../stores/TeamStore";
-    import CompletedMatchCard, { TeamStats } from "./CompletedMatchCard.svelte";
+    import { townStore } from "../../stores/TownStore";
+    import CompletedMatchCard, { TownStats } from "./CompletedMatchCard.svelte";
 
     export let match: CompletedMatch;
     export let matchGroupId: number;
     export let matchId: number;
-    $: teams = $teamStore;
-    $: team1 = teams?.find((t) => t.id == match.team1.id);
-    $: team2 = teams?.find((t) => t.id == match.team2.id);
+    $: towns = $townStore;
+    $: town1 = towns?.find((t) => t.id == match.town1.id);
+    $: town2 = towns?.find((t) => t.id == match.town2.id);
 
-    function compileTeamStats(team: CompletedMatchTeam): TeamStats {
+    function compileTownStats(town: CompletedMatchTown): TownStats {
         return {
-            totalHits: team.playerStats.reduce(
+            totalHits: town.playerStats.reduce(
                 (sum, player) => sum + Number(player.battingStats.hits),
                 0,
             ),
-            totalRuns: team.playerStats.reduce(
+            totalRuns: town.playerStats.reduce(
                 (sum, player) => sum + Number(player.battingStats.runs),
                 0,
             ),
-            totalHomeRuns: team.playerStats.reduce(
+            totalHomeRuns: town.playerStats.reduce(
                 (sum, player) => sum + Number(player.battingStats.homeRuns),
                 0,
             ),
-            totalStrikeouts: team.playerStats.reduce(
+            totalStrikeouts: town.playerStats.reduce(
                 (sum, player) => sum + Number(player.battingStats.strikeouts),
                 0,
             ),
-            totalPitches: team.playerStats.reduce(
+            totalPitches: town.playerStats.reduce(
                 (sum, player) => sum + Number(player.pitchingStats.pitches),
                 0,
             ),
-            totalStrikes: team.playerStats.reduce(
+            totalStrikes: town.playerStats.reduce(
                 (sum, player) => sum + Number(player.pitchingStats.strikes),
                 0,
             ),
         };
     }
 
-    $: team1Stats = compileTeamStats(match.team1);
-    $: team2Stats = compileTeamStats(match.team2);
+    $: town1Stats = compileTownStats(match.town1);
+    $: town2Stats = compileTownStats(match.town2);
 </script>
 
-{#if team1 && team2 && team1Stats && team2Stats}
+{#if town1 && town2 && town1Stats && town2Stats}
     <div class="w-full flex justify-around">
         <CompletedMatchCard
             {matchGroupId}
             {matchId}
             {match}
-            {team1Stats}
-            {team2Stats}
+            {town1Stats}
+            {town2Stats}
         />
     </div>
 {/if}

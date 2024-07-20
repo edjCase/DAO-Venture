@@ -3,7 +3,7 @@
     import { ProposalContent } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
     let name: string | undefined;
     let url: string | undefined;
@@ -21,8 +21,8 @@
     };
 </script>
 
-<FormTemplate {generateProposal} {teamId}>
-    <div class="p-2">Creates a new link for the team page</div>
+<FormTemplate {generateProposal} {townId}>
+    <div class="p-2">Creates a new link for the town page</div>
     <div class="p-2">
         Specifying a name of an existing link, it will update the link. If the
         link has no url specified, it will be deleted

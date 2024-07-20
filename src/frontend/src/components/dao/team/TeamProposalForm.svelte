@@ -10,7 +10,7 @@
     import SwapPositionsForm from "./proposal_forms/SwapPositionsForm.svelte";
     import MotionForm from "./proposal_forms/MotionForm.svelte";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
     let proposalTypes = [
         {
@@ -25,32 +25,32 @@
         },
         {
             value: "changeName",
-            name: "Change Team Name",
+            name: "Change Town Name",
             component: ChangeNameForm,
         },
         {
             value: "changeColor",
-            name: "Change Team Color",
+            name: "Change Town Color",
             component: ChangeColorForm,
         },
         {
             value: "changeLogo",
-            name: "Change Team Logo",
+            name: "Change Town Logo",
             component: ChangeLogoForm,
         },
         {
             value: "changeMotto",
-            name: "Change Team Motto",
+            name: "Change Town Motto",
             component: ChangeMottoForm,
         },
         {
             value: "changeDescription",
-            name: "Change Team Description",
+            name: "Change Town Description",
             component: ChangeDescriptionForm,
         },
         {
             value: "Modify Link",
-            name: "Modify Team Link",
+            name: "Modify Town Link",
             component: ModifyLinkForm,
         },
         {
@@ -74,4 +74,4 @@
 <div class="mb-2">
     <Select items={proposalTypes} bind:value={selectedProposalType} />
 </div>
-<svelte:component this={selectedProposal.component} {teamId} />
+<svelte:component this={selectedProposal.component} {townId} />

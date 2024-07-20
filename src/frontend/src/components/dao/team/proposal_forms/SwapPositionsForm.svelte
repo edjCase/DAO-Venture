@@ -7,7 +7,7 @@
         fromEnum,
     } from "../../../../models/FieldPosition";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
     let positions = Object.entries(FieldPositionEnum).map(([_, enumValue]) => {
         return {
@@ -37,7 +37,7 @@
     };
 </script>
 
-<FormTemplate {generateProposal} {teamId}>
+<FormTemplate {generateProposal} {townId}>
     <div class="p-2">Swaps the position of two players</div>
     <Label>Position 1</Label>
     <Select items={positions} bind:value={position1} />

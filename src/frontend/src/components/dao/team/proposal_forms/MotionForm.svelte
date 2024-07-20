@@ -3,7 +3,7 @@
     import { ProposalContent } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
     let title: string | undefined;
     let description: string | undefined;
@@ -24,7 +24,7 @@
     };
 </script>
 
-<FormTemplate {generateProposal} {teamId}>
+<FormTemplate {generateProposal} {townId}>
     <div class="p-2">
         Creates a motion proposal, with no executed effect if adopted
     </div>

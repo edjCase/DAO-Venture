@@ -1,46 +1,46 @@
 <script lang="ts">
   import { CreatePlayerFluffResult } from "../ic-agent/declarations/main";
-  import { teamStore } from "../stores/TeamStore";
+  import { townStore } from "../stores/TownStore";
   import { playerStore } from "../stores/PlayerStore";
-  import { teams as teamData } from "../data/TeamData";
+  import { towns as townData } from "../data/TownData";
   import { players as playerData } from "../data/PlayerData";
-  import { teamTraits as traitData } from "../data/TeamTraitData";
+  import { townTraits as traitData } from "../data/TownTraitData";
   import { mainAgentFactory } from "../ic-agent/Main";
   import LoadingButton from "./common/LoadingButton.svelte";
   import { traitStore } from "../stores/TraitStore";
   import BigIntInput from "./scenario/editors/BigIntInput.svelte";
   import { Label } from "flowbite-svelte";
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
   $: players = $playerStore;
 
   let initialCurrency = BigInt(10);
   let initialEntropy = BigInt(7);
 
-  let createTeams = async function (): Promise<void> {
+  let createTowns = async function (): Promise<void> {
     let mainAgent = await mainAgentFactory();
     let promises = [];
-    for (let i = 0; i < teamData.length; i++) {
-      let team = teamData[i];
+    for (let i = 0; i < townData.length; i++) {
+      let town = townData[i];
 
       let promise = mainAgent
-        .createTeam({
-          ...team,
+        .createTown({
+          ...town,
           entropy: initialEntropy,
           currency: initialCurrency,
         })
         .then(async (result) => {
           if ("ok" in result) {
-            let teamId = result.ok;
-            console.log("Created team: ", teamId);
+            let townId = result.ok;
+            console.log("Created town: ", townId);
           } else {
-            console.log("Failed to make team: ", result);
+            console.log("Failed to make town: ", result);
           }
         });
       promises.push(promise);
     }
     await Promise.all(promises);
-    await teamStore.refetch();
+    await townStore.refetch();
     await playerStore.refetch();
   };
 
@@ -70,11 +70,11 @@
     await Promise.all(promises);
   };
 
-  let createTeamTraits = async function () {
+  let createTownTraits = async function () {
     let mainAgent = await mainAgentFactory();
     let promises = [];
     for (let trait of traitData) {
-      let promise = mainAgent.createTeamTrait(trait).then(async (result) => {
+      let promise = mainAgent.createTownTrait(trait).then(async (result) => {
         if ("ok" in result) {
           let traitId = result.ok;
           console.log("Created trait: ", traitId);
@@ -90,15 +90,15 @@
 
   let initialize = async function () {
     await createPlayers();
-    await createTeams();
-    await createTeamTraits();
+    await createTowns();
+    await createTownTraits();
   };
 </script>
 
-{#if !teams || !players || players.length + teams.length <= 0}
-  <Label>Initial Team Currency</Label>
+{#if !towns || !players || players.length + towns.length <= 0}
+  <Label>Initial Town Currency</Label>
   <BigIntInput bind:value={initialCurrency} />
-  <Label>Initial Team Entropy</Label>
+  <Label>Initial Town Entropy</Label>
   <BigIntInput bind:value={initialEntropy} />
   <LoadingButton onClick={initialize}>
     Initialize With Default Data

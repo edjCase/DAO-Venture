@@ -1,8 +1,8 @@
 <!-- <script lang="ts">
-  import { LiveTeamDetails } from "../../stores/LiveMatchGroupStore";
-  import TeamLogo from "../team/TeamLogo.svelte";
+  import { LiveTownDetails } from "../../stores/LiveMatchGroupStore";
+  import TownLogo from "../town/TownLogo.svelte";
 
-  export let team: LiveTeamDetails;
+  export let town: LiveTownDetails;
   export let isOffense: boolean;
 </script>
 
@@ -16,13 +16,13 @@
       {isOffense ? "Offense" : "Defense"}
     </div>
     <div class="text-center">
-      {team.name}
+      {town.name}
     </div>
   </div>
   <div class="flex-1 flex items-center justify-center">
-    <TeamLogo {team} size="md" />
+    <TownLogo {town} size="md" />
   </div>
   <div class="flex-1 flex text-7xl items-center justify-center">
-    {team.score}
+    {town.score}
   </div>
 </div> -->

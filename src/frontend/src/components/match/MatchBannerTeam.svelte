@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { TeamOrUndetermined } from "../../models/Team";
-    import TeamLogo from "../team/TeamLogo.svelte";
+    import { TownOrUndetermined } from "../../models/Town";
+    import TownLogo from "../town/TownLogo.svelte";
 
-    export let team: TeamOrUndetermined;
+    export let town: TownOrUndetermined;
     export let score: bigint | undefined;
 </script>
 
 <div class="flex items-center jusity-center">
     <div class="mr-2">
-        <TeamLogo {team} size="xxs" border={true} padding={false} />
+        <TownLogo {town} size="xxs" border={true} padding={false} />
     </div>
     <div>
         {score == undefined ? "-" : score.toString()}

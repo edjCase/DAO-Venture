@@ -3,15 +3,15 @@
     import { onDestroy } from "svelte";
     import {
         Proposal,
-        TeamProposal,
+        TownProposal,
     } from "../../../ic-agent/declarations/main";
     import { mainAgentFactory } from "../../../ic-agent/Main";
     import GenericProposalList from "../GenericProposalList.svelte";
     import { ProposalType } from "../GenericProposal.svelte";
-    import TeamProposalView from "./TeamProposalView.svelte";
+    import TownProposalView from "./TownProposalView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
     let proposals: Proposal[] = [];
     let genericProposals: ProposalType[] = [];
@@ -19,21 +19,21 @@
     $: genericProposals = proposals.map((p) => {
         let title;
         if ("changeName" in p.content) {
-            title = "Change Team Name";
+            title = "Change Town Name";
         } else if ("train" in p.content) {
             title = "Train Position ";
         } else if ("swapPlayerPositions" in p.content) {
             title = "Swap Player Positions";
         } else if ("changeColor" in p.content) {
-            title = "Change Team Color";
+            title = "Change Town Color";
         } else if ("changeLogo" in p.content) {
-            title = "Change Team Logo";
+            title = "Change Town Logo";
         } else if ("changeMotto" in p.content) {
-            title = "Change Team Motto";
+            title = "Change Town Motto";
         } else if ("changeDescription" in p.content) {
-            title = "Change Team Description";
+            title = "Change Town Description";
         } else if ("modifyLink" in p.content) {
-            title = "Modify Team Link";
+            title = "Modify Town Link";
         } else if ("motion" in p.content) {
             title = p.content.motion.title;
         } else {
@@ -49,17 +49,17 @@
         };
     });
 
-    let unsubscribeToTeamProposals = proposalStore.subscribeToTeam(
-        teamId,
+    let unsubscribeToTownProposals = proposalStore.subscribeToTown(
+        townId,
         (updatedProposals) => {
             proposals = updatedProposals;
         },
     );
     onDestroy(() => {
-        unsubscribeToTeamProposals();
+        unsubscribeToTownProposals();
     });
 
-    let getProposal = (proposalId: bigint): TeamProposal => {
+    let getProposal = (proposalId: bigint): TownProposal => {
         let proposal = proposals.find((p) => p.id == proposalId);
         if (proposal) {
             return proposal;
@@ -69,17 +69,17 @@
 
     let onVote = async (proposalId: bigint, vote: boolean) => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.voteOnTeamProposal(teamId, {
+        let result = await mainAgent.voteOnTownProposal(townId, {
             proposalId: proposalId,
             vote,
         });
         console.log("Vote Result: ", result);
         if ("ok" in result) {
-            proposalStore.refetchTeamProposal(teamId, proposalId);
+            proposalStore.refetchTownProposal(townId, proposalId);
         }
     };
     let onRefresh = async () => {
-        await proposalStore.refetchTeamProposals(teamId);
+        await proposalStore.refetchTownProposals(townId);
     };
 </script>
 
@@ -90,6 +90,6 @@
     let:proposalId
 >
     <slot name="details">
-        <TeamProposalView proposal={getProposal(proposalId)} {teamId} />
+        <TownProposalView proposal={getProposal(proposalId)} {townId} />
     </slot>
 </GenericProposalList>

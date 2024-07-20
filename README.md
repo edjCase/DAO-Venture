@@ -4,20 +4,20 @@
 Welcome to DAOball, an innovative and community-centric virtual spectator sport that reimagines the essence of traditional games. Drawing inspiration from baseball, DAOball infuses randomness and a whimsical twist into its gameplay, creating a unique and engaging experience for all participants.
 
 ### What is DAOball?
-DAOball is not just a game; it's a sepctator sport focused on community interaction, collective decision-making, and experimentation with Decentralized Autonomous Organizations (DAOs). This project stands out as it shifts the focus from individual achievement to team collaboration and consensus within DAOs.
+DAOball is not just a game; it's a sepctator sport focused on community interaction, collective decision-making, and experimentation with Decentralized Autonomous Organizations (DAOs). This project stands out as it shifts the focus from individual achievement to town collaboration and consensus within DAOs.
 
 ## Features
 
-### Community-Driven Teams
-- **DAO Structure**: Teams in DAOball act as DAOs, where decisions are made collectively through direct democracy.
-- **Inclusive Participation**: Anyone can join a team by staking or paying a fee, emphasizing openness and community involvement.
+### Community-Driven Towns
+- **DAO Structure**: Towns in DAOball act as DAOs, where decisions are made collectively through direct democracy.
+- **Inclusive Participation**: Anyone can join a town by staking or paying a fee, emphasizing openness and community involvement.
 
 ### Player Dynamics
 - **Organic Progression**: Players in the game evolve over time, influenced by experiences, training, and random events.
 - **Emotional Engagement**: The potential for injuries and the trading of players add depth and emotional layers to the gameplay.
 
 ### Matches and Engagement
-- **Unpredictable Outcomes**: Matches are determined by the collective decisions of team DAOs, ensuring unpredictability and excitement.
+- **Unpredictable Outcomes**: Matches are determined by the collective decisions of town DAOs, ensuring unpredictability and excitement.
 - **Community Interaction**: Regular live-streamed matches and social media integration foster a vibrant communal experience.
 
 ### Governance and Evolution

@@ -1,45 +1,18 @@
-import Skill "Skill";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
-import FieldPosition "FieldPosition";
 
 module {
-    public type TargetTeam = {
+    public type TargetTown = {
         #contextual;
-        #random : Nat; // Number of random teams
+        #random : Nat; // Number of random towns
         #chosen : [Nat];
         #all;
     };
 
-    public type ChosenOrRandomFieldPosition = {
-        #random;
-        #chosen : FieldPosition.FieldPosition;
-    };
-
-    public type ChosenOrRandomSkill = {
-        #random;
-        #chosen : Skill.Skill;
-    };
-
-    public type TargetPosition = {
-        team : TargetTeam;
-        position : ChosenOrRandomFieldPosition;
-    };
-
-    public type Duration = {
-        #indefinite;
-        #matches : Nat;
-    };
-
     public type ReverseEffect = {
-        #skill : {
-            playerId : Nat32;
-            skill : Skill.Skill;
-            deltaToRemove : Int;
-        };
         // TODO anomoly
         // #anomoly : {
-        //     teamId : Nat;
+        //     townId : Nat;
         //     anomoly : Anomoly.Anomoly;
         // };
     };
@@ -49,9 +22,6 @@ module {
         // #anomoly : AnomolyEffect;
         #entropyThreshold : EntropyThresholdEffect;
         #leagueIncome : LeagueIncomeEffect;
-        #teamTrait : TeamTraitEffect;
-        #skill : SkillEffect;
-        #injury : InjuryEffect;
         #entropy : EntropyEffect;
         #currency : CurrencyEffect;
         #oneOf : [WeightedEffect];
@@ -61,7 +31,7 @@ module {
 
     // TODO anomoly
     // public type AnomolyEffect = {
-    //     team : TargetTeam;
+    //     town : TargetTown;
     //     duration : Duration;
     //     anomoly : Anomoly.Anomoly;
     // };
@@ -74,24 +44,13 @@ module {
         delta : Int;
     };
 
-    public type SkillEffect = {
-        position : TargetPosition;
-        skill : ChosenOrRandomSkill;
-        duration : Duration;
-        delta : Int;
-    };
-
-    public type InjuryEffect = {
-        position : TargetPosition;
-    };
-
     public type EntropyEffect = {
-        team : TargetTeam;
+        town : TargetTown;
         delta : Int;
     };
 
     public type CurrencyEffect = {
-        team : TargetTeam;
+        town : TargetTown;
         value : {
             #flat : Int;
         };
@@ -103,53 +62,19 @@ module {
         description : Text;
     };
 
-    public type TeamTraitEffectKind = {
-        #add;
-        #remove;
+    public type TownEffectOutcome = {
+        #entropy : EntropyTownEffectOutcome;
+        #currency : CurrencyTownEffectOutcome;
     };
 
-    public type TeamTraitEffect = {
-        team : TargetTeam;
-        traitId : Text;
-        kind : TeamTraitEffectKind;
-    };
-
-    public type PlayerEffectOutcome = {
-        #skill : SkillPlayerEffectOutcome;
-        #injury : InjuryPlayerEffectOutcome;
-    };
-
-    public type SkillPlayerEffectOutcome = {
-        position : TargetPositionInstance;
-        skill : Skill.Skill;
-        duration : Duration;
+    public type EntropyTownEffectOutcome = {
+        townId : Nat;
         delta : Int;
     };
 
-    public type InjuryPlayerEffectOutcome = {
-        position : TargetPositionInstance;
-    };
-
-    public type TeamEffectOutcome = {
-        #entropy : EntropyTeamEffectOutcome;
-        #currency : CurrencyTeamEffectOutcome;
-        #teamTrait : TeamTraitTeamEffectOutcome;
-    };
-
-    public type EntropyTeamEffectOutcome = {
-        teamId : Nat;
+    public type CurrencyTownEffectOutcome = {
+        townId : Nat;
         delta : Int;
-    };
-
-    public type CurrencyTeamEffectOutcome = {
-        teamId : Nat;
-        delta : Int;
-    };
-
-    public type TeamTraitTeamEffectOutcome = {
-        teamId : Nat;
-        traitId : Text;
-        kind : TeamTraitEffectKind;
     };
 
     public type LeagueEffectOutcome = {
@@ -167,26 +92,22 @@ module {
 
     // TODO anomoly
     // public type AnomolyMatchEffectOutcome = {
-    //     teamId : Nat;
+    //     townId : Nat;
     //     anomoly : Anomoly.Anomoly;
     //     duration : Duration;
     // };
 
-    public type EffectOutcome = PlayerEffectOutcome or TeamEffectOutcome or LeagueEffectOutcome;
+    public type EffectOutcome = TownEffectOutcome or LeagueEffectOutcome;
 
-    public type TargetPositionInstance = {
-        teamId : Nat;
-        position : FieldPosition.FieldPosition;
+    public type Requirement = {
+        #size : RangeRequirement;
+        #entropy : RangeRequirement;
+        #age : RangeRequirement;
     };
 
-    public type TraitRequirement = {
-        id : Text;
-        kind : TraitRequirementKind;
-    };
-
-    public type TraitRequirementKind = {
-        #required;
-        #prohibited;
+    public type RangeRequirement = {
+        #above : Nat;
+        #below : Nat;
     };
 
     public type Scenario = {
@@ -213,9 +134,9 @@ module {
         title : Text;
         description : Text;
         currencyCost : Nat;
-        traitRequirements : [TraitRequirement];
-        teamEffect : Effect;
-        allowedTeamIds : [Nat];
+        requirements : [Requirement];
+        townEffect : Effect;
+        allowedTownIds : [Nat];
     };
 
     public type NoLeagueEffectScenario = {
@@ -278,13 +199,7 @@ module {
     };
 
     public type PropotionalBidPrizeKind = {
-        #skill : PropotionalBidPrizeSkill;
-    };
 
-    public type PropotionalBidPrizeSkill = {
-        skill : ChosenOrRandomSkill;
-        position : TargetPosition;
-        duration : Duration;
     };
 
     public type TextInputScenario = {
@@ -299,7 +214,7 @@ module {
     };
 
     public type ScenarioStateInProgress = {
-        optionsForTeam : [Nat];
+        optionsForTown : [Nat];
     };
 
     public type ScenarioStateResolved = {
@@ -310,8 +225,8 @@ module {
 
     public type ScenarioResolvedOptions = {
         undecidedOption : {
-            teamEffect : Effect;
-            chosenByTeamIds : [Nat];
+            townEffect : Effect;
+            chosenByTownIds : [Nat];
         };
         kind : ScenarioResolvedOptionsKind;
     };
@@ -327,15 +242,15 @@ module {
         title : Text;
         description : Text;
         currencyCost : Nat;
-        traitRequirements : [TraitRequirement];
-        teamEffect : Effect;
-        seenByTeamIds : [Nat];
-        chosenByTeamIds : [Nat];
+        requirements : [Requirement];
+        townEffect : Effect;
+        seenByTownIds : [Nat];
+        chosenByTownIds : [Nat];
     };
 
     public type ScenarioResolvedOptionRaw<T> = {
         value : T;
-        chosenByTeamIds : [Nat];
+        chosenByTownIds : [Nat];
     };
 
     public type ScenarioOutcome = {
@@ -353,7 +268,7 @@ module {
     };
 
     public type ThresholdContribution = {
-        teamId : Nat;
+        townId : Nat;
         amount : Int;
     };
 
@@ -362,7 +277,7 @@ module {
     };
 
     public type LotteryScenarioOutcome = {
-        winningTeamId : ?Nat;
+        winningTownId : ?Nat;
     };
 
     public type ProportionalBidScenarioOutcome = {
@@ -374,7 +289,7 @@ module {
     };
 
     public type ProportionalWinningBid = {
-        teamId : Nat;
+        townId : Nat;
         proportion : Nat;
     };
 

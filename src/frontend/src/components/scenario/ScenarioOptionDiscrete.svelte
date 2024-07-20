@@ -5,9 +5,9 @@
         TraitRequirement,
         VoteOnScenarioRequest,
     } from "../../ic-agent/declarations/main";
-    import { teamStore } from "../../stores/TeamStore";
+    import { townStore } from "../../stores/TownStore";
     import { traitStore } from "../../stores/TraitStore";
-    import TeamLogo from "../team/TeamLogo.svelte";
+    import TownLogo from "../town/TownLogo.svelte";
     import {
         QuestionCircleSolid,
         ThumbsDownSolid,
@@ -15,7 +15,7 @@
     } from "flowbite-svelte-icons";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { mainAgentFactory } from "../../ic-agent/Main";
-    import { Team } from "../../ic-agent/declarations/main";
+    import { Town } from "../../ic-agent/declarations/main";
 
     type State =
         | {
@@ -25,7 +25,7 @@
           }
         | {
               resolved: {
-                  chosenByTeamIds: bigint[];
+                  chosenByTownIds: bigint[];
               };
           };
 
@@ -36,13 +36,13 @@
         traitRequirements: TraitRequirement[];
     };
     export let scenarioId: bigint;
-    export let currency: { teamCurrency: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
+    export let currency: { townCurrency: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
     export let vote: ScenarioVote | "ineligible";
     export let state: State;
 
     $: meetsCurrencyRequirements =
-        currency !== undefined && currency.cost <= currency.teamCurrency;
+        currency !== undefined && currency.cost <= currency.townCurrency;
 
     $: selectable =
         "inProgress" in state &&
@@ -57,11 +57,11 @@
             ? "opacity-50 cursor-not-allowed"
             : "";
 
-    let teamsWithOption: Team[] | undefined = undefined;
-    teamStore.subscribe((teams) => {
-        teamsWithOption = teams?.filter((t) => {
+    let townsWithOption: Town[] | undefined = undefined;
+    townStore.subscribe((towns) => {
+        townsWithOption = towns?.filter((t) => {
             if ("resolved" in state) {
-                return state.resolved.chosenByTeamIds.includes(t.id);
+                return state.resolved.chosenByTownIds.includes(t.id);
             }
             return false;
         });
@@ -97,7 +97,7 @@
 
     let voteForOption = async function () {
         if (vote === "ineligible") {
-            console.error("Team is ineligible to vote for this option");
+            console.error("Town is ineligible to vote for this option");
             return;
         }
         let request: VoteOnScenarioRequest = {
@@ -105,24 +105,24 @@
             value: { id: BigInt(option.id) },
         };
         console.log(
-            `Voting for team ${vote.teamId} and scenario ${scenarioId} with option ${option.id}`,
+            `Voting for town ${vote.townId} and scenario ${scenarioId} with option ${option.id}`,
             request,
         );
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.voteOnScenario(request);
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
-            teamStore.refetch();
+            townStore.refetch();
             scenarioStore.refetchVotes([scenarioId]);
         } else {
             console.error("Failed to vote for match: ", result);
         }
     };
 
-    $: teamOption =
-        vote === "ineligible" || !("discrete" in vote.teamOptions)
+    $: townOption =
+        vote === "ineligible" || !("discrete" in vote.townOptions)
             ? undefined
-            : vote.teamOptions.discrete.find((v) => v.id === BigInt(option.id));
+            : vote.townOptions.discrete.find((v) => v.id === BigInt(option.id));
 </script>
 
 <div
@@ -145,11 +145,11 @@
         {#if currency !== undefined && currency.cost > 0}
             <div class="text-xl text-center">{currency.cost} 💰</div>
         {/if}
-        {#if teamOption === undefined}
+        {#if townOption === undefined}
             <div class="text-center text-xl font-bold">Ineligible to vote</div>
         {:else}
             <div>
-                Team Votes: {teamOption.currentVotingPower}
+                Town Votes: {townOption.currentVotingPower}
             </div>
         {/if}
         {#each requirements as { name, icon, color }}
@@ -159,10 +159,10 @@
             </Badge>
         {/each}
     </div>
-    {#if "resolved" in state && teamsWithOption !== undefined}
+    {#if "resolved" in state && townsWithOption !== undefined}
         <div class="flex items-center justify-center">
-            {#each teamsWithOption as team}
-                <TeamLogo {team} size="xs" />
+            {#each townsWithOption as town}
+                <TownLogo {town} size="xs" />
             {/each}
         </div>
     {/if}

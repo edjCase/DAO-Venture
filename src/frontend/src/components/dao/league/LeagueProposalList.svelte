@@ -13,16 +13,16 @@
 
     $: genericProposals = proposals.map((p) => {
         let title;
-        if ("changeTeamName" in p.content) {
-            title = "Change Team Name ";
-        } else if ("changeTeamColor" in p.content) {
-            title = "Change Team Color";
-        } else if ("changeTeamDescription" in p.content) {
-            title = "Change Team Description";
-        } else if ("changeTeamLogo" in p.content) {
-            title = "Change Team Logo";
-        } else if ("changeTeamMotto" in p.content) {
-            title = "Change Team Motto";
+        if ("changeTownName" in p.content) {
+            title = "Change Town Name ";
+        } else if ("changeTownColor" in p.content) {
+            title = "Change Town Color";
+        } else if ("changeTownDescription" in p.content) {
+            title = "Change Town Description";
+        } else if ("changeTownLogo" in p.content) {
+            title = "Change Town Logo";
+        } else if ("changeTownMotto" in p.content) {
+            title = "Change Town Motto";
         } else if ("motion" in p.content) {
             title = p.content.motion.title;
         } else {
@@ -38,13 +38,13 @@
         };
     });
 
-    let unsubscribeToTeamProposals = proposalStore.subscribeToLeague(
+    let unsubscribeToTownProposals = proposalStore.subscribeToLeague(
         (updatedProposals) => {
             proposals = updatedProposals;
         },
     );
     onDestroy(() => {
-        unsubscribeToTeamProposals();
+        unsubscribeToTownProposals();
     });
 
     let onVote = async (proposalId: bigint, vote: boolean) => {

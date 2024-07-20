@@ -7,7 +7,7 @@
     import FormTemplate from "./FormTemplate.svelte";
     import { ProposalContent } from "../../../../ic-agent/declarations/main";
 
-    export let teamId: bigint;
+    export let townId: bigint;
     let skillTypes = [
         {
             value: "speed",
@@ -146,7 +146,7 @@
     };
 </script>
 
-<FormTemplate {generateProposal} {teamId}>
+<FormTemplate {generateProposal} {townId}>
     <div class="p-2">Train the player in the position specified.</div>
     <div class="p-2">
         Increases skill to the next level at the cost of currency equal to the

@@ -5,20 +5,20 @@
     import { mainAgentFactory } from "../../ic-agent/Main";
     import UserIdCopyButton from "../user/UserIdCopyButton.svelte";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
     let members: UserVotingInfo[] | undefined;
 
-    let refreshUsers = async (teamId: bigint) => {
+    let refreshUsers = async (townId: bigint) => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.getTeamOwners({ team: teamId });
+        let result = await mainAgent.getTownOwners({ town: townId });
         if ("ok" in result) {
             members = result.ok;
         } else {
-            console.error("Failed to get team owners: ", result);
+            console.error("Failed to get town owners: ", result);
         }
     };
-    $: refreshUsers(teamId);
+    $: refreshUsers(townId);
 </script>
 
 {#if members}

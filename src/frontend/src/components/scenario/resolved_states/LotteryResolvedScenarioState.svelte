@@ -1,22 +1,22 @@
 <script lang="ts">
     import { LotteryScenarioOutcome } from "../../../ic-agent/declarations/main";
-    import { Team } from "../../../ic-agent/declarations/main";
-    import TeamLogo from "../../team/TeamLogo.svelte";
+    import { Town } from "../../../ic-agent/declarations/main";
+    import TownLogo from "../../town/TownLogo.svelte";
 
     export let outcome: LotteryScenarioOutcome;
-    export let teams: Team[];
+    export let towns: Town[];
 
-    $: winningTeam =
-        outcome.winningTeamId[0] !== undefined
-            ? teams.find((team) => team.id === outcome.winningTeamId[0])
+    $: winningTown =
+        outcome.winningTownId[0] !== undefined
+            ? towns.find((town) => town.id === outcome.winningTownId[0])
             : undefined;
 </script>
 
 <div class="text-xl text-center mb-8">
     Winner
-    {#if winningTeam === undefined}
+    {#if winningTown === undefined}
         <div>NONE</div>
     {:else}
-        <TeamLogo team={winningTeam} size="md" />
+        <TownLogo town={winningTown} size="md" />
     {/if}
 </div>

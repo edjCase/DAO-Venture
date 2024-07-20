@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { CurrencyTeamEffectOutcome } from "../../../ic-agent/declarations/main";
-    import { Team } from "../../../ic-agent/declarations/main";
+    import { CurrencyTownEffectOutcome } from "../../../ic-agent/declarations/main";
+    import { Town } from "../../../ic-agent/declarations/main";
 
-    export let value: CurrencyTeamEffectOutcome;
-    export let teams: Team[];
+    export let value: CurrencyTownEffectOutcome;
+    export let towns: Town[];
 
     let absDelta = Math.abs(Number(value.delta));
     let gainOrLoss = value.delta >= 0 ? "+" : "-";
 
-    $: teamName = teams?.find((team) => team.id === value.teamId)?.name ?? "";
+    $: townName = towns?.find((town) => town.id === value.townId)?.name ?? "";
 </script>
 
 <div>
-    Team {teamName}
+    Town {townName}
     {gainOrLoss}{absDelta} 💰
 </div>

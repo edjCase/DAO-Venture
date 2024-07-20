@@ -3,7 +3,7 @@
     import { ProposalContent } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
     let description: string | undefined;
 
@@ -19,8 +19,8 @@
     };
 </script>
 
-<FormTemplate {generateProposal} {teamId}>
-    <div class="p-2">Updates the description of the team.</div>
+<FormTemplate {generateProposal} {townId}>
+    <div class="p-2">Updates the description of the town.</div>
     <div class="p-2">Requires a league approval vote.</div>
     <Label>Description</Label>
     <Input type="text" bind:value={description} />

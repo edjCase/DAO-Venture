@@ -1,46 +1,46 @@
 <!-- <script lang="ts">
   import { MatchDetails } from "../../models/Match";
 
-  import { LiveMatch, LiveTeamDetails } from "../../stores/LiveMatchGroupStore";
-  import { teamStore } from "../../stores/TeamStore";
+  import { LiveMatch, LiveTownDetails } from "../../stores/LiveMatchGroupStore";
+  import { townStore } from "../../stores/TownStore";
   import Field from "./Field.svelte";
-  import TeamFieldInfo from "./TeamFieldInfo.svelte";
+  import TownFieldInfo from "./TownFieldInfo.svelte";
 
   export let match: MatchDetails;
   export let liveMatch: LiveMatch;
 
-  let offenseTeam: LiveTeamDetails | undefined;
-  let defenseTeam: LiveTeamDetails | undefined;
+  let offenseTown: LiveTownDetails | undefined;
+  let defenseTown: LiveTownDetails | undefined;
   let winner: string | undefined;
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
 
   $: {
-    if ("score" in match.team1 && "score" in match.team2) {
-      match.team1.score = liveMatch.team1.score;
-      match.team2.score = liveMatch.team2.score;
+    if ("score" in match.town1 && "score" in match.town2) {
+      match.town1.score = liveMatch.town1.score;
+      match.town2.score = liveMatch.town2.score;
     }
     if (liveMatch) {
       match.winner = liveMatch.winner;
     }
-    if (match.winner && "id" in match.team1 && "id" in match.team2) {
-      let team1Id = match.team1.id;
-      let team2Id = match.team2.id;
-      if ("team1" in match.winner) {
-        winner = teams?.find((t) => t.id == team1Id)?.name;
-      } else if ("team2" in match.winner) {
-        winner = teams?.find((t) => t.id == team2Id)?.name;
+    if (match.winner && "id" in match.town1 && "id" in match.town2) {
+      let town1Id = match.town1.id;
+      let town2Id = match.town2.id;
+      if ("town1" in match.winner) {
+        winner = towns?.find((t) => t.id == town1Id)?.name;
+      } else if ("town2" in match.winner) {
+        winner = towns?.find((t) => t.id == town2Id)?.name;
       } else {
         winner = "Tie";
       }
     }
     if (liveMatch.liveState) {
-      if ("team1" in liveMatch.liveState.offenseTeamId) {
-        offenseTeam = liveMatch.team1;
-        defenseTeam = liveMatch.team2;
-      } else if ("team2" in liveMatch.liveState.offenseTeamId) {
-        offenseTeam = liveMatch.team2;
-        defenseTeam = liveMatch.team1;
+      if ("town1" in liveMatch.liveState.offenseTownId) {
+        offenseTown = liveMatch.town1;
+        defenseTown = liveMatch.town2;
+      } else if ("town2" in liveMatch.liveState.offenseTownId) {
+        offenseTown = liveMatch.town2;
+        defenseTown = liveMatch.town1;
       }
     }
   }
@@ -52,22 +52,22 @@
       Round {liveMatch.log?.rounds.length}
     </div>
     <div class="absolute top-[300px] left-[5%]">
-        {#if "id" in match.team1 && "id" in match.team2}
+        {#if "id" in match.town1 && "id" in match.town2}
           {#each lastTurn.events as e}
             <MatchEvent
               event={e}
-              team1Id={match.team1.id}
-              team2Id={match.team2.id}
+              town1Id={match.town1.id}
+              town2Id={match.town2.id}
             />
           {/each}
         {/if}
       </div>
-    {#if defenseTeam}
-      <TeamFieldInfo team={defenseTeam} isOffense={false} />
+    {#if defenseTown}
+      <TownFieldInfo town={defenseTown} isOffense={false} />
     {/if}
     <Field match={liveMatch} />
-    {#if offenseTeam}
-      <TeamFieldInfo team={offenseTeam} isOffense={true} />
+    {#if offenseTown}
+      <TownFieldInfo town={offenseTown} isOffense={true} />
     {/if}
   {:else if winner}
     <div class="text-center text-3xl mb-5">

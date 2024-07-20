@@ -4,7 +4,7 @@
         AddScenarioRequest,
         Scenario,
     } from "../../ic-agent/declarations/main";
-    import { teamStore } from "../../stores/TeamStore";
+    import { townStore } from "../../stores/TownStore";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { dateToNanoseconds } from "../../utils/DateUtils";
     import LoadingButton from "../common/LoadingButton.svelte";
@@ -12,7 +12,7 @@
     import { Button, Label, Select, Toggle } from "flowbite-svelte";
     import { toJsonString } from "../../utils/StringUtil";
 
-    $: teams = $teamStore;
+    $: towns = $townStore;
     $: scenarios = $scenarioStore;
 
     let initialEnd = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3);
@@ -24,7 +24,7 @@
         endTime: dateToNanoseconds(initialEnd),
         undecidedEffect: {
             entropy: {
-                team: { contextual: null },
+                town: { contextual: null },
                 delta: BigInt(1),
             },
         },
@@ -40,8 +40,8 @@
             console.error("Scenario not loaded. Cannot add scenario.");
             return;
         }
-        if (!teams) {
-            console.error("Teams have not loaded. Cannot add scenario.");
+        if (!towns) {
+            console.error("Towns have not loaded. Cannot add scenario.");
             return;
         }
         let mainAgent = await mainAgentFactory();

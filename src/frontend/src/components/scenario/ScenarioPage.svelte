@@ -62,15 +62,15 @@
                     more
                 </li>
                 <li>
-                    🔥: The measure of chaos in the team and league. 0 is
+                    🔥: The measure of chaos in the town and league. 0 is
                     ordered and any additional value is more chaotic Too much
-                    entropy can negatively affect the team and if the total
+                    entropy can negatively affect the town and if the total
                     entropy of the league exceeds the threshold, the league will
                     collapse
                 </li>
                 <li>
-                    💰: The money of the team. It can be used as a currency for
-                    scenarios and training the team
+                    💰: The money of the town. It can be used as a currency for
+                    scenarios and training the town
                 </li>
             </ul>
         </div>

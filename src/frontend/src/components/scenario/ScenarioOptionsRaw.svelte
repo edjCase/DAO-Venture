@@ -1,12 +1,12 @@
 <script lang="ts">
     import {
         ScenarioOptionValue,
-        ScenarioTeamOptionNat,
-        ScenarioTeamOptionText,
+        ScenarioTownOptionNat,
+        ScenarioTownOptionText,
         VoteOnScenarioRequest,
     } from "../../ic-agent/declarations/main";
     import { mainAgentFactory } from "../../ic-agent/Main";
-    import { teamStore } from "../../stores/TeamStore";
+    import { townStore } from "../../stores/TownStore";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionNat from "./ScenarioOptionNat.svelte";
     import BigIntInput from "./editors/BigIntInput.svelte";
@@ -15,20 +15,20 @@
     import ScenarioOptionText from "./ScenarioOptionText.svelte";
     import { Input } from "flowbite-svelte";
     export let scenarioId: bigint;
-    export let teamId: bigint;
+    export let townId: bigint;
     export let proposeName: string;
     export let kind:
         | {
               nat: {
-                  options: ScenarioTeamOptionNat[];
+                  options: ScenarioTownOptionNat[];
                   icon: string;
-                  teamCurrency: bigint | undefined;
+                  townCurrency: bigint | undefined;
                   vote: bigint | undefined;
               };
           }
         | {
               text: {
-                  options: ScenarioTeamOptionText[];
+                  options: ScenarioTownOptionText[];
                   vote: string | undefined;
               };
           };
@@ -54,10 +54,10 @@
                 return;
             }
             if (
-                kind.nat.teamCurrency === undefined ||
-                value > kind.nat.teamCurrency
+                kind.nat.townCurrency === undefined ||
+                value > kind.nat.townCurrency
             ) {
-                console.error("Value exceeds team currency");
+                console.error("Value exceeds town currency");
                 return;
             }
             optionValue = { nat: value };
@@ -82,7 +82,7 @@
             value: optionValue,
         };
         console.log(
-            `Voting for team ${teamId} and scenario ${scenarioId} with value:`,
+            `Voting for town ${townId} and scenario ${scenarioId} with value:`,
             value,
             request,
         );
@@ -90,7 +90,7 @@
         let result = await mainAgent.voteOnScenario(request);
         if ("ok" in result) {
             console.log("Voted for scenario", request.scenarioId);
-            teamStore.refetch();
+            townStore.refetch();
             scenarioStore.refetchVotes([scenarioId]);
         } else {
             console.error("Failed to vote for match: ", result);
@@ -111,7 +111,7 @@
                     <ScenarioOptionNat
                         {option}
                         selected={kind.nat.vote === option.value}
-                        teamCurrency={kind.nat.teamCurrency}
+                        townCurrency={kind.nat.townCurrency}
                         icon={kind.nat.icon}
                         onSelect={() => {
                             value = option.value;

@@ -1,12 +1,12 @@
 import { describe, beforeEach, afterEach, it, expect, inject } from 'vitest';
 import { init as leagueInit, idlFactory as leagueIdlFactory, type _SERVICE as LEAGUE_SERVICE, VoteOnScenarioResult } from '../../src/ic-agent/declarations/main';
-import { init as teamsInit, idlFactory as teamsIdlFactory, type _SERVICE as TEAMS_SERVICE } from '../../src/ic-agent/declarations/main';
+import { init as townsInit, idlFactory as townsIdlFactory, type _SERVICE as TEAMS_SERVICE } from '../../src/ic-agent/declarations/main';
 import { init as playersInit, idlFactory as playersIdlFactory, type _SERVICE as PLAYERS_SERVICE } from '../../src/ic-agent/declarations/main';
-import { init as usersInit, idlFactory as usersIdlFactory, type _SERVICE as USERS_SERVICE, AddTeamOwnerResult } from '../../src/ic-agent/declarations/main';
+import { init as usersInit, idlFactory as usersIdlFactory, type _SERVICE as USERS_SERVICE, AddTownOwnerResult } from '../../src/ic-agent/declarations/main';
 import { init as stadiumInit, idlFactory as stadiumIdlFactory, type _SERVICE as STADIUM_SERVICE } from '../../src/ic-agent/declarations/main';
-import { teams as teamData } from "../../src/data/TeamData";
+import { towns as townData } from "../../src/data/TownData";
 import { players as playerData } from "../../src/data/PlayerData";
-import { teamTraits as traitData } from "../../src/data/TeamTraitData";
+import { townTraits as traitData } from "../../src/data/TownTraitData";
 import { resolve } from 'path';
 import { Actor, PocketIc, generateRandomIdentity } from '@hadronous/pic';
 import { Principal } from '@dfinity/principal';
@@ -25,7 +25,7 @@ const basePath = resolve(
     'canisters'
 );
 export const LEAGUE_WASM_PATH = resolve(basePath, "league", 'league.wasm');
-export const TEAMS_WASM_PATH = resolve(basePath, "teams", 'teams.wasm');
+export const TEAMS_WASM_PATH = resolve(basePath, "towns", 'towns.wasm');
 export const PLAYERS_WASM_PATH = resolve(basePath, "players", 'players.wasm');
 export const STADIUM_WASM_PATH = resolve(basePath, "stadium", 'stadium.wasm');
 export const USERS_WASM_PATH = resolve(basePath, "users", 'users.wasm');
@@ -38,14 +38,14 @@ describe('Test suite name', () => {
     // and an actor to interact with our canister.
     let pic: PocketIc;
     let leagueActor: Actor<LEAGUE_SERVICE>;
-    let teamsActor: Actor<TEAMS_SERVICE>;
+    let townsActor: Actor<TEAMS_SERVICE>;
     let playersActor: Actor<PLAYERS_SERVICE>;
     let stadiumActor: Actor<STADIUM_SERVICE>;
     let usersActor: Actor<USERS_SERVICE>;
 
-    const usersPerTeam = 10;
+    const usersPerTown = 10;
 
-    let teams: { userIds: Principal[] }[] = [];
+    let towns: { userIds: Principal[] }[] = [];
 
     let bdfnPrincipal = Principal.fromText("zedmc-7yeiu-fmd5m-c7nun-r3unf-qap5y-drgdf-ozckp-gzuzn-wj4n4-6qe");
     const oneDayInNanos = BigInt(60 * 60 * 24 * 1_000_000_000);
@@ -62,14 +62,14 @@ describe('Test suite name', () => {
 
         // Create empty canisters
         const leagueCanisterId = await pic.createCanister();
-        const teamsCanisterId = await pic.createCanister();
+        const townsCanisterId = await pic.createCanister();
         const playersCanisterId = await pic.createCanister();
         const stadiumCanisterId = await pic.createCanister();
         const usersCanisterId = await pic.createCanister();
 
         // Install League canister
         await pic.installCode({
-            arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal], [usersCanisterId, teamsCanisterId, playersCanisterId, stadiumCanisterId]),
+            arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal, IDL.Principal], [usersCanisterId, townsCanisterId, playersCanisterId, stadiumCanisterId]),
             canisterId: leagueCanisterId,
             wasm: LEAGUE_WASM_PATH
         })
@@ -77,20 +77,20 @@ describe('Test suite name', () => {
         leagueActor.setPrincipal(bdfnPrincipal);
 
 
-        // Install Teams canisterq
+        // Install Towns canisterq
         await pic.installCode({
             arg: IDL.encode([IDL.Principal, IDL.Principal, IDL.Principal], [leagueCanisterId, usersCanisterId, playersCanisterId]),
-            canisterId: teamsCanisterId,
+            canisterId: townsCanisterId,
             wasm: TEAMS_WASM_PATH
         });
 
-        teamsActor = await pic.createActor(teamsIdlFactory, teamsCanisterId);
-        teamsActor.setPrincipal(bdfnPrincipal);
+        townsActor = await pic.createActor(townsIdlFactory, townsCanisterId);
+        townsActor.setPrincipal(bdfnPrincipal);
 
 
         // Install Players canister
         await pic.installCode({
-            arg: IDL.encode([IDL.Principal, IDL.Principal], [leagueCanisterId, teamsCanisterId]),
+            arg: IDL.encode([IDL.Principal, IDL.Principal], [leagueCanisterId, townsCanisterId]),
             canisterId: playersCanisterId,
             wasm: PLAYERS_WASM_PATH
         });
@@ -126,8 +126,8 @@ describe('Test suite name', () => {
         expect(response).toEqual({ 'ok': null });
 
         await createPlayers();
-        await createTeams();
-        await createTeamTraits();
+        await createTowns();
+        await createTownTraits();
     });
 
     let createPlayers = async function () {
@@ -146,32 +146,32 @@ describe('Test suite name', () => {
         }
     };
 
-    let createTeams = async function (): Promise<void> {
-        for (let i = 0; i < teamData.length; i++) {
-            let team = teamData[i];
-            let result = await leagueActor.createTeam(team);
+    let createTowns = async function (): Promise<void> {
+        for (let i = 0; i < townData.length; i++) {
+            let town = townData[i];
+            let result = await leagueActor.createTown(town);
             expect(result).toEqual({ 'ok': BigInt(i) });
 
             let userIds: Principal[] = [];
-            for (let j = 0; j < usersPerTeam; j++) {
+            for (let j = 0; j < usersPerTown; j++) {
                 let userIdentity = generateRandomIdentity();
-                let userResult = await usersActor.addTeamOwner({
-                    teamId: BigInt(i),
+                let userResult = await usersActor.addTownOwner({
+                    townId: BigInt(i),
                     userId: useruser.id,
                     votingPower: BigInt(1)
                 });
                 expect(userResult).toEqual({ 'ok': null });
                 userIds.push(useruser.id);
             }
-            teams.push({ userIds });
+            towns.push({ userIds });
         }
     };
 
 
-    let createTeamTraits = async function () {
+    let createTownTraits = async function () {
         for (let i = 0; i < traitData.length; i++) {
             let trait = traitData[i];
-            let result = await teamsActor.createTeamTrait(trait);
+            let result = await townsActor.createTownTrait(trait);
             expect(result).toEqual({ 'ok': null });
         }
     };
@@ -208,7 +208,7 @@ describe('Test suite name', () => {
                             description: "Option 1",
                             traitRequirements: [],
                             currencyCost: BigInt(0),
-                            teamEffect: {
+                            townEffect: {
                                 currency: {
                                     target: {
                                         contextual: null
@@ -224,7 +224,7 @@ describe('Test suite name', () => {
                             description: "Option 2",
                             traitRequirements: [],
                             currencyCost: BigInt(0),
-                            teamEffect: {
+                            townEffect: {
                                 currency: {
                                     target: {
                                         contextual: null
@@ -255,7 +255,7 @@ describe('Test suite name', () => {
                     "noLeagueEffect": {
                         "options": [
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -265,7 +265,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 1",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -279,7 +279,7 @@ describe('Test suite name', () => {
                                 "traitRequirements": []
                             },
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -289,7 +289,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 2",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -323,10 +323,10 @@ describe('Test suite name', () => {
 
 
         let hasOneOk = false;
-        for (let i = 0; i < teams.length; i++) {
-            let team = teams[i];
-            for (let j = 0; j < team.userIds.length; j++) {
-                let userId = team.userIds[j];
+        for (let i = 0; i < towns.length; i++) {
+            let town = towns[i];
+            for (let j = 0; j < town.userIds.length; j++) {
+                let userId = town.userIds[j];
                 leagueActor.setPrincipal(userId);
                 let voteResult = await leagueActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
 
@@ -343,8 +343,8 @@ describe('Test suite name', () => {
 
                 expect(getVoteResult).toEqual({
                     "ok": {
-                        "teamId": BigInt(i),
-                        "teamOptions": {
+                        "townId": BigInt(i),
+                        "townOptions": {
                             'discrete': [
                                 {
                                     "currentVotingPower": BigInt(j + 1),
@@ -364,7 +364,7 @@ describe('Test suite name', () => {
                                 }
                             ]
                         },
-                        "teamVotingPower": BigInt(usersPerTeam),
+                        "townVotingPower": BigInt(usersPerTown),
                         "votingPower": BigInt(1),
                         "value": [{ id: BigInt(0) }]
                     }
@@ -387,7 +387,7 @@ describe('Test suite name', () => {
                     "noLeagueEffect": {
                         "options": [
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -397,7 +397,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 1",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -411,7 +411,7 @@ describe('Test suite name', () => {
                                 "traitRequirements": []
                             },
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -421,7 +421,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 2",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -446,42 +446,42 @@ describe('Test suite name', () => {
                                 {
                                     "id": 0n,
                                     "title": "Option 1",
-                                    "teamEffect": {
+                                    "townEffect": {
                                         "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
                                     },
-                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 1",
                                     "traitRequirements": [],
-                                    "chosenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "chosenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "currencyCost": 0n
                                 },
                                 {
                                     "id": 1n,
                                     "title": "Option 2",
-                                    "teamEffect": {
+                                    "townEffect": {
                                         "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
                                     },
-                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 2",
                                     "traitRequirements": [],
-                                    "chosenByTeamIds": [],
+                                    "chosenByTownIds": [],
                                     "currencyCost": 0n
                                 }
                             ]
                         },
                         "effectOutcomes": [
-                            { "currency": { "teamId": 0n, "delta": 1n } },
-                            { "currency": { "teamId": 1n, "delta": 1n } },
-                            { "currency": { "teamId": 2n, "delta": 1n } },
-                            { "currency": { "teamId": 3n, "delta": 1n } },
-                            { "currency": { "teamId": 4n, "delta": 1n } },
-                            { "currency": { "teamId": 5n, "delta": 1n } }
+                            { "currency": { "townId": 0n, "delta": 1n } },
+                            { "currency": { "townId": 1n, "delta": 1n } },
+                            { "currency": { "townId": 2n, "delta": 1n } },
+                            { "currency": { "townId": 3n, "delta": 1n } },
+                            { "currency": { "townId": 4n, "delta": 1n } },
+                            { "currency": { "townId": 5n, "delta": 1n } }
                         ]
                     }
                 },
@@ -556,7 +556,7 @@ describe('Test suite name', () => {
                     "noLeagueEffect": {
                         "options": [
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -566,7 +566,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 1",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -580,7 +580,7 @@ describe('Test suite name', () => {
                                 "traitRequirements": []
                             },
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -590,7 +590,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 2",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -623,10 +623,10 @@ describe('Test suite name', () => {
         });
 
         let hasOneOk = false;
-        for (let i = 0; i < teams.length; i++) {
-            let team = teams[i];
-            for (let j = 0; j < team.userIds.length; j++) {
-                let userId = team.userIds[j];
+        for (let i = 0; i < towns.length; i++) {
+            let town = towns[i];
+            for (let j = 0; j < town.userIds.length; j++) {
+                let userId = town.userIds[j];
                 leagueActor.setPrincipal(userId);
                 let voteResult = await leagueActor.voteOnScenario({ scenarioId: BigInt(0), value: { 'id': BigInt(0) } });
 
@@ -643,8 +643,8 @@ describe('Test suite name', () => {
 
                 expect(getVoteResult).toEqual({
                     "ok": {
-                        "teamId": BigInt(i),
-                        "teamOptions": {
+                        "townId": BigInt(i),
+                        "townOptions": {
                             'discrete': [
                                 {
                                     "currentVotingPower": BigInt(j + 1),
@@ -664,7 +664,7 @@ describe('Test suite name', () => {
                                 }
                             ]
                         },
-                        "teamVotingPower": BigInt(usersPerTeam),
+                        "townVotingPower": BigInt(usersPerTown),
                         "votingPower": BigInt(1),
                         "value": [{ id: BigInt(0) }]
                     }
@@ -687,7 +687,7 @@ describe('Test suite name', () => {
                     "noLeagueEffect": {
                         "options": [
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -697,7 +697,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 1",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -711,7 +711,7 @@ describe('Test suite name', () => {
                                 "traitRequirements": []
                             },
                             {
-                                "allowedTeamIds": [
+                                "allowedTownIds": [
                                     0n,
                                     1n,
                                     2n,
@@ -721,7 +721,7 @@ describe('Test suite name', () => {
                                 ],
                                 "description": "Option 2",
                                 "currencyCost": 0n,
-                                "teamEffect": {
+                                "townEffect": {
                                     "currency": {
                                         "target": {
                                             "contextual": null
@@ -746,42 +746,42 @@ describe('Test suite name', () => {
                                 {
                                     "id": 0n,
                                     "title": "Option 1",
-                                    "teamEffect": {
+                                    "townEffect": {
                                         "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
                                     },
-                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 1",
                                     "traitRequirements": [],
-                                    "chosenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "chosenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "currencyCost": 0n
                                 },
                                 {
                                     "id": 1n,
                                     "title": "Option 2",
-                                    "teamEffect": {
+                                    "townEffect": {
                                         "currency": {
                                             "value": { "flat": 1n },
                                             "target": { "contextual": null }
                                         }
                                     },
-                                    "seenByTeamIds": [0n, 1n, 2n, 3n, 4n, 5n],
+                                    "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 2",
                                     "traitRequirements": [],
-                                    "chosenByTeamIds": [],
+                                    "chosenByTownIds": [],
                                     "currencyCost": 0n
                                 }
                             ]
                         },
                         "effectOutcomes": [
-                            { "currency": { "teamId": 0n, "delta": 1n } },
-                            { "currency": { "teamId": 1n, "delta": 1n } },
-                            { "currency": { "teamId": 2n, "delta": 1n } },
-                            { "currency": { "teamId": 3n, "delta": 1n } },
-                            { "currency": { "teamId": 4n, "delta": 1n } },
-                            { "currency": { "teamId": 5n, "delta": 1n } }
+                            { "currency": { "townId": 0n, "delta": 1n } },
+                            { "currency": { "townId": 1n, "delta": 1n } },
+                            { "currency": { "townId": 2n, "delta": 1n } },
+                            { "currency": { "townId": 3n, "delta": 1n } },
+                            { "currency": { "townId": 4n, "delta": 1n } },
+                            { "currency": { "townId": 5n, "delta": 1n } }
                         ]
                     }
                 },

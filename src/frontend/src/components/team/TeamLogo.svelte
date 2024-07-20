@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { TeamOrUndetermined } from "../../models/Team";
+  import { TownOrUndetermined } from "../../models/Town";
   import { toRgbString } from "../../utils/StringUtil";
 
-  export let team: TeamOrUndetermined;
+  export let town: TownOrUndetermined;
   export let size: "xxs" | "xs" | "sm" | "md" | "lg" | undefined;
   export let border: boolean = true;
   export let padding: boolean = true;
@@ -10,22 +10,22 @@
   export let name: "left" | "right" | undefined = undefined;
 
   $: logoUrl =
-    "logoUrl" in team ? team.logoUrl : "/images/team-logos/unknown.png";
+    "logoUrl" in town ? town.logoUrl : "/images/town-logos/unknown.png";
   $: title =
-    "name" in team
-      ? team.name
-      : "winnerOfMatch" in team
+    "name" in town
+      ? town.name
+      : "winnerOfMatch" in town
         ? "Winner of previous match group"
-        : "Team with rank of: " + (team.seasonStandingIndex + 1);
+        : "Town with rank of: " + (town.seasonStandingIndex + 1);
   $: triggerId =
-    "teamLogo_" +
-    ("id" in team
-      ? team.id.toString()
-      : "winnerOfMatch" in team
-        ? "W" + team.winnerOfMatch
-        : "S" + team.seasonStandingIndex);
+    "townLogo_" +
+    ("id" in town
+      ? town.id.toString()
+      : "winnerOfMatch" in town
+        ? "W" + town.winnerOfMatch
+        : "S" + town.seasonStandingIndex);
 
-  $: teamColor = "color" in team ? toRgbString(team.color) : "grey";
+  $: townColor = "color" in town ? toRgbString(town.color) : "grey";
   let imageWidth: number;
   let borderSize: number;
   $: {
@@ -69,16 +69,16 @@
       alt={title}
       {title}
       style={`width: ${imageWidth}px; height: ${imageWidth}px; ` +
-        (border ? `border: ${borderSize}px solid ` + teamColor : "")}
+        (border ? `border: ${borderSize}px solid ` + townColor : "")}
     />
-    {#if stats && "currency" in team}
+    {#if stats && "currency" in town}
       <div class="flex items-center justify-center font-bold">
         <div class="flex items-center justify-center mx-1">
-          <span class="">{team.currency}</span>
+          <span class="">{town.currency}</span>
           <span class="text-md">💰</span>
         </div>
         <div class="flex items-center justify-center">
-          <span class="">{team.entropy}</span>
+          <span class="">{town.entropy}</span>
           <span class="text-md">🔥</span>
         </div>
       </div>

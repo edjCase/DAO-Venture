@@ -21,7 +21,7 @@
         <h3 class="text-xl font-semibold mb-3 text-gray-100">Regular Season</h3>
         <ul class="list-disc list-inside text-sm">
           <li>Format: <strong>Round Robin</strong></li>
-          <li>Each team plays others <strong>once</strong></li>
+          <li>Each town plays others <strong>once</strong></li>
           <li>Matches occur every <strong>2 Days</strong></li>
           <li>
             All matches in a group happen <strong>simultaneously</strong>

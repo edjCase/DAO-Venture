@@ -1,11 +1,11 @@
 <script lang="ts">
     import { Input, Label } from "flowbite-svelte";
     import { mainAgentFactory } from "../../ic-agent/Main";
-    import { CreateTeamTraitRequest } from "../../ic-agent/declarations/main";
+    import { CreateTownTraitRequest } from "../../ic-agent/declarations/main";
     import LoadingButton from "../common/LoadingButton.svelte";
     import { traitStore } from "../../stores/TraitStore";
 
-    let trait: CreateTeamTraitRequest = {
+    let trait: CreateTownTraitRequest = {
         id: "",
         name: "",
         description: "",
@@ -17,7 +17,7 @@
             return;
         }
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.createTeamTrait(trait);
+        let result = await mainAgent.createTownTrait(trait);
         if ("ok" in result) {
             console.log("Created trait: ", trait);
             traitStore.refetch();

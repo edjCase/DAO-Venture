@@ -6,14 +6,14 @@
     import { toJsonString } from "../../../../utils/StringUtil";
 
     export let content: TrainContent;
-    export let teamId: bigint;
+    export let townId: bigint;
 
     // TODO this doesn't work for executed proposals, since its the current level
     let currentLevel: bigint | undefined;
     playerStore.subscribe((players) => {
         let player = players?.find(
             (p) =>
-                p.teamId == teamId &&
+                p.townId == townId &&
                 Object.keys(p.position)[0] == Object.keys(content.position)[0],
         );
         if (player) {

@@ -20,17 +20,17 @@
                         {
                             title: "Contribute",
                             description:
-                                "Contribute 1 to the threshold, but -1 random skill to a random player on the team for a match.",
+                                "Contribute 1 to the threshold, but -1 random skill to a random player on the town for a match.",
                             currencyCost: BigInt(0),
                             traitRequirements: [],
                             value: { fixed: BigInt(1) },
-                            teamEffect: {
+                            townEffect: {
                                 skill: {
                                     duration: { matches: BigInt(1) },
                                     skill: { random: null },
                                     position: {
                                         position: { random: null },
-                                        team: { contextual: null },
+                                        town: { contextual: null },
                                     },
                                     delta: BigInt(-1),
                                 },
@@ -43,26 +43,26 @@
                             currencyCost: BigInt(0),
                             traitRequirements: [],
                             value: { fixed: BigInt(0) },
-                            teamEffect: { noEffect: null },
+                            townEffect: { noEffect: null },
                         },
                     ],
                     success: {
                         effect: {
                             currency: {
-                                team: { contextual: null },
+                                town: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
                         },
-                        description: "+10 💰 for each team",
+                        description: "+10 💰 for each town",
                     },
                     failure: {
                         effect: {
                             entropy: {
-                                team: { contextual: null },
+                                town: { contextual: null },
                                 delta: BigInt(1),
                             },
                         },
-                        description: "+1 🔥 for each team",
+                        description: "+1 🔥 for each town",
                     },
                     minAmount: BigInt(1),
                 },
@@ -74,21 +74,21 @@
                         {
                             title: "Fast Start",
                             description:
-                                "There is no time to wait, give us the 💰and crank up the 🔥. +10 💰+2 entropy per team",
+                                "There is no time to wait, give us the 💰and crank up the 🔥. +10 💰+2 entropy per town",
                             currencyCost: BigInt(0),
                             leagueEffect: {
                                 allOf: [
                                     {
                                         entropy: {
                                             delta: BigInt(2),
-                                            team: {
+                                            town: {
                                                 contextual: null,
                                             },
                                         },
                                     },
                                     {
                                         currency: {
-                                            team: {
+                                            town: {
                                                 contextual: null,
                                             },
                                             value: {
@@ -98,7 +98,7 @@
                                     },
                                 ],
                             },
-                            teamEffect: {
+                            townEffect: {
                                 noEffect: null,
                             },
                             traitRequirements: [],
@@ -111,7 +111,7 @@
                             leagueEffect: {
                                 noEffect: null,
                             },
-                            teamEffect: {
+                            townEffect: {
                                 noEffect: null,
                             },
                             traitRequirements: [],
@@ -119,21 +119,21 @@
                         {
                             title: "Cool Down",
                             description:
-                                "Entropy is running too hot, lets cool it off by investing in our league. -5 💰-2 🔥 per team",
+                                "Entropy is running too hot, lets cool it off by investing in our league. -5 💰-2 🔥 per town",
                             currencyCost: BigInt(0),
                             leagueEffect: {
                                 allOf: [
                                     {
                                         entropy: {
                                             delta: BigInt(-2),
-                                            team: {
+                                            town: {
                                                 contextual: null,
                                             },
                                         },
                                     },
                                     {
                                         currency: {
-                                            team: {
+                                            town: {
                                                 contextual: null,
                                             },
                                             value: {
@@ -143,7 +143,7 @@
                                     },
                                 ],
                             },
-                            teamEffect: {
+                            townEffect: {
                                 noEffect: null,
                             },
                             traitRequirements: [],
@@ -159,7 +159,7 @@
                         description: "+10 💰",
                         effect: {
                             currency: {
-                                team: { contextual: null },
+                                town: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
                         },
@@ -171,14 +171,14 @@
                 proportionalBid: {
                     prize: {
                         description:
-                            "+1 random skill for 1 match to a random player on the team",
+                            "+1 random skill for 1 match to a random player on the town",
                         kind: {
                             skill: {
                                 duration: { matches: BigInt(1) },
                                 skill: { random: null },
                                 position: {
                                     position: { random: null },
-                                    team: { contextual: null },
+                                    town: { contextual: null },
                                 },
                             },
                         },
@@ -201,14 +201,14 @@
                             description: "Description 1",
                             currencyCost: BigInt(0),
                             traitRequirements: [],
-                            teamEffect: { noEffect: null },
+                            townEffect: { noEffect: null },
                         },
                         {
                             title: "Option 2",
                             description: "Description 2",
                             currencyCost: BigInt(0),
                             traitRequirements: [],
-                            teamEffect: { noEffect: null },
+                            townEffect: { noEffect: null },
                         },
                     ],
                 },

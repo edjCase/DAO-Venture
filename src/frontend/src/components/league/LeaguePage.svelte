@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Card, TabItem, Tabs } from "flowbite-svelte";
     import LeagueProposalList from "../dao/league/LeagueProposalList.svelte";
-    import { teamStore } from "../../stores/TeamStore";
+    import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
     import LoadingValue from "../common/LoadingValue.svelte";
     import { UserStats } from "../../ic-agent/declarations/main";
@@ -13,23 +13,23 @@
         userStats = stats;
     });
 
-    $: teams = $teamStore;
-    $: teamStatsMap = new Map(userStats?.teams.map((team) => [team.id, team]));
+    $: towns = $townStore;
+    $: townStatsMap = new Map(userStats?.towns.map((town) => [town.id, town]));
 </script>
 
 <div class="text-3xl text-center my-5">League</div>
 <div class="text-center">
     <div class="flex items-center justify-center">
-        <span class="mr-2">Teams:</span>
-        <LoadingValue value={teams?.length} />
+        <span class="mr-2">Towns:</span>
+        <LoadingValue value={towns?.length} />
     </div>
     <div class="flex items-center justify-center">
         <span class="mr-2">Users:</span>
         <LoadingValue value={userStats?.userCount} />
     </div>
     <div class="flex items-center justify-center">
-        <span class="mr-2">Team Owners:</span>
-        <LoadingValue value={userStats?.teamOwnerCount} />
+        <span class="mr-2">Town Owners:</span>
+        <LoadingValue value={userStats?.townOwnerCount} />
     </div>
     <div class="flex items-center justify-center">
         <span class="mr-2">Total User Points:</span>
@@ -41,34 +41,34 @@
         <LeagueProposalList />
         <LeagueProposalForm />
     </TabItem>
-    <TabItem title="Teams">
+    <TabItem title="Towns">
         <div class="flex flex-col items-center">
-            {#if teams}
-                {#each teams as team}
+            {#if towns}
+                {#each towns as town}
                     <Card class="my-2 w-full">
                         <div class="text-3xl text-center">
-                            <LoadingValue value={team.name} />
+                            <LoadingValue value={town.name} />
                         </div>
                         <div class="flex items-center">
-                            <span class="mr-2">Team Id:</span>
-                            <LoadingValue value={team.id} />
+                            <span class="mr-2">Town Id:</span>
+                            <LoadingValue value={town.id} />
                         </div>
                         <div class="flex items-center">
                             <span class="mr-2">User Count:</span>
                             <LoadingValue
-                                value={teamStatsMap.get(team.id)?.userCount}
+                                value={townStatsMap.get(town.id)?.userCount}
                             />
                         </div>
                         <div class="flex items-center">
-                            <span class="mr-2">Team Owner Count:</span>
+                            <span class="mr-2">Town Owner Count:</span>
                             <LoadingValue
-                                value={teamStatsMap.get(team.id)?.ownerCount}
+                                value={townStatsMap.get(town.id)?.ownerCount}
                             />
                         </div>
                         <div class="flex items-center">
-                            <span class="mr-2">Team Total Points:</span>
+                            <span class="mr-2">Town Total Points:</span>
                             <LoadingValue
-                                value={teamStatsMap.get(team.id)?.totalPoints}
+                                value={townStatsMap.get(town.id)?.totalPoints}
                             />
                         </div>
                     </Card>

@@ -1,12 +1,12 @@
 import { Writable, writable } from "svelte/store";
-import { LeagueProposal, TeamProposal } from "../ic-agent/declarations/main";
+import { LeagueProposal, TownProposal } from "../ic-agent/declarations/main";
 import { mainAgentFactory } from "../ic-agent/Main";
 import { toJsonString } from "../utils/StringUtil";
 
 
 export const proposalStore = (() => {
     let leagueStore = writable<LeagueProposal[]>([]);
-    let teamStores = new Map<bigint, Writable<TeamProposal[]>>();
+    let townStores = new Map<bigint, Writable<TownProposal[]>>();
 
 
 
@@ -44,21 +44,21 @@ export const proposalStore = (() => {
         return leagueStore.subscribe(callback);
     }
 
-    const getOrCreateTeamStore = (teamId: bigint) => {
-        let store = teamStores.get(teamId);
+    const getOrCreateTownStore = (townId: bigint) => {
+        let store = townStores.get(townId);
         if (!store) {
-            store = writable<TeamProposal[]>([]);
-            teamStores.set(teamId, store);
-            refetchTeamProposals(teamId);
+            store = writable<TownProposal[]>([]);
+            townStores.set(townId, store);
+            refetchTownProposals(townId);
         };
         return store;
     };
 
-    const refetchTeamProposal = async (teamId: bigint, proposalId: bigint) => {
-        let store = getOrCreateTeamStore(teamId);
+    const refetchTownProposal = async (townId: bigint, proposalId: bigint) => {
+        let store = getOrCreateTownStore(townId);
         let mainAgent = await mainAgentFactory();
         let proposalResult = await mainAgent
-            .getTeamProposal(teamId, proposalId);
+            .getTownProposal(townId, proposalId);
         if ('ok' in proposalResult) {
             let proposal = proposalResult.ok;
             store.update((current) => {
@@ -71,24 +71,24 @@ export const proposalStore = (() => {
                 return current;
             });
         } else {
-            throw new Error("Error fetching team proposal: " + toJsonString(proposalResult));
+            throw new Error("Error fetching town proposal: " + toJsonString(proposalResult));
         }
     }
 
-    const refetchTeamProposals = async (teamId: bigint) => {
-        let store = getOrCreateTeamStore(teamId);
+    const refetchTownProposals = async (townId: bigint) => {
+        let store = getOrCreateTownStore(townId);
         let mainAgent = await mainAgentFactory();
         let proposals = await mainAgent
-            .getTeamProposals(teamId, BigInt(999), BigInt(0)); // TODO
+            .getTownProposals(townId, BigInt(999), BigInt(0)); // TODO
         if ('ok' in proposals) {
             store.set(proposals.ok.data);
         } else {
-            throw new Error("Error fetching team proposals: " + toJsonString(proposals));
+            throw new Error("Error fetching town proposals: " + toJsonString(proposals));
         }
     };
 
-    const subscribeToTeam = (teamId: bigint, callback: (value: TeamProposal[]) => void) => {
-        let store = getOrCreateTeamStore(teamId);
+    const subscribeToTown = (townId: bigint, callback: (value: TownProposal[]) => void) => {
+        let store = getOrCreateTownStore(townId);
         return store.subscribe(callback);
     }
 
@@ -98,9 +98,9 @@ export const proposalStore = (() => {
         subscribeToLeague,
         refetchLeagueProposals,
         refetchLeagueProposal,
-        subscribeToTeam,
-        refetchTeamProposals,
-        refetchTeamProposal
+        subscribeToTown,
+        refetchTownProposals,
+        refetchTownProposal
     };
 })();
 

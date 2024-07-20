@@ -3,8 +3,8 @@
   import Home from "./routes/Home.svelte";
   import NotFound from "./routes/NotFound.svelte";
   import MatchGroup from "./routes/MatchGroup.svelte";
-  import Team from "./routes/Team.svelte";
-  import Teams from "./routes/Teams.svelte";
+  import Town from "./routes/Town.svelte";
+  import Towns from "./routes/Towns.svelte";
   import Schedule from "./routes/Schedule.svelte";
   import Admin from "./routes/Admin.svelte";
   import About from "./routes/About.svelte";
@@ -13,7 +13,7 @@
   import Matches from "./routes/Matches.svelte";
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
-  import MyTeam from "./routes/MyTeam.svelte";
+  import MyTown from "./routes/MyTown.svelte";
   import League from "./routes/League.svelte";
   import Navbar from "./components/common/Navbar.svelte";
   import TopPredictors from "./routes/TopPredictors.svelte";
@@ -28,9 +28,9 @@
       <Route path="/matches" component={Matches} />
       <Route path="/profile" component={UserProfile} />
       <Route path="/schedule" component={Schedule} />
-      <Route path="/my-team" component={MyTeam} />
-      <Route path="/teams" component={Teams} />
-      <Route path="/teams/:teamIdString" component={Team} />
+      <Route path="/my-town" component={MyTown} />
+      <Route path="/towns" component={Towns} />
+      <Route path="/towns/:townIdString" component={Town} />
       <Route path="/league" component={League} />
       <Route path="top-predictors" component={TopPredictors} />
       <Route path="/match-groups/:matchGroupIdString" component={MatchGroup} />

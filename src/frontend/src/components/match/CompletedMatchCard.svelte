@@ -1,5 +1,5 @@
 <script lang="ts" context="module">
-  export type TeamStats = {
+  export type TownStats = {
     totalHits: number;
     totalRuns: number;
     totalHomeRuns: number;
@@ -13,33 +13,33 @@
   import {
     CompletedMatch,
     MatchGroupPredictionSummary,
-    TeamIdOrTie,
+    TownIdOrTie,
   } from "../../ic-agent/declarations/main";
   import { predictionStore } from "../../stores/PredictionsStore";
-  import { teamStore } from "../../stores/TeamStore";
-  import TeamLogo from "../team/TeamLogo.svelte";
+  import { townStore } from "../../stores/TownStore";
+  import TownLogo from "../town/TownLogo.svelte";
 
   export let matchGroupId: number;
   export let matchId: number;
   export let match: CompletedMatch;
-  export let team1Stats: TeamStats | undefined = undefined;
-  export let team2Stats: TeamStats | undefined = undefined;
+  export let town1Stats: TownStats | undefined = undefined;
+  export let town2Stats: TownStats | undefined = undefined;
 
   let predictions: MatchGroupPredictionSummary | undefined;
   predictionStore.subscribeToMatchGroup(matchGroupId, (p) => {
     predictions = p;
   });
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
 
-  $: team1 = teams?.find((t) => t.id == match.team1.id);
-  $: team2 = teams?.find((t) => t.id == match.team2.id);
+  $: town1 = towns?.find((t) => t.id == match.town1.id);
+  $: town2 = towns?.find((t) => t.id == match.town2.id);
 
-  let team1Score: bigint | undefined;
-  let team2Score: bigint | undefined;
+  let town1Score: bigint | undefined;
+  let town2Score: bigint | undefined;
   $: {
-    team1Score = "score" in match.team1 ? match.team1.score : undefined;
-    team2Score = "score" in match.team2 ? match.team2.score : undefined;
+    town1Score = "score" in match.town1 ? match.town1.score : undefined;
+    town2Score = "score" in match.town2 ? match.town2.score : undefined;
   }
   $: prediction =
     predictions?.matches[Number(matchId)] === undefined
@@ -48,47 +48,47 @@
         ? undefined
         : predictions.matches[Number(matchId)].yourVote[0];
 
-  let getTeamEmojis = (
-    winner: TeamIdOrTie | undefined,
-    teamId: "team1" | "team2",
+  let getTownEmojis = (
+    winner: TownIdOrTie | undefined,
+    townId: "town1" | "town2",
   ) => {
     let emojis = [];
     if (winner) {
-      if (teamId in winner) {
+      if (townId in winner) {
         emojis.push("👑");
       } else if ("tie" in winner) {
         emojis.push("😑");
       }
     }
-    if (prediction && teamId in prediction) {
+    if (prediction && townId in prediction) {
       emojis.push("🔮");
     }
     return emojis.join(" ");
   };
 
-  $: team1Emoji = getTeamEmojis(match.winner, "team1");
-  $: team2Emoji = getTeamEmojis(match.winner, "team2");
+  $: town1Emoji = getTownEmojis(match.winner, "town1");
+  $: town2Emoji = getTownEmojis(match.winner, "town2");
 </script>
 
-{#if team1 && team2}
+{#if town1 && town2}
   <div class="flex justify-between">
     <div class="flex flex-col">
       <div class="flex flex-row items-center">
-        <TeamLogo team={team1} size="xs" />
+        <TownLogo town={town1} size="xs" />
         <div class="text-4xl font-bold mx-4 flex items-center">
-          {team1Score || "-"}
-          <span class="text-base">{team1Emoji}</span>
+          {town1Score || "-"}
+          <span class="text-base">{town1Emoji}</span>
         </div>
       </div>
-      {#if team1Stats}
+      {#if town1Stats}
         <div class="flex justify-center mt-2">
           <ul class="text-sm">
-            <li>Hits: {team1Stats.totalHits}</li>
-            <li>Runs: {team1Stats.totalRuns}</li>
-            <li>Home Runs: {team1Stats.totalHomeRuns}</li>
-            <li>Strikeouts: {team1Stats.totalStrikeouts}</li>
-            <li>Pitches: {team1Stats.totalPitches}</li>
-            <li>Strikes: {team1Stats.totalStrikes}</li>
+            <li>Hits: {town1Stats.totalHits}</li>
+            <li>Runs: {town1Stats.totalRuns}</li>
+            <li>Home Runs: {town1Stats.totalHomeRuns}</li>
+            <li>Strikeouts: {town1Stats.totalStrikeouts}</li>
+            <li>Pitches: {town1Stats.totalPitches}</li>
+            <li>Strikes: {town1Stats.totalStrikes}</li>
           </ul>
         </div>
       {/if}
@@ -97,20 +97,20 @@
     <div class="flex flex-col">
       <div class="flex flex-row items-center justify-end">
         <div class="text-4xl font-bold mx-4 flex items-center">
-          <span class="text-base">{team2Emoji}</span>
-          {team2Score || "-"}
+          <span class="text-base">{town2Emoji}</span>
+          {town2Score || "-"}
         </div>
-        <TeamLogo team={team2} size="xs" />
+        <TownLogo town={town2} size="xs" />
       </div>
-      {#if team2Stats}
+      {#if town2Stats}
         <div class="flex justify-center mt-2">
           <ul class="text-sm">
-            <li>Hits: {team2Stats.totalHits}</li>
-            <li>Runs: {team2Stats.totalRuns}</li>
-            <li>Home Runs: {team2Stats.totalHomeRuns}</li>
-            <li>Strikeouts: {team2Stats.totalStrikeouts}</li>
-            <li>Pitches: {team2Stats.totalPitches}</li>
-            <li>Strikes: {team2Stats.totalStrikes}</li>
+            <li>Hits: {town2Stats.totalHits}</li>
+            <li>Runs: {town2Stats.totalRuns}</li>
+            <li>Home Runs: {town2Stats.totalHomeRuns}</li>
+            <li>Strikeouts: {town2Stats.totalStrikeouts}</li>
+            <li>Pitches: {town2Stats.totalPitches}</li>
+            <li>Strikes: {town2Stats.totalStrikes}</li>
           </ul>
         </div>
       {/if}

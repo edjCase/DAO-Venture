@@ -1,32 +1,32 @@
 <script lang="ts">
   import {
     CompletedSeason,
-    CompletedSeasonTeam,
-    Team,
+    CompletedSeasonTown,
+    Town,
   } from "../../ic-agent/declarations/main";
-  import TeamLogo from "./TeamLogo.svelte";
-  import { teamStore } from "../../stores/TeamStore";
+  import TownLogo from "./TownLogo.svelte";
+  import { townStore } from "../../stores/TownStore";
 
   export let completedSeason: CompletedSeason;
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
 
-  $: teamsWithS =
-    teams == undefined
+  $: townsWithS =
+    towns == undefined
       ? undefined
-      : completedSeason.teams.map<[CompletedSeasonTeam, Team]>((t) => [
+      : completedSeason.towns.map<[CompletedSeasonTown, Town]>((t) => [
           t,
-          teams.find((team) => team.id == t.id)!,
+          towns.find((town) => town.id == t.id)!,
         ]);
 </script>
 
 <div>
-  <div class="text-center text-3xl font-bold my-4">Teams</div>
+  <div class="text-center text-3xl font-bold my-4">Towns</div>
   <div class="flex flex-wrap">
-    {#if teamsWithS}
-      {#each teamsWithS as [c, team]}
+    {#if townsWithS}
+      {#each townsWithS as [c, town]}
         <div class="mb-1 mx-2">
-          <TeamLogo {team} size="sm" />
+          <TownLogo {town} size="sm" />
           <div class="w-full text-center">{c.wins} - {c.losses}</div>
         </div>
       {/each}

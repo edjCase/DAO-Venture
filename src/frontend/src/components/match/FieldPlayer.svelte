@@ -5,11 +5,11 @@
   import UniqueAvatar from "../common/UniqueAvatar.svelte";
 
   export let player: LivePlayerState;
-  export let teamColor: [number, number, number];
+  export let townColor: [number, number, number];
   export let x: number;
   export let y: number;
   let width = 10;
-  let color = toRgbString(teamColor);
+  let color = toRgbString(townColor);
 </script>
 
 <svg {x} {y}>

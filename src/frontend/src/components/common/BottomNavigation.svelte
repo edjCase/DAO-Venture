@@ -101,9 +101,9 @@
         <BullhornSolid class={iconClass} />
     </BottomNavItem>
     <BottomNavItem
-        btnName="Team"
-        href="/my-team"
-        on:click={navOnClick("/my-team")}
+        btnName="Town"
+        href="/my-town"
+        on:click={navOnClick("/my-town")}
     >
         <UsersSolid class={iconClass} />
     </BottomNavItem>
@@ -144,9 +144,9 @@
                 </SidebarItem>
             {/if}
             <SidebarItem
-                label="Teams"
-                href="/teams"
-                on:click={navOnClick("/teams")}
+                label="Towns"
+                href="/towns"
+                on:click={navOnClick("/towns")}
             >
                 <svelte:fragment slot="icon">
                     <UsersSolid class={iconClass} />

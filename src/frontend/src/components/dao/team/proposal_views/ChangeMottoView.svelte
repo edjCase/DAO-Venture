@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { ChangeTeamMottoContent } from "../../../../ic-agent/declarations/main";
+    import { ChangeTownMottoContent } from "../../../../ic-agent/declarations/main";
 
-    export let content: ChangeTeamMottoContent;
+    export let content: ChangeTownMottoContent;
 </script>
 
 <div>New Motto: {content.motto}</div>

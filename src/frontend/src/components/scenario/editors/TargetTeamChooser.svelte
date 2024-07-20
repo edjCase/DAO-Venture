@@ -1,21 +1,21 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
-    import { TargetTeam } from "../../../ic-agent/declarations/main";
-    import TargetTeamEditor from "./TargetTeamEditor.svelte";
+    import { TargetTown } from "../../../ic-agent/declarations/main";
+    import TargetTownEditor from "./TargetTownEditor.svelte";
 
-    export let value: TargetTeam;
+    export let value: TargetTown;
 
     let selected = Object.keys(value)[0];
 
     let items = [
         { value: "contextual", name: "Contextual" },
-        { value: "chosen", name: "Chosen Team" },
-        { value: "random", name: "Random Team" },
-        { value: "all", name: "All Teams" },
+        { value: "chosen", name: "Chosen Town" },
+        { value: "random", name: "Random Town" },
+        { value: "all", name: "All Towns" },
     ];
 
-    $: value = { [selected]: null } as TargetTeam;
+    $: value = { [selected]: null } as TargetTown;
 </script>
 
 <Select {items} bind:value={selected} />
-<TargetTeamEditor bind:value />
+<TargetTownEditor bind:value />

@@ -7,7 +7,7 @@
     import { BenevolentDictatorState } from "../ic-agent/declarations/main";
     import { userStore } from "../stores/UserStore";
     import { Accordion, AccordionItem, Badge, Tooltip } from "flowbite-svelte";
-    import AddTeamTrait from "./team/AddTeamTrait.svelte";
+    import AddTownTrait from "./town/AddTownTrait.svelte";
     import { traitStore } from "../stores/TraitStore";
 
     $: user = $userStore;
@@ -44,7 +44,7 @@
                 <DaoAdmin />
             </AccordionItem>
             <AccordionItem>
-                <span slot="header">Team Traits</span>
+                <span slot="header">Town Traits</span>
                 <div class="text-3xl">Current</div>
                 {#if traits !== undefined}
                     {#each traits as trait}
@@ -53,7 +53,7 @@
                     {/each}
                 {/if}
                 <div class="text-3xl mt-5">Add</div>
-                <AddTeamTrait />
+                <AddTownTrait />
             </AccordionItem>
         </Accordion>
     {/if}

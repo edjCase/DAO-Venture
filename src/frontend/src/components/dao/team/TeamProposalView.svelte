@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { TeamProposal } from "../../../ic-agent/declarations/main";
+    import { TownProposal } from "../../../ic-agent/declarations/main";
     import ChangeColorView from "./proposal_views/ChangeColorView.svelte";
     import ChangeNameView from "./proposal_views/ChangeNameView.svelte";
     import ChangeLogoView from "./proposal_views/ChangeLogoView.svelte";
@@ -11,8 +11,8 @@
     import SwapPositionsView from "./proposal_views/SwapPositionsView.svelte";
     import MotionView from "./proposal_views/MotionView.svelte";
 
-    export let proposal: TeamProposal;
-    export let teamId: bigint;
+    export let proposal: TownProposal;
+    export let townId: bigint;
 
     const components: Record<string, any> = {
         motion: MotionView,
@@ -34,5 +34,5 @@
 {#if !SelectedComponent}
     Not Implemented View: <pre>{toJsonString(proposal.content)}</pre>
 {:else}
-    <svelte:component this={SelectedComponent} {content} {teamId} />
+    <svelte:component this={SelectedComponent} {content} {townId} />
 {/if}

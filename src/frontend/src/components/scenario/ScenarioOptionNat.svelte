@@ -1,20 +1,20 @@
 <script lang="ts">
-    import { ScenarioTeamOptionNat } from "../../ic-agent/declarations/main";
+    import { ScenarioTownOptionNat } from "../../ic-agent/declarations/main";
 
-    export let option: ScenarioTeamOptionNat;
-    export let teamCurrency: bigint | undefined; // Undefined used for loading but also for resolved scenarios
+    export let option: ScenarioTownOptionNat;
+    export let townCurrency: bigint | undefined; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
     export let icon: string;
     export let onSelect: () => void;
 
     $: meetsCurrencyRequirements =
-        teamCurrency !== undefined && option.value <= teamCurrency;
+        townCurrency !== undefined && option.value <= townCurrency;
 
     $: selectable = meetsCurrencyRequirements;
 
     $: cursorPointerClass = selectable ? "cursor-pointer" : "";
     $: disabledClass =
-        teamCurrency !== undefined && !meetsCurrencyRequirements
+        townCurrency !== undefined && !meetsCurrencyRequirements
             ? "opacity-50 cursor-not-allowed"
             : "";
 </script>
@@ -38,7 +38,7 @@
             {icon}
         </div>
         <div class="px-6">
-            Team: {option.currentVotingPower}
+            Town: {option.currentVotingPower}
         </div>
     </div>
 </div>

@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { ScenarioTeamOptionText } from "../../ic-agent/declarations/main";
+    import { ScenarioTownOptionText } from "../../ic-agent/declarations/main";
 
-    export let option: ScenarioTeamOptionText;
+    export let option: ScenarioTownOptionText;
     export let selected: boolean;
     export let onSelect: () => void;
 </script>
@@ -23,7 +23,7 @@
             {option.value}
         </div>
         <div class="px-6">
-            Team: {option.currentVotingPower}
+            Town: {option.currentVotingPower}
         </div>
     </div>
 </div>

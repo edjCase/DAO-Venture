@@ -1,65 +1,65 @@
 <script lang="ts">
   import { Link } from "svelte-routing";
-  import { teamStore } from "../../stores/TeamStore";
+  import { townStore } from "../../stores/TownStore";
   import { Button } from "flowbite-svelte";
-  import TeamLogo from "./TeamLogo.svelte";
+  import TownLogo from "./TownLogo.svelte";
   import { StarSolid } from "flowbite-svelte-icons";
   import { userStore } from "../../stores/UserStore";
-  import { Team } from "../../ic-agent/declarations/main";
+  import { Town } from "../../ic-agent/declarations/main";
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
   $: user = $userStore;
 
-  let associatedTeamId: bigint | undefined;
+  let associatedTownId: bigint | undefined;
   $: {
-    associatedTeamId = user?.membership[0]?.teamId;
+    associatedTownId = user?.membership[0]?.townId;
   }
 
-  let selectedTeam: Team | undefined;
-  $: selectedTeam = teams && teams[0];
+  let selectedTown: Town | undefined;
+  $: selectedTown = towns && towns[0];
 </script>
 
 <div class="flex flex-col justify-between">
   <div class="pb-10">
-    {#if selectedTeam}
+    {#if selectedTown}
       <div class="flex justify-center items-center">
-        <div class="text-3xl text-center m-5">{selectedTeam.name}</div>
+        <div class="text-3xl text-center m-5">{selectedTown.name}</div>
         <div>
           {#if user}
-            {#if associatedTeamId !== undefined}
-              {#if associatedTeamId == selectedTeam.id}
+            {#if associatedTownId !== undefined}
+              {#if associatedTownId == selectedTown.id}
                 <StarSolid size="lg" />
               {/if}
             {/if}
           {/if}
         </div>
       </div>
-      <TeamLogo team={selectedTeam} size="lg" />
+      <TownLogo town={selectedTown} size="lg" />
       <blockquote class="mx-auto mb-4 max-w-2xl">
         <div class="mt-5">
-          <div class="text-lg team-info-text text-justify">
-            {selectedTeam.description}
+          <div class="text-lg town-info-text text-justify">
+            {selectedTown.description}
           </div>
         </div>
       </blockquote>
       <div class="flex justify-center">
-        <Link to={`/teams/${selectedTeam.id.toString()}`}>
-          <Button>View Team Page</Button>
+        <Link to={`/towns/${selectedTown.id.toString()}`}>
+          <Button>View Town Page</Button>
         </Link>
       </div>
     {/if}
   </div>
-  {#if teams !== undefined}
+  {#if towns !== undefined}
     <div class="flex flex-wrap justify-around">
-      {#each teams as team}
+      {#each towns as town}
         <div
-          class="mb-5 {selectedTeam === team ? 'opacity-50' : ''}"
+          class="mb-5 {selectedTown === town ? 'opacity-50' : ''}"
           role="button"
           tabindex="0"
           on:keydown={() => {}}
-          on:click={() => (selectedTeam = team)}
+          on:click={() => (selectedTown = town)}
         >
-          <TeamLogo {team} size="md" />
+          <TownLogo {town} size="md" />
         </div>
       {/each}
     </div>

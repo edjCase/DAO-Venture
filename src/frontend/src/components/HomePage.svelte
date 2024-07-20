@@ -3,12 +3,12 @@
     import ScenarioHome from "../components/scenario/ScenarioHome.svelte";
     import EntropyHome from "./entropy/EntropyHome.svelte";
     import TopPredictorsHome from "./user/TopPredictorsHome.svelte";
-    import { teamStore } from "../stores/TeamStore";
+    import { townStore } from "../stores/TownStore";
     import { userStore } from "../stores/UserStore";
     import { Button } from "flowbite-svelte";
     import { mainAgentFactory } from "../ic-agent/Main";
 
-    $: teams = $teamStore;
+    $: towns = $townStore;
 
     let userCount: bigint | undefined;
     userStore.subscribeStats((stats) => {
@@ -19,7 +19,7 @@
 
     $: user = $userStore;
 
-    let joinTeam = async () => {
+    let joinTown = async () => {
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.joinLeague();
         if ("ok" in result) {
@@ -33,8 +33,8 @@
 </script>
 
 <div class="bg-gray-800 rounded p-2">
-    {#if teams && userCount !== undefined}
-        {#if teams.length <= 0}
+    {#if towns && userCount !== undefined}
+        {#if towns.length <= 0}
             <div class="p-4 text-center">
                 <div class="text-3xl">League is in disarray</div>
                 <div>
@@ -50,7 +50,7 @@
                     <div class="text-3xl text-center">
                         Want to join the league?
                     </div>
-                    <Button on:click={joinTeam}>Click Here</Button>
+                    <Button on:click={joinTown}>Click Here</Button>
                 </div>
             {/if}
             <div class="flex flex-col gap-6">

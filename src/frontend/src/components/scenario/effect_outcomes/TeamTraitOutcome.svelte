@@ -1,18 +1,18 @@
 <script lang="ts">
-    import { TeamTraitTeamEffectOutcome } from "../../../ic-agent/declarations/main";
-    import { Team, Trait } from "../../../ic-agent/declarations/main";
+    import { TownTraitTownEffectOutcome } from "../../../ic-agent/declarations/main";
+    import { Town, Trait } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
 
-    export let value: TeamTraitTeamEffectOutcome;
+    export let value: TownTraitTownEffectOutcome;
     export let traits: Trait[];
-    export let teams: Team[];
+    export let towns: Town[];
 
-    $: teamName = teams.find((team) => team.id === value.teamId)?.name ?? "";
+    $: townName = towns.find((town) => town.id === value.townId)?.name ?? "";
 
     $: traitName = traits.find((t) => t.id == value.traitId)?.name ?? "";
 </script>
 
-Team {teamName}
+Town {townName}
 {#if "add" in value.kind}
     +
 {:else if "remove" in value.kind}

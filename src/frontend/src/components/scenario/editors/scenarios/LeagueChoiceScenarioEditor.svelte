@@ -13,7 +13,7 @@
             description: "Option " + (value.options.length + 1),
             currencyCost: BigInt(0),
             leagueEffect: { noEffect: null },
-            teamEffect: { noEffect: null },
+            townEffect: { noEffect: null },
             traitRequirements: [],
         });
         value.options = value.options; // Trigger reactivity
@@ -34,8 +34,8 @@
         <Input type="text" bind:value={option.description} />
         <Label>Currency Cost</Label>
         <BigIntInput bind:value={option.currencyCost} />
-        <Label>Team Effect</Label>
-        <ScenarioEffectChooser bind:value={option.teamEffect} />
+        <Label>Town Effect</Label>
+        <ScenarioEffectChooser bind:value={option.townEffect} />
         <Label>League Effect</Label>
         <ScenarioEffectChooser bind:value={option.leagueEffect} />
         <Label>Trait Requirements</Label>

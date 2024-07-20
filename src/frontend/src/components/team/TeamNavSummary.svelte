@@ -1,16 +1,16 @@
 <script lang="ts">
-    import { teamStore } from "../../stores/TeamStore";
+    import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
-    import TeamLogo from "./TeamLogo.svelte";
+    import TownLogo from "./TownLogo.svelte";
 
     $: user = $userStore;
-    $: teams = $teamStore;
+    $: towns = $townStore;
 
-    $: team = teams?.find((t) => t.id === user?.membership[0]?.teamId);
+    $: town = towns?.find((t) => t.id === user?.membership[0]?.townId);
 </script>
 
-{#if team}
-    <TeamLogo {team} size="xs" stats={true} />
+{#if town}
+    <TownLogo {town} size="xs" stats={true} />
 {:else}
     <div class="w-10 h-10" />
 {/if}

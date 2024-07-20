@@ -3,7 +3,7 @@
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import MatchUp from "./MatchUp.svelte";
   import { Hr } from "flowbite-svelte";
-  import { teamStore } from "../../stores/TeamStore";
+  import { townStore } from "../../stores/TownStore";
   import {
     CompletedMatchGroup,
     InProgressSeasonMatchGroupVariant,
@@ -17,7 +17,7 @@
 
   $: lastMatches = lastMatchGroup?.matches || [];
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
 </script>
 
 <section>
@@ -31,13 +31,13 @@
       <div class="p-2">
         <div class="text-xl text-center mb-2">Predict Winners</div>
         <div class="flex justify-around flex-wrap gap-4">
-          {#if teams}
+          {#if towns}
             {#each matchGroup.scheduled.matches as match, matchId}
               <MatchUp
                 {matchGroupId}
                 {matchId}
-                team1Id={match.team1.id}
-                team2Id={match.team2.id}
+                town1Id={match.town1.id}
+                town2Id={match.town2.id}
               />
             {/each}
           {/if}

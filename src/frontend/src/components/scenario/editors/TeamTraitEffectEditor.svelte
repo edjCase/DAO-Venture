@@ -1,10 +1,10 @@
 <script lang="ts">
     import { Label, Select } from "flowbite-svelte";
-    import TargetTeamChooser from "./TargetTeamChooser.svelte";
-    import TeamTraitEditor from "./TeamTraitEditor.svelte";
-    import { TeamTraitEffect } from "../../../ic-agent/declarations/main";
+    import TargetTownChooser from "./TargetTownChooser.svelte";
+    import TownTraitEditor from "./TownTraitEditor.svelte";
+    import { TownTraitEffect } from "../../../ic-agent/declarations/main";
 
-    export let value: TeamTraitEffect;
+    export let value: TownTraitEffect;
 
     $: selectedKind = Object.keys(value.kind)[0];
 
@@ -28,8 +28,8 @@
     ];
 </script>
 
-<Label>Team</Label>
-<TargetTeamChooser bind:value={value.team} />
-<TeamTraitEditor bind:value={value.traitId} />
+<Label>Town</Label>
+<TargetTownChooser bind:value={value.town} />
+<TownTraitEditor bind:value={value.traitId} />
 <Label>Kind</Label>
 <Select items={traitKindItems} on:change={onChange} value={selectedKind} />

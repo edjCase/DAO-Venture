@@ -2,10 +2,10 @@
     import { mainAgentFactory } from "../../../../ic-agent/Main";
     import { proposalStore } from "../../../../stores/ProposalStore";
     import LoadingButton from "../../../common/LoadingButton.svelte";
-    import { TeamProposalContent } from "../../../../ic-agent/declarations/main";
+    import { TownProposalContent } from "../../../../ic-agent/declarations/main";
 
-    export let teamId: bigint;
-    export let generateProposal: () => TeamProposalContent | string;
+    export let townId: bigint;
+    export let generateProposal: () => TownProposalContent | string;
 
     let createProposal = async () => {
         let proposal = generateProposal();
@@ -15,10 +15,10 @@
         }
         console.log("Creating proposal: ", proposal);
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.createTeamProposal(teamId, proposal);
+        let result = await mainAgent.createTownProposal(townId, proposal);
         if ("ok" in result) {
-            console.log(`Created Team Proposal: `, result.ok);
-            proposalStore.refetchTeamProposal(teamId, result.ok);
+            console.log(`Created Town Proposal: `, result.ok);
+            proposalStore.refetchTownProposal(townId, result.ok);
         } else {
             console.error("Error creating proposal: ", result);
         }

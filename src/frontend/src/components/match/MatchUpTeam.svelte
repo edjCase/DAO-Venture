@@ -1,29 +1,29 @@
 <script lang="ts">
     import { Spinner } from "flowbite-svelte";
-    import { TeamId, TeamStandingInfo } from "../../ic-agent/declarations/main";
+    import { TownId, TownStandingInfo } from "../../ic-agent/declarations/main";
     import { predictionStore } from "../../stores/PredictionsStore";
-    import { teamStore } from "../../stores/TeamStore";
-    import TeamLogo from "../team/TeamLogo.svelte";
-    import { TeamOrUndetermined } from "../../models/Team";
+    import { townStore } from "../../stores/TownStore";
+    import TownLogo from "../town/TownLogo.svelte";
+    import { TownOrUndetermined } from "../../models/Town";
 
     type MatchPrediction = {
-        teamTotal: number;
-        teamPercentage: number;
-        yourVote: TeamId | undefined;
+        townTotal: number;
+        townPercentage: number;
+        yourVote: TownId | undefined;
     };
 
     export let matchGroupId: number;
     export let matchId: number;
-    export let team: TeamOrUndetermined;
-    export let teamId: TeamId;
+    export let town: TownOrUndetermined;
+    export let townId: TownId;
 
     let matchPredictions: MatchPrediction | undefined;
     let predicting = false;
 
-    let teamStandings: TeamStandingInfo[] | undefined;
+    let townStandings: TownStandingInfo[] | undefined;
 
-    teamStore.subscribeTeamStandings((standings) => {
-        teamStandings = standings;
+    townStore.subscribeTownStandings((standings) => {
+        townStandings = standings;
     });
 
     predictionStore.subscribeToMatchGroup(matchGroupId, (predictions) => {
@@ -33,14 +33,14 @@
         } else {
             let matchPrediction = predictions.matches[Number(matchId)];
             let totalPredictions =
-                Number(matchPrediction.team1) + Number(matchPrediction.team2);
-            let team =
-                "team1" in teamId
-                    ? matchPrediction.team1
-                    : matchPrediction.team2;
+                Number(matchPrediction.town1) + Number(matchPrediction.town2);
+            let town =
+                "town1" in townId
+                    ? matchPrediction.town1
+                    : matchPrediction.town2;
             matchPredictions = {
-                teamTotal: Number(team),
-                teamPercentage: Number(team) / totalPredictions || 0,
+                townTotal: Number(town),
+                townPercentage: Number(town) / totalPredictions || 0,
                 yourVote:
                     matchPrediction.yourVote.length > 0
                         ? matchPrediction.yourVote[0]
@@ -54,42 +54,42 @@
         await predictionStore.predictMatchOutcome(
             matchGroupId,
             matchId,
-            teamId,
+            townId,
         );
         predicting = false;
     };
-    function areTeamsEqual(
-        team1: TeamId | undefined,
-        team2: TeamId | undefined,
+    function areTownsEqual(
+        town1: TownId | undefined,
+        town2: TownId | undefined,
     ) {
-        if (team1 === undefined || team2 === undefined) {
+        if (town1 === undefined || town2 === undefined) {
             return false;
         }
-        if ("team1" in team1 && "team1" in team2) {
+        if ("town1" in town1 && "town1" in town2) {
             return true;
         }
-        if ("team2" in team1 && "team2" in team2) {
+        if ("town2" in town1 && "town2" in town2) {
             return true;
         }
         return false;
     }
 
-    // Placeholder function for getting team stats
-    let teamStats: string;
+    // Placeholder function for getting town stats
+    let townStats: string;
     $: {
-        teamStats = "";
-        if ("id" in team) {
-            let id = team.id;
-            const standing = teamStandings?.find((s) => s.id == id);
+        townStats = "";
+        if ("id" in town) {
+            let id = town.id;
+            const standing = townStandings?.find((s) => s.id == id);
             if (standing) {
-                teamStats = `${standing.wins}-${standing.losses}`;
+                townStats = `${standing.wins}-${standing.losses}`;
             }
         }
     }
     let predictionIcon = "";
     $: {
         if (matchPredictions !== undefined) {
-            if (areTeamsEqual(matchPredictions.yourVote, teamId)) {
+            if (areTownsEqual(matchPredictions.yourVote, townId)) {
                 predictionIcon = "🟢";
             } else if (matchPredictions.yourVote !== undefined) {
                 predictionIcon = "";
@@ -102,9 +102,9 @@
 
 <div class="flex justify-between gap-2">
     <div class="flex flex-col justify-center items-center">
-        <TeamLogo {team} size="sm" stats={false} />
+        <TownLogo {town} size="sm" stats={false} />
         <div class="text-sm font-bold">
-            {teamStats}
+            {townStats}
         </div>
     </div>
     <div class="flex flex-col items-center justify-center text-center">
@@ -120,7 +120,7 @@
         {#if matchPredictions !== undefined}
             <div class="flex flex-col items-center justify-center">
                 <div class="text-sm">
-                    {(matchPredictions.teamPercentage * 100).toFixed(0)}%
+                    {(matchPredictions.townPercentage * 100).toFixed(0)}%
                 </div>
                 {#if predicting}
                     <Spinner size="5" />

@@ -1,15 +1,15 @@
 <script lang="ts">
-    import { ChangeTeamLogoContent__1 } from "../../../../ic-agent/declarations/main";
-    import { teamStore } from "../../../../stores/TeamStore";
+    import { ChangeTownLogoContent__1 } from "../../../../ic-agent/declarations/main";
+    import { townStore } from "../../../../stores/TownStore";
 
-    export let content: ChangeTeamLogoContent__1;
-    $: teams = $teamStore;
+    export let content: ChangeTownLogoContent__1;
+    $: towns = $townStore;
 
-    let team = teams?.find((team) => team.id === content.teamId);
+    let town = towns?.find((town) => town.id === content.townId);
 </script>
 
-<div>Team Id: {content.teamId}</div>
-<div>Current Logo: {team?.name}</div>
+<div>Town Id: {content.townId}</div>
+<div>Current Logo: {town?.name}</div>
 
 <div class="flex justify-center">
     <img

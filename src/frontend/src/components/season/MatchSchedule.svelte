@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { TeamOrUndetermined } from "../../models/Team";
-    import TeamLogo from "../team/TeamLogo.svelte";
+    import { TownOrUndetermined } from "../../models/Town";
+    import TownLogo from "../town/TownLogo.svelte";
 
-    export let team1: TeamOrUndetermined;
-    export let team2: TeamOrUndetermined;
+    export let town1: TownOrUndetermined;
+    export let town2: TownOrUndetermined;
 </script>
 
 <div class="flex items-center justify-center text-center">
-    <TeamLogo team={team1} size="xs" name="left" />
+    <TownLogo town={town1} size="xs" name="left" />
     <span class="text-gray-500 mx-1">vs</span>
-    <TeamLogo team={team2} size="xs" name="right" />
+    <TownLogo town={town2} size="xs" name="right" />
 </div>

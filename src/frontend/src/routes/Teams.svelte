@@ -1,13 +1,13 @@
 <script lang="ts">
-  import TeamGrid from "../components/team/TeamGrid.svelte";
+  import TownGrid from "../components/town/TownGrid.svelte";
 </script>
 
-<div class="teams">
-  <TeamGrid />
+<div class="towns">
+  <TownGrid />
 </div>
 
 <style>
-  .teams {
+  .towns {
     display: flex;
     justify-content: center;
   }

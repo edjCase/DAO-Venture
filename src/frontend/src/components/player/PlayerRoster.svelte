@@ -3,12 +3,12 @@
   import { Player } from "../../ic-agent/declarations/main";
   import PlayerCard from "./PlayerCard.svelte";
 
-  export let teamId: bigint;
+  export let townId: bigint;
 
   let players: Player[] | undefined;
   playerStore.subscribe((playerList) => {
     players = playerList
-      ?.filter((p) => p.teamId?.toString() === teamId.toString())
+      ?.filter((p) => p.townId?.toString() === townId.toString())
       .sort((a, b) => a.id - b.id);
   });
 </script>

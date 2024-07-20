@@ -250,7 +250,7 @@ export const players: Player[] = [
         "title": "The Unending",
         "description": "The sound from a cracking bat, forever trapped, bouncing off the stadium walls.",
         "quirks": ["Very repetative", "Harmonicist"],
-        "likes": ["Psychoacoustics", "Resonating with teammates"],
+        "likes": ["Psychoacoustics", "Resonating with townmates"],
         "dislikes": ["Foam Panels", "Time"]
     },
     {
@@ -319,7 +319,7 @@ export const players: Player[] = [
         "description": "An assemblage of misfit clockwork and sputtering gizmos, Fizzle Sprocket is a chaotic whirlwind of mechanical laughter and unpredictable movements.",
         "quirks": [
             "Ticks loudly when excited",
-            "Emits steam when perplexed"
+            "Emits stown when perplexed"
         ],
         "likes": [
             "Winding keys",
@@ -475,9 +475,9 @@ export const players: Player[] = [
     {
         "name": "Patch",
         "title": "The Frayed Fanatic",
-        "description": "A patchwork of torn team banners and jerseys, each tear a story of excitement and despair.",
+        "description": "A patchwork of torn town banners and jerseys, each tear a story of excitement and despair.",
         "quirks": ["Shifts colors to match the mood of the crowd", "Repairs itself with memorabilia"],
-        "likes": ["Tailgate parties", "Team anthems"],
+        "likes": ["Tailgate parties", "Town anthems"],
         "dislikes": ["Uniform redesigns", "Faded glory"]
     },
     {
@@ -508,7 +508,7 @@ export const players: Player[] = [
     {
         "name": "Fervor",
         "title": "The Ember Enthusiast",
-        "description": "Formed from the burning desire of underdog teams, a blazing beacon of hope and persistence.",
+        "description": "Formed from the burning desire of underdog towns, a blazing beacon of hope and persistence.",
         "quirks": ["Glowing warmly in the face of adversity", "Sparks ideas in heated moments"],
         "likes": ["Rousing speeches", "Campfire stories"],
         "dislikes": ["Water cooler gossip", "Fair-weather fans"]
@@ -670,7 +670,7 @@ export const players: Player[] = [
     {
         "name": "Wysp",
         "title": "The Ethereal Drifter",
-        "description": "Formed from the swirling steam of hotdogs and pretzels, a ghostly presence of comfort food past.",
+        "description": "Formed from the swirling stown of hotdogs and pretzels, a ghostly presence of comfort food past.",
         "quirks": ["Vanishes in a puff when startled", "Smells faintly of mustard and cheese"],
         "likes": ["Winter nights", "Warm blankets"],
         "dislikes": ["Strong winds", "Cold snacks"]
@@ -889,7 +889,7 @@ export const players: Player[] = [
     {
         "name": "Flare",
         "title": "The Blazing Banner",
-        "description": "Born from the fiery spirit of team rallies and burning passion of fans, a beacon of burning fervor.",
+        "description": "Born from the fiery spirit of town rallies and burning passion of fans, a beacon of burning fervor.",
         "quirks": ["Flares up in moments of excitement", "Emits a warm, comforting heat"],
         "likes": ["Bonfires", "Victory celebrations"],
         "dislikes": ["Rainy days", "Dampened spirits"]

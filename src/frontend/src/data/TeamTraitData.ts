@@ -1,6 +1,6 @@
 import { Trait } from "../ic-agent/declarations/main";
 
-export const teamTraits: Trait[] = [
+export const townTraits: Trait[] = [
     {
         id: "SELFISH",
         name: "Selfish",

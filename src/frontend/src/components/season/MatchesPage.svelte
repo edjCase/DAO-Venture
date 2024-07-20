@@ -1,6 +1,6 @@
 <script lang="ts">
     import { scheduleStore } from "../../stores/ScheduleStore";
-    import TeamStandings from "../team/TeamStandings.svelte";
+    import TownStandings from "../town/TownStandings.svelte";
     import SeasonWinners from "./SeasonWinners.svelte";
     import MatchGroup from "../match/MatchGroup.svelte";
     import {
@@ -56,15 +56,15 @@
     {:else if "completed" in seasonStatus}
         {#if "success" in seasonStatus.completed.outcome}
             <SeasonWinners
-                championTeamId={seasonStatus.completed.outcome.success
-                    .championTeamId}
-                runnerUpTeamId={seasonStatus.completed.outcome.success
-                    .runnerUpTeamId}
+                championTownId={seasonStatus.completed.outcome.success
+                    .championTownId}
+                runnerUpTownId={seasonStatus.completed.outcome.success
+                    .runnerUpTownId}
             />
 
             <div class="flex flex-wrap justify-evenly gap-2">
-                <div class="teams">
-                    <TeamStandings completedSeason={seasonStatus.completed} />
+                <div class="towns">
+                    <TownStandings completedSeason={seasonStatus.completed} />
                 </div>
             </div>
         {:else}
@@ -122,7 +122,7 @@
 {/if}
 
 <style>
-    .teams {
+    .towns {
         max-width: 400px;
     }
 </style>

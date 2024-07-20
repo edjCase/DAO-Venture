@@ -1,8 +1,8 @@
 // import { writable } from "svelte/store";
-// import { LiveBaseState, MatchLog, LivePlayerState, TeamId, LiveMatchStateWithStatus, LiveMatchTeam, } from "../ic-agent/declarations/main";
+// import { LiveBaseState, MatchLog, LivePlayerState, TownId, LiveMatchStateWithStatus, LiveMatchTown, } from "../ic-agent/declarations/main";
 // import { nanosecondsToDate } from "../utils/DateUtils";
 // import { scheduleStore } from "./ScheduleStore";
-// import { SeasonStatus, TeamIdOrTie, TeamPositions } from "../ic-agent/declarations/main";
+// import { SeasonStatus, TownIdOrTie, TownPositions } from "../ic-agent/declarations/main";
 // import { mainAgentFactory } from "../ic-agent/Main";
 
 // export type LiveMatchGroup = {
@@ -10,23 +10,23 @@
 //   matches: LiveMatch[];
 // };
 
-// export type LiveTeamDetails = TeamDetailsWithScore & {
-//   positions: TeamPositions
+// export type LiveTownDetails = TownDetailsWithScore & {
+//   positions: TownPositions
 // };
 
 // export type LiveMatch = {
-//   team1: LiveTeamDetails;
-//   team2: LiveTeamDetails;
+//   town1: LiveTownDetails;
+//   town2: LiveTownDetails;
 //   // TODO anomoly
 //   // anomoly: Anomoly;
 //   liveState: LiveMatchState | undefined
 //   log: MatchLog | undefined;
-//   winner: TeamIdOrTie | undefined;
+//   winner: TownIdOrTie | undefined;
 // };
 
 
 // export type LiveMatchState = {
-//   offenseTeamId: TeamId;
+//   offenseTownId: TownId;
 //   players: LivePlayerState[];
 //   bases: LiveBaseState;
 //   round: number;
@@ -39,20 +39,20 @@
 //   let nextMatchTimeout: any;
 //   let liveMatchInterval: any;
 
-//   const mapTeam = (team: LiveMatchTeam): LiveTeamDetails => {
+//   const mapTown = (town: LiveMatchTown): LiveTownDetails => {
 //     return {
-//       id: team.id,
-//       score: team.score,
-//       positions: team.positions
+//       id: town.id,
+//       score: town.score,
+//       positions: town.positions
 //     }
 //   };
 
 //   const mapTickResult = (tickResult: LiveMatchStateWithStatus): LiveMatch => {
 //     let liveState: LiveMatchState | undefined;
-//     let winner: TeamIdOrTie | undefined;
+//     let winner: TownIdOrTie | undefined;
 //     if ('inProgress' in tickResult.status) {
 //       liveState = {
-//         offenseTeamId: tickResult.offenseTeamId,
+//         offenseTownId: tickResult.offenseTownId,
 //         players: tickResult.players,
 //         bases: tickResult.bases,
 //         round: tickResult.log.rounds.length,
@@ -64,8 +64,8 @@
 //       winner = undefined; // TODO
 //     }
 //     return {
-//       team1: mapTeam(tickResult.team1),
-//       team2: mapTeam(tickResult.team2),
+//       town1: mapTown(tickResult.town1),
+//       town2: mapTown(tickResult.town2),
 //       liveState: liveState,
 //       log: tickResult.log,
 //       winner: winner

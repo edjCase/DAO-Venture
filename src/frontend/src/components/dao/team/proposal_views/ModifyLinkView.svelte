@@ -1,7 +1,7 @@
 <script lang="ts">
-    import { ModifyTeamLinkContent } from "../../../../ic-agent/declarations/main";
+    import { ModifyTownLinkContent } from "../../../../ic-agent/declarations/main";
 
-    export let content: ModifyTeamLinkContent;
+    export let content: ModifyTownLinkContent;
 </script>
 
 <div>Name: {content.name}</div>

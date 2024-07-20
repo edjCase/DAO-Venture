@@ -3,12 +3,12 @@
   import SeasonScheduleOverview from "./SeasonScheduleOverview.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import MatchSchedule from "./MatchSchedule.svelte";
-  import { teamStore } from "../../stores/TeamStore";
-  import { TeamOrUndetermined } from "../../models/Team";
+  import { townStore } from "../../stores/TownStore";
+  import { TownOrUndetermined } from "../../models/Town";
   import {
     InProgressSeasonMatchGroupVariant,
-    Team,
-    TeamAssignment,
+    Town,
+    TownAssignment,
   } from "../../ic-agent/declarations/main";
 
   type MatchGroup = {
@@ -16,28 +16,28 @@
     matches: Match[];
   };
   type Match = {
-    team1: TeamOrUndetermined;
-    team2: TeamOrUndetermined;
+    town1: TownOrUndetermined;
+    town2: TownOrUndetermined;
   };
 
-  $: teams = $teamStore;
+  $: towns = $townStore;
   let matchGroupVariants: InProgressSeasonMatchGroupVariant[] = [];
   let matchGroups: MatchGroup[] | undefined;
 
-  let mapTeamAssignment = (
-    team: TeamAssignment,
-    teams: Team[],
-  ): TeamOrUndetermined => {
-    if ("predetermined" in team) {
-      return teams.find((t) => t.id == team.predetermined)!;
+  let mapTownAssignment = (
+    town: TownAssignment,
+    towns: Town[],
+  ): TownOrUndetermined => {
+    if ("predetermined" in town) {
+      return towns.find((t) => t.id == town.predetermined)!;
     }
-    if ("winnerOfMatch" in team) {
+    if ("winnerOfMatch" in town) {
       return {
-        winnerOfMatch: Number(team.winnerOfMatch),
+        winnerOfMatch: Number(town.winnerOfMatch),
       };
     }
     return {
-      seasonStandingIndex: Number(team.seasonStandingIndex),
+      seasonStandingIndex: Number(town.seasonStandingIndex),
     };
   };
 
@@ -46,7 +46,7 @@
   });
 
   $: {
-    if (teams && matchGroupVariants) {
+    if (towns && matchGroupVariants) {
       matchGroups = matchGroupVariants.map(
         (group: InProgressSeasonMatchGroupVariant): MatchGroup => {
           if ("completed" in group) {
@@ -54,8 +54,8 @@
               time: group.completed.time,
               matches: group.completed.matches.map((match) => {
                 return {
-                  team1: teams.find((t) => t.id == match.team1.id)!,
-                  team2: teams.find((t) => t.id == match.team2.id)!,
+                  town1: towns.find((t) => t.id == match.town1.id)!,
+                  town2: towns.find((t) => t.id == match.town2.id)!,
                 };
               }),
             };
@@ -65,8 +65,8 @@
               time: group.inProgress.time,
               matches: group.inProgress.matches.map((match) => {
                 return {
-                  team1: teams.find((t) => t.id == match.team1.id)!,
-                  team2: teams.find((t) => t.id == match.team2.id)!,
+                  town1: towns.find((t) => t.id == match.town1.id)!,
+                  town2: towns.find((t) => t.id == match.town2.id)!,
                 };
               }),
             };
@@ -76,8 +76,8 @@
               time: group.scheduled.time,
               matches: group.scheduled.matches.map((match) => {
                 return {
-                  team1: teams.find((t) => t.id == match.team1.id)!,
-                  team2: teams.find((t) => t.id == match.team2.id)!,
+                  town1: towns.find((t) => t.id == match.town1.id)!,
+                  town2: towns.find((t) => t.id == match.town2.id)!,
                 };
               }),
             };
@@ -86,8 +86,8 @@
             time: group.notScheduled.time,
             matches: group.notScheduled.matches.map((match) => {
               return {
-                team1: mapTeamAssignment(match.team1, teams),
-                team2: mapTeamAssignment(match.team2, teams),
+                town1: mapTownAssignment(match.town1, towns),
+                town2: mapTownAssignment(match.town2, towns),
               };
             }),
           };
@@ -110,8 +110,8 @@
           <ul class="">
             {#each group.matches as match}
               <li class="py-3">
-                {#if teams}
-                  <MatchSchedule team1={match.team1} team2={match.team2} />
+                {#if towns}
+                  <MatchSchedule town1={match.town1} town2={match.town2} />
                 {/if}
               </li>
             {/each}

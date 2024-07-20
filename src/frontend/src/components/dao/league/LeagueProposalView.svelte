@@ -1,10 +1,10 @@
 <script lang="ts">
     import { LeagueProposal } from "../../../ic-agent/declarations/main";
-    import ChangeTeamColorView from "./proposal_views/ChangeTeamColorView.svelte";
-    import ChangeTeamNameView from "./proposal_views/ChangeTeamNameView.svelte";
-    import ChangeTeamLogoView from "./proposal_views/ChangeTeamLogoView.svelte";
-    import ChangeTeamMottoView from "./proposal_views/ChangeTeamMottoView.svelte";
-    import ChangeTeamDescriptionView from "./proposal_views/ChangeTeamDescriptionView.svelte";
+    import ChangeTownColorView from "./proposal_views/ChangeTownColorView.svelte";
+    import ChangeTownNameView from "./proposal_views/ChangeTownNameView.svelte";
+    import ChangeTownLogoView from "./proposal_views/ChangeTownLogoView.svelte";
+    import ChangeTownMottoView from "./proposal_views/ChangeTownMottoView.svelte";
+    import ChangeTownDescriptionView from "./proposal_views/ChangeTownDescriptionView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
     import MotionView from "./proposal_views/MotionView.svelte";
 
@@ -12,11 +12,11 @@
 
     const components: Record<string, any> = {
         motion: MotionView,
-        changeName: ChangeTeamNameView,
-        changeColor: ChangeTeamColorView,
-        changeLogo: ChangeTeamLogoView,
-        changeMotto: ChangeTeamMottoView,
-        changeDescription: ChangeTeamDescriptionView,
+        changeName: ChangeTownNameView,
+        changeColor: ChangeTownColorView,
+        changeLogo: ChangeTownLogoView,
+        changeMotto: ChangeTownMottoView,
+        changeDescription: ChangeTownDescriptionView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

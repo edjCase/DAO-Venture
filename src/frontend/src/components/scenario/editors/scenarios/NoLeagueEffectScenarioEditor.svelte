@@ -12,7 +12,7 @@
             title: "Option " + (value.options.length + 1),
             description: "Option " + (value.options.length + 1),
             currencyCost: BigInt(0),
-            teamEffect: { noEffect: null },
+            townEffect: { noEffect: null },
             traitRequirements: [],
         });
         value.options = value.options; // Trigger reactivity
@@ -33,8 +33,8 @@
         <Input type="text" bind:value={option.description} />
         <Label>Currency Cost</Label>
         <BigIntInput bind:value={option.currencyCost} />
-        <Label>Team Effect</Label>
-        <ScenarioEffectChooser bind:value={option.teamEffect} />
+        <Label>Town Effect</Label>
+        <ScenarioEffectChooser bind:value={option.townEffect} />
         <Label>Trait Requirements</Label>
         <TraitRequirementsEditor bind:value={option.traitRequirements} />
 

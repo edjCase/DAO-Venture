@@ -3,7 +3,7 @@
   import {
     LiveMatch,
     LiveMatchState,
-    LiveTeamDetails,
+    LiveTownDetails,
   } from "../../stores/LiveMatchGroupStore";
   import FieldPlayer from "./FieldPlayer.svelte";
   import FieldBase from "./FieldBase.svelte";
@@ -28,8 +28,8 @@
 
   type LiveData = {
     liveState: LiveMatchState;
-    offenseTeam: LiveTeamDetails;
-    defenseTeam: LiveTeamDetails;
+    offenseTown: LiveTownDetails;
+    defenseTown: LiveTownDetails;
   };
 
   const pitcherPosition = { x: 45, y: 60 };
@@ -92,22 +92,22 @@
 
   // let getPlayerFieldCoordinates = (
   //   playerId: number,
-  //   team: LiveTeamDetails,
+  //   town: LiveTownDetails,
   // ): { x: number; y: number } | undefined => {
   //   let position: FieldPositionEnum;
-  //   if (team.positions.centerField === playerId) {
+  //   if (town.positions.centerField === playerId) {
   //     position = FieldPositionEnum.CenterField;
-  //   } else if (team.positions.leftField === playerId) {
+  //   } else if (town.positions.leftField === playerId) {
   //     position = FieldPositionEnum.LeftField;
-  //   } else if (team.positions.rightField === playerId) {
+  //   } else if (town.positions.rightField === playerId) {
   //     position = FieldPositionEnum.RightField;
-  //   } else if (team.positions.firstBase === playerId) {
+  //   } else if (town.positions.firstBase === playerId) {
   //     position = FieldPositionEnum.FirstBase;
-  //   } else if (team.positions.secondBase === playerId) {
+  //   } else if (town.positions.secondBase === playerId) {
   //     position = FieldPositionEnum.SecondBase;
-  //   } else if (team.positions.shortStop === playerId) {
+  //   } else if (town.positions.shortStop === playerId) {
   //     position = FieldPositionEnum.ShortStop;
-  //   } else if (team.positions.thirdBase === playerId) {
+  //   } else if (town.positions.thirdBase === playerId) {
   //     position = FieldPositionEnum.ThirdBase;
   //   } else {
   //     return undefined;
@@ -116,14 +116,14 @@
   // };
 
   $: if (match.liveState) {
-    let offenseTeam;
-    let defenseTeam;
-    if ("team1" in match.liveState.offenseTeamId) {
-      offenseTeam = match.team1;
-      defenseTeam = match.team2;
+    let offenseTown;
+    let defenseTown;
+    if ("town1" in match.liveState.offenseTownId) {
+      offenseTown = match.town1;
+      defenseTown = match.town2;
     } else {
-      offenseTeam = match.team2;
-      defenseTeam = match.team1;
+      offenseTown = match.town2;
+      defenseTown = match.town1;
     }
     // ballLocations = [{ ...homeBaseLocation, color: "white" }];
     // if (match.log && match.log.rounds.length > 0) {
@@ -206,8 +206,8 @@
     // }
     liveData = {
       liveState: match.liveState,
-      offenseTeam: offenseTeam,
-      defenseTeam: defenseTeam,
+      offenseTown: offenseTown,
+      defenseTown: defenseTown,
     };
   } else {
     liveData = undefined;
@@ -223,27 +223,27 @@
       <FieldPlayer
         x={leftFieldPosition.x}
         y={leftFieldPosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.leftField)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.leftField)}
       />
       <FieldPlayer
         x={centerFieldPosition.x}
         y={centerFieldPosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.centerField)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.centerField)}
       />
       <FieldPlayer
         x={rightFieldPosition.x}
         y={rightFieldPosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.rightField)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.rightField)}
       />
 
        Home base 
       <FieldBase
         x={homeBaseLocation.x}
         y={homeBaseLocation.y}
-        teamColor={liveData.offenseTeam.color}
+        townColor={liveData.offenseTown.color}
         player={getPlayer(liveData.liveState.bases.atBat)}
       />
 
@@ -251,61 +251,61 @@
       <FieldBase
         x={firstBaseLocation.x}
         y={firstBaseLocation.y}
-        teamColor={liveData.offenseTeam.color}
+        townColor={liveData.offenseTown.color}
         player={getPlayerOrNull(liveData.liveState.bases.firstBase)}
       />
 
       <FieldPlayer
         x={firstBasePosition.x}
         y={firstBasePosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.firstBase)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.firstBase)}
       />
 
        Second base 
       <FieldBase
         x={secondBaseLocation.x}
         y={secondBaseLocation.y}
-        teamColor={liveData.offenseTeam.color}
+        townColor={liveData.offenseTown.color}
         player={getPlayerOrNull(liveData.liveState.bases.secondBase)}
       />
 
       <FieldPlayer
         x={secondBasePosition.x}
         y={secondBasePosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.secondBase)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.secondBase)}
       />
 
        Short stop 
       <FieldPlayer
         x={shortStopPosition.x}
         y={shortStopPosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.shortStop)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.shortStop)}
       />
 
        Third base 
       <FieldBase
         x={thirdBaseLocation.x}
         y={thirdBaseLocation.y}
-        teamColor={liveData.offenseTeam.color}
+        townColor={liveData.offenseTown.color}
         player={getPlayerOrNull(liveData.liveState.bases.thirdBase)}
       />
 
       <FieldPlayer
         x={thirdBasePosition.x}
         y={thirdBasePosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.thirdBase)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.thirdBase)}
       />
 
        Pitcher 
       <FieldPlayer
         x={pitcherPosition.x}
         y={pitcherPosition.y}
-        teamColor={liveData.defenseTeam.color}
-        player={getPlayer(liveData.defenseTeam.positions.pitcher)}
+        townColor={liveData.defenseTown.color}
+        player={getPlayer(liveData.defenseTown.positions.pitcher)}
       />
 
        Baseball 

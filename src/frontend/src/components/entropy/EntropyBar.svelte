@@ -1,17 +1,17 @@
 <script lang="ts">
-    import { LeagueData, Team } from "../../ic-agent/declarations/main";
+    import { LeagueData, Town } from "../../ic-agent/declarations/main";
     import { leagueStore } from "../../stores/LeagueStore";
     import { ChevronDownSolid } from "flowbite-svelte-icons";
-    import { teamStore } from "../../stores/TeamStore";
-    let teams: Team[] = [];
+    import { townStore } from "../../stores/TownStore";
+    let towns: Town[] = [];
     let entropyData: LeagueData | undefined;
 
-    teamStore.subscribe((t) => {
+    townStore.subscribe((t) => {
         if (!t) {
             return;
         }
-        teams = t;
-        teams.sort((a, b) => Number(b.entropy) - Number(a.entropy));
+        towns = t;
+        towns.sort((a, b) => Number(b.entropy) - Number(a.entropy));
     });
 
     leagueStore.subscribeData((data) => {
@@ -60,16 +60,16 @@
                 title="Entropy threshold exceeded"
             ></div>
         {:else}
-            {#each teams as team}
-                {#if Number(team.entropy) > 0}
+            {#each towns as town}
+                {#if Number(town.entropy) > 0}
                     <div
                         class="h-full"
-                        style="width: {(Number(team.entropy) /
+                        style="width: {(Number(town.entropy) /
                             Number(entropyData.currentEntropy)) *
                             leagueEntropyPercentage}%; background-color: {toRgbString(
-                            team.color,
+                            town.color,
                         )};"
-                        title="{team.name}: {team.entropy}"
+                        title="{town.name}: {town.entropy}"
                     ></div>
                 {/if}
             {/each}

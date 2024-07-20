@@ -1,14 +1,14 @@
 <script lang="ts">
-    import { ChangeTeamMottoContent__1 } from "../../../../ic-agent/declarations/main";
-    import { teamStore } from "../../../../stores/TeamStore";
+    import { ChangeTownMottoContent__1 } from "../../../../ic-agent/declarations/main";
+    import { townStore } from "../../../../stores/TownStore";
 
-    export let content: ChangeTeamMottoContent__1;
-    $: teams = $teamStore;
+    export let content: ChangeTownMottoContent__1;
+    $: towns = $townStore;
 
-    let team = teams?.find((team) => team.id === content.teamId);
+    let town = towns?.find((town) => town.id === content.townId);
 </script>
 
-<div>Team Id: {content.teamId}</div>
-<div>Current Motto: {team?.name}</div>
+<div>Town Id: {content.townId}</div>
+<div>Current Motto: {town?.name}</div>
 
 <div>New Motto: {content.motto}</div>
