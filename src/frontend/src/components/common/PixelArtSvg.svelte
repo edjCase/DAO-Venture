@@ -3,8 +3,9 @@
 
     export let pixels: PixelGrid;
     export let pixelSize: number;
-    export let imageWidth: number;
-    export let imageHeight: number;
+
+    let imageHeight = pixels.length * pixelSize;
+    let imageWidth = pixels[0].length * pixelSize;
 </script>
 
 <svg

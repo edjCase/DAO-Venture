@@ -1,30 +1,22 @@
 <script lang="ts">
-    import ScenarioHome from "../components/scenario/ScenarioHome.svelte";
-    import EntropyHome from "./entropy/EntropyHome.svelte";
     import { townStore } from "../stores/TownStore";
     import { userStore } from "../stores/UserStore";
-    import { Button } from "flowbite-svelte";
     import { mainAgentFactory } from "../ic-agent/Main";
-    import TopUsersHome from "./user/TopUsersHome.svelte";
+    import LoadingButton from "./common/LoadingButton.svelte";
+    import TownFlag from "./town/TownFlag.svelte";
 
     $: towns = $townStore;
 
-    let userCount: bigint | undefined;
-    userStore.subscribeStats((stats) => {
-        if (stats) {
-            userCount = stats.userCount;
-        }
-    });
-
     $: user = $userStore;
 
-    let joinTown = async () => {
+    let joinWorld = async () => {
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.joinWorld();
         if ("ok" in result) {
             console.log("Joined world", result);
             userStore.refetchCurrentUser();
             userStore.refetchStats();
+            townStore.refetch();
         } else {
             console.log("Error joining world", result);
         }
@@ -32,35 +24,21 @@
 </script>
 
 <div class="bg-gray-800 rounded p-2">
-    {#if towns && userCount !== undefined}
-        {#if towns.length <= 0}
-            <div class="p-4 text-center">
-                <div class="text-3xl">World is in disarray</div>
-                <div>
-                    Waiting for the Benevolent Dictator (For Now) to start the
-                    world
+    {#if user?.residency[0] === undefined}
+        <div class="text-center text-3xl">
+            <LoadingButton onClick={joinWorld}>Join World</LoadingButton>
+        </div>
+    {/if}
+    {#if towns}
+        {#each towns as town}
+            <div class="flex flex-col justify-center gap-2">
+                <div class="flex gap-2">
+                    <TownFlag {town} size="xxs" />
+                    <div class="text-3xl">{town.name}</div>
                 </div>
+                <div>Size: {town.size}</div>
+                <div>Population: {town.population}</div>
             </div>
-        {:else}
-            {#if user !== undefined && user?.residency[0] === undefined}
-                <div
-                    class="flex flex-col items-center justify-center gap-2 mb-4"
-                >
-                    <div class="text-3xl text-center">
-                        Want to join the world?
-                    </div>
-                    <Button on:click={joinTown}>Click Here</Button>
-                </div>
-            {/if}
-            <div class="flex flex-col gap-6">
-                <div class="flex justify-around flex-wrap gap-6">
-                    <EntropyHome />
-                    <TopUsersHome />
-                </div>
-                <div>
-                    <ScenarioHome />
-                </div>
-            </div>
-        {/if}
+        {/each}
     {/if}
 </div>

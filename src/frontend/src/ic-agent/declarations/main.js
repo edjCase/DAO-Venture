@@ -492,11 +492,14 @@ export const idlFactory = ({ IDL }) => {
   });
   const Town = IDL.Record({
     'id' : IDL.Nat,
+    'genesisTime' : Time,
     'motto' : IDL.Text,
     'name' : IDL.Text,
+    'size' : IDL.Nat,
     'flagImage' : FlagImage,
     'entropy' : IDL.Nat,
     'currency' : IDL.Nat,
+    'population' : IDL.Nat,
   });
   const GetUserError = IDL.Variant({
     'notAuthorized' : IDL.Null,

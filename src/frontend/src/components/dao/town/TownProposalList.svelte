@@ -1,10 +1,7 @@
 <script lang="ts">
     import { proposalStore } from "../../../stores/ProposalStore";
     import { onDestroy } from "svelte";
-    import {
-        Proposal,
-        TownProposal,
-    } from "../../../ic-agent/declarations/main";
+    import { TownProposal } from "../../../ic-agent/declarations/main";
     import { mainAgentFactory } from "../../../ic-agent/Main";
     import GenericProposalList from "../GenericProposalList.svelte";
     import { ProposalType } from "../GenericProposal.svelte";
@@ -13,7 +10,7 @@
 
     export let townId: bigint;
 
-    let proposals: Proposal[] = [];
+    let proposals: TownProposal[] = [];
     let genericProposals: ProposalType[] = [];
 
     $: genericProposals = proposals.map((p) => {

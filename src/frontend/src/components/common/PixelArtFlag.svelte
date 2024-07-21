@@ -5,33 +5,28 @@
     export let pixels: PixelGrid;
     export let size: "xxs" | "xs" | "sm" | "md" | "lg" | undefined;
 
-    let imageWidth: number;
-    let imageHeight: number;
+    let pixelSize: number;
     $: {
-        let imageSize: number;
         switch (size) {
             case "xxs":
-                imageSize = 35;
+                pixelSize = 1;
                 break;
             case "xs":
-                imageSize = 60;
+                pixelSize = 2;
                 break;
             case "sm":
-                imageSize = 75;
+                pixelSize = 3;
                 break;
             case "md":
-                imageSize = 100;
+                pixelSize = 4;
                 break;
             case "lg":
-                imageSize = 150;
+                pixelSize = 5;
                 break;
             default:
-                imageSize = 50;
+                pixelSize = 6;
         }
-        imageWidth = imageSize;
-        imageHeight = imageSize;
     }
-    let pixelSize = 1;
 </script>
 
-<PixelArtSvg {pixelSize} {pixels} {imageHeight} {imageWidth} />
+<PixelArtSvg {pixelSize} {pixels} />

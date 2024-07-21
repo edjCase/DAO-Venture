@@ -21,6 +21,7 @@ import Hash "mo:base/Hash";
 import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Town "../models/Town";
+import TimeUtil "../TimeUtil";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -214,14 +215,6 @@ module {
         worldEffect : Scenario.Effect;
     };
 
-    public type TownWithStats = Town.Town and {
-        population : Nat;
-        size : Nat;
-        currency : Nat;
-        entropy : Nat;
-        age : Nat;
-    };
-
     public class Handler<system>(
         data : StableData,
         processEffectOutcome : <system>(
@@ -374,7 +367,7 @@ module {
         public func add<system>(
             scenario : AddScenarioRequest,
             members : [ScenarioMember],
-            allTowns : [TownWithStats],
+            allTowns : [Town.Town],
         ) : AddScenarioResult {
             switch (validateScenario(scenario)) {
                 case (#ok) {};
@@ -398,7 +391,7 @@ module {
                             let allowedTownIds = allTowns.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(town : TownWithStats) : ?Nat {
+                                func(town : Town.Town) : ?Nat {
                                     if (townMeetsRequirements(town, option.requirements)) {
                                         ?town.id;
                                     } else {
@@ -424,7 +417,7 @@ module {
                             let allowedTownIds = allTowns.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(town : TownWithStats) : ?Nat {
+                                func(town : Town.Town) : ?Nat {
                                     if (townMeetsRequirements(town, option.requirements)) {
                                         ?town.id;
                                     } else {
@@ -450,7 +443,7 @@ module {
                             let allowedTownIds = allTowns.vals()
                             |> IterTools.mapFilter(
                                 _,
-                                func(town : TownWithStats) : ?Nat {
+                                func(town : Town.Town) : ?Nat {
                                     if (townMeetsRequirements(town, option.requirements)) {
                                         ?town.id;
                                     } else {
@@ -714,7 +707,7 @@ module {
             Buffer.toArray(townResults);
         };
 
-        private func townMeetsRequirements(townStats : TownWithStats, requirements : [Scenario.Requirement]) : Bool {
+        private func townMeetsRequirements(townStats : Town.Town, requirements : [Scenario.Requirement]) : Bool {
             let testRange = func(townValue : Int, range : Scenario.RangeRequirement) : Bool {
                 switch (range) {
                     case (#above(value)) townValue > value;
@@ -730,7 +723,10 @@ module {
                         case (#population(population)) testRange(townStats.population, population);
                         case (#currency(currency)) testRange(townStats.currency, currency);
                         case (#entropy(entropy)) testRange(townStats.entropy, entropy);
-                        case (#age(age)) testRange(townStats.age, age);
+                        case (#age(age)) {
+                            let currentAge = TimeUtil.getAge(townStats.genesisTime).days;
+                            testRange(currentAge, age);
+                        };
                     };
                 },
             );

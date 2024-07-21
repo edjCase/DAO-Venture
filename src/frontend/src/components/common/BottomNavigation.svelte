@@ -11,7 +11,6 @@
         BarsOutline,
         BellRingSolid,
         BookOutline,
-        BullhornSolid,
         CalendarMonthOutline,
         GithubSolid,
         GlobeSolid,
@@ -82,7 +81,7 @@
     });
 </script>
 
-<BottomNav {activeUrl} position="fixed" classInner="grid-cols-6 z-50">
+<BottomNav {activeUrl} position="fixed" classInner="grid-cols-5 z-50">
     <BottomNavItem btnName="Home" href="/" on:click={navOnClick("/")}>
         <HomeSolid class={iconClass} />
     </BottomNavItem>
@@ -92,13 +91,6 @@
         on:click={navOnClick("/scenarios")}
     >
         <BellRingSolid class={iconClass} />
-    </BottomNavItem>
-    <BottomNavItem
-        btnName="Matches"
-        href="/matches"
-        on:click={navOnClick("/matches")}
-    >
-        <BullhornSolid class={iconClass} />
     </BottomNavItem>
     <BottomNavItem
         btnName="Town"

@@ -10,9 +10,9 @@
 
     const components: Record<string, any> = {
         motion: MotionView,
-        changeName: ChangeTownNameView,
-        changeFlag: ChangeTownFlagView,
-        changeMotto: ChangeTownMottoView,
+        changeTownName: ChangeTownNameView,
+        changeTownFlag: ChangeTownFlagView,
+        changeTownMotto: ChangeTownMottoView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

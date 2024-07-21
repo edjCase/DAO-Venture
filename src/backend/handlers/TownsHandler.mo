@@ -8,6 +8,7 @@ import Option "mo:base/Option";
 import IterTools "mo:itertools/Iter";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
+import Time "mo:base/Time";
 import Flag "../models/Flag";
 import Town "../models/Town";
 
@@ -19,11 +20,14 @@ module {
 
     public type StableTownData = {
         id : Nat;
-        currency : Nat;
         name : Text;
         flagImage : Flag.FlagImage;
         motto : Text;
         entropy : Nat;
+        currency : Nat;
+        population : Nat;
+        size : Nat;
+        genesisTime : Time.Time;
     };
 
     type MutableTownData = {
@@ -33,6 +37,9 @@ module {
         var motto : Text;
         var entropy : Nat;
         var currency : Nat;
+        var population : Nat;
+        var size : Nat;
+        genesisTime : Time.Time;
     };
 
     public class Handler<system>(
@@ -75,6 +82,9 @@ module {
                 motto = town.motto;
                 entropy = town.entropy;
                 currency = town.currency;
+                genesisTime = town.genesisTime;
+                population = town.population;
+                size = town.size;
             };
         };
 
@@ -91,8 +101,6 @@ module {
             name : Text,
             flagImage : Flag.FlagImage,
             motto : Text,
-            entropy : Nat,
-            currency : Nat,
         ) : Result.Result<Nat, { #nameTaken }> {
             Debug.print("Creating new town with name " # name);
             let nameAlreadyTaken = towns.entries()
@@ -112,8 +120,11 @@ module {
                 var name = name;
                 var flagImage = flagImage;
                 var motto = motto;
-                var entropy = entropy;
-                var currency = currency;
+                var entropy = 0;
+                var currency = 0;
+                var population = 0;
+                var size = 0;
+                genesisTime = Time.now();
             };
             towns.put(townId, townData);
 
@@ -199,6 +210,9 @@ module {
                 name = town.name;
                 flagImage = town.flagImage;
                 motto = town.motto;
+                genesisTime = town.genesisTime;
+                population = town.population;
+                size = town.size;
             };
         };
     };
@@ -215,22 +229,28 @@ module {
     private func toMutableTownData(stableData : StableTownData) : MutableTownData {
         {
             id = stableData.id;
-            var currency = stableData.currency;
             var name = stableData.name;
             var flagImage = stableData.flagImage;
             var motto = stableData.motto;
+            var currency = stableData.currency;
             var entropy = stableData.entropy;
+            var population = stableData.population;
+            var size = stableData.size;
+            genesisTime = stableData.genesisTime;
         };
     };
 
     private func toStableTownData(town : MutableTownData) : StableTownData {
         {
             id = town.id;
-            currency = town.currency;
-            entropy = town.entropy;
             name = town.name;
             flagImage = town.flagImage;
             motto = town.motto;
+            currency = town.currency;
+            entropy = town.entropy;
+            population = town.population;
+            size = town.size;
+            genesisTime = town.genesisTime;
         };
     };
 

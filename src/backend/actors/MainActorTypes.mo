@@ -223,16 +223,6 @@ module {
         #invalid : [Text];
     };
 
-    public type CreateTownRequest = {
-        name : Text;
-        logoUrl : Text;
-        motto : Text;
-        description : Text;
-        color : (Nat8, Nat8, Nat8);
-        entropy : Nat;
-        currency : Nat;
-    };
-
     public type CreateTownResult = Result.Result<Nat, CreateTownError>;
 
     public type CreateTownError = {

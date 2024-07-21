@@ -27,6 +27,8 @@ import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
 import TownsHandler "../handlers/TownsHandler";
 import Town "../models/Town";
+import Flag "../models/Flag";
+import TimeUtil "../TimeUtil";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -318,22 +320,10 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_);
     };
 
-    private func getDayInfo() : { timeTillNextDay : Nat; currentDay : Nat } {
-        let timeElapsed = Time.now() - genesisTime;
-        if (timeElapsed < 0) {
-            Debug.trap("Time elapsed is negative: " # Int.toText(timeElapsed));
-        };
-        let timeElapsedNat : Nat = Int.abs(timeElapsed);
-        let dayInNanos : Nat = 60 * 60 * 24 * 1_000_000_000;
-        let timeTillNextDay : Nat = timeElapsedNat % dayInNanos;
-        let currentDay : Nat = timeElapsedNat / dayInNanos;
-        { timeTillNextDay = timeTillNextDay; currentDay = currentDay };
-    };
-
     private func resetDayTimer<system>() {
-        let { timeTillNextDay } = getDayInfo();
+        let { timeInDay } = TimeUtil.getAge(genesisTime);
         ignore Timer.setTimer<system>(
-            #nanoseconds(timeTillNextDay),
+            #nanoseconds(timeInDay),
             func() : async () {
                 await* processDays();
             },
@@ -377,16 +367,51 @@ actor MainActor : Types.Actor {
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromBlob(seedBlob);
         let towns = townsHandler.getAll();
-        if (towns.size() <= 0) {
-            return #err(#noTowns);
+        let randomTownId : Nat = if (towns.size() <= 0) {
+            // TODO better initialization
+            let height = 24;
+            let width = 32;
+            let image = {
+                pixels = Array.tabulate(
+                    height,
+                    func(_ : Nat) : [Flag.Pixel] {
+                        Array.tabulate(
+                            width,
+                            func(_ : Nat) : Flag.Pixel = {
+                                red = 0;
+                                green = 0;
+                                blue = 0;
+                            },
+                        );
+                    },
+                );
+            };
+            let #ok(townId) = townsHandler.create<system>("First Town", image, "First Town Motto") else Debug.trap("Failed to create first town");
+            let townDao = buildTownDao<system>(
+                townId,
+                {
+                    proposalDuration = #days(3);
+                    proposals = [];
+                    votingThreshold = #percent({
+                        percent = 50;
+                        quorum = ?20;
+                    });
+                },
+            );
+            townDaos.put(
+                townId,
+                townDao,
+            );
+            townId;
+        } else {
+            towns.vals()
+            |> Iter.map<Town.Town, Nat>(
+                _,
+                func(town : Town.Town) : Nat = town.id,
+            )
+            |> Iter.toArray(_)
+            |> prng.nextArrayElement(_);
         };
-        let randomTownId : Nat = towns.vals()
-        |> Iter.map<Town.Town, Nat>(
-            _,
-            func(town : Town.Town) : Nat = town.id,
-        )
-        |> Iter.toArray(_)
-        |> prng.nextArrayElement(_);
         let votingPower = 1; // TODO get voting power from token
         userHandler.addWorldMember(caller, randomTownId, votingPower);
     };
@@ -458,7 +483,7 @@ actor MainActor : Types.Actor {
             return #err(#notAuthorized);
         };
         let ?dao = townDaos.get(townId) else return #err(#townNotFound);
-        Debug.print("Creating proposal for town " # Nat.toText(townId) # " with content: " # debug_show (content));
+        Debug.print("Creating proposal for town " # Nat.toText(townId));
         await* dao.createProposal<system>(caller, content, members);
     };
 
@@ -495,18 +520,7 @@ actor MainActor : Types.Actor {
         };
         let members = userHandler.getTownOwners(null);
         let towns = townsHandler.getAll();
-        let townsWithStats : [ScenarioHandler.TownWithStats] = towns.vals()
-        |> Iter.map<Town.Town, ScenarioHandler.TownWithStats>(
-            _,
-            func(town : Town.Town) : ScenarioHandler.TownWithStats = {
-                town with
-                age = 1; // TODO
-                population = 1; // TODO
-                size = 1; // TODO
-            },
-        )
-        |> Iter.toArray(_);
-        scenarioHandler.add<system>(scenario, members, townsWithStats);
+        scenarioHandler.add<system>(scenario, members, towns);
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
@@ -566,9 +580,9 @@ actor MainActor : Types.Actor {
     // Private Methods ---------------------------------------------------------
 
     private func processDays() : async* () {
-        let { currentDay } = getDayInfo();
+        let { days } = TimeUtil.getAge(genesisTime);
         label l loop {
-            if (currentDay <= daysProcessed) {
+            if (days <= daysProcessed) {
                 break l;
             };
             disperseCurrencyDividends();

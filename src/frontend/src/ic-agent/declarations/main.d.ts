@@ -356,11 +356,14 @@ export type ThresholdValue__1 = { 'fixed' : bigint } |
 export type Time = bigint;
 export interface Town {
   'id' : bigint,
+  'genesisTime' : Time,
   'motto' : string,
   'name' : string,
+  'size' : bigint,
   'flagImage' : FlagImage,
   'entropy' : bigint,
   'currency' : bigint,
+  'population' : bigint,
 }
 export interface TownProposal {
   'id' : bigint,
