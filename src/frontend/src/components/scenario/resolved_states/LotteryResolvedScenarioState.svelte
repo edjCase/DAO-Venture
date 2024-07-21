@@ -1,7 +1,7 @@
 <script lang="ts">
     import { LotteryScenarioOutcome } from "../../../ic-agent/declarations/main";
     import { Town } from "../../../ic-agent/declarations/main";
-    import TeamFlag from "../../town/TeamFlag.svelte";
+    import TownFlag from "../../town/TownFlag.svelte";
 
     export let outcome: LotteryScenarioOutcome;
     export let towns: Town[];
@@ -17,6 +17,6 @@
     {#if winningTown === undefined}
         <div>NONE</div>
     {:else}
-        <TeamFlag town={winningTown} size="md" />
+        <TownFlag town={winningTown} size="md" />
     {/if}
 </div>

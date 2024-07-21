@@ -41,35 +41,6 @@
                     value: { flat: BigInt(1) },
                 },
             };
-        } else if (selectedType === "skill") {
-            value = {
-                skill: {
-                    position: {
-                        position: { random: null },
-                        town: { contextual: null },
-                    },
-                    skill: { random: null },
-                    duration: { matches: BigInt(1) },
-                    delta: BigInt(0),
-                },
-            };
-        } else if (selectedType === "injury") {
-            value = {
-                injury: {
-                    position: {
-                        position: { random: null },
-                        town: { contextual: null },
-                    },
-                },
-            };
-        } else if (selectedType === "townTrait") {
-            value = {
-                townTrait: {
-                    kind: { add: null },
-                    town: { contextual: null },
-                    traitId: "",
-                },
-            };
         } else if (selectedType === "noEffect") {
             value = {
                 noEffect: null,

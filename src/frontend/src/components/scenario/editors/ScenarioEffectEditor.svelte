@@ -3,13 +3,9 @@
     import BigIntInput from "./BigIntInput.svelte";
     import { Effect } from "../../../ic-agent/declarations/main";
     import { toJsonString } from "../../../utils/StringUtil";
-    import TargetPositionEditor from "./TargetPositionEditor.svelte";
-    import DurationChooser from "./DurationChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
     import TargetTownChooser from "./TargetTownChooser.svelte";
-    import ChosenOrRandomSkillChooser from "./ChosenOrRandomSkillChooser.svelte";
-    import TownTraitEffectEditor from "./TownTraitEffectEditor.svelte";
     export let value: Effect;
 
     let addOption = () => {
@@ -67,28 +63,6 @@
     <BigIntInput bind:value={value.currency.value.flat} />
     <Label>Town</Label>
     <TargetTownChooser bind:value={value.currency.town} />
-{:else if "skill" in value}
-    <Label>Target Position</Label>
-    <div class="ml-4">
-        <TargetPositionEditor bind:value={value.skill.position} />
-    </div>
-    <Label>Skill</Label>
-    <div class="ml-4">
-        <ChosenOrRandomSkillChooser bind:value={value.skill.skill} />
-    </div>
-    <Label>Duration</Label>
-    <div class="ml-4">
-        <DurationChooser bind:value={value.skill.duration} />
-    </div>
-    <Label>Delta</Label>
-    <BigIntInput bind:value={value.skill.delta} />
-{:else if "injury" in value}
-    <Label>Target</Label>
-    <div class="ml-4">
-        <TargetPositionEditor bind:value={value.injury.position} />
-    </div>
-{:else if "townTrait" in value}
-    <TownTraitEffectEditor bind:value={value.townTrait} />
 {:else if "entropyThreshold" in value}
     <Label>Delta</Label>
     <BigIntInput bind:value={value.entropyThreshold.delta} />

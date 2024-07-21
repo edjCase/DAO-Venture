@@ -1,52 +1,30 @@
 <script lang="ts">
-    import { writable, type Writable } from "svelte/store";
+    import { PixelGrid, Rgb } from "../../models/PixelArt";
+    import RgbColor from "./RgbColor.svelte";
 
-    export let gridSize = 16;
     export let pixelSize = 20;
+    export let pixels: PixelGrid;
 
-    type RGB = { red: number; green: number; blue: number };
-    type PixelGrid = RGB[][];
+    let height = pixels.length;
+    let width = pixels[0].length;
 
-    let selectedColor: RGB = { red: 0, green: 0, blue: 0 };
-    let pixelData: Writable<PixelGrid> = writable(
-        Array(gridSize)
-            .fill(null)
-            .map(() =>
-                Array(gridSize).fill({ red: 255, green: 255, blue: 255 }),
-            ),
-    );
+    let selectedColor: Rgb = { red: 0, green: 0, blue: 0 };
 
     function updatePixel(x: number, y: number): void {
-        pixelData.update((data) => {
-            data[y][x] = { ...selectedColor };
-            return data;
-        });
-    }
-
-    function handleColorChange(event: Event): void {
-        const hex = (event.target as HTMLInputElement).value;
-        selectedColor = {
-            red: parseInt(hex.slice(1, 3), 16),
-            green: parseInt(hex.slice(3, 5), 16),
-            blue: parseInt(hex.slice(5, 7), 16),
-        };
+        pixels![y][x] = { ...selectedColor };
     }
 </script>
 
 <div class="flex flex-col items-center space-y-4">
     <div class="flex space-x-4 items-center">
-        <input
-            type="color"
-            on:input={handleColorChange}
-            class="w-12 h-12 cursor-pointer"
-        />
+        <RgbColor bind:value={selectedColor} />
     </div>
 
     <div
         class="grid bg-gray-200 rounded-lg"
-        style:grid-template-columns="repeat({gridSize}, {pixelSize}px)"
+        style:grid-template-columns="repeat({width}, {pixelSize}px)"
     >
-        {#each $pixelData as row, y}
+        {#each pixels as row, y}
             {#each row as pixel, x}
                 <div
                     on:click={() => updatePixel(x, y)}
@@ -56,7 +34,7 @@
                         }
                     }}
                     role="button"
-                    tabindex={x + y * gridSize}
+                    tabindex={x + y * height}
                     class="cursor-pointer hover:opacity-75 transition-opacity"
                     style:width="{pixelSize}px"
                     style:height="{pixelSize}px"

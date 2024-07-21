@@ -541,6 +541,11 @@ actor MainActor : Types.Actor {
         #ok(stats);
     };
 
+    public shared query func getTopUsers(request : Types.GetTopUsersRequest) : async Types.GetTopUsersResult {
+        let result = userHandler.getTopUsers(request.count, request.offset);
+        #ok(result);
+    };
+
     public shared query func getTownOwners(request : Types.GetTownOwnersRequest) : async Types.GetTownOwnersResult {
         let townId = switch (request) {
             case (#town(townId)) ?townId;

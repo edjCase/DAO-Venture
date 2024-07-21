@@ -2,11 +2,11 @@
     import SeasonHome from "../components/season/SeasonHome.svelte";
     import ScenarioHome from "../components/scenario/ScenarioHome.svelte";
     import EntropyHome from "./entropy/EntropyHome.svelte";
-    import TopPredictorsHome from "./user/TopPredictorsHome.svelte";
     import { townStore } from "../stores/TownStore";
     import { userStore } from "../stores/UserStore";
     import { Button } from "flowbite-svelte";
     import { mainAgentFactory } from "../ic-agent/Main";
+    import TopUsersHome from "./user/TopUsersHome.svelte";
 
     $: towns = $townStore;
 
@@ -59,7 +59,7 @@
                 </div>
                 <div class="flex justify-around flex-wrap gap-6">
                     <EntropyHome />
-                    <TopPredictorsHome />
+                    <TopUsersHome />
                 </div>
                 <div>
                     <ScenarioHome />

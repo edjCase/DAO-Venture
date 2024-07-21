@@ -20,19 +20,14 @@
                         {
                             title: "Contribute",
                             description:
-                                "Contribute 1 to the threshold, but -1 random skill to a random player on the town for a match.",
+                                "Contribute 1 to the threshold, but -1 💰.",
                             currencyCost: BigInt(0),
-                            traitRequirements: [],
+                            requirements: [],
                             value: { fixed: BigInt(1) },
                             townEffect: {
-                                skill: {
-                                    duration: { matches: BigInt(1) },
-                                    skill: { random: null },
-                                    position: {
-                                        position: { random: null },
-                                        town: { contextual: null },
-                                    },
-                                    delta: BigInt(-1),
+                                currency: {
+                                    town: { contextual: null },
+                                    value: { flat: BigInt(-1) },
                                 },
                             },
                         },
@@ -41,7 +36,7 @@
                             description:
                                 "Don't contribute to the threshold, but no negative effect.",
                             currencyCost: BigInt(0),
-                            traitRequirements: [],
+                            requirements: [],
                             value: { fixed: BigInt(0) },
                             townEffect: { noEffect: null },
                         },
@@ -101,7 +96,7 @@
                             townEffect: {
                                 noEffect: null,
                             },
-                            traitRequirements: [],
+                            requirements: [],
                         },
                         {
                             title: "Status Quo",
@@ -114,7 +109,7 @@
                             townEffect: {
                                 noEffect: null,
                             },
-                            traitRequirements: [],
+                            requirements: [],
                         },
                         {
                             title: "Cool Down",
@@ -146,7 +141,7 @@
                             townEffect: {
                                 noEffect: null,
                             },
-                            traitRequirements: [],
+                            requirements: [],
                         },
                     ],
                 },
@@ -200,14 +195,14 @@
                             title: "Option 1",
                             description: "Description 1",
                             currencyCost: BigInt(0),
-                            traitRequirements: [],
+                            requirements: [],
                             townEffect: { noEffect: null },
                         },
                         {
                             title: "Option 2",
                             description: "Description 2",
                             currencyCost: BigInt(0),
-                            traitRequirements: [],
+                            requirements: [],
                             townEffect: { noEffect: null },
                         },
                     ],

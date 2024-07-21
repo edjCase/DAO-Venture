@@ -2,20 +2,16 @@
     import { Badge } from "flowbite-svelte";
     import {
         ScenarioVote,
-        TraitRequirement,
+        Requirement,
         VoteOnScenarioRequest,
+        RangeRequirement,
     } from "../../ic-agent/declarations/main";
     import { townStore } from "../../stores/TownStore";
-    import { traitStore } from "../../stores/TraitStore";
-    import TeamFlag from "../town/TeamFlag.svelte";
-    import {
-        QuestionCircleSolid,
-        ThumbsDownSolid,
-        ThumbsUpSolid,
-    } from "flowbite-svelte-icons";
+    import TownFlag from "../town/TownFlag.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { mainAgentFactory } from "../../ic-agent/Main";
     import { Town } from "../../ic-agent/declarations/main";
+    import { toJsonString } from "../../utils/StringUtil";
 
     type State =
         | {
@@ -33,7 +29,7 @@
         id: bigint;
         title: string;
         description: string;
-        traitRequirements: TraitRequirement[];
+        requirements: Requirement[];
     };
     export let scenarioId: bigint;
     export let currency: { townCurrency: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
@@ -67,30 +63,50 @@
         });
     });
 
-    $: traits = $traitStore;
-
-    $: requirements = option.traitRequirements.map((r) => {
-        let name = traits?.find((t) => t.id === r.id)?.name ?? "";
-
-        let icon:
-            | typeof QuestionCircleSolid
-            | typeof ThumbsDownSolid
-            | typeof ThumbsUpSolid;
-        let color: "none" | "red" | "green";
-        if ("required" in r.kind) {
-            icon = ThumbsUpSolid;
-            color = "green";
-        } else if ("prohibited" in r.kind) {
-            icon = ThumbsDownSolid;
-            color = "red";
+    let getRangeText = function (range: RangeRequirement) {
+        if ("above" in range) {
+            return `Above ${range.above}`;
+        } else if ("below" in range) {
+            return `Below ${range.below}`;
         } else {
-            icon = QuestionCircleSolid;
-            color = "none";
+            return "NOT IMPLEMENTED RANGE: " + toJsonString(range);
+        }
+    };
+
+    $: requirements = option.requirements.map((r) => {
+        let label;
+        let color:
+            | "red"
+            | "yellow"
+            | "green"
+            | "indigo"
+            | "purple"
+            | "pink"
+            | "blue"
+            | "dark"
+            | "primary";
+        if ("size" in r) {
+            label = "Size: " + getRangeText(r.size);
+            color = "dark";
+        } else if ("population" in r) {
+            label = "Population: " + getRangeText(r.population);
+            color = "yellow";
+        } else if ("currency" in r) {
+            label = "Currency: " + getRangeText(r.currency);
+            color = "green";
+        } else if ("entropy" in r) {
+            label = "Entropy: " + getRangeText(r.entropy);
+            color = "indigo";
+        } else if ("age" in r) {
+            label = "Age: " + getRangeText(r.age);
+            color = "purple";
+        } else {
+            label = "NOT IMPLEMENTED REQUIREMENT: " + toJsonString(r);
+            color = "red";
         }
 
         return {
-            name: name,
-            icon,
+            label,
             color,
         };
     });
@@ -152,17 +168,16 @@
                 Town Votes: {townOption.currentVotingPower}
             </div>
         {/if}
-        {#each requirements as { name, icon, color }}
+        {#each requirements as { label, color }}
             <Badge {color}>
-                <svelte:component this={icon} size="xs" class="mr-2" />
-                {name}
+                {label}
             </Badge>
         {/each}
     </div>
     {#if "resolved" in state && townsWithOption !== undefined}
         <div class="flex items-center justify-center">
             {#each townsWithOption as town}
-                <TeamFlag {town} size="xs" />
+                <TownFlag {town} size="xs" />
             {/each}
         </div>
     {/if}

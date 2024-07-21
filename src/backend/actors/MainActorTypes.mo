@@ -11,7 +11,6 @@ import Town "../models/Town";
 
 module {
     public type Actor = actor {
-
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
         getWorldProposals : query (count : Nat, offset : Nat) -> async GetWorldProposalsResult;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
@@ -36,6 +35,7 @@ module {
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
+        getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getTownOwners : query (request : GetTownOwnersRequest) -> async GetTownOwnersResult;
         assignUserToTown : (request : AssignUserToTownRequest) -> async Result.Result<(), AssignUserToTownError>;
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
@@ -240,12 +240,12 @@ module {
         #notAuthorized;
     };
 
-    public type GetUserLeaderboardRequest = {
+    public type GetTopUsersRequest = {
         count : Nat;
         offset : Nat;
     };
 
-    public type GetUserLeaderboardResult = {
+    public type GetTopUsersResult = {
         #ok : CommonTypes.PagedResult<UserHandler.User>;
     };
 

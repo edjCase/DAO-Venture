@@ -13,27 +13,26 @@ module {
 
     public type User = {
         id : Principal;
-        membership : ?UserMembership;
-        points : Int;
+        residency : ?UserResidency;
+        level : Nat;
+        currency : Nat;
     };
 
-    public type UserMembership = {
+    public type UserResidency = {
         townId : Nat;
         votingPower : Nat;
     };
 
     public type UserStats = {
-        totalPoints : Int;
+        totalUserLevel : Int;
         userCount : Nat;
-        townOwnerCount : Nat;
         towns : [TownStats];
     };
 
     public type TownStats = {
         id : Nat;
-        totalPoints : Int;
         userCount : Nat;
-        ownerCount : Nat;
+        totalUserLevel : Int;
     };
 
     public type UserVotingInfo = {
@@ -48,8 +47,9 @@ module {
 
     type MutableUser = {
         id : Principal;
-        var membership : ?UserMembership;
-        var points : Int;
+        var residency : ?UserResidency;
+        var level : Nat;
+        var currency : Nat;
     };
 
     public class UserHandler(stableData : StableData) {
@@ -74,36 +74,32 @@ module {
 
         public func getStats() : UserStats {
             let worldStats = {
-                var totalPoints : Int = 0;
+                var totalUserLevel : Int = 0;
                 var userCount = 0;
-                var townOwnerCount = 0;
             };
             let townStats = HashMap.HashMap<Nat, TownStats>(6, Nat.equal, Nat32.fromNat);
             for (user in users.vals()) {
-                switch (user.membership) {
-                    case (?membership) {
-                        let stats : TownStats = switch (townStats.get(membership.townId)) {
+                switch (user.residency) {
+                    case (?residency) {
+                        let stats : TownStats = switch (townStats.get(residency.townId)) {
                             case (?stats) stats;
                             case (null) {
                                 {
-                                    id = membership.townId;
-                                    totalPoints = 0;
+                                    id = residency.townId;
+                                    totalUserLevel = 0;
                                     userCount = 0;
-                                    ownerCount = 0;
                                 };
                             };
                         };
 
                         let newStats : TownStats = {
-                            id = membership.townId;
-                            totalPoints = stats.totalPoints + user.points;
+                            id = residency.townId;
+                            totalUserLevel = stats.totalUserLevel + user.level;
                             userCount = stats.userCount + 1;
-                            ownerCount = stats.ownerCount + 1;
                         };
-                        townStats.put(membership.townId, newStats);
-                        worldStats.townOwnerCount += 1;
+                        townStats.put(residency.townId, newStats);
 
-                        worldStats.totalPoints += user.points;
+                        worldStats.totalUserLevel += user.level;
                         worldStats.userCount += 1;
 
                     };
@@ -111,18 +107,17 @@ module {
                 };
             };
             {
-                totalPoints = worldStats.totalPoints;
+                totalUserLevel = worldStats.totalUserLevel;
                 userCount = worldStats.userCount;
-                townOwnerCount = worldStats.townOwnerCount;
                 towns = Iter.toArray<TownStats>(townStats.vals());
             };
         };
 
-        public func getUserLeaderboard(count : Nat, offset : Nat) : CommonTypes.PagedResult<User> {
+        public func getTopUsers(count : Nat, offset : Nat) : CommonTypes.PagedResult<User> {
             let orderedUsers = users.vals()
             |> IterTools.sort(
                 _,
-                func(u1 : MutableUser, u2 : MutableUser) : Order.Order = Int.compare(u2.points, u1.points),
+                func(u1 : MutableUser, u2 : MutableUser) : Order.Order = Int.compare(u2.level, u1.level),
             )
             |> IterTools.skip(_, offset)
             |> IterTools.take(_, count)
@@ -136,16 +131,16 @@ module {
         };
 
         public func getTownOwners(townId : ?Nat) : [UserVotingInfo] {
-            let getMatchingTownMembership = switch (townId) {
-                case (?tId) func(membership : UserMembership) : ?Nat {
+            let getMatchingTownResidency = switch (townId) {
+                case (?tId) func(residency : UserResidency) : ?Nat {
                     // Filter to only the town we want
-                    if (membership.townId == tId) {
+                    if (residency.townId == tId) {
                         return ?tId;
                     };
                     return null;
                 };
-                case (null) func(membership : UserMembership) : ?Nat {
-                    ?membership.townId;
+                case (null) func(residency : UserResidency) : ?Nat {
+                    ?residency.townId;
                 };
             };
 
@@ -153,13 +148,13 @@ module {
             |> IterTools.mapFilter(
                 _,
                 func(user : MutableUser) : ?UserVotingInfo {
-                    let ?membership = user.membership else return null;
-                    switch (getMatchingTownMembership(membership)) {
+                    let ?residency = user.residency else return null;
+                    switch (getMatchingTownResidency(residency)) {
                         case (?townId) {
                             ?{
                                 id = user.id;
                                 townId = townId;
-                                votingPower = membership.votingPower;
+                                votingPower = residency.votingPower;
                             };
                         };
                         case (null) {
@@ -178,12 +173,12 @@ module {
             votingPower : Nat,
         ) : Result.Result<(), { #alreadyWorldMember }> {
             let user = getOrCreateUser(userId);
-            switch (user.membership) {
+            switch (user.residency) {
                 case (?_) {
                     return #err(#alreadyWorldMember);
                 };
                 case (null) {
-                    user.membership := ?{
+                    user.residency := ?{
                         townId = townId;
                         votingPower = votingPower;
                     };
@@ -197,10 +192,10 @@ module {
             townId : Nat,
         ) : Result.Result<(), { #notWorldMember }> {
             let user = getOrCreateUser(userId);
-            switch (user.membership) {
-                case (?membership) {
-                    user.membership := ?{
-                        membership with
+            switch (user.residency) {
+                case (?residency) {
+                    user.residency := ?{
+                        residency with
                         townId = townId;
                     };
                     #ok;
@@ -212,12 +207,18 @@ module {
             };
         };
 
-        public func awardPoints(
+        public func awardLevels(
             userId : Principal,
-            points : Int,
+            delta : Int,
         ) : Result.Result<(), { #userNotFound }> {
             let ?user = users.get(userId) else return #err(#userNotFound);
-            user.points += points;
+            let newLevel = user.level + delta;
+            let newLevelNat = if (newLevel < 0) {
+                0;
+            } else {
+                Int.abs(newLevel);
+            };
+            user.level += newLevelNat;
             #ok;
         };
 
@@ -227,8 +228,9 @@ module {
                 case (null) {
                     let newUser : MutableUser = {
                         id = userId;
-                        var membership = null;
-                        var points = 0;
+                        var residency = null;
+                        var level = 0;
+                        var currency = 0;
                     };
                     users.put(userId, newUser);
                     newUser;
@@ -241,16 +243,18 @@ module {
     private func toMutableUser(user : User) : MutableUser {
         {
             id = user.id;
-            var membership = user.membership;
-            var points = user.points;
+            var residency = user.residency;
+            var level = user.level;
+            var currency = user.currency;
         };
     };
 
     private func fromMutableUser(user : MutableUser) : User {
         {
             id = user.id;
-            membership = user.membership;
-            points = user.points;
+            residency = user.residency;
+            level = user.level;
+            currency = user.currency;
         };
     };
 

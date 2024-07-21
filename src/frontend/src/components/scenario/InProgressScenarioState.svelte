@@ -13,7 +13,7 @@
     import { Town } from "../../ic-agent/declarations/main";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
     import ScenarioOptionsRaw from "./ScenarioOptionsRaw.svelte";
-    import TeamFlag from "../town/TeamFlag.svelte";
+    import TownFlag from "../town/TownFlag.svelte";
     import TextInputInProgressScenarioState from "./in_progress_states/TextInputInProgressScenarioState.svelte";
 
     export let scenario: Scenario;
@@ -90,7 +90,7 @@
                     ? ""
                     : "opacity-25"}
             >
-                <TeamFlag {town} size="xs" />
+                <TownFlag {town} size="xs" />
             </div>
         {/each}
     </div>

@@ -206,7 +206,7 @@ describe('Test suite name', () => {
                         {
                             title: "Option 1",
                             description: "Option 1",
-                            traitRequirements: [],
+                            requirements: [],
                             currencyCost: BigInt(0),
                             townEffect: {
                                 currency: {
@@ -222,7 +222,7 @@ describe('Test suite name', () => {
                         {
                             title: "Option 2",
                             description: "Option 2",
-                            traitRequirements: [],
+                            requirements: [],
                             currencyCost: BigInt(0),
                             townEffect: {
                                 currency: {
@@ -276,7 +276,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 1",
-                                "traitRequirements": []
+                                "requirements": []
                             },
                             {
                                 "allowedTownIds": [
@@ -300,7 +300,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 2",
-                                "traitRequirements": []
+                                "requirements": []
                             }
                         ]
                     }
@@ -352,7 +352,7 @@ describe('Test suite name', () => {
                                     "currencyCost": 0n,
                                     "id": 0n,
                                     "title": "Option 1",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                 },
                                 {
                                     "currentVotingPower": 0n,
@@ -360,7 +360,7 @@ describe('Test suite name', () => {
                                     "currencyCost": 0n,
                                     "id": 1n,
                                     "title": "Option 2",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                 }
                             ]
                         },
@@ -408,7 +408,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 1",
-                                "traitRequirements": []
+                                "requirements": []
                             },
                             {
                                 "allowedTownIds": [
@@ -432,7 +432,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 2",
-                                "traitRequirements": []
+                                "requirements": []
                             }
                         ]
                     }
@@ -454,7 +454,7 @@ describe('Test suite name', () => {
                                     },
                                     "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 1",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                     "chosenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "currencyCost": 0n
                                 },
@@ -469,7 +469,7 @@ describe('Test suite name', () => {
                                     },
                                     "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 2",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                     "chosenByTownIds": [],
                                     "currencyCost": 0n
                                 }
@@ -577,7 +577,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 1",
-                                "traitRequirements": []
+                                "requirements": []
                             },
                             {
                                 "allowedTownIds": [
@@ -601,7 +601,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 2",
-                                "traitRequirements": []
+                                "requirements": []
                             }
                         ]
                     }
@@ -652,7 +652,7 @@ describe('Test suite name', () => {
                                     "currencyCost": 0n,
                                     "id": 0n,
                                     "title": "Option 1",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                 },
                                 {
                                     "currentVotingPower": 0n,
@@ -660,7 +660,7 @@ describe('Test suite name', () => {
                                     "currencyCost": 0n,
                                     "id": 1n,
                                     "title": "Option 2",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                 }
                             ]
                         },
@@ -708,7 +708,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 1",
-                                "traitRequirements": []
+                                "requirements": []
                             },
                             {
                                 "allowedTownIds": [
@@ -732,7 +732,7 @@ describe('Test suite name', () => {
                                     }
                                 },
                                 "title": "Option 2",
-                                "traitRequirements": []
+                                "requirements": []
                             }
                         ]
                     }
@@ -754,7 +754,7 @@ describe('Test suite name', () => {
                                     },
                                     "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 1",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                     "chosenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "currencyCost": 0n
                                 },
@@ -769,7 +769,7 @@ describe('Test suite name', () => {
                                     },
                                     "seenByTownIds": [0n, 1n, 2n, 3n, 4n, 5n],
                                     "description": "Option 2",
-                                    "traitRequirements": [],
+                                    "requirements": [],
                                     "chosenByTownIds": [],
                                     "currencyCost": 0n
                                 }

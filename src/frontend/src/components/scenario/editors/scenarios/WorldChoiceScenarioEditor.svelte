@@ -1,20 +1,19 @@
 <script lang="ts">
     import { Button, Input, Label } from "flowbite-svelte";
-    import BigIntInput from "../BigIntInput.svelte";
     import ScenarioEffectChooser from "../ScenarioEffectChooser.svelte";
     import { TrashBinSolid } from "flowbite-svelte-icons";
-    import { ThresholdScenarioRequest } from "../../../../ic-agent/declarations/main";
-    import ThresholdValueChooser from "../ThresholdValueChooser.svelte";
+    import { WorldChoiceScenarioRequest } from "../../../../ic-agent/declarations/main";
     import TeqirementsEditor from "../RequirementsEditor.svelte";
-    export let value: ThresholdScenarioRequest;
+    import BigIntInput from "../BigIntInput.svelte";
+    export let value: WorldChoiceScenarioRequest;
 
     let addOption = () => {
         value.options.push({
             title: "Option " + (value.options.length + 1),
             description: "Option " + (value.options.length + 1),
             currencyCost: BigInt(0),
+            worldEffect: { noEffect: null },
             townEffect: { noEffect: null },
-            value: { fixed: BigInt(1) },
             requirements: [],
         });
         value.options = value.options; // Trigger reactivity
@@ -37,8 +36,8 @@
         <BigIntInput bind:value={option.currencyCost} />
         <Label>Town Effect</Label>
         <ScenarioEffectChooser bind:value={option.townEffect} />
-        <Label>Threshold Delta</Label>
-        <ThresholdValueChooser bind:value={option.value} />
+        <Label>World Effect</Label>
+        <ScenarioEffectChooser bind:value={option.worldEffect} />
         <Label>Trait Requirements</Label>
         <TeqirementsEditor bind:value={option.requirements} />
 
@@ -47,15 +46,4 @@
         </button>
     {/each}
     <Button on:click={addOption}>Add Option</Button>
-    <hr />
-    <Label>Minimum Threshold Value</Label>
-    <BigIntInput bind:value={value.minAmount} />
-    <Label>On Success Description</Label>
-    <Input type="text" bind:value={value.success.description} />
-    <Label>On Success Effect</Label>
-    <ScenarioEffectChooser bind:value={value.success.effect} />
-    <Label>On Failure Description</Label>
-    <Input type="text" bind:value={value.failure.description} />
-    <Label>On Failure Effect</Label>
-    <ScenarioEffectChooser bind:value={value.failure.effect} />
 </div>

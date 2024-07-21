@@ -11,7 +11,6 @@
     } from "flowbite-svelte-icons";
     import { townStore } from "../../stores/TownStore";
     import { toJsonString } from "../../utils/StringUtil";
-    import { traitStore } from "../../stores/TraitStore";
     import ThresholdResolvedScenarioState from "./resolved_states/ThresholdResolvedScenarioState.svelte";
     import NoWorldEffectResolvedScenarioState from "./resolved_states/NoWorldEffectResolvedScenarioState.svelte";
     import ProportionalBidResolvedScenarioState from "./resolved_states/ProportionalBidResolvedScenarioState.svelte";
@@ -20,7 +19,7 @@
     import ScenarioEffectOutcome from "./ScenarioEffectOutcome.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
-    import TeamFlag from "../town/TeamFlag.svelte";
+    import TownFlag from "../town/TownFlag.svelte";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
@@ -29,7 +28,6 @@
     let vote: ScenarioVote | "ineligible" = "ineligible";
 
     $: towns = $townStore;
-    $: traits = $traitStore;
 
     scenarioStore.subscribeVotingData((scenarioVotingData) => {
         let votingData = scenarioVotingData[Number(scenario.id)];
@@ -59,7 +57,7 @@
     }
 </script>
 
-{#if towns !== undefined && traits !== undefined}
+{#if towns !== undefined}
     <div>
         {#if "threshold" in state.scenarioOutcome && "threshold" in scenario.kind}
             <ThresholdResolvedScenarioState
@@ -116,7 +114,7 @@
                 <div class="flex">
                     {#each natOption.chosenByTownIds as townId}
                         <!-- TODO Fix this town not found hack -->
-                        <TeamFlag
+                        <TownFlag
                             town={towns.find((t) => t.id == townId) ||
                                 towns[-1]}
                             size="xs"
@@ -132,7 +130,7 @@
                 <div class="flex">
                     {#each textOption.chosenByTownIds as townId}
                         <!-- TODO Fix this town not found hack -->
-                        <TeamFlag
+                        <TownFlag
                             town={towns.find((t) => t.id == townId) ||
                                 towns[-1]}
                             size="xs"
@@ -150,7 +148,7 @@
             <div class="flex items-center justify-center">
                 {#each state.options.undecidedOption.chosenByTownIds as townId}
                     <!-- TODO Fix this town not found hack -->
-                    <TeamFlag
+                    <TownFlag
                         town={towns.find((t) => t.id == townId) || towns[-1]}
                         size="xs"
                     />
@@ -176,7 +174,7 @@
                 Nothing happened...
             {:else}
                 {#each state.effectOutcomes as outcome}
-                    <ScenarioEffectOutcome {outcome} {towns} {traits} />
+                    <ScenarioEffectOutcome {outcome} {towns} />
                 {/each}
             {/if}
         </AccordionItem>
