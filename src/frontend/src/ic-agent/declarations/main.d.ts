@@ -84,6 +84,8 @@ export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
 export type GetScenarioVoteResult = { 'ok' : VotingData } |
   { 'err' : GetScenarioVoteError };
 export type GetScenariosResult = { 'ok' : Array<Scenario> };
+export interface GetTopUsersRequest { 'count' : bigint, 'offset' : bigint }
+export type GetTopUsersResult = { 'ok' : PagedResult_2 };
 export type GetTownOwnersRequest = { 'all' : null } |
   { 'town' : bigint };
 export type GetTownOwnersResult = { 'ok' : Array<UserVotingInfo> };
@@ -125,6 +127,11 @@ export interface PagedResult {
 }
 export interface PagedResult_1 {
   'data' : Array<Proposal>,
+  'count' : bigint,
+  'offset' : bigint,
+}
+export interface PagedResult_2 {
+  'data' : Array<User>,
   'count' : bigint,
   'offset' : bigint,
 }
@@ -371,21 +378,20 @@ export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent__1 } |
   { 'motion' : MotionContent__1 };
 export interface TownStats {
   'id' : bigint,
-  'totalPoints' : bigint,
-  'ownerCount' : bigint,
+  'totalUserLevel' : bigint,
   'userCount' : bigint,
 }
 export interface TownVotingPower { 'total' : bigint, 'voted' : bigint }
 export interface User {
   'id' : Principal,
-  'membership' : [] | [UserMembership],
-  'points' : bigint,
+  'residency' : [] | [UserResidency],
+  'level' : bigint,
+  'currency' : bigint,
 }
-export interface UserMembership { 'votingPower' : bigint, 'townId' : bigint }
+export interface UserResidency { 'votingPower' : bigint, 'townId' : bigint }
 export interface UserStats {
   'towns' : Array<TownStats>,
-  'townOwnerCount' : bigint,
-  'totalPoints' : bigint,
+  'totalUserLevel' : bigint,
   'userCount' : bigint,
 }
 export interface UserVotingInfo {
@@ -497,6 +503,7 @@ export interface _SERVICE {
     GetScenarioVoteResult
   >,
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
+  'getTopUsers' : ActorMethod<[GetTopUsersRequest], GetTopUsersResult>,
   'getTownOwners' : ActorMethod<[GetTownOwnersRequest], GetTownOwnersResult>,
   'getTownProposal' : ActorMethod<[bigint, bigint], GetTownProposalResult>,
   'getTownProposals' : ActorMethod<

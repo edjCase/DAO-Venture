@@ -406,6 +406,26 @@ export const idlFactory = ({ IDL }) => {
     'err' : GetScenarioVoteError,
   });
   const GetScenariosResult = IDL.Variant({ 'ok' : IDL.Vec(Scenario) });
+  const GetTopUsersRequest = IDL.Record({
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const UserResidency = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'townId' : IDL.Nat,
+  });
+  const User = IDL.Record({
+    'id' : IDL.Principal,
+    'residency' : IDL.Opt(UserResidency),
+    'level' : IDL.Nat,
+    'currency' : IDL.Nat,
+  });
+  const PagedResult_2 = IDL.Record({
+    'data' : IDL.Vec(User),
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const GetTopUsersResult = IDL.Variant({ 'ok' : PagedResult_2 });
   const GetTownOwnersRequest = IDL.Variant({
     'all' : IDL.Null,
     'town' : IDL.Nat,
@@ -478,15 +498,6 @@ export const idlFactory = ({ IDL }) => {
     'entropy' : IDL.Nat,
     'currency' : IDL.Nat,
   });
-  const UserMembership = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'townId' : IDL.Nat,
-  });
-  const User = IDL.Record({
-    'id' : IDL.Principal,
-    'membership' : IDL.Opt(UserMembership),
-    'points' : IDL.Int,
-  });
   const GetUserError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'notFound' : IDL.Null,
@@ -494,14 +505,12 @@ export const idlFactory = ({ IDL }) => {
   const GetUserResult = IDL.Variant({ 'ok' : User, 'err' : GetUserError });
   const TownStats = IDL.Record({
     'id' : IDL.Nat,
-    'totalPoints' : IDL.Int,
-    'ownerCount' : IDL.Nat,
+    'totalUserLevel' : IDL.Int,
     'userCount' : IDL.Nat,
   });
   const UserStats = IDL.Record({
     'towns' : IDL.Vec(TownStats),
-    'townOwnerCount' : IDL.Nat,
-    'totalPoints' : IDL.Int,
+    'totalUserLevel' : IDL.Int,
     'userCount' : IDL.Nat,
   });
   const GetUserStatsResult = IDL.Variant({
@@ -638,6 +647,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
+    'getTopUsers' : IDL.Func(
+        [GetTopUsersRequest],
+        [GetTopUsersResult],
+        ['query'],
+      ),
     'getTownOwners' : IDL.Func(
         [GetTownOwnersRequest],
         [GetTownOwnersResult],
