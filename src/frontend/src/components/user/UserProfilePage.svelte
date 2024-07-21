@@ -9,8 +9,8 @@
     $: user = $userStore;
     $: towns = $townStore;
 
-    $: town = towns?.find((t) => t.id == user?.membership[0]?.townId);
-    $: coOwner = user?.membership[0] !== undefined;
+    $: town = towns?.find((t) => t.id == user?.residency[0]?.townId);
+    $: coOwner = user?.residency[0] !== undefined;
 </script>
 
 <div class="bg-gray-800 p-4">
@@ -46,7 +46,7 @@
                 {/if}
             </div>
             <div class="mb-4">
-                <div class="font-bold text-xl mb-2">Points - {user.points}</div>
+                <div class="font-bold text-xl mb-2">Level - {user.level}</div>
             </div>
         </div>
     {/if}

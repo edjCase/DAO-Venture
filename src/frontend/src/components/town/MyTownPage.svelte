@@ -14,8 +14,8 @@
 
     $: user = $userStore;
 
-    $: town = towns?.find((t) => t.id == user?.membership[0]?.townId);
-    $: votingPower = user?.membership[0]?.votingPower || 0;
+    $: town = towns?.find((t) => t.id == user?.residency[0]?.townId);
+    $: votingPower = user?.residency[0]?.votingPower || 0;
     let join = async () => {
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.joinWorld();

@@ -13,7 +13,7 @@
 
     let getTopUsers = async () => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.getUserLeaderboard({
+        let result = await mainAgent.getTopUsers({
             count: BigInt(count),
             offset: BigInt(offset),
         });

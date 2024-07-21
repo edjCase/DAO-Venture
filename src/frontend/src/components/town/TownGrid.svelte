@@ -12,7 +12,7 @@
 
   let associatedTownId: bigint | undefined;
   $: {
-    associatedTownId = user?.membership[0]?.townId;
+    associatedTownId = user?.residency[0]?.townId;
   }
 
   let selectedTown: Town | undefined;

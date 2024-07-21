@@ -38,7 +38,7 @@
                     <div
                         class="font-bold text-lg flex items-center justify-center"
                     >
-                        {user.points}
+                        {user.level}
                     </div>
                     <UserAvatar userId={user.id} size="md" border={false} />
                     <UserPseudonym userId={user.id} maxWidth="100%" />

@@ -1,6 +1,4 @@
 <script lang="ts">
-  import PlayerRoster from "../player/PlayerRoster.svelte";
-  import MatchHistory from "../match/MatchHistory.svelte";
   import { TabItem, Tabs } from "flowbite-svelte";
   import TownFlag from "./TownFlag.svelte";
   import { Town } from "../../ic-agent/declarations/main";
@@ -15,12 +13,6 @@
     </div>
   </div>
   <Tabs>
-    <TabItem title="Roster" open>
-      <PlayerRoster townId={town.id} />
-    </TabItem>
-    <TabItem title="Matches">
-      <MatchHistory townId={town.id} />
-    </TabItem>
     <TabItem title="Fluff">
       <div class="flex-1 flex flex-col justify-center text-left p-5 text-lg">
         <div class="town-info">

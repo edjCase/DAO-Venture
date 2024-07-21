@@ -27,8 +27,9 @@ function createUserStore() {
         else if ('err' in result && 'notFound' in result.err) {
             let emptyUser: User = {
                 id: currentUserId,
-                points: BigInt(0),
-                membership: []
+                level: BigInt(0),
+                currency: BigInt(0),
+                residency: []
             };
             currentUser.set(emptyUser);
         } else {

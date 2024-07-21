@@ -15,7 +15,7 @@
         <UserPseudonym userId={user.id} />
       </div>
       <div class="text-center text-md font-bold">
-        {user.points} <span class="text-lg">🔮</span>
+        Level: {user.level}
       </div>
     </div>
   {:else}

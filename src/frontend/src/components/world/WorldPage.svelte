@@ -28,12 +28,8 @@
         <LoadingValue value={userStats?.userCount} />
     </div>
     <div class="flex items-center justify-center">
-        <span class="mr-2">Town Owners:</span>
-        <LoadingValue value={userStats?.townOwnerCount} />
-    </div>
-    <div class="flex items-center justify-center">
-        <span class="mr-2">Total User Points:</span>
-        <LoadingValue value={userStats?.totalPoints} />
+        <span class="mr-2">Total User Level:</span>
+        <LoadingValue value={userStats?.totalUserLevel} />
     </div>
 </div>
 <Tabs>
@@ -60,15 +56,10 @@
                             />
                         </div>
                         <div class="flex items-center">
-                            <span class="mr-2">Town Owner Count:</span>
+                            <span class="mr-2">Town Total User Level:</span>
                             <LoadingValue
-                                value={townStatsMap.get(town.id)?.ownerCount}
-                            />
-                        </div>
-                        <div class="flex items-center">
-                            <span class="mr-2">Town Total Points:</span>
-                            <LoadingValue
-                                value={townStatsMap.get(town.id)?.totalPoints}
+                                value={townStatsMap.get(town.id)
+                                    ?.totalUserLevel}
                             />
                         </div>
                     </Card>

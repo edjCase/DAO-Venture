@@ -1,5 +1,4 @@
 <script lang="ts">
-    import SeasonHome from "../components/season/SeasonHome.svelte";
     import ScenarioHome from "../components/scenario/ScenarioHome.svelte";
     import EntropyHome from "./entropy/EntropyHome.svelte";
     import { townStore } from "../stores/TownStore";
@@ -43,7 +42,7 @@
                 </div>
             </div>
         {:else}
-            {#if user !== undefined && user?.membership[0] === undefined}
+            {#if user !== undefined && user?.residency[0] === undefined}
                 <div
                     class="flex flex-col items-center justify-center gap-2 mb-4"
                 >
@@ -54,9 +53,6 @@
                 </div>
             {/if}
             <div class="flex flex-col gap-6">
-                <div>
-                    <SeasonHome />
-                </div>
                 <div class="flex justify-around flex-wrap gap-6">
                     <EntropyHome />
                     <TopUsersHome />

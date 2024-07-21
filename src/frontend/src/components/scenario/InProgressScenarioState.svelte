@@ -26,9 +26,9 @@
     $: towns = $townStore;
 
     $: {
-        townId = userContext?.membership[0]?.townId;
+        townId = userContext?.residency[0]?.townId;
         town = towns?.find((town) => town.id === townId);
-        isOwner = userContext?.membership[0] !== undefined;
+        isOwner = userContext?.residency[0] !== undefined;
     }
 
     let votingData: VotingData | undefined;
