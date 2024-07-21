@@ -20,8 +20,6 @@ module {
     public type Effect = {
         // TODO anomoly
         // #anomoly : AnomolyEffect;
-        #entropyThreshold : EntropyThresholdEffect;
-        #worldIncome : WorldIncomeEffect;
         #entropy : EntropyEffect;
         #currency : CurrencyEffect;
         #oneOf : [WeightedEffect];
@@ -77,19 +75,6 @@ module {
         delta : Int;
     };
 
-    public type WorldEffectOutcome = {
-        #worldIncome : WorldIncomeEffectOutcome;
-        #entropyThreshold : EntropyThresholdEffectOutcome;
-    };
-
-    public type WorldIncomeEffectOutcome = {
-        delta : Int;
-    };
-
-    public type EntropyThresholdEffectOutcome = {
-        delta : Int;
-    };
-
     // TODO anomoly
     // public type AnomolyMatchEffectOutcome = {
     //     townId : Nat;
@@ -97,7 +82,7 @@ module {
     //     duration : Duration;
     // };
 
-    public type EffectOutcome = TownEffectOutcome or WorldEffectOutcome;
+    public type EffectOutcome = TownEffectOutcome;
 
     public type Requirement = {
         #size : RangeRequirement;

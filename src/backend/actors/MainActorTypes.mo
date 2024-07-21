@@ -8,6 +8,7 @@ import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
 import Town "../models/Town";
+import World "../models/World";
 
 module {
     public type Actor = actor {
@@ -26,7 +27,7 @@ module {
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
 
-        getWorldData : query () -> async WorldData;
+        getWorldGrid : query () -> async GetWorldGridResult;
         getTowns : query () -> async [Town.Town];
         createTownProposal : (townId : Nat, request : TownProposalContent) -> async CreateTownProposalResult;
         getTownProposal : query (townId : Nat, id : Nat) -> async GetTownProposalResult;
@@ -40,6 +41,10 @@ module {
         assignUserToTown : (request : AssignUserToTownRequest) -> async Result.Result<(), AssignUserToTownError>;
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
+
+    public type GetWorldGridError = {};
+
+    public type GetWorldGridResult = Result.Result<[World.WorldLocation], GetWorldGridError>;
 
     public type CreateWorldProposalRequest = {
         #motion : WorldDao.MotionContent;

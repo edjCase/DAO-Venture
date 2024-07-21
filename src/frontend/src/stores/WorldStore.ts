@@ -6,23 +6,24 @@ import { WorldData } from "../ic-agent/declarations/main";
 
 
 export const worldStore = (() => {
-  const dataStore = writable<WorldData | undefined>();
+  const { subscribe, set
+  } = writable<WorldGrid | undefined>();
 
-  const refetchData = async () => {
+  const refetch = async () => {
     let mainAgent = await mainAgentFactory();
-    let entropyData = await mainAgent.getWorldData();
-    dataStore.set(entropyData);
+    let entropyData = await mainAgent.getWorldGrid();
+    set(entropyData);
   };
 
 
 
-  setInterval(refetchData, 1000 * 10); // Refetch every 10 seconds
+  setInterval(refetch, 1000 * 10); // Refetch every 10 seconds
 
-  refetchData();
+  refetch();
 
 
   return {
-    subscribeData: dataStore.subscribe,
-    refetchData
+    subscribe,
+    refetch
   };
 })();

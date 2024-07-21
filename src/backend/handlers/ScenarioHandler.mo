@@ -1269,12 +1269,6 @@ module {
             case (#entropy(_)) {
                 // TODO
             };
-            case (#entropyThreshold(_)) {
-                // TODO
-            };
-            case (#worldIncome(_)) {
-                // TODO
-            };
             case (#noEffect) {};
         };
         #ok;
@@ -1520,12 +1514,6 @@ module {
                     });
                     outcomes.add(outcome);
                 };
-            };
-            case (#entropyThreshold(e)) {
-                outcomes.add(#entropyThreshold(e));
-            };
-            case (#worldIncome(income)) {
-                outcomes.add(#worldIncome(income));
             };
             case (#noEffect) ();
         };

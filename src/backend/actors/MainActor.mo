@@ -29,6 +29,8 @@ import TownsHandler "../handlers/TownsHandler";
 import Town "../models/Town";
 import Flag "../models/Flag";
 import TimeUtil "../TimeUtil";
+import World "../models/World";
+import HexGrid "../models/HexGrid";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -45,17 +47,14 @@ actor MainActor : Types.Actor {
 
     // Stables ---------------------------------------------------------
 
-    let defaultWorldIncome : Nat = 100;
-    let defaultEntropyThreshold : Nat = 100;
-
     stable let genesisTime : Time.Time = Time.now();
     stable var daysProcessed : Nat = 0;
 
     stable var benevolentDictator : Types.BenevolentDictatorState = #open;
-    stable var worldIncome : Nat = defaultWorldIncome;
-    stable var entropyThreshold : Nat = defaultEntropyThreshold;
 
     stable var reverseEffectStableData : [ReverseEffectWithDuration] = [];
+
+    stable var worldGrid : [World.WorldLocationWithoutId] = [];
 
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
@@ -103,24 +102,6 @@ actor MainActor : Types.Actor {
                     case (#ok) null;
                     case (#err(e)) Debug.trap("Error updating town currency: " # debug_show (e));
                 };
-            };
-            case (#worldIncome(incomeEffect)) {
-                let newIncome : Int = worldIncome + incomeEffect.delta;
-                if (newIncome <= 0) {
-                    worldIncome := 0;
-                } else {
-                    worldIncome := Int.abs(newIncome);
-                };
-                null;
-            };
-            case (#entropyThreshold(entropyThresholdEffect)) {
-                let newThreshold : Int = entropyThreshold + entropyThresholdEffect.delta;
-                if (newThreshold <= 0) {
-                    entropyThreshold := 0;
-                } else {
-                    entropyThreshold := Int.abs(newThreshold);
-                };
-                null;
             };
         };
         switch (reverseEffectOrNull) {
@@ -255,31 +236,6 @@ actor MainActor : Types.Actor {
     };
 
     var townDaos = buildTownDaos<system>();
-
-    private func disperseCurrencyDividends() {
-        // Give town X currency that is divided purpotionally to how much relative entropy
-        // (based on combined entropy of all towns) they have
-        let towns = townsHandler.getAll();
-        let proportionalWeights = towns.vals()
-        |> Iter.map<Town.Town, Nat>(
-            _,
-            func(town : Town.Town) : Nat = town.entropy,
-        )
-        |> Iter.toArray(_)
-        |> getProportionalEntropyWeights(_);
-
-        Debug.print("Giving currency to towns based on entropy. World Income: " # Nat.toText(worldIncome));
-
-        for ((town, currencyWeight) in IterTools.zip(towns.vals(), proportionalWeights.vals())) {
-            var newCurrency = Float.toInt(Float.floor(Float.fromInt(worldIncome) * currencyWeight));
-            switch (townsHandler.updateCurrency(town.id, newCurrency, false)) {
-                case (#ok) ();
-                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
-                case (#err(#notEnoughCurrency)) Debug.trap("Town " # Nat.toText(town.id) # " does not have enough currency to receive " # Int.toText(newCurrency) # " currency");
-            };
-            Debug.print("Town " # Nat.toText(town.id) # " share of the currency is: " # Int.toText(newCurrency) # " (weight: " # Float.toText(currencyWeight) # ")");
-        };
-    };
 
     private func getProportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
         if (entropyValues.size() == 0) {
@@ -531,14 +487,29 @@ actor MainActor : Types.Actor {
         scenarioHandler.vote<system>(request.scenarioId, caller, request.value);
     };
 
-    public shared query func getWorldData() : async Types.WorldData {
-        let currentEntropy = townsHandler.getCurrentEntropy();
+    public shared query func getWorldGrid() : async Types.GetWorldGridResult {
 
-        {
-            entropyThreshold = entropyThreshold;
-            currentEntropy = currentEntropy;
-            worldIncome = worldIncome;
+        let getCoordinate = func(i : Nat) : HexGrid.AxialCoordinate {
+            let q = i % 32;
+            let r = i / 32;
+            {
+                q = Int.toNat(q);
+                r = Int.toNat(r);
+            };
         };
+        let calcuatedWorldGrid = worldGrid.vals()
+        |> IterTools.mapEntries<World.WorldLocationWithoutId, World.WorldLocation>(
+            _,
+            func(i : Nat, location : World.WorldLocationWithoutId) : World.WorldLocation = {
+                location with
+                id = i;
+                coordinate = getCoordinate(i);
+                townId = location.townId;
+                resources = location.resources;
+            },
+        )
+        |> Iter.toArray(_);
+        #ok(calcuatedWorldGrid);
     };
 
     public shared query func getTowns() : async [Town.Town] {
@@ -585,7 +556,7 @@ actor MainActor : Types.Actor {
             if (days <= daysProcessed) {
                 break l;
             };
-            disperseCurrencyDividends();
+            // TODO
             // TODO reverse effects
             daysProcessed := daysProcessed + 1;
         };

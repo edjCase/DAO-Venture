@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Title } from "chart.js";
     import { onMount } from "svelte";
 
     interface AxialCoord {

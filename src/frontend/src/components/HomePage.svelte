@@ -4,7 +4,7 @@
     import { mainAgentFactory } from "../ic-agent/Main";
     import LoadingButton from "./common/LoadingButton.svelte";
     import TownFlag from "./town/TownFlag.svelte";
-    import HexGrid from "./common/HexGrid.svelte";
+    import WorldGrid from "./world/WorldGrid.svelte";
 
     $: towns = $townStore;
 
@@ -42,15 +42,5 @@
             </div>
         {/each}
     {/if}
-    <HexGrid
-        gridData={[
-            { coord: { q: 0, r: 0 }, value: 1 },
-            { coord: { q: 0, r: -1 }, value: 2 },
-            { coord: { q: 1, r: -1 }, value: 3 },
-            { coord: { q: 1, r: 0 }, value: 4 },
-            { coord: { q: 0, r: 1 }, value: 5 },
-            { coord: { q: -1, r: 1 }, value: 6 },
-            { coord: { q: -1, r: 0 }, value: 7 },
-        ]}
-    />
+    <WorldGrid />
 </div>
