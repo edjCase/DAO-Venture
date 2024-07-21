@@ -15,8 +15,7 @@
     },
     "main": {
       "main": "src/backend/actors/MainActor.mo",
-      "type": "motoko",
-      "specified_id": "bd3sg-teaaa-aaaaa-qaaba-cai"
+      "type": "motoko"
     },
     "internet_identity": {
       "type": "pull",
