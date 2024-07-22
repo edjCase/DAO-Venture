@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { Title } from "chart.js";
     import { onMount } from "svelte";
 
     interface AxialCoord {
@@ -9,7 +8,7 @@
 
     interface HexTile {
         coord: AxialCoord;
-        value: number;
+        value: string;
     }
 
     export let gridData: HexTile[];

@@ -6,7 +6,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'effect' : Effect,
   });
-  const WorldIncomeEffect = IDL.Record({ 'delta' : IDL.Int });
   const TargetTown = IDL.Variant({
     'all' : IDL.Null,
     'contextual' : IDL.Null,
@@ -14,7 +13,6 @@ export const idlFactory = ({ IDL }) => {
     'chosen' : IDL.Vec(IDL.Nat),
   });
   const EntropyEffect = IDL.Record({ 'town' : TargetTown, 'delta' : IDL.Int });
-  const EntropyThresholdEffect = IDL.Record({ 'delta' : IDL.Int });
   const CurrencyEffect = IDL.Record({
     'value' : IDL.Variant({ 'flat' : IDL.Int }),
     'town' : TargetTown,
@@ -24,9 +22,7 @@ export const idlFactory = ({ IDL }) => {
       'allOf' : IDL.Vec(Effect),
       'noEffect' : IDL.Null,
       'oneOf' : IDL.Vec(WeightedEffect),
-      'worldIncome' : WorldIncomeEffect,
       'entropy' : EntropyEffect,
-      'entropyThreshold' : EntropyThresholdEffect,
       'currency' : CurrencyEffect,
     })
   );
@@ -313,20 +309,16 @@ export const idlFactory = ({ IDL }) => {
     }),
     'kind' : ScenarioResolvedOptionsKind,
   });
-  const WorldIncomeEffectOutcome = IDL.Record({ 'delta' : IDL.Int });
   const EntropyTownEffectOutcome = IDL.Record({
     'townId' : IDL.Nat,
     'delta' : IDL.Int,
   });
-  const EntropyThresholdEffectOutcome = IDL.Record({ 'delta' : IDL.Int });
   const CurrencyTownEffectOutcome = IDL.Record({
     'townId' : IDL.Nat,
     'delta' : IDL.Int,
   });
   const EffectOutcome = IDL.Variant({
-    'worldIncome' : WorldIncomeEffectOutcome,
     'entropy' : EntropyTownEffectOutcome,
-    'entropyThreshold' : EntropyThresholdEffectOutcome,
     'currency' : CurrencyTownEffectOutcome,
   });
   const ScenarioStateResolved = IDL.Record({
@@ -520,10 +512,22 @@ export const idlFactory = ({ IDL }) => {
     'ok' : UserStats,
     'err' : IDL.Null,
   });
-  const WorldData = IDL.Record({
-    'worldIncome' : IDL.Nat,
-    'entropyThreshold' : IDL.Nat,
-    'currentEntropy' : IDL.Nat,
+  const LocationResource = IDL.Variant({
+    'food' : IDL.Nat,
+    'wood' : IDL.Nat,
+    'stone' : IDL.Nat,
+  });
+  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
+  const WorldLocation = IDL.Record({
+    'id' : IDL.Nat,
+    'resources' : IDL.Vec(LocationResource),
+    'townId' : IDL.Opt(IDL.Nat),
+    'coordinate' : AxialCoordinate,
+  });
+  const GetWorldGridError = IDL.Record({});
+  const GetWorldGridResult = IDL.Variant({
+    'ok' : IDL.Vec(WorldLocation),
+    'err' : GetWorldGridError,
   });
   const ChangeTownMottoContent = IDL.Record({
     'motto' : IDL.Text,
@@ -673,7 +677,7 @@ export const idlFactory = ({ IDL }) => {
     'getTowns' : IDL.Func([], [IDL.Vec(Town)], ['query']),
     'getUser' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
     'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
-    'getWorldData' : IDL.Func([], [WorldData], ['query']),
+    'getWorldGrid' : IDL.Func([], [GetWorldGridResult], ['query']),
     'getWorldProposal' : IDL.Func(
         [IDL.Nat],
         [GetWorldProposalResult],

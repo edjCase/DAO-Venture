@@ -3,7 +3,6 @@ import Hash "mo:base/Hash";
 import Int "mo:base/Int";
 import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
-import Prelude "mo:base/Prelude";
 import Float "mo:base/Float";
 import IterTools "mo:itertools/Iter";
 
@@ -125,55 +124,37 @@ module {
         r = cube.z;
     };
 
+    let neighbors = [
+        { q = 0; r = -1 },
+        { q = 1; r = -1 },
+        { q = 1; r = 0 },
+        { q = 0; r = 1 },
+        { q = -1; r = 1 },
+        { q = -1; r = 0 },
+    ];
+    // https://www.redblobgames.com/grids/hexagons/
+
     public func indexToAxialCoord(index : Nat) : AxialCoordinate {
         if (index == 0) {
             return { q = 0; r = 0 };
         };
 
-        let indexFloat : Float = Float.fromInt(index);
-        let ring : Int = Int.abs(Float.toInt(Float.floor((Float.sqrt(12.0 * indexFloat - 3.0) + 3.0) / 6.0)));
-        let ringStart : Int = 3 * ring * (ring - 1) + 1;
-        let position : Int = index - ringStart;
-        let side : Int = position / ring;
-        let offset : Int = position % ring;
+        // https://stackoverflow.com/a/77540107
+        let float_index = Float.fromInt(index);
+        // n is the layer/ring index around the center (0 being the center)
+        let n : Nat = Int.abs(Float.toInt(Float.ceil(((Float.sqrt(12.0 * float_index + 1) - 3.0) / 6.0))));
 
-        var q : Int = 0;
-        var r : Int = 0;
+        let position : Nat = (index - 3 * n * (n - 1) - 1) % (6 * n);
+        let direction : Nat = position / n; // 0 is up, 1 is up-right, 2 is down-right, etc.
+        let firstSideNeighbor = neighbors[direction]; // The direction we're moving out to first
+        let secondSideNeighbor = neighbors[(direction + 2) % 6]; // Then move down the offset
 
-        switch (side) {
-            case 0 {
-                // top
-                q := -ring + offset + 1;
-                r := -offset - 1;
-            };
-            case 1 {
-                // top-right
-                q := offset + 1;
-                r := -ring;
-            };
-            case 2 {
-                // bottom-right
-                q := ring;
-                r := -ring + offset + 1;
-            };
-            case 3 {
-                // bottom
-                q := ring - offset - 1;
-                r := offset + 1;
-            };
-            case 4 {
-                // bottom-left
-                q := -offset - 1;
-                r := ring;
-            };
-            case 5 {
-                // top-left
-                q := -ring;
-                r := ring - offset - 1;
-            };
-            case _ Prelude.unreachable();
+        let firstSideJumps = n;
+        let secondSideJumps = (position % n); // How many steps we need to take in the second direction
+
+        {
+            q = firstSideNeighbor.q * firstSideJumps + secondSideNeighbor.q * secondSideJumps;
+            r = firstSideNeighbor.r * firstSideJumps + secondSideNeighbor.r * secondSideJumps;
         };
-
-        { q = q; r = r };
     };
 };

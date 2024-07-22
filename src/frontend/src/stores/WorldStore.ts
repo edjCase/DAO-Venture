@@ -1,18 +1,23 @@
 import { writable } from "svelte/store";
 import { mainAgentFactory } from "../ic-agent/Main";
-import { WorldData } from "../ic-agent/declarations/main";
+import { WorldLocation } from "../ic-agent/declarations/main";
 
 
 
 
 export const worldStore = (() => {
   const { subscribe, set
-  } = writable<WorldGrid | undefined>();
+  } = writable<WorldLocation[] | undefined>();
 
   const refetch = async () => {
     let mainAgent = await mainAgentFactory();
-    let entropyData = await mainAgent.getWorldGrid();
-    set(entropyData);
+    let worldGrid = await mainAgent.getWorldGrid();
+    if ('ok' in worldGrid) {
+      set(worldGrid.ok);
+    }
+    else {
+      console.error("Failed to get world grid", worldGrid.err);
+    }
   };
 
 

@@ -21,6 +21,7 @@ export interface AssignUserToTownRequest {
   'userId' : Principal,
   'townId' : bigint,
 }
+export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export type BenevolentDictatorState = { 'open' : null } |
   { 'claimed' : Principal } |
   { 'disabled' : null };
@@ -58,17 +59,11 @@ export interface CurrencyTownEffectOutcome {
 export type Effect = { 'allOf' : Array<Effect> } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<WeightedEffect> } |
-  { 'worldIncome' : WorldIncomeEffect } |
   { 'entropy' : EntropyEffect } |
-  { 'entropyThreshold' : EntropyThresholdEffect } |
   { 'currency' : CurrencyEffect };
-export type EffectOutcome = { 'worldIncome' : WorldIncomeEffectOutcome } |
-  { 'entropy' : EntropyTownEffectOutcome } |
-  { 'entropyThreshold' : EntropyThresholdEffectOutcome } |
+export type EffectOutcome = { 'entropy' : EntropyTownEffectOutcome } |
   { 'currency' : CurrencyTownEffectOutcome };
 export interface EntropyEffect { 'town' : TargetTown, 'delta' : bigint }
-export interface EntropyThresholdEffect { 'delta' : bigint }
-export interface EntropyThresholdEffectOutcome { 'delta' : bigint }
 export interface EntropyTownEffectOutcome {
   'townId' : bigint,
   'delta' : bigint,
@@ -102,6 +97,9 @@ export type GetUserResult = { 'ok' : User } |
   { 'err' : GetUserError };
 export type GetUserStatsResult = { 'ok' : UserStats } |
   { 'err' : null };
+export type GetWorldGridError = {};
+export type GetWorldGridResult = { 'ok' : Array<WorldLocation> } |
+  { 'err' : GetWorldGridError };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
@@ -109,6 +107,9 @@ export type GetWorldProposalsResult = { 'ok' : PagedResult };
 export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null } |
   { 'noTowns' : null };
+export type LocationResource = { 'food' : bigint } |
+  { 'wood' : bigint } |
+  { 'stone' : bigint };
 export interface LotteryPrize { 'description' : string, 'effect' : Effect }
 export interface LotteryScenario { 'minBid' : bigint, 'prize' : LotteryPrize }
 export interface LotteryScenarioOutcome { 'winningTownId' : [] | [bigint] }
@@ -467,13 +468,12 @@ export interface WorldChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
 export interface WorldChoiceScenarioRequest {
   'options' : Array<WorldChoiceScenarioOptionRequest>,
 }
-export interface WorldData {
-  'worldIncome' : bigint,
-  'entropyThreshold' : bigint,
-  'currentEntropy' : bigint,
+export interface WorldLocation {
+  'id' : bigint,
+  'resources' : Array<LocationResource>,
+  'townId' : [] | [bigint],
+  'coordinate' : AxialCoordinate,
 }
-export interface WorldIncomeEffect { 'delta' : bigint }
-export interface WorldIncomeEffectOutcome { 'delta' : bigint }
 export interface WorldProposal {
   'id' : bigint,
   'content' : ProposalContent,
@@ -516,7 +516,7 @@ export interface _SERVICE {
   'getTowns' : ActorMethod<[], Array<Town>>,
   'getUser' : ActorMethod<[Principal], GetUserResult>,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
-  'getWorldData' : ActorMethod<[], WorldData>,
+  'getWorldGrid' : ActorMethod<[], GetWorldGridResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], GetWorldProposalsResult>,
   'joinWorld' : ActorMethod<[], Result>,

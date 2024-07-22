@@ -45,6 +45,11 @@ actor MainActor : Types.Actor {
         #days : Nat;
     };
 
+    type MutableWorldLocation = {
+        var townId : ?Nat;
+        var resources : [World.LocationResource];
+    };
+
     // Stables ---------------------------------------------------------
 
     stable let genesisTime : Time.Time = Time.now();
@@ -54,7 +59,14 @@ actor MainActor : Types.Actor {
 
     stable var reverseEffectStableData : [ReverseEffectWithDuration] = [];
 
-    stable var worldGrid : [World.WorldLocationWithoutId] = [];
+    // TODO randomly generate
+    stable var worldGridStableData : [World.WorldLocationWithoutId] = Array.tabulate(
+        19,
+        func(_ : Nat) : World.WorldLocationWithoutId = {
+            townId = null;
+            resources = [];
+        },
+    );
 
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
@@ -79,6 +91,16 @@ actor MainActor : Types.Actor {
     };
 
     // Unstables ---------------------------------------------------------
+
+    var worldGrid = worldGridStableData.vals()
+    |> Iter.map(
+        _,
+        func(location : World.WorldLocationWithoutId) : MutableWorldLocation = {
+            var townId = location.townId;
+            var resources = location.resources;
+        },
+    )
+    |> Buffer.fromIter<MutableWorldLocation>(_);
 
     var reverseEffects = Buffer.fromIter<ReverseEffectWithDuration>(reverseEffectStableData.vals());
 
@@ -300,6 +322,15 @@ actor MainActor : Types.Actor {
             func((id, d) : (Nat, ProposalEngine.ProposalEngine<TownDao.ProposalContent>)) : (Nat, ProposalTypes.StableData<TownDao.ProposalContent>) = (id, d.toStableData()),
         )
         |> Iter.toArray(_);
+        worldGridStableData := worldGrid.vals()
+        |> Iter.map<MutableWorldLocation, World.WorldLocationWithoutId>(
+            _,
+            func(location : MutableWorldLocation) : World.WorldLocationWithoutId = {
+                townId = location.townId;
+                resources = location.resources;
+            },
+        )
+        |> Iter.toArray(_);
     };
 
     system func postupgrade() {
@@ -314,6 +345,15 @@ actor MainActor : Types.Actor {
         townsHandler := TownsHandler.Handler<system>(townStableData);
         userHandler := UserHandler.UserHandler(userStableData);
         townDaos := buildTownDaos<system>();
+        worldGrid := worldGridStableData.vals()
+        |> Iter.map(
+            _,
+            func(location : World.WorldLocationWithoutId) : MutableWorldLocation = {
+                var townId = location.townId;
+                var resources = location.resources;
+            },
+        )
+        |> Buffer.fromIter<MutableWorldLocation>(_);
     };
 
     // Public Methods ---------------------------------------------------------
@@ -358,6 +398,7 @@ actor MainActor : Types.Actor {
                 townId,
                 townDao,
             );
+            worldGrid.get(0).townId := ?townId;
             townId;
         } else {
             towns.vals()
@@ -489,21 +530,13 @@ actor MainActor : Types.Actor {
 
     public shared query func getWorldGrid() : async Types.GetWorldGridResult {
 
-        let getCoordinate = func(i : Nat) : HexGrid.AxialCoordinate {
-            let q = i % 32;
-            let r = i / 32;
-            {
-                q = Int.toNat(q);
-                r = Int.toNat(r);
-            };
-        };
         let calcuatedWorldGrid = worldGrid.vals()
-        |> IterTools.mapEntries<World.WorldLocationWithoutId, World.WorldLocation>(
+        |> IterTools.mapEntries<MutableWorldLocation, World.WorldLocation>(
             _,
-            func(i : Nat, location : World.WorldLocationWithoutId) : World.WorldLocation = {
+            func(i : Nat, location : MutableWorldLocation) : World.WorldLocation = {
                 location with
                 id = i;
-                coordinate = getCoordinate(i);
+                coordinate = HexGrid.indexToAxialCoord(i);
                 townId = location.townId;
                 resources = location.resources;
             },
