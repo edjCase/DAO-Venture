@@ -2,7 +2,7 @@
     import { PixelGrid, Rgb } from "../../models/PixelArt";
     import RgbColor from "./RgbColor.svelte";
 
-    export let pixelSize = 20;
+    export let pixelSize = 40;
     export let pixels: PixelGrid;
 
     let height = pixels.length;

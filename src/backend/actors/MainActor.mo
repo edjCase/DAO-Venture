@@ -87,8 +87,8 @@ actor MainActor : Types.Actor {
             townId = null;
             resources = {
                 gold = { difficulty = 0 };
-                wood = { amount = 0 };
-                food = { amount = 0 };
+                wood = { amount = 1000 };
+                food = { amount = 1000 };
                 stone = { difficulty = 0 };
             };
         },
@@ -315,10 +315,15 @@ actor MainActor : Types.Actor {
 
     var townDaos = buildTownDaos<system>();
 
-    private func resetDayTimer<system>() {
-        let { timeInDay } = TimeUtil.getAge(genesisTime);
+    private func resetDayTimer<system>(runImmediately : Bool) {
+        let timeTillNextDay = if (runImmediately) {
+            0;
+        } else {
+            let { timeTillNextDay } = TimeUtil.getAge(genesisTime);
+            timeTillNextDay;
+        };
         ignore Timer.setTimer<system>(
-            #nanoseconds(timeInDay),
+            #nanoseconds(timeTillNextDay),
             func() : async () {
                 await* processDays();
             },
@@ -365,6 +370,7 @@ actor MainActor : Types.Actor {
             toMutableWorldLocation,
         )
         |> Buffer.fromIter<MutableWorldLocation>(_);
+        resetDayTimer<system>(true); // TODO is this sufficient if there is any weird down time?
     };
 
     // Public Methods ---------------------------------------------------------
@@ -376,8 +382,8 @@ actor MainActor : Types.Actor {
         let towns = townsHandler.getAll();
         let randomTownId : Nat = if (towns.size() <= 0) {
             // TODO better initialization
-            let height = 24;
-            let width = 32;
+            let height = 12;
+            let width = 16;
             let image = {
                 pixels = Array.tabulate(
                     height,
@@ -393,7 +399,18 @@ actor MainActor : Types.Actor {
                     },
                 );
             };
-            let #ok(townId) = townsHandler.create<system>("First Town", image, "First Town Motto") else Debug.trap("Failed to create first town");
+            let resources = {
+                gold = 1000;
+                wood = 1000;
+                food = 1000;
+                stone = 1000;
+            };
+            let #ok(townId) = townsHandler.create<system>(
+                "First Town",
+                image,
+                "First Town Motto",
+                resources,
+            ) else Debug.trap("Failed to create first town");
             let townDao = buildTownDao<system>(
                 townId,
                 {
@@ -539,7 +556,7 @@ actor MainActor : Types.Actor {
         scenarioHandler.vote<system>(request.scenarioId, caller, request.value);
     };
 
-    public shared query func getWorldGrid() : async Types.GetWorldGridResult {
+    public shared query func getWorld() : async Types.GetWorldResult {
 
         let calcuatedWorldGrid = worldGrid.vals()
         |> IterTools.mapEntries<MutableWorldLocation, World.WorldLocation>(
@@ -551,7 +568,12 @@ actor MainActor : Types.Actor {
             },
         )
         |> Iter.toArray(_);
-        #ok(calcuatedWorldGrid);
+        let { days; nextDayStartTime } = TimeUtil.getAge(genesisTime);
+        #ok({
+            age = days;
+            nextDayStartTime = nextDayStartTime;
+            grid = calcuatedWorldGrid;
+        });
     };
 
     public shared query func getTowns() : async [Town.Town] {
@@ -606,7 +628,7 @@ actor MainActor : Types.Actor {
             // TODO reverse effects
             daysProcessed := daysProcessed + 1;
         };
-        resetDayTimer<system>();
+        resetDayTimer<system>(false);
     };
 
     private func processTownTradeResources() {

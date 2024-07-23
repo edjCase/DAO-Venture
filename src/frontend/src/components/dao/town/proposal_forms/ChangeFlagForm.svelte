@@ -9,8 +9,8 @@
 
     export let townId: bigint;
 
-    let height = 24;
-    let width = 32;
+    let height = 12;
+    let width = 16;
     let image: FlagImage = {
         pixels: Array(height)
             .fill(null)

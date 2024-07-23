@@ -10,7 +10,7 @@
 </script>
 
 {#if town}
-    <TownFlag {town} size="xs" stats={true} />
+    <TownFlag {town} size="lg" stats={true} />
 {:else}
     <div class="w-10 h-10" />
 {/if}

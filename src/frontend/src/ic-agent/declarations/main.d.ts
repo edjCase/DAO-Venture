@@ -90,13 +90,13 @@ export type GetUserResult = { 'ok' : User } |
   { 'err' : GetUserError };
 export type GetUserStatsResult = { 'ok' : UserStats } |
   { 'err' : null };
-export type GetWorldGridError = {};
-export type GetWorldGridResult = { 'ok' : Array<WorldLocation> } |
-  { 'err' : GetWorldGridError };
+export type GetWorldError = {};
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type GetWorldProposalsResult = { 'ok' : PagedResult };
+export type GetWorldResult = { 'ok' : World } |
+  { 'err' : GetWorldError };
 export interface GoldResourceInfo { 'difficulty' : bigint }
 export type Job = {
     'processResource' : { 'resource' : ResourceKind, 'workerCount' : bigint }
@@ -486,6 +486,11 @@ export interface WeightedEffect {
   'effect' : Effect,
 }
 export interface WoodResourceInfo { 'amount' : bigint }
+export interface World {
+  'age' : bigint,
+  'nextDayStartTime' : bigint,
+  'grid' : Array<WorldLocation>,
+}
 export interface WorldChoiceScenario {
   'options' : Array<WorldChoiceScenarioOption>,
 }
@@ -558,7 +563,7 @@ export interface _SERVICE {
   'getTowns' : ActorMethod<[], Array<Town>>,
   'getUser' : ActorMethod<[Principal], GetUserResult>,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
-  'getWorldGrid' : ActorMethod<[], GetWorldGridResult>,
+  'getWorld' : ActorMethod<[], GetWorldResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], GetWorldProposalsResult>,
   'joinWorld' : ActorMethod<[], Result>,

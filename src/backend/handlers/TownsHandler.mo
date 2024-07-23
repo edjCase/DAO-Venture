@@ -104,6 +104,7 @@ module {
             name : Text,
             flagImage : Flag.FlagImage,
             motto : Text,
+            resources : Town.ResourceList,
         ) : Result.Result<Nat, { #nameTaken }> {
             Debug.print("Creating new town with name " # name);
             let nameAlreadyTaken = towns.entries()
@@ -144,10 +145,10 @@ module {
                     };
                 };
                 resources = {
-                    var gold = 0;
-                    var wood = 0;
-                    var food = 0;
-                    var stone = 0;
+                    var gold = resources.gold;
+                    var wood = resources.wood;
+                    var food = resources.food;
+                    var stone = resources.stone;
                 };
             };
             towns.put(townId, townData);

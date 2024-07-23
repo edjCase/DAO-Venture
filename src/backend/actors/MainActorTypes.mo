@@ -27,7 +27,7 @@ module {
         setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
         getBenevolentDictatorState : query () -> async BenevolentDictatorState;
 
-        getWorldGrid : query () -> async GetWorldGridResult;
+        getWorld : query () -> async GetWorldResult;
         getTowns : query () -> async [Town.Town];
         createTownProposal : (townId : Nat, request : TownProposalContent) -> async CreateTownProposalResult;
         getTownProposal : query (townId : Nat, id : Nat) -> async GetTownProposalResult;
@@ -42,9 +42,15 @@ module {
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
 
-    public type GetWorldGridError = {};
+    public type GetWorldError = {};
 
-    public type GetWorldGridResult = Result.Result<[World.WorldLocation], GetWorldGridError>;
+    public type GetWorldResult = Result.Result<World, GetWorldError>;
+
+    public type World = {
+        grid : [World.WorldLocation];
+        age : Nat;
+        nextDayStartTime : Nat;
+    };
 
     public type CreateWorldProposalRequest = {
         #motion : WorldDao.MotionContent;

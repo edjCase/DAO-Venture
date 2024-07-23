@@ -1,28 +1,33 @@
 import { writable } from "svelte/store";
 import { mainAgentFactory } from "../ic-agent/Main";
-import { WorldLocation } from "../ic-agent/declarations/main";
+import { World } from "../ic-agent/declarations/main";
+import { nanosecondsToDate } from "../utils/DateUtils";
 
 
 
 
 export const worldStore = (() => {
   const { subscribe, set
-  } = writable<WorldLocation[] | undefined>();
+  } = writable<World | undefined>();
 
   const refetch = async () => {
     let mainAgent = await mainAgentFactory();
-    let worldGrid = await mainAgent.getWorldGrid();
-    if ('ok' in worldGrid) {
-      set(worldGrid.ok);
+    let result = await mainAgent.getWorld();
+    if ('ok' in result) {
+      set(result.ok);
+      let now = new Date();
+      let nextDay = nanosecondsToDate(result.ok.nextDayStartTime);
+      let millisTillNextDay = nextDay.getTime() - now.getTime();
+      setInterval(refetch, millisTillNextDay); // Refetch every day
     }
     else {
-      console.error("Failed to get world grid", worldGrid.err);
+      console.error("Failed to get world grid", result.err);
+      refetch();
     }
   };
 
 
 
-  setInterval(refetch, 1000 * 10); // Refetch every 10 seconds
 
   refetch();
 

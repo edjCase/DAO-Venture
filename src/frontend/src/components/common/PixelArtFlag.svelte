@@ -1,10 +1,12 @@
 <script lang="ts">
     import { PixelGrid } from "../../models/PixelArt";
-    import PixelArtSvg from "../common/PixelArtSvg.svelte";
+    import PixelArtCanvas from "./PixelArtCanvas.svelte";
+    import PixelArtSvg from "./PixelArtSvg.svelte";
 
     export let pixels: PixelGrid;
     export let size: "xxs" | "xs" | "sm" | "md" | "lg" | undefined;
     export let border: boolean = false;
+    export let type: "canvas" | "svg" = "canvas";
 
     let pixelSize: number;
     $: {
@@ -30,4 +32,9 @@
     }
 </script>
 
-<PixelArtSvg {pixelSize} {pixels} {border} />
+<!-- TODO need svg? -->
+{#if type === "svg"}
+    <PixelArtSvg {pixelSize} {pixels} {border} />
+{:else}
+    <PixelArtCanvas {pixelSize} {pixels} {border} />
+{/if}

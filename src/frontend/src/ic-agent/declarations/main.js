@@ -573,11 +573,13 @@ export const idlFactory = ({ IDL }) => {
     'townId' : IDL.Opt(IDL.Nat),
     'coordinate' : AxialCoordinate,
   });
-  const GetWorldGridError = IDL.Record({});
-  const GetWorldGridResult = IDL.Variant({
-    'ok' : IDL.Vec(WorldLocation),
-    'err' : GetWorldGridError,
+  const World = IDL.Record({
+    'age' : IDL.Nat,
+    'nextDayStartTime' : IDL.Nat,
+    'grid' : IDL.Vec(WorldLocation),
   });
+  const GetWorldError = IDL.Record({});
+  const GetWorldResult = IDL.Variant({ 'ok' : World, 'err' : GetWorldError });
   const ChangeTownMottoContent = IDL.Record({
     'motto' : IDL.Text,
     'townId' : IDL.Nat,
@@ -726,7 +728,7 @@ export const idlFactory = ({ IDL }) => {
     'getTowns' : IDL.Func([], [IDL.Vec(Town)], ['query']),
     'getUser' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
     'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
-    'getWorldGrid' : IDL.Func([], [GetWorldGridResult], ['query']),
+    'getWorld' : IDL.Func([], [GetWorldResult], ['query']),
     'getWorldProposal' : IDL.Func(
         [IDL.Nat],
         [GetWorldProposalResult],
