@@ -22,7 +22,7 @@
               nat: {
                   options: ScenarioTownOptionNat[];
                   icon: string;
-                  townCurrency: bigint | undefined;
+                  townResourceAmount: bigint | undefined;
                   vote: bigint | undefined;
               };
           }
@@ -54,10 +54,10 @@
                 return;
             }
             if (
-                kind.nat.townCurrency === undefined ||
-                value > kind.nat.townCurrency
+                kind.nat.townResourceAmount === undefined ||
+                value > kind.nat.townResourceAmount
             ) {
-                console.error("Value exceeds town currency");
+                console.error("Value exceeds town resource");
                 return;
             }
             optionValue = { nat: value };
@@ -111,7 +111,7 @@
                     <ScenarioOptionNat
                         {option}
                         selected={kind.nat.vote === option.value}
-                        townCurrency={kind.nat.townCurrency}
+                        townResourceAmount={kind.nat.townResourceAmount}
                         icon={kind.nat.icon}
                         onSelect={() => {
                             value = option.value;

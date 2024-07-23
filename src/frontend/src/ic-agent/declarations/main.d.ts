@@ -97,6 +97,7 @@ export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type GetWorldProposalsResult = { 'ok' : PagedResult };
+export interface GoldResourceInfo { 'difficulty' : bigint }
 export type Job = {
     'processResource' : { 'resource' : ResourceKind, 'workerCount' : bigint }
   } |
@@ -112,6 +113,7 @@ export type JoinWorldError = { 'notAuthorized' : null } |
   { 'noTowns' : null };
 export interface LocationResourceList {
   'food' : FoodResourceInfo,
+  'gold' : GoldResourceInfo,
   'wood' : WoodResourceInfo,
   'stone' : StoneResourceInfo,
 }
@@ -194,14 +196,14 @@ export interface ResourceEffect {
   'town' : TargetTown,
 }
 export type ResourceKind = { 'food' : null } |
+  { 'gold' : null } |
   { 'wood' : null } |
-  { 'stone' : null } |
-  { 'currency' : null };
+  { 'stone' : null };
 export interface ResourceList {
   'food' : bigint,
+  'gold' : bigint,
   'wood' : bigint,
   'stone' : bigint,
-  'currency' : bigint,
 }
 export interface ResourceRequirement {
   'kind' : ResourceKind,
@@ -428,8 +430,8 @@ export interface TownVotingPower { 'total' : bigint, 'voted' : bigint }
 export interface User {
   'id' : Principal,
   'residency' : [] | [UserResidency],
+  'gold' : bigint,
   'level' : bigint,
-  'currency' : bigint,
 }
 export interface UserResidency { 'votingPower' : bigint, 'townId' : bigint }
 export interface UserStats {

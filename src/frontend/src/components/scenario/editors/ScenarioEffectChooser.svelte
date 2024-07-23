@@ -34,9 +34,10 @@
                     town: { contextual: null },
                 },
             };
-        } else if (selectedType === "currency") {
+        } else if (selectedType === "resource") {
             value = {
-                currency: {
+                resource: {
+                    kind: { gold: null },
                     town: { contextual: null },
                     value: { flat: BigInt(1) },
                 },
@@ -44,18 +45,6 @@
         } else if (selectedType === "noEffect") {
             value = {
                 noEffect: null,
-            };
-        } else if (selectedType === "entropyThreshold") {
-            value = {
-                entropyThreshold: {
-                    delta: BigInt(1),
-                },
-            };
-        } else if (selectedType === "worldIncome") {
-            value = {
-                worldIncome: {
-                    delta: BigInt(1),
-                },
             };
         } else {
             throw new Error(`Unknown effect type: ${selectedType}`);
@@ -76,8 +65,8 @@
             value: "entropy",
         },
         {
-            name: "Currency",
-            value: "currency",
+            name: "Resource",
+            value: "resource",
         },
         {
             name: "Skill",

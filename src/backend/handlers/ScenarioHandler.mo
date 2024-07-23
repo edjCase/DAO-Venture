@@ -721,7 +721,7 @@ module {
                         case (#population(population)) testRange(townStats.population, population);
                         case (#resource(resource)) {
                             switch (resource.kind) {
-                                case (#currency) testRange(townStats.resources.currency, resource.range);
+                                case (#gold) testRange(townStats.resources.gold, resource.range);
                                 case (#wood) testRange(townStats.resources.wood, resource.range);
                                 case (#food) testRange(townStats.resources.food, resource.range);
                                 case (#stone) testRange(townStats.resources.stone, resource.range);
@@ -851,7 +851,7 @@ module {
                 };
                 case (#lottery(_) or #proportionalBid(_)) {
                     let #nat(natValue) = value else return null;
-                    switch (chargeTownResources(townChoice.townId, [{ kind = #currency; amount = natValue }])) {
+                    switch (chargeTownResources(townChoice.townId, [{ kind = #gold; amount = natValue }])) {
                         case (#err(#notEnoughResources(_))) return null;
                         case (#ok) ?{
                             value = value;

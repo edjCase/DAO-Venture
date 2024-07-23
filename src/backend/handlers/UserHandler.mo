@@ -15,7 +15,7 @@ module {
         id : Principal;
         residency : ?UserResidency;
         level : Nat;
-        currency : Nat;
+        gold : Nat;
     };
 
     public type UserResidency = {
@@ -49,7 +49,7 @@ module {
         id : Principal;
         var residency : ?UserResidency;
         var level : Nat;
-        var currency : Nat;
+        var gold : Nat;
     };
 
     public class UserHandler(stableData : StableData) {
@@ -230,7 +230,7 @@ module {
                         id = userId;
                         var residency = null;
                         var level = 0;
-                        var currency = 0;
+                        var gold = 0;
                     };
                     users.put(userId, newUser);
                     newUser;
@@ -245,7 +245,7 @@ module {
             id = user.id;
             var residency = user.residency;
             var level = user.level;
-            var currency = user.currency;
+            var gold = user.gold;
         };
     };
 
@@ -254,7 +254,7 @@ module {
             id = user.id;
             residency = user.residency;
             level = user.level;
-            currency = user.currency;
+            gold = user.gold;
         };
     };
 

@@ -11,9 +11,14 @@ module {
     };
 
     public type LocationResourceList = {
+        gold : GoldResourceInfo;
         wood : WoodResourceInfo;
         food : FoodResourceInfo;
         stone : StoneResourceInfo;
+    };
+
+    public type GoldResourceInfo = {
+        difficulty : Nat;
     };
 
     public type WoodResourceInfo = {
@@ -29,7 +34,7 @@ module {
     };
 
     public type ResourceKind = {
-        #currency;
+        #gold;
         #wood;
         #food;
         #stone;

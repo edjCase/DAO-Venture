@@ -50,7 +50,7 @@
         if ("lottery" in scenario.kind) {
             icon = "🎟️";
         } else if ("proportionalBid" in scenario.kind) {
-            icon = "💰";
+            icon = "🪙";
         } else {
             icon = "✅";
         }
@@ -97,7 +97,13 @@
                     scenarioId={scenario.id}
                     option={discreteOption}
                     selected={selectedChoice === discreteOption.id}
-                    currency={undefined}
+                    resourceCosts={discreteOption.resourceCosts.map((rc) => {
+                        return {
+                            kind: rc.kind,
+                            cost: rc.amount,
+                            townAmount: undefined,
+                        };
+                    })}
                     {vote}
                     state={{
                         resolved: {

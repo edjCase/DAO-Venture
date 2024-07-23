@@ -3,6 +3,7 @@
     import { Requirement } from "../../../ic-agent/declarations/main";
     import RequirementRangeEditor from "./RequirementRangeEditor.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
+    import ResourceIcon from "../../icons/ResourceIcon.svelte";
     export let value: Requirement;
 </script>
 
@@ -15,9 +16,9 @@
 {:else if "population" in value}
     <Label>Population</Label>
     <RequirementRangeEditor value={value.population} />
-{:else if "currency" in value}
-    <Label>Currency</Label>
-    <RequirementRangeEditor value={value.currency} />
+{:else if "resource" in value}
+    <Label><ResourceIcon kind={value.resource.kind} /></Label>
+    <RequirementRangeEditor value={value.resource.range} />
 {:else}
     NOT IMPLEMENTED: {toJsonString(value)}
 {/if}

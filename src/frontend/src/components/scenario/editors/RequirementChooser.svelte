@@ -17,7 +17,7 @@
             value: "Population",
         },
         {
-            name: "currency",
+            name: "gold",
             value: "Currency",
         },
     ];
@@ -37,8 +37,13 @@
             case "population":
                 newValue = { population: { above: BigInt(1) } };
                 break;
-            case "currency":
-                newValue = { currency: { above: BigInt(1) } };
+            case "gold":
+                newValue = {
+                    resource: {
+                        kind: { gold: null },
+                        range: { above: BigInt(1) },
+                    },
+                };
                 break;
             default:
                 console.error(

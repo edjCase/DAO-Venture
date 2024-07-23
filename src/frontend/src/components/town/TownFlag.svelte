@@ -18,11 +18,11 @@
 
   <div class="flex flex-col items-center justify-center">
     <PixelArtFlag pixels={town.flagImage.pixels} {size} />
-    {#if stats && "currency" in town}
+    {#if stats && "gold" in town}
       <div class="flex items-center justify-center font-bold">
         <div class="flex items-center justify-center mx-1">
-          <span class="">{town.currency}</span>
-          <span class="text-md">💰</span>
+          <span class="">{town.gold}</span>
+          <span class="text-md">🪙</span>
         </div>
         <div class="flex items-center justify-center">
           <span class="">{town.entropy}</span>

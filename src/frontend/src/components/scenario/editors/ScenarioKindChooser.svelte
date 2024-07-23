@@ -20,12 +20,13 @@
                         {
                             title: "Contribute",
                             description:
-                                "Contribute 1 to the threshold, but -1 💰.",
-                            currencyCost: BigInt(0),
+                                "Contribute 1 to the threshold, but -1 🪙.",
+                            resourceCosts: [],
                             requirements: [],
                             value: { fixed: BigInt(1) },
                             townEffect: {
-                                currency: {
+                                resource: {
+                                    kind: { gold: null },
                                     town: { contextual: null },
                                     value: { flat: BigInt(-1) },
                                 },
@@ -35,7 +36,7 @@
                             title: "Don't Contribute",
                             description:
                                 "Don't contribute to the threshold, but no negative effect.",
-                            currencyCost: BigInt(0),
+                            resourceCosts: [],
                             requirements: [],
                             value: { fixed: BigInt(0) },
                             townEffect: { noEffect: null },
@@ -43,12 +44,13 @@
                     ],
                     success: {
                         effect: {
-                            currency: {
+                            resource: {
+                                kind: { gold: null },
                                 town: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
                         },
-                        description: "+10 💰 for each town",
+                        description: "+10 🪙 for each town",
                     },
                     failure: {
                         effect: {
@@ -69,8 +71,8 @@
                         {
                             title: "Fast Start",
                             description:
-                                "There is no time to wait, give us the 💰and crank up the 🔥. +10 💰+2 entropy per town",
-                            currencyCost: BigInt(0),
+                                "There is no time to wait, give us the 🪙and crank up the 🔥. +10 🪙+2 entropy per town",
+                            resourceCosts: [],
                             worldEffect: {
                                 allOf: [
                                     {
@@ -82,10 +84,9 @@
                                         },
                                     },
                                     {
-                                        currency: {
-                                            town: {
-                                                contextual: null,
-                                            },
+                                        resource: {
+                                            kind: { gold: null },
+                                            town: { contextual: null },
                                             value: {
                                                 flat: BigInt(10),
                                             },
@@ -102,7 +103,7 @@
                             title: "Status Quo",
                             description:
                                 "Things are in balance, lets not touch anything",
-                            currencyCost: BigInt(0),
+                            resourceCosts: [],
                             worldEffect: {
                                 noEffect: null,
                             },
@@ -114,8 +115,8 @@
                         {
                             title: "Cool Down",
                             description:
-                                "Entropy is running too hot, lets cool it off by investing in our world. -5 💰-2 🔥 per town",
-                            currencyCost: BigInt(0),
+                                "Entropy is running too hot, lets cool it off by investing in our world. -5 🪙-2 🔥 per town",
+                            resourceCosts: [],
                             worldEffect: {
                                 allOf: [
                                     {
@@ -127,10 +128,9 @@
                                         },
                                     },
                                     {
-                                        currency: {
-                                            town: {
-                                                contextual: null,
-                                            },
+                                        resource: {
+                                            kind: { gold: null },
+                                            town: { contextual: null },
                                             value: {
                                                 flat: BigInt(-5),
                                             },
@@ -151,9 +151,10 @@
                 lottery: {
                     minBid: BigInt(0),
                     prize: {
-                        description: "+10 💰",
+                        description: "+10 🪙",
                         effect: {
-                            currency: {
+                            resource: {
+                                kind: { gold: null },
                                 town: { contextual: null },
                                 value: { flat: BigInt(10) },
                             },
@@ -194,14 +195,14 @@
                         {
                             title: "Option 1",
                             description: "Description 1",
-                            currencyCost: BigInt(0),
+                            resourceCosts: [],
                             requirements: [],
                             townEffect: { noEffect: null },
                         },
                         {
                             title: "Option 2",
                             description: "Description 2",
-                            currencyCost: BigInt(0),
+                            resourceCosts: [],
                             requirements: [],
                             townEffect: { noEffect: null },
                         },

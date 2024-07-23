@@ -4,14 +4,14 @@
     import { TrashBinSolid } from "flowbite-svelte-icons";
     import { WorldChoiceScenarioRequest } from "../../../../ic-agent/declarations/main";
     import TeqirementsEditor from "../RequirementsEditor.svelte";
-    import BigIntInput from "../BigIntInput.svelte";
+    import ResourceCostsChooser from "../ResourceCostsChooser.svelte";
     export let value: WorldChoiceScenarioRequest;
 
     let addOption = () => {
         value.options.push({
             title: "Option " + (value.options.length + 1),
             description: "Option " + (value.options.length + 1),
-            currencyCost: BigInt(0),
+            resourceCosts: [],
             worldEffect: { noEffect: null },
             townEffect: { noEffect: null },
             requirements: [],
@@ -32,8 +32,8 @@
         <Input type="text" bind:value={option.title} />
         <Label>Description</Label>
         <Input type="text" bind:value={option.description} />
-        <Label>Currency Cost</Label>
-        <BigIntInput bind:value={option.currencyCost} />
+        <Label>Resource Costs</Label>
+        <ResourceCostsChooser bind:value={option.resourceCosts} />
         <Label>Town Effect</Label>
         <ScenarioEffectChooser bind:value={option.townEffect} />
         <Label>World Effect</Label>

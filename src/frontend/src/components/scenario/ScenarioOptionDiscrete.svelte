@@ -5,6 +5,7 @@
         Requirement,
         VoteOnScenarioRequest,
         RangeRequirement,
+        ResourceKind,
     } from "../../ic-agent/declarations/main";
     import { townStore } from "../../stores/TownStore";
     import TownFlag from "../town/TownFlag.svelte";
@@ -12,6 +13,7 @@
     import { mainAgentFactory } from "../../ic-agent/Main";
     import { Town } from "../../ic-agent/declarations/main";
     import { toJsonString } from "../../utils/StringUtil";
+    import ResourceIcon from "../icons/ResourceIcon.svelte";
 
     type State =
         | {
@@ -32,24 +34,25 @@
         requirements: Requirement[];
     };
     export let scenarioId: bigint;
-    export let currency: { townCurrency: bigint; cost: bigint } | undefined; // Undefined used for loading but also for resolved scenarios
+    export let resourceCosts: {
+        kind: ResourceKind;
+        cost: bigint;
+        townAmount: bigint | undefined;
+    }[]; // Undefined used for loading but also for resolved scenarios
     export let selected: boolean;
     export let vote: ScenarioVote | "ineligible";
     export let state: State;
 
-    $: meetsCurrencyRequirements =
-        currency !== undefined && currency.cost <= currency.townCurrency;
+    $: meetsCostRequirements = resourceCosts.every(
+        (r) => r.townAmount === undefined || r.cost <= r.townAmount,
+    );
 
     $: selectable =
-        "inProgress" in state &&
-        vote != "ineligible" &&
-        meetsCurrencyRequirements;
+        "inProgress" in state && vote != "ineligible" && meetsCostRequirements;
 
     $: cursorPointerClass = selectable ? "cursor-pointer" : "";
     $: disabledClass =
-        "inProgress" in state &&
-        currency !== undefined &&
-        !meetsCurrencyRequirements
+        "inProgress" in state && !meetsCostRequirements
             ? "opacity-50 cursor-not-allowed"
             : "";
 
@@ -91,8 +94,22 @@
         } else if ("population" in r) {
             label = "Population: " + getRangeText(r.population);
             color = "yellow";
-        } else if ("currency" in r) {
-            label = "Currency: " + getRangeText(r.currency);
+        } else if ("resource" in r) {
+            let name: string;
+            if ("gold" in r.resource.kind) {
+                name = "🪙";
+            } else if ("wood" in r.resource.kind) {
+                name = "🪵";
+            } else if ("stone" in r.resource.kind) {
+                name = "🪨";
+            } else if ("food" in r.resource.kind) {
+                name = "🥕";
+            } else {
+                name =
+                    "NOT IMPLEMENTED RESOURCE: " +
+                    toJsonString(r.resource.kind);
+            }
+            label = name + ": " + getRangeText(r.resource.range);
             color = "green";
         } else if ("entropy" in r) {
             label = "Entropy: " + getRangeText(r.entropy);
@@ -158,9 +175,12 @@
     <div class="w-full h-full">
         <div class="text-center text-xl font-bold">{option.title}</div>
         <div class="text-justify text-sm">{option.description}</div>
-        {#if currency !== undefined && currency.cost > 0}
-            <div class="text-xl text-center">{currency.cost} 💰</div>
-        {/if}
+        {#each resourceCosts as resourceCost}
+            <div class="text-xl text-center">
+                <ResourceIcon kind={resourceCost.kind} />
+                {resourceCost.cost}
+            </div>
+        {/each}
         {#if townOption === undefined}
             <div class="text-center text-xl font-bold">Ineligible to vote</div>
         {:else}

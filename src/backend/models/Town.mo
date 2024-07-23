@@ -19,7 +19,7 @@ module {
     };
 
     public type ResourceList = {
-        currency : Nat;
+        gold : Nat;
         wood : Nat;
         food : Nat;
         stone : Nat;

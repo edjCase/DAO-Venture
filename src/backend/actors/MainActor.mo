@@ -48,10 +48,15 @@ actor MainActor : Types.Actor {
     type MutableWorldLocation = {
         var townId : ?Nat;
         resources : {
+            gold : MutableGoldResourceInfo;
             wood : MutableWoodResourceInfo;
             food : MutableFoodResourceInfo;
             stone : MutableStoneResourceInfo;
         };
+    };
+
+    public type MutableGoldResourceInfo = {
+        var difficulty : Nat;
     };
 
     public type MutableWoodResourceInfo = {
@@ -81,6 +86,7 @@ actor MainActor : Types.Actor {
         func(_ : Nat) : World.WorldLocationWithoutId = {
             townId = null;
             resources = {
+                gold = { difficulty = 0 };
                 wood = { amount = 0 };
                 food = { amount = 0 };
                 stone = { difficulty = 0 };
@@ -116,6 +122,7 @@ actor MainActor : Types.Actor {
         {
             var townId = location.townId;
             resources = {
+                gold = { var difficulty = location.resources.gold.difficulty };
                 wood = { var amount = location.resources.wood.amount };
                 food = { var amount = location.resources.food.amount };
                 stone = { var difficulty = location.resources.stone.difficulty };
@@ -127,6 +134,7 @@ actor MainActor : Types.Actor {
         {
             townId = location.townId;
             resources = {
+                gold = { difficulty = location.resources.gold.difficulty };
                 wood = { amount = location.resources.wood.amount };
                 food = { amount = location.resources.food.amount };
                 stone = { difficulty = location.resources.stone.difficulty };
@@ -161,7 +169,7 @@ actor MainActor : Types.Actor {
             case (#resource(resourceEffect)) {
                 switch (townsHandler.updateResource(resourceEffect.townId, resourceEffect.kind, resourceEffect.delta, true)) {
                     case (#ok) null;
-                    case (#err(e)) Debug.trap("Error updating town currency: " # debug_show (e));
+                    case (#err(e)) Debug.trap("Error updating town gold: " # debug_show (e));
                 };
             };
         };
@@ -684,7 +692,7 @@ actor MainActor : Types.Actor {
                 let amountCanHarvest = switch (gatherResourceJob.resource) {
                     case (#wood) gatherResourceJob.workerCount * town.skills.woodCutting.proficiencyLevel * town.skills.woodCutting.techLevel;
                     case (#food) gatherResourceJob.workerCount * town.skills.farming.proficiencyLevel * town.skills.farming.techLevel;
-                    case (#currency) {
+                    case (#gold) {
                         let amountInt : Int = gatherResourceJob.workerCount * town.skills.mining.proficiencyLevel * town.skills.mining.techLevel;
                         if (amountInt <= 0) 0 else Int.abs(amountInt);
                     };
@@ -717,7 +725,7 @@ actor MainActor : Types.Actor {
                     };
                 };
                 switch (gatherResourceJob.resource) {
-                    case (#currency) townWork.goldCanHarvest += amountCanHarvest;
+                    case (#gold) townWork.goldCanHarvest += amountCanHarvest;
                     case (#wood) townWork.woodCanHarvest += amountCanHarvest;
                     case (#food) townWork.foodCanHarvest += amountCanHarvest;
                     case (#stone) townWork.stoneCanHarvest += amountCanHarvest;

@@ -38,7 +38,7 @@ module {
     };
 
     type MutableTownResourceList = {
-        var currency : Nat;
+        var gold : Nat;
         var wood : Nat;
         var food : Nat;
         var stone : Nat;
@@ -124,7 +124,7 @@ module {
                 var flagImage = flagImage;
                 var motto = motto;
                 var entropy = 0;
-                var currency = 0;
+                var gold = 0;
                 var population = 0;
                 var size = 0;
                 genesisTime = Time.now();
@@ -144,7 +144,7 @@ module {
                     };
                 };
                 resources = {
-                    var currency = 0;
+                    var gold = 0;
                     var wood = 0;
                     var food = 0;
                     var stone = 0;
@@ -199,7 +199,7 @@ module {
                     continue l;
                 };
                 let currentValue = switch (resource.kind) {
-                    case (#currency) town.resources.currency;
+                    case (#gold) town.resources.gold;
                     case (#wood) town.resources.wood;
                     case (#food) town.resources.food;
                     case (#stone) town.resources.stone;
@@ -225,8 +225,8 @@ module {
             for (resource in newResources.vals()) {
                 Debug.print("Updating resource " # debug_show (resource.kind) # " for town " # Nat.toText(townId) # " to " # Nat.toText(resource.newValue));
                 switch (resource.kind) {
-                    case (#currency) {
-                        town.resources.currency := resource.newValue;
+                    case (#gold) {
+                        town.resources.gold := resource.newValue;
                     };
                     case (#wood) {
                         town.resources.wood := resource.newValue;
@@ -309,7 +309,7 @@ module {
                 mining = fromMutableSkill(town.skills.mining);
             };
             resources = {
-                currency = town.resources.currency;
+                gold = town.resources.gold;
                 wood = town.resources.wood;
                 food = town.resources.food;
                 stone = town.resources.stone;
@@ -341,7 +341,7 @@ module {
                 mining = toMutableSkill(stableData.skills.mining);
             };
             resources = {
-                var currency = stableData.resources.currency;
+                var gold = stableData.resources.gold;
                 var wood = stableData.resources.wood;
                 var food = stableData.resources.food;
                 var stone = stableData.resources.stone;

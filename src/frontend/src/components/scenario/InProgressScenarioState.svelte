@@ -39,21 +39,19 @@
 
     scenarioStore.subscribeVotingData((scenarioVotingData) => {
         votingData = scenarioVotingData[Number(scenario.id)];
-        if (votingData?.yourData[0] !== undefined) {
+        let yourData = votingData?.yourData[0];
+        if (yourData !== undefined) {
             selectedId =
-                votingData.yourData[0].value[0] !== undefined &&
-                "id" in votingData.yourData[0]?.value[0]
-                    ? votingData.yourData[0]?.value[0].id
+                yourData.value[0] !== undefined && "id" in yourData?.value[0]
+                    ? yourData?.value[0].id
                     : undefined;
             selectedNat =
-                votingData.yourData[0]?.value[0] !== undefined &&
-                "nat" in votingData.yourData[0]?.value[0]
-                    ? votingData.yourData[0]?.value[0].nat
+                yourData?.value[0] !== undefined && "nat" in yourData?.value[0]
+                    ? yourData?.value[0].nat
                     : undefined;
             selectedText =
-                votingData.yourData[0]?.value[0] !== undefined &&
-                "text" in votingData.yourData[0]?.value[0]
-                    ? votingData.yourData[0]?.value[0].text
+                yourData?.value[0] !== undefined && "text" in yourData?.value[0]
+                    ? yourData?.value[0].text
                     : undefined;
         } else {
             selectedId = undefined;
@@ -69,7 +67,7 @@
             icon = "🎟️";
         } else if ("proportionalBid" in scenario.kind) {
             proposeName = "Bid";
-            icon = "💰";
+            icon = "🪙";
         } else if ("textInput" in scenario.kind) {
             proposeName = "Text";
             icon = "📝";
@@ -96,7 +94,8 @@
     </div>
 {/if}
 {#if votingData}
-    {#if votingData.yourData[0] === undefined}
+    {@const yourData = votingData.yourData[0]}
+    {#if yourData === undefined}
         Ineligible to vote
         {#if !userContext || !isOwner}
             <div>Want to participate in scenarios?</div>
@@ -124,46 +123,59 @@
         {:else}
             NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
         {/if}
-        {#if "nat" in votingData.yourData[0].townOptions}
+        {#if "nat" in yourData.townOptions}
             <ScenarioOptionsRaw
                 scenarioId={scenario.id}
-                townId={votingData.yourData[0].townId}
+                townId={yourData.townId}
                 kind={{
                     nat: {
-                        options: votingData.yourData[0].townOptions.nat,
+                        options: yourData.townOptions.nat,
                         vote: selectedNat,
-                        townCurrency:
-                            town === undefined ? undefined : town.currency,
+                        townResourceAmount: town?.resources.gold, // TODO add more resources to bid
                         icon: icon,
                     },
                 }}
                 {proposeName}
             />
-        {:else if "text" in votingData.yourData[0].townOptions}
+        {:else if "text" in yourData.townOptions}
             <ScenarioOptionsRaw
                 scenarioId={scenario.id}
-                townId={votingData.yourData[0].townId}
+                townId={yourData.townId}
                 kind={{
                     text: {
-                        options: votingData.yourData[0].townOptions.text,
+                        options: yourData.townOptions.text,
                         vote: selectedText,
                     },
                 }}
                 {proposeName}
             />
-        {:else if "discrete" in votingData.yourData[0].townOptions}
-            {#each votingData.yourData[0].townOptions.discrete as option}
+        {:else if "discrete" in yourData.townOptions}
+            {#each yourData.townOptions.discrete as option}
+                {@const resourceCosts = option.resourceCosts.map((rc) => {
+                    let townAmount;
+                    if ("gold" in rc.kind) {
+                        townAmount = town?.resources.gold;
+                    } else if ("wood" in rc.kind) {
+                        townAmount = town?.resources.wood;
+                    } else if ("stone" in rc.kind) {
+                        townAmount = town?.resources.stone;
+                    } else if ("food" in rc.kind) {
+                        townAmount = town?.resources.food;
+                    } else {
+                        townAmount = 0n;
+                    }
+                    return {
+                        kind: rc.kind,
+                        cost: rc.amount,
+                        townAmount: townAmount,
+                    };
+                })}
                 <ScenarioOptionDiscrete
                     scenarioId={scenario.id}
                     {option}
                     selected={selectedId === option.id}
-                    currency={town === undefined
-                        ? undefined
-                        : {
-                              cost: option.currencyCost,
-                              townCurrency: town.currency,
-                          }}
-                    vote={votingData.yourData[0]}
+                    {resourceCosts}
+                    vote={yourData}
                     state={{
                         inProgress: {
                             onSelect: () => {
@@ -175,11 +187,11 @@
             {/each}
         {:else}
             NOT IMPLEMENTED TEAM OPTIONS KIND: {toJsonString(
-                votingData.yourData[0].townOptions,
+                yourData.townOptions,
             )}
         {/if}
-        {(Number(votingData.yourData[0].townVotingPower.voted) /
-            Number(votingData.yourData[0].townVotingPower.total)) *
+        {(Number(yourData.townVotingPower.voted) /
+            Number(yourData.townVotingPower.total)) *
             100}% of your town has voted
     {/if}
 {/if}

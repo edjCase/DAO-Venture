@@ -28,7 +28,7 @@ function createUserStore() {
             let emptyUser: User = {
                 id: currentUserId,
                 level: BigInt(0),
-                currency: BigInt(0),
+                gold: BigInt(0),
                 residency: []
             };
             currentUser.set(emptyUser);

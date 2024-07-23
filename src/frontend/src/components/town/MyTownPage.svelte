@@ -9,6 +9,7 @@
     import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
     import LoadingButton from "../common/LoadingButton.svelte";
     import { mainAgentFactory } from "../../ic-agent/Main";
+    import ResourceIcon from "../icons/ResourceIcon.svelte";
 
     $: towns = $townStore;
 
@@ -35,8 +36,22 @@
         <div class="flex w-full mb-4 text-center">
             <div class="flex-grow">
                 <div class="text-xl">Town</div>
-                <div>{town.currency} 💰</div>
-                <div>{town.entropy} 🔥</div>
+                <div>
+                    {town.resources.gold}
+                    <ResourceIcon kind={{ gold: null }} />
+                </div>
+                <div>
+                    {town.resources.food}
+                    <ResourceIcon kind={{ food: null }} />
+                </div>
+                <div>
+                    {town.resources.wood}
+                    <ResourceIcon kind={{ wood: null }} />
+                </div>
+                <div>
+                    {town.resources.stone}
+                    <ResourceIcon kind={{ stone: null }} />
+                </div>
             </div>
             <div class="flex-grow">
                 <div class="text-xl">You</div>

@@ -2,7 +2,7 @@
     import { EffectOutcome } from "../../ic-agent/declarations/main";
     import { Town } from "../../ic-agent/declarations/main";
     import { toJsonString } from "../../utils/StringUtil";
-    import CurrencyOutcome from "./effect_outcomes/CurrencyOutcome.svelte";
+    import ResourceOutcome from "./effect_outcomes/ResourceOutcome.svelte";
     import EntropyOutcome from "./effect_outcomes/EntropyOutcome.svelte";
 
     export let outcome: EffectOutcome;
@@ -10,8 +10,8 @@
 </script>
 
 <div>
-    {#if "currency" in outcome}
-        <CurrencyOutcome value={outcome.currency} {towns} />
+    {#if "resource" in outcome}
+        <ResourceOutcome value={outcome.resource} {towns} />
     {:else if "entropy" in outcome}
         <EntropyOutcome value={outcome.entropy} {towns} />
     {:else}

@@ -3,9 +3,9 @@ export const idlFactory = ({ IDL }) => {
   const Time = IDL.Int;
   const ResourceKind = IDL.Variant({
     'food' : IDL.Null,
+    'gold' : IDL.Null,
     'wood' : IDL.Null,
     'stone' : IDL.Null,
-    'currency' : IDL.Null,
   });
   const TargetTown = IDL.Variant({
     'all' : IDL.Null,
@@ -425,8 +425,8 @@ export const idlFactory = ({ IDL }) => {
   const User = IDL.Record({
     'id' : IDL.Principal,
     'residency' : IDL.Opt(UserResidency),
+    'gold' : IDL.Nat,
     'level' : IDL.Nat,
-    'currency' : IDL.Nat,
   });
   const PagedResult_2 = IDL.Record({
     'data' : IDL.Vec(User),
@@ -500,9 +500,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const ResourceList = IDL.Record({
     'food' : IDL.Nat,
+    'gold' : IDL.Nat,
     'wood' : IDL.Nat,
     'stone' : IDL.Nat,
-    'currency' : IDL.Nat,
   });
   const Job = IDL.Variant({
     'processResource' : IDL.Record({
@@ -557,10 +557,12 @@ export const idlFactory = ({ IDL }) => {
     'err' : IDL.Null,
   });
   const FoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
+  const GoldResourceInfo = IDL.Record({ 'difficulty' : IDL.Nat });
   const WoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
   const StoneResourceInfo = IDL.Record({ 'difficulty' : IDL.Nat });
   const LocationResourceList = IDL.Record({
     'food' : FoodResourceInfo,
+    'gold' : GoldResourceInfo,
     'wood' : WoodResourceInfo,
     'stone' : StoneResourceInfo,
   });

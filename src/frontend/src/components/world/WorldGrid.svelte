@@ -3,6 +3,7 @@
     import { townStore } from "../../stores/TownStore";
     import HexGrid from "../common/HexGrid.svelte";
     import PixelArtFlag from "../common/PixelArtFlag.svelte";
+    import ResourceIcon from "../icons/ResourceIcon.svelte";
 
     $: towns = $townStore;
     $: locations = $worldStore;
@@ -45,17 +46,23 @@
                         {:else}
                             {townOrUndefined.name}
                         {/if}
-                        {#each location.resources as resource}
-                            <div class="text-center text-3xl">
-                                {#if "wood" in resource}
-                                    {resource.wood} Wood
-                                {:else if "stone" in resource}
-                                    {resource.stone} Stone
-                                {:else if "food" in resource}
-                                    {resource.food} Food
-                                {/if}
-                            </div>
-                        {/each}
+
+                        <div class="text-center text-3xl">
+                            <ResourceIcon kind={{ gold: null }} />
+                            Diffuculty: {location.resources.gold.difficulty}
+                        </div>
+                        <div>
+                            <ResourceIcon kind={{ wood: null }} />
+                            {location.resources.wood.amount}
+                        </div>
+                        <div>
+                            <ResourceIcon kind={{ stone: null }} />
+                            Diffuculty: {location.resources.stone.difficulty}
+                        </div>
+                        <div>
+                            <ResourceIcon kind={{ food: null }} />
+                            {location.resources.food.amount}
+                        </div>
                     </div>
                 </div>
             {/if}

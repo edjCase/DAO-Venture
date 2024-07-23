@@ -6,6 +6,7 @@
     import { TrashBinSolid } from "flowbite-svelte-icons";
     import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
     import TargetTownChooser from "./TargetTownChooser.svelte";
+    import ResourceKindChooser from "./ResourceKindChooser.svelte";
     export let value: Effect;
 
     let addOption = () => {
@@ -58,17 +59,12 @@
     <Label>Amount</Label>
     <BigIntInput bind:value={value.entropy.delta} />
     <TargetTownChooser bind:value={value.entropy.town} />
-{:else if "currency" in value}
+{:else if "resource" in value}
+    <ResourceKindChooser bind:value={value.resource.kind} />
     <Label>Amount</Label>
-    <BigIntInput bind:value={value.currency.value.flat} />
+    <BigIntInput bind:value={value.resource.value.flat} />
     <Label>Town</Label>
-    <TargetTownChooser bind:value={value.currency.town} />
-{:else if "entropyThreshold" in value}
-    <Label>Delta</Label>
-    <BigIntInput bind:value={value.entropyThreshold.delta} />
-{:else if "worldIncome" in value}
-    <Label>Delta</Label>
-    <BigIntInput bind:value={value.worldIncome.delta} />
+    <TargetTownChooser bind:value={value.resource.town} />
 {:else if "noEffect" in value}
     <div></div>
 {:else}
