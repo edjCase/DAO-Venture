@@ -1,5 +1,6 @@
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
+import World "World";
 
 module {
     public type TargetTown = {
@@ -21,7 +22,7 @@ module {
         // TODO anomoly
         // #anomoly : AnomolyEffect;
         #entropy : EntropyEffect;
-        #currency : CurrencyEffect;
+        #resource : ResourceEffect;
         #oneOf : [WeightedEffect];
         #allOf : [Effect];
         #noEffect;
@@ -47,8 +48,9 @@ module {
         delta : Int;
     };
 
-    public type CurrencyEffect = {
+    public type ResourceEffect = {
         town : TargetTown;
+        kind : World.ResourceKind;
         value : {
             #flat : Int;
         };
@@ -62,7 +64,7 @@ module {
 
     public type TownEffectOutcome = {
         #entropy : EntropyTownEffectOutcome;
-        #currency : CurrencyTownEffectOutcome;
+        #resource : ResourceTownEffectOutcome;
     };
 
     public type EntropyTownEffectOutcome = {
@@ -70,8 +72,9 @@ module {
         delta : Int;
     };
 
-    public type CurrencyTownEffectOutcome = {
+    public type ResourceTownEffectOutcome = {
         townId : Nat;
+        kind : World.ResourceKind;
         delta : Int;
     };
 
@@ -89,7 +92,12 @@ module {
         #entropy : RangeRequirement;
         #age : RangeRequirement;
         #population : RangeRequirement;
-        #currency : RangeRequirement;
+        #resource : ResourceRequirement;
+    };
+
+    public type ResourceRequirement = {
+        kind : World.ResourceKind;
+        range : RangeRequirement;
     };
 
     public type RangeRequirement = {
@@ -120,10 +128,15 @@ module {
     public type ScenarioOptionDiscrete = {
         title : Text;
         description : Text;
-        currencyCost : Nat;
+        resourceCosts : [ResourceCost];
         requirements : [Requirement];
         townEffect : Effect;
         allowedTownIds : [Nat];
+    };
+
+    public type ResourceCost = {
+        kind : World.ResourceKind;
+        amount : Nat;
     };
 
     public type NoWorldEffectScenario = {
@@ -228,7 +241,7 @@ module {
         id : Nat;
         title : Text;
         description : Text;
-        currencyCost : Nat;
+        resourceCosts : [ResourceCost];
         requirements : [Requirement];
         townEffect : Effect;
         seenByTownIds : [Nat];

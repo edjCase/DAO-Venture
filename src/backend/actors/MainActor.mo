@@ -16,12 +16,12 @@ import ProposalTypes "mo:dao-proposal-engine/Types";
 import Result "mo:base/Result";
 import Nat32 "mo:base/Nat32";
 import HashMap "mo:base/HashMap";
-import Int "mo:base/Int";
-import Float "mo:base/Float";
-import Prelude "mo:base/Prelude";
 import Array "mo:base/Array";
 import Time "mo:base/Time";
 import Timer "mo:base/Timer";
+import Nat8 "mo:base/Nat8";
+import Int "mo:base/Int";
+import Float "mo:base/Float";
 import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
@@ -47,7 +47,23 @@ actor MainActor : Types.Actor {
 
     type MutableWorldLocation = {
         var townId : ?Nat;
-        var resources : [World.LocationResource];
+        resources : {
+            wood : MutableWoodResourceInfo;
+            food : MutableFoodResourceInfo;
+            stone : MutableStoneResourceInfo;
+        };
+    };
+
+    public type MutableWoodResourceInfo = {
+        var amount : Nat;
+    };
+
+    public type MutableFoodResourceInfo = {
+        var amount : Nat;
+    };
+
+    public type MutableStoneResourceInfo = {
+        var difficulty : Nat;
     };
 
     // Stables ---------------------------------------------------------
@@ -64,7 +80,11 @@ actor MainActor : Types.Actor {
         19,
         func(_ : Nat) : World.WorldLocationWithoutId = {
             townId = null;
-            resources = [];
+            resources = {
+                wood = { amount = 0 };
+                food = { amount = 0 };
+                stone = { difficulty = 0 };
+            };
         },
     );
 
@@ -92,13 +112,32 @@ actor MainActor : Types.Actor {
 
     // Unstables ---------------------------------------------------------
 
+    private func toMutableWorldLocation(location : World.WorldLocationWithoutId) : MutableWorldLocation {
+        {
+            var townId = location.townId;
+            resources = {
+                wood = { var amount = location.resources.wood.amount };
+                food = { var amount = location.resources.food.amount };
+                stone = { var difficulty = location.resources.stone.difficulty };
+            };
+        };
+    };
+
+    private func fromMutableWorldLocation(location : MutableWorldLocation) : World.WorldLocationWithoutId {
+        {
+            townId = location.townId;
+            resources = {
+                wood = { amount = location.resources.wood.amount };
+                food = { amount = location.resources.food.amount };
+                stone = { difficulty = location.resources.stone.difficulty };
+            };
+        };
+    };
+
     var worldGrid = worldGridStableData.vals()
     |> Iter.map(
         _,
-        func(location : World.WorldLocationWithoutId) : MutableWorldLocation = {
-            var townId = location.townId;
-            var resources = location.resources;
-        },
+        toMutableWorldLocation,
     )
     |> Buffer.fromIter<MutableWorldLocation>(_);
 
@@ -119,8 +158,8 @@ actor MainActor : Types.Actor {
                     case (#err(e)) Debug.trap("Error updating town entropy: " # debug_show (e));
                 };
             };
-            case (#currency(e)) {
-                switch (townsHandler.updateCurrency(e.townId, e.delta, true)) {
+            case (#resource(resourceEffect)) {
+                switch (townsHandler.updateResource(resourceEffect.townId, resourceEffect.kind, resourceEffect.delta, true)) {
                     case (#ok) null;
                     case (#err(e)) Debug.trap("Error updating town currency: " # debug_show (e));
                 };
@@ -134,18 +173,27 @@ actor MainActor : Types.Actor {
         };
     };
 
-    private func chargeTownCurrency(townId : Nat, amount : Nat) : {
-        #ok;
-        #notEnoughCurrency;
-    } {
-        switch (townsHandler.updateCurrency(townId, -amount, false)) {
+    private func chargeTownResources(townId : Nat, resoureCosts : [Scenario.ResourceCost]) : Result.Result<(), { #notEnoughResources : [World.ResourceKind] }> {
+        let costs = resoureCosts.vals()
+        |> Iter.map(
+            _,
+            func(cost : Scenario.ResourceCost) : {
+                delta : Int;
+                kind : World.ResourceKind;
+            } = {
+                delta = -cost.amount;
+                kind = cost.kind;
+            },
+        )
+        |> Iter.toArray(_);
+        switch (townsHandler.updateResourceBulk(townId, costs, false)) {
             case (#ok) #ok;
-            case (#err(#notEnoughCurrency)) #notEnoughCurrency;
+            case (#err(#notEnoughResources(r))) #err(#notEnoughResources(r));
             case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
         };
     };
 
-    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownCurrency);
+    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownResources);
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
@@ -259,45 +307,6 @@ actor MainActor : Types.Actor {
 
     var townDaos = buildTownDaos<system>();
 
-    private func getProportionalEntropyWeights(entropyValues : [Nat]) : [Float] {
-        if (entropyValues.size() == 0) {
-            return [];
-        };
-        let ?maxEntropy = IterTools.max<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
-        let ?minEntropy = IterTools.min<Nat>(entropyValues.vals(), Nat.compare) else Prelude.unreachable();
-        let entropyRange : Nat = maxEntropy - minEntropy;
-
-        // If all entropy values are 0 or the total entropy is 0, return an array of equal weights
-        if (maxEntropy == 0) {
-            let equalWeight = 1.0 / Float.fromInt(entropyValues.size());
-            return Array.tabulate<Float>(entropyValues.size(), func(_ : Nat) : Float { equalWeight });
-        };
-
-        let weights = Iter.map<Nat, Float>(
-            entropyValues.vals(),
-            func(entropy : Nat) : Float {
-                let relativeEntropy = Float.fromInt(maxEntropy - entropy) / Float.fromInt(entropyRange);
-                return relativeEntropy + 1.0;
-            },
-        )
-        |> Iter.toArray(_);
-
-        let totalWeight = IterTools.fold<Float, Float>(
-            weights.vals(),
-            0.0,
-            func(sum : Float, weight : Float) : Float {
-                return sum + weight;
-            },
-        );
-        return Iter.map<Float, Float>(
-            weights.vals(),
-            func(weight : Float) : Float {
-                return weight / totalWeight;
-            },
-        )
-        |> Iter.toArray(_);
-    };
-
     private func resetDayTimer<system>() {
         let { timeInDay } = TimeUtil.getAge(genesisTime);
         ignore Timer.setTimer<system>(
@@ -325,17 +334,14 @@ actor MainActor : Types.Actor {
         worldGridStableData := worldGrid.vals()
         |> Iter.map<MutableWorldLocation, World.WorldLocationWithoutId>(
             _,
-            func(location : MutableWorldLocation) : World.WorldLocationWithoutId = {
-                townId = location.townId;
-                resources = location.resources;
-            },
+            fromMutableWorldLocation,
         )
         |> Iter.toArray(_);
     };
 
     system func postupgrade() {
         reverseEffects := Buffer.fromIter<ReverseEffectWithDuration>(reverseEffectStableData.vals());
-        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownCurrency);
+        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownResources);
         worldDao := ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
             worldDaoStableData,
             onWorldProposalExecute,
@@ -348,10 +354,7 @@ actor MainActor : Types.Actor {
         worldGrid := worldGridStableData.vals()
         |> Iter.map(
             _,
-            func(location : World.WorldLocationWithoutId) : MutableWorldLocation = {
-                var townId = location.townId;
-                var resources = location.resources;
-            },
+            toMutableWorldLocation,
         )
         |> Buffer.fromIter<MutableWorldLocation>(_);
     };
@@ -373,10 +376,10 @@ actor MainActor : Types.Actor {
                     func(_ : Nat) : [Flag.Pixel] {
                         Array.tabulate(
                             width,
-                            func(_ : Nat) : Flag.Pixel = {
-                                red = 0;
-                                green = 0;
-                                blue = 0;
+                            func(i : Nat) : Flag.Pixel = {
+                                red = Nat8.fromNat(i);
+                                green = Nat8.fromNat(i);
+                                blue = Nat8.fromNat(i);
                             },
                         );
                     },
@@ -534,11 +537,9 @@ actor MainActor : Types.Actor {
         |> IterTools.mapEntries<MutableWorldLocation, World.WorldLocation>(
             _,
             func(i : Nat, location : MutableWorldLocation) : World.WorldLocation = {
-                location with
+                fromMutableWorldLocation(location) with
                 id = i;
                 coordinate = HexGrid.indexToAxialCoord(i);
-                townId = location.townId;
-                resources = location.resources;
             },
         )
         |> Iter.toArray(_);
@@ -589,11 +590,141 @@ actor MainActor : Types.Actor {
             if (days <= daysProcessed) {
                 break l;
             };
+            processResourceGathering();
+            processTownTradeResources();
+            processTownConsumeResources();
+            processUpdateResources();
             // TODO
             // TODO reverse effects
             daysProcessed := daysProcessed + 1;
         };
         resetDayTimer<system>();
+    };
+
+    private func processTownTradeResources() {
+        // TODO
+    };
+
+    private func processTownConsumeResources() {
+        // TODO
+    };
+
+    private func processUpdateResources() {
+        // TODO
+    };
+
+    type TownAvailableWork = {
+        townId : Nat;
+        var goldCanHarvest : Nat;
+        var woodCanHarvest : Nat;
+        var foodCanHarvest : Nat;
+        var stoneCanHarvest : Nat;
+    };
+
+    private func processResourceGathering() {
+        let locationJobsMap = buildLocationJobs();
+        for ((locationId, townWorkMap) in locationJobsMap.entries()) {
+            let location = worldGrid.get(locationId);
+
+            // Calculate total resource requests
+            var totalWoodRequest = 0;
+            var totalFoodRequest = 0;
+
+            for ((_, townWork) in townWorkMap.entries()) {
+                totalWoodRequest += townWork.woodCanHarvest;
+                totalFoodRequest += townWork.foodCanHarvest;
+            };
+
+            // Calculate proportions if requests exceed available resources
+            let woodProportion = Float.min(1, Float.fromInt(location.resources.wood.amount) / Float.fromInt(totalWoodRequest));
+            let foodProportion = Float.min(1, Float.fromInt(location.resources.food.amount) / Float.fromInt(totalFoodRequest));
+
+            let calculatePropotionValue = func(value : Nat, proportion : Float) : Nat {
+                let adjustedValueInt = Float.toInt(Float.fromInt(value) * proportion);
+                if (adjustedValueInt < 0) {
+                    Debug.trap("Adjusted value is less than 0");
+                };
+                Int.abs(adjustedValueInt);
+            };
+            let addTownResource = func(townId : Nat, amount : Nat, resource : World.ResourceKind) {
+                switch (townsHandler.addResource(townId, resource, amount)) {
+                    case (#ok) {};
+                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
+                };
+            };
+
+            // Process each town's work
+            for ((townId, townWork) in townWorkMap.entries()) {
+                // Adjust wood harvesting
+                let adjustedWoodHarvest = calculatePropotionValue(townWork.woodCanHarvest, woodProportion);
+                location.resources.wood.amount -= adjustedWoodHarvest;
+                addTownResource(townId, adjustedWoodHarvest, #wood);
+
+                // Adjust food harvesting
+                let adjustedFoodHarvest = calculatePropotionValue(townWork.foodCanHarvest, foodProportion);
+                location.resources.food.amount -= adjustedFoodHarvest;
+                addTownResource(townId, adjustedFoodHarvest, #food);
+
+                // Stone difficulty increases regardless of proportion
+                location.resources.stone.difficulty += townWork.stoneCanHarvest;
+                addTownResource(townId, townWork.stoneCanHarvest, #food);
+            };
+        };
+    };
+
+    private func buildLocationJobs() : HashMap.HashMap<Nat, HashMap.HashMap<Nat, TownAvailableWork>> {
+        let locationTownWorkMap = HashMap.HashMap<Nat, HashMap.HashMap<Nat, TownAvailableWork>>(worldGrid.size(), Nat.equal, Nat32.fromNat);
+        // Go through all the towns
+        for (town in townsHandler.getAll().vals()) {
+            // And for each job, add the amount of resources that can be harvested
+            // from that location for that town
+            label j for (job in town.jobs.vals()) {
+                let #gatherResource(gatherResourceJob) = job else continue j;
+                let location = worldGrid.get(gatherResourceJob.locationId);
+                let amountCanHarvest = switch (gatherResourceJob.resource) {
+                    case (#wood) gatherResourceJob.workerCount * town.skills.woodCutting.proficiencyLevel * town.skills.woodCutting.techLevel;
+                    case (#food) gatherResourceJob.workerCount * town.skills.farming.proficiencyLevel * town.skills.farming.techLevel;
+                    case (#currency) {
+                        let amountInt : Int = gatherResourceJob.workerCount * town.skills.mining.proficiencyLevel * town.skills.mining.techLevel;
+                        if (amountInt <= 0) 0 else Int.abs(amountInt);
+                    };
+                    case (#stone) {
+                        let amountInt : Int = gatherResourceJob.workerCount * town.skills.mining.proficiencyLevel * town.skills.mining.techLevel - location.resources.stone.difficulty;
+                        if (amountInt <= 0) 0 else Int.abs(amountInt);
+                    };
+                };
+
+                let townWorkMap : HashMap.HashMap<Nat, TownAvailableWork> = switch (locationTownWorkMap.get(gatherResourceJob.locationId)) {
+                    case (?townWorkMap) townWorkMap;
+                    case (null) {
+                        let newTownWorkMap = HashMap.HashMap<Nat, TownAvailableWork>(1, Nat.equal, Nat32.fromNat);
+                        locationTownWorkMap.put(gatherResourceJob.locationId, newTownWorkMap);
+                        newTownWorkMap;
+                    };
+                };
+                let townWork : TownAvailableWork = switch (townWorkMap.get(town.id)) {
+                    case (?townWork) townWork;
+                    case (null) {
+                        let newTownWork : TownAvailableWork = {
+                            townId = town.id;
+                            var goldCanHarvest = 0;
+                            var woodCanHarvest = 0;
+                            var foodCanHarvest = 0;
+                            var stoneCanHarvest = 0;
+                        };
+                        townWorkMap.put(town.id, newTownWork);
+                        newTownWork;
+                    };
+                };
+                switch (gatherResourceJob.resource) {
+                    case (#currency) townWork.goldCanHarvest += amountCanHarvest;
+                    case (#wood) townWork.woodCanHarvest += amountCanHarvest;
+                    case (#food) townWork.foodCanHarvest += amountCanHarvest;
+                    case (#stone) townWork.stoneCanHarvest += amountCanHarvest;
+                };
+            };
+        };
+        locationTownWorkMap;
     };
 
     private func isWorldOrBDFN(id : Principal) : Bool {

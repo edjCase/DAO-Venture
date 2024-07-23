@@ -9,8 +9,11 @@ import IterTools "mo:itertools/Iter";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
+import Buffer "mo:base/Buffer";
+import Prelude "mo:base/Prelude";
 import Flag "../models/Flag";
 import Town "../models/Town";
+import World "../models/World";
 
 module {
 
@@ -18,17 +21,7 @@ module {
         towns : [StableTownData];
     };
 
-    public type StableTownData = {
-        id : Nat;
-        name : Text;
-        flagImage : Flag.FlagImage;
-        motto : Text;
-        entropy : Nat;
-        currency : Nat;
-        population : Nat;
-        size : Nat;
-        genesisTime : Time.Time;
-    };
+    public type StableTownData = Town.Town;
 
     type MutableTownData = {
         id : Nat;
@@ -36,10 +29,30 @@ module {
         var flagImage : Flag.FlagImage;
         var motto : Text;
         var entropy : Nat;
-        var currency : Nat;
         var population : Nat;
         var size : Nat;
         genesisTime : Time.Time;
+        jobs : Buffer.Buffer<Town.Job>;
+        skills : MutableTownSkillList;
+        resources : MutableTownResourceList;
+    };
+
+    type MutableTownResourceList = {
+        var currency : Nat;
+        var wood : Nat;
+        var food : Nat;
+        var stone : Nat;
+    };
+
+    type MutableTownSkillList = {
+        woodCutting : MutableSkill;
+        farming : MutableSkill;
+        mining : MutableSkill;
+    };
+
+    type MutableSkill = {
+        var techLevel : Nat;
+        var proficiencyLevel : Nat;
     };
 
     public class Handler<system>(
@@ -55,7 +68,7 @@ module {
                 towns = towns.vals()
                 |> Iter.map<MutableTownData, StableTownData>(
                     _,
-                    toStableTownData,
+                    fromMutableTown,
                 )
                 |> Iter.toArray(_);
             };
@@ -75,24 +88,14 @@ module {
 
         public func get(townId : Nat) : ?Town.Town {
             let ?town = towns.get(townId) else return null;
-            ?{
-                id = town.id;
-                name = town.name;
-                flagImage = town.flagImage;
-                motto = town.motto;
-                entropy = town.entropy;
-                currency = town.currency;
-                genesisTime = town.genesisTime;
-                population = town.population;
-                size = town.size;
-            };
+            ?fromMutableTown(town);
         };
 
         public func getAll() : [Town.Town] {
             towns.vals()
             |> Iter.map<MutableTownData, Town.Town>(
                 _,
-                toTown,
+                fromMutableTown,
             )
             |> Iter.toArray(_);
         };
@@ -125,32 +128,117 @@ module {
                 var population = 0;
                 var size = 0;
                 genesisTime = Time.now();
+                jobs = Buffer.Buffer<Town.Job>(0);
+                skills = {
+                    woodCutting = {
+                        var techLevel = 0;
+                        var proficiencyLevel = 0;
+                    };
+                    farming = {
+                        var techLevel = 0;
+                        var proficiencyLevel = 0;
+                    };
+                    mining = {
+                        var techLevel = 0;
+                        var proficiencyLevel = 0;
+                    };
+                };
+                resources = {
+                    var currency = 0;
+                    var wood = 0;
+                    var food = 0;
+                    var stone = 0;
+                };
             };
             towns.put(townId, townData);
 
             return #ok(townId);
         };
 
-        public func updateCurrency(
+        public func addResource(
             townId : Nat,
+            resource : World.ResourceKind,
+            amount : Nat,
+        ) : Result.Result<(), { #townNotFound }> {
+            switch (updateResource(townId, resource, amount, false)) {
+                case (#ok) #ok;
+                case (#err(#townNotFound)) #err(#townNotFound);
+                case (#err(#notEnoughResource)) Prelude.unreachable();
+            };
+        };
+
+        public func updateResource(
+            townId : Nat,
+            resource : World.ResourceKind,
             delta : Int,
             allowBelowZero : Bool,
-        ) : Result.Result<(), { #townNotFound; #notEnoughCurrency }> {
-            if (delta == 0) {
+        ) : Result.Result<(), { #townNotFound; #notEnoughResource }> {
+            switch (updateResourceBulk(townId, [{ kind = resource; delta = delta }], allowBelowZero)) {
+                case (#ok) #ok;
+                case (#err(#townNotFound)) #err(#townNotFound);
+                case (#err(#notEnoughResources(_))) #err(#notEnoughResource);
+            };
+        };
+
+        public func updateResourceBulk(
+            townId : Nat,
+            resources : [{
+                kind : World.ResourceKind;
+                delta : Int;
+            }],
+            allowBelowZero : Bool,
+        ) : Result.Result<(), { #townNotFound; #notEnoughResources : [World.ResourceKind] }> {
+            if (resources.size() == 0) {
                 return #ok;
             };
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newCurrency = town.currency + delta;
-            if (not allowBelowZero and newCurrency < 0) {
-                return #err(#notEnoughCurrency);
+            let newResources = Buffer.Buffer<{ kind : World.ResourceKind; newValue : Nat }>(resources.size());
+            let notEnoughResources : Buffer.Buffer<World.ResourceKind> = Buffer.Buffer<World.ResourceKind>(0);
+            label l for (resource in resources.vals()) {
+                if (resource.delta == 0) {
+                    continue l;
+                };
+                let currentValue = switch (resource.kind) {
+                    case (#currency) town.resources.currency;
+                    case (#wood) town.resources.wood;
+                    case (#food) town.resources.food;
+                    case (#stone) town.resources.stone;
+                };
+                let newResource = currentValue + resource.delta;
+                if (not allowBelowZero and newResource < 0) {
+                    notEnoughResources.add(resource.kind);
+                    continue l;
+                };
+                let newResourceNat = if (newResource <= 0) {
+                    0;
+                } else {
+                    Int.abs(newResource);
+                };
+                newResources.add({
+                    kind = resource.kind;
+                    newValue = newResourceNat;
+                });
             };
-            let newCurrencyNat = if (newCurrency <= 0) {
-                0;
-            } else {
-                Int.abs(newCurrency);
+            if (notEnoughResources.size() > 0) {
+                return #err(#notEnoughResources(Buffer.toArray(notEnoughResources)));
             };
-            Debug.print("Updating currency for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newCurrencyNat));
-            town.currency := newCurrencyNat;
+            for (resource in newResources.vals()) {
+                Debug.print("Updating resource " # debug_show (resource.kind) # " for town " # Nat.toText(townId) # " to " # Nat.toText(resource.newValue));
+                switch (resource.kind) {
+                    case (#currency) {
+                        town.resources.currency := resource.newValue;
+                    };
+                    case (#wood) {
+                        town.resources.wood := resource.newValue;
+                    };
+                    case (#food) {
+                        town.resources.food := resource.newValue;
+                    };
+                    case (#stone) {
+                        town.resources.stone := resource.newValue;
+                    };
+                };
+            };
             #ok;
         };
 
@@ -202,18 +290,69 @@ module {
             towns := HashMap.HashMap<Nat, MutableTownData>(0, Nat.equal, Nat32.fromNat);
         };
 
-        private func toTown(town : MutableTownData) : Town.Town {
-            {
-                id = town.id;
-                currency = town.currency;
-                entropy = town.entropy;
-                name = town.name;
-                flagImage = town.flagImage;
-                motto = town.motto;
-                genesisTime = town.genesisTime;
-                population = town.population;
-                size = town.size;
+    };
+
+    private func fromMutableTown(town : MutableTownData) : Town.Town {
+        {
+            id = town.id;
+            entropy = town.entropy;
+            name = town.name;
+            flagImage = town.flagImage;
+            motto = town.motto;
+            genesisTime = town.genesisTime;
+            population = town.population;
+            size = town.size;
+            jobs = Buffer.toArray<Town.Job>(town.jobs);
+            skills = {
+                woodCutting = fromMutableSkill(town.skills.woodCutting);
+                farming = fromMutableSkill(town.skills.farming);
+                mining = fromMutableSkill(town.skills.mining);
             };
+            resources = {
+                currency = town.resources.currency;
+                wood = town.resources.wood;
+                food = town.resources.food;
+                stone = town.resources.stone;
+            };
+        };
+    };
+
+    private func fromMutableSkill(skill : MutableSkill) : Town.Skill {
+        {
+            techLevel = skill.techLevel;
+            proficiencyLevel = skill.proficiencyLevel;
+        };
+    };
+
+    private func toMutableTownData(stableData : StableTownData) : MutableTownData {
+        {
+            id = stableData.id;
+            var name = stableData.name;
+            var flagImage = stableData.flagImage;
+            var motto = stableData.motto;
+            var entropy = stableData.entropy;
+            var population = stableData.population;
+            var size = stableData.size;
+            genesisTime = stableData.genesisTime;
+            jobs = Buffer.Buffer<Town.Job>(0);
+            skills = {
+                woodCutting = toMutableSkill(stableData.skills.woodCutting);
+                farming = toMutableSkill(stableData.skills.farming);
+                mining = toMutableSkill(stableData.skills.mining);
+            };
+            resources = {
+                var currency = stableData.resources.currency;
+                var wood = stableData.resources.wood;
+                var food = stableData.resources.food;
+                var stone = stableData.resources.stone;
+            };
+        };
+    };
+
+    private func toMutableSkill(skill : Town.Skill) : MutableSkill {
+        {
+            var techLevel = skill.techLevel;
+            var proficiencyLevel = skill.proficiencyLevel;
         };
     };
 
@@ -225,33 +364,4 @@ module {
         )
         |> HashMap.fromIter<Nat, MutableTownData>(_, towns.size(), Nat.equal, Nat32.fromNat);
     };
-
-    private func toMutableTownData(stableData : StableTownData) : MutableTownData {
-        {
-            id = stableData.id;
-            var name = stableData.name;
-            var flagImage = stableData.flagImage;
-            var motto = stableData.motto;
-            var currency = stableData.currency;
-            var entropy = stableData.entropy;
-            var population = stableData.population;
-            var size = stableData.size;
-            genesisTime = stableData.genesisTime;
-        };
-    };
-
-    private func toStableTownData(town : MutableTownData) : StableTownData {
-        {
-            id = town.id;
-            name = town.name;
-            flagImage = town.flagImage;
-            motto = town.motto;
-            currency = town.currency;
-            entropy = town.entropy;
-            population = town.population;
-            size = town.size;
-            genesisTime = town.genesisTime;
-        };
-    };
-
 };

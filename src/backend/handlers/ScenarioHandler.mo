@@ -22,6 +22,7 @@ import TextX "mo:xtended-text/TextX";
 import IterTools "mo:itertools/Iter";
 import Town "../models/Town";
 import TimeUtil "../TimeUtil";
+import World "../models/World";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -136,7 +137,7 @@ module {
         id : Nat;
         title : Text;
         description : Text;
-        currencyCost : Nat;
+        resourceCosts : [Scenario.ResourceCost];
         currentVotingPower : Nat;
         requirements : [Scenario.Requirement];
     };
@@ -171,7 +172,7 @@ module {
     public type ScenarioOptionDiscrete = {
         title : Text;
         description : Text;
-        currencyCost : Nat;
+        resourceCosts : [Scenario.ResourceCost];
         requirements : [Scenario.Requirement];
         townEffect : Scenario.Effect;
     };
@@ -220,10 +221,7 @@ module {
         processEffectOutcome : <system>(
             outcome : Scenario.EffectOutcome
         ) -> (),
-        chargeTownCurrency : (townId : Nat, amount : Nat) -> {
-            #ok;
-            #notEnoughCurrency;
-        },
+        chargeTownResources : (townId : Nat, resources : [Scenario.ResourceCost]) -> Result.Result<(), { #notEnoughResources : [World.ResourceKind] }>,
     ) {
 
         var scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
@@ -721,7 +719,14 @@ module {
                     switch (requirement) {
                         case (#size(size)) testRange(townStats.size, size);
                         case (#population(population)) testRange(townStats.population, population);
-                        case (#currency(currency)) testRange(townStats.currency, currency);
+                        case (#resource(resource)) {
+                            switch (resource.kind) {
+                                case (#currency) testRange(townStats.resources.currency, resource.range);
+                                case (#wood) testRange(townStats.resources.wood, resource.range);
+                                case (#food) testRange(townStats.resources.food, resource.range);
+                                case (#stone) testRange(townStats.resources.stone, resource.range);
+                            };
+                        };
                         case (#entropy(entropy)) testRange(townStats.entropy, entropy);
                         case (#age(age)) {
                             let currentAge = TimeUtil.getAge(townStats.genesisTime).days;
@@ -794,7 +799,7 @@ module {
             );
         };
 
-        private func isAllowedAndChargedFunc(townId : Nat, option : { allowedTownIds : [Nat]; currencyCost : Nat }) : Bool {
+        private func isAllowedAndChargedFunc(townId : Nat, option : Scenario.ScenarioOptionDiscrete) : Bool {
             let isAllowed = IterTools.any(
                 option.allowedTownIds.vals(),
                 func(townId : Nat) : Bool = townId == townId,
@@ -802,9 +807,9 @@ module {
             if (not isAllowed) {
                 return false;
             };
-            switch (chargeTownCurrency(townId, option.currencyCost)) {
+            switch (chargeTownResources(townId, option.resourceCosts)) {
                 case (#ok) true;
-                case (#notEnoughCurrency) false;
+                case (#err(#notEnoughResources(_))) false;
             };
         };
 
@@ -846,8 +851,8 @@ module {
                 };
                 case (#lottery(_) or #proportionalBid(_)) {
                     let #nat(natValue) = value else return null;
-                    switch (chargeTownCurrency(townChoice.townId, natValue)) {
-                        case (#notEnoughCurrency) return null;
+                    switch (chargeTownResources(townChoice.townId, [{ kind = #currency; amount = natValue }])) {
+                        case (#err(#notEnoughResources(_))) return null;
                         case (#ok) ?{
                             value = value;
                             townEffect = #noEffect;
@@ -1263,7 +1268,7 @@ module {
                     index += 1;
                 };
             };
-            case (#currency(_)) {
+            case (#resource(_)) {
                 // TODO
             };
             case (#entropy(_)) {
@@ -1502,14 +1507,15 @@ module {
                     outcomes.add(outcome);
                 };
             };
-            case (#currency(e)) {
-                let delta = switch (e.value) {
+            case (#resource(resourceEffect)) {
+                let delta = switch (resourceEffect.value) {
                     case (#flat(fixed)) fixed;
                 };
-                let townIds = getTownIdsFromTarget(prng, scenario.townIds, e.town, context);
+                let townIds = getTownIdsFromTarget(prng, scenario.townIds, resourceEffect.town, context);
                 for (townId in townIds.vals()) {
-                    let outcome = #currency({
+                    let outcome = #resource({
                         townId = townId;
+                        kind = resourceEffect.kind;
                         delta = delta;
                     });
                     outcomes.add(outcome);

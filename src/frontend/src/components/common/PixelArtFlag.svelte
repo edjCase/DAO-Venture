@@ -4,6 +4,7 @@
 
     export let pixels: PixelGrid;
     export let size: "xxs" | "xs" | "sm" | "md" | "lg" | undefined;
+    export let border: boolean = false;
 
     let pixelSize: number;
     $: {
@@ -29,4 +30,4 @@
     }
 </script>
 
-<PixelArtSvg {pixelSize} {pixels} />
+<PixelArtSvg {pixelSize} {pixels} {border} />

@@ -48,27 +48,20 @@ export type CreateWorldProposalError = { 'notAuthorized' : null } |
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
-export interface CurrencyEffect {
-  'value' : { 'flat' : bigint },
-  'town' : TargetTown,
-}
-export interface CurrencyTownEffectOutcome {
-  'townId' : bigint,
-  'delta' : bigint,
-}
-export type Effect = { 'allOf' : Array<Effect> } |
+export type Effect = { 'resource' : ResourceEffect } |
+  { 'allOf' : Array<Effect> } |
   { 'noEffect' : null } |
   { 'oneOf' : Array<WeightedEffect> } |
-  { 'entropy' : EntropyEffect } |
-  { 'currency' : CurrencyEffect };
-export type EffectOutcome = { 'entropy' : EntropyTownEffectOutcome } |
-  { 'currency' : CurrencyTownEffectOutcome };
+  { 'entropy' : EntropyEffect };
+export type EffectOutcome = { 'resource' : ResourceTownEffectOutcome } |
+  { 'entropy' : EntropyTownEffectOutcome };
 export interface EntropyEffect { 'town' : TargetTown, 'delta' : bigint }
 export interface EntropyTownEffectOutcome {
   'townId' : bigint,
   'delta' : bigint,
 }
 export interface FlagImage { 'pixels' : Array<Array<Pixel>> }
+export interface FoodResourceInfo { 'amount' : bigint }
 export type GetScenarioError = { 'notStarted' : null } |
   { 'notFound' : null };
 export type GetScenarioResult = { 'ok' : Scenario } |
@@ -104,12 +97,24 @@ export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type GetWorldProposalsResult = { 'ok' : PagedResult };
+export type Job = {
+    'processResource' : { 'resource' : ResourceKind, 'workerCount' : bigint }
+  } |
+  {
+    'gatherResource' : {
+      'resource' : ResourceKind,
+      'locationId' : bigint,
+      'workerCount' : bigint,
+    }
+  };
 export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null } |
   { 'noTowns' : null };
-export type LocationResource = { 'food' : bigint } |
-  { 'wood' : bigint } |
-  { 'stone' : bigint };
+export interface LocationResourceList {
+  'food' : FoodResourceInfo,
+  'wood' : WoodResourceInfo,
+  'stone' : StoneResourceInfo,
+}
 export interface LotteryPrize { 'description' : string, 'effect' : Effect }
 export interface LotteryScenario { 'minBid' : bigint, 'prize' : LotteryPrize }
 export interface LotteryScenarioOutcome { 'winningTownId' : [] | [bigint] }
@@ -178,10 +183,35 @@ export type PropotionalBidPrizeKind = {};
 export type RangeRequirement = { 'above' : bigint } |
   { 'below' : bigint };
 export type Requirement = { 'age' : RangeRequirement } |
+  { 'resource' : ResourceRequirement } |
   { 'size' : RangeRequirement } |
   { 'entropy' : RangeRequirement } |
-  { 'currency' : RangeRequirement } |
   { 'population' : RangeRequirement };
+export interface ResourceCost { 'kind' : ResourceKind, 'amount' : bigint }
+export interface ResourceEffect {
+  'value' : { 'flat' : bigint },
+  'kind' : ResourceKind,
+  'town' : TargetTown,
+}
+export type ResourceKind = { 'food' : null } |
+  { 'wood' : null } |
+  { 'stone' : null } |
+  { 'currency' : null };
+export interface ResourceList {
+  'food' : bigint,
+  'wood' : bigint,
+  'stone' : bigint,
+  'currency' : bigint,
+}
+export interface ResourceRequirement {
+  'kind' : ResourceKind,
+  'range' : RangeRequirement,
+}
+export interface ResourceTownEffectOutcome {
+  'kind' : ResourceKind,
+  'townId' : bigint,
+  'delta' : bigint,
+}
 export type Result = { 'ok' : null } |
   { 'err' : JoinWorldError };
 export type Result_1 = { 'ok' : null } |
@@ -211,16 +241,16 @@ export type ScenarioKindRequest = { 'lottery' : LotteryScenario } |
 export interface ScenarioOptionDiscrete {
   'title' : string,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'allowedTownIds' : Array<bigint>,
   'townEffect' : Effect,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
 }
 export interface ScenarioOptionDiscrete__1 {
   'title' : string,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'townEffect' : Effect,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
 }
 export type ScenarioOptionValue = { 'id' : bigint } |
@@ -237,8 +267,8 @@ export interface ScenarioResolvedOptionDiscrete {
   'title' : string,
   'chosenByTownIds' : Array<bigint>,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'townEffect' : Effect,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
   'seenByTownIds' : Array<bigint>,
 }
@@ -275,8 +305,8 @@ export interface ScenarioTownOptionDiscrete {
   'id' : bigint,
   'title' : string,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'currentVotingPower' : bigint,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
 }
 export interface ScenarioTownOptionNat {
@@ -300,6 +330,13 @@ export interface ScenarioVote {
 export type SetBenevolentDictatorStateError = { 'notAuthorized' : null };
 export type SetBenevolentDictatorStateResult = { 'ok' : null } |
   { 'err' : SetBenevolentDictatorStateError };
+export interface Skill { 'proficiencyLevel' : bigint, 'techLevel' : bigint }
+export interface SkillList {
+  'farming' : Skill,
+  'mining' : Skill,
+  'woodCutting' : Skill,
+}
+export interface StoneResourceInfo { 'difficulty' : bigint }
 export type TargetTown = { 'all' : null } |
   { 'contextual' : null } |
   { 'random' : bigint } |
@@ -318,17 +355,17 @@ export interface ThresholdScenarioOption {
   'title' : string,
   'value' : ThresholdValue,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'allowedTownIds' : Array<bigint>,
   'townEffect' : Effect,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
 }
 export interface ThresholdScenarioOptionRequest {
   'title' : string,
   'value' : ThresholdValue__1,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'townEffect' : Effect,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
 }
 export interface ThresholdScenarioOutcome {
@@ -359,11 +396,13 @@ export interface Town {
   'id' : bigint,
   'genesisTime' : Time,
   'motto' : string,
+  'resources' : ResourceList,
+  'jobs' : Array<Job>,
   'name' : string,
   'size' : bigint,
   'flagImage' : FlagImage,
   'entropy' : bigint,
-  'currency' : bigint,
+  'skills' : SkillList,
   'population' : bigint,
 }
 export interface TownProposal {
@@ -444,6 +483,7 @@ export interface WeightedEffect {
   'description' : string,
   'effect' : Effect,
 }
+export interface WoodResourceInfo { 'amount' : bigint }
 export interface WorldChoiceScenario {
   'options' : Array<WorldChoiceScenarioOption>,
 }
@@ -451,17 +491,17 @@ export interface WorldChoiceScenarioOption {
   'title' : string,
   'worldEffect' : Effect,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'allowedTownIds' : Array<bigint>,
   'townEffect' : Effect,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
 }
 export interface WorldChoiceScenarioOptionRequest {
   'title' : string,
   'worldEffect' : Effect,
   'description' : string,
+  'resourceCosts' : Array<ResourceCost>,
   'townEffect' : Effect,
-  'currencyCost' : bigint,
   'requirements' : Array<Requirement>,
 }
 export interface WorldChoiceScenarioOutcome { 'optionId' : [] | [bigint] }
@@ -470,7 +510,7 @@ export interface WorldChoiceScenarioRequest {
 }
 export interface WorldLocation {
   'id' : bigint,
-  'resources' : Array<LocationResource>,
+  'resources' : LocationResourceList,
   'townId' : [] | [bigint],
   'coordinate' : AxialCoordinate,
 }

@@ -3,10 +3,7 @@
     import { userStore } from "../stores/UserStore";
     import { mainAgentFactory } from "../ic-agent/Main";
     import LoadingButton from "./common/LoadingButton.svelte";
-    import TownFlag from "./town/TownFlag.svelte";
     import WorldGrid from "./world/WorldGrid.svelte";
-
-    $: towns = $townStore;
 
     $: user = $userStore;
 
@@ -29,18 +26,6 @@
         <div class="text-center text-3xl">
             <LoadingButton onClick={joinWorld}>Join World</LoadingButton>
         </div>
-    {/if}
-    {#if towns}
-        {#each towns as town}
-            <div class="flex flex-col justify-center gap-2">
-                <div class="flex gap-2">
-                    <TownFlag {town} size="xxs" />
-                    <div class="text-3xl">{town.name}</div>
-                </div>
-                <div>Size: {town.size}</div>
-                <div>Population: {town.population}</div>
-            </div>
-        {/each}
     {/if}
     <WorldGrid />
 </div>

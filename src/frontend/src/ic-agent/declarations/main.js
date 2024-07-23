@@ -1,10 +1,11 @@
 export const idlFactory = ({ IDL }) => {
   const Effect = IDL.Rec();
   const Time = IDL.Int;
-  const WeightedEffect = IDL.Record({
-    'weight' : IDL.Nat,
-    'description' : IDL.Text,
-    'effect' : Effect,
+  const ResourceKind = IDL.Variant({
+    'food' : IDL.Null,
+    'wood' : IDL.Null,
+    'stone' : IDL.Null,
+    'currency' : IDL.Null,
   });
   const TargetTown = IDL.Variant({
     'all' : IDL.Null,
@@ -12,18 +13,24 @@ export const idlFactory = ({ IDL }) => {
     'random' : IDL.Nat,
     'chosen' : IDL.Vec(IDL.Nat),
   });
-  const EntropyEffect = IDL.Record({ 'town' : TargetTown, 'delta' : IDL.Int });
-  const CurrencyEffect = IDL.Record({
+  const ResourceEffect = IDL.Record({
     'value' : IDL.Variant({ 'flat' : IDL.Int }),
+    'kind' : ResourceKind,
     'town' : TargetTown,
   });
+  const WeightedEffect = IDL.Record({
+    'weight' : IDL.Nat,
+    'description' : IDL.Text,
+    'effect' : Effect,
+  });
+  const EntropyEffect = IDL.Record({ 'town' : TargetTown, 'delta' : IDL.Int });
   Effect.fill(
     IDL.Variant({
+      'resource' : ResourceEffect,
       'allOf' : IDL.Vec(Effect),
       'noEffect' : IDL.Null,
       'oneOf' : IDL.Vec(WeightedEffect),
       'entropy' : EntropyEffect,
-      'currency' : CurrencyEffect,
     })
   );
   const LotteryPrize = IDL.Record({
@@ -44,23 +51,31 @@ export const idlFactory = ({ IDL }) => {
       })
     ),
   });
+  const ResourceCost = IDL.Record({
+    'kind' : ResourceKind,
+    'amount' : IDL.Nat,
+  });
   const RangeRequirement = IDL.Variant({
     'above' : IDL.Nat,
     'below' : IDL.Nat,
   });
+  const ResourceRequirement = IDL.Record({
+    'kind' : ResourceKind,
+    'range' : RangeRequirement,
+  });
   const Requirement = IDL.Variant({
     'age' : RangeRequirement,
+    'resource' : ResourceRequirement,
     'size' : RangeRequirement,
     'entropy' : RangeRequirement,
-    'currency' : RangeRequirement,
     'population' : RangeRequirement,
   });
   const ThresholdScenarioOptionRequest = IDL.Record({
     'title' : IDL.Text,
     'value' : ThresholdValue__1,
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'townEffect' : Effect,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
   });
   const ThresholdScenarioRequest = IDL.Record({
@@ -74,8 +89,8 @@ export const idlFactory = ({ IDL }) => {
   const ScenarioOptionDiscrete__1 = IDL.Record({
     'title' : IDL.Text,
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'townEffect' : Effect,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
   });
   const NoWorldEffectScenarioRequest = IDL.Record({
@@ -85,8 +100,8 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'worldEffect' : Effect,
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'townEffect' : Effect,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
   });
   const WorldChoiceScenarioRequest = IDL.Record({
@@ -206,9 +221,9 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'value' : ThresholdValue,
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'allowedTownIds' : IDL.Vec(IDL.Nat),
     'townEffect' : Effect,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
   });
   const ThresholdScenario = IDL.Record({
@@ -221,9 +236,9 @@ export const idlFactory = ({ IDL }) => {
   const ScenarioOptionDiscrete = IDL.Record({
     'title' : IDL.Text,
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'allowedTownIds' : IDL.Vec(IDL.Nat),
     'townEffect' : Effect,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
   });
   const NoWorldEffectScenario = IDL.Record({
@@ -233,9 +248,9 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'worldEffect' : Effect,
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'allowedTownIds' : IDL.Vec(IDL.Nat),
     'townEffect' : Effect,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
   });
   const WorldChoiceScenario = IDL.Record({
@@ -292,8 +307,8 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'chosenByTownIds' : IDL.Vec(IDL.Nat),
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'townEffect' : Effect,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
     'seenByTownIds' : IDL.Vec(IDL.Nat),
   });
@@ -309,17 +324,18 @@ export const idlFactory = ({ IDL }) => {
     }),
     'kind' : ScenarioResolvedOptionsKind,
   });
+  const ResourceTownEffectOutcome = IDL.Record({
+    'kind' : ResourceKind,
+    'townId' : IDL.Nat,
+    'delta' : IDL.Int,
+  });
   const EntropyTownEffectOutcome = IDL.Record({
     'townId' : IDL.Nat,
     'delta' : IDL.Int,
   });
-  const CurrencyTownEffectOutcome = IDL.Record({
-    'townId' : IDL.Nat,
-    'delta' : IDL.Int,
-  });
   const EffectOutcome = IDL.Variant({
+    'resource' : ResourceTownEffectOutcome,
     'entropy' : EntropyTownEffectOutcome,
-    'currency' : CurrencyTownEffectOutcome,
   });
   const ScenarioStateResolved = IDL.Record({
     'scenarioOutcome' : ScenarioOutcome,
@@ -363,8 +379,8 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'title' : IDL.Text,
     'description' : IDL.Text,
+    'resourceCosts' : IDL.Vec(ResourceCost),
     'currentVotingPower' : IDL.Nat,
-    'currencyCost' : IDL.Nat,
     'requirements' : IDL.Vec(Requirement),
   });
   const ScenarioTownOptions = IDL.Variant({
@@ -482,15 +498,43 @@ export const idlFactory = ({ IDL }) => {
     'ok' : PagedResult_1,
     'err' : GetTownProposalsError,
   });
+  const ResourceList = IDL.Record({
+    'food' : IDL.Nat,
+    'wood' : IDL.Nat,
+    'stone' : IDL.Nat,
+    'currency' : IDL.Nat,
+  });
+  const Job = IDL.Variant({
+    'processResource' : IDL.Record({
+      'resource' : ResourceKind,
+      'workerCount' : IDL.Nat,
+    }),
+    'gatherResource' : IDL.Record({
+      'resource' : ResourceKind,
+      'locationId' : IDL.Nat,
+      'workerCount' : IDL.Nat,
+    }),
+  });
+  const Skill = IDL.Record({
+    'proficiencyLevel' : IDL.Nat,
+    'techLevel' : IDL.Nat,
+  });
+  const SkillList = IDL.Record({
+    'farming' : Skill,
+    'mining' : Skill,
+    'woodCutting' : Skill,
+  });
   const Town = IDL.Record({
     'id' : IDL.Nat,
     'genesisTime' : Time,
     'motto' : IDL.Text,
+    'resources' : ResourceList,
+    'jobs' : IDL.Vec(Job),
     'name' : IDL.Text,
     'size' : IDL.Nat,
     'flagImage' : FlagImage,
     'entropy' : IDL.Nat,
-    'currency' : IDL.Nat,
+    'skills' : SkillList,
     'population' : IDL.Nat,
   });
   const GetUserError = IDL.Variant({
@@ -512,15 +556,18 @@ export const idlFactory = ({ IDL }) => {
     'ok' : UserStats,
     'err' : IDL.Null,
   });
-  const LocationResource = IDL.Variant({
-    'food' : IDL.Nat,
-    'wood' : IDL.Nat,
-    'stone' : IDL.Nat,
+  const FoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
+  const WoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
+  const StoneResourceInfo = IDL.Record({ 'difficulty' : IDL.Nat });
+  const LocationResourceList = IDL.Record({
+    'food' : FoodResourceInfo,
+    'wood' : WoodResourceInfo,
+    'stone' : StoneResourceInfo,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
   const WorldLocation = IDL.Record({
     'id' : IDL.Nat,
-    'resources' : IDL.Vec(LocationResource),
+    'resources' : LocationResourceList,
     'townId' : IDL.Opt(IDL.Nat),
     'coordinate' : AxialCoordinate,
   });

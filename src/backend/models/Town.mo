@@ -1,5 +1,6 @@
 import Flag "Flag";
 import Time "mo:base/Time";
+import World "World";
 
 module {
 
@@ -10,8 +11,40 @@ module {
         motto : Text;
         flagImage : Flag.FlagImage;
         entropy : Nat;
-        currency : Nat;
         size : Nat;
         population : Nat;
+        jobs : [Job];
+        skills : SkillList;
+        resources : ResourceList;
+    };
+
+    public type ResourceList = {
+        currency : Nat;
+        wood : Nat;
+        food : Nat;
+        stone : Nat;
+    };
+
+    public type SkillList = {
+        woodCutting : Skill;
+        farming : Skill;
+        mining : Skill;
+    };
+
+    public type Skill = {
+        techLevel : Nat;
+        proficiencyLevel : Nat;
+    };
+
+    public type Job = {
+        #gatherResource : {
+            locationId : Nat;
+            resource : World.ResourceKind;
+            workerCount : Nat;
+        };
+        #processResource : {
+            resource : World.ResourceKind;
+            workerCount : Nat;
+        };
     };
 };
