@@ -1,8 +1,5 @@
 <script lang="ts">
     import { WorldProposal } from "../../../ic-agent/declarations/main";
-    import ChangeTownNameView from "./proposal_views/ChangeTownNameView.svelte";
-    import ChangeTownFlagView from "./proposal_views/ChangeTownFlagView.svelte";
-    import ChangeTownMottoView from "./proposal_views/ChangeTownMottoView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
     import MotionView from "./proposal_views/MotionView.svelte";
 
@@ -10,9 +7,6 @@
 
     const components: Record<string, any> = {
         motion: MotionView,
-        changeTownName: ChangeTownNameView,
-        changeTownFlag: ChangeTownFlagView,
-        changeTownMotto: ChangeTownMottoView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

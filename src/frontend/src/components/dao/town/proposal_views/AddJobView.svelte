@@ -1,8 +1,9 @@
 <script lang="ts">
     import { AddJobContent } from "../../../../ic-agent/declarations/main";
-    import { toJsonString } from "../../../../utils/StringUtil";
+    import { buildJobDescription } from "../../../../utils/ResourceUtil";
 
     export let content: AddJobContent;
+    export let townId: bigint;
 </script>
 
-<div>New Job: {toJsonString(content.job)}</div>
+<div>{buildJobDescription(content.job)}</div>

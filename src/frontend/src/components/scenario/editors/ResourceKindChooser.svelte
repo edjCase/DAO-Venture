@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Select } from "flowbite-svelte";
     import type { ResourceKind } from "../../../ic-agent/declarations/main";
-    import { getResourceIcon } from "../../icons/ResourceIcon.svelte";
+    import { getResourceIcon } from "../../../utils/ResourceUtil";
 
     export let value: ResourceKind;
 
@@ -26,4 +26,4 @@
     });
 </script>
 
-<Select on:change={selectKind} {items} />
+<Select on:change={selectKind} {items} value={Object.keys(value)[0]} />

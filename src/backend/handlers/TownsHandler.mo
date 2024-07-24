@@ -125,8 +125,7 @@ module {
                 var flagImage = flagImage;
                 var motto = motto;
                 var entropy = 0;
-                var gold = 0;
-                var population = 0;
+                var population = 10;
                 var size = 0;
                 genesisTime = Time.now();
                 jobs = Buffer.Buffer<Town.Job>(0);

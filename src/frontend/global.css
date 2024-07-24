@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
 
 :root {
   --color-bg: #0F0F10;
@@ -29,5 +29,5 @@
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: 'Exo 2', Arial, sans-serif;
+  font-family: 'Pixelify Sans', sans-serif;
 }

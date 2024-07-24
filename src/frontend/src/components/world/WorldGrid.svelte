@@ -4,7 +4,6 @@
     import HexGrid from "../common/HexGrid.svelte";
     import PixelArtFlag from "../common/PixelArtFlag.svelte";
     import ResourceIcon from "../icons/ResourceIcon.svelte";
-    import Countdown from "../common/Countdown.svelte";
     import { nanosecondsToDate } from "../../utils/DateUtils";
 
     $: towns = $townStore;
@@ -26,12 +25,6 @@
 </script>
 
 {#if gridData !== undefined && world !== undefined}
-    <div>
-        World Age: {world.age}
-        Next day in: <Countdown
-            date={nanosecondsToDate(world.nextDayStartTime)}
-        />
-    </div>
     <HexGrid {gridData} let:id>
         {@const location = world.locations[id]}
         {@const townOrUndefined = towns?.find(

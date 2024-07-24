@@ -1,17 +1,18 @@
 <script lang="ts">
-  import { Navbar, NavBrand } from "flowbite-svelte";
+  import { Navbar } from "flowbite-svelte";
   import { Link } from "svelte-routing";
   import UserMenu from "../user/UserMenu.svelte";
   import TownNavSummary from "../town/TownNavSummary.svelte";
 </script>
 
 <Navbar rounded color="form" class="mb-2">
-  <NavBrand>
-    <Link to="/">
-      <img src="/images/logo.png" class="h-16" alt="DAOball Logo" />
-    </Link>
-  </NavBrand>
-
-  <UserMenu />
-  <TownNavSummary />
+  <div class="flex-1">
+    <UserMenu />
+  </div>
+  <div class="flex-1">
+    <Link to="/"><div class="text-center text-4xl">DAO TOWNS</div></Link>
+  </div>
+  <div class="flex-1">
+    <TownNavSummary />
+  </div>
 </Navbar>

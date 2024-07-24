@@ -4,6 +4,9 @@
     import ChangeFlagForm from "./proposal_forms/ChangeFlagForm.svelte";
     import ChangeMottoForm from "./proposal_forms/ChangeMottoForm.svelte";
     import MotionForm from "./proposal_forms/MotionForm.svelte";
+    import AddJobForm from "./proposal_forms/AddJobForm.svelte";
+    import UpdateJobForm from "./proposal_forms/UpdateJobForm.svelte";
+    import RemoveJobForm from "./proposal_forms/RemoveJobForm.svelte";
 
     export let townId: bigint;
 
