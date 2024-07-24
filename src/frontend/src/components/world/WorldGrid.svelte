@@ -4,7 +4,6 @@
     import HexGrid from "../common/HexGrid.svelte";
     import PixelArtFlag from "../common/PixelArtFlag.svelte";
     import ResourceIcon from "../icons/ResourceIcon.svelte";
-    import { nanosecondsToDate } from "../../utils/DateUtils";
 
     $: towns = $townStore;
     $: world = $worldStore;
@@ -17,11 +16,6 @@
             },
         };
     });
-    $: console.log(
-        world === undefined
-            ? undefined
-            : nanosecondsToDate(world?.nextDayStartTime),
-    );
 </script>
 
 {#if gridData !== undefined && world !== undefined}

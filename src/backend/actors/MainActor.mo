@@ -75,6 +75,7 @@ actor MainActor : Types.Actor {
 
     stable let genesisTime : Time.Time = Time.now();
     stable var daysProcessed : Nat = 0;
+    var dayTimerId : ?Timer.TimerId = null;
 
     stable var benevolentDictator : Types.BenevolentDictatorState = #open;
 
@@ -317,7 +318,12 @@ actor MainActor : Types.Actor {
             let { timeTillNextDay } = TimeUtil.getAge(genesisTime);
             timeTillNextDay;
         };
-        ignore Timer.setTimer<system>(
+        Debug.print("Resetting day timer for " # Int.toText(timeTillNextDay / 1_000_000_000) # " seconds");
+        switch (dayTimerId) {
+            case (?id) Timer.cancelTimer(id);
+            case (null) ();
+        };
+        dayTimerId := ?Timer.setTimer<system>(
             #nanoseconds(timeTillNextDay),
             func() : async () {
                 await* processDays();
@@ -650,8 +656,11 @@ actor MainActor : Types.Actor {
     };
 
     private func processResourceGathering() {
+        Debug.print("Processing resource gathering");
         let locationJobsMap = buildLocationJobs();
         for ((locationId, townWorkMap) in locationJobsMap.entries()) {
+            Debug.print("Processing location " # Nat.toText(locationId));
+            Debug.print("Town work map: " # debug_show (townWorkMap.entries() |> Iter.toArray(_)));
             let location = worldGrid.get(locationId);
 
             // Calculate total resource requests
@@ -710,14 +719,14 @@ actor MainActor : Types.Actor {
                 let #gatherResource(gatherResourceJob) = job else continue j;
                 let location = worldGrid.get(gatherResourceJob.locationId);
                 let amountCanHarvest = switch (gatherResourceJob.resource) {
-                    case (#wood) gatherResourceJob.workerCount * town.skills.woodCutting.proficiencyLevel * town.skills.woodCutting.techLevel;
-                    case (#food) gatherResourceJob.workerCount * town.skills.farming.proficiencyLevel * town.skills.farming.techLevel;
+                    case (#wood) gatherResourceJob.workerCount + town.skills.woodCutting.proficiencyLevel + town.skills.woodCutting.techLevel;
+                    case (#food) gatherResourceJob.workerCount + town.skills.farming.proficiencyLevel + town.skills.farming.techLevel;
                     case (#gold) {
-                        let amountInt : Int = gatherResourceJob.workerCount * town.skills.mining.proficiencyLevel * town.skills.mining.techLevel;
+                        let amountInt : Int = gatherResourceJob.workerCount + town.skills.mining.proficiencyLevel + town.skills.mining.techLevel;
                         if (amountInt <= 0) 0 else Int.abs(amountInt);
                     };
                     case (#stone) {
-                        let amountInt : Int = gatherResourceJob.workerCount * town.skills.mining.proficiencyLevel * town.skills.mining.techLevel - location.resources.stone.difficulty;
+                        let amountInt : Int = gatherResourceJob.workerCount + town.skills.mining.proficiencyLevel + town.skills.mining.techLevel - location.resources.stone.difficulty;
                         if (amountInt <= 0) 0 else Int.abs(amountInt);
                     };
                 };
@@ -766,4 +775,6 @@ actor MainActor : Types.Actor {
         };
     };
 
+    // Intialization ---------------------------------------------------------
+    resetDayTimer<system>(true);
 };

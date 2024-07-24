@@ -402,7 +402,7 @@ module {
             var population = stableData.population;
             var size = stableData.size;
             genesisTime = stableData.genesisTime;
-            jobs = Buffer.Buffer<Town.Job>(0);
+            jobs = Buffer.fromArray(stableData.jobs);
             skills = {
                 woodCutting = toMutableSkill(stableData.skills.woodCutting);
                 farming = toMutableSkill(stableData.skills.farming);
