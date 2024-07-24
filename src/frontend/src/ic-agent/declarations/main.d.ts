@@ -2,6 +2,7 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface AddJobContent { 'job' : Job }
 export type AddScenarioError = { 'notAuthorized' : null } |
   { 'invalid' : Array<string> };
 export interface AddScenarioRequest {
@@ -25,15 +26,9 @@ export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export type BenevolentDictatorState = { 'open' : null } |
   { 'claimed' : Principal } |
   { 'disabled' : null };
-export interface ChangeTownFlagContent {
-  'flagImage' : FlagImage,
-  'townId' : bigint,
-}
-export interface ChangeTownFlagContent__1 { 'image' : FlagImage }
-export interface ChangeTownMottoContent { 'motto' : string, 'townId' : bigint }
-export interface ChangeTownMottoContent__1 { 'motto' : string }
-export interface ChangeTownNameContent { 'name' : string, 'townId' : bigint }
-export interface ChangeTownNameContent__1 { 'name' : string }
+export interface ChangeTownFlagContent { 'image' : FlagImage }
+export interface ChangeTownMottoContent { 'motto' : string }
+export interface ChangeTownNameContent { 'name' : string }
 export type ClaimBenevolentDictatorRoleError = { 'notOpenToClaim' : null } |
   { 'notAuthenticated' : null };
 export type ClaimBenevolentDictatorRoleResult = { 'ok' : null } |
@@ -167,13 +162,13 @@ export interface Proposal {
   'timeEnd' : bigint,
   'proposerId' : Principal,
 }
-export type ProposalContent = { 'changeTownMotto' : ChangeTownMottoContent } |
-  { 'changeTownFlag' : ChangeTownFlagContent } |
-  { 'changeTownName' : ChangeTownNameContent } |
-  { 'motion' : MotionContent };
-export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent__1 } |
-  { 'changeName' : ChangeTownNameContent__1 } |
-  { 'changeMotto' : ChangeTownMottoContent__1 } |
+export type ProposalContent = { 'motion' : MotionContent };
+export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent } |
+  { 'changeName' : ChangeTownNameContent } |
+  { 'changeMotto' : ChangeTownMottoContent } |
+  { 'updateJob' : UpdateJobContent } |
+  { 'addJob' : AddJobContent } |
+  { 'removeJob' : RemoveJobContent } |
   { 'motion' : MotionContent__1 };
 export type ProposalStatusLogEntry = {
     'failedToExecute' : { 'time' : Time, 'error' : string }
@@ -184,6 +179,7 @@ export type ProposalStatusLogEntry = {
 export type PropotionalBidPrizeKind = {};
 export type RangeRequirement = { 'above' : bigint } |
   { 'below' : bigint };
+export interface RemoveJobContent { 'jobId' : bigint }
 export type Requirement = { 'age' : RangeRequirement } |
   { 'resource' : ResourceRequirement } |
   { 'size' : RangeRequirement } |
@@ -417,9 +413,12 @@ export interface TownProposal {
   'timeEnd' : bigint,
   'proposerId' : Principal,
 }
-export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent__1 } |
-  { 'changeName' : ChangeTownNameContent__1 } |
-  { 'changeMotto' : ChangeTownMottoContent__1 } |
+export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent } |
+  { 'changeName' : ChangeTownNameContent } |
+  { 'changeMotto' : ChangeTownMottoContent } |
+  { 'updateJob' : UpdateJobContent } |
+  { 'addJob' : AddJobContent } |
+  { 'removeJob' : RemoveJobContent } |
   { 'motion' : MotionContent__1 };
 export interface TownStats {
   'id' : bigint,
@@ -427,6 +426,7 @@ export interface TownStats {
   'userCount' : bigint,
 }
 export interface TownVotingPower { 'total' : bigint, 'voted' : bigint }
+export interface UpdateJobContent { 'job' : Job, 'jobId' : bigint }
 export interface User {
   'id' : Principal,
   'residency' : [] | [UserResidency],
@@ -489,7 +489,7 @@ export interface WoodResourceInfo { 'amount' : bigint }
 export interface World {
   'age' : bigint,
   'nextDayStartTime' : bigint,
-  'grid' : Array<WorldLocation>,
+  'locations' : Array<WorldLocation>,
 }
 export interface WorldChoiceScenario {
   'options' : Array<WorldChoiceScenarioOption>,

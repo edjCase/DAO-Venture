@@ -212,31 +212,6 @@ actor MainActor : Types.Actor {
                 // Do nothing
                 #ok;
             };
-            case (#changeTownName(c)) {
-                let result = townsHandler.updateName(c.townId, c.name);
-                let error = switch (result) {
-                    case (#ok) return #ok;
-                    case (#err(#townNotFound)) "Town not found";
-                    case (#err(#nameTaken)) "Name is already taken";
-                };
-                #err("Failed to update town name: " # error);
-            };
-            case (#changeTownFlag(c)) {
-                let result = townsHandler.updateFlag(c.townId, c.flagImage);
-                let error = switch (result) {
-                    case (#ok) return #ok;
-                    case (#err(#townNotFound)) "Town not found";
-                };
-                #err("Failed to update town logo: " # error);
-            };
-            case (#changeTownMotto(c)) {
-                let result = townsHandler.updateMotto(c.townId, c.motto);
-                let error = switch (result) {
-                    case (#ok) return #ok;
-                    case (#err(#townNotFound)) "Town not found";
-                };
-                #err("Failed to update town motto: " # error);
-            };
         };
     };
     func onWorldProposalReject(_ : ProposalTypes.Proposal<WorldDao.ProposalContent>) : async* () {}; // TODO
@@ -256,40 +231,60 @@ actor MainActor : Types.Actor {
     ) : ProposalEngine.ProposalEngine<TownDao.ProposalContent> {
 
         func onProposalExecute(proposal : ProposalTypes.Proposal<TownDao.ProposalContent>) : async* Result.Result<(), Text> {
-            let createWorldProposal = func(worldProposalContent : WorldDao.ProposalContent) : async* Result.Result<(), Text> {
-                let members = userHandler.getTownOwners(null);
-                let result = await* worldDao.createProposal(proposal.proposerId, worldProposalContent, members);
-                switch (result) {
-                    case (#ok(_)) #ok;
-                    case (#err(#notAuthorized)) #err("Not authorized to create change name proposal in world DAO");
-                    case (#err(#invalid(errors))) {
-                        let errorText = errors.vals()
-                        |> IterTools.fold(
-                            _,
-                            "",
-                            func(acc : Text, error : Text) : Text = acc # error # "\n",
-                        );
-                        #err("Invalid proposal:\n" # errorText);
-                    };
-                };
-            };
             switch (proposal.content) {
                 case (#motion(_)) {
                     // Do nothing
                     #ok;
                 };
-                case (#changeName(n)) {
-                    let worldProposal = #changeTownName({
-                        townId = townId;
-                        name = n.name;
-                    });
-                    await* createWorldProposal(worldProposal);
+                case (#changeName(c)) {
+                    let result = townsHandler.updateName(townId, c.name);
+                    let error = switch (result) {
+                        case (#ok) return #ok;
+                        case (#err(#townNotFound)) "Town not found";
+                        case (#err(#nameTaken)) "Name is already taken";
+                    };
+                    #err("Failed to update name: " # error);
                 };
-                case (#changeFlag(changeFlag)) {
-                    await* createWorldProposal(#changeTownFlag({ townId = townId; flagImage = changeFlag.image }));
+                case (#changeFlag(c)) {
+                    let result = townsHandler.updateFlag(townId, c.image);
+                    let error = switch (result) {
+                        case (#ok) return #ok;
+                        case (#err(#townNotFound)) "Town not found";
+                    };
+                    #err("Failed to update flag: " # error);
                 };
-                case (#changeMotto(changeMotto)) {
-                    await* createWorldProposal(#changeTownMotto({ townId = townId; motto = changeMotto.motto }));
+                case (#changeMotto(c)) {
+                    let result = townsHandler.updateMotto(townId, c.motto);
+                    let error = switch (result) {
+                        case (#ok) return #ok;
+                        case (#err(#townNotFound)) "Town not found";
+                    };
+                    #err("Failed to update motto: " # error);
+                };
+                case (#addJob(addJob)) {
+                    let error = switch (townsHandler.addJob(townId, addJob.job)) {
+                        case (#ok(_)) return #ok;
+                        case (#err(#townNotFound)) "Town not found";
+                        case (#err(#notEnoughWorkers)) "Not enough workers";
+                    };
+                    #err("Failed to add job:" # error);
+                };
+                case (#updateJob(updateJob)) {
+                    let error = switch (townsHandler.updateJob(townId, updateJob.jobId, updateJob.job)) {
+                        case (#ok(_)) return #ok;
+                        case (#err(#townNotFound)) "Town not found";
+                        case (#err(#notEnoughWorkers)) "Not enough workers";
+                        case (#err(#jobNotFound)) "Job not found";
+                    };
+                    #err("Failed to update job:" # error);
+                };
+                case (#removeJob(removeJob)) {
+                    let error = switch (townsHandler.removeJob(townId, removeJob.jobId)) {
+                        case (#ok) return #ok;
+                        case (#err(#townNotFound)) "Town not found";
+                        case (#err(#jobNotFound)) "Job not found";
+                    };
+                    #err("Failed to remove job:" # error);
                 };
             };
         };
@@ -382,18 +377,22 @@ actor MainActor : Types.Actor {
         let towns = townsHandler.getAll();
         let randomTownId : Nat = if (towns.size() <= 0) {
             // TODO better initialization
-            let height = 12;
-            let width = 16;
+            let height : Nat = 12;
+            let width : Nat = 16;
+
             let image = {
-                pixels = Array.tabulate(
+                pixels = Array.tabulate<[Flag.Pixel]>(
                     height,
                     func(_ : Nat) : [Flag.Pixel] {
-                        Array.tabulate(
+                        Array.tabulate<Flag.Pixel>(
                             width,
-                            func(i : Nat) : Flag.Pixel = {
-                                red = Nat8.fromNat(i);
-                                green = Nat8.fromNat(i);
-                                blue = Nat8.fromNat(i);
+                            func(i : Nat) : Flag.Pixel {
+                                let factor : Nat = (i * 255) / (width - 1);
+                                {
+                                    red = Nat8.fromNat(factor);
+                                    green = Nat8.fromNat(factor);
+                                    blue = Nat8.fromNat(factor);
+                                };
                             },
                         );
                     },
@@ -557,8 +556,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared query func getWorld() : async Types.GetWorldResult {
-
-        let calcuatedWorldGrid = worldGrid.vals()
+        let calcuatedWorldLocations = worldGrid.vals()
         |> IterTools.mapEntries<MutableWorldLocation, World.WorldLocation>(
             _,
             func(i : Nat, location : MutableWorldLocation) : World.WorldLocation = {
@@ -572,7 +570,7 @@ actor MainActor : Types.Actor {
         #ok({
             age = days;
             nextDayStartTime = nextDayStartTime;
-            grid = calcuatedWorldGrid;
+            locations = calcuatedWorldLocations;
         });
     };
 

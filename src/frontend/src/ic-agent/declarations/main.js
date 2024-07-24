@@ -167,17 +167,34 @@ export const idlFactory = ({ IDL }) => {
     'green' : IDL.Nat8,
   });
   const FlagImage = IDL.Record({ 'pixels' : IDL.Vec(IDL.Vec(Pixel)) });
-  const ChangeTownFlagContent__1 = IDL.Record({ 'image' : FlagImage });
-  const ChangeTownNameContent__1 = IDL.Record({ 'name' : IDL.Text });
-  const ChangeTownMottoContent__1 = IDL.Record({ 'motto' : IDL.Text });
+  const ChangeTownFlagContent = IDL.Record({ 'image' : FlagImage });
+  const ChangeTownNameContent = IDL.Record({ 'name' : IDL.Text });
+  const ChangeTownMottoContent = IDL.Record({ 'motto' : IDL.Text });
+  const Job = IDL.Variant({
+    'processResource' : IDL.Record({
+      'resource' : ResourceKind,
+      'workerCount' : IDL.Nat,
+    }),
+    'gatherResource' : IDL.Record({
+      'resource' : ResourceKind,
+      'locationId' : IDL.Nat,
+      'workerCount' : IDL.Nat,
+    }),
+  });
+  const UpdateJobContent = IDL.Record({ 'job' : Job, 'jobId' : IDL.Nat });
+  const AddJobContent = IDL.Record({ 'job' : Job });
+  const RemoveJobContent = IDL.Record({ 'jobId' : IDL.Nat });
   const MotionContent__1 = IDL.Record({
     'title' : IDL.Text,
     'description' : IDL.Text,
   });
   const TownProposalContent = IDL.Variant({
-    'changeFlag' : ChangeTownFlagContent__1,
-    'changeName' : ChangeTownNameContent__1,
-    'changeMotto' : ChangeTownMottoContent__1,
+    'changeFlag' : ChangeTownFlagContent,
+    'changeName' : ChangeTownNameContent,
+    'changeMotto' : ChangeTownMottoContent,
+    'updateJob' : UpdateJobContent,
+    'addJob' : AddJobContent,
+    'removeJob' : RemoveJobContent,
     'motion' : MotionContent__1,
   });
   const CreateTownProposalError = IDL.Variant({
@@ -445,9 +462,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetTownOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
   const ProposalContent__1 = IDL.Variant({
-    'changeFlag' : ChangeTownFlagContent__1,
-    'changeName' : ChangeTownNameContent__1,
-    'changeMotto' : ChangeTownMottoContent__1,
+    'changeFlag' : ChangeTownFlagContent,
+    'changeName' : ChangeTownNameContent,
+    'changeMotto' : ChangeTownMottoContent,
+    'updateJob' : UpdateJobContent,
+    'addJob' : AddJobContent,
+    'removeJob' : RemoveJobContent,
     'motion' : MotionContent__1,
   });
   const Vote = IDL.Record({
@@ -503,17 +523,6 @@ export const idlFactory = ({ IDL }) => {
     'gold' : IDL.Nat,
     'wood' : IDL.Nat,
     'stone' : IDL.Nat,
-  });
-  const Job = IDL.Variant({
-    'processResource' : IDL.Record({
-      'resource' : ResourceKind,
-      'workerCount' : IDL.Nat,
-    }),
-    'gatherResource' : IDL.Record({
-      'resource' : ResourceKind,
-      'locationId' : IDL.Nat,
-      'workerCount' : IDL.Nat,
-    }),
   });
   const Skill = IDL.Record({
     'proficiencyLevel' : IDL.Nat,
@@ -576,28 +585,11 @@ export const idlFactory = ({ IDL }) => {
   const World = IDL.Record({
     'age' : IDL.Nat,
     'nextDayStartTime' : IDL.Nat,
-    'grid' : IDL.Vec(WorldLocation),
+    'locations' : IDL.Vec(WorldLocation),
   });
   const GetWorldError = IDL.Record({});
   const GetWorldResult = IDL.Variant({ 'ok' : World, 'err' : GetWorldError });
-  const ChangeTownMottoContent = IDL.Record({
-    'motto' : IDL.Text,
-    'townId' : IDL.Nat,
-  });
-  const ChangeTownFlagContent = IDL.Record({
-    'flagImage' : FlagImage,
-    'townId' : IDL.Nat,
-  });
-  const ChangeTownNameContent = IDL.Record({
-    'name' : IDL.Text,
-    'townId' : IDL.Nat,
-  });
-  const ProposalContent = IDL.Variant({
-    'changeTownMotto' : ChangeTownMottoContent,
-    'changeTownFlag' : ChangeTownFlagContent,
-    'changeTownName' : ChangeTownNameContent,
-    'motion' : MotionContent,
-  });
+  const ProposalContent = IDL.Variant({ 'motion' : MotionContent });
   const WorldProposal = IDL.Record({
     'id' : IDL.Nat,
     'content' : ProposalContent,

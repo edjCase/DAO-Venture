@@ -9,7 +9,8 @@ module {
         timeTillNextDay : Nat;
         nextDayStartTime : Nat;
     } {
-        let timeElapsed = Time.now() - genesisTime;
+        let now : Nat = Int.abs(Time.now());
+        let timeElapsed = now - genesisTime;
         if (timeElapsed < 0) {
             Debug.trap("Time elapsed is negative: " # Int.toText(timeElapsed));
         };
@@ -20,7 +21,7 @@ module {
         let timeInDay : Nat = timeElapsedNat % dayTimeLength;
         let days : Nat = timeElapsedNat / dayTimeLength;
         let timeTillNextDay : Nat = dayTimeLength - timeInDay;
-        let nextDayStartTime : Nat = timeElapsedNat + timeTillNextDay;
+        let nextDayStartTime : Nat = now + timeTillNextDay;
         { timeInDay; days; timeTillNextDay; dayTimeLength; nextDayStartTime };
     };
 };

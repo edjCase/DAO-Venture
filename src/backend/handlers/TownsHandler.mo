@@ -287,8 +287,76 @@ module {
             #ok;
         };
 
+        public func addJob(townId : Nat, job : Town.Job) : Result.Result<Nat, { #townNotFound; #notEnoughWorkers }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            switch (validateJob(job, null, town)) {
+                case (#err(err)) return #err(err);
+                case (#ok) ();
+            };
+            let jobId = town.jobs.size();
+            Debug.print("Adding job " # debug_show (job) # " to town " # Nat.toText(townId) # " with id " # Nat.toText(jobId));
+            town.jobs.add(job);
+            #ok(jobId);
+        };
+
+        public func updateJob(townId : Nat, jobId : Nat, job : Town.Job) : Result.Result<(), { #townNotFound; #notEnoughWorkers; #jobNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            switch (validateJob(job, ?jobId, town)) {
+                case (#err(err)) return #err(err);
+                case (#ok) ();
+            };
+            if (jobId >= town.jobs.size()) {
+                return #err(#jobNotFound);
+            };
+            Debug.print("Updating job " # Nat.toText(jobId) # " for town " # Nat.toText(townId) # " to: " # debug_show (job));
+
+            town.jobs.put(jobId, job);
+            #ok;
+        };
+
+        public func removeJob(townId : Nat, jobId : Nat) : Result.Result<(), { #townNotFound; #jobNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+
+            if (jobId >= town.jobs.size()) {
+                return #err(#jobNotFound);
+            };
+            Debug.print("Removing job " # Nat.toText(jobId) # " for town " # Nat.toText(townId));
+            ignore town.jobs.remove(jobId);
+            #ok;
+        };
+
         public func clear() {
             towns := HashMap.HashMap<Nat, MutableTownData>(0, Nat.equal, Nat32.fromNat);
+        };
+
+        private func validateJob(job : Town.Job, jobId : ?Nat, town : MutableTownData) : Result.Result<(), { #notEnoughWorkers }> {
+            let getJobWorkerCount = func(job : Town.Job) : Nat = switch (job) {
+                case (#gatherResource(gatherResource)) {
+                    gatherResource.workerCount;
+                };
+                case (#processResource(processResource)) {
+                    processResource.workerCount;
+                };
+            };
+            let newWorkerCount = getJobWorkerCount(job);
+            let currentWorkerCount = town.jobs.vals()
+            |> IterTools.mapEntries<Town.Job, Nat>(
+                _,
+                func((i, j) : (Nat, Town.Job)) : Nat {
+                    if (jobId == ?i) {
+                        return 0; // Skip workers for updated job
+                    };
+                    getJobWorkerCount(j);
+                },
+            )
+            |> IterTools.sum(_, func(x : Nat, y : Nat) : Nat = x + y)
+            |> Option.get(_, 0);
+            let haveEnoughWorkers = newWorkerCount + currentWorkerCount <= town.population;
+
+            if (not haveEnoughWorkers) {
+                return #err(#notEnoughWorkers);
+            };
+            #ok;
         };
 
     };

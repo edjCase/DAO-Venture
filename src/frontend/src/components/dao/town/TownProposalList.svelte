@@ -23,6 +23,12 @@
             title = "Change Town Motto";
         } else if ("motion" in p.content) {
             title = p.content.motion.title;
+        } else if ("addJob" in p.content) {
+            title = "Add Job";
+        } else if ("updateJob" in p.content) {
+            title = "Update Job";
+        } else if ("removeJob" in p.content) {
+            title = "Remove Job";
         } else {
             title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }

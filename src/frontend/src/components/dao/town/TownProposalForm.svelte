@@ -28,6 +28,21 @@
             name: "Change Town Motto",
             component: ChangeMottoForm,
         },
+        {
+            value: "addJob",
+            name: "Add Job",
+            component: AddJobForm,
+        },
+        {
+            value: "updateJob",
+            name: "Update Job",
+            component: UpdateJobForm,
+        },
+        {
+            value: "removeJob",
+            name: "Remove Job",
+            component: RemoveJobForm,
+        },
     ];
     let selectedProposalType: string = proposalTypes[0].value;
 

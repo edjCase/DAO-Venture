@@ -47,7 +47,7 @@ module {
     public type GetWorldResult = Result.Result<World, GetWorldError>;
 
     public type World = {
-        grid : [World.WorldLocation];
+        locations : [World.WorldLocation];
         age : Nat;
         nextDayStartTime : Nat;
     };

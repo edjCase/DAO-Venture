@@ -13,17 +13,7 @@
 
     $: genericProposals = proposals.map((p) => {
         let title;
-        if ("changeTownName" in p.content) {
-            title = "Change Town Name ";
-        } else if ("changeTownColor" in p.content) {
-            title = "Change Town Color";
-        } else if ("changeTownDescription" in p.content) {
-            title = "Change Town Description";
-        } else if ("changeTownFlag" in p.content) {
-            title = "Change Town Logo";
-        } else if ("changeTownMotto" in p.content) {
-            title = "Change Town Motto";
-        } else if ("motion" in p.content) {
+        if ("motion" in p.content) {
             title = p.content.motion.title;
         } else {
             title = "Not Implemented Proposal Type: " + toJsonString(p.content);

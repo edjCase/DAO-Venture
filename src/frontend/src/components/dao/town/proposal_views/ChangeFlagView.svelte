@@ -6,5 +6,5 @@
 </script>
 
 <div class="flex justify-center">
-    <PixelArtFlag pixels={content.flagImage.pixels} size="lg" />
+    <PixelArtFlag pixels={content.image.pixels} size="lg" />
 </div>

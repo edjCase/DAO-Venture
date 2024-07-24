@@ -1,10 +1,27 @@
 import Flag "Flag";
+import Town "Town";
 module {
     public type ProposalContent = {
         #motion : MotionContent;
         #changeName : ChangeTownNameContent;
         #changeFlag : ChangeTownFlagContent;
         #changeMotto : ChangeTownMottoContent;
+        #addJob : AddJobContent;
+        #updateJob : UpdateJobContent;
+        #removeJob : RemoveJobContent;
+    };
+
+    public type AddJobContent = {
+        job : Town.Job;
+    };
+
+    public type UpdateJobContent = {
+        jobId : Nat;
+        job : Town.Job;
+    };
+
+    public type RemoveJobContent = {
+        jobId : Nat;
     };
 
     public type MotionContent = {

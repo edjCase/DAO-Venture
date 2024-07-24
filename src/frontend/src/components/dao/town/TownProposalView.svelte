@@ -5,6 +5,9 @@
     import ChangeMottoView from "./proposal_views/ChangeMottoView.svelte";
     import { toJsonString } from "../../../utils/StringUtil";
     import MotionView from "./proposal_views/MotionView.svelte";
+    import AddJobView from "./proposal_views/AddJobView.svelte";
+    import UpdateJobView from "./proposal_views/UpdateJobView.svelte";
+    import RemoveJobView from "./proposal_views/RemoveJobView.svelte";
 
     export let proposal: TownProposal;
     export let townId: bigint;
@@ -14,6 +17,9 @@
         changeName: ChangeNameView,
         changeFag: ChangeFlagView,
         changeMotto: ChangeMottoView,
+        addJob: AddJobView,
+        updateJob: UpdateJobView,
+        removeJob: RemoveJobView,
     };
 
     const type = Object.keys(proposal.content as any)[0];
