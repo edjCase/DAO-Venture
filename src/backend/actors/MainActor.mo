@@ -619,11 +619,13 @@ actor MainActor : Types.Actor {
     // Private Methods ---------------------------------------------------------
 
     private func processDays() : async* () {
+        Debug.print("Processing days");
         let { days } = TimeUtil.getAge(genesisTime);
         label l loop {
             if (days <= daysProcessed) {
                 break l;
             };
+            Debug.print("Processing day " # Nat.toText(daysProcessed));
             processResourceGathering();
             processTownTradeResources();
             processTownConsumeResources();
@@ -632,6 +634,7 @@ actor MainActor : Types.Actor {
             // TODO reverse effects
             daysProcessed := daysProcessed + 1;
         };
+        Debug.print("All days processed");
         resetDayTimer<system>(false);
     };
 
@@ -659,8 +662,6 @@ actor MainActor : Types.Actor {
         Debug.print("Processing resource gathering");
         let locationJobsMap = buildLocationJobs();
         for ((locationId, townWorkMap) in locationJobsMap.entries()) {
-            Debug.print("Processing location " # Nat.toText(locationId));
-            Debug.print("Town work map: " # debug_show (townWorkMap.entries() |> Iter.toArray(_)));
             let location = worldGrid.get(locationId);
 
             // Calculate total resource requests
@@ -672,9 +673,16 @@ actor MainActor : Types.Actor {
                 totalFoodRequest += townWork.foodCanHarvest;
             };
 
+            let calculateProportion = func(value : Nat, total : Nat) : Float {
+                if (total == 0) {
+                    return 0;
+                };
+                Float.min(1, Float.fromInt(value) / Float.fromInt(total));
+            };
+
             // Calculate proportions if requests exceed available resources
-            let woodProportion = Float.min(1, Float.fromInt(location.resources.wood.amount) / Float.fromInt(totalWoodRequest));
-            let foodProportion = Float.min(1, Float.fromInt(location.resources.food.amount) / Float.fromInt(totalFoodRequest));
+            let woodProportion = calculateProportion(location.resources.wood.amount, totalWoodRequest);
+            let foodProportion = calculateProportion(location.resources.food.amount, totalFoodRequest);
 
             let calculatePropotionValue = func(value : Nat, proportion : Float) : Nat {
                 let adjustedValueInt = Float.toInt(Float.fromInt(value) * proportion);
@@ -704,7 +712,11 @@ actor MainActor : Types.Actor {
 
                 // Stone difficulty increases regardless of proportion
                 location.resources.stone.difficulty += townWork.stoneCanHarvest;
-                addTownResource(townId, townWork.stoneCanHarvest, #food);
+                addTownResource(townId, townWork.stoneCanHarvest, #stone);
+
+                // Gold difficulty increases regardless of proportion
+                location.resources.gold.difficulty += townWork.goldCanHarvest;
+                addTownResource(townId, townWork.goldCanHarvest, #gold);
             };
         };
     };
@@ -718,17 +730,37 @@ actor MainActor : Types.Actor {
             label j for (job in town.jobs.vals()) {
                 let #gatherResource(gatherResourceJob) = job else continue j;
                 let location = worldGrid.get(gatherResourceJob.locationId);
-                let amountCanHarvest = switch (gatherResourceJob.resource) {
+
+                let calculateAmountWithDifficulty = func(workerCount : Int, proficiencyLevel : Nat, techLevel : Nat, difficulty : Nat) : Nat {
+                    let baseAmount = workerCount + proficiencyLevel + techLevel;
+                    let difficultyScalingFactor = 0.001; // Adjust this value to change the steepness of the linear decrease
+
+                    let scaledDifficulty = Float.fromInt(difficulty) * difficultyScalingFactor;
+                    let amountFloat = Float.fromInt(baseAmount) - scaledDifficulty;
+
+                    let amountInt = Float.toInt(amountFloat);
+                    if (amountInt <= 1) {
+                        1;
+                    } else {
+                        Int.abs(amountInt);
+                    };
+                };
+
+                let amountCanHarvest : Nat = switch (gatherResourceJob.resource) {
                     case (#wood) gatherResourceJob.workerCount + town.skills.woodCutting.proficiencyLevel + town.skills.woodCutting.techLevel;
                     case (#food) gatherResourceJob.workerCount + town.skills.farming.proficiencyLevel + town.skills.farming.techLevel;
-                    case (#gold) {
-                        let amountInt : Int = gatherResourceJob.workerCount + town.skills.mining.proficiencyLevel + town.skills.mining.techLevel;
-                        if (amountInt <= 0) 0 else Int.abs(amountInt);
-                    };
-                    case (#stone) {
-                        let amountInt : Int = gatherResourceJob.workerCount + town.skills.mining.proficiencyLevel + town.skills.mining.techLevel - location.resources.stone.difficulty;
-                        if (amountInt <= 0) 0 else Int.abs(amountInt);
-                    };
+                    case (#gold) calculateAmountWithDifficulty(
+                        gatherResourceJob.workerCount,
+                        town.skills.mining.proficiencyLevel,
+                        town.skills.mining.techLevel,
+                        location.resources.gold.difficulty,
+                    );
+                    case (#stone) calculateAmountWithDifficulty(
+                        gatherResourceJob.workerCount,
+                        town.skills.mining.proficiencyLevel,
+                        town.skills.mining.techLevel,
+                        location.resources.stone.difficulty,
+                    );
                 };
 
                 let townWorkMap : HashMap.HashMap<Nat, TownAvailableWork> = switch (locationTownWorkMap.get(gatherResourceJob.locationId)) {

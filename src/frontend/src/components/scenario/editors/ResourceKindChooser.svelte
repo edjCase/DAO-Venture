@@ -14,7 +14,7 @@
 
     function selectKind(event: Event) {
         const target = event.target as HTMLSelectElement;
-        const selectedIndex = target.selectedIndex;
+        const selectedIndex = target.selectedIndex - 1; // -1 because of the default option
         value = kinds[selectedIndex];
     }
 

@@ -192,7 +192,7 @@ module {
                 return #ok;
             };
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newResources = Buffer.Buffer<{ kind : World.ResourceKind; newValue : Nat }>(resources.size());
+            let newResources = Buffer.Buffer<{ kind : World.ResourceKind; delta : Int; newValue : Nat }>(resources.size());
             let notEnoughResources : Buffer.Buffer<World.ResourceKind> = Buffer.Buffer<World.ResourceKind>(0);
             label l for (resource in resources.vals()) {
                 if (resource.delta == 0) {
@@ -216,6 +216,7 @@ module {
                 };
                 newResources.add({
                     kind = resource.kind;
+                    delta = resource.delta;
                     newValue = newResourceNat;
                 });
             };
@@ -223,7 +224,7 @@ module {
                 return #err(#notEnoughResources(Buffer.toArray(notEnoughResources)));
             };
             for (resource in newResources.vals()) {
-                Debug.print("Updating resource " # debug_show (resource.kind) # " for town " # Nat.toText(townId) # " to " # Nat.toText(resource.newValue));
+                Debug.print("Updating resource " # debug_show (resource.kind) # " for town " # Nat.toText(townId) # " by " # Int.toText(resource.delta) # " to " # Nat.toText(resource.newValue));
                 switch (resource.kind) {
                     case (#gold) {
                         town.resources.gold := resource.newValue;
