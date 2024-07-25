@@ -1,33 +1,20 @@
 # DAOball
 
 ## Introduction
-Welcome to DAOball, an innovative and community-centric virtual spectator sport that reimagines the essence of traditional games. Drawing inspiration from baseball, DAOball infuses randomness and a whimsical twist into its gameplay, creating a unique and engaging experience for all participants.
+TODO
 
-### What is DAOball?
-DAOball is not just a game; it's a sepctator sport focused on community interaction, collective decision-making, and experimentation with Decentralized Autonomous Organizations (DAOs). This project stands out as it shifts the focus from individual achievement to town collaboration and consensus within DAOs.
-
-## Features
-
-### Community-Driven Towns
-- **DAO Structure**: Towns in DAOball act as DAOs, where decisions are made collectively through direct democracy.
-- **Inclusive Participation**: Anyone can join a town by staking or paying a fee, emphasizing openness and community involvement.
-
-### Player Dynamics
-- **Organic Progression**: Players in the game evolve over time, influenced by experiences, training, and random events.
-- **Emotional Engagement**: The potential for injuries and the trading of players add depth and emotional layers to the gameplay.
-
-### Matches and Engagement
-- **Unpredictable Outcomes**: Matches are determined by the collective decisions of town DAOs, ensuring unpredictability and excitement.
-- **Community Interaction**: Regular live-streamed matches and social media integration foster a vibrant communal experience.
-
-### Governance and Evolution
-- **Decentralized Governance**: DAOball aims to transition into a completely community-run project, governed by a DAO consisting of contributors.
-- **Continuous Improvement**: Challenges such as sybil attack prevention and sustainable governance are central to the ongoing development.
-
-## Project Goals
-- **Innovative Financial Model**: Exploring new models for online service funding and control through Web3 technologies.
-- **Building a Community Space**: Creating an engaging online community that extends beyond traditional social media engagement.
-- **Accessibility**: Making Web3 and decentralized systems accessible and enjoyable for the average person.
+## Logic
+- If town health is 0, the population will decrease
+- If town health is 100+, the population will increase
+- All events trigger every 24 hours after genesis, refered to as a 'tick'
+- Regenerative resources (wood, food) regenerate after every tick based on their current amount, with a cap on resources. Low regen with low amounts, high regen at med-high amounts, and low at high amounts
+- Non regenerative resources (stone, gold) will NOT regenerate after ticks, but rather have a difficulty that will go up (linearly) which will reduce that resource haul that tick, with a minimum of 1 on high difficulty
+- Towns can assign to jobs their population by setting worker count (1 worker = 1 population)
+- Citizens/population not assigned a job will ????????????????????????
+- Every tick each town will consume food equal to its population count
+- Population is capped based on the city size
+- City size can increase with an upgrade to the city, costing resources
+- City sizes larger than 0 require maintenance costs per tick of wood and stone, the larger the more costs
 
 ## Development Status
 DAOball is currently in its early development stages. We encourage the community to follow our progress, provide feedback, and contribute to this unique project.

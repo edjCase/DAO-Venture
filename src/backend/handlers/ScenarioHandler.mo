@@ -221,7 +221,7 @@ module {
         processEffectOutcome : <system>(
             outcome : Scenario.EffectOutcome
         ) -> (),
-        chargeTownResources : (townId : Nat, resources : [Scenario.ResourceCost]) -> Result.Result<(), { #notEnoughResources : [World.ResourceKind] }>,
+        chargeTownResources : (townId : Nat, resources : [Scenario.ResourceCost]) -> Result.Result<(), { #notEnoughResources : [{ defecit : Nat; kind : World.ResourceKind }] }>,
     ) {
 
         var scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);

@@ -30,6 +30,8 @@ module {
         var motto : Text;
         var entropy : Nat;
         var population : Nat;
+        var health : Nat;
+        var upkeepCondition : Nat;
         var size : Nat;
         genesisTime : Time.Time;
         jobs : Buffer.Buffer<Town.Job>;
@@ -126,6 +128,8 @@ module {
                 var motto = motto;
                 var entropy = 0;
                 var population = 10;
+                var health = 100;
+                var upkeepCondition = 100;
                 var size = 0;
                 genesisTime = Time.now();
                 jobs = Buffer.Buffer<Town.Job>(0);
@@ -163,7 +167,7 @@ module {
             switch (updateResource(townId, resource, amount, false)) {
                 case (#ok) #ok;
                 case (#err(#townNotFound)) #err(#townNotFound);
-                case (#err(#notEnoughResource)) Prelude.unreachable();
+                case (#err(#notEnoughResource(_))) Prelude.unreachable();
             };
         };
 
@@ -172,11 +176,11 @@ module {
             resource : World.ResourceKind,
             delta : Int,
             allowBelowZero : Bool,
-        ) : Result.Result<(), { #townNotFound; #notEnoughResource }> {
+        ) : Result.Result<(), { #townNotFound; #notEnoughResource : { defecit : Nat } }> {
             switch (updateResourceBulk(townId, [{ kind = resource; delta = delta }], allowBelowZero)) {
-                case (#ok) #ok;
+                case (#ok) #ok();
                 case (#err(#townNotFound)) #err(#townNotFound);
-                case (#err(#notEnoughResources(_))) #err(#notEnoughResource);
+                case (#err(#notEnoughResources(r))) #err(#notEnoughResource(r[0]));
             };
         };
 
@@ -187,13 +191,13 @@ module {
                 delta : Int;
             }],
             allowBelowZero : Bool,
-        ) : Result.Result<(), { #townNotFound; #notEnoughResources : [World.ResourceKind] }> {
+        ) : Result.Result<(), { #townNotFound; #notEnoughResources : [{ defecit : Nat; kind : World.ResourceKind }] }> {
             if (resources.size() == 0) {
                 return #ok;
             };
             let ?town = towns.get(townId) else return #err(#townNotFound);
             let newResources = Buffer.Buffer<{ kind : World.ResourceKind; delta : Int; newValue : Nat }>(resources.size());
-            let notEnoughResources : Buffer.Buffer<World.ResourceKind> = Buffer.Buffer<World.ResourceKind>(0);
+            let notEnoughResources = Buffer.Buffer<{ defecit : Nat; kind : World.ResourceKind }>(0);
             label l for (resource in resources.vals()) {
                 if (resource.delta == 0) {
                     continue l;
@@ -206,7 +210,10 @@ module {
                 };
                 let newResource = currentValue + resource.delta;
                 if (not allowBelowZero and newResource < 0) {
-                    notEnoughResources.add(resource.kind);
+                    notEnoughResources.add({
+                        kind = resource.kind;
+                        defecit = Int.abs(newResource);
+                    });
                     continue l;
                 };
                 let newResourceNat = if (newResource <= 0) {
@@ -285,6 +292,65 @@ module {
             town.entropy := newEntropyNat;
 
             #ok;
+        };
+
+        public func addPopulation(townId : Nat, delta : Int) : Result.Result<(), { #townNotFound }> {
+            switch (updatePopulation(townId, delta)) {
+                case (#ok) #ok;
+                case (#err(#townNotFound)) #err(#townNotFound);
+                case (#err(#populationExtinct)) Prelude.unreachable();
+            };
+        };
+
+        public func updatePopulation(townId : Nat, delta : Int) : Result.Result<(), { #townNotFound; #populationExtinct }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            Debug.print("Updating population for town " # Nat.toText(townId) # " by " # Int.toText(delta));
+            let newPopulationInt : Int = town.population + delta;
+            let newPopulationNat : Nat = if (newPopulationInt <= 0) {
+                // Population cant be negative
+                0;
+            } else {
+                Int.abs(newPopulationInt);
+            };
+            town.population := newPopulationNat;
+            if (newPopulationNat == 0) {
+                return #err(#populationExtinct);
+            };
+            #ok;
+        };
+
+        public func updateHealth(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            Debug.print("Updating health for town " # Nat.toText(townId) # " by " # Int.toText(delta));
+            let newHealthInt : Int = town.health + delta;
+            let newHealthNat : Nat = if (newHealthInt <= 0) {
+                // Health cant be negative
+                0;
+            } else if (newHealthInt >= 100) {
+                // Health cant be over 100
+                100;
+            } else {
+                Int.abs(newHealthInt);
+            };
+            town.health := newHealthNat;
+            #ok(newHealthNat);
+        };
+
+        public func updateUpkeepCondition(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            Debug.print("Updating upkeep condition for town " # Nat.toText(townId) # " by " # Int.toText(delta));
+            let newUpkeepConditionInt : Int = town.upkeepCondition + delta;
+            let newUpkeepConditionNat : Nat = if (newUpkeepConditionInt <= 0) {
+                // Upkeep condition cant be negative
+                0;
+            } else if (newUpkeepConditionInt >= 100) {
+                // Upkeep condition cant be over 100
+                100;
+            } else {
+                Int.abs(newUpkeepConditionInt);
+            };
+            town.upkeepCondition := newUpkeepConditionNat;
+            #ok(newUpkeepConditionNat);
         };
 
         public func addJob(townId : Nat, job : Town.Job) : Result.Result<Nat, { #townNotFound; #notEnoughWorkers }> {
@@ -370,6 +436,8 @@ module {
             motto = town.motto;
             genesisTime = town.genesisTime;
             population = town.population;
+            health = town.health;
+            upkeepCondition = town.upkeepCondition;
             size = town.size;
             jobs = Buffer.toArray<Town.Job>(town.jobs);
             skills = {
@@ -401,6 +469,8 @@ module {
             var motto = stableData.motto;
             var entropy = stableData.entropy;
             var population = stableData.population;
+            var health = stableData.health;
+            var upkeepCondition = stableData.upkeepCondition;
             var size = stableData.size;
             genesisTime = stableData.genesisTime;
             jobs = Buffer.fromArray(stableData.jobs);

@@ -13,6 +13,8 @@ module {
         entropy : Nat;
         size : Nat;
         population : Nat;
+        health : Nat;
+        upkeepCondition : Nat;
         jobs : [Job];
         skills : SkillList;
         resources : ResourceList;

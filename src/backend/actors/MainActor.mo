@@ -182,7 +182,7 @@ actor MainActor : Types.Actor {
         };
     };
 
-    private func chargeTownResources(townId : Nat, resoureCosts : [Scenario.ResourceCost]) : Result.Result<(), { #notEnoughResources : [World.ResourceKind] }> {
+    private func chargeTownResources(townId : Nat, resoureCosts : [Scenario.ResourceCost]) : Result.Result<(), { #notEnoughResources : [{ defecit : Nat; kind : World.ResourceKind }] }> {
         let costs = resoureCosts.vals()
         |> Iter.map(
             _,
@@ -629,7 +629,8 @@ actor MainActor : Types.Actor {
             processResourceGathering();
             processTownTradeResources();
             processTownConsumeResources();
-            processUpdateResources();
+            processRegenResources();
+            processPopulationGrowth();
             // TODO
             // TODO reverse effects
             daysProcessed := daysProcessed + 1;
@@ -638,16 +639,124 @@ actor MainActor : Types.Actor {
         resetDayTimer<system>(false);
     };
 
+    private func processPopulationGrowth() {
+        // TODO ability to pause growth or should excess food be required???
+        for (town in townsHandler.getAll().vals()) {
+            if (town.health <= 0) {
+                // Dying town
+                let tenPercentPop : Nat = Nat.max(1, town.population / 10); // TODO 10%?
+                Debug.print("Town's population " # Nat.toText(town.id) # " is dying from lack of health. Death count: " # Nat.toText(tenPercentPop));
+                switch (townsHandler.updatePopulation(town.id, -tenPercentPop)) {
+                    case (#ok) ();
+                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+                    case (#err(#populationExtinct)) {
+                        // TODO
+                        Debug.print("Town " # Nat.toText(town.id) # " has died out");
+                    };
+                };
+            };
+        };
+    };
+
     private func processTownTradeResources() {
         // TODO
     };
 
     private func processTownConsumeResources() {
         // TODO
+        for (town in townsHandler.getAll().vals()) {
+            // Food Consumption
+            switch (townsHandler.updateResource(town.id, #food, -town.population, false)) {
+                case (#ok) {
+                    let healthIncrease = 10; // TODO how much for being fed?
+                    switch (townsHandler.updateHealth(town.id, healthIncrease)) {
+                        case (#ok(_)) ();
+                        case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+                    };
+                };
+                case (#err(#notEnoughResource(_))) {
+                    let healthDecrease = -10; // TODO how much for being NOT being fed?
+                    Debug.print("Town " # Nat.toText(town.id) # " does not have enough food to feed its population, reducing health by " # Int.toText(-healthDecrease));
+                    switch (townsHandler.updateHealth(town.id, healthDecrease)) {
+                        case (#ok(_)) ();
+                        case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+                    };
+
+                };
+                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+            };
+
+            // Size maintenance costs
+            if (town.size > 0) {
+                let payMaintenanceResource = func(resource : World.ResourceKind) {
+                    let cost = town.size * 10; // TODO
+                    switch (townsHandler.updateResource(town.id, resource, -cost, false)) {
+                        case (#ok) {
+                            let conditionIncrease = 10; // TODO how much for being upkept?
+                            switch (townsHandler.updateUpkeepCondition(town.id, conditionIncrease)) {
+                                case (#ok(_)) ();
+                                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+                            };
+                        };
+                        case (#err(#notEnoughResource(_))) {
+                            let conditionDecrease = -10; // TODO how much for being NOT being upkept?
+                            Debug.print("Town " # Nat.toText(town.id) # " does not have enough " # debug_show (resource) # " to pay maintenance, reducing condition by " # Int.toText(-conditionDecrease));
+                            switch (townsHandler.updateUpkeepCondition(town.id, conditionDecrease)) {
+                                case (#ok(_)) ();
+                                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+                            };
+                        };
+                        case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+                    };
+                };
+
+                payMaintenanceResource(#wood);
+                payMaintenanceResource(#stone);
+            };
+        };
     };
 
-    private func processUpdateResources() {
-        // TODO
+    private func processRegenResources() {
+        for ((locationId, location) in IterTools.enumerate(worldGrid.vals())) {
+            let foodRegenAmount = calculateRegeneration(location.resources.food.amount);
+            if (foodRegenAmount > 0) {
+                location.resources.food.amount += foodRegenAmount;
+                Debug.print("Food regeneration amount for location " # Nat.toText(locationId) # ": " # Nat.toText(foodRegenAmount));
+            };
+
+            let woodRegenAmount = calculateRegeneration(location.resources.wood.amount);
+            if (woodRegenAmount > 0) {
+                location.resources.wood.amount += woodRegenAmount;
+                Debug.print("Wood regeneration amount for location " # Nat.toText(locationId) # ": " # Nat.toText(woodRegenAmount));
+            };
+        };
+    };
+
+    private func calculateRegeneration(currentAmount : Nat) : Nat {
+        let maxResource = 1000.0;
+        let regenRate = 0.05;
+        let optimalResourceLevel = 0.7 * maxResource;
+        let depletionThreshold = 0.3 * maxResource;
+        let resourceRatio = Float.fromInt(currentAmount) / maxResource;
+        let currentAmountFloat = Float.fromInt(currentAmount);
+
+        let amountFloat : Float = if (resourceRatio >= 1.0) {
+            0; // No regeneration if at or above max capacity
+        } else if (resourceRatio > optimalResourceLevel / maxResource) {
+            // Slow regeneration above optimal level
+            regenRate * (1.0 - resourceRatio) * currentAmountFloat;
+        } else if (currentAmountFloat > depletionThreshold) {
+            // Normal regeneration between depletion threshold and optimal level
+            regenRate * currentAmountFloat;
+        } else {
+            // Fast regeneration below depletion threshold
+            regenRate * (optimalResourceLevel / currentAmountFloat) * currentAmountFloat;
+        };
+        if (amountFloat <= 0) {
+            0;
+        } else {
+            Int.abs(Float.toInt(amountFloat));
+        };
     };
 
     type TownAvailableWork = {
@@ -698,25 +807,42 @@ actor MainActor : Types.Actor {
                 };
             };
 
+            // let addProficiencyExperience = func(townId : Nat, resource : World.ResourceKind, workers : Nat) {
+            //     let proficiency = switch (resource) {
+            //         case (#wood) #woodCutting;
+            //         case (#food) #farming;
+            //         case (#gold) #mining;
+            //         case (#stone) #mining;
+            //     };
+            //     switch (townsHandler.addProficiencyExperience(townId, proficiency, workers)) {
+            //         case (#ok) ();
+            //         case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
+            //     };
+            // };
+
             // Process each town's work
             for ((townId, townWork) in townWorkMap.entries()) {
                 // Adjust wood harvesting
                 let adjustedWoodHarvest = calculatePropotionValue(townWork.woodCanHarvest, woodProportion);
                 location.resources.wood.amount -= adjustedWoodHarvest;
                 addTownResource(townId, adjustedWoodHarvest, #wood);
+                // addProficiencyExperience(townId, #wood, townWork.wood.workers);
 
                 // Adjust food harvesting
                 let adjustedFoodHarvest = calculatePropotionValue(townWork.foodCanHarvest, foodProportion);
                 location.resources.food.amount -= adjustedFoodHarvest;
                 addTownResource(townId, adjustedFoodHarvest, #food);
+                // addProficiencyExperience(townId, #food, townWork.food.workers);
 
                 // Stone difficulty increases regardless of proportion
                 location.resources.stone.difficulty += townWork.stoneCanHarvest;
                 addTownResource(townId, townWork.stoneCanHarvest, #stone);
+                // addProficiencyExperience(townId, #stone, townWork.stone.workers);
 
                 // Gold difficulty increases regardless of proportion
                 location.resources.gold.difficulty += townWork.goldCanHarvest;
                 addTownResource(townId, townWork.goldCanHarvest, #gold);
+                // addProficiencyExperience(townId, #gold, townWork.gold.workers);
             };
         };
     };
