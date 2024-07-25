@@ -353,6 +353,20 @@ module {
             #ok(newUpkeepConditionNat);
         };
 
+        public func updateSize(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            Debug.print("Updating size for town " # Nat.toText(townId) # " by " # Int.toText(delta));
+            let newSizeInt : Int = town.size + delta;
+            let newSizeNat : Nat = if (newSizeInt <= 0) {
+                // Size cant be negative
+                0;
+            } else {
+                Int.abs(newSizeInt);
+            };
+            town.size := newSizeNat;
+            #ok(newSizeNat);
+        };
+
         public func addJob(townId : Nat, job : Town.Job) : Result.Result<Nat, { #townNotFound; #notEnoughWorkers }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             switch (validateJob(job, null, town)) {

@@ -170,6 +170,7 @@ export const idlFactory = ({ IDL }) => {
   const ChangeTownFlagContent = IDL.Record({ 'image' : FlagImage });
   const ChangeTownNameContent = IDL.Record({ 'name' : IDL.Text });
   const ChangeTownMottoContent = IDL.Record({ 'motto' : IDL.Text });
+  const IncreaseSizeContent = IDL.Record({});
   const Job = IDL.Variant({
     'processResource' : IDL.Record({
       'resource' : ResourceKind,
@@ -192,6 +193,7 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
+    'increaseSize' : IncreaseSizeContent,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
     'removeJob' : RemoveJobContent,
@@ -465,6 +467,7 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
+    'increaseSize' : IncreaseSizeContent,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
     'removeJob' : RemoveJobContent,
@@ -544,7 +547,9 @@ export const idlFactory = ({ IDL }) => {
     'flagImage' : FlagImage,
     'entropy' : IDL.Nat,
     'skills' : SkillList,
+    'upkeepCondition' : IDL.Nat,
     'population' : IDL.Nat,
+    'health' : IDL.Nat,
   });
   const GetUserError = IDL.Variant({
     'notAuthorized' : IDL.Null,

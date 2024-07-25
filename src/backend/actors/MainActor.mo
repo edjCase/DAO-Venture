@@ -287,6 +287,13 @@ actor MainActor : Types.Actor {
                     };
                     #err("Failed to remove job:" # error);
                 };
+                case (#increaseSize(_)) {
+                    let error = switch (townsHandler.updateSize(townId, 1)) {
+                        case (#ok(_)) return #ok;
+                        case (#err(#townNotFound)) "Town not found";
+                    };
+                    #err("Failed to increase size:" # error);
+                };
             };
         };
 

@@ -9,7 +9,10 @@ module {
         #addJob : AddJobContent;
         #updateJob : UpdateJobContent;
         #removeJob : RemoveJobContent;
+        #increaseSize : IncreaseSizeContent;
     };
+
+    public type IncreaseSizeContent = {};
 
     public type AddJobContent = {
         job : Town.Job;

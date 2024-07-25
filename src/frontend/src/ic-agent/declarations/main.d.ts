@@ -93,6 +93,7 @@ export type GetWorldProposalsResult = { 'ok' : PagedResult };
 export type GetWorldResult = { 'ok' : World } |
   { 'err' : GetWorldError };
 export interface GoldResourceInfo { 'difficulty' : bigint }
+export type IncreaseSizeContent = {};
 export type Job = {
     'processResource' : { 'resource' : ResourceKind, 'workerCount' : bigint }
   } |
@@ -166,6 +167,7 @@ export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
+  { 'increaseSize' : IncreaseSizeContent } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
   { 'removeJob' : RemoveJobContent } |
@@ -401,7 +403,9 @@ export interface Town {
   'flagImage' : FlagImage,
   'entropy' : bigint,
   'skills' : SkillList,
+  'upkeepCondition' : bigint,
   'population' : bigint,
+  'health' : bigint,
 }
 export interface TownProposal {
   'id' : bigint,
@@ -416,6 +420,7 @@ export interface TownProposal {
 export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
+  { 'increaseSize' : IncreaseSizeContent } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
   { 'removeJob' : RemoveJobContent } |
