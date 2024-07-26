@@ -3,6 +3,7 @@ import Scenario "../models/Scenario";
 import ProposalTypes "mo:dao-proposal-engine/Types";
 import CommonTypes "../CommonTypes";
 import Result "mo:base/Result";
+import Principal "mo:base/Principal";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
@@ -23,9 +24,7 @@ module {
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
 
-        claimBenevolentDictatorRole : () -> async ClaimBenevolentDictatorRoleResult;
-        setBenevolentDictatorState : (state : BenevolentDictatorState) -> async SetBenevolentDictatorStateResult;
-        getBenevolentDictatorState : query () -> async BenevolentDictatorState;
+        getProgenitor : query () -> async ?Principal;
 
         getWorld : query () -> async GetWorldResult;
         getTowns : query () -> async [Town.Town];
@@ -42,7 +41,7 @@ module {
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
 
-    public type GetWorldError = {};
+    public type GetWorldError = { #worldNotInitialized };
 
     public type GetWorldResult = Result.Result<World, GetWorldError>;
 
@@ -104,19 +103,6 @@ module {
 
     public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
 
-    public type ClaimBenevolentDictatorRoleError = {
-        #notOpenToClaim;
-        #notAuthenticated;
-    };
-
-    public type ClaimBenevolentDictatorRoleResult = Result.Result<(), ClaimBenevolentDictatorRoleError>;
-
-    public type SetBenevolentDictatorStateError = {
-        #notAuthorized;
-    };
-
-    public type SetBenevolentDictatorStateResult = Result.Result<(), SetBenevolentDictatorStateError>;
-
     public type GetWorldProposalError = {
         #proposalNotFound;
     };
@@ -152,12 +138,6 @@ module {
 
     public type GetScenariosResult = {
         #ok : [Scenario.Scenario];
-    };
-
-    public type BenevolentDictatorState = {
-        #open;
-        #claimed : Principal;
-        #disabled;
     };
 
     public type AddScenarioRequest = ScenarioHandler.AddScenarioRequest;
