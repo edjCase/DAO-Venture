@@ -95,13 +95,13 @@ export type GetWorldResult = { 'ok' : World } |
 export interface GoldResourceInfo { 'difficulty' : bigint }
 export type IncreaseSizeContent = {};
 export type Job = {
-    'processResource' : { 'resource' : ResourceKind, 'workerCount' : bigint }
+    'processResource' : { 'workerQuota' : bigint, 'resource' : ResourceKind }
   } |
   {
     'gatherResource' : {
+      'workerQuota' : bigint,
       'resource' : ResourceKind,
       'locationId' : bigint,
-      'workerCount' : bigint,
     }
   };
 export type JoinWorldError = { 'notAuthorized' : null } |

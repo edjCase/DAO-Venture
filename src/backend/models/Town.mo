@@ -42,11 +42,11 @@ module {
         #gatherResource : {
             locationId : Nat;
             resource : World.ResourceKind;
-            workerCount : Nat;
+            workerQuota : Nat;
         };
         #processResource : {
             resource : World.ResourceKind;
-            workerCount : Nat;
+            workerQuota : Nat;
         };
     };
 };

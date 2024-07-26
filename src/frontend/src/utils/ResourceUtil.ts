@@ -18,9 +18,9 @@ export let getResourceIcon = (kind: ResourceKind): string => {
 
 export let buildJobDescription = (job: Job): string => {
     if ("gatherResource" in job) {
-        return `Gather ${getResourceIcon(job.gatherResource.resource)} with ${job.gatherResource.workerCount} workers from location ${job.gatherResource.locationId}`;
+        return `Gather ${getResourceIcon(job.gatherResource.resource)} with ${job.gatherResource.workerQuota} worker quota from location ${job.gatherResource.locationId}`;
     } else if ("processResource" in job) {
-        return `Process ${getResourceIcon(job.processResource.resource)} with ${job.processResource.workerCount} workers`;
+        return `Process ${getResourceIcon(job.processResource.resource)} with ${job.processResource.workerQuota} worker quota`;
     } else {
         return "NOT IMPLEMENTED JOB: " + toJsonString(job);
     }

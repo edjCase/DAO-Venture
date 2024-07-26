@@ -281,7 +281,6 @@ module {
 
         public func updateEntropy(townId : Nat, delta : Int) : Result.Result<(), { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating entropy for town " # Nat.toText(townId) # " by " # Int.toText(delta));
             let newEntropyInt : Int = town.entropy + delta;
             let newEntropyNat : Nat = if (newEntropyInt <= 0) {
                 // Entropy cant be negative
@@ -289,7 +288,10 @@ module {
             } else {
                 Int.abs(newEntropyInt);
             };
-            town.entropy := newEntropyNat;
+            if (town.entropy != newEntropyNat) {
+                Debug.print("Updating entropy for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newEntropyNat));
+                town.entropy := newEntropyNat;
+            };
 
             #ok;
         };
@@ -304,7 +306,6 @@ module {
 
         public func updatePopulation(townId : Nat, delta : Int) : Result.Result<(), { #townNotFound; #populationExtinct }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating population for town " # Nat.toText(townId) # " by " # Int.toText(delta));
             let newPopulationInt : Int = town.population + delta;
             let newPopulationNat : Nat = if (newPopulationInt <= 0) {
                 // Population cant be negative
@@ -312,7 +313,10 @@ module {
             } else {
                 Int.abs(newPopulationInt);
             };
-            town.population := newPopulationNat;
+            if (town.population != newPopulationNat) {
+                Debug.print("Updating population for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newPopulationNat));
+                town.population := newPopulationNat;
+            };
             if (newPopulationNat == 0) {
                 return #err(#populationExtinct);
             };
@@ -321,7 +325,6 @@ module {
 
         public func updateHealth(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating health for town " # Nat.toText(townId) # " by " # Int.toText(delta));
             let newHealthInt : Int = town.health + delta;
             let newHealthNat : Nat = if (newHealthInt <= 0) {
                 // Health cant be negative
@@ -332,13 +335,15 @@ module {
             } else {
                 Int.abs(newHealthInt);
             };
-            town.health := newHealthNat;
+            if (town.health != newHealthNat) {
+                Debug.print("Updating health for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newHealthNat));
+                town.health := newHealthNat;
+            };
             #ok(newHealthNat);
         };
 
         public func updateUpkeepCondition(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating upkeep condition for town " # Nat.toText(townId) # " by " # Int.toText(delta));
             let newUpkeepConditionInt : Int = town.upkeepCondition + delta;
             let newUpkeepConditionNat : Nat = if (newUpkeepConditionInt <= 0) {
                 // Upkeep condition cant be negative
@@ -349,13 +354,15 @@ module {
             } else {
                 Int.abs(newUpkeepConditionInt);
             };
-            town.upkeepCondition := newUpkeepConditionNat;
+            if (town.upkeepCondition != newUpkeepConditionNat) {
+                Debug.print("Updating upkeep condition for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newUpkeepConditionNat));
+                town.upkeepCondition := newUpkeepConditionNat;
+            };
             #ok(newUpkeepConditionNat);
         };
 
         public func updateSize(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating size for town " # Nat.toText(townId) # " by " # Int.toText(delta));
             let newSizeInt : Int = town.size + delta;
             let newSizeNat : Nat = if (newSizeInt <= 0) {
                 // Size cant be negative
@@ -363,13 +370,16 @@ module {
             } else {
                 Int.abs(newSizeInt);
             };
-            town.size := newSizeNat;
+            if (town.size != newSizeNat) {
+                Debug.print("Updating size for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newSizeNat));
+                town.size := newSizeNat;
+            };
             #ok(newSizeNat);
         };
 
-        public func addJob(townId : Nat, job : Town.Job) : Result.Result<Nat, { #townNotFound; #notEnoughWorkers }> {
+        public func addJob(townId : Nat, job : Town.Job) : Result.Result<Nat, { #townNotFound; #invalid : [Text] }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            switch (validateJob(job, null, town)) {
+            switch (validateJob(job)) {
                 case (#err(err)) return #err(err);
                 case (#ok) ();
             };
@@ -379,9 +389,9 @@ module {
             #ok(jobId);
         };
 
-        public func updateJob(townId : Nat, jobId : Nat, job : Town.Job) : Result.Result<(), { #townNotFound; #notEnoughWorkers; #jobNotFound }> {
+        public func updateJob(townId : Nat, jobId : Nat, job : Town.Job) : Result.Result<(), { #townNotFound; #invalid : [Text]; #jobNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            switch (validateJob(job, ?jobId, town)) {
+            switch (validateJob(job)) {
                 case (#err(err)) return #err(err);
                 case (#ok) ();
             };
@@ -409,32 +419,22 @@ module {
             towns := HashMap.HashMap<Nat, MutableTownData>(0, Nat.equal, Nat32.fromNat);
         };
 
-        private func validateJob(job : Town.Job, jobId : ?Nat, town : MutableTownData) : Result.Result<(), { #notEnoughWorkers }> {
-            let getJobWorkerCount = func(job : Town.Job) : Nat = switch (job) {
-                case (#gatherResource(gatherResource)) {
-                    gatherResource.workerCount;
+        private func validateJob(job : Town.Job) : Result.Result<(), { #invalid : [Text] }> {
+            let errors = Buffer.Buffer<Text>(0);
+            switch (job) {
+                case (#gatherResource(gatherResourceJob)) {
+                    if (gatherResourceJob.workerQuota <= 0) {
+                        errors.add("Worker quota must be at least 1");
+                    };
                 };
-                case (#processResource(processResource)) {
-                    processResource.workerCount;
+                case (#processResource(processResourceJob)) {
+                    if (processResourceJob.workerQuota <= 0) {
+                        errors.add("Worker quota must be at least 1");
+                    };
                 };
             };
-            let newWorkerCount = getJobWorkerCount(job);
-            let currentWorkerCount = town.jobs.vals()
-            |> IterTools.mapEntries<Town.Job, Nat>(
-                _,
-                func((i, j) : (Nat, Town.Job)) : Nat {
-                    if (jobId == ?i) {
-                        return 0; // Skip workers for updated job
-                    };
-                    getJobWorkerCount(j);
-                },
-            )
-            |> IterTools.sum(_, func(x : Nat, y : Nat) : Nat = x + y)
-            |> Option.get(_, 0);
-            let haveEnoughWorkers = newWorkerCount + currentWorkerCount <= town.population;
-
-            if (not haveEnoughWorkers) {
-                return #err(#notEnoughWorkers);
+            if (errors.size() > 0) {
+                return #err(#invalid(Buffer.toArray(errors)));
             };
             #ok;
         };

@@ -31,6 +31,7 @@ import Flag "../models/Flag";
 import TimeUtil "../TimeUtil";
 import World "../models/World";
 import HexGrid "../models/HexGrid";
+import JobCoordinator "../JobCoordinator";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -266,7 +267,7 @@ actor MainActor : Types.Actor {
                     let error = switch (townsHandler.addJob(townId, addJob.job)) {
                         case (#ok(_)) return #ok;
                         case (#err(#townNotFound)) "Town not found";
-                        case (#err(#notEnoughWorkers)) "Not enough workers";
+                        case (#err(#invalid(invalid))) "Invalid job: " # debug_show (invalid); // TODO format
                     };
                     #err("Failed to add job:" # error);
                 };
@@ -274,8 +275,8 @@ actor MainActor : Types.Actor {
                     let error = switch (townsHandler.updateJob(townId, updateJob.jobId, updateJob.job)) {
                         case (#ok(_)) return #ok;
                         case (#err(#townNotFound)) "Town not found";
-                        case (#err(#notEnoughWorkers)) "Not enough workers";
                         case (#err(#jobNotFound)) "Job not found";
+                        case (#err(#invalid(invalid))) "Invalid job: " # debug_show (invalid); // TODO format
                     };
                     #err("Failed to update job:" # error);
                 };
@@ -288,9 +289,18 @@ actor MainActor : Types.Actor {
                     #err("Failed to remove job:" # error);
                 };
                 case (#increaseSize(_)) {
-                    let error = switch (townsHandler.updateSize(townId, 1)) {
-                        case (#ok(_)) return #ok;
-                        case (#err(#townNotFound)) "Town not found";
+                    let ?town = townsHandler.get(townId) else Debug.trap("Town not found: " # Nat.toText(townId));
+                    let sizeIncreaseCost = 1000 * (town.size + 1); // TODO
+                    let resourceUpdates = [{ delta = -sizeIncreaseCost; kind = #wood }, { delta = -sizeIncreaseCost; kind = #stone }];
+                    let error = switch (townsHandler.updateResourceBulk(townId, resourceUpdates, false)) {
+                        case (#ok) switch (townsHandler.updateSize(townId, 1)) {
+                            case (#ok(_)) return #ok;
+                            case (#err(#townNotFound)) "Town not found";
+                        };
+                        case (#err(#notEnoughResources(_))) {
+                            "Need " # Nat.toText(sizeIncreaseCost) # " wood and stone to increase size";
+                        };
+                        case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
                     };
                     #err("Failed to increase size:" # error);
                 };
@@ -661,6 +671,15 @@ actor MainActor : Types.Actor {
                         Debug.print("Town " # Nat.toText(town.id) # " has died out");
                     };
                 };
+            } else if (town.health >= 100) {
+                // TODO randomly trigger/random amounts
+                // Growing town
+                let onePercentPop : Nat = Nat.max(1, town.population / 100); // TODO 1%?
+                Debug.print("Town's population " # Nat.toText(town.id) # " is growing. Growth count: " # Nat.toText(onePercentPop));
+                switch (townsHandler.addPopulation(town.id, onePercentPop)) {
+                    case (#ok) ();
+                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+                };
             };
         };
     };
@@ -766,47 +785,11 @@ actor MainActor : Types.Actor {
         };
     };
 
-    type TownAvailableWork = {
-        townId : Nat;
-        var goldCanHarvest : Nat;
-        var woodCanHarvest : Nat;
-        var foodCanHarvest : Nat;
-        var stoneCanHarvest : Nat;
-    };
-
     private func processResourceGathering() {
         Debug.print("Processing resource gathering");
-        let locationJobsMap = buildLocationJobs();
+        let locations = worldGrid.vals() |> Iter.map(_, fromMutableWorldLocation) |> Iter.toArray(_);
+        let locationJobsMap = JobCoordinator.buildLocationJobs(townsHandler.getAll(), locations);
         for ((locationId, townWorkMap) in locationJobsMap.entries()) {
-            let location = worldGrid.get(locationId);
-
-            // Calculate total resource requests
-            var totalWoodRequest = 0;
-            var totalFoodRequest = 0;
-
-            for ((_, townWork) in townWorkMap.entries()) {
-                totalWoodRequest += townWork.woodCanHarvest;
-                totalFoodRequest += townWork.foodCanHarvest;
-            };
-
-            let calculateProportion = func(value : Nat, total : Nat) : Float {
-                if (total == 0) {
-                    return 0;
-                };
-                Float.min(1, Float.fromInt(value) / Float.fromInt(total));
-            };
-
-            // Calculate proportions if requests exceed available resources
-            let woodProportion = calculateProportion(location.resources.wood.amount, totalWoodRequest);
-            let foodProportion = calculateProportion(location.resources.food.amount, totalFoodRequest);
-
-            let calculatePropotionValue = func(value : Nat, proportion : Float) : Nat {
-                let adjustedValueInt = Float.toInt(Float.fromInt(value) * proportion);
-                if (adjustedValueInt < 0) {
-                    Debug.trap("Adjusted value is less than 0");
-                };
-                Int.abs(adjustedValueInt);
-            };
             let addTownResource = func(townId : Nat, amount : Nat, resource : World.ResourceKind) {
                 switch (townsHandler.addResource(townId, resource, amount)) {
                     case (#ok) {};
@@ -827,18 +810,18 @@ actor MainActor : Types.Actor {
             //     };
             // };
 
+            let location = worldGrid.get(locationId);
+
             // Process each town's work
             for ((townId, townWork) in townWorkMap.entries()) {
                 // Adjust wood harvesting
-                let adjustedWoodHarvest = calculatePropotionValue(townWork.woodCanHarvest, woodProportion);
-                location.resources.wood.amount -= adjustedWoodHarvest;
-                addTownResource(townId, adjustedWoodHarvest, #wood);
+                location.resources.wood.amount -= townWork.woodCanHarvest;
+                addTownResource(townId, townWork.woodCanHarvest, #wood);
                 // addProficiencyExperience(townId, #wood, townWork.wood.workers);
 
                 // Adjust food harvesting
-                let adjustedFoodHarvest = calculatePropotionValue(townWork.foodCanHarvest, foodProportion);
-                location.resources.food.amount -= adjustedFoodHarvest;
-                addTownResource(townId, adjustedFoodHarvest, #food);
+                location.resources.food.amount -= townWork.foodCanHarvest;
+                addTownResource(townId, townWork.foodCanHarvest, #food);
                 // addProficiencyExperience(townId, #food, townWork.food.workers);
 
                 // Stone difficulty increases regardless of proportion
@@ -852,81 +835,6 @@ actor MainActor : Types.Actor {
                 // addProficiencyExperience(townId, #gold, townWork.gold.workers);
             };
         };
-    };
-
-    private func buildLocationJobs() : HashMap.HashMap<Nat, HashMap.HashMap<Nat, TownAvailableWork>> {
-        let locationTownWorkMap = HashMap.HashMap<Nat, HashMap.HashMap<Nat, TownAvailableWork>>(worldGrid.size(), Nat.equal, Nat32.fromNat);
-        // Go through all the towns
-        for (town in townsHandler.getAll().vals()) {
-            // And for each job, add the amount of resources that can be harvested
-            // from that location for that town
-            label j for (job in town.jobs.vals()) {
-                let #gatherResource(gatherResourceJob) = job else continue j;
-                let location = worldGrid.get(gatherResourceJob.locationId);
-
-                let calculateAmountWithDifficulty = func(workerCount : Int, proficiencyLevel : Nat, techLevel : Nat, difficulty : Nat) : Nat {
-                    let baseAmount = workerCount + proficiencyLevel + techLevel;
-                    let difficultyScalingFactor = 0.001; // Adjust this value to change the steepness of the linear decrease
-
-                    let scaledDifficulty = Float.fromInt(difficulty) * difficultyScalingFactor;
-                    let amountFloat = Float.fromInt(baseAmount) - scaledDifficulty;
-
-                    let amountInt = Float.toInt(amountFloat);
-                    if (amountInt <= 1) {
-                        1;
-                    } else {
-                        Int.abs(amountInt);
-                    };
-                };
-
-                let amountCanHarvest : Nat = switch (gatherResourceJob.resource) {
-                    case (#wood) gatherResourceJob.workerCount + town.skills.woodCutting.proficiencyLevel + town.skills.woodCutting.techLevel;
-                    case (#food) gatherResourceJob.workerCount + town.skills.farming.proficiencyLevel + town.skills.farming.techLevel;
-                    case (#gold) calculateAmountWithDifficulty(
-                        gatherResourceJob.workerCount,
-                        town.skills.mining.proficiencyLevel,
-                        town.skills.mining.techLevel,
-                        location.resources.gold.difficulty,
-                    );
-                    case (#stone) calculateAmountWithDifficulty(
-                        gatherResourceJob.workerCount,
-                        town.skills.mining.proficiencyLevel,
-                        town.skills.mining.techLevel,
-                        location.resources.stone.difficulty,
-                    );
-                };
-
-                let townWorkMap : HashMap.HashMap<Nat, TownAvailableWork> = switch (locationTownWorkMap.get(gatherResourceJob.locationId)) {
-                    case (?townWorkMap) townWorkMap;
-                    case (null) {
-                        let newTownWorkMap = HashMap.HashMap<Nat, TownAvailableWork>(1, Nat.equal, Nat32.fromNat);
-                        locationTownWorkMap.put(gatherResourceJob.locationId, newTownWorkMap);
-                        newTownWorkMap;
-                    };
-                };
-                let townWork : TownAvailableWork = switch (townWorkMap.get(town.id)) {
-                    case (?townWork) townWork;
-                    case (null) {
-                        let newTownWork : TownAvailableWork = {
-                            townId = town.id;
-                            var goldCanHarvest = 0;
-                            var woodCanHarvest = 0;
-                            var foodCanHarvest = 0;
-                            var stoneCanHarvest = 0;
-                        };
-                        townWorkMap.put(town.id, newTownWork);
-                        newTownWork;
-                    };
-                };
-                switch (gatherResourceJob.resource) {
-                    case (#gold) townWork.goldCanHarvest += amountCanHarvest;
-                    case (#wood) townWork.woodCanHarvest += amountCanHarvest;
-                    case (#food) townWork.foodCanHarvest += amountCanHarvest;
-                    case (#stone) townWork.stoneCanHarvest += amountCanHarvest;
-                };
-            };
-        };
-        locationTownWorkMap;
     };
 
     private func isWorldOrBDFN(id : Principal) : Bool {

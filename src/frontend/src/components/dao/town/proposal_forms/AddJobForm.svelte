@@ -7,7 +7,7 @@
         gatherResource: {
             locationId: 0n,
             resource: { wood: null },
-            workerCount: 1n,
+            workerQuota: 100n,
         },
     };
 </script>

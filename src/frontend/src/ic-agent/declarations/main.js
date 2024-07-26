@@ -173,13 +173,13 @@ export const idlFactory = ({ IDL }) => {
   const IncreaseSizeContent = IDL.Record({});
   const Job = IDL.Variant({
     'processResource' : IDL.Record({
+      'workerQuota' : IDL.Nat,
       'resource' : ResourceKind,
-      'workerCount' : IDL.Nat,
     }),
     'gatherResource' : IDL.Record({
+      'workerQuota' : IDL.Nat,
       'resource' : ResourceKind,
       'locationId' : IDL.Nat,
-      'workerCount' : IDL.Nat,
     }),
   });
   const UpdateJobContent = IDL.Record({ 'job' : Job, 'jobId' : IDL.Nat });

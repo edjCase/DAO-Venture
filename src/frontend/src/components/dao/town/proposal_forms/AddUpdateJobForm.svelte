@@ -50,14 +50,14 @@
                 gatherResource: {
                     locationId: 0n,
                     resource: { wood: null },
-                    workerCount: BigInt(1),
+                    workerQuota: BigInt(100),
                 },
             };
         } else if (jobType === "processResource") {
             job = {
                 processResource: {
                     resource: { wood: null },
-                    workerCount: BigInt(1),
+                    workerQuota: BigInt(100),
                 },
             };
         }
@@ -74,12 +74,12 @@
         />
         <Label>Resource</Label>
         <ResourceKindChooser bind:value={job.gatherResource.resource} />
-        <Label>Worker Count</Label>
-        <BigIntInput bind:value={job.gatherResource.workerCount} />
+        <Label>Worker Quota</Label>
+        <BigIntInput bind:value={job.gatherResource.workerQuota} />
     {:else if jobType === "processResource"}
         <Label>Resource</Label>
         <ResourceKindChooser bind:value={job.processResource.resource} />
-        <Label>Worker Count</Label>
-        <BigIntInput bind:value={job.processResource.workerCount} />
+        <Label>Worker Quota</Label>
+        <BigIntInput bind:value={job.processResource.workerQuota} />
     {/if}
 </FormTemplate>
