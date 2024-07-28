@@ -38,6 +38,8 @@ export const worldStore = (() => {
       set(result.ok);
       console.log("Fetched world");
       scheduleNextFetch(result.ok.nextDayStartTime);
+    } else if ('err' in result && 'worldNotInitialized' in result.err) {
+      setTimeout(refetch, 60_000);
     } else {
       console.error("Failed to get world", result.err);
       // Retry after a short delay (e.g., 5 seconds)

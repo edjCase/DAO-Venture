@@ -1,14 +1,12 @@
 <script lang="ts">
     import {
         ScenarioOptionValue,
-        ScenarioTownOptionNat,
         ScenarioTownOptionText,
         VoteOnScenarioRequest,
     } from "../../ic-agent/declarations/main";
     import { mainAgentFactory } from "../../ic-agent/Main";
     import { townStore } from "../../stores/TownStore";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import ScenarioOptionNat from "./ScenarioOptionNat.svelte";
     import BigIntInput from "./editors/BigIntInput.svelte";
     import LoadingButton from "../common/LoadingButton.svelte";
     import { toJsonString } from "../../utils/StringUtil";
@@ -17,26 +15,15 @@
     export let scenarioId: bigint;
     export let townId: bigint;
     export let proposeName: string;
-    export let kind:
-        | {
-              nat: {
-                  options: ScenarioTownOptionNat[];
-                  icon: string;
-                  townResourceAmount: bigint | undefined;
-                  vote: bigint | undefined;
-              };
-          }
-        | {
-              text: {
-                  options: ScenarioTownOptionText[];
-                  vote: string | undefined;
-              };
-          };
+    export let kind: {
+        text: {
+            options: ScenarioTownOptionText[];
+            vote: string | undefined;
+        };
+    };
 
     let value: bigint | string | undefined;
-    if ("nat" in kind) {
-        value = kind.nat.vote;
-    } else if ("text" in kind) {
+    if ("text" in kind) {
         value = kind.text.vote;
     } else {
         throw new Error("Invalid scenario option kind: " + toJsonString(kind));
@@ -48,20 +35,7 @@
             return;
         }
         let optionValue: ScenarioOptionValue;
-        if ("nat" in kind) {
-            if (typeof value !== "bigint") {
-                console.error("Invalid value. Expected nat value, got:", value);
-                return;
-            }
-            if (
-                kind.nat.townResourceAmount === undefined ||
-                value > kind.nat.townResourceAmount
-            ) {
-                console.error("Value exceeds town resource");
-                return;
-            }
-            optionValue = { nat: value };
-        } else if ("text" in kind) {
+        if ("text" in kind) {
             if (typeof value !== "string") {
                 console.error(
                     "Invalid value. Expected text value, got:",
@@ -103,24 +77,7 @@
     class="flex flex-col items-center justify-center border-2 border-gray-700 p-2 rounded"
 >
     <div class="flex flex-col item-center justify-center min-h-48">
-        {#if "nat" in kind}
-            {#if kind.nat.options.length < 1}
-                <div>-</div>
-            {:else}
-                {#each kind.nat.options as option}
-                    <ScenarioOptionNat
-                        {option}
-                        selected={kind.nat.vote === option.value}
-                        townResourceAmount={kind.nat.townResourceAmount}
-                        icon={kind.nat.icon}
-                        onSelect={() => {
-                            value = option.value;
-                            voteForValue();
-                        }}
-                    />
-                {/each}
-            {/if}
-        {:else if "text" in kind}
+        {#if "text" in kind}
             {#if kind.text.options.length < 1}
                 <div>-</div>
             {:else}

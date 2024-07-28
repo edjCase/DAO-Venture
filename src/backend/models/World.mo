@@ -1,11 +1,8 @@
 import HexGrid "HexGrid";
 module {
-    public type WorldLocationWithoutId = {
+    public type WorldLocation = {
         townId : ?Nat;
         resources : LocationResourceList;
-    };
-
-    public type WorldLocation = WorldLocationWithoutId and {
         id : Nat;
         coordinate : HexGrid.AxialCoordinate;
     };

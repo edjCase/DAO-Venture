@@ -27,7 +27,7 @@ module {
 
     public func buildLocationJobs(
         towns : [Town.Town],
-        locations : [Location],
+        locations : HashMap.HashMap<Nat, World.WorldLocation>,
     ) : HashMap.HashMap<Nat, HashMap.HashMap<Nat, TownAvailableWork>> {
         let jobWorkerCountMap = buildJobWorkerCounts(towns);
         // Location Id -> Town Id -> TownAvailableWork
@@ -40,7 +40,7 @@ module {
                 let workerCount = Option.get(jobWorkerCountMap.get({ townId = town.id; jobId = jobId }), 0);
                 switch (job) {
                     case (#gatherResource(gatherResourceJob)) {
-                        let location = locations.get(gatherResourceJob.locationId);
+                        let ?location = locations.get(gatherResourceJob.locationId) else Debug.trap("Location not found: " # Nat.toText(gatherResourceJob.locationId));
 
                         let calculateAmountWithDifficulty = func(workerCount : Int, proficiencyLevel : Nat, techLevel : Nat, difficulty : Nat) : Nat {
                             let baseAmount = workerCount + proficiencyLevel + techLevel;
@@ -109,7 +109,8 @@ module {
         };
 
         for ((locationId, townWorkMap) in locationTownWorkMap.entries()) {
-            adjustAmountsForScarcity(locations.get(locationId), townWorkMap);
+            let ?location = locations.get(locationId) else Debug.trap("Location not found: " # Nat.toText(locationId));
+            adjustAmountsForScarcity(location, townWorkMap);
         };
         locationTownWorkMap;
     };

@@ -46,6 +46,7 @@ module {
     public type GetWorldResult = Result.Result<World, GetWorldError>;
 
     public type World = {
+        progenitor : Principal;
         locations : [World.WorldLocation];
         age : Nat;
         nextDayStartTime : Nat;

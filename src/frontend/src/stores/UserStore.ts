@@ -2,7 +2,6 @@ import { writable } from 'svelte/store';
 import { mainAgentFactory } from '../ic-agent/Main';
 import { GetUserResult, User, UserStats } from '../ic-agent/declarations/main';
 import { toJsonString } from '../utils/StringUtil';
-import { BenevolentDictatorState } from '../ic-agent/declarations/main';
 import { Principal } from '@dfinity/principal';
 import { getOrCreateAuthClient } from '../utils/AuthUtil';
 
@@ -12,7 +11,6 @@ function createUserStore() {
     let currentUserId: Principal | undefined = undefined;
     const currentUser = writable<User | undefined>(undefined);
     const userStats = writable<UserStats>();
-    const bdfnState = writable<BenevolentDictatorState>();
 
 
     const refetchCurrentUser = async () => {
@@ -55,25 +53,6 @@ function createUserStore() {
         }
     };
 
-    const refreshBdfnState = async () => {
-        let mainAgent = await mainAgentFactory();
-        let state = await mainAgent.getBenevolentDictatorState();
-        bdfnState.set(state);
-    }
-
-    const subscribeBdfnState = async (callback: (bdfnState: BenevolentDictatorState) => void) => {
-        bdfnState.subscribe(callback);
-    };
-
-    const claimBdfnRole = async () => {
-        let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.claimBenevolentDictatorRole();
-        if ('ok' in result) {
-            refreshBdfnState();
-        } else {
-            console.log("Error claiming BDFN role", result);
-        }
-    }
 
 
     const login = async () => {
@@ -115,18 +94,13 @@ function createUserStore() {
 
     checkForLogin();
     refetchStats();
-    refreshBdfnState();
-
     return {
         login,
         logout,
         subscribe: subscribeCurrentUser,
         refetchCurrentUser,
         subscribeStats,
-        refetchStats,
-        refreshBdfnState,
-        subscribeBdfnState,
-        claimBdfnRole
+        refetchStats
     };
 }
 

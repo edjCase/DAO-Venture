@@ -1,18 +1,19 @@
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Array "mo:base/Array";
 import World "models/World";
+import HexGrid "models/HexGrid";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public func generateWorld(prng : Prng) : [World.WorldLocationWithoutId] {
-        Array.tabulate(
+    public func generateWorld(prng : Prng) : [World.WorldLocation] {
+        Array.tabulate<World.WorldLocation>(
             7,
-            func(_ : Nat) : World.WorldLocationWithoutId = generateLocation(prng),
+            func(i : Nat) : World.WorldLocation = generateLocation(prng, i),
         );
     };
 
-    public func generateLocation(prng : Prng) : World.WorldLocationWithoutId {
+    public func generateLocation(prng : Prng, id : Nat) : World.WorldLocation {
         // TODO better procedural generation
         let getRandDifficulty = func() : Nat {
             return prng.nextNat(0, 10000);
@@ -23,6 +24,8 @@ module {
         };
 
         {
+            id = id;
+            coordinate = HexGrid.indexToAxialCoordinate(id);
             townId = null;
             resources = {
                 gold = { difficulty = getRandDifficulty() };

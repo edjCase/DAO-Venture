@@ -33,14 +33,6 @@ export const idlFactory = ({ IDL }) => {
       'entropy' : EntropyEffect,
     })
   );
-  const LotteryPrize = IDL.Record({
-    'description' : IDL.Text,
-    'effect' : Effect,
-  });
-  const LotteryScenario = IDL.Record({
-    'minBid' : IDL.Nat,
-    'prize' : LotteryPrize,
-  });
   const ThresholdValue__1 = IDL.Variant({
     'fixed' : IDL.Int,
     'weightedChance' : IDL.Vec(
@@ -107,22 +99,11 @@ export const idlFactory = ({ IDL }) => {
   const WorldChoiceScenarioRequest = IDL.Record({
     'options' : IDL.Vec(WorldChoiceScenarioOptionRequest),
   });
-  const PropotionalBidPrizeKind = IDL.Record({});
-  const ProportionalBidPrize = IDL.Record({
-    'kind' : PropotionalBidPrizeKind,
-    'description' : IDL.Text,
-    'amount' : IDL.Nat,
-  });
-  const ProportionalBidScenario = IDL.Record({
-    'prize' : ProportionalBidPrize,
-  });
   const ScenarioKindRequest = IDL.Variant({
-    'lottery' : LotteryScenario,
     'threshold' : ThresholdScenarioRequest,
     'textInput' : TextInputScenario,
     'noWorldEffect' : NoWorldEffectScenarioRequest,
     'worldChoice' : WorldChoiceScenarioRequest,
-    'proportionalBid' : ProportionalBidScenario,
   });
   const AddScenarioRequest = IDL.Record({
     'startTime' : IDL.Opt(Time),
@@ -153,14 +134,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Null,
     'err' : AssignUserToTownError,
   });
-  const ClaimBenevolentDictatorRoleError = IDL.Variant({
-    'notOpenToClaim' : IDL.Null,
-    'notAuthenticated' : IDL.Null,
-  });
-  const ClaimBenevolentDictatorRoleResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : ClaimBenevolentDictatorRoleError,
-  });
   const Pixel = IDL.Record({
     'red' : IDL.Nat8,
     'blue' : IDL.Nat8,
@@ -168,6 +141,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const FlagImage = IDL.Record({ 'pixels' : IDL.Vec(IDL.Vec(Pixel)) });
   const ChangeTownFlagContent = IDL.Record({ 'image' : FlagImage });
+  const StartExpeditionContent = IDL.Record({ 'locationId' : IDL.Nat });
   const ChangeTownNameContent = IDL.Record({ 'name' : IDL.Text });
   const ChangeTownMottoContent = IDL.Record({ 'motto' : IDL.Text });
   const IncreaseSizeContent = IDL.Record({});
@@ -191,6 +165,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const TownProposalContent = IDL.Variant({
     'changeFlag' : ChangeTownFlagContent,
+    'startExpedition' : StartExpeditionContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
     'increaseSize' : IncreaseSizeContent,
@@ -220,11 +195,6 @@ export const idlFactory = ({ IDL }) => {
   const CreateWorldProposalResult = IDL.Variant({
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
-  });
-  const BenevolentDictatorState = IDL.Variant({
-    'open' : IDL.Null,
-    'claimed' : IDL.Principal,
-    'disabled' : IDL.Null,
   });
   const ThresholdValue = IDL.Variant({
     'fixed' : IDL.Int,
@@ -276,15 +246,10 @@ export const idlFactory = ({ IDL }) => {
     'options' : IDL.Vec(WorldChoiceScenarioOption),
   });
   const ScenarioKind = IDL.Variant({
-    'lottery' : LotteryScenario,
     'threshold' : ThresholdScenario,
     'textInput' : TextInputScenario,
     'noWorldEffect' : NoWorldEffectScenario,
     'worldChoice' : WorldChoiceScenario,
-    'proportionalBid' : ProportionalBidScenario,
-  });
-  const LotteryScenarioOutcome = IDL.Record({
-    'winningTownId' : IDL.Opt(IDL.Nat),
   });
   const ThresholdContribution = IDL.Record({
     'townId' : IDL.Nat,
@@ -298,26 +263,13 @@ export const idlFactory = ({ IDL }) => {
   const WorldChoiceScenarioOutcome = IDL.Record({
     'optionId' : IDL.Opt(IDL.Nat),
   });
-  const ProportionalWinningBid = IDL.Record({
-    'proportion' : IDL.Nat,
-    'townId' : IDL.Nat,
-  });
-  const ProportionalBidScenarioOutcome = IDL.Record({
-    'bids' : IDL.Vec(ProportionalWinningBid),
-  });
   const ScenarioOutcome = IDL.Variant({
-    'lottery' : LotteryScenarioOutcome,
+    'noEffect' : IDL.Null,
     'threshold' : ThresholdScenarioOutcome,
     'textInput' : TextInputScenarioOutcome,
-    'noWorldEffect' : IDL.Null,
     'worldChoice' : WorldChoiceScenarioOutcome,
-    'proportionalBid' : ProportionalBidScenarioOutcome,
   });
   const ScenarioResolvedOptionRaw = IDL.Record({
-    'value' : IDL.Nat,
-    'chosenByTownIds' : IDL.Vec(IDL.Nat),
-  });
-  const ScenarioResolvedOptionRaw_1 = IDL.Record({
     'value' : IDL.Text,
     'chosenByTownIds' : IDL.Vec(IDL.Nat),
   });
@@ -332,8 +284,7 @@ export const idlFactory = ({ IDL }) => {
     'seenByTownIds' : IDL.Vec(IDL.Nat),
   });
   const ScenarioResolvedOptionsKind = IDL.Variant({
-    'nat' : IDL.Vec(ScenarioResolvedOptionRaw),
-    'text' : IDL.Vec(ScenarioResolvedOptionRaw_1),
+    'text' : IDL.Vec(ScenarioResolvedOptionRaw),
     'discrete' : IDL.Vec(ScenarioResolvedOptionDiscrete),
   });
   const ScenarioResolvedOptions = IDL.Record({
@@ -386,10 +337,6 @@ export const idlFactory = ({ IDL }) => {
     'err' : GetScenarioError,
   });
   const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
-  const ScenarioTownOptionNat = IDL.Record({
-    'value' : IDL.Nat,
-    'currentVotingPower' : IDL.Nat,
-  });
   const ScenarioTownOptionText = IDL.Record({
     'value' : IDL.Text,
     'currentVotingPower' : IDL.Nat,
@@ -403,13 +350,11 @@ export const idlFactory = ({ IDL }) => {
     'requirements' : IDL.Vec(Requirement),
   });
   const ScenarioTownOptions = IDL.Variant({
-    'nat' : IDL.Vec(ScenarioTownOptionNat),
     'text' : IDL.Vec(ScenarioTownOptionText),
     'discrete' : IDL.Vec(ScenarioTownOptionDiscrete),
   });
   const ScenarioOptionValue = IDL.Variant({
     'id' : IDL.Nat,
-    'nat' : IDL.Nat,
     'text' : IDL.Text,
   });
   const TownVotingPower = IDL.Record({ 'total' : IDL.Nat, 'voted' : IDL.Nat });
@@ -465,6 +410,7 @@ export const idlFactory = ({ IDL }) => {
   const GetTownOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
   const ProposalContent__1 = IDL.Variant({
     'changeFlag' : ChangeTownFlagContent,
+    'startExpedition' : StartExpeditionContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
     'increaseSize' : IncreaseSizeContent,
@@ -590,9 +536,10 @@ export const idlFactory = ({ IDL }) => {
   const World = IDL.Record({
     'age' : IDL.Nat,
     'nextDayStartTime' : IDL.Nat,
+    'progenitor' : IDL.Principal,
     'locations' : IDL.Vec(WorldLocation),
   });
-  const GetWorldError = IDL.Record({});
+  const GetWorldError = IDL.Variant({ 'worldNotInitialized' : IDL.Null });
   const GetWorldResult = IDL.Variant({ 'ok' : World, 'err' : GetWorldError });
   const ProposalContent = IDL.Variant({ 'motion' : MotionContent });
   const WorldProposal = IDL.Record({
@@ -622,13 +569,6 @@ export const idlFactory = ({ IDL }) => {
     'noTowns' : IDL.Null,
   });
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinWorldError });
-  const SetBenevolentDictatorStateError = IDL.Variant({
-    'notAuthorized' : IDL.Null,
-  });
-  const SetBenevolentDictatorStateResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : SetBenevolentDictatorStateError,
-  });
   const VoteOnScenarioRequest = IDL.Record({
     'scenarioId' : IDL.Nat,
     'value' : ScenarioOptionValue,
@@ -675,11 +615,6 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
     'assignUserToTown' : IDL.Func([AssignUserToTownRequest], [Result_1], []),
-    'claimBenevolentDictatorRole' : IDL.Func(
-        [],
-        [ClaimBenevolentDictatorRoleResult],
-        [],
-      ),
     'createTownProposal' : IDL.Func(
         [IDL.Nat, TownProposalContent],
         [CreateTownProposalResult],
@@ -690,11 +625,7 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
-    'getBenevolentDictatorState' : IDL.Func(
-        [],
-        [BenevolentDictatorState],
-        ['query'],
-      ),
+    'getProgenitor' : IDL.Func([], [IDL.Opt(IDL.Principal)], ['query']),
     'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
@@ -737,11 +668,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'joinWorld' : IDL.Func([], [Result], []),
-    'setBenevolentDictatorState' : IDL.Func(
-        [BenevolentDictatorState],
-        [SetBenevolentDictatorStateResult],
-        [],
-      ),
     'voteOnScenario' : IDL.Func(
         [VoteOnScenarioRequest],
         [VoteOnScenarioResult],

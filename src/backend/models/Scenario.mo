@@ -120,8 +120,6 @@ module {
         #noWorldEffect : NoWorldEffectScenario;
         #threshold : ThresholdScenario;
         #worldChoice : WorldChoiceScenario;
-        #lottery : LotteryScenario;
-        #proportionalBid : ProportionalBidScenario;
         #textInput : TextInputScenario;
     };
 
@@ -178,30 +176,6 @@ module {
         worldEffect : Effect;
     };
 
-    public type LotteryScenario = {
-        prize : LotteryPrize;
-        minBid : Nat;
-    };
-
-    public type LotteryPrize = {
-        description : Text;
-        effect : Effect;
-    };
-
-    public type ProportionalBidScenario = {
-        prize : ProportionalBidPrize;
-    };
-
-    public type ProportionalBidPrize = {
-        amount : Nat;
-        description : Text;
-        kind : PropotionalBidPrizeKind;
-    };
-
-    public type PropotionalBidPrizeKind = {
-
-    };
-
     public type TextInputScenario = {
         description : Text;
     };
@@ -233,7 +207,6 @@ module {
 
     public type ScenarioResolvedOptionsKind = {
         #discrete : [ScenarioResolvedOptionDiscrete];
-        #nat : [ScenarioResolvedOptionRaw<Nat>];
         #text : [ScenarioResolvedOptionRaw<Text>];
     };
 
@@ -256,10 +229,8 @@ module {
     public type ScenarioOutcome = {
         #threshold : ThresholdScenarioOutcome;
         #worldChoice : WorldChoiceScenarioOutcome;
-        #lottery : LotteryScenarioOutcome;
-        #proportionalBid : ProportionalBidScenarioOutcome;
         #textInput : TextInputScenarioOutcome;
-        #noWorldEffect;
+        #noEffect;
     };
 
     public type ThresholdScenarioOutcome = {
@@ -276,25 +247,11 @@ module {
         optionId : ?Nat;
     };
 
-    public type LotteryScenarioOutcome = {
-        winningTownId : ?Nat;
-    };
-
-    public type ProportionalBidScenarioOutcome = {
-        bids : [ProportionalWinningBid];
-    };
-
     public type TextInputScenarioOutcome = {
         text : Text;
     };
 
-    public type ProportionalWinningBid = {
-        townId : Nat;
-        proportion : Nat;
-    };
-
     public type ScenarioOptionValue = {
-        #nat : Nat;
         #id : Nat;
         #text : Text;
     };

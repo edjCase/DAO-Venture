@@ -13,8 +13,6 @@
     import { toJsonString } from "../../utils/StringUtil";
     import ThresholdResolvedScenarioState from "./resolved_states/ThresholdResolvedScenarioState.svelte";
     import NoWorldEffectResolvedScenarioState from "./resolved_states/NoWorldEffectResolvedScenarioState.svelte";
-    import ProportionalBidResolvedScenarioState from "./resolved_states/ProportionalBidResolvedScenarioState.svelte";
-    import LotteryResolvedScenarioState from "./resolved_states/LotteryResolvedScenarioState.svelte";
     import WorldChoiceResolvedScenarioState from "./resolved_states/WorldChoiceResolvedScenarioState.svelte";
     import ScenarioEffectOutcome from "./ScenarioEffectOutcome.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
@@ -66,17 +64,6 @@
             />
         {:else if "noWorldEffect" in state.scenarioOutcome}
             <NoWorldEffectResolvedScenarioState />
-        {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
-            <ProportionalBidResolvedScenarioState
-                scenario={scenario.kind.proportionalBid}
-                outcome={state.scenarioOutcome.proportionalBid}
-                {towns}
-            />
-        {:else if "lottery" in state.scenarioOutcome}
-            <LotteryResolvedScenarioState
-                outcome={state.scenarioOutcome.lottery}
-                {towns}
-            />
         {:else if "worldChoice" in state.scenarioOutcome && "worldChoice" in scenario.kind && "discrete" in state.options.kind}
             <WorldChoiceResolvedScenarioState
                 outcome={state.scenarioOutcome.worldChoice}
@@ -113,22 +100,6 @@
                 />
             {/each}
         {/if}
-    {:else if "nat" in state.options.kind}
-        {#each state.options.kind.nat as natOption}
-            <div class="flex items-center justify-center">
-                <div>{natOption.value} {icon}</div>
-                <div class="flex">
-                    {#each natOption.chosenByTownIds as townId}
-                        <!-- TODO Fix this town not found hack -->
-                        <TownFlag
-                            town={towns.find((t) => t.id == townId) ||
-                                towns[-1]}
-                            size="xs"
-                        />
-                    {/each}
-                </div>
-            </div>
-        {/each}
     {:else if "text" in state.options.kind}
         {#each state.options.kind.text as textOption}
             <div class="flex items-center justify-center">

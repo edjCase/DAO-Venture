@@ -2,8 +2,6 @@
     import { Select } from "flowbite-svelte";
     import { ScenarioKindRequest } from "../../../ic-agent/declarations/main";
     import NoWorldEffectScenarioEditor from "./scenarios/NoWorldEffectScenarioEditor.svelte";
-    import ProportionalBidScenarioEditor from "./scenarios/ProportionalBidScenarioEditor.svelte";
-    import LotteryScenarioEditor from "./scenarios/LotteryScenarioEditor.svelte";
     import WorldChoiceScenarioEditor from "./scenarios/WorldChoiceScenarioEditor.svelte";
     import ThresholdScenarioEditor from "./scenarios/ThresholdScenarioEditor.svelte";
     import TextInputScenarioEditor from "./scenarios/TextInputScenarioEditor.svelte";
@@ -146,42 +144,6 @@
                     ],
                 },
             };
-        } else if (selectedType === "lottery") {
-            value = {
-                lottery: {
-                    minBid: BigInt(0),
-                    prize: {
-                        description: "+10 🪙",
-                        effect: {
-                            resource: {
-                                kind: { gold: null },
-                                town: { contextual: null },
-                                value: { flat: BigInt(10) },
-                            },
-                        },
-                    },
-                },
-            };
-        } else if (selectedType === "proportionalBid") {
-            value = {
-                proportionalBid: {
-                    prize: {
-                        description:
-                            "+1 random skill for 1 match to a random player on the town",
-                        kind: {
-                            skill: {
-                                duration: { matches: BigInt(1) },
-                                skill: { random: null },
-                                position: {
-                                    position: { random: null },
-                                    town: { contextual: null },
-                                },
-                            },
-                        },
-                        amount: BigInt(1),
-                    },
-                },
-            };
         } else if (selectedType === "textInput") {
             value = {
                 textInput: {
@@ -224,14 +186,6 @@
             value: "worldChoice",
         },
         {
-            name: "Lottery",
-            value: "lottery",
-        },
-        {
-            name: "Proportional Bid",
-            value: "proportionalBid",
-        },
-        {
             name: "Text Input",
             value: "textInput",
         },
@@ -247,10 +201,6 @@
     <ThresholdScenarioEditor bind:value={value.threshold} />
 {:else if "worldChoice" in value}
     <WorldChoiceScenarioEditor bind:value={value.worldChoice} />
-{:else if "lottery" in value}
-    <LotteryScenarioEditor bind:value={value.lottery} />
-{:else if "proportionalBid" in value}
-    <ProportionalBidScenarioEditor bind:value={value.proportionalBid} />
 {:else if "textInput" in value}
     <TextInputScenarioEditor bind:value={value.textInput} />
 {:else if "noWorldEffect" in value}

@@ -3,12 +3,10 @@
     import { Scenario, VotingData } from "../../ic-agent/declarations/main";
     import { User } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import LotteryInProgressScenarioState from "./in_progress_states/LotteryInProgressScenarioState.svelte";
     import WorldChoiceInProgressScenarioState from "./in_progress_states/WorldChoiceInProgressScenarioState.svelte";
     import ThresholdInProgressScenarioState from "./in_progress_states/ThresholdInProgressScenarioState.svelte";
     import NoWorldEffectInProgressScenarioState from "./in_progress_states/NoWorldEffectInProgressScenarioState.svelte";
     import { toJsonString } from "../../utils/StringUtil";
-    import ProportionalBidInProgressScenarioState from "./in_progress_states/ProportionalBidInProgressScenarioState.svelte";
     import { townStore } from "../../stores/TownStore";
     import { Town } from "../../ic-agent/declarations/main";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
@@ -34,7 +32,6 @@
     let votingData: VotingData | undefined;
 
     let selectedId: bigint | undefined;
-    let selectedNat: bigint | undefined;
     let selectedText: string | undefined;
 
     scenarioStore.subscribeVotingData((scenarioVotingData) => {
@@ -45,36 +42,22 @@
                 yourData.value[0] !== undefined && "id" in yourData?.value[0]
                     ? yourData?.value[0].id
                     : undefined;
-            selectedNat =
-                yourData?.value[0] !== undefined && "nat" in yourData?.value[0]
-                    ? yourData?.value[0].nat
-                    : undefined;
             selectedText =
                 yourData?.value[0] !== undefined && "text" in yourData?.value[0]
                     ? yourData?.value[0].text
                     : undefined;
         } else {
             selectedId = undefined;
-            selectedNat = undefined;
             selectedText = undefined;
         }
     });
     let proposeName = "";
-    let icon = "";
     $: {
-        if ("lottery" in scenario.kind) {
-            proposeName = "Ticket Count";
-            icon = "🎟️";
-        } else if ("proportionalBid" in scenario.kind) {
-            proposeName = "Bid";
-            icon = "🪙";
-        } else if ("textInput" in scenario.kind) {
+        if ("textInput" in scenario.kind) {
             proposeName = "Text";
-            icon = "📝";
         } else {
             proposeName =
                 "NOT IMPLEMENTED SCENARIO KIND: " + toJsonString(scenario.kind);
-            icon = "❓";
         }
     }
 </script>
@@ -102,13 +85,7 @@
             <Button>Become a Town co-owner</Button>
         {/if}
     {:else}
-        {#if "lottery" in scenario.kind}
-            <LotteryInProgressScenarioState scenario={scenario.kind.lottery} />
-        {:else if "proportionalBid" in scenario.kind}
-            <ProportionalBidInProgressScenarioState
-                scenario={scenario.kind.proportionalBid}
-            />
-        {:else if "worldChoice" in scenario.kind}
+        {#if "worldChoice" in scenario.kind}
             <WorldChoiceInProgressScenarioState />
         {:else if "threshold" in scenario.kind}
             <ThresholdInProgressScenarioState
@@ -123,21 +100,7 @@
         {:else}
             NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
         {/if}
-        {#if "nat" in yourData.townOptions}
-            <ScenarioOptionsRaw
-                scenarioId={scenario.id}
-                townId={yourData.townId}
-                kind={{
-                    nat: {
-                        options: yourData.townOptions.nat,
-                        vote: selectedNat,
-                        townResourceAmount: town?.resources.gold, // TODO add more resources to bid
-                        icon: icon,
-                    },
-                }}
-                {proposeName}
-            />
-        {:else if "text" in yourData.townOptions}
+        {#if "text" in yourData.townOptions}
             <ScenarioOptionsRaw
                 scenarioId={scenario.id}
                 townId={yourData.townId}

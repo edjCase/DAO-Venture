@@ -13,7 +13,6 @@ import Nat32 "mo:base/Nat32";
 import Timer "mo:base/Timer";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
-import Prelude "mo:base/Prelude";
 import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Order "mo:base/Order";
@@ -129,7 +128,6 @@ module {
 
     public type ScenarioTownOptions = {
         #discrete : [ScenarioTownOptionDiscrete];
-        #nat : [ScenarioTownOptionNat];
         #text : [ScenarioTownOptionText];
     };
 
@@ -141,8 +139,6 @@ module {
         currentVotingPower : Nat;
         requirements : [Scenario.Requirement];
     };
-
-    public type ScenarioTownOptionNat = ScenarioTownOptionRaw<Nat>;
 
     public type ScenarioTownOptionText = ScenarioTownOptionRaw<Text>;
 
@@ -164,8 +160,6 @@ module {
         #noWorldEffect : NoWorldEffectScenarioRequest;
         #threshold : ThresholdScenarioRequest;
         #worldChoice : WorldChoiceScenarioRequest;
-        #lottery : Scenario.LotteryScenario;
-        #proportionalBid : Scenario.ProportionalBidScenario;
         #textInput : Scenario.TextInputScenario;
     };
 
@@ -292,15 +286,6 @@ module {
                     if (not IterTools.any(option.allowedTownIds.vals(), func(townId : Nat) : Bool = townId == vote.townId)) {
                         return #err(#notEligible);
                     };
-                };
-                case (#lottery(lottery)) {
-                    let #nat(natValue) = value else return #err(#invalidValue);
-                    if (natValue < lottery.minBid) {
-                        return #err(#invalidValue);
-                    };
-                };
-                case (#proportionalBid(_)) {
-                    let #nat(_) = value else return #err(#invalidValue);
                 };
                 case (#textInput(_)) {
                     let #text(_) = value else return #err(#invalidValue);
@@ -458,8 +443,6 @@ module {
                     )
                     |> Iter.toArray(_);
                 });
-                case (#lottery(lottery)) #lottery(lottery);
-                case (#proportionalBid(proportionalBid)) #proportionalBid(proportionalBid);
                 case (#textInput(textInput)) #textInput(textInput);
             };
 
@@ -573,16 +556,6 @@ module {
                 case (#noWorldEffect(noWorldEffect)) mapDiscreteOptions(noWorldEffect.options);
                 case (#worldChoice(worldChoice)) mapDiscreteOptions(worldChoice.options);
                 case (#threshold(threshold)) mapDiscreteOptions(threshold.options);
-                case (#lottery(_) or #proportionalBid(_)) {
-                    let values = mapRawOptions<Nat>(
-                        townOptionVotingPower.keys(),
-                        func(v : Scenario.ScenarioOptionValue) : Nat = switch (v) {
-                            case (#nat(n)) n;
-                            case (_) Debug.trap("Expected nat value for lottery/proportional bid scenario, but got: " # debug_show (v));
-                        },
-                    );
-                    #nat(values);
-                };
                 case (#textInput(_)) {
                     let values = mapRawOptions<Text>(
                         townOptionVotingPower.keys(),
@@ -637,11 +610,6 @@ module {
                     |> Iter.map<ScenarioTownOptionDiscrete, (Scenario.ScenarioOptionValue, Nat)>(
                         _,
                         func(option : ScenarioTownOptionDiscrete) : (Scenario.ScenarioOptionValue, Nat) = (#id(option.id), option.currentVotingPower),
-                    );
-                    case (#nat(options)) options.vals()
-                    |> Iter.map<ScenarioTownOptionNat, (Scenario.ScenarioOptionValue, Nat)>(
-                        _,
-                        func(option : ScenarioTownOptionNat) : (Scenario.ScenarioOptionValue, Nat) = (#nat(option.value), option.currentVotingPower),
                     );
                     case (#text(options)) options.vals()
                     |> Iter.map<ScenarioTownOptionText, (Scenario.ScenarioOptionValue, Nat)>(
@@ -849,16 +817,6 @@ module {
                         townEffect = option.townEffect;
                     };
                 };
-                case (#lottery(_) or #proportionalBid(_)) {
-                    let #nat(natValue) = value else return null;
-                    switch (chargeTownResources(townChoice.townId, [{ kind = #gold; amount = natValue }])) {
-                        case (#err(#notEnoughResources(_))) return null;
-                        case (#ok) ?{
-                            value = value;
-                            townEffect = #noEffect;
-                        };
-                    };
-                };
                 case (#textInput(_)) {
                     // No validation needed
                     return ?{
@@ -1005,17 +963,6 @@ module {
                         },
                     );
                     #text(textValues);
-                };
-                case (#lottery(_) or #proportionalBid(_)) {
-                    let natValues = getValuesFromTownChoices<Nat>(
-                        validatedTownChoices,
-                        Nat.compare,
-                        func(value : Scenario.ScenarioOptionValue) : Nat = switch (value) {
-                            case (#nat(natValue)) natValue;
-                            case (_) Debug.trap("Invalid vote value for lottery or proportional bid. Expected #nat, got " # debug_show (value));
-                        },
-                    );
-                    #nat(natValues);
                 };
             };
             let scenarioOutcome : Scenario.ScenarioOutcome = buildScenarioOutcome(prng, scenario, validatedTownChoices, effectOutcomes);
@@ -1176,8 +1123,6 @@ module {
             errors.add("Scenario must have a description");
         };
         switch (scenario.kind) {
-            case (#lottery(_)) ();
-            case (#proportionalBid(_)) ();
             case (#textInput(_)) ();
             case (#noWorldEffect(noWorldEffect)) {
                 if (noWorldEffect.options.size() < 2) {
@@ -1286,7 +1231,7 @@ module {
         effectOutcomes : Buffer.Buffer<Scenario.EffectOutcome>,
     ) : Scenario.ScenarioOutcome {
         switch (scenario.kind) {
-            case (#noWorldEffect(_)) #noWorldEffect;
+            case (#noWorldEffect(_)) #noEffect;
             case (#worldChoice(worldChoice)) {
                 let worldOptionValue = getMajorityOption(prng, validatedTownChoices);
                 let worldOptionId : ?Nat = switch (worldOptionValue) {
@@ -1301,112 +1246,6 @@ module {
                 };
                 #worldChoice({
                     optionId = worldOptionId;
-                });
-            };
-            case (#lottery(lottery)) {
-                let weightedTickets : [(Nat, Float)] = validatedTownChoices.vals()
-                |> Iter.filter(
-                    _,
-                    func(validatedTownChoice : ValidatedTownChoice) : Bool {
-                        switch (validatedTownChoice.choice) {
-                            case (null) false;
-                            case (?townChoice) switch (townChoice.value) {
-                                case (#nat(natValue)) natValue > 0;
-                                case (_) Debug.trap("Invalid vote value for lottery. Expected #nat, got " # debug_show (townChoice.value));
-                            };
-                        };
-                    },
-                )
-                |> Iter.map<ValidatedTownChoice, (Nat, Float)>(
-                    _,
-                    func(validatedTownChoice : ValidatedTownChoice) : (Nat, Float) {
-                        let ticketCount = switch (validatedTownChoice.choice) {
-                            case (null) Prelude.unreachable();
-                            case (?townChoice) switch (townChoice.value) {
-                                case (#nat(natValue)) natValue;
-                                case (_) Prelude.unreachable();
-                            };
-                        };
-                        (validatedTownChoice.townId, Float.fromInt(ticketCount));
-                    },
-                )
-                |> Iter.toArray(_);
-
-                let winningTownId = if (weightedTickets.size() < 1) {
-                    null; // No towns have tickets
-                } else {
-                    ?prng.nextArrayElementWeighted(weightedTickets);
-                };
-                switch (winningTownId) {
-                    case (null) ();
-                    case (?id) {
-                        // Resolve the prize effect if there is a winner
-                        resolveEffectInternal(prng, #town(id), scenario, lottery.prize.effect, effectOutcomes);
-                    };
-                };
-                #lottery({
-                    winningTownId = winningTownId;
-                });
-            };
-            case (#proportionalBid(proportionalBid)) {
-                let totalBid = Array.foldLeft(
-                    validatedTownChoices,
-                    0,
-                    func(total : Nat, validateTownChoice : ValidatedTownChoice) : Nat {
-                        let bidValue = switch (validateTownChoice.choice) {
-                            case (null) 0;
-                            case (?townData) {
-                                switch (townData.value) {
-                                    case (#nat(natValue)) natValue;
-                                    case (_) Debug.trap("Invalid vote value for proportional bid. Expected #nat, got " # debug_show (townData.value));
-                                };
-                            };
-                        };
-                        total + bidValue;
-                    },
-                );
-                let winningBids = Buffer.Buffer<{ townId : Nat; proportion : Nat }>(0);
-                label f for (validateTownChoice in validatedTownChoices.vals()) {
-                    let townBidValue = switch (validateTownChoice.choice) {
-                        case (null) continue f;
-                        case (?townData) {
-                            switch (townData.value) {
-                                case (#nat(natValue)) natValue;
-                                case (_) Debug.trap("Invalid vote value for proportional bid. Expected #nat, got " # debug_show (townData.value));
-                            };
-                        };
-                    };
-                    if (townBidValue < 1) {
-                        continue f;
-                    };
-                    let percentOfPrize = Float.fromInt(townBidValue) / Float.fromInt(totalBid);
-                    let proportionalValue = Float.toInt(percentOfPrize * Float.fromInt(proportionalBid.prize.amount)); // Round down
-                    let proportionalValueNat = if (proportionalValue < 0) {
-                        0; // Cannot bid negative
-                    } else {
-                        Int.abs(proportionalValue);
-                    };
-
-                    winningBids.add({
-                        townId = validateTownChoice.townId;
-                        proportion = proportionalValueNat;
-                    });
-                    if (proportionalValue > 0) {
-
-                        let effect : Scenario.Effect = switch (proportionalBid.prize.kind) {
-
-                        };
-                        resolveEffectInternal(
-                            prng,
-                            #town(validateTownChoice.townId),
-                            scenario,
-                            effect,
-                            effectOutcomes,
-                        );
-                    };
-                };
-                #proportionalBid({
-                    bids = Buffer.toArray(winningBids);
                 });
             };
             case (#threshold(threshold)) {
@@ -1460,7 +1299,7 @@ module {
                 });
             };
             case (#textInput(_)) {
-                #noWorldEffect;
+                #noEffect;
             };
         };
     };
@@ -1528,7 +1367,6 @@ module {
     private func scearioOptionValueEqual(a : Scenario.ScenarioOptionValue, b : Scenario.ScenarioOptionValue) : Bool = a == b;
     private func scearioOptionValueHash(a : Scenario.ScenarioOptionValue) : Hash.Hash = switch (a) {
         case (#id(optionId)) Nat32.fromNat(optionId);
-        case (#nat(natValue)) Nat32.fromNat(natValue);
         case (#text(text)) Text.hash(text);
     };
 

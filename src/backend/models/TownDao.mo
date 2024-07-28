@@ -10,6 +10,7 @@ module {
         #updateJob : UpdateJobContent;
         #removeJob : RemoveJobContent;
         #increaseSize : IncreaseSizeContent;
+        #startExpedition : StartExpeditionContent;
     };
 
     public type IncreaseSizeContent = {};
@@ -42,5 +43,9 @@ module {
 
     public type ChangeTownMottoContent = {
         motto : Text;
+    };
+
+    public type StartExpeditionContent = {
+        locationId : Nat;
     };
 };

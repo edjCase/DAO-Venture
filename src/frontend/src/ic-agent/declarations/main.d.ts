@@ -23,16 +23,9 @@ export interface AssignUserToTownRequest {
   'townId' : bigint,
 }
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
-export type BenevolentDictatorState = { 'open' : null } |
-  { 'claimed' : Principal } |
-  { 'disabled' : null };
 export interface ChangeTownFlagContent { 'image' : FlagImage }
 export interface ChangeTownMottoContent { 'motto' : string }
 export interface ChangeTownNameContent { 'name' : string }
-export type ClaimBenevolentDictatorRoleError = { 'notOpenToClaim' : null } |
-  { 'notAuthenticated' : null };
-export type ClaimBenevolentDictatorRoleResult = { 'ok' : null } |
-  { 'err' : ClaimBenevolentDictatorRoleError };
 export type CreateTownProposalError = { 'townNotFound' : null } |
   { 'notAuthorized' : null } |
   { 'invalid' : Array<string> };
@@ -85,7 +78,7 @@ export type GetUserResult = { 'ok' : User } |
   { 'err' : GetUserError };
 export type GetUserStatsResult = { 'ok' : UserStats } |
   { 'err' : null };
-export type GetWorldError = {};
+export type GetWorldError = { 'worldNotInitialized' : null };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
@@ -113,9 +106,6 @@ export interface LocationResourceList {
   'wood' : WoodResourceInfo,
   'stone' : StoneResourceInfo,
 }
-export interface LotteryPrize { 'description' : string, 'effect' : Effect }
-export interface LotteryScenario { 'minBid' : bigint, 'prize' : LotteryPrize }
-export interface LotteryScenarioOutcome { 'winningTownId' : [] | [bigint] }
 export interface MotionContent { 'title' : string, 'description' : string }
 export interface MotionContent__1 { 'title' : string, 'description' : string }
 export interface NoWorldEffectScenario {
@@ -140,19 +130,6 @@ export interface PagedResult_2 {
   'offset' : bigint,
 }
 export interface Pixel { 'red' : number, 'blue' : number, 'green' : number }
-export interface ProportionalBidPrize {
-  'kind' : PropotionalBidPrizeKind,
-  'description' : string,
-  'amount' : bigint,
-}
-export interface ProportionalBidScenario { 'prize' : ProportionalBidPrize }
-export interface ProportionalBidScenarioOutcome {
-  'bids' : Array<ProportionalWinningBid>,
-}
-export interface ProportionalWinningBid {
-  'proportion' : bigint,
-  'townId' : bigint,
-}
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent__1,
@@ -165,6 +142,7 @@ export interface Proposal {
 }
 export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent } |
+  { 'startExpedition' : StartExpeditionContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
   { 'increaseSize' : IncreaseSizeContent } |
@@ -178,7 +156,6 @@ export type ProposalStatusLogEntry = {
   { 'rejected' : { 'time' : Time } } |
   { 'executing' : { 'time' : Time } } |
   { 'executed' : { 'time' : Time } };
-export type PropotionalBidPrizeKind = {};
 export type RangeRequirement = { 'above' : bigint } |
   { 'below' : bigint };
 export interface RemoveJobContent { 'jobId' : bigint }
@@ -226,18 +203,14 @@ export interface Scenario {
   'undecidedEffect' : Effect,
   'state' : ScenarioState,
 }
-export type ScenarioKind = { 'lottery' : LotteryScenario } |
-  { 'threshold' : ThresholdScenario } |
+export type ScenarioKind = { 'threshold' : ThresholdScenario } |
   { 'textInput' : TextInputScenario } |
   { 'noWorldEffect' : NoWorldEffectScenario } |
-  { 'worldChoice' : WorldChoiceScenario } |
-  { 'proportionalBid' : ProportionalBidScenario };
-export type ScenarioKindRequest = { 'lottery' : LotteryScenario } |
-  { 'threshold' : ThresholdScenarioRequest } |
+  { 'worldChoice' : WorldChoiceScenario };
+export type ScenarioKindRequest = { 'threshold' : ThresholdScenarioRequest } |
   { 'textInput' : TextInputScenario } |
   { 'noWorldEffect' : NoWorldEffectScenarioRequest } |
-  { 'worldChoice' : WorldChoiceScenarioRequest } |
-  { 'proportionalBid' : ProportionalBidScenario };
+  { 'worldChoice' : WorldChoiceScenarioRequest };
 export interface ScenarioOptionDiscrete {
   'title' : string,
   'description' : string,
@@ -254,14 +227,11 @@ export interface ScenarioOptionDiscrete__1 {
   'requirements' : Array<Requirement>,
 }
 export type ScenarioOptionValue = { 'id' : bigint } |
-  { 'nat' : bigint } |
   { 'text' : string };
-export type ScenarioOutcome = { 'lottery' : LotteryScenarioOutcome } |
+export type ScenarioOutcome = { 'noEffect' : null } |
   { 'threshold' : ThresholdScenarioOutcome } |
   { 'textInput' : TextInputScenarioOutcome } |
-  { 'noWorldEffect' : null } |
-  { 'worldChoice' : WorldChoiceScenarioOutcome } |
-  { 'proportionalBid' : ProportionalBidScenarioOutcome };
+  { 'worldChoice' : WorldChoiceScenarioOutcome };
 export interface ScenarioResolvedOptionDiscrete {
   'id' : bigint,
   'title' : string,
@@ -273,10 +243,6 @@ export interface ScenarioResolvedOptionDiscrete {
   'seenByTownIds' : Array<bigint>,
 }
 export interface ScenarioResolvedOptionRaw {
-  'value' : bigint,
-  'chosenByTownIds' : Array<bigint>,
-}
-export interface ScenarioResolvedOptionRaw_1 {
   'value' : string,
   'chosenByTownIds' : Array<bigint>,
 }
@@ -288,9 +254,8 @@ export interface ScenarioResolvedOptions {
   'kind' : ScenarioResolvedOptionsKind,
 }
 export type ScenarioResolvedOptionsKind = {
-    'nat' : Array<ScenarioResolvedOptionRaw>
+    'text' : Array<ScenarioResolvedOptionRaw>
   } |
-  { 'text' : Array<ScenarioResolvedOptionRaw_1> } |
   { 'discrete' : Array<ScenarioResolvedOptionDiscrete> };
 export type ScenarioState = { 'notStarted' : null } |
   { 'resolved' : ScenarioStateResolved } |
@@ -309,16 +274,11 @@ export interface ScenarioTownOptionDiscrete {
   'currentVotingPower' : bigint,
   'requirements' : Array<Requirement>,
 }
-export interface ScenarioTownOptionNat {
-  'value' : bigint,
-  'currentVotingPower' : bigint,
-}
 export interface ScenarioTownOptionText {
   'value' : string,
   'currentVotingPower' : bigint,
 }
-export type ScenarioTownOptions = { 'nat' : Array<ScenarioTownOptionNat> } |
-  { 'text' : Array<ScenarioTownOptionText> } |
+export type ScenarioTownOptions = { 'text' : Array<ScenarioTownOptionText> } |
   { 'discrete' : Array<ScenarioTownOptionDiscrete> };
 export interface ScenarioVote {
   'townOptions' : ScenarioTownOptions,
@@ -327,15 +287,13 @@ export interface ScenarioVote {
   'townId' : bigint,
   'townVotingPower' : TownVotingPower,
 }
-export type SetBenevolentDictatorStateError = { 'notAuthorized' : null };
-export type SetBenevolentDictatorStateResult = { 'ok' : null } |
-  { 'err' : SetBenevolentDictatorStateError };
 export interface Skill { 'proficiencyLevel' : bigint, 'techLevel' : bigint }
 export interface SkillList {
   'farming' : Skill,
   'mining' : Skill,
   'woodCutting' : Skill,
 }
+export interface StartExpeditionContent { 'locationId' : bigint }
 export interface StoneResourceInfo { 'difficulty' : bigint }
 export type TargetTown = { 'all' : null } |
   { 'contextual' : null } |
@@ -418,6 +376,7 @@ export interface TownProposal {
   'proposerId' : Principal,
 }
 export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent } |
+  { 'startExpedition' : StartExpeditionContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
   { 'increaseSize' : IncreaseSizeContent } |
@@ -494,6 +453,7 @@ export interface WoodResourceInfo { 'amount' : bigint }
 export interface World {
   'age' : bigint,
   'nextDayStartTime' : bigint,
+  'progenitor' : Principal,
   'locations' : Array<WorldLocation>,
 }
 export interface WorldChoiceScenario {
@@ -539,10 +499,6 @@ export interface WorldProposal {
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
   'assignUserToTown' : ActorMethod<[AssignUserToTownRequest], Result_1>,
-  'claimBenevolentDictatorRole' : ActorMethod<
-    [],
-    ClaimBenevolentDictatorRoleResult
-  >,
   'createTownProposal' : ActorMethod<
     [bigint, TownProposalContent],
     CreateTownProposalResult
@@ -551,7 +507,7 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
-  'getBenevolentDictatorState' : ActorMethod<[], BenevolentDictatorState>,
+  'getProgenitor' : ActorMethod<[], [] | [Principal]>,
   'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
@@ -572,10 +528,6 @@ export interface _SERVICE {
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], GetWorldProposalsResult>,
   'joinWorld' : ActorMethod<[], Result>,
-  'setBenevolentDictatorState' : ActorMethod<
-    [BenevolentDictatorState],
-    SetBenevolentDictatorStateResult
-  >,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
   'voteOnTownProposal' : ActorMethod<
     [bigint, VoteOnTownProposalRequest],

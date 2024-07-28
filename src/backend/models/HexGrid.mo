@@ -12,7 +12,7 @@ module {
         r : Int;
     };
 
-    public type CubeCoordinate = {
+    type CubeCoordinate = {
         x : Int;
         y : Int;
         z : Int;
@@ -20,62 +20,26 @@ module {
 
     public class HexGrid<T>() {
 
-        private func axialCoordEq(a : AxialCoordinate, b : AxialCoordinate) : Bool {
-            a == b;
-        };
-        private func axialCoordHash(coord : AxialCoordinate) : Hash.Hash {
-            var hash : Nat32 = 5381;
-            hash := ((hash << 5) +% hash) +% Int.hash(coord.q);
-            hash := ((hash << 5) +% hash) +% Int.hash(coord.r);
-            hash;
-        };
-
-        private var cells = HashMap.HashMap<AxialCoordinate, T>(1, axialCoordEq, axialCoordHash);
+        private var cells = HashMap.HashMap<AxialCoordinate, T>(1, axialCoordinateEq, axialCoordinateHash);
 
         private func cubeCoordEq(a : CubeCoordinate, b : CubeCoordinate) : Bool {
             a == b;
         };
 
-        public func getValue(coord : AxialCoordinate) : ?T {
-            cells.get(coord);
+        public func getValue(coordinate : AxialCoordinate) : ?T {
+            cells.get(coordinate);
         };
 
-        public func setValue(coord : AxialCoordinate, value : T) {
-            cells.put(coord, value);
+        public func setValue(coordinate : AxialCoordinate, value : T) {
+            cells.put(coordinate, value);
         };
 
-        public func removeValue(coord : AxialCoordinate) {
-            cells.delete(coord);
+        public func removeValue(coordinate : AxialCoordinate) {
+            cells.delete(coordinate);
         };
 
         public func getOccupiedCoords() : Iter.Iter<(AxialCoordinate, T)> {
             cells.entries();
-        };
-
-        private func distanceBetween(a : CubeCoordinate, b : CubeCoordinate) : Int {
-            (Int.abs(a.x - b.x) + Int.abs(a.y - b.y) + Int.abs(a.z - b.z)) / 2;
-        };
-
-        private func getNeighbors(coord : CubeCoordinate) : Iter.Iter<CubeCoordinate> {
-            [
-                { x = 1; y = -1; z = 0 },
-                { x = 1; y = 0; z = -1 },
-                { x = 0; y = 1; z = -1 },
-                { x = -1; y = 1; z = 0 },
-                { x = -1; y = 0; z = 1 },
-                { x = 0; y = -1; z = 1 },
-            ]
-            |> Iter.fromArray(_)
-            |> Iter.map(
-                _,
-                func(dir : CubeCoordinate) : CubeCoordinate {
-                    {
-                        x = coord.x + dir.x;
-                        y = coord.y + dir.y;
-                        z = coord.z + dir.z;
-                    };
-                },
-            );
         };
 
         public func findPath(start : AxialCoordinate, end : AxialCoordinate) : [AxialCoordinate] {
@@ -91,7 +55,7 @@ module {
                     neighbors,
                     current,
                     func(acc : CubeCoordinate, neighbor : CubeCoordinate) : CubeCoordinate {
-                        if (distanceBetween(neighbor, cubicEnd) < distanceBetween(acc, cubicEnd)) {
+                        if (distanceBetweenCube(neighbor, cubicEnd) < distanceBetweenCube(acc, cubicEnd)) {
                             neighbor;
                         } else {
                             acc;
@@ -110,10 +74,36 @@ module {
 
     };
 
+    private func axialCoordinateEq(a : AxialCoordinate, b : AxialCoordinate) : Bool {
+        a == b;
+    };
+    private func axialCoordinateHash(coordinate : AxialCoordinate) : Hash.Hash {
+        var hash : Nat32 = 5381;
+        hash := ((hash << 5) +% hash) +% Int.hash(coordinate.q);
+        hash := ((hash << 5) +% hash) +% Int.hash(coordinate.r);
+        hash;
+    };
+
+    public func distanceBetween(a : AxialCoordinate, b : AxialCoordinate) : Int {
+        distanceBetweenCube(axialToCube(a), axialToCube(b));
+    };
+
+    private func distanceBetweenCube(a : CubeCoordinate, b : CubeCoordinate) : Int {
+        (Int.abs(a.x - b.x) + Int.abs(a.y - b.y) + Int.abs(a.z - b.z)) / 2;
+    };
+
+    public func areAdjacent(a : AxialCoordinate, b : AxialCoordinate) : Bool {
+        areAdjacentCube(axialToCube(a), axialToCube(b));
+    };
+
+    private func areAdjacentCube(a : CubeCoordinate, b : CubeCoordinate) : Bool {
+        distanceBetweenCube(a, b) == 1;
+    };
+
     // Convert axial to cube coordinates
-    public func axialToCube(c : AxialCoordinate) : CubeCoordinate {
-        let x = c.q;
-        let z = c.r;
+    public func axialToCube(axial : AxialCoordinate) : CubeCoordinate {
+        let x = axial.q;
+        let z = axial.r;
         let y = -x - z;
         { x = x; y = y; z = z };
     };
@@ -134,7 +124,7 @@ module {
     ];
     // https://www.redblobgames.com/grids/hexagons/
 
-    public func indexToAxialCoord(index : Nat) : AxialCoordinate {
+    public func indexToAxialCoordinate(index : Nat) : AxialCoordinate {
         if (index == 0) {
             return { q = 0; r = 0 };
         };
@@ -156,5 +146,27 @@ module {
             q = firstSideNeighbor.q * firstSideJumps + secondSideNeighbor.q * secondSideJumps;
             r = firstSideNeighbor.r * firstSideJumps + secondSideNeighbor.r * secondSideJumps;
         };
+    };
+
+    private func getNeighbors(coordinate : CubeCoordinate) : Iter.Iter<CubeCoordinate> {
+        [
+            { x = 1; y = -1; z = 0 },
+            { x = 1; y = 0; z = -1 },
+            { x = 0; y = 1; z = -1 },
+            { x = -1; y = 1; z = 0 },
+            { x = -1; y = 0; z = 1 },
+            { x = 0; y = -1; z = 1 },
+        ]
+        |> Iter.fromArray(_)
+        |> Iter.map(
+            _,
+            func(dir : CubeCoordinate) : CubeCoordinate {
+                {
+                    x = coordinate.x + dir.x;
+                    y = coordinate.y + dir.y;
+                    z = coordinate.z + dir.z;
+                };
+            },
+        );
     };
 };

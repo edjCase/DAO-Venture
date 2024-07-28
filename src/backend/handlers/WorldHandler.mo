@@ -1,17 +1,28 @@
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
-import Buffer "mo:base/Buffer";
 import Result "mo:base/Result";
 import Prelude "mo:base/Prelude";
 import Int "mo:base/Int";
+import HashMap "mo:base/HashMap";
+import Nat "mo:base/Nat";
+import Nat32 "mo:base/Nat32";
 import World "../models/World";
+import IterTools "mo:itertools/Iter";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
+import WorldGenerator "../WorldGenerator";
+import HexGrid "../models/HexGrid";
+
 module {
+    type Prng = PseudoRandomX.PseudoRandomGenerator;
+
     public type StableData = {
         progenitor : Principal;
-        locations : [World.WorldLocationWithoutId];
+        locations : [World.WorldLocation];
     };
 
     type MutableWorldLocation = {
+        id : Nat;
+        coordinate : HexGrid.AxialCoordinate;
         var townId : ?Nat;
         resources : {
             gold : MutableGoldResourceInfo;
@@ -37,8 +48,10 @@ module {
         var difficulty : Nat;
     };
 
-    private func toMutableWorldLocation(location : World.WorldLocationWithoutId) : MutableWorldLocation {
+    private func toMutableWorldLocation(location : World.WorldLocation) : MutableWorldLocation {
         {
+            id = location.id;
+            coordinate = location.coordinate;
             var townId = location.townId;
             resources = {
                 gold = { var difficulty = location.resources.gold.difficulty };
@@ -49,8 +62,10 @@ module {
         };
     };
 
-    private func fromMutableWorldLocation(location : MutableWorldLocation) : World.WorldLocationWithoutId {
+    private func fromMutableWorldLocation(location : MutableWorldLocation) : World.WorldLocation {
         {
+            id = location.id;
+            coordinate = location.coordinate;
             townId = location.townId;
             resources = {
                 gold = { difficulty = location.resources.gold.difficulty };
@@ -64,18 +79,18 @@ module {
     public class Handler(stableData : StableData) {
         public let progenitor = stableData.progenitor;
 
-        var locations = stableData.locations.vals()
-        |> Iter.map<World.WorldLocationWithoutId, MutableWorldLocation>(
+        let locations = stableData.locations.vals()
+        |> Iter.map<World.WorldLocation, (Nat, MutableWorldLocation)>(
             _,
-            toMutableWorldLocation,
+            func(a) = (a.id, toMutableWorldLocation(a)),
         )
-        |> Buffer.fromIter<MutableWorldLocation>(_);
+        |> HashMap.fromIter<Nat, MutableWorldLocation>(_, stableData.locations.size(), Nat.equal, Nat32.fromNat);
 
         public func toStableData() : StableData {
             {
                 progenitor = progenitor;
                 locations = locations.vals()
-                |> Iter.map<MutableWorldLocation, World.WorldLocationWithoutId>(
+                |> Iter.map<MutableWorldLocation, World.WorldLocation>(
                     _,
                     fromMutableWorldLocation,
                 )
@@ -83,13 +98,27 @@ module {
             };
         };
 
-        public func getLocations() : [World.WorldLocationWithoutId] {
-            return locations.vals()
-            |> Iter.map<MutableWorldLocation, World.WorldLocationWithoutId>(
+        public func exploreLocation(prng : Prng, locationId : Nat) : Result.Result<World.WorldLocation, { #locationAlreadyExplored; #noAdjacentLocationExplored }> {
+            let null = locations.get(locationId) else return #err(#locationAlreadyExplored);
+            let locationCoordinate = HexGrid.indexToAxialCoordinate(locationId);
+            let anyAdjacentExplored = locations.keys()
+            |> Iter.map<Nat, HexGrid.AxialCoordinate>(_, HexGrid.indexToAxialCoordinate)
+            |> IterTools.any<HexGrid.AxialCoordinate>(_, func(c) = HexGrid.areAdjacent(locationCoordinate, c));
+            if (not anyAdjacentExplored) {
+                return #err(#noAdjacentLocationExplored);
+            };
+            let newLocation = WorldGenerator.generateLocation(prng, locationId);
+
+            #ok(newLocation);
+        };
+
+        public func getLocations() : HashMap.HashMap<Nat, World.WorldLocation> {
+            return locations.entries()
+            |> Iter.map<(Nat, MutableWorldLocation), (Nat, World.WorldLocation)>(
                 _,
-                fromMutableWorldLocation,
+                func(a) = (a.0, fromMutableWorldLocation(a.1)),
             )
-            |> Iter.toArray(_);
+            |> HashMap.fromIter<Nat, World.WorldLocation>(_, locations.size(), Nat.equal, Nat32.fromNat);
         };
 
         public func addResource(
@@ -110,7 +139,7 @@ module {
             delta : Int,
             allowBelowZero : Bool,
         ) : Result.Result<Nat, { #locationNotFound; #notEnoughResource : { missing : Nat } }> {
-            let ?location = locations.getOpt(locationId) else return #err(#locationNotFound);
+            let ?location = locations.get(locationId) else return #err(#locationNotFound);
             let currentValue = switch (kind) {
                 case (#food) location.resources.food.amount;
                 case (#wood) location.resources.wood.amount;
@@ -137,6 +166,15 @@ module {
                 case (#stone) location.resources.stone.difficulty := newAmountOrDifficulty;
             };
             #ok(newAmountOrDifficulty);
+        };
+
+        public func addTown(locationId : Nat, townId : Nat) : Result.Result<(), { #locationNotFound; #otherTownAtLocation : Nat }> {
+            let ?location = locations.get(locationId) else return #err(#locationNotFound);
+            switch (location.townId) {
+                case (?townId) return #err(#otherTownAtLocation(townId));
+                case (null) location.townId := ?townId;
+            };
+            #ok;
         };
 
     };

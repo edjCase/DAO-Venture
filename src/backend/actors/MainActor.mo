@@ -22,6 +22,7 @@ import Timer "mo:base/Timer";
 import Nat8 "mo:base/Nat8";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
+import Error "mo:base/Error";
 import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
@@ -30,7 +31,6 @@ import Town "../models/Town";
 import Flag "../models/Flag";
 import TimeUtil "../TimeUtil";
 import World "../models/World";
-import HexGrid "../models/HexGrid";
 import JobCoordinator "../JobCoordinator";
 import WorldGenerator "../WorldGenerator";
 import WorldHandler "../handlers/WorldHandler";
@@ -239,6 +239,26 @@ actor MainActor : Types.Actor {
                         case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
                     };
                     #err("Failed to increase size:" # error);
+                };
+                case (#startExpedition(startExpedition)) {
+                    // TODO chance of failure/reward
+
+                    let error = switch (worldHandlerOrNull) {
+                        case (null) "World not initialized";
+                        case (?worldHandler) {
+                            let prng = try {
+                                PseudoRandomX.fromBlob(await Random.blob()); // TODO need to make transaction?
+                            } catch (e) {
+                                return #err("Failed to create PRNG: " # Error.message(e));
+                            };
+                            switch (worldHandler.exploreLocation(prng, startExpedition.locationId)) {
+                                case (#ok(_)) return #ok;
+                                case (#err(#locationAlreadyExplored)) "Location already explored";
+                                case (#err(#noAdjacentLocationExplored)) "No adjacent location explored";
+                            };
+                        };
+                    };
+                    #err("Failed to start expedition:" # error);
                 };
             };
         };
@@ -449,21 +469,13 @@ actor MainActor : Types.Actor {
 
     public shared query func getWorld() : async Types.GetWorldResult {
         let ?worldHandler = worldHandlerOrNull else return #err(#worldNotInitialized);
-        let calcuatedWorldLocations = worldHandler.getLocations().vals()
-        |> IterTools.mapEntries<World.WorldLocationWithoutId, World.WorldLocation>(
-            _,
-            func(i : Nat, location : World.WorldLocationWithoutId) : World.WorldLocation = {
-                location with
-                id = i;
-                coordinate = HexGrid.indexToAxialCoord(i);
-            },
-        )
-        |> Iter.toArray(_);
+        let worldLocations = worldHandler.getLocations();
         let { days; nextDayStartTime } = TimeUtil.getAge(genesisTime);
         #ok({
+            progenitor = worldHandler.progenitor;
             age = days;
             nextDayStartTime = nextDayStartTime;
-            locations = calcuatedWorldLocations;
+            locations = worldLocations.vals() |> Iter.toArray(_);
         });
     };
 
@@ -508,11 +520,12 @@ actor MainActor : Types.Actor {
     private func buildNewWorld(progenitor : Principal) : async* Nat {
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromBlob(seedBlob);
-        let newWorld = {
+        let newWorld : WorldHandler.StableData = {
             progenitor = progenitor;
             locations = WorldGenerator.generateWorld(prng);
         };
-        worldHandlerOrNull := ?WorldHandler.Handler(newWorld);
+        let worldHandler = WorldHandler.Handler(newWorld);
+        worldHandlerOrNull := ?worldHandler;
 
         // TODO better initialization
         let height : Nat = 12;
@@ -563,6 +576,12 @@ actor MainActor : Types.Actor {
             townId,
             townDao,
         );
+        let locationId = 0; // Start in middle
+        switch (worldHandler.addTown(locationId, townId)) {
+            case (#ok) ();
+            case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
+            case (#err(#otherTownAtLocation(townId))) Debug.trap("Town '" #Nat.toText(townId) # "' already at location: " # Nat.toText(locationId));
+        };
         townId;
     };
 
