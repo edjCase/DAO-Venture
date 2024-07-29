@@ -4,6 +4,7 @@ import Int "mo:base/Int";
 import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Float "mo:base/Float";
+import Nat32 "mo:base/Nat32";
 import IterTools "mo:itertools/Iter";
 
 module {
@@ -79,8 +80,8 @@ module {
     };
     private func axialCoordinateHash(coordinate : AxialCoordinate) : Hash.Hash {
         var hash : Nat32 = 5381;
-        hash := ((hash << 5) +% hash) +% Int.hash(coordinate.q);
-        hash := ((hash << 5) +% hash) +% Int.hash(coordinate.r);
+        hash := ((hash << 5) +% hash) +% Nat32.fromNat(Int.abs(coordinate.q));
+        hash := ((hash << 5) +% hash) +% Nat32.fromNat(Int.abs(coordinate.r));
         hash;
     };
 
