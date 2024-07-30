@@ -13,20 +13,19 @@
     import ScenarioOptionsRaw from "./ScenarioOptionsRaw.svelte";
     import TownFlag from "../town/TownFlag.svelte";
     import TextInputInProgressScenarioState from "./in_progress_states/TextInputInProgressScenarioState.svelte";
+    import { Link } from "svelte-routing";
 
     export let scenario: Scenario;
     export let userContext: User | undefined;
 
     let townId: bigint | undefined;
     let town: Town | undefined;
-    let isOwner: boolean = false;
 
     $: towns = $townStore;
 
     $: {
-        townId = userContext?.residency[0]?.townId;
+        townId = userContext?.townId;
         town = towns?.find((town) => town.id === townId);
-        isOwner = userContext?.residency[0] !== undefined;
     }
 
     let votingData: VotingData | undefined;
@@ -80,9 +79,9 @@
     {@const yourData = votingData.yourData[0]}
     {#if yourData === undefined}
         Ineligible to vote
-        {#if !userContext || !isOwner}
+        {#if !userContext}
             <div>Want to participate in scenarios?</div>
-            <Button>Become a Town co-owner</Button>
+            <Link to="my-town"><Button>Join the World</Button></Link>
         {/if}
     {:else}
         {#if "worldChoice" in scenario.kind}

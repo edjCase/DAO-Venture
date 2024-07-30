@@ -62,9 +62,6 @@ export type GetScenarioVoteResult = { 'ok' : VotingData } |
 export type GetScenariosResult = { 'ok' : Array<Scenario> };
 export interface GetTopUsersRequest { 'count' : bigint, 'offset' : bigint }
 export type GetTopUsersResult = { 'ok' : PagedResult_2 };
-export type GetTownOwnersRequest = { 'all' : null } |
-  { 'town' : bigint };
-export type GetTownOwnersResult = { 'ok' : Array<UserVotingInfo> };
 export type GetTownProposalError = { 'proposalNotFound' : null } |
   { 'townNotFound' : null };
 export type GetTownProposalResult = { 'ok' : TownProposal } |
@@ -78,6 +75,9 @@ export type GetUserResult = { 'ok' : User } |
   { 'err' : GetUserError };
 export type GetUserStatsResult = { 'ok' : UserStats } |
   { 'err' : null };
+export type GetUsersRequest = { 'all' : null } |
+  { 'town' : bigint };
+export type GetUsersResult = { 'ok' : Array<User> };
 export type GetWorldError = { 'worldNotInitialized' : null };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
@@ -363,6 +363,7 @@ export interface Town {
   'skills' : SkillList,
   'upkeepCondition' : bigint,
   'population' : bigint,
+  'populationMax' : bigint,
   'health' : bigint,
 }
 export interface TownProposal {
@@ -393,20 +394,15 @@ export interface TownVotingPower { 'total' : bigint, 'voted' : bigint }
 export interface UpdateJobContent { 'job' : Job, 'jobId' : bigint }
 export interface User {
   'id' : Principal,
-  'residency' : [] | [UserResidency],
-  'gold' : bigint,
+  'inWorldSince' : Time,
+  'atTownSince' : Time,
   'level' : bigint,
+  'townId' : bigint,
 }
-export interface UserResidency { 'votingPower' : bigint, 'townId' : bigint }
 export interface UserStats {
   'towns' : Array<TownStats>,
   'totalUserLevel' : bigint,
   'userCount' : bigint,
-}
-export interface UserVotingInfo {
-  'id' : Principal,
-  'votingPower' : bigint,
-  'townId' : bigint,
 }
 export interface Vote { 'value' : [] | [boolean], 'votingPower' : bigint }
 export type VoteOnScenarioError = { 'votingNotOpen' : null } |
@@ -515,7 +511,6 @@ export interface _SERVICE {
   >,
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getTopUsers' : ActorMethod<[GetTopUsersRequest], GetTopUsersResult>,
-  'getTownOwners' : ActorMethod<[GetTownOwnersRequest], GetTownOwnersResult>,
   'getTownProposal' : ActorMethod<[bigint, bigint], GetTownProposalResult>,
   'getTownProposals' : ActorMethod<
     [bigint, bigint, bigint],
@@ -524,6 +519,7 @@ export interface _SERVICE {
   'getTowns' : ActorMethod<[], Array<Town>>,
   'getUser' : ActorMethod<[Principal], GetUserResult>,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
+  'getUsers' : ActorMethod<[GetUsersRequest], GetUsersResult>,
   'getWorld' : ActorMethod<[], GetWorldResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], GetWorldProposalsResult>,

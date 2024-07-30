@@ -23,13 +23,7 @@ function createUserStore() {
             currentUser.set(result.ok);
         }
         else if ('err' in result && 'notFound' in result.err) {
-            let emptyUser: User = {
-                id: currentUserId,
-                level: BigInt(0),
-                gold: BigInt(0),
-                residency: []
-            };
-            currentUser.set(emptyUser);
+            currentUser.set(undefined);
         } else {
             throw new Error("Failed to get user: " + currentUserId + " " + toJsonString(result));
         }

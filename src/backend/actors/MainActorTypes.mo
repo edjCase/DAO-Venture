@@ -36,7 +36,7 @@ module {
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
-        getTownOwners : query (request : GetTownOwnersRequest) -> async GetTownOwnersResult;
+        getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
         assignUserToTown : (request : AssignUserToTownRequest) -> async Result.Result<(), AssignUserToTownError>;
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
@@ -233,13 +233,13 @@ module {
 
     public type GetUserStatsResult = Result.Result<UserHandler.UserStats, ()>;
 
-    public type GetTownOwnersRequest = {
+    public type GetUsersRequest = {
         #town : Nat;
         #all;
     };
 
-    public type GetTownOwnersResult = {
-        #ok : [UserHandler.UserVotingInfo];
+    public type GetUsersResult = {
+        #ok : [UserHandler.User];
     };
 
     public type AssignUserToTownRequest = {

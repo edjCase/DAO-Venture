@@ -7,20 +7,17 @@ import Nat32 "mo:base/Nat32";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Result "mo:base/Result";
+import Time "mo:base/Time";
 import CommonTypes "../CommonTypes";
 
 module {
 
     public type User = {
         id : Principal;
-        residency : ?UserResidency;
-        level : Nat;
-        gold : Nat;
-    };
-
-    public type UserResidency = {
         townId : Nat;
-        votingPower : Nat;
+        atTownSince : Time.Time;
+        inWorldSince : Time.Time;
+        level : Nat;
     };
 
     public type UserStats = {
@@ -47,9 +44,10 @@ module {
 
     type MutableUser = {
         id : Principal;
-        var residency : ?UserResidency;
+        var townId : Nat;
+        var atTownSince : Time.Time;
+        inWorldSince : Time.Time;
         var level : Nat;
-        var gold : Nat;
     };
 
     public class UserHandler(stableData : StableData) {
@@ -79,32 +77,26 @@ module {
             };
             let townStats = HashMap.HashMap<Nat, TownStats>(6, Nat.equal, Nat32.fromNat);
             for (user in users.vals()) {
-                switch (user.residency) {
-                    case (?residency) {
-                        let stats : TownStats = switch (townStats.get(residency.townId)) {
-                            case (?stats) stats;
-                            case (null) {
-                                {
-                                    id = residency.townId;
-                                    totalUserLevel = 0;
-                                    userCount = 0;
-                                };
-                            };
+                let stats : TownStats = switch (townStats.get(user.townId)) {
+                    case (?stats) stats;
+                    case (null) {
+                        {
+                            id = user.townId;
+                            totalUserLevel = 0;
+                            userCount = 0;
                         };
-
-                        let newStats : TownStats = {
-                            id = residency.townId;
-                            totalUserLevel = stats.totalUserLevel + user.level;
-                            userCount = stats.userCount + 1;
-                        };
-                        townStats.put(residency.townId, newStats);
-
-                        worldStats.totalUserLevel += user.level;
-                        worldStats.userCount += 1;
-
                     };
-                    case (null) ();
                 };
+
+                let newStats : TownStats = {
+                    id = user.townId;
+                    totalUserLevel = stats.totalUserLevel + user.level;
+                    userCount = stats.userCount + 1;
+                };
+                townStats.put(user.townId, newStats);
+
+                worldStats.totalUserLevel += user.level;
+                worldStats.userCount += 1;
             };
             {
                 totalUserLevel = worldStats.totalUserLevel;
@@ -130,58 +122,36 @@ module {
             };
         };
 
-        public func getTownOwners(townId : ?Nat) : [UserVotingInfo] {
-            let getMatchingTownResidency = switch (townId) {
-                case (?tId) func(residency : UserResidency) : ?Nat {
-                    // Filter to only the town we want
-                    if (residency.townId == tId) {
-                        return ?tId;
-                    };
-                    return null;
-                };
-                case (null) func(residency : UserResidency) : ?Nat {
-                    ?residency.townId;
-                };
-            };
-
-            let owners = users.vals()
+        public func getByTownId(townId : Nat) : [User] {
+            users.vals()
             |> IterTools.mapFilter(
                 _,
-                func(user : MutableUser) : ?UserVotingInfo {
-                    let ?residency = user.residency else return null;
-                    switch (getMatchingTownResidency(residency)) {
-                        case (?townId) {
-                            ?{
-                                id = user.id;
-                                townId = townId;
-                                votingPower = residency.votingPower;
-                            };
-                        };
-                        case (null) {
-                            return null;
-                        };
+                func(user : MutableUser) : ?User {
+                    if (user.townId == townId) {
+                        ?fromMutableUser(user);
+                    } else {
+                        null;
                     };
                 },
             )
             |> Iter.toArray(_);
-            owners;
         };
 
         public func addWorldMember(
             userId : Principal,
             townId : Nat,
-            votingPower : Nat,
         ) : Result.Result<(), { #alreadyWorldMember }> {
-            let user = getOrCreateUser(userId);
-            switch (user.residency) {
-                case (?_) {
-                    return #err(#alreadyWorldMember);
-                };
+            switch (users.get(userId)) {
+                case (?_) #err(#alreadyWorldMember);
                 case (null) {
-                    user.residency := ?{
-                        townId = townId;
-                        votingPower = votingPower;
+                    let newUser : MutableUser = {
+                        id = userId;
+                        var townId = townId;
+                        var atTownSince = Time.now();
+                        inWorldSince = Time.now();
+                        var level = 0;
                     };
+                    users.put(userId, newUser);
                     #ok;
                 };
             };
@@ -191,20 +161,10 @@ module {
             userId : Principal,
             townId : Nat,
         ) : Result.Result<(), { #notWorldMember }> {
-            let user = getOrCreateUser(userId);
-            switch (user.residency) {
-                case (?residency) {
-                    user.residency := ?{
-                        residency with
-                        townId = townId;
-                    };
-                    #ok;
-                };
-                case (null) {
-                    // Add as owner
-                    return #err(#notWorldMember);
-                };
-            };
+            let ?user = users.get(userId) else return #err(#notWorldMember);
+            user.townId := townId;
+            user.atTownSince := Time.now();
+            #ok;
         };
 
         public func awardLevels(
@@ -222,39 +182,25 @@ module {
             #ok;
         };
 
-        private func getOrCreateUser(userId : Principal) : MutableUser {
-            switch (users.get(userId)) {
-                case (?userInfo) userInfo;
-                case (null) {
-                    let newUser : MutableUser = {
-                        id = userId;
-                        var residency = null;
-                        var level = 0;
-                        var gold = 0;
-                    };
-                    users.put(userId, newUser);
-                    newUser;
-                };
-            };
-        };
-
     };
 
     private func toMutableUser(user : User) : MutableUser {
         {
             id = user.id;
-            var residency = user.residency;
+            var townId = user.townId;
+            var atTownSince = user.atTownSince;
+            inWorldSince = user.inWorldSince;
             var level = user.level;
-            var gold = user.gold;
         };
     };
 
     private func fromMutableUser(user : MutableUser) : User {
         {
             id = user.id;
-            residency = user.residency;
+            townId = user.townId;
+            atTownSince = user.atTownSince;
+            inWorldSince = user.inWorldSince;
             level = user.level;
-            gold = user.gold;
         };
     };
 

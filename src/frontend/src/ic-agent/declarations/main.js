@@ -382,15 +382,12 @@ export const idlFactory = ({ IDL }) => {
     'count' : IDL.Nat,
     'offset' : IDL.Nat,
   });
-  const UserResidency = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'townId' : IDL.Nat,
-  });
   const User = IDL.Record({
     'id' : IDL.Principal,
-    'residency' : IDL.Opt(UserResidency),
-    'gold' : IDL.Nat,
+    'inWorldSince' : Time,
+    'atTownSince' : Time,
     'level' : IDL.Nat,
+    'townId' : IDL.Nat,
   });
   const PagedResult_2 = IDL.Record({
     'data' : IDL.Vec(User),
@@ -398,16 +395,6 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const GetTopUsersResult = IDL.Variant({ 'ok' : PagedResult_2 });
-  const GetTownOwnersRequest = IDL.Variant({
-    'all' : IDL.Null,
-    'town' : IDL.Nat,
-  });
-  const UserVotingInfo = IDL.Record({
-    'id' : IDL.Principal,
-    'votingPower' : IDL.Nat,
-    'townId' : IDL.Nat,
-  });
-  const GetTownOwnersResult = IDL.Variant({ 'ok' : IDL.Vec(UserVotingInfo) });
   const ProposalContent__1 = IDL.Variant({
     'changeFlag' : ChangeTownFlagContent,
     'startExpedition' : StartExpeditionContent,
@@ -495,6 +482,7 @@ export const idlFactory = ({ IDL }) => {
     'skills' : SkillList,
     'upkeepCondition' : IDL.Nat,
     'population' : IDL.Nat,
+    'populationMax' : IDL.Nat,
     'health' : IDL.Nat,
   });
   const GetUserError = IDL.Variant({
@@ -516,6 +504,8 @@ export const idlFactory = ({ IDL }) => {
     'ok' : UserStats,
     'err' : IDL.Null,
   });
+  const GetUsersRequest = IDL.Variant({ 'all' : IDL.Null, 'town' : IDL.Nat });
+  const GetUsersResult = IDL.Variant({ 'ok' : IDL.Vec(User) });
   const FoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
   const GoldResourceInfo = IDL.Record({ 'difficulty' : IDL.Nat });
   const WoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
@@ -638,11 +628,6 @@ export const idlFactory = ({ IDL }) => {
         [GetTopUsersResult],
         ['query'],
       ),
-    'getTownOwners' : IDL.Func(
-        [GetTownOwnersRequest],
-        [GetTownOwnersResult],
-        ['query'],
-      ),
     'getTownProposal' : IDL.Func(
         [IDL.Nat, IDL.Nat],
         [GetTownProposalResult],
@@ -656,6 +641,7 @@ export const idlFactory = ({ IDL }) => {
     'getTowns' : IDL.Func([], [IDL.Vec(Town)], ['query']),
     'getUser' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
     'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
+    'getUsers' : IDL.Func([GetUsersRequest], [GetUsersResult], ['query']),
     'getWorld' : IDL.Func([], [GetWorldResult], ['query']),
     'getWorldProposal' : IDL.Func(
         [IDL.Nat],

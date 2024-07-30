@@ -5,12 +5,12 @@
     import UserPseudonym from "./UserPseudonym.svelte";
     import TownFlag from "../town/TownFlag.svelte";
     import UserIdCopyButton from "./UserIdCopyButton.svelte";
+    import { nanosecondsToDate } from "../../utils/DateUtils";
 
     $: user = $userStore;
     $: towns = $townStore;
 
-    $: town = towns?.find((t) => t.id == user?.residency[0]?.townId);
-    $: coOwner = user?.residency[0] !== undefined;
+    $: town = towns?.find((t) => t.id == user?.townId);
 </script>
 
 <div class="bg-gray-800 p-4">
@@ -39,11 +39,14 @@
                     <TownFlag {town} size="md" />
                     <div class="text-center">{town.name}</div>
                     <div class="text-center text-sm text-gray-400">
-                        {coOwner ? "Co-Owner" : "Fan"}
+                        Joined Town: {nanosecondsToDate(user.atTownSince)}
                     </div>
                 {:else}
                     <div>None</div>
                 {/if}
+                <div>
+                    Joined World: {nanosecondsToDate(user.inWorldSince)}
+                </div>
             </div>
             <div class="mb-4">
                 <div class="font-bold text-xl mb-2">Level - {user.level}</div>

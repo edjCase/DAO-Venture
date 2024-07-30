@@ -23,6 +23,7 @@ import Nat8 "mo:base/Nat8";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Error "mo:base/Error";
+import Option "mo:base/Option";
 import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
@@ -366,8 +367,7 @@ actor MainActor : Types.Actor {
                 |> prng.nextArrayElement(_);
             };
         };
-        let votingPower = 1; // TODO get voting power from token
-        userHandler.addWorldMember(caller, randomTownId, votingPower);
+        userHandler.addWorldMember(caller, randomTownId);
     };
 
     public query func getProgenitor() : async ?Principal {
@@ -387,9 +387,17 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func createWorldProposal(request : Types.CreateWorldProposalRequest) : async Types.CreateWorldProposalResult {
-        let members = userHandler.getTownOwners(null);
-        let isAMember = members
-        |> Iter.fromArray(_)
+        let members = userHandler.getAll().vals()
+        |> Iter.map(
+            _,
+            func(user : UserHandler.User) : ProposalTypes.Member = {
+                id = user.id;
+                votingPower = calculateVotingPower(user);
+            },
+        )
+        |> Iter.toArray(_);
+
+        let isAMember = members.vals()
         |> Iter.filter(
             _,
             func(member : ProposalTypes.Member) : Bool = member.id == caller,
@@ -407,14 +415,12 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func createTownProposal(townId : Nat, content : Types.TownProposalContent) : async Types.CreateTownProposalResult {
-        let members = userHandler.getTownOwners(?townId);
-        let isAMember = members
-        |> Iter.fromArray(_)
-        |> Iter.filter(
+        let members = buildVotingMembers(?townId);
+        let isAMember = members.vals()
+        |> IterTools.any(
             _,
             func(member : ProposalTypes.Member) : Bool = member.id == caller,
-        )
-        |> _.next() != null;
+        );
         if (not isAMember) {
             return #err(#notAuthorized);
         };
@@ -454,7 +460,7 @@ actor MainActor : Types.Actor {
         if (not isWorldOrProgenitor(caller)) {
             return #err(#notAuthorized);
         };
-        let members = userHandler.getTownOwners(null);
+        let members = buildVotingMembers(null);
         let towns = townsHandler.getAll();
         scenarioHandler.add<system>(scenario, members, towns);
     };
@@ -488,6 +494,14 @@ actor MainActor : Types.Actor {
         #ok(user);
     };
 
+    public shared query func getUsers(request : Types.GetUsersRequest) : async Types.GetUsersResult {
+        let users = switch (request) {
+            case (#all) userHandler.getAll();
+            case (#town(townId)) userHandler.getByTownId(townId);
+        };
+        #ok(users);
+    };
+
     public shared query func getUserStats() : async Types.GetUserStatsResult {
         let stats = userHandler.getStats();
         #ok(stats);
@@ -498,15 +512,6 @@ actor MainActor : Types.Actor {
         #ok(result);
     };
 
-    public shared query func getTownOwners(request : Types.GetTownOwnersRequest) : async Types.GetTownOwnersResult {
-        let townId = switch (request) {
-            case (#town(townId)) ?townId;
-            case (#all) null;
-        };
-        let owners = userHandler.getTownOwners(townId);
-        #ok(owners);
-    };
-
     public shared ({ caller }) func assignUserToTown(request : Types.AssignUserToTownRequest) : async Result.Result<(), Types.AssignUserToTownError> {
         if (not isWorldOrProgenitor(caller)) {
             return #err(#notAuthorized);
@@ -515,7 +520,63 @@ actor MainActor : Types.Actor {
         userHandler.changeTown(request.userId, request.townId);
     };
 
+    type VotingMemberInfo = {
+        id : Principal;
+        townId : Nat;
+        votingPower : Nat;
+    };
+
     // Private Methods ---------------------------------------------------------
+    private func buildVotingMembers(townId : ?Nat) : [VotingMemberInfo] {
+        let users = switch (townId) {
+            case (?id) userHandler.getByTownId(id);
+            case (null) userHandler.getAll();
+        };
+        users.vals()
+        |> Iter.map<UserHandler.User, VotingMemberInfo>(
+            _,
+            func(user : UserHandler.User) : VotingMemberInfo = {
+                id = user.id;
+                townId = user.townId;
+                votingPower = calculateVotingPower(user);
+            },
+        )
+        |> Iter.toArray(_);
+    };
+
+    private func calculateVotingPower(user : UserHandler.User) : Nat {
+        let basePower : Nat = 10;
+        let levelMultiplier : Nat = 5;
+        let timeMultiplier : Nat = 2;
+        let maxTimePower : Nat = 100;
+        let timeCap : Nat = 30 * 24 * 60 * 60 * 1_000_000_000; // 30 days in nanoseconds
+
+        // Power from level
+        let powerFromLevel : Nat = user.level * levelMultiplier;
+
+        let timeAtTown : Nat = Int.abs(Time.now() - user.atTownSince);
+
+        // Power from time in town
+        let townTime : Nat = Nat.min(timeAtTown, timeCap);
+        let townTimePower : Nat = Int.abs(
+            Float.toInt(
+                Float.log(Float.fromInt(townTime + 1)) / Float.log(Float.fromInt(timeCap)) * Float.fromInt(maxTimePower)
+            )
+        );
+
+        let timeInWorld : Nat = Int.abs(Time.now() - user.inWorldSince);
+
+        // Power from time in world
+        let worldTime : Nat = Nat.min(timeInWorld, timeCap);
+        let worldTimePower : Nat = Int.abs(
+            Float.toInt(
+                Float.log(Float.fromInt(worldTime + 1)) / Float.log(Float.fromInt(timeCap)) * Float.fromInt(maxTimePower)
+            )
+        );
+
+        // Combine powers
+        basePower + powerFromLevel + (townTimePower + worldTimePower) * timeMultiplier;
+    };
 
     private func buildNewWorld(progenitor : Principal) : async* Nat {
         let seedBlob = await Random.blob();
@@ -586,25 +647,47 @@ actor MainActor : Types.Actor {
     };
 
     private func processDays() : async* () {
-        let ?worldHandler = worldHandlerOrNull else return; // Skip if no world
-        Debug.print("Processing days");
-        let { days } = TimeUtil.getAge(genesisTime);
-        label l loop {
-            if (days <= daysProcessed) {
-                break l;
+        switch (worldHandlerOrNull) {
+            case (null) (); // Skip if no world
+            case (?worldHandler) {
+                Debug.print("Processing days");
+                let { days } = TimeUtil.getAge(genesisTime);
+                label l loop {
+                    if (days <= daysProcessed) {
+                        break l;
+                    };
+                    Debug.print("Processing day " # Nat.toText(daysProcessed));
+                    processResourceGathering(worldHandler);
+                    processTownTradeResources();
+                    processTownConsumeResources();
+                    processRegenResources(worldHandler);
+                    processPopulationGrowth();
+                    processTownChanges();
+                    // TODO
+                    // TODO reverse effects
+                    daysProcessed := daysProcessed + 1;
+                };
+                Debug.print("All days processed");
             };
-            Debug.print("Processing day " # Nat.toText(daysProcessed));
-            processResourceGathering(worldHandler);
-            processTownTradeResources();
-            processTownConsumeResources();
-            processRegenResources(worldHandler);
-            processPopulationGrowth();
-            // TODO
-            // TODO reverse effects
-            daysProcessed := daysProcessed + 1;
         };
-        Debug.print("All days processed");
         resetDayTimer<system>(false);
+    };
+
+    private func processTownChanges() {
+        for (town in townsHandler.getAll().vals()) {
+            // TODO
+            let totalUserLevel : ?Nat = userHandler.getByTownId(town.id).vals()
+            |> Iter.map<UserHandler.User, Nat>(
+                _,
+                func(user : UserHandler.User) : Nat = user.level,
+            )
+            |> IterTools.sum<Nat>(_, Nat.add);
+            let newPopulationMax = Option.get(totalUserLevel, 0) * 10; // TODO
+            switch (townsHandler.setPopulationMax(town.id, newPopulationMax)) {
+                case (#ok) ();
+                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+            };
+        };
     };
 
     private func processPopulationGrowth() {
@@ -615,12 +698,13 @@ actor MainActor : Types.Actor {
                 let tenPercentPop : Nat = Nat.max(1, town.population / 10); // TODO 10%?
                 Debug.print("Town's population " # Nat.toText(town.id) # " is dying from lack of health. Death count: " # Nat.toText(tenPercentPop));
                 switch (townsHandler.updatePopulation(town.id, -tenPercentPop)) {
-                    case (#ok) ();
-                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
-                    case (#err(#populationExtinct)) {
-                        // TODO
-                        Debug.print("Town " # Nat.toText(town.id) # " has died out");
+                    case (#ok(newPopulation)) {
+                        if (newPopulation == 0) {
+                            // TODO
+                            Debug.print("Town " # Nat.toText(town.id) # " has died out");
+                        };
                     };
+                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
                 };
             } else if (town.health >= 100) {
                 // TODO randomly trigger/random amounts
@@ -628,7 +712,12 @@ actor MainActor : Types.Actor {
                 let onePercentPop : Nat = Nat.max(1, town.population / 100); // TODO 1%?
                 Debug.print("Town's population " # Nat.toText(town.id) # " is growing. Growth count: " # Nat.toText(onePercentPop));
                 switch (townsHandler.addPopulation(town.id, onePercentPop)) {
-                    case (#ok) ();
+                    case (#ok(newPopulation)) {
+                        if (newPopulation == town.populationMax) {
+                            // TODO
+                            Debug.print("Town " # Nat.toText(town.id) # " has reached max population of " # Nat.toText(town.populationMax));
+                        };
+                    };
                     case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
                 };
             };
@@ -761,42 +850,48 @@ actor MainActor : Types.Actor {
                 };
             };
 
-            // let addProficiencyExperience = func(townId : Nat, resource : World.ResourceKind, workers : Nat) {
-            //     let proficiency = switch (resource) {
-            //         case (#wood) #woodCutting;
-            //         case (#food) #farming;
-            //         case (#gold) #mining;
-            //         case (#stone) #mining;
-            //     };
-            //     switch (townsHandler.addProficiencyExperience(townId, proficiency, workers)) {
-            //         case (#ok) ();
-            //         case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
-            //     };
-            // };
+            let addProficiencyExperience = func(townId : Nat, resource : World.ResourceKind, value : Nat) {
+                let skill : Town.SkillKind = switch (resource) {
+                    case (#wood) #woodCutting;
+                    case (#food) #farming;
+                    case (#gold) #mining;
+                    case (#stone) #mining;
+                };
+
+                let delta = if (value == 0) {
+                    // If no resources were gathered, the town gets less proficient
+                    -10; // TODO
+                } else {
+                    value;
+                };
+
+                switch (townsHandler.updateProficiency(townId, skill, delta)) {
+                    case (#ok(_)) ();
+                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
+                };
+            };
 
             // Process each town's work
             for ((townId, townWork) in townWorkMap.entries()) {
-                // Adjust wood harvesting
+                // Wood
                 removeLocationResource(#wood, townWork.woodCanHarvest);
                 addTownResource(townId, townWork.woodCanHarvest, #wood);
-                // addProficiencyExperience(townId, #wood, townWork.wood.workers);
+                addProficiencyExperience(townId, #wood, townWork.woodCanHarvest);
 
-                // Adjust food harvesting
+                // Food
                 removeLocationResource(#food, townWork.foodCanHarvest);
                 addTownResource(townId, townWork.foodCanHarvest, #food);
-                // addProficiencyExperience(townId, #food, townWork.food.workers);
+                addProficiencyExperience(townId, #food, townWork.foodCanHarvest);
 
-                // Stone difficulty increases regardless of proportion
+                // Stone
                 removeLocationResource(#stone, townWork.stoneCanHarvest);
-                removeLocationResource(#wood, townWork.woodCanHarvest);
-
                 addTownResource(townId, townWork.stoneCanHarvest, #stone);
-                // addProficiencyExperience(townId, #stone, townWork.stone.workers);
+                addProficiencyExperience(townId, #stone, townWork.stoneCanHarvest);
 
-                // Gold difficulty increases regardless of proportion
+                // Gold
                 removeLocationResource(#gold, townWork.goldCanHarvest);
                 addTownResource(townId, townWork.goldCanHarvest, #gold);
-                // addProficiencyExperience(townId, #gold, townWork.gold.workers);
+                addProficiencyExperience(townId, #gold, townWork.goldCanHarvest);
             };
         };
     };

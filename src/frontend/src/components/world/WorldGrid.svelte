@@ -4,6 +4,10 @@
     import HexGrid from "../common/HexGrid.svelte";
     import PixelArtFlag from "../common/PixelArtFlag.svelte";
     import ResourceIcon from "../icons/ResourceIcon.svelte";
+    import { userStore } from "../../stores/UserStore";
+    import { toJsonString } from "../../utils/StringUtil";
+    import TownFlag from "../town/TownFlag.svelte";
+    import { Job } from "../../ic-agent/declarations/main";
 
     $: towns = $townStore;
     $: world = $worldStore;
@@ -16,6 +20,42 @@
             },
         };
     });
+
+    $: user = $userStore;
+
+    $: myTown = towns?.find((town) => town.id === user?.townId);
+
+    type TownJob = { townId: bigint; kind: Job };
+
+    let locationJobMap: Map<bigint, TownJob[]> | undefined;
+    $: if (world !== undefined && towns !== undefined) {
+        locationJobMap = new Map<bigint, TownJob[]>();
+        for (const location of world.locations) {
+            let locationJobs = [];
+            for (const town of towns) {
+                for (const job of town.jobs) {
+                    let locationId: bigint | undefined;
+                    if ("gatherResource" in job) {
+                        locationId = job.gatherResource.locationId;
+                    } else if ("processResource" in job) {
+                        // Get town location
+                        locationId = world.locations.find(
+                            (location) => location.townId[0] === town.id,
+                        )?.id;
+                    } else {
+                        console.error(
+                            "NOT IMPLEMENTED JOB TYPE:",
+                            toJsonString(job),
+                        );
+                    }
+                    if (locationId === location.id) {
+                        locationJobs.push({ townId: town.id, kind: job });
+                    }
+                }
+            }
+            locationJobMap.set(location.id, locationJobs);
+        }
+    }
 </script>
 
 {#if gridData !== undefined && world !== undefined}
@@ -79,6 +119,9 @@
                             Town:
                             {#if townOrUndefined !== undefined}
                                 {townOrUndefined.name}
+                                {#if townOrUndefined?.id === myTown?.id}
+                                    (MY TOWN)
+                                {/if}
                             {:else}
                                 -
                             {/if}
@@ -104,6 +147,57 @@
                                 </div>
                             {/each}
                         </div>
+                        {#if locationJobMap !== undefined}
+                            <div>JOBS:</div>
+                            {@const locationJobs = locationJobMap.get(
+                                location.id,
+                            )}
+                            {#if locationJobs === undefined || locationJobs.length === 0}
+                                <div>-</div>
+                            {:else}
+                                {#each locationJobs as job}
+                                    {@const town = towns?.find(
+                                        (town) => town.id === job.townId,
+                                    )}
+                                    <div class="flex justify-center gap-2">
+                                        {#if town !== undefined}
+                                            <TownFlag {town} size="xs" />
+                                        {/if}
+                                        {#if "gatherResource" in job.kind}
+                                            <div>
+                                                Gather
+                                                <ResourceIcon
+                                                    kind={job.kind
+                                                        .gatherResource
+                                                        .resource}
+                                                />
+                                            </div>
+                                            <div>
+                                                {job.kind.gatherResource
+                                                    .workerQuota}
+                                            </div>
+                                        {:else if "processResource" in job.kind}
+                                            <div>
+                                                Process
+                                                <ResourceIcon
+                                                    kind={job.kind
+                                                        .processResource
+                                                        .resource}
+                                                />
+                                            </div>
+                                            <div>
+                                                {job.kind.processResource
+                                                    .workerQuota}
+                                            </div>
+                                        {:else}
+                                            NOT IMPLEMENTED JOB TYPE: {toJsonString(
+                                                job,
+                                            )}
+                                        {/if}
+                                    </div>
+                                {/each}
+                            {/if}
+                        {/if}
                     </div>
                 </div>
             {/if}

@@ -6,7 +6,7 @@
     $: user = $userStore;
     $: towns = $townStore;
 
-    $: town = towns?.find((t) => t.id === user?.residency[0]?.townId);
+    $: town = towns?.find((t) => t.id === user?.townId);
 </script>
 
 {#if town}

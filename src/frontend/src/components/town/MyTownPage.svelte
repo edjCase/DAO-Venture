@@ -4,19 +4,18 @@
     import TownFlag from "../town/TownFlag.svelte";
     import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
-    import { Badge, TabItem, Tabs } from "flowbite-svelte";
+    import { TabItem, Tabs } from "flowbite-svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
-    import { ChervonDoubleUpSolid } from "flowbite-svelte-icons";
     import LoadingButton from "../common/LoadingButton.svelte";
     import { mainAgentFactory } from "../../ic-agent/Main";
     import ResourceIcon from "../icons/ResourceIcon.svelte";
+    import { nanosecondsToDate } from "../../utils/DateUtils";
 
     $: towns = $townStore;
 
     $: user = $userStore;
 
-    $: town = towns?.find((t) => t.id == user?.residency[0]?.townId);
-    $: votingPower = user?.residency[0]?.votingPower || 0;
+    $: town = towns?.find((t) => t.id == user?.townId);
     let join = async () => {
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.joinWorld();
@@ -54,32 +53,17 @@
                 </div>
             </div>
             <div class="flex-grow">
-                <div class="text-xl">You</div>
-                <div>
-                    Level:
-                    {#if votingPower <= 0}
-                        <span class="text-green-500 bold">FAN</span>
-                        <a
-                            href="https://oc.app/community/cghnf-2qaaa-aaaar-baa6a-cai/channel/61170281920579717573386498610085170743"
-                            target="_blank"
-                        >
-                            <Badge
-                                rounded
-                                large
-                                title="Upgrade to Co-Owner"
-                                color="primary"
-                                class="ml-2 p-1 cursor-pointer"
-                            >
-                                <ChervonDoubleUpSolid size="xs" />
-                                <span class="sr-only">Upgrade</span>
-                            </Badge>
-                        </a>
-                    {:else}
-                        <span class="text-blue-500 bold"> CO-OWNER </span>
-                    {/if}
-                </div>
-                {#if votingPower > 0}
-                    <div>Voting Power: {votingPower}</div>
+                {#if user !== undefined}
+                    <div class="text-xl">You</div>
+                    <div>
+                        Level: {user?.level}
+                    </div>
+                    <div>
+                        Joined Town: {nanosecondsToDate(user.atTownSince)}
+                    </div>
+                    <div>
+                        Joined World: {nanosecondsToDate(user.inWorldSince)}
+                    </div>
                 {/if}
             </div>
         </div>
@@ -93,11 +77,9 @@
                 <div class="mt-5">
                     <TownProposalList townId={town.id} />
                 </div>
-                {#if votingPower > 0}
-                    <div class="mt-5">
-                        <TownProposalForm townId={town.id} />
-                    </div>
-                {/if}
+                <div class="mt-5">
+                    <TownProposalForm townId={town.id} />
+                </div>
             </TabItem>
         </Tabs>
     </SectionWithOverview>

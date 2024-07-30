@@ -13,6 +13,7 @@ module {
         entropy : Nat;
         size : Nat;
         population : Nat;
+        populationMax : Nat;
         health : Nat;
         upkeepCondition : Nat;
         jobs : [Job];
@@ -25,6 +26,12 @@ module {
         wood : Nat;
         food : Nat;
         stone : Nat;
+    };
+
+    public type SkillKind = {
+        #woodCutting;
+        #farming;
+        #mining;
     };
 
     public type SkillList = {

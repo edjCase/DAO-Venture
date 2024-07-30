@@ -30,6 +30,7 @@ module {
         var motto : Text;
         var entropy : Nat;
         var population : Nat;
+        var populationMax : Nat;
         var health : Nat;
         var upkeepCondition : Nat;
         var size : Nat;
@@ -128,6 +129,7 @@ module {
                 var motto = motto;
                 var entropy = 0;
                 var population = 10;
+                var populationMax = 10;
                 var health = 100;
                 var upkeepCondition = 100;
                 var size = 0;
@@ -296,29 +298,34 @@ module {
             #ok;
         };
 
-        public func addPopulation(townId : Nat, delta : Int) : Result.Result<(), { #townNotFound }> {
+        public func addPopulation(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
             switch (updatePopulation(townId, delta)) {
-                case (#ok) #ok;
+                case (#ok(newPopulation)) #ok(newPopulation);
                 case (#err(#townNotFound)) #err(#townNotFound);
-                case (#err(#populationExtinct)) Prelude.unreachable();
             };
         };
 
-        public func updatePopulation(townId : Nat, delta : Int) : Result.Result<(), { #townNotFound; #populationExtinct }> {
+        public func updatePopulation(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             let newPopulationInt : Int = town.population + delta;
             let newPopulationNat : Nat = if (newPopulationInt <= 0) {
                 // Population cant be negative
                 0;
             } else {
-                Int.abs(newPopulationInt);
+                Nat.max(town.populationMax, Int.abs(newPopulationInt));
             };
             if (town.population != newPopulationNat) {
                 Debug.print("Updating population for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newPopulationNat));
                 town.population := newPopulationNat;
             };
-            if (newPopulationNat == 0) {
-                return #err(#populationExtinct);
+            #ok(newPopulationNat);
+        };
+
+        public func setPopulationMax(townId : Nat, newMax : Nat) : Result.Result<(), { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            if (town.populationMax != newMax) {
+                Debug.print("Setting population max for town " # Nat.toText(townId) # " to " # Nat.toText(newMax));
+                town.populationMax := newMax;
             };
             #ok;
         };
@@ -415,6 +422,27 @@ module {
             #ok;
         };
 
+        public func updateProficiency(townId : Nat, skill : Town.SkillKind, delta : Int) : Result.Result<Nat, { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            let skillData = switch (skill) {
+                case (#woodCutting) town.skills.woodCutting;
+                case (#farming) town.skills.farming;
+                case (#mining) town.skills.mining;
+            };
+            let newProficiencyInt : Int = skillData.proficiencyLevel + delta;
+            let newProficiencyNat : Nat = if (newProficiencyInt <= 0) {
+                // Proficiency cant be negative
+                0;
+            } else {
+                Int.abs(newProficiencyInt);
+            };
+            if (skillData.proficiencyLevel != newProficiencyNat) {
+                Debug.print("Updating proficiency for skill " # debug_show (skill) # " for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newProficiencyNat));
+                skillData.proficiencyLevel := newProficiencyNat;
+            };
+            #ok(newProficiencyNat);
+        };
+
         public func clear() {
             towns := HashMap.HashMap<Nat, MutableTownData>(0, Nat.equal, Nat32.fromNat);
         };
@@ -450,6 +478,7 @@ module {
             motto = town.motto;
             genesisTime = town.genesisTime;
             population = town.population;
+            populationMax = town.populationMax;
             health = town.health;
             upkeepCondition = town.upkeepCondition;
             size = town.size;
@@ -483,6 +512,7 @@ module {
             var motto = stableData.motto;
             var entropy = stableData.entropy;
             var population = stableData.population;
+            var populationMax = stableData.populationMax;
             var health = stableData.health;
             var upkeepCondition = stableData.upkeepCondition;
             var size = stableData.size;
