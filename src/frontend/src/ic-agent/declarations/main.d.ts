@@ -51,6 +51,13 @@ export interface EntropyTownEffectOutcome {
 export interface ExploreJob { 'workerQuota' : bigint, 'locationId' : bigint }
 export interface FlagImage { 'pixels' : Array<Array<Pixel>> }
 export interface FoodResourceInfo { 'amount' : bigint }
+export interface FoundTownContent {
+  'motto' : string,
+  'flag' : FlagImage,
+  'name' : string,
+  'locationId' : bigint,
+  'users' : Array<Principal>,
+}
 export interface GatherResourceJob {
   'workerQuota' : bigint,
   'resource' : ResourceKind,
@@ -92,7 +99,6 @@ export type GetWorldProposalsResult = { 'ok' : PagedResult };
 export type GetWorldResult = { 'ok' : World } |
   { 'err' : GetWorldError };
 export interface GoldResourceInfo { 'difficulty' : bigint }
-export type IncreaseSizeContent = {};
 export type Job = { 'explore' : ExploreJob } |
   { 'processResource' : ProcessResourceJob } |
   { 'gatherResource' : GatherResourceJob };
@@ -151,9 +157,9 @@ export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
-  { 'increaseSize' : IncreaseSizeContent } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
+  { 'foundTown' : FoundTownContent } |
   { 'removeJob' : RemoveJobContent } |
   { 'motion' : MotionContent__1 };
 export type ProposalStatusLogEntry = {
@@ -390,9 +396,9 @@ export interface TownProposal {
 export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
-  { 'increaseSize' : IncreaseSizeContent } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
+  { 'foundTown' : FoundTownContent } |
   { 'removeJob' : RemoveJobContent } |
   { 'motion' : MotionContent__1 };
 export interface TownStats {
@@ -537,6 +543,7 @@ export interface _SERVICE {
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], GetWorldProposalsResult>,
   'joinWorld' : ActorMethod<[], Result>,
+  'resetTimer' : ActorMethod<[], undefined>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
   'voteOnTownProposal' : ActorMethod<
     [bigint, VoteOnTownProposalRequest],

@@ -110,17 +110,8 @@ module {
             flagImage : Flag.FlagImage,
             motto : Text,
             resources : Town.ResourceList,
-        ) : Result.Result<Nat, { #nameTaken }> {
+        ) : Nat {
             Debug.print("Creating new town with name " # name);
-            let nameAlreadyTaken = towns.entries()
-            |> IterTools.any(
-                _,
-                func((_, v) : (Nat, MutableTownData)) : Bool = v.name == name,
-            );
-
-            if (nameAlreadyTaken) {
-                return #err(#nameTaken);
-            };
             let townId = nextTownId;
             nextTownId += 1;
 
@@ -168,7 +159,7 @@ module {
             };
             towns.put(townId, townData);
 
-            return #ok(townId);
+            return townId;
         };
 
         public func addResource(
@@ -262,16 +253,8 @@ module {
             #ok;
         };
 
-        public func updateName(townId : Nat, newName : Text) : Result.Result<(), { #townNotFound; #nameTaken }> {
+        public func updateName(townId : Nat, newName : Text) : Result.Result<(), { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            let nameAlreadyTaken = towns.entries()
-            |> IterTools.any(
-                _,
-                func((_, v) : (Nat, MutableTownData)) : Bool = v.name == newName,
-            );
-            if (nameAlreadyTaken) {
-                return #err(#nameTaken);
-            };
             Debug.print("Updating name for town " # Nat.toText(townId) # " to: " # newName);
             town.name := newName;
             #ok;
@@ -322,7 +305,7 @@ module {
                 // Population cant be negative
                 0;
             } else {
-                Nat.max(town.populationMax, Int.abs(newPopulationInt));
+                Nat.min(town.populationMax, Int.abs(newPopulationInt));
             };
             if (town.population != newPopulationNat) {
                 Debug.print("Updating population for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newPopulationNat));

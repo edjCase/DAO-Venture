@@ -21,7 +21,7 @@ module {
         };
     };
 
-    public func generateLocationKind(prng : Prng, id : Nat, explored : Bool) : World.LocationKind {
+    public func generateLocationKind(prng : Prng, _ : Nat, explored : Bool) : World.LocationKind {
         // TODO better procedural generation
         let getRandDifficulty = func() : Nat {
             return prng.nextNat(0, 10000);

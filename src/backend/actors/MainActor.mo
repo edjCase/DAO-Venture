@@ -163,6 +163,9 @@ actor MainActor : Types.Actor {
         onWorldProposalValidate,
     );
 
+    // Initialize town daos here to be used in buildTownDao
+    var townDaos = HashMap.HashMap<Nat, ProposalEngine.ProposalEngine<TownDao.ProposalContent>>(townDaoStableData.size(), Nat.equal, Nat32.fromNat);
+
     func buildTownDao<system>(
         townId : Nat,
         data : ProposalTypes.StableData<TownDao.ProposalContent>,
@@ -178,8 +181,7 @@ actor MainActor : Types.Actor {
                     let result = townsHandler.updateName(townId, c.name);
                     let error = switch (result) {
                         case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found";
-                        case (#err(#nameTaken)) "Name is already taken";
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
                     };
                     #err("Failed to update name: " # error);
                 };
@@ -187,7 +189,7 @@ actor MainActor : Types.Actor {
                     let result = townsHandler.updateFlag(townId, c.image);
                     let error = switch (result) {
                         case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found";
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
                     };
                     #err("Failed to update flag: " # error);
                 };
@@ -195,14 +197,14 @@ actor MainActor : Types.Actor {
                     let result = townsHandler.updateMotto(townId, c.motto);
                     let error = switch (result) {
                         case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found";
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
                     };
                     #err("Failed to update motto: " # error);
                 };
                 case (#addJob(addJob)) {
                     let error = switch (townsHandler.addJob(townId, addJob.job)) {
                         case (#ok(_)) return #ok;
-                        case (#err(#townNotFound)) "Town not found";
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
                         case (#err(#invalid(invalid))) "Invalid job: " # debug_show (invalid); // TODO format
                     };
                     #err("Failed to add job:" # error);
@@ -210,8 +212,8 @@ actor MainActor : Types.Actor {
                 case (#updateJob(updateJob)) {
                     let error = switch (townsHandler.updateJob(townId, updateJob.jobId, updateJob.job)) {
                         case (#ok(_)) return #ok;
-                        case (#err(#townNotFound)) "Town not found";
-                        case (#err(#jobNotFound)) "Job not found";
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
+                        case (#err(#jobNotFound)) "Job not found: " # Nat.toText(updateJob.jobId);
                         case (#err(#invalid(invalid))) "Invalid job: " # debug_show (invalid); // TODO format
                     };
                     #err("Failed to update job:" # error);
@@ -219,26 +221,47 @@ actor MainActor : Types.Actor {
                 case (#removeJob(removeJob)) {
                     let error = switch (townsHandler.removeJob(townId, removeJob.jobId)) {
                         case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found";
-                        case (#err(#jobNotFound)) "Job not found";
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
+                        case (#err(#jobNotFound)) "Job not found: " # Nat.toText(removeJob.jobId);
                     };
                     #err("Failed to remove job:" # error);
                 };
-                case (#increaseSize(_)) {
-                    let ?town = townsHandler.get(townId) else Debug.trap("Town not found: " # Nat.toText(townId));
-                    let sizeIncreaseCost = 1000 * (town.size + 1); // TODO
-                    let resourceUpdates = [{ delta = -sizeIncreaseCost; kind = #wood }, { delta = -sizeIncreaseCost; kind = #stone }];
-                    let error = switch (townsHandler.updateResourceBulk(townId, resourceUpdates, false)) {
-                        case (#ok) switch (townsHandler.updateSize(townId, 1)) {
-                            case (#ok(_)) return #ok;
-                            case (#err(#townNotFound)) "Town not found";
+                case (#foundTown(foundTown)) {
+                    let foundingResourceCosts = [
+                        {
+                            kind = #wood;
+                            delta = -100; // TODO
+                        },
+                        {
+                            kind = #stone;
+                            delta = -100; // TODO
+                        },
+                        {
+                            kind = #food;
+                            delta = -100; // TODO
+                        },
+                    ];
+                    let error : Text = switch (townsHandler.updateResourceBulk(townId, foundingResourceCosts, false)) {
+                        case (#ok) {
+                            let _ = createTown<system>(
+                                foundTown.name,
+                                foundTown.flag,
+                                foundTown.motto,
+                                {
+                                    wood = 0;
+                                    stone = 0;
+                                    gold = 0;
+                                    food = 100; // TODO
+                                },
+                                foundTown.locationId,
+                                buildTownDao,
+                            );
+                            return #ok;
                         };
-                        case (#err(#notEnoughResources(_))) {
-                            "Need " # Nat.toText(sizeIncreaseCost) # " wood and stone to increase size";
-                        };
-                        case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
+                        case (#err(#notEnoughResources(r))) "Not enough resources: " # debug_show (r);
                     };
-                    #err("Failed to increase size:" # error);
+                    #err("Failed to found town: " # error);
                 };
             };
         };
@@ -252,17 +275,49 @@ actor MainActor : Types.Actor {
         ProposalEngine.ProposalEngine<system, TownDao.ProposalContent>(data, onProposalExecute, onProposalReject, onProposalValidate);
     };
 
-    private func buildTownDaos<system>() : HashMap.HashMap<Nat, ProposalEngine.ProposalEngine<TownDao.ProposalContent>> {
-        let daos = HashMap.HashMap<Nat, ProposalEngine.ProposalEngine<TownDao.ProposalContent>>(townDaoStableData.size(), Nat.equal, Nat32.fromNat);
+    private func createTown<system>(
+        name : Text,
+        image : Flag.FlagImage,
+        motto : Text,
+        resources : Town.ResourceList,
+        locationId : Nat,
+        buildTownDao : <system>(Nat, ProposalTypes.StableData<TownDao.ProposalContent>) -> ProposalEngine.ProposalEngine<TownDao.ProposalContent>,
+    ) : Nat {
+        let ?worldHandler = worldHandlerOrNull else Debug.trap("Cannot create town if world is not initialized");
 
-        for ((townId, data) in townDaoStableData.vals()) {
-            let townDao = buildTownDao<system>(townId, data);
-            daos.put(townId, townDao);
+        let townId = townsHandler.create<system>(name, image, motto, resources);
+        let townDao = buildTownDao<system>(
+            townId,
+            {
+                proposalDuration = #days(3);
+                proposals = [];
+                votingThreshold = #percent({
+                    percent = 50;
+                    quorum = ?20;
+                });
+            },
+        );
+        townDaos.put(
+            townId,
+            townDao,
+        );
+        switch (worldHandler.addTown(locationId, townId)) {
+            case (#ok) ();
+            case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
+            case (#err(#otherTownAtLocation(townId))) Debug.trap("Town '" #Nat.toText(townId) # "' already at location: " # Nat.toText(locationId));
         };
-        daos;
+        townId;
     };
 
-    var townDaos = buildTownDaos<system>();
+    private func populateTownDaosFromStable<system>() {
+        for ((townId, data) in townDaoStableData.vals()) {
+            let townDao = buildTownDao<system>(townId, data);
+            townDaos.put(townId, townDao);
+        };
+    };
+
+    // Populate town daos from stable data
+    populateTownDaosFromStable<system>();
 
     private func resetDayTimer<system>(runImmediately : Bool) {
         let timeTillNextDay = if (runImmediately) {
@@ -319,7 +374,8 @@ actor MainActor : Types.Actor {
             case (null) null;
             case (?worldStableData) ?WorldHandler.Handler(worldStableData);
         };
-        townDaos := buildTownDaos<system>();
+        townDaos := HashMap.HashMap<Nat, ProposalEngine.ProposalEngine<TownDao.ProposalContent>>(townDaoStableData.size(), Nat.equal, Nat32.fromNat);
+        populateTownDaosFromStable<system>();
         resetDayTimer<system>(true); // TODO is this sufficient if there is any weird down time?
     };
 
@@ -593,40 +649,22 @@ actor MainActor : Types.Actor {
                 },
             );
         };
+
+        let locationId = 0; // Start in middle
         let resources = {
             gold = 0;
             wood = 0;
             food = 1000;
             stone = 0;
         };
-        let #ok(townId) = townsHandler.create<system>(
+        createTown<system>(
             "First Town",
             image,
             "First Town Motto",
             resources,
-        ) else Debug.trap("Failed to create first town");
-        let townDao = buildTownDao<system>(
-            townId,
-            {
-                proposalDuration = #days(3);
-                proposals = [];
-                votingThreshold = #percent({
-                    percent = 50;
-                    quorum = ?20;
-                });
-            },
+            locationId,
+            buildTownDao,
         );
-        townDaos.put(
-            townId,
-            townDao,
-        );
-        let locationId = 0; // Start in middle
-        switch (worldHandler.addTown(locationId, townId)) {
-            case (#ok) ();
-            case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
-            case (#err(#otherTownAtLocation(townId))) Debug.trap("Town '" #Nat.toText(townId) # "' already at location: " # Nat.toText(locationId));
-        };
-        townId;
     };
 
     private func processDays() : async* () {
@@ -666,7 +704,7 @@ actor MainActor : Types.Actor {
                 func(user : UserHandler.User) : Nat = user.level,
             )
             |> IterTools.sum<Nat>(_, Nat.add);
-            let newPopulationMax = Option.get(totalUserLevel, 0) * 10; // TODO
+            let newPopulationMax = Option.get(totalUserLevel, 0) * 10 + 100; // TODO
             switch (townsHandler.setPopulationMax(town.id, newPopulationMax)) {
                 case (#ok) ();
                 case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
@@ -676,6 +714,7 @@ actor MainActor : Types.Actor {
 
     private func processPopulationGrowth() {
         // TODO ability to pause growth or should excess food be required???
+        Debug.print("Processing population growth");
         for (town in townsHandler.getAll().vals()) {
             if (town.health <= 0) {
                 // Dying town
@@ -810,8 +849,12 @@ actor MainActor : Types.Actor {
             // Normal regeneration between depletion threshold and optimal level
             regenRate * currentAmountFloat;
         } else {
-            // Fast regeneration below depletion threshold
-            regenRate * (optimalResourceLevel / currentAmountFloat) * currentAmountFloat;
+            // Slow regeneration below depletion threshold
+            if (currentAmountFloat <= 0.0) {
+                0; // Base regeneration when completely depleted
+            } else {
+                regenRate * Float.min(optimalResourceLevel / currentAmountFloat, 2.0) * currentAmountFloat;
+            };
         };
         if (amountFloat <= 0) {
             0;
@@ -894,7 +937,7 @@ actor MainActor : Types.Actor {
             };
         };
         let removeLocationResource = func(resource : World.ResourceKind, amount : Nat) : Result.Result<(), { #notEnoughResource : { missing : Nat } }> {
-            switch (worldHandler.updateResource(job.locationId, resource, -amount, false)) {
+            switch (worldHandler.updateResource(job.locationId, resource, -amount, #errorOnNegative({ setToZero = true }))) {
                 case (#ok(_)) #ok;
                 case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(job.locationId));
                 case (#err(#notEnoughResource(r))) #err(#notEnoughResource(r));
@@ -927,7 +970,7 @@ actor MainActor : Types.Actor {
         };
 
         addTownResource(townId, trueAmount, job.resource);
-        addProficiencyExperience(townId, job.resource, trueAmount);
+        addProficiencyExperience(townId, job.resource, 1);
     };
 
     type Location = {

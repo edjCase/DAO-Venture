@@ -45,6 +45,8 @@
                                 "standard" in location.kind &&
                                 location.kind.standard.townId[0] === town.id,
                         )?.id;
+                    } else if ("explore" in job) {
+                        locationId = job.explore.locationId;
                     } else {
                         console.error(
                             "NOT IMPLEMENTED JOB TYPE:",

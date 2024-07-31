@@ -9,10 +9,8 @@ module {
         #addJob : AddJobContent;
         #updateJob : UpdateJobContent;
         #removeJob : RemoveJobContent;
-        #increaseSize : IncreaseSizeContent;
+        #foundTown : FoundTownContent;
     };
-
-    public type IncreaseSizeContent = {};
 
     public type AddJobContent = {
         job : Town.Job;
@@ -42,5 +40,13 @@ module {
 
     public type ChangeTownMottoContent = {
         motto : Text;
+    };
+
+    public type FoundTownContent = {
+        name : Text;
+        flag : Flag.FlagImage;
+        motto : Text;
+        users : [Principal];
+        locationId : Nat;
     };
 };

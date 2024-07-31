@@ -143,7 +143,6 @@ export const idlFactory = ({ IDL }) => {
   const ChangeTownFlagContent = IDL.Record({ 'image' : FlagImage });
   const ChangeTownNameContent = IDL.Record({ 'name' : IDL.Text });
   const ChangeTownMottoContent = IDL.Record({ 'motto' : IDL.Text });
-  const IncreaseSizeContent = IDL.Record({});
   const ExploreJob = IDL.Record({
     'workerQuota' : IDL.Nat,
     'locationId' : IDL.Nat,
@@ -168,6 +167,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateJobContent = IDL.Record({ 'job' : Job, 'jobId' : IDL.Nat });
   const AddJobContent = IDL.Record({ 'job' : Job });
+  const FoundTownContent = IDL.Record({
+    'motto' : IDL.Text,
+    'flag' : FlagImage,
+    'name' : IDL.Text,
+    'locationId' : IDL.Nat,
+    'users' : IDL.Vec(IDL.Principal),
+  });
   const RemoveJobContent = IDL.Record({ 'jobId' : IDL.Nat });
   const MotionContent__1 = IDL.Record({
     'title' : IDL.Text,
@@ -177,9 +183,9 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
-    'increaseSize' : IncreaseSizeContent,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
+    'foundTown' : FoundTownContent,
     'removeJob' : RemoveJobContent,
     'motion' : MotionContent__1,
   });
@@ -408,9 +414,9 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
-    'increaseSize' : IncreaseSizeContent,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
+    'foundTown' : FoundTownContent,
     'removeJob' : RemoveJobContent,
     'motion' : MotionContent__1,
   });
@@ -675,6 +681,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'joinWorld' : IDL.Func([], [Result], []),
+    'resetTimer' : IDL.Func([], [], []),
     'voteOnScenario' : IDL.Func(
         [VoteOnScenarioRequest],
         [VoteOnScenarioResult],

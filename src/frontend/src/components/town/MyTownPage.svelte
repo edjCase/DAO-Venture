@@ -27,6 +27,22 @@
             console.log("Error joining world", result);
         }
     };
+    function getTimeAgo(nanoseconds: bigint): string {
+        const date = nanosecondsToDate(nanoseconds);
+        const now = new Date();
+        const diffInMilliseconds = now.getTime() - date.getTime();
+        const diffInDays = Math.floor(
+            diffInMilliseconds / (1000 * 60 * 60 * 24),
+        );
+
+        if (diffInDays === 0) {
+            return "Today";
+        } else if (diffInDays === 1) {
+            return "Yesterday";
+        } else {
+            return `${diffInDays} days ago`;
+        }
+    }
 </script>
 
 {#if town}
@@ -51,6 +67,7 @@
                     {town.resources.stone}
                     <ResourceIcon kind={{ stone: null }} />
                 </div>
+                <div>Population: {town.population}/{town.populationMax}</div>
             </div>
             <div class="flex-grow">
                 {#if user?.worldData !== undefined}
@@ -59,14 +76,10 @@
                         Level: {user.worldData.level}
                     </div>
                     <div>
-                        Joined Town: {nanosecondsToDate(
-                            user.worldData.atTownSince,
-                        )}
+                        Joined Town: {getTimeAgo(user.worldData.atTownSince)}
                     </div>
                     <div>
-                        Joined World: {nanosecondsToDate(
-                            user.worldData.inWorldSince,
-                        )}
+                        Joined World: {getTimeAgo(user.worldData.inWorldSince)}
                     </div>
                 {/if}
             </div>

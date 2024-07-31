@@ -72,11 +72,24 @@ module {
         workerCount : Nat,
         processResourceJob : Town.ProcessResourceJob,
     ) : Nat {
-        // TODO levels
-        switch (processResourceJob.resource) {
-            case (#wood) workerCount + town.skills.carpentry.proficiencyLevel + town.skills.carpentry.techLevel;
-            case (#stone) workerCount + town.skills.masonry.proficiencyLevel + town.skills.masonry.techLevel;
+        let (proficiency, techLevel, baseRate) = switch (processResourceJob.resource) {
+            case (#wood) (town.skills.carpentry.proficiencyLevel, town.skills.carpentry.techLevel, 2);
+            case (#stone) (town.skills.masonry.proficiencyLevel, town.skills.masonry.techLevel, 2);
         };
+        // Step 1: Calculate extraction based on number of workers
+        let workerExtraction : Nat = workerCount * baseRate;
+
+        // Step 2: Apply proficiency modifier
+        let proficiencyModifier : Float = 1 + (Float.fromInt(proficiency) * 0.1); // TODO
+
+        // Step 3: Apply tech level modifier
+        let techModifier : Float = 1 + (Float.fromInt(techLevel) * 0.2); // TODO
+
+        // Calculate total extraction
+        let totalExtraction : Float = Float.fromInt(workerExtraction) * proficiencyModifier * techModifier;
+
+        // Round and convert back to Nat
+        return Int.abs(Float.toInt(Float.floor(totalExtraction)));
     };
 
     private func getGatherResourceAmount(
@@ -106,10 +119,41 @@ module {
                     };
                 };
 
-                // TODO levels
+                let calculateResourceExtraction = func(
+                    workerCount : Nat,
+                    proficiency : Nat,
+                    techLevel : Nat,
+                    baseRate : Nat,
+                ) : Nat {
+                    // Step 1: Calculate extraction based on number of workers
+                    let workerExtraction : Nat = workerCount * baseRate;
+
+                    // Step 2: Apply proficiency modifier
+                    let proficiencyModifier : Float = 1 + (Float.fromInt(proficiency) * 0.1); // TODO
+
+                    // Step 3: Apply tech level modifier
+                    let techModifier : Float = 1 + (Float.fromInt(techLevel) * 0.2); // TODO
+
+                    // Calculate total extraction
+                    let totalExtraction : Float = Float.fromInt(workerExtraction) * proficiencyModifier * techModifier;
+
+                    // Round and convert back to Nat
+                    return Int.abs(Float.toInt(Float.floor(totalExtraction)));
+                };
+
                 switch (gatherResourceJob.resource) {
-                    case (#wood) workerCount + town.skills.woodCutting.proficiencyLevel + town.skills.woodCutting.techLevel;
-                    case (#food) workerCount + town.skills.farming.proficiencyLevel + town.skills.farming.techLevel;
+                    case (#wood) calculateResourceExtraction(
+                        workerCount,
+                        town.skills.woodCutting.proficiencyLevel,
+                        town.skills.woodCutting.techLevel,
+                        2,
+                    );
+                    case (#food) calculateResourceExtraction(
+                        workerCount,
+                        town.skills.farming.proficiencyLevel,
+                        town.skills.farming.techLevel,
+                        2,
+                    );
                     case (#gold) calculateAmountWithDifficulty(
                         workerCount,
                         town.skills.mining.proficiencyLevel,

@@ -176,7 +176,7 @@ module {
             kind : World.ResourceKind,
             delta : Nat,
         ) : Result.Result<Nat, { #locationNotFound }> {
-            switch (updateResource(locationId, kind, delta, false)) {
+            switch (updateResource(locationId, kind, delta, #ignoreNegative)) {
                 case (#ok(v)) #ok(v);
                 case (#err(#locationNotFound)) #err(#locationNotFound);
                 case (#err(#notEnoughResource(_))) Prelude.unreachable();
@@ -187,17 +187,17 @@ module {
             locationId : Nat,
             kind : World.ResourceKind,
             delta : Int,
-            allowBelowZero : Bool,
+            behaviour : {
+                #errorOnNegative : { setToZero : Bool };
+                #ignoreNegative;
+            },
         ) : Result.Result<Nat, { #locationNotFound; #notEnoughResource : { missing : Nat } }> {
-            Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta));
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
 
-            Debug.print("Location found");
             let standardLocation = switch (location.kind) {
                 case (#unexplored(_)) return #err(#locationNotFound); // TODO better error?
                 case (#standard(standardLocation)) standardLocation;
             };
-            Debug.print("Standard location found");
             let currentValue = switch (kind) {
                 case (#food) standardLocation.resources.food.amount;
                 case (#wood) standardLocation.resources.wood.amount;
@@ -207,23 +207,32 @@ module {
             if (delta == 0) {
                 return #ok(currentValue);
             };
+
+            let updateResource = func(kind : World.ResourceKind, newAmountOrDifficulty : Nat) {
+                Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmountOrDifficulty));
+                switch (kind) {
+                    case (#food) standardLocation.resources.food.amount := newAmountOrDifficulty;
+                    case (#wood) standardLocation.resources.wood.amount := newAmountOrDifficulty;
+                    case (#gold) standardLocation.resources.gold.difficulty := newAmountOrDifficulty;
+                    case (#stone) standardLocation.resources.stone.difficulty := newAmountOrDifficulty;
+                };
+            };
+
             let newValueInt = currentValue + delta;
             let newAmountOrDifficulty : Nat = if (newValueInt <= 0) {
-                if (not allowBelowZero) {
-                    return #err(#notEnoughResource({ missing = Int.abs(newValueInt) }));
+                switch (behaviour) {
+                    case (#errorOnNegative({ setToZero })) {
+                        if (setToZero) {
+                            updateResource(kind, 0);
+                        };
+                        return #err(#notEnoughResource({ missing = Int.abs(newValueInt) }));
+                    };
+                    case (#ignoreNegative) 0; // Keep min value of 0
                 };
-                // Keep min value of 0
-                0;
             } else {
                 Int.abs(newValueInt);
             };
-            Debug.print("New value: " # Nat.toText(newAmountOrDifficulty));
-            switch (kind) {
-                case (#food) standardLocation.resources.food.amount := newAmountOrDifficulty;
-                case (#wood) standardLocation.resources.wood.amount := newAmountOrDifficulty;
-                case (#gold) standardLocation.resources.gold.difficulty := newAmountOrDifficulty;
-                case (#stone) standardLocation.resources.stone.difficulty := newAmountOrDifficulty;
-            };
+            updateResource(kind, newAmountOrDifficulty);
             #ok(newAmountOrDifficulty);
         };
 
