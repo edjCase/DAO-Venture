@@ -15,7 +15,7 @@
 
     $: user = $userStore;
 
-    $: town = towns?.find((t) => t.id == user?.townId);
+    $: town = towns?.find((t) => t.id == user?.worldData?.townId);
     let join = async () => {
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.joinWorld();
@@ -53,16 +53,20 @@
                 </div>
             </div>
             <div class="flex-grow">
-                {#if user !== undefined}
+                {#if user?.worldData !== undefined}
                     <div class="text-xl">You</div>
                     <div>
-                        Level: {user?.level}
+                        Level: {user.worldData.level}
                     </div>
                     <div>
-                        Joined Town: {nanosecondsToDate(user.atTownSince)}
+                        Joined Town: {nanosecondsToDate(
+                            user.worldData.atTownSince,
+                        )}
                     </div>
                     <div>
-                        Joined World: {nanosecondsToDate(user.inWorldSince)}
+                        Joined World: {nanosecondsToDate(
+                            user.worldData.inWorldSince,
+                        )}
                     </div>
                 {/if}
             </div>

@@ -1,10 +1,24 @@
 import HexGrid "HexGrid";
 module {
     public type WorldLocation = {
-        townId : ?Nat;
-        resources : LocationResourceList;
+        kind : LocationKind;
         id : Nat;
         coordinate : HexGrid.AxialCoordinate;
+    };
+
+    public type LocationKind = {
+        #unexplored : UnexploredLocation;
+        #standard : StandardLocation;
+    };
+
+    public type UnexploredLocation = {
+        currentExploration : Nat;
+        explorationNeeded : Nat;
+    };
+
+    public type StandardLocation = {
+        townId : ?Nat;
+        resources : LocationResourceList;
     };
 
     public type LocationResourceList = {

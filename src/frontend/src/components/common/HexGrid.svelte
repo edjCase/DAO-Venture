@@ -31,6 +31,7 @@
                 {tile}
                 {id}
                 {hexSize}
+                faded={tile.faded}
                 onClick={handleOnClick(id)}
                 selected={selectedTile == id}
             >

@@ -6,8 +6,8 @@ import Int "mo:base/Int";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
+import Debug "mo:base/Debug";
 import World "../models/World";
-import IterTools "mo:itertools/Iter";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import WorldGenerator "../WorldGenerator";
 import HexGrid "../models/HexGrid";
@@ -23,6 +23,20 @@ module {
     type MutableWorldLocation = {
         id : Nat;
         coordinate : HexGrid.AxialCoordinate;
+        var kind : MutableLocationKind;
+    };
+
+    type MutableLocationKind = {
+        #unexplored : MutableUnexploredLocation;
+        #standard : MutableStandardLocation;
+    };
+
+    type MutableUnexploredLocation = {
+        var currentExploration : Nat;
+        explorationNeeded : Nat;
+    };
+
+    type MutableStandardLocation = {
         var townId : ?Nat;
         resources : {
             gold : MutableGoldResourceInfo;
@@ -52,13 +66,29 @@ module {
         {
             id = location.id;
             coordinate = location.coordinate;
-            var townId = location.townId;
-            resources = {
-                gold = { var difficulty = location.resources.gold.difficulty };
-                wood = { var amount = location.resources.wood.amount };
-                food = { var amount = location.resources.food.amount };
-                stone = { var difficulty = location.resources.stone.difficulty };
-            };
+            var kind = toMutableLocationKind(location.kind);
+        };
+    };
+
+    private func toMutableLocationKind(kind : World.LocationKind) : MutableLocationKind {
+        switch (kind) {
+            case (#unexplored(u)) #unexplored({
+                var currentExploration = u.currentExploration;
+                explorationNeeded = u.explorationNeeded;
+            });
+            case (#standard(s)) #standard({
+                var townId = s.townId;
+                resources = {
+                    gold = {
+                        var difficulty = s.resources.gold.difficulty;
+                    };
+                    wood = { var amount = s.resources.wood.amount };
+                    food = { var amount = s.resources.food.amount };
+                    stone = {
+                        var difficulty = s.resources.stone.difficulty;
+                    };
+                };
+            });
         };
     };
 
@@ -66,13 +96,25 @@ module {
         {
             id = location.id;
             coordinate = location.coordinate;
-            townId = location.townId;
-            resources = {
-                gold = { difficulty = location.resources.gold.difficulty };
-                wood = { amount = location.resources.wood.amount };
-                food = { amount = location.resources.food.amount };
-                stone = { difficulty = location.resources.stone.difficulty };
-            };
+            kind = fromMutableLocationKind(location.kind);
+        };
+    };
+
+    private func fromMutableLocationKind(kind : MutableLocationKind) : World.LocationKind {
+        switch (kind) {
+            case (#unexplored(u)) #unexplored({
+                currentExploration = u.currentExploration;
+                explorationNeeded = u.explorationNeeded;
+            });
+            case (#standard(s)) #standard({
+                townId = s.townId;
+                resources = {
+                    gold = { difficulty = s.resources.gold.difficulty };
+                    wood = { amount = s.resources.wood.amount };
+                    food = { amount = s.resources.food.amount };
+                    stone = { difficulty = s.resources.stone.difficulty };
+                };
+            });
         };
     };
 
@@ -98,18 +140,26 @@ module {
             };
         };
 
-        public func exploreLocation(prng : Prng, locationId : Nat) : Result.Result<World.WorldLocation, { #locationAlreadyExplored; #noAdjacentLocationExplored }> {
-            let null = locations.get(locationId) else return #err(#locationAlreadyExplored);
-            let locationCoordinate = HexGrid.indexToAxialCoordinate(locationId);
-            let anyAdjacentExplored = locations.keys()
-            |> Iter.map<Nat, HexGrid.AxialCoordinate>(_, HexGrid.indexToAxialCoordinate)
-            |> IterTools.any<HexGrid.AxialCoordinate>(_, func(c) = HexGrid.areAdjacent(locationCoordinate, c));
-            if (not anyAdjacentExplored) {
-                return #err(#noAdjacentLocationExplored);
+        public func exploreLocation(
+            prng : Prng,
+            locationId : Nat,
+            amount : Nat,
+        ) : Result.Result<{ #incomplete; #complete }, { #locationAlreadyExplored; #locationNotFound }> {
+            let ?location = locations.get(locationId) else return #err(#locationNotFound);
+            switch (location.kind) {
+                case (#unexplored(unexplored)) {
+                    Debug.print("Exploring location " # Nat.toText(locationId) # " by " # Nat.toText(amount));
+                    unexplored.currentExploration += amount;
+                    if (unexplored.currentExploration >= unexplored.explorationNeeded) {
+                        Debug.print("Location " # Nat.toText(locationId) # " fully explored");
+                        location.kind := toMutableLocationKind(WorldGenerator.generateLocationKind(prng, location.id, true));
+                        #ok(#complete);
+                    } else {
+                        #ok(#incomplete);
+                    };
+                };
+                case (_) return #err(#locationAlreadyExplored);
             };
-            let newLocation = WorldGenerator.generateLocation(prng, locationId);
-
-            #ok(newLocation);
         };
 
         public func getLocations() : HashMap.HashMap<Nat, World.WorldLocation> {
@@ -139,12 +189,20 @@ module {
             delta : Int,
             allowBelowZero : Bool,
         ) : Result.Result<Nat, { #locationNotFound; #notEnoughResource : { missing : Nat } }> {
+            Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta));
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
+
+            Debug.print("Location found");
+            let standardLocation = switch (location.kind) {
+                case (#unexplored(_)) return #err(#locationNotFound); // TODO better error?
+                case (#standard(standardLocation)) standardLocation;
+            };
+            Debug.print("Standard location found");
             let currentValue = switch (kind) {
-                case (#food) location.resources.food.amount;
-                case (#wood) location.resources.wood.amount;
-                case (#gold) location.resources.gold.difficulty;
-                case (#stone) location.resources.stone.difficulty;
+                case (#food) standardLocation.resources.food.amount;
+                case (#wood) standardLocation.resources.wood.amount;
+                case (#gold) standardLocation.resources.gold.difficulty;
+                case (#stone) standardLocation.resources.stone.difficulty;
             };
             if (delta == 0) {
                 return #ok(currentValue);
@@ -159,20 +217,25 @@ module {
             } else {
                 Int.abs(newValueInt);
             };
+            Debug.print("New value: " # Nat.toText(newAmountOrDifficulty));
             switch (kind) {
-                case (#food) location.resources.food.amount := newAmountOrDifficulty;
-                case (#wood) location.resources.wood.amount := newAmountOrDifficulty;
-                case (#gold) location.resources.gold.difficulty := newAmountOrDifficulty;
-                case (#stone) location.resources.stone.difficulty := newAmountOrDifficulty;
+                case (#food) standardLocation.resources.food.amount := newAmountOrDifficulty;
+                case (#wood) standardLocation.resources.wood.amount := newAmountOrDifficulty;
+                case (#gold) standardLocation.resources.gold.difficulty := newAmountOrDifficulty;
+                case (#stone) standardLocation.resources.stone.difficulty := newAmountOrDifficulty;
             };
             #ok(newAmountOrDifficulty);
         };
 
         public func addTown(locationId : Nat, townId : Nat) : Result.Result<(), { #locationNotFound; #otherTownAtLocation : Nat }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
-            switch (location.townId) {
+            let standardLocation = switch (location.kind) {
+                case (#unexplored(_)) return #err(#locationNotFound); // TODO better error?
+                case (#standard(standardLocation)) standardLocation;
+            };
+            switch (standardLocation.townId) {
                 case (?townId) return #err(#otherTownAtLocation(townId));
-                case (null) location.townId := ?townId;
+                case (null) standardLocation.townId := ?townId;
             };
             #ok;
         };

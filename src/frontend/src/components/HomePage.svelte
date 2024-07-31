@@ -11,7 +11,7 @@
     $: user = $userStore;
     $: towns = $townStore;
 
-    $: myTown = towns?.find((town) => town.id === user?.townId);
+    $: myTown = towns?.find((town) => town.id === user?.worldData?.townId);
     $: world = $worldStore;
 
     let joinWorld = async () => {

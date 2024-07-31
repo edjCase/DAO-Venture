@@ -5,11 +5,14 @@ import { toJsonString } from '../utils/StringUtil';
 import { Principal } from '@dfinity/principal';
 import { getOrCreateAuthClient } from '../utils/AuthUtil';
 
-
+type UserData = {
+    id: Principal;
+    worldData: User | undefined;
+};
 
 function createUserStore() {
     let currentUserId: Principal | undefined = undefined;
-    const currentUser = writable<User | undefined>(undefined);
+    const currentUser = writable<UserData | undefined>(undefined);
     const userStats = writable<UserStats>();
 
 
@@ -20,16 +23,22 @@ function createUserStore() {
         let mainAgent = await mainAgentFactory();
         let result: GetUserResult = await mainAgent.getUser(currentUserId);
         if ('ok' in result) {
-            currentUser.set(result.ok);
+            currentUser.set({
+                id: currentUserId,
+                worldData: result.ok
+            });
         }
         else if ('err' in result && 'notFound' in result.err) {
-            currentUser.set(undefined);
+            currentUser.set({
+                id: currentUserId,
+                worldData: undefined
+            });
         } else {
             throw new Error("Failed to get user: " + currentUserId + " " + toJsonString(result));
         }
     };
 
-    const subscribeCurrentUser = (callback: (user: User | undefined) => void) => {
+    const subscribeCurrentUser = (callback: (user: UserData | undefined) => void) => {
         return currentUser.subscribe(callback);
     };
 

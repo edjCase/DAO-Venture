@@ -48,8 +48,14 @@ export interface EntropyTownEffectOutcome {
   'townId' : bigint,
   'delta' : bigint,
 }
+export interface ExploreJob { 'workerQuota' : bigint, 'locationId' : bigint }
 export interface FlagImage { 'pixels' : Array<Array<Pixel>> }
 export interface FoodResourceInfo { 'amount' : bigint }
+export interface GatherResourceJob {
+  'workerQuota' : bigint,
+  'resource' : ResourceKind,
+  'locationId' : bigint,
+}
 export type GetScenarioError = { 'notStarted' : null } |
   { 'notFound' : null };
 export type GetScenarioResult = { 'ok' : Scenario } |
@@ -87,19 +93,14 @@ export type GetWorldResult = { 'ok' : World } |
   { 'err' : GetWorldError };
 export interface GoldResourceInfo { 'difficulty' : bigint }
 export type IncreaseSizeContent = {};
-export type Job = {
-    'processResource' : { 'workerQuota' : bigint, 'resource' : ResourceKind }
-  } |
-  {
-    'gatherResource' : {
-      'workerQuota' : bigint,
-      'resource' : ResourceKind,
-      'locationId' : bigint,
-    }
-  };
+export type Job = { 'explore' : ExploreJob } |
+  { 'processResource' : ProcessResourceJob } |
+  { 'gatherResource' : GatherResourceJob };
 export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null } |
   { 'noTowns' : null };
+export type LocationKind = { 'unexplored' : UnexploredLocation } |
+  { 'standard' : StandardLocation };
 export interface LocationResourceList {
   'food' : FoodResourceInfo,
   'gold' : GoldResourceInfo,
@@ -130,6 +131,12 @@ export interface PagedResult_2 {
   'offset' : bigint,
 }
 export interface Pixel { 'red' : number, 'blue' : number, 'green' : number }
+export interface ProcessResourceJob {
+  'workerQuota' : bigint,
+  'resource' : ProcessingResourceKind,
+}
+export type ProcessingResourceKind = { 'wood' : null } |
+  { 'stone' : null };
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent__1,
@@ -142,7 +149,6 @@ export interface Proposal {
 }
 export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent } |
-  { 'startExpedition' : StartExpeditionContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
   { 'increaseSize' : IncreaseSizeContent } |
@@ -292,8 +298,13 @@ export interface SkillList {
   'farming' : Skill,
   'mining' : Skill,
   'woodCutting' : Skill,
+  'carpentry' : Skill,
+  'masonry' : Skill,
 }
-export interface StartExpeditionContent { 'locationId' : bigint }
+export interface StandardLocation {
+  'resources' : LocationResourceList,
+  'townId' : [] | [bigint],
+}
 export interface StoneResourceInfo { 'difficulty' : bigint }
 export type TargetTown = { 'all' : null } |
   { 'contextual' : null } |
@@ -377,7 +388,6 @@ export interface TownProposal {
   'proposerId' : Principal,
 }
 export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent } |
-  { 'startExpedition' : StartExpeditionContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
   { 'increaseSize' : IncreaseSizeContent } |
@@ -391,6 +401,10 @@ export interface TownStats {
   'userCount' : bigint,
 }
 export interface TownVotingPower { 'total' : bigint, 'voted' : bigint }
+export interface UnexploredLocation {
+  'explorationNeeded' : bigint,
+  'currentExploration' : bigint,
+}
 export interface UpdateJobContent { 'job' : Job, 'jobId' : bigint }
 export interface User {
   'id' : Principal,
@@ -478,8 +492,7 @@ export interface WorldChoiceScenarioRequest {
 }
 export interface WorldLocation {
   'id' : bigint,
-  'resources' : LocationResourceList,
-  'townId' : [] | [bigint],
+  'kind' : LocationKind,
   'coordinate' : AxialCoordinate,
 }
 export interface WorldProposal {

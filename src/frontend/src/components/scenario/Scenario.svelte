@@ -31,7 +31,7 @@
     {#if "resolved" in scenario.state}
       <ResolvedScenarioState {scenario} state={scenario.state.resolved} />
     {:else if "inProgress" in scenario.state}
-      <InProgressScenarioState {scenario} userContext={user} />
+      <InProgressScenarioState {scenario} userContext={user?.worldData} />
       <div class="text-center text-xl">
         Scenario ends in: <Countdown
           date={nanosecondsToDate(scenario.endTime)}

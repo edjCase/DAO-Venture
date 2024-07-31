@@ -51,6 +51,8 @@ module {
         woodCutting : MutableSkill;
         farming : MutableSkill;
         mining : MutableSkill;
+        carpentry : MutableSkill;
+        masonry : MutableSkill;
     };
 
     type MutableSkill = {
@@ -145,6 +147,14 @@ module {
                         var proficiencyLevel = 0;
                     };
                     mining = {
+                        var techLevel = 0;
+                        var proficiencyLevel = 0;
+                    };
+                    carpentry = {
+                        var techLevel = 0;
+                        var proficiencyLevel = 0;
+                    };
+                    masonry = {
                         var techLevel = 0;
                         var proficiencyLevel = 0;
                     };
@@ -460,6 +470,12 @@ module {
                         errors.add("Worker quota must be at least 1");
                     };
                 };
+                case (#explore(exploreJob)) {
+                    if (exploreJob.workerQuota <= 0) {
+                        errors.add("Worker quota must be at least 1");
+                    };
+                    // TODO check if location is explored?
+                };
             };
             if (errors.size() > 0) {
                 return #err(#invalid(Buffer.toArray(errors)));
@@ -487,6 +503,8 @@ module {
                 woodCutting = fromMutableSkill(town.skills.woodCutting);
                 farming = fromMutableSkill(town.skills.farming);
                 mining = fromMutableSkill(town.skills.mining);
+                carpentry = fromMutableSkill(town.skills.carpentry);
+                masonry = fromMutableSkill(town.skills.masonry);
             };
             resources = {
                 gold = town.resources.gold;
@@ -522,6 +540,8 @@ module {
                 woodCutting = toMutableSkill(stableData.skills.woodCutting);
                 farming = toMutableSkill(stableData.skills.farming);
                 mining = toMutableSkill(stableData.skills.mining);
+                carpentry = toMutableSkill(stableData.skills.carpentry);
+                masonry = toMutableSkill(stableData.skills.masonry);
             };
             resources = {
                 var gold = stableData.resources.gold;

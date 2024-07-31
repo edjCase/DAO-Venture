@@ -38,6 +38,8 @@ module {
         woodCutting : Skill;
         farming : Skill;
         mining : Skill;
+        carpentry : Skill;
+        masonry : Skill;
     };
 
     public type Skill = {
@@ -46,14 +48,29 @@ module {
     };
 
     public type Job = {
-        #gatherResource : {
-            locationId : Nat;
-            resource : World.ResourceKind;
-            workerQuota : Nat;
-        };
-        #processResource : {
-            resource : World.ResourceKind;
-            workerQuota : Nat;
-        };
+        #gatherResource : GatherResourceJob;
+        #processResource : ProcessResourceJob;
+        #explore : ExploreJob;
+    };
+
+    public type GatherResourceJob = {
+        locationId : Nat;
+        resource : World.ResourceKind;
+        workerQuota : Nat;
+    };
+
+    public type ProcessResourceJob = {
+        resource : ProcessingResourceKind;
+        workerQuota : Nat;
+    };
+
+    public type ProcessingResourceKind = {
+        #wood;
+        #stone;
+    };
+
+    public type ExploreJob = {
+        locationId : Nat;
+        workerQuota : Nat;
     };
 };

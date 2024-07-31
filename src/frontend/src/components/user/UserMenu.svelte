@@ -8,15 +8,17 @@
 </script>
 
 <div class="flex flex-col items-center">
-  {#if user}
+  {#if user !== undefined}
     <UserAvatar userId={user.id} size="lg" />
     <div class="font-medium text-center">
       <div>
         <UserPseudonym userId={user.id} />
       </div>
-      <div class="text-center text-md font-bold">
-        Level: {user.level}
-      </div>
+      {#if user.worldData != undefined}
+        <div class="text-center text-md font-bold">
+          Level: {user.worldData.level}
+        </div>
+      {/if}
     </div>
   {:else}
     <LoginButton />

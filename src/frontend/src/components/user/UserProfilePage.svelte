@@ -10,7 +10,7 @@
     $: user = $userStore;
     $: towns = $townStore;
 
-    $: town = towns?.find((t) => t.id == user?.townId);
+    $: town = towns?.find((t) => t.id == user?.worldData?.townId);
 </script>
 
 <div class="bg-gray-800 p-4">
@@ -33,24 +33,32 @@
                     <UserIdCopyButton userId={user.id} />
                 </div>
             </div>
-            <div class="mb-4">
-                <div class="font-bold text-xl mb-2">Town</div>
-                {#if town}
-                    <TownFlag {town} size="md" />
-                    <div class="text-center">{town.name}</div>
-                    <div class="text-center text-sm text-gray-400">
-                        Joined Town: {nanosecondsToDate(user.atTownSince)}
+            {#if user.worldData !== undefined}
+                <div class="mb-4">
+                    <div class="font-bold text-xl mb-2">Town</div>
+                    {#if town}
+                        <TownFlag {town} size="md" />
+                        <div class="text-center">{town.name}</div>
+                        <div class="text-center text-sm text-gray-400">
+                            Joined Town: {nanosecondsToDate(
+                                user.worldData.atTownSince,
+                            )}
+                        </div>
+                    {:else}
+                        <div>None</div>
+                    {/if}
+                    <div>
+                        Joined World: {nanosecondsToDate(
+                            user.worldData.inWorldSince,
+                        )}
                     </div>
-                {:else}
-                    <div>None</div>
-                {/if}
-                <div>
-                    Joined World: {nanosecondsToDate(user.inWorldSince)}
                 </div>
-            </div>
-            <div class="mb-4">
-                <div class="font-bold text-xl mb-2">Level - {user.level}</div>
-            </div>
+                <div class="mb-4">
+                    <div class="font-bold text-xl mb-2">
+                        Level - {user.worldData.level}
+                    </div>
+                </div>
+            {/if}
         </div>
     {/if}
 

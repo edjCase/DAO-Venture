@@ -4,6 +4,7 @@
         r: number; // bottom -> top
     }
     export interface HexTileData {
+        faded: boolean;
         coordinate: AxialCoordinate;
     }
 </script>
@@ -13,6 +14,7 @@
     export let id: number;
     export let hexSize: number;
     export let selected: boolean;
+    export let faded: boolean = false;
     export let onClick: (coord: AxialCoordinate) => void = () => {};
 
     const { x, y } = hexToPixel(tile.coordinate);
@@ -52,7 +54,7 @@
 >
     <polygon
         points={getHexPoints(0, 0)}
-        class="stroke-gray-400"
+        class="stroke-gray-400 fill-blac {faded ? 'opacity-10' : ''}"
         stroke-width={selected ? 4 : 1}
     />
     <slot {id} />
