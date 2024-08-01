@@ -104,12 +104,15 @@ module {
             case (#unexplored(_)) Debug.trap("Location is unexplored: " # Nat.toText(gatherResourceJob.locationId));
             case (#standard(standardLocation)) {
 
-                let calculateAmountWithDifficulty = func(workerCount : Int, proficiencyLevel : Nat, techLevel : Nat, difficulty : Nat) : Nat {
+                let calculateAmountWithEfficiency = func(
+                    workerCount : Int,
+                    proficiencyLevel : Nat,
+                    techLevel : Nat,
+                    efficiency : Float,
+                ) : Nat {
                     let baseAmount = workerCount + proficiencyLevel + techLevel;
-                    let difficultyScalingFactor = 0.001; // Adjust this value to change the steepness of the linear decrease
 
-                    let scaledDifficulty = Float.fromInt(difficulty) * difficultyScalingFactor;
-                    let amountFloat = Float.fromInt(baseAmount) - scaledDifficulty;
+                    let amountFloat = Float.fromInt(baseAmount) * efficiency;
 
                     let amountInt = Float.toInt(amountFloat);
                     if (amountInt <= 1) {
@@ -154,17 +157,17 @@ module {
                         town.skills.farming.techLevel,
                         2,
                     );
-                    case (#gold) calculateAmountWithDifficulty(
+                    case (#gold) calculateAmountWithEfficiency(
                         workerCount,
                         town.skills.mining.proficiencyLevel,
                         town.skills.mining.techLevel,
-                        standardLocation.resources.gold.difficulty,
+                        standardLocation.resources.gold.efficiency,
                     );
-                    case (#stone) calculateAmountWithDifficulty(
+                    case (#stone) calculateAmountWithEfficiency(
                         workerCount,
                         town.skills.mining.proficiencyLevel,
                         town.skills.mining.techLevel,
-                        standardLocation.resources.stone.difficulty,
+                        standardLocation.resources.stone.efficiency,
                     );
                 };
             };

@@ -1,12 +1,12 @@
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
-import Prelude "mo:base/Prelude";
 import Int "mo:base/Int";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
+import Float "mo:base/Float";
 import World "../models/World";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import WorldGenerator "../WorldGenerator";
@@ -46,20 +46,20 @@ module {
         };
     };
 
-    public type MutableGoldResourceInfo = {
-        var difficulty : Nat;
+    type MutableGoldResourceInfo = {
+        var efficiency : Float;
     };
 
-    public type MutableWoodResourceInfo = {
+    type MutableWoodResourceInfo = {
         var amount : Nat;
     };
 
-    public type MutableFoodResourceInfo = {
+    type MutableFoodResourceInfo = {
         var amount : Nat;
     };
 
-    public type MutableStoneResourceInfo = {
-        var difficulty : Nat;
+    type MutableStoneResourceInfo = {
+        var efficiency : Float;
     };
 
     private func toMutableWorldLocation(location : World.WorldLocation) : MutableWorldLocation {
@@ -80,12 +80,12 @@ module {
                 var townId = s.townId;
                 resources = {
                     gold = {
-                        var difficulty = s.resources.gold.difficulty;
+                        var efficiency = s.resources.gold.efficiency;
                     };
                     wood = { var amount = s.resources.wood.amount };
                     food = { var amount = s.resources.food.amount };
                     stone = {
-                        var difficulty = s.resources.stone.difficulty;
+                        var efficiency = s.resources.stone.efficiency;
                     };
                 };
             });
@@ -109,10 +109,10 @@ module {
             case (#standard(s)) #standard({
                 townId = s.townId;
                 resources = {
-                    gold = { difficulty = s.resources.gold.difficulty };
+                    gold = { efficiency = s.resources.gold.efficiency };
                     wood = { amount = s.resources.wood.amount };
                     food = { amount = s.resources.food.amount };
-                    stone = { difficulty = s.resources.stone.difficulty };
+                    stone = { efficiency = s.resources.stone.efficiency };
                 };
             });
         };
@@ -171,21 +171,44 @@ module {
             |> HashMap.fromIter<Nat, World.WorldLocation>(_, locations.size(), Nat.equal, Nat32.fromNat);
         };
 
-        public func addResource(
-            locationId : Nat,
-            kind : World.ResourceKind,
-            delta : Nat,
-        ) : Result.Result<Nat, { #locationNotFound }> {
-            switch (updateResource(locationId, kind, delta, #ignoreNegative)) {
-                case (#ok(v)) #ok(v);
-                case (#err(#locationNotFound)) #err(#locationNotFound);
-                case (#err(#notEnoughResource(_))) Prelude.unreachable();
-            };
+        public func getLocation(locationId : Nat) : ?World.WorldLocation {
+            let ?location = locations.get(locationId) else return null;
+            ?fromMutableWorldLocation(location);
         };
 
-        public func updateResource(
+        public type EfficiencyResourceKind = {
+            #gold;
+            #stone;
+        };
+
+        public func updateEfficiencyResource(
             locationId : Nat,
-            kind : World.ResourceKind,
+            kind : EfficiencyResourceKind,
+            newEfficiency : Float,
+        ) : Result.Result<Float, { #locationNotFound }> {
+            let ?location = locations.get(locationId) else return #err(#locationNotFound);
+
+            let standardLocation = switch (location.kind) {
+                case (#unexplored(_)) return #err(#locationNotFound); // TODO better error?
+                case (#standard(standardLocation)) standardLocation;
+            };
+
+            Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " to " # Float.toText(newEfficiency));
+            switch (kind) {
+                case (#gold) standardLocation.resources.gold.efficiency := newEfficiency;
+                case (#stone) standardLocation.resources.stone.efficiency := newEfficiency;
+            };
+            #ok(newEfficiency);
+        };
+
+        public type DeterminateResourceKind = {
+            #wood;
+            #food;
+        };
+
+        public func updateDeterminateResource(
+            locationId : Nat,
+            kind : { #wood; #food },
             delta : Int,
             behaviour : {
                 #errorOnNegative : { setToZero : Bool };
@@ -199,27 +222,23 @@ module {
                 case (#standard(standardLocation)) standardLocation;
             };
             let currentValue = switch (kind) {
-                case (#food) standardLocation.resources.food.amount;
-                case (#wood) standardLocation.resources.wood.amount;
-                case (#gold) standardLocation.resources.gold.difficulty;
-                case (#stone) standardLocation.resources.stone.difficulty;
+                case (#food(_)) standardLocation.resources.food.amount;
+                case (#wood(_)) standardLocation.resources.wood.amount;
             };
             if (delta == 0) {
                 return #ok(currentValue);
             };
 
-            let updateResource = func(kind : World.ResourceKind, newAmountOrDifficulty : Nat) {
-                Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmountOrDifficulty));
+            let updateResource = func(kind : DeterminateResourceKind, newAmount : Nat) {
+                Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmount));
                 switch (kind) {
-                    case (#food) standardLocation.resources.food.amount := newAmountOrDifficulty;
-                    case (#wood) standardLocation.resources.wood.amount := newAmountOrDifficulty;
-                    case (#gold) standardLocation.resources.gold.difficulty := newAmountOrDifficulty;
-                    case (#stone) standardLocation.resources.stone.difficulty := newAmountOrDifficulty;
+                    case (#food) standardLocation.resources.food.amount := newAmount;
+                    case (#wood) standardLocation.resources.wood.amount := newAmount;
                 };
             };
 
             let newValueInt = currentValue + delta;
-            let newAmountOrDifficulty : Nat = if (newValueInt <= 0) {
+            let newAmount : Nat = if (newValueInt <= 0) {
                 switch (behaviour) {
                     case (#errorOnNegative({ setToZero })) {
                         if (setToZero) {
@@ -232,8 +251,8 @@ module {
             } else {
                 Int.abs(newValueInt);
             };
-            updateResource(kind, newAmountOrDifficulty);
-            #ok(newAmountOrDifficulty);
+            updateResource(kind, newAmount);
+            #ok(newAmount);
         };
 
         public func addTown(locationId : Nat, townId : Nat) : Result.Result<(), { #locationNotFound; #otherTownAtLocation : Nat }> {

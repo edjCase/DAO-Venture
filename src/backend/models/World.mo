@@ -29,7 +29,7 @@ module {
     };
 
     public type GoldResourceInfo = {
-        difficulty : Nat;
+        efficiency : Float;
     };
 
     public type WoodResourceInfo = {
@@ -41,7 +41,7 @@ module {
     };
 
     public type StoneResourceInfo = {
-        difficulty : Nat;
+        efficiency : Float;
     };
 
     public type ResourceKind = {

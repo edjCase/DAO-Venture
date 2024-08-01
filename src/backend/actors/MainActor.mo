@@ -936,13 +936,6 @@ actor MainActor : Types.Actor {
                 case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
             };
         };
-        let removeLocationResource = func(resource : World.ResourceKind, amount : Nat) : Result.Result<(), { #notEnoughResource : { missing : Nat } }> {
-            switch (worldHandler.updateResource(job.locationId, resource, -amount, #errorOnNegative({ setToZero = true }))) {
-                case (#ok(_)) #ok;
-                case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(job.locationId));
-                case (#err(#notEnoughResource(r))) #err(#notEnoughResource(r));
-            };
-        };
 
         let addProficiencyExperience = func(townId : Nat, resource : World.ResourceKind, value : Nat) {
             let skill : Town.SkillKind = switch (resource) {
@@ -952,25 +945,35 @@ actor MainActor : Types.Actor {
                 case (#stone) #mining;
             };
 
-            let delta = if (value == 0) {
-                // If no resources were gathered, the town gets less proficient
-                -10; // TODO
-            } else {
-                value;
-            };
-
             switch (townsHandler.updateProficiency(townId, skill, delta)) {
                 case (#ok(_)) ();
                 case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
             };
         };
-        let trueAmount : Nat = switch (removeLocationResource(job.resource, amount)) {
-            case (#err(#notEnoughResource(r))) amount - r.missing; // TODO handle this better vs first come first serve
-            case (#ok) amount;
+        let ?location = worldHandler.getLocation(job.locationId) else Debug.trap("Location not found: " # Nat.toText(job.locationId));
+        let standardLocation = switch (location.kind) {
+            case (#unexplored(_)) Debug.trap("Location not explored: " # Nat.toText(job.locationId));
+            case (#standard(standardLocation)) standardLocation;
+        };
+        let trueAmount : Nat = switch (job.resource) {
+            case (#wood or #food) {
+                switch (worldHandler.updateDeterminateResource(job.locationId, job.resource, -amount, #errorOnNegative({ setToZero = true }))) {
+                    case (#ok(_)) amount;
+                    case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(job.locationId));
+                    case (#err(#notEnoughResource(r))) amount - r.missing; // TODO handle this better vs first come first serve
+                };
+            };
+            case (#gold or #stone) {
+                let newEfficiency = standardLocation.resources.gold.efficiency - Float.fromInt(amount) * 0.00001;
+                switch (worldHandler.updateEfficiencyResource(job.locationId, job.resource, -newEfficiency)) {
+                    case (#ok(_)) amount;
+                    case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(job.locationId));
+                };
+            };
         };
 
         addTownResource(townId, trueAmount, job.resource);
-        addProficiencyExperience(townId, job.resource, 1);
+        addProficiencyExperience(townId, job.resource, trueAmount);
     };
 
     type Location = {
