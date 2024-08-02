@@ -38,6 +38,33 @@ module {
         jobs : Buffer.Buffer<Town.Job>;
         skills : MutableTownSkillList;
         resources : MutableTownResourceList;
+        workPlan : MutableTownWorkPlan;
+    };
+
+    type MutableTownWorkPlan = {
+        gatherWood : MutableGatheringWorkPlan;
+        gatherFood : MutableGatheringWorkPlan;
+        gatherStone : MutableEfficiencyGatheringWorkPlan;
+        gatherGold : MutableEfficiencyGatheringWorkPlan;
+        processWood : MutableProcessResourceWorkPlan;
+        processStone : MutableProcessResourceWorkPlan;
+    };
+
+    type MutableProcessResourceWorkPlan = {
+        var weight : Nat;
+        var maxOutput : Nat;
+    };
+
+    type MutableGatheringWorkPlan = {
+        var weight : Nat;
+    };
+
+    type MutableLocationResourceLimit = {
+        var locationId : Nat;
+    };
+
+    type MutableEfficiencyGatheringWorkPlan = {
+        var weight : Nat;
     };
 
     type MutableTownResourceList = {
@@ -155,6 +182,32 @@ module {
                     var wood = resources.wood;
                     var food = resources.food;
                     var stone = resources.stone;
+                };
+                workPlan = {
+                    gatherWood = {
+                        var weight = 1;
+                        locationLimits = Buffer.Buffer<MutableLocationResourceLimit>(0);
+                    };
+                    gatherFood = {
+                        var weight = 1;
+                        locationLimits = Buffer.Buffer<MutableLocationResourceLimit>(0);
+                    };
+                    gatherStone = {
+                        var weight = 1;
+                        var efficiencyMin = 0.0;
+                    };
+                    gatherGold = {
+                        var weight = 1;
+                        var efficiencyMin = 0.0;
+                    };
+                    processWood = {
+                        var weight = 1;
+                        var maxOutput = 0;
+                    };
+                    processStone = {
+                        var weight = 1;
+                        var maxOutput = 0;
+                    };
                 };
             };
             towns.put(townId, townData);
@@ -443,20 +496,8 @@ module {
         private func validateJob(job : Town.Job) : Result.Result<(), { #invalid : [Text] }> {
             let errors = Buffer.Buffer<Text>(0);
             switch (job) {
-                case (#gatherResource(gatherResourceJob)) {
-                    if (gatherResourceJob.workerQuota <= 0) {
-                        errors.add("Worker quota must be at least 1");
-                    };
-                };
-                case (#processResource(processResourceJob)) {
-                    if (processResourceJob.workerQuota <= 0) {
-                        errors.add("Worker quota must be at least 1");
-                    };
-                };
-                case (#explore(exploreJob)) {
-                    if (exploreJob.workerQuota <= 0) {
-                        errors.add("Worker quota must be at least 1");
-                    };
+                case (#explore(_)) {
+
                     // TODO check if location is explored?
                 };
             };
@@ -495,6 +536,37 @@ module {
                 food = town.resources.food;
                 stone = town.resources.stone;
             };
+            workPlan = fromMutableWorkPlan(town.workPlan);
+        };
+    };
+
+    private func fromMutableWorkPlan(workPlan : MutableTownWorkPlan) : Town.TownWorkPlan {
+        {
+            gatherWood = fromMutableGatheringWorkPlan(workPlan.gatherWood);
+            gatherFood = fromMutableGatheringWorkPlan(workPlan.gatherFood);
+            gatherStone = fromMutableEfficiencyGatheringWorkPlan(workPlan.gatherStone);
+            gatherGold = fromMutableEfficiencyGatheringWorkPlan(workPlan.gatherGold);
+            processWood = fromMutableProcessResourceWorkPlan(workPlan.processWood);
+            processStone = fromMutableProcessResourceWorkPlan(workPlan.processStone);
+        };
+    };
+
+    private func fromMutableProcessResourceWorkPlan(workPlan : MutableProcessResourceWorkPlan) : Town.ProcessResourceWorkPlan {
+        {
+            weight = workPlan.weight;
+            maxOutput = workPlan.maxOutput;
+        };
+    };
+
+    private func fromMutableGatheringWorkPlan(workPlan : MutableGatheringWorkPlan) : Town.DeterminateGatheringWorkPlan {
+        {
+            weight = workPlan.weight;
+        };
+    };
+
+    private func fromMutableEfficiencyGatheringWorkPlan(workPlan : MutableEfficiencyGatheringWorkPlan) : Town.EfficiencyGatheringWorkPlan {
+        {
+            weight = workPlan.weight;
         };
     };
 
@@ -532,6 +604,36 @@ module {
                 var food = stableData.resources.food;
                 var stone = stableData.resources.stone;
             };
+            workPlan = toMutableWorkPlan(stableData.workPlan);
+        };
+    };
+    private func toMutableWorkPlan(workPlan : Town.TownWorkPlan) : MutableTownWorkPlan {
+        {
+            gatherWood = toMutableGatheringWorkPlan(workPlan.gatherWood);
+            gatherFood = toMutableGatheringWorkPlan(workPlan.gatherFood);
+            gatherStone = toMutableEfficiencyGatheringWorkPlan(workPlan.gatherStone);
+            gatherGold = toMutableEfficiencyGatheringWorkPlan(workPlan.gatherGold);
+            processWood = toMutableProcessResourceWorkPlan(workPlan.processWood);
+            processStone = toMutableProcessResourceWorkPlan(workPlan.processStone);
+        };
+    };
+
+    private func toMutableProcessResourceWorkPlan(workPlan : Town.ProcessResourceWorkPlan) : MutableProcessResourceWorkPlan {
+        {
+            var weight = workPlan.weight;
+            var maxOutput = workPlan.maxOutput;
+        };
+    };
+
+    private func toMutableGatheringWorkPlan(workPlan : Town.DeterminateGatheringWorkPlan) : MutableGatheringWorkPlan {
+        {
+            var weight = workPlan.weight;
+        };
+    };
+
+    private func toMutableEfficiencyGatheringWorkPlan(workPlan : Town.EfficiencyGatheringWorkPlan) : MutableEfficiencyGatheringWorkPlan {
+        {
+            var weight = workPlan.weight;
         };
     };
 

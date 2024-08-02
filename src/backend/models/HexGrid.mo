@@ -7,6 +7,8 @@ import Float "mo:base/Float";
 import Nat32 "mo:base/Nat32";
 import IterTools "mo:itertools/Iter";
 
+// https://www.redblobgames.com/grids/hexagons/
+
 module {
     public type AxialCoordinate = {
         q : Int;
@@ -89,6 +91,10 @@ module {
         distanceBetweenCube(axialToCube(a), axialToCube(b));
     };
 
+    public func distanceBetweenIndex(a : Nat, b : Nat) : Int {
+        distanceBetween(indexToAxialCoordinate(a), indexToAxialCoordinate(b));
+    };
+
     private func distanceBetweenCube(a : CubeCoordinate, b : CubeCoordinate) : Int {
         (Int.abs(a.x - b.x) + Int.abs(a.y - b.y) + Int.abs(a.z - b.z)) / 2;
     };
@@ -123,7 +129,6 @@ module {
         { q = -1; r = 1 },
         { q = -1; r = 0 },
     ];
-    // https://www.redblobgames.com/grids/hexagons/
 
     public func indexToAxialCoordinate(index : Nat) : AxialCoordinate {
         if (index == 0) {

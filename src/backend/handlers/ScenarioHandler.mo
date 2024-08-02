@@ -736,7 +736,7 @@ module {
             //     Debug.trap("Failed to end scenario, unable to get random entropy. Error: " # Error.message(err));
             // };
             // TODO get proper prng, async is complicating things
-            let prng = PseudoRandomX.fromSeed(0);
+            let prng = PseudoRandomX.fromSeed(0, #xorshift32);
 
             switch (scenario.state) {
                 case (#notStarted(state)) {

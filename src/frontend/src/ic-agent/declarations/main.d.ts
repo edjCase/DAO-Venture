@@ -36,6 +36,7 @@ export type CreateWorldProposalError = { 'notAuthorized' : null } |
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
+export interface DeterminateGatheringWorkPlan { 'weight' : bigint }
 export type Effect = { 'resource' : ResourceEffect } |
   { 'allOf' : Array<Effect> } |
   { 'noEffect' : null } |
@@ -43,12 +44,13 @@ export type Effect = { 'resource' : ResourceEffect } |
   { 'entropy' : EntropyEffect };
 export type EffectOutcome = { 'resource' : ResourceTownEffectOutcome } |
   { 'entropy' : EntropyTownEffectOutcome };
+export interface EfficiencyGatheringWorkPlan { 'weight' : bigint }
 export interface EntropyEffect { 'town' : TargetTown, 'delta' : bigint }
 export interface EntropyTownEffectOutcome {
   'townId' : bigint,
   'delta' : bigint,
 }
-export interface ExploreJob { 'workerQuota' : bigint, 'locationId' : bigint }
+export interface ExploreJob { 'locationId' : bigint }
 export interface FlagImage { 'pixels' : Array<Array<Pixel>> }
 export interface FoodResourceInfo { 'amount' : bigint }
 export interface FoundTownContent {
@@ -57,11 +59,6 @@ export interface FoundTownContent {
   'name' : string,
   'locationId' : bigint,
   'users' : Array<Principal>,
-}
-export interface GatherResourceJob {
-  'workerQuota' : bigint,
-  'resource' : ResourceKind,
-  'locationId' : bigint,
 }
 export type GetScenarioError = { 'notStarted' : null } |
   { 'notFound' : null };
@@ -98,21 +95,17 @@ export type GetWorldProposalResult = { 'ok' : WorldProposal } |
 export type GetWorldProposalsResult = { 'ok' : PagedResult };
 export type GetWorldResult = { 'ok' : World } |
   { 'err' : GetWorldError };
-export interface GoldResourceInfo { 'difficulty' : bigint }
-export type Job = { 'explore' : ExploreJob } |
-  { 'processResource' : ProcessResourceJob } |
-  { 'gatherResource' : GatherResourceJob };
+export interface GoldResourceInfo { 'efficiency' : number }
+export type Job = { 'explore' : ExploreJob };
 export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null } |
   { 'noTowns' : null };
-export type LocationKind = { 'unexplored' : UnexploredLocation } |
-  { 'standard' : StandardLocation };
-export interface LocationResourceList {
-  'food' : FoodResourceInfo,
-  'gold' : GoldResourceInfo,
-  'wood' : WoodResourceInfo,
-  'stone' : StoneResourceInfo,
-}
+export type LocationKind = { 'food' : FoodResourceInfo } |
+  { 'gold' : GoldResourceInfo } |
+  { 'town' : TownLocation } |
+  { 'wood' : WoodResourceInfo } |
+  { 'stone' : StoneResourceInfo } |
+  { 'unexplored' : UnexploredLocation };
 export interface MotionContent { 'title' : string, 'description' : string }
 export interface MotionContent__1 { 'title' : string, 'description' : string }
 export interface NoWorldEffectScenario {
@@ -137,12 +130,10 @@ export interface PagedResult_2 {
   'offset' : bigint,
 }
 export interface Pixel { 'red' : number, 'blue' : number, 'green' : number }
-export interface ProcessResourceJob {
-  'workerQuota' : bigint,
-  'resource' : ProcessingResourceKind,
+export interface ProcessResourceWorkPlan {
+  'weight' : bigint,
+  'maxOutput' : bigint,
 }
-export type ProcessingResourceKind = { 'wood' : null } |
-  { 'stone' : null };
 export interface Proposal {
   'id' : bigint,
   'content' : ProposalContent__1,
@@ -307,11 +298,7 @@ export interface SkillList {
   'carpentry' : Skill,
   'masonry' : Skill,
 }
-export interface StandardLocation {
-  'resources' : LocationResourceList,
-  'townId' : [] | [bigint],
-}
-export interface StoneResourceInfo { 'difficulty' : bigint }
+export interface StoneResourceInfo { 'efficiency' : number }
 export type TargetTown = { 'all' : null } |
   { 'contextual' : null } |
   { 'random' : bigint } |
@@ -369,6 +356,7 @@ export type ThresholdValue__1 = { 'fixed' : bigint } |
 export type Time = bigint;
 export interface Town {
   'id' : bigint,
+  'workPlan' : TownWorkPlan,
   'genesisTime' : Time,
   'motto' : string,
   'resources' : ResourceList,
@@ -383,6 +371,7 @@ export interface Town {
   'populationMax' : bigint,
   'health' : bigint,
 }
+export interface TownLocation { 'townId' : bigint }
 export interface TownProposal {
   'id' : bigint,
   'content' : ProposalContent__1,
@@ -407,6 +396,14 @@ export interface TownStats {
   'userCount' : bigint,
 }
 export interface TownVotingPower { 'total' : bigint, 'voted' : bigint }
+export interface TownWorkPlan {
+  'gatherFood' : DeterminateGatheringWorkPlan,
+  'gatherGold' : EfficiencyGatheringWorkPlan,
+  'gatherWood' : DeterminateGatheringWorkPlan,
+  'processWood' : ProcessResourceWorkPlan,
+  'processStone' : ProcessResourceWorkPlan,
+  'gatherStone' : EfficiencyGatheringWorkPlan,
+}
 export interface UnexploredLocation {
   'explorationNeeded' : bigint,
   'currentExploration' : bigint,

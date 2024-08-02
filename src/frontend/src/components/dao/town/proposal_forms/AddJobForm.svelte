@@ -4,10 +4,8 @@
 
     export let townId: bigint;
     let job: Job = {
-        gatherResource: {
+        explore: {
             locationId: 0n,
-            resource: { wood: null },
-            workerQuota: 100n,
         },
     };
 </script>

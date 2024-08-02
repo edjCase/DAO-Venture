@@ -7,6 +7,7 @@ import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Float "mo:base/Float";
+import Prelude "mo:base/Prelude";
 import World "../models/World";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import WorldGenerator "../WorldGenerator";
@@ -28,7 +29,15 @@ module {
 
     type MutableLocationKind = {
         #unexplored : MutableUnexploredLocation;
-        #standard : MutableStandardLocation;
+        #gold : MutableGoldLocation;
+        #wood : MutableWoodLocation;
+        #food : MutableFoodLocation;
+        #stone : MutableStoneLocation;
+        #town : MutableTownLocation;
+    };
+
+    type MutableTownLocation = {
+        var townId : Nat;
     };
 
     type MutableUnexploredLocation = {
@@ -36,29 +45,19 @@ module {
         explorationNeeded : Nat;
     };
 
-    type MutableStandardLocation = {
-        var townId : ?Nat;
-        resources : {
-            gold : MutableGoldResourceInfo;
-            wood : MutableWoodResourceInfo;
-            food : MutableFoodResourceInfo;
-            stone : MutableStoneResourceInfo;
-        };
-    };
-
-    type MutableGoldResourceInfo = {
+    type MutableGoldLocation = {
         var efficiency : Float;
     };
 
-    type MutableWoodResourceInfo = {
+    type MutableWoodLocation = {
         var amount : Nat;
     };
 
-    type MutableFoodResourceInfo = {
+    type MutableFoodLocation = {
         var amount : Nat;
     };
 
-    type MutableStoneResourceInfo = {
+    type MutableStoneLocation = {
         var efficiency : Float;
     };
 
@@ -76,19 +75,11 @@ module {
                 var currentExploration = u.currentExploration;
                 explorationNeeded = u.explorationNeeded;
             });
-            case (#standard(s)) #standard({
-                var townId = s.townId;
-                resources = {
-                    gold = {
-                        var efficiency = s.resources.gold.efficiency;
-                    };
-                    wood = { var amount = s.resources.wood.amount };
-                    food = { var amount = s.resources.food.amount };
-                    stone = {
-                        var efficiency = s.resources.stone.efficiency;
-                    };
-                };
-            });
+            case (#gold(g)) #gold({ var efficiency = g.efficiency });
+            case (#wood(w)) #wood({ var amount = w.amount });
+            case (#food(f)) #food({ var amount = f.amount });
+            case (#stone(s)) #stone({ var efficiency = s.efficiency });
+            case (#town(t)) #town({ var townId = t.townId });
         };
     };
 
@@ -106,15 +97,11 @@ module {
                 currentExploration = u.currentExploration;
                 explorationNeeded = u.explorationNeeded;
             });
-            case (#standard(s)) #standard({
-                townId = s.townId;
-                resources = {
-                    gold = { efficiency = s.resources.gold.efficiency };
-                    wood = { amount = s.resources.wood.amount };
-                    food = { amount = s.resources.food.amount };
-                    stone = { efficiency = s.resources.stone.efficiency };
-                };
-            });
+            case (#gold(g)) #gold({ efficiency = g.efficiency });
+            case (#wood(w)) #wood({ amount = w.amount });
+            case (#food(f)) #food({ amount = f.amount });
+            case (#stone(s)) #stone({ efficiency = s.efficiency });
+            case (#town(t)) #town({ townId = t.townId });
         };
     };
 
@@ -183,22 +170,19 @@ module {
 
         public func updateEfficiencyResource(
             locationId : Nat,
-            kind : EfficiencyResourceKind,
             newEfficiency : Float,
-        ) : Result.Result<Float, { #locationNotFound }> {
+        ) : Result.Result<(), { #locationNotFound }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
 
-            let standardLocation = switch (location.kind) {
-                case (#unexplored(_)) return #err(#locationNotFound); // TODO better error?
-                case (#standard(standardLocation)) standardLocation;
+            switch (location.kind) {
+                case (#gold(goldLocation)) goldLocation.efficiency := newEfficiency;
+                case (#stone(stoneLocation)) stoneLocation.efficiency := newEfficiency;
+                case (_) return #err(#locationNotFound); // TODO better error?
             };
 
-            Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " to " # Float.toText(newEfficiency));
-            switch (kind) {
-                case (#gold) standardLocation.resources.gold.efficiency := newEfficiency;
-                case (#stone) standardLocation.resources.stone.efficiency := newEfficiency;
-            };
-            #ok(newEfficiency);
+            Debug.print("Updating resource " # debug_show (location.kind) # " at location " # Nat.toText(locationId) # " to " # Float.toText(newEfficiency));
+
+            #ok;
         };
 
         public type DeterminateResourceKind = {
@@ -208,7 +192,6 @@ module {
 
         public func updateDeterminateResource(
             locationId : Nat,
-            kind : { #wood; #food },
             delta : Int,
             behaviour : {
                 #errorOnNegative : { setToZero : Bool };
@@ -217,23 +200,21 @@ module {
         ) : Result.Result<Nat, { #locationNotFound; #notEnoughResource : { missing : Nat } }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
 
-            let standardLocation = switch (location.kind) {
-                case (#unexplored(_)) return #err(#locationNotFound); // TODO better error?
-                case (#standard(standardLocation)) standardLocation;
-            };
-            let currentValue = switch (kind) {
-                case (#food(_)) standardLocation.resources.food.amount;
-                case (#wood(_)) standardLocation.resources.wood.amount;
+            let currentValue = switch (location.kind) {
+                case (#wood(woodLocation)) woodLocation.amount;
+                case (#food(foodLocation)) foodLocation.amount;
+                case (_) return #err(#locationNotFound); // TODO better error?
             };
             if (delta == 0) {
                 return #ok(currentValue);
             };
 
-            let updateResource = func(kind : DeterminateResourceKind, newAmount : Nat) {
-                Debug.print("Updating resource " # debug_show (kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmount));
-                switch (kind) {
-                    case (#food) standardLocation.resources.food.amount := newAmount;
-                    case (#wood) standardLocation.resources.wood.amount := newAmount;
+            let updateResource = func(newAmount : Nat) {
+                Debug.print("Updating determinate resource at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmount));
+                switch (location.kind) {
+                    case (#wood(woodLocation)) woodLocation.amount := newAmount;
+                    case (#food(foodLocation)) foodLocation.amount := newAmount;
+                    case (_) Prelude.unreachable();
                 };
             };
 
@@ -242,7 +223,7 @@ module {
                 switch (behaviour) {
                     case (#errorOnNegative({ setToZero })) {
                         if (setToZero) {
-                            updateResource(kind, 0);
+                            updateResource(0);
                         };
                         return #err(#notEnoughResource({ missing = Int.abs(newValueInt) }));
                     };
@@ -251,19 +232,26 @@ module {
             } else {
                 Int.abs(newValueInt);
             };
-            updateResource(kind, newAmount);
+            updateResource(newAmount);
             #ok(newAmount);
         };
 
         public func addTown(locationId : Nat, townId : Nat) : Result.Result<(), { #locationNotFound; #otherTownAtLocation : Nat }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
-            let standardLocation = switch (location.kind) {
-                case (#unexplored(_)) return #err(#locationNotFound); // TODO better error?
-                case (#standard(standardLocation)) standardLocation;
-            };
-            switch (standardLocation.townId) {
-                case (?townId) return #err(#otherTownAtLocation(townId));
-                case (null) standardLocation.townId := ?townId;
+            switch (location.kind) {
+                case (#town(townLocation)) return #err(#otherTownAtLocation(townLocation.townId));
+                case (#unexplored(_)) return #err(#locationNotFound);
+                case (_) {
+                    // Overwrite the location with a town, destroying the previous location
+                    locations.put(
+                        locationId,
+                        {
+                            id = location.id;
+                            coordinate = location.coordinate;
+                            var kind = #town({ var townId = townId });
+                        },
+                    );
+                };
             };
             #ok;
         };

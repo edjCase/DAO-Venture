@@ -143,28 +143,8 @@ export const idlFactory = ({ IDL }) => {
   const ChangeTownFlagContent = IDL.Record({ 'image' : FlagImage });
   const ChangeTownNameContent = IDL.Record({ 'name' : IDL.Text });
   const ChangeTownMottoContent = IDL.Record({ 'motto' : IDL.Text });
-  const ExploreJob = IDL.Record({
-    'workerQuota' : IDL.Nat,
-    'locationId' : IDL.Nat,
-  });
-  const ProcessingResourceKind = IDL.Variant({
-    'wood' : IDL.Null,
-    'stone' : IDL.Null,
-  });
-  const ProcessResourceJob = IDL.Record({
-    'workerQuota' : IDL.Nat,
-    'resource' : ProcessingResourceKind,
-  });
-  const GatherResourceJob = IDL.Record({
-    'workerQuota' : IDL.Nat,
-    'resource' : ResourceKind,
-    'locationId' : IDL.Nat,
-  });
-  const Job = IDL.Variant({
-    'explore' : ExploreJob,
-    'processResource' : ProcessResourceJob,
-    'gatherResource' : GatherResourceJob,
-  });
+  const ExploreJob = IDL.Record({ 'locationId' : IDL.Nat });
+  const Job = IDL.Variant({ 'explore' : ExploreJob });
   const UpdateJobContent = IDL.Record({ 'job' : Job, 'jobId' : IDL.Nat });
   const AddJobContent = IDL.Record({ 'job' : Job });
   const FoundTownContent = IDL.Record({
@@ -468,6 +448,20 @@ export const idlFactory = ({ IDL }) => {
     'ok' : PagedResult_1,
     'err' : GetTownProposalsError,
   });
+  const DeterminateGatheringWorkPlan = IDL.Record({ 'weight' : IDL.Nat });
+  const EfficiencyGatheringWorkPlan = IDL.Record({ 'weight' : IDL.Nat });
+  const ProcessResourceWorkPlan = IDL.Record({
+    'weight' : IDL.Nat,
+    'maxOutput' : IDL.Nat,
+  });
+  const TownWorkPlan = IDL.Record({
+    'gatherFood' : DeterminateGatheringWorkPlan,
+    'gatherGold' : EfficiencyGatheringWorkPlan,
+    'gatherWood' : DeterminateGatheringWorkPlan,
+    'processWood' : ProcessResourceWorkPlan,
+    'processStone' : ProcessResourceWorkPlan,
+    'gatherStone' : EfficiencyGatheringWorkPlan,
+  });
   const ResourceList = IDL.Record({
     'food' : IDL.Nat,
     'gold' : IDL.Nat,
@@ -487,6 +481,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Town = IDL.Record({
     'id' : IDL.Nat,
+    'workPlan' : TownWorkPlan,
     'genesisTime' : Time,
     'motto' : IDL.Text,
     'resources' : ResourceList,
@@ -522,27 +517,22 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetUsersRequest = IDL.Variant({ 'all' : IDL.Null, 'town' : IDL.Nat });
   const GetUsersResult = IDL.Variant({ 'ok' : IDL.Vec(User) });
+  const FoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
+  const GoldResourceInfo = IDL.Record({ 'efficiency' : IDL.Float64 });
+  const TownLocation = IDL.Record({ 'townId' : IDL.Nat });
+  const WoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
+  const StoneResourceInfo = IDL.Record({ 'efficiency' : IDL.Float64 });
   const UnexploredLocation = IDL.Record({
     'explorationNeeded' : IDL.Nat,
     'currentExploration' : IDL.Nat,
   });
-  const FoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
-  const GoldResourceInfo = IDL.Record({ 'difficulty' : IDL.Nat });
-  const WoodResourceInfo = IDL.Record({ 'amount' : IDL.Nat });
-  const StoneResourceInfo = IDL.Record({ 'difficulty' : IDL.Nat });
-  const LocationResourceList = IDL.Record({
+  const LocationKind = IDL.Variant({
     'food' : FoodResourceInfo,
     'gold' : GoldResourceInfo,
+    'town' : TownLocation,
     'wood' : WoodResourceInfo,
     'stone' : StoneResourceInfo,
-  });
-  const StandardLocation = IDL.Record({
-    'resources' : LocationResourceList,
-    'townId' : IDL.Opt(IDL.Nat),
-  });
-  const LocationKind = IDL.Variant({
     'unexplored' : UnexploredLocation,
-    'standard' : StandardLocation,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
   const WorldLocation = IDL.Record({

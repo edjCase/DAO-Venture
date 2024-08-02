@@ -254,7 +254,7 @@ test(
         ];
         for (i in Iter.range(0, 60)) {
             let expected = expectedItems[i];
-            let actual = HexGrid.indexToAxialCoord(i);
+            let actual = HexGrid.indexToAxialCoordinate(i);
             if (expected != actual) {
                 Debug.trap("Expected: " # debug_show (expected) # ", Actual: " # debug_show (actual));
             };

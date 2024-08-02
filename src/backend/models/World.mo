@@ -6,9 +6,16 @@ module {
         coordinate : HexGrid.AxialCoordinate;
     };
 
-    public type LocationKind = {
+    public type ResourceLocationKind = {
+        #gold : GoldResourceInfo;
+        #wood : WoodResourceInfo;
+        #food : FoodResourceInfo;
+        #stone : StoneResourceInfo;
+    };
+
+    public type LocationKind = ResourceLocationKind or {
         #unexplored : UnexploredLocation;
-        #standard : StandardLocation;
+        #town : TownLocation;
     };
 
     public type UnexploredLocation = {
@@ -16,16 +23,8 @@ module {
         explorationNeeded : Nat;
     };
 
-    public type StandardLocation = {
-        townId : ?Nat;
-        resources : LocationResourceList;
-    };
-
-    public type LocationResourceList = {
-        gold : GoldResourceInfo;
-        wood : WoodResourceInfo;
-        food : FoodResourceInfo;
-        stone : StoneResourceInfo;
+    public type TownLocation = {
+        townId : Nat;
     };
 
     public type GoldResourceInfo = {

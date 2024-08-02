@@ -1,6 +1,5 @@
 import Flag "Flag";
 import Time "mo:base/Time";
-import World "World";
 
 module {
 
@@ -19,6 +18,30 @@ module {
         jobs : [Job];
         skills : SkillList;
         resources : ResourceList;
+
+        workPlan : TownWorkPlan;
+    };
+
+    public type TownWorkPlan = {
+        gatherWood : DeterminateGatheringWorkPlan;
+        gatherFood : DeterminateGatheringWorkPlan;
+        gatherStone : EfficiencyGatheringWorkPlan;
+        gatherGold : EfficiencyGatheringWorkPlan;
+        processWood : ProcessResourceWorkPlan;
+        processStone : ProcessResourceWorkPlan;
+    };
+
+    public type ProcessResourceWorkPlan = {
+        weight : Nat;
+        maxOutput : Nat;
+    };
+
+    public type DeterminateGatheringWorkPlan = {
+        weight : Nat;
+    };
+
+    public type EfficiencyGatheringWorkPlan = {
+        weight : Nat;
     };
 
     public type ResourceList = {
@@ -48,29 +71,10 @@ module {
     };
 
     public type Job = {
-        #gatherResource : GatherResourceJob;
-        #processResource : ProcessResourceJob;
         #explore : ExploreJob;
-    };
-
-    public type GatherResourceJob = {
-        locationId : Nat;
-        resource : World.ResourceKind;
-        workerQuota : Nat;
-    };
-
-    public type ProcessResourceJob = {
-        resource : ProcessingResourceKind;
-        workerQuota : Nat;
-    };
-
-    public type ProcessingResourceKind = {
-        #wood;
-        #stone;
     };
 
     public type ExploreJob = {
         locationId : Nat;
-        workerQuota : Nat;
     };
 };

@@ -1,5 +1,7 @@
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Array "mo:base/Array";
+import Prelude "mo:base/Prelude";
+import Nat "mo:base/Nat";
 import World "models/World";
 import HexGrid "models/HexGrid";
 
@@ -8,8 +10,8 @@ module {
 
     public func generateWorld(prng : Prng) : [World.WorldLocation] {
         Array.tabulate<World.WorldLocation>(
-            19,
-            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, i <= 6),
+            37,
+            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, i <= 18),
         );
     };
 
@@ -23,24 +25,16 @@ module {
 
     public func generateLocationKind(prng : Prng, _ : Nat, explored : Bool) : World.LocationKind {
         // TODO better procedural generation
-        let getRandEfficiency = func() : Float {
-            return prng.nextFloat(0, 1);
-        };
-
-        let getRandAmount = func(min : Nat, max : Nat) : Nat {
-            return prng.nextNat(min, max);
-        };
         let kind : World.LocationKind = if (explored) {
+            let a = prng.nextNat(0, 4);
             // TODO other types?
-            #standard({
-                townId = null;
-                resources = {
-                    gold = { efficiency = getRandEfficiency() };
-                    wood = { amount = getRandAmount(0, 1000) };
-                    food = { amount = getRandAmount(0, 1000) };
-                    stone = { efficiency = getRandEfficiency() };
-                };
-            });
+            switch (a) {
+                case (0) #wood({ amount = prng.nextNat(0, 1000) });
+                case (1) #food({ amount = prng.nextNat(0, 1000) });
+                case (2) #gold({ efficiency = prng.nextFloat(0, 1) });
+                case (3) #stone({ efficiency = prng.nextFloat(0, 1) });
+                case (_) Prelude.unreachable();
+            };
         } else {
             #unexplored({
                 currentExploration = 0;
