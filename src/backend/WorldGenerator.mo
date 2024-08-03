@@ -8,10 +8,11 @@ import HexGrid "models/HexGrid";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public func generateWorld(prng : Prng) : [World.WorldLocation] {
+    public func generateWorld(prng : Prng, radius : Nat) : [World.WorldLocation] {
+        let tileCount = 1 + 3 * radius * (radius + 1);
         Array.tabulate<World.WorldLocation>(
-            37,
-            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, i <= 18),
+            tileCount,
+            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, false),
         );
     };
 

@@ -258,6 +258,10 @@ test(
             if (expected != actual) {
                 Debug.trap("Expected: " # debug_show (expected) # ", Actual: " # debug_show (actual));
             };
+            let reverse = HexGrid.axialCoordinateToIndex(actual);
+            if (i != reverse) {
+                Debug.trap("Reverse. Expected: " # debug_show (i) # ", Actual: " # debug_show (reverse));
+            };
         };
     },
 );

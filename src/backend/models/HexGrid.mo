@@ -5,6 +5,9 @@ import Iter "mo:base/Iter";
 import Buffer "mo:base/Buffer";
 import Float "mo:base/Float";
 import Nat32 "mo:base/Nat32";
+import Nat "mo:base/Nat";
+import Prelude "mo:base/Prelude";
+import Debug "mo:base/Debug";
 import IterTools "mo:itertools/Iter";
 
 // https://www.redblobgames.com/grids/hexagons/
@@ -52,7 +55,7 @@ module {
 
             while (not cubeCoordEq(current, cubicEnd)) {
                 path.add(current);
-                let neighbors = getNeighbors(current);
+                let neighbors = getNeighborsCube(current);
                 // Simple heuristic: move towards the end coordinate
                 current := IterTools.fold<CubeCoordinate, CubeCoordinate>(
                     neighbors,
@@ -122,12 +125,12 @@ module {
     };
 
     let neighbors = [
-        { q = 0; r = -1 },
-        { q = 1; r = -1 },
-        { q = 1; r = 0 },
-        { q = 0; r = 1 },
-        { q = -1; r = 1 },
-        { q = -1; r = 0 },
+        { q = 0; r = -1 }, // Up
+        { q = 1; r = -1 }, // Up-right
+        { q = 1; r = 0 }, // Down-right
+        { q = 0; r = 1 }, // Down
+        { q = -1; r = 1 }, // Down-left
+        { q = -1; r = 0 } // Up-left
     ];
 
     public func indexToAxialCoordinate(index : Nat) : AxialCoordinate {
@@ -154,7 +157,78 @@ module {
         };
     };
 
-    private func getNeighbors(coordinate : CubeCoordinate) : Iter.Iter<CubeCoordinate> {
+    public func axialCoordinateToIndex(coordinate : AxialCoordinate) : Nat {
+        let { q; r } = coordinate;
+
+        if (q == 0 and r == 0) {
+            return 0;
+        };
+
+        // Calculate the ring number
+        let ring : Nat = Nat.max(Int.abs(q), Nat.max(Int.abs(r), Int.abs(-q - r)));
+
+        // Calculate the base index for this ring
+        let ringStart : Nat = 3 * ring * (ring - 1) + 1;
+
+        // Determine which side of the hexagon we're on
+        let (side, offset) : (Nat, Int) = if (q == 0) {
+            if (r < 0) {
+                (0, 0); // Up
+            } else if (r == 0) {
+                return 0; // Center
+            } else {
+                (3, 0); // Down
+            };
+        } else if (r == 0) {
+            if (q > 0) {
+                (2, 0); // Down-right
+            } else {
+                (5, 0); // Up-left
+            };
+        } else if (q + r == 0) {
+            if (q > 0) {
+                (1, 0); // Up-right
+            } else {
+                (4, 0); // Down-left
+            };
+        } else {
+            if (q > 0) {
+                if (r < 0) {
+                    if (q > -r) {
+                        (1, q + r); // Up-right with offset
+                    } else {
+                        (0, q); // Up with offset
+                    };
+                } else {
+                    (2, r); // Down-right with offset
+                };
+            } else {
+                if (r < 0) {
+                    (5, -r); // Up-left with offset
+                } else {
+                    if (q > -r) {
+                        (3, -q); // Down with offset
+                    } else {
+                        (4, q + r); //Down-left with offset
+                    };
+                };
+            };
+        };
+
+        // Calculate the position on the side
+
+        ringStart + side * ring + Int.abs(offset);
+    };
+
+    public func getNeighbors(coordinate : AxialCoordinate) : Iter.Iter<AxialCoordinate> {
+        getNeighborsCube(axialToCube(coordinate))
+        |> Iter.map(
+            _,
+            cubeToAxial,
+        );
+    };
+
+    private func getNeighborsCube(coordinate : CubeCoordinate) : Iter.Iter<CubeCoordinate> {
         [
             { x = 1; y = -1; z = 0 },
             { x = 1; y = 0; z = -1 },

@@ -67,7 +67,7 @@
                 )}
                 {#if townOrUndefined !== undefined}
                     <g transform="translate(-32, -24)">
-                        <foreignObject x="0" y="0" width="100%" height="100%">
+                        <foreignObject x="0" y="0" width="64" height="48">
                             <PixelArtFlag
                                 pixels={townOrUndefined.flagImage.pixels}
                                 size="md"

@@ -36,6 +36,7 @@ import JobAllocator "../JobAllocator";
 import WorldGenerator "../WorldGenerator";
 import WorldHandler "../handlers/WorldHandler";
 import HexGrid "../models/HexGrid";
+import ColorUtil "../ColorUtil";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -229,6 +230,7 @@ actor MainActor : Types.Actor {
                     #err("Failed to remove job:" # error);
                 };
                 case (#foundTown(foundTown)) {
+                    let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
                     let foundingResourceCosts = [
                         {
                             kind = #wood;
@@ -246,6 +248,7 @@ actor MainActor : Types.Actor {
                     let error : Text = switch (townsHandler.updateResourceBulk(townId, foundingResourceCosts, false)) {
                         case (#ok) {
                             let _ = createTown<system>(
+                                prng,
                                 foundTown.name,
                                 foundTown.flag,
                                 foundTown.motto,
@@ -278,6 +281,7 @@ actor MainActor : Types.Actor {
     };
 
     private func createTown<system>(
+        prng : Prng,
         name : Text,
         image : Flag.FlagImage,
         motto : Text,
@@ -303,11 +307,12 @@ actor MainActor : Types.Actor {
             townId,
             townDao,
         );
-        switch (worldHandler.addTown(locationId, townId)) {
+        switch (worldHandler.addTown(prng, locationId, townId)) {
             case (#ok) ();
             case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
             case (#err(#otherTownAtLocation(townId))) Debug.trap("Town '" #Nat.toText(townId) # "' already at location: " # Nat.toText(locationId));
         };
+        Debug.print("Created town " # Nat.toText(townId) # " at location " # Nat.toText(locationId));
         townId;
     };
 
@@ -624,7 +629,7 @@ actor MainActor : Types.Actor {
         let prng = PseudoRandomX.fromBlob(seedBlob, #xorshift32);
         let newWorld : WorldHandler.StableData = {
             progenitor = progenitor;
-            locations = WorldGenerator.generateWorld(prng);
+            locations = WorldGenerator.generateWorld(prng, 20);
         };
         let worldHandler = WorldHandler.Handler(newWorld);
         worldHandlerOrNull := ?worldHandler;
@@ -640,11 +645,12 @@ actor MainActor : Types.Actor {
                     Array.tabulate<Flag.Pixel>(
                         width,
                         func(i : Nat) : Flag.Pixel {
-                            let factor : Nat = (i * 255) / (width - 1);
+                            let hue : Float = Float.fromInt(i) / Float.fromInt(width) * 360.0;
+                            let (r, g, b) = ColorUtil.hsvToRgb(hue, 1.0, 1.0);
                             {
-                                red = Nat8.fromNat(factor);
-                                green = Nat8.fromNat(factor);
-                                blue = Nat8.fromNat(factor);
+                                red = r;
+                                green = g;
+                                blue = b;
                             };
                         },
                     );
@@ -652,7 +658,8 @@ actor MainActor : Types.Actor {
             );
         };
 
-        let locationId = 0; // Start in middle
+        // TODO dont randomize on edge of world, better procedural generation
+        let locationId = prng.nextNat(0, worldHandler.getLocations().size()); // TODO
         let resources = {
             gold = 0;
             wood = 0;
@@ -660,6 +667,7 @@ actor MainActor : Types.Actor {
             stone = 0;
         };
         createTown<system>(
+            prng,
             "First Town",
             image,
             "First Town Motto",

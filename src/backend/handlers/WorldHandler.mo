@@ -108,7 +108,7 @@ module {
     public class Handler(stableData : StableData) {
         public let progenitor = stableData.progenitor;
 
-        let locations = stableData.locations.vals()
+        let locations : HashMap.HashMap<Nat, MutableWorldLocation> = stableData.locations.vals()
         |> Iter.map<World.WorldLocation, (Nat, MutableWorldLocation)>(
             _,
             func(a) = (a.id, toMutableWorldLocation(a)),
@@ -138,14 +138,27 @@ module {
                     Debug.print("Exploring location " # Nat.toText(locationId) # " by " # Nat.toText(amount));
                     unexplored.currentExploration += amount;
                     if (unexplored.currentExploration >= unexplored.explorationNeeded) {
-                        Debug.print("Location " # Nat.toText(locationId) # " fully explored");
-                        location.kind := toMutableLocationKind(WorldGenerator.generateLocationKind(prng, location.id, true));
-                        #ok(#complete);
+                        switch (revealLocation(prng, locationId)) {
+                            case (#ok(_)) #ok(#complete);
+                            case (#err(err)) #err(err);
+                        };
                     } else {
                         #ok(#incomplete);
                     };
                 };
                 case (_) return #err(#locationAlreadyExplored);
+            };
+        };
+
+        public func revealLocation(prng : Prng, locationId : Nat) : Result.Result<World.WorldLocation, { #locationNotFound; #locationAlreadyExplored }> {
+            let ?location = locations.get(locationId) else return #err(#locationNotFound);
+            switch (location.kind) {
+                case (#unexplored(_)) {
+                    Debug.print("Revealing location " # Nat.toText(locationId));
+                    location.kind := toMutableLocationKind(WorldGenerator.generateLocationKind(prng, location.id, true));
+                    #ok(fromMutableWorldLocation(location));
+                };
+                case (_) #err(#locationAlreadyExplored);
             };
         };
 
@@ -236,11 +249,11 @@ module {
             #ok(newAmount);
         };
 
-        public func addTown(locationId : Nat, townId : Nat) : Result.Result<(), { #locationNotFound; #otherTownAtLocation : Nat }> {
+        public func addTown(prng : Prng, locationId : Nat, townId : Nat) : Result.Result<(), { #locationNotFound; #otherTownAtLocation : Nat }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
+            Debug.print(debug_show (location));
             switch (location.kind) {
                 case (#town(townLocation)) return #err(#otherTownAtLocation(townLocation.townId));
-                case (#unexplored(_)) return #err(#locationNotFound);
                 case (_) {
                     // Overwrite the location with a town, destroying the previous location
                     locations.put(
@@ -251,6 +264,17 @@ module {
                             var kind = #town({ var townId = townId });
                         },
                     );
+                    // TODO do some procdeural generation of town resources so that
+                    // the town has some resources to start with of all important types
+                    let surroundingLocations = HexGrid.getNeighbors(location.coordinate);
+                    for (neighbor in surroundingLocations) {
+                        let index = HexGrid.axialCoordinateToIndex(neighbor);
+                        switch (revealLocation(prng, index)) {
+                            case (#ok(_)) ();
+                            case (#err(#locationNotFound)) (); // Skip non-existent locations
+                            case (#err(#locationAlreadyExplored)) (); // Skip already explored locations
+                        };
+                    };
                 };
             };
             #ok;

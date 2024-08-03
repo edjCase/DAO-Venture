@@ -4,6 +4,7 @@ module {
         kind : LocationKind;
         id : Nat;
         coordinate : HexGrid.AxialCoordinate;
+        // anomoly : ?Anomoly;
     };
 
     public type ResourceLocationKind = {
