@@ -29,6 +29,7 @@
     });
 
     function handleWheel(event: WheelEvent) {
+        if (!svg) return;
         event.preventDefault();
         const delta = event.deltaY;
         const scaleAmount = delta > 0 ? 0.9 : 1.1;
@@ -49,6 +50,7 @@
     }
 
     function startPan(event: MouseEvent) {
+        if (!svg) return;
         isPanning = true;
         lastX = event.clientX;
         lastY = event.clientY;
@@ -56,6 +58,7 @@
     }
 
     function pan(event: MouseEvent) {
+        if (!svg) return;
         if (!isPanning) return;
 
         const dx = event.clientX - lastX;
@@ -75,6 +78,7 @@
     }
 
     function endPan() {
+        if (!svg) return;
         isPanning = false;
         svg.style.cursor = "move";
     }

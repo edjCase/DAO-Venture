@@ -176,11 +176,11 @@ module {
                     };
                     processWood = {
                         weight = 1;
-                        maxOutput = 0;
+                        maxStorage = 0;
                     };
                     processStone = {
                         weight = 1;
-                        maxOutput = 0;
+                        maxStorage = 0;
                     };
                 };
             };

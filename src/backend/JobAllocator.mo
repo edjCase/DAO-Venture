@@ -25,13 +25,13 @@ module {
     };
 
     public func allocateWorkInTown(town : Town.Town) : TownWorkAllocation {
-        let totalWeight = Float.fromInt(town.workPlan.gatherWood.weight + town.workPlan.gatherFood.weight + town.workPlan.gatherStone.weight + town.workPlan.gatherGold.weight + town.workPlan.processWood.weight + town.workPlan.processStone.weight);
-        let woodGathererCount = Float.fromInt(town.workPlan.gatherWood.weight) / totalWeight * Float.fromInt(town.population);
-        let foodGathererCount = Float.fromInt(town.workPlan.gatherFood.weight) / totalWeight * Float.fromInt(town.population);
-        let stoneGathererCount = Float.fromInt(town.workPlan.gatherStone.weight) / totalWeight * Float.fromInt(town.population);
-        let goldGathererCount = Float.fromInt(town.workPlan.gatherGold.weight) / totalWeight * Float.fromInt(town.population);
-        let woodProcesserCount = Float.fromInt(town.workPlan.processWood.weight) / totalWeight * Float.fromInt(town.population);
-        let stoneProcesserCount = Float.fromInt(town.workPlan.processStone.weight) / totalWeight * Float.fromInt(town.population);
+        let totalWeight = town.workPlan.gatherWood.weight + town.workPlan.gatherFood.weight + town.workPlan.gatherStone.weight + town.workPlan.gatherGold.weight + town.workPlan.processWood.weight + town.workPlan.processStone.weight;
+        let woodGathererCount = town.workPlan.gatherWood.weight / totalWeight * Float.fromInt(town.population);
+        let foodGathererCount = town.workPlan.gatherFood.weight / totalWeight * Float.fromInt(town.population);
+        let stoneGathererCount = town.workPlan.gatherStone.weight / totalWeight * Float.fromInt(town.population);
+        let goldGathererCount = town.workPlan.gatherGold.weight / totalWeight * Float.fromInt(town.population);
+        let woodProcesserCount = town.workPlan.processWood.weight / totalWeight * Float.fromInt(town.population);
+        let stoneProcesserCount = town.workPlan.processStone.weight / totalWeight * Float.fromInt(town.population);
         // TODO rounding errors?
 
         let toNat = func(f : Float) : Nat {

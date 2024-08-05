@@ -11,8 +11,11 @@
     } from "chart.js";
     import { TownWorkPlan } from "../../ic-agent/declarations/main";
     import { onMount } from "svelte";
+    import { getResourceIcon } from "../../utils/ResourceUtil";
+    import ResourceIcon from "../icons/ResourceIcon.svelte";
 
     export let workPlan: TownWorkPlan;
+    export let legend: boolean = false;
     let weights: number[] = [];
     let total: number = 0;
     let chartRef: ChartJS<"pie", number[], string>;
@@ -41,12 +44,12 @@
 
     const data: ChartData<"pie", number[], string> = {
         labels: [
-            "Gather Food",
-            "Gather Wood",
-            "Gather Stone",
-            "Gather Gold",
-            "Process Stone",
-            "Process Wood",
+            "Gather " + getResourceIcon({ food: null }),
+            "Gather " + getResourceIcon({ wood: null }),
+            "Gather " + getResourceIcon({ stone: null }),
+            "Gather " + getResourceIcon({ gold: null }),
+            "Process " + getResourceIcon({ stone: null }),
+            "Process " + getResourceIcon({ wood: null }),
         ],
         datasets: [
             {
@@ -78,31 +81,51 @@
     });
 </script>
 
-<div class="w-64 h-64">
-    <Pie
-        bind:chart={chartRef}
-        {data}
-        options={{
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: true,
-                    position: "right",
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function (context) {
-                            const label = context.label || "";
-                            const value = context.parsed || 0;
-                            const percentage = ((value / total) * 100).toFixed(
-                                1,
-                            );
-                            return `${label}: ${percentage}% (${value})`;
-                        },
+<div class="flex flex-col items-center">
+    <div class="w-64 h-64">
+        <Pie
+            bind:chart={chartRef}
+            {data}
+            options={{
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false,
+                        position: "right",
                     },
                 },
-            },
-        }}
-    />
+            }}
+        />
+    </div>
+    {#if legend}
+        <div
+            class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-2 text-xl text-center mt-4"
+        >
+            <div class="border rounded p-2">
+                Gather <ResourceIcon kind={{ food: null }} />: {workPlan
+                    .gatherFood.weight}
+            </div>
+            <div class="border rounded p-2">
+                Gather <ResourceIcon kind={{ wood: null }} />: {workPlan
+                    .gatherWood.weight}
+            </div>
+            <div class="border rounded p-2">
+                Gather <ResourceIcon kind={{ stone: null }} />: {workPlan
+                    .gatherStone.weight}
+            </div>
+            <div class="border rounded p-2">
+                Gather <ResourceIcon kind={{ gold: null }} />: {workPlan
+                    .gatherGold.weight}
+            </div>
+            <div class="border rounded p-2">
+                Process <ResourceIcon kind={{ stone: null }} />: {workPlan
+                    .processStone.weight}
+            </div>
+            <div class="border rounded p-2">
+                Process <ResourceIcon kind={{ wood: null }} />: {workPlan
+                    .processWood.weight}
+            </div>
+        </div>
+    {/if}
 </div>

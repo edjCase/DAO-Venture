@@ -32,16 +32,16 @@ module {
     };
 
     public type ProcessResourceWorkPlan = {
-        weight : Nat;
-        maxOutput : Nat;
+        weight : Float;
+        maxStorage : Nat;
     };
 
     public type DeterminateGatheringWorkPlan = {
-        weight : Nat;
+        weight : Float;
     };
 
     public type EfficiencyGatheringWorkPlan = {
-        weight : Nat;
+        weight : Float;
     };
 
     public type ResourceList = {
