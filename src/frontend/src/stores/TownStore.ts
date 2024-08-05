@@ -15,8 +15,6 @@ export const townStore = (() => {
   };
 
 
-
-
   setInterval(refetch, 1000 * 10); // Refetch every 10 seconds
 
   refetch();

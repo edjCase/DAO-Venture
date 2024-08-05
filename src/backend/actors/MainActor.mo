@@ -19,7 +19,6 @@ import HashMap "mo:base/HashMap";
 import Array "mo:base/Array";
 import Time "mo:base/Time";
 import Timer "mo:base/Timer";
-import Nat8 "mo:base/Nat8";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Option "mo:base/Option";
@@ -267,6 +266,13 @@ actor MainActor : Types.Actor {
                         case (#err(#notEnoughResources(r))) "Not enough resources: " # debug_show (r);
                     };
                     #err("Failed to found town: " # error);
+                };
+                case (#updateWorkPlan(updateWorkPlan)) {
+                    let error = switch (townsHandler.updateWorkPlan(townId, updateWorkPlan.workPlan)) {
+                        case (#ok) return #ok;
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
+                    };
+                    #err("Failed to update work plan: " # error);
                 };
             };
         };
@@ -641,12 +647,24 @@ actor MainActor : Types.Actor {
         let image = {
             pixels = Array.tabulate<[Flag.Pixel]>(
                 height,
-                func(_ : Nat) : [Flag.Pixel] {
+                func(j : Nat) : [Flag.Pixel] {
                     Array.tabulate<Flag.Pixel>(
                         width,
                         func(i : Nat) : Flag.Pixel {
-                            let hue : Float = Float.fromInt(i) / Float.fromInt(width) * 360.0;
-                            let (r, g, b) = ColorUtil.hsvToRgb(hue, 1.0, 1.0);
+                            let w : Float = Float.fromInt(i) / Float.fromInt(width);
+                            let h : Float = Float.fromInt(j) / Float.fromInt(height);
+                            // Create a checkered pattern
+                            let checker = (i / 4 + j / 4) % 2 == 0;
+
+                            // Base hue changes across the width
+                            let hue : Float = w * 360.0;
+
+                            // Saturation varies in a wave pattern
+                            let sat : Float = 0.8 + 0.2 * Float.sin(w * 6.28318);
+
+                            // Value is higher for checker squares and varies with height
+                            let val : Float = if (checker) 0.8 - 0.6 * h else 0.5 - 0.3 * h;
+                            let (r, g, b) = ColorUtil.hsvToRgb(hue, sat, val);
                             {
                                 red = r;
                                 green = g;

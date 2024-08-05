@@ -148,6 +148,7 @@ export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
+  { 'updateWorkPlan' : UpdateWorkPlanContent } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
   { 'foundTown' : FoundTownContent } |
@@ -385,6 +386,7 @@ export interface TownProposal {
 export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
+  { 'updateWorkPlan' : UpdateWorkPlanContent } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
   { 'foundTown' : FoundTownContent } |
@@ -409,6 +411,7 @@ export interface UnexploredLocation {
   'currentExploration' : bigint,
 }
 export interface UpdateJobContent { 'job' : Job, 'jobId' : bigint }
+export interface UpdateWorkPlanContent { 'workPlan' : TownWorkPlan }
 export interface User {
   'id' : Principal,
   'inWorldSince' : Time,

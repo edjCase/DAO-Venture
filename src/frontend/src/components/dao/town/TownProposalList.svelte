@@ -29,6 +29,10 @@
             title = "Update Job";
         } else if ("removeJob" in p.content) {
             title = "Remove Job";
+        } else if ("foundTown" in p.content) {
+            title = "Found Town";
+        } else if ("updateWorkPlan" in p.content) {
+            title = "Update Work Plan";
         } else {
             title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }

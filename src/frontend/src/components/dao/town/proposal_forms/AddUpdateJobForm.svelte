@@ -5,8 +5,8 @@
         Job,
         TownProposalContent,
     } from "../../../../ic-agent/declarations/main";
-    import { worldStore } from "../../../../stores/WorldStore";
     import { toJsonString } from "../../../../utils/StringUtil";
+    import LocationSelector from "../../../world/LocationSelector.svelte";
 
     export let townId: bigint;
     export let job: Job;
@@ -32,15 +32,6 @@
 
     $: jobTypes = [{ name: "Explore", value: "explore" }];
 
-    $: world = $worldStore;
-
-    $: unexploredLocationitems = world?.locations
-        .filter((location) => "unexplored" in location.kind)
-        .map((location) => ({
-            name: location.id.toString(),
-            value: location.id,
-        }));
-
     let onTypeChange = (e: Event) => {
         jobType = (e.target as HTMLSelectElement).value;
         if (jobType === "explore") {
@@ -59,9 +50,9 @@
     <Select bind:value={jobType} items={jobTypes} on:change={onTypeChange} />
     {#if "explore" in job}
         <Label>Location</Label>
-        <Select
+        <LocationSelector
             bind:value={job.explore.locationId}
-            items={unexploredLocationitems}
+            kind="unexplored"
         />
     {:else}
         NOT IMPLEMENTED JOB TYPE {toJsonString(job)}

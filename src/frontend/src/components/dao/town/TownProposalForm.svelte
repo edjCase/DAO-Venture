@@ -7,6 +7,8 @@
     import AddJobForm from "./proposal_forms/AddJobForm.svelte";
     import UpdateJobForm from "./proposal_forms/UpdateJobForm.svelte";
     import RemoveJobForm from "./proposal_forms/RemoveJobForm.svelte";
+    import FoundTownForm from "./proposal_forms/FoundTownForm.svelte";
+    import UpdateWorkPlanForm from "./proposal_forms/UpdateWorkPlanForm.svelte";
 
     export let townId: bigint;
 
@@ -45,6 +47,16 @@
             value: "removeJob",
             name: "Remove Job",
             component: RemoveJobForm,
+        },
+        {
+            value: "foundTown",
+            name: "Found Town",
+            component: FoundTownForm,
+        },
+        {
+            value: "updateWorkPlan",
+            name: "Update Work Plan",
+            component: UpdateWorkPlanForm,
         },
     ];
     let selectedProposalType: string = proposalTypes[0].value;

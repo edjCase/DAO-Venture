@@ -7,35 +7,39 @@
 
     export let kind: LocationKind;
 
+    let toPercentText = (value: number) => {
+        return `${(value * 100).toFixed(1)}%`;
+    };
+
     let resource: {
         kind: ResourceKind;
-        type: "efficiency" | "amount";
-        value: number | bigint;
+        label: "Efficiency" | "Units";
+        value: string;
     };
     $: {
         if ("gold" in kind) {
             resource = {
                 kind: { gold: null },
-                type: "efficiency",
-                value: kind.gold.efficiency,
+                label: "Efficiency",
+                value: toPercentText(kind.gold.efficiency),
             };
         } else if ("wood" in kind) {
             resource = {
                 kind: { wood: null },
-                type: "amount",
-                value: kind.wood.amount,
+                label: "Units",
+                value: kind.wood.amount.toString(),
             };
         } else if ("stone" in kind) {
             resource = {
                 kind: { stone: null },
-                type: "efficiency",
-                value: kind.stone.efficiency,
+                label: "Efficiency",
+                value: toPercentText(kind.stone.efficiency),
             };
         } else if ("food" in kind) {
             resource = {
                 kind: { food: null },
-                type: "amount",
-                value: kind.food.amount,
+                label: "Units",
+                value: kind.food.amount.toString(),
             };
         } else {
             console.error("Unknown resource kind:", kind);
@@ -52,11 +56,7 @@
     <span class="flex items-center gap-1">
         {resource.value}
         <span class="text-xs">
-            {#if resource.type === "efficiency"}
-                Efficeincy
-            {:else if resource.type === "amount"}
-                Units
-            {/if}
+            {resource.label}
         </span>
     </span>
 </div>

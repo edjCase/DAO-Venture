@@ -10,6 +10,11 @@ module {
         #updateJob : UpdateJobContent;
         #removeJob : RemoveJobContent;
         #foundTown : FoundTownContent;
+        #updateWorkPlan : UpdateWorkPlanContent;
+    };
+
+    public type UpdateWorkPlanContent = {
+        workPlan : Town.TownWorkPlan;
     };
 
     public type AddJobContent = {

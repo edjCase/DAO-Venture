@@ -143,6 +143,21 @@ export const idlFactory = ({ IDL }) => {
   const ChangeTownFlagContent = IDL.Record({ 'image' : FlagImage });
   const ChangeTownNameContent = IDL.Record({ 'name' : IDL.Text });
   const ChangeTownMottoContent = IDL.Record({ 'motto' : IDL.Text });
+  const DeterminateGatheringWorkPlan = IDL.Record({ 'weight' : IDL.Nat });
+  const EfficiencyGatheringWorkPlan = IDL.Record({ 'weight' : IDL.Nat });
+  const ProcessResourceWorkPlan = IDL.Record({
+    'weight' : IDL.Nat,
+    'maxOutput' : IDL.Nat,
+  });
+  const TownWorkPlan = IDL.Record({
+    'gatherFood' : DeterminateGatheringWorkPlan,
+    'gatherGold' : EfficiencyGatheringWorkPlan,
+    'gatherWood' : DeterminateGatheringWorkPlan,
+    'processWood' : ProcessResourceWorkPlan,
+    'processStone' : ProcessResourceWorkPlan,
+    'gatherStone' : EfficiencyGatheringWorkPlan,
+  });
+  const UpdateWorkPlanContent = IDL.Record({ 'workPlan' : TownWorkPlan });
   const ExploreJob = IDL.Record({ 'locationId' : IDL.Nat });
   const Job = IDL.Variant({ 'explore' : ExploreJob });
   const UpdateJobContent = IDL.Record({ 'job' : Job, 'jobId' : IDL.Nat });
@@ -163,6 +178,7 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
+    'updateWorkPlan' : UpdateWorkPlanContent,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
     'foundTown' : FoundTownContent,
@@ -394,6 +410,7 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
+    'updateWorkPlan' : UpdateWorkPlanContent,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
     'foundTown' : FoundTownContent,
@@ -447,20 +464,6 @@ export const idlFactory = ({ IDL }) => {
   const GetTownProposalsResult = IDL.Variant({
     'ok' : PagedResult_1,
     'err' : GetTownProposalsError,
-  });
-  const DeterminateGatheringWorkPlan = IDL.Record({ 'weight' : IDL.Nat });
-  const EfficiencyGatheringWorkPlan = IDL.Record({ 'weight' : IDL.Nat });
-  const ProcessResourceWorkPlan = IDL.Record({
-    'weight' : IDL.Nat,
-    'maxOutput' : IDL.Nat,
-  });
-  const TownWorkPlan = IDL.Record({
-    'gatherFood' : DeterminateGatheringWorkPlan,
-    'gatherGold' : EfficiencyGatheringWorkPlan,
-    'gatherWood' : DeterminateGatheringWorkPlan,
-    'processWood' : ProcessResourceWorkPlan,
-    'processStone' : ProcessResourceWorkPlan,
-    'gatherStone' : EfficiencyGatheringWorkPlan,
   });
   const ResourceList = IDL.Record({
     'food' : IDL.Nat,

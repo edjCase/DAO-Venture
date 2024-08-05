@@ -6,8 +6,6 @@ import Buffer "mo:base/Buffer";
 import Float "mo:base/Float";
 import Nat32 "mo:base/Nat32";
 import Nat "mo:base/Nat";
-import Prelude "mo:base/Prelude";
-import Debug "mo:base/Debug";
 import IterTools "mo:itertools/Iter";
 
 // https://www.redblobgames.com/grids/hexagons/

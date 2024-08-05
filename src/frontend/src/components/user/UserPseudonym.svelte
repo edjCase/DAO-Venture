@@ -1,3 +1,13 @@
+<script lang="ts" context="module">
+    export let buildUserPseudonym = (userId: Principal | string) =>
+        uniqueNamesGenerator({
+            dictionaries: [adjectives, colors, animals],
+            separator: " ",
+            style: "capital",
+            seed: userId instanceof Principal ? userId.toString() : userId,
+        });
+</script>
+
 <script lang="ts">
     import { Principal } from "@dfinity/principal";
     import {
@@ -10,14 +20,7 @@
     export let userId: Principal | string;
     export let maxWidth: string | undefined = undefined;
 
-    $: userIdString = userId instanceof Principal ? userId.toString() : userId;
-
-    $: pseudonym = uniqueNamesGenerator({
-        dictionaries: [adjectives, colors, animals],
-        separator: " ",
-        style: "capital",
-        seed: userIdString,
-    });
+    $: pseudonym = buildUserPseudonym(userId);
 
     $: truncateClass = maxWidth ? "truncate" : "";
     $: style = maxWidth ? `max-width: ${maxWidth};` : "";

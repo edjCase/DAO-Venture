@@ -38,33 +38,7 @@ module {
         jobs : Buffer.Buffer<Town.Job>;
         skills : MutableTownSkillList;
         resources : MutableTownResourceList;
-        workPlan : MutableTownWorkPlan;
-    };
-
-    type MutableTownWorkPlan = {
-        gatherWood : MutableGatheringWorkPlan;
-        gatherFood : MutableGatheringWorkPlan;
-        gatherStone : MutableEfficiencyGatheringWorkPlan;
-        gatherGold : MutableEfficiencyGatheringWorkPlan;
-        processWood : MutableProcessResourceWorkPlan;
-        processStone : MutableProcessResourceWorkPlan;
-    };
-
-    type MutableProcessResourceWorkPlan = {
-        var weight : Nat;
-        var maxOutput : Nat;
-    };
-
-    type MutableGatheringWorkPlan = {
-        var weight : Nat;
-    };
-
-    type MutableLocationResourceLimit = {
-        var locationId : Nat;
-    };
-
-    type MutableEfficiencyGatheringWorkPlan = {
-        var weight : Nat;
+        var workPlan : Town.TownWorkPlan;
     };
 
     type MutableTownResourceList = {
@@ -183,36 +157,43 @@ module {
                     var food = resources.food;
                     var stone = resources.stone;
                 };
-                workPlan = {
+                var workPlan = {
                     gatherWood = {
-                        var weight = 1;
-                        locationLimits = Buffer.Buffer<MutableLocationResourceLimit>(0);
+                        weight = 1;
+                        locationLimits = [];
                     };
                     gatherFood = {
-                        var weight = 1;
-                        locationLimits = Buffer.Buffer<MutableLocationResourceLimit>(0);
+                        weight = 1;
+                        locationLimits = [];
                     };
                     gatherStone = {
-                        var weight = 1;
-                        var efficiencyMin = 0.0;
+                        weight = 1;
+                        efficiencyMin = 0.0;
                     };
                     gatherGold = {
-                        var weight = 1;
-                        var efficiencyMin = 0.0;
+                        weight = 1;
+                        efficiencyMin = 0.0;
                     };
                     processWood = {
-                        var weight = 1;
-                        var maxOutput = 0;
+                        weight = 1;
+                        maxOutput = 0;
                     };
                     processStone = {
-                        var weight = 1;
-                        var maxOutput = 0;
+                        weight = 1;
+                        maxOutput = 0;
                     };
                 };
             };
             towns.put(townId, townData);
 
             return townId;
+        };
+
+        public func updateWorkPlan(townId : Nat, workPlan : Town.TownWorkPlan) : Result.Result<(), { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            Debug.print("Updating work plan for town " # Nat.toText(townId));
+            town.workPlan := workPlan;
+            #ok;
         };
 
         public func addResource(
@@ -536,37 +517,7 @@ module {
                 food = town.resources.food;
                 stone = town.resources.stone;
             };
-            workPlan = fromMutableWorkPlan(town.workPlan);
-        };
-    };
-
-    private func fromMutableWorkPlan(workPlan : MutableTownWorkPlan) : Town.TownWorkPlan {
-        {
-            gatherWood = fromMutableGatheringWorkPlan(workPlan.gatherWood);
-            gatherFood = fromMutableGatheringWorkPlan(workPlan.gatherFood);
-            gatherStone = fromMutableEfficiencyGatheringWorkPlan(workPlan.gatherStone);
-            gatherGold = fromMutableEfficiencyGatheringWorkPlan(workPlan.gatherGold);
-            processWood = fromMutableProcessResourceWorkPlan(workPlan.processWood);
-            processStone = fromMutableProcessResourceWorkPlan(workPlan.processStone);
-        };
-    };
-
-    private func fromMutableProcessResourceWorkPlan(workPlan : MutableProcessResourceWorkPlan) : Town.ProcessResourceWorkPlan {
-        {
-            weight = workPlan.weight;
-            maxOutput = workPlan.maxOutput;
-        };
-    };
-
-    private func fromMutableGatheringWorkPlan(workPlan : MutableGatheringWorkPlan) : Town.DeterminateGatheringWorkPlan {
-        {
-            weight = workPlan.weight;
-        };
-    };
-
-    private func fromMutableEfficiencyGatheringWorkPlan(workPlan : MutableEfficiencyGatheringWorkPlan) : Town.EfficiencyGatheringWorkPlan {
-        {
-            weight = workPlan.weight;
+            workPlan = town.workPlan;
         };
     };
 
@@ -604,39 +555,9 @@ module {
                 var food = stableData.resources.food;
                 var stone = stableData.resources.stone;
             };
-            workPlan = toMutableWorkPlan(stableData.workPlan);
+            var workPlan = stableData.workPlan;
         };
     };
-    private func toMutableWorkPlan(workPlan : Town.TownWorkPlan) : MutableTownWorkPlan {
-        {
-            gatherWood = toMutableGatheringWorkPlan(workPlan.gatherWood);
-            gatherFood = toMutableGatheringWorkPlan(workPlan.gatherFood);
-            gatherStone = toMutableEfficiencyGatheringWorkPlan(workPlan.gatherStone);
-            gatherGold = toMutableEfficiencyGatheringWorkPlan(workPlan.gatherGold);
-            processWood = toMutableProcessResourceWorkPlan(workPlan.processWood);
-            processStone = toMutableProcessResourceWorkPlan(workPlan.processStone);
-        };
-    };
-
-    private func toMutableProcessResourceWorkPlan(workPlan : Town.ProcessResourceWorkPlan) : MutableProcessResourceWorkPlan {
-        {
-            var weight = workPlan.weight;
-            var maxOutput = workPlan.maxOutput;
-        };
-    };
-
-    private func toMutableGatheringWorkPlan(workPlan : Town.DeterminateGatheringWorkPlan) : MutableGatheringWorkPlan {
-        {
-            var weight = workPlan.weight;
-        };
-    };
-
-    private func toMutableEfficiencyGatheringWorkPlan(workPlan : Town.EfficiencyGatheringWorkPlan) : MutableEfficiencyGatheringWorkPlan {
-        {
-            var weight = workPlan.weight;
-        };
-    };
-
     private func toMutableSkill(skill : Town.Skill) : MutableSkill {
         {
             var techLevel = skill.techLevel;

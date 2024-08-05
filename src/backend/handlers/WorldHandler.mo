@@ -264,20 +264,29 @@ module {
                             var kind = #town({ var townId = townId });
                         },
                     );
-                    // TODO do some procdeural generation of town resources so that
-                    // the town has some resources to start with of all important types
-                    let surroundingLocations = HexGrid.getNeighbors(location.coordinate);
-                    for (neighbor in surroundingLocations) {
-                        let index = HexGrid.axialCoordinateToIndex(neighbor);
-                        switch (revealLocation(prng, index)) {
-                            case (#ok(_)) ();
-                            case (#err(#locationNotFound)) (); // Skip non-existent locations
-                            case (#err(#locationAlreadyExplored)) (); // Skip already explored locations
-                        };
-                    };
+                    revealNeighbors(prng, location, 1);
                 };
             };
             #ok;
+        };
+
+        private func revealNeighbors(prng : Prng, location : MutableWorldLocation, depthRemaining : Nat) {
+            // TODO do some procdeural generation of town resources so that
+            // the town has some resources to start with of all important types
+            let surroundingLocations = HexGrid.getNeighbors(location.coordinate);
+            label f for (neighbor in surroundingLocations) {
+                let neighborLocationId = HexGrid.axialCoordinateToIndex(neighbor);
+                switch (revealLocation(prng, neighborLocationId)) {
+                    case (#ok(_)) ();
+                    case (#err(#locationNotFound)) continue f; // Skip non-existent locations
+                    case (#err(#locationAlreadyExplored)) (); // Skip already explored locations
+                };
+                if (depthRemaining > 0) {
+                    let ?neighborLocation = locations.get(neighborLocationId) else Debug.trap("Location not found: " # Nat.toText(neighborLocationId));
+                    // TODO optimize not to reveal neighbors of neighbors that are already revealed
+                    revealNeighbors(prng, neighborLocation, depthRemaining - 1);
+                };
+            };
         };
 
     };
