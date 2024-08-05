@@ -21,7 +21,6 @@ module {
     public type Effect = {
         // TODO anomoly
         // #anomoly : AnomolyEffect;
-        #entropy : EntropyEffect;
         #resource : ResourceEffect;
         #oneOf : [WeightedEffect];
         #allOf : [Effect];
@@ -35,16 +34,7 @@ module {
     //     anomoly : Anomoly.Anomoly;
     // };
 
-    public type EntropyThresholdEffect = {
-        delta : Int;
-    };
-
     public type WorldIncomeEffect = {
-        delta : Int;
-    };
-
-    public type EntropyEffect = {
-        town : TargetTown;
         delta : Int;
     };
 
@@ -63,13 +53,7 @@ module {
     };
 
     public type TownEffectOutcome = {
-        #entropy : EntropyTownEffectOutcome;
         #resource : ResourceTownEffectOutcome;
-    };
-
-    public type EntropyTownEffectOutcome = {
-        townId : Nat;
-        delta : Int;
     };
 
     public type ResourceTownEffectOutcome = {
@@ -89,7 +73,6 @@ module {
 
     public type Requirement = {
         #size : RangeRequirement;
-        #entropy : RangeRequirement;
         #age : RangeRequirement;
         #population : RangeRequirement;
         #resource : ResourceRequirement;

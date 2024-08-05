@@ -9,7 +9,6 @@ module {
         genesisTime : Time.Time;
         motto : Text;
         flagImage : Flag.FlagImage;
-        entropy : Nat;
         size : Nat;
         population : Nat;
         populationMax : Nat;
@@ -18,7 +17,6 @@ module {
         jobs : [Job];
         skills : SkillList;
         resources : ResourceList;
-
         workPlan : TownWorkPlan;
     };
 

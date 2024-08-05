@@ -29,7 +29,6 @@ import TownDao "../models/TownDao";
 import TownsHandler "../handlers/TownsHandler";
 import Town "../models/Town";
 import Flag "../models/Flag";
-import TimeUtil "../TimeUtil";
 import World "../models/World";
 import JobAllocator "../JobAllocator";
 import WorldGenerator "../WorldGenerator";
@@ -52,7 +51,6 @@ actor MainActor : Types.Actor {
 
     // Stables ---------------------------------------------------------
 
-    stable let genesisTime : Time.Time = Time.now();
     stable var daysProcessed : Nat = 0;
     var dayTimerId : ?Timer.TimerId = null;
 
@@ -97,15 +95,6 @@ actor MainActor : Types.Actor {
         effectOutcome : Scenario.EffectOutcome
     ) : () {
         let reverseEffectOrNull : ?ReverseEffectWithDuration = switch (effectOutcome) {
-            case (#entropy(entropyEffect)) {
-                switch (townsHandler.updateEntropy(entropyEffect.townId, entropyEffect.delta)) {
-                    case (#ok) {
-                        // TODO check if entropy is above threshold
-                        null;
-                    };
-                    case (#err(e)) Debug.trap("Error updating town entropy: " # debug_show (e));
-                };
-            };
             case (#resource(resourceEffect)) {
                 switch (townsHandler.updateResource(resourceEffect.townId, resourceEffect.kind, resourceEffect.delta, true)) {
                     case (#ok) null;
@@ -333,11 +322,13 @@ actor MainActor : Types.Actor {
     populateTownDaosFromStable<system>();
 
     private func resetDayTimer<system>(runImmediately : Bool) {
-        let timeTillNextDay = if (runImmediately) {
+        let ?worldHandler = worldHandlerOrNull else return; // Skip if no world
+        let timeTillNextDay : Nat = if (runImmediately) {
             0;
         } else {
-            let { timeTillNextDay } = TimeUtil.getAge(genesisTime);
-            timeTillNextDay;
+            let { nextDayStartTime } = worldHandler.getAgeInfo();
+            // TODO better way to handle getting Nat value?
+            nextDayStartTime - Int.abs(Time.now());
         };
         Debug.print("Resetting day timer for " # Int.toText(timeTillNextDay / 1_000_000_000) # " seconds");
         switch (dayTimerId) {
@@ -528,10 +519,10 @@ actor MainActor : Types.Actor {
     public shared query func getWorld() : async Types.GetWorldResult {
         let ?worldHandler = worldHandlerOrNull else return #err(#worldNotInitialized);
         let worldLocations = worldHandler.getLocations();
-        let { days; nextDayStartTime } = TimeUtil.getAge(genesisTime);
+        let { daysElapsed; nextDayStartTime } = worldHandler.getAgeInfo();
         #ok({
             progenitor = worldHandler.progenitor;
-            age = days;
+            daysElapsed = daysElapsed;
             nextDayStartTime = nextDayStartTime;
             locations = worldLocations.vals() |> Iter.toArray(_);
         });
@@ -539,6 +530,10 @@ actor MainActor : Types.Actor {
 
     public shared query func getTowns() : async [Town.Town] {
         townsHandler.getAll();
+    };
+
+    public shared query func getTownHistory(townId : Nat, count : Nat, offset : Nat) : async Types.GetTownHistoryResult {
+        townsHandler.getHistory(townId, count, offset);
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
@@ -630,10 +625,11 @@ actor MainActor : Types.Actor {
         basePower + powerFromLevel + (townTimePower + worldTimePower) * timeMultiplier;
     };
 
-    private func buildNewWorld(progenitor : Principal) : async* Nat {
+    private func buildNewWorld<system>(progenitor : Principal) : async* Nat {
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromBlob(seedBlob, #xorshift32);
         let newWorld : WorldHandler.StableData = {
+            genesisTime = Time.now();
             progenitor = progenitor;
             locations = WorldGenerator.generateWorld(prng, 20);
         };
@@ -684,7 +680,7 @@ actor MainActor : Types.Actor {
             food = 1000;
             stone = 0;
         };
-        createTown<system>(
+        let townId = createTown<system>(
             prng,
             "First Town",
             image,
@@ -693,6 +689,8 @@ actor MainActor : Types.Actor {
             locationId,
             buildTownDao,
         );
+        resetDayTimer<system>(false);
+        townId;
     };
 
     private func processDays() : async* () {
@@ -700,9 +698,9 @@ actor MainActor : Types.Actor {
             case (null) (); // Skip if no world
             case (?worldHandler) {
                 Debug.print("Processing days");
-                let { days } = TimeUtil.getAge(genesisTime);
+                let { daysElapsed } = worldHandler.getAgeInfo();
                 label l loop {
-                    if (days <= daysProcessed) {
+                    if (daysElapsed <= daysProcessed) {
                         break l;
                     };
                     Debug.print("Processing day " # Nat.toText(daysProcessed));
@@ -746,7 +744,7 @@ actor MainActor : Types.Actor {
             if (town.health <= 0) {
                 // Dying town
                 let tenPercentPop : Nat = Nat.max(1, town.population / 10); // TODO 10%?
-                Debug.print("Town's population " # Nat.toText(town.id) # " is dying from lack of health. Death count: " # Nat.toText(tenPercentPop));
+                Debug.print("Town " # Nat.toText(town.id) # "'s population is dying from lack of health. Death count: " # Nat.toText(tenPercentPop));
                 switch (townsHandler.updatePopulation(town.id, -tenPercentPop)) {
                     case (#ok(newPopulation)) {
                         if (newPopulation == 0) {
@@ -760,7 +758,7 @@ actor MainActor : Types.Actor {
                 // TODO randomly trigger/random amounts
                 // Growing town
                 let onePercentPop : Nat = Nat.max(1, town.population / 100); // TODO 1%?
-                Debug.print("Town's population " # Nat.toText(town.id) # " is growing. Growth count: " # Nat.toText(onePercentPop));
+                Debug.print("Town " # Nat.toText(town.id) # "'s population  is growing. Growth count: " # Nat.toText(onePercentPop));
                 switch (townsHandler.addPopulation(town.id, onePercentPop)) {
                     case (#ok(newPopulation)) {
                         if (newPopulation == town.populationMax) {
@@ -914,9 +912,22 @@ actor MainActor : Types.Actor {
             |> Iter.toArray(_);
             let townAllocation = JobAllocator.allocateWorkInTown(town);
             let locationAllocations = JobAllocator.allocateWorkToResourceLocations(townAllocation, accessableLocations);
-            processLocationResourceWork(worldHandler, town.id, locationAllocations);
+            let gatherWork = processLocationResourceWork(worldHandler, town.id, locationAllocations);
 
             // TODO process process resource
+
+            let snapshot : TownsHandler.DaySnapshot = {
+                day = worldHandler.getAgeInfo().daysElapsed;
+                work = {
+                    gatherWork with
+                    processWood = { workers = 0; units = 0 };
+                    processStone = { workers = 0; units = 0 };
+                };
+            };
+            switch (townsHandler.addDaySnapshot(town.id, snapshot)) {
+                case (#ok) ();
+                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
+            };
         };
     };
 
@@ -951,7 +962,25 @@ actor MainActor : Types.Actor {
         worldHandler : WorldHandler.Handler,
         townId : Nat,
         resourceLocations : [JobAllocator.ResourceLocationWorkAllocation],
-    ) {
+    ) : TownsHandler.DaySnapshotGatherWork {
+        let work = {
+            gatherWood = {
+                var workers = 0;
+                var units = 0;
+            };
+            gatherFood = {
+                var workers = 0;
+                var units = 0;
+            };
+            gatherGold = {
+                var workers = 0;
+                var units = 0;
+            };
+            gatherStone = {
+                var workers = 0;
+                var units = 0;
+            };
+        };
 
         let addTownResource = func(townId : Nat, amount : Nat, resource : World.ResourceKind) {
             switch (townsHandler.addResource(townId, resource, amount)) {
@@ -993,10 +1022,8 @@ actor MainActor : Types.Actor {
         let updateEfficiencyResource = func(
             locationId : Nat,
             amount : Nat,
-            currentEfficiency : Float,
         ) : Nat {
-            let newEfficiency = currentEfficiency - Float.fromInt(amount) * 0.00001;
-            switch (worldHandler.updateEfficiencyResource(locationId, -newEfficiency)) {
+            switch (worldHandler.updateEfficiencyResource(locationId, amount)) {
                 case (#ok(_)) amount;
                 case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
             };
@@ -1006,12 +1033,42 @@ actor MainActor : Types.Actor {
             let (kind, trueAmount) : (World.ResourceKind, Nat) = switch (loc.kind) {
                 case (#wood(_)) (#wood, updateDeterminateResource(loc.locationId, loc.workers));
                 case (#food(_)) (#food, updateDeterminateResource(loc.locationId, loc.workers));
-                case (#gold(gold)) (#gold, updateEfficiencyResource(loc.locationId, loc.workers, gold.efficiency));
-                case (#stone(stone)) (#stone, updateEfficiencyResource(loc.locationId, loc.workers, stone.efficiency));
+                case (#gold(_)) (#gold, updateEfficiencyResource(loc.locationId, loc.workers));
+                case (#stone(_)) (#stone, updateEfficiencyResource(loc.locationId, loc.workers));
+            };
+
+            switch (kind) {
+                case (#wood) {
+                    work.gatherWood.workers += loc.workers;
+                    work.gatherWood.units += trueAmount;
+                };
+                case (#food) {
+                    work.gatherFood.workers += loc.workers;
+                    work.gatherFood.units += trueAmount;
+                };
+                case (#gold) {
+                    work.gatherGold.workers += loc.workers;
+                    work.gatherGold.units += trueAmount;
+                };
+                case (#stone) {
+                    work.gatherStone.workers += loc.workers;
+                    work.gatherStone.units += trueAmount;
+                };
             };
 
             addTownResource(townId, trueAmount, kind);
             addProficiencyExperience(townId, kind, trueAmount);
+        };
+
+        let mapWork = func(w : { var workers : Nat; var units : Nat }) : TownsHandler.Work = {
+            workers = w.workers;
+            units = w.units;
+        };
+        {
+            gatherWood = mapWork(work.gatherWood);
+            gatherFood = mapWork(work.gatherFood);
+            gatherGold = mapWork(work.gatherGold);
+            gatherStone = mapWork(work.gatherStone);
         };
     };
 

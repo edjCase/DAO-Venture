@@ -695,7 +695,6 @@ module {
                                 case (#stone) testRange(townStats.resources.stone, resource.range);
                             };
                         };
-                        case (#entropy(entropy)) testRange(townStats.entropy, entropy);
                         case (#age(age)) {
                             let currentAge = TimeUtil.getAge(townStats.genesisTime).days;
                             testRange(currentAge, age);
@@ -1216,9 +1215,6 @@ module {
             case (#resource(_)) {
                 // TODO
             };
-            case (#entropy(_)) {
-                // TODO
-            };
             case (#noEffect) {};
         };
         #ok;
@@ -1335,16 +1331,6 @@ module {
                 );
                 let subEffect = prng.nextArrayElementWeighted(weightedSubEffects);
                 resolveEffectInternal(prng, context, scenario, subEffect, outcomes);
-            };
-            case (#entropy(entropyEffect)) {
-                let townIds = getTownIdsFromTarget(prng, scenario.townIds, entropyEffect.town, context);
-                for (townId in townIds.vals()) {
-                    let outcome = #entropy({
-                        townId = townId;
-                        delta = entropyEffect.delta;
-                    });
-                    outcomes.add(outcome);
-                };
             };
             case (#resource(resourceEffect)) {
                 let delta = switch (resourceEffect.value) {

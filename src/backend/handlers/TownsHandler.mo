@@ -4,16 +4,17 @@ import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Int "mo:base/Int";
-import Option "mo:base/Option";
-import IterTools "mo:itertools/Iter";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Prelude "mo:base/Prelude";
+import Order "mo:base/Order";
 import Flag "../models/Flag";
 import Town "../models/Town";
 import World "../models/World";
+import IterTools "mo:itertools/Iter";
+import CommonTypes "../CommonTypes";
 
 module {
 
@@ -21,14 +22,15 @@ module {
         towns : [StableTownData];
     };
 
-    public type StableTownData = Town.Town;
+    public type StableTownData = Town.Town and {
+        history : [DaySnapshot];
+    };
 
     type MutableTownData = {
         id : Nat;
         var name : Text;
         var flagImage : Flag.FlagImage;
         var motto : Text;
-        var entropy : Nat;
         var population : Nat;
         var populationMax : Nat;
         var health : Nat;
@@ -39,6 +41,29 @@ module {
         skills : MutableTownSkillList;
         resources : MutableTownResourceList;
         var workPlan : Town.TownWorkPlan;
+        history : HashMap.HashMap<Nat, DaySnapshot>;
+    };
+
+    public type DaySnapshot = {
+        day : Nat;
+        work : DaySnapshotWork;
+    };
+
+    public type DaySnapshotGatherWork = {
+        gatherWood : Work;
+        gatherFood : Work;
+        gatherStone : Work;
+        gatherGold : Work;
+    };
+
+    public type DaySnapshotWork = DaySnapshotGatherWork and {
+        processWood : Work;
+        processStone : Work;
+    };
+
+    public type Work = {
+        workers : Nat;
+        units : Nat;
     };
 
     type MutableTownResourceList = {
@@ -80,18 +105,6 @@ module {
             };
         };
 
-        public func getCurrentEntropy() : Nat {
-            Option.get(
-                towns.vals()
-                |> Iter.map<MutableTownData, Nat>(
-                    _,
-                    func(town : MutableTownData) : Nat = town.entropy,
-                )
-                |> IterTools.sum(_, func(x : Nat, y : Nat) : Nat = x + y),
-                0,
-            );
-        };
-
         public func get(townId : Nat) : ?Town.Town {
             let ?town = towns.get(townId) else return null;
             ?fromMutableTown(town);
@@ -104,6 +117,22 @@ module {
                 fromMutableTown,
             )
             |> Iter.toArray(_);
+        };
+
+        public func getHistory(townId : Nat, count : Nat, offset : Nat) : Result.Result<CommonTypes.PagedResult<DaySnapshot>, { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            let history = town.history.vals()
+            // Sort from newest to oldest
+            |> Iter.sort(_, func(a : DaySnapshot, b : DaySnapshot) : Order.Order = Nat.compare(b.day, a.day))
+            |> IterTools.skip(_, offset)
+            |> IterTools.take(_, count)
+            |> Iter.toArray(_);
+            #ok({
+                total = town.history.size();
+                data = history;
+                count = count;
+                offset = offset;
+            });
         };
 
         public func create<system>(
@@ -121,7 +150,6 @@ module {
                 var name = name;
                 var flagImage = flagImage;
                 var motto = motto;
-                var entropy = 0;
                 var population = 10;
                 var populationMax = 10;
                 var health = 100;
@@ -159,7 +187,7 @@ module {
                 };
                 var workPlan = {
                     gatherWood = {
-                        weight = 1;
+                        weight = 0;
                         locationLimits = [];
                     };
                     gatherFood = {
@@ -167,26 +195,33 @@ module {
                         locationLimits = [];
                     };
                     gatherStone = {
-                        weight = 1;
+                        weight = 0;
                         efficiencyMin = 0.0;
                     };
                     gatherGold = {
-                        weight = 1;
+                        weight = 0;
                         efficiencyMin = 0.0;
                     };
                     processWood = {
-                        weight = 1;
+                        weight = 0;
                         maxStorage = 0;
                     };
                     processStone = {
-                        weight = 1;
+                        weight = 0;
                         maxStorage = 0;
                     };
                 };
+                history = HashMap.HashMap<Nat, DaySnapshot>(0, Nat.equal, Nat32.fromNat);
             };
             towns.put(townId, townData);
 
             return townId;
+        };
+
+        public func addDaySnapshot(townId : Nat, snapshot : DaySnapshot) : Result.Result<(), { #townNotFound }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            let null = town.history.replace(snapshot.day, snapshot) else Debug.trap("Day snapshot already exists for town " # Nat.toText(townId) # " on day " # Nat.toText(snapshot.day));
+            #ok;
         };
 
         public func updateWorkPlan(townId : Nat, workPlan : Town.TownWorkPlan) : Result.Result<(), { #townNotFound }> {
@@ -247,6 +282,7 @@ module {
                 };
                 let newResource = currentValue + resource.delta;
                 if (not allowBelowZero and newResource < 0) {
+
                     notEnoughResources.add({
                         kind = resource.kind;
                         defecit = Int.abs(newResource);
@@ -305,23 +341,6 @@ module {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             Debug.print("Updating motto for town " # Nat.toText(townId) # " to: " # newMotto);
             town.motto := newMotto;
-            #ok;
-        };
-
-        public func updateEntropy(townId : Nat, delta : Int) : Result.Result<(), { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newEntropyInt : Int = town.entropy + delta;
-            let newEntropyNat : Nat = if (newEntropyInt <= 0) {
-                // Entropy cant be negative
-                0;
-            } else {
-                Int.abs(newEntropyInt);
-            };
-            if (town.entropy != newEntropyNat) {
-                Debug.print("Updating entropy for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newEntropyNat));
-                town.entropy := newEntropyNat;
-            };
-
             #ok;
         };
 
@@ -490,10 +509,9 @@ module {
 
     };
 
-    private func fromMutableTown(town : MutableTownData) : Town.Town {
+    private func fromMutableTown(town : MutableTownData) : StableTownData {
         {
             id = town.id;
-            entropy = town.entropy;
             name = town.name;
             flagImage = town.flagImage;
             motto = town.motto;
@@ -518,6 +536,9 @@ module {
                 stone = town.resources.stone;
             };
             workPlan = town.workPlan;
+            history = town.history.vals()
+            |> Iter.sort(_, func(a : DaySnapshot, b : DaySnapshot) : Order.Order = Nat.compare(a.day, b.day))
+            |> Iter.toArray(_);
         };
     };
 
@@ -534,7 +555,6 @@ module {
             var name = stableData.name;
             var flagImage = stableData.flagImage;
             var motto = stableData.motto;
-            var entropy = stableData.entropy;
             var population = stableData.population;
             var populationMax = stableData.populationMax;
             var health = stableData.health;
@@ -556,6 +576,17 @@ module {
                 var stone = stableData.resources.stone;
             };
             var workPlan = stableData.workPlan;
+            history = stableData.history.vals()
+            |> Iter.map<DaySnapshot, (Nat, DaySnapshot)>(
+                _,
+                func(snapshot : DaySnapshot) : (Nat, DaySnapshot) = (snapshot.day, snapshot),
+            )
+            |> HashMap.fromIter<Nat, DaySnapshot>(
+                _,
+                stableData.history.size(),
+                Nat.equal,
+                Nat32.fromNat,
+            );
         };
     };
     private func toMutableSkill(skill : Town.Skill) : MutableSkill {

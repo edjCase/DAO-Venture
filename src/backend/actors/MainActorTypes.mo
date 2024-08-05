@@ -10,6 +10,7 @@ import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
 import Town "../models/Town";
 import World "../models/World";
+import TownsHandler "../handlers/TownsHandler";
 
 module {
     public type Actor = actor {
@@ -28,6 +29,7 @@ module {
 
         getWorld : query () -> async GetWorldResult;
         getTowns : query () -> async [Town.Town];
+        getTownHistory : query (townId : Nat, count : Nat, offset : Nat) -> async GetTownHistoryResult;
         createTownProposal : (townId : Nat, request : TownProposalContent) -> async CreateTownProposalResult;
         getTownProposal : query (townId : Nat, id : Nat) -> async GetTownProposalResult;
         getTownProposals : query (townId : Nat, count : Nat, offset : Nat) -> async GetTownProposalsResult;
@@ -41,6 +43,12 @@ module {
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
 
+    public type GetTownHistoryError = {
+        #townNotFound;
+    };
+
+    public type GetTownHistoryResult = Result.Result<CommonTypes.PagedResult<TownsHandler.DaySnapshot>, GetTownHistoryError>;
+
     public type GetWorldError = { #worldNotInitialized };
 
     public type GetWorldResult = Result.Result<World, GetWorldError>;
@@ -48,7 +56,7 @@ module {
     public type World = {
         progenitor : Principal;
         locations : [World.WorldLocation];
-        age : Nat;
+        daysElapsed : Nat;
         nextDayStartTime : Nat;
     };
 

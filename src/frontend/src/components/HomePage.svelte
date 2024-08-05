@@ -33,7 +33,7 @@
         <div class="flex-1">
             {#if world !== undefined}
                 <div class="text-center text-3xl mb-5">
-                    World Age: {world.age}
+                    World Age: {world.daysElapsed}
                 </div>
                 <div class="text-center text-xl flex flex-col items-center">
                     Next day: <Countdown

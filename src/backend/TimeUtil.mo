@@ -6,7 +6,6 @@ module {
     public func getAge(genesisTime : Time.Time) : {
         days : Nat;
         dayTimeLength : Nat;
-        timeTillNextDay : Nat;
         nextDayStartTime : Nat;
     } {
         let now : Nat = Int.abs(Time.now());
@@ -22,6 +21,6 @@ module {
         let days : Nat = timeElapsedNat / dayTimeLength;
         let timeTillNextDay : Nat = dayTimeLength - timeInDay;
         let nextDayStartTime : Nat = now + timeTillNextDay;
-        { timeInDay; days; timeTillNextDay; dayTimeLength; nextDayStartTime };
+        { timeInDay; days; dayTimeLength; nextDayStartTime };
     };
 };

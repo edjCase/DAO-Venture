@@ -8,17 +8,26 @@ import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
+import Time "mo:base/Time";
 import World "../models/World";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import WorldGenerator "../WorldGenerator";
 import HexGrid "../models/HexGrid";
+import TimeUtil "../TimeUtil";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
+        genesisTime : Time.Time;
         progenitor : Principal;
         locations : [World.WorldLocation];
+    };
+
+    public type WorldAgeInfo = {
+        genesisTime : Time.Time;
+        daysElapsed : Nat;
+        nextDayStartTime : Nat;
     };
 
     type MutableWorldLocation = {
@@ -117,6 +126,7 @@ module {
 
         public func toStableData() : StableData {
             {
+                genesisTime = stableData.genesisTime;
                 progenitor = progenitor;
                 locations = locations.vals()
                 |> Iter.map<MutableWorldLocation, World.WorldLocation>(
@@ -124,6 +134,15 @@ module {
                     fromMutableWorldLocation,
                 )
                 |> Iter.toArray(_);
+            };
+        };
+
+        public func getAgeInfo() : WorldAgeInfo {
+            let { days; nextDayStartTime } = TimeUtil.getAge(stableData.genesisTime);
+            {
+                genesisTime = stableData.genesisTime;
+                daysElapsed = days;
+                nextDayStartTime = nextDayStartTime;
             };
         };
 
@@ -183,17 +202,30 @@ module {
 
         public func updateEfficiencyResource(
             locationId : Nat,
-            newEfficiency : Float,
+            amountCollected : Nat,
         ) : Result.Result<(), { #locationNotFound }> {
+            if (amountCollected == 0) {
+                return #ok;
+            };
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
 
+            let currenctEfficiency = switch (location.kind) {
+                case (#gold(goldLocation)) goldLocation.efficiency;
+                case (#stone(stoneLocation)) stoneLocation.efficiency;
+                case (_) Debug.trap("No efficiency resource at location " # Nat.toText(locationId));
+            };
+            Debug.print("Current efficiency: " # Float.toText(currenctEfficiency));
+            Debug.print("Amount collected: " # Nat.toText(amountCollected));
+            let decayFactor : Float = 0.0001; // Adjust this to control how quickly efficiency decreases
+            let newEfficiency = currenctEfficiency * Float.exp(-decayFactor * Float.fromInt(amountCollected));
+            Debug.print("New efficiency: " # Float.toText(newEfficiency));
             switch (location.kind) {
                 case (#gold(goldLocation)) goldLocation.efficiency := newEfficiency;
                 case (#stone(stoneLocation)) stoneLocation.efficiency := newEfficiency;
-                case (_) return #err(#locationNotFound); // TODO better error?
+                case (_) Debug.trap("No efficiency resource at location " # Nat.toText(locationId));
             };
 
-            Debug.print("Updating resource " # debug_show (location.kind) # " at location " # Nat.toText(locationId) # " to " # Float.toText(newEfficiency));
+            // Debug.print("Updating resource " # debug_show (location.kind) # " at location " # Nat.toText(locationId) # " to " # Float.toText(newEfficiency));
 
             #ok;
         };
@@ -223,7 +255,7 @@ module {
             };
 
             let updateResource = func(newAmount : Nat) {
-                Debug.print("Updating determinate resource at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmount));
+                // Debug.print("Updating " #debug_show (location.kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmount));
                 switch (location.kind) {
                     case (#wood(woodLocation)) woodLocation.amount := newAmount;
                     case (#food(foodLocation)) foodLocation.amount := newAmount;
