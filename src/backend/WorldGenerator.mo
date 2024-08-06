@@ -12,30 +12,41 @@ module {
         let tileCount = 1 + 3 * radius * (radius + 1);
         Array.tabulate<World.WorldLocation>(
             tileCount,
-            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, false),
+            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, false, null),
         );
     };
 
-    public func generateLocation(prng : Prng, id : Nat, explored : Bool) : World.WorldLocation {
+    public func generateLocation(prng : Prng, id : Nat, explored : Bool, claimedByTownId : ?Nat) : World.WorldLocation {
         {
             id = id;
             coordinate = HexGrid.indexToAxialCoordinate(id);
-            kind = generateLocationKind(prng, id, explored);
+            kind = generateLocationKind(prng, id, explored, claimedByTownId);
         };
     };
 
-    public func generateLocationKind(prng : Prng, _ : Nat, explored : Bool) : World.LocationKind {
+    public func generateLocationKind(prng : Prng, _ : Nat, explored : Bool, claimedByTownId : ?Nat) : World.LocationKind {
         // TODO better procedural generation
         let kind : World.LocationKind = if (explored) {
-            let a = prng.nextNat(0, 4);
+            let getRandomRarity = func() : World.ResourceRarity {
+                prng.nextArrayElementWeighted([(#common, 1.0), (#uncommon, 0.1), (#rare, 0.01)]);
+            };
             // TODO other types?
-            switch (a) {
-                case (0) #wood({ amount = prng.nextNat(0, 1000) });
-                case (1) #food({ amount = prng.nextNat(0, 1000) });
-                case (2) #gold({ efficiency = prng.nextFloat(0, 1) });
-                case (3) #stone({ efficiency = prng.nextFloat(0, 1) });
+            let kind : World.ResourceKind = switch (prng.nextNat(0, 4)) {
+                case (0) #wood;
+                case (1) #food;
+                case (2) #gold;
+                case (3) #stone;
                 case (_) Prelude.unreachable();
             };
+            let claimedByTownIds = switch (claimedByTownId) {
+                case (?townId) [townId];
+                case (null) [];
+            };
+            #resource({
+                kind = kind;
+                rarity = getRandomRarity();
+                claimedByTownIds = claimedByTownIds;
+            });
         } else {
             #unexplored({
                 currentExploration = 0;

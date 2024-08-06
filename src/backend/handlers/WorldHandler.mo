@@ -1,13 +1,10 @@
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
-import Int "mo:base/Int";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import Float "mo:base/Float";
-import Prelude "mo:base/Prelude";
 import Time "mo:base/Time";
 import World "../models/World";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
@@ -38,10 +35,7 @@ module {
 
     type MutableLocationKind = {
         #unexplored : MutableUnexploredLocation;
-        #gold : MutableGoldLocation;
-        #wood : MutableWoodLocation;
-        #food : MutableFoodLocation;
-        #stone : MutableStoneLocation;
+        #resource : MutableResourceLocation;
         #town : MutableTownLocation;
     };
 
@@ -54,20 +48,10 @@ module {
         explorationNeeded : Nat;
     };
 
-    type MutableGoldLocation = {
-        var efficiency : Float;
-    };
-
-    type MutableWoodLocation = {
-        var amount : Nat;
-    };
-
-    type MutableFoodLocation = {
-        var amount : Nat;
-    };
-
-    type MutableStoneLocation = {
-        var efficiency : Float;
+    type MutableResourceLocation = {
+        var rarity : World.ResourceRarity;
+        kind : World.ResourceKind;
+        claimedByTownIds : HashMap.HashMap<Nat, ()>;
     };
 
     private func toMutableWorldLocation(location : World.WorldLocation) : MutableWorldLocation {
@@ -84,10 +68,13 @@ module {
                 var currentExploration = u.currentExploration;
                 explorationNeeded = u.explorationNeeded;
             });
-            case (#gold(g)) #gold({ var efficiency = g.efficiency });
-            case (#wood(w)) #wood({ var amount = w.amount });
-            case (#food(f)) #food({ var amount = f.amount });
-            case (#stone(s)) #stone({ var efficiency = s.efficiency });
+            case (#resource(r)) #resource({
+                kind = r.kind;
+                var rarity = r.rarity;
+                claimedByTownIds = r.claimedByTownIds.vals()
+                |> Iter.map<Nat, (Nat, ())>(_, func(a : Nat) : (Nat, ()) = (a, ()))
+                |> HashMap.fromIter(_, r.claimedByTownIds.size(), Nat.equal, Nat32.fromNat);
+            });
             case (#town(t)) #town({ var townId = t.townId });
         };
     };
@@ -106,10 +93,11 @@ module {
                 currentExploration = u.currentExploration;
                 explorationNeeded = u.explorationNeeded;
             });
-            case (#gold(g)) #gold({ efficiency = g.efficiency });
-            case (#wood(w)) #wood({ amount = w.amount });
-            case (#food(f)) #food({ amount = f.amount });
-            case (#stone(s)) #stone({ efficiency = s.efficiency });
+            case (#resource(r)) #resource({
+                kind = r.kind;
+                rarity = r.rarity;
+                claimedByTownIds = Iter.toArray(r.claimedByTownIds.keys());
+            });
             case (#town(t)) #town({ townId = t.townId });
         };
     };
@@ -157,7 +145,7 @@ module {
                     Debug.print("Exploring location " # Nat.toText(locationId) # " by " # Nat.toText(amount));
                     unexplored.currentExploration += amount;
                     if (unexplored.currentExploration >= unexplored.explorationNeeded) {
-                        switch (revealLocation(prng, locationId)) {
+                        switch (revealLocation(prng, locationId, null)) {
                             case (#ok(_)) #ok(#complete);
                             case (#err(err)) #err(err);
                         };
@@ -169,15 +157,29 @@ module {
             };
         };
 
-        public func revealLocation(prng : Prng, locationId : Nat) : Result.Result<World.WorldLocation, { #locationNotFound; #locationAlreadyExplored }> {
+        public func revealLocation(prng : Prng, locationId : Nat, claimedByTownId : ?Nat) : Result.Result<World.WorldLocation, { #locationNotFound; #locationAlreadyExplored }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
                 case (#unexplored(_)) {
                     Debug.print("Revealing location " # Nat.toText(locationId));
-                    location.kind := toMutableLocationKind(WorldGenerator.generateLocationKind(prng, location.id, true));
+                    location.kind := toMutableLocationKind(WorldGenerator.generateLocationKind(prng, location.id, true, claimedByTownId));
                     #ok(fromMutableWorldLocation(location));
                 };
                 case (_) #err(#locationAlreadyExplored);
+            };
+        };
+
+        public func claimLocation(
+            locationId : Nat,
+            townId : Nat,
+        ) : Result.Result<(), { #locationNotFound; #cannotClaim }> {
+            let ?location = locations.get(locationId) else return #err(#locationNotFound);
+            switch (location.kind) {
+                case (#resource(resource)) {
+                    resource.claimedByTownIds.put(townId, ());
+                    #ok;
+                };
+                case (#town(_) or #unexplored(_)) return #err(#cannotClaim);
             };
         };
 
@@ -195,95 +197,8 @@ module {
             ?fromMutableWorldLocation(location);
         };
 
-        public type EfficiencyResourceKind = {
-            #gold;
-            #stone;
-        };
-
-        public func updateEfficiencyResource(
-            locationId : Nat,
-            amountCollected : Nat,
-        ) : Result.Result<(), { #locationNotFound }> {
-            if (amountCollected == 0) {
-                return #ok;
-            };
-            let ?location = locations.get(locationId) else return #err(#locationNotFound);
-
-            let currenctEfficiency = switch (location.kind) {
-                case (#gold(goldLocation)) goldLocation.efficiency;
-                case (#stone(stoneLocation)) stoneLocation.efficiency;
-                case (_) Debug.trap("No efficiency resource at location " # Nat.toText(locationId));
-            };
-            Debug.print("Current efficiency: " # Float.toText(currenctEfficiency));
-            Debug.print("Amount collected: " # Nat.toText(amountCollected));
-            let decayFactor : Float = 0.0001; // Adjust this to control how quickly efficiency decreases
-            let newEfficiency = currenctEfficiency * Float.exp(-decayFactor * Float.fromInt(amountCollected));
-            Debug.print("New efficiency: " # Float.toText(newEfficiency));
-            switch (location.kind) {
-                case (#gold(goldLocation)) goldLocation.efficiency := newEfficiency;
-                case (#stone(stoneLocation)) stoneLocation.efficiency := newEfficiency;
-                case (_) Debug.trap("No efficiency resource at location " # Nat.toText(locationId));
-            };
-
-            // Debug.print("Updating resource " # debug_show (location.kind) # " at location " # Nat.toText(locationId) # " to " # Float.toText(newEfficiency));
-
-            #ok;
-        };
-
-        public type DeterminateResourceKind = {
-            #wood;
-            #food;
-        };
-
-        public func updateDeterminateResource(
-            locationId : Nat,
-            delta : Int,
-            behaviour : {
-                #errorOnNegative : { setToZero : Bool };
-                #ignoreNegative;
-            },
-        ) : Result.Result<Nat, { #locationNotFound; #notEnoughResource : { missing : Nat } }> {
-            let ?location = locations.get(locationId) else return #err(#locationNotFound);
-
-            let currentValue = switch (location.kind) {
-                case (#wood(woodLocation)) woodLocation.amount;
-                case (#food(foodLocation)) foodLocation.amount;
-                case (_) return #err(#locationNotFound); // TODO better error?
-            };
-            if (delta == 0) {
-                return #ok(currentValue);
-            };
-
-            let updateResource = func(newAmount : Nat) {
-                // Debug.print("Updating " #debug_show (location.kind) # " at location " # Nat.toText(locationId) # " by " # Int.toText(delta) # " to " # Nat.toText(newAmount));
-                switch (location.kind) {
-                    case (#wood(woodLocation)) woodLocation.amount := newAmount;
-                    case (#food(foodLocation)) foodLocation.amount := newAmount;
-                    case (_) Prelude.unreachable();
-                };
-            };
-
-            let newValueInt = currentValue + delta;
-            let newAmount : Nat = if (newValueInt <= 0) {
-                switch (behaviour) {
-                    case (#errorOnNegative({ setToZero })) {
-                        if (setToZero) {
-                            updateResource(0);
-                        };
-                        return #err(#notEnoughResource({ missing = Int.abs(newValueInt) }));
-                    };
-                    case (#ignoreNegative) 0; // Keep min value of 0
-                };
-            } else {
-                Int.abs(newValueInt);
-            };
-            updateResource(newAmount);
-            #ok(newAmount);
-        };
-
         public func addTown(prng : Prng, locationId : Nat, townId : Nat) : Result.Result<(), { #locationNotFound; #otherTownAtLocation : Nat }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
-            Debug.print(debug_show (location));
             switch (location.kind) {
                 case (#town(townLocation)) return #err(#otherTownAtLocation(townLocation.townId));
                 case (_) {
@@ -296,19 +211,19 @@ module {
                             var kind = #town({ var townId = townId });
                         },
                     );
-                    revealNeighbors(prng, location, 1);
+                    revealNeighbors(prng, location, 1, townId);
                 };
             };
             #ok;
         };
 
-        private func revealNeighbors(prng : Prng, location : MutableWorldLocation, depthRemaining : Nat) {
+        private func revealNeighbors(prng : Prng, location : MutableWorldLocation, depthRemaining : Nat, revealingTownId : Nat) {
             // TODO do some procdeural generation of town resources so that
             // the town has some resources to start with of all important types
             let surroundingLocations = HexGrid.getNeighbors(location.coordinate);
             label f for (neighbor in surroundingLocations) {
                 let neighborLocationId = HexGrid.axialCoordinateToIndex(neighbor);
-                switch (revealLocation(prng, neighborLocationId)) {
+                switch (revealLocation(prng, neighborLocationId, ?revealingTownId)) {
                     case (#ok(_)) ();
                     case (#err(#locationNotFound)) continue f; // Skip non-existent locations
                     case (#err(#locationAlreadyExplored)) (); // Skip already explored locations
@@ -316,7 +231,7 @@ module {
                 if (depthRemaining > 0) {
                     let ?neighborLocation = locations.get(neighborLocationId) else Debug.trap("Location not found: " # Nat.toText(neighborLocationId));
                     // TODO optimize not to reveal neighbors of neighbors that are already revealed
-                    revealNeighbors(prng, neighborLocation, depthRemaining - 1);
+                    revealNeighbors(prng, neighborLocation, depthRemaining - 1, revealingTownId);
                 };
             };
         };

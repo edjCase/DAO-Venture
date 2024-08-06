@@ -10,7 +10,6 @@ import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Prelude "mo:base/Prelude";
 import Order "mo:base/Order";
-import Float "mo:base/Float";
 import Flag "../models/Flag";
 import Town "../models/Town";
 import World "../models/World";
@@ -39,9 +38,7 @@ module {
         var size : Nat;
         genesisTime : Time.Time;
         jobs : Buffer.Buffer<Town.Job>;
-        skills : MutableTownSkillList;
         resources : MutableTownResourceList;
-        var workPlan : Town.TownWorkPlan;
         history : HashMap.HashMap<Nat, DaySnapshot>;
     };
 
@@ -50,21 +47,15 @@ module {
         work : DaySnapshotWork;
     };
 
-    public type DaySnapshotGatherWork = {
-        gatherWood : Work;
-        gatherFood : Work;
-        gatherStone : Work;
-        gatherGold : Work;
+    public type DaySnapshotWork = {
+        wood : ResourceSnapshot;
+        food : ResourceSnapshot;
+        stone : ResourceSnapshot;
+        gold : ResourceSnapshot;
     };
 
-    public type DaySnapshotWork = DaySnapshotGatherWork and {
-        processWood : Work;
-        processStone : Work;
-    };
-
-    public type Work = {
-        workers : Nat;
-        units : Nat;
+    public type ResourceSnapshot = {
+        amount : Nat;
     };
 
     type MutableTownResourceList = {
@@ -72,19 +63,6 @@ module {
         var wood : Nat;
         var food : Nat;
         var stone : Nat;
-    };
-
-    type MutableTownSkillList = {
-        woodCutting : MutableSkill;
-        farming : MutableSkill;
-        mining : MutableSkill;
-        carpentry : MutableSkill;
-        masonry : MutableSkill;
-    };
-
-    type MutableSkill = {
-        var techLevel : Nat;
-        var proficiencyMultiplier : Float;
     };
 
     public class Handler<system>(
@@ -222,13 +200,6 @@ module {
         public func addDaySnapshot(townId : Nat, snapshot : DaySnapshot) : Result.Result<(), { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             let null = town.history.replace(snapshot.day, snapshot) else Debug.trap("Day snapshot already exists for town " # Nat.toText(townId) # " on day " # Nat.toText(snapshot.day));
-            #ok;
-        };
-
-        public func updateWorkPlan(townId : Nat, workPlan : Town.TownWorkPlan) : Result.Result<(), { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating work plan for town " # Nat.toText(townId));
-            town.workPlan := workPlan;
             #ok;
         };
 
@@ -469,24 +440,6 @@ module {
             #ok;
         };
 
-        public func updateProficiency(townId : Nat, skill : Town.SkillKind, amountCollected : Nat) : Result.Result<Float, { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let skillData = switch (skill) {
-                case (#woodCutting) town.skills.woodCutting;
-                case (#farming) town.skills.farming;
-                case (#mining) town.skills.mining;
-            };
-            let maxMultiplier : Float = 2.0;
-            let increaseFactor : Float = 0.01; // Adjust this to control how quickly the multiplier increases
-
-            let increase = increaseFactor * Float.fromInt(amountCollected);
-            let newMultiplier = Float.min(skillData.proficiencyMultiplier + increase, maxMultiplier);
-
-            Debug.print("Updating proficiency multiplier for skill " # debug_show (skill) # " for town " # Nat.toText(townId) # " to " # Float.toText(newMultiplier));
-            skillData.proficiencyMultiplier := newMultiplier;
-            #ok(newMultiplier);
-        };
-
         public func clear() {
             towns := HashMap.HashMap<Nat, MutableTownData>(0, Nat.equal, Nat32.fromNat);
         };
@@ -520,30 +473,15 @@ module {
             upkeepCondition = town.upkeepCondition;
             size = town.size;
             jobs = Buffer.toArray<Town.Job>(town.jobs);
-            skills = {
-                woodCutting = fromMutableSkill(town.skills.woodCutting);
-                farming = fromMutableSkill(town.skills.farming);
-                mining = fromMutableSkill(town.skills.mining);
-                carpentry = fromMutableSkill(town.skills.carpentry);
-                masonry = fromMutableSkill(town.skills.masonry);
-            };
             resources = {
                 gold = town.resources.gold;
                 wood = town.resources.wood;
                 food = town.resources.food;
                 stone = town.resources.stone;
             };
-            workPlan = town.workPlan;
             history = town.history.vals()
             |> Iter.sort(_, func(a : DaySnapshot, b : DaySnapshot) : Order.Order = Nat.compare(a.day, b.day))
             |> Iter.toArray(_);
-        };
-    };
-
-    private func fromMutableSkill(skill : MutableSkill) : Town.Skill {
-        {
-            techLevel = skill.techLevel;
-            proficiencyMultiplier = skill.proficiencyMultiplier;
         };
     };
 
@@ -560,20 +498,12 @@ module {
             var size = stableData.size;
             genesisTime = stableData.genesisTime;
             jobs = Buffer.fromArray(stableData.jobs);
-            skills = {
-                woodCutting = toMutableSkill(stableData.skills.woodCutting);
-                farming = toMutableSkill(stableData.skills.farming);
-                mining = toMutableSkill(stableData.skills.mining);
-                carpentry = toMutableSkill(stableData.skills.carpentry);
-                masonry = toMutableSkill(stableData.skills.masonry);
-            };
             resources = {
                 var gold = stableData.resources.gold;
                 var wood = stableData.resources.wood;
                 var food = stableData.resources.food;
                 var stone = stableData.resources.stone;
             };
-            var workPlan = stableData.workPlan;
             history = stableData.history.vals()
             |> Iter.map<DaySnapshot, (Nat, DaySnapshot)>(
                 _,
@@ -585,12 +515,6 @@ module {
                 Nat.equal,
                 Nat32.fromNat,
             );
-        };
-    };
-    private func toMutableSkill(skill : Town.Skill) : MutableSkill {
-        {
-            var techLevel = skill.techLevel;
-            var proficiencyMultiplier = skill.proficiencyMultiplier;
         };
     };
 

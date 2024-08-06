@@ -10,8 +10,6 @@
     import { mainAgentFactory } from "../../ic-agent/Main";
     import ResourceIcon from "../icons/ResourceIcon.svelte";
     import { nanosecondsToDate } from "../../utils/DateUtils";
-    import TownHistory from "./TownHistory.svelte";
-    import TownSkills from "./TownSkills.svelte";
 
     $: towns = $townStore;
 
@@ -98,16 +96,6 @@
                 </div>
                 <div class="mt-5">
                     <TownProposalForm townId={town.id} />
-                </div>
-            </TabItem>
-            <TabItem title="History">
-                <div class="mt-5">
-                    <TownHistory townId={town.id} />
-                </div>
-            </TabItem>
-            <TabItem title="Skills">
-                <div class="mt-5">
-                    <TownSkills townId={town.id} />
                 </div>
             </TabItem>
         </Tabs>

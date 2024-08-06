@@ -9,7 +9,7 @@
     import UpdateJobView from "./proposal_views/UpdateJobView.svelte";
     import RemoveJobView from "./proposal_views/RemoveJobView.svelte";
     import FoundTownView from "./proposal_views/FoundTownView.svelte";
-    import UpdateWorkPlanView from "./proposal_views/UpdateWorkPlanView.svelte";
+    import ClaimLocationView from "./proposal_views/ClaimLocationView.svelte";
 
     export let proposal: TownProposal;
     export let townId: bigint;
@@ -23,7 +23,7 @@
         updateJob: UpdateJobView,
         removeJob: RemoveJobView,
         foundTown: FoundTownView,
-        updateWorkPlan: UpdateWorkPlanView,
+        claimLocation: ClaimLocationView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

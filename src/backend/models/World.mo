@@ -7,16 +7,10 @@ module {
         // anomoly : ?Anomoly;
     };
 
-    public type ResourceLocationKind = {
-        #gold : GoldResourceInfo;
-        #wood : WoodResourceInfo;
-        #food : FoodResourceInfo;
-        #stone : StoneResourceInfo;
-    };
-
-    public type LocationKind = ResourceLocationKind or {
+    public type LocationKind = {
         #unexplored : UnexploredLocation;
         #town : TownLocation;
+        #resource : ResourceLocation;
     };
 
     public type UnexploredLocation = {
@@ -28,20 +22,16 @@ module {
         townId : Nat;
     };
 
-    public type GoldResourceInfo = {
-        efficiency : Float;
+    public type ResourceLocation = {
+        kind : ResourceKind;
+        rarity : ResourceRarity;
+        claimedByTownIds : [Nat];
     };
 
-    public type WoodResourceInfo = {
-        amount : Nat;
-    };
-
-    public type FoodResourceInfo = {
-        amount : Nat;
-    };
-
-    public type StoneResourceInfo = {
-        efficiency : Float;
+    public type ResourceRarity = {
+        #common;
+        #uncommon;
+        #rare;
     };
 
     public type ResourceKind = {

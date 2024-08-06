@@ -10,11 +10,12 @@ module {
         #updateJob : UpdateJobContent;
         #removeJob : RemoveJobContent;
         #foundTown : FoundTownContent;
-        #updateWorkPlan : UpdateWorkPlanContent;
+        #claimLocation : ClaimLocationContent;
     };
 
-    public type UpdateWorkPlanContent = {
-        workPlan : Town.TownWorkPlan;
+    public type ClaimLocationContent = {
+        locationId : Nat;
+        leaveLocationId : ?Nat;
     };
 
     public type AddJobContent = {

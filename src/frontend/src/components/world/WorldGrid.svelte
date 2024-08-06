@@ -143,8 +143,11 @@
                                         {/if}
                                     </div>
                                 {/if}
-                            {:else if "gold" in location.kind || "wood" in location.kind || "stone" in location.kind || "food" in location.kind}
-                                <ResourceHexTile kind={location.kind} />
+                            {:else if "resource" in location.kind}
+                                <ResourceHexTile
+                                    kind={location.kind.resource.kind}
+                                    rarity={location.kind.resource.rarity}
+                                />
                             {:else if "unexplored" in location.kind}
                                 <div>Unexplored</div>
                                 <div>

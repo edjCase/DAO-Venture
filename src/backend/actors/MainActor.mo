@@ -22,7 +22,6 @@ import Timer "mo:base/Timer";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Option "mo:base/Option";
-import Prelude "mo:base/Prelude";
 import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
@@ -30,10 +29,8 @@ import TownsHandler "../handlers/TownsHandler";
 import Town "../models/Town";
 import Flag "../models/Flag";
 import World "../models/World";
-import JobAllocator "../JobAllocator";
 import WorldGenerator "../WorldGenerator";
 import WorldHandler "../handlers/WorldHandler";
-import HexGrid "../models/HexGrid";
 import ColorUtil "../ColorUtil";
 
 actor MainActor : Types.Actor {
@@ -263,10 +260,12 @@ actor MainActor : Types.Actor {
                     };
                     #err("Failed to found town: " # error);
                 };
-                case (#updateWorkPlan(updateWorkPlan)) {
-                    let error = switch (townsHandler.updateWorkPlan(townId, updateWorkPlan.workPlan)) {
+                case (#claimLocation(claimLocation)) {
+                    let ?worldHandler = worldHandlerOrNull else return #err("Cannot claim location if world is not initialized");
+                    let error = switch (worldHandler.claimLocation(claimLocation.locationId, townId)) {
                         case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
+                        case (#err(#locationNotFound)) "Location not found: " # Nat.toText(townId);
+                        case (#err(#cannotClaim)) "Cannot claim location: " # Nat.toText(claimLocation.locationId);
                     };
                     #err("Failed to update work plan: " # error);
                 };
@@ -714,7 +713,6 @@ actor MainActor : Types.Actor {
                     processTownWork(worldHandler);
                     processTownTradeResources();
                     processTownConsumeResources();
-                    processRegenResources(worldHandler);
                     processPopulationGrowth();
                     processTownChanges();
                     // TODO
@@ -837,59 +835,6 @@ actor MainActor : Types.Actor {
         };
     };
 
-    private func processRegenResources(worldHandler : WorldHandler.Handler) {
-        let regen = func(locationId : Nat, kind : { #wood; #food }, amount : Nat) {
-            let regenAmount = calculateRegeneration(amount);
-            if (regenAmount > 0) {
-                switch (worldHandler.updateDeterminateResource(locationId, regenAmount, #ignoreNegative)) {
-                    case (#ok(_)) ();
-                    case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
-                    case (#err(#notEnoughResource(_))) Prelude.unreachable();
-                };
-                Debug.print(debug_show (kind) # " regeneration amount for location " # Nat.toText(locationId) # ": " # Nat.toText(regenAmount));
-            };
-        };
-
-        label f for ((locationId, location) in IterTools.enumerate(worldHandler.getLocations().vals())) {
-            switch (location.kind) {
-                case (#unexplored(_) or #town(_) or #gold(_) or #stone(_)) continue f;
-                case (#wood(woodLocation)) regen(locationId, #wood, woodLocation.amount);
-                case (#food(foodLocation)) regen(locationId, #food, foodLocation.amount);
-            };
-        };
-    };
-
-    private func calculateRegeneration(currentAmount : Nat) : Nat {
-        let maxResource = 1000.0;
-        let regenRate = 0.05;
-        let optimalResourceLevel = 0.7 * maxResource;
-        let depletionThreshold = 0.3 * maxResource;
-        let resourceRatio = Float.fromInt(currentAmount) / maxResource;
-        let currentAmountFloat = Float.fromInt(currentAmount);
-
-        let amountFloat : Float = if (resourceRatio >= 1.0) {
-            0; // No regeneration if at or above max capacity
-        } else if (resourceRatio > optimalResourceLevel / maxResource) {
-            // Slow regeneration above optimal level
-            regenRate * (1.0 - resourceRatio) * currentAmountFloat;
-        } else if (currentAmountFloat > depletionThreshold) {
-            // Normal regeneration between depletion threshold and optimal level
-            regenRate * currentAmountFloat;
-        } else {
-            // Slow regeneration below depletion threshold
-            if (currentAmountFloat <= 0.0) {
-                0; // Base regeneration when completely depleted
-            } else {
-                regenRate * Float.min(optimalResourceLevel / currentAmountFloat, 2.0) * currentAmountFloat;
-            };
-        };
-        if (amountFloat <= 0) {
-            0;
-        } else {
-            Int.abs(Float.toInt(amountFloat));
-        };
-    };
-
     private func processTownWork(
         worldHandler : WorldHandler.Handler
     ) {
@@ -908,33 +853,28 @@ actor MainActor : Types.Actor {
 
         for (town in townsHandler.getAll().vals()) {
             let ?townLocation = townLocationMap.get(town.id) else Debug.trap("Town location not found: " # Nat.toText(town.id));
-            let accessableLocations = locations.vals()
-            |> Iter.filter(
+            let townResourceLocations = locations.vals()
+            |> IterTools.mapFilter(
                 _,
-                func(location : World.WorldLocation) : Bool {
-                    let distance = HexGrid.distanceBetween(location.coordinate, townLocation.coordinate);
-                    distance <= 2 and distance != 0; // TODO
+                func(location : World.WorldLocation) : ?World.ResourceLocation {
+                    let #resource(resource) = location.kind else return null;
+                    ?resource;
                 },
-            )
-            |> Iter.toArray(_);
-            let townAllocation = JobAllocator.allocateWorkInTown(town);
-            let locationAllocations = JobAllocator.allocateWorkToResourceLocations(townAllocation, accessableLocations);
-            let gatherWork = processLocationResourceWork(worldHandler, town.id, locationAllocations);
+            );
 
-            // TODO process process resource
-
-            let snapshot : TownsHandler.DaySnapshot = {
-                day = worldHandler.getAgeInfo().daysElapsed;
-                work = {
-                    gatherWork with
-                    processWood = { workers = 0; units = 0 };
-                    processStone = { workers = 0; units = 0 };
+            for (resourceLocation in townResourceLocations) {
+                // TODO rarity
+                let amount = switch (resourceLocation.rarity) {
+                    case (#common) 10;
+                    case (#uncommon) 12;
+                    case (#rare) 15;
+                };
+                switch (townsHandler.addResource(town.id, resourceLocation.kind, amount)) {
+                    case (#ok) ();
+                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
                 };
             };
-            switch (townsHandler.addDaySnapshot(town.id, snapshot)) {
-                case (#ok) ();
-                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
-            };
+
         };
     };
 
@@ -964,128 +904,6 @@ actor MainActor : Types.Actor {
     //         };
     //     };
     // };
-
-    private func processLocationResourceWork(
-        worldHandler : WorldHandler.Handler,
-        townId : Nat,
-        resourceLocations : [JobAllocator.ResourceLocationWorkAllocation],
-    ) : TownsHandler.DaySnapshotGatherWork {
-        let work = {
-            gatherWood = {
-                var workers = 0;
-                var units = 0;
-            };
-            gatherFood = {
-                var workers = 0;
-                var units = 0;
-            };
-            gatherGold = {
-                var workers = 0;
-                var units = 0;
-            };
-            gatherStone = {
-                var workers = 0;
-                var units = 0;
-            };
-        };
-
-        let addTownResource = func(townId : Nat, amount : Nat, resource : World.ResourceKind) {
-            switch (townsHandler.addResource(townId, resource, amount)) {
-                case (#ok) {};
-                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
-            };
-        };
-
-        let addProficiencyExperience = func(townId : Nat, resource : World.ResourceKind, value : Nat) {
-            let skill : Town.SkillKind = switch (resource) {
-                case (#wood) #woodCutting;
-                case (#food) #farming;
-                case (#gold) #mining;
-                case (#stone) #mining;
-            };
-
-            switch (townsHandler.updateProficiency(townId, skill, value)) {
-                case (#ok(_)) ();
-                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
-            };
-        };
-
-        let updateDeterminateResource = func(
-            locationId : Nat,
-            amount : Nat,
-        ) : Nat {
-            let result = worldHandler.updateDeterminateResource(
-                locationId,
-                -amount,
-                #errorOnNegative({ setToZero = true }),
-            );
-            switch (result) {
-                case (#ok(_)) amount;
-                case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
-                case (#err(#notEnoughResource(r))) amount - r.missing; // TODO handle this better vs first come first serve
-            };
-        };
-
-        let updateEfficiencyResource = func(
-            locationId : Nat,
-            amount : Nat,
-        ) : Nat {
-            switch (worldHandler.updateEfficiencyResource(locationId, amount)) {
-                case (#ok(_)) amount;
-                case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
-            };
-        };
-        let ?town = townsHandler.get(townId) else Debug.trap("Town not found: " # Nat.toText(townId));
-        for (loc in resourceLocations.vals()) {
-            let skill = switch (loc.kind) {
-                case (#wood(_)) town.skills.woodCutting;
-                case (#food(_)) town.skills.farming;
-                case (#gold(_)) town.skills.mining;
-                case (#stone(_)) town.skills.mining;
-            };
-            let amount = Int.abs(Float.toInt(Float.floor(Float.fromInt(loc.workers) * skill.proficiencyMultiplier))) + skill.techLevel; // TODO
-
-            let (kind, trueAmount) : (World.ResourceKind, Nat) = switch (loc.kind) {
-                case (#wood(_)) (#wood, updateDeterminateResource(loc.locationId, amount));
-                case (#food(_)) (#food, updateDeterminateResource(loc.locationId, amount));
-                case (#gold(_)) (#gold, updateEfficiencyResource(loc.locationId, amount));
-                case (#stone(_)) (#stone, updateEfficiencyResource(loc.locationId, amount));
-            };
-
-            switch (kind) {
-                case (#wood) {
-                    work.gatherWood.workers += loc.workers;
-                    work.gatherWood.units += trueAmount;
-                };
-                case (#food) {
-                    work.gatherFood.workers += loc.workers;
-                    work.gatherFood.units += trueAmount;
-                };
-                case (#gold) {
-                    work.gatherGold.workers += loc.workers;
-                    work.gatherGold.units += trueAmount;
-                };
-                case (#stone) {
-                    work.gatherStone.workers += loc.workers;
-                    work.gatherStone.units += trueAmount;
-                };
-            };
-
-            addTownResource(townId, trueAmount, kind);
-            addProficiencyExperience(townId, kind, trueAmount);
-        };
-
-        let mapWork = func(w : { var workers : Nat; var units : Nat }) : TownsHandler.Work = {
-            workers = w.workers;
-            units = w.units;
-        };
-        {
-            gatherWood = mapWork(work.gatherWood);
-            gatherFood = mapWork(work.gatherFood);
-            gatherGold = mapWork(work.gatherGold);
-            gatherStone = mapWork(work.gatherStone);
-        };
-    };
 
     private func isWorldOrProgenitor(id : Principal) : Bool {
         if (id == Principal.fromActor(MainActor)) {
