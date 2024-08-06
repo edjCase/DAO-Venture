@@ -111,9 +111,6 @@
             }
             label = name + ": " + getRangeText(r.resource.range);
             color = "green";
-        } else if ("entropy" in r) {
-            label = "Entropy: " + getRangeText(r.entropy);
-            color = "indigo";
         } else if ("age" in r) {
             label = "Age: " + getRangeText(r.age);
             color = "purple";

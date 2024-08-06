@@ -65,7 +65,7 @@ module {
 
     public type Skill = {
         techLevel : Nat;
-        proficiencyLevel : Nat;
+        proficiencyMultiplier : Float;
     };
 
     public type Job = {

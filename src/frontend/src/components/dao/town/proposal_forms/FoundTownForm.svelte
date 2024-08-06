@@ -36,7 +36,7 @@
                 flag: flag,
                 motto: motto,
                 locationId: locationId,
-                users: migrantIds,
+                migrantIds: migrantIds,
             },
         };
     };

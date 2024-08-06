@@ -27,13 +27,6 @@
                     },
                 ],
             };
-        } else if (selectedType === "entropy") {
-            value = {
-                entropy: {
-                    delta: BigInt(0),
-                    town: { contextual: null },
-                },
-            };
         } else if (selectedType === "resource") {
             value = {
                 resource: {
@@ -61,10 +54,6 @@
             value: "oneOf",
         },
         {
-            name: "Entropy",
-            value: "entropy",
-        },
-        {
             name: "Resource",
             value: "resource",
         },
@@ -79,14 +68,6 @@
         {
             name: "Town Trait",
             value: "townTrait",
-        },
-        {
-            name: "Entropy Threshold",
-            value: "entropyThreshold",
-        },
-        {
-            name: "World Income",
-            value: "worldIncome",
         },
         {
             name: "No Effect",

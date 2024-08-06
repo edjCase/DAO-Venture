@@ -14,7 +14,7 @@
 <div>Location: {content.locationId}</div>
 <div>Users:</div>
 <ul>
-    {#each content.users as userId}
+    {#each content.migrantIds as userId}
         <li>
             <UserAvatar {userId} size="xs" />
             <UserPseudonym {userId} />

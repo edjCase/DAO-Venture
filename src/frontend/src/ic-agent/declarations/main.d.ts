@@ -59,8 +59,8 @@ export interface FoundTownContent {
   'motto' : string,
   'flag' : FlagImage,
   'name' : string,
+  'migrantIds' : Array<Principal>,
   'locationId' : bigint,
-  'users' : Array<Principal>,
 }
 export type GetScenarioError = { 'notStarted' : null } |
   { 'notFound' : null };
@@ -300,7 +300,10 @@ export interface ScenarioVote {
   'townId' : bigint,
   'townVotingPower' : TownVotingPower,
 }
-export interface Skill { 'proficiencyLevel' : bigint, 'techLevel' : bigint }
+export interface Skill {
+  'proficiencyMultiplier' : number,
+  'techLevel' : bigint,
+}
 export interface SkillList {
   'farming' : Skill,
   'mining' : Skill,

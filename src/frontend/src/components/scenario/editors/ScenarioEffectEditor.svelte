@@ -55,10 +55,6 @@
         {/each}
         <Button on:click={addOption}>Add Option</Button>
     </div>
-{:else if "entropy" in value}
-    <Label>Amount</Label>
-    <BigIntInput bind:value={value.entropy.delta} />
-    <TargetTownChooser bind:value={value.entropy.town} />
 {:else if "resource" in value}
     <ResourceKindChooser bind:value={value.resource.kind} />
     <Label>Amount</Label>

@@ -51,7 +51,7 @@ module {
         name : Text;
         flag : Flag.FlagImage;
         motto : Text;
-        users : [Principal];
+        migrantIds : [Principal];
         locationId : Nat;
     };
 };

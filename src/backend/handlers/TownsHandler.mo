@@ -10,6 +10,7 @@ import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Prelude "mo:base/Prelude";
 import Order "mo:base/Order";
+import Float "mo:base/Float";
 import Flag "../models/Flag";
 import Town "../models/Town";
 import World "../models/World";
@@ -83,7 +84,7 @@ module {
 
     type MutableSkill = {
         var techLevel : Nat;
-        var proficiencyLevel : Nat;
+        var proficiencyMultiplier : Float;
     };
 
     public class Handler<system>(
@@ -160,23 +161,23 @@ module {
                 skills = {
                     woodCutting = {
                         var techLevel = 0;
-                        var proficiencyLevel = 0;
+                        var proficiencyMultiplier = 1;
                     };
                     farming = {
                         var techLevel = 0;
-                        var proficiencyLevel = 0;
+                        var proficiencyMultiplier = 1;
                     };
                     mining = {
                         var techLevel = 0;
-                        var proficiencyLevel = 0;
+                        var proficiencyMultiplier = 1;
                     };
                     carpentry = {
                         var techLevel = 0;
-                        var proficiencyLevel = 0;
+                        var proficiencyMultiplier = 1;
                     };
                     masonry = {
                         var techLevel = 0;
-                        var proficiencyLevel = 0;
+                        var proficiencyMultiplier = 1;
                     };
                 };
                 resources = {
@@ -187,19 +188,19 @@ module {
                 };
                 var workPlan = {
                     gatherWood = {
-                        weight = 0;
-                        locationLimits = [];
-                    };
-                    gatherFood = {
                         weight = 1;
                         locationLimits = [];
                     };
+                    gatherFood = {
+                        weight = 2;
+                        locationLimits = [];
+                    };
                     gatherStone = {
-                        weight = 0;
+                        weight = 1;
                         efficiencyMin = 0.0;
                     };
                     gatherGold = {
-                        weight = 0;
+                        weight = 1;
                         efficiencyMin = 0.0;
                     };
                     processWood = {
@@ -468,25 +469,22 @@ module {
             #ok;
         };
 
-        public func updateProficiency(townId : Nat, skill : Town.SkillKind, delta : Int) : Result.Result<Nat, { #townNotFound }> {
+        public func updateProficiency(townId : Nat, skill : Town.SkillKind, amountCollected : Nat) : Result.Result<Float, { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             let skillData = switch (skill) {
                 case (#woodCutting) town.skills.woodCutting;
                 case (#farming) town.skills.farming;
                 case (#mining) town.skills.mining;
             };
-            let newProficiencyInt : Int = skillData.proficiencyLevel + delta;
-            let newProficiencyNat : Nat = if (newProficiencyInt <= 0) {
-                // Proficiency cant be negative
-                0;
-            } else {
-                Int.abs(newProficiencyInt);
-            };
-            if (skillData.proficiencyLevel != newProficiencyNat) {
-                Debug.print("Updating proficiency for skill " # debug_show (skill) # " for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newProficiencyNat));
-                skillData.proficiencyLevel := newProficiencyNat;
-            };
-            #ok(newProficiencyNat);
+            let maxMultiplier : Float = 2.0;
+            let increaseFactor : Float = 0.01; // Adjust this to control how quickly the multiplier increases
+
+            let increase = increaseFactor * Float.fromInt(amountCollected);
+            let newMultiplier = Float.min(skillData.proficiencyMultiplier + increase, maxMultiplier);
+
+            Debug.print("Updating proficiency multiplier for skill " # debug_show (skill) # " for town " # Nat.toText(townId) # " to " # Float.toText(newMultiplier));
+            skillData.proficiencyMultiplier := newMultiplier;
+            #ok(newMultiplier);
         };
 
         public func clear() {
@@ -545,7 +543,7 @@ module {
     private func fromMutableSkill(skill : MutableSkill) : Town.Skill {
         {
             techLevel = skill.techLevel;
-            proficiencyLevel = skill.proficiencyLevel;
+            proficiencyMultiplier = skill.proficiencyMultiplier;
         };
     };
 
@@ -592,7 +590,7 @@ module {
     private func toMutableSkill(skill : Town.Skill) : MutableSkill {
         {
             var techLevel = skill.techLevel;
-            var proficiencyLevel = skill.proficiencyLevel;
+            var proficiencyMultiplier = skill.proficiencyMultiplier;
         };
     };
 

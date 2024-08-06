@@ -23,10 +23,7 @@
         startTime: [],
         endTime: dateToNanoseconds(initialEnd),
         undecidedEffect: {
-            entropy: {
-                town: { contextual: null },
-                delta: BigInt(1),
-            },
+            noEffect: null,
         },
         kind: {
             noWorldEffect: {

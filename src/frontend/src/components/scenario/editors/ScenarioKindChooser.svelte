@@ -52,10 +52,7 @@
                     },
                     failure: {
                         effect: {
-                            entropy: {
-                                town: { contextual: null },
-                                delta: BigInt(1),
-                            },
+                            noEffect: null,
                         },
                         description: "+1 🔥 for each town",
                     },
@@ -73,14 +70,6 @@
                             resourceCosts: [],
                             worldEffect: {
                                 allOf: [
-                                    {
-                                        entropy: {
-                                            delta: BigInt(2),
-                                            town: {
-                                                contextual: null,
-                                            },
-                                        },
-                                    },
                                     {
                                         resource: {
                                             kind: { gold: null },
@@ -117,14 +106,6 @@
                             resourceCosts: [],
                             worldEffect: {
                                 allOf: [
-                                    {
-                                        entropy: {
-                                            delta: BigInt(-2),
-                                            town: {
-                                                contextual: null,
-                                            },
-                                        },
-                                    },
                                     {
                                         resource: {
                                             kind: { gold: null },

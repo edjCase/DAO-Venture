@@ -163,8 +163,8 @@ export const idlFactory = ({ IDL }) => {
     'motto' : IDL.Text,
     'flag' : FlagImage,
     'name' : IDL.Text,
+    'migrantIds' : IDL.Vec(IDL.Principal),
     'locationId' : IDL.Nat,
-    'users' : IDL.Vec(IDL.Principal),
   });
   const RemoveJobContent = IDL.Record({ 'jobId' : IDL.Nat });
   const MotionContent__1 = IDL.Record({
@@ -482,7 +482,7 @@ export const idlFactory = ({ IDL }) => {
     'stone' : IDL.Nat,
   });
   const Skill = IDL.Record({
-    'proficiencyLevel' : IDL.Nat,
+    'proficiencyMultiplier' : IDL.Float64,
     'techLevel' : IDL.Nat,
   });
   const SkillList = IDL.Record({

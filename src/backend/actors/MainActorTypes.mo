@@ -77,12 +77,6 @@ module {
         #noTowns;
     };
 
-    public type WorldData = {
-        worldIncome : Nat;
-        entropyThreshold : Nat;
-        currentEntropy : Nat;
-    };
-
     public type GetPositionError = {
         #townNotFound;
     };

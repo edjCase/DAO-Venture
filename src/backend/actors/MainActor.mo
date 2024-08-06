@@ -233,6 +233,7 @@ actor MainActor : Types.Actor {
                             delta = -100; // TODO
                         },
                     ];
+                    // TODO validate migrants are in the town before moving them
                     let error : Text = switch (townsHandler.updateResourceBulk(townId, foundingResourceCosts, false)) {
                         case (#ok) {
                             let _ = createTown<system>(
@@ -249,6 +250,12 @@ actor MainActor : Types.Actor {
                                 foundTown.locationId,
                                 buildTownDao,
                             );
+                            for (migrant in foundTown.migrantIds.vals()) {
+                                switch (userHandler.changeTown(migrant, townId)) {
+                                    case (#ok) ();
+                                    case (#err(#notWorldMember)) Debug.trap("User is not a world member: " # Principal.toText(migrant));
+                                };
+                            };
                             return #ok;
                         };
                         case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
@@ -1028,13 +1035,21 @@ actor MainActor : Types.Actor {
                 case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
             };
         };
-
+        let ?town = townsHandler.get(townId) else Debug.trap("Town not found: " # Nat.toText(townId));
         for (loc in resourceLocations.vals()) {
+            let skill = switch (loc.kind) {
+                case (#wood(_)) town.skills.woodCutting;
+                case (#food(_)) town.skills.farming;
+                case (#gold(_)) town.skills.mining;
+                case (#stone(_)) town.skills.mining;
+            };
+            let amount = Int.abs(Float.toInt(Float.floor(Float.fromInt(loc.workers) * skill.proficiencyMultiplier))) + skill.techLevel; // TODO
+
             let (kind, trueAmount) : (World.ResourceKind, Nat) = switch (loc.kind) {
-                case (#wood(_)) (#wood, updateDeterminateResource(loc.locationId, loc.workers));
-                case (#food(_)) (#food, updateDeterminateResource(loc.locationId, loc.workers));
-                case (#gold(_)) (#gold, updateEfficiencyResource(loc.locationId, loc.workers));
-                case (#stone(_)) (#stone, updateEfficiencyResource(loc.locationId, loc.workers));
+                case (#wood(_)) (#wood, updateDeterminateResource(loc.locationId, amount));
+                case (#food(_)) (#food, updateDeterminateResource(loc.locationId, amount));
+                case (#gold(_)) (#gold, updateEfficiencyResource(loc.locationId, amount));
+                case (#stone(_)) (#stone, updateEfficiencyResource(loc.locationId, amount));
             };
 
             switch (kind) {

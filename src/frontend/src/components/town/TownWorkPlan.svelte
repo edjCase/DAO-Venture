@@ -17,7 +17,6 @@
     export let workPlan: TownWorkPlan;
     export let legend: boolean = false;
     let weights: number[] = [];
-    let total: number = 0;
     let chartRef: ChartJS<"pie", number[], string>;
 
     function updateChartData(
@@ -32,7 +31,6 @@
             Number(wp.processStone.weight),
             Number(wp.processWood.weight),
         ];
-        total = weights.reduce((a, b) => a + b, 0);
 
         chartRef.data.datasets[0].data = weights;
         chartRef.update();
