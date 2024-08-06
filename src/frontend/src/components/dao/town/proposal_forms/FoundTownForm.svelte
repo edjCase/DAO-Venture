@@ -9,20 +9,26 @@
     import FormTemplate from "./FormTemplate.svelte";
     import TownFlagCreator from "../../../town/TownFlagCreator.svelte";
     import UserMultiSelector from "../../../user/UserMultiSelector.svelte";
+    import RgbColor from "../../../common/RgbColor.svelte";
+    import { Rgb } from "../../../../models/PixelArt";
 
     export let townId: bigint;
 
     let name: string = "";
+    let color: Rgb | undefined;
     let flag: FlagImage | undefined;
     let motto: string = "";
     let locationId: bigint = 0n;
     let migrantIds: Principal[] = [];
     let generateProposal = (): TownProposalContent | string => {
         if (name === "") {
-            return "No name chosend";
+            return "No name chosen";
         }
         if (locationId === undefined) {
             return "No location selected";
+        }
+        if (color === undefined) {
+            return "No color selected";
         }
         if (flag === undefined) {
             return "No flag selected";
@@ -34,6 +40,7 @@
             foundTown: {
                 name: name,
                 flag: flag,
+                color: [color.red, color.green, color.blue],
                 motto: motto,
                 locationId: locationId,
                 migrantIds: migrantIds,
@@ -45,6 +52,8 @@
 <FormTemplate {generateProposal} {townId}>
     <Label>Town Name</Label>
     <Input bind:value={name} />
+    <Label>Color</Label>
+    <RgbColor bind:value={color} />
     <Label>Flag</Label>
     <TownFlagCreator bind:value={flag} />
     <Label>Motto</Label>

@@ -237,6 +237,7 @@ actor MainActor : Types.Actor {
                                 prng,
                                 foundTown.name,
                                 foundTown.flag,
+                                foundTown.color,
                                 foundTown.motto,
                                 {
                                     wood = 0;
@@ -285,6 +286,7 @@ actor MainActor : Types.Actor {
         prng : Prng,
         name : Text,
         image : Flag.FlagImage,
+        color : (Nat8, Nat8, Nat8),
         motto : Text,
         resources : Town.ResourceList,
         locationId : Nat,
@@ -292,7 +294,7 @@ actor MainActor : Types.Actor {
     ) : Nat {
         let ?worldHandler = worldHandlerOrNull else Debug.trap("Cannot create town if world is not initialized");
 
-        let townId = townsHandler.create<system>(name, image, motto, resources);
+        let townId = townsHandler.create<system>(name, image, color, motto, resources);
         let townDao = buildTownDao<system>(
             townId,
             {
@@ -677,6 +679,7 @@ actor MainActor : Types.Actor {
                 },
             );
         };
+        let color : (Nat8, Nat8, Nat8) = (127, 127, 127);
 
         // TODO dont randomize on edge of world, better procedural generation
         let locationId = prng.nextNat(0, worldHandler.getLocations().size()); // TODO
@@ -690,6 +693,7 @@ actor MainActor : Types.Actor {
             prng,
             "First Town",
             image,
+            color,
             "First Town Motto",
             resources,
             locationId,
@@ -705,12 +709,18 @@ actor MainActor : Types.Actor {
             case (?worldHandler) {
                 Debug.print("Processing days");
                 let { daysElapsed } = worldHandler.getAgeInfo();
+                if (daysElapsed <= daysProcessed) {
+                    Debug.print("No days to process");
+                    return;
+                };
+                let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
                 label l loop {
                     if (daysElapsed <= daysProcessed) {
                         break l;
                     };
                     Debug.print("Processing day " # Nat.toText(daysProcessed));
                     processTownWork(worldHandler);
+                    processTownJobs(prng, worldHandler);
                     processTownTradeResources();
                     processTownConsumeResources();
                     processPopulationGrowth();
@@ -878,32 +888,50 @@ actor MainActor : Types.Actor {
         };
     };
 
-    // private func processExploreJob(
-    //     prng : Prng,
-    //     worldHandler : WorldHandler.Handler,
-    //     townsHandler : TownsHandler.Handler,
-    //     job : Town.ExploreJob,
-    //     jobId : Nat,
-    //     townId : Nat,
-    //     amount : Nat,
-    // ) {
-    //     Debug.print("Processing explore job " # Nat.toText(jobId) # " for town " # Nat.toText(townId) # " at location " # Nat.toText(job.locationId) # " with amount " # Nat.toText(amount));
-    //     // TODO
-    //     let complete = switch (worldHandler.exploreLocation(prng, job.locationId, amount)) {
-    //         case (#ok(state)) state == #complete;
-    //         case (#err(#locationAlreadyExplored)) true;
-    //         case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(job.locationId));
-    //     };
-    //     Debug.print("Explore job " # Nat.toText(jobId) # " for town " # Nat.toText(townId) # " at location " # Nat.toText(job.locationId) # " is complete: " # Bool.toText(complete));
-    //     if (complete) {
-    //         // Cancel job if complete
-    //         switch (townsHandler.removeJob(townId, jobId)) {
-    //             case (#ok) {};
-    //             case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
-    //             case (#err(#jobNotFound)) Debug.trap("Job not found: " # Nat.toText(jobId));
-    //         };
-    //     };
-    // };
+    private func processTownJobs(prng : Prng, worldHandler : WorldHandler.Handler) {
+        Debug.print("Processing town jobs");
+        for (town in townsHandler.getAll().vals()) {
+            for ((jobId, job) in IterTools.enumerate(town.jobs.vals())) {
+                switch (job) {
+                    case (#explore(exploreJob)) {
+                        processExploreJob(
+                            prng,
+                            worldHandler,
+                            exploreJob,
+                            jobId,
+                            town.id,
+                        );
+                    };
+                };
+            };
+        };
+    };
+
+    private func processExploreJob(
+        prng : Prng,
+        worldHandler : WorldHandler.Handler,
+        job : Town.ExploreJob,
+        jobId : Nat,
+        townId : Nat,
+    ) {
+        let amount = 10; // TODO
+        Debug.print("Processing explore job " # Nat.toText(jobId) # " for town " # Nat.toText(townId) # " at location " # Nat.toText(job.locationId) # " with amount " # Nat.toText(amount));
+
+        let complete = switch (worldHandler.exploreLocation(prng, job.locationId, amount)) {
+            case (#ok(state)) state == #complete;
+            case (#err(#locationAlreadyExplored)) true;
+            case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(job.locationId));
+        };
+        Debug.print("Explore job " # Nat.toText(jobId) # " for town " # Nat.toText(townId) # " at location " # Nat.toText(job.locationId) # " is complete: " # Bool.toText(complete));
+        if (complete) {
+            // Cancel job if complete
+            switch (townsHandler.removeJob(townId, jobId)) {
+                case (#ok) {};
+                case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(townId));
+                case (#err(#jobNotFound)) Debug.trap("Job not found: " # Nat.toText(jobId));
+            };
+        };
+    };
 
     private func isWorldOrProgenitor(id : Principal) : Bool {
         if (id == Principal.fromActor(MainActor)) {

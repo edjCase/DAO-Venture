@@ -51,6 +51,7 @@ module {
     public type FoundTownContent = {
         name : Text;
         flag : Flag.FlagImage;
+        color : (Nat8, Nat8, Nat8);
         motto : Text;
         migrantIds : [Principal];
         locationId : Nat;

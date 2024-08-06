@@ -3,21 +3,24 @@
         q: number; // top left -> bottom right
         r: number; // bottom -> top
     }
-    export interface HexTileData {
-        faded: boolean;
-        coordinate: AxialCoordinate;
-    }
+    export type HexTileKind =
+        | { unexplored: null }
+        | {
+              explored: {
+                  towns: { id: bigint; color: [number, number, number] }[];
+              };
+          };
 </script>
 
 <script lang="ts">
-    export let tile: HexTileData;
+    export let kind: HexTileKind;
+    export let coordinate: AxialCoordinate;
     export let id: number;
     export let hexSize: number;
     export let selected: boolean;
-    export let faded: boolean = false;
     export let onClick: (coord: AxialCoordinate) => void = () => {};
 
-    const { x, y } = hexToPixel(tile.coordinate);
+    const { x, y } = hexToPixel(coordinate);
 
     function hexToPixel(hex: AxialCoordinate): { x: number; y: number } {
         const x = hexSize * ((3 / 2) * hex.q);
@@ -42,20 +45,79 @@
     function handleClick(coord: AxialCoordinate) {
         onClick(coord);
     }
+
+    $: fillOpacity = "unexplored" in kind ? 0.1 : 1;
+    let fill = "";
+    $: {
+        fill = "black";
+        if ("explored" in kind) {
+            if (kind.explored.towns.length === 1) {
+                fill = `rgb(${kind.explored.towns[0].color.join(",")})`;
+            } else if (kind.explored.towns.length > 1) {
+                // Create a linear gradient
+                const colors = kind.explored.towns.map(
+                    (town) => `rgb(${town.color.join(",")})`,
+                );
+                fill = createStripePatternUrl(colors);
+            }
+        }
+    }
+    function createStripePatternUrl(colors: string[]): string {
+        const g = document.getElementById("hex-" + id);
+        const defs = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "defs",
+        );
+        const pattern = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "pattern",
+        );
+
+        const patternId = "tile-pattern-" + id;
+        const stripeWidth = 10; // Adjust for thicker/thinner stripes
+        const patternSize = colors.length * stripeWidth;
+
+        pattern.setAttribute("id", patternId);
+        pattern.setAttribute("patternUnits", "userSpaceOnUse");
+        pattern.setAttribute("width", patternSize.toString());
+        pattern.setAttribute("height", patternSize.toString());
+        pattern.setAttribute("patternTransform", "rotate(60)"); // Adjusted rotation angle
+
+        colors.forEach((color: string, index: number) => {
+            const rect = document.createElementNS(
+                "http://www.w3.org/2000/svg",
+                "rect",
+            );
+            rect.setAttribute("x", (index * stripeWidth).toString());
+            rect.setAttribute("y", "0");
+            rect.setAttribute("width", stripeWidth.toString());
+            rect.setAttribute("height", patternSize.toString());
+            rect.setAttribute("fill", color);
+            pattern.appendChild(rect);
+        });
+
+        defs.appendChild(pattern);
+        g?.appendChild(defs);
+
+        return `url(#${patternId})`;
+    }
 </script>
 
 <g
+    id={"hex-" + id}
     transform={`translate(${x}, ${y})`}
-    on:click={() => handleClick(tile.coordinate)}
-    on:keypress={() => handleClick(tile.coordinate)}
+    on:click={() => handleClick(coordinate)}
+    on:keypress={() => handleClick(coordinate)}
     role="button"
     tabindex={id}
     class="cursor-pointer hover:opacity-80 transition-opacity focus:outline-none"
 >
     <polygon
         points={getHexPoints(0, 0)}
-        class="stroke-gray-400 fill-blac {faded ? 'opacity-10' : ''}"
         stroke-width={selected ? 4 : 1}
+        stroke="rgb(156, 163, 175)"
+        {fill}
+        fill-opacity={fillOpacity}
     />
     <slot {id} />
 </g>

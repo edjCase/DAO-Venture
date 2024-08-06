@@ -30,6 +30,7 @@ module {
         id : Nat;
         var name : Text;
         var flagImage : Flag.FlagImage;
+        var color : (Nat8, Nat8, Nat8);
         var motto : Text;
         var population : Nat;
         var populationMax : Nat;
@@ -117,6 +118,7 @@ module {
         public func create<system>(
             name : Text,
             flagImage : Flag.FlagImage,
+            color : (Nat8, Nat8, Nat8),
             motto : Text,
             resources : Town.ResourceList,
         ) : Nat {
@@ -128,6 +130,7 @@ module {
                 id = townId;
                 var name = name;
                 var flagImage = flagImage;
+                var color = color;
                 var motto = motto;
                 var population = 10;
                 var populationMax = 10;
@@ -465,6 +468,7 @@ module {
             id = town.id;
             name = town.name;
             flagImage = town.flagImage;
+            color = town.color;
             motto = town.motto;
             genesisTime = town.genesisTime;
             population = town.population;
@@ -490,6 +494,7 @@ module {
             id = stableData.id;
             var name = stableData.name;
             var flagImage = stableData.flagImage;
+            var color = stableData.color;
             var motto = stableData.motto;
             var population = stableData.population;
             var populationMax = stableData.populationMax;

@@ -1,6 +1,11 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import HexTile, { AxialCoordinate, HexTileData } from "./HexTile.svelte";
+    import HexTile, { AxialCoordinate, HexTileKind } from "./HexTile.svelte";
+
+    interface HexTileData {
+        kind: HexTileKind;
+        coordinate: AxialCoordinate;
+    }
 
     export let gridData: HexTileData[];
     export let hexSize: number = 60;
@@ -101,10 +106,10 @@
         <g bind:this={svgGroup}>
             {#each gridData as tile, id}
                 <HexTile
-                    {tile}
+                    coordinate={tile.coordinate}
+                    kind={tile.kind}
                     {id}
                     {hexSize}
-                    faded={tile.faded}
                     onClick={handleOnClick(id)}
                     selected={selectedTile == id}
                 >

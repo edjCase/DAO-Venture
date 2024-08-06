@@ -6,6 +6,7 @@ import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Time "mo:base/Time";
+import Buffer "mo:base/Buffer";
 import World "../models/World";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import WorldGenerator "../WorldGenerator";
@@ -211,27 +212,33 @@ module {
                             var kind = #town({ var townId = townId });
                         },
                     );
-                    revealNeighbors(prng, location, 1, townId);
+                    revealNeighbors(prng, location, 1, ?townId);
                 };
             };
             #ok;
         };
 
-        private func revealNeighbors(prng : Prng, location : MutableWorldLocation, depthRemaining : Nat, revealingTownId : Nat) {
+        private func revealNeighbors(prng : Prng, location : MutableWorldLocation, depthRemaining : Nat, revealingTownId : ?Nat) {
             // TODO do some procdeural generation of town resources so that
             // the town has some resources to start with of all important types
             let surroundingLocations = HexGrid.getNeighbors(location.coordinate);
+
+            let neighborLocationIds = Buffer.Buffer<Nat>(6);
             label f for (neighbor in surroundingLocations) {
                 let neighborLocationId = HexGrid.axialCoordinateToIndex(neighbor);
-                switch (revealLocation(prng, neighborLocationId, ?revealingTownId)) {
+                switch (revealLocation(prng, neighborLocationId, revealingTownId)) {
                     case (#ok(_)) ();
                     case (#err(#locationNotFound)) continue f; // Skip non-existent locations
                     case (#err(#locationAlreadyExplored)) (); // Skip already explored locations
                 };
+                neighborLocationIds.add(neighborLocationId);
+            };
+            for (neighborLocationId in neighborLocationIds.vals()) {
                 if (depthRemaining > 0) {
                     let ?neighborLocation = locations.get(neighborLocationId) else Debug.trap("Location not found: " # Nat.toText(neighborLocationId));
                     // TODO optimize not to reveal neighbors of neighbors that are already revealed
-                    revealNeighbors(prng, neighborLocation, depthRemaining - 1, revealingTownId);
+                    // Only 'claim' the immediate neighbors of the town, but reveal one level past
+                    revealNeighbors(prng, neighborLocation, depthRemaining - 1, null);
                 };
             };
         };

@@ -2,20 +2,44 @@
     import { worldStore } from "../../stores/WorldStore";
     import { townStore } from "../../stores/TownStore";
     import HexGrid from "../common/HexGrid.svelte";
-    import PixelArtFlag from "../common/PixelArtFlag.svelte";
     import { userStore } from "../../stores/UserStore";
     import { toJsonString } from "../../utils/StringUtil";
     import TownFlag from "../town/TownFlag.svelte";
-    import { Job } from "../../ic-agent/declarations/main";
-    import ResourceHexTile from "./ResourceHexTile.svelte";
-    import ResourceIcon from "../icons/ResourceIcon.svelte";
+    import { Job, TownProposalContent } from "../../ic-agent/declarations/main";
+    import ResourceLocation from "./ResourceLocationInfo.svelte";
+    import { HexTileKind } from "../common/HexTile.svelte";
+    import LoadingButton from "../common/LoadingButton.svelte";
+    import { mainAgentFactory } from "../../ic-agent/Main";
+    import { proposalStore } from "../../stores/ProposalStore";
+    import Location from "./Location.svelte";
 
     $: towns = $townStore;
     $: world = $worldStore;
 
     $: gridData = world?.locations.map((location) => {
+        let kind: HexTileKind;
+        if ("unexplored" in location.kind) {
+            kind = { unexplored: null };
+        } else if ("town" in location.kind) {
+            let townId = location.kind.town.townId;
+            let claimedByTowns = towns?.filter((t) => t.id == townId) || [];
+            kind = { explored: { towns: claimedByTowns } };
+        } else if ("resource" in location.kind) {
+            let townIds = location.kind.resource.claimedByTownIds;
+            let claimedByTowns =
+                towns?.filter((t) => townIds.includes(t.id)) || [];
+            kind = {
+                explored: {
+                    towns: claimedByTowns,
+                },
+            };
+        } else {
+            throw (
+                "NOT IMPLEMENTED LOCATION KIND: " + toJsonString(location.kind)
+            );
+        }
         return {
-            faded: "unexplored" in location.kind,
+            kind: kind,
             coordinate: {
                 q: Number(location.coordinate.q),
                 r: Number(location.coordinate.r),
@@ -53,71 +77,45 @@
             locationJobMap.set(location.id, locationJobs);
         }
     }
+
+    let createTownProposal = async (content: TownProposalContent) => {
+        if (myTown !== undefined) {
+            let mainAgent = await mainAgentFactory();
+            let result = await mainAgent.createTownProposal(myTown.id, content);
+            if ("ok" in result) {
+                console.log("Proposal Created", result.ok);
+                proposalStore.refetchTownProposals(myTown.id);
+            } else {
+                console.log("Error creating proposal", result.err);
+            }
+        }
+    };
+
+    let claimLocation = (locationId: bigint) => async () => {
+        await createTownProposal({
+            claimLocation: {
+                locationId,
+                leaveLocationId: [], // TODO
+            },
+        });
+    };
+
+    let exploreLocation = (locationId: bigint) => async () => {
+        await createTownProposal({
+            addJob: {
+                job: {
+                    explore: {
+                        locationId,
+                    },
+                },
+            },
+        });
+    };
 </script>
 
 {#if gridData !== undefined && world !== undefined}
     <HexGrid {gridData} let:id>
-        {@const location = world.locations.find((l) => l.id == id)}
-        {#if location !== undefined}
-            {#if "town" in location.kind}
-                {@const townOrUndefined = towns?.find(
-                    (town) =>
-                        "town" in location.kind &&
-                        town.id === location.kind.town.townId,
-                )}
-                {#if townOrUndefined !== undefined}
-                    <g transform="translate(-32, -24)">
-                        <foreignObject x="0" y="0" width="64" height="48">
-                            <PixelArtFlag
-                                pixels={townOrUndefined.flagImage.pixels}
-                                size="md"
-                                border={true}
-                            />
-                        </foreignObject>
-                    </g>
-                {/if}
-            {:else if "gold" in location.kind}
-                <text
-                    x="0"
-                    y="0"
-                    dominant-baseline="middle"
-                    text-anchor="middle"
-                    font-size="2em"
-                >
-                    <ResourceIcon kind={{ gold: null }} />
-                </text>
-            {:else if "wood" in location.kind}
-                <text
-                    x="0"
-                    y="0"
-                    dominant-baseline="middle"
-                    text-anchor="middle"
-                    font-size="2em"
-                >
-                    <ResourceIcon kind={{ wood: null }} />
-                </text>
-            {:else if "stone" in location.kind}
-                <text
-                    x="0"
-                    y="0"
-                    dominant-baseline="middle"
-                    text-anchor="middle"
-                    font-size="2em"
-                >
-                    <ResourceIcon kind={{ stone: null }} />
-                </text>
-            {:else if "food" in location.kind}
-                <text
-                    x="0"
-                    y="0"
-                    dominant-baseline="middle"
-                    text-anchor="middle"
-                    font-size="2em"
-                >
-                    <ResourceIcon kind={{ food: null }} />
-                </text>
-            {/if}
-        {/if}
+        <Location locationId={id} />
         <div slot="tileInfo" let:selectedTile>
             {#if selectedTile !== undefined}
                 {@const location = world.locations.find(
@@ -144,10 +142,23 @@
                                     </div>
                                 {/if}
                             {:else if "resource" in location.kind}
-                                <ResourceHexTile
+                                <ResourceLocation
                                     kind={location.kind.resource.kind}
                                     rarity={location.kind.resource.rarity}
                                 />
+                                {#if location.kind.resource.claimedByTownIds.length > 0}
+                                    Claimed By: {location.kind.resource.claimedByTownIds.join(
+                                        ", ",
+                                    )}
+                                {:else}
+                                    Unclaimed
+                                {/if}
+                                {#if myTown !== undefined && !location.kind.resource.claimedByTownIds.includes(myTown?.id)}
+                                    <LoadingButton
+                                        onClick={claimLocation(location.id)}
+                                        >Propose Annexation to DAO</LoadingButton
+                                    >
+                                {/if}
                             {:else if "unexplored" in location.kind}
                                 <div>Unexplored</div>
                                 <div>
@@ -155,6 +166,13 @@
                                         .currentExploration}/{location.kind
                                         .unexplored.explorationNeeded}
                                 </div>
+
+                                {#if myTown !== undefined && !myTown.jobs.some((j) => "explore" in j && j.explore.locationId === location.id)}
+                                    <LoadingButton
+                                        onClick={exploreLocation(location.id)}
+                                        >Propose Exploration to DAO</LoadingButton
+                                    >
+                                {/if}
                             {:else}
                                 NOT IMPLEMENTED LOCATION KIND: {toJsonString(
                                     location.kind,

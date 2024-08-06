@@ -9,6 +9,7 @@ module {
         genesisTime : Time.Time;
         motto : Text;
         flagImage : Flag.FlagImage;
+        color : (Nat8, Nat8, Nat8);
         size : Nat;
         population : Nat;
         populationMax : Nat;
