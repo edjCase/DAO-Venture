@@ -4,29 +4,19 @@
     import TownFlag from "../town/TownFlag.svelte";
     import { townStore } from "../../stores/TownStore";
     import { userStore } from "../../stores/UserStore";
-    import { TabItem, Tabs } from "flowbite-svelte";
+    import { Button, TabItem, Tabs } from "flowbite-svelte";
     import SectionWithOverview from "../common/SectionWithOverview.svelte";
-    import LoadingButton from "../common/LoadingButton.svelte";
-    import { mainAgentFactory } from "../../ic-agent/Main";
     import ResourceIcon from "../icons/ResourceIcon.svelte";
     import { nanosecondsToDate } from "../../utils/DateUtils";
+    import TownJobs from "./TownJobs.svelte";
+    import { Link } from "svelte-routing";
 
     $: towns = $townStore;
 
     $: user = $userStore;
 
     $: town = towns?.find((t) => t.id == user?.worldData?.townId);
-    let join = async () => {
-        let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.joinWorld();
-        if ("ok" in result) {
-            console.log("Joined world", result);
-            userStore.refetchCurrentUser();
-            userStore.refetchStats();
-        } else {
-            console.log("Error joining world", result);
-        }
-    };
+
     function getTimeAgo(nanoseconds: bigint): string {
         const date = nanosecondsToDate(nanoseconds);
         const now = new Date();
@@ -35,13 +25,7 @@
             diffInMilliseconds / (1000 * 60 * 60 * 24),
         );
 
-        if (diffInDays === 0) {
-            return "Today";
-        } else if (diffInDays === 1) {
-            return "Yesterday";
-        } else {
-            return `${diffInDays} days ago`;
-        }
+        return `${diffInDays} days ago`;
     }
 </script>
 
@@ -97,12 +81,17 @@
                     <TownProposalForm townId={town.id} />
                 </div>
             </TabItem>
+            <TabItem title="Jobs">
+                <div class="mt-5">
+                    <TownJobs townId={town.id} />
+                </div>
+            </TabItem>
         </Tabs>
     </SectionWithOverview>
 {:else}
     <div>
-        Want to join in and participate in world governance? Join the world and
-        get assigned to a random town!
+        Want to join in and participate in world governance? Pick a town on the
+        grid and join up!
     </div>
-    <LoadingButton onClick={join}>Join</LoadingButton>
+    <Link to="/"><Button>Home</Button></Link>
 {/if}

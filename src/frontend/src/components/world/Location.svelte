@@ -25,6 +25,14 @@
             }
         }
     }
+    $: exploringByTownIds = towns
+        ?.filter((t) =>
+            t.jobs.some(
+                (job) =>
+                    "explore" in job && job.explore.locationId == locationId,
+            ),
+        )
+        .map((t) => t.id);
 </script>
 
 {#if location !== undefined}
@@ -72,7 +80,11 @@
             dominant-baseline="middle"
             text-anchor="middle"
             font-size="2em"
-        ></text>
+        >
+            {#if exploringByTownIds !== undefined && exploringByTownIds.length > 0}
+                🧭
+            {/if}
+        </text>
     {:else}
         <text
             x="0"

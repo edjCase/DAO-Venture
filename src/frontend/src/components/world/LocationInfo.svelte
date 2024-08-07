@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Job, TownProposalContent } from "../../ic-agent/declarations/main";
+    import { TownProposalContent } from "../../ic-agent/declarations/main";
     import { mainAgentFactory } from "../../ic-agent/Main";
     import { proposalStore } from "../../stores/ProposalStore";
     import { townStore } from "../../stores/TownStore";
@@ -7,7 +7,6 @@
     import { worldStore } from "../../stores/WorldStore";
     import { toJsonString } from "../../utils/StringUtil";
     import LoadingButton from "../common/LoadingButton.svelte";
-    import TownFlag from "../town/TownFlag.svelte";
     import ResourceLocationInfo from "./ResourceLocationInfo.svelte";
 
     export let locationId: bigint;
@@ -75,33 +74,6 @@
             console.log("Error joining world", result);
         }
     };
-
-    type TownJob = { townId: bigint; kind: Job };
-
-    let locationJobMap: Map<bigint, TownJob[]> | undefined;
-    $: if (world !== undefined && towns !== undefined) {
-        locationJobMap = new Map<bigint, TownJob[]>();
-        for (const location of world.locations) {
-            let locationJobs = [];
-            for (const town of towns) {
-                for (const job of town.jobs) {
-                    let locationId: bigint | undefined;
-                    if ("explore" in job) {
-                        locationId = job.explore.locationId;
-                    } else {
-                        console.error(
-                            "NOT IMPLEMENTED JOB TYPE:",
-                            toJsonString(job),
-                        );
-                    }
-                    if (locationId === location.id) {
-                        locationJobs.push({ townId: town.id, kind: job });
-                    }
-                }
-            }
-            locationJobMap.set(location.id, locationJobs);
-        }
-    }
 </script>
 
 {#if location !== undefined}
@@ -145,9 +117,11 @@
                 {/if}
                 {#if myTown !== undefined && !location.kind.resource.claimedByTownIds.includes(myTown?.id)}
                     <!-- TODO only do 'adjacent' locations to territory-->
-                    <LoadingButton onClick={claimLocation(location.id)}
-                        >Propose Annexation to DAO</LoadingButton
-                    >
+                    <div>
+                        <LoadingButton onClick={claimLocation(location.id)}>
+                            Propose Annexation to DAO
+                        </LoadingButton>
+                    </div>
                 {/if}
             {:else if "unexplored" in location.kind}
                 <div>Unexplored</div>
@@ -164,32 +138,6 @@
                 {/if}
             {:else}
                 NOT IMPLEMENTED LOCATION KIND: {toJsonString(location.kind)}
-            {/if}
-            {#if locationJobMap !== undefined}
-                <div>JOBS:</div>
-                {@const locationJobs = locationJobMap.get(location.id)}
-                {#if locationJobs === undefined || locationJobs.length === 0}
-                    <div>-</div>
-                {:else}
-                    {#each locationJobs as job}
-                        {@const town = towns?.find(
-                            (town) => town.id === job.townId,
-                        )}
-                        <div class="flex justify-center gap-2">
-                            {#if town !== undefined}
-                                <TownFlag {town} size="xs" />
-                            {/if}
-                            {#if "explore" in job.kind}
-                                <div>Explore</div>
-                                <div>
-                                    Location: {job.kind.explore.locationId}
-                                </div>
-                            {:else}
-                                NOT IMPLEMENTED JOB TYPE: {toJsonString(job)}
-                            {/if}
-                        </div>
-                    {/each}
-                {/if}
             {/if}
         </div>
     </div>
