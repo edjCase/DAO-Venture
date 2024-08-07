@@ -16,12 +16,12 @@ import ProposalTypes "mo:dao-proposal-engine/Types";
 import Result "mo:base/Result";
 import Nat32 "mo:base/Nat32";
 import HashMap "mo:base/HashMap";
-import Array "mo:base/Array";
 import Time "mo:base/Time";
 import Timer "mo:base/Timer";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Option "mo:base/Option";
+import Prelude "mo:base/Prelude";
 import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
 import TownDao "../models/TownDao";
@@ -31,7 +31,8 @@ import Flag "../models/Flag";
 import World "../models/World";
 import WorldGenerator "../WorldGenerator";
 import WorldHandler "../handlers/WorldHandler";
-import ColorUtil "../ColorUtil";
+import HexGrid "../models/HexGrid";
+import TimeUtil "../TimeUtil";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -263,12 +264,38 @@ actor MainActor : Types.Actor {
                 };
                 case (#claimLocation(claimLocation)) {
                     let ?worldHandler = worldHandlerOrNull else return #err("Cannot claim location if world is not initialized");
+                    let townTerritoryLocations = worldHandler.getTownTerritoryLocations(townId, false);
+                    let ?town = townsHandler.get(townId) else return #err("Town not found: " # Nat.toText(townId));
+                    if (townTerritoryLocations.size() >= town.size) {
+                        return #err("Town territory is at max size already: " # Nat.toText(town.size));
+                    };
+                    let ?locationToClaim = worldHandler.getLocation(claimLocation.locationId) else return #err("Location not found: " # Nat.toText(claimLocation.locationId));
+                    switch (locationToClaim.kind) {
+                        case (#unexplored(_)) return #err("Cannot claim unexplored location");
+                        case (#town(_) or #resource(_)) (); // OK
+                    };
+                    let isAdjcaentToTerritory = townTerritoryLocations.vals()
+                    |> IterTools.any(
+                        _,
+                        func(location : World.WorldLocation) : Bool = HexGrid.areAdjacent(location.coordinate, locationToClaim.coordinate),
+                    );
+                    if (not isAdjcaentToTerritory) {
+                        return #err("Location is not adjacent to town territory");
+                    };
                     let error = switch (worldHandler.claimLocation(claimLocation.locationId, townId)) {
                         case (#ok) return #ok;
                         case (#err(#locationNotFound)) "Location not found: " # Nat.toText(townId);
                         case (#err(#cannotClaim)) "Cannot claim location: " # Nat.toText(claimLocation.locationId);
                     };
                     #err("Failed to update work plan: " # error);
+                };
+                case (#increaseSize) {
+                    let error = switch (townsHandler.increaseSize(townId)) {
+                        case (#ok(_)) return #ok;
+                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
+                        case (#err(#sizeLimitReached)) "Town size limit reached";
+                    };
+                    #err("Failed to increase size: " # error);
                 };
             };
         };
@@ -393,28 +420,52 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
-    public shared ({ caller }) func joinWorld() : async Result.Result<(), Types.JoinWorldError> {
-        // TODO restrict to NFT?/TOken holders
+    public shared ({ caller }) func intializeWorld(
+        request : Types.InitializeWorldRequest
+    ) : async Result.Result<(), Types.InitializeWorldError> {
+        let null = worldHandlerOrNull else return #err(#alreadyInitialized);
+
         let seedBlob = await Random.blob();
         let prng = PseudoRandomX.fromBlob(seedBlob, #xorshift32);
-        let towns = townsHandler.getAll();
-        let randomTownId : Nat = switch (worldHandlerOrNull) {
-            case (null) {
-                let firstTownId = await* buildNewWorld(caller);
-                firstTownId;
-            };
-            case (?_) {
-                // Get random existing town
-                towns.vals()
-                |> Iter.map<Town.Town, Nat>(
-                    _,
-                    func(town : Town.Town) : Nat = town.id,
-                )
-                |> Iter.toArray(_)
-                |> prng.nextArrayElement(_);
-            };
+
+        let worldRadius = 20;
+        let newWorld : WorldHandler.StableData = {
+            genesisTime = Time.now();
+            progenitor = caller;
+            locations = WorldGenerator.generateWorld(prng, worldRadius);
         };
-        userHandler.addWorldMember(caller, randomTownId);
+        let worldHandler = WorldHandler.Handler(newWorld);
+        worldHandlerOrNull := ?worldHandler;
+
+        // TODO dont randomize on edge of world, better procedural generation
+        let locationId = prng.nextNat(0, worldHandler.getLocations().size()); // TODO
+        let resources = {
+            gold = 0;
+            wood = 0;
+            food = 1000;
+            stone = 0;
+        };
+        let townId = createTown<system>(
+            prng,
+            request.town.name,
+            request.town.flag,
+            request.town.color,
+            request.town.motto,
+            resources,
+            locationId,
+            buildTownDao,
+        );
+        switch (userHandler.addWorldMember(caller, townId)) {
+            case (#ok) ();
+            case (#err(#alreadyWorldMember)) Prelude.unreachable();
+        };
+        resetDayTimer<system>(true);
+        #ok;
+    };
+
+    public shared ({ caller }) func joinWorld(request : Types.JoinWorldRequest) : async Result.Result<(), Types.JoinWorldError> {
+        // TODO restrict to NFT?/TOken holders
+        userHandler.addWorldMember(caller, request.townId);
     };
 
     public func resetTimer() : async () {
@@ -633,76 +684,6 @@ actor MainActor : Types.Actor {
         basePower + powerFromLevel + (townTimePower + worldTimePower) * timeMultiplier;
     };
 
-    private func buildNewWorld<system>(progenitor : Principal) : async* Nat {
-        let seedBlob = await Random.blob();
-        let prng = PseudoRandomX.fromBlob(seedBlob, #xorshift32);
-        let newWorld : WorldHandler.StableData = {
-            genesisTime = Time.now();
-            progenitor = progenitor;
-            locations = WorldGenerator.generateWorld(prng, 20);
-        };
-        let worldHandler = WorldHandler.Handler(newWorld);
-        worldHandlerOrNull := ?worldHandler;
-
-        // TODO better initialization
-        let height : Nat = 12;
-        let width : Nat = 16;
-
-        let image = {
-            pixels = Array.tabulate<[Flag.Pixel]>(
-                height,
-                func(j : Nat) : [Flag.Pixel] {
-                    Array.tabulate<Flag.Pixel>(
-                        width,
-                        func(i : Nat) : Flag.Pixel {
-                            let w : Float = Float.fromInt(i) / Float.fromInt(width);
-                            let h : Float = Float.fromInt(j) / Float.fromInt(height);
-                            // Create a checkered pattern
-                            let checker = (i / 4 + j / 4) % 2 == 0;
-
-                            // Base hue changes across the width
-                            let hue : Float = w * 360.0;
-
-                            // Saturation varies in a wave pattern
-                            let sat : Float = 0.8 + 0.2 * Float.sin(w * 6.28318);
-
-                            // Value is higher for checker squares and varies with height
-                            let val : Float = if (checker) 0.8 - 0.6 * h else 0.5 - 0.3 * h;
-                            let (r, g, b) = ColorUtil.hsvToRgb(hue, sat, val);
-                            {
-                                red = r;
-                                green = g;
-                                blue = b;
-                            };
-                        },
-                    );
-                },
-            );
-        };
-        let color : (Nat8, Nat8, Nat8) = (127, 127, 127);
-
-        // TODO dont randomize on edge of world, better procedural generation
-        let locationId = prng.nextNat(0, worldHandler.getLocations().size()); // TODO
-        let resources = {
-            gold = 0;
-            wood = 0;
-            food = 1000;
-            stone = 0;
-        };
-        let townId = createTown<system>(
-            prng,
-            "First Town",
-            image,
-            color,
-            "First Town Motto",
-            resources,
-            locationId,
-            buildTownDao,
-        );
-        resetDayTimer<system>(false);
-        townId;
-    };
-
     private func processDays() : async* () {
         switch (worldHandlerOrNull) {
             case (null) (); // Skip if no world
@@ -723,8 +704,8 @@ actor MainActor : Types.Actor {
                     processTownJobs(prng, worldHandler);
                     processTownTradeResources();
                     processTownConsumeResources();
-                    processPopulationGrowth();
-                    processTownChanges();
+                    processUpdateTownSizeLimit();
+                    // TODO reduce size if town is 'unhealthy'?
                     // TODO
                     // TODO reverse effects
                     daysProcessed := daysProcessed + 1;
@@ -735,54 +716,28 @@ actor MainActor : Types.Actor {
         resetDayTimer<system>(false);
     };
 
-    private func processTownChanges() {
+    private func processUpdateTownSizeLimit() {
         for (town in townsHandler.getAll().vals()) {
-            // TODO
-            let totalUserLevel : ?Nat = userHandler.getByTownId(town.id).vals()
-            |> Iter.map<UserHandler.User, Nat>(
+            let totalUserLevel : Nat = userHandler.getByTownId(town.id).vals()
+            |> Iter.map(
                 _,
                 func(user : UserHandler.User) : Nat = user.level,
             )
-            |> IterTools.sum<Nat>(_, Nat.add);
-            let newPopulationMax = Option.get(totalUserLevel, 0) * 10 + 100; // TODO
-            switch (townsHandler.setPopulationMax(town.id, newPopulationMax)) {
+            |> IterTools.sum(_, func(a : Nat, b : Nat) : Nat = a + b)
+            |> Option.get(_, 0); // TODO
+
+            // Age bonus that slows over time
+            let daysSinceGenesis = TimeUtil.getAge(town.genesisTime).daysElapsed;
+            let baseBonus = 2.0; // Adjust this value to control the overall bonus scale
+            let scaleFactor = 5.0; // Adjust this to control how quickly the bonus growth slows down
+
+            let ageBonus : Nat = Int.abs(Float.toInt(baseBonus * Float.log(1.0 + Float.fromInt(daysSinceGenesis) / scaleFactor)));
+
+            let newSizeLimit : Nat = 6 + totalUserLevel + ageBonus;
+            switch (townsHandler.setSizeLimit(town.id, newSizeLimit)) {
                 case (#ok) ();
                 case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
-            };
-        };
-    };
-
-    private func processPopulationGrowth() {
-        // TODO ability to pause growth or should excess food be required???
-        Debug.print("Processing population growth");
-        for (town in townsHandler.getAll().vals()) {
-            if (town.health <= 0) {
-                // Dying town
-                let tenPercentPop : Nat = Nat.max(1, town.population / 10); // TODO 10%?
-                Debug.print("Town " # Nat.toText(town.id) # "'s population is dying from lack of health. Death count: " # Nat.toText(tenPercentPop));
-                switch (townsHandler.updatePopulation(town.id, -tenPercentPop)) {
-                    case (#ok(newPopulation)) {
-                        if (newPopulation == 0) {
-                            // TODO
-                            Debug.print("Town " # Nat.toText(town.id) # " has died out");
-                        };
-                    };
-                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
-                };
-            } else if (town.health >= 100) {
-                // TODO randomly trigger/random amounts
-                // Growing town
-                let onePercentPop : Nat = Nat.max(1, town.population / 100); // TODO 1%?
-                Debug.print("Town " # Nat.toText(town.id) # "'s population  is growing. Growth count: " # Nat.toText(onePercentPop));
-                switch (townsHandler.addPopulation(town.id, onePercentPop)) {
-                    case (#ok(newPopulation)) {
-                        if (newPopulation == town.populationMax) {
-                            // TODO
-                            Debug.print("Town " # Nat.toText(town.id) # " has reached max population of " # Nat.toText(town.populationMax));
-                        };
-                    };
-                    case (#err(#townNotFound)) Debug.trap("Town not found: " # Nat.toText(town.id));
-                };
+                case (#err(#cantBeZero)) Debug.trap("Size limit cannot be zero");
             };
         };
     };
@@ -795,7 +750,8 @@ actor MainActor : Types.Actor {
         // TODO
         for (town in townsHandler.getAll().vals()) {
             // Food Consumption
-            switch (townsHandler.updateResource(town.id, #food, -town.population, false)) {
+            let foodConsumption = town.size * 10; // TODO
+            switch (townsHandler.updateResource(town.id, #food, -foodConsumption, false)) {
                 case (#ok) {
                     let healthIncrease = 10; // TODO how much for being fed?
                     switch (townsHandler.updateHealth(town.id, healthIncrease)) {
@@ -851,18 +807,7 @@ actor MainActor : Types.Actor {
         Debug.print("Processing town work");
         let locations = worldHandler.getLocations();
 
-        let townLocationMap = locations.vals()
-        |> IterTools.mapFilter(
-            _,
-            func(location : World.WorldLocation) : ?(Nat, World.WorldLocation) {
-                let #town(townLocation) = location.kind else return null;
-                ?(townLocation.townId, location);
-            },
-        )
-        |> HashMap.fromIter<Nat, World.WorldLocation>(_, locations.size(), Nat.equal, Nat32.fromNat);
-
         for (town in townsHandler.getAll().vals()) {
-            let ?townLocation = townLocationMap.get(town.id) else Debug.trap("Town location not found: " # Nat.toText(town.id));
             let townResourceLocations = locations.vals()
             |> IterTools.mapFilter(
                 _,
@@ -873,7 +818,7 @@ actor MainActor : Types.Actor {
             );
 
             for (resourceLocation in townResourceLocations) {
-                // TODO rarity
+                // TODO rarity values
                 let amount = switch (resourceLocation.rarity) {
                     case (#common) 10;
                     case (#uncommon) 12;

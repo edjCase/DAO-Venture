@@ -4,7 +4,7 @@ import Debug "mo:base/Debug";
 module {
 
     public func getAge(genesisTime : Time.Time) : {
-        days : Nat;
+        daysElapsed : Nat;
         dayTimeLength : Nat;
         nextDayStartTime : Nat;
     } {
@@ -18,9 +18,9 @@ module {
 
         let timeElapsedNat : Nat = Int.abs(timeElapsed);
         let timeInDay : Nat = timeElapsedNat % dayTimeLength;
-        let days : Nat = timeElapsedNat / dayTimeLength;
+        let daysElapsed : Nat = timeElapsedNat / dayTimeLength;
         let timeTillNextDay : Nat = dayTimeLength - timeInDay;
         let nextDayStartTime : Nat = now + timeTillNextDay;
-        { timeInDay; days; dayTimeLength; nextDayStartTime };
+        { timeInDay; daysElapsed; dayTimeLength; nextDayStartTime };
     };
 };

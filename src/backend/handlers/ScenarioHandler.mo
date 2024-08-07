@@ -686,7 +686,6 @@ module {
                 func(requirement : Scenario.Requirement) : Bool {
                     switch (requirement) {
                         case (#size(size)) testRange(townStats.size, size);
-                        case (#population(population)) testRange(townStats.population, population);
                         case (#resource(resource)) {
                             switch (resource.kind) {
                                 case (#gold) testRange(townStats.resources.gold, resource.range);
@@ -696,7 +695,7 @@ module {
                             };
                         };
                         case (#age(age)) {
-                            let currentAge = TimeUtil.getAge(townStats.genesisTime).days;
+                            let currentAge = TimeUtil.getAge(townStats.genesisTime).daysElapsed;
                             testRange(currentAge, age);
                         };
                     };

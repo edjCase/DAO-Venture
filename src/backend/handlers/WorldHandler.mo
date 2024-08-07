@@ -127,10 +127,10 @@ module {
         };
 
         public func getAgeInfo() : WorldAgeInfo {
-            let { days; nextDayStartTime } = TimeUtil.getAge(stableData.genesisTime);
+            let { daysElapsed; nextDayStartTime } = TimeUtil.getAge(stableData.genesisTime);
             {
                 genesisTime = stableData.genesisTime;
-                daysElapsed = days;
+                daysElapsed = daysElapsed;
                 nextDayStartTime = nextDayStartTime;
             };
         };
@@ -168,6 +168,20 @@ module {
                 };
                 case (_) #err(#locationAlreadyExplored);
             };
+        };
+
+        public func getTownTerritoryLocations(townId : Nat, includeTownLocation : Bool) : [World.WorldLocation] {
+            return locations.vals()
+            |> Iter.filter<MutableWorldLocation>(
+                _,
+                func(a) = switch (a.kind) {
+                    case (#town(townLocation)) includeTownLocation and townLocation.townId == townId;
+                    case (#resource(resource)) resource.claimedByTownIds.get(townId) != null;
+                    case (_) false;
+                },
+            )
+            |> Iter.map<MutableWorldLocation, World.WorldLocation>(_, fromMutableWorldLocation)
+            |> Iter.toArray(_);
         };
 
         public func claimLocation(

@@ -11,6 +11,7 @@ import TownDao "../models/TownDao";
 import Town "../models/Town";
 import World "../models/World";
 import TownsHandler "../handlers/TownsHandler";
+import Flag "../models/Flag";
 
 module {
     public type Actor = actor {
@@ -39,8 +40,26 @@ module {
         getUserStats : query () -> async GetUserStatsResult;
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
+        // TODO remove
         assignUserToTown : (request : AssignUserToTownRequest) -> async Result.Result<(), AssignUserToTownError>;
-        joinWorld : () -> async Result.Result<(), JoinWorldError>;
+
+        intializeWorld : (request : InitializeWorldRequest) -> async Result.Result<(), InitializeWorldError>;
+        joinWorld : (request : JoinWorldRequest) -> async Result.Result<(), JoinWorldError>;
+    };
+
+    public type InitializeWorldRequest = {
+        town : InitializeTownRequest;
+    };
+
+    public type InitializeTownRequest = {
+        name : Text;
+        motto : Text;
+        flag : Flag.FlagImage;
+        color : (Nat8, Nat8, Nat8);
+    };
+
+    public type InitializeWorldError = {
+        #alreadyInitialized;
     };
 
     public type GetTownHistoryError = {
@@ -70,6 +89,10 @@ module {
     };
 
     public type CreateWorldProposalResult = Result.Result<Nat, CreateWorldProposalError>;
+
+    public type JoinWorldRequest = {
+        townId : Nat;
+    };
 
     public type JoinWorldError = {
         #notAuthorized;

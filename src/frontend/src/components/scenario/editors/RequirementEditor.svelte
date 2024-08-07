@@ -13,9 +13,6 @@
 {:else if "age" in value}
     <Label>Age</Label>
     <RequirementRangeEditor value={value.age} />
-{:else if "population" in value}
-    <Label>Population</Label>
-    <RequirementRangeEditor value={value.population} />
 {:else if "resource" in value}
     <Label><ResourceIcon kind={value.resource.kind} /></Label>
     <RequirementRangeEditor value={value.resource.range} />

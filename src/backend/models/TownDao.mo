@@ -11,6 +11,7 @@ module {
         #removeJob : RemoveJobContent;
         #foundTown : FoundTownContent;
         #claimLocation : ClaimLocationContent;
+        #increaseSize;
     };
 
     public type ClaimLocationContent = {

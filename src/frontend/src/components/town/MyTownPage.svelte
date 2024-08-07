@@ -67,7 +67,6 @@
                     {town.resources.stone}
                     <ResourceIcon kind={{ stone: null }} />
                 </div>
-                <div>Population: {town.population}/{town.populationMax}</div>
             </div>
             <div class="flex-grow">
                 {#if user?.worldData !== undefined}

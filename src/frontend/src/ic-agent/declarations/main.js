@@ -57,7 +57,6 @@ export const idlFactory = ({ IDL }) => {
     'age' : RangeRequirement,
     'resource' : ResourceRequirement,
     'size' : RangeRequirement,
-    'population' : RangeRequirement,
   });
   const ThresholdScenarioOptionRequest = IDL.Record({
     'title' : IDL.Text,
@@ -127,7 +126,7 @@ export const idlFactory = ({ IDL }) => {
     'notAuthorized' : IDL.Null,
     'notWorldMember' : IDL.Null,
   });
-  const Result_1 = IDL.Variant({
+  const Result_2 = IDL.Variant({
     'ok' : IDL.Null,
     'err' : AssignUserToTownError,
   });
@@ -165,6 +164,7 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
+    'increaseSize' : IDL.Null,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
     'foundTown' : FoundTownContent,
@@ -408,6 +408,7 @@ export const idlFactory = ({ IDL }) => {
     'changeFlag' : ChangeTownFlagContent,
     'changeName' : ChangeTownNameContent,
     'changeMotto' : ChangeTownMottoContent,
+    'increaseSize' : IDL.Null,
     'updateJob' : UpdateJobContent,
     'addJob' : AddJobContent,
     'foundTown' : FoundTownContent,
@@ -479,9 +480,8 @@ export const idlFactory = ({ IDL }) => {
     'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
     'size' : IDL.Nat,
     'flagImage' : FlagImage,
+    'sizeLimit' : IDL.Nat,
     'upkeepCondition' : IDL.Nat,
-    'population' : IDL.Nat,
-    'populationMax' : IDL.Nat,
     'health' : IDL.Nat,
   });
   const GetUserError = IDL.Variant({
@@ -561,6 +561,19 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const GetWorldProposalsResult = IDL.Variant({ 'ok' : PagedResult });
+  const InitializeTownRequest = IDL.Record({
+    'motto' : IDL.Text,
+    'flag' : FlagImage,
+    'name' : IDL.Text,
+    'color' : IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8),
+  });
+  const InitializeWorldRequest = IDL.Record({ 'town' : InitializeTownRequest });
+  const InitializeWorldError = IDL.Variant({ 'alreadyInitialized' : IDL.Null });
+  const Result_1 = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : InitializeWorldError,
+  });
+  const JoinWorldRequest = IDL.Record({ 'townId' : IDL.Nat });
   const JoinWorldError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'alreadyWorldMember' : IDL.Null,
@@ -612,7 +625,7 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'addScenario' : IDL.Func([AddScenarioRequest], [AddScenarioResult], []),
-    'assignUserToTown' : IDL.Func([AssignUserToTownRequest], [Result_1], []),
+    'assignUserToTown' : IDL.Func([AssignUserToTownRequest], [Result_2], []),
     'createTownProposal' : IDL.Func(
         [IDL.Nat, TownProposalContent],
         [CreateTownProposalResult],
@@ -666,7 +679,8 @@ export const idlFactory = ({ IDL }) => {
         [GetWorldProposalsResult],
         ['query'],
       ),
-    'joinWorld' : IDL.Func([], [Result], []),
+    'intializeWorld' : IDL.Func([InitializeWorldRequest], [Result_1], []),
+    'joinWorld' : IDL.Func([JoinWorldRequest], [Result], []),
     'resetTimer' : IDL.Func([], [], []),
     'voteOnScenario' : IDL.Func(
         [VoteOnScenarioRequest],

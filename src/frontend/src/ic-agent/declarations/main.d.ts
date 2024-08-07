@@ -100,10 +100,19 @@ export type GetWorldProposalResult = { 'ok' : WorldProposal } |
 export type GetWorldProposalsResult = { 'ok' : PagedResult };
 export type GetWorldResult = { 'ok' : World } |
   { 'err' : GetWorldError };
+export interface InitializeTownRequest {
+  'motto' : string,
+  'flag' : FlagImage,
+  'name' : string,
+  'color' : [number, number, number],
+}
+export type InitializeWorldError = { 'alreadyInitialized' : null };
+export interface InitializeWorldRequest { 'town' : InitializeTownRequest }
 export type Job = { 'explore' : ExploreJob };
 export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null } |
   { 'noTowns' : null };
+export interface JoinWorldRequest { 'townId' : bigint }
 export type LocationKind = { 'resource' : ResourceLocation } |
   { 'town' : TownLocation } |
   { 'unexplored' : UnexploredLocation };
@@ -150,6 +159,7 @@ export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalContent__1 = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
+  { 'increaseSize' : null } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
   { 'foundTown' : FoundTownContent } |
@@ -167,8 +177,7 @@ export type RangeRequirement = { 'above' : bigint } |
 export interface RemoveJobContent { 'jobId' : bigint }
 export type Requirement = { 'age' : RangeRequirement } |
   { 'resource' : ResourceRequirement } |
-  { 'size' : RangeRequirement } |
-  { 'population' : RangeRequirement };
+  { 'size' : RangeRequirement };
 export interface ResourceCost { 'kind' : ResourceKind, 'amount' : bigint }
 export interface ResourceEffect {
   'value' : { 'flat' : bigint },
@@ -206,6 +215,8 @@ export interface ResourceTownEffectOutcome {
 export type Result = { 'ok' : null } |
   { 'err' : JoinWorldError };
 export type Result_1 = { 'ok' : null } |
+  { 'err' : InitializeWorldError };
+export type Result_2 = { 'ok' : null } |
   { 'err' : AssignUserToTownError };
 export interface Scenario {
   'id' : bigint,
@@ -366,9 +377,8 @@ export interface Town {
   'color' : [number, number, number],
   'size' : bigint,
   'flagImage' : FlagImage,
+  'sizeLimit' : bigint,
   'upkeepCondition' : bigint,
-  'population' : bigint,
-  'populationMax' : bigint,
   'health' : bigint,
 }
 export interface TownLocation { 'townId' : bigint }
@@ -385,6 +395,7 @@ export interface TownProposal {
 export type TownProposalContent = { 'changeFlag' : ChangeTownFlagContent } |
   { 'changeName' : ChangeTownNameContent } |
   { 'changeMotto' : ChangeTownMottoContent } |
+  { 'increaseSize' : null } |
   { 'updateJob' : UpdateJobContent } |
   { 'addJob' : AddJobContent } |
   { 'foundTown' : FoundTownContent } |
@@ -502,7 +513,7 @@ export interface WorldProposal {
 }
 export interface _SERVICE {
   'addScenario' : ActorMethod<[AddScenarioRequest], AddScenarioResult>,
-  'assignUserToTown' : ActorMethod<[AssignUserToTownRequest], Result_1>,
+  'assignUserToTown' : ActorMethod<[AssignUserToTownRequest], Result_2>,
   'createTownProposal' : ActorMethod<
     [bigint, TownProposalContent],
     CreateTownProposalResult
@@ -535,7 +546,8 @@ export interface _SERVICE {
   'getWorld' : ActorMethod<[], GetWorldResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], GetWorldProposalsResult>,
-  'joinWorld' : ActorMethod<[], Result>,
+  'intializeWorld' : ActorMethod<[InitializeWorldRequest], Result_1>,
+  'joinWorld' : ActorMethod<[JoinWorldRequest], Result>,
   'resetTimer' : ActorMethod<[], undefined>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
   'voteOnTownProposal' : ActorMethod<

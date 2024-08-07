@@ -32,11 +32,10 @@ module {
         var flagImage : Flag.FlagImage;
         var color : (Nat8, Nat8, Nat8);
         var motto : Text;
-        var population : Nat;
-        var populationMax : Nat;
         var health : Nat;
         var upkeepCondition : Nat;
         var size : Nat;
+        var sizeLimit : Nat;
         genesisTime : Time.Time;
         jobs : Buffer.Buffer<Town.Job>;
         resources : MutableTownResourceList;
@@ -132,11 +131,10 @@ module {
                 var flagImage = flagImage;
                 var color = color;
                 var motto = motto;
-                var population = 10;
-                var populationMax = 10;
                 var health = 100;
                 var upkeepCondition = 100;
-                var size = 0;
+                var size = 6;
+                var sizeLimit = 6;
                 genesisTime = Time.now();
                 jobs = Buffer.Buffer<Town.Job>(0);
                 skills = {
@@ -319,38 +317,6 @@ module {
             #ok;
         };
 
-        public func addPopulation(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
-            switch (updatePopulation(townId, delta)) {
-                case (#ok(newPopulation)) #ok(newPopulation);
-                case (#err(#townNotFound)) #err(#townNotFound);
-            };
-        };
-
-        public func updatePopulation(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newPopulationInt : Int = town.population + delta;
-            let newPopulationNat : Nat = if (newPopulationInt <= 0) {
-                // Population cant be negative
-                0;
-            } else {
-                Nat.min(town.populationMax, Int.abs(newPopulationInt));
-            };
-            if (town.population != newPopulationNat) {
-                Debug.print("Updating population for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newPopulationNat));
-                town.population := newPopulationNat;
-            };
-            #ok(newPopulationNat);
-        };
-
-        public func setPopulationMax(townId : Nat, newMax : Nat) : Result.Result<(), { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            if (town.populationMax != newMax) {
-                Debug.print("Setting population max for town " # Nat.toText(townId) # " to " # Nat.toText(newMax));
-                town.populationMax := newMax;
-            };
-            #ok;
-        };
-
         public func updateHealth(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
             let newHealthInt : Int = town.health + delta;
@@ -389,20 +355,39 @@ module {
             #ok(newUpkeepConditionNat);
         };
 
-        public func updateSize(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
+        public func setSizeLimit(townId : Nat, sizeLimit : Nat) : Result.Result<(), { #townNotFound; #cantBeZero }> {
             let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newSizeInt : Int = town.size + delta;
-            let newSizeNat : Nat = if (newSizeInt <= 0) {
-                // Size cant be negative
-                0;
-            } else {
-                Int.abs(newSizeInt);
+            if (sizeLimit < 1) {
+                return #err(#cantBeZero);
             };
-            if (town.size != newSizeNat) {
-                Debug.print("Updating size for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newSizeNat));
-                town.size := newSizeNat;
+            if (town.sizeLimit == sizeLimit) {
+                return #ok;
             };
-            #ok(newSizeNat);
+            Debug.print("Setting size limit for town " # Nat.toText(townId) # " to " # Nat.toText(sizeLimit));
+            town.sizeLimit := sizeLimit;
+            #ok;
+        };
+
+        public func increaseSize(townId : Nat) : Result.Result<Nat, { #townNotFound; #sizeLimitReached }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            if (town.size >= town.sizeLimit) {
+                return #err(#sizeLimitReached);
+            };
+            let newSize = town.size + 1;
+            Debug.print("Increasing size for town " # Nat.toText(townId) # " to " # Nat.toText(newSize));
+            town.size := newSize;
+            #ok(newSize);
+        };
+
+        public func decreaseSize(townId : Nat) : Result.Result<Nat, { #townNotFound; #cantBeZero }> {
+            let ?town = towns.get(townId) else return #err(#townNotFound);
+            if (town.size <= 1) {
+                return #err(#cantBeZero);
+            };
+            let newSize : Nat = town.size - 1;
+            Debug.print("Decreasing size for town " # Nat.toText(townId) # " to " # Nat.toText(newSize));
+            town.size := newSize;
+            #ok(newSize);
         };
 
         public func addJob(townId : Nat, job : Town.Job) : Result.Result<Nat, { #townNotFound; #invalid : [Text] }> {
@@ -471,11 +456,10 @@ module {
             color = town.color;
             motto = town.motto;
             genesisTime = town.genesisTime;
-            population = town.population;
-            populationMax = town.populationMax;
             health = town.health;
             upkeepCondition = town.upkeepCondition;
             size = town.size;
+            sizeLimit = town.sizeLimit;
             jobs = Buffer.toArray<Town.Job>(town.jobs);
             resources = {
                 gold = town.resources.gold;
@@ -496,11 +480,10 @@ module {
             var flagImage = stableData.flagImage;
             var color = stableData.color;
             var motto = stableData.motto;
-            var population = stableData.population;
-            var populationMax = stableData.populationMax;
             var health = stableData.health;
             var upkeepCondition = stableData.upkeepCondition;
             var size = stableData.size;
+            var sizeLimit = stableData.sizeLimit;
             genesisTime = stableData.genesisTime;
             jobs = Buffer.fromArray(stableData.jobs);
             resources = {

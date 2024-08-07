@@ -74,7 +74,6 @@ module {
     public type Requirement = {
         #size : RangeRequirement;
         #age : RangeRequirement;
-        #population : RangeRequirement;
         #resource : ResourceRequirement;
     };
 

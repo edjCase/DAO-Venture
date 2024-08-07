@@ -91,9 +91,6 @@
         if ("size" in r) {
             label = "Size: " + getRangeText(r.size);
             color = "dark";
-        } else if ("population" in r) {
-            label = "Population: " + getRangeText(r.population);
-            color = "yellow";
         } else if ("resource" in r) {
             let name: string;
             if ("gold" in r.resource.kind) {

@@ -13,12 +13,8 @@
             value: "Age",
         },
         {
-            name: "population",
-            value: "Population",
-        },
-        {
             name: "gold",
-            value: "Currency",
+            value: "Gold",
         },
     ];
 
@@ -33,9 +29,6 @@
                 break;
             case "age":
                 newValue = { age: { above: BigInt(1) } };
-                break;
-            case "population":
-                newValue = { population: { above: BigInt(1) } };
                 break;
             case "gold":
                 newValue = {

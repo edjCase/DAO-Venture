@@ -10,6 +10,7 @@
     import RemoveJobView from "./proposal_views/RemoveJobView.svelte";
     import FoundTownView from "./proposal_views/FoundTownView.svelte";
     import ClaimLocationView from "./proposal_views/ClaimLocationView.svelte";
+    import IncreaseSizeView from "./proposal_views/IncreaseSizeView.svelte";
 
     export let proposal: TownProposal;
     export let townId: bigint;
@@ -24,6 +25,7 @@
         removeJob: RemoveJobView,
         foundTown: FoundTownView,
         claimLocation: ClaimLocationView,
+        increaseSize: IncreaseSizeView,
     };
 
     const type = Object.keys(proposal.content as any)[0];

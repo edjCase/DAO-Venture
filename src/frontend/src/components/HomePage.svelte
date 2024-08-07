@@ -1,33 +1,21 @@
 <script lang="ts">
     import { townStore } from "../stores/TownStore";
     import { userStore } from "../stores/UserStore";
-    import { mainAgentFactory } from "../ic-agent/Main";
-    import LoadingButton from "./common/LoadingButton.svelte";
     import WorldGrid from "./world/WorldGrid.svelte";
     import Countdown from "./common/Countdown.svelte";
     import { worldStore } from "../stores/WorldStore";
     import { nanosecondsToDate } from "../utils/DateUtils";
     import ResourceIcon from "./icons/ResourceIcon.svelte";
+    import { Button } from "flowbite-svelte";
+    import { Link } from "svelte-routing";
+    import { ArrowUpRightFromSquareOutline } from "flowbite-svelte-icons";
+    import InitializeWorld from "./world/InitializeWorld.svelte";
 
     $: user = $userStore;
     $: towns = $townStore;
 
     $: myTown = towns?.find((town) => town.id === user?.worldData?.townId);
     $: world = $worldStore;
-
-    let joinWorld = async () => {
-        let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.joinWorld();
-        if ("ok" in result) {
-            console.log("Joined world", result);
-            userStore.refetchCurrentUser();
-            userStore.refetchStats();
-            townStore.refetch();
-            worldStore.refetch();
-        } else {
-            console.log("Error joining world", result);
-        }
-    };
 
     let townIncome: {
         gold: number;
@@ -81,9 +69,9 @@
 </script>
 
 <div class="bg-gray-800 rounded p-2">
-    <div class="flex jusity-between">
-        <div class="flex-1">
-            {#if world !== undefined}
+    {#if world !== undefined}
+        <div class="flex jusity-between">
+            <div class="flex-1">
                 <div class="text-center text-3xl mb-5">
                     World Age: {world.daysElapsed}
                 </div>
@@ -92,45 +80,49 @@
                         date={nanosecondsToDate(world.nextDayStartTime)}
                     />
                 </div>
-            {/if}
-        </div>
-        <div class="flex-1 text-center text-xl">
+            </div>
             {#if myTown !== undefined}
-                <div class="text-3xl">{myTown.name}</div>
-                <div class="">
-                    Population: {myTown.population}
-                </div>
-                <div class="">
-                    Size: {myTown.size}
-                </div>
-                <div class="">
-                    Jobs: {myTown.jobs.length}
-                </div>
-                <div>
-                    <div>
-                        {townIncome.gold}
-                        <ResourceIcon kind={{ gold: null }} />/day
+                <div class="flex-1 text-center text-xl">
+                    <div class="text-3xl">{myTown.name}</div>
+                    <div class="">
+                        Size: {myTown.size}/{myTown.sizeLimit}
+                    </div>
+                    <div class="">
+                        Jobs: {myTown.jobs.length}
                     </div>
                     <div>
-                        {townIncome.wood}
-                        <ResourceIcon kind={{ wood: null }} />/day
-                    </div>
-                    <div>
-                        {townIncome.stone}
-                        <ResourceIcon kind={{ stone: null }} />/day
-                    </div>
-                    <div>
-                        {townIncome.food}
-                        <ResourceIcon kind={{ food: null }} />/day
+                        <div>
+                            {townIncome.gold}
+                            <ResourceIcon kind={{ gold: null }} />/day
+                        </div>
+                        <div>
+                            {townIncome.wood}
+                            <ResourceIcon kind={{ wood: null }} />/day
+                        </div>
+                        <div>
+                            {townIncome.stone}
+                            <ResourceIcon kind={{ stone: null }} />/day
+                        </div>
+                        <div>
+                            {townIncome.food}
+                            <ResourceIcon kind={{ food: null }} />/day
+                        </div>
                     </div>
                 </div>
             {:else}
-                <div class="text-3xl">
-                    <LoadingButton onClick={joinWorld}>Join World</LoadingButton
-                    >
+                <div>
+                    <Link to="/how-to-play">
+                        <Button class="p-4 text-center text-3xl">
+                            <span class="mr-2">How To Play</span>
+                            <ArrowUpRightFromSquareOutline />
+                        </Button>
+                    </Link>
+                    <div>Select town on grid to join</div>
                 </div>
             {/if}
         </div>
-    </div>
-    <WorldGrid />
+        <WorldGrid />
+    {:else}
+        <InitializeWorld />
+    {/if}
 </div>

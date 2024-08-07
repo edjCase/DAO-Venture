@@ -11,8 +11,7 @@ module {
         flagImage : Flag.FlagImage;
         color : (Nat8, Nat8, Nat8);
         size : Nat;
-        population : Nat;
-        populationMax : Nat;
+        sizeLimit : Nat;
         health : Nat;
         upkeepCondition : Nat;
         jobs : [Job];

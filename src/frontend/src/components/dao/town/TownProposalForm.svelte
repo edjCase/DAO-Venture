@@ -9,6 +9,7 @@
     import RemoveJobForm from "./proposal_forms/RemoveJobForm.svelte";
     import FoundTownForm from "./proposal_forms/FoundTownForm.svelte";
     import ClaimLocationForm from "./proposal_forms/ClaimLocationForm.svelte";
+    import IncreaseSizeForm from "./proposal_forms/IncreaseSizeForm.svelte";
 
     export let townId: bigint;
 
@@ -57,6 +58,11 @@
             value: "claimLocation",
             name: "Claim Location",
             component: ClaimLocationForm,
+        },
+        {
+            value: "increaseSize",
+            name: "Increase Town Size",
+            component: IncreaseSizeForm,
         },
     ];
     let selectedProposalType: string = proposalTypes[0].value;

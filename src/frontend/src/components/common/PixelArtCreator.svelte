@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { Button } from "flowbite-svelte";
     import { PixelGrid, Rgb } from "../../models/PixelArt";
     import RgbColor from "./RgbColor.svelte";
 
@@ -13,15 +14,15 @@
     function updatePixel(x: number, y: number): void {
         pixels![y][x] = { ...selectedColor };
     }
+
+    let fillWithColor = () => {
+        pixels = pixels.map((row) => row.map(() => ({ ...selectedColor })));
+    };
 </script>
 
-<div class="flex flex-col items-center space-y-4">
-    <div class="flex space-x-4 items-center">
-        <RgbColor bind:value={selectedColor} />
-    </div>
-
+<div class="flex space-x-4">
     <div
-        class="grid bg-gray-200 rounded-lg"
+        class="grid rounded-lg"
         style:grid-template-columns="repeat({width}, {pixelSize}px)"
     >
         {#each pixels as row, y}
@@ -42,5 +43,9 @@
                 />
             {/each}
         {/each}
+    </div>
+    <div class="flex flex-col justify-center">
+        <RgbColor bind:value={selectedColor} type="vertical" />
+        <Button on:click={fillWithColor}>Fill w/color</Button>
     </div>
 </div>

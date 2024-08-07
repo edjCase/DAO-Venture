@@ -33,6 +33,8 @@
             title = "Found Town";
         } else if ("claimLocation" in p.content) {
             title = "Claim Location";
+        } else if ("increaseSize" in p.content) {
+            title = "Increase Town Size";
         } else {
             title = "Not Implemented Proposal Type: " + toJsonString(p.content);
         }
