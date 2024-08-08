@@ -40,4 +40,11 @@ module {
         #food;
         #stone;
     };
+
+    public type ResourceList = {
+        gold : Nat;
+        wood : Nat;
+        food : Nat;
+        stone : Nat;
+    };
 };

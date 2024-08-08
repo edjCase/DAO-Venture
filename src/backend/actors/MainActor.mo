@@ -24,7 +24,6 @@ import Option "mo:base/Option";
 import Prelude "mo:base/Prelude";
 import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
-import TownDao "../models/TownDao";
 import TownsHandler "../handlers/TownsHandler";
 import Town "../models/Town";
 import Flag "../models/Flag";
@@ -89,26 +88,7 @@ actor MainActor : Types.Actor {
 
     var townsHandler = TownsHandler.Handler<system>(townStableData);
 
-    private func processEffectOutcome<system>(
-        effectOutcome : Scenario.EffectOutcome
-    ) : () {
-        let reverseEffectOrNull : ?ReverseEffectWithDuration = switch (effectOutcome) {
-            case (#resource(resourceEffect)) {
-                switch (townsHandler.updateResource(resourceEffect.townId, resourceEffect.kind, resourceEffect.delta, true)) {
-                    case (#ok) null;
-                    case (#err(e)) Debug.trap("Error updating town gold: " # debug_show (e));
-                };
-            };
-        };
-        switch (reverseEffectOrNull) {
-            case (?reverseEffect) {
-                reverseEffects.add(reverseEffect);
-            };
-            case (null) ();
-        };
-    };
-
-    private func chargeTownResources(townId : Nat, resoureCosts : [Scenario.ResourceCost]) : Result.Result<(), { #notEnoughResources : [{ defecit : Nat; kind : World.ResourceKind }] }> {
+    private func chargeResources(resoureCosts : [Scenario.ResourceCost]) : Result.Result<(), { #notEnoughResources : [{ defecit : Nat; kind : World.ResourceKind }] }> {
         let costs = resoureCosts.vals()
         |> Iter.map(
             _,
@@ -128,7 +108,7 @@ actor MainActor : Types.Actor {
         };
     };
 
-    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeTownResources);
+    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, processEffectOutcome, chargeResources);
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
@@ -151,200 +131,6 @@ actor MainActor : Types.Actor {
         onWorldProposalReject,
         onWorldProposalValidate,
     );
-
-    // Initialize town daos here to be used in buildTownDao
-    var townDaos = HashMap.HashMap<Nat, ProposalEngine.ProposalEngine<TownDao.ProposalContent>>(townDaoStableData.size(), Nat.equal, Nat32.fromNat);
-
-    func buildTownDao<system>(
-        townId : Nat,
-        data : ProposalTypes.StableData<TownDao.ProposalContent>,
-    ) : ProposalEngine.ProposalEngine<TownDao.ProposalContent> {
-
-        func onProposalExecute(proposal : ProposalTypes.Proposal<TownDao.ProposalContent>) : async* Result.Result<(), Text> {
-            switch (proposal.content) {
-                case (#motion(_)) {
-                    // Do nothing
-                    #ok;
-                };
-                case (#changeName(c)) {
-                    let result = townsHandler.updateName(townId, c.name);
-                    let error = switch (result) {
-                        case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                    };
-                    #err("Failed to update name: " # error);
-                };
-                case (#changeFlag(c)) {
-                    let result = townsHandler.updateFlag(townId, c.image);
-                    let error = switch (result) {
-                        case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                    };
-                    #err("Failed to update flag: " # error);
-                };
-                case (#changeMotto(c)) {
-                    let result = townsHandler.updateMotto(townId, c.motto);
-                    let error = switch (result) {
-                        case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                    };
-                    #err("Failed to update motto: " # error);
-                };
-                case (#addJob(addJob)) {
-                    let error = switch (townsHandler.addJob(townId, addJob.job)) {
-                        case (#ok(_)) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                        case (#err(#invalid(invalid))) "Invalid job: " # debug_show (invalid); // TODO format
-                    };
-                    #err("Failed to add job:" # error);
-                };
-                case (#updateJob(updateJob)) {
-                    let error = switch (townsHandler.updateJob(townId, updateJob.jobId, updateJob.job)) {
-                        case (#ok(_)) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                        case (#err(#jobNotFound)) "Job not found: " # Nat.toText(updateJob.jobId);
-                        case (#err(#invalid(invalid))) "Invalid job: " # debug_show (invalid); // TODO format
-                    };
-                    #err("Failed to update job:" # error);
-                };
-                case (#removeJob(removeJob)) {
-                    let error = switch (townsHandler.removeJob(townId, removeJob.jobId)) {
-                        case (#ok) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                        case (#err(#jobNotFound)) "Job not found: " # Nat.toText(removeJob.jobId);
-                    };
-                    #err("Failed to remove job:" # error);
-                };
-                case (#foundTown(foundTown)) {
-                    let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-                    let foundingResourceCosts = [
-                        {
-                            kind = #wood;
-                            delta = -100; // TODO
-                        },
-                        {
-                            kind = #stone;
-                            delta = -100; // TODO
-                        },
-                        {
-                            kind = #food;
-                            delta = -100; // TODO
-                        },
-                    ];
-                    // TODO validate migrants are in the town before moving them
-                    let error : Text = switch (townsHandler.updateResourceBulk(townId, foundingResourceCosts, false)) {
-                        case (#ok) {
-                            let _ = createTown<system>(
-                                prng,
-                                foundTown.name,
-                                foundTown.flag,
-                                foundTown.color,
-                                foundTown.motto,
-                                {
-                                    wood = 0;
-                                    stone = 0;
-                                    gold = 0;
-                                    food = 100; // TODO
-                                },
-                                foundTown.locationId,
-                                buildTownDao,
-                            );
-                            for (migrant in foundTown.migrantIds.vals()) {
-                                switch (userHandler.changeTown(migrant, townId)) {
-                                    case (#ok) ();
-                                    case (#err(#notWorldMember)) Debug.trap("User is not a world member: " # Principal.toText(migrant));
-                                };
-                            };
-                            return #ok;
-                        };
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                        case (#err(#notEnoughResources(r))) "Not enough resources: " # debug_show (r);
-                    };
-                    #err("Failed to found town: " # error);
-                };
-                case (#claimLocation(claimLocation)) {
-                    let ?worldHandler = worldHandlerOrNull else return #err("Cannot claim location if world is not initialized");
-                    let townTerritoryLocations = worldHandler.getTownTerritoryLocations(townId, false);
-                    let ?town = townsHandler.get(townId) else return #err("Town not found: " # Nat.toText(townId));
-                    if (townTerritoryLocations.size() >= town.size) {
-                        return #err("Town territory is at max size already: " # Nat.toText(town.size));
-                    };
-                    let ?locationToClaim = worldHandler.getLocation(claimLocation.locationId) else return #err("Location not found: " # Nat.toText(claimLocation.locationId));
-                    switch (locationToClaim.kind) {
-                        case (#unexplored(_)) return #err("Cannot claim unexplored location");
-                        case (#town(_) or #resource(_)) (); // OK
-                    };
-                    let isAdjcaentToTerritory = townTerritoryLocations.vals()
-                    |> IterTools.any(
-                        _,
-                        func(location : World.WorldLocation) : Bool = HexGrid.areAdjacent(location.coordinate, locationToClaim.coordinate),
-                    );
-                    if (not isAdjcaentToTerritory) {
-                        return #err("Location is not adjacent to town territory");
-                    };
-                    let error = switch (worldHandler.claimLocation(claimLocation.locationId, townId)) {
-                        case (#ok) return #ok;
-                        case (#err(#locationNotFound)) "Location not found: " # Nat.toText(townId);
-                        case (#err(#cannotClaim)) "Cannot claim location: " # Nat.toText(claimLocation.locationId);
-                    };
-                    #err("Failed to update work plan: " # error);
-                };
-                case (#increaseSize) {
-                    let error = switch (townsHandler.increaseSize(townId)) {
-                        case (#ok(_)) return #ok;
-                        case (#err(#townNotFound)) "Town not found: " # Nat.toText(townId);
-                        case (#err(#sizeLimitReached)) "Town size limit reached";
-                    };
-                    #err("Failed to increase size: " # error);
-                };
-            };
-        };
-
-        func onProposalReject(proposal : ProposalTypes.Proposal<TownDao.ProposalContent>) : async* () {
-            Debug.print("Rejected proposal: " # debug_show (proposal));
-        };
-        func onProposalValidate(_ : TownDao.ProposalContent) : async* Result.Result<(), [Text]> {
-            #ok; // TODO
-        };
-        ProposalEngine.ProposalEngine<system, TownDao.ProposalContent>(data, onProposalExecute, onProposalReject, onProposalValidate);
-    };
-
-    private func createTown<system>(
-        prng : Prng,
-        name : Text,
-        image : Flag.FlagImage,
-        color : (Nat8, Nat8, Nat8),
-        motto : Text,
-        resources : Town.ResourceList,
-        locationId : Nat,
-        buildTownDao : <system>(Nat, ProposalTypes.StableData<TownDao.ProposalContent>) -> ProposalEngine.ProposalEngine<TownDao.ProposalContent>,
-    ) : Nat {
-        let ?worldHandler = worldHandlerOrNull else Debug.trap("Cannot create town if world is not initialized");
-
-        let townId = townsHandler.create<system>(name, image, color, motto, resources);
-        let townDao = buildTownDao<system>(
-            townId,
-            {
-                proposalDuration = #days(3);
-                proposals = [];
-                votingThreshold = #percent({
-                    percent = 50;
-                    quorum = ?20;
-                });
-            },
-        );
-        townDaos.put(
-            townId,
-            townDao,
-        );
-        switch (worldHandler.addTown(prng, locationId, townId)) {
-            case (#ok) ();
-            case (#err(#locationNotFound)) Debug.trap("Location not found: " # Nat.toText(locationId));
-            case (#err(#otherTownAtLocation(townId))) Debug.trap("Town '" #Nat.toText(townId) # "' already at location: " # Nat.toText(locationId));
-        };
-        Debug.print("Created town " # Nat.toText(townId) # " at location " # Nat.toText(locationId));
-        townId;
-    };
 
     private func populateTownDaosFromStable<system>() {
         for ((townId, data) in townDaoStableData.vals()) {

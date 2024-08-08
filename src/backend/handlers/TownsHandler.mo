@@ -3,16 +3,11 @@ import Iter "mo:base/Iter";
 import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
-import Int "mo:base/Int";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
-import Time "mo:base/Time";
-import Buffer "mo:base/Buffer";
-import Prelude "mo:base/Prelude";
 import Order "mo:base/Order";
 import Flag "../models/Flag";
 import Town "../models/Town";
-import World "../models/World";
 import IterTools "mo:itertools/Iter";
 import CommonTypes "../CommonTypes";
 
@@ -30,15 +25,6 @@ module {
         id : Nat;
         var name : Text;
         var flagImage : Flag.FlagImage;
-        var color : (Nat8, Nat8, Nat8);
-        var motto : Text;
-        var health : Nat;
-        var upkeepCondition : Nat;
-        var size : Nat;
-        var sizeLimit : Nat;
-        genesisTime : Time.Time;
-        jobs : Buffer.Buffer<Town.Job>;
-        resources : MutableTownResourceList;
         history : HashMap.HashMap<Nat, DaySnapshot>;
     };
 
@@ -48,21 +34,10 @@ module {
     };
 
     public type DaySnapshotWork = {
-        wood : ResourceSnapshot;
-        food : ResourceSnapshot;
-        stone : ResourceSnapshot;
-        gold : ResourceSnapshot;
-    };
-
-    public type ResourceSnapshot = {
-        amount : Nat;
-    };
-
-    type MutableTownResourceList = {
-        var gold : Nat;
-        var wood : Nat;
-        var food : Nat;
-        var stone : Nat;
+        wood : Nat;
+        food : Nat;
+        stone : Nat;
+        gold : Nat;
     };
 
     public class Handler<system>(
@@ -117,9 +92,6 @@ module {
         public func create<system>(
             name : Text,
             flagImage : Flag.FlagImage,
-            color : (Nat8, Nat8, Nat8),
-            motto : Text,
-            resources : Town.ResourceList,
         ) : Nat {
             Debug.print("Creating new town with name " # name);
             let townId = nextTownId;
@@ -129,171 +101,11 @@ module {
                 id = townId;
                 var name = name;
                 var flagImage = flagImage;
-                var color = color;
-                var motto = motto;
-                var health = 100;
-                var upkeepCondition = 100;
-                var size = 6;
-                var sizeLimit = 6;
-                genesisTime = Time.now();
-                jobs = Buffer.Buffer<Town.Job>(0);
-                skills = {
-                    woodCutting = {
-                        var techLevel = 0;
-                        var proficiencyMultiplier = 1;
-                    };
-                    farming = {
-                        var techLevel = 0;
-                        var proficiencyMultiplier = 1;
-                    };
-                    mining = {
-                        var techLevel = 0;
-                        var proficiencyMultiplier = 1;
-                    };
-                    carpentry = {
-                        var techLevel = 0;
-                        var proficiencyMultiplier = 1;
-                    };
-                    masonry = {
-                        var techLevel = 0;
-                        var proficiencyMultiplier = 1;
-                    };
-                };
-                resources = {
-                    var gold = resources.gold;
-                    var wood = resources.wood;
-                    var food = resources.food;
-                    var stone = resources.stone;
-                };
-                var workPlan = {
-                    gatherWood = {
-                        weight = 1;
-                        locationLimits = [];
-                    };
-                    gatherFood = {
-                        weight = 2;
-                        locationLimits = [];
-                    };
-                    gatherStone = {
-                        weight = 1;
-                        efficiencyMin = 0.0;
-                    };
-                    gatherGold = {
-                        weight = 1;
-                        efficiencyMin = 0.0;
-                    };
-                    processWood = {
-                        weight = 0;
-                        maxStorage = 0;
-                    };
-                    processStone = {
-                        weight = 0;
-                        maxStorage = 0;
-                    };
-                };
                 history = HashMap.HashMap<Nat, DaySnapshot>(0, Nat.equal, Nat32.fromNat);
             };
             towns.put(townId, townData);
 
             return townId;
-        };
-
-        public func addDaySnapshot(townId : Nat, snapshot : DaySnapshot) : Result.Result<(), { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let null = town.history.replace(snapshot.day, snapshot) else Debug.trap("Day snapshot already exists for town " # Nat.toText(townId) # " on day " # Nat.toText(snapshot.day));
-            #ok;
-        };
-
-        public func addResource(
-            townId : Nat,
-            resource : World.ResourceKind,
-            amount : Nat,
-        ) : Result.Result<(), { #townNotFound }> {
-            switch (updateResource(townId, resource, amount, false)) {
-                case (#ok) #ok;
-                case (#err(#townNotFound)) #err(#townNotFound);
-                case (#err(#notEnoughResource(_))) Prelude.unreachable();
-            };
-        };
-
-        public func updateResource(
-            townId : Nat,
-            resource : World.ResourceKind,
-            delta : Int,
-            allowBelowZero : Bool,
-        ) : Result.Result<(), { #townNotFound; #notEnoughResource : { defecit : Nat } }> {
-            switch (updateResourceBulk(townId, [{ kind = resource; delta = delta }], allowBelowZero)) {
-                case (#ok) #ok();
-                case (#err(#townNotFound)) #err(#townNotFound);
-                case (#err(#notEnoughResources(r))) #err(#notEnoughResource(r[0]));
-            };
-        };
-
-        public func updateResourceBulk(
-            townId : Nat,
-            resources : [{
-                kind : World.ResourceKind;
-                delta : Int;
-            }],
-            allowBelowZero : Bool,
-        ) : Result.Result<(), { #townNotFound; #notEnoughResources : [{ defecit : Nat; kind : World.ResourceKind }] }> {
-            if (resources.size() == 0) {
-                return #ok;
-            };
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newResources = Buffer.Buffer<{ kind : World.ResourceKind; delta : Int; newValue : Nat }>(resources.size());
-            let notEnoughResources = Buffer.Buffer<{ defecit : Nat; kind : World.ResourceKind }>(0);
-            label l for (resource in resources.vals()) {
-                if (resource.delta == 0) {
-                    continue l;
-                };
-                let currentValue = switch (resource.kind) {
-                    case (#gold) town.resources.gold;
-                    case (#wood) town.resources.wood;
-                    case (#food) town.resources.food;
-                    case (#stone) town.resources.stone;
-                };
-                let newResource = currentValue + resource.delta;
-                if (not allowBelowZero and newResource < 0) {
-
-                    notEnoughResources.add({
-                        kind = resource.kind;
-                        defecit = Int.abs(newResource);
-                    });
-                    continue l;
-                };
-                let newResourceNat = if (newResource <= 0) {
-                    0;
-                } else {
-                    Int.abs(newResource);
-                };
-                newResources.add({
-                    kind = resource.kind;
-                    delta = resource.delta;
-                    newValue = newResourceNat;
-                });
-            };
-            if (notEnoughResources.size() > 0) {
-                return #err(#notEnoughResources(Buffer.toArray(notEnoughResources)));
-            };
-            for (resource in newResources.vals()) {
-                Debug.print("Updating resource " # debug_show (resource.kind) # " for town " # Nat.toText(townId) # " by " # Int.toText(resource.delta) # " to " # Nat.toText(resource.newValue));
-                switch (resource.kind) {
-                    case (#gold) {
-                        town.resources.gold := resource.newValue;
-                    };
-                    case (#wood) {
-                        town.resources.wood := resource.newValue;
-                    };
-                    case (#food) {
-                        town.resources.food := resource.newValue;
-                    };
-                    case (#stone) {
-                        town.resources.stone := resource.newValue;
-                    };
-                };
-            };
-            #ok;
         };
 
         public func updateName(townId : Nat, newName : Text) : Result.Result<(), { #townNotFound }> {
@@ -310,140 +122,8 @@ module {
             #ok;
         };
 
-        public func updateMotto(townId : Nat, newMotto : Text) : Result.Result<(), { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            Debug.print("Updating motto for town " # Nat.toText(townId) # " to: " # newMotto);
-            town.motto := newMotto;
-            #ok;
-        };
-
-        public func updateHealth(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newHealthInt : Int = town.health + delta;
-            let newHealthNat : Nat = if (newHealthInt <= 0) {
-                // Health cant be negative
-                0;
-            } else if (newHealthInt >= 100) {
-                // Health cant be over 100
-                100;
-            } else {
-                Int.abs(newHealthInt);
-            };
-            if (town.health != newHealthNat) {
-                Debug.print("Updating health for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newHealthNat));
-                town.health := newHealthNat;
-            };
-            #ok(newHealthNat);
-        };
-
-        public func updateUpkeepCondition(townId : Nat, delta : Int) : Result.Result<Nat, { #townNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            let newUpkeepConditionInt : Int = town.upkeepCondition + delta;
-            let newUpkeepConditionNat : Nat = if (newUpkeepConditionInt <= 0) {
-                // Upkeep condition cant be negative
-                0;
-            } else if (newUpkeepConditionInt >= 100) {
-                // Upkeep condition cant be over 100
-                100;
-            } else {
-                Int.abs(newUpkeepConditionInt);
-            };
-            if (town.upkeepCondition != newUpkeepConditionNat) {
-                Debug.print("Updating upkeep condition for town " # Nat.toText(townId) # " by " # Int.toText(delta) # " to " # Nat.toText(newUpkeepConditionNat));
-                town.upkeepCondition := newUpkeepConditionNat;
-            };
-            #ok(newUpkeepConditionNat);
-        };
-
-        public func setSizeLimit(townId : Nat, sizeLimit : Nat) : Result.Result<(), { #townNotFound; #cantBeZero }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            if (sizeLimit < 1) {
-                return #err(#cantBeZero);
-            };
-            if (town.sizeLimit == sizeLimit) {
-                return #ok;
-            };
-            Debug.print("Setting size limit for town " # Nat.toText(townId) # " to " # Nat.toText(sizeLimit));
-            town.sizeLimit := sizeLimit;
-            #ok;
-        };
-
-        public func increaseSize(townId : Nat) : Result.Result<Nat, { #townNotFound; #sizeLimitReached }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            if (town.size >= town.sizeLimit) {
-                return #err(#sizeLimitReached);
-            };
-            let newSize = town.size + 1;
-            Debug.print("Increasing size for town " # Nat.toText(townId) # " to " # Nat.toText(newSize));
-            town.size := newSize;
-            #ok(newSize);
-        };
-
-        public func decreaseSize(townId : Nat) : Result.Result<Nat, { #townNotFound; #cantBeZero }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            if (town.size <= 1) {
-                return #err(#cantBeZero);
-            };
-            let newSize : Nat = town.size - 1;
-            Debug.print("Decreasing size for town " # Nat.toText(townId) # " to " # Nat.toText(newSize));
-            town.size := newSize;
-            #ok(newSize);
-        };
-
-        public func addJob(townId : Nat, job : Town.Job) : Result.Result<Nat, { #townNotFound; #invalid : [Text] }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            switch (validateJob(job)) {
-                case (#err(err)) return #err(err);
-                case (#ok) ();
-            };
-            let jobId = town.jobs.size();
-            Debug.print("Adding job " # debug_show (job) # " to town " # Nat.toText(townId) # " with id " # Nat.toText(jobId));
-            town.jobs.add(job);
-            #ok(jobId);
-        };
-
-        public func updateJob(townId : Nat, jobId : Nat, job : Town.Job) : Result.Result<(), { #townNotFound; #invalid : [Text]; #jobNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-            switch (validateJob(job)) {
-                case (#err(err)) return #err(err);
-                case (#ok) ();
-            };
-            if (jobId >= town.jobs.size()) {
-                return #err(#jobNotFound);
-            };
-            Debug.print("Updating job " # Nat.toText(jobId) # " for town " # Nat.toText(townId) # " to: " # debug_show (job));
-
-            town.jobs.put(jobId, job);
-            #ok;
-        };
-
-        public func removeJob(townId : Nat, jobId : Nat) : Result.Result<(), { #townNotFound; #jobNotFound }> {
-            let ?town = towns.get(townId) else return #err(#townNotFound);
-
-            if (jobId >= town.jobs.size()) {
-                return #err(#jobNotFound);
-            };
-            Debug.print("Removing job " # Nat.toText(jobId) # " for town " # Nat.toText(townId));
-            ignore town.jobs.remove(jobId);
-            #ok;
-        };
-
         public func clear() {
             towns := HashMap.HashMap<Nat, MutableTownData>(0, Nat.equal, Nat32.fromNat);
-        };
-
-        private func validateJob(job : Town.Job) : Result.Result<(), { #invalid : [Text] }> {
-            let errors = Buffer.Buffer<Text>(0);
-            switch (job) {
-                case (#explore(_)) {
-
-                    // TODO check if location is explored?
-                };
-            };
-            if (errors.size() > 0) {
-                return #err(#invalid(Buffer.toArray(errors)));
-            };
-            #ok;
         };
 
     };
@@ -453,20 +133,6 @@ module {
             id = town.id;
             name = town.name;
             flagImage = town.flagImage;
-            color = town.color;
-            motto = town.motto;
-            genesisTime = town.genesisTime;
-            health = town.health;
-            upkeepCondition = town.upkeepCondition;
-            size = town.size;
-            sizeLimit = town.sizeLimit;
-            jobs = Buffer.toArray<Town.Job>(town.jobs);
-            resources = {
-                gold = town.resources.gold;
-                wood = town.resources.wood;
-                food = town.resources.food;
-                stone = town.resources.stone;
-            };
             history = town.history.vals()
             |> Iter.sort(_, func(a : DaySnapshot, b : DaySnapshot) : Order.Order = Nat.compare(a.day, b.day))
             |> Iter.toArray(_);
@@ -478,20 +144,6 @@ module {
             id = stableData.id;
             var name = stableData.name;
             var flagImage = stableData.flagImage;
-            var color = stableData.color;
-            var motto = stableData.motto;
-            var health = stableData.health;
-            var upkeepCondition = stableData.upkeepCondition;
-            var size = stableData.size;
-            var sizeLimit = stableData.sizeLimit;
-            genesisTime = stableData.genesisTime;
-            jobs = Buffer.fromArray(stableData.jobs);
-            resources = {
-                var gold = stableData.resources.gold;
-                var wood = stableData.resources.wood;
-                var food = stableData.resources.food;
-                var stone = stableData.resources.stone;
-            };
             history = stableData.history.vals()
             |> Iter.map<DaySnapshot, (Nat, DaySnapshot)>(
                 _,

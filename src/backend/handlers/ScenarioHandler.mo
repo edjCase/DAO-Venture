@@ -26,15 +26,6 @@ import World "../models/World";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    type ValidatedTownChoice = {
-        townId : Nat;
-        choice : ?ValidatedChoice;
-    };
-    type ValidatedChoice = {
-        value : Scenario.ScenarioOptionValue;
-        townEffect : Scenario.Effect;
-    };
-
     public type StableData = {
         scenarios : [StableScenarioData];
     };
@@ -52,13 +43,8 @@ module {
     };
 
     public type VoterInfo = {
-        townId : Nat;
         id : Principal;
         votingPower : Nat;
-    };
-
-    public type Vote = VoterInfo and {
-        value : ?Scenario.ScenarioOptionValue;
     };
 
     public type ScenarioMember = {
@@ -69,56 +55,30 @@ module {
 
     public type StableScenarioData = {
         id : Nat;
-        title : Text;
-        description : Text;
-        undecidedEffect : Scenario.Effect;
         kind : Scenario.ScenarioKind;
-        state : ScenarioState;
-        startTime : Time.Time;
-        endTime : Time.Time;
-        townIds : [Nat];
-        votes : [Vote];
     };
 
     type MutableScenarioData = {
         id : Nat;
         title : Text;
-        description : Text;
-        undecidedEffect : Scenario.Effect;
         kind : Scenario.ScenarioKind;
-        state : ScenarioState;
-        startTime : Time.Time;
-        endTime : Time.Time;
-        townIds : [Nat];
-        votes : HashMap.HashMap<Principal, Vote>;
+        votes : HashMap.HashMap<Principal, VoterInfo>;
     };
 
     type ScenarioState = {
-        #notStarted : {
-            startTimerId : Nat;
-        };
         #inProgress : {
             endTimerId : Nat;
         };
-        #resolved : Scenario.ScenarioStateResolved;
-    };
-
-    type ResolvedTownChoice = {
-        townId : Nat;
-        value : ?Scenario.ScenarioOptionValue;
+        #resolved : {};
     };
 
     public type VotingData = {
         yourData : ?ScenarioVote;
-        townIdsWithConsensus : [Nat];
     };
 
     public type ScenarioVote = {
-        value : ?Scenario.ScenarioOptionValue;
+        value : ?Nat;
         votingPower : Nat;
-        townId : Nat;
-        townVotingPower : TownVotingPower;
-        townOptions : ScenarioTownOptions;
     };
 
     public type TownVotingPower = {
@@ -126,96 +86,23 @@ module {
         voted : Nat;
     };
 
-    public type ScenarioTownOptions = {
-        #discrete : [ScenarioTownOptionDiscrete];
-        #text : [ScenarioTownOptionText];
+    public type ResourceDeltas = {
+        gold : Int;
+        wood : Int;
+        food : Int;
+        stone : Int;
     };
 
-    public type ScenarioTownOptionDiscrete = {
-        id : Nat;
-        title : Text;
-        description : Text;
-        resourceCosts : [Scenario.ResourceCost];
-        currentVotingPower : Nat;
-        requirements : [Scenario.Requirement];
-    };
-
-    public type ScenarioTownOptionText = ScenarioTownOptionRaw<Text>;
-
-    public type ScenarioTownOptionRaw<T> = {
-        value : T;
-        currentVotingPower : Nat;
-    };
-
-    public type AddScenarioRequest = {
-        startTime : ?Time.Time;
-        endTime : Time.Time;
-        title : Text;
-        description : Text;
-        undecidedEffect : Scenario.Effect;
-        kind : ScenarioKindRequest;
-    };
-
-    public type ScenarioKindRequest = {
-        #noWorldEffect : NoWorldEffectScenarioRequest;
-        #threshold : ThresholdScenarioRequest;
-        #worldChoice : WorldChoiceScenarioRequest;
-        #textInput : Scenario.TextInputScenario;
-    };
-
-    public type ScenarioOptionDiscrete = {
-        title : Text;
-        description : Text;
-        resourceCosts : [Scenario.ResourceCost];
-        requirements : [Scenario.Requirement];
-        townEffect : Scenario.Effect;
-    };
-
-    public type NoWorldEffectScenarioRequest = {
-        options : [ScenarioOptionDiscrete];
-    };
-
-    public type ThresholdScenarioRequest = {
-        minAmount : Nat;
-        success : {
-            description : Text;
-            effect : Scenario.Effect;
-        };
-        failure : {
-            description : Text;
-            effect : Scenario.Effect;
-        };
-        undecidedAmount : ThresholdValue;
-        options : [ThresholdScenarioOptionRequest];
-    };
-
-    public type ThresholdScenarioOptionRequest = ScenarioOptionDiscrete and {
-        value : ThresholdValue;
-    };
-
-    public type ThresholdValue = {
-        #fixed : Int;
-        #weightedChance : [{
-            value : Int;
-            weight : Nat;
-            description : Text;
-        }];
-    };
-
-    public type WorldChoiceScenarioRequest = {
-        options : [WorldChoiceScenarioOptionRequest];
-    };
-
-    public type WorldChoiceScenarioOptionRequest = ScenarioOptionDiscrete and {
-        worldEffect : Scenario.Effect;
+    public type NotEnoughResourcesErr = {
+        goldMissing : ?Nat;
+        woodMissing : ?Nat;
+        foodMissing : ?Nat;
+        stoneMissing : ?Nat;
     };
 
     public class Handler<system>(
         data : StableData,
-        processEffectOutcome : <system>(
-            outcome : Scenario.EffectOutcome
-        ) -> (),
-        chargeTownResources : (townId : Nat, resources : [Scenario.ResourceCost]) -> Result.Result<(), { #notEnoughResources : [{ defecit : Nat; kind : World.ResourceKind }] }>,
+        chargeResources : (resources : ResourceDeltas) -> Result.Result<(), { #notEnoughResources : NotEnoughResourcesErr }>,
     ) {
 
         var scenarios : HashMap.HashMap<Nat, MutableScenarioData> = toHashMap(data.scenarios);
@@ -258,7 +145,7 @@ module {
         public func vote<system>(
             scenarioId : Nat,
             voterId : Principal,
-            value : Scenario.ScenarioOptionValue,
+            value : Nat,
         ) : Result.Result<(), { #notEligible; #invalidValue; #scenarioNotFound; #votingNotOpen }> {
 
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
@@ -347,362 +234,6 @@ module {
             });
         };
 
-        public func add<system>(
-            scenario : AddScenarioRequest,
-            members : [ScenarioMember],
-            allTowns : [Town.Town],
-        ) : AddScenarioResult {
-            switch (validateScenario(scenario)) {
-                case (#ok) {};
-                case (#invalid(errors)) return #err(#invalid(errors));
-            };
-            let startTime = switch (scenario.startTime) {
-                case (null) Time.now();
-                case (?t) t;
-            };
-
-            let townIds = HashMap.HashMap<Nat, ()>(0, Nat.equal, Nat32.fromNat);
-
-            // TODO refactor the duplicatio
-            let kind : Scenario.ScenarioKind = switch (scenario.kind) {
-                case (#noWorldEffect(noWorldEffect)) #noWorldEffect({
-                    noWorldEffect with
-                    options = noWorldEffect.options.vals()
-                    |> Iter.map<ScenarioOptionDiscrete, Scenario.ScenarioOptionDiscrete>(
-                        _,
-                        func(option : ScenarioOptionDiscrete) : Scenario.ScenarioOptionDiscrete {
-                            let allowedTownIds = allTowns.vals()
-                            |> IterTools.mapFilter(
-                                _,
-                                func(town : Town.Town) : ?Nat {
-                                    if (townMeetsRequirements(town, option.requirements)) {
-                                        ?town.id;
-                                    } else {
-                                        null;
-                                    };
-                                },
-                            )
-                            |> Iter.toArray(_);
-                            {
-                                option with
-                                allowedTownIds = allowedTownIds;
-                            };
-                        },
-                    )
-                    |> Iter.toArray(_);
-                });
-                case (#worldChoice(worldChoice)) #worldChoice({
-                    worldChoice with
-                    options = worldChoice.options.vals()
-                    |> Iter.map<WorldChoiceScenarioOptionRequest, Scenario.WorldChoiceScenarioOption>(
-                        _,
-                        func(option : WorldChoiceScenarioOptionRequest) : Scenario.WorldChoiceScenarioOption {
-                            let allowedTownIds = allTowns.vals()
-                            |> IterTools.mapFilter(
-                                _,
-                                func(town : Town.Town) : ?Nat {
-                                    if (townMeetsRequirements(town, option.requirements)) {
-                                        ?town.id;
-                                    } else {
-                                        null;
-                                    };
-                                },
-                            )
-                            |> Iter.toArray(_);
-                            {
-                                option with
-                                allowedTownIds = allowedTownIds;
-                            };
-                        },
-                    )
-                    |> Iter.toArray(_);
-                });
-                case (#threshold(threshold)) #threshold({
-                    threshold with
-                    options = threshold.options.vals()
-                    |> Iter.map<ThresholdScenarioOptionRequest, Scenario.ThresholdScenarioOption>(
-                        _,
-                        func(option : ThresholdScenarioOptionRequest) : Scenario.ThresholdScenarioOption {
-                            let allowedTownIds = allTowns.vals()
-                            |> IterTools.mapFilter(
-                                _,
-                                func(town : Town.Town) : ?Nat {
-                                    if (townMeetsRequirements(town, option.requirements)) {
-                                        ?town.id;
-                                    } else {
-                                        null;
-                                    };
-                                },
-                            )
-                            |> Iter.toArray(_);
-                            {
-                                option with
-                                allowedTownIds = allowedTownIds;
-                            };
-                        },
-                    )
-                    |> Iter.toArray(_);
-                });
-                case (#textInput(textInput)) #textInput(textInput);
-            };
-
-            let votes = members.vals()
-            |> Iter.map<ScenarioMember, (Principal, Vote)>(
-                _,
-                func(member : ScenarioMember) : (Principal, Vote) {
-                    townIds.put(member.townId, ());
-                    (
-                        member.id,
-                        {
-                            id = member.id;
-                            townId = member.townId;
-                            votingPower = member.votingPower;
-                            value = null;
-                        },
-                    );
-                },
-            )
-            |> HashMap.fromIter<Principal, Vote>(_, members.size(), Principal.equal, Principal.hash);
-
-            let scenarioId = nextScenarioId;
-            nextScenarioId += 1;
-            let state = if (startTime <= Time.now()) {
-                #inProgress({
-                    endTimerId = createEndTimer<system>(scenarioId, scenario.endTime);
-                });
-            } else {
-                #notStarted({
-                    startTimerId = createStartTimer<system>(scenarioId, startTime);
-                });
-            };
-
-            scenarios.put(
-                scenarioId,
-                {
-
-                    id = scenarioId;
-                    title = scenario.title;
-                    description = scenario.description;
-                    undecidedEffect = scenario.undecidedEffect;
-                    kind = kind;
-                    state = state;
-                    startTime = startTime;
-                    endTime = scenario.endTime;
-                    townIds = Iter.toArray(townIds.keys());
-                    votes = votes;
-                },
-            );
-            #ok;
-        };
-
-        private func buildTownOptions(scenario : MutableScenarioData, townId : Nat) : ScenarioTownOptions {
-
-            // Create map of option id => town voting power for option
-            let townOptionVotingPower : HashMap.HashMap<Scenario.ScenarioOptionValue, Nat> = scenario.votes.vals()
-            |> Iter.filter(
-                _,
-                func(vote : Vote) : Bool = vote.townId == townId,
-            )
-            |> IterTools.fold(
-                _,
-                HashMap.HashMap<Scenario.ScenarioOptionValue, Nat>(0, scearioOptionValueEqual, scearioOptionValueHash),
-                func(acc : HashMap.HashMap<Scenario.ScenarioOptionValue, Nat>, vote : Vote) : HashMap.HashMap<Scenario.ScenarioOptionValue, Nat> {
-                    switch (vote.value) {
-                        case (?v) {
-                            let currentVotingPower = Option.get(acc.get(v), 0);
-                            acc.put(v, currentVotingPower + vote.votingPower);
-                        };
-                        case (null) ();
-                    };
-                    acc;
-                },
-            );
-            // Function to handle common logic for discrete options
-            func mapDiscreteOptions(options : [Scenario.ScenarioOptionDiscrete]) : ScenarioTownOptions {
-                let o = options.vals()
-                |> IterTools.mapEntries(
-                    _,
-                    func(optionId : Nat, option : Scenario.ScenarioOptionDiscrete) : ScenarioTownOptionDiscrete {
-                        {
-                            option with
-                            id = optionId;
-                            currentVotingPower = Option.get(townOptionVotingPower.get(#id(optionId)), 0);
-                        };
-                    },
-                )
-                |> Iter.toArray(_);
-                #discrete(o);
-            };
-
-            // Function to handle common logic for nat options
-            func mapRawOptions<T>(
-                options : Iter.Iter<Scenario.ScenarioOptionValue>,
-                valueExtractor : Scenario.ScenarioOptionValue -> T,
-            ) : [ScenarioTownOptionRaw<T>] {
-                options
-                |> Iter.map(
-                    _,
-                    func(value : Scenario.ScenarioOptionValue) : ScenarioTownOptionRaw<T> {
-                        {
-                            value = valueExtractor(value);
-                            currentVotingPower = Option.get(townOptionVotingPower.get(value), 0);
-                        };
-                    },
-                )
-                |> Iter.toArray(_);
-            };
-
-            switch (scenario.kind) {
-                case (#noWorldEffect(noWorldEffect)) mapDiscreteOptions(noWorldEffect.options);
-                case (#worldChoice(worldChoice)) mapDiscreteOptions(worldChoice.options);
-                case (#threshold(threshold)) mapDiscreteOptions(threshold.options);
-                case (#textInput(_)) {
-                    let values = mapRawOptions<Text>(
-                        townOptionVotingPower.keys(),
-                        func(v : Scenario.ScenarioOptionValue) : Text = switch (v) {
-                            case (#text(t)) t;
-                            case (_) Debug.trap("Expected nat value for text input bid scenario, but got: " # debug_show (v));
-                        },
-                    );
-                    #text(values);
-                };
-            };
-        };
-
-        private func resolveTownChoices(scenario : MutableScenarioData) : [ResolvedTownChoice] {
-            type TownInfo = {
-                var total : Nat;
-                towns : HashMap.HashMap<Nat, Nat>;
-            };
-            let votingPowerInfo : TownInfo = IterTools.fold(
-                scenario.votes.vals(),
-                {
-                    var total = 0;
-                    towns = HashMap.HashMap<Nat, Nat>(0, Nat.equal, Nat32.fromNat);
-                },
-                func(acc : TownInfo, vote : Vote) : TownInfo {
-                    let currentVotingPower = Option.get(acc.towns.get(vote.townId), 0);
-                    acc.towns.put(vote.townId, currentVotingPower + vote.votingPower);
-                    acc.total += vote.votingPower;
-                    acc;
-                },
-            );
-            let allTownOptions = scenario.townIds.vals()
-            |> Iter.map<Nat, (Nat, ScenarioTownOptions)>(
-                _,
-                func(townId : Nat) : (Nat, ScenarioTownOptions) {
-                    (townId, buildTownOptions(scenario, townId));
-                },
-            )
-            |> HashMap.fromIter<Nat, ScenarioTownOptions>(_, scenario.townIds.size(), Nat.equal, Nat32.fromNat);
-
-            let townResults = Buffer.Buffer<ResolvedTownChoice>(scenario.townIds.size());
-            label f for ((townId, townOptions) in allTownOptions.entries()) {
-                let hasVotingPower = Option.get(votingPowerInfo.towns.get(townId), 0) > 0;
-                if (not hasVotingPower) {
-                    // Only include towns with voters
-                    continue f;
-                };
-                var optionsWithMostVotes = Buffer.Buffer<{ value : Scenario.ScenarioOptionValue; votingPower : Nat }>(0);
-
-                let optionVotingPowers : Iter.Iter<(Scenario.ScenarioOptionValue, Nat)> = switch (townOptions) {
-                    case (#discrete(options)) options.vals()
-                    |> Iter.map<ScenarioTownOptionDiscrete, (Scenario.ScenarioOptionValue, Nat)>(
-                        _,
-                        func(option : ScenarioTownOptionDiscrete) : (Scenario.ScenarioOptionValue, Nat) = (#id(option.id), option.currentVotingPower),
-                    );
-                    case (#text(options)) options.vals()
-                    |> Iter.map<ScenarioTownOptionText, (Scenario.ScenarioOptionValue, Nat)>(
-                        _,
-                        func(option : ScenarioTownOptionText) : (Scenario.ScenarioOptionValue, Nat) = (#text(option.value), option.currentVotingPower),
-                    );
-                };
-
-                // Calculate the options with the most votes
-                label f for ((value, optionVotingPower) in optionVotingPowers) {
-                    if (optionVotingPower < 1) {
-                        // Skip non votes
-                        continue f;
-                    };
-                    let add = if (optionsWithMostVotes.size() < 1) {
-                        // If there are no options with most votes, add this as the first
-                        true;
-                    } else {
-                        let maxVotingPower = optionsWithMostVotes.get(0).votingPower;
-                        let eqyalToOrEqualsMax = optionVotingPower >= maxVotingPower;
-                        if (optionVotingPower > maxVotingPower) {
-                            optionsWithMostVotes.clear(); // Reset options if a new max is found
-                        };
-                        eqyalToOrEqualsMax;
-                    };
-                    if (add) {
-                        optionsWithMostVotes.add({
-                            value = value;
-                            votingPower = optionVotingPower;
-                        });
-                    };
-                };
-                let optionWithMostVotes = if (optionsWithMostVotes.size() == 1) {
-                    ?optionsWithMostVotes.get(0);
-                } else {
-                    if (optionsWithMostVotes.size() > 1) {
-                        Debug.print("Town " # Nat.toText(townId) # " has a tie in option voting, no consensus was reached");
-                    };
-                    null;
-                };
-
-                let chosenValueId : ?Scenario.ScenarioOptionValue = switch (optionWithMostVotes) {
-                    case (null) null;
-                    case (?o) {
-                        // Validate that the majority has been reached
-                        let townVotingPower = Option.get(votingPowerInfo.towns.get(townId), 0);
-                        let minMajorityVotingPower : Nat = Int.abs(Float.toInt(Float.floor(Float.fromInt(townVotingPower) / 2.) + 1));
-                        if (minMajorityVotingPower > o.votingPower) {
-                            null; // No majority, so undecided
-                        } else {
-                            ?o.value;
-                        };
-                    };
-                };
-                townResults.add({
-                    townId = townId;
-                    value = chosenValueId;
-                });
-            };
-
-            Buffer.toArray(townResults);
-        };
-
-        private func townMeetsRequirements(townStats : Town.Town, requirements : [Scenario.Requirement]) : Bool {
-            let testRange = func(townValue : Int, range : Scenario.RangeRequirement) : Bool {
-                switch (range) {
-                    case (#above(value)) townValue > value;
-                    case (#below(value)) townValue < value;
-                };
-            };
-
-            IterTools.all<Scenario.Requirement>(
-                requirements.vals(),
-                func(requirement : Scenario.Requirement) : Bool {
-                    switch (requirement) {
-                        case (#size(size)) testRange(townStats.size, size);
-                        case (#resource(resource)) {
-                            switch (resource.kind) {
-                                case (#gold) testRange(townStats.resources.gold, resource.range);
-                                case (#wood) testRange(townStats.resources.wood, resource.range);
-                                case (#food) testRange(townStats.resources.food, resource.range);
-                                case (#stone) testRange(townStats.resources.stone, resource.range);
-                            };
-                        };
-                        case (#age(age)) {
-                            let currentAge = TimeUtil.getAge(townStats.genesisTime).daysElapsed;
-                            testRange(currentAge, age);
-                        };
-                    };
-                },
-            );
-        };
-
         private func start<system>(scenarioId : Nat) : StartScenarioResult {
             let ?scenario = scenarios.get(scenarioId) else return #notFound;
             switch (scenario.state) {
@@ -726,7 +257,7 @@ module {
 
         private func end<system>(
             scenario : MutableScenarioData,
-            townVotingResult : [ResolvedTownChoice],
+            choice : Nat,
         ) : () {
             // let prng = try {
             //     PseudoRandomX.fromBlob(await Random.blob());
@@ -749,7 +280,7 @@ module {
             let resolvedScenarioState = resolveScenario(
                 prng,
                 scenario,
-                townVotingResult,
+                choice,
             );
 
             for (effectOutcome in resolvedScenarioState.effectOutcomes.vals()) {
@@ -765,7 +296,7 @@ module {
             );
         };
 
-        private func isAllowedAndChargedFunc(townId : Nat, option : Scenario.ScenarioOptionDiscrete) : Bool {
+        private func isAllowedAndChargedFunc(townId : Nat, option : {}) : Bool {
             let isAllowed = IterTools.any(
                 option.allowedTownIds.vals(),
                 func(townId : Nat) : Bool = townId == townId,
@@ -779,103 +310,11 @@ module {
             };
         };
 
-        private func validateResolvedOption(
-            townChoice : ResolvedTownChoice,
-            scenarioKind : Scenario.ScenarioKind,
-        ) : ?ValidatedChoice {
-            let ?value = townChoice.value else return null;
-            switch (scenarioKind) {
-                case (#noWorldEffect(noWorldEffect)) {
-                    let #id(optionId) = value else return null;
-                    let option = noWorldEffect.options[optionId];
-                    let true = isAllowedAndChargedFunc(townChoice.townId, option) else return null;
-
-                    return ?{
-                        value = value;
-                        townEffect = option.townEffect;
-                    };
-                };
-                case (#worldChoice(worldChoice)) {
-                    let #id(optionId) = value else return null;
-                    let option = worldChoice.options[optionId];
-                    let true = isAllowedAndChargedFunc(townChoice.townId, option) else return null;
-
-                    return ?{
-                        value = value;
-                        townEffect = option.townEffect;
-                    };
-                };
-                case (#threshold(threshold)) {
-                    let #id(optionId) = value else return null;
-                    let option = threshold.options[optionId];
-                    let true = isAllowedAndChargedFunc(townChoice.townId, option) else return null;
-
-                    return ?{
-                        value = value;
-                        townEffect = option.townEffect;
-                    };
-                };
-                case (#textInput(_)) {
-                    // No validation needed
-                    return ?{
-                        value = value;
-                        townEffect = #noEffect;
-                    };
-                };
-            };
-        };
-
-        private func getValuesFromTownChoices<T>(
-            validatedTownChoices : [ValidatedTownChoice],
-            compare : (T, T) -> Order.Order,
-            getTValue : (Scenario.ScenarioOptionValue) -> T,
-        ) : [Scenario.ScenarioResolvedOptionRaw<T>] {
-            let valueToTownsMap = HashMap.HashMap<Scenario.ScenarioOptionValue, Buffer.Buffer<Nat>>(0, scearioOptionValueEqual, scearioOptionValueHash);
-            label f for (validateTownChoice in validatedTownChoices.vals()) {
-                let valueOrNull = switch (validateTownChoice.choice) {
-                    case (?townChoice) townChoice.value;
-                    case (null) continue f; // Skip undecided
-                };
-                let townIds = switch (valueToTownsMap.get(valueOrNull)) {
-                    case (null) {
-                        let emptyTownIds = Buffer.Buffer<Nat>(1);
-                        valueToTownsMap.put(valueOrNull, emptyTownIds);
-                        emptyTownIds;
-                    };
-                    case (?townIds) townIds;
-                };
-                townIds.add(validateTownChoice.townId);
-            };
-            valueToTownsMap.entries()
-            |> Iter.map<(Scenario.ScenarioOptionValue, Buffer.Buffer<Nat>), (T, Buffer.Buffer<Nat>)>(
-                _,
-                func((value, townIds) : (Scenario.ScenarioOptionValue, Buffer.Buffer<Nat>)) : (T, Buffer.Buffer<Nat>) {
-                    let tValue = getTValue(value);
-                    (tValue, townIds);
-                },
-            )
-            // Order by value
-            |> Iter.sort<(T, Buffer.Buffer<Nat>)>(
-                _,
-                func((x, _) : (T, Buffer.Buffer<Nat>), (y, _) : (T, Buffer.Buffer<Nat>)) : Order.Order = compare(x, y),
-            )
-            |> Iter.map(
-                _,
-                func((value, townIds) : (T, Buffer.Buffer<Nat>)) : Scenario.ScenarioResolvedOptionRaw<T> {
-                    {
-                        value = value;
-                        chosenByTownIds = Buffer.toArray(townIds);
-                    };
-                },
-            )
-            |> Iter.toArray(_);
-        };
-
         private func resolveScenario(
             prng : Prng,
             scenario : MutableScenarioData,
-            unvalidatedTownChoices : [ResolvedTownChoice],
-        ) : Scenario.ScenarioStateResolved {
+            unvalidatedChoice : Nat,
+        ) : {} {
             // If missing town votes, add them as undecided
             // If voted for an option that is not allowed, add them as undecided
             let validatedTownChoices = scenario.townIds.vals()
@@ -988,20 +427,6 @@ module {
             };
         };
 
-        private func createStartTimer<system>(scenarioId : Nat, startTime : Time.Time) : Nat {
-            createTimer<system>(
-                startTime,
-                func<system>() : async* () {
-                    Debug.print("Starting scenario with timer. Scenario id: " # Nat.toText(scenarioId));
-                    switch (start<system>(scenarioId)) {
-                        case (#ok) ();
-                        case (#alreadyStarted) Debug.trap("Scenario already started: " # Nat.toText(scenarioId));
-                        case (#notFound) Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
-                    };
-                },
-            );
-        };
-
         private func createEndTimer<system>(scenarioId : Nat, endTime : Time.Time) : Nat {
             createTimer<system>(
                 endTime,
@@ -1094,58 +519,6 @@ module {
     type EffectContext = {
         #world;
         #town : Nat;
-    };
-
-    public func validateScenario(scenario : AddScenarioRequest) : ValidateScenarioResult {
-        let errors = Buffer.Buffer<Text>(0);
-        let startTime = switch (scenario.startTime) {
-            case (null) Time.now();
-            case (?t) {
-                if (t < Time.now()) {
-                    errors.add("Scenario start time must be in the future");
-                };
-                t;
-            };
-        };
-        if (scenario.endTime < startTime) {
-            errors.add("Scenario end time must be after the start time");
-        };
-        let dayInNanos = 24 * 60 * 60 * 1000000000; // 24 hours in nanoseconds
-        if (scenario.endTime - startTime < dayInNanos) {
-            errors.add("Scenario duration must be at least 1 day");
-        };
-        if (TextX.isEmptyOrWhitespace(scenario.title)) {
-            errors.add("Scenario must have a title");
-        };
-        if (TextX.isEmptyOrWhitespace(scenario.description)) {
-            errors.add("Scenario must have a description");
-        };
-        switch (scenario.kind) {
-            case (#textInput(_)) ();
-            case (#noWorldEffect(noWorldEffect)) {
-                if (noWorldEffect.options.size() < 2) {
-                    errors.add("Scenario must have at least 2 options");
-                };
-                validateDiscreteOptions(noWorldEffect.options, errors);
-            };
-            case (#worldChoice(worldChoice)) {
-                if (worldChoice.options.size() < 2) {
-                    errors.add("Scenario must have at least 2 options");
-                };
-                validateDiscreteOptions(worldChoice.options, errors);
-            };
-            case (#threshold(threshold)) {
-                if (threshold.options.size() < 2) {
-                    errors.add("Scenario must have at least 2 options");
-                };
-                validateDiscreteOptions(threshold.options, errors);
-            };
-        };
-        if (errors.size() > 0) {
-            #invalid(Buffer.toArray(errors));
-        } else {
-            #ok;
-        };
     };
 
     private func validateDiscreteOptions(

@@ -7,7 +7,6 @@ import Principal "mo:base/Principal";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
-import TownDao "../models/TownDao";
 import Town "../models/Town";
 import World "../models/World";
 import TownsHandler "../handlers/TownsHandler";
@@ -29,19 +28,11 @@ module {
         getProgenitor : query () -> async ?Principal;
 
         getWorld : query () -> async GetWorldResult;
-        getTowns : query () -> async [Town.Town];
-        getTownHistory : query (townId : Nat, count : Nat, offset : Nat) -> async GetTownHistoryResult;
-        createTownProposal : (townId : Nat, request : TownProposalContent) -> async CreateTownProposalResult;
-        getTownProposal : query (townId : Nat, id : Nat) -> async GetTownProposalResult;
-        getTownProposals : query (townId : Nat, count : Nat, offset : Nat) -> async GetTownProposalsResult;
-        voteOnTownProposal : (townId : Nat, request : VoteOnTownProposalRequest) -> async VoteOnTownProposalResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
-        // TODO remove
-        assignUserToTown : (request : AssignUserToTownRequest) -> async Result.Result<(), AssignUserToTownError>;
 
         intializeWorld : (request : InitializeWorldRequest) -> async Result.Result<(), InitializeWorldError>;
         joinWorld : (request : JoinWorldRequest) -> async Result.Result<(), JoinWorldError>;
