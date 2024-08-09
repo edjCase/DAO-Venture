@@ -1,6 +1,6 @@
 <script lang="ts">
     import { Card } from "flowbite-svelte";
-    import { Scenario, VotingData } from "../../ic-agent/declarations/main";
+    import { Scenario } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { Link } from "svelte-routing";
 

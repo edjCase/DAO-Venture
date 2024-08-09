@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { WorldProposal } from "../../../ic-agent/declarations/main";
-    import { toJsonString } from "../../../utils/StringUtil";
+    import { WorldProposal } from "../../ic-agent/declarations/main";
+    import { toJsonString } from "../../utils/StringUtil";
     import MotionView from "./proposal_views/MotionView.svelte";
 
     export let proposal: WorldProposal;

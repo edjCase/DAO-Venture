@@ -48,10 +48,7 @@ module {
                 claimedByTownIds = claimedByTownIds;
             });
         } else {
-            #unexplored({
-                currentExploration = 0;
-                explorationNeeded = 100;
-            });
+            #unexplored;
         };
 
         kind;

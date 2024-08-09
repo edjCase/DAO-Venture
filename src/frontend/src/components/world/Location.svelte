@@ -1,15 +1,11 @@
 <script lang="ts">
-    import { townStore } from "../../stores/TownStore";
     import { worldStore } from "../../stores/WorldStore";
-    import PixelArtFlag from "../common/PixelArtFlag.svelte";
     import ResourceIcon from "../icons/ResourceIcon.svelte";
 
     export let locationId: bigint;
 
     $: world = $worldStore;
     $: location = world?.locations.find((l) => l.id == locationId);
-
-    $: towns = $townStore;
 
     let rarityColor: string = "";
     $: {
@@ -25,34 +21,13 @@
             }
         }
     }
-    $: exploringByTownIds = towns
-        ?.filter((t) =>
-            t.jobs.some(
-                (job) =>
-                    "explore" in job && job.explore.locationId == locationId,
-            ),
-        )
-        .map((t) => t.id);
+
+    $: exploring = false; // TODO
 </script>
 
 {#if location !== undefined}
     {#if "town" in location.kind}
-        {@const townOrUndefined = towns?.find(
-            (town) =>
-                "town" in location.kind &&
-                town.id === location.kind.town.townId,
-        )}
-        {#if townOrUndefined !== undefined}
-            <g transform="translate(-32, -24)">
-                <foreignObject x="0" y="0" width="64" height="48">
-                    <PixelArtFlag
-                        pixels={townOrUndefined.flagImage.pixels}
-                        size="md"
-                        border={true}
-                    />
-                </foreignObject>
-            </g>
-        {/if}
+        <div></div>
     {:else if "resource" in location.kind}
         <g>
             <circle
@@ -81,7 +56,7 @@
             text-anchor="middle"
             font-size="2em"
         >
-            {#if exploringByTownIds !== undefined && exploringByTownIds.length > 0}
+            {#if exploring}
                 🧭
             {/if}
         </text>

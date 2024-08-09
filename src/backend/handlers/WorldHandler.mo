@@ -13,7 +13,6 @@ import World "../models/World";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import WorldGenerator "../WorldGenerator";
 import HexGrid "../models/HexGrid";
-import TimeUtil "../TimeUtil";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -47,15 +46,11 @@ module {
         var townId : Nat;
     };
 
-    type MutableUnexploredLocation = {
-        var currentExploration : Nat;
-        explorationNeeded : Nat;
-    };
+    type MutableUnexploredLocation = {};
 
     type MutableResourceLocation = {
         var rarity : World.ResourceRarity;
         kind : World.ResourceKind;
-        claimedByTownIds : HashMap.HashMap<Nat, ()>;
     };
 
     type MutableResourceList = {
@@ -75,10 +70,7 @@ module {
 
     private func toMutableLocationKind(kind : World.LocationKind) : MutableLocationKind {
         switch (kind) {
-            case (#unexplored(u)) #unexplored({
-                var currentExploration = u.currentExploration;
-                explorationNeeded = u.explorationNeeded;
-            });
+            case (#unexplored) #unexplored;
             case (#resource(r)) #resource({
                 kind = r.kind;
                 var rarity = r.rarity;
@@ -100,10 +92,7 @@ module {
 
     private func fromMutableLocationKind(kind : MutableLocationKind) : World.LocationKind {
         switch (kind) {
-            case (#unexplored(u)) #unexplored({
-                currentExploration = u.currentExploration;
-                explorationNeeded = u.explorationNeeded;
-            });
+            case (#unexplored) #unexplored;
             case (#resource(r)) #resource({
                 kind = r.kind;
                 rarity = r.rarity;
@@ -162,19 +151,13 @@ module {
             prng : Prng,
             locationId : Nat,
             amount : Nat,
-        ) : Result.Result<{ #incomplete; #complete }, { #locationAlreadyExplored; #locationNotFound }> {
+        ) : Result.Result<(), { #locationAlreadyExplored; #locationNotFound }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
                 case (#unexplored(unexplored)) {
-                    Debug.print("Exploring location " # Nat.toText(locationId) # " by " # Nat.toText(amount));
-                    unexplored.currentExploration += amount;
-                    if (unexplored.currentExploration >= unexplored.explorationNeeded) {
-                        switch (revealLocation(prng, locationId, null)) {
-                            case (#ok(_)) #ok(#complete);
-                            case (#err(err)) #err(err);
-                        };
-                    } else {
-                        #ok(#incomplete);
+                    switch (revealLocation(prng, locationId, null)) {
+                        case (#ok(_)) #ok;
+                        case (#err(err)) #err(err);
                     };
                 };
                 case (_) return #err(#locationAlreadyExplored);

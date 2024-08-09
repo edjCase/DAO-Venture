@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Input, Label, Textarea } from "flowbite-svelte";
-    import { CreateWorldProposalRequest } from "../../../../ic-agent/declarations/main";
     import FormTemplate from "./FormTemplate.svelte";
+    import { CreateWorldProposalRequest } from "../../../ic-agent/declarations/main";
 
     let title: string | undefined;
     let description: string | undefined;

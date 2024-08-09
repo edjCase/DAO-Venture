@@ -1,8 +1,8 @@
 <script lang="ts">
-    import { mainAgentFactory } from "../../../../ic-agent/Main";
-    import { proposalStore } from "../../../../stores/ProposalStore";
-    import LoadingButton from "../../../common/LoadingButton.svelte";
-    import { CreateWorldProposalRequest } from "../../../../ic-agent/declarations/main";
+    import { CreateWorldProposalRequest } from "../../../ic-agent/declarations/main";
+    import { mainAgentFactory } from "../../../ic-agent/Main";
+    import { proposalStore } from "../../../stores/ProposalStore";
+    import LoadingButton from "../../common/LoadingButton.svelte";
 
     export let generateProposal: () => CreateWorldProposalRequest | string;
 
@@ -17,7 +17,7 @@
         let result = await mainAgent.createWorldProposal(proposal);
         if ("ok" in result) {
             console.log(`Created World Proposal: `, result.ok);
-            proposalStore.refetchWorldProposal(result.ok);
+            proposalStore.refetchById(result.ok);
         } else {
             console.error("Error creating world proposal: ", result);
         }

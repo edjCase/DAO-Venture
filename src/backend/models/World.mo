@@ -8,14 +8,9 @@ module {
     };
 
     public type LocationKind = {
-        #unexplored : UnexploredLocation;
+        #unexplored;
         #town : TownLocation;
         #resource : ResourceLocation;
-    };
-
-    public type UnexploredLocation = {
-        currentExploration : Nat;
-        explorationNeeded : Nat;
     };
 
     public type TownLocation = {
