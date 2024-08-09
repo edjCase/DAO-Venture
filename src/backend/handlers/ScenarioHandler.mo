@@ -5,37 +5,20 @@ import Result "mo:base/Result";
 import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
+import Order "mo:base/Order";
 import GenericProposalEngine "mo:dao-proposal-engine/GenericProposalEngine";
 import MysteriousStructureScenario "../scenarios/MysteriousStructure";
 import Scenario "../models/Scenario";
+import CommonTypes "../CommonTypes";
+import IterTools "mo:itertools/Iter";
 
 module {
     public type StableData = {
-        scenarios : [Scenario];
-    };
-
-    public type Scenario = {
-        id : Nat;
-        day : Nat;
-        kind : ScenarioKind;
-    };
-
-    public type ScenarioKind = {
-        #mysteriousStructure : ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>;
-    };
-
-    public type ScenarioData<MetaData, ProposalContent, Choice> = {
-        proposal : GenericProposalEngine.Proposal<ProposalContent, Choice>;
-        metaData : MetaData;
-    };
-
-    public type ScenarioChoiceKind = {
-        #mysteriousStructure : MysteriousStructureScenario.Choice;
+        scenarios : [Scenario.Scenario];
     };
 
     type MutableScenario = {
         id : Nat;
-        day : Nat;
         kind : MutableScenarioKind;
     };
 
@@ -64,7 +47,7 @@ module {
             };
         };
 
-        public func start<system>(currentDay : Nat, kind : ScenarioKind) : Nat {
+        public func start<system>(currentDay : Nat, kind : Scenario.ScenarioKind) : Nat {
             let scenarioId = scenarios.size(); // TODO?
             let scenario = toMutableScenario<system>({
                 id = scenarioId;
@@ -78,12 +61,60 @@ module {
             scenarioId;
         };
 
-        public func get(scenarioId : Nat) : ?Scenario {
+        public func get(scenarioId : Nat) : ?Scenario.Scenario {
             let ?scenario = scenarios.get(scenarioId) else return null;
             ?fromMutableScenario(scenario);
         };
 
-        public func vote<system>(scenarioId : Nat, voterId : Principal, choice : ScenarioChoiceKind) : async* Result.Result<(), { #votingClosed; #notAuthorized; #scenarioNotFound; #invalidChoice; #alreadyVoted }> {
+        public func getAll(count : Nat, offset : Nat) : CommonTypes.PagedResult<Scenario.Scenario> {
+            var filteredScenarios = scenarios.vals()
+            |> Iter.sort(
+                _,
+                func(a : MutableScenario, b : MutableScenario) : Order.Order = Nat.compare(a.id, b.id),
+            )
+            |> IterTools.skip(_, offset)
+            |> IterTools.take(_, count)
+            |> Iter.map(_, fromMutableScenario)
+            |> Iter.toArray(_);
+            {
+                data = filteredScenarios;
+                offset = offset;
+                count = count;
+                totalCount = scenarios.size();
+            };
+        };
+
+        public func getVote(
+            scenarioId : Nat,
+            voterId : Principal,
+        ) : Result.Result<GenericProposalEngine.Vote<Scenario.ScenarioChoiceKind>, { #scenarioNotFound; #notEligible }> {
+            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+            let result : ?GenericProposalEngine.Vote<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
+                case (#mysteriousStructure(mysteriousStructure)) {
+                    let proposalId = 0; // TODO better way?
+                    let vote = mysteriousStructure.proposalEngine.getVote(proposalId, voterId);
+                    switch (vote) {
+                        case (?v) {
+                            let value = switch (v.value) {
+                                case (?choice) ? #mysteriousStructure(choice);
+                                case (null) null;
+                            };
+                            ?{
+                                v with
+                                value = value;
+                            };
+                        };
+                        case (null) null;
+                    };
+                };
+            };
+            switch (result) {
+                case (?vote) #ok(vote);
+                case (null) #err(#notEligible);
+            };
+        };
+
+        public func vote<system>(scenarioId : Nat, voterId : Principal, choice : Scenario.ScenarioChoiceKind) : async* Result.Result<(), { #votingClosed; #notAuthorized; #scenarioNotFound; #invalidChoice; #alreadyVoted }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let result : Result.Result<(), GenericProposalEngine.VoteError> = switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) {
@@ -102,36 +133,27 @@ module {
 
     };
 
-    private func toMutableScenario<system>(scenario : Scenario) : MutableScenario {
+    private func toMutableScenario<system>(scenario : Scenario.Scenario) : MutableScenario {
         let kind : MutableScenarioKind = switch (scenario.kind) {
             case (#mysteriousStructure(mysteriousStructure)) #mysteriousStructure(toMutableMysteriousStructureScenario<system>(mysteriousStructure));
         };
         {
             id = scenario.id;
-            day = scenario.day;
             kind = kind;
         };
     };
 
-    private func fromMutableScenario(scenario : MutableScenario) : Scenario {
+    private func fromMutableScenario(scenario : MutableScenario) : Scenario.Scenario {
         {
             id = scenario.id;
-            day = scenario.day;
             kind = switch (scenario.kind) {
-                case (#mysteriousStructure(mysteriousStructure)) {
-                    let ?proposal = mysteriousStructure.proposalEngine.getProposal(0) // TODO better way?
-                    else Debug.trap("Proposal not found for mysterious structure scenario: " # Nat.toText(scenario.id));
-                    #mysteriousStructure({
-                        proposal = proposal;
-                        metaData = mysteriousStructure.metaData;
-                    });
-                };
+                case (#mysteriousStructure(mysteriousStructure)) #mysteriousStructure(fromMutableMysteriousStructureScenario(scenario.id, mysteriousStructure));
             };
         };
     };
 
     private func toMutableMysteriousStructureScenario<system>(
-        mysteriousStructure : ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>
+        mysteriousStructure : Scenario.ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>
     ) : MutableScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice> {
         {
             metaData = mysteriousStructure.metaData;
@@ -149,6 +171,18 @@ module {
                 MysteriousStructureScenario.equalChoice,
                 MysteriousStructureScenario.hashChoice,
             );
+        };
+    };
+
+    private func fromMutableMysteriousStructureScenario(
+        scenarioId : Nat,
+        mysteriousStructure : MutableScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>,
+    ) : Scenario.ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice> {
+        let ?proposal = mysteriousStructure.proposalEngine.getProposal(0) // TODO better way?
+        else Debug.trap("Proposal not found for mysterious structure scenario: " # Nat.toText(scenarioId));
+        {
+            proposal = proposal;
+            metaData = mysteriousStructure.metaData;
         };
     };
 };

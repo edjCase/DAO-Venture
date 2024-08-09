@@ -1,5 +1,6 @@
 import Nat "mo:base/Nat";
-import World "World";
+import GenericProposalEngine "mo:dao-proposal-engine/GenericProposalEngine";
+import MysteriousStructureScenario "../scenarios/MysteriousStructure";
 
 module {
 
@@ -9,11 +10,15 @@ module {
     };
 
     public type ScenarioKind = {
-
+        #mysteriousStructure : ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>;
     };
 
-    public type ResourceCost = {
-        kind : World.ResourceKind;
-        amount : Nat;
+    public type ScenarioData<MetaData, ProposalContent, Choice> = {
+        proposal : GenericProposalEngine.Proposal<ProposalContent, Choice>;
+        metaData : MetaData;
+    };
+
+    public type ScenarioChoiceKind = {
+        #mysteriousStructure : MysteriousStructureScenario.Choice;
     };
 };

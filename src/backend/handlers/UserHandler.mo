@@ -119,6 +119,7 @@ module {
                 data = orderedUsers;
                 count = count;
                 offset = offset;
+                totalCount = users.size();
             };
         };
 

@@ -213,9 +213,8 @@ actor MainActor : Types.Actor {
         #ok(scenario);
     };
 
-    public query func getScenarios() : async Types.GetScenariosResult {
-        let openScenarios = scenarioHandler.getScenarios(false);
-        #ok(openScenarios);
+    public query func getAllScenarios(request : Types.GetAllScenariosRequest) : async Types.GetAllScenariosResult {
+        scenarioHandler.getAll(request.count, request.offset);
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {

@@ -15,7 +15,7 @@ module {
         getWorldProposals : query (count : Nat, offset : Nat) -> async GetWorldProposalsResult;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
         getScenario : query (Nat) -> async GetScenarioResult;
-        getScenarios : query () -> async GetScenariosResult;
+        getAllScenarios : query (request : GetAllScenariosRequest) -> async GetAllScenariosResult;
         voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
@@ -156,8 +156,11 @@ module {
 
     public type GetScenarioResult = Result.Result<Scenario.Scenario, GetScenarioError>;
 
-    public type GetScenariosResult = {
-        #ok : [Scenario.Scenario];
+    public type GetAllScenariosResult = CommonTypes.PagedResult<Scenario.Scenario>;
+
+    public type GetAllScenariosRequest = {
+        count : Nat;
+        offset : Nat;
     };
 
     public type GetTopUsersRequest = {
