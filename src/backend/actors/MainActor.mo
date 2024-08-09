@@ -1,34 +1,24 @@
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Buffer "mo:base/Buffer";
 import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
 import Bool "mo:base/Bool";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Types "MainActorTypes";
-import Scenario "../models/Scenario";
 import UserHandler "../handlers/UserHandler";
 import BinaryProposalEngine "mo:dao-proposal-engine/BinaryProposalEngine";
 import Result "mo:base/Result";
-import Nat32 "mo:base/Nat32";
-import HashMap "mo:base/HashMap";
 import Time "mo:base/Time";
-import Timer "mo:base/Timer";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
-import Option "mo:base/Option";
 import Prelude "mo:base/Prelude";
-import IterTools "mo:itertools/Iter";
 import WorldDao "../models/WorldDao";
-import Flag "../models/Flag";
-import World "../models/World";
 import WorldGenerator "../WorldGenerator";
 import WorldHandler "../handlers/WorldHandler";
-import HexGrid "../models/HexGrid";
-import TimeUtil "../TimeUtil";
 import ScenarioHandler "../handlers/ScenarioHandler";
+import CommonTypes "../CommonTypes";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -39,9 +29,6 @@ actor MainActor : Types.Actor {
     };
 
     // Stables ---------------------------------------------------------
-
-    stable var daysProcessed : Nat = 0;
-    var dayTimerId : ?Timer.TimerId = null;
 
     stable var worldStableData : ?WorldHandler.StableData = null;
 
@@ -121,9 +108,7 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
-    public shared ({ caller }) func intializeWorld(
-        request : Types.InitializeWorldRequest
-    ) : async Result.Result<(), Types.InitializeWorldError> {
+    public shared ({ caller }) func intializeWorld() : async Result.Result<(), Types.InitializeWorldError> {
         let null = worldHandlerOrNull else return #err(#alreadyInitialized);
 
         let seedBlob = await Random.blob();
@@ -144,14 +129,6 @@ actor MainActor : Types.Actor {
         let worldHandler = WorldHandler.Handler(newWorld);
         worldHandlerOrNull := ?worldHandler;
 
-        // TODO dont randomize on edge of world, better procedural generation
-        let locationId = prng.nextNat(0, worldHandler.getLocations().size()); // TODO
-        let resources = {
-            gold = 0;
-            wood = 0;
-            food = 1000;
-            stone = 0;
-        };
         switch (userHandler.addWorldMember(caller)) {
             case (#ok) ();
             case (#err(#alreadyWorldMember)) Prelude.unreachable();
@@ -159,9 +136,9 @@ actor MainActor : Types.Actor {
         #ok;
     };
 
-    public shared ({ caller }) func joinWorld(request : Types.JoinWorldRequest) : async Result.Result<(), Types.JoinWorldError> {
+    public shared ({ caller }) func joinWorld() : async Result.Result<(), Types.JoinWorldError> {
         // TODO restrict to NFT?/TOken holders
-        userHandler.addWorldMember(caller, request.townId);
+        userHandler.addWorldMember(caller);
     };
 
     public query func getProgenitor() : async ?Principal {
@@ -176,8 +153,8 @@ actor MainActor : Types.Actor {
         };
     };
 
-    public shared query func getWorldProposals(count : Nat, offset : Nat) : async Types.GetWorldProposalsResult {
-        #ok(worldDao.getProposals(count, offset));
+    public shared query func getWorldProposals(count : Nat, offset : Nat) : async CommonTypes.PagedResult<Types.WorldProposal> {
+        worldDao.getProposals(count, offset);
     };
 
     public shared ({ caller }) func createWorldProposal(request : Types.CreateWorldProposalRequest) : async Types.CreateWorldProposalResult {
@@ -194,7 +171,7 @@ actor MainActor : Types.Actor {
         let isAMember = members.vals()
         |> Iter.filter(
             _,
-            func(member : ProposalEngine.Member) : Bool = member.id == caller,
+            func(member : BinaryProposalEngine.Member) : Bool = member.id == caller,
         )
         |> _.next() != null;
         if (not isAMember) {
@@ -218,7 +195,21 @@ actor MainActor : Types.Actor {
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
-        scenarioHandler.getVote(request.scenarioId, caller);
+        let vote = switch (scenarioHandler.getVote(request.scenarioId, caller)) {
+            case (#ok(vote)) ?vote;
+            case (#err(#notEligible)) null;
+            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
+        };
+        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (scenarioHandler.getVoteSummary(request.scenarioId)) {
+            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
+            case (#ok(summary)) summary;
+        };
+        #ok({
+            yourVote = vote;
+            totalVotingPower = totalVotingPower;
+            undecidedVotingPower = undecidedVotingPower;
+            votingPowerByChoice = votingPowerByChoice;
+        });
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
@@ -245,7 +236,6 @@ actor MainActor : Types.Actor {
     public shared query func getUsers(request : Types.GetUsersRequest) : async Types.GetUsersResult {
         let users = switch (request) {
             case (#all) userHandler.getAll();
-            case (#town(townId)) userHandler.getByTownId(townId);
         };
         #ok(users);
     };
@@ -262,27 +252,10 @@ actor MainActor : Types.Actor {
 
     type VotingMemberInfo = {
         id : Principal;
-        townId : Nat;
         votingPower : Nat;
     };
 
     // Private Methods ---------------------------------------------------------
-    private func buildVotingMembers(townId : ?Nat) : [VotingMemberInfo] {
-        let users = switch (townId) {
-            case (?id) userHandler.getByTownId(id);
-            case (null) userHandler.getAll();
-        };
-        users.vals()
-        |> Iter.map<UserHandler.User, VotingMemberInfo>(
-            _,
-            func(user : UserHandler.User) : VotingMemberInfo = {
-                id = user.id;
-                townId = user.townId;
-                votingPower = calculateVotingPower(user);
-            },
-        )
-        |> Iter.toArray(_);
-    };
 
     private func calculateVotingPower(user : UserHandler.User) : Nat {
         let basePower : Nat = 10;
@@ -293,16 +266,6 @@ actor MainActor : Types.Actor {
 
         // Power from level
         let powerFromLevel : Nat = user.level * levelMultiplier;
-
-        let timeAtTown : Nat = Int.abs(Time.now() - user.atTownSince);
-
-        // Power from time in town
-        let townTime : Nat = Nat.min(timeAtTown, timeCap);
-        let townTimePower : Nat = Int.abs(
-            Float.toInt(
-                Float.log(Float.fromInt(townTime + 1)) / Float.log(Float.fromInt(timeCap)) * Float.fromInt(maxTimePower)
-            )
-        );
 
         let timeInWorld : Nat = Int.abs(Time.now() - user.inWorldSince);
 
@@ -315,17 +278,7 @@ actor MainActor : Types.Actor {
         );
 
         // Combine powers
-        basePower + powerFromLevel + (townTimePower + worldTimePower) * timeMultiplier;
+        basePower + powerFromLevel + worldTimePower * timeMultiplier;
     };
 
-    private func isWorldOrProgenitor(id : Principal) : Bool {
-        if (id == Principal.fromActor(MainActor)) {
-            // World is admin
-            return true;
-        };
-        switch (worldHandlerOrNull) {
-            case (null) false;
-            case (?worldHandler) worldHandler.progenitor == id;
-        };
-    };
 };

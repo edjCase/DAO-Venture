@@ -1,18 +1,18 @@
 import Nat "mo:base/Nat";
 import Scenario "../models/Scenario";
 import ProposalEngine "mo:dao-proposal-engine/BinaryProposalEngine";
+import GenericProposalEngine "mo:dao-proposal-engine/GenericProposalEngine";
 import CommonTypes "../CommonTypes";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import World "../models/World";
-import Flag "../models/Flag";
 
 module {
     public type Actor = actor {
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
-        getWorldProposals : query (count : Nat, offset : Nat) -> async GetWorldProposalsResult;
+        getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
         getScenario : query (Nat) -> async GetScenarioResult;
         getAllScenarios : query (request : GetAllScenariosRequest) -> async GetAllScenariosResult;
@@ -30,27 +30,12 @@ module {
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
-        intializeWorld : (request : InitializeWorldRequest) -> async Result.Result<(), InitializeWorldError>;
-        joinWorld : (request : JoinWorldRequest) -> async Result.Result<(), JoinWorldError>;
-    };
-
-    public type InitializeWorldRequest = {
-        town : InitializeTownRequest;
-    };
-
-    public type InitializeTownRequest = {
-        name : Text;
-        motto : Text;
-        flag : Flag.FlagImage;
-        color : (Nat8, Nat8, Nat8);
+        intializeWorld : () -> async Result.Result<(), InitializeWorldError>;
+        joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
 
     public type InitializeWorldError = {
         #alreadyInitialized;
-    };
-
-    public type GetTownHistoryError = {
-        #townNotFound;
     };
 
     public type GetWorldError = { #worldNotInitialized };
@@ -75,19 +60,12 @@ module {
 
     public type CreateWorldProposalResult = Result.Result<Nat, CreateWorldProposalError>;
 
-    public type JoinWorldRequest = {
-        townId : Nat;
-    };
-
     public type JoinWorldError = {
         #notAuthorized;
         #alreadyWorldMember;
-        #noTowns;
     };
 
-    public type GetPositionError = {
-        #townNotFound;
-    };
+    public type GetPositionError = {};
 
     public type GetScenarioVoteRequest = {
         scenarioId : Nat;
@@ -98,27 +76,28 @@ module {
         #notEligible;
     };
 
-    public type VotingData = {
-        yourData : ?ScenarioVote;
+    public type ScenarioVote = {
+        yourVote : ?ScenarioVoteChoice;
+        totalVotingPower : Nat;
+        undecidedVotingPower : Nat;
+        votingPowerByChoice : [GenericProposalEngine.ChoiceVotingPower<Scenario.ScenarioChoiceKind>];
     };
 
-    public type ScenarioVote = {
-        value : ?Nat;
+    public type ScenarioVoteChoice = {
+        choice : ?Scenario.ScenarioChoiceKind;
         votingPower : Nat;
     };
 
-    public type GetScenarioVoteResult = Result.Result<VotingData, GetScenarioVoteError>;
+    public type GetScenarioVoteResult = Result.Result<ScenarioVote, GetScenarioVoteError>;
 
     public type VoteOnScenarioRequest = {
         scenarioId : Nat;
-        value : Nat;
+        value : Scenario.ScenarioChoiceKind;
     };
 
-    public type VoteOnScenarioError = {
-        #notEligible;
+    public type VoteOnScenarioError = GenericProposalEngine.VoteError or {
         #scenarioNotFound;
-        #votingNotOpen;
-        #invalidValue;
+        #invalidChoice;
     };
 
     public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
@@ -128,10 +107,6 @@ module {
     };
 
     public type GetWorldProposalResult = Result.Result<WorldProposal, GetWorldProposalError>;
-
-    public type GetWorldProposalsResult = {
-        #ok : CommonTypes.PagedResult<WorldProposal>;
-    };
 
     public type WorldProposal = ProposalEngine.Proposal<WorldDao.ProposalContent>;
 
@@ -175,7 +150,6 @@ module {
     public type GetUserStatsResult = Result.Result<UserHandler.UserStats, ()>;
 
     public type GetUsersRequest = {
-        #town : Nat;
         #all;
     };
 
