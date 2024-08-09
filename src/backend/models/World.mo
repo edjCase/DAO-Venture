@@ -20,7 +20,6 @@ module {
     public type ResourceLocation = {
         kind : ResourceKind;
         rarity : ResourceRarity;
-        claimedByTownIds : [Nat];
     };
 
     public type ResourceRarity = {

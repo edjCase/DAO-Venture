@@ -5,7 +5,6 @@ import HashMap "mo:base/HashMap";
 import Nat "mo:base/Nat";
 import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
-import Time "mo:base/Time";
 import Buffer "mo:base/Buffer";
 import Prelude "mo:base/Prelude";
 import Int "mo:base/Int";
@@ -18,16 +17,10 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
-        genesisTime : Time.Time;
+        turn : Nat;
         progenitor : Principal;
         locations : [World.WorldLocation];
         daoResources : World.ResourceList;
-    };
-
-    public type WorldAgeInfo = {
-        genesisTime : Time.Time;
-        daysElapsed : Nat;
-        nextDayStartTime : Nat;
     };
 
     type MutableWorldLocation = {
@@ -37,7 +30,7 @@ module {
     };
 
     type MutableLocationKind = {
-        #unexplored : MutableUnexploredLocation;
+        #unexplored;
         #resource : MutableResourceLocation;
         #town : MutableTownLocation;
     };
@@ -45,8 +38,6 @@ module {
     type MutableTownLocation = {
         var townId : Nat;
     };
-
-    type MutableUnexploredLocation = {};
 
     type MutableResourceLocation = {
         var rarity : World.ResourceRarity;
@@ -74,9 +65,6 @@ module {
             case (#resource(r)) #resource({
                 kind = r.kind;
                 var rarity = r.rarity;
-                claimedByTownIds = r.claimedByTownIds.vals()
-                |> Iter.map<Nat, (Nat, ())>(_, func(a : Nat) : (Nat, ()) = (a, ()))
-                |> HashMap.fromIter(_, r.claimedByTownIds.size(), Nat.equal, Nat32.fromNat);
             });
             case (#town(t)) #town({ var townId = t.townId });
         };
@@ -96,7 +84,6 @@ module {
             case (#resource(r)) #resource({
                 kind = r.kind;
                 rarity = r.rarity;
-                claimedByTownIds = Iter.toArray(r.claimedByTownIds.keys());
             });
             case (#town(t)) #town({ townId = t.townId });
         };
@@ -119,9 +106,11 @@ module {
         )
         |> HashMap.fromIter<Nat, MutableWorldLocation>(_, stableData.locations.size(), Nat.equal, Nat32.fromNat);
 
+        var turn = stableData.turn;
+
         public func toStableData() : StableData {
             {
-                genesisTime = stableData.genesisTime;
+                turn = turn;
                 progenitor = progenitor;
                 daoResources = {
                     gold = daoResources.gold;
@@ -138,24 +127,18 @@ module {
             };
         };
 
-        public func getAgeInfo() : WorldAgeInfo {
-            let { daysElapsed; nextDayStartTime } = TimeUtil.getAge(stableData.genesisTime);
-            {
-                genesisTime = stableData.genesisTime;
-                daysElapsed = daysElapsed;
-                nextDayStartTime = nextDayStartTime;
-            };
+        public func getTurn() : Nat {
+            turn;
         };
 
         public func exploreLocation(
             prng : Prng,
             locationId : Nat,
-            amount : Nat,
         ) : Result.Result<(), { #locationAlreadyExplored; #locationNotFound }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
-                case (#unexplored(unexplored)) {
-                    switch (revealLocation(prng, locationId, null)) {
+                case (#unexplored) {
+                    switch (revealLocation(prng, locationId)) {
                         case (#ok(_)) #ok;
                         case (#err(err)) #err(err);
                     };
@@ -164,43 +147,15 @@ module {
             };
         };
 
-        public func revealLocation(prng : Prng, locationId : Nat, claimedByTownId : ?Nat) : Result.Result<World.WorldLocation, { #locationNotFound; #locationAlreadyExplored }> {
+        public func revealLocation(prng : Prng, locationId : Nat) : Result.Result<World.WorldLocation, { #locationNotFound; #locationAlreadyExplored }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
                 case (#unexplored(_)) {
                     Debug.print("Revealing location " # Nat.toText(locationId));
-                    location.kind := toMutableLocationKind(WorldGenerator.generateLocationKind(prng, location.id, true, claimedByTownId));
+                    location.kind := toMutableLocationKind(WorldGenerator.generateLocationKind(prng, location.id, true));
                     #ok(fromMutableWorldLocation(location));
                 };
                 case (_) #err(#locationAlreadyExplored);
-            };
-        };
-
-        public func getTownTerritoryLocations(townId : Nat, includeTownLocation : Bool) : [World.WorldLocation] {
-            return locations.vals()
-            |> Iter.filter<MutableWorldLocation>(
-                _,
-                func(a) = switch (a.kind) {
-                    case (#town(townLocation)) includeTownLocation and townLocation.townId == townId;
-                    case (#resource(resource)) resource.claimedByTownIds.get(townId) != null;
-                    case (_) false;
-                },
-            )
-            |> Iter.map<MutableWorldLocation, World.WorldLocation>(_, fromMutableWorldLocation)
-            |> Iter.toArray(_);
-        };
-
-        public func claimLocation(
-            locationId : Nat,
-            townId : Nat,
-        ) : Result.Result<(), { #locationNotFound; #cannotClaim }> {
-            let ?location = locations.get(locationId) else return #err(#locationNotFound);
-            switch (location.kind) {
-                case (#resource(resource)) {
-                    resource.claimedByTownIds.put(townId, ());
-                    #ok;
-                };
-                case (#town(_) or #unexplored(_)) return #err(#cannotClaim);
             };
         };
 
@@ -309,7 +264,7 @@ module {
             #ok;
         };
 
-        private func revealNeighbors(prng : Prng, location : MutableWorldLocation, depthRemaining : Nat, revealingTownId : ?Nat) {
+        private func revealNeighbors(prng : Prng, location : MutableWorldLocation, depthRemaining : Nat) {
             // TODO do some procdeural generation of town resources so that
             // the town has some resources to start with of all important types
             let surroundingLocations = HexGrid.getNeighbors(location.coordinate);
@@ -317,7 +272,7 @@ module {
             let neighborLocationIds = Buffer.Buffer<Nat>(6);
             label f for (neighbor in surroundingLocations) {
                 let neighborLocationId = HexGrid.axialCoordinateToIndex(neighbor);
-                switch (revealLocation(prng, neighborLocationId, revealingTownId)) {
+                switch (revealLocation(prng, neighborLocationId)) {
                     case (#ok(_)) ();
                     case (#err(#locationNotFound)) continue f; // Skip non-existent locations
                     case (#err(#locationAlreadyExplored)) (); // Skip already explored locations
@@ -329,7 +284,7 @@ module {
                     let ?neighborLocation = locations.get(neighborLocationId) else Debug.trap("Location not found: " # Nat.toText(neighborLocationId));
                     // TODO optimize not to reveal neighbors of neighbors that are already revealed
                     // Only 'claim' the immediate neighbors of the town, but reveal one level past
-                    revealNeighbors(prng, neighborLocation, depthRemaining - 1, null);
+                    revealNeighbors(prng, neighborLocation, depthRemaining - 1);
                 };
             };
         };

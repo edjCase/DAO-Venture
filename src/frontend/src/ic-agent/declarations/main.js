@@ -57,7 +57,11 @@ export const idlFactory = ({ IDL }) => {
     'proposal' : Proposal,
   });
   const ScenarioKind = IDL.Variant({ 'mysteriousStructure' : ScenarioData });
-  const Scenario = IDL.Record({ 'id' : IDL.Nat, 'kind' : ScenarioKind });
+  const Scenario = IDL.Record({
+    'id' : IDL.Nat,
+    'kind' : ScenarioKind,
+    'turn' : IDL.Nat,
+  });
   const GetAllScenariosResult = IDL.Record({
     'data' : IDL.Vec(Scenario),
     'count' : IDL.Nat,
@@ -140,18 +144,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const ResourceLocation = IDL.Record({
     'kind' : ResourceKind,
-    'claimedByTownIds' : IDL.Vec(IDL.Nat),
     'rarity' : ResourceRarity,
   });
   const TownLocation = IDL.Record({ 'townId' : IDL.Nat });
-  const UnexploredLocation = IDL.Record({
-    'explorationNeeded' : IDL.Nat,
-    'currentExploration' : IDL.Nat,
-  });
   const LocationKind = IDL.Variant({
     'resource' : ResourceLocation,
     'town' : TownLocation,
-    'unexplored' : UnexploredLocation,
+    'unexplored' : IDL.Null,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
   const WorldLocation = IDL.Record({
@@ -160,8 +159,7 @@ export const idlFactory = ({ IDL }) => {
     'coordinate' : AxialCoordinate,
   });
   const World = IDL.Record({
-    'nextDayStartTime' : IDL.Nat,
-    'daysElapsed' : IDL.Nat,
+    'turn' : IDL.Nat,
     'progenitor' : IDL.Principal,
     'locations' : IDL.Vec(WorldLocation),
   });

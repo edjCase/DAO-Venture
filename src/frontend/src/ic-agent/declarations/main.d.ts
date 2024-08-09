@@ -50,7 +50,7 @@ export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null };
 export type LocationKind = { 'resource' : ResourceLocation } |
   { 'town' : TownLocation } |
-  { 'unexplored' : UnexploredLocation };
+  { 'unexplored' : null };
 export interface MetaData { 'structureName' : string }
 export interface MotionContent { 'title' : string, 'description' : string }
 export interface PagedResult {
@@ -117,7 +117,6 @@ export type ResourceKind = { 'food' : null } |
   { 'stone' : null };
 export interface ResourceLocation {
   'kind' : ResourceKind,
-  'claimedByTownIds' : Array<bigint>,
   'rarity' : ResourceRarity,
 }
 export type ResourceRarity = { 'rare' : null } |
@@ -127,7 +126,11 @@ export type Result = { 'ok' : null } |
   { 'err' : JoinWorldError };
 export type Result_1 = { 'ok' : null } |
   { 'err' : InitializeWorldError };
-export interface Scenario { 'id' : bigint, 'kind' : ScenarioKind }
+export interface Scenario {
+  'id' : bigint,
+  'kind' : ScenarioKind,
+  'turn' : bigint,
+}
 export type ScenarioChoiceKind = { 'mysteriousStructure' : Choice };
 export interface ScenarioData { 'metaData' : MetaData, 'proposal' : Proposal }
 export type ScenarioKind = { 'mysteriousStructure' : ScenarioData };
@@ -143,10 +146,6 @@ export interface ScenarioVoteChoice {
 }
 export type Time = bigint;
 export interface TownLocation { 'townId' : bigint }
-export interface UnexploredLocation {
-  'explorationNeeded' : bigint,
-  'currentExploration' : bigint,
-}
 export interface User {
   'id' : Principal,
   'inWorldSince' : Time,
@@ -178,8 +177,7 @@ export type VoteOnWorldProposalResult = { 'ok' : null } |
   { 'err' : VoteOnWorldProposalError };
 export interface Vote_1 { 'votingPower' : bigint, 'choice' : [] | [Choice] }
 export interface World {
-  'nextDayStartTime' : bigint,
-  'daysElapsed' : bigint,
+  'turn' : bigint,
   'progenitor' : Principal,
   'locations' : Array<WorldLocation>,
 }

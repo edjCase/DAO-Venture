@@ -45,8 +45,7 @@ module {
     public type World = {
         progenitor : Principal;
         locations : [World.WorldLocation];
-        daysElapsed : Nat;
-        nextDayStartTime : Nat;
+        turn : Nat;
     };
 
     public type CreateWorldProposalRequest = {

@@ -116,7 +116,7 @@ actor MainActor : Types.Actor {
 
         let worldRadius = 20;
         let newWorld : WorldHandler.StableData = {
-            genesisTime = Time.now();
+            turn = 0;
             progenitor = caller;
             locations = WorldGenerator.generateWorld(prng, worldRadius);
             daoResources = {
@@ -219,11 +219,9 @@ actor MainActor : Types.Actor {
     public shared query func getWorld() : async Types.GetWorldResult {
         let ?worldHandler = worldHandlerOrNull else return #err(#worldNotInitialized);
         let worldLocations = worldHandler.getLocations();
-        let { daysElapsed; nextDayStartTime } = worldHandler.getAgeInfo();
         #ok({
             progenitor = worldHandler.progenitor;
-            daysElapsed = daysElapsed;
-            nextDayStartTime = nextDayStartTime;
+            turn = worldHandler.getTurn();
             locations = worldLocations.vals() |> Iter.toArray(_);
         });
     };

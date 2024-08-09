@@ -12,19 +12,19 @@ module {
         let tileCount = 1 + 3 * radius * (radius + 1);
         Array.tabulate<World.WorldLocation>(
             tileCount,
-            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, false, null),
+            func(i : Nat) : World.WorldLocation = generateLocation(prng, i, false),
         );
     };
 
-    public func generateLocation(prng : Prng, id : Nat, explored : Bool, claimedByTownId : ?Nat) : World.WorldLocation {
+    public func generateLocation(prng : Prng, id : Nat, explored : Bool) : World.WorldLocation {
         {
             id = id;
             coordinate = HexGrid.indexToAxialCoordinate(id);
-            kind = generateLocationKind(prng, id, explored, claimedByTownId);
+            kind = generateLocationKind(prng, id, explored);
         };
     };
 
-    public func generateLocationKind(prng : Prng, _ : Nat, explored : Bool, claimedByTownId : ?Nat) : World.LocationKind {
+    public func generateLocationKind(prng : Prng, _ : Nat, explored : Bool) : World.LocationKind {
         // TODO better procedural generation
         let kind : World.LocationKind = if (explored) {
             let getRandomRarity = func() : World.ResourceRarity {
@@ -38,14 +38,9 @@ module {
                 case (3) #stone;
                 case (_) Prelude.unreachable();
             };
-            let claimedByTownIds = switch (claimedByTownId) {
-                case (?townId) [townId];
-                case (null) [];
-            };
             #resource({
                 kind = kind;
                 rarity = getRandomRarity();
-                claimedByTownIds = claimedByTownIds;
             });
         } else {
             #unexplored;

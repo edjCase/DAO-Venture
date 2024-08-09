@@ -19,6 +19,7 @@ module {
 
     type MutableScenario = {
         id : Nat;
+        turn : Nat;
         kind : MutableScenarioKind;
     };
 
@@ -47,11 +48,11 @@ module {
             };
         };
 
-        public func start<system>(currentDay : Nat, kind : Scenario.ScenarioKind) : Nat {
+        public func start<system>(turn : Nat, kind : Scenario.ScenarioKind) : Nat {
             let scenarioId = scenarios.size(); // TODO?
             let scenario = toMutableScenario<system>({
                 id = scenarioId;
-                day = currentDay;
+                turn = turn;
                 kind = kind;
             });
             scenarios.put(
@@ -164,6 +165,7 @@ module {
         };
         {
             id = scenario.id;
+            turn = scenario.turn;
             kind = kind;
         };
     };
@@ -171,6 +173,7 @@ module {
     private func fromMutableScenario(scenario : MutableScenario) : Scenario.Scenario {
         {
             id = scenario.id;
+            turn = scenario.turn;
             kind = switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) #mysteriousStructure(fromMutableMysteriousStructureScenario(scenario.id, mysteriousStructure));
             };
