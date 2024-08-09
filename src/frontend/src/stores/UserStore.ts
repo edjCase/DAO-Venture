@@ -2,17 +2,18 @@ import { writable } from 'svelte/store';
 import { mainAgentFactory } from '../ic-agent/Main';
 import { GetUserResult, User, UserStats } from '../ic-agent/declarations/main';
 import { toJsonString } from '../utils/StringUtil';
-import { BenevolentDictatorState } from '../ic-agent/declarations/main';
 import { Principal } from '@dfinity/principal';
 import { getOrCreateAuthClient } from '../utils/AuthUtil';
 
-
+type UserData = {
+    id: Principal;
+    worldData: User | undefined;
+};
 
 function createUserStore() {
     let currentUserId: Principal | undefined = undefined;
-    const currentUser = writable<User | undefined>(undefined);
+    const currentUser = writable<UserData | undefined>(undefined);
     const userStats = writable<UserStats>();
-    const bdfnState = writable<BenevolentDictatorState>();
 
 
     const refetchCurrentUser = async () => {
@@ -22,21 +23,22 @@ function createUserStore() {
         let mainAgent = await mainAgentFactory();
         let result: GetUserResult = await mainAgent.getUser(currentUserId);
         if ('ok' in result) {
-            currentUser.set(result.ok);
+            currentUser.set({
+                id: currentUserId,
+                worldData: result.ok
+            });
         }
         else if ('err' in result && 'notFound' in result.err) {
-            let emptyUser: User = {
+            currentUser.set({
                 id: currentUserId,
-                points: BigInt(0),
-                membership: []
-            };
-            currentUser.set(emptyUser);
+                worldData: undefined
+            });
         } else {
             throw new Error("Failed to get user: " + currentUserId + " " + toJsonString(result));
         }
     };
 
-    const subscribeCurrentUser = (callback: (user: User | undefined) => void) => {
+    const subscribeCurrentUser = (callback: (user: UserData | undefined) => void) => {
         return currentUser.subscribe(callback);
     };
 
@@ -54,25 +56,6 @@ function createUserStore() {
         }
     };
 
-    const refreshBdfnState = async () => {
-        let mainAgent = await mainAgentFactory();
-        let state = await mainAgent.getBenevolentDictatorState();
-        bdfnState.set(state);
-    }
-
-    const subscribeBdfnState = async (callback: (bdfnState: BenevolentDictatorState) => void) => {
-        bdfnState.subscribe(callback);
-    };
-
-    const claimBdfnRole = async () => {
-        let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.claimBenevolentDictatorRole();
-        if ('ok' in result) {
-            refreshBdfnState();
-        } else {
-            console.log("Error claiming BDFN role", result);
-        }
-    }
 
 
     const login = async () => {
@@ -114,18 +97,13 @@ function createUserStore() {
 
     checkForLogin();
     refetchStats();
-    refreshBdfnState();
-
     return {
         login,
         logout,
         subscribe: subscribeCurrentUser,
         refetchCurrentUser,
         subscribeStats,
-        refetchStats,
-        refreshBdfnState,
-        subscribeBdfnState,
-        claimBdfnRole
+        refetchStats
     };
 }
 

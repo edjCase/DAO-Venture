@@ -18,15 +18,15 @@
         platforms.
       </p>
       <p>
-        Designed as a league, DAOBall includes a fixed number of teams, with
+        Designed as a world, DAOBall includes a fixed number of towns, with
         each one operated and funded by community members. What sets this
-        approach apart is the collaborative nature of team management. Rather
+        approach apart is the collaborative nature of town management. Rather
         than individuals participating on their own, community members work
-        together to decide their team's organizational structure through a
+        together to decide their town's organizational structure through a
         collaborative decision-making process. This collective approach allows
         for nuanced strategies and management decisions, simulating real-world
-        team dynamics and adding depth to the experience. It's not just about
-        controlling a virtual team; it's about fostering cooperation and shared
+        town dynamics and adding depth to the experience. It's not just about
+        controlling a virtual town; it's about fostering cooperation and shared
         goals within a community-driven environment.
       </p>
       <p>
@@ -41,7 +41,7 @@
       <p>
         But DAOBall is more than just an interactive experience. It's about
         crafting a comprehensive and immersive community environment. A lean
-        core team collaborates to integrate various services such as chat,
+        core town collaborates to integrate various services such as chat,
         social media, enhanced user interfaces, blogs, content creation, and
         more. By embracing the adaptable and interconnected nature of modern
         online technology, DAOBall aspires to create a rich and engaging
@@ -53,9 +53,9 @@
         Our Mission at DAOBall is to craft a new and engaging way to experience
         online interaction and entertainment. We want to provide more than just
         a traditional experience by building a community where you can control,
-        manage, and actively participate with your team. This is about
+        manage, and actively participate with your town. This is about
         connecting with like-minded individuals, having genuine influence over
-        your virtual team, and enjoying a unique experience that evolves and
+        your virtual town, and enjoying a unique experience that evolves and
         thrives with your involvement.
       </p>
       <p>
@@ -73,7 +73,7 @@
         end goal is to step back and have this experience not controlled by us.
         As DAOBall matures, we plan to transition it into a decentralized DAO,
         allowing the community to take the reins. Since the experience is funded
-        by the community through optional spectator subscriptions and team fees,
+        by the community through optional spectator subscriptions and town fees,
         it will endure as long as the community continues to support and believe
         in it.
       </p>

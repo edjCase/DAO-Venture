@@ -1,16 +1,16 @@
 <script lang="ts">
     import LoginButton from "../../components/common/LoginButton.svelte";
     import { userStore } from "../../stores/UserStore";
-    import { teamStore } from "../../stores/TeamStore";
+    import { townStore } from "../../stores/TownStore";
     import UserPseudonym from "./UserPseudonym.svelte";
-    import TeamLogo from "../team/TeamLogo.svelte";
+    import TownFlag from "../town/TownFlag.svelte";
     import UserIdCopyButton from "./UserIdCopyButton.svelte";
+    import { nanosecondsToDate } from "../../utils/DateUtils";
 
     $: user = $userStore;
-    $: teams = $teamStore;
+    $: towns = $townStore;
 
-    $: team = teams?.find((t) => t.id == user?.membership[0]?.teamId);
-    $: coOwner = user?.membership[0] !== undefined;
+    $: town = towns?.find((t) => t.id == user?.worldData?.townId);
 </script>
 
 <div class="bg-gray-800 p-4">
@@ -33,21 +33,32 @@
                     <UserIdCopyButton userId={user.id} />
                 </div>
             </div>
-            <div class="mb-4">
-                <div class="font-bold text-xl mb-2">Team</div>
-                {#if team}
-                    <TeamLogo {team} size="md" />
-                    <div class="text-center">{team.name}</div>
-                    <div class="text-center text-sm text-gray-400">
-                        {coOwner ? "Co-Owner" : "Fan"}
+            {#if user.worldData !== undefined}
+                <div class="mb-4">
+                    <div class="font-bold text-xl mb-2">Town</div>
+                    {#if town}
+                        <TownFlag {town} size="md" />
+                        <div class="text-center">{town.name}</div>
+                        <div class="text-center text-sm text-gray-400">
+                            Joined Town: {nanosecondsToDate(
+                                user.worldData.atTownSince,
+                            )}
+                        </div>
+                    {:else}
+                        <div>None</div>
+                    {/if}
+                    <div>
+                        Joined World: {nanosecondsToDate(
+                            user.worldData.inWorldSince,
+                        )}
                     </div>
-                {:else}
-                    <div>None</div>
-                {/if}
-            </div>
-            <div class="mb-4">
-                <div class="font-bold text-xl mb-2">Points - {user.points}</div>
-            </div>
+                </div>
+                <div class="mb-4">
+                    <div class="font-bold text-xl mb-2">
+                        Level - {user.worldData.level}
+                    </div>
+                </div>
+            {/if}
         </div>
     {/if}
 

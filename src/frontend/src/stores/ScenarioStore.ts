@@ -12,13 +12,9 @@ export const scenarioStore = (() => {
 
     const refetch = async () => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.getScenarios();
-        if ('ok' in result) {
-            set(result.ok);
-            refreshEndTimers(result.ok);
-        } else {
-            console.log("Error getting scenarios", result);
-        }
+        let result = await mainAgent.getAllScenarios({ count: 999n, offset: 0n }); // TODO paging
+        set(result.data);
+        refreshEndTimers(result.data);
     };
 
     const refetchById = async (scenarioId: bigint) => {

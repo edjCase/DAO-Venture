@@ -54,23 +54,22 @@
             <ul class="list-disc list-inside text-sm space-y-1">
                 <li>
                     Scenarios are a way to <strong
-                        >interact with the league</strong
+                        >interact with the world</strong
                     > and influence the outcome of matches
                 </li>
                 <li>
-                    Each choice has a tradeoffs of entropy, currency, skills and
+                    Each choice has a tradeoffs of entropy, gold, skills and
                     more
                 </li>
                 <li>
-                    🔥: The measure of chaos in the team and league. 0 is
-                    ordered and any additional value is more chaotic Too much
-                    entropy can negatively affect the team and if the total
-                    entropy of the league exceeds the threshold, the league will
-                    collapse
+                    🔥: The measure of chaos in the town and world. 0 is ordered
+                    and any additional value is more chaotic Too much entropy
+                    can negatively affect the town and if the total entropy of
+                    the world exceeds the threshold, the world will collapse
                 </li>
                 <li>
-                    💰: The money of the team. It can be used as a currency for
-                    scenarios and training the team
+                    🪙: The gold of the town. It can be used as a gold for
+                    scenarios and training the town
                 </li>
             </ul>
         </div>

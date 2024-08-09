@@ -3,114 +3,89 @@
     import { Scenario, VotingData } from "../../ic-agent/declarations/main";
     import { User } from "../../ic-agent/declarations/main";
     import { scenarioStore } from "../../stores/ScenarioStore";
-    import LotteryInProgressScenarioState from "./in_progress_states/LotteryInProgressScenarioState.svelte";
-    import LeagueChoiceInProgressScenarioState from "./in_progress_states/LeagueChoiceInProgressScenarioState.svelte";
+    import WorldChoiceInProgressScenarioState from "./in_progress_states/WorldChoiceInProgressScenarioState.svelte";
     import ThresholdInProgressScenarioState from "./in_progress_states/ThresholdInProgressScenarioState.svelte";
-    import NoLeagueEffectInProgressScenarioState from "./in_progress_states/NoLeagueEffectInProgressScenarioState.svelte";
+    import NoWorldEffectInProgressScenarioState from "./in_progress_states/NoWorldEffectInProgressScenarioState.svelte";
     import { toJsonString } from "../../utils/StringUtil";
-    import ProportionalBidInProgressScenarioState from "./in_progress_states/ProportionalBidInProgressScenarioState.svelte";
-    import { teamStore } from "../../stores/TeamStore";
-    import { Team } from "../../ic-agent/declarations/main";
+    import { townStore } from "../../stores/TownStore";
+    import { Town } from "../../ic-agent/declarations/main";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
     import ScenarioOptionsRaw from "./ScenarioOptionsRaw.svelte";
-    import TeamLogo from "../team/TeamLogo.svelte";
+    import TownFlag from "../town/TownFlag.svelte";
     import TextInputInProgressScenarioState from "./in_progress_states/TextInputInProgressScenarioState.svelte";
+    import { Link } from "svelte-routing";
 
     export let scenario: Scenario;
     export let userContext: User | undefined;
 
-    let teamId: bigint | undefined;
-    let team: Team | undefined;
-    let isOwner: boolean = false;
+    let townId: bigint | undefined;
+    let town: Town | undefined;
 
-    $: teams = $teamStore;
+    $: towns = $townStore;
 
     $: {
-        teamId = userContext?.membership[0]?.teamId;
-        team = teams?.find((team) => team.id === teamId);
-        isOwner = userContext?.membership[0] !== undefined;
+        townId = userContext?.townId;
+        town = towns?.find((town) => town.id === townId);
     }
 
     let votingData: VotingData | undefined;
 
     let selectedId: bigint | undefined;
-    let selectedNat: bigint | undefined;
     let selectedText: string | undefined;
 
     scenarioStore.subscribeVotingData((scenarioVotingData) => {
         votingData = scenarioVotingData[Number(scenario.id)];
-        if (votingData?.yourData[0] !== undefined) {
+        let yourData = votingData?.yourData[0];
+        if (yourData !== undefined) {
             selectedId =
-                votingData.yourData[0].value[0] !== undefined &&
-                "id" in votingData.yourData[0]?.value[0]
-                    ? votingData.yourData[0]?.value[0].id
-                    : undefined;
-            selectedNat =
-                votingData.yourData[0]?.value[0] !== undefined &&
-                "nat" in votingData.yourData[0]?.value[0]
-                    ? votingData.yourData[0]?.value[0].nat
+                yourData.value[0] !== undefined && "id" in yourData?.value[0]
+                    ? yourData?.value[0].id
                     : undefined;
             selectedText =
-                votingData.yourData[0]?.value[0] !== undefined &&
-                "text" in votingData.yourData[0]?.value[0]
-                    ? votingData.yourData[0]?.value[0].text
+                yourData?.value[0] !== undefined && "text" in yourData?.value[0]
+                    ? yourData?.value[0].text
                     : undefined;
         } else {
             selectedId = undefined;
-            selectedNat = undefined;
             selectedText = undefined;
         }
     });
     let proposeName = "";
-    let icon = "";
     $: {
-        if ("lottery" in scenario.kind) {
-            proposeName = "Ticket Count";
-            icon = "🎟️";
-        } else if ("proportionalBid" in scenario.kind) {
-            proposeName = "Bid";
-            icon = "💰";
-        } else if ("textInput" in scenario.kind) {
+        if ("textInput" in scenario.kind) {
             proposeName = "Text";
-            icon = "📝";
         } else {
             proposeName =
                 "NOT IMPLEMENTED SCENARIO KIND: " + toJsonString(scenario.kind);
-            icon = "❓";
         }
     }
 </script>
 
-{#if teams && votingData}
-    Teams with consensus on choice:
+{#if towns && votingData}
+    Towns with consensus on choice:
     <div class="flex">
-        {#each teams as team}
+        {#each towns as town}
             <div
-                class={votingData.teamIdsWithConsensus.includes(team.id)
+                class={votingData.townIdsWithConsensus.includes(town.id)
                     ? ""
                     : "opacity-25"}
             >
-                <TeamLogo {team} size="xs" />
+                <TownFlag {town} size="xs" />
             </div>
         {/each}
     </div>
 {/if}
 {#if votingData}
-    {#if votingData.yourData[0] === undefined}
+    {@const yourData = votingData.yourData[0]}
+    {#if yourData === undefined}
         Ineligible to vote
-        {#if !userContext || !isOwner}
+        {#if !userContext}
             <div>Want to participate in scenarios?</div>
-            <Button>Become a Team co-owner</Button>
+            <Link to="my-town"><Button>Join the World</Button></Link>
         {/if}
     {:else}
-        {#if "lottery" in scenario.kind}
-            <LotteryInProgressScenarioState scenario={scenario.kind.lottery} />
-        {:else if "proportionalBid" in scenario.kind}
-            <ProportionalBidInProgressScenarioState
-                scenario={scenario.kind.proportionalBid}
-            />
-        {:else if "leagueChoice" in scenario.kind}
-            <LeagueChoiceInProgressScenarioState />
+        {#if "worldChoice" in scenario.kind}
+            <WorldChoiceInProgressScenarioState />
         {:else if "threshold" in scenario.kind}
             <ThresholdInProgressScenarioState
                 scenario={scenario.kind.threshold}
@@ -119,51 +94,50 @@
             <TextInputInProgressScenarioState
                 scenario={scenario.kind.textInput}
             />
-        {:else if "noLeagueEffect" in scenario.kind}
-            <NoLeagueEffectInProgressScenarioState />
+        {:else if "noWorldEffect" in scenario.kind}
+            <NoWorldEffectInProgressScenarioState />
         {:else}
             NOT IMPLEMENTED SCENARIO KIND: {toJsonString(scenario.kind)}
         {/if}
-        {#if "nat" in votingData.yourData[0].teamOptions}
+        {#if "text" in yourData.townOptions}
             <ScenarioOptionsRaw
                 scenarioId={scenario.id}
-                teamId={votingData.yourData[0].teamId}
-                kind={{
-                    nat: {
-                        options: votingData.yourData[0].teamOptions.nat,
-                        vote: selectedNat,
-                        teamCurrency:
-                            team === undefined ? undefined : team.currency,
-                        icon: icon,
-                    },
-                }}
-                {proposeName}
-            />
-        {:else if "text" in votingData.yourData[0].teamOptions}
-            <ScenarioOptionsRaw
-                scenarioId={scenario.id}
-                teamId={votingData.yourData[0].teamId}
+                townId={yourData.townId}
                 kind={{
                     text: {
-                        options: votingData.yourData[0].teamOptions.text,
+                        options: yourData.townOptions.text,
                         vote: selectedText,
                     },
                 }}
                 {proposeName}
             />
-        {:else if "discrete" in votingData.yourData[0].teamOptions}
-            {#each votingData.yourData[0].teamOptions.discrete as option}
+        {:else if "discrete" in yourData.townOptions}
+            {#each yourData.townOptions.discrete as option}
+                {@const resourceCosts = option.resourceCosts.map((rc) => {
+                    let townAmount;
+                    if ("gold" in rc.kind) {
+                        townAmount = town?.resources.gold;
+                    } else if ("wood" in rc.kind) {
+                        townAmount = town?.resources.wood;
+                    } else if ("stone" in rc.kind) {
+                        townAmount = town?.resources.stone;
+                    } else if ("food" in rc.kind) {
+                        townAmount = town?.resources.food;
+                    } else {
+                        townAmount = 0n;
+                    }
+                    return {
+                        kind: rc.kind,
+                        cost: rc.amount,
+                        townAmount: townAmount,
+                    };
+                })}
                 <ScenarioOptionDiscrete
                     scenarioId={scenario.id}
                     {option}
                     selected={selectedId === option.id}
-                    currency={team === undefined
-                        ? undefined
-                        : {
-                              cost: option.currencyCost,
-                              teamCurrency: team.currency,
-                          }}
-                    vote={votingData.yourData[0]}
+                    {resourceCosts}
+                    vote={yourData}
                     state={{
                         inProgress: {
                             onSelect: () => {
@@ -175,11 +149,11 @@
             {/each}
         {:else}
             NOT IMPLEMENTED TEAM OPTIONS KIND: {toJsonString(
-                votingData.yourData[0].teamOptions,
+                yourData.townOptions,
             )}
         {/if}
-        {(Number(votingData.yourData[0].teamVotingPower.voted) /
-            Number(votingData.yourData[0].teamVotingPower.total)) *
-            100}% of your team has voted
+        {(Number(yourData.townVotingPower.voted) /
+            Number(yourData.townVotingPower.total)) *
+            100}% of your town has voted
     {/if}
 {/if}

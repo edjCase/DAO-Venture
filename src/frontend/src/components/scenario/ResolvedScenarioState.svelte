@@ -9,18 +9,15 @@
         ChevronDoubleDownOutline,
         ChevronDoubleUpOutline,
     } from "flowbite-svelte-icons";
-    import { teamStore } from "../../stores/TeamStore";
+    import { townStore } from "../../stores/TownStore";
     import { toJsonString } from "../../utils/StringUtil";
-    import { traitStore } from "../../stores/TraitStore";
     import ThresholdResolvedScenarioState from "./resolved_states/ThresholdResolvedScenarioState.svelte";
-    import NoLeagueEffectResolvedScenarioState from "./resolved_states/NoLeagueEffectResolvedScenarioState.svelte";
-    import ProportionalBidResolvedScenarioState from "./resolved_states/ProportionalBidResolvedScenarioState.svelte";
-    import LotteryResolvedScenarioState from "./resolved_states/LotteryResolvedScenarioState.svelte";
-    import LeagueChoiceResolvedScenarioState from "./resolved_states/LeagueChoiceResolvedScenarioState.svelte";
+    import NoWorldEffectResolvedScenarioState from "./resolved_states/NoWorldEffectResolvedScenarioState.svelte";
+    import WorldChoiceResolvedScenarioState from "./resolved_states/WorldChoiceResolvedScenarioState.svelte";
     import ScenarioEffectOutcome from "./ScenarioEffectOutcome.svelte";
     import { scenarioStore } from "../../stores/ScenarioStore";
     import ScenarioOptionDiscrete from "./ScenarioOptionDiscrete.svelte";
-    import TeamLogo from "../team/TeamLogo.svelte";
+    import TownFlag from "../town/TownFlag.svelte";
 
     export let scenario: Scenario;
     export let state: ScenarioStateResolved;
@@ -28,8 +25,7 @@
     let selectedChoice: bigint | undefined;
     let vote: ScenarioVote | "ineligible" = "ineligible";
 
-    $: teams = $teamStore;
-    $: traits = $traitStore;
+    $: towns = $townStore;
 
     scenarioStore.subscribeVotingData((scenarioVotingData) => {
         let votingData = scenarioVotingData[Number(scenario.id)];
@@ -52,36 +48,25 @@
         if ("lottery" in scenario.kind) {
             icon = "🎟️";
         } else if ("proportionalBid" in scenario.kind) {
-            icon = "💰";
+            icon = "🪙";
         } else {
             icon = "✅";
         }
     }
 </script>
 
-{#if teams !== undefined && traits !== undefined}
+{#if towns !== undefined}
     <div>
         {#if "threshold" in state.scenarioOutcome && "threshold" in scenario.kind}
             <ThresholdResolvedScenarioState
                 scenario={scenario.kind.threshold}
                 outcome={state.scenarioOutcome.threshold}
             />
-        {:else if "noLeagueEffect" in state.scenarioOutcome}
-            <NoLeagueEffectResolvedScenarioState />
-        {:else if "proportionalBid" in state.scenarioOutcome && "proportionalBid" in scenario.kind}
-            <ProportionalBidResolvedScenarioState
-                scenario={scenario.kind.proportionalBid}
-                outcome={state.scenarioOutcome.proportionalBid}
-                {teams}
-            />
-        {:else if "lottery" in state.scenarioOutcome}
-            <LotteryResolvedScenarioState
-                outcome={state.scenarioOutcome.lottery}
-                {teams}
-            />
-        {:else if "leagueChoice" in state.scenarioOutcome && "leagueChoice" in scenario.kind && "discrete" in state.options.kind}
-            <LeagueChoiceResolvedScenarioState
-                outcome={state.scenarioOutcome.leagueChoice}
+        {:else if "noWorldEffect" in state.scenarioOutcome}
+            <NoWorldEffectResolvedScenarioState />
+        {:else if "worldChoice" in state.scenarioOutcome && "worldChoice" in scenario.kind && "discrete" in state.options.kind}
+            <WorldChoiceResolvedScenarioState
+                outcome={state.scenarioOutcome.worldChoice}
                 options={state.options.kind.discrete}
             />
         {:else}
@@ -92,49 +77,39 @@
     </div>
     {#if "discrete" in state.options.kind}
         {#if state.options.kind.discrete.length < 1}
-            No options were shown to any team
+            No options were shown to any town
         {:else}
             {#each state.options.kind.discrete as discreteOption}
                 <ScenarioOptionDiscrete
                     scenarioId={scenario.id}
                     option={discreteOption}
                     selected={selectedChoice === discreteOption.id}
-                    currency={undefined}
+                    resourceCosts={discreteOption.resourceCosts.map((rc) => {
+                        return {
+                            kind: rc.kind,
+                            cost: rc.amount,
+                            townAmount: undefined,
+                        };
+                    })}
                     {vote}
                     state={{
                         resolved: {
-                            chosenByTeamIds: discreteOption.chosenByTeamIds,
+                            chosenByTownIds: discreteOption.chosenByTownIds,
                         },
                     }}
                 />
             {/each}
         {/if}
-    {:else if "nat" in state.options.kind}
-        {#each state.options.kind.nat as natOption}
-            <div class="flex items-center justify-center">
-                <div>{natOption.value} {icon}</div>
-                <div class="flex">
-                    {#each natOption.chosenByTeamIds as teamId}
-                        <!-- TODO Fix this team not found hack -->
-                        <TeamLogo
-                            team={teams.find((t) => t.id == teamId) ||
-                                teams[-1]}
-                            size="xs"
-                        />
-                    {/each}
-                </div>
-            </div>
-        {/each}
     {:else if "text" in state.options.kind}
         {#each state.options.kind.text as textOption}
             <div class="flex items-center justify-center">
                 <div>{textOption.value} {icon}</div>
                 <div class="flex">
-                    {#each textOption.chosenByTeamIds as teamId}
-                        <!-- TODO Fix this team not found hack -->
-                        <TeamLogo
-                            team={teams.find((t) => t.id == teamId) ||
-                                teams[-1]}
+                    {#each textOption.chosenByTownIds as townId}
+                        <!-- TODO Fix this town not found hack -->
+                        <TownFlag
+                            town={towns.find((t) => t.id == townId) ||
+                                towns[-1]}
                             size="xs"
                         />
                     {/each}
@@ -144,14 +119,14 @@
     {:else}
         NOT IMPLEMENTED OPTIONS KIND {toJsonString(state.options)}
     {/if}
-    {#if state.options.undecidedOption.chosenByTeamIds.length > 0}
+    {#if state.options.undecidedOption.chosenByTownIds.length > 0}
         <div>
-            Undecided teams:
+            Undecided towns:
             <div class="flex items-center justify-center">
-                {#each state.options.undecidedOption.chosenByTeamIds as teamId}
-                    <!-- TODO Fix this team not found hack -->
-                    <TeamLogo
-                        team={teams.find((t) => t.id == teamId) || teams[-1]}
+                {#each state.options.undecidedOption.chosenByTownIds as townId}
+                    <!-- TODO Fix this town not found hack -->
+                    <TownFlag
+                        town={towns.find((t) => t.id == townId) || towns[-1]}
                         size="xs"
                     />
                 {/each}
@@ -176,7 +151,7 @@
                 Nothing happened...
             {:else}
                 {#each state.effectOutcomes as outcome}
-                    <ScenarioEffectOutcome {outcome} {teams} {traits} />
+                    <ScenarioEffectOutcome {outcome} {towns} />
                 {/each}
             {/if}
         </AccordionItem>

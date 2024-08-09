@@ -1,24 +1,24 @@
 <script lang="ts">
     import UserAvatar from "../user/UserAvatar.svelte";
     import UserPseudonym from "../user/UserPseudonym.svelte";
-    import { UserVotingInfo } from "../../ic-agent/declarations/main";
     import { mainAgentFactory } from "../../ic-agent/Main";
     import UserIdCopyButton from "../user/UserIdCopyButton.svelte";
+    import { User } from "../../ic-agent/declarations/main";
 
-    export let teamId: bigint;
+    export let townId: bigint;
 
-    let members: UserVotingInfo[] | undefined;
+    let members: User[] | undefined;
 
-    let refreshUsers = async (teamId: bigint) => {
+    let refreshUsers = async (townId: bigint) => {
         let mainAgent = await mainAgentFactory();
-        let result = await mainAgent.getTeamOwners({ team: teamId });
+        let result = await mainAgent.getUsers({ town: townId });
         if ("ok" in result) {
             members = result.ok;
         } else {
-            console.error("Failed to get team owners: ", result);
+            console.error("Failed to get town owners: ", result);
         }
     };
-    $: refreshUsers(teamId);
+    $: refreshUsers(townId);
 </script>
 
 {#if members}

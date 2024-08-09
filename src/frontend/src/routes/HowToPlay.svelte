@@ -30,7 +30,7 @@
 
     <section>
       <div class="flex items-center mb-4 rounded">
-        <h2 class="text-xl font-semibold">Playing as a Team Owner</h2>
+        <h2 class="text-xl font-semibold">Playing as a Town Owner</h2>
         <img
           src="images/how-to-play/voting.jpg"
           alt="Co-Ownership"

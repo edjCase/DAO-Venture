@@ -11,20 +11,17 @@
         BarsOutline,
         BellRingSolid,
         BookOutline,
-        BullhornSolid,
         CalendarMonthOutline,
         GithubSolid,
         GlobeSolid,
         HomeSolid,
         QuestionCircleOutline,
         TwitterSolid,
-        UserCircleSolid,
         UsersSolid,
     } from "flowbite-svelte-icons";
     import { onMount } from "svelte";
     import { navigate, useLocation } from "svelte-routing";
     import { userStore } from "../../stores/UserStore";
-    import { BenevolentDictatorState } from "../../ic-agent/declarations/main";
     import UserAvatar from "../user/UserAvatar.svelte";
 
     let location = useLocation();
@@ -62,27 +59,9 @@
     });
 
     $: user = $userStore;
-
-    let bdfnState: BenevolentDictatorState | undefined;
-    let isBdfnOrBdfnOpen: Boolean = false;
-    $: {
-        if (bdfnState !== undefined) {
-            if ("open" in bdfnState) {
-                isBdfnOrBdfnOpen = true;
-            } else if ("claimed" in bdfnState) {
-                isBdfnOrBdfnOpen =
-                    bdfnState.claimed.toString() == user?.id.toString();
-            } else {
-                isBdfnOrBdfnOpen = false;
-            }
-        }
-    }
-    userStore.subscribeBdfnState((state) => {
-        bdfnState = state;
-    });
 </script>
 
-<BottomNav {activeUrl} position="fixed" classInner="grid-cols-6 z-50">
+<BottomNav {activeUrl} position="fixed" classInner="grid-cols-5 z-50">
     <BottomNavItem btnName="Home" href="/" on:click={navOnClick("/")}>
         <HomeSolid class={iconClass} />
     </BottomNavItem>
@@ -94,23 +73,16 @@
         <BellRingSolid class={iconClass} />
     </BottomNavItem>
     <BottomNavItem
-        btnName="Matches"
-        href="/matches"
-        on:click={navOnClick("/matches")}
-    >
-        <BullhornSolid class={iconClass} />
-    </BottomNavItem>
-    <BottomNavItem
-        btnName="Team"
-        href="/my-team"
-        on:click={navOnClick("/my-team")}
+        btnName="Town"
+        href="/my-town"
+        on:click={navOnClick("/my-town")}
     >
         <UsersSolid class={iconClass} />
     </BottomNavItem>
     <BottomNavItem
-        btnName="League"
-        href="/league"
-        on:click={navOnClick("/league")}
+        btnName="World"
+        href="/world"
+        on:click={navOnClick("/world")}
     >
         <GlobeSolid class={iconClass} />
     </BottomNavItem>
@@ -144,9 +116,9 @@
                 </SidebarItem>
             {/if}
             <SidebarItem
-                label="Teams"
-                href="/teams"
-                on:click={navOnClick("/teams")}
+                label="Towns"
+                href="/towns"
+                on:click={navOnClick("/towns")}
             >
                 <svelte:fragment slot="icon">
                     <UsersSolid class={iconClass} />
@@ -218,18 +190,5 @@
                 </SidebarItem>
             </SidebarGroup>
         </SidebarGroup>
-        {#if isBdfnOrBdfnOpen}
-            <SidebarGroup border={true}>
-                <SidebarItem
-                    label="Admin"
-                    href="/admin"
-                    on:click={navOnClick("/admin")}
-                >
-                    <svelte:fragment slot="icon">
-                        <UserCircleSolid class={iconClass} />
-                    </svelte:fragment>
-                </SidebarItem>
-            </SidebarGroup>
-        {/if}
     </Sidebar>
 </Drawer>

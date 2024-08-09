@@ -3,42 +3,27 @@ import HashMap "mo:base/HashMap";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Nat32 "mo:base/Nat32";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Result "mo:base/Result";
+import Time "mo:base/Time";
 import CommonTypes "../CommonTypes";
 
 module {
 
     public type User = {
         id : Principal;
-        membership : ?UserMembership;
-        points : Int;
-    };
-
-    public type UserMembership = {
-        teamId : Nat;
-        votingPower : Nat;
+        inWorldSince : Time.Time;
+        level : Nat;
     };
 
     public type UserStats = {
-        totalPoints : Int;
+        totalUserLevel : Int;
         userCount : Nat;
-        teamOwnerCount : Nat;
-        teams : [TeamStats];
-    };
-
-    public type TeamStats = {
-        id : Nat;
-        totalPoints : Int;
-        userCount : Nat;
-        ownerCount : Nat;
     };
 
     public type UserVotingInfo = {
         id : Principal;
-        teamId : Nat;
         votingPower : Nat;
     };
 
@@ -48,8 +33,8 @@ module {
 
     type MutableUser = {
         id : Principal;
-        var membership : ?UserMembership;
-        var points : Int;
+        inWorldSince : Time.Time;
+        var level : Nat;
     };
 
     public class UserHandler(stableData : StableData) {
@@ -73,56 +58,25 @@ module {
         };
 
         public func getStats() : UserStats {
-            let leagueStats = {
-                var totalPoints : Int = 0;
+            let worldStats = {
+                var totalUserLevel : Int = 0;
                 var userCount = 0;
-                var teamOwnerCount = 0;
             };
-            let teamStats = HashMap.HashMap<Nat, TeamStats>(6, Nat.equal, Nat32.fromNat);
             for (user in users.vals()) {
-                switch (user.membership) {
-                    case (?membership) {
-                        let stats : TeamStats = switch (teamStats.get(membership.teamId)) {
-                            case (?stats) stats;
-                            case (null) {
-                                {
-                                    id = membership.teamId;
-                                    totalPoints = 0;
-                                    userCount = 0;
-                                    ownerCount = 0;
-                                };
-                            };
-                        };
-
-                        let newStats : TeamStats = {
-                            id = membership.teamId;
-                            totalPoints = stats.totalPoints + user.points;
-                            userCount = stats.userCount + 1;
-                            ownerCount = stats.ownerCount + 1;
-                        };
-                        teamStats.put(membership.teamId, newStats);
-                        leagueStats.teamOwnerCount += 1;
-
-                        leagueStats.totalPoints += user.points;
-                        leagueStats.userCount += 1;
-
-                    };
-                    case (null) ();
-                };
+                worldStats.totalUserLevel += user.level;
+                worldStats.userCount += 1;
             };
             {
-                totalPoints = leagueStats.totalPoints;
-                userCount = leagueStats.userCount;
-                teamOwnerCount = leagueStats.teamOwnerCount;
-                teams = Iter.toArray<TeamStats>(teamStats.vals());
+                totalUserLevel = worldStats.totalUserLevel;
+                userCount = worldStats.userCount;
             };
         };
 
-        public func getUserLeaderboard(count : Nat, offset : Nat) : CommonTypes.PagedResult<User> {
+        public func getTopUsers(count : Nat, offset : Nat) : CommonTypes.PagedResult<User> {
             let orderedUsers = users.vals()
             |> IterTools.sort(
                 _,
-                func(u1 : MutableUser, u2 : MutableUser) : Order.Order = Int.compare(u2.points, u1.points),
+                func(u1 : MutableUser, u2 : MutableUser) : Order.Order = Int.compare(u2.level, u1.level),
             )
             |> IterTools.skip(_, offset)
             |> IterTools.take(_, count)
@@ -132,108 +86,40 @@ module {
                 data = orderedUsers;
                 count = count;
                 offset = offset;
+                totalCount = users.size();
             };
         };
 
-        public func getTeamOwners(teamId : ?Nat) : [UserVotingInfo] {
-            let getMatchingTeamMembership = switch (teamId) {
-                case (?tId) func(membership : UserMembership) : ?Nat {
-                    // Filter to only the team we want
-                    if (membership.teamId == tId) {
-                        return ?tId;
-                    };
-                    return null;
-                };
-                case (null) func(membership : UserMembership) : ?Nat {
-                    ?membership.teamId;
-                };
-            };
-
-            let owners = users.vals()
-            |> IterTools.mapFilter(
-                _,
-                func(user : MutableUser) : ?UserVotingInfo {
-                    let ?membership = user.membership else return null;
-                    switch (getMatchingTeamMembership(membership)) {
-                        case (?teamId) {
-                            ?{
-                                id = user.id;
-                                teamId = teamId;
-                                votingPower = membership.votingPower;
-                            };
-                        };
-                        case (null) {
-                            return null;
-                        };
-                    };
-                },
-            )
-            |> Iter.toArray(_);
-            owners;
-        };
-
-        public func addLeagueMember(
-            userId : Principal,
-            teamId : Nat,
-            votingPower : Nat,
-        ) : Result.Result<(), { #alreadyLeagueMember }> {
-            let user = getOrCreateUser(userId);
-            switch (user.membership) {
-                case (?membership) {
-                    return #err(#alreadyLeagueMember);
-                };
-                case (null) {
-                    user.membership := ?{
-                        teamId = teamId;
-                        votingPower = votingPower;
-                    };
-                    #ok;
-                };
-            };
-        };
-
-        public func changeTeam(
-            userId : Principal,
-            teamId : Nat,
-        ) : Result.Result<(), { #notLeagueMember }> {
-            let user = getOrCreateUser(userId);
-            switch (user.membership) {
-                case (?membership) {
-                    user.membership := ?{
-                        membership with
-                        teamId = teamId;
-                    };
-                    #ok;
-                };
-                case (null) {
-                    // Add as owner
-                    return #err(#notLeagueMember);
-                };
-            };
-        };
-
-        public func awardPoints(
-            userId : Principal,
-            points : Int,
-        ) : Result.Result<(), { #userNotFound }> {
-            let ?user = users.get(userId) else return #err(#userNotFound);
-            user.points += points;
-            #ok;
-        };
-
-        private func getOrCreateUser(userId : Principal) : MutableUser {
+        public func addWorldMember(
+            userId : Principal
+        ) : Result.Result<(), { #alreadyWorldMember }> {
             switch (users.get(userId)) {
-                case (?userInfo) userInfo;
+                case (?_) #err(#alreadyWorldMember);
                 case (null) {
                     let newUser : MutableUser = {
                         id = userId;
-                        var membership = null;
-                        var points = 0;
+                        inWorldSince = Time.now();
+                        var level = 0;
                     };
                     users.put(userId, newUser);
-                    newUser;
+                    #ok;
                 };
             };
+        };
+
+        public func awardLevels(
+            userId : Principal,
+            delta : Int,
+        ) : Result.Result<(), { #userNotFound }> {
+            let ?user = users.get(userId) else return #err(#userNotFound);
+            let newLevel = user.level + delta;
+            let newLevelNat = if (newLevel < 0) {
+                0;
+            } else {
+                Int.abs(newLevel);
+            };
+            user.level += newLevelNat;
+            #ok;
         };
 
     };
@@ -241,16 +127,16 @@ module {
     private func toMutableUser(user : User) : MutableUser {
         {
             id = user.id;
-            var membership = user.membership;
-            var points = user.points;
+            inWorldSince = user.inWorldSince;
+            var level = user.level;
         };
     };
 
     private func fromMutableUser(user : MutableUser) : User {
         {
             id = user.id;
-            membership = user.membership;
-            points = user.points;
+            inWorldSince = user.inWorldSince;
+            level = user.level;
         };
     };
 

@@ -8,41 +8,41 @@
         TabItem,
         Tabs,
     } from "flowbite-svelte";
-    import { teamStore } from "../stores/TeamStore";
+    import { townStore } from "../stores/TownStore";
     import { Principal } from "@dfinity/principal";
     import MemberList from "./dao/MemberList.svelte";
     import { mainAgentFactory } from "../ic-agent/Main";
     import { userStore } from "../stores/UserStore";
-    $: teams = $teamStore;
+    $: towns = $townStore;
 
-    let teamItems: SelectOptionType<bigint>[] | undefined;
-    let selectedTeamId: bigint | undefined;
+    let townItems: SelectOptionType<bigint>[] | undefined;
+    let selectedTownId: bigint | undefined;
     let newMemberId: string = "";
 
     $: {
-        if (teams && teams.length > 0) {
-            teamItems = teams.map((team) => {
+        if (towns && towns.length > 0) {
+            townItems = towns.map((town) => {
                 return {
-                    value: team.id,
-                    name: team.name,
+                    value: town.id,
+                    name: town.name,
                 };
             });
-            if (!selectedTeamId) {
-                selectedTeamId = teamItems[0].value;
+            if (!selectedTownId) {
+                selectedTownId = townItems[0].value;
             }
         }
     }
 
     let assignMember = async () => {
-        if (selectedTeamId === undefined) {
-            console.log("No team selected");
+        if (selectedTownId === undefined) {
+            console.log("No town selected");
             return;
         }
-        console.log("Assigning member to team", newMemberId, selectedTeamId);
+        console.log("Assigning member to town", newMemberId, selectedTownId);
         let userId = Principal.fromText(newMemberId);
         let mainAgent = await mainAgentFactory();
-        let res = await mainAgent.assignUserToTeam({
-            teamId: BigInt(selectedTeamId),
+        let res = await mainAgent.assignUserToTown({
+            townId: BigInt(selectedTownId),
             userId: userId,
         });
 
@@ -55,17 +55,17 @@
     };
 </script>
 
-{#if teamItems}
-    <div class="text-3xl">Team DAO Admin Panel</div>
+{#if townItems}
+    <div class="text-3xl">Town DAO Admin Panel</div>
     <hr class="mb-6" />
-    <div class="text-2xl">Team Context:</div>
-    <Select items={teamItems} bind:value={selectedTeamId} />
+    <div class="text-2xl">Town Context:</div>
+    <Select items={townItems} bind:value={selectedTownId} />
 
-    {#if selectedTeamId !== undefined}
+    {#if selectedTownId !== undefined}
         <Tabs>
             <TabItem title="Members" open>
-                <MemberList teamId={selectedTeamId} />
-                <div class="text-2xl">Assign User to Team</div>
+                <MemberList townId={selectedTownId} />
+                <div class="text-2xl">Assign User to Town</div>
                 <div class="mb-6">
                     <Label for="default-input" class="block mb-2">User Id</Label
                     >

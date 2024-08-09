@@ -6,7 +6,7 @@ image: "/images/whitepaper.png"
 draft: false
 ---
 
-DAOball merges the excitement of spectator sports with the innovation of decentralized technology, offering a collaborative and interactive platform for community engagement. It's structured around the concept of DAOs (Decentralized Autonomous Organizations), where players not only enjoy the game as spectators but also have the opportunity to shape the team's strategies and overall narrative. This allows for a dynamic experience that evolves with the contributions and decisions of its community, rooted in a setting that encourages fun and creativity without financial speculation.
+DAOball merges the excitement of spectator sports with the innovation of decentralized technology, offering a collaborative and interactive platform for community engagement. It's structured around the concept of DAOs (Decentralized Autonomous Organizations), where players not only enjoy the game as spectators but also have the opportunity to shape the town's strategies and overall narrative. This allows for a dynamic experience that evolves with the contributions and decisions of its community, rooted in a setting that encourages fun and creativity without financial speculation.
 
 At the heart of DAOball is the commitment to fostering a strong community bond through shared decision-making and storytelling, reminiscent of the collaborative narratives found in tabletop games. As DAOball progresses, the goal is to move towards a more decentralized model, making the game increasingly community-driven. This vision includes broadening the avenues for community input, ensuring that DAOball continues to grow and adapt in alignment with the desires and creativity of its player base​​.
 
