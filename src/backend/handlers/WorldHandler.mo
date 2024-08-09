@@ -22,7 +22,7 @@ module {
         genesisTime : Time.Time;
         progenitor : Principal;
         locations : [World.WorldLocation];
-        daoResources : ResourceList;
+        daoResources : World.ResourceList;
     };
 
     public type WorldAgeInfo = {
