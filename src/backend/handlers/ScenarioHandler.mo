@@ -24,12 +24,11 @@ module {
     };
 
     type MutableScenarioKind = {
-        #mysteriousStructure : MutableScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>;
+        #mysteriousStructure : MutableScenarioData<MysteriousStructureScenario.Choice>;
     };
 
-    type MutableScenarioData<MetaData, ProposalContent, Choice> = {
-        proposalEngine : GenericProposalEngine.ProposalEngine<ProposalContent, Choice>;
-        metaData : MetaData;
+    type MutableScenarioData<Choice> = {
+        proposalEngine : GenericProposalEngine.ProposalEngine<Scenario.ProposalContent, Choice>;
     };
 
     public class Handler<system>(
@@ -181,10 +180,9 @@ module {
     };
 
     private func toMutableMysteriousStructureScenario<system>(
-        mysteriousStructure : Scenario.ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>
-    ) : MutableScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice> {
+        mysteriousStructure : Scenario.ScenarioData<MysteriousStructureScenario.Choice>
+    ) : MutableScenarioData<MysteriousStructureScenario.Choice> {
         {
-            metaData = mysteriousStructure.metaData;
             proposalEngine = GenericProposalEngine.ProposalEngine<system, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>(
                 {
                     proposals = [mysteriousStructure.proposal];
@@ -204,13 +202,12 @@ module {
 
     private func fromMutableMysteriousStructureScenario(
         scenarioId : Nat,
-        mysteriousStructure : MutableScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>,
-    ) : Scenario.ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice> {
+        mysteriousStructure : MutableScenarioData<MysteriousStructureScenario.Choice>,
+    ) : Scenario.ScenarioData<MysteriousStructureScenario.Choice> {
         let ?proposal = mysteriousStructure.proposalEngine.getProposal(0) // TODO better way?
         else Debug.trap("Proposal not found for mysterious structure scenario: " # Nat.toText(scenarioId));
         {
             proposal = proposal;
-            metaData = mysteriousStructure.metaData;
         };
     };
 };

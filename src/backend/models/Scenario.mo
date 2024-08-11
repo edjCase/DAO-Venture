@@ -10,13 +10,16 @@ module {
         kind : ScenarioKind;
     };
 
-    public type ScenarioKind = {
-        #mysteriousStructure : ScenarioData<MysteriousStructureScenario.LocationData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>;
+    public type ProposalContent = {
+        locationId : Nat;
     };
 
-    public type ScenarioData<LocationData, ProposalContent, Choice> = {
+    public type ScenarioKind = {
+        #mysteriousStructure : ScenarioData<MysteriousStructureScenario.Choice>;
+    };
+
+    public type ScenarioData<Choice> = {
         proposal : GenericProposalEngine.Proposal<ProposalContent, Choice>;
-        metaData : LocationData;
     };
 
     public type ScenarioChoiceKind = {
