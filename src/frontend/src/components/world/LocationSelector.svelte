@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Select, SelectOptionType } from "flowbite-svelte";
     import { worldStore } from "../../stores/WorldStore";
-    import { WorldLocation } from "../../ic-agent/declarations/main";
+    import { Location } from "../../ic-agent/declarations/main";
 
     export let value: bigint;
     export let kind: "unexplored" | "explored" | "all";
@@ -9,7 +9,7 @@
 
     let locationItems: SelectOptionType<bigint>[] | undefined;
     $: if (world !== undefined) {
-        let filter: (location: WorldLocation) => boolean;
+        let filter: (location: Location) => boolean;
         if (kind === "unexplored") {
             filter = (location) => "unexplored" in location.kind;
         } else if (kind === "explored") {

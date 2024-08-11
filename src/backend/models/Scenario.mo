@@ -11,12 +11,12 @@ module {
     };
 
     public type ScenarioKind = {
-        #mysteriousStructure : ScenarioData<MysteriousStructureScenario.MetaData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>;
+        #mysteriousStructure : ScenarioData<MysteriousStructureScenario.LocationData, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>;
     };
 
-    public type ScenarioData<MetaData, ProposalContent, Choice> = {
+    public type ScenarioData<LocationData, ProposalContent, Choice> = {
         proposal : GenericProposalEngine.Proposal<ProposalContent, Choice>;
-        metaData : MetaData;
+        metaData : LocationData;
     };
 
     public type ScenarioChoiceKind = {

@@ -179,9 +179,9 @@ export interface Vote_1 { 'votingPower' : bigint, 'choice' : [] | [Choice] }
 export interface World {
   'turn' : bigint,
   'progenitor' : Principal,
-  'locations' : Array<WorldLocation>,
+  'locations' : Array<Location>,
 }
-export interface WorldLocation {
+export interface Location {
   'id' : bigint,
   'kind' : LocationKind,
   'coordinate' : AxialCoordinate,

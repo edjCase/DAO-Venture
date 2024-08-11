@@ -153,7 +153,7 @@ export const idlFactory = ({ IDL }) => {
     'unexplored' : IDL.Null,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
-  const WorldLocation = IDL.Record({
+  const Location = IDL.Record({
     'id' : IDL.Nat,
     'kind' : LocationKind,
     'coordinate' : AxialCoordinate,
@@ -161,7 +161,7 @@ export const idlFactory = ({ IDL }) => {
   const World = IDL.Record({
     'turn' : IDL.Nat,
     'progenitor' : IDL.Principal,
-    'locations' : IDL.Vec(WorldLocation),
+    'locations' : IDL.Vec(Location),
   });
   const GetWorldError = IDL.Variant({ 'worldNotInitialized' : IDL.Null });
   const GetWorldResult = IDL.Variant({ 'ok' : World, 'err' : GetWorldError });

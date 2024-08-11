@@ -7,7 +7,7 @@ import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
-import World "../models/World";
+import Location "../models/Location";
 
 module {
     public type Actor = actor {
@@ -44,7 +44,7 @@ module {
 
     public type World = {
         progenitor : Principal;
-        locations : [World.WorldLocation];
+        locations : [Location.Location];
         turn : Nat;
     };
 
