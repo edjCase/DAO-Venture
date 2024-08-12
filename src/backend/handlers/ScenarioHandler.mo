@@ -6,75 +6,64 @@ import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Order "mo:base/Order";
-import ExtendedProposalEngine "mo:dao-proposal-engine/ExtendedProposalEngine";
+import Random "mo:base/Random";
+import Error "mo:base/Error";
+import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import MysteriousStructureScenario "../scenarios/MysteriousStructure";
 import Scenario "../models/Scenario";
 import CommonTypes "../CommonTypes";
 import IterTools "mo:itertools/Iter";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
+import MysteriousStructure "../scenarios/MysteriousStructure";
 
 module {
     public type StableData = {
         scenarios : [Scenario.Scenario];
     };
 
-    type MutableScenario = {
-        id : Nat;
-        turn : Nat;
-        kind : MutableScenarioKind;
-    };
-
-    type MutableScenarioKind = {
-        #mysteriousStructure : MutableScenarioData<MysteriousStructureScenario.Choice>;
-    };
-
-    type MutableScenarioData<Choice> = {
-        proposalEngine : ExtendedProposalEngine.ProposalEngine<Scenario.ProposalContent, Choice>;
-    };
-
     public class Handler<system>(
         data : StableData
     ) {
-        let scenarios = HashMap.HashMap<Nat, MutableScenario>(data.scenarios.size(), Nat.equal, Nat32.fromNat);
-        for (scenario in data.scenarios.vals()) {
-            scenarios.put(scenario.id, toMutableScenario<system>(scenario));
-        };
+        let votingThreshold = #percent({ percent = 50; quorum = ?20 });
+        let scenarios = data.scenarios.vals()
+        |> Iter.map<Scenario.Scenario, (Nat, Scenario.Scenario)>(
+            _,
+            func(scenario : Scenario.Scenario) : (Nat, Scenario.Scenario) = (scenario.id, scenario),
+        )
+        |> HashMap.fromIter<Nat, Scenario.Scenario>(_, data.scenarios.size(), Nat.equal, Nat32.fromNat);
 
         public func toStableData() : StableData {
             {
                 scenarios = scenarios.vals()
-                |> Iter.map(_, fromMutableScenario)
                 |> Iter.toArray(_);
             };
         };
 
         public func start<system>(turn : Nat, kind : Scenario.ScenarioKind) : Nat {
             let scenarioId = scenarios.size(); // TODO?
-            let scenario = toMutableScenario<system>({
-                id = scenarioId;
-                turn = turn;
-                kind = kind;
-            });
             scenarios.put(
                 scenarioId,
-                scenario,
+                {
+                    id = scenarioId;
+                    turn = turn;
+                    kind = kind;
+                },
             );
             scenarioId;
         };
 
         public func get(scenarioId : Nat) : ?Scenario.Scenario {
-            let ?scenario = scenarios.get(scenarioId) else return null;
-            ?fromMutableScenario(scenario);
+            scenarios.get(scenarioId);
         };
 
         public func getAll(count : Nat, offset : Nat) : CommonTypes.PagedResult<Scenario.Scenario> {
             var filteredScenarios = scenarios.vals()
             |> Iter.sort(
                 _,
-                func(a : MutableScenario, b : MutableScenario) : Order.Order = Nat.compare(a.id, b.id),
+                func(a : Scenario.Scenario, b : Scenario.Scenario) : Order.Order = Nat.compare(a.id, b.id),
             )
             |> IterTools.skip(_, offset)
             |> IterTools.take(_, count)
-            |> Iter.map(_, fromMutableScenario)
             |> Iter.toArray(_);
             {
                 data = filteredScenarios;
@@ -87,12 +76,11 @@ module {
         public func getVote(
             scenarioId : Nat,
             voterId : Principal,
-        ) : Result.Result<ExtendedProposalEngine.Vote<Scenario.ScenarioChoiceKind>, { #scenarioNotFound; #notEligible }> {
+        ) : Result.Result<ExtendedProposal.Vote<Scenario.ScenarioChoiceKind>, { #scenarioNotFound; #notEligible }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let result : ?ExtendedProposalEngine.Vote<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
+            let result : ?ExtendedProposal.Vote<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) {
-                    let proposalId = 0; // TODO better way?
-                    let vote = mysteriousStructure.proposalEngine.getVote(proposalId, voterId);
+                    let vote = ExtendedProposal.getVote(mysteriousStructure.proposal, voterId);
                     switch (vote) {
                         case (?v) {
                             let choice = switch (v.choice) {
@@ -114,20 +102,23 @@ module {
             };
         };
 
-        public func getVoteSummary(scenarioId : Nat) : Result.Result<ExtendedProposalEngine.VotingSummary<Scenario.ScenarioChoiceKind>, { #scenarioNotFound }> {
+        public func getVoteSummary(scenarioId : Nat) : Result.Result<ExtendedProposal.VotingSummary<Scenario.ScenarioChoiceKind>, { #scenarioNotFound }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let summary : ExtendedProposalEngine.VotingSummary<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
+            let summary : ExtendedProposal.VotingSummary<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) {
-                    let proposalId = 0; // TODO better way?
-                    let summary = mysteriousStructure.proposalEngine.getVoteSummary(proposalId);
+                    let summary = ExtendedProposal.buildVotingSummary(
+                        mysteriousStructure.proposal,
+                        MysteriousStructureScenario.equalChoice,
+                        MysteriousStructureScenario.hashChoice,
+                    );
                     {
                         summary with
                         votingPowerByChoice = summary.votingPowerByChoice.vals()
                         |> Iter.map(
                             _,
                             func(
-                                choice : ExtendedProposalEngine.ChoiceVotingPower<MysteriousStructureScenario.Choice>
-                            ) : ExtendedProposalEngine.ChoiceVotingPower<Scenario.ScenarioChoiceKind> = {
+                                choice : ExtendedProposal.ChoiceVotingPower<MysteriousStructureScenario.Choice>
+                            ) : ExtendedProposal.ChoiceVotingPower<Scenario.ScenarioChoiceKind> = {
                                 choice = #mysteriousStructure(choice.choice);
                                 votingPower = choice.votingPower;
                             },
@@ -139,75 +130,59 @@ module {
             #ok(summary);
         };
 
-        public func vote<system>(scenarioId : Nat, voterId : Principal, choice : Scenario.ScenarioChoiceKind) : async* Result.Result<(), ExtendedProposalEngine.VoteError or { #scenarioNotFound; #invalidChoice }> {
+        public func vote(
+            scenarioId : Nat,
+            voterId : Principal,
+            choice : Scenario.ScenarioChoiceKind,
+        ) : async* Result.Result<(), ExtendedProposal.VoteError or { #scenarioNotFound; #invalidChoice }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let result : Result.Result<(), ExtendedProposalEngine.VoteError> = switch (scenario.kind) {
+            switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) {
                     let #mysteriousStructure(mysteriousStructureChoice) = choice else return #err(#invalidChoice);
-                    await* mysteriousStructure.proposalEngine.vote<system>(scenarioId, voterId, mysteriousStructureChoice);
+                    let voteResult = ExtendedProposal.vote(
+                        mysteriousStructure.proposal,
+                        voterId,
+                        mysteriousStructureChoice,
+                        votingThreshold,
+                        MysteriousStructure.equalChoice,
+                        MysteriousStructure.hashChoice,
+                    );
+                    switch (voteResult) {
+                        case (#ok(ok)) {
+                            let outcome = switch (ok.choiceStatus) {
+                                case (#determined(choice)) {
+                                    let randomBlob = label l : Blob loop {
+                                        try {
+                                            let blob = await Random.blob();
+                                            break l(blob);
+                                        } catch (err) {
+                                            Debug.print("Failed to generate random blob, retrying... Error: " # Error.message(err));
+                                            continue l;
+                                        };
+                                    };
+                                    let prng = PseudoRandomX.fromBlob(randomBlob, #xorshift32);
+                                    ?MysteriousStructure.getOutcome(prng, choice);
+                                };
+                                case (#undetermined) null;
+                            };
+                            scenarios.put(
+                                scenarioId,
+                                {
+                                    scenario with
+                                    kind = #mysteriousStructure({
+                                        mysteriousStructure with
+                                        proposal = ok.updatedProposal;
+                                        outcome = outcome;
+                                    });
+                                },
+                            );
+                            #ok;
+                        };
+                        case (#err(err)) return #err(err);
+                    };
                 };
             };
-            switch (result) {
-                case (#ok) #ok;
-                case (#err(#alreadyVoted)) #err(#alreadyVoted);
-                case (#err(#notAuthorized)) #err(#notAuthorized);
-                case (#err(#votingClosed)) #err(#votingClosed);
-                case (#err(#proposalNotFound)) Debug.trap("Proposal not found for scenario: " # Nat.toText(scenarioId));
-            };
         };
 
-    };
-
-    private func toMutableScenario<system>(scenario : Scenario.Scenario) : MutableScenario {
-        let kind : MutableScenarioKind = switch (scenario.kind) {
-            case (#mysteriousStructure(mysteriousStructure)) #mysteriousStructure(toMutableMysteriousStructureScenario<system>(mysteriousStructure));
-        };
-        {
-            id = scenario.id;
-            turn = scenario.turn;
-            kind = kind;
-        };
-    };
-
-    private func fromMutableScenario(scenario : MutableScenario) : Scenario.Scenario {
-        {
-            id = scenario.id;
-            turn = scenario.turn;
-            kind = switch (scenario.kind) {
-                case (#mysteriousStructure(mysteriousStructure)) #mysteriousStructure(fromMutableMysteriousStructureScenario(scenario.id, mysteriousStructure));
-            };
-        };
-    };
-
-    private func toMutableMysteriousStructureScenario<system>(
-        mysteriousStructure : Scenario.ScenarioData<MysteriousStructureScenario.Choice>
-    ) : MutableScenarioData<MysteriousStructureScenario.Choice> {
-        {
-            proposalEngine = ExtendedProposalEngine.ProposalEngine<system, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>(
-                {
-                    proposals = [mysteriousStructure.proposal];
-                    proposalDuration = null;
-                    votingThreshold = #percent({
-                        percent = 50;
-                        quorum = ?20;
-                    });
-                },
-                MysteriousStructureScenario.onProposalExecute,
-                MysteriousStructureScenario.onProposalValidate,
-                MysteriousStructureScenario.equalChoice,
-                MysteriousStructureScenario.hashChoice,
-            );
-        };
-    };
-
-    private func fromMutableMysteriousStructureScenario(
-        scenarioId : Nat,
-        mysteriousStructure : MutableScenarioData<MysteriousStructureScenario.Choice>,
-    ) : Scenario.ScenarioData<MysteriousStructureScenario.Choice> {
-        let ?proposal = mysteriousStructure.proposalEngine.getProposal(0) // TODO better way?
-        else Debug.trap("Proposal not found for mysterious structure scenario: " # Nat.toText(scenarioId));
-        {
-            proposal = proposal;
-        };
     };
 };

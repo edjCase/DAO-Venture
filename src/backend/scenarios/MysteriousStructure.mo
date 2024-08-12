@@ -4,6 +4,7 @@ import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import Nat "mo:base/Nat";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
+import Outcome "../models/Outcome";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -24,10 +25,6 @@ module {
         proposal : ExtendedProposalEngine.Proposal<ProposalContent, Choice>;
     };
 
-    public type MutableData = LocationData and {
-        proposalEngine : ExtendedProposalEngine.ProposalEngine<ProposalContent, Choice>;
-    };
-
     public type Choice = {
         #cautiousSearch;
         #forcefulEntry;
@@ -37,26 +34,7 @@ module {
         #arcaneVision;
     };
 
-    public type Item = {
-        #echoCrystal;
-        #ancientRunes;
-        #mysticalTome;
-        #scryingOrb;
-    };
-
-    public type Trait = {
-        #natureAttuned;
-        #thirdEye;
-    };
-
-    public type ChoiceRequirement = {
-        #all : [ChoiceRequirement];
-        #any : [ChoiceRequirement];
-        #item : Item;
-        #trait : Trait;
-    };
-
-    public func getChoiceRequirement(choice : Choice) : ?ChoiceRequirement {
+    public func getChoiceRequirement(choice : Choice) : ?Outcome.ChoiceRequirement {
         switch (choice) {
             case (#cautiousSearch or #forcefulEntry) null;
             case (#crystalResonance) ? #item(#echoCrystal);
@@ -77,29 +55,9 @@ module {
         };
     };
 
-    public type Outcome = {
-        description : [Text];
-        effects : [Effect];
-    };
-
-    public type Effect = {
-        #money : Int;
-        #item : {
-            item : Item;
-            kind : { #gain; #lose };
-        };
-        #trait : {
-            trait : Trait;
-            kind : { #gain; #lose };
-        };
-        #health : {
-            amount : Int;
-        };
-    };
-
-    public func getOutcome(prng : Prng, choice : Choice) : Outcome {
+    public func getOutcome(prng : Prng, choice : ?Choice) : Outcome.Outcome<Choice> {
         let descriptions = Buffer.Buffer<Text>(1);
-        let effects = Buffer.Buffer<Effect>(1);
+        let effects = Buffer.Buffer<Outcome.Effect>(1);
         // switch (choice) {
         //     case (#cautiousSearch) {
         //         if (prng.nextRatio(3, 10)) {
@@ -237,6 +195,7 @@ module {
         //     };
         // };
         {
+            choice = choice;
             description = Buffer.toArray(descriptions);
             effects = Buffer.toArray(effects);
         };

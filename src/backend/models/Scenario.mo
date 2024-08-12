@@ -1,6 +1,7 @@
 import Nat "mo:base/Nat";
 import ExtendedProposalEngine "mo:dao-proposal-engine/ExtendedProposalEngine";
-import MysteriousStructureScenario "../scenarios/MysteriousStructure";
+import MysteriousStructure "../scenarios/MysteriousStructure";
+import Outcome "Outcome";
 
 module {
 
@@ -15,14 +16,16 @@ module {
     };
 
     public type ScenarioKind = {
-        #mysteriousStructure : ScenarioData<MysteriousStructureScenario.Choice>;
+        #mysteriousStructure : ScenarioData<MysteriousStructure.Choice>;
     };
 
-    public type ScenarioData<Choice> = {
-        proposal : ExtendedProposalEngine.Proposal<ProposalContent, Choice>;
+    public type ScenarioData<TChoice> = {
+        proposal : ExtendedProposalEngine.Proposal<ProposalContent, TChoice>;
+        outcome : ?Outcome.Outcome<TChoice>;
     };
 
     public type ScenarioChoiceKind = {
-        #mysteriousStructure : MysteriousStructureScenario.Choice;
+        #mysteriousStructure : MysteriousStructure.Choice;
     };
+
 };
