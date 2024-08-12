@@ -1,5 +1,5 @@
 import Nat "mo:base/Nat";
-import GenericProposalEngine "mo:dao-proposal-engine/GenericProposalEngine";
+import ExtendedProposalEngine "mo:dao-proposal-engine/ExtendedProposalEngine";
 import MysteriousStructureScenario "../scenarios/MysteriousStructure";
 
 module {
@@ -19,7 +19,7 @@ module {
     };
 
     public type ScenarioData<Choice> = {
-        proposal : GenericProposalEngine.Proposal<ProposalContent, Choice>;
+        proposal : ExtendedProposalEngine.Proposal<ProposalContent, Choice>;
     };
 
     public type ScenarioChoiceKind = {

@@ -8,7 +8,8 @@ import Bool "mo:base/Bool";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Types "MainActorTypes";
 import UserHandler "../handlers/UserHandler";
-import BinaryProposalEngine "mo:dao-proposal-engine/BinaryProposalEngine";
+import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
+import Proposal "mo:dao-proposal-engine/Proposal";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
 import Int "mo:base/Int";
@@ -35,7 +36,7 @@ actor MainActor : Types.Actor {
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
     };
-    stable var worldDaoStableData : BinaryProposalEngine.StableData<WorldDao.ProposalContent> = {
+    stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
         proposalDuration = ? #days(3);
         proposals = [];
         votingThreshold = #percent({
@@ -59,7 +60,7 @@ actor MainActor : Types.Actor {
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
-    func onWorldProposalExecute(proposal : BinaryProposalEngine.Proposal<WorldDao.ProposalContent>) : async* Result.Result<(), Text> {
+    func onWorldProposalExecute(proposal : ProposalEngine.Proposal<WorldDao.ProposalContent>) : async* Result.Result<(), Text> {
         // TODO change world proposal for town data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
             case (#motion(_)) {
@@ -68,11 +69,11 @@ actor MainActor : Types.Actor {
             };
         };
     };
-    func onWorldProposalReject(_ : BinaryProposalEngine.Proposal<WorldDao.ProposalContent>) : async* () {}; // TODO
+    func onWorldProposalReject(_ : ProposalEngine.Proposal<WorldDao.ProposalContent>) : async* () {}; // TODO
     func onWorldProposalValidate(_ : WorldDao.ProposalContent) : async* Result.Result<(), [Text]> {
         #ok; // TODO
     };
-    var worldDao = BinaryProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
+    var worldDao = ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
         worldDaoStableData,
         onWorldProposalExecute,
         onWorldProposalReject,
@@ -93,7 +94,7 @@ actor MainActor : Types.Actor {
 
     system func postupgrade() {
         scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData);
-        worldDao := BinaryProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
+        worldDao := ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
             worldDaoStableData,
             onWorldProposalExecute,
             onWorldProposalReject,
@@ -161,7 +162,7 @@ actor MainActor : Types.Actor {
         let members = userHandler.getAll().vals()
         |> Iter.map(
             _,
-            func(user : UserHandler.User) : BinaryProposalEngine.Member = {
+            func(user : UserHandler.User) : Proposal.Member = {
                 id = user.id;
                 votingPower = calculateVotingPower(user);
             },
@@ -171,7 +172,7 @@ actor MainActor : Types.Actor {
         let isAMember = members.vals()
         |> Iter.filter(
             _,
-            func(member : BinaryProposalEngine.Member) : Bool = member.id == caller,
+            func(member : Proposal.Member) : Bool = member.id == caller,
         )
         |> _.next() != null;
         if (not isAMember) {

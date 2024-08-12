@@ -1,7 +1,7 @@
 import Nat "mo:base/Nat";
 import Scenario "../models/Scenario";
-import ProposalEngine "mo:dao-proposal-engine/BinaryProposalEngine";
-import GenericProposalEngine "mo:dao-proposal-engine/GenericProposalEngine";
+import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
+import ExtendedProposalEngine "mo:dao-proposal-engine/ExtendedProposalEngine";
 import CommonTypes "../CommonTypes";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
@@ -79,7 +79,7 @@ module {
         yourVote : ?ScenarioVoteChoice;
         totalVotingPower : Nat;
         undecidedVotingPower : Nat;
-        votingPowerByChoice : [GenericProposalEngine.ChoiceVotingPower<Scenario.ScenarioChoiceKind>];
+        votingPowerByChoice : [ExtendedProposalEngine.ChoiceVotingPower<Scenario.ScenarioChoiceKind>];
     };
 
     public type ScenarioVoteChoice = {
@@ -94,7 +94,7 @@ module {
         value : Scenario.ScenarioChoiceKind;
     };
 
-    public type VoteOnScenarioError = GenericProposalEngine.VoteError or {
+    public type VoteOnScenarioError = ExtendedProposalEngine.VoteError or {
         #scenarioNotFound;
         #invalidChoice;
     };

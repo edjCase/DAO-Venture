@@ -1,4 +1,4 @@
-import GenericProposalEngine "mo:dao-proposal-engine/GenericProposalEngine";
+import ExtendedProposalEngine "mo:dao-proposal-engine/ExtendedProposalEngine";
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
@@ -21,11 +21,11 @@ module {
     };
 
     public type StableData = LocationData and {
-        proposal : GenericProposalEngine.Proposal<ProposalContent, Choice>;
+        proposal : ExtendedProposalEngine.Proposal<ProposalContent, Choice>;
     };
 
     public type MutableData = LocationData and {
-        proposalEngine : GenericProposalEngine.ProposalEngine<ProposalContent, Choice>;
+        proposalEngine : ExtendedProposalEngine.ProposalEngine<ProposalContent, Choice>;
     };
 
     public type Choice = {
@@ -262,7 +262,7 @@ module {
 
     public func onProposalExecute(
         choice : ?Choice,
-        proposal : GenericProposalEngine.Proposal<ProposalContent, Choice>,
+        proposal : ExtendedProposalEngine.Proposal<ProposalContent, Choice>,
     ) : async* Result.Result<(), Text> {
         #ok; // TODO
     };

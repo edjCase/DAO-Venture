@@ -6,7 +6,7 @@ import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Order "mo:base/Order";
-import GenericProposalEngine "mo:dao-proposal-engine/GenericProposalEngine";
+import ExtendedProposalEngine "mo:dao-proposal-engine/ExtendedProposalEngine";
 import MysteriousStructureScenario "../scenarios/MysteriousStructure";
 import Scenario "../models/Scenario";
 import CommonTypes "../CommonTypes";
@@ -28,7 +28,7 @@ module {
     };
 
     type MutableScenarioData<Choice> = {
-        proposalEngine : GenericProposalEngine.ProposalEngine<Scenario.ProposalContent, Choice>;
+        proposalEngine : ExtendedProposalEngine.ProposalEngine<Scenario.ProposalContent, Choice>;
     };
 
     public class Handler<system>(
@@ -87,9 +87,9 @@ module {
         public func getVote(
             scenarioId : Nat,
             voterId : Principal,
-        ) : Result.Result<GenericProposalEngine.Vote<Scenario.ScenarioChoiceKind>, { #scenarioNotFound; #notEligible }> {
+        ) : Result.Result<ExtendedProposalEngine.Vote<Scenario.ScenarioChoiceKind>, { #scenarioNotFound; #notEligible }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let result : ?GenericProposalEngine.Vote<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
+            let result : ?ExtendedProposalEngine.Vote<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) {
                     let proposalId = 0; // TODO better way?
                     let vote = mysteriousStructure.proposalEngine.getVote(proposalId, voterId);
@@ -114,9 +114,9 @@ module {
             };
         };
 
-        public func getVoteSummary(scenarioId : Nat) : Result.Result<GenericProposalEngine.VotingSummary<Scenario.ScenarioChoiceKind>, { #scenarioNotFound }> {
+        public func getVoteSummary(scenarioId : Nat) : Result.Result<ExtendedProposalEngine.VotingSummary<Scenario.ScenarioChoiceKind>, { #scenarioNotFound }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let summary : GenericProposalEngine.VotingSummary<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
+            let summary : ExtendedProposalEngine.VotingSummary<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) {
                     let proposalId = 0; // TODO better way?
                     let summary = mysteriousStructure.proposalEngine.getVoteSummary(proposalId);
@@ -126,8 +126,8 @@ module {
                         |> Iter.map(
                             _,
                             func(
-                                choice : GenericProposalEngine.ChoiceVotingPower<MysteriousStructureScenario.Choice>
-                            ) : GenericProposalEngine.ChoiceVotingPower<Scenario.ScenarioChoiceKind> = {
+                                choice : ExtendedProposalEngine.ChoiceVotingPower<MysteriousStructureScenario.Choice>
+                            ) : ExtendedProposalEngine.ChoiceVotingPower<Scenario.ScenarioChoiceKind> = {
                                 choice = #mysteriousStructure(choice.choice);
                                 votingPower = choice.votingPower;
                             },
@@ -139,9 +139,9 @@ module {
             #ok(summary);
         };
 
-        public func vote<system>(scenarioId : Nat, voterId : Principal, choice : Scenario.ScenarioChoiceKind) : async* Result.Result<(), GenericProposalEngine.VoteError or { #scenarioNotFound; #invalidChoice }> {
+        public func vote<system>(scenarioId : Nat, voterId : Principal, choice : Scenario.ScenarioChoiceKind) : async* Result.Result<(), ExtendedProposalEngine.VoteError or { #scenarioNotFound; #invalidChoice }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let result : Result.Result<(), GenericProposalEngine.VoteError> = switch (scenario.kind) {
+            let result : Result.Result<(), ExtendedProposalEngine.VoteError> = switch (scenario.kind) {
                 case (#mysteriousStructure(mysteriousStructure)) {
                     let #mysteriousStructure(mysteriousStructureChoice) = choice else return #err(#invalidChoice);
                     await* mysteriousStructure.proposalEngine.vote<system>(scenarioId, voterId, mysteriousStructureChoice);
@@ -183,7 +183,7 @@ module {
         mysteriousStructure : Scenario.ScenarioData<MysteriousStructureScenario.Choice>
     ) : MutableScenarioData<MysteriousStructureScenario.Choice> {
         {
-            proposalEngine = GenericProposalEngine.ProposalEngine<system, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>(
+            proposalEngine = ExtendedProposalEngine.ProposalEngine<system, MysteriousStructureScenario.ProposalContent, MysteriousStructureScenario.Choice>(
                 {
                     proposals = [mysteriousStructure.proposal];
                     proposalDuration = null;
