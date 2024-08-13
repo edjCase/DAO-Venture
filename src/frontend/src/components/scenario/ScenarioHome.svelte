@@ -15,12 +15,6 @@
 
     $: activeScenariosWithVotingStatus = scenarios?.map((scenario) => {
         let votingStatus: string;
-        if ('mysteriousStructure' in scenario.kind ){
-            scenario.kind.mysteriousStructure.proposal.votes[0][1].choice[0]!.
-        } else 
-        {
-            throw new Error("Unimplemented scenario kind:", scenario.kind);
-        }
         let vote = scenario.[Number(scenario.id)];
         if (vote === undefined) {
             votingStatus = "Ineligible to vote";

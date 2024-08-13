@@ -104,7 +104,7 @@ export const idlFactory = ({ IDL }) => {
   const GetUsersRequest = IDL.Variant({ 'all' : IDL.Null });
   const GetUsersResult = IDL.Variant({ 'ok' : IDL.Vec(User) });
   const LocationKind = IDL.Variant({
-    'scenario' : Scenario,
+    'scenario' : IDL.Nat,
     'unexplored' : IDL.Null,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });

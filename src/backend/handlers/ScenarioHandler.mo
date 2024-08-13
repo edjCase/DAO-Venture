@@ -21,6 +21,8 @@ import OutcomeHandler "OutcomeHandler";
 import CharacterHandler "CharacterHandler";
 
 module {
+    type Prng = PseudoRandomX.PseudoRandomGenerator;
+
     public type StableData = {
         scenarios : [ScenarioData];
     };
@@ -69,6 +71,13 @@ module {
                 },
             );
             scenarioId;
+        };
+
+        public func generateAndStart(prng : Prng) : Nat {
+            // TODO
+            let turn = 0;
+            let kind = #mysteriousStructure(MysteriousStructure.generate(prng));
+            start(turn, kind);
         };
 
         public func get(scenarioId : Nat) : ?Scenario.Scenario {

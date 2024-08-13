@@ -1,5 +1,4 @@
 import HexGrid "HexGrid";
-import Scenario "Scenario";
 
 module {
     public type Location = {
@@ -10,6 +9,6 @@ module {
 
     public type LocationKind = {
         #unexplored;
-        #scenario : Scenario.Scenario;
+        #scenario : Nat;
     };
 };

@@ -1,7 +1,6 @@
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Random "mo:base/Random";
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
 import Bool "mo:base/Bool";
@@ -127,14 +126,11 @@ actor MainActor : Types.Actor {
     public shared ({ caller }) func intializeWorld() : async Result.Result<(), Types.InitializeWorldError> {
         let null = worldHandlerOrNull else return #err(#alreadyInitialized);
 
-        let seedBlob = await Random.blob();
-        let prng = PseudoRandomX.fromBlob(seedBlob, #xorshift32);
-
         let worldRadius = 20;
         let newWorld : WorldHandler.StableData = {
             turn = 0;
             progenitor = caller;
-            locations = WorldGenerator.generateWorld(prng, worldRadius);
+            locations = WorldGenerator.generateWorld(worldRadius);
             daoResources = {
                 gold = 0;
                 wood = 0;

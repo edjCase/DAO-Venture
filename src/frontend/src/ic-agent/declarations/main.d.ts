@@ -56,7 +56,7 @@ export interface Location {
   'kind' : LocationKind,
   'coordinate' : AxialCoordinate,
 }
-export type LocationKind = { 'scenario' : Scenario } |
+export type LocationKind = { 'scenario' : bigint } |
   { 'unexplored' : null };
 export interface MotionContent { 'title' : string, 'description' : string }
 export interface Outcome {
