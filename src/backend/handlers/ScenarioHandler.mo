@@ -8,6 +8,7 @@ import Iter "mo:base/Iter";
 import Order "mo:base/Order";
 import Random "mo:base/Random";
 import Error "mo:base/Error";
+import Option "mo:base/Option";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import MysteriousStructureScenario "../scenarios/MysteriousStructure";
 import Scenario "../models/Scenario";
@@ -15,6 +16,8 @@ import CommonTypes "../CommonTypes";
 import IterTools "mo:itertools/Iter";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import MysteriousStructure "../scenarios/MysteriousStructure";
+import OutcomeHandler "OutcomeHandler";
+import CharacterHandler "CharacterHandler";
 
 module {
     public type StableData = {
@@ -22,7 +25,8 @@ module {
     };
 
     public class Handler<system>(
-        data : StableData
+        data : StableData,
+        characterHandler : CharacterHandler.Handler,
     ) {
         let votingThreshold = #percent({ percent = 50; quorum = ?20 });
         let scenarios = data.scenarios.vals()
@@ -149,8 +153,8 @@ module {
                     );
                     switch (voteResult) {
                         case (#ok(ok)) {
-                            let outcome = switch (ok.choiceStatus) {
-                                case (#determined(choice)) {
+                            switch (ok.choiceStatus) {
+                                case (#determined(choiceOrUndecided)) {
                                     let randomBlob = label l : Blob loop {
                                         try {
                                             let blob = await Random.blob();
@@ -161,9 +165,11 @@ module {
                                         };
                                     };
                                     let prng = PseudoRandomX.fromBlob(randomBlob, #xorshift32);
-                                    ?MysteriousStructure.getOutcome(prng, choice);
+                                    let outcomeHandler = OutcomeHandler.Handler(prng, characterHandler);
+                                    let choice = Option.get(choiceOrUndecided, #skip); // TODO random?
+                                    MysteriousStructure.processOutcome(prng, outcomeHandler, choice);
                                 };
-                                case (#undetermined) null;
+                                case (#undetermined) ();
                             };
                             scenarios.put(
                                 scenarioId,
@@ -172,7 +178,6 @@ module {
                                     kind = #mysteriousStructure({
                                         mysteriousStructure with
                                         proposal = ok.updatedProposal;
-                                        outcome = outcome;
                                     });
                                 },
                             );

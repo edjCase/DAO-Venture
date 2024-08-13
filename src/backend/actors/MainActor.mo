@@ -20,6 +20,7 @@ import WorldGenerator "../WorldGenerator";
 import WorldHandler "../handlers/WorldHandler";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import CommonTypes "../CommonTypes";
+import CharacterHandler "../handlers/CharacterHandler";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -36,6 +37,16 @@ actor MainActor : Types.Actor {
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
     };
+
+    stable var characterStableData : CharacterHandler.StableData = {
+        character = {
+            gold = 0;
+            health = 100;
+            traits = [];
+            items = [];
+        };
+    };
+
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
         proposalDuration = ? #days(3);
         proposals = [];
@@ -56,7 +67,9 @@ actor MainActor : Types.Actor {
         case (?worldStableData) ?WorldHandler.Handler(worldStableData);
     };
 
-    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData);
+    var characterHandler = CharacterHandler.Handler(characterStableData);
+
+    var scenarioHandler = ScenarioHandler.Handler<system>(scenarioStableData, characterHandler);
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
@@ -83,6 +96,7 @@ actor MainActor : Types.Actor {
     // System Methods ---------------------------------------------------------
 
     system func preupgrade() {
+        characterStableData := characterHandler.toStableData();
         scenarioStableData := scenarioHandler.toStableData();
         worldDaoStableData := worldDao.toStableData();
         userStableData := userHandler.toStableData();
@@ -93,7 +107,8 @@ actor MainActor : Types.Actor {
     };
 
     system func postupgrade() {
-        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData);
+        characterHandler := CharacterHandler.Handler(characterStableData);
+        scenarioHandler := ScenarioHandler.Handler<system>(scenarioStableData, characterHandler);
         worldDao := ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
             worldDaoStableData,
             onWorldProposalExecute,

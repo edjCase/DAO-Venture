@@ -3,7 +3,10 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
-export type Choice = {};
+export type Choice = { 'forcefulEntry' : null } |
+  { 'skip' : null } |
+  { 'secretEntrance' : null } |
+  { 'sacrifice' : null };
 export interface ChoiceVotingPower {
   'votingPower' : bigint,
   'choice' : ScenarioChoiceKind,
@@ -48,11 +51,25 @@ export type GetWorldResult = { 'ok' : World } |
 export type InitializeWorldError = { 'alreadyInitialized' : null };
 export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null };
-export type LocationKind = { 'resource' : ResourceLocation } |
-  { 'town' : TownLocation } |
+export interface Location {
+  'id' : bigint,
+  'kind' : LocationKind,
+  'coordinate' : AxialCoordinate,
+}
+export interface LocationData {
+  'size' : string,
+  'unusualFeature' : string,
+  'structureName' : string,
+  'material' : string,
+  'condition' : string,
+}
+export type LocationKind = { 'mysteriousStructure' : LocationData } |
   { 'unexplored' : null };
-export interface MetaData { 'structureName' : string }
 export interface MotionContent { 'title' : string, 'description' : string }
+export interface Outcome {
+  'description' : Array<string>,
+  'choice' : [] | [Choice],
+}
 export interface PagedResult {
   'data' : Array<WorldProposal>,
   'count' : bigint,
@@ -71,12 +88,11 @@ export interface Proposal {
   'content' : ProposalContent__1,
   'timeStart' : bigint,
   'votes' : Array<[Principal, Vote_1]>,
-  'endTimerId' : [] | [bigint],
   'timeEnd' : [] | [bigint],
   'proposerId' : Principal,
 }
 export type ProposalContent = { 'motion' : MotionContent };
-export type ProposalContent__1 = {};
+export interface ProposalContent__1 { 'locationId' : bigint }
 export type ProposalStatus = {
     'failedToExecute' : {
       'executingTime' : Time,
@@ -111,17 +127,6 @@ export type ProposalStatus_1 = {
       'executedTime' : Time,
     }
   };
-export type ResourceKind = { 'food' : null } |
-  { 'gold' : null } |
-  { 'wood' : null } |
-  { 'stone' : null };
-export interface ResourceLocation {
-  'kind' : ResourceKind,
-  'rarity' : ResourceRarity,
-}
-export type ResourceRarity = { 'rare' : null } |
-  { 'common' : null } |
-  { 'uncommon' : null };
 export type Result = { 'ok' : null } |
   { 'err' : JoinWorldError };
 export type Result_1 = { 'ok' : null } |
@@ -132,7 +137,10 @@ export interface Scenario {
   'turn' : bigint,
 }
 export type ScenarioChoiceKind = { 'mysteriousStructure' : Choice };
-export interface ScenarioData { 'metaData' : MetaData, 'proposal' : Proposal }
+export interface ScenarioData {
+  'proposal' : Proposal,
+  'outcome' : [] | [Outcome],
+}
 export type ScenarioKind = { 'mysteriousStructure' : ScenarioData };
 export interface ScenarioVote {
   'votingPowerByChoice' : Array<ChoiceVotingPower>,
@@ -145,7 +153,6 @@ export interface ScenarioVoteChoice {
   'choice' : [] | [ScenarioChoiceKind],
 }
 export type Time = bigint;
-export interface TownLocation { 'townId' : bigint }
 export interface User {
   'id' : Principal,
   'inWorldSince' : Time,
@@ -181,18 +188,12 @@ export interface World {
   'progenitor' : Principal,
   'locations' : Array<Location>,
 }
-export interface Location {
-  'id' : bigint,
-  'kind' : LocationKind,
-  'coordinate' : AxialCoordinate,
-}
 export interface WorldProposal {
   'id' : bigint,
   'status' : ProposalStatus,
   'content' : ProposalContent,
   'timeStart' : bigint,
   'votes' : Array<[Principal, Vote]>,
-  'endTimerId' : [] | [bigint],
   'timeEnd' : [] | [bigint],
   'proposerId' : Principal,
 }

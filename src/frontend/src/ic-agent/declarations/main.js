@@ -16,9 +16,13 @@ export const idlFactory = ({ IDL }) => {
     'count' : IDL.Nat,
     'offset' : IDL.Nat,
   });
-  const MetaData = IDL.Record({ 'structureName' : IDL.Text });
   const Time = IDL.Int;
-  const Choice = IDL.Record({});
+  const Choice = IDL.Variant({
+    'forcefulEntry' : IDL.Null,
+    'skip' : IDL.Null,
+    'secretEntrance' : IDL.Null,
+    'sacrifice' : IDL.Null,
+  });
   const ProposalStatus_1 = IDL.Variant({
     'failedToExecute' : IDL.Record({
       'executingTime' : Time,
@@ -37,7 +41,7 @@ export const idlFactory = ({ IDL }) => {
       'executedTime' : Time,
     }),
   });
-  const ProposalContent__1 = IDL.Record({});
+  const ProposalContent__1 = IDL.Record({ 'locationId' : IDL.Nat });
   const Vote_1 = IDL.Record({
     'votingPower' : IDL.Nat,
     'choice' : IDL.Opt(Choice),
@@ -48,13 +52,16 @@ export const idlFactory = ({ IDL }) => {
     'content' : ProposalContent__1,
     'timeStart' : IDL.Int,
     'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote_1)),
-    'endTimerId' : IDL.Opt(IDL.Nat),
     'timeEnd' : IDL.Opt(IDL.Int),
     'proposerId' : IDL.Principal,
   });
+  const Outcome = IDL.Record({
+    'description' : IDL.Vec(IDL.Text),
+    'choice' : IDL.Opt(Choice),
+  });
   const ScenarioData = IDL.Record({
-    'metaData' : MetaData,
     'proposal' : Proposal,
+    'outcome' : IDL.Opt(Outcome),
   });
   const ScenarioKind = IDL.Variant({ 'mysteriousStructure' : ScenarioData });
   const Scenario = IDL.Record({
@@ -131,25 +138,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetUsersRequest = IDL.Variant({ 'all' : IDL.Null });
   const GetUsersResult = IDL.Variant({ 'ok' : IDL.Vec(User) });
-  const ResourceKind = IDL.Variant({
-    'food' : IDL.Null,
-    'gold' : IDL.Null,
-    'wood' : IDL.Null,
-    'stone' : IDL.Null,
+  const LocationData = IDL.Record({
+    'size' : IDL.Text,
+    'unusualFeature' : IDL.Text,
+    'structureName' : IDL.Text,
+    'material' : IDL.Text,
+    'condition' : IDL.Text,
   });
-  const ResourceRarity = IDL.Variant({
-    'rare' : IDL.Null,
-    'common' : IDL.Null,
-    'uncommon' : IDL.Null,
-  });
-  const ResourceLocation = IDL.Record({
-    'kind' : ResourceKind,
-    'rarity' : ResourceRarity,
-  });
-  const TownLocation = IDL.Record({ 'townId' : IDL.Nat });
   const LocationKind = IDL.Variant({
-    'resource' : ResourceLocation,
-    'town' : TownLocation,
+    'mysteriousStructure' : LocationData,
     'unexplored' : IDL.Null,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
@@ -194,7 +191,6 @@ export const idlFactory = ({ IDL }) => {
     'content' : ProposalContent,
     'timeStart' : IDL.Int,
     'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote)),
-    'endTimerId' : IDL.Opt(IDL.Nat),
     'timeEnd' : IDL.Opt(IDL.Int),
     'proposerId' : IDL.Principal,
   });
