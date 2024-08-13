@@ -16,19 +16,7 @@ export interface Data {
   'material' : string,
   'condition' : string,
 }
-export interface GetAllScenariosRequest { 'count' : bigint, 'offset' : bigint }
-export interface GetAllScenariosResult {
-  'data' : Array<Scenario>,
-  'count' : bigint,
-  'totalCount' : bigint,
-  'offset' : bigint,
-}
-export type GetScenarioError = { 'notStarted' : null } |
-  { 'notFound' : null };
-export type GetScenarioResult = { 'ok' : Scenario } |
-  { 'err' : GetScenarioError };
-export type GetScenarioVoteError = { 'notEligible' : null } |
-  { 'scenarioNotFound' : null };
+export type GetScenarioVoteError = { 'scenarioNotFound' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
 export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
   { 'err' : GetScenarioVoteError };
@@ -99,11 +87,16 @@ export type Result_1 = { 'ok' : null } |
   { 'err' : InitializeWorldError };
 export interface Scenario {
   'id' : bigint,
+  'title' : string,
+  'voteData' : ScenarioVote,
   'kind' : ScenarioKind,
   'turn' : bigint,
+  'description' : string,
   'outcome' : [] | [Outcome],
+  'options' : Array<ScenarioOption>,
 }
 export type ScenarioKind = { 'mysteriousStructure' : Data };
+export interface ScenarioOption { 'id' : string, 'description' : string }
 export interface ScenarioVote {
   'votingPowerByChoice' : Array<ChoiceVotingPower>,
   'undecidedVotingPower' : bigint,
@@ -163,12 +156,8 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
-  'getAllScenarios' : ActorMethod<
-    [GetAllScenariosRequest],
-    GetAllScenariosResult
-  >,
   'getProgenitor' : ActorMethod<[], [] | [Principal]>,
-  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
+  'getScenario' : ActorMethod<[bigint], [] | [Scenario]>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
     GetScenarioVoteResult

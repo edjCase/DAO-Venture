@@ -8,14 +8,14 @@ import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import Location "../models/Location";
+import Outcome "../models/Outcome";
 
 module {
     public type Actor = actor {
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
         getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
-        getScenario : query (Nat) -> async GetScenarioResult;
-        getAllScenarios : query (request : GetAllScenariosRequest) -> async GetAllScenariosResult;
+        getScenario : query (id : Nat) -> async ?Scenario;
         voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
@@ -32,6 +32,22 @@ module {
 
         intializeWorld : () -> async Result.Result<(), InitializeWorldError>;
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
+    };
+
+    public type Scenario = {
+        id : Nat;
+        turn : Nat;
+        kind : Scenario.ScenarioKind;
+        outcome : ?Outcome.Outcome;
+        title : Text;
+        description : Text;
+        options : [ScenarioOption];
+        voteData : ScenarioVote;
+    };
+
+    public type ScenarioOption = {
+        id : Text;
+        description : Text;
     };
 
     public type InitializeWorldError = {
@@ -72,7 +88,6 @@ module {
 
     public type GetScenarioVoteError = {
         #scenarioNotFound;
-        #notEligible;
     };
 
     public type ScenarioVote = {
@@ -121,20 +136,6 @@ module {
         #proposalNotFound;
         #alreadyVoted;
         #votingClosed;
-    };
-
-    public type GetScenarioError = {
-        #notFound;
-        #notStarted;
-    };
-
-    public type GetScenarioResult = Result.Result<Scenario.Scenario, GetScenarioError>;
-
-    public type GetAllScenariosResult = CommonTypes.PagedResult<Scenario.Scenario>;
-
-    public type GetAllScenariosRequest = {
-        count : Nat;
-        offset : Nat;
     };
 
     public type GetTopUsersRequest = {

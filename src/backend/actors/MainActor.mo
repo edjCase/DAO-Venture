@@ -20,6 +20,7 @@ import WorldHandler "../handlers/WorldHandler";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import CommonTypes "../CommonTypes";
 import CharacterHandler "../handlers/CharacterHandler";
+import MysteriousStructure "../scenarios/MysteriousStructure";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -197,31 +198,31 @@ actor MainActor : Types.Actor {
         await* worldDao.vote(request.proposalId, caller, request.vote);
     };
 
-    public query func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
-        let ?scenario = scenarioHandler.get(scenarioId) else return #err(#notFound);
-        #ok(scenario);
-    };
-
-    public query func getAllScenarios(request : Types.GetAllScenariosRequest) : async Types.GetAllScenariosResult {
-        scenarioHandler.getAll(request.count, request.offset);
+    public query ({ caller }) func getScenario(scenarioId : Nat) : async ?Types.Scenario {
+        let ?scenario = scenarioHandler.get(scenarioId) else return null;
+        let (title, description, options) = switch (scenario.kind) {
+            case (#mysteriousStructure(mysteriousStructure)) {
+                let title = MysteriousStructure.getTitle();
+                let description = MysteriousStructure.getDescription(mysteriousStructure);
+                let options = MysteriousStructure.getOptions();
+                (title, description, options);
+            };
+        };
+        let voteData = switch (getScenarioVoteInternal(caller, scenarioId)) {
+            case (#ok(voteData)) voteData;
+            case (#err(#scenarioNotFound)) Prelude.unreachable();
+        };
+        ?{
+            scenario with
+            title = title;
+            description = description;
+            options = options;
+            voteData = voteData;
+        };
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
-        let vote = switch (scenarioHandler.getVote(request.scenarioId, caller)) {
-            case (#ok(vote)) ?vote;
-            case (#err(#notEligible)) null;
-            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
-        };
-        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (scenarioHandler.getVoteSummary(request.scenarioId)) {
-            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
-            case (#ok(summary)) summary;
-        };
-        #ok({
-            yourVote = vote;
-            totalVotingPower = totalVotingPower;
-            undecidedVotingPower = undecidedVotingPower;
-            votingPowerByChoice = votingPowerByChoice;
-        });
+        getScenarioVoteInternal(caller, request.scenarioId);
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
@@ -266,6 +267,24 @@ actor MainActor : Types.Actor {
     };
 
     // Private Methods ---------------------------------------------------------
+
+    private func getScenarioVoteInternal(voterId : Principal, scenarioId : Nat) : Types.GetScenarioVoteResult {
+        let vote = switch (scenarioHandler.getVote(scenarioId, voterId)) {
+            case (#ok(vote)) ?vote;
+            case (#err(#notEligible)) null;
+            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
+        };
+        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (scenarioHandler.getVoteSummary(scenarioId)) {
+            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
+            case (#ok(summary)) summary;
+        };
+        #ok({
+            yourVote = vote;
+            totalVotingPower = totalVotingPower;
+            undecidedVotingPower = undecidedVotingPower;
+            votingPowerByChoice = votingPowerByChoice;
+        });
+    };
 
     private func calculateVotingPower(user : UserHandler.User) : Nat {
         let basePower : Nat = 10;

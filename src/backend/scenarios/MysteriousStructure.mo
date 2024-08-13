@@ -46,6 +46,41 @@ module {
         };
     };
 
+    public func getTitle() : Text {
+        "Mysterious Structure";
+    };
+
+    public func getDescription(data : Data) : Text {
+        Text.join(
+            " ",
+            [
+                "You come across a",
+                data.size,
+                data.material,
+                data.condition,
+                data.structureName,
+                "with an unusual feature that",
+                data.unusualFeature,
+                ".",
+            ].vals(),
+        );
+    };
+
+    public func getOptions() : [{ id : Text; description : Text }] {
+        [
+            { id = "skip"; description = getChoiceDescription(#skip) },
+            {
+                id = "forcefulEntry";
+                description = getChoiceDescription(#forcefulEntry);
+            },
+            { id = "sacrifice"; description = getChoiceDescription(#sacrifice) },
+            {
+                id = "secretEntrance";
+                description = getChoiceDescription(#secretEntrance);
+            },
+        ];
+    };
+
     public func processOutcome(
         prng : Prng,
         outcomeProcessor : Outcome.Processor,

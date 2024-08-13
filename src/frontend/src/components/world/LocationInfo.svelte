@@ -1,7 +1,6 @@
 <script lang="ts">
     import { worldStore } from "../../stores/WorldStore";
     import { toJsonString } from "../../utils/StringUtil";
-    import ResourceLocationInfo from "./ResourceLocationInfo.svelte";
 
     export let locationId: bigint;
 
@@ -15,13 +14,8 @@
         <div class="text-center text-3xl">
             Tile {locationId}
 
-            {#if "town" in location.kind}
-                <div></div>
-            {:else if "resource" in location.kind}
-                <ResourceLocationInfo
-                    kind={location.kind.resource.kind}
-                    rarity={location.kind.resource.rarity}
-                />
+            {#if "scenario" in location.kind}
+                <div>Scenario: {location.kind.scenario}</div>
             {:else if "unexplored" in location.kind}
                 <div>Unexplored</div>
             {:else}

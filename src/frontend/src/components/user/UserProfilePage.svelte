@@ -1,16 +1,11 @@
 <script lang="ts">
     import LoginButton from "../../components/common/LoginButton.svelte";
     import { userStore } from "../../stores/UserStore";
-    import { townStore } from "../../stores/TownStore";
     import UserPseudonym from "./UserPseudonym.svelte";
-    import TownFlag from "../town/TownFlag.svelte";
     import UserIdCopyButton from "./UserIdCopyButton.svelte";
     import { nanosecondsToDate } from "../../utils/DateUtils";
 
     $: user = $userStore;
-    $: towns = $townStore;
-
-    $: town = towns?.find((t) => t.id == user?.worldData?.townId);
 </script>
 
 <div class="bg-gray-800 p-4">
@@ -35,18 +30,6 @@
             </div>
             {#if user.worldData !== undefined}
                 <div class="mb-4">
-                    <div class="font-bold text-xl mb-2">Town</div>
-                    {#if town}
-                        <TownFlag {town} size="md" />
-                        <div class="text-center">{town.name}</div>
-                        <div class="text-center text-sm text-gray-400">
-                            Joined Town: {nanosecondsToDate(
-                                user.worldData.atTownSince,
-                            )}
-                        </div>
-                    {:else}
-                        <div>None</div>
-                    {/if}
                     <div>
                         Joined World: {nanosecondsToDate(
                             user.worldData.inWorldSince,

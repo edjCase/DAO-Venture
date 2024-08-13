@@ -12,43 +12,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
   });
-  const GetAllScenariosRequest = IDL.Record({
-    'count' : IDL.Nat,
-    'offset' : IDL.Nat,
-  });
-  const Data = IDL.Record({
-    'size' : IDL.Text,
-    'unusualFeature' : IDL.Text,
-    'structureName' : IDL.Text,
-    'material' : IDL.Text,
-    'condition' : IDL.Text,
-  });
-  const ScenarioKind = IDL.Variant({ 'mysteriousStructure' : Data });
-  const Outcome = IDL.Record({
-    'messages' : IDL.Vec(IDL.Text),
-    'choice' : IDL.Opt(IDL.Text),
-  });
-  const Scenario = IDL.Record({
-    'id' : IDL.Nat,
-    'kind' : ScenarioKind,
-    'turn' : IDL.Nat,
-    'outcome' : IDL.Opt(Outcome),
-  });
-  const GetAllScenariosResult = IDL.Record({
-    'data' : IDL.Vec(Scenario),
-    'count' : IDL.Nat,
-    'totalCount' : IDL.Nat,
-    'offset' : IDL.Nat,
-  });
-  const GetScenarioError = IDL.Variant({
-    'notStarted' : IDL.Null,
-    'notFound' : IDL.Null,
-  });
-  const GetScenarioResult = IDL.Variant({
-    'ok' : Scenario,
-    'err' : GetScenarioError,
-  });
-  const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
   const ChoiceVotingPower = IDL.Record({
     'votingPower' : IDL.Nat,
     'choice' : IDL.Text,
@@ -63,10 +26,34 @@ export const idlFactory = ({ IDL }) => {
     'totalVotingPower' : IDL.Nat,
     'yourVote' : IDL.Opt(ScenarioVoteChoice),
   });
-  const GetScenarioVoteError = IDL.Variant({
-    'notEligible' : IDL.Null,
-    'scenarioNotFound' : IDL.Null,
+  const Data = IDL.Record({
+    'size' : IDL.Text,
+    'unusualFeature' : IDL.Text,
+    'structureName' : IDL.Text,
+    'material' : IDL.Text,
+    'condition' : IDL.Text,
   });
+  const ScenarioKind = IDL.Variant({ 'mysteriousStructure' : Data });
+  const Outcome = IDL.Record({
+    'messages' : IDL.Vec(IDL.Text),
+    'choice' : IDL.Opt(IDL.Text),
+  });
+  const ScenarioOption = IDL.Record({
+    'id' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Scenario = IDL.Record({
+    'id' : IDL.Nat,
+    'title' : IDL.Text,
+    'voteData' : ScenarioVote,
+    'kind' : ScenarioKind,
+    'turn' : IDL.Nat,
+    'description' : IDL.Text,
+    'outcome' : IDL.Opt(Outcome),
+    'options' : IDL.Vec(ScenarioOption),
+  });
+  const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
+  const GetScenarioVoteError = IDL.Variant({ 'scenarioNotFound' : IDL.Null });
   const GetScenarioVoteResult = IDL.Variant({
     'ok' : ScenarioVote,
     'err' : GetScenarioVoteError,
@@ -209,13 +196,8 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
-    'getAllScenarios' : IDL.Func(
-        [GetAllScenariosRequest],
-        [GetAllScenariosResult],
-        ['query'],
-      ),
     'getProgenitor' : IDL.Func([], [IDL.Opt(IDL.Principal)], ['query']),
-    'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
+    'getScenario' : IDL.Func([IDL.Nat], [IDL.Opt(Scenario)], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
         [GetScenarioVoteResult],
