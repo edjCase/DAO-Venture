@@ -16,58 +16,23 @@ export const idlFactory = ({ IDL }) => {
     'count' : IDL.Nat,
     'offset' : IDL.Nat,
   });
-  const Time = IDL.Int;
-  const Choice = IDL.Variant({
-    'forcefulEntry' : IDL.Null,
-    'skip' : IDL.Null,
-    'secretEntrance' : IDL.Null,
-    'sacrifice' : IDL.Null,
+  const Data = IDL.Record({
+    'size' : IDL.Text,
+    'unusualFeature' : IDL.Text,
+    'structureName' : IDL.Text,
+    'material' : IDL.Text,
+    'condition' : IDL.Text,
   });
-  const ProposalStatus_1 = IDL.Variant({
-    'failedToExecute' : IDL.Record({
-      'executingTime' : Time,
-      'error' : IDL.Text,
-      'failedTime' : Time,
-      'choice' : IDL.Opt(Choice),
-    }),
-    'open' : IDL.Null,
-    'executing' : IDL.Record({
-      'executingTime' : Time,
-      'choice' : IDL.Opt(Choice),
-    }),
-    'executed' : IDL.Record({
-      'executingTime' : Time,
-      'choice' : IDL.Opt(Choice),
-      'executedTime' : Time,
-    }),
-  });
-  const ProposalContent__1 = IDL.Record({ 'locationId' : IDL.Nat });
-  const Vote_1 = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'choice' : IDL.Opt(Choice),
-  });
-  const Proposal = IDL.Record({
-    'id' : IDL.Nat,
-    'status' : ProposalStatus_1,
-    'content' : ProposalContent__1,
-    'timeStart' : IDL.Int,
-    'votes' : IDL.Vec(IDL.Tuple(IDL.Principal, Vote_1)),
-    'timeEnd' : IDL.Opt(IDL.Int),
-    'proposerId' : IDL.Principal,
-  });
+  const ScenarioKind = IDL.Variant({ 'mysteriousStructure' : Data });
   const Outcome = IDL.Record({
-    'description' : IDL.Vec(IDL.Text),
-    'choice' : IDL.Opt(Choice),
+    'messages' : IDL.Vec(IDL.Text),
+    'choice' : IDL.Opt(IDL.Text),
   });
-  const ScenarioData = IDL.Record({
-    'proposal' : Proposal,
-    'outcome' : IDL.Opt(Outcome),
-  });
-  const ScenarioKind = IDL.Variant({ 'mysteriousStructure' : ScenarioData });
   const Scenario = IDL.Record({
     'id' : IDL.Nat,
     'kind' : ScenarioKind,
     'turn' : IDL.Nat,
+    'outcome' : IDL.Opt(Outcome),
   });
   const GetAllScenariosResult = IDL.Record({
     'data' : IDL.Vec(Scenario),
@@ -84,14 +49,13 @@ export const idlFactory = ({ IDL }) => {
     'err' : GetScenarioError,
   });
   const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
-  const ScenarioChoiceKind = IDL.Variant({ 'mysteriousStructure' : Choice });
   const ChoiceVotingPower = IDL.Record({
     'votingPower' : IDL.Nat,
-    'choice' : ScenarioChoiceKind,
+    'choice' : IDL.Text,
   });
   const ScenarioVoteChoice = IDL.Record({
     'votingPower' : IDL.Nat,
-    'choice' : IDL.Opt(ScenarioChoiceKind),
+    'choice' : IDL.Opt(IDL.Text),
   });
   const ScenarioVote = IDL.Record({
     'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower),
@@ -111,6 +75,7 @@ export const idlFactory = ({ IDL }) => {
     'count' : IDL.Nat,
     'offset' : IDL.Nat,
   });
+  const Time = IDL.Int;
   const User = IDL.Record({
     'id' : IDL.Principal,
     'inWorldSince' : Time,
@@ -138,15 +103,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetUsersRequest = IDL.Variant({ 'all' : IDL.Null });
   const GetUsersResult = IDL.Variant({ 'ok' : IDL.Vec(User) });
-  const LocationData = IDL.Record({
-    'size' : IDL.Text,
-    'unusualFeature' : IDL.Text,
-    'structureName' : IDL.Text,
-    'material' : IDL.Text,
-    'condition' : IDL.Text,
-  });
   const LocationKind = IDL.Variant({
-    'mysteriousStructure' : LocationData,
+    'scenario' : Scenario,
     'unexplored' : IDL.Null,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
@@ -217,7 +175,7 @@ export const idlFactory = ({ IDL }) => {
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinWorldError });
   const VoteOnScenarioRequest = IDL.Record({
     'scenarioId' : IDL.Nat,
-    'value' : ScenarioChoiceKind,
+    'value' : IDL.Text,
   });
   const VoteOnScenarioError = IDL.Variant({
     'proposalNotFound' : IDL.Null,

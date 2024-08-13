@@ -3,19 +3,19 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
-export type Choice = { 'forcefulEntry' : null } |
-  { 'skip' : null } |
-  { 'secretEntrance' : null } |
-  { 'sacrifice' : null };
-export interface ChoiceVotingPower {
-  'votingPower' : bigint,
-  'choice' : ScenarioChoiceKind,
-}
+export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
 export type CreateWorldProposalError = { 'notAuthorized' : null } |
   { 'invalid' : Array<string> };
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
+export interface Data {
+  'size' : string,
+  'unusualFeature' : string,
+  'structureName' : string,
+  'material' : string,
+  'condition' : string,
+}
 export interface GetAllScenariosRequest { 'count' : bigint, 'offset' : bigint }
 export interface GetAllScenariosResult {
   'data' : Array<Scenario>,
@@ -56,19 +56,12 @@ export interface Location {
   'kind' : LocationKind,
   'coordinate' : AxialCoordinate,
 }
-export interface LocationData {
-  'size' : string,
-  'unusualFeature' : string,
-  'structureName' : string,
-  'material' : string,
-  'condition' : string,
-}
-export type LocationKind = { 'mysteriousStructure' : LocationData } |
+export type LocationKind = { 'scenario' : Scenario } |
   { 'unexplored' : null };
 export interface MotionContent { 'title' : string, 'description' : string }
 export interface Outcome {
-  'description' : Array<string>,
-  'choice' : [] | [Choice],
+  'messages' : Array<string>,
+  'choice' : [] | [string],
 }
 export interface PagedResult {
   'data' : Array<WorldProposal>,
@@ -82,17 +75,7 @@ export interface PagedResult_1 {
   'totalCount' : bigint,
   'offset' : bigint,
 }
-export interface Proposal {
-  'id' : bigint,
-  'status' : ProposalStatus_1,
-  'content' : ProposalContent__1,
-  'timeStart' : bigint,
-  'votes' : Array<[Principal, Vote_1]>,
-  'timeEnd' : [] | [bigint],
-  'proposerId' : Principal,
-}
 export type ProposalContent = { 'motion' : MotionContent };
-export interface ProposalContent__1 { 'locationId' : bigint }
 export type ProposalStatus = {
     'failedToExecute' : {
       'executingTime' : Time,
@@ -110,23 +93,6 @@ export type ProposalStatus = {
       'executedTime' : Time,
     }
   };
-export type ProposalStatus_1 = {
-    'failedToExecute' : {
-      'executingTime' : Time,
-      'error' : string,
-      'failedTime' : Time,
-      'choice' : [] | [Choice],
-    }
-  } |
-  { 'open' : null } |
-  { 'executing' : { 'executingTime' : Time, 'choice' : [] | [Choice] } } |
-  {
-    'executed' : {
-      'executingTime' : Time,
-      'choice' : [] | [Choice],
-      'executedTime' : Time,
-    }
-  };
 export type Result = { 'ok' : null } |
   { 'err' : JoinWorldError };
 export type Result_1 = { 'ok' : null } |
@@ -135,13 +101,9 @@ export interface Scenario {
   'id' : bigint,
   'kind' : ScenarioKind,
   'turn' : bigint,
-}
-export type ScenarioChoiceKind = { 'mysteriousStructure' : Choice };
-export interface ScenarioData {
-  'proposal' : Proposal,
   'outcome' : [] | [Outcome],
 }
-export type ScenarioKind = { 'mysteriousStructure' : ScenarioData };
+export type ScenarioKind = { 'mysteriousStructure' : Data };
 export interface ScenarioVote {
   'votingPowerByChoice' : Array<ChoiceVotingPower>,
   'undecidedVotingPower' : bigint,
@@ -150,7 +112,7 @@ export interface ScenarioVote {
 }
 export interface ScenarioVoteChoice {
   'votingPower' : bigint,
-  'choice' : [] | [ScenarioChoiceKind],
+  'choice' : [] | [string],
 }
 export type Time = bigint;
 export interface User {
@@ -168,7 +130,7 @@ export type VoteOnScenarioError = { 'proposalNotFound' : null } |
   { 'scenarioNotFound' : null };
 export interface VoteOnScenarioRequest {
   'scenarioId' : bigint,
-  'value' : ScenarioChoiceKind,
+  'value' : string,
 }
 export type VoteOnScenarioResult = { 'ok' : null } |
   { 'err' : VoteOnScenarioError };
@@ -182,7 +144,6 @@ export interface VoteOnWorldProposalRequest {
 }
 export type VoteOnWorldProposalResult = { 'ok' : null } |
   { 'err' : VoteOnWorldProposalError };
-export interface Vote_1 { 'votingPower' : bigint, 'choice' : [] | [Choice] }
 export interface World {
   'turn' : bigint,
   'progenitor' : Principal,

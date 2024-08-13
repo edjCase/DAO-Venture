@@ -1,13 +1,11 @@
 import Text "mo:base/Text";
-import Nat "mo:base/Nat";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "../models/Outcome";
-import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type LocationData = {
+    public type Data = {
         structureName : Text;
         size : Text;
         material : Text;
@@ -15,19 +13,21 @@ module {
         unusualFeature : Text;
     };
 
-    public type ProposalContent = {
-        locationId : Nat;
-    };
-
-    public type StableData = LocationData and {
-        proposal : ExtendedProposal.Proposal<ProposalContent, Choice>;
-    };
-
     public type Choice = {
         #skip;
         #forcefulEntry;
         #secretEntrance;
         #sacrifice;
+    };
+
+    public func choiceFromText(text : Text) : ?Choice {
+        switch (text) {
+            case ("skip") ? #skip;
+            case ("forcefulEntry") ? #forcefulEntry;
+            case ("secretEntrance") ? #secretEntrance;
+            case ("sacrifice") ? #sacrifice;
+            case (_) null;
+        };
     };
 
     public func getChoiceRequirement(choice : Choice) : ?Outcome.ChoiceRequirement {
@@ -152,7 +152,7 @@ module {
         Text.join(" ", [prefix, noun, suffix].vals());
     };
 
-    public func generateLocation(prng : Prng) : LocationData {
+    public func generate(prng : Prng) : Data {
         {
             structureName = generateStructureName(prng);
             size = prng.nextArrayElement(sizeOptions);

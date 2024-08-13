@@ -27,7 +27,20 @@ module {
 
     public func generateLocationKind(prng : Prng) : Location.LocationKind {
         switch (prng.nextNat(0, 1)) {
-            case (0) #mysteriousStructure(MysteriousStructure.generateLocation(prng));
+            case (0) {
+                #scenario({
+                    id = 0;
+                    turn = 0;
+                    kind = #mysteriousStructure({
+                        structureName = "Mysterious Structure";
+                        size = "small";
+                        material = "stone";
+                        condition = "good";
+                        unusualFeature = "glowing runes";
+                    });
+                    outcome = null;
+                });
+            };
             case (_) Prelude.unreachable();
         };
     };

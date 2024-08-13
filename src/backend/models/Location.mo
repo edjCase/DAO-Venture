@@ -1,14 +1,15 @@
 import HexGrid "HexGrid";
-import MysteriousStructure "../scenarios/MysteriousStructure";
+import Scenario "Scenario";
+
 module {
     public type Location = {
-        kind : LocationKind;
         id : Nat;
         coordinate : HexGrid.AxialCoordinate;
+        kind : LocationKind;
     };
 
     public type LocationKind = {
         #unexplored;
-        #mysteriousStructure : MysteriousStructure.LocationData;
+        #scenario : Scenario.Scenario;
     };
 };

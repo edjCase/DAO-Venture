@@ -50,5 +50,9 @@ module {
             messages.add("You get " # Nat.toText(amount) # " gold");
             characterHandler.addGold(amount);
         };
+
+        public func getMessages() : [Text] {
+            Buffer.toArray(messages);
+        };
     };
 };

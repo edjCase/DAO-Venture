@@ -4,40 +4,30 @@
     import { scenarioStore } from "../../stores/ScenarioStore";
     import { Link } from "svelte-routing";
 
-    let activeScenarios: Scenario[] = [];
-    let votes: Record<string, VotingData> = {};
+    let scenarios: Scenario[] | undefined;
 
-    scenarioStore.subscribe((scenarios) => {
+    scenarioStore.subscribe((s) => {
         if (scenarios === undefined) {
             return;
         }
-        activeScenarios = scenarios.filter(
-            (scenario) => "inProgress" in scenario.state,
-        );
-        scenarioStore.refetchVotes(activeScenarios.map((s) => s.id));
+        scenarios = s;
     });
 
-    scenarioStore.subscribeVotingData((v) => {
-        votes = v;
-    });
-
-    let activeScenariosWithVotingStatus: (Scenario & {
-        votingStatus: string;
-    })[] = [];
-
-    $: activeScenariosWithVotingStatus = activeScenarios.map((scenario) => {
+    $: activeScenariosWithVotingStatus = scenarios?.map((scenario) => {
         let votingStatus: string;
-        if (Object.keys(votes).length === 0) {
-            votingStatus = "Loading...";
+        if ('mysteriousStructure' in scenario.kind ){
+            scenario.kind.mysteriousStructure.proposal.votes[0][1].choice[0]!.
+        } else 
+        {
+            throw new Error("Unimplemented scenario kind:", scenario.kind);
+        }
+        let vote = scenario.[Number(scenario.id)];
+        if (vote === undefined) {
+            votingStatus = "Ineligible to vote";
+        } else if (vote.yourData[0]?.value.length === 0) {
+            votingStatus = "Not Voted";
         } else {
-            let vote = votes[Number(scenario.id)];
-            if (vote === undefined) {
-                votingStatus = "Ineligible to vote";
-            } else if (vote.yourData[0]?.value.length === 0) {
-                votingStatus = "Not Voted";
-            } else {
-                votingStatus = "Voted";
-            }
+            votingStatus = "Voted";
         }
         return {
             ...scenario,

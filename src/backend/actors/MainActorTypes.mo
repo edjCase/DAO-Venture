@@ -79,11 +79,11 @@ module {
         yourVote : ?ScenarioVoteChoice;
         totalVotingPower : Nat;
         undecidedVotingPower : Nat;
-        votingPowerByChoice : [ExtendedProposalEngine.ChoiceVotingPower<Scenario.ScenarioChoiceKind>];
+        votingPowerByChoice : [ExtendedProposalEngine.ChoiceVotingPower<Text>];
     };
 
     public type ScenarioVoteChoice = {
-        choice : ?Scenario.ScenarioChoiceKind;
+        choice : ?Text;
         votingPower : Nat;
     };
 
@@ -91,7 +91,7 @@ module {
 
     public type VoteOnScenarioRequest = {
         scenarioId : Nat;
-        value : Scenario.ScenarioChoiceKind;
+        value : Text;
     };
 
     public type VoteOnScenarioError = ExtendedProposalEngine.VoteError or {

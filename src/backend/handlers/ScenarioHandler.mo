@@ -9,8 +9,9 @@ import Order "mo:base/Order";
 import Random "mo:base/Random";
 import Error "mo:base/Error";
 import Option "mo:base/Option";
+import Text "mo:base/Text";
+import Time "mo:base/Time";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
-import MysteriousStructureScenario "../scenarios/MysteriousStructure";
 import Scenario "../models/Scenario";
 import CommonTypes "../CommonTypes";
 import IterTools "mo:itertools/Iter";
@@ -21,7 +22,11 @@ import CharacterHandler "CharacterHandler";
 
 module {
     public type StableData = {
-        scenarios : [Scenario.Scenario];
+        scenarios : [ScenarioData];
+    };
+
+    type ScenarioData = Scenario.Scenario and {
+        proposal : ExtendedProposal.Proposal<{}, Text>;
     };
 
     public class Handler<system>(
@@ -30,11 +35,11 @@ module {
     ) {
         let votingThreshold = #percent({ percent = 50; quorum = ?20 });
         let scenarios = data.scenarios.vals()
-        |> Iter.map<Scenario.Scenario, (Nat, Scenario.Scenario)>(
+        |> Iter.map<ScenarioData, (Nat, ScenarioData)>(
             _,
-            func(scenario : Scenario.Scenario) : (Nat, Scenario.Scenario) = (scenario.id, scenario),
+            func(scenario : ScenarioData) : (Nat, ScenarioData) = (scenario.id, scenario),
         )
-        |> HashMap.fromIter<Nat, Scenario.Scenario>(_, data.scenarios.size(), Nat.equal, Nat32.fromNat);
+        |> HashMap.fromIter<Nat, ScenarioData>(_, data.scenarios.size(), Nat.equal, Nat32.fromNat);
 
         public func toStableData() : StableData {
             {
@@ -43,7 +48,7 @@ module {
             };
         };
 
-        public func start<system>(turn : Nat, kind : Scenario.ScenarioKind) : Nat {
+        public func start(turn : Nat, kind : Scenario.ScenarioKind) : Nat {
             let scenarioId = scenarios.size(); // TODO?
             scenarios.put(
                 scenarioId,
@@ -51,6 +56,16 @@ module {
                     id = scenarioId;
                     turn = turn;
                     kind = kind;
+                    proposal = {
+                        id = scenarioId;
+                        proposerId = Principal.fromText("aa-aaaa"); // TODO
+                        timeStart = Time.now();
+                        timeEnd = null;
+                        content = {};
+                        votes = []; // TODO snapshot
+                        status = #open;
+                    };
+                    outcome = null;
                 },
             );
             scenarioId;
@@ -80,113 +95,102 @@ module {
         public func getVote(
             scenarioId : Nat,
             voterId : Principal,
-        ) : Result.Result<ExtendedProposal.Vote<Scenario.ScenarioChoiceKind>, { #scenarioNotFound; #notEligible }> {
+        ) : Result.Result<ExtendedProposal.Vote<Text>, { #scenarioNotFound; #notEligible }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let result : ?ExtendedProposal.Vote<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
-                case (#mysteriousStructure(mysteriousStructure)) {
-                    let vote = ExtendedProposal.getVote(mysteriousStructure.proposal, voterId);
-                    switch (vote) {
-                        case (?v) {
-                            let choice = switch (v.choice) {
-                                case (?choice) ? #mysteriousStructure(choice);
-                                case (null) null;
-                            };
-                            ?{
-                                v with
-                                choice = choice;
-                            };
-                        };
-                        case (null) null;
-                    };
-                };
-            };
-            switch (result) {
-                case (?vote) #ok(vote);
-                case (null) #err(#notEligible);
-            };
+
+            let vote = ExtendedProposal.getVote(scenario.proposal, voterId);
+            let ?v = vote else return #err(#notEligible);
+            #ok(v);
         };
 
-        public func getVoteSummary(scenarioId : Nat) : Result.Result<ExtendedProposal.VotingSummary<Scenario.ScenarioChoiceKind>, { #scenarioNotFound }> {
+        public func getVoteSummary(scenarioId : Nat) : Result.Result<ExtendedProposal.VotingSummary<Text>, { #scenarioNotFound }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            let summary : ExtendedProposal.VotingSummary<Scenario.ScenarioChoiceKind> = switch (scenario.kind) {
-                case (#mysteriousStructure(mysteriousStructure)) {
-                    let summary = ExtendedProposal.buildVotingSummary(
-                        mysteriousStructure.proposal,
-                        MysteriousStructureScenario.equalChoice,
-                        MysteriousStructureScenario.hashChoice,
-                    );
-                    {
-                        summary with
-                        votingPowerByChoice = summary.votingPowerByChoice.vals()
-                        |> Iter.map(
-                            _,
-                            func(
-                                choice : ExtendedProposal.ChoiceVotingPower<MysteriousStructureScenario.Choice>
-                            ) : ExtendedProposal.ChoiceVotingPower<Scenario.ScenarioChoiceKind> = {
-                                choice = #mysteriousStructure(choice.choice);
-                                votingPower = choice.votingPower;
-                            },
-                        )
-                        |> Iter.toArray(_);
-                    };
-                };
-            };
-            #ok(summary);
+            let summary = ExtendedProposal.buildVotingSummary(
+                scenario.proposal,
+                Text.equal,
+                Text.hash,
+            );
+
+            #ok({
+                summary with
+                votingPowerByChoice = summary.votingPowerByChoice
+            });
         };
 
         public func vote(
             scenarioId : Nat,
             voterId : Principal,
-            choice : Scenario.ScenarioChoiceKind,
+            choice : Text,
         ) : async* Result.Result<(), ExtendedProposal.VoteError or { #scenarioNotFound; #invalidChoice }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
-            switch (scenario.kind) {
-                case (#mysteriousStructure(mysteriousStructure)) {
-                    let #mysteriousStructure(mysteriousStructureChoice) = choice else return #err(#invalidChoice);
-                    let voteResult = ExtendedProposal.vote(
-                        mysteriousStructure.proposal,
-                        voterId,
-                        mysteriousStructureChoice,
-                        votingThreshold,
-                        MysteriousStructure.equalChoice,
-                        MysteriousStructure.hashChoice,
+            let voteResult = ExtendedProposal.vote(
+                scenario.proposal,
+                voterId,
+                choice,
+            );
+            // TODO do we want auto execute on vote?
+            switch (voteResult) {
+                case (#ok(ok)) {
+                    scenarios.put(
+                        scenarioId,
+                        {
+                            scenario with
+                            proposal = ok.updatedProposal;
+                        },
                     );
-                    switch (voteResult) {
-                        case (#ok(ok)) {
-                            switch (ok.choiceStatus) {
-                                case (#determined(choiceOrUndecided)) {
-                                    let randomBlob = label l : Blob loop {
-                                        try {
-                                            let blob = await Random.blob();
-                                            break l(blob);
-                                        } catch (err) {
-                                            Debug.print("Failed to generate random blob, retrying... Error: " # Error.message(err));
-                                            continue l;
-                                        };
-                                    };
-                                    let prng = PseudoRandomX.fromBlob(randomBlob, #xorshift32);
-                                    let outcomeHandler = OutcomeHandler.Handler(prng, characterHandler);
-                                    let choice = Option.get(choiceOrUndecided, #skip); // TODO random?
-                                    MysteriousStructure.processOutcome(prng, outcomeHandler, choice);
-                                };
-                                case (#undetermined) ();
-                            };
-                            scenarios.put(
-                                scenarioId,
-                                {
-                                    scenario with
-                                    kind = #mysteriousStructure({
-                                        mysteriousStructure with
-                                        proposal = ok.updatedProposal;
-                                    });
-                                },
-                            );
-                            #ok;
-                        };
-                        case (#err(err)) return #err(err);
-                    };
+                    #ok;
+                };
+                case (#err(err)) return #err(err);
+            };
+        };
+
+        public func end(scenarioId : Nat) : async* Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
+            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+            if (scenario.outcome != null) {
+                return #err(#alreadyEnded);
+            };
+            let randomBlob = label l : Blob loop {
+                try {
+                    let blob = await Random.blob();
+                    break l(blob);
+                } catch (err) {
+                    Debug.print("Failed to generate random blob, retrying... Error: " # Error.message(err));
+                    continue l;
                 };
             };
+            let choiceOrUndecided : ?Text = switch (
+                ExtendedProposal.calculateVoteStatus(
+                    scenario.proposal,
+                    votingThreshold,
+                    Text.equal,
+                    Text.hash,
+                    true,
+                )
+            ) {
+                case (#determined(determined)) determined;
+                case (#undetermined) null;
+            };
+            let prng = PseudoRandomX.fromBlob(randomBlob, #xorshift32);
+            let outcomeHandler = OutcomeHandler.Handler(prng, characterHandler);
+            switch (scenario.kind) {
+                case (#mysteriousStructure(_)) {
+                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
+                    let ?parsedChoice = MysteriousStructure.choiceFromText(choice) else return #err(#invalidChoice);
+                    MysteriousStructure.processOutcome(prng, outcomeHandler, parsedChoice);
+                };
+            };
+
+            scenarios.put(
+                scenarioId,
+                {
+                    scenario with
+                    outcome = ?{
+                        choice = choiceOrUndecided;
+                        messages = outcomeHandler.getMessages();
+                    };
+                },
+            );
+            #ok;
         };
 
     };

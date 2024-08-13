@@ -4,9 +4,9 @@ import Item "Item";
 import Character "Character";
 module {
 
-    public type Outcome<TChoice> = {
-        choice : ?TChoice;
-        description : [Text];
+    public type Outcome = {
+        choice : ?Text;
+        messages : [Text];
     };
 
     public type ChoiceRequirement = {
