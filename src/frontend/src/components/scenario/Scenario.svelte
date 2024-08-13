@@ -1,36 +1,61 @@
 <script lang="ts">
+  import { Button } from "flowbite-svelte";
   import { Scenario } from "../../ic-agent/declarations/main";
-  import { toJsonString } from "../../utils/StringUtil";
+  import { scenarioStore } from "../../stores/ScenarioStore";
+  import { mainAgentFactory } from "../../ic-agent/Main";
 
-  export let scenario: Scenario;
+  export let scenarioId: bigint;
+  let scenario: Scenario | undefined;
+
+  scenarioStore.getById(scenarioId).subscribe((s) => {
+    scenario = s;
+  });
+
+  let vote = (optionId: string) => async () => {
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.voteOnScenario({
+      scenarioId: scenarioId,
+      value: optionId,
+    });
+    if ("ok" in result) {
+      console.log("Voted successfully");
+      scenarioStore.refetchById(scenarioId);
+    } else {
+      console.error("Failed to vote:", result);
+    }
+  };
 </script>
 
 <div class="p-6">
-  <div class="text-3xl text-center">
-    {scenario.title}
-  </div>
-  <div class="my-6">
-    {scenario.description}
-  </div>
-  <div class="flex flex-col items-center gap-2">
-    <div>
-      {#if "mysteriousStructure" in scenario.kind}
-        <div></div>
-      {:else}
-        NOT IMPLEMENTED SCENARIO KIND {toJsonString(scenario.kind)}
+  {#if scenario !== undefined}
+    <div class="text-3xl text-center">
+      {scenario.title}
+    </div>
+    <div class="text-xl my-6">
+      {scenario.description}
+    </div>
+    <div class="flex flex-col items-center gap-2">
+      <div>
+        <div>Options</div>
+        <ul class="text-lg text-left p-6">
+          {#each scenario.options as option, i}
+            <li>
+              <Button
+                class="p-4 border rounded mb-2"
+                on:click={vote(option.id)}
+              >
+                {i}. {option.description}
+              </Button>
+            </li>
+          {/each}
+        </ul>
+      </div>
+      {#if scenario.outcome[0] !== undefined}
+        <div>Outcome</div>
+        {#each scenario.outcome[0].messages as message}
+          <div>{message}</div>
+        {/each}
       {/if}
     </div>
-    <div>
-      {#each scenario.options as option}
-        <div>
-          <div>{option.description}</div>
-        </div>
-      {/each}
-    </div>
-    {#if scenario.outcome[0] !== undefined}
-      {#each scenario.outcome[0].messages as message}
-        <div>{message}</div>
-      {/each}
-    {/if}
-  </div>
+  {/if}
 </div>

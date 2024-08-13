@@ -18,6 +18,7 @@ module {
         turn : Nat;
         progenitor : Principal;
         locations : [Location.Location];
+        characterLocation : Nat;
     };
 
     type MutableLocation = {
@@ -54,6 +55,8 @@ module {
 
         var turn = stableData.turn;
 
+        var characterLocation = stableData.characterLocation;
+
         public func toStableData() : StableData {
             {
                 turn = turn;
@@ -64,6 +67,7 @@ module {
                     fromMutableLocation,
                 )
                 |> Iter.toArray(_);
+                characterLocation = characterLocation;
             };
         };
 
@@ -71,21 +75,24 @@ module {
             turn;
         };
 
-        public func exploreLocation(
+        public func getCharacterLocation() : Nat {
+            characterLocation;
+        };
+
+        public func moveCharacter(
             prng : Prng,
             locationId : Nat,
             scenarioGenerator : (Prng) -> Nat,
-        ) : Result.Result<(), { #locationAlreadyExplored; #locationNotFound }> {
+        ) : Result.Result<(), { #locationNotFound }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
                 case (#unexplored) {
-                    switch (revealLocation(prng, locationId, scenarioGenerator)) {
-                        case (#ok(_)) #ok;
-                        case (#err(err)) #err(err);
-                    };
+                    location.kind := WorldGenerator.generateLocationKind(prng, scenarioGenerator);
                 };
-                case (_) return #err(#locationAlreadyExplored);
+                case (_) ();
             };
+            characterLocation := locationId;
+            #ok;
         };
 
         public func revealLocation(
@@ -95,8 +102,7 @@ module {
         ) : Result.Result<Location.Location, { #locationNotFound; #locationAlreadyExplored }> {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
-                case (#unexplored(_)) {
-                    Debug.print("Revealing location " # Nat.toText(locationId));
+                case (#unexplored) {
                     location.kind := WorldGenerator.generateLocationKind(prng, scenarioGenerator);
                     #ok(fromMutableLocation(location));
                 };

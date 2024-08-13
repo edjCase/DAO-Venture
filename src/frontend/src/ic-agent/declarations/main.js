@@ -102,6 +102,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const World = IDL.Record({
     'turn' : IDL.Nat,
+    'characterLocation' : IDL.Nat,
     'progenitor' : IDL.Principal,
     'locations' : IDL.Vec(Location),
   });

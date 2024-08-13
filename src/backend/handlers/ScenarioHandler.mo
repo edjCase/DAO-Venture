@@ -50,8 +50,26 @@ module {
             };
         };
 
-        public func start(turn : Nat, kind : Scenario.ScenarioKind) : Nat {
+        public func start(
+            turn : Nat,
+            kind : Scenario.ScenarioKind,
+            proposerId : Principal,
+            members : [ExtendedProposal.Member],
+        ) : Nat {
             let scenarioId = scenarios.size(); // TODO?
+            let votes = members.vals()
+            |> Iter.map<ExtendedProposal.Member, (Principal, ExtendedProposal.Vote<Text>)>(
+                _,
+                func(member : ExtendedProposal.Member) : (Principal, ExtendedProposal.Vote<Text>) = (
+                    member.id,
+                    {
+                        choice = null;
+                        votingPower = member.votingPower;
+                    },
+                ),
+            )
+            |> Iter.toArray(_);
+
             scenarios.put(
                 scenarioId,
                 {
@@ -60,11 +78,11 @@ module {
                     kind = kind;
                     proposal = {
                         id = scenarioId;
-                        proposerId = Principal.fromText("aa-aaaa"); // TODO
+                        proposerId = proposerId;
                         timeStart = Time.now();
                         timeEnd = null;
                         content = {};
-                        votes = []; // TODO snapshot
+                        votes = votes;
                         status = #open;
                     };
                     outcome = null;
@@ -73,11 +91,9 @@ module {
             scenarioId;
         };
 
-        public func generateAndStart(prng : Prng) : Nat {
-            // TODO
-            let turn = 0;
+        public func generateAndStart(prng : Prng, turn : Nat, proposerId : Principal, members : [ExtendedProposal.Member]) : Nat {
             let kind = #mysteriousStructure(MysteriousStructure.generate(prng));
-            start(turn, kind);
+            start(turn, kind, proposerId, members);
         };
 
         public func get(scenarioId : Nat) : ?Scenario.Scenario {

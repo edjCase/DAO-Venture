@@ -1,6 +1,7 @@
 <script lang="ts">
     import { worldStore } from "../../stores/WorldStore";
     import { toJsonString } from "../../utils/StringUtil";
+    import Scenario from "../scenario/Scenario.svelte";
 
     export let locationId: bigint;
 
@@ -15,7 +16,7 @@
             Tile {locationId}
 
             {#if "scenario" in location.kind}
-                <div>Scenario: {location.kind.scenario}</div>
+                <Scenario scenarioId={location.kind.scenario} />
             {:else if "unexplored" in location.kind}
                 <div>Unexplored</div>
             {:else}

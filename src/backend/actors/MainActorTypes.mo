@@ -62,6 +62,7 @@ module {
         progenitor : Principal;
         locations : [Location.Location];
         turn : Nat;
+        characterLocation : Nat;
     };
 
     public type CreateWorldProposalRequest = {

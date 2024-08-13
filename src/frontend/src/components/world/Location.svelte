@@ -5,19 +5,23 @@
 
     $: world = $worldStore;
     $: location = world?.locations.find((l) => l.id == locationId);
+
+    $: hasCharacter = world?.characterLocation == locationId;
 </script>
 
 {#if location !== undefined}
     {#if "scenario" in location.kind}
         <g>
-            <circle
-                cx="0"
-                cy="-0.25em"
-                r="1.5em"
-                fill="black"
-                stroke="rgb(156, 163, 175)"
-                stroke-width="0.2em"
-            />
+            {#if hasCharacter}
+                <circle
+                    cx="0"
+                    cy="-0.25em"
+                    r="1.5em"
+                    fill="black"
+                    stroke="rgb(156, 163, 175)"
+                    stroke-width="0.2em"
+                />
+            {/if}
             <text
                 x="0"
                 y="0"

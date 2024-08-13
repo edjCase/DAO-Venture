@@ -139,6 +139,7 @@ export type VoteOnWorldProposalResult = { 'ok' : null } |
   { 'err' : VoteOnWorldProposalError };
 export interface World {
   'turn' : bigint,
+  'characterLocation' : bigint,
   'progenitor' : Principal,
   'locations' : Array<Location>,
 }
