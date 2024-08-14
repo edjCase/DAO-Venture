@@ -130,6 +130,10 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
+    public shared func nextTurn() : async () {
+        worldHandler.nextTurn();
+    };
+
     public shared ({ caller }) func joinWorld() : async Result.Result<(), Types.JoinWorldError> {
         // TODO restrict to NFT?/TOken holders
         userHandler.addWorldMember(caller);

@@ -59,11 +59,14 @@
     on:keypress={() => handleClick(coordinate)}
     role="button"
     tabindex={id}
-    class="cursor-pointer hover:opacity-80 transition-opacity focus:outline-none"
+    class="cursor-pointer transition-opacity focus:outline-none {selected
+        ? ''
+        : 'hover:opacity-80'}"
 >
     <polygon
         points={getHexPoints(0, 0)}
-        stroke-width={selected ? 4 : 1}
+        stroke-width={1}
+        stroke-dasharray={selected ? 3 : undefined}
         stroke="rgb(156, 163, 175)"
         fill="black"
         fill-opacity={fillOpacity}

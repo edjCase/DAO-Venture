@@ -167,6 +167,7 @@ export interface _SERVICE {
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
   'joinWorld' : ActorMethod<[], Result>,
+  'nextTurn' : ActorMethod<[], undefined>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
   'voteOnWorldProposal' : ActorMethod<
     [VoteOnWorldProposalRequest],

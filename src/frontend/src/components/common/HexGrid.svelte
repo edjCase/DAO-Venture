@@ -49,15 +49,14 @@
 
         // Only update panX for horizontal movement
         panX -= (dx / svgRect.width) * viewBox.width;
-        console.log("panX", panX);
         let minX = 0;
         if (panX < minX) {
-            panX = 0;
+            panX = minX;
         }
 
         let maxX = hexSize * gridData.length - 1;
         if (panX > maxX) {
-            panX = hexSize * gridData.length;
+            panX = maxX;
         }
 
         lastX = event.clientX;

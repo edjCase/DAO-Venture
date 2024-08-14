@@ -218,6 +218,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'joinWorld' : IDL.Func([], [Result], []),
+    'nextTurn' : IDL.Func([], [], []),
     'voteOnScenario' : IDL.Func(
         [VoteOnScenarioRequest],
         [VoteOnScenarioResult],

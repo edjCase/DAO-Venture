@@ -70,6 +70,10 @@ module {
             turn;
         };
 
+        public func nextTurn() {
+            turn += 1;
+        };
+
         public func getCharacterLocationId() : Nat {
             characterLocationId;
         };
