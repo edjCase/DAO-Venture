@@ -6,7 +6,7 @@
   import HowToPlay from "./routes/HowToPlay.svelte";
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
-  import World from "./routes/World.svelte";
+  import Dao from "./routes/Dao.svelte";
   import Navbar from "./components/common/Navbar.svelte";
 </script>
 
@@ -16,7 +16,7 @@
     <div class="pb-20">
       <Route path="/" component={Home} />
       <Route path="/profile" component={UserProfile} />
-      <Route path="/world" component={World} />
+      <Route path="/dao" component={Dao} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/about" component={About} />
       <Route path="*" component={NotFound} />

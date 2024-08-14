@@ -6,7 +6,6 @@ module {
 
     public type Scenario = {
         id : Nat;
-        turn : Nat;
         kind : ScenarioKind;
         outcome : ?Outcome.Outcome;
     };

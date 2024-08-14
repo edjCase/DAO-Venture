@@ -10,7 +10,17 @@
 </script>
 
 {#if location !== undefined}
-    {#if "home" in location.kind}
+    <g>
+        {#if hasCharacter}
+            <circle
+                cx="0"
+                cy="-0.25em"
+                r="1.5em"
+                fill="black"
+                stroke="rgb(156, 163, 175)"
+                stroke-width="0.2em"
+            />
+        {/if}
         <text
             x="0"
             y="0"
@@ -18,48 +28,7 @@
             text-anchor="middle"
             font-size="2em"
         >
-            🏠
+            🏰
         </text>
-    {:else if "scenario" in location.kind}
-        <g>
-            {#if hasCharacter}
-                <circle
-                    cx="0"
-                    cy="-0.25em"
-                    r="1.5em"
-                    fill="black"
-                    stroke="rgb(156, 163, 175)"
-                    stroke-width="0.2em"
-                />
-            {/if}
-            <text
-                x="0"
-                y="0"
-                dominant-baseline="middle"
-                text-anchor="middle"
-                font-size="2em"
-            >
-                🏰
-            </text>
-        </g>
-    {:else if "unexplored" in location.kind}
-        <text
-            x="0"
-            y="0"
-            dominant-baseline="middle"
-            text-anchor="middle"
-            font-size="2em"
-        >
-        </text>
-    {:else}
-        <text
-            x="0"
-            y="0"
-            dominant-baseline="middle"
-            text-anchor="middle"
-            font-size="2em"
-        >
-            ???
-        </text>
-    {/if}
+    </g>
 {/if}

@@ -1,5 +1,6 @@
 <script lang="ts" context="module">
     export interface HexTileData {
+        id: number;
         kind: HexTileKind;
         coordinate: AxialCoordinate;
     }
@@ -75,6 +76,7 @@
     }
 
     let handleOnClick = (tileId: number) => (coord: AxialCoordinate) => {
+        console.log("Clicked on tile", tileId, coord);
         selectedTileId = tileId;
         onClick(coord);
     };
@@ -83,16 +85,16 @@
 <div>
     <svg bind:this={svg} cursor="move" width="100%" height="100%">
         <g bind:this={svgGroup}>
-            {#each gridData as tile, id}
+            {#each gridData as tile}
                 <HexTile
                     coordinate={tile.coordinate}
                     kind={tile.kind}
-                    {id}
+                    id={tile.id}
                     {hexSize}
-                    onClick={handleOnClick(id)}
-                    selected={selectedTileId == id}
+                    onClick={handleOnClick(tile.id)}
+                    selected={selectedTileId == tile.id}
                 >
-                    <slot {id} />
+                    <slot id={tile.id} />
                 </HexTile>
             {/each}
         </g>

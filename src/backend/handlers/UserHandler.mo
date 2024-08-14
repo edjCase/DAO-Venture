@@ -90,11 +90,11 @@ module {
             };
         };
 
-        public func addWorldMember(
+        public func add(
             userId : Principal
-        ) : Result.Result<(), { #alreadyWorldMember }> {
+        ) : Result.Result<(), { #alreadyMember }> {
             switch (users.get(userId)) {
-                case (?_) #err(#alreadyWorldMember);
+                case (?_) #err(#alreadyMember);
                 case (null) {
                     let newUser : MutableUser = {
                         id = userId;

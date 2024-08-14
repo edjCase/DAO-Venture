@@ -2,12 +2,9 @@ import Nat "mo:base/Nat";
 import HashMap "mo:base/HashMap";
 import Nat32 "mo:base/Nat32";
 import Result "mo:base/Result";
-import Debug "mo:base/Debug";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Order "mo:base/Order";
-import Random "mo:base/Random";
-import Error "mo:base/Error";
 import Option "mo:base/Option";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
@@ -24,12 +21,23 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
-        scenarios : [ScenarioData];
+        scenarios : [Scenario];
     };
 
-    type ScenarioData = Scenario.Scenario and {
+    public type Scenario = Scenario.Scenario and {
         proposal : ExtendedProposal.Proposal<{}, Text>;
     };
+
+    public type VoteError = ExtendedProposal.VoteError or {
+        #scenarioNotFound;
+        #invalidChoice;
+    };
+
+    public type GetVoteResult = Result.Result<ExtendedProposal.Vote<Text>, { #scenarioNotFound; #notEligible }>;
+
+    public type GetVoteSummaryResult = Result.Result<ExtendedProposal.VotingSummary<Text>, { #scenarioNotFound }>;
+
+    public type Member = ExtendedProposal.Member;
 
     public class Handler<system>(
         data : StableData,
@@ -37,11 +45,11 @@ module {
     ) {
         let votingThreshold = #percent({ percent = 50; quorum = ?20 });
         let scenarios = data.scenarios.vals()
-        |> Iter.map<ScenarioData, (Nat, ScenarioData)>(
+        |> Iter.map<Scenario, (Nat, Scenario)>(
             _,
-            func(scenario : ScenarioData) : (Nat, ScenarioData) = (scenario.id, scenario),
+            func(scenario : Scenario) : (Nat, Scenario) = (scenario.id, scenario),
         )
-        |> HashMap.fromIter<Nat, ScenarioData>(_, data.scenarios.size(), Nat.equal, Nat32.fromNat);
+        |> HashMap.fromIter<Nat, Scenario>(_, data.scenarios.size(), Nat.equal, Nat32.fromNat);
 
         public func toStableData() : StableData {
             {
@@ -51,49 +59,26 @@ module {
         };
 
         public func start(
-            turn : Nat,
             kind : Scenario.ScenarioKind,
             proposerId : Principal,
             members : [ExtendedProposal.Member],
         ) : Nat {
             let scenarioId = scenarios.size(); // TODO?
-            let votes = members.vals()
-            |> Iter.map<ExtendedProposal.Member, (Principal, ExtendedProposal.Vote<Text>)>(
-                _,
-                func(member : ExtendedProposal.Member) : (Principal, ExtendedProposal.Vote<Text>) = (
-                    member.id,
-                    {
-                        choice = null;
-                        votingPower = member.votingPower;
-                    },
-                ),
-            )
-            |> Iter.toArray(_);
 
-            scenarios.put(
+            let newScenario : Scenario = create(
                 scenarioId,
-                {
-                    id = scenarioId;
-                    turn = turn;
-                    kind = kind;
-                    proposal = {
-                        id = scenarioId;
-                        proposerId = proposerId;
-                        timeStart = Time.now();
-                        timeEnd = null;
-                        content = {};
-                        votes = votes;
-                        status = #open;
-                    };
-                    outcome = null;
-                },
+                kind,
+                proposerId,
+                members,
             );
+
+            scenarios.put(scenarioId, newScenario);
             scenarioId;
         };
 
-        public func generateAndStart(prng : Prng, turn : Nat, proposerId : Principal, members : [ExtendedProposal.Member]) : Nat {
+        public func generateAndStart(prng : Prng, proposerId : Principal, members : [ExtendedProposal.Member]) : Nat {
             let kind = #mysteriousStructure(MysteriousStructure.generate(prng));
-            start(turn, kind, proposerId, members);
+            start(kind, proposerId, members);
         };
 
         public func get(scenarioId : Nat) : ?Scenario.Scenario {
@@ -120,7 +105,7 @@ module {
         public func getVote(
             scenarioId : Nat,
             voterId : Principal,
-        ) : Result.Result<ExtendedProposal.Vote<Text>, { #scenarioNotFound; #notEligible }> {
+        ) : GetVoteResult {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
 
             let vote = ExtendedProposal.getVote(scenario.proposal, voterId);
@@ -128,7 +113,7 @@ module {
             #ok(v);
         };
 
-        public func getVoteSummary(scenarioId : Nat) : Result.Result<ExtendedProposal.VotingSummary<Text>, { #scenarioNotFound }> {
+        public func getVoteSummary(scenarioId : Nat) : GetVoteSummaryResult {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let summary = ExtendedProposal.buildVotingSummary(
                 scenario.proposal,
@@ -146,7 +131,7 @@ module {
             scenarioId : Nat,
             voterId : Principal,
             choice : Text,
-        ) : async* Result.Result<(), ExtendedProposal.VoteError or { #scenarioNotFound; #invalidChoice }> {
+        ) : Result.Result<(), VoteError> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let voteResult = ExtendedProposal.vote(
                 scenario.proposal,
@@ -169,19 +154,10 @@ module {
             };
         };
 
-        public func end(scenarioId : Nat) : async* Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
+        public func end(prng : Prng, scenarioId : Nat) : Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             if (scenario.outcome != null) {
                 return #err(#alreadyEnded);
-            };
-            let randomBlob = label l : Blob loop {
-                try {
-                    let blob = await Random.blob();
-                    break l(blob);
-                } catch (err) {
-                    Debug.print("Failed to generate random blob, retrying... Error: " # Error.message(err));
-                    continue l;
-                };
             };
             let choiceOrUndecided : ?Text = switch (
                 ExtendedProposal.calculateVoteStatus(
@@ -195,7 +171,6 @@ module {
                 case (#determined(determined)) determined;
                 case (#undetermined) null;
             };
-            let prng = PseudoRandomX.fromBlob(randomBlob, #xorshift32);
             let outcomeHandler = OutcomeHandler.Handler(prng, characterHandler);
             switch (scenario.kind) {
                 case (#mysteriousStructure(_)) {
@@ -218,5 +193,33 @@ module {
             #ok;
         };
 
+    };
+
+    public func create(id : Nat, kind : Scenario.ScenarioKind, proposerId : Principal, members : [ExtendedProposal.Member]) : Scenario {
+        {
+            id = id;
+            kind = kind;
+            proposal = {
+                id = id;
+                proposerId = proposerId;
+                timeStart = Time.now();
+                timeEnd = null;
+                content = {};
+                votes = members.vals()
+                |> Iter.map<ExtendedProposal.Member, (Principal, ExtendedProposal.Vote<Text>)>(
+                    _,
+                    func(member : ExtendedProposal.Member) : (Principal, ExtendedProposal.Vote<Text>) = (
+                        member.id,
+                        {
+                            choice = null;
+                            votingPower = member.votingPower;
+                        },
+                    ),
+                )
+                |> Iter.toArray(_);
+                status = #open;
+            };
+            outcome = null;
+        };
     };
 };

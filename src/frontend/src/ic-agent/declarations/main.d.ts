@@ -4,8 +4,8 @@ import type { IDL } from '@dfinity/candid';
 
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
-export type CreateWorldProposalError = { 'notAuthorized' : null } |
-  { 'invalid' : Array<string> };
+export type CreateWorldProposalError = { 'invalid' : Array<string> } |
+  { 'notEligible' : null };
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
@@ -16,37 +16,39 @@ export interface Data {
   'material' : string,
   'condition' : string,
 }
-export type GetScenarioVoteError = { 'scenarioNotFound' : null };
+export type GetScenarioError = { 'noActiveGame' : null } |
+  { 'notFound' : null };
+export type GetScenarioResult = { 'ok' : Scenario } |
+  { 'err' : GetScenarioError };
+export type GetScenarioVoteError = { 'noActiveGame' : null } |
+  { 'scenarioNotFound' : null };
 export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
 export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
   { 'err' : GetScenarioVoteError };
 export interface GetTopUsersRequest { 'count' : bigint, 'offset' : bigint }
 export type GetTopUsersResult = { 'ok' : PagedResult_1 };
-export type GetUserError = { 'notAuthorized' : null } |
-  { 'notFound' : null };
+export type GetUserError = { 'notFound' : null };
 export type GetUserResult = { 'ok' : User } |
   { 'err' : GetUserError };
 export type GetUserStatsResult = { 'ok' : UserStats } |
   { 'err' : null };
 export type GetUsersRequest = { 'all' : null };
 export type GetUsersResult = { 'ok' : Array<User> };
-export type GetWorldError = { 'worldNotInitialized' : null };
+export type GetWorldError = { 'noActiveGame' : null };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type GetWorldResult = { 'ok' : World } |
   { 'err' : GetWorldError };
-export type JoinWorldError = { 'notAuthorized' : null } |
-  { 'alreadyWorldMember' : null };
+export type JoinError = { 'alreadyMember' : null };
 export interface Location {
   'id' : bigint,
-  'kind' : LocationKind,
+  'scenarioId' : bigint,
   'coordinate' : AxialCoordinate,
 }
-export type LocationKind = { 'home' : null } |
-  { 'scenario' : bigint } |
-  { 'unexplored' : null };
 export interface MotionContent { 'title' : string, 'description' : string }
+export type NextTurnResult = { 'ok' : null } |
+  { 'err' : { 'noActiveInstance' : null } };
 export interface Outcome {
   'messages' : Array<string>,
   'choice' : [] | [string],
@@ -82,13 +84,12 @@ export type ProposalStatus = {
     }
   };
 export type Result = { 'ok' : null } |
-  { 'err' : JoinWorldError };
+  { 'err' : JoinError };
 export interface Scenario {
   'id' : bigint,
   'title' : string,
   'voteData' : ScenarioVote,
   'kind' : ScenarioKind,
-  'turn' : bigint,
   'description' : string,
   'outcome' : [] | [Outcome],
   'options' : Array<ScenarioOption>,
@@ -105,6 +106,9 @@ export interface ScenarioVoteChoice {
   'votingPower' : bigint,
   'choice' : [] | [string],
 }
+export type StartGameError = { 'alreadyStarted' : null };
+export type StartGameResult = { 'ok' : null } |
+  { 'err' : StartGameError };
 export type Time = bigint;
 export interface User {
   'id' : Principal,
@@ -113,11 +117,12 @@ export interface User {
 }
 export interface UserStats { 'totalUserLevel' : bigint, 'userCount' : bigint }
 export interface Vote { 'votingPower' : bigint, 'choice' : [] | [boolean] }
-export type VoteOnScenarioError = { 'proposalNotFound' : null } |
-  { 'notAuthorized' : null } |
+export type VoteOnScenarioError = { 'noActiveGame' : null } |
+  { 'proposalNotFound' : null } |
   { 'alreadyVoted' : null } |
   { 'votingClosed' : null } |
   { 'invalidChoice' : null } |
+  { 'notEligible' : null } |
   { 'scenarioNotFound' : null };
 export interface VoteOnScenarioRequest {
   'scenarioId' : bigint,
@@ -126,9 +131,9 @@ export interface VoteOnScenarioRequest {
 export type VoteOnScenarioResult = { 'ok' : null } |
   { 'err' : VoteOnScenarioError };
 export type VoteOnWorldProposalError = { 'proposalNotFound' : null } |
-  { 'notAuthorized' : null } |
   { 'alreadyVoted' : null } |
-  { 'votingClosed' : null };
+  { 'votingClosed' : null } |
+  { 'notEligible' : null };
 export interface VoteOnWorldProposalRequest {
   'vote' : boolean,
   'proposalId' : bigint,
@@ -154,7 +159,7 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
-  'getScenario' : ActorMethod<[bigint], [] | [Scenario]>,
+  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
     GetScenarioVoteResult
@@ -166,8 +171,9 @@ export interface _SERVICE {
   'getWorld' : ActorMethod<[], GetWorldResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
-  'joinWorld' : ActorMethod<[], Result>,
-  'nextTurn' : ActorMethod<[], undefined>,
+  'join' : ActorMethod<[], Result>,
+  'nextTurn' : ActorMethod<[], NextTurnResult>,
+  'startGame' : ActorMethod<[], StartGameResult>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
   'voteOnWorldProposal' : ActorMethod<
     [VoteOnWorldProposalRequest],

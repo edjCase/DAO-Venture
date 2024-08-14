@@ -31,8 +31,8 @@ export const scenarioStore = (() => {
         try {
             let mainAgent = await mainAgentFactory();
             let result = await mainAgent.getScenario(scenarioId);
-            if (result.length === 1) {
-                let scenario = result[0];
+            if ('ok' in result) {
+                let scenario = result.ok;
                 update(scenarios => ({
                     ...scenarios,
                     [Number(scenarioId)]: scenario

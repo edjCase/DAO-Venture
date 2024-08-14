@@ -9,15 +9,13 @@
     } from "flowbite-svelte";
     import {
         BarsOutline,
-        BellRingSolid,
         BookOutline,
-        CalendarMonthOutline,
         GithubSolid,
         GlobeSolid,
-        HomeSolid,
         QuestionCircleOutline,
         TwitterSolid,
-        UsersSolid,
+        ClipboardListSolid,
+        UserCircleSolid,
     } from "flowbite-svelte-icons";
     import { onMount } from "svelte";
     import { navigate, useLocation } from "svelte-routing";
@@ -62,29 +60,31 @@
 </script>
 
 <BottomNav {activeUrl} position="fixed" classInner="grid-cols-5 z-50">
-    <BottomNavItem btnName="Home" href="/" on:click={navOnClick("/")}>
-        <HomeSolid class={iconClass} />
-    </BottomNavItem>
-    <BottomNavItem
-        btnName="Scenarios"
-        href="/scenarios"
-        on:click={navOnClick("/scenarios")}
-    >
-        <BellRingSolid class={iconClass} />
-    </BottomNavItem>
-    <BottomNavItem
-        btnName="Town"
-        href="/my-town"
-        on:click={navOnClick("/my-town")}
-    >
-        <UsersSolid class={iconClass} />
-    </BottomNavItem>
-    <BottomNavItem
-        btnName="World"
-        href="/world"
-        on:click={navOnClick("/world")}
-    >
+    <BottomNavItem btnName="World" href="/" on:click={navOnClick("/")}>
         <GlobeSolid class={iconClass} />
+    </BottomNavItem>
+    <BottomNavItem
+        btnName="Character"
+        href="/character"
+        on:click={navOnClick("/character")}
+    >
+        <UserCircleSolid class={iconClass} />
+    </BottomNavItem>
+    <BottomNavItem btnName="DAO" href="/dao" on:click={navOnClick("/dao")}>
+        <ClipboardListSolid class={iconClass} />
+    </BottomNavItem>
+    <BottomNavItem
+        btnName="Profile"
+        href="/profile"
+        on:click={navOnClick("/profile")}
+    >
+        {#if user}
+            <div class={iconClass}>
+                <UserAvatar userId={user.id} border={false} size="md" />
+            </div>
+        {:else}
+            <UserCircleSolid class={iconClass} />
+        {/if}
     </BottomNavItem>
     <BottomNavItem id="hamburger" btnName="" on:click={toggleDrawer}>
         <BarsOutline class={iconClass} />
@@ -104,35 +104,6 @@
 >
     <Sidebar asideClass="w-32" {activeUrl}>
         <SidebarGroup>
-            {#if user}
-                <SidebarItem
-                    label="Profile"
-                    href="/profile"
-                    on:click={navOnClick("/profile")}
-                >
-                    <svelte:fragment slot="icon">
-                        <UserAvatar userId={user.id} border={false} size="md" />
-                    </svelte:fragment>
-                </SidebarItem>
-            {/if}
-            <SidebarItem
-                label="Towns"
-                href="/towns"
-                on:click={navOnClick("/towns")}
-            >
-                <svelte:fragment slot="icon">
-                    <UsersSolid class={iconClass} />
-                </svelte:fragment>
-            </SidebarItem>
-            <SidebarItem
-                label="Schedule"
-                href="/schedule"
-                on:click={navOnClick("/schedule")}
-            >
-                <svelte:fragment slot="icon">
-                    <CalendarMonthOutline class={iconClass} />
-                </svelte:fragment>
-            </SidebarItem>
             <SidebarItem
                 label="How To Play"
                 href="/how-to-play"

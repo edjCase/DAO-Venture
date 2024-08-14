@@ -1,7 +1,7 @@
 <script lang="ts">
     import { TabItem, Tabs } from "flowbite-svelte";
-    import ProposalList from "../dao/ProposalList.svelte";
-    import ProposalForm from "../dao/ProposalForm.svelte";
+    import ProposalList from "./ProposalList.svelte";
+    import ProposalForm from "./ProposalForm.svelte";
     import { userStore } from "../../stores/UserStore";
     import LoadingValue from "../common/LoadingValue.svelte";
     import { UserStats } from "../../ic-agent/declarations/main";

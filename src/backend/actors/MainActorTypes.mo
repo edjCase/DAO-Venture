@@ -15,7 +15,7 @@ module {
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
         getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
-        getScenario : query (id : Nat) -> async ?Scenario;
+        getScenario : query (id : Nat) -> async GetScenarioResult;
         voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
@@ -28,12 +28,31 @@ module {
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
-        joinWorld : () -> async Result.Result<(), JoinWorldError>;
+        startGame : () -> async StartGameResult;
+        join : () -> async JoinResult;
+
+        nextTurn : () -> async NextTurnResult;
     };
+
+    public type StartGameError = {
+        #alreadyStarted;
+    };
+
+    public type StartGameResult = Result.Result<(), StartGameError>;
+
+    public type JoinResult = Result.Result<(), JoinError>;
+
+    public type GetScenarioResult = Result.Result<Scenario, GetScenarioError>;
+
+    public type GetScenarioError = {
+        #notFound;
+        #noActiveGame;
+    };
+
+    public type NextTurnResult = Result.Result<(), { #noActiveInstance }>;
 
     public type Scenario = {
         id : Nat;
-        turn : Nat;
         kind : Scenario.ScenarioKind;
         outcome : ?Outcome.Outcome;
         title : Text;
@@ -47,11 +66,7 @@ module {
         description : Text;
     };
 
-    public type InitializeWorldError = {
-        #alreadyInitialized;
-    };
-
-    public type GetWorldError = { #worldNotInitialized };
+    public type GetWorldError = { #noActiveGame };
 
     public type GetWorldResult = Result.Result<World, GetWorldError>;
 
@@ -66,15 +81,14 @@ module {
     };
 
     public type CreateWorldProposalError = {
-        #notAuthorized;
+        #notEligible;
         #invalid : [Text];
     };
 
     public type CreateWorldProposalResult = Result.Result<Nat, CreateWorldProposalError>;
 
-    public type JoinWorldError = {
-        #notAuthorized;
-        #alreadyWorldMember;
+    public type JoinError = {
+        #alreadyMember;
     };
 
     public type GetPositionError = {};
@@ -85,6 +99,7 @@ module {
 
     public type GetScenarioVoteError = {
         #scenarioNotFound;
+        #noActiveGame;
     };
 
     public type ScenarioVote = {
@@ -109,6 +124,7 @@ module {
     public type VoteOnScenarioError = ExtendedProposalEngine.VoteError or {
         #scenarioNotFound;
         #invalidChoice;
+        #noActiveGame;
     };
 
     public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
@@ -129,7 +145,7 @@ module {
     public type VoteOnWorldProposalResult = Result.Result<(), VoteOnWorldProposalError>;
 
     public type VoteOnWorldProposalError = {
-        #notAuthorized;
+        #notEligible;
         #proposalNotFound;
         #alreadyVoted;
         #votingClosed;
@@ -156,7 +172,6 @@ module {
 
     public type GetUserError = {
         #notFound;
-        #notAuthorized;
     };
 
     public type GetUserResult = Result.Result<UserHandler.User, GetUserError>;
