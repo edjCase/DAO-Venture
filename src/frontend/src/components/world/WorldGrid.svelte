@@ -1,36 +1,52 @@
 <script lang="ts">
     import { worldStore } from "../../stores/WorldStore";
-    import HexGrid from "../common/HexGrid.svelte";
+    import HexGrid, { HexTileData } from "../common/HexGrid.svelte";
     import { toJsonString } from "../../utils/StringUtil";
     import { HexTileKind } from "../common/HexTile.svelte";
     import Location from "./Location.svelte";
     import LocationInfo from "./LocationInfo.svelte";
+    import { World } from "../../ic-agent/declarations/main";
 
-    $: world = $worldStore;
+    let selectedTileId: number | undefined;
+    let world: World | undefined;
+    let gridData: HexTileData[] | undefined;
 
-    $: gridData = world?.locations.map((location) => {
-        let kind: HexTileKind;
-        if ("unexplored" in location.kind) {
-            kind = { unexplored: null };
-        } else if ("scenario" in location.kind) {
-            kind = { explored: { icon: "🏰" } };
-        } else {
-            throw (
-                "NOT IMPLEMENTED LOCATION KIND: " + toJsonString(location.kind)
-            );
+    worldStore.subscribe((newWorld) => {
+        if (newWorld === undefined) {
+            return;
         }
-        return {
-            kind: kind,
-            coordinate: {
-                q: Number(location.coordinate.q),
-                r: Number(location.coordinate.r),
-            },
-        };
+        if (world === undefined) {
+            selectedTileId = Number(newWorld.characterLocationId);
+        }
+        world = newWorld;
+        gridData = world.locations.map((location) => {
+            console.log("location", location);
+            let kind: HexTileKind;
+            if ("home" in location.kind) {
+                kind = { explored: { icon: "🏠" } };
+            } else if ("unexplored" in location.kind) {
+                kind = { unexplored: null };
+            } else if ("scenario" in location.kind) {
+                kind = { explored: { icon: "🏰" } };
+            } else {
+                throw (
+                    "NOT IMPLEMENTED LOCATION KIND: " +
+                    toJsonString(location.kind)
+                );
+            }
+            return {
+                kind: kind,
+                coordinate: {
+                    q: Number(location.coordinate.q),
+                    r: Number(location.coordinate.r),
+                },
+            };
+        });
     });
 </script>
 
 {#if gridData !== undefined && world !== undefined}
-    <HexGrid {gridData} let:id>
+    <HexGrid {gridData} bind:selectedTileId let:id>
         <Location locationId={id} />
         <div slot="tileInfo" let:selectedTile>
             {#if selectedTile !== undefined}

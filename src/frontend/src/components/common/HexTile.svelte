@@ -1,7 +1,7 @@
 <script lang="ts" context="module">
     export interface AxialCoordinate {
-        q: number; // top left -> bottom right
-        r: number; // bottom -> top
+        q: number; // left -> right
+        r: number; // top-left -> bottom-right
     }
     export type HexTileKind =
         | { unexplored: null }
@@ -22,11 +22,14 @@
 
     const { x, y } = hexToPixel(coordinate);
 
+    const scaleFactor = 1; // This will make the hexes half their original size
+
     function hexToPixel(hex: AxialCoordinate): { x: number; y: number } {
-        const x = hexSize * ((3 / 2) * hex.q);
-        const y =
+        const x =
             hexSize *
-            ((Math.sqrt(3) / 2) * Number(hex.q) + Math.sqrt(3) * hex.r);
+            scaleFactor *
+            (Math.sqrt(3) * hex.q + (Math.sqrt(3) / 2) * hex.r);
+        const y = hexSize * scaleFactor * ((3 / 2) * hex.r);
 
         return { x, y };
     }
@@ -34,9 +37,9 @@
     function getHexPoints(centerX: number, centerY: number): string {
         const points = [];
         for (let i = 0; i < 6; i++) {
-            const angle = ((2 * Math.PI) / 6) * i;
-            const x = centerX + hexSize * Math.cos(angle);
-            const y = centerY + hexSize * Math.sin(angle);
+            const angle = (Math.PI / 3) * i + Math.PI / 6; // Add PI/6 to rotate 30 degrees
+            const x = centerX + hexSize * scaleFactor * Math.cos(angle);
+            const y = centerY + hexSize * scaleFactor * Math.sin(angle);
             points.push(`${x},${y}`);
         }
         return points.join(" ");

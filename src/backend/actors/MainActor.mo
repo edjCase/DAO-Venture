@@ -14,14 +14,13 @@ import Time "mo:base/Time";
 import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
-import Random "mo:base/Random";
 import WorldDao "../models/WorldDao";
-import WorldGenerator "../WorldGenerator";
 import WorldHandler "../handlers/WorldHandler";
 import ScenarioHandler "../handlers/ScenarioHandler";
 import CommonTypes "../CommonTypes";
 import CharacterHandler "../handlers/CharacterHandler";
 import MysteriousStructure "../scenarios/MysteriousStructure";
+import HexGrid "../models/HexGrid";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -33,7 +32,22 @@ actor MainActor : Types.Actor {
 
     // Stables ---------------------------------------------------------
 
-    stable var worldStableData : ?WorldHandler.StableData = null;
+    stable var worldStableData : WorldHandler.StableData = {
+        characterLocationId = 0;
+        turn = 0;
+        locations = [
+            {
+                id = 0;
+                coordinate = { q = 0; r = 0 };
+                kind = #home;
+            },
+            {
+                id = HexGrid.axialCoordinateToIndex({ q = 1; r = 0 });
+                coordinate = { q = 1; r = 0 };
+                kind = #unexplored;
+            },
+        ];
+    };
 
     stable var scenarioStableData : ScenarioHandler.StableData = {
         scenarios = [];
@@ -63,10 +77,7 @@ actor MainActor : Types.Actor {
 
     // Unstables ---------------------------------------------------------
 
-    var worldHandlerOrNull : ?WorldHandler.Handler = switch (worldStableData) {
-        case (null) null;
-        case (?worldStableData) ?WorldHandler.Handler(worldStableData);
-    };
+    var worldHandler = WorldHandler.Handler(worldStableData);
 
     var characterHandler = CharacterHandler.Handler(characterStableData);
 
@@ -101,10 +112,7 @@ actor MainActor : Types.Actor {
         scenarioStableData := scenarioHandler.toStableData();
         worldDaoStableData := worldDao.toStableData();
         userStableData := userHandler.toStableData();
-        worldStableData := switch (worldHandlerOrNull) {
-            case (null) null;
-            case (?worldStableData) ?worldStableData.toStableData();
-        };
+        worldStableData := worldHandler.toStableData();
     };
 
     system func postupgrade() {
@@ -117,60 +125,14 @@ actor MainActor : Types.Actor {
             onWorldProposalValidate,
         );
         userHandler := UserHandler.UserHandler(userStableData);
-        worldHandlerOrNull := switch (worldStableData) {
-            case (null) null;
-            case (?worldStableData) ?WorldHandler.Handler(worldStableData);
-        };
+        worldHandler := WorldHandler.Handler(worldStableData);
     };
 
     // Public Methods ---------------------------------------------------------
 
-    public shared ({ caller }) func intializeWorld() : async Result.Result<(), Types.InitializeWorldError> {
-        let null = worldHandlerOrNull else return #err(#alreadyInitialized);
-
-        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-
-        switch (userHandler.addWorldMember(caller)) {
-            case (#ok) ();
-            case (#err(#alreadyWorldMember)) Prelude.unreachable();
-        };
-
-        func generateScenario(prng : Prng) : Nat {
-            let turn = 0;
-            let proposerId = Principal.fromActor(MainActor);
-            let members = userHandler.getAll().vals()
-            |> Iter.map(
-                _,
-                func(user : UserHandler.User) : Proposal.Member = {
-                    id = user.id;
-                    votingPower = calculateVotingPower(user);
-                },
-            )
-            |> Iter.toArray(_);
-            scenarioHandler.generateAndStart(prng, turn, proposerId, members);
-        };
-
-        let worldRadius = 10;
-        let newWorld : WorldHandler.StableData = {
-            turn = 0;
-            progenitor = caller;
-            locations = WorldGenerator.generateWorld(worldRadius, prng, generateScenario);
-            characterLocation = 0;
-        };
-        let worldHandler = WorldHandler.Handler(newWorld);
-        worldHandlerOrNull := ?worldHandler;
-
-        #ok;
-    };
-
     public shared ({ caller }) func joinWorld() : async Result.Result<(), Types.JoinWorldError> {
         // TODO restrict to NFT?/TOken holders
         userHandler.addWorldMember(caller);
-    };
-
-    public query func getProgenitor() : async ?Principal {
-        let ?worldHandler = worldHandlerOrNull else return null; // Skip if no world
-        ?worldHandler.progenitor;
     };
 
     public shared query func getWorldProposal(id : Nat) : async Types.GetWorldProposalResult {
@@ -244,13 +206,11 @@ actor MainActor : Types.Actor {
     };
 
     public shared query func getWorld() : async Types.GetWorldResult {
-        let ?worldHandler = worldHandlerOrNull else return #err(#worldNotInitialized);
         let worldLocations = worldHandler.getLocations();
         #ok({
-            progenitor = worldHandler.progenitor;
             turn = worldHandler.getTurn();
             locations = worldLocations.vals() |> Iter.toArray(_);
-            characterLocation = worldHandler.getCharacterLocation();
+            characterLocationId = worldHandler.getCharacterLocationId();
         });
     };
 

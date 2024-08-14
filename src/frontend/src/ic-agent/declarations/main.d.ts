@@ -36,7 +36,6 @@ export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type GetWorldResult = { 'ok' : World } |
   { 'err' : GetWorldError };
-export type InitializeWorldError = { 'alreadyInitialized' : null };
 export type JoinWorldError = { 'notAuthorized' : null } |
   { 'alreadyWorldMember' : null };
 export interface Location {
@@ -44,7 +43,8 @@ export interface Location {
   'kind' : LocationKind,
   'coordinate' : AxialCoordinate,
 }
-export type LocationKind = { 'scenario' : bigint } |
+export type LocationKind = { 'home' : null } |
+  { 'scenario' : bigint } |
   { 'unexplored' : null };
 export interface MotionContent { 'title' : string, 'description' : string }
 export interface Outcome {
@@ -83,8 +83,6 @@ export type ProposalStatus = {
   };
 export type Result = { 'ok' : null } |
   { 'err' : JoinWorldError };
-export type Result_1 = { 'ok' : null } |
-  { 'err' : InitializeWorldError };
 export interface Scenario {
   'id' : bigint,
   'title' : string,
@@ -139,9 +137,8 @@ export type VoteOnWorldProposalResult = { 'ok' : null } |
   { 'err' : VoteOnWorldProposalError };
 export interface World {
   'turn' : bigint,
-  'characterLocation' : bigint,
-  'progenitor' : Principal,
   'locations' : Array<Location>,
+  'characterLocationId' : bigint,
 }
 export interface WorldProposal {
   'id' : bigint,
@@ -157,7 +154,6 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
-  'getProgenitor' : ActorMethod<[], [] | [Principal]>,
   'getScenario' : ActorMethod<[bigint], [] | [Scenario]>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
@@ -170,7 +166,6 @@ export interface _SERVICE {
   'getWorld' : ActorMethod<[], GetWorldResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
-  'intializeWorld' : ActorMethod<[], Result_1>,
   'joinWorld' : ActorMethod<[], Result>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
   'voteOnWorldProposal' : ActorMethod<

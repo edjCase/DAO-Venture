@@ -1,4 +1,3 @@
-import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
 import HashMap "mo:base/HashMap";
@@ -7,7 +6,6 @@ import Nat32 "mo:base/Nat32";
 import Debug "mo:base/Debug";
 import Buffer "mo:base/Buffer";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import WorldGenerator "../WorldGenerator";
 import HexGrid "../models/HexGrid";
 import Location "../models/Location";
 
@@ -16,9 +14,8 @@ module {
 
     public type StableData = {
         turn : Nat;
-        progenitor : Principal;
         locations : [Location.Location];
-        characterLocation : Nat;
+        characterLocationId : Nat;
     };
 
     type MutableLocation = {
@@ -44,7 +41,6 @@ module {
     };
 
     public class Handler(stableData : StableData) {
-        public let progenitor = stableData.progenitor;
 
         let locations : HashMap.HashMap<Nat, MutableLocation> = stableData.locations.vals()
         |> Iter.map<Location.Location, (Nat, MutableLocation)>(
@@ -55,19 +51,18 @@ module {
 
         var turn = stableData.turn;
 
-        var characterLocation = stableData.characterLocation;
+        var characterLocationId = stableData.characterLocationId;
 
         public func toStableData() : StableData {
             {
                 turn = turn;
-                progenitor = progenitor;
                 locations = locations.vals()
                 |> Iter.map<MutableLocation, Location.Location>(
                     _,
                     fromMutableLocation,
                 )
                 |> Iter.toArray(_);
-                characterLocation = characterLocation;
+                characterLocationId = characterLocationId;
             };
         };
 
@@ -75,8 +70,8 @@ module {
             turn;
         };
 
-        public func getCharacterLocation() : Nat {
-            characterLocation;
+        public func getCharacterLocationId() : Nat {
+            characterLocationId;
         };
 
         public func moveCharacter(
@@ -87,11 +82,11 @@ module {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
                 case (#unexplored) {
-                    location.kind := WorldGenerator.generateLocationKind(prng, scenarioGenerator);
+                    location.kind := Location.generateLocationKind(prng, scenarioGenerator);
                 };
                 case (_) ();
             };
-            characterLocation := locationId;
+            characterLocationId := locationId;
             #ok;
         };
 
@@ -103,7 +98,7 @@ module {
             let ?location = locations.get(locationId) else return #err(#locationNotFound);
             switch (location.kind) {
                 case (#unexplored) {
-                    location.kind := WorldGenerator.generateLocationKind(prng, scenarioGenerator);
+                    location.kind := Location.generateLocationKind(prng, scenarioGenerator);
                     #ok(fromMutableLocation(location));
                 };
                 case (_) #err(#locationAlreadyExplored);

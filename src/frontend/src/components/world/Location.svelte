@@ -6,11 +6,21 @@
     $: world = $worldStore;
     $: location = world?.locations.find((l) => l.id == locationId);
 
-    $: hasCharacter = world?.characterLocation == locationId;
+    $: hasCharacter = world?.characterLocationId == locationId;
 </script>
 
 {#if location !== undefined}
-    {#if "scenario" in location.kind}
+    {#if "home" in location.kind}
+        <text
+            x="0"
+            y="0"
+            dominant-baseline="middle"
+            text-anchor="middle"
+            font-size="2em"
+        >
+            🏠
+        </text>
+    {:else if "scenario" in location.kind}
         <g>
             {#if hasCharacter}
                 <circle

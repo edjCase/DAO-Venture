@@ -21,8 +21,6 @@ module {
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
 
-        getProgenitor : query () -> async ?Principal;
-
         getWorld : query () -> async GetWorldResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
@@ -30,7 +28,6 @@ module {
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
-        intializeWorld : () -> async Result.Result<(), InitializeWorldError>;
         joinWorld : () -> async Result.Result<(), JoinWorldError>;
     };
 
@@ -59,10 +56,9 @@ module {
     public type GetWorldResult = Result.Result<World, GetWorldError>;
 
     public type World = {
-        progenitor : Principal;
         locations : [Location.Location];
         turn : Nat;
-        characterLocation : Nat;
+        characterLocationId : Nat;
     };
 
     public type CreateWorldProposalRequest = {

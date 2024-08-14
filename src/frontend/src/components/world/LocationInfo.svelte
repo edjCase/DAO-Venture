@@ -15,7 +15,9 @@
         <div class="text-center text-3xl">
             Tile {locationId}
 
-            {#if "scenario" in location.kind}
+            {#if "home" in location.kind}
+                <div>Home</div>
+            {:else if "scenario" in location.kind}
                 <Scenario scenarioId={location.kind.scenario} />
             {:else if "unexplored" in location.kind}
                 <div>Unexplored</div>

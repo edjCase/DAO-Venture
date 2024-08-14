@@ -91,6 +91,7 @@ export const idlFactory = ({ IDL }) => {
   const GetUsersRequest = IDL.Variant({ 'all' : IDL.Null });
   const GetUsersResult = IDL.Variant({ 'ok' : IDL.Vec(User) });
   const LocationKind = IDL.Variant({
+    'home' : IDL.Null,
     'scenario' : IDL.Nat,
     'unexplored' : IDL.Null,
   });
@@ -102,9 +103,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const World = IDL.Record({
     'turn' : IDL.Nat,
-    'characterLocation' : IDL.Nat,
-    'progenitor' : IDL.Principal,
     'locations' : IDL.Vec(Location),
+    'characterLocationId' : IDL.Nat,
   });
   const GetWorldError = IDL.Variant({ 'worldNotInitialized' : IDL.Null });
   const GetWorldResult = IDL.Variant({ 'ok' : World, 'err' : GetWorldError });
@@ -151,11 +151,6 @@ export const idlFactory = ({ IDL }) => {
     'totalCount' : IDL.Nat,
     'offset' : IDL.Nat,
   });
-  const InitializeWorldError = IDL.Variant({ 'alreadyInitialized' : IDL.Null });
-  const Result_1 = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : InitializeWorldError,
-  });
   const JoinWorldError = IDL.Variant({
     'notAuthorized' : IDL.Null,
     'alreadyWorldMember' : IDL.Null,
@@ -197,7 +192,6 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
-    'getProgenitor' : IDL.Func([], [IDL.Opt(IDL.Principal)], ['query']),
     'getScenario' : IDL.Func([IDL.Nat], [IDL.Opt(Scenario)], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
@@ -223,7 +217,6 @@ export const idlFactory = ({ IDL }) => {
         [PagedResult],
         ['query'],
       ),
-    'intializeWorld' : IDL.Func([], [Result_1], []),
     'joinWorld' : IDL.Func([], [Result], []),
     'voteOnScenario' : IDL.Func(
         [VoteOnScenarioRequest],
