@@ -7,6 +7,7 @@ import Principal "mo:base/Principal";
 import Result "mo:base/Result";
 import Location "../models/Location";
 import Scenario "../models/Scenario";
+import Character "../models/Character";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -17,10 +18,11 @@ module {
         character : CharacterHandler.StableData;
     };
 
-    public type WorldInfo = {
+    public type GameState = {
         turn : Nat;
         locations : [Location.Location];
         characterLocationId : Nat;
+        character : Character.Character;
     };
 
     public class Handler<system>(data : StableData, canisterId : Principal) {
@@ -50,6 +52,9 @@ module {
         public func getScenario(scenarioId : Nat) : ?Scenario.Scenario {
             scenarios.get(scenarioId);
         };
+        public func getScenarios() : [Scenario.Scenario] {
+            scenarios.getAll();
+        };
 
         public func vote(scenarioId : Nat, voterId : Principal, choice : Text) : Result.Result<(), ScenarioHandler.VoteError> {
             scenarios.vote(scenarioId, voterId, choice);
@@ -63,11 +68,12 @@ module {
             scenarios.getVoteSummary(scenarioId);
         };
 
-        public func getWorld() : WorldInfo {
+        public func getState() : GameState {
             {
                 turn = world.getTurn();
                 locations = world.getLocations();
                 characterLocationId = world.getCharacterLocation().id;
+                character = character.get();
             };
         };
 

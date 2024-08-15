@@ -5,7 +5,7 @@ import { toJsonString } from "../utils/StringUtil";
 
 
 export const proposalStore = (() => {
-    let worldStore = writable<WorldProposal[]>([]);
+    let gameStateStore = writable<WorldProposal[]>([]);
 
     const refetchById = async (proposalId: bigint) => {
         let mainAgent = await mainAgentFactory();
@@ -16,7 +16,7 @@ export const proposalStore = (() => {
         } else {
             throw new Error("Error fetching proposal " + proposalId + ": " + toJsonString(proposalResult));
         }
-        worldStore.update((current) => {
+        gameStateStore.update((current) => {
             let index = current.findIndex(p => p.id === proposalId);
             if (index >= 0) {
                 current[index] = proposal;
@@ -30,11 +30,11 @@ export const proposalStore = (() => {
     const refetch = async () => {
         let mainAgent = await mainAgentFactory();
         let proposalsResult = await mainAgent.getWorldProposals(BigInt(999), BigInt(0)); // TODO
-        worldStore.set(proposalsResult.data);
+        gameStateStore.set(proposalsResult.data);
     };
 
     const subscribe = (callback: (value: WorldProposal[]) => void) => {
-        return worldStore.subscribe(callback);
+        return gameStateStore.subscribe(callback);
     }
 
 

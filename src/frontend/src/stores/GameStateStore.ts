@@ -1,9 +1,9 @@
 import { writable } from "svelte/store";
 import { mainAgentFactory } from "../ic-agent/Main";
-import { World } from "../ic-agent/declarations/main";
+import { GameState } from "../ic-agent/declarations/main";
 
-export const worldStore = (() => {
-  const { subscribe, set } = writable<World | undefined>();
+export const gameStateStore = (() => {
+  const { subscribe, set } = writable<GameState | undefined>();
 
   // let fetchNextDayTimeout: NodeJS.Timeout | undefined = undefined;
 
@@ -31,16 +31,16 @@ export const worldStore = (() => {
 
   const refetch = async () => {
     const mainAgent = await mainAgentFactory();
-    const result = await mainAgent.getWorld();
+    const result = await mainAgent.getGameState();
 
     if ('ok' in result) {
       set(result.ok);
-      console.log("Fetched world");
+      console.log("Fetched game state");
       // scheduleNextFetch(result.ok.nextDayStartTime); // TODO
     } else if ('err' in result && 'noActiveGame' in result.err) {
       setTimeout(refetch, 60_000);
     } else {
-      console.error("Failed to get world", result.err);
+      console.error("Failed to get game state", result.err);
       // Retry after a short delay (e.g., 5 seconds)
       setTimeout(refetch, 5000);
     }

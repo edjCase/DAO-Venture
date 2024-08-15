@@ -3,6 +3,12 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
+export interface Character {
+  'gold' : bigint,
+  'traits' : Array<Trait>,
+  'items' : Array<Item>,
+  'health' : bigint,
+}
 export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
 export type CreateWorldProposalError = { 'invalid' : Array<string> } |
   { 'notEligible' : null };
@@ -16,6 +22,15 @@ export interface Data {
   'material' : string,
   'condition' : string,
 }
+export interface GameState {
+  'character' : Character,
+  'turn' : bigint,
+  'locations' : Array<Location>,
+  'characterLocationId' : bigint,
+}
+export type GetGameStateError = { 'noActiveGame' : null };
+export type GetGameStateResult = { 'ok' : GameState } |
+  { 'err' : GetGameStateError };
 export type GetScenarioError = { 'noActiveGame' : null } |
   { 'notFound' : null };
 export type GetScenarioResult = { 'ok' : Scenario } |
@@ -25,6 +40,9 @@ export type GetScenarioVoteError = { 'noActiveGame' : null } |
 export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
 export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
   { 'err' : GetScenarioVoteError };
+export type GetScenariosError = { 'noActiveGame' : null };
+export type GetScenariosResult = { 'ok' : Array<Scenario> } |
+  { 'err' : GetScenariosError };
 export interface GetTopUsersRequest { 'count' : bigint, 'offset' : bigint }
 export type GetTopUsersResult = { 'ok' : PagedResult_1 };
 export type GetUserError = { 'notFound' : null };
@@ -34,12 +52,10 @@ export type GetUserStatsResult = { 'ok' : UserStats } |
   { 'err' : null };
 export type GetUsersRequest = { 'all' : null };
 export type GetUsersResult = { 'ok' : Array<User> };
-export type GetWorldError = { 'noActiveGame' : null };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
-export type GetWorldResult = { 'ok' : World } |
-  { 'err' : GetWorldError };
+export interface Item { 'id' : string, 'name' : string, 'description' : string }
 export type JoinError = { 'alreadyMember' : null };
 export interface Location {
   'id' : bigint,
@@ -110,6 +126,11 @@ export type StartGameError = { 'alreadyStarted' : null };
 export type StartGameResult = { 'ok' : null } |
   { 'err' : StartGameError };
 export type Time = bigint;
+export interface Trait {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
 export interface User {
   'id' : Principal,
   'inWorldSince' : Time,
@@ -140,11 +161,6 @@ export interface VoteOnWorldProposalRequest {
 }
 export type VoteOnWorldProposalResult = { 'ok' : null } |
   { 'err' : VoteOnWorldProposalError };
-export interface World {
-  'turn' : bigint,
-  'locations' : Array<Location>,
-  'characterLocationId' : bigint,
-}
 export interface WorldProposal {
   'id' : bigint,
   'status' : ProposalStatus,
@@ -159,16 +175,17 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
+  'getGameState' : ActorMethod<[], GetGameStateResult>,
   'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
     GetScenarioVoteResult
   >,
+  'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getTopUsers' : ActorMethod<[GetTopUsersRequest], GetTopUsersResult>,
   'getUser' : ActorMethod<[Principal], GetUserResult>,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
   'getUsers' : ActorMethod<[GetUsersRequest], GetUsersResult>,
-  'getWorld' : ActorMethod<[], GetWorldResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
   'join' : ActorMethod<[], Result>,

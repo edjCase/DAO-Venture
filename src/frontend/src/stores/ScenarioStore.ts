@@ -1,53 +1,42 @@
-import { writable, derived, type Readable } from 'svelte/store';
+import { writable } from 'svelte/store';
 import { type Scenario } from "../ic-agent/declarations/main";
 import { mainAgentFactory } from "../ic-agent/Main";
 
 export const scenarioStore = (() => {
-    const { subscribe, update } = writable<Record<number, Scenario>>({});
+    const { subscribe, set, update } = writable<Scenario[]>();
 
-    const getById = (id: bigint): Readable<Scenario | undefined> => {
-        const numId = Number(id);
-        return {
-            subscribe: (run: (value: Scenario | undefined) => void) => {
-                const unsubscribe = derived<Readable<Record<number, Scenario>>, Scenario | undefined>(
-                    { subscribe },
-                    $store => $store[numId]
-                ).subscribe(run);
+    const refetchById = async (id: bigint) => {
+        const mainAgent = await mainAgentFactory();
+        const result = await mainAgent.getScenario(id);
+        if ('ok' in result) {
+            update((scenarios) => {
+                const index = scenarios.findIndex((s) => s.id === id);
+                if (index !== -1) {
+                    scenarios[index] = result.ok;
+                }
+                return scenarios;
+            });
+        } else {
+            console.error("Failed to get scenario " + id, result.err)
+        }
+    }
 
-                // Fetch the scenario if it's not already in the store
-                update(scenarios => {
-                    if (!(numId in scenarios)) {
-                        refetchById(id);
-                    }
-                    return scenarios;
-                });
-
-                return unsubscribe;
-            }
-        };
-    };
-
-    const refetchById = async (scenarioId: bigint) => {
-        try {
-            let mainAgent = await mainAgentFactory();
-            let result = await mainAgent.getScenario(scenarioId);
-            if ('ok' in result) {
-                let scenario = result.ok;
-                update(scenarios => ({
-                    ...scenarios,
-                    [Number(scenarioId)]: scenario
-                }));
-            } else {
-                console.log("Scenario not found", scenarioId);
-            }
-        } catch (error) {
-            console.error("Error fetching scenario:", error);
+    const refetch = async () => {
+        const mainAgent = await mainAgentFactory();
+        const result = await mainAgent.getScenarios();
+        if ('ok' in result) {
+            set(result.ok);
+        } else {
+            console.error("Failed to get scenarios", result.err);
         }
     };
 
+    refetch();
+
+
     return {
         subscribe,
-        getById,
+        refetch,
         refetchById,
     };
 })();

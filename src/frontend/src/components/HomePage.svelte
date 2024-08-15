@@ -1,24 +1,25 @@
 <script lang="ts">
     import WorldGrid from "./world/WorldGrid.svelte";
-    import { worldStore } from "../stores/WorldStore";
+    import { gameStateStore } from "../stores/GameStateStore";
     import LoadingButton from "./common/LoadingButton.svelte";
     import { mainAgentFactory } from "../ic-agent/Main";
     import { userStore } from "../stores/UserStore";
+    import { scenarioStore } from "../stores/ScenarioStore";
 
-    $: world = $worldStore;
-
+    $: gameState = $gameStateStore;
     $: user = $userStore;
 
     let nextTurn = async () => {
         let mainAgent = await mainAgentFactory();
         await mainAgent.nextTurn();
-        worldStore.refetch();
+        gameStateStore.refetch();
+        scenarioStore.refetch();
     };
     let start = async () => {
         let mainAgent = await mainAgentFactory();
         let result = await mainAgent.startGame();
         if ("ok" in result) {
-            worldStore.refetch();
+            gameStateStore.refetch();
         } else {
             console.error("Failed to start game", result);
         }
@@ -38,7 +39,7 @@
     {#if user?.worldData === undefined}
         <LoadingButton onClick={join}>Join</LoadingButton>
     {/if}
-    {#if world !== undefined}
+    {#if gameState !== undefined}
         <LoadingButton onClick={nextTurn}>Next Turn</LoadingButton>
         <WorldGrid />
     {:else}

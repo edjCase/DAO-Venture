@@ -12,6 +12,39 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
   });
+  const Trait = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Item = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Character = IDL.Record({
+    'gold' : IDL.Nat,
+    'traits' : IDL.Vec(Trait),
+    'items' : IDL.Vec(Item),
+    'health' : IDL.Nat,
+  });
+  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
+  const Location = IDL.Record({
+    'id' : IDL.Nat,
+    'scenarioId' : IDL.Nat,
+    'coordinate' : AxialCoordinate,
+  });
+  const GameState = IDL.Record({
+    'character' : Character,
+    'turn' : IDL.Nat,
+    'locations' : IDL.Vec(Location),
+    'characterLocationId' : IDL.Nat,
+  });
+  const GetGameStateError = IDL.Variant({ 'noActiveGame' : IDL.Null });
+  const GetGameStateResult = IDL.Variant({
+    'ok' : GameState,
+    'err' : GetGameStateError,
+  });
   const ChoiceVotingPower = IDL.Record({
     'votingPower' : IDL.Nat,
     'choice' : IDL.Text,
@@ -68,6 +101,11 @@ export const idlFactory = ({ IDL }) => {
     'ok' : ScenarioVote,
     'err' : GetScenarioVoteError,
   });
+  const GetScenariosError = IDL.Variant({ 'noActiveGame' : IDL.Null });
+  const GetScenariosResult = IDL.Variant({
+    'ok' : IDL.Vec(Scenario),
+    'err' : GetScenariosError,
+  });
   const GetTopUsersRequest = IDL.Record({
     'count' : IDL.Nat,
     'offset' : IDL.Nat,
@@ -97,19 +135,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const GetUsersRequest = IDL.Variant({ 'all' : IDL.Null });
   const GetUsersResult = IDL.Variant({ 'ok' : IDL.Vec(User) });
-  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
-  const Location = IDL.Record({
-    'id' : IDL.Nat,
-    'scenarioId' : IDL.Nat,
-    'coordinate' : AxialCoordinate,
-  });
-  const World = IDL.Record({
-    'turn' : IDL.Nat,
-    'locations' : IDL.Vec(Location),
-    'characterLocationId' : IDL.Nat,
-  });
-  const GetWorldError = IDL.Variant({ 'noActiveGame' : IDL.Null });
-  const GetWorldResult = IDL.Variant({ 'ok' : World, 'err' : GetWorldError });
   const ProposalStatus = IDL.Variant({
     'failedToExecute' : IDL.Record({
       'executingTime' : Time,
@@ -201,12 +226,14 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
+    'getGameState' : IDL.Func([], [GetGameStateResult], ['query']),
     'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
         [GetScenarioVoteResult],
         ['query'],
       ),
+    'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
     'getTopUsers' : IDL.Func(
         [GetTopUsersRequest],
         [GetTopUsersResult],
@@ -215,7 +242,6 @@ export const idlFactory = ({ IDL }) => {
     'getUser' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
     'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
     'getUsers' : IDL.Func([GetUsersRequest], [GetUsersResult], ['query']),
-    'getWorld' : IDL.Func([], [GetWorldResult], ['query']),
     'getWorldProposal' : IDL.Func(
         [IDL.Nat],
         [GetWorldProposalResult],

@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { worldStore } from "../../stores/WorldStore";
+    import { gameStateStore } from "../../stores/GameStateStore";
     import Scenario from "../scenario/Scenario.svelte";
 
     export let locationId: bigint;
 
-    $: world = $worldStore;
+    $: gameState = $gameStateStore;
 
-    $: location = world?.locations.find((l) => l.id == locationId);
+    $: location = gameState?.locations.find((l) => l.id == locationId);
 </script>
 
 {#if location !== undefined}

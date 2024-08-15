@@ -1,13 +1,13 @@
 <script lang="ts">
     import { Select, SelectOptionType } from "flowbite-svelte";
-    import { worldStore } from "../../stores/WorldStore";
+    import { gameStateStore } from "../../stores/GameStateStore";
 
     export let value: bigint;
-    $: world = $worldStore;
+    $: gameState = $gameStateStore;
 
     let locationItems: SelectOptionType<bigint>[] | undefined;
-    $: if (world !== undefined) {
-        locationItems = world.locations.map((location) => ({
+    $: if (gameState !== undefined) {
+        locationItems = gameState.locations.map((location) => ({
             name: location.id.toString(),
             value: location.id,
         }));

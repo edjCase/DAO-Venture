@@ -2,6 +2,7 @@ import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Item "Item";
 import Character "Character";
+import Trait "Trait";
 module {
 
     public type Outcome = {
@@ -13,7 +14,7 @@ module {
         #all : [ChoiceRequirement];
         #any : [ChoiceRequirement];
         #item : Item.Item;
-        #trait : Character.Trait;
+        #trait : Trait.Trait;
     };
 
     public type Processor = {

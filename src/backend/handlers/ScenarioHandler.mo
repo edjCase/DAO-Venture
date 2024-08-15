@@ -8,10 +8,9 @@ import Order "mo:base/Order";
 import Option "mo:base/Option";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
+import Debug "mo:base/Debug";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import Scenario "../models/Scenario";
-import CommonTypes "../CommonTypes";
-import IterTools "mo:itertools/Iter";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import MysteriousStructure "../scenarios/MysteriousStructure";
 import OutcomeHandler "OutcomeHandler";
@@ -85,21 +84,13 @@ module {
             scenarios.get(scenarioId);
         };
 
-        public func getAll(count : Nat, offset : Nat) : CommonTypes.PagedResult<Scenario.Scenario> {
-            var filteredScenarios = scenarios.vals()
+        public func getAll() : [Scenario.Scenario] {
+            scenarios.vals()
             |> Iter.sort(
                 _,
                 func(a : Scenario.Scenario, b : Scenario.Scenario) : Order.Order = Nat.compare(a.id, b.id),
             )
-            |> IterTools.skip(_, offset)
-            |> IterTools.take(_, count)
             |> Iter.toArray(_);
-            {
-                data = filteredScenarios;
-                offset = offset;
-                count = count;
-                totalCount = scenarios.size();
-            };
         };
 
         public func getVote(
@@ -159,6 +150,7 @@ module {
             if (scenario.outcome != null) {
                 return #err(#alreadyEnded);
             };
+            Debug.print("Ending scenario " # Nat.toText(scenarioId));
             let choiceOrUndecided : ?Text = switch (
                 ExtendedProposal.calculateVoteStatus(
                     scenario.proposal,
@@ -179,15 +171,16 @@ module {
                     MysteriousStructure.processOutcome(prng, outcomeHandler, parsedChoice);
                 };
             };
+            let outcome = {
+                choice = choiceOrUndecided;
+                messages = outcomeHandler.getMessages();
+            };
 
             scenarios.put(
                 scenarioId,
                 {
                     scenario with
-                    outcome = ?{
-                        choice = choiceOrUndecided;
-                        messages = outcomeHandler.getMessages();
-                    };
+                    outcome = ?outcome;
                 },
             );
             #ok;

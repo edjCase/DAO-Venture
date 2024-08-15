@@ -9,6 +9,7 @@ import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import Location "../models/Location";
 import Outcome "../models/Outcome";
+import Character "../models/Character";
 
 module {
     public type Actor = actor {
@@ -16,12 +17,13 @@ module {
         getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
         getScenario : query (id : Nat) -> async GetScenarioResult;
+        getScenarios : query () -> async GetScenariosResult;
         voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
 
-        getWorld : query () -> async GetWorldResult;
+        getGameState : query () -> async GetGameStateResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
@@ -41,6 +43,12 @@ module {
     public type StartGameResult = Result.Result<(), StartGameError>;
 
     public type JoinResult = Result.Result<(), JoinError>;
+
+    public type GetScenariosResult = Result.Result<[Scenario], GetScenariosError>;
+
+    public type GetScenariosError = {
+        #noActiveGame;
+    };
 
     public type GetScenarioResult = Result.Result<Scenario, GetScenarioError>;
 
@@ -66,14 +74,34 @@ module {
         description : Text;
     };
 
-    public type GetWorldError = { #noActiveGame };
+    public type GetGameStateError = { #noActiveGame };
 
-    public type GetWorldResult = Result.Result<World, GetWorldError>;
+    public type GetGameStateResult = Result.Result<GameState, GetGameStateError>;
 
-    public type World = {
+    public type GameState = {
         locations : [Location.Location];
         turn : Nat;
         characterLocationId : Nat;
+        character : Character;
+    };
+
+    public type Character = {
+        gold : Nat;
+        health : Nat;
+        items : [Item];
+        traits : [Trait];
+    };
+
+    public type Item = {
+        id : Text;
+        name : Text;
+        description : Text;
+    };
+
+    public type Trait = {
+        id : Text;
+        name : Text;
+        description : Text;
     };
 
     public type CreateWorldProposalRequest = {

@@ -22,6 +22,9 @@ import GameHandler "../handlers/GameHandler";
 import Character "../models/Character";
 import Location "../models/Location";
 import ScenarioHandler "../handlers/ScenarioHandler";
+import Item "../models/Item";
+import Trait "../models/Trait";
+import Scenario "../models/Scenario";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -185,26 +188,18 @@ actor MainActor : Types.Actor {
     public query ({ caller }) func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
         let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
         let ?scenario = gameHandler.getScenario(scenarioId) else return #err(#notFound);
-        let (title, description, options) = switch (scenario.kind) {
-            case (#mysteriousStructure(mysteriousStructure)) {
-                let title = MysteriousStructure.getTitle();
-                let description = MysteriousStructure.getDescription(mysteriousStructure);
-                let options = MysteriousStructure.getOptions();
-                (title, description, options);
-            };
-        };
-        let voteData = switch (getScenarioVoteInternal(caller, scenarioId)) {
-            case (#ok(voteData)) voteData;
-            case (#err(#noActiveGame)) Prelude.unreachable();
-            case (#err(#scenarioNotFound)) Prelude.unreachable();
-        };
-        #ok({
-            scenario with
-            title = title;
-            description = description;
-            options = options;
-            voteData = voteData;
-        });
+        #ok(mapScenario(caller, scenario));
+    };
+
+    public query ({ caller }) func getScenarios() : async Types.GetScenariosResult {
+        let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
+        let scenarios = gameHandler.getScenarios().vals()
+        |> Iter.map(
+            _,
+            func(scenario : Scenario.Scenario) : Types.Scenario = mapScenario(caller, scenario),
+        )
+        |> Iter.toArray(_);
+        #ok(scenarios);
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
@@ -216,10 +211,39 @@ actor MainActor : Types.Actor {
         gameHandler.vote(request.scenarioId, caller, request.value);
     };
 
-    public shared query func getWorld() : async Types.GetWorldResult {
+    public shared query func getGameState() : async Types.GetGameStateResult {
         let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
-        let world = gameHandler.getWorld();
-        #ok(world);
+        let gameState = gameHandler.getState();
+        let character : Types.Character = {
+            gold = gameState.character.gold;
+            health = gameState.character.health;
+            items = gameState.character.items.vals()
+            |> Iter.map(
+                _,
+                func(item : Item.Item) : Types.Item = {
+                    id = Item.toId(item);
+                    name = Item.toText(item);
+                    description = Item.toDescription(item);
+                },
+            )
+            |> Iter.toArray(_);
+            traits = gameState.character.traits.vals()
+            |> Iter.map(
+                _,
+                func(trait : Trait.Trait) : Types.Trait = {
+                    id = Trait.toId(trait);
+                    name = Trait.toText(trait);
+                    description = Trait.toDescription(trait);
+                },
+            )
+            |> Iter.toArray(_);
+        };
+        #ok({
+            locations = gameState.locations;
+            turn = gameState.turn;
+            characterLocationId = gameState.characterLocationId;
+            character = character;
+        });
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
@@ -250,6 +274,33 @@ actor MainActor : Types.Actor {
     };
 
     // Private Methods ---------------------------------------------------------
+
+    private func mapScenario(
+        voterId : Principal,
+        scenario : Scenario.Scenario,
+    ) : Types.Scenario {
+
+        let (title, description, options) = switch (scenario.kind) {
+            case (#mysteriousStructure(mysteriousStructure)) {
+                let title = MysteriousStructure.getTitle();
+                let description = MysteriousStructure.getDescription(mysteriousStructure);
+                let options = MysteriousStructure.getOptions();
+                (title, description, options);
+            };
+        };
+        let voteData = switch (getScenarioVoteInternal(voterId, scenario.id)) {
+            case (#ok(voteData)) voteData;
+            case (#err(#noActiveGame)) Prelude.unreachable();
+            case (#err(#scenarioNotFound)) Prelude.unreachable();
+        };
+        {
+            scenario with
+            title = title;
+            description = description;
+            options = options;
+            voteData = voteData;
+        };
+    };
 
     private func buildVotingMembersList() : [Proposal.Member] {
         userHandler.getAll().vals()

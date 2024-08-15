@@ -1,15 +1,12 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
-  import { Scenario } from "../../ic-agent/declarations/main";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { mainAgentFactory } from "../../ic-agent/Main";
 
   export let scenarioId: bigint;
-  let scenario: Scenario | undefined;
 
-  scenarioStore.getById(scenarioId).subscribe((s) => {
-    scenario = s;
-  });
+  $: scenarios = $scenarioStore;
+  $: scenario = scenarios?.find((s) => s.id == scenarioId);
 
   let vote = (optionId: string) => async () => {
     let mainAgent = await mainAgentFactory();

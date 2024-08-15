@@ -55,7 +55,7 @@
             panX = minX;
         }
 
-        let maxX = hexSize * gridData.length - 1;
+        let maxX = hexSize * 1.5 * gridData.length - 1;
         if (panX > maxX) {
             panX = maxX;
         }
@@ -76,7 +76,6 @@
     }
 
     let handleOnClick = (tileId: number) => (coord: AxialCoordinate) => {
-        console.log("Clicked on tile", tileId, coord);
         selectedTileId = tileId;
         onClick(coord);
     };

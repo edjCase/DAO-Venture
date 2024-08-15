@@ -1,12 +1,12 @@
 <script lang="ts">
-    import { worldStore } from "../../stores/WorldStore";
+    import { gameStateStore } from "../../stores/GameStateStore";
 
     export let locationId: bigint;
 
-    $: world = $worldStore;
-    $: location = world?.locations.find((l) => l.id == locationId);
+    $: gameState = $gameStateStore;
+    $: location = gameState?.locations.find((l) => l.id == locationId);
 
-    $: hasCharacter = world?.characterLocationId == locationId;
+    $: hasCharacter = gameState?.characterLocationId == locationId;
 </script>
 
 {#if location !== undefined}
