@@ -1,7 +1,6 @@
 import Text "mo:base/Text";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "../models/Outcome";
-import Item "../models/Item";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -10,7 +9,6 @@ module {
 
     public type Choice = {
         #rescueSwimming;
-        #useBoat;
         #castSpell;
         #disregard;
     };
@@ -18,7 +16,6 @@ module {
     public func choiceFromText(text : Text) : ?Choice {
         switch (text) {
             case ("rescueSwimming") ? #rescueSwimming;
-            case ("useBoat") ? #useBoat;
             case ("castSpell") ? #castSpell;
             case ("disregard") ? #disregard;
             case (_) null;
@@ -28,7 +25,6 @@ module {
     public func getChoiceRequirement(choice : Choice) : ?Outcome.ChoiceRequirement {
         switch (choice) {
             case (#rescueSwimming or #disregard) null;
-            case (#useBoat) ? #item(#boat);
             case (#castSpell) ? #trait(#magical);
         };
     };
@@ -36,7 +32,6 @@ module {
     public func getChoiceDescription(choice : Choice) : Text {
         switch (choice) {
             case (#rescueSwimming) "Swim out to rescue the passengers.";
-            case (#useBoat) "Use your boat to safely rescue the passengers.";
             case (#castSpell) "Cast a water-walking spell to rescue the passengers.";
             case (#disregard) "disregard the sinking boat and continue on your way.";
         };
@@ -54,21 +49,15 @@ module {
                 id = "rescueSwimming";
                 description = getChoiceDescription(#rescueSwimming);
             },
-            { id = "useBoat"; description = getChoiceDescription(#useBoat) },
             { id = "castSpell"; description = getChoiceDescription(#castSpell) },
             { id = "disregard"; description = getChoiceDescription(#disregard) },
         ];
     };
 
-    let giftTable : [(Item.Item, Float)] = [
-        (#echoCrystal, 0.1),
-        (#herbs, 1),
-    ];
-
     public func processOutcome(
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
-        data : Data,
+        _ : Data,
         choice : Choice,
     ) {
         switch (choice) {
@@ -89,15 +78,6 @@ module {
                             return;
                         };
                     };
-                };
-            };
-            case (#useBoat) {
-                outcomeProcessor.log("You safely rescue all passengers using your boat.");
-                outcomeProcessor.reward();
-                if (prng.nextRatio(1, 10)) {
-                    outcomeProcessor.log("One of the rescued passengers gifts you a valuable item in gratitude.");
-                    let randomItem = prng.nextArrayElementWeighted(giftTable);
-                    outcomeProcessor.addItem(randomItem);
                 };
             };
             case (#castSpell) {
@@ -121,7 +101,6 @@ module {
             };
             case (#disregard) {
                 outcomeProcessor.log("You disregard the calls for help and continue on your way, leaving the passengers to their fate.");
-                outcomeProcessor.decreaseKarma();
             };
         };
     };
@@ -133,9 +112,8 @@ module {
     public func hashChoice(choice : Choice) : Nat32 {
         switch (choice) {
             case (#rescueSwimming) 0;
-            case (#useBoat) 1;
-            case (#castSpell) 2;
-            case (#disregard) 3;
+            case (#castSpell) 1;
+            case (#disregard) 2;
         };
     };
 

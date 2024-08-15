@@ -1,6 +1,7 @@
 import Text "mo:base/Text";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "../models/Outcome";
+import Item "../models/Item";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -58,7 +59,7 @@ module {
     public func processOutcome(
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
-        data : Data,
+        _ : Data,
         choice : Choice,
     ) {
         switch (choice) {
@@ -79,9 +80,8 @@ module {
                 };
             };
             case (#negotiate) {
-                if (prng.nextRatio(1, 2)) {
+                if (prng.nextRatio(1, 2) and outcomeProcessor.loseRandomItem()) {
                     outcomeProcessor.log("The dark elves accept your offer and let you pass.");
-                    outcomeProcessor.loseResource();
                 } else {
                     outcomeProcessor.log("Negotiations fail, and the dark elves attack!");
                     let damage = prng.nextNat(1, 4);
@@ -96,8 +96,7 @@ module {
             };
             case (#retreat) {
                 if (prng.nextRatio(2, 3)) {
-                    outcomeProcessor.log("You manage to escape, but leave behind some resources.");
-                    outcomeProcessor.loseResource();
+                    outcomeProcessor.log("You manage to escape.");
                 } else {
                     outcomeProcessor.log("Your retreat fails, and the dark elves catch up to you.");
                     let damage = prng.nextNat(1, 3);

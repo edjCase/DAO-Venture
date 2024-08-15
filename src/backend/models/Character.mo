@@ -1,11 +1,13 @@
 import Item "Item";
 import Trait "Trait";
+import TrieSet "mo:base/TrieSet";
 module {
 
     public type Character = {
         health : Nat;
         gold : Nat;
-        items : [Item.Item];
-        traits : [Trait.Trait];
+        weaponLevel : Nat;
+        items : TrieSet.Set<Item.Item>;
+        traits : TrieSet.Set<Trait.Trait>;
     };
 };

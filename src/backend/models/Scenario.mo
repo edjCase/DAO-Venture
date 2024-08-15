@@ -1,4 +1,6 @@
 import Nat "mo:base/Nat";
+import PseudoRandomX "mo:xtended-random/PseudoRandomX";
+import Outcome "Outcome";
 import MysteriousStructure "../scenarios/MysteriousStructure";
 import DarkElfAmbush "../scenarios/DarkElfAmbush";
 import CorruptedTreant "../scenarios/CorruptedTreant";
@@ -33,9 +35,9 @@ import FairyMarket "../scenarios/FairyMarket";
 // import MysticPortal "../scenarios/MysticPortal";
 // import ShiftingPaths "../scenarios/ShiftingPaths";
 // import SeasonalShift "../scenarios/SeasonalShift";
-import Outcome "Outcome";
 
 module {
+    type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type Scenario = {
         id : Nat;
@@ -78,6 +80,19 @@ module {
         // #mysticPortal : MysticPortal.Data;
         // #shiftingPaths : ShiftingPaths.Data;
         // #seasonalShift : SeasonalShift.Data;
+    };
+
+    public type Class = {
+        getChoiceRequirement : (text : Text) -> ?Outcome.ChoiceRequirement;
+        getChoiceDescription : (choiceId : Text) -> Text;
+        getTitle : () -> Text;
+        getDescription : () -> Text;
+        getOptions : () -> [{ id : Text; description : Text }];
+        processOutcome : (
+            prng : Prng,
+            outcomeProcessor : Outcome.Processor,
+            choiceId : Text,
+        ) -> ();
     };
 
 };

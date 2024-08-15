@@ -62,7 +62,7 @@ module {
     public func processOutcome(
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
-        data : Data,
+        _ : Data,
         choice : Choice,
     ) {
         switch (choice) {
@@ -71,12 +71,13 @@ module {
                     outcomeProcessor.log("You defeat the corrupted treant, but at a cost.");
                     let damage = prng.nextNat(2, 5);
                     switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) outcomeProcessor.reward();
+                        case (#alive) ();
                         case (#dead) {
                             outcomeProcessor.log("The treant's last strike proves fatal.");
                             return;
                         };
                     };
+                    outcomeProcessor.reward();
                 } else {
                     outcomeProcessor.log("The treant's power overwhelms you.");
                     let damage = prng.nextNat(3, 7);

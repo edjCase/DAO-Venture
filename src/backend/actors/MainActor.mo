@@ -15,6 +15,8 @@ import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
 import Random "mo:base/Random";
+import TrieSet "mo:base/TrieSet";
+import Trie "mo:base/Trie";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import MysteriousStructure "../scenarios/MysteriousStructure";
@@ -122,8 +124,9 @@ actor MainActor : Types.Actor {
         let character : Character.Character = {
             gold = 0;
             health = 100;
-            items = [];
-            traits = [];
+            items = TrieSet.empty();
+            traits = TrieSet.empty();
+            weaponLevel = 0;
         };
         let scenario = #mysteriousStructure(MysteriousStructure.generate(prng)); // TODO
         let location : Location.Location = {
@@ -217,20 +220,20 @@ actor MainActor : Types.Actor {
         let character : Types.Character = {
             gold = gameState.character.gold;
             health = gameState.character.health;
-            items = gameState.character.items.vals()
+            items = Trie.iter(gameState.character.items)
             |> Iter.map(
                 _,
-                func(item : Item.Item) : Types.Item = {
+                func((item, _) : (Item.Item, ())) : Types.Item = {
                     id = Item.toId(item);
                     name = Item.toText(item);
                     description = Item.toDescription(item);
                 },
             )
             |> Iter.toArray(_);
-            traits = gameState.character.traits.vals()
+            traits = Trie.iter(gameState.character.traits)
             |> Iter.map(
                 _,
-                func(trait : Trait.Trait) : Types.Trait = {
+                func((trait, _) : (Trait.Trait, ())) : Types.Trait = {
                     id = Trait.toId(trait);
                     name = Trait.toText(trait);
                     description = Trait.toDescription(trait);
@@ -283,7 +286,7 @@ actor MainActor : Types.Actor {
         let (title, description, options) = switch (scenario.kind) {
             case (#mysteriousStructure(mysteriousStructure)) {
                 let title = MysteriousStructure.getTitle();
-                let description = MysteriousStructure.getDescription(mysteriousStructure);
+                let description = MysteriousStructure.getDescription();
                 let options = MysteriousStructure.getOptions();
                 (title, description, options);
             };

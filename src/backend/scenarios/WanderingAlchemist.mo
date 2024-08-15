@@ -1,11 +1,14 @@
 import Text "mo:base/Text";
+import Prelude "mo:base/Prelude";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "../models/Outcome";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type Data = {};
+    public type Data = {
+        cost : Nat;
+    };
 
     public type Choice = {
         #tradeHerbs;
@@ -72,18 +75,21 @@ module {
         switch (choice) {
             case (#tradeHerbs) {
                 outcomeProcessor.log("You trade your herbs for a mysterious potion.");
-                outcomeProcessor.removeItem(#herbs);
-                outcomeProcessor.addItem(#healthPoition);
+                let true = outcomeProcessor.removeItem(#herbs) else Prelude.unreachable(); // A requirement for the choice
+                ignore outcomeProcessor.addItem(#healthPotion); // TODO already have item?
             };
             case (#buyPotion) {
-                outcomeProcessor.log("You purchase a potion of your choice from the alchemist.");
-                outcomeProcessor.loseResource(#gold);
-                outcomeProcessor.addItem(#healthPoition);
+                if (outcomeProcessor.removeGold(data.cost)) {
+                    outcomeProcessor.log("You purchase a potion of your choice from the alchemist.");
+                    ignore outcomeProcessor.addItem(#healthPotion); // TODO already have item?
+                } else {
+                    outcomeProcessor.log("You don't have enough gold to buy a potion.");
+                };
             };
             case (#learnRecipe) {
                 if (prng.nextRatio(3, 5)) {
                     outcomeProcessor.log("You successfully learn a new potion recipe from the alchemist!");
-                    outcomeProcessor.gainSkill(#alchemy);
+                    ignore outcomeProcessor.addTrait(#alchemist); // TODO already have trait?
                 } else {
                     outcomeProcessor.log("The alchemist's instructions are too complex. You fail to learn the recipe.");
                 };
@@ -108,6 +114,8 @@ module {
     };
 
     public func generate(_ : Prng) : Data {
-        {};
+        {
+            cost = 30;
+        };
     };
 };

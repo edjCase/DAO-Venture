@@ -1,5 +1,6 @@
 import Text "mo:base/Text";
 import Int "mo:base/Int";
+import Prelude "mo:base/Prelude";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "../models/Outcome";
 import Item "../models/Item";
@@ -77,25 +78,22 @@ module {
             case (#buyTrinket) {
                 if (outcomeProcessor.removeGold(data.trinket.cost)) {
                     outcomeProcessor.log("You purchase a mysterious trinket for " # Int.toText(data.trinket.cost) # " gold.");
-                    outcomeProcessor.addItem(data.trinket.item);
+                    ignore outcomeProcessor.addItem(data.trinket.item); // TODO already have item?
                 } else {
                     outcomeProcessor.log("You don't have enough gold to buy a trinket.");
                 };
             };
             case (#trade) {
-                if (prng.nextRatio(3, 5)) {
+                if (prng.nextRatio(3, 5) and outcomeProcessor.loseRandomItem() and outcomeProcessor.addTrait(#magical)) {
                     outcomeProcessor.log("The fairies accept your trade, granting you a boon.");
-                    outcomeProcessor.loseRandomItem();
-                    outcomeProcessor.gainSkill(#magic);
                 } else {
                     outcomeProcessor.log("The fairies reject your offer, seeming offended.");
                 };
             };
             case (#useCharm) {
                 outcomeProcessor.log("Your fairy charm glows, granting you favor in the market.");
-                outcomeProcessor.loseItem(#fairyCharm);
-                outcomeProcessor.gainAugment();
-                outcomeProcessor.gainSkill(#magic);
+                let true = outcomeProcessor.removeItem(#fairyCharm) else Prelude.unreachable(); // Checked with requirement
+                ignore outcomeProcessor.addTrait(#magical); // TODO already have trait?
             };
             case (#leave) {
                 outcomeProcessor.log("You leave the fairy market, the magical stalls fading behind you.");
