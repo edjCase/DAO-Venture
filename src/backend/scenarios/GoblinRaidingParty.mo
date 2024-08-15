@@ -65,75 +65,60 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         data : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#fight) {
-                if (prng.nextRatio(3, 5)) {
-                    outcomeProcessor.log("You successfully fend off the goblin raiding party!");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("The goblins overwhelm you with their numbers.");
-                    let damage = prng.nextNat(2, 5);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The goblin raid proves fatal.");
-                            return;
-                        };
-                    };
+        func goblinAttack() {
+            let damage = prng.nextNat(1, 3);
+            switch (outcomeProcessor.takeDamage(damage)) {
+                case (#alive) ();
+                case (#dead) {
+                    outcomeProcessor.log("The goblin's greed knows no bounds.");
+                    return;
                 };
             };
-            case (#bribe) {
-                let attacked = if (outcomeProcessor.removeGold(data.bribeCost)) {
-                    if (prng.nextRatio(4, 5)) {
-                        outcomeProcessor.log("The goblins accept your offering and leave you alone.");
-                        false;
-                    } else {
-                        outcomeProcessor.log("The goblins take your bribe but attack anyway!");
-                        true;
-                    };
-                } else {
-                    outcomeProcessor.log("The goblins see you don't have any gold and attack!");
-                    true;
-                };
-                if (attacked) {
-                    let damage = prng.nextNat(1, 3);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The goblin's greed knows no bounds.");
-                            return;
+        };
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You stand frozen, unable to decide. The dwarf pushes you out of his shop.");
+            };
+            case (?choice) {
+                switch (choice) {
+                    case (#fight) {
+                        if (prng.nextRatio(3, 5)) {
+                            outcomeProcessor.log("You successfully fend off the goblin raiding party!");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("The goblins overwhelm you with their numbers.");
+                            goblinAttack();
                         };
                     };
-                };
-            };
-            case (#intimidate) {
-                if (prng.nextRatio(4, 5)) {
-                    outcomeProcessor.log("Your show of strength scares off the goblins.");
-                } else {
-                    outcomeProcessor.log("The goblins are not impressed and attack!");
-                    let damage = prng.nextNat(1, 4);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("Your bluff fails tragically.");
-                            return;
+                    case (#bribe) {
+                        if (outcomeProcessor.removeGold(data.bribeCost)) {
+                            if (prng.nextRatio(4, 5)) {
+                                outcomeProcessor.log("The goblins accept your offering and leave you alone.");
+                            } else {
+                                outcomeProcessor.log("The goblins take your bribe but attack anyway!");
+                                goblinAttack();
+                            };
+                        } else {
+                            outcomeProcessor.log("The goblins see you don't have any gold and attack!");
+                            goblinAttack();
                         };
                     };
-                };
-            };
-            case (#distract) {
-                if (prng.nextRatio(4, 5)) {
-                    outcomeProcessor.log("Your clever diversion allows you to slip away unnoticed.");
-                } else {
-                    outcomeProcessor.log("The goblins see through your trick and attack!");
-                    let damage = prng.nextNat(1, 3);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("Your failed distraction leads to a tragic end.");
-                            return;
+                    case (#intimidate) {
+                        if (prng.nextRatio(4, 5)) {
+                            outcomeProcessor.log("Your show of strength scares off the goblins.");
+                        } else {
+                            outcomeProcessor.log("The goblins are not impressed and attack!");
+                            goblinAttack();
+                        };
+                    };
+                    case (#distract) {
+                        if (prng.nextRatio(4, 5)) {
+                            outcomeProcessor.log("Your clever diversion allows you to slip away unnoticed.");
+                        } else {
+                            outcomeProcessor.log("The goblins see through your trick and attack!");
+                            goblinAttack();
                         };
                     };
                 };

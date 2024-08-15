@@ -70,32 +70,39 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         data : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#tradeHerbs) {
-                outcomeProcessor.log("You trade your herbs for a mysterious potion.");
-                let true = outcomeProcessor.removeItem(#herbs) else Prelude.unreachable(); // A requirement for the choice
-                ignore outcomeProcessor.addItem(#healthPotion); // TODO already have item?
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You ignore them and continue walking down the path.");
             };
-            case (#buyPotion) {
-                if (outcomeProcessor.removeGold(data.cost)) {
-                    outcomeProcessor.log("You purchase a potion of your choice from the alchemist.");
-                    ignore outcomeProcessor.addItem(#healthPotion); // TODO already have item?
-                } else {
-                    outcomeProcessor.log("You don't have enough gold to buy a potion.");
+            case (?choice) {
+                switch (choice) {
+                    case (#tradeHerbs) {
+                        outcomeProcessor.log("You trade your herbs for a mysterious potion.");
+                        let true = outcomeProcessor.removeItem(#herbs) else Prelude.unreachable(); // A requirement for the choice
+                        ignore outcomeProcessor.addItem(#healthPotion); // TODO already have item?
+                    };
+                    case (#buyPotion) {
+                        if (outcomeProcessor.removeGold(data.cost)) {
+                            outcomeProcessor.log("You purchase a potion of your choice from the alchemist.");
+                            ignore outcomeProcessor.addItem(#healthPotion); // TODO already have item?
+                        } else {
+                            outcomeProcessor.log("You don't have enough gold to buy a potion.");
+                        };
+                    };
+                    case (#learnRecipe) {
+                        if (prng.nextRatio(3, 5)) {
+                            outcomeProcessor.log("You successfully learn a new potion recipe from the alchemist!");
+                            ignore outcomeProcessor.addTrait(#alchemist); // TODO already have trait?
+                        } else {
+                            outcomeProcessor.log("The alchemist's instructions are too complex. You fail to learn the recipe.");
+                        };
+                    };
+                    case (#decline) {
+                        outcomeProcessor.log("You politely decline the alchemist's offers and continue on your journey.");
+                    };
                 };
-            };
-            case (#learnRecipe) {
-                if (prng.nextRatio(3, 5)) {
-                    outcomeProcessor.log("You successfully learn a new potion recipe from the alchemist!");
-                    ignore outcomeProcessor.addTrait(#alchemist); // TODO already have trait?
-                } else {
-                    outcomeProcessor.log("The alchemist's instructions are too complex. You fail to learn the recipe.");
-                };
-            };
-            case (#decline) {
-                outcomeProcessor.log("You politely decline the alchemist's offers and continue on your journey.");
             };
         };
     };

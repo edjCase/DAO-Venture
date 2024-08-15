@@ -68,33 +68,41 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         data : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#upgradeWeapon) {
-                if (outcomeProcessor.removeGold(data.upgradeCost)) {
-                    outcomeProcessor.log("You upgrade your weapon for " # Int.toText(data.upgradeCost) # " gold.");
-                    outcomeProcessor.upgradeWeapon(1);
-                } else {
-                    outcomeProcessor.log("You don't have enough gold to upgrade your weapon.");
+
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You stand frozen, unable to decide. The dwarf pushes you out of his shop.");
+            };
+            case (?choice) {
+                switch (choice) {
+                    case (#upgradeWeapon) {
+                        if (outcomeProcessor.removeGold(data.upgradeCost)) {
+                            outcomeProcessor.log("You upgrade your weapon for " # Int.toText(data.upgradeCost) # " gold.");
+                            outcomeProcessor.upgradeWeapon(1);
+                        } else {
+                            outcomeProcessor.log("You don't have enough gold to upgrade your weapon.");
+                        };
+                    };
+                    case (#haggle) {
+                        if (prng.nextRatio(3, 10)) {
+                            let discountedCost = prng.nextNat(30, 50);
+                            outcomeProcessor.log("The dwarf grudgingly offers a discounted upgrade price of " # Int.toText(discountedCost) # " gold.");
+                            // Offer discounted upgrade logic here
+                        } else {
+                            outcomeProcessor.log("The dwarf is offended by your haggling and refuses to upgrade your weapon.");
+                        };
+                    };
+                    case (#dwarfNegotiate) {
+                        let specialDeal = prng.nextNat(25, 40);
+                        outcomeProcessor.log("Your dwarf crew member negotiates a special deal: " # Int.toText(specialDeal) # " gold for a weapon upgrade.");
+                        // Offer special deal logic here
+                    };
+                    case (#leave) {
+                        outcomeProcessor.log("You leave the weaponsmith's shop without upgrading your weapon.");
+                    };
                 };
-            };
-            case (#haggle) {
-                if (prng.nextRatio(3, 10)) {
-                    let discountedCost = prng.nextNat(30, 50);
-                    outcomeProcessor.log("The dwarf grudgingly offers a discounted upgrade price of " # Int.toText(discountedCost) # " gold.");
-                    // Offer discounted upgrade logic here
-                } else {
-                    outcomeProcessor.log("The dwarf is offended by your haggling and refuses to upgrade your weapon.");
-                };
-            };
-            case (#dwarfNegotiate) {
-                let specialDeal = prng.nextNat(25, 40);
-                outcomeProcessor.log("Your dwarf crew member negotiates a special deal: " # Int.toText(specialDeal) # " gold for a weapon upgrade.");
-                // Offer special deal logic here
-            };
-            case (#leave) {
-                outcomeProcessor.log("You leave the weaponsmith's shop without upgrading your weapon.");
             };
         };
     };

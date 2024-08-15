@@ -5,7 +5,6 @@ import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Order "mo:base/Order";
-import Option "mo:base/Option";
 import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Debug "mo:base/Debug";
@@ -24,6 +23,7 @@ import SinkingBoat "../scenarios/SinkingBoat";
 import WanderingAlchemist "../scenarios/WanderingAlchemist";
 import DwarvenWeaponsmith "../scenarios/DwarvenWeaponsmith";
 import FairyMarket "../scenarios/FairyMarket";
+import ScenarioHelper "../ScenarioHelper";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -85,19 +85,7 @@ module {
         };
 
         public func generateAndStart(prng : Prng, proposerId : Principal, members : [ExtendedProposal.Member]) : Nat {
-            let kind = prng.optionBuilder<Scenario.ScenarioKind>()
-            // prettier-ignore
-            .withFunc(func() : Scenario.ScenarioKind = #mysteriousStructure(MysteriousStructure.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #darkElfAmbush(DarkElfAmbush.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #corruptedTreant(CorruptedTreant.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #goblinRaidingParty(GoblinRaidingParty.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #lostElfling(LostElfling.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #trappedDruid(TrappedDruid.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #sinkingBoat(SinkingBoat.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #wanderingAlchemist(WanderingAlchemist.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #dwarvenWeaponsmith(DwarvenWeaponsmith.generate(prng)), 1.0)
-            .withFunc(func() : Scenario.ScenarioKind = #fairyMarket(FairyMarket.generate(prng)), 1.0)
-            .next();
+            let kind = generateRandomKind(prng);
             start(kind, proposerId, members);
         };
 
@@ -185,58 +173,13 @@ module {
                 case (#undetermined) null;
             };
             let outcomeHandler = OutcomeHandler.Handler(prng, characterHandler);
-            let scenarioClass = switch (scenario.kind) {
-                case (#mysteriousStructure(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = MysteriousStructure.choiceFromText(choice) else return #err(#invalidChoice);
-                    MysteriousStructure.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#darkElfAmbush(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = DarkElfAmbush.choiceFromText(choice) else return #err(#invalidChoice);
-                    DarkElfAmbush.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#corruptedTreant(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = CorruptedTreant.choiceFromText(choice) else return #err(#invalidChoice);
-                    CorruptedTreant.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#goblinRaidingParty(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = GoblinRaidingParty.choiceFromText(choice) else return #err(#invalidChoice);
-                    GoblinRaidingParty.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#lostElfling(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = LostElfling.choiceFromText(choice) else return #err(#invalidChoice);
-                    LostElfling.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#trappedDruid(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = TrappedDruid.choiceFromText(choice) else return #err(#invalidChoice);
-                    TrappedDruid.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#sinkingBoat(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = SinkingBoat.choiceFromText(choice) else return #err(#invalidChoice);
-                    SinkingBoat.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#wanderingAlchemist(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = WanderingAlchemist.choiceFromText(choice) else return #err(#invalidChoice);
-                    WanderingAlchemist.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#dwarvenWeaponsmith(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = DwarvenWeaponsmith.choiceFromText(choice) else return #err(#invalidChoice);
-                    DwarvenWeaponsmith.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-                case (#fairyMarket(data)) {
-                    let choice = Option.get(choiceOrUndecided, "skip"); // TODO random?
-                    let ?parsedChoice = FairyMarket.choiceFromText(choice) else return #err(#invalidChoice);
-                    FairyMarket.processOutcome(prng, outcomeHandler, data, parsedChoice);
-                };
-            };
+
+            let helper = ScenarioHelper.fromKind(scenario.kind);
+            helper.processOutcome(
+                prng,
+                outcomeHandler,
+                choiceOrUndecided,
+            );
             let outcome = {
                 choice = choiceOrUndecided;
                 messages = outcomeHandler.getMessages();
@@ -252,6 +195,22 @@ module {
             #ok;
         };
 
+    };
+
+    public func generateRandomKind(prng : Prng) : Scenario.ScenarioKind {
+        prng.optionBuilder<Scenario.ScenarioKind>()
+        // prettier-ignore
+        .withFunc(func() : Scenario.ScenarioKind = #mysteriousStructure(MysteriousStructure.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #darkElfAmbush(DarkElfAmbush.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #corruptedTreant(CorruptedTreant.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #goblinRaidingParty(GoblinRaidingParty.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #lostElfling(LostElfling.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #trappedDruid(TrappedDruid.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #sinkingBoat(SinkingBoat.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #wanderingAlchemist(WanderingAlchemist.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #dwarvenWeaponsmith(DwarvenWeaponsmith.generate(prng)), 1.0)
+        .withFunc(func() : Scenario.ScenarioKind = #fairyMarket(FairyMarket.generate(prng)), 1.0)
+        .next();
     };
 
     public func create(id : Nat, kind : Scenario.ScenarioKind, proposerId : Principal, members : [ExtendedProposal.Member]) : Scenario {
@@ -281,4 +240,5 @@ module {
             outcome = null;
         };
     };
+
 };

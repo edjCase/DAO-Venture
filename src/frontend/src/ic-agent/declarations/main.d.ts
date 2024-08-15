@@ -6,7 +6,7 @@ export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export interface Character {
   'gold' : bigint,
   'traits' : Array<Trait>,
-  'items' : Array<Item>,
+  'items' : Array<Item__1>,
   'health' : bigint,
 }
 export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
@@ -15,13 +15,16 @@ export type CreateWorldProposalError = { 'invalid' : Array<string> } |
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
-export interface Data {
-  'size' : string,
-  'unusualFeature' : string,
-  'structureName' : string,
-  'material' : string,
-  'condition' : string,
-}
+export type Data = {};
+export type Data__1 = {};
+export interface Data__2 { 'upgradeCost' : bigint }
+export interface Data__3 { 'trinket' : Trinket }
+export interface Data__4 { 'bribeCost' : bigint }
+export type Data__5 = {};
+export type Data__6 = {};
+export type Data__7 = {};
+export type Data__8 = {};
+export interface Data__9 { 'cost' : bigint }
 export interface GameState {
   'character' : Character,
   'turn' : bigint,
@@ -55,7 +58,15 @@ export type GetUsersResult = { 'ok' : Array<User> };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
-export interface Item { 'id' : string, 'name' : string, 'description' : string }
+export type Item = { 'echoCrystal' : null } |
+  { 'herbs' : null } |
+  { 'healthPotion' : null } |
+  { 'fairyCharm' : null };
+export interface Item__1 {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
 export type JoinError = { 'alreadyMember' : null };
 export interface Location {
   'id' : bigint,
@@ -110,7 +121,16 @@ export interface Scenario {
   'outcome' : [] | [Outcome],
   'options' : Array<ScenarioOption>,
 }
-export type ScenarioKind = { 'mysteriousStructure' : Data };
+export type ScenarioKind = { 'goblinRaidingParty' : Data__4 } |
+  { 'trappedDruid' : Data__8 } |
+  { 'corruptedTreant' : Data } |
+  { 'wanderingAlchemist' : Data__9 } |
+  { 'darkElfAmbush' : Data__1 } |
+  { 'dwarvenWeaponsmith' : Data__2 } |
+  { 'mysteriousStructure' : Data__6 } |
+  { 'fairyMarket' : Data__3 } |
+  { 'lostElfling' : Data__5 } |
+  { 'sinkingBoat' : Data__7 };
 export interface ScenarioOption { 'id' : string, 'description' : string }
 export interface ScenarioVote {
   'votingPowerByChoice' : Array<ChoiceVotingPower>,
@@ -131,6 +151,7 @@ export interface Trait {
   'name' : string,
   'description' : string,
 }
+export interface Trinket { 'cost' : bigint, 'item' : Item }
 export interface User {
   'id' : Principal,
   'inWorldSince' : Time,

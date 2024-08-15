@@ -27,6 +27,7 @@ import ScenarioHandler "../handlers/ScenarioHandler";
 import Item "../models/Item";
 import Trait "../models/Trait";
 import Scenario "../models/Scenario";
+import ScenarioHelper "../ScenarioHelper";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -128,7 +129,7 @@ actor MainActor : Types.Actor {
             traits = TrieSet.empty();
             weaponLevel = 0;
         };
-        let scenario = #mysteriousStructure(MysteriousStructure.generate(prng)); // TODO
+        let scenario = ScenarioHandler.generateRandomKind(prng);
         let location : Location.Location = {
             id = 0;
             coordinate = { q = 0; r = 0 };
@@ -283,14 +284,7 @@ actor MainActor : Types.Actor {
         scenario : Scenario.Scenario,
     ) : Types.Scenario {
 
-        let (title, description, options) = switch (scenario.kind) {
-            case (#mysteriousStructure(mysteriousStructure)) {
-                let title = MysteriousStructure.getTitle();
-                let description = MysteriousStructure.getDescription();
-                let options = MysteriousStructure.getOptions();
-                (title, description, options);
-            };
-        };
+        let helper = ScenarioHelper.fromKind(scenario.kind);
         let voteData = switch (getScenarioVoteInternal(voterId, scenario.id)) {
             case (#ok(voteData)) voteData;
             case (#err(#noActiveGame)) Prelude.unreachable();
@@ -298,9 +292,9 @@ actor MainActor : Types.Actor {
         };
         {
             scenario with
-            title = title;
-            description = description;
-            options = options;
+            title = helper.getTitle();
+            description = helper.getDescription();
+            options = helper.getOptions();
             voteData = voteData;
         };
     };

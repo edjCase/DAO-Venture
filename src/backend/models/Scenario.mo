@@ -82,17 +82,4 @@ module {
         // #seasonalShift : SeasonalShift.Data;
     };
 
-    public type Class = {
-        getChoiceRequirement : (text : Text) -> ?Outcome.ChoiceRequirement;
-        getChoiceDescription : (choiceId : Text) -> Text;
-        getTitle : () -> Text;
-        getDescription : () -> Text;
-        getOptions : () -> [{ id : Text; description : Text }];
-        processOutcome : (
-            prng : Prng,
-            outcomeProcessor : Outcome.Processor,
-            choiceId : Text,
-        ) -> ();
-    };
-
 };

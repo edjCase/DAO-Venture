@@ -72,31 +72,38 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         data : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#buyTrinket) {
-                if (outcomeProcessor.removeGold(data.trinket.cost)) {
-                    outcomeProcessor.log("You purchase a mysterious trinket for " # Int.toText(data.trinket.cost) # " gold.");
-                    ignore outcomeProcessor.addItem(data.trinket.item); // TODO already have item?
-                } else {
-                    outcomeProcessor.log("You don't have enough gold to buy a trinket.");
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You stand frozen, unable to decide. The faeries escort you out of the market.");
+            };
+            case (?choice) {
+                switch (choice) {
+                    case (#buyTrinket) {
+                        if (outcomeProcessor.removeGold(data.trinket.cost)) {
+                            outcomeProcessor.log("You purchase a mysterious trinket for " # Int.toText(data.trinket.cost) # " gold.");
+                            ignore outcomeProcessor.addItem(data.trinket.item); // TODO already have item?
+                        } else {
+                            outcomeProcessor.log("You don't have enough gold to buy a trinket.");
+                        };
+                    };
+                    case (#trade) {
+                        if (prng.nextRatio(3, 5) and outcomeProcessor.loseRandomItem() and outcomeProcessor.addTrait(#magical)) {
+                            outcomeProcessor.log("The fairies accept your trade, granting you a boon.");
+                        } else {
+                            outcomeProcessor.log("The fairies reject your offer, seeming offended.");
+                        };
+                    };
+                    case (#useCharm) {
+                        outcomeProcessor.log("Your fairy charm glows, granting you favor in the market.");
+                        let true = outcomeProcessor.removeItem(#fairyCharm) else Prelude.unreachable(); // Checked with requirement
+                        ignore outcomeProcessor.addTrait(#magical); // TODO already have trait?
+                    };
+                    case (#leave) {
+                        outcomeProcessor.log("You leave the fairy market, the magical stalls fading behind you.");
+                    };
                 };
-            };
-            case (#trade) {
-                if (prng.nextRatio(3, 5) and outcomeProcessor.loseRandomItem() and outcomeProcessor.addTrait(#magical)) {
-                    outcomeProcessor.log("The fairies accept your trade, granting you a boon.");
-                } else {
-                    outcomeProcessor.log("The fairies reject your offer, seeming offended.");
-                };
-            };
-            case (#useCharm) {
-                outcomeProcessor.log("Your fairy charm glows, granting you favor in the market.");
-                let true = outcomeProcessor.removeItem(#fairyCharm) else Prelude.unreachable(); // Checked with requirement
-                ignore outcomeProcessor.addTrait(#magical); // TODO already have trait?
-            };
-            case (#leave) {
-                outcomeProcessor.log("You leave the fairy market, the magical stalls fading behind you.");
             };
         };
     };

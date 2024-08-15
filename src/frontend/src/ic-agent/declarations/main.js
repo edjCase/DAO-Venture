@@ -17,7 +17,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
-  const Item = IDL.Record({
+  const Item__1 = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -25,7 +25,7 @@ export const idlFactory = ({ IDL }) => {
   const Character = IDL.Record({
     'gold' : IDL.Nat,
     'traits' : IDL.Vec(Trait),
-    'items' : IDL.Vec(Item),
+    'items' : IDL.Vec(Item__1),
     'health' : IDL.Nat,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
@@ -59,14 +59,35 @@ export const idlFactory = ({ IDL }) => {
     'totalVotingPower' : IDL.Nat,
     'yourVote' : IDL.Opt(ScenarioVoteChoice),
   });
-  const Data = IDL.Record({
-    'size' : IDL.Text,
-    'unusualFeature' : IDL.Text,
-    'structureName' : IDL.Text,
-    'material' : IDL.Text,
-    'condition' : IDL.Text,
+  const Data__4 = IDL.Record({ 'bribeCost' : IDL.Nat });
+  const Data__8 = IDL.Record({});
+  const Data = IDL.Record({});
+  const Data__9 = IDL.Record({ 'cost' : IDL.Nat });
+  const Data__1 = IDL.Record({});
+  const Data__2 = IDL.Record({ 'upgradeCost' : IDL.Nat });
+  const Data__6 = IDL.Record({});
+  const Item = IDL.Variant({
+    'echoCrystal' : IDL.Null,
+    'herbs' : IDL.Null,
+    'healthPotion' : IDL.Null,
+    'fairyCharm' : IDL.Null,
   });
-  const ScenarioKind = IDL.Variant({ 'mysteriousStructure' : Data });
+  const Trinket = IDL.Record({ 'cost' : IDL.Nat, 'item' : Item });
+  const Data__3 = IDL.Record({ 'trinket' : Trinket });
+  const Data__5 = IDL.Record({});
+  const Data__7 = IDL.Record({});
+  const ScenarioKind = IDL.Variant({
+    'goblinRaidingParty' : Data__4,
+    'trappedDruid' : Data__8,
+    'corruptedTreant' : Data,
+    'wanderingAlchemist' : Data__9,
+    'darkElfAmbush' : Data__1,
+    'dwarvenWeaponsmith' : Data__2,
+    'mysteriousStructure' : Data__6,
+    'fairyMarket' : Data__3,
+    'lostElfling' : Data__5,
+    'sinkingBoat' : Data__7,
+  });
   const Outcome = IDL.Record({
     'messages' : IDL.Vec(IDL.Text),
     'choice' : IDL.Opt(IDL.Text),

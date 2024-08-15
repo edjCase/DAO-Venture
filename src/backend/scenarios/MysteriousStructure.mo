@@ -65,7 +65,7 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         _ : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
 
         func exploreTreasureRoom() {
@@ -101,40 +101,47 @@ module {
             exploreTreasureRoom();
         };
 
-        switch (choice) {
-            case (#secretEntrance) {
-                outcomeProcessor.log("You find a hidden entrance and carefully make your way inside.");
-                exploreTreasureRoom();
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You don't seem to find the structure interesting and move on.");
             };
-            case (#forcefulEntry) {
-                func rollForDamage() {
-                    if (prng.nextRatio(1, 2)) {
-                        outcomeProcessor.log("You hurt yourself trying to force into the entrance.");
-                        let damage = prng.nextNat(1, 5);
-                        switch (outcomeProcessor.takeDamage(damage)) {
-                            case (#alive) ();
-                            case (#dead) {
-                                outcomeProcessor.log("You are defeated in the most embarassing way.");
-                                return;
+            case (?choice) {
+                switch (choice) {
+                    case (#secretEntrance) {
+                        outcomeProcessor.log("You find a hidden entrance and carefully make your way inside.");
+                        exploreTreasureRoom();
+                    };
+                    case (#forcefulEntry) {
+                        func rollForDamage() {
+                            if (prng.nextRatio(1, 2)) {
+                                outcomeProcessor.log("You hurt yourself trying to force into the entrance.");
+                                let damage = prng.nextNat(1, 5);
+                                switch (outcomeProcessor.takeDamage(damage)) {
+                                    case (#alive) ();
+                                    case (#dead) {
+                                        outcomeProcessor.log("You are defeated in the most embarassing way.");
+                                        return;
+                                    };
+                                };
                             };
                         };
+
+                        rollForDamage();
+                        if (prng.nextRatio(1, 2)) {
+                            outcomeProcessor.log("You manage to create an opening and enter the structure.");
+                            exploreStructure();
+                        } else {
+                            outcomeProcessor.log("Your attempts to force your way inside are unsuccessful.");
+                        };
+                    };
+                    case (#sacrifice) {
+                        outcomeProcessor.log("You make an offering to the structure and allows you to enter safely.");
+                        exploreTreasureRoom();
+                    };
+                    case (#skip) {
+                        outcomeProcessor.log("You decide to leave the structure alone and continue exploring elsewhere.");
                     };
                 };
-
-                rollForDamage();
-                if (prng.nextRatio(1, 2)) {
-                    outcomeProcessor.log("You manage to create an opening and enter the structure.");
-                    exploreStructure();
-                } else {
-                    outcomeProcessor.log("Your attempts to force your way inside are unsuccessful.");
-                };
-            };
-            case (#sacrifice) {
-                outcomeProcessor.log("You make an offering to the structure and allows you to enter safely.");
-                exploreTreasureRoom();
-            };
-            case (#skip) {
-                outcomeProcessor.log("You decide to leave the structure alone and continue exploring elsewhere.");
             };
         };
     };

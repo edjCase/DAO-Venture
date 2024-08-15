@@ -63,76 +63,57 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         _ : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#attack) {
-                if (prng.nextRatio(2, 5)) {
-                    outcomeProcessor.log("You defeat the corrupted treant, but at a cost.");
-                    let damage = prng.nextNat(2, 5);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The treant's last strike proves fatal.");
-                            return;
-                        };
-                    };
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("The treant's power overwhelms you.");
-                    let damage = prng.nextNat(3, 7);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("You fall to the corrupted treant's might.");
-                            return;
-                        };
-                    };
+        func treantAttack() {
+            let damage = prng.nextNat(3, 7);
+            switch (outcomeProcessor.takeDamage(damage)) {
+                case (#alive) ();
+                case (#dead) {
+                    outcomeProcessor.log("You fall to the corrupted treant's might.");
+                    return;
                 };
             };
-            case (#purify) {
-                if (prng.nextRatio(4, 5)) {
-                    outcomeProcessor.log("Your magic cleanses the corruption. The treant returns to its peaceful state.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("The corruption resists your magic and lashes out!");
-                    let damage = prng.nextNat(1, 3);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The backlash of dark energy proves too much.");
-                            return;
+        };
+
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You stand frozen, unable to decide. The treant attacks.");
+                treantAttack();
+            };
+            case (?choice) {
+                switch (choice) {
+                    case (#attack) {
+                        if (prng.nextRatio(2, 5)) {
+                            outcomeProcessor.log("You attack the treant, but at a reciprocates.");
+                            treantAttack();
+                            outcomeProcessor.reward();
+                        } else {};
+                    };
+                    case (#purify) {
+                        if (prng.nextRatio(4, 5)) {
+                            outcomeProcessor.log("Your magic cleanses the corruption. The treant returns to its peaceful state.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("The corruption resists your magic and lashes out!");
+                            treantAttack();
                         };
                     };
-                };
-            };
-            case (#evade) {
-                if (prng.nextRatio(3, 5)) {
-                    outcomeProcessor.log("You successfully navigate around the treant without incident.");
-                } else {
-                    outcomeProcessor.log("The treant notices your attempt to sneak by and attacks!");
-                    let damage = prng.nextNat(2, 4);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("You fail to evade the treant's powerful strike.");
-                            return;
+                    case (#evade) {
+                        if (prng.nextRatio(3, 5)) {
+                            outcomeProcessor.log("You successfully navigate around the treant without incident.");
+                        } else {
+                            outcomeProcessor.log("The treant notices your attempt to sneak by and attacks!");
+                            treantAttack();
                         };
                     };
-                };
-            };
-            case (#communicate) {
-                if (prng.nextRatio(4, 5)) {
-                    outcomeProcessor.log("You reach the treant's consciousness. It calms and allows you to pass.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("The corruption is too strong. The treant attacks despite your efforts.");
-                    let damage = prng.nextNat(1, 4);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("Your attempt at communication ends tragically.");
-                            return;
+                    case (#communicate) {
+                        if (prng.nextRatio(4, 5)) {
+                            outcomeProcessor.log("You reach the treant's consciousness. It calms and allows you to pass.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("The corruption is too strong. The treant attacks despite your efforts.");
+                            treantAttack();
                         };
                     };
                 };

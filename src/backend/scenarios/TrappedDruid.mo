@@ -71,59 +71,67 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         _ : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#freeDirectly) {
-                if (prng.nextRatio(1, 2)) {
-                    outcomeProcessor.log("You successfully free the druid from the magical snare.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("The magical snare reacts violently to your attempt.");
-                    let damage = prng.nextNat(2, 4);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The magical backlash proves fatal.");
-                            return;
+
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You don't seem to hear them and continue walking.");
+            };
+            case (?choice) {
+                switch (choice) {
+                    case (#freeDirectly) {
+                        if (prng.nextRatio(1, 2)) {
+                            outcomeProcessor.log("You successfully free the druid from the magical snare.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("The magical snare reacts violently to your attempt.");
+                            let damage = prng.nextNat(2, 4);
+                            switch (outcomeProcessor.takeDamage(damage)) {
+                                case (#alive) ();
+                                case (#dead) {
+                                    outcomeProcessor.log("The magical backlash proves fatal.");
+                                    return;
+                                };
+                            };
                         };
                     };
-                };
-            };
-            case (#useNatureSkills) {
-                if (prng.nextRatio(4, 5)) {
-                    outcomeProcessor.log("Your nature skills allow you to safely disarm the snare and free the druid.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("Despite your skills, the snare proves too complex to disarm safely.");
-                    let damage = prng.nextNat(1, 2);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The magical snare overwhelms your abilities.");
-                            return;
+                    case (#useNatureSkills) {
+                        if (prng.nextRatio(4, 5)) {
+                            outcomeProcessor.log("Your nature skills allow you to safely disarm the snare and free the druid.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("Despite your skills, the snare proves too complex to disarm safely.");
+                            let damage = prng.nextNat(1, 2);
+                            switch (outcomeProcessor.takeDamage(damage)) {
+                                case (#alive) ();
+                                case (#dead) {
+                                    outcomeProcessor.log("The magical snare overwhelms your abilities.");
+                                    return;
+                                };
+                            };
                         };
                     };
-                };
-            };
-            case (#findAlternativeSolution) {
-                if (prng.nextRatio(2, 3)) {
-                    outcomeProcessor.log("You find a magical artifact nearby that helps neutralize the snare.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("Your search attracts unwanted attention from forest creatures.");
-                    let damage = prng.nextNat(1, 3);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The forest creatures prove too much to handle.");
-                            return;
+                    case (#findAlternativeSolution) {
+                        if (prng.nextRatio(2, 3)) {
+                            outcomeProcessor.log("You find a magical artifact nearby that helps neutralize the snare.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("Your search attracts unwanted attention from forest creatures.");
+                            let damage = prng.nextNat(1, 3);
+                            switch (outcomeProcessor.takeDamage(damage)) {
+                                case (#alive) ();
+                                case (#dead) {
+                                    outcomeProcessor.log("The forest creatures prove too much to handle.");
+                                    return;
+                                };
+                            };
                         };
                     };
+                    case (#leaveAlone) {
+                        outcomeProcessor.log("You decide the risk is too great and leave the druid to their fate.");
+                    };
                 };
-            };
-            case (#leaveAlone) {
-                outcomeProcessor.log("You decide the risk is too great and leave the druid to their fate.");
             };
         };
     };

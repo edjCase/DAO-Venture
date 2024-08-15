@@ -62,56 +62,63 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         _ : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#help) {
-                if (prng.nextRatio(4, 5)) {
-                    outcomeProcessor.log("You successfully help the elfling and reunite them with their clan.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("Your attempt to help leads you into a dangerous situation.");
-                    let damage = prng.nextNat(1, 3);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The forest's dangers prove too much in your rescue attempt.");
-                            return;
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You stand frozen, unable to decide. The dwarf pushes you out of his shop.");
+            };
+            case (?choice) {
+                switch (choice) {
+                    case (#help) {
+                        if (prng.nextRatio(4, 5)) {
+                            outcomeProcessor.log("You successfully help the elfling and reunite them with their clan.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("Your attempt to help leads you into a dangerous situation.");
+                            let damage = prng.nextNat(1, 3);
+                            switch (outcomeProcessor.takeDamage(damage)) {
+                                case (#alive) ();
+                                case (#dead) {
+                                    outcomeProcessor.log("The forest's dangers prove too much in your rescue attempt.");
+                                    return;
+                                };
+                            };
                         };
                     };
-                };
-            };
-            case (#abandon) {
-                outcomeProcessor.log("You ignore the elfling's cries and continue on your way.");
-            };
-            case (#investigate) {
-                if (prng.nextRatio(3, 4)) {
-                    outcomeProcessor.log("Your careful investigation reveals a safe path to the elfling.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("While investigating, you stumble into a hidden danger.");
-                    let damage = prng.nextNat(1, 2);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The hidden danger proves fatal.");
-                            return;
+                    case (#abandon) {
+                        outcomeProcessor.log("You ignore the elfling's cries and continue on your way.");
+                    };
+                    case (#investigate) {
+                        if (prng.nextRatio(3, 4)) {
+                            outcomeProcessor.log("Your careful investigation reveals a safe path to the elfling.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("While investigating, you stumble into a hidden danger.");
+                            let damage = prng.nextNat(1, 2);
+                            switch (outcomeProcessor.takeDamage(damage)) {
+                                case (#alive) ();
+                                case (#dead) {
+                                    outcomeProcessor.log("The hidden danger proves fatal.");
+                                    return;
+                                };
+                            };
                         };
                     };
-                };
-            };
-            case (#useMagic) {
-                if (prng.nextRatio(9, 10)) {
-                    outcomeProcessor.log("Your magic successfully guides the elfling back to their clan.");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("Your magic attracts unwanted attention from forest spirits.");
-                    let damage = prng.nextNat(1, 2);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The forest spirits overwhelm you.");
-                            return;
+                    case (#useMagic) {
+                        if (prng.nextRatio(9, 10)) {
+                            outcomeProcessor.log("Your magic successfully guides the elfling back to their clan.");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("Your magic attracts unwanted attention from forest spirits.");
+                            let damage = prng.nextNat(1, 2);
+                            switch (outcomeProcessor.takeDamage(damage)) {
+                                case (#alive) ();
+                                case (#dead) {
+                                    outcomeProcessor.log("The forest spirits overwhelm you.");
+                                    return;
+                                };
+                            };
                         };
                     };
                 };

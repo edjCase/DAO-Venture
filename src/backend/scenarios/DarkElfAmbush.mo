@@ -1,7 +1,6 @@
 import Text "mo:base/Text";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "../models/Outcome";
-import Item "../models/Item";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -60,66 +59,57 @@ module {
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
         _ : Data,
-        choice : Choice,
+        choiceOrUndecided : ?Choice,
     ) {
-        switch (choice) {
-            case (#fight) {
-                if (prng.nextRatio(3, 5)) {
-                    outcomeProcessor.log("You successfully fend off the dark elves!");
-                    outcomeProcessor.reward();
-                } else {
-                    outcomeProcessor.log("The dark elves overpower you.");
-                    let damage = prng.nextNat(2, 6);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("You fall to the dark elves' attack.");
-                            return;
-                        };
-                    };
+        func elfAttack() {
+            let damage = prng.nextNat(2, 6);
+            switch (outcomeProcessor.takeDamage(damage)) {
+                case (#alive) ();
+                case (#dead) {
+                    outcomeProcessor.log("You fall to the dark elves' attack.");
+                    return;
                 };
             };
-            case (#negotiate) {
-                if (prng.nextRatio(1, 2) and outcomeProcessor.loseRandomItem()) {
-                    outcomeProcessor.log("The dark elves accept your offer and let you pass.");
-                } else {
-                    outcomeProcessor.log("Negotiations fail, and the dark elves attack!");
-                    let damage = prng.nextNat(1, 4);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The dark elves show no mercy.");
-                            return;
+        };
+
+        switch (choiceOrUndecided) {
+            case (null) {
+                outcomeProcessor.log("You stand frozen, unable to decide. The elves attacks.");
+                elfAttack();
+            };
+            case (?choice) {
+                switch (choice) {
+                    case (#fight) {
+                        if (prng.nextRatio(3, 5)) {
+                            outcomeProcessor.log("You successfully fend off the dark elves!");
+                            outcomeProcessor.reward();
+                        } else {
+                            outcomeProcessor.log("The dark elves overpower you.");
+                            elfAttack();
                         };
                     };
-                };
-            };
-            case (#retreat) {
-                if (prng.nextRatio(2, 3)) {
-                    outcomeProcessor.log("You manage to escape.");
-                } else {
-                    outcomeProcessor.log("Your retreat fails, and the dark elves catch up to you.");
-                    let damage = prng.nextNat(1, 3);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("You fall during your attempted escape.");
-                            return;
+                    case (#negotiate) {
+                        if (prng.nextRatio(1, 2) and outcomeProcessor.loseRandomItem()) {
+                            outcomeProcessor.log("The dark elves accept your offer and let you pass.");
+                        } else {
+                            outcomeProcessor.log("Negotiations fail, and the dark elves attack!");
+                            elfAttack();
                         };
                     };
-                };
-            };
-            case (#stealth) {
-                if (prng.nextRatio(4, 5)) {
-                    outcomeProcessor.log("You successfully sneak past the dark elves without being detected.");
-                } else {
-                    outcomeProcessor.log("Despite your agility, the dark elves spot you.");
-                    let damage = prng.nextNat(1, 2);
-                    switch (outcomeProcessor.takeDamage(damage)) {
-                        case (#alive) ();
-                        case (#dead) {
-                            outcomeProcessor.log("The dark elves' attack proves too much.");
-                            return;
+                    case (#retreat) {
+                        if (prng.nextRatio(2, 3)) {
+                            outcomeProcessor.log("You manage to escape.");
+                        } else {
+                            outcomeProcessor.log("Your retreat fails, and the dark elves catch up to you.");
+                            elfAttack();
+                        };
+                    };
+                    case (#stealth) {
+                        if (prng.nextRatio(4, 5)) {
+                            outcomeProcessor.log("You successfully sneak past the dark elves without being detected.");
+                        } else {
+                            outcomeProcessor.log("Despite your agility, the dark elves spot you.");
+                            elfAttack();
                         };
                     };
                 };
