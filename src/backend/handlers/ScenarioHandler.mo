@@ -76,7 +76,7 @@ module {
         };
 
         public func generateAndStart(prng : Prng, proposerId : Principal, members : [ExtendedProposal.Member]) : Nat {
-            let kind = #mysteriousStructure(MysteriousStructure.generate(prng));
+            let kind = #mysteriousStructure; // TODO
             start(kind, proposerId, members);
         };
 

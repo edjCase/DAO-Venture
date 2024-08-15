@@ -1,7 +1,13 @@
 module {
 
-    public type Item = {
+    public type Weapon = {
+        #axe;
+        #club;
+    };
+
+    public type Item = Weapon or {
         #echoCrystal;
+        #herbs;
     };
 
     public func toId(item : Item) : Text {

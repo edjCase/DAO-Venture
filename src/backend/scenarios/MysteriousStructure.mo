@@ -5,13 +5,7 @@ import Outcome "../models/Outcome";
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type Data = {
-        structureName : Text;
-        size : Text;
-        material : Text;
-        condition : Text;
-        unusualFeature : Text;
-    };
+    public type Data = {};
 
     public type Choice = {
         #skip;
@@ -50,21 +44,7 @@ module {
         "Mysterious Structure";
     };
 
-    public func getDescription(data : Data) : Text {
-        Text.join(
-            " ",
-            [
-                "You come across a",
-                data.size,
-                data.material,
-                data.condition,
-                data.structureName,
-                "with an unusual feature that",
-                data.unusualFeature,
-                ".",
-            ].vals(),
-        );
-    };
+    public func getDescription() : Text = "You encounter a pyramid-like structure with glowing runes, overgrown by vines. A sealed entrance beckons.";
 
     public func getOptions() : [{ id : Text; description : Text }] {
         [
@@ -84,6 +64,7 @@ module {
     public func processOutcome(
         prng : Prng,
         outcomeProcessor : Outcome.Processor,
+        _ : Data,
         choice : Choice,
     ) {
 
@@ -171,30 +152,8 @@ module {
         };
     };
 
-    private let prefixes = ["Forgotten", "Ancient", "Mystic", "Enigmatic", "Shadowy", "Ethereal", "Whispering", "Shimmering", "Veiled", "Otherworldly"];
-    private let nouns = ["Tower", "Temple", "Monolith", "Obelisk", "Spire", "Citadel", "Pillar", "Dome", "Pyramid", "Arch"];
-    private let suffixes = ["of Echoes", "of Shadows", "of Time", "of Secrets", "of the Ancients", "of Whispers", "of Eternity", "of the Void", "of Mysteries", "of Forgotten Lore"];
-
-    private let sizeOptions = ["Small", "Medium", "Large", "Massive"];
-    private let materialOptions = ["Stone", "Crystal", "Metal", "Wood", "Bone", "Energy"];
-    private let conditionOptions = ["Crumbling", "Well-preserved", "Partially submerged", "Overgrown", "Glowing", "Floating"];
-    private let unusualFeatures = ["Emits strange sounds", "Shifts appearance", "Radiates energy", "Distorts nearby space", "Changes color", "Attracts local wildlife"];
-
-    private func generateStructureName(prng : Prng) : Text {
-        let prefix = prng.nextArrayElement(prefixes);
-        let noun = prng.nextArrayElement(nouns);
-        let suffix = prng.nextArrayElement(suffixes);
-        Text.join(" ", [prefix, noun, suffix].vals());
-    };
-
-    public func generate(prng : Prng) : Data {
-        {
-            structureName = generateStructureName(prng);
-            size = prng.nextArrayElement(sizeOptions);
-            material = prng.nextArrayElement(materialOptions);
-            condition = prng.nextArrayElement(conditionOptions);
-            unusualFeature = prng.nextArrayElement(unusualFeatures);
-        };
+    public func generate(_ : Prng) : Data {
+        {};
     };
 
 };

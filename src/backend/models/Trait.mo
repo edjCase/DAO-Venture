@@ -2,6 +2,13 @@ module {
 
     public type Trait = {
         #perceptive;
+        #naturalist;
+        #magical;
+        #agile;
+        #dwarf;
+        #strong;
+        #clever;
+        #intelligent;
     };
 
     public func toId(item : Trait) : Text {

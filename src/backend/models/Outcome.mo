@@ -1,7 +1,6 @@
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Item "Item";
-import Character "Character";
 import Trait "Trait";
 module {
 
@@ -22,8 +21,9 @@ module {
         takeDamage : (Nat) -> { #alive; #dead };
         reward : () -> ();
         addGold : (Nat) -> ();
+        removeGold : (Nat) -> Bool; // True -> Had enough, False -> Not enough
         addItem : (Item.Item) -> ();
-        // removeItem : (Item) -> { hadItem : Bool };
+        removeItem : (Item.Item) -> ();
         // addTrait : (Trait) -> ();
         // removeTrait : (Trait) -> { hadTrait : Bool };
     };
