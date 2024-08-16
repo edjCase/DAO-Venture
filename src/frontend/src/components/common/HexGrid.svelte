@@ -1,104 +1,154 @@
 <script lang="ts" context="module">
-    export interface HexTileData {
-        id: number;
-        kind: HexTileKind;
-        coordinate: AxialCoordinate;
-    }
+  export interface HexTileData {
+    id: number;
+    kind: HexTileKind;
+    coordinate: AxialCoordinate;
+  }
 </script>
 
 <script lang="ts">
-    import { onMount } from "svelte";
-    import HexTile, { AxialCoordinate, HexTileKind } from "./HexTile.svelte";
+  import { onMount } from "svelte";
+  import { tweened } from "svelte/motion";
+  import { cubicOut } from "svelte/easing";
+  import HexTile, {
+    AxialCoordinate,
+    HexTileKind,
+    getHexPolygonPoints,
+  } from "./HexTile.svelte";
 
-    export let gridData: HexTileData[];
-    export let hexSize: number = 60;
-    export let selectedTileId: number | undefined;
-    export let onClick: (coord: AxialCoordinate) => void = () => {};
+  export let gridData: HexTileData[];
+  export let hexSize: number = 60;
+  export let selectedTileId: number | undefined;
+  export let onClick: (coord: AxialCoordinate) => void = () => {};
 
-    let svg: SVGSVGElement;
-    let svgGroup: SVGGElement;
-    let panX = 0;
-    let isPanning = false;
-    let lastX: number;
+  let svg: SVGSVGElement;
+  let isPanning = false;
+  let lastX: number;
 
-    onMount(() => {
-        const verticalPadding = hexSize * 0.1; // Add some vertical padding
-        const height = hexSize * 2 + verticalPadding * 2; // One hex tall plus padding
-        svg.setAttribute(
-            "viewBox",
-            `${-hexSize * 2} ${-hexSize - verticalPadding} ${hexSize * 4} ${height}`,
-        );
+  // Use a tweened store for smooth animation
+  const panX = tweened(0, {
+    duration: 300,
+    easing: cubicOut,
+  });
 
-        svg.addEventListener("mousedown", startPan);
-        window.addEventListener("mousemove", pan);
-        window.addEventListener("mouseup", endPan);
+  function hexToPixelX(q: number, r: number): number {
+    const hexWidth = hexSize * Math.sqrt(3);
+    const viewBoxCenter = -hexSize;
+    return viewBoxCenter + hexWidth * (q + r / 2) - hexWidth / 2;
+  }
+
+  function findNearestHex(x: number): HexTileData {
+    return gridData.reduce((nearest, current) => {
+      const currentX = hexToPixelX(current.coordinate.q, current.coordinate.r);
+      const nearestX = hexToPixelX(nearest.coordinate.q, nearest.coordinate.r);
+      return Math.abs(currentX - x) < Math.abs(nearestX - x)
+        ? current
+        : nearest;
     });
+  }
 
-    function startPan(event: MouseEvent) {
-        if (!svg) return;
-        isPanning = true;
-        lastX = event.clientX;
-        svg.style.cursor = "grabbing";
+  function centerOnHex(hexData: HexTileData) {
+    const hexX = hexToPixelX(hexData.coordinate.q, hexData.coordinate.r);
+    panX.set(hexX); // This will trigger a smooth animation
+    selectedTileId = hexData.id;
+  }
+
+  onMount(() => {
+    const verticalPadding = hexSize * 0.1;
+    const x = -hexSize * 2;
+    const y = -hexSize - verticalPadding;
+    const width = hexSize * 8;
+    const height = hexSize * 2 + verticalPadding * 2;
+    svg.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
+
+    svg.addEventListener("mousedown", startPan);
+    window.addEventListener("mousemove", pan);
+    window.addEventListener("mouseup", endPan);
+  });
+
+  function startPan(event: MouseEvent) {
+    if (!svg) return;
+    isPanning = true;
+    lastX = event.clientX;
+    svg.style.cursor = "grabbing";
+  }
+
+  function pan(event: MouseEvent) {
+    if (!svg || !isPanning) return;
+
+    const dx = event.clientX - lastX;
+    const svgRect = svg.getBoundingClientRect();
+    const viewBox = svg.viewBox.baseVal;
+
+    let newPanX = $panX - (dx / svgRect.width) * viewBox.width;
+
+    panX.set(newPanX, { duration: 0 }); // Update without animation during panning
+
+    lastX = event.clientX;
+  }
+
+  function endPan() {
+    if (!svg) return;
+    isPanning = false;
+    svg.style.cursor = "move";
+
+    // Snap to nearest hex with animation
+    const nearestHex = findNearestHex($panX);
+    centerOnHex(nearestHex);
+  }
+
+  let handleOnClickTile = (tileId: number) => (coord: AxialCoordinate) => {
+    selectedTileId = tileId;
+    onClick(coord);
+
+    const selectedHex = gridData.find((tile) => tile.id === tileId);
+    if (selectedHex) {
+      centerOnHex(selectedHex);
     }
+  };
 
-    function pan(event: MouseEvent) {
-        if (!svg || !isPanning) return;
-
-        const dx = event.clientX - lastX;
-        const svgRect = svg.getBoundingClientRect();
-        const viewBox = svg.viewBox.baseVal;
-
-        // Only update panX for horizontal movement
-        panX -= (dx / svgRect.width) * viewBox.width;
-        let minX = 0;
-        if (panX < minX) {
-            panX = minX;
-        }
-
-        let maxX = hexSize * 1.5 * gridData.length - 1;
-        if (panX > maxX) {
-            panX = maxX;
-        }
-
-        lastX = event.clientX;
-
-        updateTransform();
+  // Watch for changes in selectedTileId
+  $: if (selectedTileId !== undefined) {
+    const selectedHex = gridData.find((tile) => tile.id === selectedTileId);
+    if (selectedHex) {
+      centerOnHex(selectedHex);
     }
-
-    function endPan() {
-        if (!svg) return;
-        isPanning = false;
-        svg.style.cursor = "move";
-    }
-
-    function updateTransform() {
-        svgGroup.setAttribute("transform", `translate(${-panX},0)`);
-    }
-
-    let handleOnClick = (tileId: number) => (coord: AxialCoordinate) => {
-        selectedTileId = tileId;
-        onClick(coord);
-    };
+  }
 </script>
 
 <div>
-    <svg bind:this={svg} cursor="move" width="100%" height="100%">
-        <g bind:this={svgGroup}>
-            {#each gridData as tile}
-                <HexTile
-                    coordinate={tile.coordinate}
-                    kind={tile.kind}
-                    id={tile.id}
-                    {hexSize}
-                    onClick={handleOnClick(tile.id)}
-                    selected={selectedTileId == tile.id}
-                >
-                    <slot id={tile.id} />
-                </HexTile>
-            {/each}
-        </g>
-    </svg>
-    {#if selectedTileId !== undefined}
-        <slot name="tileInfo" selectedTile={selectedTileId} />
-    {/if}
+  <svg bind:this={svg} cursor="move" width="100%" height="100%">
+    <g transform={`translate(${-$panX},0)`}>
+      {#each gridData as tile}
+        <HexTile
+          coordinate={tile.coordinate}
+          kind={tile.kind}
+          id={tile.id}
+          {hexSize}
+          onClick={handleOnClickTile(tile.id)}
+          selected={selectedTileId == tile.id}
+        >
+          <slot id={tile.id} />
+        </HexTile>
+      {/each}
+      <!-- Draw a white border around the selected tile LAST -->
+      {#if selectedTileId !== undefined}
+        {@const selectedTile = gridData.find(
+          (tile) => tile.id === selectedTileId
+        )}
+        {#if selectedTile !== undefined}
+          <polygon
+            points={getHexPolygonPoints(hexSize, selectedTile.coordinate)}
+            fill="none"
+            stroke="white"
+            stroke-width="3"
+            pointer-events="none"
+          />
+        {/if}
+      {/if}
+    </g>
+  </svg>
+  {#if selectedTileId !== undefined}
+    <slot name="tileInfo" selectedTile={selectedTileId} />
+  {/if}
 </div>

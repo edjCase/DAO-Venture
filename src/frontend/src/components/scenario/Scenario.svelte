@@ -31,6 +31,12 @@
     <div class="text-xl my-6">
       {scenario.description}
     </div>
+    {#if scenario.outcome[0] !== undefined}
+      <div>Outcome</div>
+      {#each scenario.outcome[0].messages as message}
+        <div>{message}</div>
+      {/each}
+    {/if}
     <div class="flex flex-col items-center gap-2">
       <div>
         <div>Options</div>
@@ -38,7 +44,7 @@
           {#each scenario.options as option, i}
             <li>
               <Button
-                class="p-4 border rounded mb-2"
+                class="p-4 border rounded mb-2 w-full"
                 on:click={vote(option.id)}
               >
                 {i}. {option.description}
@@ -47,12 +53,6 @@
           {/each}
         </ul>
       </div>
-      {#if scenario.outcome[0] !== undefined}
-        <div>Outcome</div>
-        {#each scenario.outcome[0].messages as message}
-          <div>{message}</div>
-        {/each}
-      {/if}
     </div>
   {/if}
 </div>

@@ -1,19 +1,18 @@
 <script lang="ts">
-    import { gameStateStore } from "../../stores/GameStateStore";
-    import Scenario from "../scenario/Scenario.svelte";
+  import { gameStateStore } from "../../stores/GameStateStore";
+  import Scenario from "../scenario/Scenario.svelte";
 
-    export let locationId: bigint;
+  export let locationId: bigint;
 
-    $: gameState = $gameStateStore;
+  $: gameState = $gameStateStore;
 
-    $: location = gameState?.locations.find((l) => l.id == locationId);
+  $: location = gameState?.locations.find((l) => l.id == locationId);
 </script>
 
 {#if location !== undefined}
-    <div class="bg-gray-800 rounded p-2">
-        <div class="text-center text-3xl">
-            Tile {locationId}
-            <Scenario scenarioId={location.scenarioId} />
-        </div>
+  <div class="bg-gray-800 rounded p-2">
+    <div class="text-center text-3xl">
+      <Scenario scenarioId={location.scenarioId} />
     </div>
+  </div>
 {/if}
