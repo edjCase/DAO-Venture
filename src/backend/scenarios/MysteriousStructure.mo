@@ -81,21 +81,16 @@ module {
             if (prng.nextRatio(1, 4)) {
                 outcomeProcessor.log("You are ambushed by a group of hostile creatures!");
                 let healthLoss = prng.nextNat(0, 5);
-                switch (outcomeProcessor.takeDamage(healthLoss)) {
-                    case (#alive) ();
-                    case (#dead) {
-                        return;
-                    };
+                if (not outcomeProcessor.takeDamage(healthLoss)) {
+                    outcomeProcessor.log("The creatures overwhelm you.");
+                    return; // TODO stop the game
                 };
             } else if (prng.nextRatio(1, 2)) {
                 outcomeProcessor.log("You trigger a trap!");
                 let damage = prng.nextNat(1, 3);
-                switch (outcomeProcessor.takeDamage(damage)) {
-                    case (#alive) ();
-                    case (#dead) {
-                        outcomeProcessor.log("The trap is too much for you to handle.");
-                        return;
-                    };
+                if (not outcomeProcessor.takeDamage(damage)) {
+                    outcomeProcessor.log("The trap is too much for you to handle.");
+                    return; // TODO stop the game
                 };
             };
             exploreTreasureRoom();
@@ -116,12 +111,9 @@ module {
                             if (prng.nextRatio(1, 2)) {
                                 outcomeProcessor.log("You hurt yourself trying to force into the entrance.");
                                 let damage = prng.nextNat(1, 5);
-                                switch (outcomeProcessor.takeDamage(damage)) {
-                                    case (#alive) ();
-                                    case (#dead) {
-                                        outcomeProcessor.log("You are defeated in the most embarassing way.");
-                                        return;
-                                    };
+                                if (not outcomeProcessor.takeDamage(damage)) {
+                                    outcomeProcessor.log("You are defeated in the most embarassing way.");
+                                    return; // TODO stop the game
                                 };
                             };
                         };

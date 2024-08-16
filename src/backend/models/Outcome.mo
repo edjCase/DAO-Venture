@@ -20,7 +20,8 @@ module {
 
     public type Processor = {
         log : (Text) -> ();
-        takeDamage : (Nat) -> { #alive; #dead };
+        takeDamage : (Nat) -> Bool; // True -> Alive, False -> Dead
+        heal : (Nat) -> ();
         addGold : (Nat) -> ();
         upgradeStat : (Character.CharacterStatKind, Nat) -> ();
         reward : () -> ();

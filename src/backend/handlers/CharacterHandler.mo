@@ -24,20 +24,28 @@ module {
             character.items;
         };
 
-        public func takeDamage(amount : Nat) : { #alive; #dead } {
+        public func takeDamage(amount : Nat) : Bool {
             let newHealth : Int = character.health - amount;
             if (newHealth <= 0) {
                 character := {
                     character with
                     health = 0;
                 };
-                #dead;
+                false;
             } else {
                 character := {
                     character with
                     health = Int.abs(newHealth);
                 };
-                #alive;
+                true;
+            };
+        };
+
+        public func heal(amount : Nat) {
+            // TODO max health?
+            character := {
+                character with
+                health = character.health + amount;
             };
         };
 

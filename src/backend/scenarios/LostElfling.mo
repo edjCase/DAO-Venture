@@ -77,12 +77,9 @@ module {
                         } else {
                             outcomeProcessor.log("Your attempt to help leads you into a dangerous situation.");
                             let damage = prng.nextNat(1, 3);
-                            switch (outcomeProcessor.takeDamage(damage)) {
-                                case (#alive) ();
-                                case (#dead) {
-                                    outcomeProcessor.log("The forest's dangers prove too much in your rescue attempt.");
-                                    return;
-                                };
+                            if (not outcomeProcessor.takeDamage(damage)) {
+                                outcomeProcessor.log("The forest's dangers prove too much in your rescue attempt.");
+                                return; // TODO stop the game
                             };
                         };
                     };
@@ -96,12 +93,9 @@ module {
                         } else {
                             outcomeProcessor.log("While investigating, you stumble into a hidden danger.");
                             let damage = prng.nextNat(1, 2);
-                            switch (outcomeProcessor.takeDamage(damage)) {
-                                case (#alive) ();
-                                case (#dead) {
-                                    outcomeProcessor.log("The hidden danger proves fatal.");
-                                    return;
-                                };
+                            if (not outcomeProcessor.takeDamage(damage)) {
+                                outcomeProcessor.log("The hidden danger proves fatal.");
+                                return; // TODO stop the game
                             };
                         };
                     };
@@ -112,12 +106,9 @@ module {
                         } else {
                             outcomeProcessor.log("Your magic attracts unwanted attention from forest spirits.");
                             let damage = prng.nextNat(1, 2);
-                            switch (outcomeProcessor.takeDamage(damage)) {
-                                case (#alive) ();
-                                case (#dead) {
-                                    outcomeProcessor.log("The forest spirits overwhelm you.");
-                                    return;
-                                };
+                            if (not outcomeProcessor.takeDamage(damage)) {
+                                outcomeProcessor.log("The forest spirits overwhelm you.");
+                                return; // TODO stop the game
                             };
                         };
                     };

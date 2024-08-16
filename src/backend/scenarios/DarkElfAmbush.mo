@@ -63,12 +63,9 @@ module {
     ) {
         func elfAttack() {
             let damage = prng.nextNat(2, 6);
-            switch (outcomeProcessor.takeDamage(damage)) {
-                case (#alive) ();
-                case (#dead) {
-                    outcomeProcessor.log("You fall to the dark elves' attack.");
-                    return;
-                };
+            if (not outcomeProcessor.takeDamage(damage)) {
+                outcomeProcessor.log("You fall to the dark elves' attack.");
+                return; // TODO stop the game
             };
         };
 

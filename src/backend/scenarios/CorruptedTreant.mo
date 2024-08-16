@@ -67,12 +67,9 @@ module {
     ) {
         func treantAttack() {
             let damage = prng.nextNat(3, 7);
-            switch (outcomeProcessor.takeDamage(damage)) {
-                case (#alive) ();
-                case (#dead) {
-                    outcomeProcessor.log("You fall to the corrupted treant's might.");
-                    return;
-                };
+            if (not outcomeProcessor.takeDamage(damage)) {
+                outcomeProcessor.log("You fall to the corrupted treant's might.");
+                return; // TODO stop the game
             };
         };
 

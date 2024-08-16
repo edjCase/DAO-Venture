@@ -69,12 +69,9 @@ module {
     ) {
         func goblinAttack() {
             let damage = prng.nextNat(1, 3);
-            switch (outcomeProcessor.takeDamage(damage)) {
-                case (#alive) ();
-                case (#dead) {
-                    outcomeProcessor.log("The goblin's greed knows no bounds.");
-                    return;
-                };
+            if (not outcomeProcessor.takeDamage(damage)) {
+                outcomeProcessor.log("The goblin's greed knows no bounds.");
+                return; // TODO stop the game
             };
         };
         switch (choiceOrUndecided) {

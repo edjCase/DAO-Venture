@@ -73,16 +73,12 @@ module {
                         } else {
                             outcomeProcessor.log("The current is stronger than you anticipated.");
                             let damage = prng.nextNat(1, 3);
-                            switch (outcomeProcessor.takeDamage(damage)) {
-                                case (#alive) {
-                                    outcomeProcessor.log("You manage to rescue the passengers, but at a cost to your health.");
-                                    outcomeProcessor.reward();
-                                };
-                                case (#dead) {
-                                    outcomeProcessor.log("The river's current proves too much for you to handle.");
-                                    return;
-                                };
+                            if (not outcomeProcessor.takeDamage(damage)) {
+                                outcomeProcessor.log("The river's current proves too much for you to handle.");
+                                return; // TODO stop the game
                             };
+                            outcomeProcessor.log("You manage to rescue the passengers, but at a cost to your health.");
+                            outcomeProcessor.reward();
                         };
                     };
                     case (#castSpell) {
@@ -92,16 +88,12 @@ module {
                         } else {
                             outcomeProcessor.log("Your spell falters midway through the rescue.");
                             let damage = prng.nextNat(1, 2);
-                            switch (outcomeProcessor.takeDamage(damage)) {
-                                case (#alive) {
-                                    outcomeProcessor.log("Despite the setback, you manage to complete the rescue.");
-                                    outcomeProcessor.reward();
-                                };
-                                case (#dead) {
-                                    outcomeProcessor.log("The spell's failure leads to a tragic end for both you and the passengers.");
-                                    return;
-                                };
+                            if (not outcomeProcessor.takeDamage(damage)) {
+                                outcomeProcessor.log("The spell's failure leads to a tragic end for both you and the passengers.");
+                                return; // TODO stop the game
                             };
+                            outcomeProcessor.log("Despite the setback, you manage to complete the rescue.");
+                            outcomeProcessor.reward();
                         };
                     };
                     case (#disregard) {

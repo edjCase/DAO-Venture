@@ -21,9 +21,14 @@ module {
             messages.add(message);
         };
 
-        public func takeDamage(amount : Nat) : { #alive; #dead } {
+        public func takeDamage(amount : Nat) : Bool {
             messages.add("You take " # Nat.toText(amount) # " damage.");
             characterHandler.takeDamage(amount);
+        };
+
+        public func heal(amount : Nat) {
+            messages.add("You heal " # Nat.toText(amount) # " health.");
+            characterHandler.heal(amount);
         };
 
         public func addItem(item : Item.Item) : Bool {
