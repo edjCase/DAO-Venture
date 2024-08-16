@@ -6,8 +6,15 @@ export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export interface Character {
   'gold' : bigint,
   'traits' : Array<Trait>,
+  'stats' : CharacterStats,
   'items' : Array<Item__1>,
   'health' : bigint,
+}
+export interface CharacterStats {
+  'magic' : bigint,
+  'speed' : bigint,
+  'defense' : bigint,
+  'attack' : bigint,
 }
 export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
 export type CreateWorldProposalError = { 'invalid' : Array<string> } |

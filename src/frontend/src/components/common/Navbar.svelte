@@ -2,9 +2,7 @@
   import { Navbar } from "flowbite-svelte";
   import { Link } from "svelte-routing";
   import UserMenu from "../user/UserMenu.svelte";
-  import { gameStateStore } from "../../stores/GameStateStore";
-
-  $: gameState = $gameStateStore;
+  import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
 </script>
 
 <Navbar rounded color="form" class="mb-2">
@@ -12,7 +10,9 @@
     <UserMenu />
   </div>
   <div class="flex-1">
-    <Link to="/"><div class="text-center text-4xl">DAO TOWNS</div></Link>
+    <Link to="/"><div class="text-center text-4xl">DAO Venture</div></Link>
   </div>
-  <div class="flex-1 text-center">Turn: {gameState?.turn}</div>
+  <div class="flex-1 justify-center">
+    <CharacterAvatarWithStats size="sm" />
+  </div>
 </Navbar>

@@ -11,7 +11,7 @@ module {
     };
 
     public type Choice = {
-        #upgradeWeapon;
+        #upgradeAttack;
         #haggle;
         #leave;
         #dwarfNegotiate;
@@ -19,7 +19,7 @@ module {
 
     public func choiceFromText(text : Text) : ?Choice {
         switch (text) {
-            case ("upgradeWeapon") ? #upgradeWeapon;
+            case ("upgradeAttack") ? #upgradeAttack;
             case ("haggle") ? #haggle;
             case ("leave") ? #leave;
             case ("dwarfNegotiate") ? #dwarfNegotiate;
@@ -29,14 +29,14 @@ module {
 
     public func getChoiceRequirement(choice : Choice) : ?Outcome.ChoiceRequirement {
         switch (choice) {
-            case (#upgradeWeapon or #haggle or #leave) null;
+            case (#upgradeAttack or #haggle or #leave) null;
             case (#dwarfNegotiate) ? #trait(#dwarf);
         };
     };
 
     public func getChoiceDescription(choice : Choice) : Text {
         switch (choice) {
-            case (#upgradeWeapon) "Upgrade your weapon (+1 damage).";
+            case (#upgradeAttack) "Upgrade your attack (+1).";
             case (#haggle) "Attempt to haggle for a better price.";
             case (#leave) "Leave without upgrading.";
             case (#dwarfNegotiate) "Have your dwarf crew member negotiate.";
@@ -47,13 +47,13 @@ module {
         "Dwarven Weaponsmith";
     };
 
-    public func getDescription() : Text = "You encounter a surly dwarven weaponsmith, offering weapon upgrades at steep prices.";
+    public func getDescription() : Text = "You encounter a surly dwarven weaponsmith, attack upgrades at steep prices.";
 
     public func getOptions() : [{ id : Text; description : Text }] {
         [
             {
-                id = "upgradeWeapon";
-                description = getChoiceDescription(#upgradeWeapon);
+                id = "upgradeAttack";
+                description = getChoiceDescription(#upgradeAttack);
             },
             { id = "haggle"; description = getChoiceDescription(#haggle) },
             { id = "leave"; description = getChoiceDescription(#leave) },
@@ -77,12 +77,12 @@ module {
             };
             case (?choice) {
                 switch (choice) {
-                    case (#upgradeWeapon) {
+                    case (#upgradeAttack) {
                         if (outcomeProcessor.removeGold(data.upgradeCost)) {
-                            outcomeProcessor.log("You upgrade your weapon for " # Int.toText(data.upgradeCost) # " gold.");
-                            outcomeProcessor.upgradeWeapon(1);
+                            outcomeProcessor.log("You upgrade your attack by 1 for " # Int.toText(data.upgradeCost) # " gold.");
+                            outcomeProcessor.upgradeStat(#attack, 1);
                         } else {
-                            outcomeProcessor.log("You don't have enough gold to upgrade your weapon.");
+                            outcomeProcessor.log("You don't have enough gold to upgrade your attack.");
                         };
                     };
                     case (#haggle) {
@@ -91,7 +91,7 @@ module {
                             outcomeProcessor.log("The dwarf grudgingly offers a discounted upgrade price of " # Int.toText(discountedCost) # " gold.");
                             // Offer discounted upgrade logic here
                         } else {
-                            outcomeProcessor.log("The dwarf is offended by your haggling and refuses to upgrade your weapon.");
+                            outcomeProcessor.log("The dwarf is offended by your haggling and refuses to upgrade your attack.");
                         };
                     };
                     case (#dwarfNegotiate) {
@@ -100,7 +100,7 @@ module {
                         // Offer special deal logic here
                     };
                     case (#leave) {
-                        outcomeProcessor.log("You leave the weaponsmith's shop without upgrading your weapon.");
+                        outcomeProcessor.log("You leave the weaponsmith's shop without upgrading your attack.");
                     };
                 };
             };
@@ -113,7 +113,7 @@ module {
 
     public func hashChoice(choice : Choice) : Nat32 {
         switch (choice) {
-            case (#upgradeWeapon) 0;
+            case (#upgradeAttack) 0;
             case (#haggle) 1;
             case (#leave) 2;
             case (#dwarfNegotiate) 3;

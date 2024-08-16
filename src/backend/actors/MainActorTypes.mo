@@ -88,6 +88,7 @@ module {
     public type Character = {
         gold : Nat;
         health : Nat;
+        stats : Character.CharacterStats;
         items : [Item];
         traits : [Trait];
     };

@@ -19,7 +19,6 @@ import TrieSet "mo:base/TrieSet";
 import Trie "mo:base/Trie";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
-import MysteriousStructure "../scenarios/MysteriousStructure";
 import GameHandler "../handlers/GameHandler";
 import Character "../models/Character";
 import Location "../models/Location";
@@ -127,7 +126,12 @@ actor MainActor : Types.Actor {
             health = 100;
             items = TrieSet.empty();
             traits = TrieSet.empty();
-            weaponLevel = 0;
+            stats = {
+                attack = 0;
+                defense = 0;
+                speed = 0;
+                magic = 0;
+            };
         };
         let scenario = ScenarioHandler.generateRandomKind(prng);
         let location : Location.Location = {
@@ -221,6 +225,7 @@ actor MainActor : Types.Actor {
         let character : Types.Character = {
             gold = gameState.character.gold;
             health = gameState.character.health;
+            stats = gameState.character.stats;
             items = Trie.iter(gameState.character.items)
             |> Iter.map(
                 _,

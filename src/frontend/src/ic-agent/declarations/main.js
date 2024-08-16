@@ -17,6 +17,12 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
+  const CharacterStats = IDL.Record({
+    'magic' : IDL.Nat,
+    'speed' : IDL.Nat,
+    'defense' : IDL.Nat,
+    'attack' : IDL.Nat,
+  });
   const Item__1 = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
@@ -25,6 +31,7 @@ export const idlFactory = ({ IDL }) => {
   const Character = IDL.Record({
     'gold' : IDL.Nat,
     'traits' : IDL.Vec(Trait),
+    'stats' : CharacterStats,
     'items' : IDL.Vec(Item__1),
     'health' : IDL.Nat,
   });

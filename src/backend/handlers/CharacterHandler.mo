@@ -60,10 +60,36 @@ module {
             true;
         };
 
-        public func upgradeWeapon(amount : Nat) {
+        public func upgradeStat(kind : Character.CharacterStatKind, amount : Nat) {
+            let newStats = switch (kind) {
+                case (#attack) {
+                    {
+                        character.stats with
+                        attack = character.stats.attack + amount;
+                    };
+                };
+                case (#defense) {
+                    {
+                        character.stats with
+                        defense = character.stats.defense + amount;
+                    };
+                };
+                case (#speed) {
+                    {
+                        character.stats with
+                        speed = character.stats.speed + amount;
+                    };
+                };
+                case (#magic) {
+                    {
+                        character.stats with
+                        magic = character.stats.magic + amount;
+                    };
+                };
+            };
             character := {
                 character with
-                weaponLevel = character.weaponLevel + amount;
+                stats = newStats;
             };
         };
 

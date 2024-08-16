@@ -3,6 +3,7 @@ import Nat "mo:base/Nat";
 import Bool "mo:base/Bool";
 import Item "Item";
 import Trait "Trait";
+import Character "Character";
 module {
 
     public type Outcome = {
@@ -21,7 +22,7 @@ module {
         log : (Text) -> ();
         takeDamage : (Nat) -> { #alive; #dead };
         addGold : (Nat) -> ();
-        upgradeWeapon : (Nat) -> ();
+        upgradeStat : (Character.CharacterStatKind, Nat) -> ();
         reward : () -> ();
         removeGold : (Nat) -> Bool; // True -> Had enough, False -> Not enough
         addItem : (Item.Item) -> Bool; // True -> Didnt have item, False -> Had item

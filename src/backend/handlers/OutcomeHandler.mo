@@ -6,6 +6,7 @@ import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Item "../models/Item";
 import CharacterHandler "CharacterHandler";
 import Trait "../models/Trait";
+import Character "../models/Character";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -47,9 +48,9 @@ module {
             characterHandler.addGold(amount);
         };
 
-        public func upgradeWeapon(amount : Nat) {
-            messages.add("You upgrade your weapon by " # Nat.toText(amount));
-            characterHandler.upgradeWeapon(amount);
+        public func upgradeStat(kind : Character.CharacterStatKind, amount : Nat) {
+            messages.add("You upgrade your " # Character.toTextStatKind(kind) # " stat by " # Nat.toText(amount));
+            characterHandler.upgradeStat(kind, amount);
         };
 
         type Reward = {
