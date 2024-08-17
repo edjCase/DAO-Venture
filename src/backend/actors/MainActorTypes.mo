@@ -1,15 +1,15 @@
 import Nat "mo:base/Nat";
 import Scenario "../models/Scenario";
 import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
-import ExtendedProposalEngine "mo:dao-proposal-engine/ExtendedProposalEngine";
+import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import CommonTypes "../CommonTypes";
 import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
-import Location "../models/Location";
 import Outcome "../models/Outcome";
 import Character "../models/Character";
+import GameHandler "../handlers/GameHandler";
 
 module {
     public type Actor = actor {
@@ -23,24 +23,32 @@ module {
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
 
-        getGameState : query () -> async GetGameStateResult;
+        getGameState : query () -> async GameHandler.GameState;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
-        startGame : () -> async StartGameResult;
+        initialize : () -> async InitializeResult;
+        voteOnNewGame : (request : VoteOnNewGameRequest) -> async VoteOnNewGameResult;
         join : () -> async JoinResult;
-
-        nextTurn : () -> async NextTurnResult;
     };
 
-    public type StartGameError = {
+    public type InitializeResult = Result.Result<(), { #alreadyInitialized }>;
+
+    public type VoteOnNewGameRequest = {
+        characterId : Nat;
+        difficulty : GameHandler.Difficulty;
+    };
+
+    public type VoteOnNewGameError = ExtendedProposal.VoteError or {
+        #noActiveGame;
+        #invalidCharacterId;
         #alreadyStarted;
     };
 
-    public type StartGameResult = Result.Result<(), StartGameError>;
+    public type VoteOnNewGameResult = Result.Result<(), VoteOnNewGameError>;
 
     public type JoinResult = Result.Result<(), JoinError>;
 
@@ -57,8 +65,6 @@ module {
         #noActiveGame;
     };
 
-    public type NextTurnResult = Result.Result<(), { #noActiveInstance }>;
-
     public type Scenario = {
         id : Nat;
         kind : Scenario.ScenarioKind;
@@ -72,17 +78,6 @@ module {
     public type ScenarioOption = {
         id : Text;
         description : Text;
-    };
-
-    public type GetGameStateError = { #noActiveGame };
-
-    public type GetGameStateResult = Result.Result<GameState, GetGameStateError>;
-
-    public type GameState = {
-        locations : [Location.Location];
-        turn : Nat;
-        characterLocationId : Nat;
-        character : Character;
     };
 
     public type Character = {
@@ -135,7 +130,7 @@ module {
         yourVote : ?ScenarioVoteChoice;
         totalVotingPower : Nat;
         undecidedVotingPower : Nat;
-        votingPowerByChoice : [ExtendedProposalEngine.ChoiceVotingPower<Text>];
+        votingPowerByChoice : [ExtendedProposal.ChoiceVotingPower<Text>];
     };
 
     public type ScenarioVoteChoice = {
@@ -150,7 +145,7 @@ module {
         value : Text;
     };
 
-    public type VoteOnScenarioError = ExtendedProposalEngine.VoteError or {
+    public type VoteOnScenarioError = ExtendedProposal.VoteError or {
         #scenarioNotFound;
         #invalidChoice;
         #noActiveGame;

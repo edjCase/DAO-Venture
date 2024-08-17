@@ -5,12 +5,18 @@
   export let locationId: bigint;
 
   $: gameState = $gameStateStore;
-  $: location = gameState?.locations.find((l) => l.id == locationId);
+  $: location =
+    gameState !== undefined && "inProgress" in gameState
+      ? gameState.inProgress.locations.find((l) => l.id == locationId)
+      : undefined;
 
   $: scenarios = $scenarioStore;
   $: scenario = location && scenarios?.find((s) => s.id == location.scenarioId);
 
-  $: hasCharacter = gameState?.characterLocationId == locationId;
+  $: hasCharacter =
+    gameState !== undefined && "inProgress" in gameState
+      ? gameState.inProgress.characterLocationId == locationId
+      : undefined;
 </script>
 
 {#if location !== undefined}
@@ -33,8 +39,7 @@
       font-size="2em"
       style="pointer-events: none; user-select: none;"
     >
-      {#if scenario}
-        {#if "mysteriousStructure" in scenario.kind}
+      {#if scenario}{#if "mysteriousStructure" in scenario.kind}
           🏛️
         {:else if "goblinRaidingParty" in scenario.kind}
           🏹
@@ -54,6 +59,16 @@
           🔨
         {:else if "fairyMarket" in scenario.kind}
           🧚
+        {:else if "enchantedGrove" in scenario.kind}
+          🍃
+        {:else if "knowledgeNexus" in scenario.kind}
+          📖
+        {:else if "mysticForge" in scenario.kind}
+          🛠️
+        {:else if "travelingBard" in scenario.kind}
+          🎵
+        {:else if "druidicSanctuary" in scenario.kind}
+          🌿
         {:else}
           ❓
         {/if}

@@ -15,16 +15,9 @@ import Int "mo:base/Int";
 import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
 import Random "mo:base/Random";
-import TrieSet "mo:base/TrieSet";
-import Trie "mo:base/Trie";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
-import Character "../models/Character";
-import Location "../models/Location";
-import ScenarioHandler "../handlers/ScenarioHandler";
-import Item "../models/Item";
-import Trait "../models/Trait";
 import Scenario "../models/Scenario";
 import ScenarioHelper "../ScenarioHelper";
 
@@ -38,7 +31,7 @@ actor MainActor : Types.Actor {
 
     // Stables ---------------------------------------------------------
 
-    stable var gameStableDataOrNull : ?GameHandler.StableData = null;
+    stable var gameStableData : GameHandler.StableData = #notInitialized;
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
         proposalDuration = ? #days(3);
@@ -55,7 +48,7 @@ actor MainActor : Types.Actor {
 
     // Unstables ---------------------------------------------------------
 
-    var gameHandlerOrNull : ?GameHandler.Handler = null;
+    var gameHandler = GameHandler.Handler<system>(gameStableData);
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
@@ -82,19 +75,13 @@ actor MainActor : Types.Actor {
     // System Methods ---------------------------------------------------------
 
     system func preupgrade() {
-        gameStableDataOrNull := switch (gameHandlerOrNull) {
-            case (?gameHandler) ?gameHandler.toStableData();
-            case (null) null;
-        };
+        gameStableData := gameHandler.toStableData();
         worldDaoStableData := worldDao.toStableData();
         userStableData := userHandler.toStableData();
     };
 
     system func postupgrade() {
-        gameHandlerOrNull := switch (gameStableDataOrNull) {
-            case (?gameStableData) ?GameHandler.Handler<system>(gameStableData, Principal.fromActor(MainActor));
-            case (null) null;
-        };
+        gameHandler := GameHandler.Handler<system>(gameStableData);
         worldDao := ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
             worldDaoStableData,
             onWorldProposalExecute,
@@ -106,55 +93,32 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
-    // TODO remove
-    public shared func nextTurn() : async Types.NextTurnResult {
-        let ?gameHandler = gameHandlerOrNull else return #err(#noActiveInstance);
+    public shared func initialize() : async Types.InitializeResult {
+        // TODO is there a way to not have to intialize, or trigger immediately after creation
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
+        let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the new game vote
         let members = buildVotingMembersList();
-        gameHandler.nextTurn(prng, members);
-        #ok;
+        gameHandler.initialize(
+            prng,
+            proposerId,
+            members,
+        );
     };
 
-    public shared func startGame() : async Types.StartGameResult {
-        let null = gameHandlerOrNull else return #err(#alreadyStarted);
-        // TODO restrict to DAO proposal approval
-
+    public shared ({ caller }) func voteOnNewGame(request : Types.VoteOnNewGameRequest) : async Types.VoteOnNewGameResult {
+        let { characterId; difficulty } = switch (gameHandler.voteOnNewGame(caller, request.characterId, request.difficulty)) {
+            case (#ok(null)) return #ok; // no consensus yet
+            case (#ok(?newGameChoice)) newGameChoice; // Concensus reached
+            case (#err(err)) return #err(err);
+        };
+        // Start the game if consensus reached
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-
-        let character : Character.Character = {
-            gold = 0;
-            health = 100;
-            items = TrieSet.empty();
-            traits = TrieSet.empty();
-            stats = {
-                attack = 0;
-                defense = 0;
-                speed = 0;
-                magic = 0;
-            };
-        };
-        let scenario = ScenarioHandler.generateRandomKind(prng);
-        let location : Location.Location = {
-            id = 0;
-            coordinate = { q = 0; r = 0 };
-            scenarioId = 0;
-        };
         let members = buildVotingMembersList();
-        let stableData : GameHandler.StableData = {
-            world = {
-                turn = 0;
-                locations = [location];
-                characterLocationId = 0;
-            };
-            scenarios = {
-                scenarios = [ScenarioHandler.create(0, scenario, Principal.fromActor(MainActor), members)];
-            };
-            character = {
-                character = character;
-            };
+        let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the first scenario
+        switch (gameHandler.startGame<system>(prng, characterId, proposerId, difficulty, members)) {
+            case (#ok) #ok;
+            case (#err(err)) #err(err);
         };
-        gameHandlerOrNull := ?GameHandler.Handler<system>(stableData, Principal.fromActor(MainActor));
-        #ok;
     };
 
     public shared ({ caller }) func join() : async Result.Result<(), Types.JoinError> {
@@ -194,20 +158,25 @@ actor MainActor : Types.Actor {
     };
 
     public query ({ caller }) func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
-        let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
-        let ?scenario = gameHandler.getScenario(scenarioId) else return #err(#notFound);
-        #ok(mapScenario(caller, scenario));
+        switch (gameHandler.getScenario(scenarioId)) {
+            case (#ok(scenario)) #ok(mapScenario(caller, scenario));
+            case (#err(err)) return #err(err);
+        };
     };
 
     public query ({ caller }) func getScenarios() : async Types.GetScenariosResult {
-        let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
-        let scenarios = gameHandler.getScenarios().vals()
-        |> Iter.map(
-            _,
-            func(scenario : Scenario.Scenario) : Types.Scenario = mapScenario(caller, scenario),
-        )
-        |> Iter.toArray(_);
-        #ok(scenarios);
+        switch (gameHandler.getScenarios()) {
+            case (#err(err)) return #err(err);
+            case (#ok(scenarios)) {
+                let mappedScenarios = scenarios.vals()
+                |> Iter.map(
+                    _,
+                    func(scenario : Scenario.Scenario) : Types.Scenario = mapScenario(caller, scenario),
+                )
+                |> Iter.toArray(_);
+                #ok(mappedScenarios);
+            };
+        };
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
@@ -215,44 +184,24 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
-        let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
-        gameHandler.vote(request.scenarioId, caller, request.value);
+        switch (gameHandler.voteOnScenario(request.scenarioId, caller, request.value)) {
+            case (#ok(null)) ();
+            case (#ok(?choice)) {
+                let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
+                let members = buildVotingMembersList();
+                let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the next scenario
+                switch (gameHandler.endTurn(prng, proposerId, members, ?choice)) {
+                    case (#ok) ();
+                    case (#err(#noActiveGame)) Prelude.unreachable();
+                };
+            };
+            case (#err(error)) return #err(error);
+        };
+        #ok;
     };
 
-    public shared query func getGameState() : async Types.GetGameStateResult {
-        let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
-        let gameState = gameHandler.getState();
-        let character : Types.Character = {
-            gold = gameState.character.gold;
-            health = gameState.character.health;
-            stats = gameState.character.stats;
-            items = Trie.iter(gameState.character.items)
-            |> Iter.map(
-                _,
-                func((item, _) : (Item.Item, ())) : Types.Item = {
-                    id = Item.toId(item);
-                    name = Item.toText(item);
-                    description = Item.toDescription(item);
-                },
-            )
-            |> Iter.toArray(_);
-            traits = Trie.iter(gameState.character.traits)
-            |> Iter.map(
-                _,
-                func((trait, _) : (Trait.Trait, ())) : Types.Trait = {
-                    id = Trait.toId(trait);
-                    name = Trait.toText(trait);
-                    description = Trait.toDescription(trait);
-                },
-            )
-            |> Iter.toArray(_);
-        };
-        #ok({
-            locations = gameState.locations;
-            turn = gameState.turn;
-            characterLocationId = gameState.characterLocationId;
-            character = character;
-        });
+    public shared query func getGameState() : async GameHandler.GameState {
+        gameHandler.getState();
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
@@ -317,14 +266,15 @@ actor MainActor : Types.Actor {
     };
 
     private func getScenarioVoteInternal(voterId : Principal, scenarioId : Nat) : Types.GetScenarioVoteResult {
-        let ?gameHandler = gameHandlerOrNull else return #err(#noActiveGame);
-        let vote = switch (gameHandler.getVote(scenarioId, voterId)) {
+        let vote = switch (gameHandler.getScenarioVote(scenarioId, voterId)) {
             case (#ok(vote)) ?vote;
             case (#err(#notEligible)) null;
             case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
+            case (#err(#noActiveGame)) return #err(#noActiveGame);
         };
-        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (gameHandler.getVoteSummary(scenarioId)) {
+        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (gameHandler.getScenarioVoteSummary(scenarioId)) {
             case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
+            case (#err(#noActiveGame)) Prelude.unreachable();
             case (#ok(summary)) summary;
         };
         #ok({

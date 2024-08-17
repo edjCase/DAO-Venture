@@ -12,28 +12,53 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
   });
-  const Trait = IDL.Record({
-    'id' : IDL.Text,
+  const ChoiceVotingPower_1 = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : IDL.Nat,
+  });
+  const VotingSummary = IDL.Record({
+    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower_1),
+    'undecidedVotingPower' : IDL.Nat,
+    'totalVotingPower' : IDL.Nat,
+  });
+  const TraitState = IDL.Record({
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
+  const ClassState = IDL.Record({
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const RaceState = IDL.Record({ 'name' : IDL.Text, 'description' : IDL.Text });
   const CharacterStats = IDL.Record({
-    'magic' : IDL.Nat,
-    'speed' : IDL.Nat,
-    'defense' : IDL.Nat,
-    'attack' : IDL.Nat,
+    'magic' : IDL.Int,
+    'speed' : IDL.Int,
+    'defense' : IDL.Int,
+    'attack' : IDL.Int,
   });
-  const Item__1 = IDL.Record({
-    'id' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-  });
-  const Character = IDL.Record({
+  const ItemState = IDL.Record({ 'name' : IDL.Text, 'description' : IDL.Text });
+  const CharacterState = IDL.Record({
     'gold' : IDL.Nat,
-    'traits' : IDL.Vec(Trait),
+    'traits' : IDL.Vec(TraitState),
+    'class' : ClassState,
+    'race' : RaceState,
     'stats' : CharacterStats,
-    'items' : IDL.Vec(Item__1),
+    'items' : IDL.Vec(ItemState),
     'health' : IDL.Nat,
+  });
+  const Difficulty = IDL.Variant({
+    'easy' : IDL.Null,
+    'hard' : IDL.Null,
+    'medium' : IDL.Null,
+  });
+  const ChoiceVotingPower_2 = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : Difficulty,
+  });
+  const VotingSummary_1 = IDL.Record({
+    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower_2),
+    'undecidedVotingPower' : IDL.Nat,
+    'totalVotingPower' : IDL.Nat,
   });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
   const Location = IDL.Record({
@@ -41,16 +66,24 @@ export const idlFactory = ({ IDL }) => {
     'scenarioId' : IDL.Nat,
     'coordinate' : AxialCoordinate,
   });
-  const GameState = IDL.Record({
-    'character' : Character,
-    'turn' : IDL.Nat,
-    'locations' : IDL.Vec(Location),
-    'characterLocationId' : IDL.Nat,
-  });
-  const GetGameStateError = IDL.Variant({ 'noActiveGame' : IDL.Null });
-  const GetGameStateResult = IDL.Variant({
-    'ok' : GameState,
-    'err' : GetGameStateError,
+  const GameState = IDL.Variant({
+    'notStarted' : IDL.Record({
+      'characterVotes' : VotingSummary,
+      'characterOptions' : IDL.Vec(CharacterState),
+      'difficultyVotes' : VotingSummary_1,
+    }),
+    'completed' : IDL.Record({
+      'turns' : IDL.Nat,
+      'character' : CharacterState,
+      'difficulty' : Difficulty,
+    }),
+    'notInitialized' : IDL.Null,
+    'inProgress' : IDL.Record({
+      'character' : CharacterState,
+      'turn' : IDL.Nat,
+      'locations' : IDL.Vec(Location),
+      'characterLocationId' : IDL.Nat,
+    }),
   });
   const ChoiceVotingPower = IDL.Record({
     'votingPower' : IDL.Nat,
@@ -66,34 +99,65 @@ export const idlFactory = ({ IDL }) => {
     'totalVotingPower' : IDL.Nat,
     'yourVote' : IDL.Opt(ScenarioVoteChoice),
   });
-  const Data__4 = IDL.Record({ 'bribeCost' : IDL.Nat });
-  const Data__8 = IDL.Record({});
+  const Data__6 = IDL.Record({ 'bribeCost' : IDL.Nat });
+  const Data__12 = IDL.Record({});
+  const Data__13 = IDL.Record({
+    'inspirationCost' : IDL.Nat,
+    'talesCost' : IDL.Nat,
+    'requestCost' : IDL.Nat,
+  });
+  const Data__2 = IDL.Record({
+    'blessingCost' : IDL.Nat,
+    'communeCost' : IDL.Nat,
+    'healingCost' : IDL.Nat,
+  });
   const Data = IDL.Record({});
-  const Data__9 = IDL.Record({ 'cost' : IDL.Nat });
+  const Data__14 = IDL.Record({ 'cost' : IDL.Nat });
   const Data__1 = IDL.Record({});
-  const Data__2 = IDL.Record({ 'upgradeCost' : IDL.Nat });
-  const Data__6 = IDL.Record({});
+  const Data__3 = IDL.Record({ 'upgradeCost' : IDL.Nat });
+  const Data__4 = IDL.Record({
+    'communeCost' : IDL.Nat,
+    'harvestCost' : IDL.Nat,
+    'meditationCost' : IDL.Nat,
+  });
+  const Data__10 = IDL.Record({
+    'reforgeCost' : IDL.Nat,
+    'upgradeCost' : IDL.Nat,
+    'craftCost' : IDL.Nat,
+  });
+  const Data__9 = IDL.Record({});
+  const Data__7 = IDL.Record({
+    'mapCost' : IDL.Nat,
+    'skillCost' : IDL.Nat,
+    'studyCost' : IDL.Nat,
+  });
   const Item = IDL.Variant({
     'echoCrystal' : IDL.Null,
     'herbs' : IDL.Null,
+    'treasureMap' : IDL.Null,
     'healthPotion' : IDL.Null,
     'fairyCharm' : IDL.Null,
   });
   const Trinket = IDL.Record({ 'cost' : IDL.Nat, 'item' : Item });
-  const Data__3 = IDL.Record({ 'trinket' : Trinket });
-  const Data__5 = IDL.Record({});
-  const Data__7 = IDL.Record({});
+  const Data__5 = IDL.Record({ 'trinket' : Trinket });
+  const Data__8 = IDL.Record({});
+  const Data__11 = IDL.Record({});
   const ScenarioKind = IDL.Variant({
-    'goblinRaidingParty' : Data__4,
-    'trappedDruid' : Data__8,
+    'goblinRaidingParty' : Data__6,
+    'trappedDruid' : Data__12,
+    'travelingBard' : Data__13,
+    'druidicSanctuary' : Data__2,
     'corruptedTreant' : Data,
-    'wanderingAlchemist' : Data__9,
+    'wanderingAlchemist' : Data__14,
     'darkElfAmbush' : Data__1,
-    'dwarvenWeaponsmith' : Data__2,
-    'mysteriousStructure' : Data__6,
-    'fairyMarket' : Data__3,
-    'lostElfling' : Data__5,
-    'sinkingBoat' : Data__7,
+    'dwarvenWeaponsmith' : Data__3,
+    'enchantedGrove' : Data__4,
+    'mysticForge' : Data__10,
+    'mysteriousStructure' : Data__9,
+    'knowledgeNexus' : Data__7,
+    'fairyMarket' : Data__5,
+    'lostElfling' : Data__8,
+    'sinkingBoat' : Data__11,
   });
   const Outcome = IDL.Record({
     'messages' : IDL.Vec(IDL.Text),
@@ -206,16 +270,27 @@ export const idlFactory = ({ IDL }) => {
     'totalCount' : IDL.Nat,
     'offset' : IDL.Nat,
   });
+  const InitializeResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({ 'alreadyInitialized' : IDL.Null }),
+  });
   const JoinError = IDL.Variant({ 'alreadyMember' : IDL.Null });
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinError });
-  const NextTurnResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({ 'noActiveInstance' : IDL.Null }),
+  const VoteOnNewGameRequest = IDL.Record({
+    'difficulty' : Difficulty,
+    'characterId' : IDL.Nat,
   });
-  const StartGameError = IDL.Variant({ 'alreadyStarted' : IDL.Null });
-  const StartGameResult = IDL.Variant({
+  const VoteOnNewGameError = IDL.Variant({
+    'noActiveGame' : IDL.Null,
+    'invalidCharacterId' : IDL.Null,
+    'alreadyVoted' : IDL.Null,
+    'votingClosed' : IDL.Null,
+    'alreadyStarted' : IDL.Null,
+    'notEligible' : IDL.Null,
+  });
+  const VoteOnNewGameResult = IDL.Variant({
     'ok' : IDL.Null,
-    'err' : StartGameError,
+    'err' : VoteOnNewGameError,
   });
   const VoteOnScenarioRequest = IDL.Record({
     'scenarioId' : IDL.Nat,
@@ -223,7 +298,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const VoteOnScenarioError = IDL.Variant({
     'noActiveGame' : IDL.Null,
-    'proposalNotFound' : IDL.Null,
     'alreadyVoted' : IDL.Null,
     'votingClosed' : IDL.Null,
     'invalidChoice' : IDL.Null,
@@ -254,7 +328,7 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
-    'getGameState' : IDL.Func([], [GetGameStateResult], ['query']),
+    'getGameState' : IDL.Func([], [GameState], ['query']),
     'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],
@@ -280,9 +354,13 @@ export const idlFactory = ({ IDL }) => {
         [PagedResult],
         ['query'],
       ),
+    'initialize' : IDL.Func([], [InitializeResult], []),
     'join' : IDL.Func([], [Result], []),
-    'nextTurn' : IDL.Func([], [NextTurnResult], []),
-    'startGame' : IDL.Func([], [StartGameResult], []),
+    'voteOnNewGame' : IDL.Func(
+        [VoteOnNewGameRequest],
+        [VoteOnNewGameResult],
+        [],
+      ),
     'voteOnScenario' : IDL.Func(
         [VoteOnScenarioRequest],
         [VoteOnScenarioResult],

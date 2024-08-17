@@ -33,15 +33,9 @@ export const gameStateStore = (() => {
     const mainAgent = await mainAgentFactory();
     const result = await mainAgent.getGameState();
 
-    if ('ok' in result) {
-      set(result.ok);
-      console.log("Fetched game state");
-      // scheduleNextFetch(result.ok.nextDayStartTime); // TODO
-    } else if ('err' in result && 'noActiveGame' in result.err) {
-      setTimeout(refetch, 60_000);
-    } else {
-      console.error("Failed to get game state", result.err);
-      // Retry after a short delay (e.g., 5 seconds)
+    set(result);
+    if ('notIntialized' in result) {
+      console.log("Game state not initialized yet");
       setTimeout(refetch, 5000);
     }
   };

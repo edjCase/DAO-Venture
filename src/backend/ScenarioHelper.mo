@@ -12,6 +12,11 @@ import WanderingAlchemist "scenarios/WanderingAlchemist";
 import DwarvenWeaponsmith "scenarios/DwarvenWeaponsmith";
 import FairyMarket "scenarios/FairyMarket";
 import DarkElfAmbush "scenarios/DarkElfAmbush";
+import EnchantedGrove "scenarios/EnchantedGrove";
+import KnowledgeNexus "scenarios/KnowledgeNexus";
+import MysticForge "scenarios/MysticForge";
+import TravelingBard "scenarios/TravelingBard";
+import DruidicSanctuary "scenarios/DruidicSanctuary";
 
 module {
 
@@ -128,6 +133,56 @@ module {
                 FairyMarket.getDescription,
                 FairyMarket.getOptions,
                 FairyMarket.processOutcome,
+            );
+            case (#enchantedGrove(data)) DefaultScenarioHelper<EnchantedGrove.Data, EnchantedGrove.Choice>(
+                data,
+                EnchantedGrove.choiceFromText,
+                EnchantedGrove.getChoiceRequirement,
+                EnchantedGrove.getChoiceDescription,
+                EnchantedGrove.getTitle,
+                EnchantedGrove.getDescription,
+                EnchantedGrove.getOptions,
+                EnchantedGrove.processOutcome,
+            );
+            case (#knowledgeNexus(data)) DefaultScenarioHelper<KnowledgeNexus.Data, KnowledgeNexus.Choice>(
+                data,
+                KnowledgeNexus.choiceFromText,
+                KnowledgeNexus.getChoiceRequirement,
+                KnowledgeNexus.getChoiceDescription,
+                KnowledgeNexus.getTitle,
+                KnowledgeNexus.getDescription,
+                KnowledgeNexus.getOptions,
+                KnowledgeNexus.processOutcome,
+            );
+            case (#mysticForge(data)) DefaultScenarioHelper<MysticForge.Data, MysticForge.Choice>(
+                data,
+                MysticForge.choiceFromText,
+                MysticForge.getChoiceRequirement,
+                MysticForge.getChoiceDescription,
+                MysticForge.getTitle,
+                MysticForge.getDescription,
+                MysticForge.getOptions,
+                MysticForge.processOutcome,
+            );
+            case (#travelingBard(data)) DefaultScenarioHelper<TravelingBard.Data, TravelingBard.Choice>(
+                data,
+                TravelingBard.choiceFromText,
+                TravelingBard.getChoiceRequirement,
+                TravelingBard.getChoiceDescription,
+                TravelingBard.getTitle,
+                TravelingBard.getDescription,
+                TravelingBard.getOptions,
+                TravelingBard.processOutcome,
+            );
+            case (#druidicSanctuary(data)) DefaultScenarioHelper<DruidicSanctuary.Data, DruidicSanctuary.Choice>(
+                data,
+                DruidicSanctuary.choiceFromText,
+                DruidicSanctuary.getChoiceRequirement,
+                DruidicSanctuary.getChoiceDescription,
+                DruidicSanctuary.getTitle,
+                DruidicSanctuary.getDescription,
+                DruidicSanctuary.getOptions,
+                DruidicSanctuary.processOutcome,
             );
         };
     };

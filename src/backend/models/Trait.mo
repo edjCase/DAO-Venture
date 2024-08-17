@@ -10,6 +10,7 @@ module {
         #clever;
         #intelligent;
         #alchemist;
+        #artificer;
     };
 
     public func toId(item : Trait) : Text {
@@ -23,6 +24,7 @@ module {
             case (#clever) "clever";
             case (#intelligent) "intelligent";
             case (#alchemist) "alchemist";
+            case (#artificer) "artificer";
         };
     };
 
@@ -37,20 +39,36 @@ module {
             case (#clever) "Clever";
             case (#intelligent) "Intelligent";
             case (#alchemist) "Alchemist";
+            case (#artificer) "Artificer";
         };
     };
 
-    public func toDescription(item : Trait) : Text {
-        switch (item) {
-            case (#perceptive) "You seem to pick up on things that others miss.";
-            case (#naturalist) "You have a deep connection to the natural world.";
-            case (#magical) "You have a natural affinity for magic.";
-            case (#agile) "You are quick and nimble.";
-            case (#dwarf) "You are short and stout.";
-            case (#strong) "You are physically powerful.";
-            case (#clever) "You are quick-witted and resourceful.";
-            case (#intelligent) "You are highly intelligent.";
-            case (#alchemist) "You have a deep understanding of alchemy.";
+    public func toDescription(trait : Trait) : Text {
+        switch (trait) {
+            case (#perceptive) "You can spot a needle in a haystack, especially if the needle owes you money.";
+            case (#naturalist) "You're so in tune with nature, trees consider you their therapist.";
+            case (#magical) "Your magical affinity is so strong, your cereal turns into a potion every morning.";
+            case (#agile) "You're so nimble, you could dance through a field of mousetraps... hypothetically.";
+            case (#dwarf) "You're vertically challenged but horizontally gifted. And yes, it all goes into the beard.";
+            case (#strong) "You don't break a sweat, you break barbells. Doors fear your knock.";
+            case (#clever) "Your wit is so sharp, it's considered a concealed weapon in seven kingdoms.";
+            case (#intelligent) "Your brain is so big, it has its own gravity field. Watch out for orbiting ideas!";
+            case (#alchemist) "You can turn lead into gold, but mostly you just turn gold into 'oops'.";
+            case (#artificer) "Half wizard, half handyman. Your tool belt is 90% pockets, 10% interdimensional spaces.";
+        };
+    };
+
+    public type State = {
+        id : Text;
+        name : Text;
+        description : Text;
+    };
+
+    public func toState(item : Trait) : State {
+        {
+            id = toId(item);
+            name = toText(item);
+            description = toDescription(item);
         };
     };
 
@@ -65,6 +83,7 @@ module {
             case (#clever) 6;
             case (#intelligent) 7;
             case (#alchemist) 8;
+            case (#artificer) 9;
         };
     };
 

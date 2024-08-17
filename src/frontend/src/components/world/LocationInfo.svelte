@@ -6,7 +6,10 @@
 
   $: gameState = $gameStateStore;
 
-  $: location = gameState?.locations.find((l) => l.id == locationId);
+  $: location =
+    gameState !== undefined && "inProgress" in gameState
+      ? gameState.inProgress.locations.find((l) => l.id == locationId)
+      : undefined;
 </script>
 
 {#if location !== undefined}

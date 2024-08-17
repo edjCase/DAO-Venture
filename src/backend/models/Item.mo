@@ -5,6 +5,7 @@ module {
         #herbs;
         #fairyCharm;
         #healthPotion;
+        #treasureMap;
     };
 
     public func toId(item : Item) : Text {
@@ -13,6 +14,7 @@ module {
             case (#herbs) "herbs";
             case (#fairyCharm) "fairyCharm";
             case (#healthPotion) "healthPotion";
+            case (#treasureMap) "treasureMap";
         };
     };
 
@@ -22,15 +24,31 @@ module {
             case (#herbs) "Herbs";
             case (#fairyCharm) "Fairy Charm";
             case (#healthPotion) "Health Potion";
+            case (#treasureMap) "Treasure Map";
         };
     };
 
     public func toDescription(item : Item) : Text {
         switch (item) {
-            case (#echoCrystal) "A crystal that echoes the sound of your voice.";
-            case (#herbs) "A bundle of aromatic herbs.";
-            case (#fairyCharm) "A charm that attracts fairies.";
-            case (#healthPotion) "A potion that restores health.";
+            case (#echoCrystal) "A crystal that repeats everything you say, say, say...";
+            case (#herbs) "Nature's breath mints, now in leafy green!";
+            case (#fairyCharm) "Guaranteed to attract 99% more fairy dust. Side effects may include spontaneous glitter.";
+            case (#healthPotion) "Tastes like liquid band-aid, works like magic. Literally.";
+            case (#treasureMap) "A piece of paper with a red X on it.";
+        };
+    };
+
+    public type State = {
+        id : Text;
+        name : Text;
+        description : Text;
+    };
+
+    public func toState(item : Item) : State {
+        {
+            id = toId(item);
+            name = toText(item);
+            description = toDescription(item);
         };
     };
 
@@ -40,6 +58,7 @@ module {
             case (#herbs) 1;
             case (#fairyCharm) 2;
             case (#healthPotion) 3;
+            case (#treasureMap) 4;
         };
     };
 

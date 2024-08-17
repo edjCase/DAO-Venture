@@ -131,14 +131,13 @@ module {
             scenarioId : Nat,
             voterId : Principal,
             choice : Text,
-        ) : Result.Result<(), VoteError> {
+        ) : Result.Result<?Text, VoteError> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             let voteResult = ExtendedProposal.vote(
                 scenario.proposal,
                 voterId,
                 choice,
             );
-            // TODO do we want auto execute on vote?
             switch (voteResult) {
                 case (#ok(ok)) {
                     scenarios.put(
@@ -148,30 +147,30 @@ module {
                             proposal = ok.updatedProposal;
                         },
                     );
-                    #ok;
+                    // Calculate if choice is determined/scenario is over
+                    switch (
+                        ExtendedProposal.calculateVoteStatus(
+                            ok.updatedProposal,
+                            votingThreshold,
+                            Text.equal,
+                            Text.hash,
+                            false,
+                        )
+                    ) {
+                        case (#determined(choiceOrNull)) #ok(choiceOrNull);
+                        case (#undetermined) #ok(null);
+                    };
                 };
                 case (#err(err)) return #err(err);
             };
         };
 
-        public func end(prng : Prng, scenarioId : Nat) : Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
+        public func end(prng : Prng, scenarioId : Nat, choiceOrUndecided : ?Text) : Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
             let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
             if (scenario.outcome != null) {
                 return #err(#alreadyEnded);
             };
             Debug.print("Ending scenario " # Nat.toText(scenarioId));
-            let choiceOrUndecided : ?Text = switch (
-                ExtendedProposal.calculateVoteStatus(
-                    scenario.proposal,
-                    votingThreshold,
-                    Text.equal,
-                    Text.hash,
-                    true,
-                )
-            ) {
-                case (#determined(determined)) determined;
-                case (#undetermined) null;
-            };
             let outcomeHandler = OutcomeHandler.Handler(prng, characterHandler);
 
             let helper = ScenarioHelper.fromKind(scenario.kind);
