@@ -14,6 +14,7 @@ module {
     public type ChoiceRequirement = {
         #all : [ChoiceRequirement];
         #any : [ChoiceRequirement];
+        #stat : (Character.CharacterStatKind, Nat);
         #item : Item.Item;
         #trait : Trait.Trait;
     };

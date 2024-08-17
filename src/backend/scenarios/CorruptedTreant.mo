@@ -27,7 +27,7 @@ module {
     public func getChoiceRequirement(choice : Choice) : ?Outcome.ChoiceRequirement {
         switch (choice) {
             case (#attack or #evade) null;
-            case (#purify) ? #trait(#magical);
+            case (#purify) ? #stat((#magic, 2));
             case (#communicate) ? #trait(#naturalist);
         };
     };

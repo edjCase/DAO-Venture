@@ -21,6 +21,11 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
+        current : GameInstance;
+        historical : [CompletedData];
+    };
+
+    public type GameInstance = {
         #notInitialized;
         #notStarted : NotStartedData;
         #inProgress : InProgressData;
@@ -122,8 +127,8 @@ module {
     };
 
     public class Handler<system>(data : StableData) {
-
-        var stateKind : MutableGameStateKind = switch (data) {
+        var historical : [CompletedData] = data.historical;
+        var stateKind : MutableGameStateKind = switch (data.current) {
             case (#notInitialized) #notInitialized;
             case (#notStarted(notStarted)) {
                 #notStarted({
@@ -146,7 +151,7 @@ module {
         };
 
         public func toStableData() : StableData {
-            switch (stateKind) {
+            let current = switch (stateKind) {
                 case (#notInitialized) #notInitialized;
                 case (#notStarted(notStarted)) {
                     #notStarted({
@@ -164,6 +169,7 @@ module {
                 };
                 case (#completed(completed)) #completed(completed);
             };
+            { current; historical };
         };
 
         public func initialize(

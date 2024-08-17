@@ -31,7 +31,10 @@ actor MainActor : Types.Actor {
 
     // Stables ---------------------------------------------------------
 
-    stable var gameStableData : GameHandler.StableData = #notInitialized;
+    stable var gameStableData : GameHandler.StableData = {
+        current = #notInitialized;
+        historical = [];
+    };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
         proposalDuration = ? #days(3);

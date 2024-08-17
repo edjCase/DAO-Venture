@@ -161,7 +161,7 @@ module {
             };
             case (#mage) {
                 magic += 1;
-                addTrait(#magical);
+                addTrait(#intelligent);
             };
             case (#rogue) {
                 speed += 2;

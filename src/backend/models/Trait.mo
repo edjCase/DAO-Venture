@@ -3,7 +3,6 @@ module {
     public type Trait = {
         #perceptive;
         #naturalist;
-        #magical;
         #agile;
         #dwarf;
         #strong;
@@ -17,7 +16,6 @@ module {
         switch (item) {
             case (#perceptive) "perceptive";
             case (#naturalist) "naturalist";
-            case (#magical) "magical";
             case (#agile) "agile";
             case (#dwarf) "dwarf";
             case (#strong) "strong";
@@ -32,7 +30,6 @@ module {
         switch (item) {
             case (#perceptive) "Perceptive";
             case (#naturalist) "Naturalist";
-            case (#magical) "Magical";
             case (#agile) "Agile";
             case (#dwarf) "Dwarf";
             case (#strong) "Strong";
@@ -47,7 +44,6 @@ module {
         switch (trait) {
             case (#perceptive) "You can spot a needle in a haystack, especially if the needle owes you money.";
             case (#naturalist) "You're so in tune with nature, trees consider you their therapist.";
-            case (#magical) "Your magical affinity is so strong, your cereal turns into a potion every morning.";
             case (#agile) "You're so nimble, you could dance through a field of mousetraps... hypothetically.";
             case (#dwarf) "You're vertically challenged but horizontally gifted. And yes, it all goes into the beard.";
             case (#strong) "You don't break a sweat, you break barbells. Doors fear your knock.";
@@ -76,14 +72,13 @@ module {
         switch (item) {
             case (#perceptive) 0;
             case (#naturalist) 1;
-            case (#magical) 2;
-            case (#agile) 3;
-            case (#dwarf) 4;
-            case (#strong) 5;
-            case (#clever) 6;
-            case (#intelligent) 7;
-            case (#alchemist) 8;
-            case (#artificer) 9;
+            case (#agile) 2;
+            case (#dwarf) 3;
+            case (#strong) 4;
+            case (#clever) 5;
+            case (#intelligent) 6;
+            case (#alchemist) 7;
+            case (#artificer) 8;
         };
     };
 

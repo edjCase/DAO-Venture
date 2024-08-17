@@ -89,8 +89,9 @@ module {
                         };
                     };
                     case (#trade) {
-                        if (prng.nextRatio(3, 5) and outcomeProcessor.loseRandomItem() and outcomeProcessor.addTrait(#magical)) {
-                            outcomeProcessor.log("The fairies accept your trade, granting you a boon.");
+                        if (prng.nextRatio(3, 5) and outcomeProcessor.loseRandomItem()) {
+                            outcomeProcessor.log("The fairies accept your trade, granting you a magical boon.");
+                            outcomeProcessor.upgradeStat(#magic, 1);
                         } else {
                             outcomeProcessor.log("The fairies reject your offer, seeming offended.");
                         };
@@ -98,7 +99,7 @@ module {
                     case (#useCharm) {
                         outcomeProcessor.log("Your fairy charm glows, granting you favor in the market.");
                         let true = outcomeProcessor.removeItem(#fairyCharm) else Prelude.unreachable(); // Checked with requirement
-                        ignore outcomeProcessor.addTrait(#magical); // TODO already have trait?
+                        outcomeProcessor.upgradeStat(#magic, 1);
                     };
                     case (#leave) {
                         outcomeProcessor.log("You leave the fairy market, the magical stalls fading behind you.");
