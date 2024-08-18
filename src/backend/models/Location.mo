@@ -1,6 +1,5 @@
 import HexGrid "HexGrid";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Prelude "mo:base/Prelude";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;

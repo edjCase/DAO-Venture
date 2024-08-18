@@ -19,7 +19,7 @@ import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
 import Scenario "../models/Scenario";
-import ScenarioHelper "../ScenarioHelper";
+import Character "../models/Character";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -34,6 +34,11 @@ actor MainActor : Types.Actor {
     stable var gameStableData : GameHandler.StableData = {
         current = #notInitialized;
         historical = [];
+        classes = [];
+        races = [];
+        scenarios = [];
+        items = [];
+        traits = [];
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
@@ -118,7 +123,15 @@ actor MainActor : Types.Actor {
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
         let members = buildVotingMembersList();
         let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the first scenario
-        switch (gameHandler.startGame<system>(prng, characterId, proposerId, difficulty, members)) {
+        switch (
+            gameHandler.startGame<system>(
+                prng,
+                characterId,
+                proposerId,
+                difficulty,
+                members,
+            )
+        ) {
             case (#ok) #ok;
             case (#err(err)) #err(err);
         };
@@ -162,7 +175,7 @@ actor MainActor : Types.Actor {
 
     public query ({ caller }) func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
         switch (gameHandler.getScenario(scenarioId)) {
-            case (#ok(scenario)) #ok(mapScenario(caller, scenario));
+            case (#ok(scenario)) #ok(mapScenario(caller, scenario, scenarioMetaData));
             case (#err(err)) return #err(err);
         };
     };
@@ -174,7 +187,7 @@ actor MainActor : Types.Actor {
                 let mappedScenarios = scenarios.vals()
                 |> Iter.map(
                     _,
-                    func(scenario : Scenario.Scenario) : Types.Scenario = mapScenario(caller, scenario),
+                    func(scenario : Scenario.Scenario) : Types.Scenario = mapScenario(caller, scenario, scenarioMetaData),
                 )
                 |> Iter.toArray(_);
                 #ok(mappedScenarios);
@@ -203,8 +216,8 @@ actor MainActor : Types.Actor {
         #ok;
     };
 
-    public shared query func getGameState() : async GameHandler.GameState {
-        gameHandler.getState();
+    public shared query func getGameInstance() : async GameHandler.GameInstanceWithMetaData {
+        gameHandler.getInstance();
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
@@ -239,9 +252,9 @@ actor MainActor : Types.Actor {
     private func mapScenario(
         voterId : Principal,
         scenario : Scenario.Scenario,
+        metaData : Scenario.ScenarioMetaData,
     ) : Types.Scenario {
 
-        let helper = ScenarioHelper.fromKind(scenario.kind);
         let voteData = switch (getScenarioVoteInternal(voterId, scenario.id)) {
             case (#ok(voteData)) voteData;
             case (#err(#noActiveGame)) Prelude.unreachable();
@@ -249,9 +262,7 @@ actor MainActor : Types.Actor {
         };
         {
             scenario with
-            title = helper.getTitle();
-            description = helper.getDescription();
-            options = helper.getOptions();
+            metaData = metaData;
             voteData = voteData;
         };
     };

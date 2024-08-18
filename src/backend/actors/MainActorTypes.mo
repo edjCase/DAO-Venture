@@ -7,9 +7,9 @@ import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
-import Outcome "../models/Outcome";
 import Character "../models/Character";
 import GameHandler "../handlers/GameHandler";
+import Location "../models/Location";
 
 module {
     public type Actor = actor {
@@ -23,7 +23,7 @@ module {
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
 
-        getGameState : query () -> async GameHandler.GameState;
+        getGameInstance : query () -> async GameHandler.GameInstanceWithMetaData;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
@@ -65,39 +65,9 @@ module {
         #noActiveGame;
     };
 
-    public type Scenario = {
-        id : Nat;
-        kind : Scenario.ScenarioKind;
-        outcome : ?Outcome.Outcome;
-        title : Text;
-        description : Text;
-        options : [ScenarioOption];
+    public type Scenario = Scenario.Scenario and {
+        metaData : Scenario.ScenarioMetaData;
         voteData : ScenarioVote;
-    };
-
-    public type ScenarioOption = {
-        id : Text;
-        description : Text;
-    };
-
-    public type Character = {
-        gold : Nat;
-        health : Nat;
-        stats : Character.CharacterStats;
-        items : [Item];
-        traits : [Trait];
-    };
-
-    public type Item = {
-        id : Text;
-        name : Text;
-        description : Text;
-    };
-
-    public type Trait = {
-        id : Text;
-        name : Text;
-        description : Text;
     };
 
     public type CreateWorldProposalRequest = {

@@ -11,28 +11,17 @@ import Debug "mo:base/Debug";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import Scenario "../models/Scenario";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import MysteriousStructure "../scenarios/MysteriousStructure";
-import OutcomeHandler "OutcomeHandler";
 import CharacterHandler "CharacterHandler";
-import DarkElfAmbush "../scenarios/DarkElfAmbush";
-import CorruptedTreant "../scenarios/CorruptedTreant";
-import GoblinRaidingParty "../scenarios/GoblinRaidingParty";
-import LostElfling "../scenarios/LostElfling";
-import TrappedDruid "../scenarios/TrappedDruid";
-import SinkingBoat "../scenarios/SinkingBoat";
-import WanderingAlchemist "../scenarios/WanderingAlchemist";
-import DwarvenWeaponsmith "../scenarios/DwarvenWeaponsmith";
-import FairyMarket "../scenarios/FairyMarket";
-import ScenarioHelper "../ScenarioHelper";
+import ScenarioSimulator "../ScenarioSimulator";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
-        scenarios : [Scenario];
+        instances : [ScenarioInstance];
     };
 
-    public type Scenario = Scenario.Scenario and {
+    public type ScenarioInstance = Scenario.Scenario and {
         proposal : ExtendedProposal.Proposal<{}, Text>;
     };
 
@@ -52,52 +41,50 @@ module {
         characterHandler : CharacterHandler.Handler,
     ) {
         let votingThreshold = #percent({ percent = 50; quorum = ?20 });
-        let scenarios = data.scenarios.vals()
-        |> Iter.map<Scenario, (Nat, Scenario)>(
+        let instances = data.instances.vals()
+        |> Iter.map<ScenarioInstance, (Nat, ScenarioInstance)>(
             _,
-            func(scenario : Scenario) : (Nat, Scenario) = (scenario.id, scenario),
+            func(scenario : ScenarioInstance) : (Nat, ScenarioInstance) = (scenario.id, scenario),
         )
-        |> HashMap.fromIter<Nat, Scenario>(_, data.scenarios.size(), Nat.equal, Nat32.fromNat);
+        |> HashMap.fromIter<Nat, ScenarioInstance>(_, data.instances.size(), Nat.equal, Nat32.fromNat);
 
         public func toStableData() : StableData {
             {
-                scenarios = scenarios.vals()
+                instances = instances.vals()
                 |> Iter.toArray(_);
             };
         };
 
         public func start(
-            kind : Scenario.ScenarioKind,
+            scenario : {
+                metaDataId : Text;
+                data : [Scenario.GeneratedDataFieldInstance];
+            },
             proposerId : Principal,
             members : [ExtendedProposal.Member],
         ) : Nat {
-            let scenarioId = scenarios.size(); // TODO?
+            let scenarioId = instances.size(); // TODO?
 
-            let newScenario : Scenario = create(
+            let newInstance : ScenarioInstance = create(
                 scenarioId,
-                kind,
+                scenario,
                 proposerId,
                 members,
             );
 
-            scenarios.put(scenarioId, newScenario);
+            instances.put(scenarioId, newInstance);
             scenarioId;
         };
 
-        public func generateAndStart(prng : Prng, proposerId : Principal, members : [ExtendedProposal.Member]) : Nat {
-            let kind = generateRandomKind(prng);
-            start(kind, proposerId, members);
+        public func get(scenarioId : Nat) : ?ScenarioInstance {
+            instances.get(scenarioId);
         };
 
-        public func get(scenarioId : Nat) : ?Scenario.Scenario {
-            scenarios.get(scenarioId);
-        };
-
-        public func getAll() : [Scenario.Scenario] {
-            scenarios.vals()
+        public func getAll() : [ScenarioInstance] {
+            instances.vals()
             |> Iter.sort(
                 _,
-                func(a : Scenario.Scenario, b : Scenario.Scenario) : Order.Order = Nat.compare(a.id, b.id),
+                func(a : ScenarioInstance, b : ScenarioInstance) : Order.Order = Nat.compare(a.id, b.id),
             )
             |> Iter.toArray(_);
         };
@@ -106,7 +93,7 @@ module {
             scenarioId : Nat,
             voterId : Principal,
         ) : GetVoteResult {
-            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+            let ?scenario = instances.get(scenarioId) else return #err(#scenarioNotFound);
 
             let vote = ExtendedProposal.getVote(scenario.proposal, voterId);
             let ?v = vote else return #err(#notEligible);
@@ -114,7 +101,7 @@ module {
         };
 
         public func getVoteSummary(scenarioId : Nat) : GetVoteSummaryResult {
-            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+            let ?scenario = instances.get(scenarioId) else return #err(#scenarioNotFound);
             let summary = ExtendedProposal.buildVotingSummary(
                 scenario.proposal,
                 Text.equal,
@@ -132,7 +119,7 @@ module {
             voterId : Principal,
             choice : Text,
         ) : Result.Result<?Text, VoteError> {
-            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+            let ?scenario = instances.get(scenarioId) else return #err(#scenarioNotFound);
             let voteResult = ExtendedProposal.vote(
                 scenario.proposal,
                 voterId,
@@ -140,7 +127,7 @@ module {
             );
             switch (voteResult) {
                 case (#ok(ok)) {
-                    scenarios.put(
+                    instances.put(
                         scenarioId,
                         {
                             scenario with
@@ -165,26 +152,25 @@ module {
             };
         };
 
-        public func end(prng : Prng, scenarioId : Nat, choiceOrUndecided : ?Text) : Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
-            let ?scenario = scenarios.get(scenarioId) else return #err(#scenarioNotFound);
+        public func end(
+            prng : Prng,
+            scenarioId : Nat,
+            choiceOrUndecided : ?Text,
+        ) : Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
+            let ?scenario = instances.get(scenarioId) else return #err(#scenarioNotFound);
             if (scenario.outcome != null) {
                 return #err(#alreadyEnded);
             };
             Debug.print("Ending scenario " # Nat.toText(scenarioId));
-            let outcomeHandler = OutcomeHandler.Handler(prng, characterHandler);
+            let simulator = ScenarioSimulator.Simulator(characterHandler);
 
-            let helper = ScenarioHelper.fromKind(scenario.kind);
-            helper.processOutcome(
+            let outcome = simulator.run(
                 prng,
-                outcomeHandler,
+                scenario,
                 choiceOrUndecided,
             );
-            let outcome = {
-                choice = choiceOrUndecided;
-                messages = outcomeHandler.getMessages();
-            };
 
-            scenarios.put(
+            instances.put(
                 scenarioId,
                 {
                     scenario with
@@ -193,29 +179,20 @@ module {
             );
             #ok;
         };
-
     };
 
-    public func generateRandomKind(prng : Prng) : Scenario.ScenarioKind {
-        prng.optionBuilder<Scenario.ScenarioKind>()
-        // prettier-ignore
-        .withFunc(func() : Scenario.ScenarioKind = #mysteriousStructure(MysteriousStructure.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #darkElfAmbush(DarkElfAmbush.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #corruptedTreant(CorruptedTreant.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #goblinRaidingParty(GoblinRaidingParty.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #lostElfling(LostElfling.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #trappedDruid(TrappedDruid.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #sinkingBoat(SinkingBoat.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #wanderingAlchemist(WanderingAlchemist.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #dwarvenWeaponsmith(DwarvenWeaponsmith.generate(prng)), 1.0)
-        .withFunc(func() : Scenario.ScenarioKind = #fairyMarket(FairyMarket.generate(prng)), 1.0)
-        .next();
-    };
-
-    public func create(id : Nat, kind : Scenario.ScenarioKind, proposerId : Principal, members : [ExtendedProposal.Member]) : Scenario {
+    public func create(
+        id : Nat,
+        scenario : {
+            metaDataId : Text;
+            data : [Scenario.GeneratedDataFieldInstance];
+        },
+        proposerId : Principal,
+        members : [ExtendedProposal.Member],
+    ) : ScenarioInstance {
         {
+            scenario with
             id = id;
-            kind = kind;
             proposal = {
                 id = id;
                 proposerId = proposerId;

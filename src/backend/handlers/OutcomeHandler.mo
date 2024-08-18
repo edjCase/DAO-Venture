@@ -3,9 +3,7 @@ import Buffer "mo:base/Buffer";
 import Nat "mo:base/Nat";
 import TrieSet "mo:base/TrieSet";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Item "../models/Item";
 import CharacterHandler "CharacterHandler";
-import Trait "../models/Trait";
 import Character "../models/Character";
 
 module {
@@ -31,13 +29,13 @@ module {
             characterHandler.heal(amount);
         };
 
-        public func addItem(item : Item.Item) : Bool {
-            messages.add("You get " # Item.toText(item));
+        public func addItem(item : Text) : Bool {
+            messages.add("You get " # item);
             characterHandler.addItem(item);
         };
 
-        public func removeItem(item : Item.Item) : Bool {
-            messages.add("You lose " # Item.toText(item));
+        public func removeItem(item : Text) : Bool {
+            messages.add("You lose " # item);
             characterHandler.removeItem(item);
         };
 
@@ -59,14 +57,14 @@ module {
         };
 
         type Reward = {
-            #item : Item.Item;
+            #item : Text;
             #money : Nat;
         };
         // TODO reward table
         let weightedRewardTable : [(Reward, Float)] = [
             (#money(1), 20.0),
             (#money(10), 15.0),
-            (#item(#echoCrystal), 1.0),
+            (#item("echoCrystal"), 1.0),
         ];
         public func reward() {
             log("You find a reward!");
@@ -86,13 +84,13 @@ module {
             };
         };
 
-        public func addTrait(trait : Trait.Trait) : Bool {
-            messages.add("You gain the trait " # Trait.toText(trait));
+        public func addTrait(trait : Text) : Bool {
+            messages.add("You gain the trait " # trait);
             characterHandler.addTrait(trait);
         };
 
-        public func removeTrait(trait : Trait.Trait) : Bool {
-            messages.add("You lose the trait " # Trait.toText(trait));
+        public func removeTrait(trait : Text) : Bool {
+            messages.add("You lose the trait " # trait);
             characterHandler.removeTrait(trait);
         };
 

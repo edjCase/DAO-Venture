@@ -1,8 +1,7 @@
 import Character "../models/Character";
 import Int "mo:base/Int";
 import TrieSet "mo:base/TrieSet";
-import Item "../models/Item";
-import Trait "../models/Trait";
+import Text "mo:base/Text";
 module {
     public type StableData = {
         character : Character.Character;
@@ -20,8 +19,8 @@ module {
             character;
         };
 
-        public func getItems() : TrieSet.Set<Item.Item> {
-            character.items;
+        public func getItems() : TrieSet.Set<Text> {
+            character.itemIds;
         };
 
         public func takeDamage(amount : Nat) : Bool {
@@ -101,42 +100,42 @@ module {
             };
         };
 
-        public func addItem(item : Item.Item) : Bool {
-            let newItems = TrieSet.put<Item.Item>(character.items, item, Item.hash(item), Item.equal);
-            if (TrieSet.size(newItems) == TrieSet.size(character.items)) return false;
+        public func addItem(itemId : Text) : Bool {
+            let newItemIds = TrieSet.put<Text>(character.itemIds, itemId, Text.hash(itemId), Text.equal);
+            if (TrieSet.size(newItemIds) == TrieSet.size(character.itemIds)) return false;
             character := {
                 character with
-                items = newItems;
+                itemIds = newItemIds;
             };
             true;
         };
 
-        public func removeItem(item : Item.Item) : Bool {
-            let newItems = TrieSet.delete<Item.Item>(character.items, item, Item.hash(item), Item.equal);
-            if (TrieSet.size(newItems) == TrieSet.size(character.items)) return false;
+        public func removeItem(itemId : Text) : Bool {
+            let newItemIds = TrieSet.delete<Text>(character.itemIds, itemId, Text.hash(itemId), Text.equal);
+            if (TrieSet.size(newItemIds) == TrieSet.size(character.itemIds)) return false;
             character := {
                 character with
-                items = newItems;
+                itemIds = newItemIds;
             };
             true;
         };
 
-        public func addTrait(trait : Trait.Trait) : Bool {
-            let newTraits = TrieSet.put<Trait.Trait>(character.traits, trait, Trait.hash(trait), Trait.equal);
-            if (TrieSet.size(newTraits) == TrieSet.size(character.traits)) return false;
+        public func addTrait(traitId : Text) : Bool {
+            let newTraitIds = TrieSet.put<Text>(character.traitIds, traitId, Text.hash(traitId), Text.equal);
+            if (TrieSet.size(newTraitIds) == TrieSet.size(character.traitIds)) return false;
             character := {
                 character with
-                traits = newTraits;
+                traitIds = newTraitIds;
             };
             true;
         };
 
-        public func removeTrait(trait : Trait.Trait) : Bool {
-            let newTraits = TrieSet.delete<Trait.Trait>(character.traits, trait, Trait.hash(trait), Trait.equal);
-            if (TrieSet.size(newTraits) == TrieSet.size(character.traits)) return false;
+        public func removeTrait(traitId : Text) : Bool {
+            let newTraitIds = TrieSet.delete<Text>(character.traitIds, traitId, Text.hash(traitId), Text.equal);
+            if (TrieSet.size(newTraitIds) == TrieSet.size(character.traitIds)) return false;
             character := {
                 character with
-                traits = newTraits;
+                traitIds = newTraitIds;
             };
             true;
         };
