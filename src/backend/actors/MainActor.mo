@@ -18,8 +18,6 @@ import Random "mo:base/Random";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
-import Scenario "../models/Scenario";
-import Character "../models/Character";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -175,7 +173,7 @@ actor MainActor : Types.Actor {
 
     public query ({ caller }) func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
         switch (gameHandler.getScenario(scenarioId)) {
-            case (#ok(scenario)) #ok(mapScenario(caller, scenario, scenarioMetaData));
+            case (#ok(scenario)) #ok(mapScenario(caller, scenario));
             case (#err(err)) return #err(err);
         };
     };
@@ -187,7 +185,7 @@ actor MainActor : Types.Actor {
                 let mappedScenarios = scenarios.vals()
                 |> Iter.map(
                     _,
-                    func(scenario : Scenario.Scenario) : Types.Scenario = mapScenario(caller, scenario, scenarioMetaData),
+                    func(scenario : GameHandler.ScenarioWithMetaData) : Types.Scenario = mapScenario(caller, scenario),
                 )
                 |> Iter.toArray(_);
                 #ok(mappedScenarios);
@@ -251,8 +249,7 @@ actor MainActor : Types.Actor {
 
     private func mapScenario(
         voterId : Principal,
-        scenario : Scenario.Scenario,
-        metaData : Scenario.ScenarioMetaData,
+        scenario : GameHandler.ScenarioWithMetaData,
     ) : Types.Scenario {
 
         let voteData = switch (getScenarioVoteInternal(voterId, scenario.id)) {
@@ -262,7 +259,6 @@ actor MainActor : Types.Actor {
         };
         {
             scenario with
-            metaData = metaData;
             voteData = voteData;
         };
     };

@@ -11,8 +11,7 @@ import Debug "mo:base/Debug";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import Scenario "../models/Scenario";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import CharacterHandler "CharacterHandler";
-import ScenarioSimulator "../ScenarioSimulator";
+import Outcome "../models/Outcome";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -37,8 +36,7 @@ module {
     public type Member = ExtendedProposal.Member;
 
     public class Handler<system>(
-        data : StableData,
-        characterHandler : CharacterHandler.Handler,
+        data : StableData
     ) {
         let votingThreshold = #percent({ percent = 50; quorum = ?20 });
         let instances = data.instances.vals()
@@ -153,22 +151,14 @@ module {
         };
 
         public func end(
-            prng : Prng,
             scenarioId : Nat,
-            choiceOrUndecided : ?Text,
+            outcome : Outcome.Outcome,
         ) : Result.Result<(), { #scenarioNotFound; #alreadyEnded; #invalidChoice }> {
             let ?scenario = instances.get(scenarioId) else return #err(#scenarioNotFound);
             if (scenario.outcome != null) {
                 return #err(#alreadyEnded);
             };
             Debug.print("Ending scenario " # Nat.toText(scenarioId));
-            let simulator = ScenarioSimulator.Simulator(characterHandler);
-
-            let outcome = simulator.run(
-                prng,
-                scenario,
-                choiceOrUndecided,
-            );
 
             instances.put(
                 scenarioId,

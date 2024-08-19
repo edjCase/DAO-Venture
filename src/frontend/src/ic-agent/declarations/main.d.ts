@@ -3,21 +3,34 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
-export interface CharacterState {
-  'gold' : bigint,
-  'traits' : Array<TraitState>,
-  'class' : ClassState,
-  'race' : RaceState,
-  'stats' : CharacterStats,
-  'items' : Array<ItemState>,
-  'health' : bigint,
-}
+export type CharacterStatKind = { 'magic' : null } |
+  { 'speed' : null } |
+  { 'defense' : null } |
+  { 'attack' : null };
 export interface CharacterStats {
   'magic' : bigint,
   'speed' : bigint,
   'defense' : bigint,
   'attack' : bigint,
 }
+export interface CharacterWithMetaData {
+  'traits' : Array<Trait>,
+  'class' : Class,
+  'race' : Race,
+  'stats' : CharacterStats,
+  'items' : Array<Item>,
+}
+export interface Choice {
+  'id' : string,
+  'description' : string,
+  'requirement' : [] | [ChoiceRequirement],
+  'pathId' : string,
+}
+export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
+  { 'any' : Array<ChoiceRequirement> } |
+  { 'trait' : string } |
+  { 'item' : string } |
+  { 'stat' : [CharacterStatKind, bigint] };
 export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
 export interface ChoiceVotingPower_1 {
   'votingPower' : bigint,
@@ -27,73 +40,78 @@ export interface ChoiceVotingPower_2 {
   'votingPower' : bigint,
   'choice' : Difficulty,
 }
-export interface ClassState { 'name' : string, 'description' : string }
+export interface Class {
+  'id' : string,
+  'effects' : Array<Effect__1>,
+  'name' : string,
+  'description' : string,
+}
+export type Condition = { 'hasGold' : NatValue } |
+  { 'hasItem' : TextValue } |
+  { 'hasTrait' : TextValue };
 export type CreateWorldProposalError = { 'invalid' : Array<string> } |
   { 'notEligible' : null };
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
-export type Data = {};
-export type Data__1 = {};
-export interface Data__10 {
-  'reforgeCost' : bigint,
-  'upgradeCost' : bigint,
-  'craftCost' : bigint,
-}
-export type Data__11 = {};
-export type Data__12 = {};
-export interface Data__13 {
-  'inspirationCost' : bigint,
-  'talesCost' : bigint,
-  'requestCost' : bigint,
-}
-export interface Data__14 { 'cost' : bigint }
-export interface Data__2 {
-  'blessingCost' : bigint,
-  'communeCost' : bigint,
-  'healingCost' : bigint,
-}
-export interface Data__3 { 'upgradeCost' : bigint }
-export interface Data__4 {
-  'communeCost' : bigint,
-  'harvestCost' : bigint,
-  'meditationCost' : bigint,
-}
-export interface Data__5 { 'trinket' : Trinket }
-export interface Data__6 { 'bribeCost' : bigint }
-export interface Data__7 {
-  'mapCost' : bigint,
-  'skillCost' : bigint,
-  'studyCost' : bigint,
-}
-export type Data__8 = {};
-export type Data__9 = {};
 export type Difficulty = { 'easy' : null } |
   { 'hard' : null } |
   { 'medium' : null };
-export type GameState = {
+export type Effect = { 'reward' : null } |
+  { 'removeTrait' : RandomOrSpecificTextValue } |
+  { 'damage' : NatValue } |
+  { 'heal' : NatValue } |
+  { 'upgradeStat' : [CharacterStatKind, NatValue] } |
+  { 'addItem' : TextValue } |
+  { 'addTrait' : TextValue } |
+  { 'removeGold' : NatValue } |
+  { 'removeItem' : RandomOrSpecificTextValue };
+export type Effect__1 = { 'magic' : bigint } |
+  { 'trait' : string } |
+  { 'gold' : bigint } |
+  { 'item' : string } |
+  { 'speed' : bigint } |
+  { 'defense' : bigint } |
+  { 'attack' : bigint } |
+  { 'health' : bigint };
+export type GameInstanceWithMetaData = {
     'notStarted' : {
       'characterVotes' : VotingSummary,
-      'characterOptions' : Array<CharacterState>,
+      'characterOptions' : Array<CharacterWithMetaData>,
       'difficultyVotes' : VotingSummary_1,
     }
   } |
   {
     'completed' : {
       'turns' : bigint,
-      'character' : CharacterState,
+      'character' : CharacterWithMetaData,
       'difficulty' : Difficulty,
     }
   } |
   { 'notInitialized' : null } |
   {
     'inProgress' : {
-      'character' : CharacterState,
+      'character' : CharacterWithMetaData,
       'turn' : bigint,
       'locations' : Array<Location>,
       'characterLocationId' : bigint,
     }
   };
+export interface GeneratedDataField {
+  'id' : string,
+  'value' : GeneratedDataFieldValue,
+  'name' : string,
+}
+export interface GeneratedDataFieldInstance {
+  'id' : string,
+  'value' : GeneratedDataFieldInstanceValue,
+}
+export type GeneratedDataFieldInstanceValue = { 'nat' : bigint } |
+  { 'text' : string };
+export interface GeneratedDataFieldNat { 'max' : bigint, 'min' : bigint }
+export interface GeneratedDataFieldText { 'options' : Array<[string, number]> }
+export type GeneratedDataFieldValue = { 'nat' : GeneratedDataFieldNat } |
+  { 'text' : GeneratedDataFieldText };
 export type GetScenarioError = { 'noActiveGame' : null } |
   { 'notFound' : null };
 export type GetScenarioResult = { 'ok' : Scenario } |
@@ -120,12 +138,7 @@ export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type InitializeResult = { 'ok' : null } |
   { 'err' : { 'alreadyInitialized' : null } };
-export type Item = { 'echoCrystal' : null } |
-  { 'herbs' : null } |
-  { 'treasureMap' : null } |
-  { 'healthPotion' : null } |
-  { 'fairyCharm' : null };
-export interface ItemState { 'name' : string, 'description' : string }
+export interface Item { 'id' : string, 'name' : string, 'description' : string }
 export type JoinError = { 'alreadyMember' : null };
 export interface Location {
   'id' : bigint,
@@ -133,9 +146,18 @@ export interface Location {
   'coordinate' : AxialCoordinate,
 }
 export interface MotionContent { 'title' : string, 'description' : string }
+export type NatValue = { 'raw' : bigint } |
+  { 'dataField' : string } |
+  { 'random' : [bigint, bigint] };
 export interface Outcome {
   'messages' : Array<string>,
-  'choice' : [] | [string],
+  'choiceOrUndecided' : [] | [string],
+}
+export interface OutcomePath {
+  'id' : string,
+  'effects' : Array<Effect>,
+  'description' : string,
+  'paths' : Array<WeightedOutcomePath>,
 }
 export interface PagedResult {
   'data' : Array<WorldProposal>,
@@ -167,34 +189,33 @@ export type ProposalStatus = {
       'executedTime' : Time,
     }
   };
-export interface RaceState { 'name' : string, 'description' : string }
+export interface Race {
+  'id' : string,
+  'effects' : Array<Effect__1>,
+  'name' : string,
+  'description' : string,
+}
+export type RandomOrSpecificTextValue = { 'specific' : TextValue } |
+  { 'random' : null };
 export type Result = { 'ok' : null } |
   { 'err' : JoinError };
 export interface Scenario {
   'id' : bigint,
-  'title' : string,
   'voteData' : ScenarioVote,
-  'kind' : ScenarioKind,
-  'description' : string,
+  'metaDataId' : string,
+  'metaData' : ScenarioMetaData,
+  'data' : Array<GeneratedDataFieldInstance>,
   'outcome' : [] | [Outcome],
-  'options' : Array<ScenarioOption>,
 }
-export type ScenarioKind = { 'goblinRaidingParty' : Data__6 } |
-  { 'trappedDruid' : Data__12 } |
-  { 'travelingBard' : Data__13 } |
-  { 'druidicSanctuary' : Data__2 } |
-  { 'corruptedTreant' : Data } |
-  { 'wanderingAlchemist' : Data__14 } |
-  { 'darkElfAmbush' : Data__1 } |
-  { 'dwarvenWeaponsmith' : Data__3 } |
-  { 'enchantedGrove' : Data__4 } |
-  { 'mysticForge' : Data__10 } |
-  { 'mysteriousStructure' : Data__9 } |
-  { 'knowledgeNexus' : Data__7 } |
-  { 'fairyMarket' : Data__5 } |
-  { 'lostElfling' : Data__8 } |
-  { 'sinkingBoat' : Data__11 };
-export interface ScenarioOption { 'id' : string, 'description' : string }
+export interface ScenarioMetaData {
+  'id' : string,
+  'title' : string,
+  'data' : Array<GeneratedDataField>,
+  'description' : string,
+  'paths' : Array<OutcomePath>,
+  'choices' : Array<Choice>,
+  'undecidedPathId' : string,
+}
 export interface ScenarioVote {
   'votingPowerByChoice' : Array<ChoiceVotingPower>,
   'undecidedVotingPower' : bigint,
@@ -205,9 +226,15 @@ export interface ScenarioVoteChoice {
   'votingPower' : bigint,
   'choice' : [] | [string],
 }
+export type TextValue = { 'raw' : string } |
+  { 'dataField' : string } |
+  { 'weighted' : Array<[string, number]> };
 export type Time = bigint;
-export interface TraitState { 'name' : string, 'description' : string }
-export interface Trinket { 'cost' : bigint, 'item' : Item }
+export interface Trait {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
 export interface User {
   'id' : Principal,
   'inWorldSince' : Time,
@@ -259,6 +286,11 @@ export interface VotingSummary_1 {
   'undecidedVotingPower' : bigint,
   'totalVotingPower' : bigint,
 }
+export interface WeightedOutcomePath {
+  'weight' : number,
+  'pathId' : string,
+  'condition' : [] | [Condition],
+}
 export interface WorldProposal {
   'id' : bigint,
   'status' : ProposalStatus,
@@ -273,7 +305,7 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
-  'getGameState' : ActorMethod<[], GameState>,
+  'getGameInstance' : ActorMethod<[], GameInstanceWithMetaData>,
   'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],

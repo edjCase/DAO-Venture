@@ -1,4 +1,5 @@
 export const idlFactory = ({ IDL }) => {
+  const ChoiceRequirement = IDL.Rec();
   const MotionContent = IDL.Record({
     'title' : IDL.Text,
     'description' : IDL.Text,
@@ -21,30 +22,50 @@ export const idlFactory = ({ IDL }) => {
     'undecidedVotingPower' : IDL.Nat,
     'totalVotingPower' : IDL.Nat,
   });
-  const TraitState = IDL.Record({
+  const Trait = IDL.Record({
+    'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
-  const ClassState = IDL.Record({
+  const Effect__1 = IDL.Variant({
+    'magic' : IDL.Int,
+    'trait' : IDL.Text,
+    'gold' : IDL.Nat,
+    'item' : IDL.Text,
+    'speed' : IDL.Int,
+    'defense' : IDL.Int,
+    'attack' : IDL.Int,
+    'health' : IDL.Int,
+  });
+  const Class = IDL.Record({
+    'id' : IDL.Text,
+    'effects' : IDL.Vec(Effect__1),
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
-  const RaceState = IDL.Record({ 'name' : IDL.Text, 'description' : IDL.Text });
+  const Race = IDL.Record({
+    'id' : IDL.Text,
+    'effects' : IDL.Vec(Effect__1),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
   const CharacterStats = IDL.Record({
     'magic' : IDL.Int,
     'speed' : IDL.Int,
     'defense' : IDL.Int,
     'attack' : IDL.Int,
   });
-  const ItemState = IDL.Record({ 'name' : IDL.Text, 'description' : IDL.Text });
-  const CharacterState = IDL.Record({
-    'gold' : IDL.Nat,
-    'traits' : IDL.Vec(TraitState),
-    'class' : ClassState,
-    'race' : RaceState,
+  const Item = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const CharacterWithMetaData = IDL.Record({
+    'traits' : IDL.Vec(Trait),
+    'class' : Class,
+    'race' : Race,
     'stats' : CharacterStats,
-    'items' : IDL.Vec(ItemState),
-    'health' : IDL.Nat,
+    'items' : IDL.Vec(Item),
   });
   const Difficulty = IDL.Variant({
     'easy' : IDL.Null,
@@ -66,20 +87,20 @@ export const idlFactory = ({ IDL }) => {
     'scenarioId' : IDL.Nat,
     'coordinate' : AxialCoordinate,
   });
-  const GameState = IDL.Variant({
+  const GameInstanceWithMetaData = IDL.Variant({
     'notStarted' : IDL.Record({
       'characterVotes' : VotingSummary,
-      'characterOptions' : IDL.Vec(CharacterState),
+      'characterOptions' : IDL.Vec(CharacterWithMetaData),
       'difficultyVotes' : VotingSummary_1,
     }),
     'completed' : IDL.Record({
       'turns' : IDL.Nat,
-      'character' : CharacterState,
+      'character' : CharacterWithMetaData,
       'difficulty' : Difficulty,
     }),
     'notInitialized' : IDL.Null,
     'inProgress' : IDL.Record({
-      'character' : CharacterState,
+      'character' : CharacterWithMetaData,
       'turn' : IDL.Nat,
       'locations' : IDL.Vec(Location),
       'characterLocationId' : IDL.Nat,
@@ -99,82 +120,112 @@ export const idlFactory = ({ IDL }) => {
     'totalVotingPower' : IDL.Nat,
     'yourVote' : IDL.Opt(ScenarioVoteChoice),
   });
-  const Data__6 = IDL.Record({ 'bribeCost' : IDL.Nat });
-  const Data__12 = IDL.Record({});
-  const Data__13 = IDL.Record({
-    'inspirationCost' : IDL.Nat,
-    'talesCost' : IDL.Nat,
-    'requestCost' : IDL.Nat,
+  const GeneratedDataFieldNat = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
   });
-  const Data__2 = IDL.Record({
-    'blessingCost' : IDL.Nat,
-    'communeCost' : IDL.Nat,
-    'healingCost' : IDL.Nat,
+  const GeneratedDataFieldText = IDL.Record({
+    'options' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64)),
   });
-  const Data = IDL.Record({});
-  const Data__14 = IDL.Record({ 'cost' : IDL.Nat });
-  const Data__1 = IDL.Record({});
-  const Data__3 = IDL.Record({ 'upgradeCost' : IDL.Nat });
-  const Data__4 = IDL.Record({
-    'communeCost' : IDL.Nat,
-    'harvestCost' : IDL.Nat,
-    'meditationCost' : IDL.Nat,
+  const GeneratedDataFieldValue = IDL.Variant({
+    'nat' : GeneratedDataFieldNat,
+    'text' : GeneratedDataFieldText,
   });
-  const Data__10 = IDL.Record({
-    'reforgeCost' : IDL.Nat,
-    'upgradeCost' : IDL.Nat,
-    'craftCost' : IDL.Nat,
+  const GeneratedDataField = IDL.Record({
+    'id' : IDL.Text,
+    'value' : GeneratedDataFieldValue,
+    'name' : IDL.Text,
   });
-  const Data__9 = IDL.Record({});
-  const Data__7 = IDL.Record({
-    'mapCost' : IDL.Nat,
-    'skillCost' : IDL.Nat,
-    'studyCost' : IDL.Nat,
+  const TextValue = IDL.Variant({
+    'raw' : IDL.Text,
+    'dataField' : IDL.Text,
+    'weighted' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64)),
   });
-  const Item = IDL.Variant({
-    'echoCrystal' : IDL.Null,
-    'herbs' : IDL.Null,
-    'treasureMap' : IDL.Null,
-    'healthPotion' : IDL.Null,
-    'fairyCharm' : IDL.Null,
+  const RandomOrSpecificTextValue = IDL.Variant({
+    'specific' : TextValue,
+    'random' : IDL.Null,
   });
-  const Trinket = IDL.Record({ 'cost' : IDL.Nat, 'item' : Item });
-  const Data__5 = IDL.Record({ 'trinket' : Trinket });
-  const Data__8 = IDL.Record({});
-  const Data__11 = IDL.Record({});
-  const ScenarioKind = IDL.Variant({
-    'goblinRaidingParty' : Data__6,
-    'trappedDruid' : Data__12,
-    'travelingBard' : Data__13,
-    'druidicSanctuary' : Data__2,
-    'corruptedTreant' : Data,
-    'wanderingAlchemist' : Data__14,
-    'darkElfAmbush' : Data__1,
-    'dwarvenWeaponsmith' : Data__3,
-    'enchantedGrove' : Data__4,
-    'mysticForge' : Data__10,
-    'mysteriousStructure' : Data__9,
-    'knowledgeNexus' : Data__7,
-    'fairyMarket' : Data__5,
-    'lostElfling' : Data__8,
-    'sinkingBoat' : Data__11,
+  const NatValue = IDL.Variant({
+    'raw' : IDL.Nat,
+    'dataField' : IDL.Text,
+    'random' : IDL.Tuple(IDL.Nat, IDL.Nat),
+  });
+  const CharacterStatKind = IDL.Variant({
+    'magic' : IDL.Null,
+    'speed' : IDL.Null,
+    'defense' : IDL.Null,
+    'attack' : IDL.Null,
+  });
+  const Effect = IDL.Variant({
+    'reward' : IDL.Null,
+    'removeTrait' : RandomOrSpecificTextValue,
+    'damage' : NatValue,
+    'heal' : NatValue,
+    'upgradeStat' : IDL.Tuple(CharacterStatKind, NatValue),
+    'addItem' : TextValue,
+    'addTrait' : TextValue,
+    'removeGold' : NatValue,
+    'removeItem' : RandomOrSpecificTextValue,
+  });
+  const Condition = IDL.Variant({
+    'hasGold' : NatValue,
+    'hasItem' : TextValue,
+    'hasTrait' : TextValue,
+  });
+  const WeightedOutcomePath = IDL.Record({
+    'weight' : IDL.Float64,
+    'pathId' : IDL.Text,
+    'condition' : IDL.Opt(Condition),
+  });
+  const OutcomePath = IDL.Record({
+    'id' : IDL.Text,
+    'effects' : IDL.Vec(Effect),
+    'description' : IDL.Text,
+    'paths' : IDL.Vec(WeightedOutcomePath),
+  });
+  ChoiceRequirement.fill(
+    IDL.Variant({
+      'all' : IDL.Vec(ChoiceRequirement),
+      'any' : IDL.Vec(ChoiceRequirement),
+      'trait' : IDL.Text,
+      'item' : IDL.Text,
+      'stat' : IDL.Tuple(CharacterStatKind, IDL.Nat),
+    })
+  );
+  const Choice = IDL.Record({
+    'id' : IDL.Text,
+    'description' : IDL.Text,
+    'requirement' : IDL.Opt(ChoiceRequirement),
+    'pathId' : IDL.Text,
+  });
+  const ScenarioMetaData = IDL.Record({
+    'id' : IDL.Text,
+    'title' : IDL.Text,
+    'data' : IDL.Vec(GeneratedDataField),
+    'description' : IDL.Text,
+    'paths' : IDL.Vec(OutcomePath),
+    'choices' : IDL.Vec(Choice),
+    'undecidedPathId' : IDL.Text,
+  });
+  const GeneratedDataFieldInstanceValue = IDL.Variant({
+    'nat' : IDL.Nat,
+    'text' : IDL.Text,
+  });
+  const GeneratedDataFieldInstance = IDL.Record({
+    'id' : IDL.Text,
+    'value' : GeneratedDataFieldInstanceValue,
   });
   const Outcome = IDL.Record({
     'messages' : IDL.Vec(IDL.Text),
-    'choice' : IDL.Opt(IDL.Text),
-  });
-  const ScenarioOption = IDL.Record({
-    'id' : IDL.Text,
-    'description' : IDL.Text,
+    'choiceOrUndecided' : IDL.Opt(IDL.Text),
   });
   const Scenario = IDL.Record({
     'id' : IDL.Nat,
-    'title' : IDL.Text,
     'voteData' : ScenarioVote,
-    'kind' : ScenarioKind,
-    'description' : IDL.Text,
+    'metaDataId' : IDL.Text,
+    'metaData' : ScenarioMetaData,
+    'data' : IDL.Vec(GeneratedDataFieldInstance),
     'outcome' : IDL.Opt(Outcome),
-    'options' : IDL.Vec(ScenarioOption),
   });
   const GetScenarioError = IDL.Variant({
     'noActiveGame' : IDL.Null,
@@ -328,7 +379,7 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
-    'getGameState' : IDL.Func([], [GameState], ['query']),
+    'getGameInstance' : IDL.Func([], [GameInstanceWithMetaData], ['query']),
     'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
     'getScenarioVote' : IDL.Func(
         [GetScenarioVoteRequest],

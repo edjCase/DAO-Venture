@@ -11,12 +11,14 @@ import Time "mo:base/Time";
 import HashMap "mo:base/HashMap";
 import Text "mo:base/Text";
 import Trie "mo:base/Trie";
+import Nat "mo:base/Nat";
 import Location "../models/Location";
 import Scenario "../models/Scenario";
 import Character "../models/Character";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import IterTools "mo:itertools/Iter";
 import CharacterGenerator "../CharacterGenerator";
+import ScenarioSimulator "../ScenarioSimulator";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -147,7 +149,7 @@ module {
             case (#inProgress(inProgress)) {
                 let worldHandler = WorldHandler.Handler(inProgress.world);
                 let characterHandler = CharacterHandler.Handler(inProgress.character);
-                let scenarioHandler = ScenarioHandler.Handler<system>(inProgress.scenarios, characterHandler);
+                let scenarioHandler = ScenarioHandler.Handler<system>(inProgress.scenarios);
                 #inProgress({
                     difficulty = inProgress.difficulty;
                     worldHandler = worldHandler;
@@ -204,7 +206,7 @@ module {
         public func getScenario(scenarioId : Nat) : Result.Result<ScenarioWithMetaData, { #noActiveGame; #notFound }> {
             let #inProgress({ scenarioHandler }) = instance else return #err(#noActiveGame);
             let ?scenario = scenarioHandler.get(scenarioId) else return #err(#notFound);
-            let scenarioMetaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
+            let ?scenarioMetaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
             #ok({
                 scenario with
                 metaData = scenarioMetaData;
@@ -212,7 +214,19 @@ module {
         };
         public func getScenarios() : Result.Result<[ScenarioWithMetaData], { #noActiveGame }> {
             let #inProgress({ scenarioHandler }) = instance else return #err(#noActiveGame);
-            #ok(scenarioHandler.getAll());
+            let scenariosWithMetaData = scenarioHandler.getAll().vals()
+            |> Iter.map<ScenarioHandler.ScenarioInstance, ScenarioWithMetaData>(
+                _,
+                func(scenario : ScenarioHandler.ScenarioInstance) : ScenarioWithMetaData {
+                    let ?scenarioMetaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
+                    {
+                        scenario with
+                        metaData = scenarioMetaData;
+                    };
+                },
+            )
+            |> Iter.toArray(_);
+            #ok(scenariosWithMetaData);
         };
 
         public func voteOnScenario(scenarioId : Nat, voterId : Principal, choice : Text) : Result.Result<?Text, ScenarioHandler.VoteError or { #noActiveGame }> {
@@ -311,13 +325,10 @@ module {
             let characterHandler = CharacterHandler.Handler({
                 character = character;
             });
-            let scenarioHandler = ScenarioHandler.Handler<system>(
-                {
-                    instances = [];
-                    metaDataList = [];
-                },
-                characterHandler,
-            );
+            let scenarioHandler = ScenarioHandler.Handler<system>({
+                instances = [];
+                metaDataList = [];
+            });
             let scenario = generateScenario(prng);
             let scenarioId = scenarioHandler.start(scenario, proposerId, members);
             let location : Location.Location = {
@@ -345,13 +356,26 @@ module {
             members : [ScenarioHandler.Member],
             choiceOrUndecided : ?Text,
         ) : Result.Result<(), { #noActiveGame }> {
-            let #inProgress({ worldHandler; scenarioHandler }) = instance else return #err(#noActiveGame);
-            switch (scenarioHandler.end(prng, worldHandler.getCharacterLocation().scenarioId, choiceOrUndecided)) {
+            let #inProgress({ worldHandler; scenarioHandler; characterHandler }) = instance else return #err(#noActiveGame);
+
+            let scenarioId = worldHandler.getCharacterLocation().scenarioId;
+
+            let ?scenario = scenarioHandler.get(scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
+            let ?scenarioMetaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
+
+            let outcome = ScenarioSimulator.run(
+                prng,
+                characterHandler,
+                scenario,
+                scenarioMetaData,
+                choiceOrUndecided,
+            );
+            switch (scenarioHandler.end(scenarioId, outcome)) {
                 case (#ok) ();
                 case (#err(error)) Debug.trap("Unable to end scenario: " # debug_show (error));
             };
-            let scenario = generateScenario(prng);
-            let newScenarioId = scenarioHandler.start(scenario, proposerId, members);
+            let newScenario = generateScenario(prng);
+            let newScenarioId = scenarioHandler.start(newScenario, proposerId, members);
             worldHandler.nextTurn(newScenarioId);
             #ok;
         };
