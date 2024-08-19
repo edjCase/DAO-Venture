@@ -61,11 +61,13 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
   });
   const CharacterWithMetaData = IDL.Record({
+    'gold' : IDL.Nat,
     'traits' : IDL.Vec(Trait),
     'class' : Class,
     'race' : Race,
     'stats' : CharacterStats,
     'items' : IDL.Vec(Item),
+    'health' : IDL.Nat,
   });
   const Difficulty = IDL.Variant({
     'easy' : IDL.Null,

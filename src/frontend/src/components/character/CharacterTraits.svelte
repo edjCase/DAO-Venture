@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { TraitState } from "../../ic-agent/declarations/main";
+  import { Trait } from "../../ic-agent/declarations/main";
 
-  export let traits: TraitState[];
+  export let traits: Trait[];
 </script>
 
 <div class="border p-6">

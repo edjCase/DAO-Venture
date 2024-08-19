@@ -1,9 +1,9 @@
 import { writable } from "svelte/store";
 import { mainAgentFactory } from "../ic-agent/Main";
-import { GameState } from "../ic-agent/declarations/main";
+import { GameInstanceWithMetaData } from "../ic-agent/declarations/main";
 
 export const gameStateStore = (() => {
-  const { subscribe, set } = writable<GameState | undefined>();
+  const { subscribe, set } = writable<GameInstanceWithMetaData | undefined>();
 
   // let fetchNextDayTimeout: NodeJS.Timeout | undefined = undefined;
 

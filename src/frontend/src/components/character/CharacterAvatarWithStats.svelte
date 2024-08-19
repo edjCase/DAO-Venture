@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { CharacterState } from "../../ic-agent/declarations/main";
+  import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
   import { gameStateStore } from "../../stores/GameStateStore";
   import CharacterAvatar from "../character/CharacterAvatar.svelte";
 
@@ -10,7 +10,7 @@
   const getValue = (value: bigint | undefined): string =>
     value === undefined ? "" : value.toString();
 
-  let character: CharacterState | undefined;
+  let character: CharacterWithMetaData | undefined;
   $: {
     if (gameState !== undefined) {
       if ("notInitialized" in gameState) {

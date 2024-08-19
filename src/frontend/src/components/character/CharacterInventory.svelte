@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { ItemState } from "../../ic-agent/declarations/main";
+  import { Item } from "../../ic-agent/declarations/main";
 
-  export let items: ItemState[];
+  export let items: Item[];
 </script>
 
 <div class="border p-6">

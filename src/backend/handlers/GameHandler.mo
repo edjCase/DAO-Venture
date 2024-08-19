@@ -86,6 +86,8 @@ module {
     };
 
     public type CharacterWithMetaData = {
+        health : Nat;
+        gold : Nat;
         class_ : Character.Class;
         race : Character.Race;
         stats : Character.CharacterStats;

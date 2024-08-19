@@ -39,39 +39,8 @@
       font-size="2em"
       style="pointer-events: none; user-select: none;"
     >
-      {#if scenario}{#if "mysteriousStructure" in scenario.kind}
-          🏛️
-        {:else if "goblinRaidingParty" in scenario.kind}
-          🏹
-        {:else if "lostElfling" in scenario.kind}
-          🧝
-        {:else if "sinkingBoat" in scenario.kind}
-          🚣
-        {:else if "darkElfAmbush" in scenario.kind}
-          🗡️
-        {:else if "corruptedTreant" in scenario.kind}
-          🌲
-        {:else if "trappedDruid" in scenario.kind}
-          🧙
-        {:else if "wanderingAlchemist" in scenario.kind}
-          🧪
-        {:else if "dwarvenWeaponsmith" in scenario.kind}
-          🔨
-        {:else if "fairyMarket" in scenario.kind}
-          🧚
-        {:else if "enchantedGrove" in scenario.kind}
-          🍃
-        {:else if "knowledgeNexus" in scenario.kind}
-          📖
-        {:else if "mysticForge" in scenario.kind}
-          🛠️
-        {:else if "travelingBard" in scenario.kind}
-          🎵
-        {:else if "druidicSanctuary" in scenario.kind}
-          🌿
-        {:else}
-          ❓
-        {/if}
+      {#if scenario}
+        {scenario.metaData.id}
       {/if}
     </text>
   </g>

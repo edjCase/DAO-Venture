@@ -14,11 +14,13 @@ export interface CharacterStats {
   'attack' : bigint,
 }
 export interface CharacterWithMetaData {
+  'gold' : bigint,
   'traits' : Array<Trait>,
   'class' : Class,
   'race' : Race,
   'stats' : CharacterStats,
   'items' : Array<Item>,
+  'health' : bigint,
 }
 export interface Choice {
   'id' : string,

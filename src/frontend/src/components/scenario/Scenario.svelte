@@ -26,10 +26,10 @@
 <div class="p-6">
   {#if scenario !== undefined}
     <div class="text-3xl text-center">
-      {scenario.title}
+      {scenario.metaData.title}
     </div>
     <div class="text-xl my-6">
-      {scenario.description}
+      {scenario.metaData.description}
     </div>
     {#if scenario.outcome[0] !== undefined}
       <div>Outcome</div>
@@ -41,7 +41,7 @@
       <div>
         <div>Options</div>
         <ul class="text-lg text-left p-6">
-          {#each scenario.options as option, i}
+          {#each scenario.metaData.choices as option, i}
             <li>
               <Button
                 class="p-4 border rounded mb-2 w-full"
