@@ -244,7 +244,7 @@ module {
         let weightedRewardTable : [(Reward, Float)] = [
             (#money(1), 20.0),
             (#money(10), 15.0),
-            (#item("echoCrystal"), 1.0),
+            (#item("crystal"), 1.0),
         ];
         public func reward() {
             log("You find a reward!");

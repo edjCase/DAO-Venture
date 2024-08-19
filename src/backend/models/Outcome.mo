@@ -14,5 +14,7 @@ module {
         #stat : (Character.CharacterStatKind, Nat);
         #item : Text;
         #trait : Text;
+        #race : Text;
+        #class_ : Text;
     };
 };

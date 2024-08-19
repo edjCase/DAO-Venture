@@ -1,4 +1,4 @@
-import Scenario "models/Scenario";
+import Scenario "../models/Scenario";
 module {
     public let scenarios : [Scenario.ScenarioMetaData] = [
         {
@@ -574,7 +574,7 @@ module {
                     id = "dwarf_negotiate";
                     description = "Have your dwarf crew member negotiate.";
                     pathId = "dwarf_negotiate_path";
-                    requirement = ? #trait("dwarf");
+                    requirement = ? #race("dwarf");
                 },
             ];
             undecidedPathId = "undecided_path";
@@ -879,7 +879,7 @@ module {
                     id = "use_charm";
                     description = "Use a fairy charm to get better deals.";
                     pathId = "use_charm_path";
-                    requirement = ? #item("fairy_charm");
+                    requirement = ? #item("crystal");
                 },
             ];
             undecidedPathId = "undecided_path";

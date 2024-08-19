@@ -30,6 +30,8 @@ export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
   { 'any' : Array<ChoiceRequirement> } |
   { 'trait' : string } |
   { 'item' : string } |
+  { 'class' : string } |
+  { 'race' : string } |
   { 'stat' : [CharacterStatKind, bigint] };
 export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
 export interface ChoiceVotingPower_1 {

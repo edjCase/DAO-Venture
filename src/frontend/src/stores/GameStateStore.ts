@@ -31,7 +31,7 @@ export const gameStateStore = (() => {
 
   const refetch = async () => {
     const mainAgent = await mainAgentFactory();
-    const result = await mainAgent.getGameState();
+    const result = await mainAgent.getGameInstance();
 
     set(result);
     if ('notIntialized' in result) {

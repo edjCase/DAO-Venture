@@ -160,6 +160,8 @@ module {
                         errors.add("Invalid item id in choice requirement: " # itemId);
                     };
                 };
+                case (#race(_)) {};
+                case (#class_(_)) {};
                 case (#stat(_)) {};
                 case (#all(all)) {
                     for (requirement in all.vals()) {

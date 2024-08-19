@@ -447,7 +447,7 @@ module {
             character : Character.Character
         ) : CharacterWithMetaData {
             let ?class_ = classes.get(character.classId) else Debug.trap("Class not found: " # character.classId);
-            let ?race = classes.get(character.raceId) else Debug.trap("Race not found: " # character.raceId);
+            let ?race = races.get(character.raceId) else Debug.trap("Race not found: " # character.raceId);
             let itemsWithMetaData = Trie.iter(character.itemIds)
             |> Iter.map(
                 _,

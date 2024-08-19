@@ -189,6 +189,8 @@ export const idlFactory = ({ IDL }) => {
       'any' : IDL.Vec(ChoiceRequirement),
       'trait' : IDL.Text,
       'item' : IDL.Text,
+      'class' : IDL.Text,
+      'race' : IDL.Text,
       'stat' : IDL.Tuple(CharacterStatKind, IDL.Nat),
     })
   );

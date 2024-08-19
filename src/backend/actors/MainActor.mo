@@ -18,6 +18,11 @@ import Random "mo:base/Random";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
+import ClassData "../initial_data/ClassData";
+import RaceData "../initial_data/RaceData";
+import ItemData "../initial_data/ItemData";
+import ScenarioData "../initial_data/ScenarioData";
+import TraitData "../initial_data/TraitData";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -32,11 +37,11 @@ actor MainActor : Types.Actor {
     stable var gameStableData : GameHandler.StableData = {
         current = #notInitialized;
         historical = [];
-        classes = [];
-        races = [];
-        scenarios = [];
-        items = [];
-        traits = [];
+        classes = ClassData.classes;
+        races = RaceData.races;
+        scenarios = ScenarioData.scenarios;
+        items = ItemData.items;
+        traits = TraitData.traits;
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
