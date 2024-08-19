@@ -27,7 +27,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
-  const Effect__1 = IDL.Variant({
+  const CharacterModifier = IDL.Variant({
     'magic' : IDL.Int,
     'trait' : IDL.Text,
     'gold' : IDL.Nat,
@@ -39,15 +39,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const Class = IDL.Record({
     'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect__1),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'modifiers' : IDL.Vec(CharacterModifier),
   });
   const Race = IDL.Record({
     'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect__1),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'modifiers' : IDL.Vec(CharacterModifier),
   });
   const CharacterStats = IDL.Record({
     'magic' : IDL.Int,

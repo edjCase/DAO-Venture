@@ -4,13 +4,16 @@ import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 import Int "mo:base/Int";
 import Character "models/Character";
+import CharacterModifier "models/CharacterModifier";
+import Class "models/Class";
+import Race "models/Race";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public func generate(
-        class_ : Character.Class,
-        race : Character.Race,
+        class_ : Class.Class,
+        race : Race.Race,
     ) : Character.Character {
         var gold : Nat = 0;
         var health : Nat = 100;
@@ -29,8 +32,8 @@ module {
             traitIds := TrieSet.put(traitIds, trait, Text.hash(trait), Text.equal);
         };
 
-        func applyEffect(effect : Character.Effect) {
-            switch (effect) {
+        func applyModifier(modifier : CharacterModifier.CharacterModifier) {
+            switch (modifier) {
                 case (#attack(delta)) attack += delta;
                 case (#defense(delta)) defense += delta;
                 case (#speed(delta)) speed += delta;
@@ -49,12 +52,12 @@ module {
             };
         };
 
-        for (effect in class_.effects.vals()) {
-            applyEffect(effect);
+        for (effect in class_.modifiers.vals()) {
+            applyModifier(effect);
         };
 
-        for (effect in race.effects.vals()) {
-            applyEffect(effect);
+        for (effect in race.modifiers.vals()) {
+            applyModifier(effect);
         };
 
         {

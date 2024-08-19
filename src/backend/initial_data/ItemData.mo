@@ -1,6 +1,6 @@
-import Character "../models/Character";
+import Item "../models/Item";
 module {
-    public let items : [Character.Item] = [
+    public let items : [Item.Item] = [
         {
             id = "herbs";
             name = "Herbs";
@@ -12,22 +12,22 @@ module {
             description = "For when knocking politely just won't do.";
         },
         {
-            id = "runeStone";
+            id = "rune_stone";
             name = "Rune Stone";
             description = "Ancient stone imbued with magical power. Also makes a great paperweight.";
         },
         {
-            id = "fishingTackle";
+            id = "fishing_tackle";
             name = "Fishing Tackle";
             description = "For catching fish or snagging secrets from the depths.";
         },
         {
-            id = "vialOfAcid";
+            id = "vial_of_acid";
             name = "Vial of Acid";
             description = "Highly corrosive. Handle with care, or don't handle at all.";
         },
         {
-            id = "disguiseKit";
+            id = "disguise_kit";
             name = "Disguise Kit";
             description = "Be anyone you want to be, except yourself.";
         },
@@ -45,6 +45,16 @@ module {
             id = "compass";
             name = "Compass";
             description = "Always points north, unless you're lost. Then it points to adventure.";
+        },
+        {
+            id = "treant_bark";
+            name = "Treant Bark";
+            description = "A piece of a living tree. It occasionally whispers ancient secrets.";
+        },
+        {
+            id = "treasure_map";
+            name = "Treasure Map";
+            description = "X marks the spot. Or was it Y? Z? Better check all the letters just in case.";
         },
     ];
 };

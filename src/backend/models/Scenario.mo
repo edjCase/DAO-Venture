@@ -3,12 +3,13 @@ import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
 import Text "mo:base/Text";
-import Iter "mo:base/Iter";
 import Float "mo:base/Float";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "Outcome";
 import TextX "mo:xtended-text/TextX";
 import Character "Character";
+import Trait "Trait";
+import Item "Item";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -117,17 +118,11 @@ module {
 
     public func validateMetaData(
         metaData : ScenarioMetaData,
-        allTraitIds : [Text],
-        allItemIds : [Text],
+        existingMetaData : HashMap.HashMap<Text, ScenarioMetaData>,
+        items : HashMap.HashMap<Text, Item.Item>,
+        traits : HashMap.HashMap<Text, Trait.Trait>,
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
-        let traitIdMap = allTraitIds.vals()
-        |> Iter.map<Text, (Text, ())>(_, func(traitId : Text) : (Text, ()) = (traitId, ()))
-        |> HashMap.fromIter<Text, ()>(_, allTraitIds.size(), Text.equal, Text.hash);
-
-        let itemIdMap = allItemIds.vals()
-        |> Iter.map<Text, (Text, ())>(_, func(itemId : Text) : (Text, ()) = (itemId, ()))
-        |> HashMap.fromIter<Text, ()>(_, allItemIds.size(), Text.equal, Text.hash);
 
         let dataFieldIdMap = HashMap.HashMap<Text, GeneratedDataField>(metaData.data.size(), Text.equal, Text.hash);
         // Check id and description
@@ -141,6 +136,10 @@ module {
             errors.add("Scenario description is empty");
         };
 
+        if (existingMetaData.get(metaData.id) != null) {
+            errors.add("Duplicate scenario id: " # metaData.id);
+        };
+
         // Check data fields
         for (field in metaData.data.vals()) {
             if (dataFieldIdMap.replace(field.id, field) != null) {
@@ -151,12 +150,12 @@ module {
         func validateRequirement(requirement : Outcome.ChoiceRequirement) {
             switch (requirement) {
                 case (#trait(traitId)) {
-                    if (traitIdMap.get(traitId) == null) {
+                    if (traits.get(traitId) == null) {
                         errors.add("Invalid trait id in choice requirement: " # traitId);
                     };
                 };
                 case (#item(itemId)) {
-                    if (itemIdMap.get(itemId) == null) {
+                    if (items.get(itemId) == null) {
                         errors.add("Invalid item id in choice requirement: " # itemId);
                     };
                 };
@@ -197,17 +196,23 @@ module {
                 errors.add("Duplicate path id: " # path.id);
             };
 
-            func validateTextValue(value : TextValue, map : HashMap.HashMap<Text, ()>, kind : Text) {
+            func validateTextValue<T>(value : TextValue, map : HashMap.HashMap<Text, T>, kind : Text) {
                 switch (value) {
                     case (#raw(raw)) {
-                        if (map.get(raw) == null) {
-                            errors.add("Invalid " # kind # ": " # raw);
+                        switch (map.get(raw)) {
+                            case (?_) ();
+                            case (null) {
+                                errors.add("Invalid " # kind # ": " # raw);
+                            };
                         };
                     };
                     case (#weighted(weighted)) {
                         for ((v, weight) in weighted.vals()) {
-                            if (map.get(v) == null) {
-                                errors.add("Invalid " # kind # ": " # v);
+                            switch (map.get(v)) {
+                                case (?_) ();
+                                case (null) {
+                                    errors.add("Invalid " # kind # ": " # v);
+                                };
                             };
                             if (weight <= 0.0) {
                                 errors.add("Weights must be greater than 0: " # Float.toText(weight));
@@ -266,19 +271,19 @@ module {
 
             for (effect in path.effects.vals()) {
                 switch (effect) {
-                    case (#addItem(addItem)) validateTextValue(addItem, itemIdMap, "item");
-                    case (#addTrait(addTrait)) validateTextValue(addTrait, traitIdMap, "trait");
+                    case (#addItem(addItem)) validateTextValue(addItem, items, "item");
+                    case (#addTrait(addTrait)) validateTextValue(addTrait, traits, "trait");
                     case (#removeGold(removeGold)) validateNatValue(removeGold, "gold");
                     case (#removeItem(removeItem)) {
                         switch (removeItem) {
                             case (#random) {};
-                            case (#specific(specific)) validateTextValue(specific, itemIdMap, "item");
+                            case (#specific(specific)) validateTextValue(specific, items, "item");
                         };
                     };
                     case (#removeTrait(removeTrait)) {
                         switch (removeTrait) {
                             case (#random) {};
-                            case (#specific(specific)) validateTextValue(specific, traitIdMap, "trait");
+                            case (#specific(specific)) validateTextValue(specific, traits, "trait");
                         };
                     };
                     case (#damage(damage)) validateNatValue(damage, "damage");

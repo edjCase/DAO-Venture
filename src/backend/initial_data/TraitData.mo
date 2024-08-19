@@ -1,6 +1,7 @@
-import Character "../models/Character";
+import Trait "../models/Trait";
+
 module {
-    public let traits : [Character.Trait] = [
+    public let traits : [Trait.Trait] = [
         {
             id = "perceptive";
             name = "Perceptive";
@@ -55,6 +56,16 @@ module {
             id = "cursed";
             name = "Cursed";
             description = "A dark energy clings to you, bringing misfortune to your foes but at a cost to yourself.";
+        },
+        {
+            id = "alchemist";
+            name = "Alchemist";
+            description = "You can brew potions that would make a chemistry lab jealous. Just don't drink the blue one.";
+        },
+        {
+            id = "intelligent";
+            name = "Intelligent";
+            description = "Your brain could outcompute a library. Good luck finding hats that fit.";
         },
     ];
 };

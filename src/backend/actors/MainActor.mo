@@ -37,11 +37,11 @@ actor MainActor : Types.Actor {
     stable var gameStableData : GameHandler.StableData = {
         current = #notInitialized;
         historical = [];
-        classes = ClassData.classes;
-        races = RaceData.races;
-        scenarios = ScenarioData.scenarios;
-        items = ItemData.items;
-        traits = TraitData.traits;
+        classes = [];
+        races = [];
+        scenarios = [];
+        items = [];
+        traits = [];
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
@@ -109,6 +109,41 @@ actor MainActor : Types.Actor {
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
         let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the new game vote
         let members = buildVotingMembersList();
+
+        for (item in ItemData.items.vals()) {
+            switch (gameHandler.addItem(item)) {
+                case (#ok) ();
+                case (#err(err)) return Debug.trap("Error adding item: " # debug_show (err));
+            };
+        };
+
+        for (trait in TraitData.traits.vals()) {
+            switch (gameHandler.addTrait(trait)) {
+                case (#ok) ();
+                case (#err(err)) return Debug.trap("Error adding trait: " # debug_show (err));
+            };
+        };
+
+        for (class_ in ClassData.classes.vals()) {
+            switch (gameHandler.addClass(class_)) {
+                case (#ok) ();
+                case (#err(err)) return Debug.trap("Error adding class: " # debug_show (err));
+            };
+        };
+        for (race in RaceData.races.vals()) {
+            switch (gameHandler.addRace(race)) {
+                case (#ok) ();
+                case (#err(err)) return Debug.trap("Error adding race: " # debug_show (err));
+            };
+        };
+
+        for (scenario in ScenarioData.scenarios.vals()) {
+            switch (gameHandler.addScenarioMetaData(scenario)) {
+                case (#ok) ();
+                case (#err(err)) return Debug.trap("Error adding scenario: " # debug_show (err));
+            };
+        };
+
         gameHandler.initialize(
             prng,
             proposerId,

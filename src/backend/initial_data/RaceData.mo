@@ -1,11 +1,11 @@
-import Character "../models/Character";
+import Race "../models/Race";
 module {
-    public let races : [Character.Race] = [
+    public let races : [Race.Race] = [
         {
             id = "human";
             name = "Human";
             description = "Humans are versatile and adaptable.";
-            effects = [
+            modifiers = [
                 #attack(1),
                 #defense(1),
                 #trait("clever"),
@@ -15,7 +15,7 @@ module {
             id = "elf";
             name = "Elf";
             description = "Elves are graceful and attuned to nature.";
-            effects = [
+            modifiers = [
                 #magic(1),
                 #speed(1),
                 #trait("naturalist"),
@@ -25,7 +25,7 @@ module {
             id = "dwarf";
             name = "Dwarf";
             description = "Dwarves are sturdy and resilient.";
-            effects = [
+            modifiers = [
                 #defense(2),
                 #health(10),
                 #trait("tough"),
@@ -35,7 +35,7 @@ module {
             id = "halfling";
             name = "Halfling";
             description = "Halflings are small and nimble.";
-            effects = [
+            modifiers = [
                 #speed(2),
                 #defense(1),
                 #trait("stealthy"),
@@ -45,7 +45,7 @@ module {
             id = "faerie";
             name = "Faerie";
             description = "Faeries are mysterious and enchanting.";
-            effects = [
+            modifiers = [
                 #magic(2),
                 #speed(1),
                 #trait("charismatic"),

@@ -15,43 +15,6 @@ module {
         traitIds : TrieSet.Set<Text>;
     };
 
-    public type Trait = {
-        id : Text;
-        name : Text;
-        description : Text;
-    };
-
-    public type Item = {
-        id : Text;
-        name : Text;
-        description : Text;
-    };
-
-    public type Race = {
-        id : Text;
-        name : Text;
-        description : Text;
-        effects : [Effect];
-    };
-
-    public type Class = {
-        id : Text;
-        name : Text;
-        description : Text;
-        effects : [Effect];
-    };
-
-    public type Effect = {
-        #attack : Int;
-        #defense : Int;
-        #speed : Int;
-        #magic : Int;
-        #gold : Nat;
-        #health : Int;
-        #item : Text;
-        #trait : Text;
-    };
-
     public type CharacterStats = {
         attack : Int;
         defense : Int;

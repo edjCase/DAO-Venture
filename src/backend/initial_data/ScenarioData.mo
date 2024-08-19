@@ -87,7 +87,7 @@ module {
                 {
                     id = "successful_purification";
                     description = "Your magic cleanses the corruption. The treant returns to its peaceful state.";
-                    effects = [#reward, #addTrait(#raw("nature_friend"))];
+                    effects = [#reward, #addTrait(#raw("naturalist"))];
                     paths = [];
                 },
                 {
@@ -803,7 +803,7 @@ module {
                     id = "commune_success";
                     description = "You commune with nature spirits and receive a unique item.";
                     effects = [
-                        #addItem(#raw("fairy_charm")),
+                        #addItem(#raw("crystal")),
                     ];
                     paths = [];
                 },
@@ -876,9 +876,9 @@ module {
                     requirement = null;
                 },
                 {
-                    id = "use_charm";
-                    description = "Use a fairy charm to get better deals.";
-                    pathId = "use_charm_path";
+                    id = "use_crystal";
+                    description = "Use a  to get better deals.";
+                    pathId = "use_crystal_path";
                     requirement = ? #item("crystal");
                 },
             ];
@@ -949,10 +949,10 @@ module {
                     paths = [];
                 },
                 {
-                    id = "use_charm_path";
+                    id = "use_crystal_path";
                     description = "Your fairy charm glows, granting you favor in the market.";
                     effects = [
-                        #removeItem(#specific(#raw("fairy_charm"))),
+                        #removeItem(#specific(#raw("crystal"))),
                         #upgradeStat(#magic, #raw(1)),
                     ];
                     paths = [];
@@ -979,7 +979,7 @@ module {
                 {
                     id = "bribe_cost";
                     name = "Bribe Cost";
-                    value = #nat({ min = 20; max = 20 });
+                    value = #nat({ min = 20; max = 30 });
                 },
                 {
                     id = "goblin_damage";
@@ -1697,7 +1697,7 @@ module {
                     id = "craft";
                     description = "Craft a special item. Warning: May result in unexpected chicken statues.";
                     pathId = "craft_path";
-                    requirement = ? #trait("artificer");
+                    requirement = ? #class_("artificer");
                 },
                 {
                     id = "leave";
@@ -1816,7 +1816,7 @@ module {
                 {
                     id = "craft_success";
                     description = "The forge erupts in a shower of sparks. You've created something... interesting.";
-                    effects = [#addItem(#raw("echo_crystal"))];
+                    effects = [#addItem(#raw("crystal"))];
                     paths = [];
                 },
                 {
@@ -2283,7 +2283,7 @@ module {
                 {
                     id = "song_success";
                     description = "The bard plays your request with surprising skill. You receive a magical token of appreciation from the universe.";
-                    effects = [#addItem(#raw("fairy_charm"))];
+                    effects = [#addItem(#raw("crystal"))];
                     paths = [];
                 },
                 {
@@ -2318,28 +2318,28 @@ module {
             description = "You encounter a wandering alchemist, their pack filled with bubbling vials and aromatic herbs.";
             data = [
                 {
-                    id = "potion_cost";
-                    name = "Potion Cost";
-                    value = #nat({ min = 30; max = 30 });
+                    id = "vial_of_acid_cost";
+                    name = "Vial of Acid Cost";
+                    value = #nat({ min = 30; max = 35 });
                 },
             ];
             choices = [
                 {
                     id = "trade_herbs";
-                    description = "Trade your herbs for a random potion.";
+                    description = "Trade your herbs for a vial of acid.";
                     pathId = "trade_herbs_path";
                     requirement = ? #item("herbs");
                 },
                 {
-                    id = "buy_potion";
-                    description = "Buy a potion of your choice for some gold.";
-                    pathId = "buy_potion_path";
+                    id = "buy_vial_of_acid";
+                    description = "Buy a vial of acid for some gold.";
+                    pathId = "buy_vial_of_acid_path";
                     requirement = null;
                 },
                 {
-                    id = "learn_recipe";
-                    description = "Try to learn a potion recipe from the alchemist.";
-                    pathId = "learn_recipe_path";
+                    id = "learn";
+                    description = "Try to learn from the alchemist.";
+                    pathId = "learn_path";
                     requirement = ? #trait("intelligent");
                 },
                 {
@@ -2353,71 +2353,48 @@ module {
             paths = [
                 {
                     id = "trade_herbs_path";
-                    description = "You trade your herbs for a mysterious potion.";
+                    description = "You trade your herbs for a vial of acid.";
                     effects = [
                         #removeItem(#specific(#raw("herbs"))),
-                        #addItem(#raw("health_potion")),
+                        #addItem(#raw("vial_of_acid")),
                     ];
                     paths = [];
                 },
                 {
-                    id = "buy_potion_path";
-                    description = "You attempt to purchase a potion from the alchemist.";
+                    id = "buy_vial_of_acid_path";
+                    description = "You purchase a vial of acid from the alchemist.";
                     effects = [
-                        #removeGold(#dataField("potion_cost")),
-                        #addItem(#raw("health_potion")),
+                        #removeGold(#dataField("vial_of_acid_cost")),
+                        #addItem(#raw("vial_of_acid")),
                     ];
-                    paths = [
-                        {
-                            weight = 1;
-                            condition = ? #hasGold(#dataField("potion_cost"));
-                            pathId = "buy_potion_success";
-                        },
-                        {
-                            weight = 1;
-                            condition = null;
-                            pathId = "buy_potion_failure";
-                        },
-                    ];
-                },
-                {
-                    id = "buy_potion_success";
-                    description = "You purchase a potion of your choice from the alchemist.";
-                    effects = [];
                     paths = [];
                 },
                 {
-                    id = "buy_potion_failure";
-                    description = "You don't have enough gold to buy a potion.";
-                    effects = [];
-                    paths = [];
-                },
-                {
-                    id = "learn_recipe_path";
-                    description = "You try to learn a potion recipe from the alchemist.";
+                    id = "learn_path";
+                    description = "You try to learn from the alchemist.";
                     effects = [];
                     paths = [
                         {
                             weight = 3;
                             condition = null;
-                            pathId = "learn_recipe_success";
+                            pathId = "learn_success";
                         },
                         {
                             weight = 2;
                             condition = null;
-                            pathId = "learn_recipe_failure";
+                            pathId = "learn_failure";
                         },
                     ];
                 },
                 {
-                    id = "learn_recipe_success";
-                    description = "You successfully learn a new potion recipe from the alchemist!";
+                    id = "learn_success";
+                    description = "You successfully learn from the alchemist!";
                     effects = [#addTrait(#raw("alchemist"))];
                     paths = [];
                 },
                 {
-                    id = "learn_recipe_failure";
-                    description = "The alchemist's instructions are too complex. You fail to learn the recipe.";
+                    id = "learn_failure";
+                    description = "The alchemist's instructions are too complex. You fail to learn anything.";
                     effects = [];
                     paths = [];
                 },

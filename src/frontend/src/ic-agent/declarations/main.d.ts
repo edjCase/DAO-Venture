@@ -3,6 +3,14 @@ import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
+export type CharacterModifier = { 'magic' : bigint } |
+  { 'trait' : string } |
+  { 'gold' : bigint } |
+  { 'item' : string } |
+  { 'speed' : bigint } |
+  { 'defense' : bigint } |
+  { 'attack' : bigint } |
+  { 'health' : bigint };
 export type CharacterStatKind = { 'magic' : null } |
   { 'speed' : null } |
   { 'defense' : null } |
@@ -46,9 +54,9 @@ export interface ChoiceVotingPower_2 {
 }
 export interface Class {
   'id' : string,
-  'effects' : Array<Effect__1>,
   'name' : string,
   'description' : string,
+  'modifiers' : Array<CharacterModifier>,
 }
 export type Condition = { 'hasGold' : NatValue } |
   { 'hasItem' : TextValue } |
@@ -70,14 +78,6 @@ export type Effect = { 'reward' : null } |
   { 'addTrait' : TextValue } |
   { 'removeGold' : NatValue } |
   { 'removeItem' : RandomOrSpecificTextValue };
-export type Effect__1 = { 'magic' : bigint } |
-  { 'trait' : string } |
-  { 'gold' : bigint } |
-  { 'item' : string } |
-  { 'speed' : bigint } |
-  { 'defense' : bigint } |
-  { 'attack' : bigint } |
-  { 'health' : bigint };
 export type GameInstanceWithMetaData = {
     'notStarted' : {
       'characterVotes' : VotingSummary,
@@ -195,9 +195,9 @@ export type ProposalStatus = {
   };
 export interface Race {
   'id' : string,
-  'effects' : Array<Effect__1>,
   'name' : string,
   'description' : string,
+  'modifiers' : Array<CharacterModifier>,
 }
 export type RandomOrSpecificTextValue = { 'specific' : TextValue } |
   { 'random' : null };

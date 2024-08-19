@@ -19,6 +19,10 @@ import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import IterTools "mo:itertools/Iter";
 import CharacterGenerator "../CharacterGenerator";
 import ScenarioSimulator "../ScenarioSimulator";
+import Trait "../models/Trait";
+import Item "../models/Item";
+import Class "../models/Class";
+import Race "../models/Race";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -26,11 +30,11 @@ module {
     public type StableData = {
         current : GameInstance;
         historical : [CompletedData];
-        classes : [Character.Class];
-        races : [Character.Race];
+        classes : [Class.Class];
+        races : [Race.Race];
         scenarios : [Scenario.ScenarioMetaData];
-        items : [Character.Item];
-        traits : [Character.Trait];
+        items : [Item.Item];
+        traits : [Trait.Trait];
     };
 
     public type GameInstance = {
@@ -88,11 +92,11 @@ module {
     public type CharacterWithMetaData = {
         health : Nat;
         gold : Nat;
-        class_ : Character.Class;
-        race : Character.Race;
+        class_ : Class.Class;
+        race : Race.Race;
         stats : Character.CharacterStats;
-        items : [Character.Item];
-        traits : [Character.Trait];
+        items : [Item.Item];
+        traits : [Trait.Trait];
     };
 
     public type ScenarioWithMetaData = Scenario.Scenario and {
@@ -121,24 +125,24 @@ module {
     public class Handler<system>(data : StableData) {
         var historical : [CompletedData] = data.historical;
         let classes = data.classes.vals()
-        |> Iter.map<Character.Class, (Text, Character.Class)>(_, func(class_ : Character.Class) : (Text, Character.Class) = (class_.id, class_))
-        |> HashMap.fromIter<Text, Character.Class>(_, data.classes.size(), Text.equal, Text.hash);
+        |> Iter.map<Class.Class, (Text, Class.Class)>(_, func(class_ : Class.Class) : (Text, Class.Class) = (class_.id, class_))
+        |> HashMap.fromIter<Text, Class.Class>(_, data.classes.size(), Text.equal, Text.hash);
 
         let races = data.races.vals()
-        |> Iter.map<Character.Race, (Text, Character.Race)>(_, func(race : Character.Race) : (Text, Character.Race) = (race.id, race))
-        |> HashMap.fromIter<Text, Character.Race>(_, data.races.size(), Text.equal, Text.hash);
+        |> Iter.map<Race.Race, (Text, Race.Race)>(_, func(race : Race.Race) : (Text, Race.Race) = (race.id, race))
+        |> HashMap.fromIter<Text, Race.Race>(_, data.races.size(), Text.equal, Text.hash);
 
         let scenarios = data.scenarios.vals()
         |> Iter.map<Scenario.ScenarioMetaData, (Text, Scenario.ScenarioMetaData)>(_, func(scenario : Scenario.ScenarioMetaData) : (Text, Scenario.ScenarioMetaData) = (scenario.id, scenario))
         |> HashMap.fromIter<Text, Scenario.ScenarioMetaData>(_, data.scenarios.size(), Text.equal, Text.hash);
 
         let items = data.items.vals()
-        |> Iter.map<Character.Item, (Text, Character.Item)>(_, func(item : Character.Item) : (Text, Character.Item) = (item.id, item))
-        |> HashMap.fromIter<Text, Character.Item>(_, data.items.size(), Text.equal, Text.hash);
+        |> Iter.map<Item.Item, (Text, Item.Item)>(_, func(item : Item.Item) : (Text, Item.Item) = (item.id, item))
+        |> HashMap.fromIter<Text, Item.Item>(_, data.items.size(), Text.equal, Text.hash);
 
         let traits = data.traits.vals()
-        |> Iter.map<Character.Trait, (Text, Character.Trait)>(_, func(trait : Character.Trait) : (Text, Character.Trait) = (trait.id, trait))
-        |> HashMap.fromIter<Text, Character.Trait>(_, data.traits.size(), Text.equal, Text.hash);
+        |> Iter.map<Trait.Trait, (Text, Trait.Trait)>(_, func(trait : Trait.Trait) : (Text, Trait.Trait) = (trait.id, trait))
+        |> HashMap.fromIter<Text, Trait.Trait>(_, data.traits.size(), Text.equal, Text.hash);
 
         var instance : MutableGameInstance = switch (data.current) {
             case (#notInitialized) #notInitialized;
@@ -386,6 +390,56 @@ module {
             toInstanceWithMetaData(instance);
         };
 
+        public func addItem(item : Item.Item) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Item.validate(item, items)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding item: " # item.id);
+            items.put(item.id, item);
+            #ok;
+        };
+
+        public func addTrait(trait : Trait.Trait) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Trait.validate(trait, traits)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding trait: " # trait.id);
+            traits.put(trait.id, trait);
+            #ok;
+        };
+
+        public func addRace(race : Race.Race) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Race.validate(race, races, items, traits)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding race: " # race.id);
+            races.put(race.id, race);
+            #ok;
+        };
+
+        public func addClass(class_ : Class.Class) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Class.validate(class_, classes, items, traits)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding class: " # class_.id);
+            classes.put(class_.id, class_);
+            #ok;
+        };
+
+        public func addScenarioMetaData(scenario : Scenario.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Scenario.validateMetaData(scenario, scenarios, items, traits)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding scenario meta data: " # scenario.id);
+            scenarios.put(scenario.id, scenario);
+            #ok;
+        };
+
         private func generateScenario(prng : Prng) : {
             metaDataId : Text;
             data : [Scenario.GeneratedDataFieldInstance];
@@ -396,7 +450,7 @@ module {
                 _,
                 func(field : Scenario.GeneratedDataField) : Scenario.GeneratedDataFieldInstance {
                     let value = switch (field.value) {
-                        case (#nat(nat)) #nat(prng.nextNat(nat.min, nat.max));
+                        case (#nat({ min; max })) #nat(prng.nextNat(min, max));
                         case (#text(text)) #text(prng.nextArrayElementWeighted(text.options));
                     };
                     {
@@ -453,7 +507,7 @@ module {
             let itemsWithMetaData = Trie.iter(character.itemIds)
             |> Iter.map(
                 _,
-                func((itemId, _) : (Text, ())) : Character.Item {
+                func((itemId, _) : (Text, ())) : Item.Item {
                     let ?item = items.get(itemId) else Debug.trap("Item not found: " # itemId);
                     item;
                 },
@@ -463,7 +517,7 @@ module {
             let traitsWithMetaData = Trie.iter(character.traitIds)
             |> Iter.map(
                 _,
-                func((traitId, _) : (Text, ())) : Character.Trait {
+                func((traitId, _) : (Text, ())) : Trait.Trait {
                     let ?trait = traits.get(traitId) else Debug.trap("Trait not found: " # traitId);
                     trait;
                 },
