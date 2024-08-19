@@ -206,6 +206,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'title' : IDL.Text,
     'data' : IDL.Vec(GeneratedDataField),
+    'icon' : IDL.Vec(IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8))),
     'description' : IDL.Text,
     'paths' : IDL.Vec(OutcomePath),
     'choices' : IDL.Vec(Choice),

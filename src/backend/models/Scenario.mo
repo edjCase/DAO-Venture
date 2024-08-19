@@ -25,6 +25,7 @@ module {
         id : Text;
         title : Text;
         description : Text;
+        icon : [[(Nat8, Nat8, Nat8)]];
         data : [GeneratedDataField];
         choices : [Choice];
         paths : [OutcomePath];
@@ -138,6 +139,10 @@ module {
 
         if (existingMetaData.get(metaData.id) != null) {
             errors.add("Duplicate scenario id: " # metaData.id);
+        };
+
+        if (metaData.icon.size() != 16 or metaData.icon[0].size() != 16) {
+            errors.add("Invalid icon size: " # Nat.toText(metaData.icon.size()) # "x" # Nat.toText(metaData.icon[0].size()) # " (expected 16x16)");
         };
 
         // Check data fields

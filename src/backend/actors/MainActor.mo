@@ -140,7 +140,7 @@ actor MainActor : Types.Actor {
         for (scenario in ScenarioData.scenarios.vals()) {
             switch (gameHandler.addScenarioMetaData(scenario)) {
                 case (#ok) ();
-                case (#err(err)) return Debug.trap("Error adding scenario: " # debug_show (err));
+                case (#err(err)) return Debug.trap("Error adding scenario " # scenario.id # ", Error: " # debug_show (err));
             };
         };
 

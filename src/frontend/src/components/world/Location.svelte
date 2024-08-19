@@ -1,6 +1,7 @@
 <script lang="ts">
   import { gameStateStore } from "../../stores/GameStateStore";
   import { scenarioStore } from "../../stores/ScenarioStore";
+  import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
 
   export let locationId: bigint;
 
@@ -21,27 +22,20 @@
 
 {#if location !== undefined}
   <g>
+    {#if scenario}
+      <foreignObject width="100%" height="100%" x={-16} y={-16}>
+        <PixelArtCanvas pixels={scenario.metaData.icon} pixelSize={2} />
+      </foreignObject>
+    {/if}
     {#if hasCharacter}
       <circle
         cx="0"
-        cy="-0.25em"
+        cy="0"
         r="1.5em"
-        fill="black"
+        fill="none"
         stroke="rgb(156, 163, 175)"
         stroke-width="0.2em"
       />
     {/if}
-    <text
-      x="0"
-      y="0"
-      dominant-baseline="middle"
-      text-anchor="middle"
-      font-size="2em"
-      style="pointer-events: none; user-select: none;"
-    >
-      {#if scenario}
-        {scenario.metaData.id}
-      {/if}
-    </text>
   </g>
 {/if}

@@ -2,6 +2,7 @@
   import { Button } from "flowbite-svelte";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { mainAgentFactory } from "../../ic-agent/Main";
+  import { gameStateStore } from "../../stores/GameStateStore";
 
   export let scenarioId: bigint;
 
@@ -16,7 +17,8 @@
     });
     if ("ok" in result) {
       console.log("Voted successfully");
-      scenarioStore.refetchById(scenarioId);
+      scenarioStore.refetch();
+      gameStateStore.refetch();
     } else {
       console.error("Failed to vote:", result);
     }

@@ -215,6 +215,7 @@ export interface ScenarioMetaData {
   'id' : string,
   'title' : string,
   'data' : Array<GeneratedDataField>,
+  'icon' : Array<Array<[number, number, number]>>,
   'description' : string,
   'paths' : Array<OutcomePath>,
   'choices' : Array<Choice>,
