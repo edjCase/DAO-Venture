@@ -775,7 +775,7 @@ module {
             choices = [
                 {
                     id = "meditate";
-                    description = "Meditate to increase your magic stat (costs gold).";
+                    description = "Meditate to increase your magic stat.";
                     pathId = "meditate_path";
                     requirement = null;
                 },
@@ -787,7 +787,7 @@ module {
                 },
                 {
                     id = "commune";
-                    description = "Commune with nature spirits for a chance at a unique item (costs gold).";
+                    description = "Commune with nature spirits for a chance at a unique item.";
                     pathId = "commune_path";
                     requirement = null;
                 },
@@ -1319,19 +1319,19 @@ module {
             choices = [
                 {
                     id = "study";
-                    description = "Study ancient texts to increase your magic stat (costs gold).";
+                    description = "Study ancient texts to increase your magic stat.";
                     pathId = "study_path";
                     requirement = null;
                 },
                 {
                     id = "learn_skill";
-                    description = "Learn a new skill to increase your attack or defense (costs gold).";
+                    description = "Learn a new skill to increase your attack or defense.";
                     pathId = "learn_skill_path";
                     requirement = ? #trait("clever");
                 },
                 {
                     id = "decipher_map";
-                    description = "Decipher an old map for a chance to discover a hidden location (costs gold).";
+                    description = "Decipher an old map for a chance to discover a hidden location.";
                     pathId = "decipher_map_path";
                     requirement = null;
                 },

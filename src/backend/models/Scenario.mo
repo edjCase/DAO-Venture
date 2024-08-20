@@ -167,6 +167,11 @@ module {
                 case (#race(_)) {};
                 case (#class_(_)) {};
                 case (#stat(_)) {};
+                case (#gold(gold)) {
+                    if (gold == 0) {
+                        errors.add("Gold requirement must be greater than 0");
+                    };
+                };
                 case (#all(all)) {
                     for (requirement in all.vals()) {
                         validateRequirement(requirement);

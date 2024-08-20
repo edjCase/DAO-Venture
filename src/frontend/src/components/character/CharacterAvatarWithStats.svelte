@@ -2,6 +2,7 @@
   import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
   import { gameStateStore } from "../../stores/GameStateStore";
   import CharacterAvatar from "../character/CharacterAvatar.svelte";
+  import Icon from "./Icon.svelte";
 
   export let size: "xs" | "sm" | "md" | "lg" | "xl";
 
@@ -37,16 +38,16 @@
   <div>Character not found</div>
 {:else}
   <div class="flex justify-around">
-    <div>🪙 {goldStat}</div>
-    <div>🫀 {healthStat}</div>
+    <div><Icon kind={{ gold: null }} /> {goldStat}</div>
+    <div><Icon kind={{ health: null }} /> {healthStat}</div>
   </div>
   <div class="flex justify-center m-2">
     <CharacterAvatar {size} characterClass="warrior" seed={0} />
   </div>
   <div class="flex justify-around">
-    <div>⚔️ {attackStat}</div>
-    <div>🛡️ {defenseStat}</div>
-    <div>🏃 {speedStat}</div>
-    <div>🔮 {magicStat}</div>
+    <div><Icon kind={{ attack: null }} /> {attackStat}</div>
+    <div><Icon kind={{ defense: null }} /> {defenseStat}</div>
+    <div><Icon kind={{ speed: null }} /> {speedStat}</div>
+    <div><Icon kind={{ magic: null }} /> {magicStat}</div>
   </div>
 {/if}

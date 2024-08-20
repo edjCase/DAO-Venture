@@ -1,8 +1,8 @@
 <script lang="ts">
-  import { Button } from "flowbite-svelte";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { gameStateStore } from "../../stores/GameStateStore";
+  import ChoiceRequirement from "./ChoiceRequirement.svelte";
 
   export let scenarioId: bigint;
 
@@ -33,25 +33,39 @@
     <div class="text-xl my-6">
       {scenario.metaData.description}
     </div>
-    {#if scenario.outcome[0] !== undefined}
-      <div>Outcome</div>
-      {#each scenario.outcome[0].messages as message}
-        <div>{message}</div>
-      {/each}
-    {/if}
+    <div class="mb-5">
+      <div class="mb-2">Outcome</div>
+      {#if scenario.outcome[0] !== undefined}
+        <ul class="text-sm">
+          {#each scenario.outcome[0].messages as message}
+            <li>{message}</li>
+          {/each}
+        </ul>
+      {:else}
+        <div class="text-sm">Unresolved</div>
+      {/if}
+    </div>
     <div class="flex flex-col items-center gap-2">
       <div>
         <div>Options</div>
-        <ul class="text-lg text-left p-6">
-          {#each scenario.metaData.choices as option, i}
-            <li>
-              <Button
-                class="p-4 border rounded mb-2 w-full"
-                on:click={vote(option.id)}
-              >
-                {i}. {option.description}
-              </Button>
-            </li>
+        <ul class="text-lg p-6">
+          {#each scenario.metaData.choices as option}
+            {#if scenario.availableChoiceIds.includes(option.id)}
+              <li>
+                <button
+                  class={"p-4 border rounded mb-2 w-full text-left" +
+                    (option.id == scenario.voteData.yourVote[0]?.choice[0]
+                      ? " bg-gray-900"
+                      : "")}
+                  on:click={vote(option.id)}
+                >
+                  {option.description}
+                  {#if option.requirement[0] !== undefined}
+                    <ChoiceRequirement value={option.requirement[0]} />
+                  {/if}
+                </button>
+              </li>
+            {/if}
           {/each}
         </ul>
       </div>

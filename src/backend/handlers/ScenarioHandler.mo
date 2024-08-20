@@ -115,13 +115,13 @@ module {
         public func vote(
             scenarioId : Nat,
             voterId : Principal,
-            choice : Text,
+            choiceId : Text,
         ) : Result.Result<?Text, VoteError> {
             let ?scenario = instances.get(scenarioId) else return #err(#scenarioNotFound);
             let voteResult = ExtendedProposal.vote(
                 scenario.proposal,
                 voterId,
-                choice,
+                choiceId,
             );
             switch (voteResult) {
                 case (#ok(ok)) {

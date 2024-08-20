@@ -190,6 +190,7 @@ export const idlFactory = ({ IDL }) => {
       'all' : IDL.Vec(ChoiceRequirement),
       'any' : IDL.Vec(ChoiceRequirement),
       'trait' : IDL.Text,
+      'gold' : IDL.Nat,
       'item' : IDL.Text,
       'class' : IDL.Text,
       'race' : IDL.Text,
@@ -230,6 +231,7 @@ export const idlFactory = ({ IDL }) => {
     'metaDataId' : IDL.Text,
     'metaData' : ScenarioMetaData,
     'data' : IDL.Vec(GeneratedDataFieldInstance),
+    'availableChoiceIds' : IDL.Vec(IDL.Text),
     'outcome' : IDL.Opt(Outcome),
   });
   const GetScenarioError = IDL.Variant({
@@ -359,6 +361,7 @@ export const idlFactory = ({ IDL }) => {
     'invalidChoice' : IDL.Null,
     'notEligible' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
+    'choiceRequirementNotMet' : IDL.Null,
   });
   const VoteOnScenarioResult = IDL.Variant({
     'ok' : IDL.Null,

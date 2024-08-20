@@ -7,9 +7,7 @@ import Result "mo:base/Result";
 import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
-import Character "../models/Character";
 import GameHandler "../handlers/GameHandler";
-import Location "../models/Location";
 
 module {
     public type Actor = actor {
@@ -68,6 +66,7 @@ module {
     public type Scenario = Scenario.Scenario and {
         metaData : Scenario.ScenarioMetaData;
         voteData : ScenarioVote;
+        availableChoiceIds : [Text];
     };
 
     public type CreateWorldProposalRequest = {
@@ -119,6 +118,7 @@ module {
         #scenarioNotFound;
         #invalidChoice;
         #noActiveGame;
+        #choiceRequirementNotMet;
     };
 
     public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;

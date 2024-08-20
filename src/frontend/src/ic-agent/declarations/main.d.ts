@@ -39,6 +39,7 @@ export interface Choice {
 export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
   { 'any' : Array<ChoiceRequirement> } |
   { 'trait' : string } |
+  { 'gold' : bigint } |
   { 'item' : string } |
   { 'class' : string } |
   { 'race' : string } |
@@ -209,6 +210,7 @@ export interface Scenario {
   'metaDataId' : string,
   'metaData' : ScenarioMetaData,
   'data' : Array<GeneratedDataFieldInstance>,
+  'availableChoiceIds' : Array<string>,
   'outcome' : [] | [Outcome],
 }
 export interface ScenarioMetaData {
@@ -264,7 +266,8 @@ export type VoteOnScenarioError = { 'noActiveGame' : null } |
   { 'votingClosed' : null } |
   { 'invalidChoice' : null } |
   { 'notEligible' : null } |
-  { 'scenarioNotFound' : null };
+  { 'scenarioNotFound' : null } |
+  { 'choiceRequirementNotMet' : null };
 export interface VoteOnScenarioRequest {
   'scenarioId' : bigint,
   'value' : string,

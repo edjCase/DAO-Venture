@@ -1,3 +1,4 @@
 {
-    "html.format.enable": false
+  "html.format.enable": false,
+  "makefile.configureOnOpen": false
 }
