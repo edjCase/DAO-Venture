@@ -4,13 +4,54 @@
   import LoadingButton from "./common/LoadingButton.svelte";
   import { mainAgentFactory } from "../ic-agent/Main";
   import { userStore } from "../stores/UserStore";
-  import { Difficulty } from "../ic-agent/declarations/main";
+  import {
+    AddGameContentRequest,
+    Difficulty,
+  } from "../ic-agent/declarations/main";
+
+  interface ImageModule {
+    default: string;
+  }
 
   $: gameState = $gameStateStore;
   $: user = $userStore;
 
   let initialize = async () => {
     let mainAgent = await mainAgentFactory();
+
+    let addGameContent = async (content: AddGameContentRequest) => {
+      let result = await mainAgent.addGameContent(content);
+      if ("ok" in result) {
+        console.log("Added content", content);
+      } else {
+        console.error("Failed to add content", content, result);
+      }
+    };
+
+    let imageModules = import.meta.glob("../initial_data/images/*.png");
+    for (const path in imageModules) {
+      const module = (await imageModules[path]()) as ImageModule;
+      const response = await fetch(module.default);
+      const data = await response.arrayBuffer();
+      const id = path.split("/").pop()?.split(".").shift() || "";
+      await addGameContent({
+        image: { id: id, data: new Uint8Array(data), kind: { png: null } },
+      });
+    }
+    let traits = await import("../initial_data/TraitData").then((module) => {
+      return module.traits;
+    });
+    for (let trait of traits) {
+      await addGameContent({ trait: trait });
+    }
+
+    let items = await import("../initial_data/ItemData").then((module) => {
+      return module.items;
+    });
+    for (let item of items) {
+      await addGameContent({ item: item });
+    }
+
     let result = await mainAgent.initialize();
     if ("ok" in result) {
       gameStateStore.refetch();

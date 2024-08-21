@@ -1,28 +1,11 @@
 export const idlFactory = ({ IDL }) => {
   const ChoiceRequirement = IDL.Rec();
-  const MotionContent = IDL.Record({
-    'title' : IDL.Text,
+  const Trait = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
     'description' : IDL.Text,
   });
-  const CreateWorldProposalRequest = IDL.Variant({ 'motion' : MotionContent });
-  const CreateWorldProposalError = IDL.Variant({
-    'invalid' : IDL.Vec(IDL.Text),
-    'notEligible' : IDL.Null,
-  });
-  const CreateWorldProposalResult = IDL.Variant({
-    'ok' : IDL.Nat,
-    'err' : CreateWorldProposalError,
-  });
-  const ChoiceVotingPower_1 = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'choice' : IDL.Nat,
-  });
-  const VotingSummary = IDL.Record({
-    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower_1),
-    'undecidedVotingPower' : IDL.Nat,
-    'totalVotingPower' : IDL.Nat,
-  });
-  const Trait = IDL.Record({
+  const Item = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -49,78 +32,11 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'modifiers' : IDL.Vec(CharacterModifier),
   });
-  const CharacterStats = IDL.Record({
-    'magic' : IDL.Int,
-    'speed' : IDL.Int,
-    'defense' : IDL.Int,
-    'attack' : IDL.Int,
-  });
-  const Item = IDL.Record({
+  const ImageKind = IDL.Variant({ 'png' : IDL.Null });
+  const Image = IDL.Record({
     'id' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-  });
-  const CharacterWithMetaData = IDL.Record({
-    'gold' : IDL.Nat,
-    'traits' : IDL.Vec(Trait),
-    'class' : Class,
-    'race' : Race,
-    'stats' : CharacterStats,
-    'items' : IDL.Vec(Item),
-    'health' : IDL.Nat,
-  });
-  const Difficulty = IDL.Variant({
-    'easy' : IDL.Null,
-    'hard' : IDL.Null,
-    'medium' : IDL.Null,
-  });
-  const ChoiceVotingPower_2 = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'choice' : Difficulty,
-  });
-  const VotingSummary_1 = IDL.Record({
-    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower_2),
-    'undecidedVotingPower' : IDL.Nat,
-    'totalVotingPower' : IDL.Nat,
-  });
-  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
-  const Location = IDL.Record({
-    'id' : IDL.Nat,
-    'scenarioId' : IDL.Nat,
-    'coordinate' : AxialCoordinate,
-  });
-  const GameInstanceWithMetaData = IDL.Variant({
-    'notStarted' : IDL.Record({
-      'characterVotes' : VotingSummary,
-      'characterOptions' : IDL.Vec(CharacterWithMetaData),
-      'difficultyVotes' : VotingSummary_1,
-    }),
-    'completed' : IDL.Record({
-      'turns' : IDL.Nat,
-      'character' : CharacterWithMetaData,
-      'difficulty' : Difficulty,
-    }),
-    'notInitialized' : IDL.Null,
-    'inProgress' : IDL.Record({
-      'character' : CharacterWithMetaData,
-      'turn' : IDL.Nat,
-      'locations' : IDL.Vec(Location),
-      'characterLocationId' : IDL.Nat,
-    }),
-  });
-  const ChoiceVotingPower = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'choice' : IDL.Text,
-  });
-  const ScenarioVoteChoice = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'choice' : IDL.Opt(IDL.Text),
-  });
-  const ScenarioVote = IDL.Record({
-    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower),
-    'undecidedVotingPower' : IDL.Nat,
-    'totalVotingPower' : IDL.Nat,
-    'yourVote' : IDL.Opt(ScenarioVoteChoice),
+    'data' : IDL.Vec(IDL.Nat8),
+    'kind' : ImageKind,
   });
   const GeneratedDataFieldNat = IDL.Record({
     'max' : IDL.Nat,
@@ -207,11 +123,116 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'title' : IDL.Text,
     'data' : IDL.Vec(GeneratedDataField),
-    'icon' : IDL.Vec(IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8))),
     'description' : IDL.Text,
     'paths' : IDL.Vec(OutcomePath),
+    'imageId' : IDL.Text,
     'choices' : IDL.Vec(Choice),
     'undecidedPathId' : IDL.Text,
+  });
+  const AddGameContentRequest = IDL.Variant({
+    'trait' : Trait,
+    'item' : Item,
+    'class' : Class,
+    'race' : Race,
+    'image' : Image,
+    'scenario' : ScenarioMetaData,
+  });
+  const AddGameContentResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({
+      'notAuthorized' : IDL.Null,
+      'invalid' : IDL.Vec(IDL.Text),
+    }),
+  });
+  const MotionContent = IDL.Record({
+    'title' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const CreateWorldProposalRequest = IDL.Variant({ 'motion' : MotionContent });
+  const CreateWorldProposalError = IDL.Variant({
+    'invalid' : IDL.Vec(IDL.Text),
+    'notEligible' : IDL.Null,
+  });
+  const CreateWorldProposalResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'err' : CreateWorldProposalError,
+  });
+  const ChoiceVotingPower_1 = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : IDL.Nat,
+  });
+  const VotingSummary = IDL.Record({
+    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower_1),
+    'undecidedVotingPower' : IDL.Nat,
+    'totalVotingPower' : IDL.Nat,
+  });
+  const CharacterStats = IDL.Record({
+    'magic' : IDL.Int,
+    'speed' : IDL.Int,
+    'defense' : IDL.Int,
+    'attack' : IDL.Int,
+  });
+  const CharacterWithMetaData = IDL.Record({
+    'gold' : IDL.Nat,
+    'traits' : IDL.Vec(Trait),
+    'class' : Class,
+    'race' : Race,
+    'stats' : CharacterStats,
+    'items' : IDL.Vec(Item),
+    'health' : IDL.Nat,
+  });
+  const Difficulty = IDL.Variant({
+    'easy' : IDL.Null,
+    'hard' : IDL.Null,
+    'medium' : IDL.Null,
+  });
+  const ChoiceVotingPower_2 = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : Difficulty,
+  });
+  const VotingSummary_1 = IDL.Record({
+    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower_2),
+    'undecidedVotingPower' : IDL.Nat,
+    'totalVotingPower' : IDL.Nat,
+  });
+  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
+  const Location = IDL.Record({
+    'id' : IDL.Nat,
+    'scenarioId' : IDL.Nat,
+    'coordinate' : AxialCoordinate,
+  });
+  const GameInstanceWithMetaData = IDL.Variant({
+    'notStarted' : IDL.Record({
+      'characterVotes' : VotingSummary,
+      'characterOptions' : IDL.Vec(CharacterWithMetaData),
+      'difficultyVotes' : VotingSummary_1,
+    }),
+    'completed' : IDL.Record({
+      'turns' : IDL.Nat,
+      'character' : CharacterWithMetaData,
+      'difficulty' : Difficulty,
+    }),
+    'notInitialized' : IDL.Null,
+    'inProgress' : IDL.Record({
+      'character' : CharacterWithMetaData,
+      'turn' : IDL.Nat,
+      'locations' : IDL.Vec(Location),
+      'characterLocationId' : IDL.Nat,
+    }),
+  });
+  const ChoiceVotingPower = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : IDL.Text,
+  });
+  const ScenarioVoteChoice = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : IDL.Opt(IDL.Text),
+  });
+  const ScenarioVote = IDL.Record({
+    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower),
+    'undecidedVotingPower' : IDL.Nat,
+    'totalVotingPower' : IDL.Nat,
+    'yourVote' : IDL.Opt(ScenarioVoteChoice),
   });
   const GeneratedDataFieldInstanceValue = IDL.Variant({
     'nat' : IDL.Nat,
@@ -328,9 +349,47 @@ export const idlFactory = ({ IDL }) => {
     'totalCount' : IDL.Nat,
     'offset' : IDL.Nat,
   });
+  const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
+  const HttpRequest = IDL.Record({
+    'url' : IDL.Text,
+    'method' : IDL.Text,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(HeaderField),
+  });
+  const Token = IDL.Record({ 'arbitrary_data' : IDL.Text });
+  const StreamingCallbackHttpResponse = IDL.Record({
+    'token' : IDL.Opt(Token),
+    'body' : IDL.Vec(IDL.Nat8),
+  });
+  const CallbackStrategy = IDL.Record({
+    'token' : Token,
+    'callback' : IDL.Func([Token], [StreamingCallbackHttpResponse], ['query']),
+  });
+  const StreamingStrategy = IDL.Variant({ 'Callback' : CallbackStrategy });
+  const HttpResponse = IDL.Record({
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(HeaderField),
+    'upgrade' : IDL.Opt(IDL.Bool),
+    'streaming_strategy' : IDL.Opt(StreamingStrategy),
+    'status_code' : IDL.Nat16,
+  });
+  const HttpUpdateRequest = IDL.Record({
+    'url' : IDL.Text,
+    'method' : IDL.Text,
+    'body' : IDL.Vec(IDL.Nat8),
+    'headers' : IDL.Vec(HeaderField),
+  });
   const InitializeResult = IDL.Variant({
     'ok' : IDL.Null,
-    'err' : IDL.Variant({ 'alreadyInitialized' : IDL.Null }),
+    'err' : IDL.Variant({
+      'noTraits' : IDL.Null,
+      'noItems' : IDL.Null,
+      'noClasses' : IDL.Null,
+      'noRaces' : IDL.Null,
+      'noScenarios' : IDL.Null,
+      'noImages' : IDL.Null,
+      'alreadyInitialized' : IDL.Null,
+    }),
   });
   const JoinError = IDL.Variant({ 'alreadyMember' : IDL.Null });
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinError });
@@ -382,6 +441,11 @@ export const idlFactory = ({ IDL }) => {
     'err' : VoteOnWorldProposalError,
   });
   return IDL.Service({
+    'addGameContent' : IDL.Func(
+        [AddGameContentRequest],
+        [AddGameContentResult],
+        [],
+      ),
     'createWorldProposal' : IDL.Func(
         [CreateWorldProposalRequest],
         [CreateWorldProposalResult],
@@ -413,6 +477,8 @@ export const idlFactory = ({ IDL }) => {
         [PagedResult],
         ['query'],
       ),
+    'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
+    'http_request_update' : IDL.Func([HttpUpdateRequest], [HttpResponse], []),
     'initialize' : IDL.Func([], [InitializeResult], []),
     'join' : IDL.Func([], [Result], []),
     'voteOnNewGame' : IDL.Func(

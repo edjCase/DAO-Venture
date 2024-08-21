@@ -18,11 +18,7 @@ import Random "mo:base/Random";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
-import ClassData "../initial_data/ClassData";
-import RaceData "../initial_data/RaceData";
-import ItemData "../initial_data/ItemData";
-import ScenarioData "../initial_data/ScenarioData";
-import TraitData "../initial_data/TraitData";
+import HttpHandler "../handlers/HttpHandler";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -42,6 +38,7 @@ actor MainActor : Types.Actor {
         scenarios = [];
         items = [];
         traits = [];
+        images = [];
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
@@ -60,6 +57,8 @@ actor MainActor : Types.Actor {
     // Unstables ---------------------------------------------------------
 
     var gameHandler = GameHandler.Handler<system>(gameStableData);
+
+    var httpHandler = HttpHandler.Handler(gameHandler);
 
     var userHandler = UserHandler.UserHandler(userStableData);
 
@@ -110,45 +109,23 @@ actor MainActor : Types.Actor {
         let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the new game vote
         let members = buildVotingMembersList();
 
-        for (item in ItemData.items.vals()) {
-            switch (gameHandler.addItem(item)) {
-                case (#ok) ();
-                case (#err(err)) return Debug.trap("Error adding item: " # debug_show (err));
-            };
-        };
-
-        for (trait in TraitData.traits.vals()) {
-            switch (gameHandler.addTrait(trait)) {
-                case (#ok) ();
-                case (#err(err)) return Debug.trap("Error adding trait: " # debug_show (err));
-            };
-        };
-
-        for (class_ in ClassData.classes.vals()) {
-            switch (gameHandler.addClass(class_)) {
-                case (#ok) ();
-                case (#err(err)) return Debug.trap("Error adding class: " # debug_show (err));
-            };
-        };
-        for (race in RaceData.races.vals()) {
-            switch (gameHandler.addRace(race)) {
-                case (#ok) ();
-                case (#err(err)) return Debug.trap("Error adding race: " # debug_show (err));
-            };
-        };
-
-        for (scenario in ScenarioData.scenarios.vals()) {
-            switch (gameHandler.addScenarioMetaData(scenario)) {
-                case (#ok) ();
-                case (#err(err)) return Debug.trap("Error adding scenario " # scenario.id # ", Error: " # debug_show (err));
-            };
-        };
-
         gameHandler.initialize(
             prng,
             proposerId,
             members,
         );
+    };
+
+    public shared func addGameContent(request : Types.AddGameContentRequest) : async Types.AddGameContentResult {
+        // TODO authorization check
+        switch (request) {
+            case (#item(item)) gameHandler.addItem(item);
+            case (#trait(trait)) gameHandler.addTrait(trait);
+            case (#image(image)) gameHandler.addImage(image);
+            case (#scenario(scenario)) gameHandler.addScenarioMetaData(scenario);
+            case (#race(race)) gameHandler.addRace(race);
+            case (#class_(class_)) gameHandler.addClass(class_);
+        };
     };
 
     public shared ({ caller }) func voteOnNewGame(request : Types.VoteOnNewGameRequest) : async Types.VoteOnNewGameResult {
@@ -280,9 +257,12 @@ actor MainActor : Types.Actor {
         #ok(result);
     };
 
-    type VotingMemberInfo = {
-        id : Principal;
-        votingPower : Nat;
+    public query func http_request(req : HttpHandler.HttpRequest) : async HttpHandler.HttpResponse {
+        httpHandler.http_request(req);
+    };
+
+    public func http_request_update(req : HttpHandler.HttpUpdateRequest) : async HttpHandler.HttpResponse {
+        httpHandler.http_request_update(req);
     };
 
     // Private Methods ---------------------------------------------------------

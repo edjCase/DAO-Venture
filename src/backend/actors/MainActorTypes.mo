@@ -8,6 +8,11 @@ import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import GameHandler "../handlers/GameHandler";
+import Item "../models/Item";
+import Trait "../models/Trait";
+import Image "../models/Image";
+import Race "../models/Race";
+import Class "../models/Class";
 
 module {
     public type Actor = actor {
@@ -31,9 +36,22 @@ module {
         initialize : () -> async InitializeResult;
         voteOnNewGame : (request : VoteOnNewGameRequest) -> async VoteOnNewGameResult;
         join : () -> async JoinResult;
+
+        addGameContent : (request : AddGameContentRequest) -> async AddGameContentResult;
     };
 
-    public type InitializeResult = Result.Result<(), { #alreadyInitialized }>;
+    public type AddGameContentRequest = {
+        #item : Item.Item;
+        #trait : Trait.Trait;
+        #image : Image.Image;
+        #scenario : Scenario.ScenarioMetaData;
+        #race : Race.Race;
+        #class_ : Class.Class;
+    };
+
+    public type AddGameContentResult = Result.Result<(), { #invalid : [Text]; #notAuthorized }>;
+
+    public type InitializeResult = Result.Result<(), { #alreadyInitialized; #noClasses; #noRaces; #noScenarios; #noItems; #noTraits; #noImages }>;
 
     public type VoteOnNewGameRequest = {
         characterId : Nat;

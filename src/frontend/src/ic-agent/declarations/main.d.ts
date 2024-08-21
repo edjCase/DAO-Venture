@@ -2,7 +2,19 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type AddGameContentRequest = { 'trait' : Trait } |
+  { 'item' : Item } |
+  { 'class' : Class } |
+  { 'race' : Race } |
+  { 'image' : Image } |
+  { 'scenario' : ScenarioMetaData };
+export type AddGameContentResult = { 'ok' : null } |
+  { 'err' : { 'notAuthorized' : null } | { 'invalid' : Array<string> } };
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
+export interface CallbackStrategy {
+  'token' : Token,
+  'callback' : [Principal, string],
+}
 export type CharacterModifier = { 'magic' : bigint } |
   { 'trait' : string } |
   { 'gold' : bigint } |
@@ -141,8 +153,42 @@ export type GetUsersResult = { 'ok' : Array<User> };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
+export type HeaderField = [string, string];
+export interface HttpRequest {
+  'url' : string,
+  'method' : string,
+  'body' : Uint8Array | number[],
+  'headers' : Array<HeaderField>,
+}
+export interface HttpResponse {
+  'body' : Uint8Array | number[],
+  'headers' : Array<HeaderField>,
+  'upgrade' : [] | [boolean],
+  'streaming_strategy' : [] | [StreamingStrategy],
+  'status_code' : number,
+}
+export interface HttpUpdateRequest {
+  'url' : string,
+  'method' : string,
+  'body' : Uint8Array | number[],
+  'headers' : Array<HeaderField>,
+}
+export interface Image {
+  'id' : string,
+  'data' : Uint8Array | number[],
+  'kind' : ImageKind,
+}
+export type ImageKind = { 'png' : null };
 export type InitializeResult = { 'ok' : null } |
-  { 'err' : { 'alreadyInitialized' : null } };
+  {
+    'err' : { 'noTraits' : null } |
+      { 'noItems' : null } |
+      { 'noClasses' : null } |
+      { 'noRaces' : null } |
+      { 'noScenarios' : null } |
+      { 'noImages' : null } |
+      { 'alreadyInitialized' : null }
+  };
 export interface Item { 'id' : string, 'name' : string, 'description' : string }
 export type JoinError = { 'alreadyMember' : null };
 export interface Location {
@@ -217,9 +263,9 @@ export interface ScenarioMetaData {
   'id' : string,
   'title' : string,
   'data' : Array<GeneratedDataField>,
-  'icon' : Array<Array<[number, number, number]>>,
   'description' : string,
   'paths' : Array<OutcomePath>,
+  'imageId' : string,
   'choices' : Array<Choice>,
   'undecidedPathId' : string,
 }
@@ -233,10 +279,16 @@ export interface ScenarioVoteChoice {
   'votingPower' : bigint,
   'choice' : [] | [string],
 }
+export interface StreamingCallbackHttpResponse {
+  'token' : [] | [Token],
+  'body' : Uint8Array | number[],
+}
+export type StreamingStrategy = { 'Callback' : CallbackStrategy };
 export type TextValue = { 'raw' : string } |
   { 'dataField' : string } |
   { 'weighted' : Array<[string, number]> };
 export type Time = bigint;
+export interface Token { 'arbitrary_data' : string }
 export interface Trait {
   'id' : string,
   'name' : string,
@@ -309,6 +361,7 @@ export interface WorldProposal {
   'proposerId' : Principal,
 }
 export interface _SERVICE {
+  'addGameContent' : ActorMethod<[AddGameContentRequest], AddGameContentResult>,
   'createWorldProposal' : ActorMethod<
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
@@ -326,6 +379,8 @@ export interface _SERVICE {
   'getUsers' : ActorMethod<[GetUsersRequest], GetUsersResult>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
+  'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
+  'http_request_update' : ActorMethod<[HttpUpdateRequest], HttpResponse>,
   'initialize' : ActorMethod<[], InitializeResult>,
   'join' : ActorMethod<[], Result>,
   'voteOnNewGame' : ActorMethod<[VoteOnNewGameRequest], VoteOnNewGameResult>,

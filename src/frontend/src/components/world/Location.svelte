@@ -1,7 +1,7 @@
 <script lang="ts">
   import { gameStateStore } from "../../stores/GameStateStore";
   import { scenarioStore } from "../../stores/ScenarioStore";
-  import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
+  import GameImage from "../common/GameImage.svelte";
 
   export let locationId: bigint;
 
@@ -19,7 +19,7 @@
   <g>
     {#if scenario}
       <foreignObject width="100%" height="100%" x={-32} y={-32}>
-        <PixelArtCanvas pixels={scenario.metaData.icon} pixelSize={4} />
+        <GameImage id={scenario.metaData.imageId} />
       </foreignObject>
     {/if}
   </g>

@@ -25,6 +25,7 @@ import Item "../models/Item";
 import Class "../models/Class";
 import Race "../models/Race";
 import Outcome "../models/Outcome";
+import Image "../models/Image";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -37,6 +38,7 @@ module {
         scenarios : [Scenario.ScenarioMetaData];
         items : [Item.Item];
         traits : [Trait.Trait];
+        images : [Image.Image];
     };
 
     public type GameInstance = {
@@ -147,6 +149,10 @@ module {
         |> Iter.map<Trait.Trait, (Text, Trait.Trait)>(_, func(trait : Trait.Trait) : (Text, Trait.Trait) = (trait.id, trait))
         |> HashMap.fromIter<Text, Trait.Trait>(_, data.traits.size(), Text.equal, Text.hash);
 
+        let images = data.images.vals()
+        |> Iter.map<Image.Image, (Text, Image.Image)>(_, func(image : Image.Image) : (Text, Image.Image) = (image.id, image))
+        |> HashMap.fromIter<Text, Image.Image>(_, data.images.size(), Text.equal, Text.hash);
+
         var instance : MutableGameInstance = switch (data.current) {
             case (#notInitialized) #notInitialized;
             case (#notStarted(notStarted)) {
@@ -179,6 +185,7 @@ module {
                 scenarios = Iter.toArray(scenarios.vals());
                 items = Iter.toArray(items.vals());
                 traits = Iter.toArray(traits.vals());
+                images = Iter.toArray(images.vals());
             };
         };
 
@@ -186,9 +193,26 @@ module {
             prng : Prng,
             proposerId : Principal,
             members : [ExtendedProposal.Member],
-        ) : Result.Result<(), { #alreadyInitialized }> {
+        ) : Result.Result<(), { #alreadyInitialized; #noClasses; #noRaces; #noScenarios; #noItems; #noTraits; #noImages }> {
             let #notInitialized = instance else return #err(#alreadyInitialized);
-
+            if (classes.size() == 0) {
+                return #err(#noClasses);
+            };
+            if (races.size() == 0) {
+                return #err(#noRaces);
+            };
+            if (scenarios.size() == 0) {
+                return #err(#noScenarios);
+            };
+            if (items.size() == 0) {
+                return #err(#noItems);
+            };
+            if (traits.size() == 0) {
+                return #err(#noTraits);
+            };
+            if (images.size() == 0) {
+                return #err(#noImages);
+            };
             let classArray = Iter.toArray(classes.vals());
             let raceArray = Iter.toArray(races.vals());
             let characterOptions = IterTools.range(0, 4)
@@ -447,13 +471,36 @@ module {
         };
 
         public func addScenarioMetaData(scenario : Scenario.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Scenario.validateMetaData(scenario, scenarios, items, traits)) {
+            switch (
+                Scenario.validateMetaData(
+                    scenario,
+                    scenarios,
+                    items,
+                    traits,
+                    images,
+                )
+            ) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
             Debug.print("Adding scenario meta data: " # scenario.id);
             scenarios.put(scenario.id, scenario);
             #ok;
+        };
+
+        public func addImage(image : Image.Image) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Image.validate(image, images)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+
+            Debug.print("Adding image: " # image.id);
+            images.put(image.id, image);
+            #ok;
+        };
+
+        public func getImage(imageId : Text) : ?Image.Image {
+            images.get(imageId);
         };
 
         private func mapScenario(

@@ -10,6 +10,7 @@ import TextX "mo:xtended-text/TextX";
 import Character "Character";
 import Trait "Trait";
 import Item "Item";
+import Image "Image";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -25,7 +26,7 @@ module {
         id : Text;
         title : Text;
         description : Text;
-        icon : [[(Nat8, Nat8, Nat8)]];
+        imageId : Text;
         data : [GeneratedDataField];
         choices : [Choice];
         paths : [OutcomePath];
@@ -122,6 +123,7 @@ module {
         existingMetaData : HashMap.HashMap<Text, ScenarioMetaData>,
         items : HashMap.HashMap<Text, Item.Item>,
         traits : HashMap.HashMap<Text, Trait.Trait>,
+        images : HashMap.HashMap<Text, Image.Image>,
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
 
@@ -141,8 +143,8 @@ module {
             errors.add("Duplicate scenario id: " # metaData.id);
         };
 
-        if (metaData.icon.size() != 16 or metaData.icon[0].size() != 16) {
-            errors.add("Invalid icon size: " # Nat.toText(metaData.icon.size()) # "x" # Nat.toText(metaData.icon[0].size()) # " (expected 16x16)");
+        if (images.get(metaData.imageId) == null) {
+            errors.add("Image id not found: " # metaData.imageId);
         };
 
         // Check data fields
