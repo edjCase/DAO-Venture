@@ -73,6 +73,10 @@
     ? ''
     : 'hover:opacity-80'}"
 >
+  <clipPath id={"hex-clip-" + id}>
+    <polygon points={getHexPolygonPoints(hexSize, undefined)} />
+  </clipPath>
+
   <polygon
     points={getHexPolygonPoints(hexSize, undefined)}
     stroke-width={selected ? 2 : 0}
@@ -80,5 +84,8 @@
     fill="black"
     fill-opacity={fillOpacity}
   />
-  <slot {id} />
+
+  <g clip-path={`url(#hex-clip-${id})`}>
+    <slot {id} />
+  </g>
 </g>

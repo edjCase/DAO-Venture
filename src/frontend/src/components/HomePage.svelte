@@ -7,7 +7,9 @@
   import {
     AddGameContentRequest,
     Difficulty,
+    Trait,
   } from "../ic-agent/declarations/main";
+  import MermaidDiagram from "./common/MermaidDiagram.svelte";
 
   interface ImageModule {
     default: string;
@@ -29,28 +31,65 @@
     };
 
     let imageModules = import.meta.glob("../initial_data/images/*.png");
-    for (const path in imageModules) {
-      const module = (await imageModules[path]()) as ImageModule;
-      const response = await fetch(module.default);
-      const data = await response.arrayBuffer();
-      const id = path.split("/").pop()?.split(".").shift() || "";
-      await addGameContent({
-        image: { id: id, data: new Uint8Array(data), kind: { png: null } },
-      });
-    }
+
+    await Promise.all(
+      Object.keys(imageModules).map(async (path) => {
+        const module = (await imageModules[path]()) as ImageModule;
+        const response = await fetch(module.default);
+        const data = await response.arrayBuffer();
+        const id = path.split("/").pop()?.split(".").shift() || "";
+        await addGameContent({
+          image: { id: id, data: new Uint8Array(data), kind: { png: null } },
+        });
+      })
+    );
+
     let traits = await import("../initial_data/TraitData").then((module) => {
       return module.traits;
     });
-    for (let trait of traits) {
-      await addGameContent({ trait: trait });
-    }
+    await Promise.all(
+      traits.map(async (trait: Trait) => {
+        await addGameContent({ trait: trait });
+      })
+    );
 
     let items = await import("../initial_data/ItemData").then((module) => {
       return module.items;
     });
-    for (let item of items) {
-      await addGameContent({ item: item });
-    }
+    await Promise.all(
+      items.map(async (item) => {
+        await addGameContent({ item: item });
+      })
+    );
+
+    let classes = await import("../initial_data/ClassData").then((module) => {
+      return module.classes;
+    });
+    await Promise.all(
+      classes.map(async (classData) => {
+        await addGameContent({ class: classData });
+      })
+    );
+
+    let races = await import("../initial_data/RaceData").then((module) => {
+      return module.races;
+    });
+    await Promise.all(
+      races.map(async (race) => {
+        await addGameContent({ race: race });
+      })
+    );
+
+    let scenarios = await import("../initial_data/ScenarioData").then(
+      (module) => {
+        return module.scenarios;
+      }
+    );
+    await Promise.all(
+      scenarios.map(async (scenario) => {
+        await addGameContent({ scenario: scenario });
+      })
+    );
 
     let result = await mainAgent.initialize();
     if ("ok" in result) {
@@ -205,4 +244,5 @@
       <div>Difficulty: {gameState.completed.difficulty}</div>
     {/if}
   {/if}
+  <MermaidDiagram />
 </div>

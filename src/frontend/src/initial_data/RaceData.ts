@@ -1,6 +1,7 @@
+import { Race } from "../ic-agent/declarations/main";
 
 
-export const races  = [
+export const races : Race[] = [
     {
         id: "human",
         name: "Human",

@@ -503,6 +503,26 @@ module {
             images.get(imageId);
         };
 
+        public func getScenarioMetaDataList() : [Scenario.ScenarioMetaData] {
+            scenarios.vals() |> Iter.toArray(_);
+        };
+
+        public func getTraits() : [Trait.Trait] {
+            traits.vals() |> Iter.toArray(_);
+        };
+
+        public func getItems() : [Item.Item] {
+            items.vals() |> Iter.toArray(_);
+        };
+
+        public func getRaces() : [Race.Race] {
+            races.vals() |> Iter.toArray(_);
+        };
+
+        public func getClasses() : [Class.Class] {
+            classes.vals() |> Iter.toArray(_);
+        };
+
         private func mapScenario(
             scenario : ScenarioHandler.ScenarioInstance,
             character : Character.Character,

@@ -1,6 +1,7 @@
+import { Trait } from "../ic-agent/declarations/main";
 
 
-export const traits = [
+export const traits : Trait[] = [
    {
        id: "perceptive",
        name: "Perceptive",

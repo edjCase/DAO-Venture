@@ -1,5 +1,6 @@
+import { Item } from "../ic-agent/declarations/main";
 
-export const items = [
+export const items: Item[] = [
     {
         id: "herbs",
         name: "Herbs",

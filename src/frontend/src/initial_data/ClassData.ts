@@ -1,6 +1,7 @@
+import { Class } from "../ic-agent/declarations/main";
 
 
-export const classes= [
+export const classes : Class[]= [
     {
         id: "warrior",
         name: "Warrior",

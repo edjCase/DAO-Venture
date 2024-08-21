@@ -366,14 +366,19 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
+  'getClasses' : ActorMethod<[], Array<Class>>,
   'getGameInstance' : ActorMethod<[], GameInstanceWithMetaData>,
+  'getItems' : ActorMethod<[], Array<Item>>,
+  'getRaces' : ActorMethod<[], Array<Race>>,
   'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
+  'getScenarioMetaDataList' : ActorMethod<[], Array<ScenarioMetaData>>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
     GetScenarioVoteResult
   >,
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getTopUsers' : ActorMethod<[GetTopUsersRequest], GetTopUsersResult>,
+  'getTraits' : ActorMethod<[], Array<Trait>>,
   'getUser' : ActorMethod<[Principal], GetUserResult>,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
   'getUsers' : ActorMethod<[GetUsersRequest], GetUsersResult>,

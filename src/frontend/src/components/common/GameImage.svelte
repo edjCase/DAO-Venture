@@ -4,9 +4,9 @@
   $: baseUrl =
     process.env.DFX_NETWORK === "ic"
       ? `https://${process.env.MAIN_CANISTER_ID}.ic0.app`
-      : `http://localhost:${process.env.LOCAL_NETWORK_PORT}`;
+      : `http://${process.env.MAIN_CANISTER_ID}.localhost:${process.env.LOCAL_NETWORK_PORT}`;
 
-  $: imageUrl = `${baseUrl}/images/${id}.png`;
+  $: imageUrl = `${baseUrl}/images/${id}`;
 </script>
 
-<img src={imageUrl} alt={id} />
+<img src={imageUrl} alt={id} width="256" height="256" />

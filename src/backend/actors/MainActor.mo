@@ -19,6 +19,11 @@ import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
 import HttpHandler "../handlers/HttpHandler";
+import Scenario "../models/Scenario";
+import Trait "../models/Trait";
+import Class "../models/Class";
+import Race "../models/Race";
+import Item "../models/Item";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -250,6 +255,26 @@ actor MainActor : Types.Actor {
     public shared query func getUserStats() : async Types.GetUserStatsResult {
         let stats = userHandler.getStats();
         #ok(stats);
+    };
+
+    public query func getScenarioMetaDataList() : async [Scenario.ScenarioMetaData] {
+        gameHandler.getScenarioMetaDataList();
+    };
+
+    public query func getTraits() : async [Trait.Trait] {
+        gameHandler.getTraits();
+    };
+
+    public query func getClasses() : async [Class.Class] {
+        gameHandler.getClasses();
+    };
+
+    public query func getRaces() : async [Race.Race] {
+        gameHandler.getRaces();
+    };
+
+    public query func getItems() : async [Item.Item] {
+        gameHandler.getItems();
     };
 
     public shared query func getTopUsers(request : Types.GetTopUsersRequest) : async Types.GetTopUsersResult {

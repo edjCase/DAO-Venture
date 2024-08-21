@@ -19,8 +19,8 @@ module {
         existingImages : HashMap.HashMap<Text, Image>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        if (image.data.size() > 100 * 1024) {
-            errors.add("Scenario image is too large. Max size is 100KB");
+        if (image.data.size() > 200 * 1024) {
+            errors.add("Scenario image is too large. Max size is 200KB");
         };
         if (existingImages.get(image.id) != null) {
             errors.add("Duplicate image id: " # image.id);

@@ -3,6 +3,7 @@
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { gameStateStore } from "../../stores/GameStateStore";
   import ChoiceRequirement from "./ChoiceRequirement.svelte";
+  import GameImage from "../common/GameImage.svelte";
 
   export let scenarioId: bigint;
 
@@ -27,6 +28,9 @@
 
 <div class="p-6">
   {#if scenario !== undefined}
+    <div class="flex justify-center">
+      <GameImage id={scenario.metaData.imageId} />
+    </div>
     <div class="text-3xl text-center">
       {scenario.metaData.title}
     </div>

@@ -17,7 +17,7 @@
   } from "./HexTile.svelte";
 
   export let gridData: HexTileData[];
-  export let hexSize: number = 60;
+  export let hexSize: number = 20;
   export let selectedTileId: number | undefined;
   export let onClick: (coord: AxialCoordinate) => void = () => {};
 
@@ -55,9 +55,9 @@
 
   onMount(() => {
     const verticalPadding = hexSize * 0.1;
-    const x = -hexSize * 2;
+    const x = -hexSize * 10;
     const y = -hexSize - verticalPadding;
-    const width = hexSize * 8;
+    const width = hexSize * 24;
     const height = hexSize * 2 + verticalPadding * 2;
     svg.setAttribute("viewBox", `${x} ${y} ${width} ${height}`);
 

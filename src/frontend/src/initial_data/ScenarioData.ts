@@ -1,6 +1,7 @@
+import { ScenarioMetaData } from "../ic-agent/declarations/main";
 
 
-export const scenarios  = [
+export const scenarios : ScenarioMetaData[] = [
     {
       id: "corrupted_treant",
       title: "Corrupted Treant",
@@ -841,10 +842,10 @@ export const scenarios  = [
         ],
        },
        {
-        id: "fairy_market",
-        title: "Fairy Market",
-        description: "You stumble upon a hidden fairy market, offering magical trinkets and mysterious trades.",
-        imageId: "fairy_market",
+        id: "faerie_market",
+        title: "Faerie Market",
+        description: "You stumble upon a hidden faerie market, offering magical trinkets and mysterious trades.",
+        imageId: "faerie_market",
         data: [
           {
             id: "trinket_cost",
@@ -871,7 +872,7 @@ export const scenarios  = [
           },
           {
             id: "trade",
-            description: "Trade an item for fairy magic.",
+            description: "Trade an item for faerie magic.",
             pathId: "trade_path",
             requirement: [],
           },
@@ -924,7 +925,7 @@ export const scenarios  = [
           },
           {
             id: "trade_path",
-            description: "You offer to trade an item for fairy magic.",
+            description: "You offer to trade an item for faerie magic.",
             effects: [
               { removeItem: { random: null } },
               { upgradeStat: [{ magic: null }, { raw: 1n }] },
@@ -944,19 +945,19 @@ export const scenarios  = [
           },
           {
             id: "trade_success",
-            description: "The fairies accept your trade, granting you a magical boon.",
+            description: "The faeries accept your trade, granting you a magical boon.",
             effects: [],
             paths: [],
           },
           {
             id: "trade_failure",
-            description: "The fairies reject your offer, seeming offended.",
+            description: "The faeries reject your offer, seeming offended.",
             effects: [],
             paths: [],
           },
           {
             id: "use_crystal_path",
-            description: "Your fairy charm glows, granting you favor in the market.",
+            description: "Your faerie charm glows, granting you favor in the market.",
             effects: [
               { removeItem: { specific: { raw: "crystal" } } },
               { upgradeStat: [{ magic: null }, { raw: 1n }] },
@@ -965,7 +966,7 @@ export const scenarios  = [
           },
           {
             id: "leave_path",
-            description: "You leave the fairy market, the magical stalls fading behind you.",
+            description: "You leave the faerie market, the magical stalls fading behind you.",
             effects: [],
             paths: [],
           },

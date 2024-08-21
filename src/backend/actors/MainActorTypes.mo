@@ -38,6 +38,16 @@ module {
         join : () -> async JoinResult;
 
         addGameContent : (request : AddGameContentRequest) -> async AddGameContentResult;
+
+        getScenarioMetaDataList : query () -> async [Scenario.ScenarioMetaData];
+
+        getTraits : query () -> async [Trait.Trait];
+
+        getClasses : query () -> async [Class.Class];
+
+        getRaces : query () -> async [Race.Race];
+
+        getItems : query () -> async [Item.Item];
     };
 
     public type AddGameContentRequest = {

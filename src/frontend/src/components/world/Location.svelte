@@ -13,14 +13,18 @@
 
   $: scenarios = $scenarioStore;
   $: scenario = location && scenarios?.find((s) => s.id == location.scenarioId);
+
+  let size = 40;
 </script>
 
 {#if location !== undefined}
   <g>
     {#if scenario}
-      <foreignObject width="100%" height="100%" x={-32} y={-32}>
-        <GameImage id={scenario.metaData.imageId} />
-      </foreignObject>
+      <svg x={-size / 2} y={-size / 2} width={size} height={size}>
+        <foreignObject width={size} height={size}>
+          <GameImage id={scenario.metaData.imageId} />
+        </foreignObject>
+      </svg>
     {/if}
   </g>
 {/if}

@@ -34,14 +34,17 @@ module {
         );
 
         public func http_request(req : HttpRequest) : HttpResponse {
+            Debug.print("Received request: " # req.url);
             let ?imageId = getImageId(req.url) else return build404Response();
+            Debug.print("Image id: " # imageId);
             let ?image = gameHandler.getImage(imageId) else return return build404Response();
-
+            Debug.print("Got Image: " # image.id);
             let cachedBody = cache.get(imageId);
-            let contentType = getContentType(image.kind);
 
             switch cachedBody {
                 case (?body) {
+                    Debug.print("Request was found in cache.\n");
+                    let contentType = getContentType(image.kind);
                     return {
                         status_code : Nat16 = 200;
                         headers = [("content-type", contentType), cache.certificationHeader(req.url)];
@@ -64,6 +67,7 @@ module {
         };
 
         public func http_request_update(req : HttpUpdateRequest) : HttpResponse {
+            Debug.print("Received update request: " # req.url);
             let ?imageId = getImageId(req.url) else return build404Response();
 
             let ?image = gameHandler.getImage(imageId) else return return build404Response();
@@ -80,7 +84,8 @@ module {
         };
 
         private func getImageId(url : Text) : ?Text {
-            Text.stripStart(url, #text("/images/"));
+            let ?end = Text.stripStart(url, #text("/images/")) else return null;
+            Text.split(end, #char('?')).next();
         };
 
         private func build404Response() : HttpResponse {
