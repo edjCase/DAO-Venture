@@ -16,7 +16,9 @@
     startOnLoad: false,
     theme: "forest",
     darkMode: true,
-    flowchart: {},
+    flowchart: {
+      curve: "basis",
+    },
   });
 
   function generateMermaidDiagram(
@@ -38,6 +40,10 @@
     diagramCode += addSubgraph("Races", races);
     diagramCode += addSubgraph("Classes", classes);
 
+    type Connection = { from: string; to: string };
+
+    let usingConnections: Connection[] = [];
+    let requiringConnections: Connection[] = [];
     // Add connections
     scenarios.forEach((scenario) => {
       const scenarioId = scenario.id;
@@ -48,10 +54,10 @@
           if ("addItem" in effect) {
             if ("raw" in effect.addItem) {
               const itemId = effect.addItem.raw;
-              diagramCode += `${scenarioId} -->|Uses| ${itemId}\n`;
+              usingConnections.push({ from: scenarioId, to: itemId });
             } else if ("weighted" in effect.addItem) {
               for (const [itemId, _] of effect.addItem.weighted) {
-                diagramCode += `${scenarioId} -->|Uses| ${itemId}\n`;
+                usingConnections.push({ from: scenarioId, to: itemId });
               }
             }
           }
@@ -60,7 +66,7 @@
             if ("specific" in effect.removeItem) {
               if ("raw" in effect.removeItem.specific) {
                 itemId = effect.removeItem.specific.raw;
-                diagramCode += `${scenarioId} -->|Uses| ${itemId}\n`;
+                usingConnections.push({ from: scenarioId, to: itemId });
               }
             }
           }
@@ -71,15 +77,41 @@
       scenario.choices.forEach((choice) => {
         if (choice.requirement[0]) {
           if ("trait" in choice.requirement[0]) {
-            diagramCode += `${scenarioId} -->|Option requires trait| ${choice.requirement[0].trait}\n`;
+            requiringConnections.push({
+              from: scenarioId,
+              to: choice.requirement[0].trait,
+            });
           } else if ("race" in choice.requirement[0]) {
-            diagramCode += `${scenarioId} -->|Option requires race| ${choice.requirement[0].race}\n`;
+            requiringConnections.push({
+              from: scenarioId,
+              to: choice.requirement[0].race,
+            });
           } else if ("class" in choice.requirement[0]) {
-            diagramCode += `${scenarioId} -->|Option requires class| ${choice.requirement[0].class}\n`;
+            requiringConnections.push({
+              from: scenarioId,
+              to: choice.requirement[0].class,
+            });
           }
         }
       });
     });
+
+    usingConnections.forEach((connection) => {
+      diagramCode += `${connection.from} --> ${connection.to}\n`;
+    });
+    requiringConnections.forEach((connection) => {
+      diagramCode += `${connection.from} --> ${connection.to}\n`;
+    });
+
+    let usesIndexes = usingConnections.map((_, i) => i).join(",");
+    // Uses
+    diagramCode += `linkStyle ${usesIndexes} stroke:#4CAF50,stroke-width:2px;\n`;
+
+    let requiresIndexes = requiringConnections
+      .map((_, i) => i + usingConnections.length)
+      .join(",");
+    // Requires
+    diagramCode += `linkStyle ${requiresIndexes} stroke:#F44336,stroke-width:2px;\n`;
 
     return diagramCode;
   }

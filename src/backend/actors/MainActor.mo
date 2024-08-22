@@ -44,6 +44,7 @@ actor MainActor : Types.Actor {
         items = [];
         traits = [];
         images = [];
+        zones = [];
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {

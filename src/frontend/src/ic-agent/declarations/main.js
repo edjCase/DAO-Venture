@@ -127,6 +127,11 @@ export const idlFactory = ({ IDL }) => {
     'paths' : IDL.Vec(OutcomePath),
     'imageId' : IDL.Text,
     'choices' : IDL.Vec(Choice),
+    'location' : IDL.Record({
+      'isCommon' : IDL.Bool,
+      'isInFinale' : IDL.Bool,
+      'zoneIds' : IDL.Vec(IDL.Text),
+    }),
     'undecidedPathId' : IDL.Text,
   });
   const AddGameContentRequest = IDL.Variant({

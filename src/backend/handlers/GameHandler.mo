@@ -26,6 +26,7 @@ import Class "../models/Class";
 import Race "../models/Race";
 import Outcome "../models/Outcome";
 import Image "../models/Image";
+import Zone "../models/Zone";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -39,6 +40,7 @@ module {
         items : [Item.Item];
         traits : [Trait.Trait];
         images : [Image.Image];
+        zones : [Zone.Zone];
     };
 
     public type GameInstance = {
@@ -153,6 +155,10 @@ module {
         |> Iter.map<Image.Image, (Text, Image.Image)>(_, func(image : Image.Image) : (Text, Image.Image) = (image.id, image))
         |> HashMap.fromIter<Text, Image.Image>(_, data.images.size(), Text.equal, Text.hash);
 
+        let zones = data.zones.vals()
+        |> Iter.map<Zone.Zone, (Text, Zone.Zone)>(_, func(zone : Zone.Zone) : (Text, Zone.Zone) = (zone.id, zone))
+        |> HashMap.fromIter<Text, Zone.Zone>(_, data.zones.size(), Text.equal, Text.hash);
+
         var instance : MutableGameInstance = switch (data.current) {
             case (#notInitialized) #notInitialized;
             case (#notStarted(notStarted)) {
@@ -186,6 +192,7 @@ module {
                 items = Iter.toArray(items.vals());
                 traits = Iter.toArray(traits.vals());
                 images = Iter.toArray(images.vals());
+                zones = Iter.toArray(zones.vals());
             };
         };
 
@@ -478,6 +485,7 @@ module {
                     items,
                     traits,
                     images,
+                    zones,
                 )
             ) {
                 case (#err(errors)) return #err(#invalid(errors));

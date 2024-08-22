@@ -11,6 +11,7 @@ import Character "Character";
 import Trait "Trait";
 import Item "Item";
 import Image "Image";
+import Zone "Zone";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -26,6 +27,11 @@ module {
         id : Text;
         title : Text;
         description : Text;
+        location : {
+            isCommon : Bool;
+            isInFinale : Bool;
+            zoneIds : [Text];
+        };
         imageId : Text;
         data : [GeneratedDataField];
         choices : [Choice];
@@ -124,6 +130,7 @@ module {
         items : HashMap.HashMap<Text, Item.Item>,
         traits : HashMap.HashMap<Text, Trait.Trait>,
         images : HashMap.HashMap<Text, Image.Image>,
+        zones : HashMap.HashMap<Text, Zone.Zone>,
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
 
@@ -145,6 +152,18 @@ module {
 
         if (images.get(metaData.imageId) == null) {
             errors.add("Image id not found: " # metaData.imageId);
+        };
+
+        if (metaData.location.zoneIds.size() == 0) {
+            if (not metaData.location.isCommon and not metaData.location.isInFinale) {
+                errors.add("Scenario must be in a zone if it is not common and not in the finale");
+            };
+        } else {
+            for (zoneId in metaData.location.zoneIds.vals()) {
+                if (zones.get(zoneId) == null) {
+                    errors.add("Zone id not found: " # zoneId);
+                };
+            };
         };
 
         // Check data fields

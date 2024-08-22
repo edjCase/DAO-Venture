@@ -267,6 +267,11 @@ export interface ScenarioMetaData {
   'paths' : Array<OutcomePath>,
   'imageId' : string,
   'choices' : Array<Choice>,
+  'location' : {
+    'isCommon' : boolean,
+    'isInFinale' : boolean,
+    'zoneIds' : Array<string>,
+  },
   'undecidedPathId' : string,
 }
 export interface ScenarioVote {
