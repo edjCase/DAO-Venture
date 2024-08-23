@@ -15,14 +15,14 @@ export const zones = [
         name: "Mystic Caves",
         description: "A vast underground network of caverns, glowing with magical crystals and echoing with arcane energies."
     },
-    {
-        id: "scorching_desert",
-        name: "Scorching Desert",
-        description: "An unforgiving landscape of sand and heat, hiding oases of magic and ancient tombs."
-    },
-    {
-        id: "treacherous_mountains",
-        name: "Treacherous Mountains",
-        description: "Sky-piercing peaks and deep valleys, home to hardy creatures and long-forgotten shrines."
-    },
+    // {
+    //     id: "scorching_desert",
+    //     name: "Scorching Desert",
+    //     description: "An unforgiving landscape of sand and heat, hiding oases of magic and ancient tombs."
+    // },
+    // {
+    //     id: "treacherous_mountains",
+    //     name: "Treacherous Mountains",
+    //     description: "Sky-piercing peaks and deep valleys, home to hardy creatures and long-forgotten shrines."
+    // },
 ];

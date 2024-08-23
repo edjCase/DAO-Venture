@@ -19,14 +19,14 @@ module {
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
         getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
-        getScenario : query (id : Nat) -> async GetScenarioResult;
-        getScenarios : query () -> async GetScenariosResult;
+        getScenario : query (request : GetScenarioRequest) -> async GetScenarioResult;
+        getScenarios : query (request : GetScenariosRequest) -> async GetScenariosResult;
         voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
 
         getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
 
-        getGameInstance : query () -> async GameHandler.GameInstanceWithMetaData;
+        getGame : query (request : GetGameRequest) -> async GetGameResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
@@ -50,6 +50,12 @@ module {
         getItems : query () -> async [Item.Item];
     };
 
+    public type GetGameRequest = {
+        gameId : Nat;
+    };
+
+    public type GetGameResult = Result.Result<GameHandler.GameInstanceWithMetaData, { #gameNotFound }>;
+
     public type AddGameContentRequest = {
         #item : Item.Item;
         #trait : Trait.Trait;
@@ -61,15 +67,17 @@ module {
 
     public type AddGameContentResult = Result.Result<(), { #invalid : [Text]; #notAuthorized }>;
 
-    public type InitializeResult = Result.Result<(), { #alreadyInitialized; #noClasses; #noRaces; #noScenarios; #noItems; #noTraits; #noImages }>;
+    public type InitializeResult = Result.Result<(), GameHandler.InitializeError>;
 
     public type VoteOnNewGameRequest = {
+        gameId : Nat;
         characterId : Nat;
         difficulty : GameHandler.Difficulty;
     };
 
     public type VoteOnNewGameError = ExtendedProposal.VoteError or {
-        #noActiveGame;
+        #gameNotFound;
+        #gameNotActive;
         #invalidCharacterId;
         #alreadyStarted;
     };
@@ -78,17 +86,28 @@ module {
 
     public type JoinResult = Result.Result<(), JoinError>;
 
+    public type GetScenariosRequest = {
+        gameId : Nat;
+    };
+
     public type GetScenariosResult = Result.Result<[Scenario], GetScenariosError>;
 
     public type GetScenariosError = {
-        #noActiveGame;
+        #gameNotFound;
+        #gameNotActive;
+    };
+
+    public type GetScenarioRequest = {
+        gameId : Nat;
+        scenarioId : Nat;
     };
 
     public type GetScenarioResult = Result.Result<Scenario, GetScenarioError>;
 
     public type GetScenarioError = {
         #notFound;
-        #noActiveGame;
+        #gameNotFound;
+        #gameNotActive;
     };
 
     public type Scenario = Scenario.Scenario and {
@@ -115,12 +134,14 @@ module {
     public type GetPositionError = {};
 
     public type GetScenarioVoteRequest = {
+        gameId : Nat;
         scenarioId : Nat;
     };
 
     public type GetScenarioVoteError = {
         #scenarioNotFound;
-        #noActiveGame;
+        #gameNotFound;
+        #gameNotActive;
     };
 
     public type ScenarioVote = {
@@ -138,6 +159,7 @@ module {
     public type GetScenarioVoteResult = Result.Result<ScenarioVote, GetScenarioVoteError>;
 
     public type VoteOnScenarioRequest = {
+        gameId : Nat;
         scenarioId : Nat;
         value : Text;
     };
@@ -145,7 +167,8 @@ module {
     public type VoteOnScenarioError = ExtendedProposal.VoteError or {
         #scenarioNotFound;
         #invalidChoice;
-        #noActiveGame;
+        #gameNotFound;
+        #gameNotActive;
         #choiceRequirementNotMet;
     };
 

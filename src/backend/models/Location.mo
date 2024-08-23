@@ -8,6 +8,7 @@ module {
         id : Nat; // TODO remove redundant id since it can be derived from the coordinate
         coordinate : HexGrid.AxialCoordinate;
         scenarioId : Nat;
+        zoneId : Text;
     };
 
 };

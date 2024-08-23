@@ -69,6 +69,7 @@ export interface Class {
   'id' : string,
   'name' : string,
   'description' : string,
+  'unlockRequirement' : UnlockRequirement,
   'modifiers' : Array<CharacterModifier>,
 }
 export type Condition = { 'hasGold' : NatValue } |
@@ -86,6 +87,7 @@ export type Effect = { 'reward' : null } |
   { 'removeTrait' : RandomOrSpecificTextValue } |
   { 'damage' : NatValue } |
   { 'heal' : NatValue } |
+  { 'achievement' : string } |
   { 'upgradeStat' : [CharacterStatKind, NatValue] } |
   { 'addItem' : TextValue } |
   { 'addTrait' : TextValue } |
@@ -105,13 +107,11 @@ export type GameInstanceWithMetaData = {
       'difficulty' : Difficulty,
     }
   } |
-  { 'notInitialized' : null } |
   {
     'inProgress' : {
       'character' : CharacterWithMetaData,
       'turn' : bigint,
       'locations' : Array<Location>,
-      'characterLocationId' : bigint,
     }
   };
 export interface GeneratedDataField {
@@ -129,16 +129,27 @@ export interface GeneratedDataFieldNat { 'max' : bigint, 'min' : bigint }
 export interface GeneratedDataFieldText { 'options' : Array<[string, number]> }
 export type GeneratedDataFieldValue = { 'nat' : GeneratedDataFieldNat } |
   { 'text' : GeneratedDataFieldText };
-export type GetScenarioError = { 'noActiveGame' : null } |
-  { 'notFound' : null };
+export interface GetGameRequest { 'gameId' : bigint }
+export type GetGameResult = { 'ok' : GameInstanceWithMetaData } |
+  { 'err' : { 'gameNotFound' : null } };
+export type GetScenarioError = { 'notFound' : null } |
+  { 'gameNotFound' : null } |
+  { 'gameNotActive' : null };
+export interface GetScenarioRequest { 'scenarioId' : bigint, 'gameId' : bigint }
 export type GetScenarioResult = { 'ok' : Scenario } |
   { 'err' : GetScenarioError };
-export type GetScenarioVoteError = { 'noActiveGame' : null } |
+export type GetScenarioVoteError = { 'gameNotFound' : null } |
+  { 'gameNotActive' : null } |
   { 'scenarioNotFound' : null };
-export interface GetScenarioVoteRequest { 'scenarioId' : bigint }
+export interface GetScenarioVoteRequest {
+  'scenarioId' : bigint,
+  'gameId' : bigint,
+}
 export type GetScenarioVoteResult = { 'ok' : ScenarioVote } |
   { 'err' : GetScenarioVoteError };
-export type GetScenariosError = { 'noActiveGame' : null };
+export type GetScenariosError = { 'gameNotFound' : null } |
+  { 'gameNotActive' : null };
+export interface GetScenariosRequest { 'gameId' : bigint }
 export type GetScenariosResult = { 'ok' : Array<Scenario> } |
   { 'err' : GetScenariosError };
 export interface GetTopUsersRequest { 'count' : bigint, 'offset' : bigint }
@@ -179,23 +190,27 @@ export interface Image {
   'kind' : ImageKind,
 }
 export type ImageKind = { 'png' : null };
+export type InitializeError = { 'noTraits' : null } |
+  { 'noZones' : null } |
+  { 'noItems' : null } |
+  { 'noScenariosForZone' : string } |
+  { 'noClasses' : null } |
+  { 'noRaces' : null } |
+  { 'noScenarios' : null } |
+  { 'noImages' : null } |
+  { 'alreadyInitialized' : null };
 export type InitializeResult = { 'ok' : null } |
-  {
-    'err' : { 'noTraits' : null } |
-      { 'noItems' : null } |
-      { 'noClasses' : null } |
-      { 'noRaces' : null } |
-      { 'noScenarios' : null } |
-      { 'noImages' : null } |
-      { 'alreadyInitialized' : null }
-  };
+  { 'err' : InitializeError };
 export interface Item { 'id' : string, 'name' : string, 'description' : string }
 export type JoinError = { 'alreadyMember' : null };
 export interface Location {
   'id' : bigint,
   'scenarioId' : bigint,
   'coordinate' : AxialCoordinate,
+  'zoneId' : string,
 }
+export type LocationKind = { 'common' : null } |
+  { 'zoneIds' : Array<string> };
 export interface MotionContent { 'title' : string, 'description' : string }
 export type NatValue = { 'raw' : bigint } |
   { 'dataField' : string } |
@@ -267,11 +282,7 @@ export interface ScenarioMetaData {
   'paths' : Array<OutcomePath>,
   'imageId' : string,
   'choices' : Array<Choice>,
-  'location' : {
-    'isCommon' : boolean,
-    'isInFinale' : boolean,
-    'zoneIds' : Array<string>,
-  },
+  'location' : LocationKind,
   'undecidedPathId' : string,
 }
 export interface ScenarioVote {
@@ -299,35 +310,41 @@ export interface Trait {
   'name' : string,
   'description' : string,
 }
+export type UnlockRequirement = { 'acheivementId' : string };
 export interface User {
   'id' : Principal,
-  'inWorldSince' : Time,
-  'level' : bigint,
+  'createTime' : Time,
+  'achievementIds' : Array<string>,
+  'points' : bigint,
 }
-export interface UserStats { 'totalUserLevel' : bigint, 'userCount' : bigint }
+export interface UserStats { 'userCount' : bigint }
 export interface Vote { 'votingPower' : bigint, 'choice' : [] | [boolean] }
-export type VoteOnNewGameError = { 'noActiveGame' : null } |
-  { 'invalidCharacterId' : null } |
+export type VoteOnNewGameError = { 'invalidCharacterId' : null } |
   { 'alreadyVoted' : null } |
   { 'votingClosed' : null } |
   { 'alreadyStarted' : null } |
-  { 'notEligible' : null };
+  { 'gameNotFound' : null } |
+  { 'notEligible' : null } |
+  { 'gameNotActive' : null };
 export interface VoteOnNewGameRequest {
   'difficulty' : Difficulty,
+  'gameId' : bigint,
   'characterId' : bigint,
 }
 export type VoteOnNewGameResult = { 'ok' : null } |
   { 'err' : VoteOnNewGameError };
-export type VoteOnScenarioError = { 'noActiveGame' : null } |
-  { 'alreadyVoted' : null } |
+export type VoteOnScenarioError = { 'alreadyVoted' : null } |
   { 'votingClosed' : null } |
   { 'invalidChoice' : null } |
+  { 'gameNotFound' : null } |
   { 'notEligible' : null } |
+  { 'gameNotActive' : null } |
   { 'scenarioNotFound' : null } |
   { 'choiceRequirementNotMet' : null };
 export interface VoteOnScenarioRequest {
   'scenarioId' : bigint,
   'value' : string,
+  'gameId' : bigint,
 }
 export type VoteOnScenarioResult = { 'ok' : null } |
   { 'err' : VoteOnScenarioError };
@@ -372,16 +389,16 @@ export interface _SERVICE {
     CreateWorldProposalResult
   >,
   'getClasses' : ActorMethod<[], Array<Class>>,
-  'getGameInstance' : ActorMethod<[], GameInstanceWithMetaData>,
+  'getGame' : ActorMethod<[GetGameRequest], GetGameResult>,
   'getItems' : ActorMethod<[], Array<Item>>,
   'getRaces' : ActorMethod<[], Array<Race>>,
-  'getScenario' : ActorMethod<[bigint], GetScenarioResult>,
+  'getScenario' : ActorMethod<[GetScenarioRequest], GetScenarioResult>,
   'getScenarioMetaDataList' : ActorMethod<[], Array<ScenarioMetaData>>,
   'getScenarioVote' : ActorMethod<
     [GetScenarioVoteRequest],
     GetScenarioVoteResult
   >,
-  'getScenarios' : ActorMethod<[], GetScenariosResult>,
+  'getScenarios' : ActorMethod<[GetScenariosRequest], GetScenariosResult>,
   'getTopUsers' : ActorMethod<[GetTopUsersRequest], GetTopUsersResult>,
   'getTraits' : ActorMethod<[], Array<Trait>>,
   'getUser' : ActorMethod<[Principal], GetUserResult>,

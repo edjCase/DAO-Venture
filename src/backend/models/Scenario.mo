@@ -12,6 +12,7 @@ import Trait "Trait";
 import Item "Item";
 import Image "Image";
 import Zone "Zone";
+import Achievement "Achievement";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -27,16 +28,17 @@ module {
         id : Text;
         title : Text;
         description : Text;
-        location : {
-            isCommon : Bool;
-            isInFinale : Bool;
-            zoneIds : [Text];
-        };
+        location : LocationKind;
         imageId : Text;
         data : [GeneratedDataField];
         choices : [Choice];
         paths : [OutcomePath];
         undecidedPathId : Text;
+    };
+
+    public type LocationKind = {
+        #common;
+        #zoneIds : [Text];
     };
 
     public type GeneratedDataField = {
@@ -99,6 +101,7 @@ module {
         #removeItem : RandomOrSpecificTextValue;
         #addTrait : TextValue;
         #removeTrait : RandomOrSpecificTextValue;
+        #achievement : Text;
     };
 
     public type RandomOrSpecificTextValue = {
@@ -131,6 +134,7 @@ module {
         traits : HashMap.HashMap<Text, Trait.Trait>,
         images : HashMap.HashMap<Text, Image.Image>,
         zones : HashMap.HashMap<Text, Zone.Zone>,
+        achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
 
@@ -154,14 +158,17 @@ module {
             errors.add("Image id not found: " # metaData.imageId);
         };
 
-        if (metaData.location.zoneIds.size() == 0) {
-            if (not metaData.location.isCommon and not metaData.location.isInFinale) {
-                errors.add("Scenario must be in a zone if it is not common and not in the finale");
-            };
-        } else {
-            for (zoneId in metaData.location.zoneIds.vals()) {
-                if (zones.get(zoneId) == null) {
-                    errors.add("Zone id not found: " # zoneId);
+        switch (metaData.location) {
+            case (#common) {};
+            case (#zoneIds(zoneIds)) {
+                if (zoneIds.size() == 0) {
+                    errors.add("Zone ids must not be empty");
+                } else {
+                    for (zoneId in zoneIds.vals()) {
+                        if (zones.get(zoneId) == null) {
+                            errors.add("Zone id not found: " # zoneId);
+                        };
+                    };
                 };
             };
         };
@@ -321,6 +328,14 @@ module {
                     case (#heal(heal)) validateNatValue(heal, "heal");
                     case (#reward) {};
                     case (#upgradeStat(upgradeStat)) validateNatValue(upgradeStat.1, "stat");
+                    case (#achievement(achievementId)) {
+                        if (TextX.isEmpty(achievementId)) {
+                            errors.add("Achievement id cannot be empty");
+                        };
+                        if (achievements.get(achievementId) == null) {
+                            errors.add("Invalid achievement id: " # achievementId);
+                        };
+                    };
                 };
             };
         };

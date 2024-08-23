@@ -7,18 +7,20 @@ import Order "mo:base/Order";
 import Int "mo:base/Int";
 import Result "mo:base/Result";
 import Time "mo:base/Time";
+import Array "mo:base/Array";
+import Text "mo:base/Text";
 import CommonTypes "../CommonTypes";
 
 module {
 
     public type User = {
         id : Principal;
-        inWorldSince : Time.Time;
-        level : Nat;
+        createTime : Time.Time;
+        points : Nat;
+        achievementIds : [Text];
     };
 
     public type UserStats = {
-        totalUserLevel : Int;
         userCount : Nat;
     };
 
@@ -31,29 +33,21 @@ module {
         users : [User];
     };
 
-    type MutableUser = {
-        id : Principal;
-        inWorldSince : Time.Time;
-        var level : Nat;
-    };
-
-    public class UserHandler(stableData : StableData) {
-        let users : HashMap.HashMap<Principal, MutableUser> = buildUserMap(stableData.users);
+    public class Handler(stableData : StableData) {
+        let users : HashMap.HashMap<Principal, User> = buildUserMap(stableData.users);
 
         public func toStableData() : StableData {
             {
-                users = users.vals() |> Iter.map(_, fromMutableUser) |> Iter.toArray(_);
+                users = users.vals() |> Iter.toArray(_);
             };
         };
 
         public func get(id : Principal) : ?User {
-            let ?user = users.get(id) else return null;
-            ?fromMutableUser(user);
+            users.get(id);
         };
 
         public func getAll() : [User] {
             users.vals()
-            |> Iter.map(_, fromMutableUser)
             |> Iter.toArray(_);
         };
 
@@ -63,7 +57,6 @@ module {
                 var userCount = 0;
             };
             for (user in users.vals()) {
-                worldStats.totalUserLevel += user.level;
                 worldStats.userCount += 1;
             };
             {
@@ -76,11 +69,10 @@ module {
             let orderedUsers = users.vals()
             |> IterTools.sort(
                 _,
-                func(u1 : MutableUser, u2 : MutableUser) : Order.Order = Int.compare(u2.level, u1.level),
+                func(u1 : User, u2 : User) : Order.Order = Int.compare(u2.points, u1.points),
             )
             |> IterTools.skip(_, offset)
             |> IterTools.take(_, count)
-            |> Iter.map(_, fromMutableUser)
             |> Iter.toArray(_);
             {
                 data = orderedUsers;
@@ -96,10 +88,11 @@ module {
             switch (users.get(userId)) {
                 case (?_) #err(#alreadyMember);
                 case (null) {
-                    let newUser : MutableUser = {
+                    let newUser : User = {
                         id = userId;
-                        inWorldSince = Time.now();
-                        var level = 0;
+                        createTime = Time.now();
+                        achievementIds = [];
+                        points = 0;
                     };
                     users.put(userId, newUser);
                     #ok;
@@ -107,47 +100,38 @@ module {
             };
         };
 
-        public func awardLevels(
+        public func unlockAchievement(
             userId : Principal,
-            delta : Int,
-        ) : Result.Result<(), { #userNotFound }> {
-            let ?user = users.get(userId) else return #err(#userNotFound);
-            let newLevel = user.level + delta;
-            let newLevelNat = if (newLevel < 0) {
-                0;
-            } else {
-                Int.abs(newLevel);
+            achievementId : Text,
+        ) : Result.Result<(), { #userNotFound; #achievementNotFound; #achievementAlreadyUnlocked }> {
+            switch (users.get(userId)) {
+                case (null) #err(#userNotFound);
+                case (?user) {
+                    if (Array.indexOf(achievementId, user.achievementIds, Text.equal) != null) {
+                        #err(#achievementAlreadyUnlocked);
+                    } else {
+                        users.put(
+                            userId,
+                            {
+                                user with
+                                achievementIds = Array.append(user.achievementIds, [achievementId]);
+                            },
+                        );
+                        #ok;
+                    };
+                };
             };
-            user.level += newLevelNat;
-            #ok;
         };
 
     };
 
-    private func toMutableUser(user : User) : MutableUser {
-        {
-            id = user.id;
-            inWorldSince = user.inWorldSince;
-            var level = user.level;
-        };
-    };
-
-    private func fromMutableUser(user : MutableUser) : User {
-        {
-            id = user.id;
-            inWorldSince = user.inWorldSince;
-            level = user.level;
-        };
-    };
-
-    private func buildUserMap(users : [User]) : HashMap.HashMap<Principal, MutableUser> {
+    private func buildUserMap(users : [User]) : HashMap.HashMap<Principal, User> {
         users.vals()
-        |> Iter.map(_, toMutableUser)
-        |> Iter.map<MutableUser, (Principal, MutableUser)>(
+        |> Iter.map<User, (Principal, User)>(
             _,
-            func(p : MutableUser) : (Principal, MutableUser) { (p.id, p) },
+            func(p : User) : (Principal, User) { (p.id, p) },
         )
-        |> HashMap.fromIter<Principal, MutableUser>(_, users.size(), Principal.equal, Principal.hash);
+        |> HashMap.fromIter<Principal, User>(_, users.size(), Principal.equal, Principal.hash);
     };
 
 };

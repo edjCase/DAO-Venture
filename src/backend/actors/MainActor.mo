@@ -10,9 +10,6 @@ import UserHandler "../handlers/UserHandler";
 import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
 import Proposal "mo:dao-proposal-engine/Proposal";
 import Result "mo:base/Result";
-import Time "mo:base/Time";
-import Int "mo:base/Int";
-import Float "mo:base/Float";
 import Prelude "mo:base/Prelude";
 import Random "mo:base/Random";
 import WorldDao "../models/WorldDao";
@@ -36,8 +33,7 @@ actor MainActor : Types.Actor {
     // Stables ---------------------------------------------------------
 
     stable var gameStableData : GameHandler.StableData = {
-        current = #notInitialized;
-        historical = [];
+        instances = [];
         classes = [];
         races = [];
         scenarios = [];
@@ -45,6 +41,7 @@ actor MainActor : Types.Actor {
         traits = [];
         images = [];
         zones = [];
+        achievements = [];
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
@@ -62,11 +59,11 @@ actor MainActor : Types.Actor {
 
     // Unstables ---------------------------------------------------------
 
-    var gameHandler = GameHandler.Handler<system>(gameStableData);
+    var gameHandler = GameHandler.Handler(gameStableData);
 
     var httpHandler = HttpHandler.Handler(gameHandler);
 
-    var userHandler = UserHandler.UserHandler(userStableData);
+    var userHandler = UserHandler.Handler(userStableData);
 
     func onWorldProposalExecute(proposal : ProposalEngine.Proposal<WorldDao.ProposalContent>) : async* Result.Result<(), Text> {
         // TODO change world proposal for town data to be a simple approve w/ callback. Dont need to expose all the update routes
@@ -97,14 +94,14 @@ actor MainActor : Types.Actor {
     };
 
     system func postupgrade() {
-        gameHandler := GameHandler.Handler<system>(gameStableData);
+        gameHandler := GameHandler.Handler(gameStableData);
         worldDao := ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
             worldDaoStableData,
             onWorldProposalExecute,
             onWorldProposalReject,
             onWorldProposalValidate,
         );
-        userHandler := UserHandler.UserHandler(userStableData);
+        userHandler := UserHandler.Handler(userStableData);
     };
 
     // Public Methods ---------------------------------------------------------
@@ -135,7 +132,14 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func voteOnNewGame(request : Types.VoteOnNewGameRequest) : async Types.VoteOnNewGameResult {
-        let { characterId; difficulty } = switch (gameHandler.voteOnNewGame(caller, request.characterId, request.difficulty)) {
+        let { characterId; difficulty } = switch (
+            gameHandler.voteOnNewGame(
+                request.gameId,
+                caller,
+                request.characterId,
+                request.difficulty,
+            )
+        ) {
             case (#ok(null)) return #ok; // no consensus yet
             case (#ok(?newGameChoice)) newGameChoice; // Concensus reached
             case (#err(err)) return #err(err);
@@ -147,6 +151,7 @@ actor MainActor : Types.Actor {
         switch (
             gameHandler.startGame<system>(
                 prng,
+                request.gameId,
                 characterId,
                 proposerId,
                 difficulty,
@@ -194,21 +199,21 @@ actor MainActor : Types.Actor {
         await* worldDao.vote(request.proposalId, caller, request.vote);
     };
 
-    public query ({ caller }) func getScenario(scenarioId : Nat) : async Types.GetScenarioResult {
-        switch (gameHandler.getScenario(scenarioId)) {
-            case (#ok(scenario)) #ok(mapScenario(caller, scenario));
+    public query ({ caller }) func getScenario(request : Types.GetScenarioRequest) : async Types.GetScenarioResult {
+        switch (gameHandler.getScenario(request.gameId, request.scenarioId)) {
+            case (#ok(scenario)) #ok(mapScenario(request.gameId, caller, scenario));
             case (#err(err)) return #err(err);
         };
     };
 
-    public query ({ caller }) func getScenarios() : async Types.GetScenariosResult {
-        switch (gameHandler.getScenarios()) {
+    public query ({ caller }) func getScenarios(request : Types.GetScenariosRequest) : async Types.GetScenariosResult {
+        switch (gameHandler.getScenarios(request.gameId)) {
             case (#err(err)) return #err(err);
             case (#ok(scenarios)) {
                 let mappedScenarios = scenarios.vals()
                 |> Iter.map(
                     _,
-                    func(scenario : GameHandler.ScenarioWithMetaData) : Types.Scenario = mapScenario(caller, scenario),
+                    func(scenario : GameHandler.ScenarioWithMetaData) : Types.Scenario = mapScenario(request.gameId, caller, scenario),
                 )
                 |> Iter.toArray(_);
                 #ok(mappedScenarios);
@@ -217,19 +222,20 @@ actor MainActor : Types.Actor {
     };
 
     public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
-        getScenarioVoteInternal(caller, request.scenarioId);
+        getScenarioVoteInternal(request.gameId, caller, request.scenarioId);
     };
 
     public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
-        switch (gameHandler.voteOnScenario(request.scenarioId, caller, request.value)) {
+        switch (gameHandler.voteOnScenario(request.gameId, request.scenarioId, caller, request.value)) {
             case (#ok(null)) ();
             case (#ok(?choice)) {
                 let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
                 let members = buildVotingMembersList();
                 let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the next scenario
-                switch (gameHandler.endTurn(prng, proposerId, members, ?choice)) {
+                switch (gameHandler.endTurn(prng, request.gameId, proposerId, members, userHandler, ?choice)) {
                     case (#ok) ();
-                    case (#err(#noActiveGame)) Prelude.unreachable();
+                    case (#err(#gameNotFound)) Prelude.unreachable();
+                    case (#err(#gameNotActive)) Prelude.unreachable();
                 };
             };
             case (#err(error)) return #err(error);
@@ -237,8 +243,8 @@ actor MainActor : Types.Actor {
         #ok;
     };
 
-    public shared query func getGameInstance() : async GameHandler.GameInstanceWithMetaData {
-        gameHandler.getInstance();
+    public shared query func getGame(request : Types.GetGameRequest) : async Types.GetGameResult {
+        gameHandler.getInstance(request.gameId);
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
@@ -294,13 +300,15 @@ actor MainActor : Types.Actor {
     // Private Methods ---------------------------------------------------------
 
     private func mapScenario(
+        gameId : Nat,
         voterId : Principal,
         scenario : GameHandler.ScenarioWithMetaData,
     ) : Types.Scenario {
 
-        let voteData = switch (getScenarioVoteInternal(voterId, scenario.id)) {
+        let voteData = switch (getScenarioVoteInternal(gameId, voterId, scenario.id)) {
             case (#ok(voteData)) voteData;
-            case (#err(#noActiveGame)) Prelude.unreachable();
+            case (#err(#gameNotFound)) Prelude.unreachable();
+            case (#err(#gameNotActive)) Prelude.unreachable();
             case (#err(#scenarioNotFound)) Prelude.unreachable();
         };
         {
@@ -321,16 +329,18 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_);
     };
 
-    private func getScenarioVoteInternal(voterId : Principal, scenarioId : Nat) : Types.GetScenarioVoteResult {
-        let vote = switch (gameHandler.getScenarioVote(scenarioId, voterId)) {
+    private func getScenarioVoteInternal(gameId : Nat, voterId : Principal, scenarioId : Nat) : Types.GetScenarioVoteResult {
+        let vote = switch (gameHandler.getScenarioVote(gameId, scenarioId, voterId)) {
             case (#ok(vote)) ?vote;
             case (#err(#notEligible)) null;
             case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
-            case (#err(#noActiveGame)) return #err(#noActiveGame);
+            case (#err(#gameNotFound)) return #err(#gameNotFound);
+            case (#err(#gameNotActive)) return #err(#gameNotActive);
         };
-        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (gameHandler.getScenarioVoteSummary(scenarioId)) {
+        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (gameHandler.getScenarioVoteSummary(gameId, scenarioId)) {
             case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
-            case (#err(#noActiveGame)) Prelude.unreachable();
+            case (#err(#gameNotFound)) Prelude.unreachable();
+            case (#err(#gameNotActive)) Prelude.unreachable();
             case (#ok(summary)) summary;
         };
         #ok({
@@ -341,28 +351,29 @@ actor MainActor : Types.Actor {
         });
     };
 
-    private func calculateVotingPower(user : UserHandler.User) : Nat {
-        let basePower : Nat = 10;
-        let levelMultiplier : Nat = 5;
-        let timeMultiplier : Nat = 2;
-        let maxTimePower : Nat = 100;
-        let timeCap : Nat = 30 * 24 * 60 * 60 * 1_000_000_000; // 30 days in nanoseconds
+    private func calculateVotingPower(_ : UserHandler.User) : Nat {
+        // let basePower : Nat = 10;
+        // let levelMultiplier : Nat = 5;
+        // let timeMultiplier : Nat = 2;
+        // let maxTimePower : Nat = 100;
+        // let timeCap : Nat = 30 * 24 * 60 * 60 * 1_000_000_000; // 30 days in nanoseconds
 
-        // Power from level
-        let powerFromLevel : Nat = user.level * levelMultiplier;
+        // // Power from level
 
-        let timeInWorld : Nat = Int.abs(Time.now() - user.inWorldSince) + 1;
+        // let timeInWorld : Nat = Int.abs(Time.now() - user.inWorldSince) + 1;
 
-        // Power from time in world
-        let worldTime : Nat = Nat.min(timeInWorld, timeCap);
-        let worldTimePower : Nat = Int.abs(
-            Float.toInt(
-                Float.log(Float.fromInt(worldTime + 1)) / Float.log(Float.fromInt(timeCap)) * Float.fromInt(maxTimePower)
-            )
-        );
+        // // Power from time in world
+        // let worldTime : Nat = Nat.min(timeInWorld, timeCap);
+        // let worldTimePower : Nat = Int.abs(
+        //     Float.toInt(
+        //         Float.log(Float.fromInt(worldTime + 1)) / Float.log(Float.fromInt(timeCap)) * Float.fromInt(maxTimePower)
+        //     )
+        // );
 
-        // Combine powers
-        basePower + powerFromLevel + worldTimePower * timeMultiplier;
+        // // Combine powers
+        // basePower + powerFromLevel + worldTimePower * timeMultiplier;
+        // TODO
+        1;
     };
 
 };

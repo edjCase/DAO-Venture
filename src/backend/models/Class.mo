@@ -6,6 +6,8 @@ import TextX "mo:xtended-text/TextX";
 import CharacterModifier "CharacterModifier";
 import Item "Item";
 import Trait "Trait";
+import UnlockRequirement "UnlockRequirement";
+import Achievement "Achievement";
 
 module {
 
@@ -14,6 +16,7 @@ module {
         name : Text;
         description : Text;
         modifiers : [CharacterModifier.CharacterModifier];
+        unlockRequirement : UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
@@ -21,6 +24,7 @@ module {
         existingClasses : HashMap.HashMap<Text, Class>,
         items : HashMap.HashMap<Text, Item.Item>,
         traits : HashMap.HashMap<Text, Trait.Trait>,
+        achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         if (TextX.isEmptyOrWhitespace(class_.id)) {
@@ -34,6 +38,10 @@ module {
         };
         if (existingClasses.get(class_.id) != null) {
             errors.add("Class id " # class_.id # " already exists.");
+        };
+        switch (UnlockRequirement.validate(class_.unlockRequirement, achievements)) {
+            case (#err(err)) errors.append(Buffer.fromArray(err));
+            case (#ok) ();
         };
         for (modifier in class_.modifiers.vals()) {
             switch (CharacterModifier.validate(modifier, items, traits)) {

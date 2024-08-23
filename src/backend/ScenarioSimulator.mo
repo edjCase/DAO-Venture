@@ -5,23 +5,28 @@ import TrieSet "mo:base/TrieSet";
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
+import Principal "mo:base/Principal";
 import CharacterHandler "handlers/CharacterHandler";
 import Outcome "models/Outcome";
 import Scenario "models/Scenario";
 import Character "models/Character";
+import UserHandler "handlers/UserHandler";
+import ScenarioHandler "handlers/ScenarioHandler";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public func run(
         prng : Prng,
+        members : [ScenarioHandler.Member],
+        userHandler : UserHandler.Handler,
         characterHandler : CharacterHandler.Handler,
         scenario : Scenario.Scenario,
         scenarioMetaData : Scenario.ScenarioMetaData,
         choiceOrUndecided : ?Text,
     ) : Outcome.Outcome {
         let messages = Buffer.Buffer<Text>(5);
-        let helper = Helper(prng, characterHandler, scenario, messages);
+        let helper = Helper(prng, members, characterHandler, userHandler, scenario, messages);
 
         let initialPathId = switch (choiceOrUndecided) {
             case (null) { scenarioMetaData.undecidedPathId };
@@ -126,7 +131,9 @@ module {
 
     private class Helper(
         prng : Prng,
+        members : [ScenarioHandler.Member],
         characterHandler : CharacterHandler.Handler,
+        userHandler : UserHandler.Handler,
         scenario : Scenario.Scenario,
         messages : Buffer.Buffer<Text>,
     ) {
@@ -188,6 +195,15 @@ module {
                         };
                         case (#specific(traitId)) {
                             ignore removeTrait(getTextValue(prng, traitId, scenario.data));
+                        };
+                    };
+                };
+                case (#achievement(achievementId)) {
+                    for (member in members.vals()) {
+                        switch (userHandler.unlockAchievement(member.id, achievementId)) {
+                            case (#ok or #err(#achievementAlreadyUnlocked)) ();
+                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(member.id));
+                            case (#err(#achievementNotFound)) Debug.trap("Achievement not found: " # achievementId);
                         };
                     };
                 };

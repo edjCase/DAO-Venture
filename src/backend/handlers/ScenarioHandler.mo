@@ -35,7 +35,7 @@ module {
 
     public type Member = ExtendedProposal.Member;
 
-    public class Handler<system>(
+    public class Handler(
         data : StableData
     ) {
         let votingThreshold = #percent({ percent = 50; quorum = ?20 });

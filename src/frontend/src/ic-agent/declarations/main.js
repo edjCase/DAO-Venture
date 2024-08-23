@@ -10,6 +10,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
+  const UnlockRequirement = IDL.Variant({ 'acheivementId' : IDL.Text });
   const CharacterModifier = IDL.Variant({
     'magic' : IDL.Int,
     'trait' : IDL.Text,
@@ -24,6 +25,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'unlockRequirement' : UnlockRequirement,
     'modifiers' : IDL.Vec(CharacterModifier),
   });
   const Race = IDL.Record({
@@ -79,6 +81,7 @@ export const idlFactory = ({ IDL }) => {
     'removeTrait' : RandomOrSpecificTextValue,
     'damage' : NatValue,
     'heal' : NatValue,
+    'achievement' : IDL.Text,
     'upgradeStat' : IDL.Tuple(CharacterStatKind, NatValue),
     'addItem' : TextValue,
     'addTrait' : TextValue,
@@ -119,6 +122,10 @@ export const idlFactory = ({ IDL }) => {
     'requirement' : IDL.Opt(ChoiceRequirement),
     'pathId' : IDL.Text,
   });
+  const LocationKind = IDL.Variant({
+    'common' : IDL.Null,
+    'zoneIds' : IDL.Vec(IDL.Text),
+  });
   const ScenarioMetaData = IDL.Record({
     'id' : IDL.Text,
     'title' : IDL.Text,
@@ -127,11 +134,7 @@ export const idlFactory = ({ IDL }) => {
     'paths' : IDL.Vec(OutcomePath),
     'imageId' : IDL.Text,
     'choices' : IDL.Vec(Choice),
-    'location' : IDL.Record({
-      'isCommon' : IDL.Bool,
-      'isInFinale' : IDL.Bool,
-      'zoneIds' : IDL.Vec(IDL.Text),
-    }),
+    'location' : LocationKind,
     'undecidedPathId' : IDL.Text,
   });
   const AddGameContentRequest = IDL.Variant({
@@ -162,6 +165,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
   });
+  const GetGameRequest = IDL.Record({ 'gameId' : IDL.Nat });
   const ChoiceVotingPower_1 = IDL.Record({
     'votingPower' : IDL.Nat,
     'choice' : IDL.Nat,
@@ -205,6 +209,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'scenarioId' : IDL.Nat,
     'coordinate' : AxialCoordinate,
+    'zoneId' : IDL.Text,
   });
   const GameInstanceWithMetaData = IDL.Variant({
     'notStarted' : IDL.Record({
@@ -217,13 +222,19 @@ export const idlFactory = ({ IDL }) => {
       'character' : CharacterWithMetaData,
       'difficulty' : Difficulty,
     }),
-    'notInitialized' : IDL.Null,
     'inProgress' : IDL.Record({
       'character' : CharacterWithMetaData,
       'turn' : IDL.Nat,
       'locations' : IDL.Vec(Location),
-      'characterLocationId' : IDL.Nat,
     }),
+  });
+  const GetGameResult = IDL.Variant({
+    'ok' : GameInstanceWithMetaData,
+    'err' : IDL.Variant({ 'gameNotFound' : IDL.Null }),
+  });
+  const GetScenarioRequest = IDL.Record({
+    'scenarioId' : IDL.Nat,
+    'gameId' : IDL.Nat,
   });
   const ChoiceVotingPower = IDL.Record({
     'votingPower' : IDL.Nat,
@@ -261,23 +272,32 @@ export const idlFactory = ({ IDL }) => {
     'outcome' : IDL.Opt(Outcome),
   });
   const GetScenarioError = IDL.Variant({
-    'noActiveGame' : IDL.Null,
     'notFound' : IDL.Null,
+    'gameNotFound' : IDL.Null,
+    'gameNotActive' : IDL.Null,
   });
   const GetScenarioResult = IDL.Variant({
     'ok' : Scenario,
     'err' : GetScenarioError,
   });
-  const GetScenarioVoteRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
+  const GetScenarioVoteRequest = IDL.Record({
+    'scenarioId' : IDL.Nat,
+    'gameId' : IDL.Nat,
+  });
   const GetScenarioVoteError = IDL.Variant({
-    'noActiveGame' : IDL.Null,
+    'gameNotFound' : IDL.Null,
+    'gameNotActive' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
   });
   const GetScenarioVoteResult = IDL.Variant({
     'ok' : ScenarioVote,
     'err' : GetScenarioVoteError,
   });
-  const GetScenariosError = IDL.Variant({ 'noActiveGame' : IDL.Null });
+  const GetScenariosRequest = IDL.Record({ 'gameId' : IDL.Nat });
+  const GetScenariosError = IDL.Variant({
+    'gameNotFound' : IDL.Null,
+    'gameNotActive' : IDL.Null,
+  });
   const GetScenariosResult = IDL.Variant({
     'ok' : IDL.Vec(Scenario),
     'err' : GetScenariosError,
@@ -289,8 +309,9 @@ export const idlFactory = ({ IDL }) => {
   const Time = IDL.Int;
   const User = IDL.Record({
     'id' : IDL.Principal,
-    'inWorldSince' : Time,
-    'level' : IDL.Nat,
+    'createTime' : Time,
+    'achievementIds' : IDL.Vec(IDL.Text),
+    'points' : IDL.Nat,
   });
   const PagedResult_1 = IDL.Record({
     'data' : IDL.Vec(User),
@@ -301,10 +322,7 @@ export const idlFactory = ({ IDL }) => {
   const GetTopUsersResult = IDL.Variant({ 'ok' : PagedResult_1 });
   const GetUserError = IDL.Variant({ 'notFound' : IDL.Null });
   const GetUserResult = IDL.Variant({ 'ok' : User, 'err' : GetUserError });
-  const UserStats = IDL.Record({
-    'totalUserLevel' : IDL.Int,
-    'userCount' : IDL.Nat,
-  });
+  const UserStats = IDL.Record({ 'userCount' : IDL.Nat });
   const GetUserStatsResult = IDL.Variant({
     'ok' : UserStats,
     'err' : IDL.Null,
@@ -384,31 +402,36 @@ export const idlFactory = ({ IDL }) => {
     'body' : IDL.Vec(IDL.Nat8),
     'headers' : IDL.Vec(HeaderField),
   });
+  const InitializeError = IDL.Variant({
+    'noTraits' : IDL.Null,
+    'noZones' : IDL.Null,
+    'noItems' : IDL.Null,
+    'noScenariosForZone' : IDL.Text,
+    'noClasses' : IDL.Null,
+    'noRaces' : IDL.Null,
+    'noScenarios' : IDL.Null,
+    'noImages' : IDL.Null,
+    'alreadyInitialized' : IDL.Null,
+  });
   const InitializeResult = IDL.Variant({
     'ok' : IDL.Null,
-    'err' : IDL.Variant({
-      'noTraits' : IDL.Null,
-      'noItems' : IDL.Null,
-      'noClasses' : IDL.Null,
-      'noRaces' : IDL.Null,
-      'noScenarios' : IDL.Null,
-      'noImages' : IDL.Null,
-      'alreadyInitialized' : IDL.Null,
-    }),
+    'err' : InitializeError,
   });
   const JoinError = IDL.Variant({ 'alreadyMember' : IDL.Null });
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinError });
   const VoteOnNewGameRequest = IDL.Record({
     'difficulty' : Difficulty,
+    'gameId' : IDL.Nat,
     'characterId' : IDL.Nat,
   });
   const VoteOnNewGameError = IDL.Variant({
-    'noActiveGame' : IDL.Null,
     'invalidCharacterId' : IDL.Null,
     'alreadyVoted' : IDL.Null,
     'votingClosed' : IDL.Null,
     'alreadyStarted' : IDL.Null,
+    'gameNotFound' : IDL.Null,
     'notEligible' : IDL.Null,
+    'gameNotActive' : IDL.Null,
   });
   const VoteOnNewGameResult = IDL.Variant({
     'ok' : IDL.Null,
@@ -417,13 +440,15 @@ export const idlFactory = ({ IDL }) => {
   const VoteOnScenarioRequest = IDL.Record({
     'scenarioId' : IDL.Nat,
     'value' : IDL.Text,
+    'gameId' : IDL.Nat,
   });
   const VoteOnScenarioError = IDL.Variant({
-    'noActiveGame' : IDL.Null,
     'alreadyVoted' : IDL.Null,
     'votingClosed' : IDL.Null,
     'invalidChoice' : IDL.Null,
+    'gameNotFound' : IDL.Null,
     'notEligible' : IDL.Null,
+    'gameNotActive' : IDL.Null,
     'scenarioNotFound' : IDL.Null,
     'choiceRequirementNotMet' : IDL.Null,
   });
@@ -457,10 +482,14 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getClasses' : IDL.Func([], [IDL.Vec(Class)], ['query']),
-    'getGameInstance' : IDL.Func([], [GameInstanceWithMetaData], ['query']),
+    'getGame' : IDL.Func([GetGameRequest], [GetGameResult], ['query']),
     'getItems' : IDL.Func([], [IDL.Vec(Item)], ['query']),
     'getRaces' : IDL.Func([], [IDL.Vec(Race)], ['query']),
-    'getScenario' : IDL.Func([IDL.Nat], [GetScenarioResult], ['query']),
+    'getScenario' : IDL.Func(
+        [GetScenarioRequest],
+        [GetScenarioResult],
+        ['query'],
+      ),
     'getScenarioMetaDataList' : IDL.Func(
         [],
         [IDL.Vec(ScenarioMetaData)],
@@ -471,7 +500,11 @@ export const idlFactory = ({ IDL }) => {
         [GetScenarioVoteResult],
         ['query'],
       ),
-    'getScenarios' : IDL.Func([], [GetScenariosResult], ['query']),
+    'getScenarios' : IDL.Func(
+        [GetScenariosRequest],
+        [GetScenariosResult],
+        ['query'],
+      ),
     'getTopUsers' : IDL.Func(
         [GetTopUsersRequest],
         [GetTopUsersResult],
