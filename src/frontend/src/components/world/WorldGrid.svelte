@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { gameStateStore } from "../../stores/GameStateStore";
+  import { currentGameStore } from "../../stores/CurrentGameStore";
   import HexGrid, { HexTileData } from "../common/HexGrid.svelte";
   import Location from "./Location.svelte";
   import LocationInfo from "./LocationInfo.svelte";
@@ -7,16 +7,20 @@
   let selectedTileId: number | undefined;
   let gridData: HexTileData[] | undefined;
 
-  gameStateStore.subscribe((newGameState) => {
+  currentGameStore.subscribe((newGameState) => {
     if (newGameState === undefined) {
       return;
     }
-    if ("inProgress" in newGameState) {
+    if ("inProgress" in newGameState.state) {
       if (gridData === undefined) {
         // Set the selected tile to the character's location on the first render
-        selectedTileId = Number(newGameState.inProgress.characterLocationId);
+        selectedTileId = Number(
+          newGameState.state.inProgress.locations[
+            newGameState.state.inProgress.locations.length - 1
+          ].id
+        );
       }
-      gridData = newGameState.inProgress.locations.map((location) => {
+      gridData = newGameState.state.inProgress.locations.map((location) => {
         return {
           id: Number(location.id),
           kind: { explored: { icon: "" } },

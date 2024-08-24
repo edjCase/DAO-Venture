@@ -140,7 +140,6 @@
     ]);
 
     diagram = generateMermaidDiagram(scenarios, items, traits, races, classes);
-    console.log(diagram);
     setTimeout(() => {
       mermaid.init();
     }, 0);

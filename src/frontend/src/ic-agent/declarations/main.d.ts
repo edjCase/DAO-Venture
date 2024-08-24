@@ -2,14 +2,31 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export interface Achievement {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+}
 export type AddGameContentRequest = { 'trait' : Trait } |
   { 'item' : Item } |
   { 'class' : Class } |
   { 'race' : Race } |
+  { 'zone' : Zone } |
+  { 'achievement' : Achievement } |
   { 'image' : Image } |
   { 'scenario' : ScenarioMetaData };
 export type AddGameContentResult = { 'ok' : null } |
   { 'err' : { 'notAuthorized' : null } | { 'invalid' : Array<string> } };
+export interface AddUserToGameRequest {
+  'userId' : Principal,
+  'gameId' : bigint,
+}
+export type AddUserToGameResult = { 'ok' : null } |
+  {
+    'err' : { 'alreadyJoined' : null } |
+      { 'notAuthorized' : null } |
+      { 'gameNotFound' : null }
+  };
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export interface CallbackStrategy {
   'token' : Token,
@@ -69,12 +86,23 @@ export interface Class {
   'id' : string,
   'name' : string,
   'description' : string,
-  'unlockRequirement' : UnlockRequirement,
+  'unlockRequirement' : [] | [UnlockRequirement],
   'modifiers' : Array<CharacterModifier>,
 }
 export type Condition = { 'hasGold' : NatValue } |
   { 'hasItem' : TextValue } |
   { 'hasTrait' : TextValue };
+export type CreateGameError = { 'noTraits' : null } |
+  { 'noZones' : null } |
+  { 'noItems' : null } |
+  { 'noScenariosForZone' : string } |
+  { 'noClasses' : null } |
+  { 'noRaces' : null } |
+  { 'noScenarios' : null } |
+  { 'noImages' : null } |
+  { 'alreadyInitialized' : null };
+export type CreateGameResult = { 'ok' : bigint } |
+  { 'err' : CreateGameError };
 export type CreateWorldProposalError = { 'invalid' : Array<string> } |
   { 'notEligible' : null };
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
@@ -93,18 +121,19 @@ export type Effect = { 'reward' : null } |
   { 'addTrait' : TextValue } |
   { 'removeGold' : NatValue } |
   { 'removeItem' : RandomOrSpecificTextValue };
-export type GameInstanceWithMetaData = {
-    'notStarted' : {
-      'characterVotes' : VotingSummary,
-      'characterOptions' : Array<CharacterWithMetaData>,
-      'difficultyVotes' : VotingSummary_1,
-    }
-  } |
+export type GameStateWithMetaData = { 'notStarted' : null } |
   {
     'completed' : {
       'turns' : bigint,
       'character' : CharacterWithMetaData,
       'difficulty' : Difficulty,
+    }
+  } |
+  {
+    'voting' : {
+      'characterVotes' : VotingSummary,
+      'characterOptions' : Array<CharacterWithMetaData>,
+      'difficultyVotes' : VotingSummary_1,
     }
   } |
   {
@@ -114,6 +143,12 @@ export type GameInstanceWithMetaData = {
       'locations' : Array<Location>,
     }
   };
+export interface GameWithMetaData {
+  'id' : bigint,
+  'guestUserIds' : Array<Principal>,
+  'state' : GameStateWithMetaData,
+  'hostUserId' : Principal,
+}
 export interface GeneratedDataField {
   'id' : string,
   'value' : GeneratedDataFieldValue,
@@ -129,8 +164,10 @@ export interface GeneratedDataFieldNat { 'max' : bigint, 'min' : bigint }
 export interface GeneratedDataFieldText { 'options' : Array<[string, number]> }
 export type GeneratedDataFieldValue = { 'nat' : GeneratedDataFieldNat } |
   { 'text' : GeneratedDataFieldText };
+export type GetCurrentGameResult = { 'ok' : [] | [GameWithMetaData] } |
+  { 'err' : { 'notAuthenticated' : null } };
 export interface GetGameRequest { 'gameId' : bigint }
-export type GetGameResult = { 'ok' : GameInstanceWithMetaData } |
+export type GetGameResult = { 'ok' : GameWithMetaData } |
   { 'err' : { 'gameNotFound' : null } };
 export type GetScenarioError = { 'notFound' : null } |
   { 'gameNotFound' : null } |
@@ -190,17 +227,6 @@ export interface Image {
   'kind' : ImageKind,
 }
 export type ImageKind = { 'png' : null };
-export type InitializeError = { 'noTraits' : null } |
-  { 'noZones' : null } |
-  { 'noItems' : null } |
-  { 'noScenariosForZone' : string } |
-  { 'noClasses' : null } |
-  { 'noRaces' : null } |
-  { 'noScenarios' : null } |
-  { 'noImages' : null } |
-  { 'alreadyInitialized' : null };
-export type InitializeResult = { 'ok' : null } |
-  { 'err' : InitializeError };
 export interface Item { 'id' : string, 'name' : string, 'description' : string }
 export type JoinError = { 'alreadyMember' : null };
 export interface Location {
@@ -295,6 +321,13 @@ export interface ScenarioVoteChoice {
   'votingPower' : bigint,
   'choice' : [] | [string],
 }
+export interface StartGameVoteRequest { 'gameId' : bigint }
+export type StartGameVoteResult = { 'ok' : null } |
+  {
+    'err' : { 'notAuthorized' : null } |
+      { 'gameNotFound' : null } |
+      { 'gameAlreadyStarted' : null }
+  };
 export interface StreamingCallbackHttpResponse {
   'token' : [] | [Token],
   'body' : Uint8Array | number[],
@@ -382,13 +415,17 @@ export interface WorldProposal {
   'timeEnd' : [] | [bigint],
   'proposerId' : Principal,
 }
+export interface Zone { 'id' : string, 'name' : string, 'description' : string }
 export interface _SERVICE {
   'addGameContent' : ActorMethod<[AddGameContentRequest], AddGameContentResult>,
+  'addUserToGame' : ActorMethod<[AddUserToGameRequest], AddUserToGameResult>,
+  'createGame' : ActorMethod<[], CreateGameResult>,
   'createWorldProposal' : ActorMethod<
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
   'getClasses' : ActorMethod<[], Array<Class>>,
+  'getCurrentGame' : ActorMethod<[], GetCurrentGameResult>,
   'getGame' : ActorMethod<[GetGameRequest], GetGameResult>,
   'getItems' : ActorMethod<[], Array<Item>>,
   'getRaces' : ActorMethod<[], Array<Race>>,
@@ -408,8 +445,8 @@ export interface _SERVICE {
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'http_request_update' : ActorMethod<[HttpUpdateRequest], HttpResponse>,
-  'initialize' : ActorMethod<[], InitializeResult>,
   'join' : ActorMethod<[], Result>,
+  'startGameVote' : ActorMethod<[StartGameVoteRequest], StartGameVoteResult>,
   'voteOnNewGame' : ActorMethod<[VoteOnNewGameRequest], VoteOnNewGameResult>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,
   'voteOnWorldProposal' : ActorMethod<

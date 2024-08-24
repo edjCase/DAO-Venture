@@ -16,7 +16,7 @@ module {
         name : Text;
         description : Text;
         modifiers : [CharacterModifier.CharacterModifier];
-        unlockRequirement : UnlockRequirement.UnlockRequirement;
+        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
@@ -39,9 +39,14 @@ module {
         if (existingClasses.get(class_.id) != null) {
             errors.add("Class id " # class_.id # " already exists.");
         };
-        switch (UnlockRequirement.validate(class_.unlockRequirement, achievements)) {
-            case (#err(err)) errors.append(Buffer.fromArray(err));
-            case (#ok) ();
+        switch (class_.unlockRequirement) {
+            case (null) ();
+            case (?unlockRequirement) {
+                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
+                    case (#err(err)) errors.append(Buffer.fromArray(err));
+                    case (#ok) ();
+                };
+            };
         };
         for (modifier in class_.modifiers.vals()) {
             switch (CharacterModifier.validate(modifier, items, traits)) {

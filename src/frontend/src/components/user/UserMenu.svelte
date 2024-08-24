@@ -16,7 +16,7 @@
       </div>
       {#if user.worldData != undefined}
         <div class="text-center text-md font-bold">
-          Level: {user.worldData.level}
+          Points: {user.worldData.points}
         </div>
       {/if}
     </div>

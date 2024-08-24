@@ -13,6 +13,8 @@ import Trait "../models/Trait";
 import Image "../models/Image";
 import Race "../models/Race";
 import Class "../models/Class";
+import Zone "../models/Zone";
+import Achievement "../models/Achievement";
 
 module {
     public type Actor = actor {
@@ -27,13 +29,16 @@ module {
         voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
 
         getGame : query (request : GetGameRequest) -> async GetGameResult;
+        getCurrentGame : query () -> async GetCurrentGameResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
-        initialize : () -> async InitializeResult;
+        createGame : () -> async CreateGameResult;
+        addUserToGame : (request : AddUserToGameRequest) -> async AddUserToGameResult;
+        startGameVote : (request : StartGameVoteRequest) -> async StartGameVoteResult;
         voteOnNewGame : (request : VoteOnNewGameRequest) -> async VoteOnNewGameResult;
         join : () -> async JoinResult;
 
@@ -50,11 +55,26 @@ module {
         getItems : query () -> async [Item.Item];
     };
 
+    public type AddUserToGameRequest = {
+        gameId : Nat;
+        userId : Principal;
+    };
+
+    public type AddUserToGameResult = Result.Result<(), { #gameNotFound; #notAuthorized; #alreadyJoined }>;
+
+    public type StartGameVoteRequest = {
+        gameId : Nat;
+    };
+
+    public type StartGameVoteResult = Result.Result<(), { #gameNotFound; #gameAlreadyStarted; #notAuthorized }>;
+
     public type GetGameRequest = {
         gameId : Nat;
     };
 
-    public type GetGameResult = Result.Result<GameHandler.GameInstanceWithMetaData, { #gameNotFound }>;
+    public type GetCurrentGameResult = Result.Result<?GameHandler.GameWithMetaData, { #notAuthenticated }>;
+
+    public type GetGameResult = Result.Result<GameHandler.GameWithMetaData, { #gameNotFound }>;
 
     public type AddGameContentRequest = {
         #item : Item.Item;
@@ -63,11 +83,13 @@ module {
         #scenario : Scenario.ScenarioMetaData;
         #race : Race.Race;
         #class_ : Class.Class;
+        #zone : Zone.Zone;
+        #achievement : Achievement.Achievement;
     };
 
     public type AddGameContentResult = Result.Result<(), { #invalid : [Text]; #notAuthorized }>;
 
-    public type InitializeResult = Result.Result<(), GameHandler.InitializeError>;
+    public type CreateGameResult = Result.Result<Nat, GameHandler.CreateGameError>;
 
     public type VoteOnNewGameRequest = {
         gameId : Nat;

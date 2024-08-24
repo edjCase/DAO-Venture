@@ -1,22 +1,22 @@
 <script lang="ts">
-  import { gameStateStore } from "../../stores/GameStateStore";
+  import { currentGameStore } from "../../stores/CurrentGameStore";
   import Character from "./Character.svelte";
 
-  $: gameState = $gameStateStore;
+  $: currentGame = $currentGameStore;
 </script>
 
-{#if gameState !== undefined}
-  {#if "notInitialized" in gameState}
-    <div>Game not initialized</div>
-  {:else if "notStarted" in gameState}
+{#if currentGame !== undefined}
+  {#if "notStarted" in currentGame.state}
     <div>Game not started</div>
-  {:else if "inProgress" in gameState}
-    <div>Turn: {gameState.inProgress.turn}</div>
-    <Character character={gameState.inProgress.character} />
+  {:else if "voting" in currentGame.state}
+    <div>Vote for the next character</div>
+  {:else if "inProgress" in currentGame.state}
+    <div>Turn: {currentGame.state.inProgress.turn}</div>
+    <Character character={currentGame.state.inProgress.character} />
   {:else}
     <div>Game over</div>
-    <div>Total Turns: {gameState.completed.turns}</div>
-    <div>Difficulty: {gameState.completed.difficulty}</div>
-    <Character character={gameState.completed.character} />
+    <div>Total Turns: {currentGame.state.completed.turns}</div>
+    <div>Difficulty: {currentGame.state.completed.difficulty}</div>
+    <Character character={currentGame.state.completed.character} />
   {/if}
 {/if}

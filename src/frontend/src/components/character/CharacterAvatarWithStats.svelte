@@ -1,27 +1,27 @@
 <script lang="ts">
   import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
-  import { gameStateStore } from "../../stores/GameStateStore";
+  import { currentGameStore } from "../../stores/CurrentGameStore";
   import CharacterAvatar from "../character/CharacterAvatar.svelte";
   import Icon from "./Icon.svelte";
 
   export let size: "xs" | "sm" | "md" | "lg" | "xl";
 
-  $: gameState = $gameStateStore;
+  $: currentGame = $currentGameStore;
 
   const getValue = (value: bigint | undefined): string =>
     value === undefined ? "" : value.toString();
 
   let character: CharacterWithMetaData | undefined;
   $: {
-    if (gameState !== undefined) {
-      if ("notInitialized" in gameState) {
+    if (currentGame !== undefined) {
+      if ("notStarted" in currentGame.state) {
         character = undefined;
-      } else if ("notStarted" in gameState) {
+      } else if ("voting" in currentGame.state) {
         character = undefined;
-      } else if ("inProgress" in gameState) {
-        character = gameState.inProgress.character;
+      } else if ("inProgress" in currentGame.state) {
+        character = currentGame.state.inProgress.character;
       } else {
-        character = gameState.completed.character;
+        character = currentGame.state.completed.character;
       }
     }
   }

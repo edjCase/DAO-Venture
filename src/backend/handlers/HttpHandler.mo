@@ -7,6 +7,8 @@ import Blob "mo:base/Blob";
 import CertifiedCache "mo:certified-cache";
 import GameHandler "GameHandler";
 import Image "../models/Image";
+import Nat32 "mo:base/Nat32";
+import IterTools "mo:itertools/Iter";
 
 module {
     public type HttpRequest = Http.HttpRequest;
@@ -24,7 +26,7 @@ module {
 
         let two_days_in_nanos = 2 * 24 * 60 * 60 * 1000 * 1000 * 1000; // TODO length?
 
-        var cache = CertifiedCache.fromEntries<Text, Blob>(
+        var imageResponseCache = CertifiedCache.fromEntries<Text, Blob>(
             entries,
             Text.equal,
             Text.hash,
@@ -33,54 +35,119 @@ module {
             two_days_in_nanos + Int.abs(Time.now()),
         );
 
-        public func http_request(req : HttpRequest) : HttpResponse {
-            Debug.print("Received request: " # req.url);
-            let ?imageId = getImageId(req.url) else return build404Response();
-            Debug.print("Image id: " # imageId);
-            let ?image = gameHandler.getImage(imageId) else return return build404Response();
-            Debug.print("Got Image: " # image.id);
-            let cachedBody = cache.get(imageId);
+        // var etagResponseCache = CertifiedCache.fromEntries<Text, Blob>(
+        //     entries,
+        //     Text.equal,
+        //     Text.hash,
+        //     Text.encodeUtf8,
+        //     func(b : Blob) : Blob { b },
+        //     two_days_in_nanos + Int.abs(Time.now()),
+        // );
 
-            switch cachedBody {
+        let eTagBlob = Blob.fromArray([]);
+
+        public func http_request(req : HttpRequest) : HttpResponse {
+            let ?imageId = getImageId(req.url) else return build404Response(null);
+            let ?image = gameHandler.getImage(imageId) else return build404Response(null);
+
+            let etag = buildEtag(image.data);
+
+            Debug.print("ETag: " # etag);
+
+            // switch (etagResponseCache.get(imageId)) {
+            //     case (?_) {
+            //         if (hasEtagCacheHeader(req, etag)) {
+            //             Debug.print(debug_show (eTagBlob));
+            //             let (_, certHeaderValue) = etagResponseCache.certificationHeader(req.url);
+            //             Debug.print(debug_show (certHeaderValue));
+            //             return {
+            //                 status_code = 304;
+            //                 headers = [
+            //                     ("ETag", etag),
+            //                     ("Cache-Control", "public, max-age=3600"),
+            //                     ("Test", certHeaderValue),
+            //                 ];
+            //                 body = eTagBlob;
+            //                 streaming_strategy = null;
+            //                 upgrade = null;
+            //             };
+            //         };
+            //     };
+            //     case (null) {};
+            // };
+
+            switch (imageResponseCache.get(req.url)) {
                 case (?body) {
-                    Debug.print("Request was found in cache.\n");
                     let contentType = getContentType(image.kind);
                     return {
-                        status_code : Nat16 = 200;
-                        headers = [("content-type", contentType), cache.certificationHeader(req.url)];
+                        status_code = 200;
+                        headers = [
+                            ("content-type", contentType),
+                            ("ETag", etag),
+                            ("Cache-Control", "public, max-age=3600"),
+                            imageResponseCache.certificationHeader(req.url),
+                        ];
                         body = body;
                         streaming_strategy = null;
                         upgrade = null;
                     };
                 };
-                case null {
-                    Debug.print("Request was not found in cache. Upgrading to update request.\n");
-                    return {
-                        status_code = 404;
-                        headers = [];
-                        body = Blob.fromArray([]);
-                        streaming_strategy = null;
-                        upgrade = ?true;
-                    };
+                case (null) {
+                    return build404Response(?true);
                 };
             };
         };
 
         public func http_request_update(req : HttpUpdateRequest) : HttpResponse {
             Debug.print("Received update request: " # req.url);
-            let ?imageId = getImageId(req.url) else return build404Response();
+            let ?imageId = getImageId(req.url) else return build404Response(null);
 
-            let ?image = gameHandler.getImage(imageId) else return return build404Response();
+            let ?image = gameHandler.getImage(imageId) else return build404Response(null);
 
             let contentType = getContentType(image.kind);
+            let etag = buildEtag(image.data);
+
+            imageResponseCache.put(req.url, image.data, null);
+
+            // etagResponseCache.put(imageId, eTagBlob, ?two_days_in_nanos);
+
+            // if (hasEtagCacheHeader(req, etag)) {
+            //     Debug.print("ETag cache hit and request has ETag header");
+            //     return {
+            //         status_code = 304;
+            //         headers = [
+            //             ("ETag", etag),
+            //             ("Cache-Control", "public, max-age=3600"),
+            //         ];
+            //         body = eTagBlob;
+            //         streaming_strategy = null;
+            //         upgrade = null;
+            //     };
+            // };
 
             {
-                status_code : Nat16 = 200;
-                headers = [("content-type", contentType)];
+                status_code = 200;
+                headers = [
+                    ("content-type", contentType),
+                    ("ETag", etag),
+                    ("Cache-Control", "public, max-age=3600"),
+                ];
                 body = image.data;
                 streaming_strategy = null;
                 upgrade = null;
             };
+        };
+
+        private func hasEtagCacheHeader(req : HttpRequest, eTag : Text) : Bool {
+            req.headers.vals()
+            |> IterTools.any(
+                _,
+                func(header : Http.HeaderField) : Bool = header.0 == "if-none-match" and header.1 == eTag,
+            );
+        };
+
+        private func buildEtag(blob : Blob) : Text {
+            "\"" # Nat32.toText(Blob.hash(blob)) # "\"";
         };
 
         private func getImageId(url : Text) : ?Text {
@@ -88,13 +155,13 @@ module {
             Text.split(end, #char('?')).next();
         };
 
-        private func build404Response() : HttpResponse {
+        private func build404Response(upgrade : ?Bool) : HttpResponse {
             {
                 status_code = 404;
                 headers = [];
                 body = Blob.fromArray([]);
                 streaming_strategy = null;
-                upgrade = null;
+                upgrade = upgrade;
             };
         };
 

@@ -1,7 +1,7 @@
 import { Class } from "../ic-agent/declarations/main";
 
 
-export const classes : Class[]= [
+export const classes: Class[] = [
     {
         id: "warrior",
         name: "Warrior",
@@ -11,6 +11,7 @@ export const classes : Class[]= [
             { health: 10n },
             { trait: "strong" },
         ],
+        unlockRequirement: []
     },
     {
         id: "mage",
@@ -21,6 +22,7 @@ export const classes : Class[]= [
             { trait: "alchemist" },
             { trait: "intelligent" },
         ],
+        unlockRequirement: []
     },
     {
         id: "rogue",
@@ -31,6 +33,7 @@ export const classes : Class[]= [
             { gold: 10n },
             { trait: "agile" },
         ],
+        unlockRequirement: []
     },
     {
         id: "archer",
@@ -41,6 +44,7 @@ export const classes : Class[]= [
             { speed: 1n },
             { trait: "perceptive" },
         ],
+        unlockRequirement: []
     },
     {
         id: "druid",
@@ -51,6 +55,7 @@ export const classes : Class[]= [
             { health: 5n },
             { trait: "naturalist" },
         ],
+        unlockRequirement: []
     },
     {
         id: "paladin",
@@ -61,6 +66,7 @@ export const classes : Class[]= [
             { defense: 1n },
             { trait: "holy" },
         ],
+        unlockRequirement: []
     },
     {
         id: "bard",
@@ -71,6 +77,7 @@ export const classes : Class[]= [
             { speed: 1n },
             { trait: "charismatic" },
         ],
+        unlockRequirement: []
     },
     {
         id: "monk",
@@ -80,6 +87,7 @@ export const classes : Class[]= [
             { speed: 2n },
             { trait: "tough" },
         ],
+        unlockRequirement: []
     },
     {
         id: "artificer",
@@ -90,6 +98,7 @@ export const classes : Class[]= [
             { attack: 1n },
             { trait: "crafty" },
         ],
+        unlockRequirement: []
     },
     {
         id: "necromancer",
@@ -100,5 +109,6 @@ export const classes : Class[]= [
             { health: -5n },
             { trait: "cursed" },
         ],
+        unlockRequirement: []
     },
 ];

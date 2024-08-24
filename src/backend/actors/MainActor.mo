@@ -106,17 +106,17 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
-    public shared func initialize() : async Types.InitializeResult {
-        // TODO is there a way to not have to intialize, or trigger immediately after creation
-        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-        let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the new game vote
-        let members = buildVotingMembersList();
+    public shared ({ caller }) func createGame() : async Types.CreateGameResult {
+        gameHandler.createInstance(caller);
+    };
 
-        gameHandler.initialize(
-            prng,
-            proposerId,
-            members,
-        );
+    public shared ({ caller }) func addUserToGame(request : Types.AddUserToGameRequest) : async Types.AddUserToGameResult {
+        gameHandler.addUserToGame(request.gameId, caller, request.userId);
+    };
+
+    public shared ({ caller }) func startGameVote(request : Types.StartGameVoteRequest) : async Types.StartGameVoteResult {
+        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
+        gameHandler.startVote(prng, request.gameId, caller);
     };
 
     public shared func addGameContent(request : Types.AddGameContentRequest) : async Types.AddGameContentResult {
@@ -128,6 +128,8 @@ actor MainActor : Types.Actor {
             case (#scenario(scenario)) gameHandler.addScenarioMetaData(scenario);
             case (#race(race)) gameHandler.addRace(race);
             case (#class_(class_)) gameHandler.addClass(class_);
+            case (#zone(zone)) gameHandler.addZone(zone);
+            case (#achievement(achievement)) gameHandler.addAchievement(achievement);
         };
     };
 
@@ -244,7 +246,18 @@ actor MainActor : Types.Actor {
     };
 
     public shared query func getGame(request : Types.GetGameRequest) : async Types.GetGameResult {
-        gameHandler.getInstance(request.gameId);
+        switch (gameHandler.getInstance(request.gameId)) {
+            case (?game) #ok(game);
+            case (null) return #err(#gameNotFound);
+        };
+    };
+
+    public shared query ({ caller }) func getCurrentGame() : async Types.GetCurrentGameResult {
+        if (Principal.isAnonymous(caller)) {
+            return #err(#notAuthenticated);
+        };
+
+        #ok(gameHandler.getCurrentInstance(caller));
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {

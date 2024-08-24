@@ -1,25 +1,32 @@
 <script lang="ts">
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { mainAgentFactory } from "../../ic-agent/Main";
-  import { gameStateStore } from "../../stores/GameStateStore";
+  import { currentGameStore } from "../../stores/CurrentGameStore";
   import ChoiceRequirement from "./ChoiceRequirement.svelte";
   import GameImage from "../common/GameImage.svelte";
 
   export let scenarioId: bigint;
 
+  $: currentGame = $currentGameStore;
+
   $: scenarios = $scenarioStore;
   $: scenario = scenarios?.find((s) => s.id == scenarioId);
 
   let vote = (optionId: string) => async () => {
+    if (currentGame === undefined) {
+      console.error("Game not found");
+      return;
+    }
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.voteOnScenario({
+      gameId: currentGame.id,
       scenarioId: scenarioId,
       value: optionId,
     });
     if ("ok" in result) {
       console.log("Voted successfully");
-      scenarioStore.refetch();
-      gameStateStore.refetch();
+      scenarioStore.refetchByGameId(currentGame.id);
+      currentGameStore.refetch();
     } else {
       console.error("Failed to vote:", result);
     }

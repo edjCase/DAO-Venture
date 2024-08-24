@@ -5,16 +5,16 @@ export const zones = [
         name: "Enchanted Forest",
         description: "A mystical woodland teeming with magical creatures and ancient secrets."
     },
-    {
-        id: "ancient_ruins",
-        name: "Ancient Ruins",
-        description: "Crumbling structures of a long-lost civilization, filled with forgotten knowledge and hidden dangers."
-    },
-    {
-        id: "mystic_caves",
-        name: "Mystic Caves",
-        description: "A vast underground network of caverns, glowing with magical crystals and echoing with arcane energies."
-    },
+    // {
+    //     id: "ancient_ruins",
+    //     name: "Ancient Ruins",
+    //     description: "Crumbling structures of a long-lost civilization, filled with forgotten knowledge and hidden dangers."
+    // },
+    // {
+    //     id: "mystic_caves",
+    //     name: "Mystic Caves",
+    //     description: "A vast underground network of caverns, glowing with magical crystals and echoing with arcane energies."
+    // },
     // {
     //     id: "scorching_desert",
     //     name: "Scorching Desert",

@@ -1,6 +1,6 @@
 <script lang="ts">
   import WorldGrid from "./world/WorldGrid.svelte";
-  import { gameStateStore } from "../stores/GameStateStore";
+  import { currentGameStore } from "../stores/CurrentGameStore";
   import LoadingButton from "./common/LoadingButton.svelte";
   import { mainAgentFactory } from "../ic-agent/Main";
   import { userStore } from "../stores/UserStore";
@@ -9,13 +9,13 @@
     Difficulty,
     Trait,
   } from "../ic-agent/declarations/main";
-  import MermaidDiagram from "./common/MermaidDiagram.svelte";
+  import LoginButton from "./common/LoginButton.svelte";
 
   interface ImageModule {
     default: string;
   }
 
-  $: gameState = $gameStateStore;
+  $: currentGame = $currentGameStore;
   $: user = $userStore;
 
   let initialize = async () => {
@@ -80,6 +80,15 @@
       })
     );
 
+    let zones = await import("../initial_data/ZoneData").then((module) => {
+      return module.zones;
+    });
+    await Promise.all(
+      zones.map(async (zone) => {
+        await addGameContent({ zone: zone });
+      })
+    );
+
     let scenarios = await import("../initial_data/ScenarioData").then(
       (module) => {
         return module.scenarios;
@@ -90,14 +99,33 @@
         await addGameContent({ scenario: scenario });
       })
     );
-
-    let result = await mainAgent.initialize();
+  };
+  let createGame = async () => {
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.createGame();
     if ("ok" in result) {
-      gameStateStore.refetch();
+      currentGameStore.refetch();
+    } else {
+      console.error("Failed to create game", result);
+    }
+  };
+
+  let startGameVote = async () => {
+    if (currentGame === undefined) {
+      console.error("Game state not loaded");
+      return;
+    }
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.startGameVote({
+      gameId: currentGame.id,
+    });
+    if ("ok" in result) {
+      currentGameStore.refetch();
     } else {
       console.error("Failed to start game", result);
     }
   };
+
   let join = async () => {
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.join();
@@ -111,6 +139,10 @@
   let characterId: number | undefined = undefined;
   let difficulty: Difficulty | undefined = undefined;
   let vote = async () => {
+    if (currentGame === undefined) {
+      console.error("Game state not loaded");
+      return;
+    }
     if (characterId === undefined) {
       console.error("Character not selected");
       return;
@@ -121,11 +153,12 @@
     }
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.voteOnNewGame({
+      gameId: currentGame.id,
       characterId: BigInt(characterId),
       difficulty: difficulty,
     });
     if ("ok" in result) {
-      gameStateStore.refetch();
+      currentGameStore.refetch();
     } else {
       console.error("Failed to vote", result);
     }
@@ -136,113 +169,119 @@
   {#if user?.worldData === undefined}
     <LoadingButton onClick={join}>Join</LoadingButton>
   {/if}
-  {#if gameState !== undefined}
-    {#if "notInitialized" in gameState}
-      <div>Game not initialized</div>
-      <LoadingButton onClick={initialize}>Initialize</LoadingButton>
-    {:else if "notStarted" in gameState}
-      <div class="text-3xl">Vote on next game</div>
-      <div class="flex flex-col p-8">
-        {#each gameState.notStarted.characterOptions as character, id}
-          <button
-            on:click={() => {
-              characterId = id;
-            }}
-          >
-            <div
-              class="border rounded p-4 mb-4 w-full {characterId == id
-                ? 'bg-gray-700'
-                : ''}"
-            >
-              <div class="text-2xl">
-                {character.race.name}
-                {character.class.name}
-              </div>
-              <div>
-                {#if character.health > 100}
-                  <div>+{character.health - 100n} 🫀</div>
-                {:else if character.health < 100}
-                  <div>-{100n - character.health} 🫀</div>
-                {/if}
-                {#if character.gold > 0}
-                  <div>+{character.gold} 🪙</div>
-                {/if}
-                {#if character.stats.attack > 0}
-                  <div>+{character.stats.attack} ⚔️</div>
-                {/if}
-                {#if character.stats.defense > 0}
-                  <div>+{character.stats.defense} 🛡️</div>
-                {/if}
-                {#if character.stats.speed > 0}
-                  <div>+{character.stats.speed} 🏃</div>
-                {/if}
-                {#if character.stats.magic > 0}
-                  <div>+{character.stats.magic} 🔮</div>
-                {/if}
-                {#each character.traits as trait}
-                  <div>+{trait.name}</div>
-                {/each}
-                {#each character.items as item}
-                  <div>+{item.name}</div>
-                {/each}
-              </div>
-            </div>
-          </button>
-        {/each}
-      </div>
-      <div>
-        <button
-          on:click={() => {
-            difficulty = { easy: null };
-          }}
-        >
-          <div
-            class="border rounded p-4 mb-4 w-full {difficulty !== undefined &&
-            'easy' in difficulty
-              ? 'bg-gray-700'
-              : ''}"
-          >
-            Easy
-          </div>
-        </button>
-        <button
-          on:click={() => {
-            difficulty = { medium: null };
-          }}
-        >
-          <div
-            class="border rounded p-4 mb-4 w-full {difficulty !== undefined &&
-            'medium' in difficulty
-              ? 'bg-gray-700'
-              : ''}"
-          >
-            Medium
-          </div>
-        </button>
-        <button
-          on:click={() => {
-            difficulty = { hard: null };
-          }}
-        >
-          <div
-            class="border rounded p-4 mb-4 w-full {difficulty !== undefined &&
-            'hard' in difficulty
-              ? 'bg-gray-700'
-              : ''}"
-          >
-            Hard
-          </div>
-        </button>
-      </div>
-      <LoadingButton onClick={vote}>Vote</LoadingButton>
-    {:else if "inProgress" in gameState}
-      <div>Turn: {gameState.inProgress.turn}</div>
-      <WorldGrid />
+  <LoadingButton onClick={initialize}>Initialize Data</LoadingButton>
+  {#if currentGame === undefined}
+    {#if user !== undefined}
+      <LoadingButton onClick={createGame}>Create New Game</LoadingButton>
     {:else}
-      <div>Game over</div>
-      <div>Total Turns: {gameState.completed.turns}</div>
-      <div>Difficulty: {gameState.completed.difficulty}</div>
+      <LoginButton />
     {/if}
+  {:else if "notStarted" in currentGame.state}
+    <div>Invite Users</div>
+    <div>Start Vote</div>
+    <LoadingButton onClick={startGameVote}>Start Vote for Game</LoadingButton>
+  {:else if "voting" in currentGame.state}
+    <div class="text-3xl">Vote on next game</div>
+    <div class="flex flex-col p-8">
+      {#each currentGame.state.voting.characterOptions as character, id}
+        <button
+          on:click={() => {
+            characterId = id;
+          }}
+        >
+          <div
+            class="border rounded p-4 mb-4 w-full {characterId == id
+              ? 'bg-gray-700'
+              : ''}"
+          >
+            <div class="text-2xl">
+              {character.race.name}
+              {character.class.name}
+            </div>
+            <div>
+              {#if character.health > 100}
+                <div>+{character.health - 100n} 🫀</div>
+              {:else if character.health < 100}
+                <div>-{100n - character.health} 🫀</div>
+              {/if}
+              {#if character.gold > 0}
+                <div>+{character.gold} 🪙</div>
+              {/if}
+              {#if character.stats.attack > 0}
+                <div>+{character.stats.attack} ⚔️</div>
+              {/if}
+              {#if character.stats.defense > 0}
+                <div>+{character.stats.defense} 🛡️</div>
+              {/if}
+              {#if character.stats.speed > 0}
+                <div>+{character.stats.speed} 🏃</div>
+              {/if}
+              {#if character.stats.magic > 0}
+                <div>+{character.stats.magic} 🔮</div>
+              {/if}
+              {#each character.traits as trait}
+                <div>+{trait.name}</div>
+              {/each}
+              {#each character.items as item}
+                <div>+{item.name}</div>
+              {/each}
+            </div>
+          </div>
+        </button>
+      {/each}
+    </div>
+    <div>
+      <button
+        on:click={() => {
+          difficulty = { easy: null };
+        }}
+      >
+        <div
+          class="border rounded p-4 mb-4 w-full {difficulty !== undefined &&
+          'easy' in difficulty
+            ? 'bg-gray-700'
+            : ''}"
+        >
+          Easy
+        </div>
+      </button>
+      <button
+        on:click={() => {
+          difficulty = { medium: null };
+        }}
+      >
+        <div
+          class="border rounded p-4 mb-4 w-full {difficulty !== undefined &&
+          'medium' in difficulty
+            ? 'bg-gray-700'
+            : ''}"
+        >
+          Medium
+        </div>
+      </button>
+      <button
+        on:click={() => {
+          difficulty = { hard: null };
+        }}
+      >
+        <div
+          class="border rounded p-4 mb-4 w-full {difficulty !== undefined &&
+          'hard' in difficulty
+            ? 'bg-gray-700'
+            : ''}"
+        >
+          Hard
+        </div>
+      </button>
+    </div>
+    <LoadingButton onClick={vote}>Vote</LoadingButton>
+  {:else if "inProgress" in currentGame.state}
+    <div>Turn: {currentGame.state.inProgress.turn}</div>
+    <WorldGrid />
+  {:else}
+    <div>Game over</div>
+    <div>Total Turns: {currentGame.state.completed.turns}</div>
+    <div>Difficulty: {currentGame.state.completed.difficulty}</div>
   {/if}
-  <MermaidDiagram />
+  <!-- <MermaidDiagram /> -->
 </div>

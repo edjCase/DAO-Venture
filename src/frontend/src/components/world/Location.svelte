@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { gameStateStore } from "../../stores/GameStateStore";
+  import { currentGameStore } from "../../stores/CurrentGameStore";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import GameImage from "../common/GameImage.svelte";
 
   export let locationId: bigint;
 
-  $: gameState = $gameStateStore;
+  $: currentGame = $currentGameStore;
   $: location =
-    gameState !== undefined && "inProgress" in gameState
-      ? gameState.inProgress.locations.find((l) => l.id == locationId)
+    currentGame !== undefined && "inProgress" in currentGame.state
+      ? currentGame.state.inProgress.locations.find((l) => l.id == locationId)
       : undefined;
 
   $: scenarios = $scenarioStore;
@@ -27,4 +27,6 @@
       </svg>
     {/if}
   </g>
+{:else}
+  <text x="0" y="0" fill="red">Location not found</text>
 {/if}
