@@ -35,6 +35,7 @@ module {
             two_days_in_nanos + Int.abs(Time.now()),
         );
 
+        // TODO cant figure out why cert is invalid
         // var etagResponseCache = CertifiedCache.fromEntries<Text, Blob>(
         //     entries,
         //     Text.equal,
@@ -54,18 +55,18 @@ module {
 
             Debug.print("ETag: " # etag);
 
-            // switch (etagResponseCache.get(imageId)) {
+            // TODO cant figure out why cert is invalid
+            // switch (etagResponseCache.get(req.url)) {
             //     case (?_) {
+            //         Debug.print("ETag cache hit");
             //         if (hasEtagCacheHeader(req, etag)) {
-            //             Debug.print(debug_show (eTagBlob));
-            //             let (_, certHeaderValue) = etagResponseCache.certificationHeader(req.url);
-            //             Debug.print(debug_show (certHeaderValue));
+            //             Debug.print("ETag cache hit and request has ETag header");
             //             return {
             //                 status_code = 304;
             //                 headers = [
             //                     ("ETag", etag),
             //                     ("Cache-Control", "public, max-age=3600"),
-            //                     ("Test", certHeaderValue),
+            //                     etagResponseCache.certificationHeader(req.url),
             //                 ];
             //                 body = eTagBlob;
             //                 streaming_strategy = null;
@@ -109,21 +110,22 @@ module {
 
             imageResponseCache.put(req.url, image.data, null);
 
-            // etagResponseCache.put(imageId, eTagBlob, ?two_days_in_nanos);
+            // TODO cant figure out why cert is invalid
+            // etagResponseCache.put(req.url, eTagBlob, ?two_days_in_nanos);
 
-            // if (hasEtagCacheHeader(req, etag)) {
-            //     Debug.print("ETag cache hit and request has ETag header");
-            //     return {
-            //         status_code = 304;
-            //         headers = [
-            //             ("ETag", etag),
-            //             ("Cache-Control", "public, max-age=3600"),
-            //         ];
-            //         body = eTagBlob;
-            //         streaming_strategy = null;
-            //         upgrade = null;
-            //     };
-            // };
+            if (hasEtagCacheHeader(req, etag)) {
+                Debug.print("ETag cache hit and request has ETag header");
+                return {
+                    status_code = 304;
+                    headers = [
+                        ("ETag", etag),
+                        ("Cache-Control", "public, max-age=3600"),
+                    ];
+                    body = eTagBlob;
+                    streaming_strategy = null;
+                    upgrade = null;
+                };
+            };
 
             {
                 status_code = 200;
