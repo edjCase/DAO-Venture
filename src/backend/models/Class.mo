@@ -15,6 +15,7 @@ module {
         id : Text;
         name : Text;
         description : Text;
+        weaponId : Text;
         modifiers : [CharacterModifier.CharacterModifier];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };

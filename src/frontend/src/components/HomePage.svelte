@@ -89,6 +89,17 @@
       })
     );
 
+    let creatures = await import("../initial_data/CreatureData").then(
+      (module) => {
+        return module.creatures;
+      }
+    );
+    await Promise.all(
+      creatures.map(async (creature) => {
+        await addGameContent({ creature: creature });
+      })
+    );
+
     let scenarios = await import("../initial_data/ScenarioData").then(
       (module) => {
         return module.scenarios;

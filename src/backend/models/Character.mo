@@ -1,6 +1,7 @@
 import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
+import Weapon "Weapon";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -10,6 +11,7 @@ module {
         gold : Nat;
         classId : Text;
         raceId : Text;
+        weapon : Weapon.Weapon;
         stats : CharacterStats;
         itemIds : TrieSet.Set<Text>;
         traitIds : TrieSet.Set<Text>;

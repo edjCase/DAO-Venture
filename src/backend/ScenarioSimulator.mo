@@ -6,12 +6,18 @@ import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
 import Principal "mo:base/Principal";
+import HashMap "mo:base/HashMap";
+import Int "mo:base/Int";
+import Iter "mo:base/Iter";
+import Float "mo:base/Float";
 import CharacterHandler "handlers/CharacterHandler";
 import Outcome "models/Outcome";
 import Scenario "models/Scenario";
 import Character "models/Character";
 import UserHandler "handlers/UserHandler";
 import ScenarioHandler "handlers/ScenarioHandler";
+import Creature "models/Creature";
+import Weapon "models/Weapon";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -23,10 +29,19 @@ module {
         characterHandler : CharacterHandler.Handler,
         scenario : Scenario.Scenario,
         scenarioMetaData : Scenario.ScenarioMetaData,
+        creatures : HashMap.HashMap<Text, Creature.Creature>,
         choiceOrUndecided : ?Text,
     ) : Outcome.Outcome {
         let messages = Buffer.Buffer<Text>(5);
-        let helper = Helper(prng, members, characterHandler, userHandler, scenario, messages);
+        let helper = Helper(
+            prng,
+            members,
+            characterHandler,
+            userHandler,
+            scenario,
+            creatures,
+            messages,
+        );
 
         let initialPathId = switch (choiceOrUndecided) {
             case (null) { scenarioMetaData.undecidedPathId };
@@ -48,13 +63,29 @@ module {
             ) else Debug.trap("Invalid path ID: " # currentPathId);
             helper.log(currentPath.description);
 
-            for (effect in currentPath.effects.vals()) {
-                switch (helper.applyEffect(effect)) {
-                    case (#alive) (); // Continue
-                    case (#dead) {
-                        return {
-                            messages = Buffer.toArray(messages);
-                            choiceOrUndecided = choiceOrUndecided;
+            switch (currentPath.kind) {
+                case (#combat(combat)) {
+                    let outcome = runCombat(prng, combat, helper);
+                    switch (outcome) {
+                        case (#alive) (); // Continue
+                        case (#dead) {
+                            return {
+                                messages = helper.getMessages();
+                                choiceOrUndecided = choiceOrUndecided;
+                            };
+                        };
+                    };
+                };
+                case (#effects(effects)) {
+                    for (effect in effects.vals()) {
+                        switch (helper.applyEffect(effect)) {
+                            case (#alive) (); // Continue
+                            case (#dead) {
+                                return {
+                                    messages = helper.getMessages();
+                                    choiceOrUndecided = choiceOrUndecided;
+                                };
+                            };
                         };
                     };
                 };
@@ -89,6 +120,93 @@ module {
         {
             messages = Buffer.toArray(messages);
             choiceOrUndecided = choiceOrUndecided;
+        };
+    };
+    func runCombat(
+        prng : Prng,
+        combat : Scenario.CombatPath,
+        helper : Helper,
+    ) : { #alive; #dead } {
+        let character = helper.getCharacterStats();
+        var creature = helper.getCreatureStats(combat.creatureId);
+
+        func calculateWeaponDamage(weapon : Weapon.Weapon) : Nat {
+            var damage = 0;
+            for (_ in Iter.range(0, weapon.baseStats.damage.attacks - 1)) {
+                damage += prng.nextNat(weapon.baseStats.damage.min, weapon.baseStats.damage.max);
+            };
+            damage;
+        };
+
+        func calculateHitChance(attacker : { accuracy : Int }, defender : { speed : Int }) : Nat {
+            let hitChance : Int = attacker.accuracy - defender.speed + 50;
+            // Clamp to 5-100%
+            hitChance |> Int.min(100, _) |> Int.max(5, _) |> Int.abs(_);
+        };
+
+        func getAttackDamage(
+            attacker : {
+                health : Nat;
+                speed : Int;
+                weapon : Weapon.Weapon;
+            },
+            defender : {
+                health : Nat;
+                defense : Int;
+                speed : Int;
+            },
+            isCharacter : Bool,
+        ) : Nat {
+            let hitChance = calculateHitChance(attacker.weapon.baseStats, defender);
+            if (prng.nextNat(1, 100) <= hitChance) {
+                var damage = calculateWeaponDamage(attacker.weapon);
+                if (prng.nextNat(1, 100) <= attacker.weapon.baseStats.criticalChance) {
+                    let damagePlusCrit = damage
+                    |> Float.fromInt(_) * attacker.weapon.baseStats.criticalMultiplier
+                    |> Float.toInt(_)
+                    |> Int.max(1, _)
+                    |> Int.abs(_);
+                    damage := damagePlusCrit;
+                };
+                // TODO better defense
+                // TODO do damage type/resistances
+                let finalDamage = Int.abs(Int.max(0, damage - defender.defense));
+                helper.log(if (isCharacter) "You hit for " else "The creature hits you for " # Nat.toText(finalDamage) # " damage.");
+                finalDamage;
+            } else {
+                helper.log(if (isCharacter) "Your attack misses." else "The creature's attack misses.");
+                0;
+            };
+        };
+
+        // Determine initiative
+        let characterInitiative = character.speed + prng.nextNat(1, 20);
+        let creatureInitiative = creature.speed + prng.nextNat(1, 20);
+        let characterFirst = characterInitiative >= creatureInitiative;
+
+        helper.log(if (characterFirst) "You act first!" else "The creature acts first!");
+
+        var isCharacterTurn = characterFirst;
+        loop {
+
+            if (isCharacterTurn) {
+                let characterAttackDamage = getAttackDamage(character, creature, true);
+                let newHealth = Int.abs(Int.max(0, creature.health - characterAttackDamage));
+                if (newHealth <= 0) {
+                    helper.log("You defeat the creature!");
+                    return #alive;
+                };
+                creature := {
+                    creature with
+                    health = newHealth;
+                };
+            } else {
+                let creatureAttackDamage = getAttackDamage(creature, character, false);
+                switch (helper.damageCharacter(creatureAttackDamage)) {
+                    case (#alive) ();
+                    case (#dead) return #dead;
+                };
+            };
         };
     };
 
@@ -135,8 +253,45 @@ module {
         characterHandler : CharacterHandler.Handler,
         userHandler : UserHandler.Handler,
         scenario : Scenario.Scenario,
+        creatures : HashMap.HashMap<Text, Creature.Creature>,
         messages : Buffer.Buffer<Text>,
     ) {
+        type CombatStats = {
+            health : Nat;
+            attack : Int;
+            defense : Int;
+            speed : Int;
+            magic : Int;
+            weapon : Weapon.Weapon;
+        };
+
+        public func getCharacterStats() : CombatStats {
+            let character = characterHandler.get();
+            {
+                health = character.health;
+                attack = character.stats.attack;
+                defense = character.stats.defense;
+                speed = character.stats.speed;
+                magic = character.stats.magic;
+                weapon = character.weapon;
+            };
+        };
+
+        public func getCreatureStats(creatureId : Text) : CombatStats {
+            switch (creatures.get(creatureId)) {
+                case (?creature) {
+                    {
+                        health = creature.health;
+                        attack = creature.stats.attack;
+                        defense = creature.stats.defense;
+                        speed = creature.stats.speed;
+                        magic = creature.stats.magic;
+                        weapon = creature.weapon;
+                    };
+                };
+                case (null) Debug.trap("Creature not found: " # creatureId);
+            };
+        };
 
         public func meetsCondition(condition : Scenario.Condition) : Bool {
             let character = characterHandler.get();
@@ -161,7 +316,10 @@ module {
                 case (#reward) reward();
                 case (#damage(amount)) {
                     let damageAmount = getNatValue(prng, amount, scenario.data);
-                    if (not takeDamage(damageAmount)) return #dead;
+                    switch (damageCharacter(damageAmount)) {
+                        case (#alive) ();
+                        case (#dead) return #dead;
+                    };
                 };
                 case (#heal(amount)) {
                     heal(getNatValue(prng, amount, scenario.data));
@@ -215,9 +373,13 @@ module {
             messages.add(message);
         };
 
-        public func takeDamage(amount : Nat) : Bool {
+        public func damageCharacter(amount : Nat) : { #alive; #dead } {
             messages.add("You take " # Nat.toText(amount) # " damage.");
-            characterHandler.takeDamage(amount);
+            if (characterHandler.takeDamage(amount)) {
+                #alive;
+            } else {
+                #dead;
+            };
         };
 
         public func heal(amount : Nat) {

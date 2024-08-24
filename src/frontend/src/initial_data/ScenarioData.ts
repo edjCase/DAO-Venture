@@ -43,34 +43,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "attack_treant",
         description: "You attack the treant.",
         effects: [],
-        paths: [
-          {
-            weight: 0.7,
-            condition: [],
-            pathId: "victory",
-          },
-          {
-            weight: 0.3,
-            condition: [],
-            pathId: "victory_with_injury",
-          },
-        ],
-      },
-      {
-        id: "victory",
-        description: "You defeat the treant",
-        effects: [{ addItem: { raw: "treant_bark" } }],
         paths: [],
-      },
-      {
-        id: "victory_with_injury",
-        description: "The treant hits you.",
-        effects: [{ damage: { random: [1n, 3n] } }],
-        paths: [{
-          weight: 1,
-          condition: [],
-          pathId: "victory",
-        }],
       },
       {
         id: "purify_treant",

@@ -15,6 +15,7 @@ import Race "../models/Race";
 import Class "../models/Class";
 import Zone "../models/Zone";
 import Achievement "../models/Achievement";
+import Creature "../models/Creature";
 
 module {
     public type Actor = actor {
@@ -85,6 +86,7 @@ module {
         #class_ : Class.Class;
         #zone : Zone.Zone;
         #achievement : Achievement.Achievement;
+        #creature : Creature.Creature;
     };
 
     public type AddGameContentResult = Result.Result<(), { #invalid : [Text]; #notAuthorized }>;

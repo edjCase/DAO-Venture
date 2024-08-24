@@ -13,6 +13,7 @@ import Item "Item";
 import Image "Image";
 import Zone "Zone";
 import Achievement "Achievement";
+import Creature "Creature";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -81,8 +82,17 @@ module {
     public type OutcomePath = {
         id : Text;
         description : Text;
-        effects : [Effect];
+        kind : OutcomePathKind;
         paths : [WeightedOutcomePath];
+    };
+
+    public type OutcomePathKind = {
+        #effects : [Effect];
+        #combat : CombatPath;
+    };
+
+    public type CombatPath = {
+        creatureId : Text;
     };
 
     public type WeightedOutcomePath = {
@@ -135,6 +145,7 @@ module {
         images : HashMap.HashMap<Text, Image.Image>,
         zones : HashMap.HashMap<Text, Zone.Zone>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
+        creatures : HashMap.HashMap<Text, Creature.Creature>,
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
 
@@ -307,33 +318,42 @@ module {
                 };
             };
 
-            for (effect in path.effects.vals()) {
-                switch (effect) {
-                    case (#addItem(addItem)) validateTextValue(addItem, items, "item");
-                    case (#addTrait(addTrait)) validateTextValue(addTrait, traits, "trait");
-                    case (#removeGold(removeGold)) validateNatValue(removeGold, "gold");
-                    case (#removeItem(removeItem)) {
-                        switch (removeItem) {
-                            case (#random) {};
-                            case (#specific(specific)) validateTextValue(specific, items, "item");
-                        };
+            switch (path.kind) {
+                case (#combat(combat)) {
+                    if (creatures.get(combat.creatureId) == null) {
+                        errors.add("Invalid creature id: " # combat.creatureId);
                     };
-                    case (#removeTrait(removeTrait)) {
-                        switch (removeTrait) {
-                            case (#random) {};
-                            case (#specific(specific)) validateTextValue(specific, traits, "trait");
-                        };
-                    };
-                    case (#damage(damage)) validateNatValue(damage, "damage");
-                    case (#heal(heal)) validateNatValue(heal, "heal");
-                    case (#reward) {};
-                    case (#upgradeStat(upgradeStat)) validateNatValue(upgradeStat.1, "stat");
-                    case (#achievement(achievementId)) {
-                        if (TextX.isEmpty(achievementId)) {
-                            errors.add("Achievement id cannot be empty");
-                        };
-                        if (achievements.get(achievementId) == null) {
-                            errors.add("Invalid achievement id: " # achievementId);
+                };
+                case (#effects(effects)) {
+                    for (effect in effects.vals()) {
+                        switch (effect) {
+                            case (#addItem(addItem)) validateTextValue(addItem, items, "item");
+                            case (#addTrait(addTrait)) validateTextValue(addTrait, traits, "trait");
+                            case (#removeGold(removeGold)) validateNatValue(removeGold, "gold");
+                            case (#removeItem(removeItem)) {
+                                switch (removeItem) {
+                                    case (#random) {};
+                                    case (#specific(specific)) validateTextValue(specific, items, "item");
+                                };
+                            };
+                            case (#removeTrait(removeTrait)) {
+                                switch (removeTrait) {
+                                    case (#random) {};
+                                    case (#specific(specific)) validateTextValue(specific, traits, "trait");
+                                };
+                            };
+                            case (#damage(damage)) validateNatValue(damage, "damage");
+                            case (#heal(heal)) validateNatValue(heal, "heal");
+                            case (#reward) {};
+                            case (#upgradeStat(upgradeStat)) validateNatValue(upgradeStat.1, "stat");
+                            case (#achievement(achievementId)) {
+                                if (TextX.isEmpty(achievementId)) {
+                                    errors.add("Achievement id cannot be empty");
+                                };
+                                if (achievements.get(achievementId) == null) {
+                                    errors.add("Invalid achievement id: " # achievementId);
+                                };
+                            };
                         };
                     };
                 };

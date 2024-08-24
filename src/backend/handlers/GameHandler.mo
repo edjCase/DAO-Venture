@@ -30,6 +30,8 @@ import Zone "../models/Zone";
 import HexGrid "../models/HexGrid";
 import Achievement "../models/Achievement";
 import UserHandler "UserHandler";
+import Creature "../models/Creature";
+import Weapon "../models/Weapon";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -44,6 +46,8 @@ module {
         images : [Image.Image];
         zones : [Zone.Zone];
         achievements : [Achievement.Achievement];
+        creatures : [Creature.Creature];
+        weapons : [Weapon.Weapon];
     };
 
     public type GameInstance = {
@@ -123,6 +127,7 @@ module {
         stats : Character.CharacterStats;
         items : [Item.Item];
         traits : [Trait.Trait];
+        weapon : Weapon.Weapon;
     };
 
     public type ScenarioWithMetaData = Scenario.Scenario and {
@@ -140,6 +145,9 @@ module {
         #noImages;
         #noZones;
         #noScenariosForZone : Text;
+        #noCreatures;
+        #noCreaturesForZone : Text;
+        #noWeapons;
     };
 
     type MutableGameInstance = {
@@ -194,6 +202,10 @@ module {
 
         let achievements = toTextHashMap<Achievement.Achievement>(data.achievements);
 
+        let creatures = toTextHashMap<Creature.Creature>(data.creatures);
+
+        let weapons = toTextHashMap<Weapon.Weapon>(data.weapons);
+
         var instances : HashMap.HashMap<Nat, MutableGameInstance> = toHashMap<GameInstance, Nat, MutableGameInstance>(
             data.instances,
             func(instance : GameInstance) : (Nat, MutableGameInstance) = (instance.id, toMutableInstance(instance)),
@@ -202,7 +214,6 @@ module {
         );
 
         public func toStableData() : StableData {
-
             {
                 instances = instances.vals() |> Iter.map(_, fromMutableInstance) |> Iter.toArray(_);
                 classes = Iter.toArray(classes.vals());
@@ -213,6 +224,8 @@ module {
                 images = Iter.toArray(images.vals());
                 zones = Iter.toArray(zones.vals());
                 achievements = Iter.toArray(achievements.vals());
+                creatures = Iter.toArray(creatures.vals());
+                weapons = Iter.toArray(weapons.vals());
             };
         };
 
@@ -240,6 +253,12 @@ module {
             if (zones.size() == 0) {
                 return #err(#noZones);
             };
+            if (creatures.size() == 0) {
+                return #err(#noCreatures);
+            };
+            if (weapons.size() == 0) {
+                return #err(#noWeapons);
+            };
             for (zone in zones.vals()) {
                 if (
                     not IterTools.any(
@@ -251,6 +270,17 @@ module {
                     )
                 ) {
                     return #err(#noScenariosForZone(zone.id));
+                };
+                if (
+                    not IterTools.any(
+                        creatures.vals(),
+                        func(creature : Creature.Creature) : Bool = switch (creature.location) {
+                            case (#common) false;
+                            case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == zone.id) != null;
+                        },
+                    )
+                ) {
+                    return #err(#noCreaturesForZone(zone.id));
                 };
             };
 
@@ -309,7 +339,7 @@ module {
                 func(_ : Nat) : Character.Character {
                     let class_ = prng.nextArrayElement(classArray);
                     let race = prng.nextArrayElement(raceArray);
-                    CharacterGenerator.generate(class_, race);
+                    CharacterGenerator.generate(class_, race, weapons);
                 },
             )
             |> Iter.toArray(_);
@@ -541,6 +571,7 @@ module {
                 inProgressInstance.characterHandler,
                 scenario,
                 scenarioMetaData,
+                creatures,
                 choiceOrUndecided,
             );
             switch (inProgressInstance.scenarioHandler.end(currentLocation.scenarioId, outcome)) {
@@ -616,6 +647,7 @@ module {
                     images,
                     zones,
                     achievements,
+                    creatures,
                 )
             ) {
                 case (#err(errors)) return #err(#invalid(errors));
@@ -643,6 +675,16 @@ module {
             };
             Debug.print("Adding achievement: " # achievement.id);
             achievements.put(achievement.id, achievement);
+            #ok;
+        };
+
+        public func addCreature(creature : Creature.Creature) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Creature.validate(creature, creatures)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding creature: " # creature.id);
+            creatures.put(creature.id, creature);
             #ok;
         };
 
@@ -849,6 +891,7 @@ module {
                 stats = character.stats;
                 items = itemsWithMetaData;
                 traits = traitsWithMetaData;
+                weapon = character.weapon;
             };
         };
 

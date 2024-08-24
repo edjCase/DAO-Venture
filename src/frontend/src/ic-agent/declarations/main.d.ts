@@ -8,6 +8,7 @@ export interface Achievement {
   'description' : string,
 }
 export type AddGameContentRequest = { 'trait' : Trait } |
+  { 'creature' : Creature } |
   { 'item' : Item } |
   { 'class' : Class } |
   { 'race' : Race } |
@@ -28,6 +29,8 @@ export type AddUserToGameResult = { 'ok' : null } |
       { 'gameNotFound' : null }
   };
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
+export type BoostType = { 'addFlat' : bigint } |
+  { 'addPercent' : number };
 export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
@@ -57,6 +60,7 @@ export interface CharacterWithMetaData {
   'race' : Race,
   'stats' : CharacterStats,
   'items' : Array<Item>,
+  'weapon' : Weapon,
   'health' : bigint,
 }
 export interface Choice {
@@ -86,17 +90,22 @@ export interface Class {
   'id' : string,
   'name' : string,
   'description' : string,
+  'weaponId' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
   'modifiers' : Array<CharacterModifier>,
 }
+export interface CombatPath { 'creatureId' : string }
 export type Condition = { 'hasGold' : NatValue } |
   { 'hasItem' : TextValue } |
   { 'hasTrait' : TextValue };
 export type CreateGameError = { 'noTraits' : null } |
+  { 'noWeapons' : null } |
+  { 'noCreaturesForZone' : string } |
   { 'noZones' : null } |
   { 'noItems' : null } |
   { 'noScenariosForZone' : string } |
   { 'noClasses' : null } |
+  { 'noCreatures' : null } |
   { 'noRaces' : null } |
   { 'noScenarios' : null } |
   { 'noImages' : null } |
@@ -108,6 +117,23 @@ export type CreateWorldProposalError = { 'invalid' : Array<string> } |
 export type CreateWorldProposalRequest = { 'motion' : MotionContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
+export interface Creature {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+  'stats' : CreatureStats,
+  'location' : CreatureLocationKind,
+  'weapon' : Weapon,
+  'health' : bigint,
+}
+export type CreatureLocationKind = { 'common' : null } |
+  { 'zoneIds' : Array<string> };
+export interface CreatureStats {
+  'magic' : bigint,
+  'speed' : bigint,
+  'defense' : bigint,
+  'attack' : bigint,
+}
 export type Difficulty = { 'easy' : null } |
   { 'hard' : null } |
   { 'medium' : null };
@@ -247,10 +273,12 @@ export interface Outcome {
 }
 export interface OutcomePath {
   'id' : string,
-  'effects' : Array<Effect>,
+  'kind' : OutcomePathKind,
   'description' : string,
   'paths' : Array<WeightedOutcomePath>,
 }
+export type OutcomePathKind = { 'effects' : Array<Effect> } |
+  { 'combat' : CombatPath };
 export interface PagedResult {
   'data' : Array<WorldProposal>,
   'count' : bigint,
@@ -328,6 +356,15 @@ export type StartGameVoteResult = { 'ok' : null } |
       { 'gameNotFound' : null } |
       { 'gameAlreadyStarted' : null }
   };
+export interface StatBoost {
+  'stat' : StatKind,
+  'affectedAttribute' : WeaponAttribute,
+  'boostType' : BoostType,
+}
+export type StatKind = { 'magic' : null } |
+  { 'speed' : null } |
+  { 'defense' : null } |
+  { 'attack' : null };
 export interface StreamingCallbackHttpResponse {
   'token' : [] | [Token],
   'body' : Uint8Array | number[],
@@ -400,6 +437,33 @@ export interface VotingSummary_1 {
   'votingPowerByChoice' : Array<ChoiceVotingPower_2>,
   'undecidedVotingPower' : bigint,
   'totalVotingPower' : bigint,
+}
+export interface Weapon {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+  'baseStats' : WeaponStats,
+  'requirements' : [] | [WeaponRequirement],
+}
+export type WeaponAttribute = { 'damage' : null } |
+  { 'criticalChance' : null } |
+  { 'criticalMultiplier' : null } |
+  { 'accuracy' : null };
+export interface WeaponDamage {
+  'max' : bigint,
+  'min' : bigint,
+  'attacks' : bigint,
+}
+export type WeaponRequirement = { 'magic' : bigint } |
+  { 'speed' : bigint } |
+  { 'defense' : bigint } |
+  { 'attack' : bigint };
+export interface WeaponStats {
+  'damage' : WeaponDamage,
+  'criticalChance' : bigint,
+  'boosts' : Array<StatBoost>,
+  'criticalMultiplier' : number,
+  'accuracy' : bigint,
 }
 export interface WeightedOutcomePath {
   'weight' : number,

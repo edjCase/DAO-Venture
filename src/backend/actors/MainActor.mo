@@ -42,6 +42,8 @@ actor MainActor : Types.Actor {
         images = [];
         zones = [];
         achievements = [];
+        creatures = [];
+        weapons = [];
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
@@ -130,6 +132,7 @@ actor MainActor : Types.Actor {
             case (#class_(class_)) gameHandler.addClass(class_);
             case (#zone(zone)) gameHandler.addZone(zone);
             case (#achievement(achievement)) gameHandler.addAchievement(achievement);
+            case (#creature(creature)) gameHandler.addCreature(creature);
         };
     };
 

@@ -5,6 +5,71 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
+  const CreatureStats = IDL.Record({
+    'magic' : IDL.Int,
+    'speed' : IDL.Int,
+    'defense' : IDL.Int,
+    'attack' : IDL.Int,
+  });
+  const CreatureLocationKind = IDL.Variant({
+    'common' : IDL.Null,
+    'zoneIds' : IDL.Vec(IDL.Text),
+  });
+  const WeaponDamage = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
+    'attacks' : IDL.Nat,
+  });
+  const StatKind = IDL.Variant({
+    'magic' : IDL.Null,
+    'speed' : IDL.Null,
+    'defense' : IDL.Null,
+    'attack' : IDL.Null,
+  });
+  const WeaponAttribute = IDL.Variant({
+    'damage' : IDL.Null,
+    'criticalChance' : IDL.Null,
+    'criticalMultiplier' : IDL.Null,
+    'accuracy' : IDL.Null,
+  });
+  const BoostType = IDL.Variant({
+    'addFlat' : IDL.Nat,
+    'addPercent' : IDL.Float64,
+  });
+  const StatBoost = IDL.Record({
+    'stat' : StatKind,
+    'affectedAttribute' : WeaponAttribute,
+    'boostType' : BoostType,
+  });
+  const WeaponStats = IDL.Record({
+    'damage' : WeaponDamage,
+    'criticalChance' : IDL.Nat,
+    'boosts' : IDL.Vec(StatBoost),
+    'criticalMultiplier' : IDL.Float64,
+    'accuracy' : IDL.Int,
+  });
+  const WeaponRequirement = IDL.Variant({
+    'magic' : IDL.Nat,
+    'speed' : IDL.Nat,
+    'defense' : IDL.Nat,
+    'attack' : IDL.Nat,
+  });
+  const Weapon = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'baseStats' : WeaponStats,
+    'requirements' : IDL.Opt(WeaponRequirement),
+  });
+  const Creature = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'stats' : CreatureStats,
+    'location' : CreatureLocationKind,
+    'weapon' : Weapon,
+    'health' : IDL.Nat,
+  });
   const Item = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
@@ -25,6 +90,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'weaponId' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
     'modifiers' : IDL.Vec(CharacterModifier),
   });
@@ -98,6 +164,11 @@ export const idlFactory = ({ IDL }) => {
     'removeGold' : NatValue,
     'removeItem' : RandomOrSpecificTextValue,
   });
+  const CombatPath = IDL.Record({ 'creatureId' : IDL.Text });
+  const OutcomePathKind = IDL.Variant({
+    'effects' : IDL.Vec(Effect),
+    'combat' : CombatPath,
+  });
   const Condition = IDL.Variant({
     'hasGold' : NatValue,
     'hasItem' : TextValue,
@@ -110,7 +181,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const OutcomePath = IDL.Record({
     'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect),
+    'kind' : OutcomePathKind,
     'description' : IDL.Text,
     'paths' : IDL.Vec(WeightedOutcomePath),
   });
@@ -149,6 +220,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddGameContentRequest = IDL.Variant({
     'trait' : Trait,
+    'creature' : Creature,
     'item' : Item,
     'class' : Class,
     'race' : Race,
@@ -178,10 +250,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateGameError = IDL.Variant({
     'noTraits' : IDL.Null,
+    'noWeapons' : IDL.Null,
+    'noCreaturesForZone' : IDL.Text,
     'noZones' : IDL.Null,
     'noItems' : IDL.Null,
     'noScenariosForZone' : IDL.Text,
     'noClasses' : IDL.Null,
+    'noCreatures' : IDL.Null,
     'noRaces' : IDL.Null,
     'noScenarios' : IDL.Null,
     'noImages' : IDL.Null,
@@ -217,6 +292,7 @@ export const idlFactory = ({ IDL }) => {
     'race' : Race,
     'stats' : CharacterStats,
     'items' : IDL.Vec(Item),
+    'weapon' : Weapon,
     'health' : IDL.Nat,
   });
   const Difficulty = IDL.Variant({
