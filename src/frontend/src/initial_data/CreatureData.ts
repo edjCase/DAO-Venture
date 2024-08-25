@@ -1,7 +1,7 @@
 import { Creature } from "../ic-agent/declarations/main";
 
 
-export const traits: Creature[] = [
+export const creatures: Creature[] = [
     {
         id: "corrupted_treant",
         name: "Corrupted Treant",
@@ -14,5 +14,6 @@ export const traits: Creature[] = [
             speed: 1n,
             magic: 1n
         },
+        weapon
     },
 ];

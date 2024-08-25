@@ -2408,7 +2408,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "learn_path",
         description: "You try to learn from the alchemist.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 3,
@@ -2425,25 +2427,33 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "learn_success",
         description: "You successfully learn from the alchemist!",
-        effects: [{ addTrait: { raw: "alchemist" } }],
+        kind: {
+          effects: [{ addTrait: { raw: "alchemist" } }],
+        },
         paths: [],
       },
       {
         id: "learn_failure",
         description: "The alchemist's instructions are too complex. You fail to learn anything.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "decline_path",
         description: "You politely decline the alchemist's offers and continue on your journey.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You ignore them and continue walking down the path.",
-        effects: [],
+        kind: {
+          effects: []
+        }
         paths: [],
       },
     ],

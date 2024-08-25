@@ -572,6 +572,7 @@ module {
                 scenario,
                 scenarioMetaData,
                 creatures,
+                weapons,
                 choiceOrUndecided,
             );
             switch (inProgressInstance.scenarioHandler.end(currentLocation.scenarioId, outcome)) {

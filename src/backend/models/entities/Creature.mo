@@ -2,13 +2,12 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
-import Weapon "Weapon";
 import Entity "Entity";
 
 module {
     public type Creature = Entity.Entity and {
         location : CreatureLocationKind;
-        weapon : Weapon.Weapon;
+        weaponId : Text;
         health : Nat;
         stats : CreatureStats;
     };

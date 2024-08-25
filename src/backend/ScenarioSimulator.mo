@@ -30,6 +30,7 @@ module {
         scenario : Scenario.Scenario,
         scenarioMetaData : Scenario.ScenarioMetaData,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
+        weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         choiceOrUndecided : ?Text,
     ) : Outcome.Outcome {
         let messages = Buffer.Buffer<Text>(5);
@@ -40,6 +41,7 @@ module {
             userHandler,
             scenario,
             creatures,
+            weapons,
             messages,
         );
 
@@ -257,6 +259,7 @@ module {
         userHandler : UserHandler.Handler,
         scenario : Scenario.Scenario,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
+        weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         messages : Buffer.Buffer<Text>,
     ) {
         type CombatStats = {
@@ -281,18 +284,15 @@ module {
         };
 
         public func getCreatureStats(creatureId : Text) : CombatStats {
-            switch (creatures.get(creatureId)) {
-                case (?creature) {
-                    {
-                        health = creature.health;
-                        attack = creature.stats.attack;
-                        defense = creature.stats.defense;
-                        speed = creature.stats.speed;
-                        magic = creature.stats.magic;
-                        weapon = creature.weapon;
-                    };
-                };
-                case (null) Debug.trap("Creature not found: " # creatureId);
+            let ?creature = creatures.get(creatureId) else Debug.trap("Creature not found: " # creatureId);
+            let ?weapon = weapons.get(creature.weaponId) else Debug.trap("Weapon not found: " # creature.weaponId);
+            {
+                health = creature.health;
+                attack = creature.stats.attack;
+                defense = creature.stats.defense;
+                speed = creature.stats.speed;
+                magic = creature.stats.magic;
+                weapon = weapon;
             };
         };
 
