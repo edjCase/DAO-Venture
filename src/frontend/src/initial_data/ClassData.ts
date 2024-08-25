@@ -1,6 +1,5 @@
 import { Class } from "../ic-agent/declarations/main";
 
-
 export const classes: Class[] = [
     {
         id: "warrior",
@@ -11,7 +10,8 @@ export const classes: Class[] = [
             { health: 10n },
             { trait: "strong" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "iron_sword"
     },
     {
         id: "mage",
@@ -22,7 +22,8 @@ export const classes: Class[] = [
             { trait: "alchemist" },
             { trait: "intelligent" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "apprentice_wand"
     },
     {
         id: "rogue",
@@ -33,7 +34,8 @@ export const classes: Class[] = [
             { gold: 10n },
             { trait: "agile" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "iron_dagger"
     },
     {
         id: "archer",
@@ -44,7 +46,8 @@ export const classes: Class[] = [
             { speed: 1n },
             { trait: "perceptive" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "short_bow"
     },
     {
         id: "druid",
@@ -55,7 +58,8 @@ export const classes: Class[] = [
             { health: 5n },
             { trait: "naturalist" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "oaken_staff"
     },
     {
         id: "paladin",
@@ -66,7 +70,8 @@ export const classes: Class[] = [
             { defense: 1n },
             { trait: "holy" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "iron_mace"
     },
     {
         id: "bard",
@@ -77,7 +82,8 @@ export const classes: Class[] = [
             { speed: 1n },
             { trait: "charismatic" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "basic_lute"
     },
     {
         id: "monk",
@@ -87,7 +93,8 @@ export const classes: Class[] = [
             { speed: 2n },
             { trait: "tough" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "wooden_staff"
     },
     {
         id: "artificer",
@@ -98,7 +105,8 @@ export const classes: Class[] = [
             { attack: 1n },
             { trait: "crafty" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "mechanic_wrench"
     },
     {
         id: "necromancer",
@@ -109,6 +117,7 @@ export const classes: Class[] = [
             { health: -5n },
             { trait: "cursed" },
         ],
-        unlockRequirement: []
+        unlockRequirement: [],
+        weaponId: "bone_staff"
     },
 ];

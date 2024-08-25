@@ -62,6 +62,15 @@
       })
     );
 
+    let weapons = await import("../initial_data/WeaponData").then((module) => {
+      return module.weapons;
+    });
+    await Promise.all(
+      weapons.map(async (weapon) => {
+        await addGameContent({ weapon: weapon });
+      })
+    );
+
     let classes = await import("../initial_data/ClassData").then((module) => {
       return module.classes;
     });

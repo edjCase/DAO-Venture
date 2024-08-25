@@ -10,6 +10,8 @@ import HashMap "mo:base/HashMap";
 import Int "mo:base/Int";
 import Iter "mo:base/Iter";
 import Float "mo:base/Float";
+import Order "mo:base/Order";
+import Prelude "mo:base/Prelude";
 import CharacterHandler "handlers/CharacterHandler";
 import Outcome "models/Outcome";
 import Scenario "models/entities/Scenario";
@@ -18,6 +20,7 @@ import UserHandler "handlers/UserHandler";
 import ScenarioHandler "handlers/ScenarioHandler";
 import Creature "models/entities/Creature";
 import Weapon "models/entities/Weapon";
+import IterTools "mo:itertools/Iter";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -130,7 +133,16 @@ module {
         helper : Helper,
     ) : { #alive; #dead } {
         let character = helper.getCharacterStats();
-        var creature = helper.getCreatureStats(combat.creatureId);
+        var creatures = combat.creatures.vals()
+        |> Iter.map(
+            _,
+            func(c : Scenario.CombatCreatureKind) : CombatStats {
+                let creatureIds = helper.getCreatureIds(c);
+                let selectedCreatureId = prng.nextArrayElement(creatureIds);
+                helper.getCreatureStats(selectedCreatureId);
+            },
+        )
+        |> Buffer.fromIter<CombatStats>(_);
 
         func calculateWeaponDamage(weapon : Weapon.Weapon) : Nat {
             var damage = 0;
@@ -181,31 +193,81 @@ module {
         };
 
         // Determine initiative
-        let characterInitiative = character.speed + prng.nextNat(1, 20);
-        let creatureInitiative = creature.speed + prng.nextNat(1, 20);
-        let characterFirst = characterInitiative >= creatureInitiative;
+        let characterInitiative : Int = character.speed + prng.nextNat(1, 20);
 
-        helper.log(if (characterFirst) "You act first!" else "The creature acts first!");
+        type InitiativeSlot = { #character; #creatureIndex : Nat };
+        type SlotAndValue = { slot : InitiativeSlot; initiative : Int };
 
-        var isCharacterTurn = characterFirst;
+        let initiativeSlots : [InitiativeSlot] = creatures.vals()
+        |> IterTools.enumerate(_)
+        |> Iter.map(
+            _,
+            func((i, c) : (Nat, CombatStats)) : SlotAndValue = {
+                slot = #creatureIndex(i);
+                initiative = c.speed + prng.nextNat(1, 20);
+            },
+        )
+        // Add character
+        |> IterTools.chain<SlotAndValue>(_, [{ slot = #character; initiative = characterInitiative } : SlotAndValue].vals())
+        // Sort by initiative
+        |> Iter.sort(_, func(x : SlotAndValue, y : SlotAndValue) : Order.Order = Int.compare(x.initiative, y.initiative))
+        |> Iter.map(_, func(x : SlotAndValue) : InitiativeSlot = x.slot)
+        |> Iter.toArray(_);
+
+        func creatureIsAlive(i : Nat) : Bool {
+            let creature = creatures.get(i) else Debug.trap("Creature not found at index: " # Int.toText(i));
+            creature.health > 0;
+        };
+
+        func getTargetCreature() : ?(CombatStats, Nat) {
+            let slot = initiativeSlots.vals()
+            |> Iter.filter(
+                _,
+                func(s : InitiativeSlot) : Bool = switch (s) {
+                    case (#creatureIndex(i)) creatureIsAlive(i);
+                    case (#character) false;
+                },
+            ).next();
+            switch (slot) {
+                case (null) null;
+                case (? #creatureIndex(i)) ?(creatures.get(i), i);
+                case (? #character) Prelude.unreachable();
+            };
+        };
+
+        var initiativeIndex = 0;
         loop {
+            switch (initiativeSlots[initiativeIndex]) {
+                case (#character) {
+                    let ?(targetCreature, creatureIndex) = getTargetCreature() else Debug.trap("No target creature found");
+                    let characterAttackDamage = getAttackDamage(character, targetCreature, true);
+                    let newHealth = Int.abs(Int.max(0, targetCreature.health - characterAttackDamage));
+                    if (newHealth <= 0) {
+                        helper.log("You defeat the creature " # Int.toText(creatureIndex + 1) # "!");
+                        let anyCreaturesAlive = creatures.vals()
+                        |> IterTools.any(_, func(c : CombatStats) : Bool { c.health > 0 });
+                        if (not anyCreaturesAlive) {
+                            return #alive;
+                        };
+                    };
 
-            if (isCharacterTurn) {
-                let characterAttackDamage = getAttackDamage(character, creature, true);
-                let newHealth = Int.abs(Int.max(0, creature.health - characterAttackDamage));
-                if (newHealth <= 0) {
-                    helper.log("You defeat the creature!");
-                    return #alive;
+                    creatures.put(
+                        creatureIndex,
+                        {
+                            targetCreature with
+                            health = newHealth;
+                        },
+                    );
                 };
-                creature := {
-                    creature with
-                    health = newHealth;
-                };
-            } else {
-                let creatureAttackDamage = getAttackDamage(creature, character, false);
-                switch (helper.damageCharacter(creatureAttackDamage)) {
-                    case (#alive) ();
-                    case (#dead) return #dead;
+                case (#creatureIndex(i)) {
+                    if (creatureIsAlive(i)) {
+                        let creature = creatures.get(i) else Debug.trap("Creature not found at index: " # Int.toText(i));
+                        let creatureAttackDamage = getAttackDamage(creature, character, false);
+                        switch (helper.damageCharacter(creatureAttackDamage)) {
+                            case (#alive) ();
+                            case (#dead) return #dead;
+                        };
+                    };
                 };
             };
         };
@@ -252,6 +314,15 @@ module {
         };
     };
 
+    type CombatStats = {
+        health : Nat;
+        attack : Int;
+        defense : Int;
+        speed : Int;
+        magic : Int;
+        weapon : Weapon.Weapon;
+    };
+
     private class Helper(
         prng : Prng,
         members : [ScenarioHandler.Member],
@@ -262,14 +333,6 @@ module {
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         messages : Buffer.Buffer<Text>,
     ) {
-        type CombatStats = {
-            health : Nat;
-            attack : Int;
-            defense : Int;
-            speed : Int;
-            magic : Int;
-            weapon : Weapon.Weapon;
-        };
 
         public func getCharacterStats() : CombatStats {
             let character = characterHandler.get();
@@ -281,6 +344,26 @@ module {
                 magic = character.stats.magic;
                 weapon = character.weapon;
             };
+        };
+
+        public func getCreatureIds(kind : Scenario.CombatCreatureKind) : [Text] {
+            let iter = switch (kind) {
+                case (#id(id)) Iter.make(id);
+                case (#filter(filter)) {
+                    let creatureFilter = switch (filter.location) {
+                        case (#any) func(_ : Creature.Creature) : Bool = true;
+                        case (#common) func(c : Creature.Creature) : Bool = c.location == #common;
+                        case (#zone(zoneId)) func(c : Creature.Creature) : Bool = switch (c.location) {
+                            case (#zoneIds(zoneIds)) Array.indexOf(zoneId, zoneIds, Text.equal) != null;
+                            case (_) false;
+                        };
+                    };
+                    creatures.vals()
+                    |> Iter.filter(_, creatureFilter)
+                    |> Iter.map(_, func(c : Creature.Creature) : Text = c.id);
+                };
+            };
+            Iter.toArray(iter);
         };
 
         public func getCreatureStats(creatureId : Text) : CombatStats {

@@ -90,7 +90,18 @@ module {
     };
 
     public type CombatPath = {
-        creatureId : Text;
+        creatures : [CombatCreatureKind];
+    };
+
+    public type CombatCreatureKind = {
+        #id : Text;
+        #filter : {
+            location : {
+                #zone : Text;
+                #common;
+                #any;
+            };
+        };
     };
 
     public type WeightedOutcomePath = {
@@ -304,8 +315,25 @@ module {
 
             switch (path.kind) {
                 case (#combat(combat)) {
-                    if (creatures.get(combat.creatureId) == null) {
-                        errors.add("Invalid creature id: " # combat.creatureId);
+                    for (creature in combat.creatures.vals()) {
+                        switch (creature) {
+                            case (#id(id)) {
+                                if (creatures.get(id) == null) {
+                                    errors.add("Invalid creature id: " # id);
+                                };
+                            };
+                            case (#filter(filter)) {
+                                switch (filter.location) {
+                                    case (#zone(zoneId)) {
+                                        if (zones.get(zoneId) == null) {
+                                            errors.add("Invalid zone id: " # zoneId);
+                                        };
+                                    };
+                                    case (#common) ();
+                                    case (#any) ();
+                                };
+                            };
+                        };
                     };
                 };
                 case (#effects(effects)) {

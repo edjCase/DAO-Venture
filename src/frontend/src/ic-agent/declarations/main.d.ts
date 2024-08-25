@@ -93,7 +93,15 @@ export interface Class {
   'unlockRequirement' : [] | [UnlockRequirement],
   'modifiers' : Array<CharacterModifier>,
 }
-export interface CombatPath { 'creatureId' : string }
+export type CombatCreatureKind = { 'id' : string } |
+  {
+    'filter' : {
+      'location' : { 'any' : null } |
+        { 'zone' : string } |
+        { 'common' : null },
+    }
+  };
+export interface CombatPath { 'creatures' : Array<CombatCreatureKind> }
 export type Condition = { 'hasGold' : NatValue } |
   { 'hasItem' : TextValue } |
   { 'hasTrait' : TextValue };
@@ -121,8 +129,8 @@ export interface Creature {
   'name' : string,
   'description' : string,
   'stats' : CreatureStats,
+  'weaponId' : string,
   'location' : CreatureLocationKind,
-  'weapon' : Weapon,
   'health' : bigint,
 }
 export type CreatureLocationKind = { 'common' : null } |

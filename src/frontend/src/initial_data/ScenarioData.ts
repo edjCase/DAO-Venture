@@ -1,10 +1,9 @@
 import { ScenarioMetaData } from "../ic-agent/declarations/main";
 
-
 export const scenarios: ScenarioMetaData[] = [
   {
     id: "corrupted_treant",
-    title: "Corrupted Treant",
+    name: "Corrupted Treant",
     description: "A massive, twisted tree creature blocks your path. Dark energy pulses through its bark.",
     data: [],
     location: {
@@ -42,13 +41,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "attack_treant",
         description: "You attack the treant.",
-        effects: [],
+        kind: {
+          combat: { creatures: [{ id: "corrupted_treant" }] }
+        },
         paths: [],
       },
       {
         id: "purify_treant",
         description: "You channel magical energy to purify the treant.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 0.8,
@@ -65,13 +68,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "successful_purification",
         description: "Your magic cleanses the corruption. The treant returns to its peaceful state.",
-        effects: [{ reward: null }, { addTrait: { raw: "naturalist" } }],
+        kind: {
+          effects: [{ reward: null }, { addTrait: { raw: "naturalist" } }]
+        },
         paths: [],
       },
       {
         id: "failed_purification",
         description: "The corruption resists your magic and lashes out!",
-        effects: [{ damage: { random: [1n, 3n] } }],
+        kind: {
+          effects: [{ damage: { random: [1n, 3n] } }]
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -81,7 +88,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "evade_treant",
         description: "You attempt to sneak past the treant.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 0.7,
@@ -98,13 +107,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "successful_evasion",
         description: "You successfully navigate around the treant without incident.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "failed_evasion",
         description: "The treant notices your attempt to sneak by and attacks!",
-        effects: [{ damage: { random: [1n, 3n] } }],
+        kind: {
+          effects: [{ damage: { random: [1n, 3n] } }]
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -114,7 +127,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "communicate_treant",
         description: "You attempt to communicate with the treant using your nature-speaking abilities.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 0.9,
@@ -131,13 +146,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "successful_communication",
         description: "You reach the treant's consciousness. It calms and allows you to pass.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "failed_communication",
         description: "The corruption is too strong. The treant attacks despite your efforts.",
-        effects: [{ damage: { random: [1n, 3n] } }],
+        kind: {
+          effects: [{ damage: { random: [1n, 3n] } }]
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -147,7 +166,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "frozen",
         description: "You stand frozen, unable to decide. The treant attacks.",
-        effects: [{ damage: { random: [1n, 3n] } }],
+        kind: {
+          effects: [{ damage: { random: [1n, 3n] } }]
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -158,7 +179,7 @@ export const scenarios: ScenarioMetaData[] = [
   },
   {
     id: "dark_elf_ambush",
-    title: "Dark Elf Ambush",
+    name: "Dark Elf Ambush",
     description: "A group of dark elves emerges from the shadows, weapons drawn. Their eyes gleam with malicious intent.",
     imageId: "dark_elf_ambush",
     data: [],
@@ -196,30 +217,31 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "fight_elves",
         description: "You stand your ground against the dark elves.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 0.6,
             condition: [],
             pathId: "successful_fight",
           },
-          {
-            weight: 0.4,
-            condition: [],
-            pathId: "elf_attack",
-          },
         ],
       },
       {
         id: "successful_fight",
         description: "You successfully fend off the dark elves!",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "negotiate_elves",
         description: "You attempt to negotiate with the dark elves.",
-        effects: [{ removeItem: { random: null } }],
+        kind: {
+          effects: [{ removeItem: { random: null } }]
+        },
         paths: [
           {
             weight: 0.5,
@@ -236,13 +258,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "successful_negotiation",
         description: "The dark elves accept your offer and let you pass.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "failed_negotiation",
         description: "Negotiations fail, and the dark elves attack!",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -252,7 +278,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "retreat_from_elves",
         description: "You attempt to retreat from the dark elves.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 0.67,
@@ -269,13 +297,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "successful_retreat",
         description: "You manage to escape.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "failed_retreat",
         description: "Your retreat fails, and the dark elves catch up to you.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -285,7 +317,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "stealth_past_elves",
         description: "You attempt to sneak past the dark elves.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 0.8,
@@ -302,13 +336,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "successful_stealth",
         description: "You successfully sneak past the dark elves without being detected.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "failed_stealth",
         description: "Despite your agility, the dark elves spot you.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -318,13 +356,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "elf_attack",
         description: "The dark elves attack!",
-        effects: [{ damage: { random: [1n, 3n] } }],
+        kind: {
+          combat: { creatures: [{ id: "dark_elf" }, { id: "dark_elf" }] }
+        },
         paths: [],
       },
       {
         id: "frozen",
         description: "You stand frozen, unable to decide. The elves attack.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [{
           weight: 1,
           condition: [],
@@ -335,7 +377,7 @@ export const scenarios: ScenarioMetaData[] = [
   },
   {
     id: "druidic_sanctuary",
-    title: "Druidic Sanctuary",
+    name: "Druidic Sanctuary",
     description: "You enter a serene grove where druids commune with nature. The trees seem to be whispering gossip.",
     imageId: "druidic_sanctuary",
     location: {
@@ -389,10 +431,12 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "seek_healing_path",
         description: "The druids surround you, chanting in what sounds suspiciously like plant-ese.",
-        effects: [
-          { removeGold: { dataField: "healing_cost" } },
-          { heal: { random: [3n, 7n] } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "healing_cost" } },
+            { heal: { random: [3n, 7n] } },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -409,21 +453,27 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "healing_success",
         description: "You feel rejuvenated, and slightly more photosynthetic.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "healing_failure",
         description: "The druids frown at your empty pockets. Seems Mother Nature doesn't work pro bono.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "request_blessing_path",
         description: "The druids prepare to bestow a blessing upon you.",
-        effects: [
-          { removeGold: { dataField: "blessing_cost" } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "blessing_cost" } },
+          ]
+        },
         paths: [
           {
             weight: 2,
@@ -445,27 +495,35 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "blessing_success",
         description: "The druids bless you with the 'strength of oak'. You feel sturdier, and vaguely like you want to grow leaves.",
-        effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "blessing_partial",
         description: "The blessing goes slightly awry. You now have an inexplicable craving for sunlight and water.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "blessing_failure",
         description: "The druids shake their heads. Apparently, 'the blessing of poverty' isn't a thing.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "commune_with_nature_path",
         description: "You attempt to commune with nature.",
-        effects: [
-          { removeGold: { dataField: "commune_cost" } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "commune_cost" } },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -487,38 +545,48 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "commune_success",
         description: "You successfully commune with nature. A squirrel imparts ancient wisdom, and hands you a nut... er, herb.",
-        effects: [{ addItem: { raw: "herbs" } }],
+        kind: {
+          effects: [{ addItem: { raw: "herbs" } }]
+        },
         paths: [],
       },
       {
         id: "commune_partial",
         description: "Your attempt at communing results in a lengthy conversation with a sassy fern. You're not sure, but you think it just insulted your haircut.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "commune_failure",
         description: "Nature, it seems, doesn't accept I.O.U.s. The trees rustle disapprovingly at your lack of funds.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "leave_path",
         description: "You leave the sanctuary, shaking off a few clingy vines. You could swear that oak just waved goodbye.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You stand motionless, unsure if that bush just winked at you.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "dwarven_weaponsmith",
-    title: "Dwarven Weaponsmith",
+    name: "Dwarven Weaponsmith",
     description: "You encounter a surly dwarven weaponsmith, offering attack upgrades at steep prices.",
     imageId: "dwarven_weaponsmith",
     location: {
@@ -572,10 +640,12 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "upgrade_attack_path",
         description: "You attempt to upgrade your attack.",
-        effects: [
-          { removeGold: { dataField: "upgrade_cost" } },
-          { upgradeStat: [{ attack: null }, { raw: 1n }] },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "upgrade_cost" } },
+            { upgradeStat: [{ attack: null }, { raw: 1n }] },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -592,19 +662,25 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "upgrade_success",
         description: "You upgrade your attack by 1 for {upgrade_cost} gold.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "upgrade_failure",
         description: "You don't have enough gold to upgrade your attack.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "haggle_path",
         description: "You attempt to haggle with the dwarf.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 3,
@@ -621,38 +697,47 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "haggle_success",
         description: "The dwarf grudgingly offers a discounted upgrade price of {discounted_cost} gold.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "haggle_failure",
         description: "The dwarf is offended by your haggling and refuses to upgrade your attack.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "dwarf_negotiate_path",
         description: "Your dwarf crew member negotiates a special deal: {special_deal} gold for a weapon upgrade.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "leave_path",
         description: "You leave the weaponsmith's shop without upgrading your attack.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You stand frozen, unable to decide. The dwarf pushes you out of his shop.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
-  },
-  {
+  }, {
     id: "enchanted_grove",
-    title: "Enchanted Grove",
+    name: "Enchanted Grove",
     description: "You enter a serene grove with magical properties.",
     imageId: "enchanted_grove",
     location: {
@@ -706,10 +791,12 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "meditate_path",
         description: "You attempt to meditate in the grove.",
-        effects: [
-          { removeGold: { dataField: "meditation_cost" } },
-          { upgradeStat: [{ magic: null }, { raw: 1n }] },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "meditation_cost" } },
+            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -726,22 +813,28 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "meditate_success",
         description: "You meditate and feel your magical abilities grow stronger.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "meditate_failure",
         description: "You don't have enough gold to perform the meditation ritual.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "harvest_path",
         description: "You attempt to harvest rare herbs from the grove.",
-        effects: [
-          { damage: { dataField: "harvest_cost" } },
-          { addItem: { raw: "herbs" } },
-        ],
+        kind: {
+          effects: [
+            { damage: { dataField: "harvest_cost" } },
+            { addItem: { raw: "herbs" } },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -758,23 +851,29 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "harvest_success",
         description: "You harvest rare herbs from the grove, expending some energy in the process.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "harvest_rejuvenation",
         description: "The grove's magic rejuvenates you slightly.",
-        effects: [
-          { heal: { raw: 1n } },
-        ],
+        kind: {
+          effects: [
+            { heal: { raw: 1n } },
+          ]
+        },
         paths: [],
       },
       {
         id: "commune_path",
         description: "You attempt to commune with nature spirits.",
-        effects: [
-          { removeGold: { dataField: "commune_cost" } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "commune_cost" } },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -796,42 +895,52 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "commune_success",
         description: "You commune with nature spirits and receive a unique item.",
-        effects: [
-          { addItem: { raw: "crystal" } },
-        ],
+        kind: {
+          effects: [
+            { addItem: { raw: "crystal" } },
+          ]
+        },
         paths: [],
       },
       {
         id: "commune_failure",
         description: "You commune with nature spirits but receive no tangible reward.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "commune_no_gold",
         description: "You don't have enough gold to commune with nature spirits.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "leave_path",
         description: "You leave the enchanted grove, feeling refreshed.",
-        effects: [
-          { heal: { raw: 1n } },
-        ],
+        kind: {
+          effects: [
+            { heal: { raw: 1n } },
+          ]
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You stand in awe of the grove's beauty, unable to decide what to do.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "faerie_market",
-    title: "Faerie Market",
+    name: "Faerie Market",
     description: "You stumble upon a hidden faerie market, offering magical trinkets and mysterious trades.",
     imageId: "faerie_market",
     location: {
@@ -877,7 +986,7 @@ export const scenarios: ScenarioMetaData[] = [
       },
       {
         id: "use_crystal",
-        description: "Use a  to get better deals.",
+        description: "Use a crystal to get better deals.",
         pathId: "use_crystal_path",
         requirement: [{ item: "crystal" }],
       },
@@ -887,10 +996,12 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "buy_trinket_path",
         description: "You attempt to purchase a magical trinket.",
-        effects: [
-          { removeGold: { dataField: "trinket_cost" } },
-          { addItem: { dataField: "trinket_item" } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "trinket_cost" } },
+            { addItem: { dataField: "trinket_item" } },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -907,22 +1018,28 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "trinket_purchase_success",
         description: "You purchase a mysterious trinket for {trinket_cost} gold.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "trinket_purchase_failure",
         description: "You don't have enough gold to buy a trinket.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "trade_path",
         description: "You offer to trade an item for faerie magic.",
-        effects: [
-          { removeItem: { random: null } },
-          { upgradeStat: [{ magic: null }, { raw: 1n }] },
-        ],
+        kind: {
+          effects: [
+            { removeItem: { random: null } },
+            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+          ]
+        },
         paths: [
           {
             weight: 3,
@@ -939,41 +1056,51 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "trade_success",
         description: "The faeries accept your trade, granting you a magical boon.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "trade_failure",
         description: "The faeries reject your offer, seeming offended.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "use_crystal_path",
         description: "Your faerie charm glows, granting you favor in the market.",
-        effects: [
-          { removeItem: { specific: { raw: "crystal" } } },
-          { upgradeStat: [{ magic: null }, { raw: 1n }] },
-        ],
+        kind: {
+          effects: [
+            { removeItem: { specific: { raw: "crystal" } } },
+            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+          ]
+        },
         paths: [],
       },
       {
         id: "leave_path",
         description: "You leave the faerie market, the magical stalls fading behind you.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You stand frozen, unable to decide. The faeries escort you out of the market.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "goblin_raiding_party",
-    title: "Goblin Raiding Party",
+    name: "Goblin Raiding Party",
     description: "A band of goblins emerges from the underbrush, brandishing crude weapons and eyeing your possessions.",
     imageId: "goblin_raiding_party",
     location: {
@@ -984,12 +1111,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "bribe_cost",
         name: "Bribe Cost",
         value: { nat: { min: 20n, max: 30n } },
-      },
-      {
-        id: "goblin_damage",
-        name: "Goblin Damage",
-        value: { nat: { min: 1n, max: 3n } },
-      },
+      }
     ],
     choices: [
       {
@@ -1022,36 +1144,31 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "fight_path",
         description: "You engage the goblin raiding party in combat.",
-        effects: [],
+        kind: {
+          combat: { creatures: [{ id: "goblin" }, { id: "goblin" }, { id: "goblin" }] }
+        },
         paths: [
           {
             weight: 3,
             condition: [],
             pathId: "fight_success",
           },
-          {
-            weight: 2,
-            condition: [],
-            pathId: "fight_failure",
-          },
         ],
       },
       {
         id: "fight_success",
         description: "You successfully fend off the goblin raiding party!",
-        effects: [{ reward: null }],
-        paths: [],
-      },
-      {
-        id: "fight_failure",
-        description: "The goblins overwhelm you with their numbers.",
-        effects: [{ damage: { dataField: "goblin_damage" } }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "bribe_path",
         description: "You attempt to bribe the goblins.",
-        effects: [{ removeGold: { dataField: "bribe_cost" } }],
+        kind: {
+          effects: [{ removeGold: { dataField: "bribe_cost" } }]
+        },
         paths: [
           {
             weight: 4,
@@ -1073,25 +1190,33 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "bribe_success",
         description: "The goblins accept your offering and leave you alone.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "bribe_failure",
         description: "The goblins take your bribe but attack anyway!",
-        effects: [{ damage: { dataField: "goblin_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "goblin_damage" } }]
+        },
         paths: [],
       },
       {
         id: "bribe_no_gold",
         description: "The goblins see you don't have any gold and attack!",
-        effects: [{ damage: { dataField: "goblin_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "goblin_damage" } }]
+        },
         paths: [],
       },
       {
         id: "intimidate_path",
         description: "You attempt to intimidate the goblins.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 4,
@@ -1108,19 +1233,25 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "intimidate_success",
         description: "Your show of strength scares off the goblins.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "intimidate_failure",
         description: "The goblins are not impressed and attack!",
-        effects: [{ damage: { dataField: "goblin_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "goblin_damage" } }]
+        },
         paths: [],
       },
       {
         id: "distract_path",
         description: "You attempt to create a clever diversion.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 4,
@@ -1137,26 +1268,44 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "distract_success",
         description: "Your clever diversion allows you to slip away unnoticed.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "distract_failure",
         description: "The goblins see through your trick and attack!",
-        effects: [{ damage: { dataField: "goblin_damage" } }],
-        paths: [],
+        kind: {
+          effects: []
+        },
+        paths: [
+          {
+            weight: 1,
+            condition: [],
+            pathId: "fight_path",
+          },
+        ],
       },
       {
         id: "undecided_path",
         description: "You stand frozen, unable to decide. The goblins attack!",
-        effects: [{ damage: { dataField: "goblin_damage" } }],
-        paths: [],
+        kind: {
+          effects: []
+        },
+        paths: [
+          {
+            weight: 1,
+            condition: [],
+            pathId: "fight_path",
+          },
+        ],
       },
     ],
   },
   {
     id: "knowledge_nexus",
-    title: "Knowledge Nexus",
+    name: "Knowledge Nexus",
     description: "You enter a floating library of ancient wisdom.",
     imageId: "knowledge_nexus",
     location: {
@@ -1210,10 +1359,12 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "study_path",
         description: "You attempt to study ancient texts.",
-        effects: [
-          { removeGold: { dataField: "study_cost" } },
-          { upgradeStat: [{ magic: null }, { raw: 1n }] },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "study_cost" } },
+            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -1230,21 +1381,27 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "study_success",
         description: "You study ancient texts and feel your magical knowledge expand.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "study_failure",
         description: "You don't have enough gold to access the rare texts.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "learn_skill_path",
         description: "You attempt to learn a new skill.",
-        effects: [
-          { removeGold: { dataField: "skill_cost" } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "skill_cost" } },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -1266,27 +1423,35 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "learn_attack",
         description: "You learn combat techniques from ancient scrolls.",
-        effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "learn_defense",
         description: "You study defensive strategies from old tomes.",
-        effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "learn_skill_failure",
         description: "You don't have enough gold to learn a new skill.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "decipher_map_path",
         description: "You attempt to decipher an ancient map.",
-        effects: [
-          { removeGold: { dataField: "map_cost" } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "map_cost" } },
+          ]
+        },
         paths: [
           {
             weight: 1,
@@ -1308,38 +1473,48 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "map_success",
         description: "You successfully decipher an ancient map, revealing a hidden location.",
-        effects: [{ addItem: { raw: "treasure_map" } }],
+        kind: {
+          effects: [{ addItem: { raw: "treasure_map" } }]
+        },
         paths: [],
       },
       {
         id: "map_failure",
         description: "Despite your efforts, you fail to decipher the map completely.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "map_no_gold",
         description: "You don't have enough gold to access the map archives.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "leave_path",
         description: "You leave the Knowledge Nexus, your mind brimming with new information.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You're overwhelmed by the vast knowledge surrounding you, unable to decide what to do.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "lost_elfling",
-    title: "Lost Elfling",
+    name: "Lost Elfling",
     description: "You hear the faint cries of a young elf, seemingly lost and separated from their clan.",
     imageId: "lost_elfling",
     location: {
@@ -1377,7 +1552,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "help_path",
         description: "You attempt to help the lost elfling.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 4,
@@ -1394,25 +1571,33 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "help_success",
         description: "You successfully help the elfling and reunite them with their clan.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "help_danger",
         description: "Your attempt to help leads you into a dangerous situation.",
-        effects: [{ damage: { random: [1n, 3n] } }],
+        kind: {
+          effects: [{ damage: { random: [1n, 3n] } }]
+        },
         paths: [],
       },
       {
         id: "abandon_path",
         description: "You ignore the elfling's cries and continue on your way.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "investigate_path",
         description: "You carefully investigate the area.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 3,
@@ -1429,19 +1614,25 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "investigate_success",
         description: "Your careful investigation reveals a safe path to the elfling.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "investigate_danger",
         description: "While investigating, you stumble into a hidden danger.",
-        effects: [{ damage: { random: [1n, 2n] } }],
+        kind: {
+          effects: [{ damage: { random: [1n, 2n] } }]
+        },
         paths: [],
       },
       {
         id: "use_magic_path",
         description: "You attempt to use magic to help the elfling.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 9,
@@ -1458,37 +1649,38 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "magic_success",
         description: "Your magic successfully guides the elfling back to their clan.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "magic_danger",
         description: "Your magic attracts unwanted attention from forest spirits.",
-        effects: [{ damage: { random: [1n, 2n] } }],
+        kind: {
+          effects: [{ damage: { random: [1n, 2n] } }]
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You stand frozen, unable to decide what to do about the lost elfling.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "mysterious_structure",
-    title: "Mysterious Structure",
+    name: "Mysterious Structure",
     description: "You encounter a pyramid-like structure with glowing runes, overgrown by vines. A sealed entrance beckons.",
     imageId: "mysterious_structure",
     location: {
       zoneIds: ["ancient_ruins"],
     },
     data: [
-      {
-        id: "ambush_damage",
-        name: "Ambush Damage",
-        value: { nat: { min: 0n, max: 5n } },
-      },
       {
         id: "trap_damage",
         name: "Trap Damage",
@@ -1531,7 +1723,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "secret_entrance_path",
         description: "You find a hidden entrance and carefully make your way inside.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 1,
@@ -1543,7 +1737,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "forceful_entry_path",
         description: "You attempt to force your way into the structure.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 1,
@@ -1565,13 +1761,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "forceful_entry_damage",
         description: "You hurt yourself trying to force into the entrance.",
-        effects: [{ damage: { dataField: "forceful_entry_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "forceful_entry_damage" } }]
+        },
         paths: [],
       },
       {
         id: "forceful_entry_success",
         description: "You manage to create an opening and enter the structure.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 1,
@@ -1583,13 +1783,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "forceful_entry_failure",
         description: "Your attempts to force your way inside are unsuccessful.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "sacrifice_path",
         description: "You make an offering to the structure and it allows you to enter safely.",
-        effects: [{ removeItem: { random: null } }],
+        kind: {
+          effects: [{ removeItem: { random: null } }]
+        },
         paths: [
           {
             weight: 1,
@@ -1601,13 +1805,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "skip_path",
         description: "You decide to leave the structure alone and continue exploring elsewhere.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "explore_structure",
         description: "You explore the mysterious structure.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 1,
@@ -1629,19 +1837,25 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "structure_ambush",
         description: "You are ambushed by a group of hostile creatures!",
-        effects: [{ damage: { dataField: "ambush_damage" } }],
+        kind: {
+          combat: { creatures: [{ filter: { location: { any: null } } }, { filter: { location: { any: null } } }] }
+        },
         paths: [],
       },
       {
         id: "structure_trap",
         description: "You trigger a trap!",
-        effects: [{ damage: { dataField: "trap_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "trap_damage" } }]
+        },
         paths: [],
       },
       {
         id: "explore_treasure_room",
         description: "You explore a hidden chamber within the structure.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 1,
@@ -1658,26 +1872,32 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "treasure_found",
         description: "You discover a hidden chamber containing a small amount of treasure.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "no_treasure",
         description: "You find nothing of interest inside.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You don't seem to find the structure interesting and move on.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "mystic_forge",
-    title: "Mystic Forge",
+    name: "Mystic Forge",
     description: "You enter a magical smithy where the hammers swing themselves and the anvils occasionally burp fire.",
     imageId: "mystic_forge",
     location: {
@@ -1731,7 +1951,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "upgrade_path",
         description: "You attempt to upgrade your equipment.",
-        effects: [{ removeGold: { dataField: "upgrade_cost" } }],
+        kind: {
+          effects: [{ removeGold: { dataField: "upgrade_cost" } }]
+        },
         paths: [
           {
             weight: 3,
@@ -1753,28 +1975,36 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "upgrade_success",
         description: "The forge bellows with approval. Your equipment feels more... equipment-y.",
-        effects: [
-          { upgradeStat: [{ attack: null }, { raw: 1n }] },
-          { upgradeStat: [{ defense: null }, { raw: 1n }] },
-        ],
+        kind: {
+          effects: [
+            { upgradeStat: [{ attack: null }, { raw: 1n }] },
+            { upgradeStat: [{ defense: null }, { raw: 1n }] },
+          ]
+        },
         paths: [],
       },
       {
         id: "upgrade_failure",
         description: "The forge hiccups. Your gold vanishes, leaving behind a faint smell of burnt toast.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "upgrade_no_gold",
         description: "The forge eyes your empty pockets and sighs dramatically.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "reforge_path",
         description: "You attempt to reforge an item.",
-        effects: [{ removeGold: { dataField: "reforge_cost" } }],
+        kind: {
+          effects: [{ removeGold: { dataField: "reforge_cost" } }]
+        },
         paths: [
           {
             weight: 1,
@@ -1796,25 +2026,33 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "reforge_attack",
         description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
-        effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "reforge_defense",
         description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
-        effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "reforge_no_gold",
         description: "The forge snorts derisively at your lack of funds. Even magical anvils have bills to pay.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "craft_path",
         description: "You attempt to craft a special item.",
-        effects: [{ removeGold: { dataField: "craft_cost" } }],
+        kind: {
+          effects: [{ removeGold: { dataField: "craft_cost" } }]
+        },
         paths: [
           {
             weight: 2,
@@ -1836,38 +2074,48 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "craft_success",
         description: "The forge erupts in a shower of sparks. You've created something... interesting.",
-        effects: [{ addItem: { raw: "crystal" } }],
+        kind: {
+          effects: [{ addItem: { raw: "crystal" } }]
+        },
         paths: [],
       },
       {
         id: "craft_failure",
         description: "The forge burps loudly. Your gold is gone, and you're left holding... is that a rubber chicken?",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "craft_no_gold",
         description: "The forge grumbles about 'in this economy' and 'the cost of phoenix feathers these days'.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "leave_path",
         description: "You leave the Mystic Forge, your eyebrows slightly singed but your spirit unquenched.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You stand frozen, mesmerized by the dancing flames and floating hammers.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "sinking_boat",
-    title: "Sinking Boat",
+    name: "Sinking Boat",
     description: "You come across a small boat sinking in a nearby river. The passengers are calling for help.",
     imageId: "sinking_boat",
     location: {
@@ -1910,7 +2158,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "rescue_swimming_path",
         description: "You attempt to swim out and rescue the passengers.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 3,
@@ -1927,13 +2177,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "swimming_success",
         description: "You successfully swim out and rescue the passengers.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "swimming_difficulty",
         description: "The current is stronger than you anticipated.",
-        effects: [{ damage: { dataField: "swimming_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "swimming_damage" } }]
+        },
         paths: [
           {
             weight: 1,
@@ -1945,13 +2199,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "swimming_rescue",
         description: "You manage to rescue the passengers, but at a cost to your health.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "cast_spell_path",
         description: "You attempt to cast a water-walking spell to rescue the passengers.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 4,
@@ -1968,13 +2226,17 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "spell_success",
         description: "Your water-walking spell allows you to easily rescue all passengers.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "spell_difficulty",
         description: "Your spell falters midway through the rescue.",
-        effects: [{ damage: { dataField: "spell_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "spell_damage" } }]
+        },
         paths: [
           {
             weight: 1,
@@ -1986,26 +2248,32 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "spell_rescue",
         description: "Despite the setback, you manage to complete the rescue.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "disregard_path",
         description: "You disregard the calls for help and continue on your way, leaving the passengers to their fate.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You don't seem to notice and carry on.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "trapped_druid",
-    title: "Trapped Druid",
+    name: "Trapped Druid",
     description: "You come across a druid entangled in a strange, pulsating magical snare. They call out for help.",
     imageId: "trapped_druid",
     location: {
@@ -2059,7 +2327,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "free_directly_path",
         description: "You attempt to free the druid directly from the magical snare.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 1,
@@ -2076,19 +2346,25 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "direct_success",
         description: "You successfully free the druid from the magical snare.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "direct_failure",
         description: "The magical snare reacts violently to your attempt.",
-        effects: [{ damage: { dataField: "direct_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "direct_damage" } }]
+        },
         paths: [],
       },
       {
         id: "use_nature_skills_path",
         description: "You use your nature skills to attempt to disarm the snare.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 4,
@@ -2105,19 +2381,25 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "nature_success",
         description: "Your nature skills allow you to safely disarm the snare and free the druid.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "nature_failure",
         description: "Despite your skills, the snare proves too complex to disarm safely.",
-        effects: [{ damage: { dataField: "nature_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "nature_damage" } }]
+        },
         paths: [],
       },
       {
         id: "find_alternative_solution_path",
         description: "You search the area for an alternative solution.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [
           {
             weight: 2,
@@ -2134,32 +2416,40 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "search_success",
         description: "You find a magical artifact nearby that helps neutralize the snare.",
-        effects: [{ reward: null }],
+        kind: {
+          effects: [{ reward: null }]
+        },
         paths: [],
       },
       {
         id: "search_failure",
         description: "Your search attracts unwanted attention from forest creatures.",
-        effects: [{ damage: { dataField: "search_damage" } }],
+        kind: {
+          effects: [{ damage: { dataField: "search_damage" } }]
+        },
         paths: [],
       },
       {
         id: "leave_alone_path",
         description: "You decide the risk is too great and leave the druid to their fate.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You don't seem to hear them and continue walking.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "travelling_bard",
-    title: "Travelling Bard",
+    name: "Travelling Bard",
     description: "You encounter a bard whose lute is suspiciously in tune for someone who's been on the road.",
     imageId: "travelling_bard",
     location: {
@@ -2213,7 +2503,9 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "seek_inspiration_path",
         description: "You seek inspiration from the bard.",
-        effects: [{ removeGold: { dataField: "inspiration_cost" } }],
+        kind: {
+          effects: [{ removeGold: { dataField: "inspiration_cost" } }]
+        },
         paths: [
           {
             weight: 3,
@@ -2235,25 +2527,33 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "inspiration_success",
         description: "The bard's words stir your soul. You feel more... magical. Or was that just indigestion?",
-        effects: [{ upgradeStat: [{ magic: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ magic: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "inspiration_failure",
         description: "The bard's inspiration misses the mark. You now know way too much about the mating habits of geese.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "no_gold_inspiration",
         description: "The bard raises an eyebrow at your empty pockets. Inspiration doesn't pay for itself, you know.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "listen_tales_path",
         description: "You listen to the bard's tales.",
-        effects: [{ removeGold: { dataField: "tales_cost" } }],
+        kind: {
+          effects: [{ removeGold: { dataField: "tales_cost" } }]
+        },
         paths: [
           {
             weight: 1,
@@ -2275,25 +2575,33 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "tales_attack",
         description: "The bard's tales of heroic deeds fill you with courage. You feel stronger, or at least less likely to run from a fight.",
-        effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "tales_defense",
         description: "The bard's stories of cunning heroes sharpen your wits. You're now 30% more likely to spot a bad deal... like this one.",
-        effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }],
+        kind: {
+          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+        },
         paths: [],
       },
       {
         id: "no_gold_tales",
         description: "The bard stops mid-sentence, looking expectantly at your coin purse. Seems this tale has a cover charge.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "request_song_path",
         description: "You request a specific song from the bard.",
-        effects: [{ removeGold: { dataField: "request_cost" } }],
+        kind: {
+          effects: [{ removeGold: { dataField: "request_cost" } }]
+        },
         paths: [
           {
             weight: 2,
@@ -2315,38 +2623,48 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "song_success",
         description: "The bard plays your request with surprising skill. You receive a magical token of appreciation from the universe.",
-        effects: [{ addItem: { raw: "crystal" } }],
+        kind: {
+          effects: [{ addItem: { raw: "crystal" } }]
+        },
         paths: [],
       },
       {
         id: "song_failure",
         description: "The bard butchers your request so badly, nearby plants wilt. You're pretty sure you've just lost brain cells.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "no_gold_song",
         description: "The bard strums a chord that sounds suspiciously like a cash register. No gold, no song.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "leave_path",
         description: "You leave the bard, humming a tune that will be stuck in your head for days. Thanks a lot.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
       {
         id: "undecided_path",
         description: "You stand there, caught between fight or flight as the bard clears his throat.",
-        effects: [],
+        kind: {
+          effects: []
+        },
         paths: [],
       },
     ],
   },
   {
     id: "wandering_alchemist",
-    title: "Wandering Alchemist",
+    name: "Wandering Alchemist",
     description: "You encounter a wandering alchemist, their pack filled with bubbling vials and aromatic herbs.",
     imageId: "wandering_alchemist",
     location: {
@@ -2390,19 +2708,23 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "trade_herbs_path",
         description: "You trade your herbs for a vial of acid.",
-        effects: [
-          { removeItem: { specific: { raw: "herbs" } } },
-          { addItem: { raw: "vial_of_acid" } },
-        ],
+        kind: {
+          effects: [
+            { removeItem: { specific: { raw: "herbs" } } },
+            { addItem: { raw: "vial_of_acid" } },
+          ]
+        },
         paths: [],
       },
       {
         id: "buy_vial_of_acid_path",
         description: "You purchase a vial of acid from the alchemist.",
-        effects: [
-          { removeGold: { dataField: "vial_of_acid_cost" } },
-          { addItem: { raw: "vial_of_acid" } },
-        ],
+        kind: {
+          effects: [
+            { removeGold: { dataField: "vial_of_acid_cost" } },
+            { addItem: { raw: "vial_of_acid" } },
+          ]
+        },
         paths: [],
       },
       {
@@ -2428,7 +2750,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_success",
         description: "You successfully learn from the alchemist!",
         kind: {
-          effects: [{ addTrait: { raw: "alchemist" } }],
+          effects: [{ addTrait: { raw: "alchemist" } }]
         },
         paths: [],
       },
@@ -2453,9 +2775,9 @@ export const scenarios: ScenarioMetaData[] = [
         description: "You ignore them and continue walking down the path.",
         kind: {
           effects: []
-        }
+        },
         paths: [],
       },
     ],
-  }
+  },
 ];

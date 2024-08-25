@@ -14,6 +14,6 @@ export const creatures: Creature[] = [
             speed: 1n,
             magic: 1n
         },
-        weapon
+        weaponId: "corrupted_branch",
     },
 ];

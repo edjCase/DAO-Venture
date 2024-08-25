@@ -34,11 +34,6 @@ module Weapon {
         #defense : Int;
     };
 
-    public type StatBoost = {
-        kind : StatBoostKind;
-        attribute : WeaponAttribute;
-    };
-
     public type StatBoostKind = {
         #addFlat : Nat;
         #addBasePercent : Nat;
