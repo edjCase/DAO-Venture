@@ -2,19 +2,16 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
-import TextX "mo:xtended-text/TextX";
-import CharacterModifier "CharacterModifier";
+import CharacterModifier "../CharacterModifier";
 import Item "Item";
 import Trait "Trait";
-import UnlockRequirement "UnlockRequirement";
+import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
+import Entity "Entity";
 
 module {
 
-    public type Class = {
-        id : Text;
-        name : Text;
-        description : Text;
+    public type Class = Entity.Entity and {
         weaponId : Text;
         modifiers : [CharacterModifier.CharacterModifier];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
@@ -28,18 +25,7 @@ module {
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        if (TextX.isEmptyOrWhitespace(class_.id)) {
-            errors.add("Class id cannot be empty.");
-        };
-        if (TextX.isEmptyOrWhitespace(class_.name)) {
-            errors.add("Class name cannot be empty.");
-        };
-        if (TextX.isEmptyOrWhitespace(class_.description)) {
-            errors.add("Class description cannot be empty.");
-        };
-        if (existingClasses.get(class_.id) != null) {
-            errors.add("Class id " # class_.id # " already exists.");
-        };
+        Entity.validate("Class", class_, existingClasses, errors);
         switch (class_.unlockRequirement) {
             case (null) ();
             case (?unlockRequirement) {

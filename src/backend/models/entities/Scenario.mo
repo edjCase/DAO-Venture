@@ -5,15 +5,16 @@ import HashMap "mo:base/HashMap";
 import Text "mo:base/Text";
 import Float "mo:base/Float";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Outcome "Outcome";
 import TextX "mo:xtended-text/TextX";
-import Character "Character";
 import Trait "Trait";
 import Item "Item";
-import Image "Image";
 import Zone "Zone";
 import Achievement "Achievement";
 import Creature "Creature";
+import Entity "Entity";
+import Outcome "../Outcome";
+import Character "../Character";
+import Image "../Image";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -25,10 +26,7 @@ module {
         outcome : ?Outcome.Outcome;
     };
 
-    public type ScenarioMetaData = {
-        id : Text;
-        title : Text;
-        description : Text;
+    public type ScenarioMetaData = Entity.Entity and {
         location : LocationKind;
         imageId : Text;
         data : [GeneratedDataField];
@@ -150,21 +148,7 @@ module {
         var errors = Buffer.Buffer<Text>(0);
 
         let dataFieldIdMap = HashMap.HashMap<Text, GeneratedDataField>(metaData.data.size(), Text.equal, Text.hash);
-        // Check id and description
-        if (TextX.isEmpty(metaData.id)) {
-            errors.add("Scenario id is empty");
-        };
-        if (TextX.isEmpty(metaData.title)) {
-            errors.add("Scenario title is empty");
-        };
-        if (TextX.isEmpty(metaData.description)) {
-            errors.add("Scenario description is empty");
-        };
-
-        if (existingMetaData.get(metaData.id) != null) {
-            errors.add("Duplicate scenario id: " # metaData.id);
-        };
-
+        Entity.validate("Scenario", metaData, existingMetaData, errors);
         if (images.get(metaData.imageId) == null) {
             errors.add("Image id not found: " # metaData.imageId);
         };

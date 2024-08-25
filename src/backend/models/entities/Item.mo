@@ -2,7 +2,7 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
-import TextX "mo:xtended-text/TextX";
+import Entity "Entity";
 
 module {
 
@@ -17,18 +17,7 @@ module {
         exisingItems : HashMap.HashMap<Text, Item>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        if (TextX.isEmptyOrWhitespace(item.id)) {
-            errors.add("Item id cannot be empty.");
-        };
-        if (TextX.isEmptyOrWhitespace(item.name)) {
-            errors.add("Item name cannot be empty.");
-        };
-        if (TextX.isEmptyOrWhitespace(item.description)) {
-            errors.add("Item description cannot be empty.");
-        };
-        if (exisingItems.get(item.id) != null) {
-            errors.add("Item id " # item.id # " already exists.");
-        };
+        Entity.validate("Item", item, exisingItems, errors);
         if (errors.size() < 1) {
             return #ok;
         };

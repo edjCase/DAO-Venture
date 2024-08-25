@@ -1,7 +1,7 @@
 import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Weapon "Weapon";
+import Weapon "entities/Weapon";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;

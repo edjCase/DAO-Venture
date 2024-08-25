@@ -2,8 +2,8 @@ import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
 import Text "mo:base/Text";
 import HashMap "mo:base/HashMap";
-import Item "Item";
-import Trait "Trait";
+import Item "entities/Item";
+import Trait "entities/Trait";
 module {
 
     public type CharacterModifier = {

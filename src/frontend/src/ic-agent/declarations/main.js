@@ -26,33 +26,33 @@ export const idlFactory = ({ IDL }) => {
     'defense' : IDL.Null,
     'attack' : IDL.Null,
   });
+  const StatBoostKind = IDL.Variant({
+    'addBasePercent' : IDL.Nat,
+    'addFlat' : IDL.Nat,
+    'addStatPercent' : IDL.Tuple(StatKind, IDL.Nat),
+  });
   const WeaponAttribute = IDL.Variant({
     'damage' : IDL.Null,
     'criticalChance' : IDL.Null,
     'criticalMultiplier' : IDL.Null,
     'accuracy' : IDL.Null,
   });
-  const BoostType = IDL.Variant({
-    'addFlat' : IDL.Nat,
-    'addPercent' : IDL.Float64,
-  });
   const StatBoost = IDL.Record({
-    'stat' : StatKind,
-    'affectedAttribute' : WeaponAttribute,
-    'boostType' : BoostType,
+    'kind' : StatBoostKind,
+    'attribute' : WeaponAttribute,
   });
   const WeaponStats = IDL.Record({
     'damage' : WeaponDamage,
     'criticalChance' : IDL.Nat,
     'boosts' : IDL.Vec(StatBoost),
-    'criticalMultiplier' : IDL.Float64,
+    'criticalMultiplier' : IDL.Nat,
     'accuracy' : IDL.Int,
   });
   const WeaponRequirement = IDL.Variant({
-    'magic' : IDL.Nat,
-    'speed' : IDL.Nat,
-    'defense' : IDL.Nat,
-    'attack' : IDL.Nat,
+    'magic' : IDL.Int,
+    'speed' : IDL.Int,
+    'defense' : IDL.Int,
+    'attack' : IDL.Int,
   });
   const Weapon = IDL.Record({
     'id' : IDL.Text,
@@ -209,8 +209,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const ScenarioMetaData = IDL.Record({
     'id' : IDL.Text,
-    'title' : IDL.Text,
     'data' : IDL.Vec(GeneratedDataField),
+    'name' : IDL.Text,
     'description' : IDL.Text,
     'paths' : IDL.Vec(OutcomePath),
     'imageId' : IDL.Text,
@@ -228,6 +228,7 @@ export const idlFactory = ({ IDL }) => {
     'achievement' : Achievement,
     'image' : Image,
     'scenario' : ScenarioMetaData,
+    'weapon' : Weapon,
   });
   const AddGameContentResult = IDL.Variant({
     'ok' : IDL.Null,

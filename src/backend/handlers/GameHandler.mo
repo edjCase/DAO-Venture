@@ -14,24 +14,24 @@ import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
 import Location "../models/Location";
-import Scenario "../models/Scenario";
+import Scenario "../models/entities/Scenario";
 import Character "../models/Character";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import IterTools "mo:itertools/Iter";
 import CharacterGenerator "../CharacterGenerator";
 import ScenarioSimulator "../ScenarioSimulator";
-import Trait "../models/Trait";
-import Item "../models/Item";
-import Class "../models/Class";
-import Race "../models/Race";
+import Trait "../models/entities/Trait";
+import Item "../models/entities/Item";
+import Class "../models/entities/Class";
+import Race "../models/entities/Race";
 import Outcome "../models/Outcome";
 import Image "../models/Image";
-import Zone "../models/Zone";
+import Zone "../models/entities/Zone";
 import HexGrid "../models/HexGrid";
-import Achievement "../models/Achievement";
+import Achievement "../models/entities/Achievement";
 import UserHandler "UserHandler";
-import Creature "../models/Creature";
-import Weapon "../models/Weapon";
+import Creature "../models/entities/Creature";
+import Weapon "../models/entities/Weapon";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -685,6 +685,16 @@ module {
             };
             Debug.print("Adding creature: " # creature.id);
             creatures.put(creature.id, creature);
+            #ok;
+        };
+
+        public func addWeapon(weapon : Weapon.Weapon) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Weapon.validate(weapon, weapons)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding weapon: " # weapon.id);
+            weapons.put(weapon.id, weapon);
             #ok;
         };
 

@@ -15,7 +15,8 @@ export type AddGameContentRequest = { 'trait' : Trait } |
   { 'zone' : Zone } |
   { 'achievement' : Achievement } |
   { 'image' : Image } |
-  { 'scenario' : ScenarioMetaData };
+  { 'scenario' : ScenarioMetaData } |
+  { 'weapon' : Weapon };
 export type AddGameContentResult = { 'ok' : null } |
   { 'err' : { 'notAuthorized' : null } | { 'invalid' : Array<string> } };
 export interface AddUserToGameRequest {
@@ -29,8 +30,6 @@ export type AddUserToGameResult = { 'ok' : null } |
       { 'gameNotFound' : null }
   };
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
-export type BoostType = { 'addFlat' : bigint } |
-  { 'addPercent' : number };
 export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
@@ -330,8 +329,8 @@ export interface Scenario {
 }
 export interface ScenarioMetaData {
   'id' : string,
-  'title' : string,
   'data' : Array<GeneratedDataField>,
+  'name' : string,
   'description' : string,
   'paths' : Array<OutcomePath>,
   'imageId' : string,
@@ -357,10 +356,12 @@ export type StartGameVoteResult = { 'ok' : null } |
       { 'gameAlreadyStarted' : null }
   };
 export interface StatBoost {
-  'stat' : StatKind,
-  'affectedAttribute' : WeaponAttribute,
-  'boostType' : BoostType,
+  'kind' : StatBoostKind,
+  'attribute' : WeaponAttribute,
 }
+export type StatBoostKind = { 'addBasePercent' : bigint } |
+  { 'addFlat' : bigint } |
+  { 'addStatPercent' : [StatKind, bigint] };
 export type StatKind = { 'magic' : null } |
   { 'speed' : null } |
   { 'defense' : null } |
@@ -462,7 +463,7 @@ export interface WeaponStats {
   'damage' : WeaponDamage,
   'criticalChance' : bigint,
   'boosts' : Array<StatBoost>,
-  'criticalMultiplier' : number,
+  'criticalMultiplier' : bigint,
   'accuracy' : bigint,
 }
 export interface WeightedOutcomePath {

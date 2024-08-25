@@ -2,14 +2,11 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
-import TextX "mo:xtended-text/TextX";
 import Weapon "Weapon";
+import Entity "Entity";
 
 module {
-    public type Creature = {
-        id : Text;
-        name : Text;
-        description : Text;
+    public type Creature = Entity.Entity and {
         location : CreatureLocationKind;
         weapon : Weapon.Weapon;
         health : Nat;
@@ -33,18 +30,7 @@ module {
         existingCreaturees : HashMap.HashMap<Text, Creature>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        if (TextX.isEmptyOrWhitespace(creature.id)) {
-            errors.add("Creature id cannot be empty.");
-        };
-        if (TextX.isEmptyOrWhitespace(creature.name)) {
-            errors.add("Creature name cannot be empty.");
-        };
-        if (TextX.isEmptyOrWhitespace(creature.description)) {
-            errors.add("Creature description cannot be empty.");
-        };
-        if (existingCreaturees.get(creature.id) != null) {
-            errors.add("Creature id " # creature.id # " already exists.");
-        };
+        Entity.validate("Creature", creature, existingCreaturees, errors);
         if (errors.size() < 1) {
             return #ok;
         };

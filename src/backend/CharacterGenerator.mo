@@ -7,9 +7,9 @@ import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
 import Character "models/Character";
 import CharacterModifier "models/CharacterModifier";
-import Class "models/Class";
-import Race "models/Race";
-import Weapon "models/Weapon";
+import Class "models/entities/Class";
+import Race "models/entities/Race";
+import Weapon "models/entities/Weapon";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;

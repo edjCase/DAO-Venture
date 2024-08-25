@@ -12,12 +12,12 @@ import Iter "mo:base/Iter";
 import Float "mo:base/Float";
 import CharacterHandler "handlers/CharacterHandler";
 import Outcome "models/Outcome";
-import Scenario "models/Scenario";
+import Scenario "models/entities/Scenario";
 import Character "models/Character";
 import UserHandler "handlers/UserHandler";
 import ScenarioHandler "handlers/ScenarioHandler";
-import Creature "models/Creature";
-import Weapon "models/Weapon";
+import Creature "models/entities/Creature";
+import Weapon "models/entities/Weapon";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -162,8 +162,7 @@ module {
                 var damage = calculateWeaponDamage(attacker.weapon);
                 if (prng.nextNat(1, 100) <= attacker.weapon.baseStats.criticalChance) {
                     let damagePlusCrit = damage
-                    |> Float.fromInt(_) * attacker.weapon.baseStats.criticalMultiplier
-                    |> Float.toInt(_)
+                    |> percentMultiply(damage, attacker.weapon.baseStats.criticalMultiplier)
                     |> Int.max(1, _)
                     |> Int.abs(_);
                     damage := damagePlusCrit;
@@ -208,6 +207,10 @@ module {
                 };
             };
         };
+    };
+
+    func percentMultiply(value : Nat, percent : Nat) : Nat {
+        Int.abs(Float.toInt(Float.floor(Float.fromInt(value) * (Float.fromInt(percent) / 100.0))));
     };
 
     func getNatValue(

@@ -16,11 +16,11 @@ import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
 import HttpHandler "../handlers/HttpHandler";
-import Scenario "../models/Scenario";
-import Trait "../models/Trait";
-import Class "../models/Class";
-import Race "../models/Race";
-import Item "../models/Item";
+import Scenario "../models/entities/Scenario";
+import Trait "../models/entities/Trait";
+import Class "../models/entities/Class";
+import Race "../models/entities/Race";
+import Item "../models/entities/Item";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -133,6 +133,7 @@ actor MainActor : Types.Actor {
             case (#zone(zone)) gameHandler.addZone(zone);
             case (#achievement(achievement)) gameHandler.addAchievement(achievement);
             case (#creature(creature)) gameHandler.addCreature(creature);
+            case (#weapon(weapon)) gameHandler.addWeapon(weapon);
         };
     };
 

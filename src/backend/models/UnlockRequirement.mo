@@ -2,7 +2,8 @@ import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
 import TextX "mo:xtended-text/TextX";
-import Achievement "Achievement";
+import Achievement "entities/Achievement";
+
 module {
     public type UnlockRequirement = {
         #acheivementId : Text;

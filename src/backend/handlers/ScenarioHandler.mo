@@ -9,7 +9,7 @@ import Text "mo:base/Text";
 import Time "mo:base/Time";
 import Debug "mo:base/Debug";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
-import Scenario "../models/Scenario";
+import Scenario "../models/entities/Scenario";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Outcome "../models/Outcome";
 

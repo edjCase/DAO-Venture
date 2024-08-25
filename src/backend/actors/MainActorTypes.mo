@@ -1,5 +1,5 @@
 import Nat "mo:base/Nat";
-import Scenario "../models/Scenario";
+import Scenario "../models/entities/Scenario";
 import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import CommonTypes "../CommonTypes";
@@ -8,14 +8,15 @@ import Principal "mo:base/Principal";
 import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import GameHandler "../handlers/GameHandler";
-import Item "../models/Item";
-import Trait "../models/Trait";
+import Item "../models/entities/Item";
+import Trait "../models/entities/Trait";
 import Image "../models/Image";
-import Race "../models/Race";
-import Class "../models/Class";
-import Zone "../models/Zone";
-import Achievement "../models/Achievement";
-import Creature "../models/Creature";
+import Race "../models/entities/Race";
+import Class "../models/entities/Class";
+import Zone "../models/entities/Zone";
+import Achievement "../models/entities/Achievement";
+import Creature "../models/entities/Creature";
+import Weapon "../models/entities/Weapon";
 
 module {
     public type Actor = actor {
@@ -87,6 +88,7 @@ module {
         #zone : Zone.Zone;
         #achievement : Achievement.Achievement;
         #creature : Creature.Creature;
+        #weapon : Weapon.Weapon;
     };
 
     public type AddGameContentResult = Result.Result<(), { #invalid : [Text]; #notAuthorized }>;
