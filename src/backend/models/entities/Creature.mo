@@ -9,19 +9,16 @@ module {
         location : CreatureLocationKind;
         weaponId : Text;
         health : Nat;
-        stats : CreatureStats;
+        maxHealth : Nat;
+        attack : Int;
+        defense : Int;
+        magic : Int;
+        speed : Int;
     };
 
     public type CreatureLocationKind = {
         #common;
         #zoneIds : [Text];
-    };
-
-    public type CreatureStats = {
-        attack : Int;
-        defense : Int;
-        magic : Int;
-        speed : Int;
     };
 
     public func validate(

@@ -13,18 +13,13 @@ module Weapon {
     };
 
     public type WeaponStats = {
-        damage : WeaponDamage;
+        attacks : Nat;
+        minDamage : Nat;
+        maxDamage : Nat;
         accuracy : Int;
         criticalChance : Nat;
         criticalMultiplier : Nat;
-        boosts : [StatBoost];
-    };
-
-    public type WeaponDamage = {
-        attacks : Nat;
-        min : Nat;
-        max : Nat;
-        // TODO damage kind?
+        statModifiers : [StatModifier];
     };
 
     public type WeaponRequirement = {
@@ -32,23 +27,31 @@ module Weapon {
         #magic : Int;
         #speed : Int;
         #defense : Int;
+        #maxHealth : Nat;
     };
 
-    public type StatBoostKind = {
-        #addFlat : Nat;
-        #addBasePercent : Nat;
-        #addStatPercent : (StatKind, Nat);
+    public type StatModifier = {
+        characterStat : CharacterStatKind;
+        attribute : WeaponAttribute;
+        factor : Float;
     };
 
-    public type StatKind = {
+    public type CharacterStatKind = {
         #attack;
         #magic;
         #speed;
         #defense;
+        #health : {
+            inverse : Bool;
+        };
+        #gold;
     };
 
     public type WeaponAttribute = {
+        #attacks;
         #damage;
+        #minDamage;
+        #maxDamage;
         #accuracy;
         #criticalChance;
         #criticalMultiplier;

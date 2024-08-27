@@ -8,20 +8,17 @@ module {
 
     public type Character = {
         health : Nat;
+        maxHealth : Nat;
         gold : Nat;
         classId : Text;
         raceId : Text;
         weapon : Weapon.Weapon;
-        stats : CharacterStats;
-        itemIds : TrieSet.Set<Text>;
-        traitIds : TrieSet.Set<Text>;
-    };
-
-    public type CharacterStats = {
         attack : Int;
         defense : Int;
         speed : Int;
         magic : Int;
+        itemIds : TrieSet.Set<Text>;
+        traitIds : TrieSet.Set<Text>;
     };
 
     public type CharacterStatKind = {
@@ -29,6 +26,8 @@ module {
         #defense;
         #speed;
         #magic;
+        #health;
+        #maxHealth;
     };
 
     public func toTextStatKind(kind : CharacterStatKind) : Text {
@@ -37,6 +36,8 @@ module {
             case (#defense) "defense";
             case (#speed) "speed";
             case (#magic) "magic";
+            case (#health) "health";
+            case (#maxHealth) "maxHealth";
         };
     };
 

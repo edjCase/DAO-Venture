@@ -28,10 +28,11 @@
 
   $: goldStat = getValue(character?.gold);
   $: healthStat = getValue(character?.health);
-  $: attackStat = getValue(character?.stats.attack);
-  $: defenseStat = getValue(character?.stats.defense);
-  $: speedStat = getValue(character?.stats.speed);
-  $: magicStat = getValue(character?.stats.magic);
+  $: maxHealthStat = getValue(character?.maxHealth);
+  $: attackStat = getValue(character?.attack);
+  $: defenseStat = getValue(character?.defense);
+  $: speedStat = getValue(character?.speed);
+  $: magicStat = getValue(character?.magic);
 </script>
 
 {#if character === undefined}
@@ -39,7 +40,7 @@
 {:else}
   <div class="flex justify-around">
     <div><Icon kind={{ gold: null }} /> {goldStat}</div>
-    <div><Icon kind={{ health: null }} /> {healthStat}</div>
+    <div><Icon kind={{ health: null }} /> {healthStat}/{maxHealthStat}</div>
   </div>
   <div class="flex justify-center m-2">
     <CharacterAvatar {size} characterClass="warrior" seed={0} />

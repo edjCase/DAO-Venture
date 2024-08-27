@@ -20,7 +20,8 @@ module {
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
     ) : Character.Character {
         var gold : Nat = 0;
-        var health : Nat = 100;
+        var maxHealth : Nat = 100;
+        var health : Nat = maxHealth;
         var itemIds = TrieSet.empty<Text>();
         var traitIds = TrieSet.empty<Text>();
         var attack : Int = 0;
@@ -51,6 +52,14 @@ module {
                         health += Int.abs(delta);
                     };
                 };
+                case (#maxHealth(delta)) {
+                    if (delta < 0) {
+                        // min health is 1
+                        maxHealth := Int.abs(Int.max(1, health + delta));
+                    } else {
+                        maxHealth += Int.abs(delta);
+                    };
+                };
                 case (#item(itemId)) addItem(itemId);
                 case (#trait(traitId)) addTrait(traitId);
             };
@@ -68,15 +77,14 @@ module {
 
         {
             health = health;
+            maxHealth = maxHealth;
             gold = gold;
             classId = class_.id;
             raceId = race.id;
-            stats = {
-                attack = attack;
-                defense = defense;
-                speed = speed;
-                magic = magic;
-            };
+            attack = attack;
+            defense = defense;
+            speed = speed;
+            magic = magic;
             itemIds = itemIds;
             traitIds = traitIds;
             weapon = weapon;

@@ -39,10 +39,12 @@ module {
             };
             case (#stat(statKind, value)) {
                 switch (statKind) {
-                    case (#attack) character.stats.attack >= value;
-                    case (#defense) character.stats.defense >= value;
-                    case (#speed) character.stats.speed >= value;
-                    case (#magic) character.stats.magic >= value;
+                    case (#attack) character.attack >= value;
+                    case (#defense) character.defense >= value;
+                    case (#speed) character.speed >= value;
+                    case (#magic) character.magic >= value;
+                    case (#health) character.health >= value;
+                    case (#maxHealth) character.maxHealth >= value;
                 };
             };
             case (#item(itemId)) TrieSet.mem(character.itemIds, itemId, Text.hash(itemId), Text.equal);

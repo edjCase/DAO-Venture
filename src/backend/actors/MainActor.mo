@@ -53,6 +53,7 @@ actor MainActor : Types.Actor {
             percent = 50;
             quorum = ?20;
         });
+        allowVoteChange = false;
     };
 
     stable var userStableData : UserHandler.StableData = {

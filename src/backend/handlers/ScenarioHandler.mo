@@ -122,6 +122,7 @@ module {
                 scenario.proposal,
                 voterId,
                 choiceId,
+                true,
             );
             switch (voteResult) {
                 case (#ok(ok)) {

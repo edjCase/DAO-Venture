@@ -36,6 +36,7 @@ export interface CallbackStrategy {
 }
 export type CharacterModifier = { 'magic' : bigint } |
   { 'trait' : string } |
+  { 'maxHealth' : bigint } |
   { 'gold' : bigint } |
   { 'item' : string } |
   { 'speed' : bigint } |
@@ -43,22 +44,28 @@ export type CharacterModifier = { 'magic' : bigint } |
   { 'attack' : bigint } |
   { 'health' : bigint };
 export type CharacterStatKind = { 'magic' : null } |
+  { 'maxHealth' : null } |
   { 'speed' : null } |
   { 'defense' : null } |
-  { 'attack' : null };
-export interface CharacterStats {
-  'magic' : bigint,
-  'speed' : bigint,
-  'defense' : bigint,
-  'attack' : bigint,
-}
+  { 'attack' : null } |
+  { 'health' : null };
+export type CharacterStatKind__1 = { 'magic' : null } |
+  { 'gold' : null } |
+  { 'speed' : null } |
+  { 'defense' : null } |
+  { 'attack' : null } |
+  { 'health' : { 'inverse' : boolean } };
 export interface CharacterWithMetaData {
+  'magic' : bigint,
+  'maxHealth' : bigint,
   'gold' : bigint,
   'traits' : Array<Trait>,
   'class' : Class,
   'race' : Race,
-  'stats' : CharacterStats,
+  'speed' : bigint,
+  'defense' : bigint,
   'items' : Array<Item>,
+  'attack' : bigint,
   'weapon' : Weapon,
   'health' : bigint,
 }
@@ -126,21 +133,19 @@ export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
 export interface Creature {
   'id' : string,
+  'magic' : bigint,
+  'maxHealth' : bigint,
   'name' : string,
   'description' : string,
-  'stats' : CreatureStats,
+  'speed' : bigint,
   'weaponId' : string,
+  'defense' : bigint,
+  'attack' : bigint,
   'location' : CreatureLocationKind,
   'health' : bigint,
 }
 export type CreatureLocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
-export interface CreatureStats {
-  'magic' : bigint,
-  'speed' : bigint,
-  'defense' : bigint,
-  'attack' : bigint,
-}
 export type Difficulty = { 'easy' : null } |
   { 'hard' : null } |
   { 'medium' : null };
@@ -363,17 +368,11 @@ export type StartGameVoteResult = { 'ok' : null } |
       { 'gameNotFound' : null } |
       { 'gameAlreadyStarted' : null }
   };
-export interface StatBoost {
-  'kind' : StatBoostKind,
+export interface StatModifier {
+  'characterStat' : CharacterStatKind__1,
+  'factor' : number,
   'attribute' : WeaponAttribute,
 }
-export type StatBoostKind = { 'addBasePercent' : bigint } |
-  { 'addFlat' : bigint } |
-  { 'addStatPercent' : [StatKind, bigint] };
-export type StatKind = { 'magic' : null } |
-  { 'speed' : null } |
-  { 'defense' : null } |
-  { 'attack' : null };
 export interface StreamingCallbackHttpResponse {
   'token' : [] | [Token],
   'body' : Uint8Array | number[],
@@ -455,22 +454,23 @@ export interface Weapon {
   'requirements' : [] | [WeaponRequirement],
 }
 export type WeaponAttribute = { 'damage' : null } |
+  { 'attacks' : null } |
   { 'criticalChance' : null } |
+  { 'maxDamage' : null } |
+  { 'minDamage' : null } |
   { 'criticalMultiplier' : null } |
   { 'accuracy' : null };
-export interface WeaponDamage {
-  'max' : bigint,
-  'min' : bigint,
-  'attacks' : bigint,
-}
 export type WeaponRequirement = { 'magic' : bigint } |
+  { 'maxHealth' : bigint } |
   { 'speed' : bigint } |
   { 'defense' : bigint } |
   { 'attack' : bigint };
 export interface WeaponStats {
-  'damage' : WeaponDamage,
+  'attacks' : bigint,
   'criticalChance' : bigint,
-  'boosts' : Array<StatBoost>,
+  'maxDamage' : bigint,
+  'minDamage' : bigint,
+  'statModifiers' : Array<StatModifier>,
   'criticalMultiplier' : bigint,
   'accuracy' : bigint,
 }

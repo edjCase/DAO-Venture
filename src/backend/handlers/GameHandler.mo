@@ -121,10 +121,14 @@ module {
 
     public type CharacterWithMetaData = {
         health : Nat;
+        maxHealth : Nat;
         gold : Nat;
         class_ : Class.Class;
         race : Race.Race;
-        stats : Character.CharacterStats;
+        attack : Int;
+        defense : Int;
+        speed : Int;
+        magic : Int;
         items : [Item.Item];
         traits : [Trait.Trait];
         weapon : Weapon.Weapon;
@@ -446,11 +450,11 @@ module {
             if (characterId >= voting.characterProposal.content.size()) {
                 return #err(#invalidCharacterId);
             };
-            let updatedCharacterProposal = switch (ExtendedProposal.vote(voting.characterProposal, voterId, characterId)) {
+            let updatedCharacterProposal = switch (ExtendedProposal.vote(voting.characterProposal, voterId, characterId, true)) {
                 case (#ok(ok)) ok.updatedProposal;
                 case (#err(error)) return #err(error);
             };
-            let updatedDifficultyProposal = switch (ExtendedProposal.vote(voting.difficultyProposal, voterId, difficulty)) {
+            let updatedDifficultyProposal = switch (ExtendedProposal.vote(voting.difficultyProposal, voterId, difficulty, true)) {
                 case (#ok(ok)) ok.updatedProposal;
                 case (#err(error)) return #err(error);
             };
@@ -753,7 +757,8 @@ module {
                 r = currentLocation.coordinate.r;
             };
             // TOOD how to change zones
-            let zoneId = if (inProgressInstance.locations.size() % 5 == 0) {
+            let scenariosPerZone = 10;
+            let zoneId = if (inProgressInstance.locations.size() % scenariosPerZone == 0) {
                 let exploredZoneIds = inProgressInstance.locations.vals()
                 |> Iter.map<Location.Location, Text>(_, func(location : Location.Location) = location.zoneId)
                 |> Iter.toArray(_)
@@ -762,6 +767,9 @@ module {
                 let unexploredZones = zones.vals()
                 |> Iter.filter<Zone.Zone>(_, func(zone : Zone.Zone) = not TrieSet.mem(exploredZoneIds, zone.id, Text.hash(zone.id), Text.equal))
                 |> Iter.toArray(_);
+                if (unexploredZones.size() == 0) {
+                    Debug.trap("No unexplored zones"); // TODO
+                };
                 prng.nextArrayElement(unexploredZones).id;
             } else {
                 currentLocation.zoneId;
@@ -896,10 +904,14 @@ module {
             |> Iter.toArray(_);
             {
                 health = character.health;
+                maxHealth = character.maxHealth;
                 gold = character.gold;
                 class_ = class_;
                 race = race;
-                stats = character.stats;
+                attack = character.attack;
+                defense = character.defense;
+                speed = character.speed;
+                magic = character.magic;
                 items = itemsWithMetaData;
                 traits = traitsWithMetaData;
                 weapon = character.weapon;

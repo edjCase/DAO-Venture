@@ -7,6 +7,7 @@
     | { speed: null }
     | { magic: null }
     | { health: null }
+    | { maxHealth: null }
     | { gold: null };
 </script>
 
@@ -19,6 +20,8 @@
 {:else if "magic" in kind}
   🔮
 {:else if "health" in kind}
+  🫀
+{:else if "maxHealth" in kind}
   🫀
 {:else if "gold" in kind}
   🪙

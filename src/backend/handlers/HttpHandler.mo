@@ -53,9 +53,8 @@ module {
 
             let etag = buildEtag(image.data);
 
-            Debug.print("ETag: " # etag);
-
             // TODO cant figure out why cert is invalid
+            // Debug.print("ETag: " # etag);
             // switch (etagResponseCache.get(req.url)) {
             //     case (?_) {
             //         Debug.print("ETag cache hit");
@@ -100,7 +99,6 @@ module {
         };
 
         public func http_request_update(req : HttpUpdateRequest) : HttpResponse {
-            Debug.print("Received update request: " # req.url);
             let ?imageId = getImageId(req.url) else return build404Response(null);
 
             let ?image = gameHandler.getImage(imageId) else return build404Response(null);

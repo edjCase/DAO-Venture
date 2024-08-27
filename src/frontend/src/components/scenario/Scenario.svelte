@@ -39,7 +39,7 @@
       <GameImage id={scenario.metaData.imageId} />
     </div>
     <div class="text-3xl text-center">
-      {scenario.metaData.title}
+      {scenario.metaData.name}
     </div>
     <div class="text-xl my-6">
       {scenario.metaData.description}

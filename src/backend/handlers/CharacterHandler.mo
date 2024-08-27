@@ -68,35 +68,43 @@ module {
         };
 
         public func upgradeStat(kind : Character.CharacterStatKind, amount : Nat) {
-            let newStats = switch (kind) {
+            character := switch (kind) {
                 case (#attack) {
                     {
-                        character.stats with
-                        attack = character.stats.attack + amount;
+                        character with
+                        attack = character.attack + amount;
                     };
                 };
                 case (#defense) {
                     {
-                        character.stats with
-                        defense = character.stats.defense + amount;
+                        character with
+                        defense = character.defense + amount;
                     };
                 };
                 case (#speed) {
                     {
-                        character.stats with
-                        speed = character.stats.speed + amount;
+                        character with
+                        speed = character.speed + amount;
                     };
                 };
                 case (#magic) {
                     {
-                        character.stats with
-                        magic = character.stats.magic + amount;
+                        character with
+                        magic = character.magic + amount;
                     };
                 };
-            };
-            character := {
-                character with
-                stats = newStats;
+                case (#health) {
+                    {
+                        character with
+                        health = character.health + amount;
+                    };
+                };
+                case (#maxHealth) {
+                    {
+                        character with
+                        maxHealth = character.maxHealth + amount;
+                    };
+                };
             };
         };
 

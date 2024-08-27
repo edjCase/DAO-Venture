@@ -227,17 +227,17 @@
               {#if character.gold > 0}
                 <div>+{character.gold} 🪙</div>
               {/if}
-              {#if character.stats.attack > 0}
-                <div>+{character.stats.attack} ⚔️</div>
+              {#if character.attack > 0}
+                <div>+{character.attack} ⚔️</div>
               {/if}
-              {#if character.stats.defense > 0}
-                <div>+{character.stats.defense} 🛡️</div>
+              {#if character.defense > 0}
+                <div>+{character.defense} 🛡️</div>
               {/if}
-              {#if character.stats.speed > 0}
-                <div>+{character.stats.speed} 🏃</div>
+              {#if character.speed > 0}
+                <div>+{character.speed} 🏃</div>
               {/if}
-              {#if character.stats.magic > 0}
-                <div>+{character.stats.magic} 🔮</div>
+              {#if character.magic > 0}
+                <div>+{character.magic} 🔮</div>
               {/if}
               {#each character.traits as trait}
                 <div>+{trait.name}</div>

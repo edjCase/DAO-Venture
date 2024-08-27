@@ -13,6 +13,7 @@ module {
         #magic : Int;
         #gold : Nat;
         #health : Int;
+        #maxHealth : Int;
         #item : Text;
         #trait : Text;
     };
@@ -52,6 +53,11 @@ module {
             case (#health(health)) {
                 if (health == 0) {
                     errors.add("Health modifier cannot be 0.");
+                };
+            };
+            case (#maxHealth(maxHealth)) {
+                if (maxHealth == 0) {
+                    errors.add("Max health modifier cannot be 0.");
                 };
             };
             case (#item(itemId)) {
