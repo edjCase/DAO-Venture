@@ -8,7 +8,7 @@ module Weapon {
 
     public type Weapon = Entity.Entity and {
         baseStats : WeaponStats;
-        requirements : ?WeaponRequirement;
+        requirements : [WeaponRequirement];
         // TODO weapon effects like bleed/stun
     };
 

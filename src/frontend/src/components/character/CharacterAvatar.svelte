@@ -1,9 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
 
   export let size: "xs" | "sm" | "md" | "lg" | "xl";
-  export let characterClass: "warrior" | "mage" | "archer" | "rogue";
-  export let seed: number;
+  export let character: CharacterWithMetaData;
 
   $: sizeClass = {
     xs: "w-12 h-12",
@@ -13,7 +13,7 @@
     xl: "w-48 h-48",
   }[size];
 
-  let character: string | undefined;
+  let characterDataUrl: string | undefined;
 
   function generateCharacter(seed: number): string {
     const canvas = document.createElement("canvas");
@@ -61,50 +61,11 @@
     ctx.fillStyle = hatColor;
     ctx.fillRect(8, 4, 16, 4);
 
-    // Draw class-specific weapon
-    switch (characterClass) {
-      case "warrior":
-        // Sword blade
-        ctx.fillStyle = "black";
-        ctx.fillRect(26, 14, 3, 12);
-        // Sword hilt
-        ctx.fillStyle = "#8B4513"; // Brown color for hilt
-        ctx.fillRect(25, 22, 5, 2);
-        break;
-      case "mage":
-        ctx.fillStyle = "black";
-        ctx.fillRect(26, 14, 3, 14); // Staff
-        ctx.fillStyle = "purple";
-        ctx.fillRect(26, 14, 4, 4); // Staff top
-        break;
-      case "archer":
-        ctx.fillStyle = "black";
-        // Vertical line (bow string)
-        ctx.fillRect(26, 14, 2, 14);
-
-        // Sideways arch (bow)
-        ctx.beginPath();
-        ctx.moveTo(26, 14);
-        ctx.quadraticCurveTo(35, 21, 26, 28);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = "black";
-        ctx.stroke();
-        break;
-      case "rogue":
-        // Dagger blade
-        ctx.fillStyle = "black";
-        ctx.fillRect(26, 14, 4, 8);
-        // Dagger hilt
-        ctx.fillStyle = "#8B4513"; // Brown color for hilt
-        ctx.fillRect(25, 18, 6, 2);
-        break;
-    }
-
     return canvas.toDataURL();
   }
 
   function handleGenerate(): void {
-    character = generateCharacter(seed);
+    characterDataUrl = generateCharacter(0);
   }
 
   onMount(() => {
@@ -113,7 +74,7 @@
 </script>
 
 <img
-  src={character}
+  src={characterDataUrl}
   alt="Character Avatar"
   class="{sizeClass} border border-gray-300 rounded"
   style="image-rendering: pixelated;"

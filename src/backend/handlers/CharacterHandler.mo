@@ -2,6 +2,7 @@ import Character "../models/Character";
 import Int "mo:base/Int";
 import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
+import Nat "mo:base/Nat";
 module {
     public type StableData = {
         character : Character.Character;
@@ -23,29 +24,27 @@ module {
             character.itemIds;
         };
 
+        public func setHealth(health : Nat) {
+            character := {
+                character with
+                health = health;
+            };
+        };
+
         public func takeDamage(amount : Nat) : Bool {
             let newHealth : Int = character.health - amount;
             if (newHealth <= 0) {
-                character := {
-                    character with
-                    health = 0;
-                };
+                setHealth(0);
                 false;
             } else {
-                character := {
-                    character with
-                    health = Int.abs(newHealth);
-                };
+                setHealth(Int.abs(newHealth));
                 true;
             };
         };
 
         public func heal(amount : Nat) {
-            // TODO max health?
-            character := {
-                character with
-                health = character.health + amount;
-            };
+            let newHealth = Nat.min(character.health + amount, character.maxHealth);
+            setHealth(newHealth);
         };
 
         public func addGold(amount : Nat) {

@@ -3,6 +3,25 @@
   import { Link } from "svelte-routing";
   import UserMenu from "../user/UserMenu.svelte";
   import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
+  import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
+  import { currentGameStore } from "../../stores/CurrentGameStore";
+
+  $: currentGame = $currentGameStore;
+
+  let character: CharacterWithMetaData | undefined;
+  $: {
+    if (currentGame !== undefined) {
+      if ("notStarted" in currentGame.state) {
+        character = undefined;
+      } else if ("voting" in currentGame.state) {
+        character = undefined;
+      } else if ("inProgress" in currentGame.state) {
+        character = currentGame.state.inProgress.character;
+      } else {
+        character = currentGame.state.completed.character;
+      }
+    }
+  }
 </script>
 
 <Navbar rounded color="form" class="mb-2">
@@ -13,6 +32,10 @@
     <Link to="/"><div class="text-center text-4xl">DAO Venture</div></Link>
   </div>
   <div class="flex-1 justify-center">
-    <CharacterAvatarWithStats size="sm" />
+    {#if character === undefined}
+      <div></div>
+    {:else}
+      <CharacterAvatarWithStats size="sm" {character} />
+    {/if}
   </div>
 </Navbar>

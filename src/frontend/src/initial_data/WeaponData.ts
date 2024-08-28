@@ -184,4 +184,43 @@ export let weapons: Weapon[] = [
             magic: 1n,
         }]
     },
+    {
+        id: "crude_daggers",
+        name: "Crude Daggers",
+        description: "Simple, roughly-made daggers favored by goblins for their quick attacks.",
+        baseStats: {
+            accuracy: 0n,
+            attacks: 2n,
+            minDamage: 1n,
+            maxDamage: 2n,
+            criticalChance: 10n,
+            criticalMultiplier: 2n,
+            statModifiers: []
+        },
+        requirements: [{
+            speed: 2n,
+        }]
+    },
+    {
+        id: "shadow_bow",
+        name: "Shadow Bow",
+        description: "A sleek bow imbued with dark magic, favored by dark elves for its precision and power.",
+        baseStats: {
+            accuracy: 15n,
+            attacks: 1n,
+            minDamage: 2n,
+            maxDamage: 5n,
+            criticalChance: 15n,
+            criticalMultiplier: 2n,
+            statModifiers: []
+        },
+        requirements: [
+            {
+                attack: 2n,
+            },
+            {
+                magic: 1n,
+            }
+        ]
+    },
 ];

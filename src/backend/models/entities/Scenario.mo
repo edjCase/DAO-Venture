@@ -33,6 +33,13 @@ module {
         choices : [Choice];
         paths : [OutcomePath];
         undecidedPathId : Text;
+        category : ScenarioCategory;
+    };
+
+    public type ScenarioCategory = {
+        #other;
+        #combat;
+        #store;
     };
 
     public type LocationKind = {
@@ -90,18 +97,22 @@ module {
     };
 
     public type CombatPath = {
-        creatures : [CombatCreatureKind];
+        creature : CombatCreatureKind;
     };
 
     public type CombatCreatureKind = {
         #id : Text;
-        #filter : {
-            location : {
-                #zone : Text;
-                #common;
-                #any;
-            };
-        };
+        #filter : CombatCreatureFilter;
+    };
+
+    public type CombatCreatureFilter = {
+        location : CombatCreatureLocationFilter;
+    };
+
+    public type CombatCreatureLocationFilter = {
+        #zone : Text;
+        #common;
+        #any;
     };
 
     public type WeightedOutcomePath = {
@@ -315,23 +326,21 @@ module {
 
             switch (path.kind) {
                 case (#combat(combat)) {
-                    for (creature in combat.creatures.vals()) {
-                        switch (creature) {
-                            case (#id(id)) {
-                                if (creatures.get(id) == null) {
-                                    errors.add("Invalid creature id: " # id);
-                                };
+                    switch (combat.creature) {
+                        case (#id(id)) {
+                            if (creatures.get(id) == null) {
+                                errors.add("Invalid creature id: " # id);
                             };
-                            case (#filter(filter)) {
-                                switch (filter.location) {
-                                    case (#zone(zoneId)) {
-                                        if (zones.get(zoneId) == null) {
-                                            errors.add("Invalid zone id: " # zoneId);
-                                        };
+                        };
+                        case (#filter(filter)) {
+                            switch (filter.location) {
+                                case (#zone(zoneId)) {
+                                    if (zones.get(zoneId) == null) {
+                                        errors.add("Invalid zone id: " # zoneId);
                                     };
-                                    case (#common) ();
-                                    case (#any) ();
                                 };
+                                case (#common) ();
+                                case (#any) ();
                             };
                         };
                     };

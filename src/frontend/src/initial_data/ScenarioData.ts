@@ -9,6 +9,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "combat": null },
     imageId: "corrupted_treant",
     choices: [
       {
@@ -42,7 +43,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "attack_treant",
         description: "You attack the treant.",
         kind: {
-          combat: { creatures: [{ id: "corrupted_treant" }] }
+          combat: { creature: { id: "corrupted_treant" } }
         },
         paths: [],
       },
@@ -116,7 +117,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "failed_evasion",
         description: "The treant notices your attempt to sneak by and attacks!",
         kind: {
-          effects: [{ damage: { random: [1n, 3n] } }]
+          effects: []
         },
         paths: [{
           weight: 1,
@@ -155,7 +156,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "failed_communication",
         description: "The corruption is too strong. The treant attacks despite your efforts.",
         kind: {
-          effects: [{ damage: { random: [1n, 3n] } }]
+          effects: []
         },
         paths: [{
           weight: 1,
@@ -167,7 +168,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "frozen",
         description: "You stand frozen, unable to decide. The treant attacks.",
         kind: {
-          effects: [{ damage: { random: [1n, 3n] } }]
+          effects: []
         },
         paths: [{
           weight: 1,
@@ -186,12 +187,13 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "combat": null },
     choices: [
       {
         id: "fight",
         description: "Stand your ground and engage the dark elves in combat.",
         requirement: [],
-        pathId: "fight_elves",
+        pathId: "elf_attack",
       },
       {
         id: "negotiate",
@@ -214,20 +216,6 @@ export const scenarios: ScenarioMetaData[] = [
     ],
     undecidedPathId: "frozen",
     paths: [
-      {
-        id: "fight_elves",
-        description: "You stand your ground against the dark elves.",
-        kind: {
-          effects: []
-        },
-        paths: [
-          {
-            weight: 0.6,
-            condition: [],
-            pathId: "successful_fight",
-          },
-        ],
-      },
       {
         id: "successful_fight",
         description: "You successfully fend off the dark elves!",
@@ -357,7 +345,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "elf_attack",
         description: "The dark elves attack!",
         kind: {
-          combat: { creatures: [{ id: "dark_elf" }, { id: "dark_elf" }] }
+          combat: { creature: { id: "dark_elves" } }
         },
         paths: [],
       },
@@ -383,6 +371,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "other": null },
     data: [
       {
         id: "healing_cost",
@@ -592,6 +581,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["mystic_caves"],
     },
+    category: { "store": null },
     data: [
       {
         id: "upgrade_cost",
@@ -735,7 +725,8 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
-  }, {
+  },
+  {
     id: "enchanted_grove",
     name: "Enchanted Grove",
     description: "You enter a serene grove with magical properties.",
@@ -743,6 +734,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "other": null },
     data: [
       {
         id: "meditation_cost",
@@ -946,6 +938,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "store": null },
     data: [
       {
         id: "trinket_cost",
@@ -1106,6 +1099,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "combat": null },
     data: [
       {
         id: "bribe_cost",
@@ -1145,7 +1139,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "fight_path",
         description: "You engage the goblin raiding party in combat.",
         kind: {
-          combat: { creatures: [{ id: "goblin" }, { id: "goblin" }, { id: "goblin" }] }
+          combat: { creature: { id: "goblins" } }
         },
         paths: [
           {
@@ -1199,17 +1193,25 @@ export const scenarios: ScenarioMetaData[] = [
         id: "bribe_failure",
         description: "The goblins take your bribe but attack anyway!",
         kind: {
-          effects: [{ damage: { dataField: "goblin_damage" } }]
+          effects: []
         },
-        paths: [],
+        paths: [{
+          pathId: "fight_path",
+          weight: 1,
+          condition: [],
+        }],
       },
       {
         id: "bribe_no_gold",
         description: "The goblins see you don't have any gold and attack!",
         kind: {
-          effects: [{ damage: { dataField: "goblin_damage" } }]
+          effects: []
         },
-        paths: [],
+        paths: [{
+          pathId: "fight_path",
+          weight: 1,
+          condition: [],
+        }],
       },
       {
         id: "intimidate_path",
@@ -1242,9 +1244,13 @@ export const scenarios: ScenarioMetaData[] = [
         id: "intimidate_failure",
         description: "The goblins are not impressed and attack!",
         kind: {
-          effects: [{ damage: { dataField: "goblin_damage" } }]
+          effects: []
         },
-        paths: [],
+        paths: [{
+          pathId: "fight_path",
+          weight: 1,
+          condition: [],
+        }],
       },
       {
         id: "distract_path",
@@ -1311,6 +1317,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["ancient_ruins"],
     },
+    category: { "store": null },
     data: [
       {
         id: "study_cost",
@@ -1520,6 +1527,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "other": null },
     data: [],
     choices: [
       {
@@ -1680,6 +1688,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["ancient_ruins"],
     },
+    category: { "other": null },
     data: [
       {
         id: "trap_damage",
@@ -1838,7 +1847,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "structure_ambush",
         description: "You are ambushed by a group of hostile creatures!",
         kind: {
-          combat: { creatures: [{ filter: { location: { any: null } } }, { filter: { location: { any: null } } }] }
+          combat: { creature: { filter: { location: { any: null } } } }
         },
         paths: [],
       },
@@ -1903,6 +1912,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["mystic_caves"],
     },
+    category: { "store": null },
     data: [
       {
         id: "upgrade_cost",
@@ -2121,6 +2131,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "other": null },
     data: [
       {
         id: "swimming_damage",
@@ -2279,6 +2290,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "other": null },
     data: [
       {
         id: "direct_damage",
@@ -2455,6 +2467,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "store": null },
     data: [
       {
         id: "inspiration_cost",
@@ -2670,6 +2683,7 @@ export const scenarios: ScenarioMetaData[] = [
     location: {
       zoneIds: ["enchanted_forest"],
     },
+    category: { "store": null },
     data: [
       {
         id: "vial_of_acid_cost",

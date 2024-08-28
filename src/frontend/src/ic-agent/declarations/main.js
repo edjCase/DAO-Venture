@@ -5,6 +5,11 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
+  const CreatureKind = IDL.Variant({
+    'normal' : IDL.Null,
+    'boss' : IDL.Null,
+    'elite' : IDL.Null,
+  });
   const CreatureLocationKind = IDL.Variant({
     'common' : IDL.Null,
     'zoneIds' : IDL.Vec(IDL.Text),
@@ -13,6 +18,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'magic' : IDL.Int,
     'maxHealth' : IDL.Nat,
+    'kind' : CreatureKind,
     'name' : IDL.Text,
     'description' : IDL.Text,
     'speed' : IDL.Int,
@@ -85,6 +91,11 @@ export const idlFactory = ({ IDL }) => {
     'value' : GeneratedDataFieldValue,
     'name' : IDL.Text,
   });
+  const ScenarioCategory = IDL.Variant({
+    'other' : IDL.Null,
+    'store' : IDL.Null,
+    'combat' : IDL.Null,
+  });
   const TextValue = IDL.Variant({
     'raw' : IDL.Text,
     'dataField' : IDL.Text,
@@ -119,17 +130,19 @@ export const idlFactory = ({ IDL }) => {
     'removeGold' : NatValue,
     'removeItem' : RandomOrSpecificTextValue,
   });
+  const CombatCreatureLocationFilter = IDL.Variant({
+    'any' : IDL.Null,
+    'zone' : IDL.Text,
+    'common' : IDL.Null,
+  });
+  const CombatCreatureFilter = IDL.Record({
+    'location' : CombatCreatureLocationFilter,
+  });
   const CombatCreatureKind = IDL.Variant({
     'id' : IDL.Text,
-    'filter' : IDL.Record({
-      'location' : IDL.Variant({
-        'any' : IDL.Null,
-        'zone' : IDL.Text,
-        'common' : IDL.Null,
-      }),
-    }),
+    'filter' : CombatCreatureFilter,
   });
-  const CombatPath = IDL.Record({ 'creatures' : IDL.Vec(CombatCreatureKind) });
+  const CombatPath = IDL.Record({ 'creature' : CombatCreatureKind });
   const OutcomePathKind = IDL.Variant({
     'effects' : IDL.Vec(Effect),
     'combat' : CombatPath,
@@ -177,6 +190,7 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(GeneratedDataField),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'category' : ScenarioCategory,
     'paths' : IDL.Vec(OutcomePath),
     'imageId' : IDL.Text,
     'choices' : IDL.Vec(Choice),
@@ -226,7 +240,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'baseStats' : WeaponStats,
-    'requirements' : IDL.Opt(WeaponRequirement),
+    'requirements' : IDL.Vec(WeaponRequirement),
   });
   const AddGameContentRequest = IDL.Variant({
     'trait' : Trait,
@@ -290,6 +304,7 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
   });
+  const Time = IDL.Int;
   const CharacterWithMetaData = IDL.Record({
     'magic' : IDL.Int,
     'maxHealth' : IDL.Nat,
@@ -309,6 +324,25 @@ export const idlFactory = ({ IDL }) => {
     'hard' : IDL.Null,
     'medium' : IDL.Null,
   });
+  const CompletedGameWithMetaData = IDL.Record({
+    'id' : IDL.Nat,
+    'startTime' : Time,
+    'turns' : IDL.Nat,
+    'guestUserIds' : IDL.Vec(IDL.Principal),
+    'endTime' : Time,
+    'character' : CharacterWithMetaData,
+    'difficulty' : Difficulty,
+    'victory' : IDL.Bool,
+    'hostUserId' : IDL.Principal,
+  });
+  const CompletedGameStateWithMetaData = IDL.Record({
+    'startTime' : Time,
+    'turns' : IDL.Nat,
+    'endTime' : Time,
+    'character' : CharacterWithMetaData,
+    'difficulty' : Difficulty,
+    'victory' : IDL.Bool,
+  });
   const ChoiceVotingPower_1 = IDL.Record({
     'votingPower' : IDL.Nat,
     'choice' : IDL.Nat,
@@ -327,6 +361,12 @@ export const idlFactory = ({ IDL }) => {
     'undecidedVotingPower' : IDL.Nat,
     'totalVotingPower' : IDL.Nat,
   });
+  const VotingGameStateWithMetaData = IDL.Record({
+    'startTime' : Time,
+    'characterVotes' : VotingSummary,
+    'characterOptions' : IDL.Vec(CharacterWithMetaData),
+    'difficultyVotes' : VotingSummary_1,
+  });
   const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
   const Location = IDL.Record({
     'id' : IDL.Nat,
@@ -334,23 +374,17 @@ export const idlFactory = ({ IDL }) => {
     'coordinate' : AxialCoordinate,
     'zoneId' : IDL.Text,
   });
+  const InProgressGameStateWithMetaData = IDL.Record({
+    'startTime' : Time,
+    'character' : CharacterWithMetaData,
+    'turn' : IDL.Nat,
+    'locations' : IDL.Vec(Location),
+  });
   const GameStateWithMetaData = IDL.Variant({
     'notStarted' : IDL.Null,
-    'completed' : IDL.Record({
-      'turns' : IDL.Nat,
-      'character' : CharacterWithMetaData,
-      'difficulty' : Difficulty,
-    }),
-    'voting' : IDL.Record({
-      'characterVotes' : VotingSummary,
-      'characterOptions' : IDL.Vec(CharacterWithMetaData),
-      'difficultyVotes' : VotingSummary_1,
-    }),
-    'inProgress' : IDL.Record({
-      'character' : CharacterWithMetaData,
-      'turn' : IDL.Nat,
-      'locations' : IDL.Vec(Location),
-    }),
+    'completed' : CompletedGameStateWithMetaData,
+    'voting' : VotingGameStateWithMetaData,
+    'inProgress' : InProgressGameStateWithMetaData,
   });
   const GameWithMetaData = IDL.Record({
     'id' : IDL.Nat,
@@ -441,7 +475,6 @@ export const idlFactory = ({ IDL }) => {
     'count' : IDL.Nat,
     'offset' : IDL.Nat,
   });
-  const Time = IDL.Int;
   const User = IDL.Record({
     'id' : IDL.Principal,
     'createTime' : Time,
@@ -617,6 +650,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getClasses' : IDL.Func([], [IDL.Vec(Class)], ['query']),
+    'getCompletedGames' : IDL.Func(
+        [],
+        [IDL.Vec(CompletedGameWithMetaData)],
+        ['query'],
+      ),
     'getCurrentGame' : IDL.Func([], [GetCurrentGameResult], ['query']),
     'getGame' : IDL.Func([GetGameRequest], [GetGameResult], ['query']),
     'getItems' : IDL.Func([], [IDL.Vec(Item)], ['query']),

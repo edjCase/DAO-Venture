@@ -265,6 +265,10 @@ actor MainActor : Types.Actor {
         #ok(gameHandler.getCurrentInstance(caller));
     };
 
+    public shared query ({ caller }) func getCompletedGames() : async [GameHandler.CompletedGameWithMetaData] {
+        gameHandler.getCompletedInstances(caller);
+    };
+
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
         let ?user = userHandler.get(userId) else return #err(#notFound);
         #ok(user);

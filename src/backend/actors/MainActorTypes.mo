@@ -32,6 +32,7 @@ module {
 
         getGame : query (request : GetGameRequest) -> async GetGameResult;
         getCurrentGame : query () -> async GetCurrentGameResult;
+        getCompletedGames : query () -> async [GameHandler.CompletedGameWithMetaData];
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;

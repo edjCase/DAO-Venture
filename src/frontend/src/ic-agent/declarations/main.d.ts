@@ -100,15 +100,34 @@ export interface Class {
   'unlockRequirement' : [] | [UnlockRequirement],
   'modifiers' : Array<CharacterModifier>,
 }
+export interface CombatCreatureFilter {
+  'location' : CombatCreatureLocationFilter,
+}
 export type CombatCreatureKind = { 'id' : string } |
-  {
-    'filter' : {
-      'location' : { 'any' : null } |
-        { 'zone' : string } |
-        { 'common' : null },
-    }
-  };
-export interface CombatPath { 'creatures' : Array<CombatCreatureKind> }
+  { 'filter' : CombatCreatureFilter };
+export type CombatCreatureLocationFilter = { 'any' : null } |
+  { 'zone' : string } |
+  { 'common' : null };
+export interface CombatPath { 'creature' : CombatCreatureKind }
+export interface CompletedGameStateWithMetaData {
+  'startTime' : Time,
+  'turns' : bigint,
+  'endTime' : Time,
+  'character' : CharacterWithMetaData,
+  'difficulty' : Difficulty,
+  'victory' : boolean,
+}
+export interface CompletedGameWithMetaData {
+  'id' : bigint,
+  'startTime' : Time,
+  'turns' : bigint,
+  'guestUserIds' : Array<Principal>,
+  'endTime' : Time,
+  'character' : CharacterWithMetaData,
+  'difficulty' : Difficulty,
+  'victory' : boolean,
+  'hostUserId' : Principal,
+}
 export type Condition = { 'hasGold' : NatValue } |
   { 'hasItem' : TextValue } |
   { 'hasTrait' : TextValue };
@@ -135,6 +154,7 @@ export interface Creature {
   'id' : string,
   'magic' : bigint,
   'maxHealth' : bigint,
+  'kind' : CreatureKind,
   'name' : string,
   'description' : string,
   'speed' : bigint,
@@ -144,6 +164,9 @@ export interface Creature {
   'location' : CreatureLocationKind,
   'health' : bigint,
 }
+export type CreatureKind = { 'normal' : null } |
+  { 'boss' : null } |
+  { 'elite' : null };
 export type CreatureLocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
 export type Difficulty = { 'easy' : null } |
@@ -160,27 +183,9 @@ export type Effect = { 'reward' : null } |
   { 'removeGold' : NatValue } |
   { 'removeItem' : RandomOrSpecificTextValue };
 export type GameStateWithMetaData = { 'notStarted' : null } |
-  {
-    'completed' : {
-      'turns' : bigint,
-      'character' : CharacterWithMetaData,
-      'difficulty' : Difficulty,
-    }
-  } |
-  {
-    'voting' : {
-      'characterVotes' : VotingSummary,
-      'characterOptions' : Array<CharacterWithMetaData>,
-      'difficultyVotes' : VotingSummary_1,
-    }
-  } |
-  {
-    'inProgress' : {
-      'character' : CharacterWithMetaData,
-      'turn' : bigint,
-      'locations' : Array<Location>,
-    }
-  };
+  { 'completed' : CompletedGameStateWithMetaData } |
+  { 'voting' : VotingGameStateWithMetaData } |
+  { 'inProgress' : InProgressGameStateWithMetaData };
 export interface GameWithMetaData {
   'id' : bigint,
   'guestUserIds' : Array<Principal>,
@@ -265,6 +270,12 @@ export interface Image {
   'kind' : ImageKind,
 }
 export type ImageKind = { 'png' : null };
+export interface InProgressGameStateWithMetaData {
+  'startTime' : Time,
+  'character' : CharacterWithMetaData,
+  'turn' : bigint,
+  'locations' : Array<Location>,
+}
 export interface Item { 'id' : string, 'name' : string, 'description' : string }
 export type JoinError = { 'alreadyMember' : null };
 export interface Location {
@@ -340,11 +351,15 @@ export interface Scenario {
   'availableChoiceIds' : Array<string>,
   'outcome' : [] | [Outcome],
 }
+export type ScenarioCategory = { 'other' : null } |
+  { 'store' : null } |
+  { 'combat' : null };
 export interface ScenarioMetaData {
   'id' : string,
   'data' : Array<GeneratedDataField>,
   'name' : string,
   'description' : string,
+  'category' : ScenarioCategory,
   'paths' : Array<OutcomePath>,
   'imageId' : string,
   'choices' : Array<Choice>,
@@ -436,6 +451,12 @@ export interface VoteOnWorldProposalRequest {
 }
 export type VoteOnWorldProposalResult = { 'ok' : null } |
   { 'err' : VoteOnWorldProposalError };
+export interface VotingGameStateWithMetaData {
+  'startTime' : Time,
+  'characterVotes' : VotingSummary,
+  'characterOptions' : Array<CharacterWithMetaData>,
+  'difficultyVotes' : VotingSummary_1,
+}
 export interface VotingSummary {
   'votingPowerByChoice' : Array<ChoiceVotingPower_1>,
   'undecidedVotingPower' : bigint,
@@ -451,7 +472,7 @@ export interface Weapon {
   'name' : string,
   'description' : string,
   'baseStats' : WeaponStats,
-  'requirements' : [] | [WeaponRequirement],
+  'requirements' : Array<WeaponRequirement>,
 }
 export type WeaponAttribute = { 'damage' : null } |
   { 'attacks' : null } |
@@ -498,6 +519,7 @@ export interface _SERVICE {
     CreateWorldProposalResult
   >,
   'getClasses' : ActorMethod<[], Array<Class>>,
+  'getCompletedGames' : ActorMethod<[], Array<CompletedGameWithMetaData>>,
   'getCurrentGame' : ActorMethod<[], GetCurrentGameResult>,
   'getGame' : ActorMethod<[GetGameRequest], GetGameResult>,
   'getItems' : ActorMethod<[], Array<Item>>,
