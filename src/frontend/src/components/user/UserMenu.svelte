@@ -14,9 +14,9 @@
       <div>
         <UserPseudonym userId={user.id} />
       </div>
-      {#if user.worldData != undefined}
+      {#if user.data != undefined}
         <div class="text-center text-md font-bold">
-          Points: {user.worldData.points}
+          Points: {user.data.points}
         </div>
       {/if}
     </div>

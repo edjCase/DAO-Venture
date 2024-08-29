@@ -18,16 +18,18 @@
   $: magicStat = getValue(character?.magic);
 </script>
 
-<div class="flex justify-around">
-  <div><Icon kind={{ gold: null }} /> {goldStat}</div>
-  <div><Icon kind={{ health: null }} /> {healthStat}/{maxHealthStat}</div>
-</div>
-<div class="flex justify-center m-2">
-  <CharacterAvatar {size} {character} />
-</div>
-<div class="flex justify-around">
-  <div><Icon kind={{ attack: null }} /> {attackStat}</div>
-  <div><Icon kind={{ defense: null }} /> {defenseStat}</div>
-  <div><Icon kind={{ speed: null }} /> {speedStat}</div>
-  <div><Icon kind={{ magic: null }} /> {magicStat}</div>
+<div>
+  <div class="flex justify-around">
+    <div><Icon kind={{ gold: null }} /> {goldStat}</div>
+    <div><Icon kind={{ health: null }} /> {healthStat}/{maxHealthStat}</div>
+  </div>
+  <div class="flex justify-center m-2">
+    <CharacterAvatar {size} {character} />
+  </div>
+  <div class="flex justify-around">
+    <div><Icon kind={{ attack: null }} /> {attackStat}</div>
+    <div><Icon kind={{ defense: null }} /> {defenseStat}</div>
+    <div><Icon kind={{ speed: null }} /> {speedStat}</div>
+    <div><Icon kind={{ magic: null }} /> {magicStat}</div>
+  </div>
 </div>

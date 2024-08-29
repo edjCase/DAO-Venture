@@ -1,0 +1,5 @@
+module {
+    public type PixelImage = {
+
+    };
+};

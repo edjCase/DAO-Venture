@@ -1,13 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap');
-
 :root {
   --color-bg: #0F0F10;
   --color-text: #E0E0E0;
-  --color-primary: #272B30;
+  --color-primary: #426A5A;
+  --color-primary-dark: #2A4A3A;
+  --color-primary-light: #5A8A7A;
   --color-secondary: #1C2025;
-  --color-accent: #426A5A;
+  --color-accent: #7D9D8D; 
   --color-info: #C1A33B;
-  --button-hover: #3C4F41;
+  --button-hover: #3C4F41; 
   --color-bg-dark: #12181B;
   --color-bg-light: #1C2326;
   --color-text-light: #E1E8ED;
@@ -18,13 +19,12 @@
 [data-theme='light'] {
   --color-bg: #F0E6D6;
   --color-text: #2C2C2C;
-  --color-primary: #4E5A65;
+  --color-primary: #426A5A; 
   --color-secondary: #B8B2A7;
   --color-accent: #7D9D8D;
   --color-info: #DBB84D;
-  --button-hover: #6B7B6E;
+  --button-hover: #3C4F41; 
 }
-
 
 body {
   background-color: var(--color-bg);

@@ -117,14 +117,15 @@
     );
   };
 
-  let initialized = true;
+  let initialized: boolean | undefined;
   onMount(async () => {
+    console.log("Checking for existing data");
     let mainAgent = await mainAgentFactory();
     let scenarios = await mainAgent.getScenarioMetaDataList();
     initialized = scenarios.length > 0;
   });
 </script>
 
-{#if !initialized}
+{#if initialized !== true}
   <LoadingButton onClick={initialize}>Initialize Data</LoadingButton>
 {/if}

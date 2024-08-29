@@ -14,6 +14,7 @@
     <hr />
     {#each completedGames as game}
       <div>
+        <div>Result: {game.victory ? "Victory" : "Defeat"}</div>
         <div>
           Type:
           {#if game.guestUserIds.length < 1}
@@ -27,7 +28,7 @@
         </div>
         <p><Difficulty value={game.difficulty} /></p>
         <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
-        <div class="w-48">
+        <div class="flex justify-center">
           <CharacterAvatarWithStats size="lg" character={game.character} />
         </div>
       </div>

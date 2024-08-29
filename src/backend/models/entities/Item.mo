@@ -6,10 +6,8 @@ import Entity "Entity";
 
 module {
 
-    public type Item = {
-        id : Text;
-        name : Text;
-        description : Text;
+    public type Item = Entity.Entity and {
+        // image : PixelImage;
     };
 
     public func validate(

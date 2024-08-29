@@ -5,9 +5,9 @@ import { toJsonString } from '../utils/StringUtil';
 import { Principal } from '@dfinity/principal';
 import { getOrCreateAuthClient } from '../utils/AuthUtil';
 
-type UserData = {
+export type UserData = {
     id: Principal;
-    worldData: User | undefined;
+    data: User | undefined;
 };
 
 function createUserStore() {
@@ -25,13 +25,13 @@ function createUserStore() {
         if ('ok' in result) {
             currentUser.set({
                 id: currentUserId,
-                worldData: result.ok
+                data: result.ok
             });
         }
         else if ('err' in result && 'notFound' in result.err) {
             currentUser.set({
                 id: currentUserId,
-                worldData: undefined
+                data: undefined
             });
         } else {
             throw new Error("Failed to get user: " + currentUserId + " " + toJsonString(result));

@@ -4,6 +4,7 @@
   import UserPseudonym from "./UserPseudonym.svelte";
   import UserIdCopyButton from "./UserIdCopyButton.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
+  import GameHistory from "../game/GameHistory.svelte";
 
   $: user = $userStore;
 </script>
@@ -28,19 +29,20 @@
           <UserIdCopyButton userId={user.id} />
         </div>
       </div>
-      {#if user.worldData !== undefined}
+      {#if user.data !== undefined}
         <div class="mb-4">
           <div>
-            Joined World: {nanosecondsToDate(user.worldData.createTime)}
+            Joined World: {nanosecondsToDate(user.data.createTime)}
           </div>
         </div>
         <div class="mb-4">
           <div class="font-bold text-xl mb-2">
-            Points - {user.worldData.points}
+            Points - {user.data.points}
           </div>
         </div>
       {/if}
     </div>
+    <GameHistory />
   {/if}
 
   <div class="mt-4">
