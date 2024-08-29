@@ -14,6 +14,8 @@ import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
 import Prelude "mo:base/Prelude";
+import Order "mo:base/Order";
+import Int "mo:base/Int";
 import Location "../models/Location";
 import Scenario "../models/entities/Scenario";
 import Character "../models/Character";
@@ -55,6 +57,7 @@ module {
         id : Nat;
         hostUserId : Principal;
         guestUserIds : [Principal];
+        createdTime : Time.Time;
         state : GameInstanceState;
     };
 
@@ -100,6 +103,7 @@ module {
         id : Nat;
         hostUserId : Principal;
         guestUserIds : [Principal];
+        createdTime : Time.Time;
         state : GameStateWithMetaData;
     };
 
@@ -137,6 +141,7 @@ module {
         id : Nat;
         hostUserId : Principal;
         guestUserIds : [Principal];
+        createdTime : Time.Time;
     };
 
     public type CharacterWithMetaData = {
@@ -178,6 +183,7 @@ module {
         id : Nat;
         hostUserId : Principal;
         guestUserIds : [Principal];
+        createdTime : Time.Time;
         state : {
             #notStarted;
             #voting : MutableVotingData;
@@ -309,6 +315,15 @@ module {
                     return #err(#noCreaturesForZone(zone.id));
                 };
             };
+            switch (getCurrentInstance(hostUserId)) {
+                case (?instance) {
+                    switch (instance.state) {
+                        case (#completed(_)) (); // Ok to create a new game
+                        case (_) return #err(#alreadyInitialized);
+                    };
+                };
+                case (null) ();
+            };
 
             let instanceId = instances.size(); // TODO
             instances.put(
@@ -317,6 +332,7 @@ module {
                     id = instanceId;
                     hostUserId = hostUserId;
                     guestUserIds = [];
+                    createdTime = Time.now();
                     state = #notStarted;
                 },
             );
@@ -324,23 +340,43 @@ module {
             #ok(instanceId);
         };
 
-        public func addUserToGame(
+        public func addPlayer(
             gameId : Nat,
-            callingUserId : Principal,
-            userIdToAdd : Principal,
-        ) : Result.Result<(), { #gameNotFound; #alreadyJoined; #notAuthorized }> {
+            playerId : Principal,
+        ) : Result.Result<(), { #gameNotFound; #alreadyJoined; #lobbyClosed }> {
             let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            if (instance.hostUserId != callingUserId) {
-                return #err(#notAuthorized);
-            };
-            if (instance.hostUserId == userIdToAdd or Array.indexOf(userIdToAdd, instance.guestUserIds, Principal.equal) != null) {
+            let #notStarted = instance.state else return #err(#lobbyClosed);
+            if (instance.hostUserId == playerId or Array.indexOf(playerId, instance.guestUserIds, Principal.equal) != null) {
                 return #err(#alreadyJoined);
             };
             instances.put(
                 gameId,
                 {
                     instance with
-                    guestUserIds = Array.append(instance.guestUserIds, [userIdToAdd]);
+                    guestUserIds = Array.append(instance.guestUserIds, [playerId]);
+                },
+            );
+            #ok;
+        };
+
+        public func kickPlayer(
+            gameId : Nat,
+            playerId : Principal,
+            kickerId : Principal,
+        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #notAuthorized; #playerNotInGame }> {
+            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
+            let #notStarted = instance.state else return #err(#gameNotActive);
+            if (instance.hostUserId != kickerId) {
+                return #err(#notAuthorized);
+            };
+            if (Array.indexOf(playerId, instance.guestUserIds, Principal.equal) == null) {
+                return #err(#playerNotInGame);
+            };
+            instances.put(
+                gameId,
+                {
+                    instance with
+                    guestUserIds = Array.filter(instance.guestUserIds, func(id : Principal) : Bool = id != playerId);
                 },
             );
             #ok;
@@ -660,18 +696,24 @@ module {
         };
 
         public func getCurrentInstance(userId : Principal) : ?GameWithMetaData {
-            for (instance in instances.vals()) {
-                switch (instance.state) {
-                    case (#completed(_)) ();
-                    case (_) {
-                        // TODO better way
-                        if (instance.hostUserId == userId or Array.indexOf(userId, instance.guestUserIds, Principal.equal) != null) {
-                            return ?toInstanceWithMetaData(instance);
-                        };
-                    };
-                };
+
+            let instanceOrNull = instances.vals()
+            |> Iter.filter<MutableGameInstance>(
+                _,
+                func(instance : MutableGameInstance) : Bool {
+                    instance.hostUserId == userId or Array.indexOf(userId, instance.guestUserIds, Principal.equal) != null;
+                },
+            )
+            |> Iter.sort(
+                _,
+                func(a : MutableGameInstance, b : MutableGameInstance) : Order.Order = Int.compare(b.createdTime, a.createdTime),
+            )
+            |> _.next();
+
+            switch (instanceOrNull) {
+                case (?instance) ?toInstanceWithMetaData(instance);
+                case (null) null;
             };
-            null;
         };
 
         public func getCompletedInstances(userId : Principal) : [CompletedGameWithMetaData] {
@@ -997,6 +1039,7 @@ module {
                 id = instance.id;
                 hostUserId = instance.hostUserId;
                 guestUserIds = instance.guestUserIds;
+                createdTime = instance.createdTime;
                 state = state;
             };
         };
@@ -1072,6 +1115,7 @@ module {
             id = instance.id;
             hostUserId = instance.hostUserId;
             guestUserIds = instance.guestUserIds;
+            createdTime = instance.createdTime;
             state = state;
         };
     };
@@ -1102,6 +1146,7 @@ module {
             id = instance.id;
             hostUserId = instance.hostUserId;
             guestUserIds = instance.guestUserIds;
+            createdTime = instance.createdTime;
             state = state;
         };
     };

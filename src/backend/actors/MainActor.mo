@@ -113,8 +113,12 @@ actor MainActor : Types.Actor {
         gameHandler.createInstance(caller);
     };
 
-    public shared ({ caller }) func addUserToGame(request : Types.AddUserToGameRequest) : async Types.AddUserToGameResult {
-        gameHandler.addUserToGame(request.gameId, caller, request.userId);
+    public shared ({ caller }) func joinGame(request : Types.JoinGameRequest) : async Types.JoinGameResult {
+        gameHandler.addPlayer(request.gameId, caller);
+    };
+
+    public shared ({ caller }) func kickPlayer(request : Types.KickPlayerRequest) : async Types.KickPlayerResult {
+        gameHandler.kickPlayer(request.gameId, request.playerId, caller);
     };
 
     public shared ({ caller }) func startGameVote(request : Types.StartGameVoteRequest) : async Types.StartGameVoteResult {
@@ -170,7 +174,7 @@ actor MainActor : Types.Actor {
         };
     };
 
-    public shared ({ caller }) func join() : async Result.Result<(), Types.JoinError> {
+    public shared ({ caller }) func register() : async Result.Result<(), Types.JoinError> {
         // TODO restrict to NFT?/TOken holders
         userHandler.add(caller);
     };

@@ -76,6 +76,6 @@
 <img
   src={characterDataUrl}
   alt="Character Avatar"
-  class="{sizeClass} border border-gray-300 rounded"
+  class={sizeClass}
   style="image-rendering: pixelated;"
 />

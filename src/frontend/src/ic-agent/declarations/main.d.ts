@@ -19,16 +19,6 @@ export type AddGameContentRequest = { 'trait' : Trait } |
   { 'weapon' : Weapon };
 export type AddGameContentResult = { 'ok' : null } |
   { 'err' : { 'notAuthorized' : null } | { 'invalid' : Array<string> } };
-export interface AddUserToGameRequest {
-  'userId' : Principal,
-  'gameId' : bigint,
-}
-export type AddUserToGameResult = { 'ok' : null } |
-  {
-    'err' : { 'alreadyJoined' : null } |
-      { 'notAuthorized' : null } |
-      { 'gameNotFound' : null }
-  };
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export interface CallbackStrategy {
   'token' : Token,
@@ -125,6 +115,7 @@ export interface CompletedGameWithMetaData {
   'endTime' : Time,
   'character' : CharacterWithMetaData,
   'difficulty' : Difficulty,
+  'createdTime' : Time,
   'victory' : boolean,
   'hostUserId' : Principal,
 }
@@ -189,6 +180,7 @@ export type GameStateWithMetaData = { 'notStarted' : null } |
 export interface GameWithMetaData {
   'id' : bigint,
   'guestUserIds' : Array<Principal>,
+  'createdTime' : Time,
   'state' : GameStateWithMetaData,
   'hostUserId' : Principal,
 }
@@ -278,6 +270,21 @@ export interface InProgressGameStateWithMetaData {
 }
 export interface Item { 'id' : string, 'name' : string, 'description' : string }
 export type JoinError = { 'alreadyMember' : null };
+export interface JoinGameRequest { 'gameId' : bigint }
+export type JoinGameResult = { 'ok' : null } |
+  {
+    'err' : { 'alreadyJoined' : null } |
+      { 'lobbyClosed' : null } |
+      { 'gameNotFound' : null }
+  };
+export interface KickPlayerRequest { 'playerId' : Principal, 'gameId' : bigint }
+export type KickPlayerResult = { 'ok' : null } |
+  {
+    'err' : { 'notAuthorized' : null } |
+      { 'gameNotFound' : null } |
+      { 'playerNotInGame' : null } |
+      { 'gameNotActive' : null }
+  };
 export interface Location {
   'id' : bigint,
   'scenarioId' : bigint,
@@ -512,7 +519,6 @@ export interface WorldProposal {
 export interface Zone { 'id' : string, 'name' : string, 'description' : string }
 export interface _SERVICE {
   'addGameContent' : ActorMethod<[AddGameContentRequest], AddGameContentResult>,
-  'addUserToGame' : ActorMethod<[AddUserToGameRequest], AddUserToGameResult>,
   'createGame' : ActorMethod<[], CreateGameResult>,
   'createWorldProposal' : ActorMethod<
     [CreateWorldProposalRequest],
@@ -540,7 +546,9 @@ export interface _SERVICE {
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'http_request_update' : ActorMethod<[HttpUpdateRequest], HttpResponse>,
-  'join' : ActorMethod<[], Result>,
+  'joinGame' : ActorMethod<[JoinGameRequest], JoinGameResult>,
+  'kickPlayer' : ActorMethod<[KickPlayerRequest], KickPlayerResult>,
+  'register' : ActorMethod<[], Result>,
   'startGameVote' : ActorMethod<[StartGameVoteRequest], StartGameVoteResult>,
   'voteOnNewGame' : ActorMethod<[VoteOnNewGameRequest], VoteOnNewGameResult>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,

@@ -8,8 +8,8 @@
   import { GameWithMetaData, User } from "../../ic-agent/declarations/main";
   import UserAvatar from "../user/UserAvatar.svelte";
   import UserPseudonym from "../user/UserPseudonym.svelte";
-  import { PlusSolid } from "flowbite-svelte-icons";
-  import { Button } from "flowbite-svelte";
+  import CopyTextButton from "../common/CopyTextButton.svelte";
+  import { Principal } from "@dfinity/principal";
 
   export let game: GameWithMetaData;
   export let user: User;
@@ -35,32 +35,53 @@
       console.error("Failed to start game", result);
     }
   };
+  let kick = (guestUserId: Principal) => async () => {
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.kickPlayer({
+      gameId: game.id,
+      playerId: guestUserId,
+    });
+    if ("ok" in result) {
+      currentGameStore.refetch();
+    } else {
+      console.error("Failed to kick user", result);
+    }
+  };
+
+  $: inviteUrl = window.location.origin + "/join/" + game.id;
+  $: isHost = game.hostUserId.toString() === user.id.toString();
 </script>
 
 <div
-  class="bg-gray-800 rounded p-2 pt-8 text-center flex flex-col items-center justify-center"
+  class="bg-gray-800 rounded p-2 text-center flex flex-col items-center justify-center"
 >
   {#if "notStarted" in game.state}
-    <div class="border rounded w-48 p-6">
-      <div>Lobby</div>
-      <div>
+    <div class="border rounded p-6 mb-4 min-w-96">
+      <div class="text-3xl text-primary-500">Lobby</div>
+      <div class="flex items-center justify-center gap-1">
         <UserAvatar userId={game.hostUserId} size="xs" />
         <UserPseudonym userId={game.hostUserId} />
         (Host)
       </div>
       {#if game.guestUserIds.length > 0}
-        <div>Guests</div>
         {#each game.guestUserIds as guestUserId}
-          <div><UserAvatar userId={guestUserId} size="xs" /></div>
+          <div class="flex items-center justify-center gap-1">
+            <UserAvatar userId={guestUserId} size="xs" />
+            <UserPseudonym userId={guestUserId} />
+            {#if guestUserId.toString() === user.id.toString()}(You){/if}
+            {#if isHost}
+              <LoadingButton onClick={kick(guestUserId)}>Kick</LoadingButton>
+            {/if}
+          </div>
         {/each}
       {/if}
+      <div class="text-xl text-primary-500 mt-4">Invite Url</div>
       <div class="flex items-center justify-center gap-2">
-        Invite Users
-        <Button><PlusSolid size="xs" /></Button>
+        <div>{inviteUrl}</div>
+        <CopyTextButton value={inviteUrl} tooltip={false} />
       </div>
     </div>
-    <div>Start Vote</div>
-    <LoadingButton onClick={startGameVote}>Start Vote for Game</LoadingButton>
+    <LoadingButton onClick={startGameVote}>Start Game</LoadingButton>
   {:else if "voting" in game.state}
     <NewGameVote gameId={game.id} state={game.state.voting} />
   {:else if "inProgress" in game.state}

@@ -9,9 +9,14 @@ export const currentGameStore = (() => {
     const mainAgent = await mainAgentFactory();
     const result = await mainAgent.getCurrentGame();
     if ('ok' in result) {
-      set(result.ok[0]);
+      let gameOrUndefined = result.ok[0];
+      set(gameOrUndefined);
+      if (gameOrUndefined !== undefined) {
+        setTimeout(refetch, 5000);
+      }
     } else {
       console.error("Current game fetch error", result.err);
+      setTimeout(refetch, 5000);
     }
   };
 

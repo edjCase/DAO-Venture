@@ -8,6 +8,7 @@
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
   import LoadingButton from "../common/LoadingButton.svelte";
+  import CharacterAvatar from "../character/CharacterAvatar.svelte";
 
   export let gameId: bigint;
   export let state: {
@@ -41,7 +42,7 @@
   };
 </script>
 
-<div class="text-3xl">Vote on next game</div>
+<div class="text-3xl">Pick character</div>
 <div class="flex flex-col p-8">
   {#each state.characterOptions as character, id}
     <button
@@ -50,41 +51,45 @@
       }}
     >
       <div
-        class="border rounded p-4 mb-4 w-full {characterId == id
+        class="flex items-center justify-left border rounded p-4 mb-4 {characterId ==
+        id
           ? 'bg-gray-700'
           : ''}"
       >
-        <div class="text-2xl">
-          {character.race.name}
-          {character.class.name}
-        </div>
-        <div>
-          {#if character.health > 100}
-            <div>+{character.health - 100n} 🫀</div>
-          {:else if character.health < 100}
-            <div>-{100n - character.health} 🫀</div>
-          {/if}
-          {#if character.gold > 0}
-            <div>+{character.gold} 🪙</div>
-          {/if}
-          {#if character.attack > 0}
-            <div>+{character.attack} ⚔️</div>
-          {/if}
-          {#if character.defense > 0}
-            <div>+{character.defense} 🛡️</div>
-          {/if}
-          {#if character.speed > 0}
-            <div>+{character.speed} 🏃</div>
-          {/if}
-          {#if character.magic > 0}
-            <div>+{character.magic} 🔮</div>
-          {/if}
-          {#each character.traits as trait}
-            <div>+{trait.name}</div>
-          {/each}
-          {#each character.items as item}
-            <div>+{item.name}</div>
-          {/each}
+        <CharacterAvatar size="lg" {character} />
+        <div class="flex-grow">
+          <div class="text-2xl">
+            {character.race.name}
+            {character.class.name}
+          </div>
+          <div>
+            {#if character.health > 100}
+              <div>+{character.health - 100n} 🫀</div>
+            {:else if character.health < 100}
+              <div>-{100n - character.health} 🫀</div>
+            {/if}
+            {#if character.gold > 0}
+              <div>+{character.gold} 🪙</div>
+            {/if}
+            {#if character.attack > 0}
+              <div>+{character.attack} ⚔️</div>
+            {/if}
+            {#if character.defense > 0}
+              <div>+{character.defense} 🛡️</div>
+            {/if}
+            {#if character.speed > 0}
+              <div>+{character.speed} 🏃</div>
+            {/if}
+            {#if character.magic > 0}
+              <div>+{character.magic} 🔮</div>
+            {/if}
+            {#each character.traits as trait}
+              <div>+{trait.name}</div>
+            {/each}
+            {#each character.items as item}
+              <div>+{item.name}</div>
+            {/each}
+          </div>
         </div>
       </div>
     </button>

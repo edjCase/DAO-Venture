@@ -261,18 +261,6 @@ export const idlFactory = ({ IDL }) => {
       'invalid' : IDL.Vec(IDL.Text),
     }),
   });
-  const AddUserToGameRequest = IDL.Record({
-    'userId' : IDL.Principal,
-    'gameId' : IDL.Nat,
-  });
-  const AddUserToGameResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({
-      'alreadyJoined' : IDL.Null,
-      'notAuthorized' : IDL.Null,
-      'gameNotFound' : IDL.Null,
-    }),
-  });
   const CreateGameError = IDL.Variant({
     'noTraits' : IDL.Null,
     'noWeapons' : IDL.Null,
@@ -332,6 +320,7 @@ export const idlFactory = ({ IDL }) => {
     'endTime' : Time,
     'character' : CharacterWithMetaData,
     'difficulty' : Difficulty,
+    'createdTime' : Time,
     'victory' : IDL.Bool,
     'hostUserId' : IDL.Principal,
   });
@@ -389,6 +378,7 @@ export const idlFactory = ({ IDL }) => {
   const GameWithMetaData = IDL.Record({
     'id' : IDL.Nat,
     'guestUserIds' : IDL.Vec(IDL.Principal),
+    'createdTime' : Time,
     'state' : GameStateWithMetaData,
     'hostUserId' : IDL.Principal,
   });
@@ -570,6 +560,28 @@ export const idlFactory = ({ IDL }) => {
     'body' : IDL.Vec(IDL.Nat8),
     'headers' : IDL.Vec(HeaderField),
   });
+  const JoinGameRequest = IDL.Record({ 'gameId' : IDL.Nat });
+  const JoinGameResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({
+      'alreadyJoined' : IDL.Null,
+      'lobbyClosed' : IDL.Null,
+      'gameNotFound' : IDL.Null,
+    }),
+  });
+  const KickPlayerRequest = IDL.Record({
+    'playerId' : IDL.Principal,
+    'gameId' : IDL.Nat,
+  });
+  const KickPlayerResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({
+      'notAuthorized' : IDL.Null,
+      'gameNotFound' : IDL.Null,
+      'playerNotInGame' : IDL.Null,
+      'gameNotActive' : IDL.Null,
+    }),
+  });
   const JoinError = IDL.Variant({ 'alreadyMember' : IDL.Null });
   const Result = IDL.Variant({ 'ok' : IDL.Null, 'err' : JoinError });
   const StartGameVoteRequest = IDL.Record({ 'gameId' : IDL.Nat });
@@ -638,11 +650,6 @@ export const idlFactory = ({ IDL }) => {
         [AddGameContentResult],
         [],
       ),
-    'addUserToGame' : IDL.Func(
-        [AddUserToGameRequest],
-        [AddUserToGameResult],
-        [],
-      ),
     'createGame' : IDL.Func([], [CreateGameResult], []),
     'createWorldProposal' : IDL.Func(
         [CreateWorldProposalRequest],
@@ -700,7 +707,9 @@ export const idlFactory = ({ IDL }) => {
       ),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
     'http_request_update' : IDL.Func([HttpUpdateRequest], [HttpResponse], []),
-    'join' : IDL.Func([], [Result], []),
+    'joinGame' : IDL.Func([JoinGameRequest], [JoinGameResult], []),
+    'kickPlayer' : IDL.Func([KickPlayerRequest], [KickPlayerResult], []),
+    'register' : IDL.Func([], [Result], []),
     'startGameVote' : IDL.Func(
         [StartGameVoteRequest],
         [StartGameVoteResult],

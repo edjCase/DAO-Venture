@@ -10,9 +10,9 @@
   $: currentGame = $currentGameStore;
   $: user = $userStore;
 
-  let join = async () => {
+  let register = async () => {
     let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.join();
+    let result = await mainAgent.register();
     if ("ok" in result) {
       userStore.refetchCurrentUser();
     } else {
@@ -34,7 +34,7 @@
   {#if user === undefined}
     <LoginPage />
   {:else if user.data === undefined}
-    <LoadingButton onClick={join}>Join</LoadingButton>
+    <LoadingButton onClick={register}>Register</LoadingButton>
   {:else}
     {#if currentGame === undefined}
       <InitialDataLoad />

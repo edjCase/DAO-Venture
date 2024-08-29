@@ -29,7 +29,11 @@
     <UserMenu />
   </div>
   <div class="flex-1">
-    <Link to="/"><div class="text-center text-4xl">DAO Venture</div></Link>
+    <Link to="/"
+      ><div class="text-center text-4xl text-primary-500">
+        DAO Venture
+      </div></Link
+    >
   </div>
   <div class="flex-1 justify-center">
     {#if character === undefined}

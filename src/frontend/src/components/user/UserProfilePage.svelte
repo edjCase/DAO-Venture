@@ -2,7 +2,7 @@
   import LoginButton from "../../components/common/LoginButton.svelte";
   import { userStore } from "../../stores/UserStore";
   import UserPseudonym from "./UserPseudonym.svelte";
-  import UserIdCopyButton from "./UserIdCopyButton.svelte";
+  import CopyTextButton from "../common/CopyTextButton.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import GameHistory from "../game/GameHistory.svelte";
 
@@ -26,7 +26,7 @@
             {user.id.toString()}
           </div>
 
-          <UserIdCopyButton userId={user.id} />
+          <CopyTextButton value={user.id.toString()} />
         </div>
       </div>
       {#if user.data !== undefined}

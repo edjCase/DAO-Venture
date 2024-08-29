@@ -34,6 +34,17 @@
       gridData = undefined;
     }
   });
+
+  let nextScenario = () => {
+    if (!gridData) {
+      return;
+    }
+    // TODO this is a hack to get the next location
+    let currentIndex = gridData.findIndex(
+      (location) => location.id === selectedTileId
+    );
+    selectedTileId = gridData[currentIndex + 1].id;
+  };
 </script>
 
 {#if gridData !== undefined}
@@ -41,7 +52,7 @@
     <Location locationId={BigInt(id)} />
     <div slot="tileInfo" let:selectedTile>
       {#if selectedTile !== undefined}
-        <LocationInfo locationId={BigInt(selectedTile)} />
+        <LocationInfo locationId={BigInt(selectedTile)} {nextScenario} />
       {/if}
     </div>
   </HexGrid>

@@ -9,6 +9,7 @@
   import Dao from "./routes/Dao.svelte";
   import Navbar from "./components/common/Navbar.svelte";
   import Character from "./routes/Character.svelte";
+  import JoinGame from "./routes/JoinGame.svelte";
 </script>
 
 <main class="p-5 max-w-xl mx-auto h-screen">
@@ -19,6 +20,7 @@
       <Route path="/character" component={Character} />
       <Route path="/dao" component={Dao} />
       <Route path="/profile" component={UserProfile} />
+      <Route path="/join/:gameIdString" component={JoinGame} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/about" component={About} />
       <Route path="*" component={NotFound} />

@@ -23,7 +23,7 @@
     <div><Icon kind={{ gold: null }} /> {goldStat}</div>
     <div><Icon kind={{ health: null }} /> {healthStat}/{maxHealthStat}</div>
   </div>
-  <div class="flex justify-center m-2">
+  <div class="flex justify-center m-2 border border-gray-300 rounded">
     <CharacterAvatar {size} {character} />
   </div>
   <div class="flex justify-around">

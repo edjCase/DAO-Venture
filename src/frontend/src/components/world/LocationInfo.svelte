@@ -3,6 +3,7 @@
   import Scenario from "../scenario/Scenario.svelte";
 
   export let locationId: bigint;
+  export let nextScenario: () => void;
 
   $: currentGame = $currentGameStore;
 
@@ -15,7 +16,7 @@
 {#if location !== undefined}
   <div class="bg-gray-800 rounded p-2">
     <div class="text-center text-3xl">
-      <Scenario scenarioId={location.scenarioId} />
+      <Scenario scenarioId={location.scenarioId} {nextScenario} />
     </div>
   </div>
 {/if}

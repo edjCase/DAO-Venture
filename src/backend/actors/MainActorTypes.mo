@@ -20,6 +20,8 @@ import Weapon "../models/entities/Weapon";
 
 module {
     public type Actor = actor {
+        register : () -> async JoinResult;
+
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
         getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
@@ -40,10 +42,10 @@ module {
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
         createGame : () -> async CreateGameResult;
-        addUserToGame : (request : AddUserToGameRequest) -> async AddUserToGameResult;
+        joinGame : (request : JoinGameRequest) -> async JoinGameResult;
+        kickPlayer : (request : KickPlayerRequest) -> async KickPlayerResult;
         startGameVote : (request : StartGameVoteRequest) -> async StartGameVoteResult;
         voteOnNewGame : (request : VoteOnNewGameRequest) -> async VoteOnNewGameResult;
-        join : () -> async JoinResult;
 
         addGameContent : (request : AddGameContentRequest) -> async AddGameContentResult;
 
@@ -58,12 +60,18 @@ module {
         getItems : query () -> async [Item.Item];
     };
 
-    public type AddUserToGameRequest = {
+    public type KickPlayerRequest = {
         gameId : Nat;
-        userId : Principal;
+        playerId : Principal;
     };
 
-    public type AddUserToGameResult = Result.Result<(), { #gameNotFound; #notAuthorized; #alreadyJoined }>;
+    public type KickPlayerResult = Result.Result<(), { #gameNotFound; #gameNotActive; #notAuthorized; #playerNotInGame }>;
+
+    public type JoinGameRequest = {
+        gameId : Nat;
+    };
+
+    public type JoinGameResult = Result.Result<(), { #gameNotFound; #lobbyClosed; #alreadyJoined }>;
 
     public type StartGameVoteRequest = {
         gameId : Nat;
