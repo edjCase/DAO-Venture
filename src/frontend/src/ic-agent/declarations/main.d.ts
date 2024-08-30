@@ -2,6 +2,12 @@ import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 import type { IDL } from '@dfinity/candid';
 
+export type AbandonGameResult = { 'ok' : null } |
+  {
+    'err' : { 'notAuthorized' : null } |
+      { 'gameComplete' : null } |
+      { 'gameNotFound' : null }
+  };
 export interface Achievement {
   'id' : string,
   'name' : string,
@@ -19,11 +25,21 @@ export type AddGameContentRequest = { 'trait' : Trait } |
   { 'weapon' : Weapon };
 export type AddGameContentResult = { 'ok' : null } |
   { 'err' : { 'notAuthorized' : null } | { 'invalid' : Array<string> } };
+export type AttackResult = { 'hit' : HitResult } |
+  { 'miss' : null };
+export type AttackerKind = { 'creature' : null } |
+  { 'character' : null };
 export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
 }
+export type ChangeGameDifficultyResult = { 'ok' : null } |
+  {
+    'err' : { 'gameStarted' : null } |
+      { 'notAuthorized' : null } |
+      { 'gameNotFound' : null }
+  };
 export type CharacterModifier = { 'magic' : bigint } |
   { 'trait' : string } |
   { 'maxHealth' : bigint } |
@@ -37,8 +53,7 @@ export type CharacterStatKind = { 'magic' : null } |
   { 'maxHealth' : null } |
   { 'speed' : null } |
   { 'defense' : null } |
-  { 'attack' : null } |
-  { 'health' : null };
+  { 'attack' : null };
 export type CharacterStatKind__1 = { 'magic' : null } |
   { 'gold' : null } |
   { 'speed' : null } |
@@ -74,14 +89,6 @@ export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
   { 'race' : string } |
   { 'stat' : [CharacterStatKind, bigint] };
 export interface ChoiceVotingPower { 'votingPower' : bigint, 'choice' : string }
-export interface ChoiceVotingPower_1 {
-  'votingPower' : bigint,
-  'choice' : bigint,
-}
-export interface ChoiceVotingPower_2 {
-  'votingPower' : bigint,
-  'choice' : Difficulty,
-}
 export interface Class {
   'id' : string,
   'name' : string,
@@ -99,12 +106,23 @@ export type CombatCreatureLocationFilter = { 'any' : null } |
   { 'zone' : string } |
   { 'common' : null };
 export interface CombatPath { 'creature' : CombatCreatureKind }
+export interface CombatResult {
+  'turns' : Array<CombatTurn>,
+  'healthDelta' : bigint,
+  'kind' : CombatResultKind,
+}
+export type CombatResultKind = { 'maxTurnsReached' : null } |
+  { 'defeat' : null } |
+  { 'victory' : null };
+export interface CombatTurn {
+  'attacker' : AttackerKind,
+  'attacks' : Array<AttackResult>,
+}
 export interface CompletedGameStateWithMetaData {
   'startTime' : Time,
   'turns' : bigint,
   'endTime' : Time,
   'character' : CharacterWithMetaData,
-  'difficulty' : Difficulty,
   'victory' : boolean,
 }
 export interface CompletedGameWithMetaData {
@@ -160,9 +178,9 @@ export type CreatureKind = { 'normal' : null } |
   { 'elite' : null };
 export type CreatureLocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
-export type Difficulty = { 'easy' : null } |
-  { 'hard' : null } |
-  { 'medium' : null };
+export type Difficulty = { 'normal' : null } |
+  { 'easy' : null } |
+  { 'hard' : null };
 export type Effect = { 'reward' : null } |
   { 'removeTrait' : RandomOrSpecificTextValue } |
   { 'damage' : NatValue } |
@@ -180,6 +198,7 @@ export type GameStateWithMetaData = { 'notStarted' : null } |
 export interface GameWithMetaData {
   'id' : bigint,
   'guestUserIds' : Array<Principal>,
+  'difficulty' : Difficulty,
   'createdTime' : Time,
   'state' : GameStateWithMetaData,
   'hostUserId' : Principal,
@@ -237,6 +256,7 @@ export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type HeaderField = [string, string];
+export interface HitResult { 'damage' : bigint }
 export interface HttpRequest {
   'url' : string,
   'method' : string,
@@ -269,21 +289,21 @@ export interface InProgressGameStateWithMetaData {
   'locations' : Array<Location>,
 }
 export interface Item { 'id' : string, 'name' : string, 'description' : string }
-export type JoinError = { 'alreadyMember' : null };
 export interface JoinGameRequest { 'gameId' : bigint }
 export type JoinGameResult = { 'ok' : null } |
   {
     'err' : { 'alreadyJoined' : null } |
       { 'lobbyClosed' : null } |
+      { 'notRegistered' : null } |
       { 'gameNotFound' : null }
   };
 export interface KickPlayerRequest { 'playerId' : Principal, 'gameId' : bigint }
 export type KickPlayerResult = { 'ok' : null } |
   {
     'err' : { 'notAuthorized' : null } |
+      { 'kickHostForbidden' : null } |
       { 'gameNotFound' : null } |
-      { 'playerNotInGame' : null } |
-      { 'gameNotActive' : null }
+      { 'playerNotInGame' : null }
   };
 export interface Location {
   'id' : bigint,
@@ -298,9 +318,22 @@ export type NatValue = { 'raw' : bigint } |
   { 'dataField' : string } |
   { 'random' : [bigint, bigint] };
 export interface Outcome {
-  'messages' : Array<string>,
+  'log' : Array<OutcomeLogEntry>,
   'choiceOrUndecided' : [] | [string],
 }
+export type OutcomeLogEntry = { 'speedDelta' : bigint } |
+  { 'removeTrait' : string } |
+  { 'healthDelta' : bigint } |
+  { 'maxHealthDelta' : bigint } |
+  { 'text' : string } |
+  { 'defenseDelta' : bigint } |
+  { 'attackDelta' : bigint } |
+  { 'addItem' : string } |
+  { 'addTrait' : string } |
+  { 'goldDelta' : bigint } |
+  { 'removeItem' : string } |
+  { 'combat' : CombatResult } |
+  { 'magicDelta' : bigint };
 export interface OutcomePath {
   'id' : string,
   'kind' : OutcomePathKind,
@@ -347,8 +380,9 @@ export interface Race {
 }
 export type RandomOrSpecificTextValue = { 'specific' : TextValue } |
   { 'random' : null };
-export type Result = { 'ok' : null } |
-  { 'err' : JoinError };
+export type RegisterError = { 'alreadyMember' : null };
+export type RegisterResult = { 'ok' : User } |
+  { 'err' : RegisterError };
 export interface Scenario {
   'id' : bigint,
   'voteData' : ScenarioVote,
@@ -427,9 +461,8 @@ export type VoteOnNewGameError = { 'invalidCharacterId' : null } |
   { 'notEligible' : null } |
   { 'gameNotActive' : null };
 export interface VoteOnNewGameRequest {
-  'difficulty' : Difficulty,
   'gameId' : bigint,
-  'characterId' : bigint,
+  'characterId' : string,
 }
 export type VoteOnNewGameResult = { 'ok' : null } |
   { 'err' : VoteOnNewGameError };
@@ -462,15 +495,9 @@ export interface VotingGameStateWithMetaData {
   'startTime' : Time,
   'characterVotes' : VotingSummary,
   'characterOptions' : Array<CharacterWithMetaData>,
-  'difficultyVotes' : VotingSummary_1,
 }
 export interface VotingSummary {
-  'votingPowerByChoice' : Array<ChoiceVotingPower_1>,
-  'undecidedVotingPower' : bigint,
-  'totalVotingPower' : bigint,
-}
-export interface VotingSummary_1 {
-  'votingPowerByChoice' : Array<ChoiceVotingPower_2>,
+  'votingPowerByChoice' : Array<ChoiceVotingPower>,
   'undecidedVotingPower' : bigint,
   'totalVotingPower' : bigint,
 }
@@ -518,7 +545,12 @@ export interface WorldProposal {
 }
 export interface Zone { 'id' : string, 'name' : string, 'description' : string }
 export interface _SERVICE {
+  'abandonGame' : ActorMethod<[bigint], AbandonGameResult>,
   'addGameContent' : ActorMethod<[AddGameContentRequest], AddGameContentResult>,
+  'changeGameDifficulty' : ActorMethod<
+    [Difficulty],
+    ChangeGameDifficultyResult
+  >,
   'createGame' : ActorMethod<[], CreateGameResult>,
   'createWorldProposal' : ActorMethod<
     [CreateWorldProposalRequest],
@@ -548,7 +580,7 @@ export interface _SERVICE {
   'http_request_update' : ActorMethod<[HttpUpdateRequest], HttpResponse>,
   'joinGame' : ActorMethod<[JoinGameRequest], JoinGameResult>,
   'kickPlayer' : ActorMethod<[KickPlayerRequest], KickPlayerResult>,
-  'register' : ActorMethod<[], Result>,
+  'register' : ActorMethod<[], RegisterResult>,
   'startGameVote' : ActorMethod<[StartGameVoteRequest], StartGameVoteResult>,
   'voteOnNewGame' : ActorMethod<[VoteOnNewGameRequest], VoteOnNewGameResult>,
   'voteOnScenario' : ActorMethod<[VoteOnScenarioRequest], VoteOnScenarioResult>,

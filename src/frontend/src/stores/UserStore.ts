@@ -7,7 +7,7 @@ import { getOrCreateAuthClient } from '../utils/AuthUtil';
 
 export type UserData = {
     id: Principal;
-    data: User | undefined;
+    data: User;
 };
 
 function createUserStore() {
@@ -29,10 +29,17 @@ function createUserStore() {
             });
         }
         else if ('err' in result && 'notFound' in result.err) {
-            currentUser.set({
-                id: currentUserId,
-                data: undefined
-            });
+            let result = await mainAgent.register();
+            if ('ok' in result) {
+                console.log("Registered user", result.ok);
+                currentUser.set({
+                    id: currentUserId,
+                    data: result.ok
+                });
+            } else {
+                console.error("Failed to register user. Logging out", result);
+                logout();
+            }
         } else {
             throw new Error("Failed to get user: " + currentUserId + " " + toJsonString(result));
         }

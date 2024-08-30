@@ -1,7 +1,7 @@
 <script lang="ts">
   import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
   import CharacterAvatar from "../character/CharacterAvatar.svelte";
-  import Icon from "./Icon.svelte";
+  import CharacterStatIcon from "./CharacterStatIcon.svelte";
 
   export let size: "xs" | "sm" | "md" | "lg" | "xl";
   export let character: CharacterWithMetaData;
@@ -20,16 +20,19 @@
 
 <div>
   <div class="flex justify-around">
-    <div><Icon kind={{ gold: null }} /> {goldStat}</div>
-    <div><Icon kind={{ health: null }} /> {healthStat}/{maxHealthStat}</div>
+    <div><CharacterStatIcon kind={{ gold: null }} /> {goldStat}</div>
+    <div>
+      <CharacterStatIcon kind={{ health: null }} />
+      {healthStat}/{maxHealthStat}
+    </div>
   </div>
   <div class="flex justify-center m-2 border border-gray-300 rounded">
     <CharacterAvatar {size} {character} />
   </div>
   <div class="flex justify-around">
-    <div><Icon kind={{ attack: null }} /> {attackStat}</div>
-    <div><Icon kind={{ defense: null }} /> {defenseStat}</div>
-    <div><Icon kind={{ speed: null }} /> {speedStat}</div>
-    <div><Icon kind={{ magic: null }} /> {magicStat}</div>
+    <div><CharacterStatIcon kind={{ attack: null }} /> {attackStat}</div>
+    <div><CharacterStatIcon kind={{ defense: null }} /> {defenseStat}</div>
+    <div><CharacterStatIcon kind={{ speed: null }} /> {speedStat}</div>
+    <div><CharacterStatIcon kind={{ magic: null }} /> {magicStat}</div>
   </div>
 </div>

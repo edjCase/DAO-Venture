@@ -6,7 +6,54 @@ module {
 
     public type Outcome = {
         choiceOrUndecided : ?Text;
-        messages : [Text];
+        log : [OutcomeLogEntry];
+    };
+
+    public type OutcomeLogEntry = {
+        #text : Text;
+        #combat : CombatResult;
+        #healthDelta : Int;
+        #maxHealthDelta : Int;
+        #attackDelta : Int;
+        #defenseDelta : Int;
+        #speedDelta : Int;
+        #magicDelta : Int;
+        #goldDelta : Int;
+        #addItem : Text;
+        #removeItem : Text;
+        #addTrait : Text;
+        #removeTrait : Text;
+    };
+
+    public type CombatResult = {
+        turns : [CombatTurn];
+        healthDelta : Int;
+        kind : CombatResultKind;
+    };
+
+    public type CombatResultKind = {
+        #victory;
+        #defeat;
+        #maxTurnsReached;
+    };
+
+    public type CombatTurn = {
+        attacker : AttackerKind;
+        attacks : [AttackResult];
+    };
+
+    public type AttackerKind = {
+        #character;
+        #creature;
+    };
+
+    public type AttackResult = {
+        #hit : HitResult;
+        #miss;
+    };
+
+    public type HitResult = {
+        damage : Nat;
     };
 
     public type ChoiceRequirement = {
@@ -43,7 +90,6 @@ module {
                     case (#defense) character.defense >= value;
                     case (#speed) character.speed >= value;
                     case (#magic) character.magic >= value;
-                    case (#health) character.health >= value;
                     case (#maxHealth) character.maxHealth >= value;
                 };
             };

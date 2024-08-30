@@ -5,6 +5,7 @@ import Float "mo:base/Float";
 import Bool "mo:base/Bool";
 import Buffer "mo:base/Buffer";
 import Weapon "models/entities/Weapon";
+import Outcome "models/Outcome";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -20,27 +21,12 @@ module {
         weapon : Weapon.Weapon;
     };
 
-    public type CombatResult = {
-        turns : [Turn];
-        newCharacterHealth : Nat;
-        kind : {
-            #victory;
-            #defeat;
-            #maxTurnsReached;
-        };
-    };
-
-    public type Turn = {
-        characterIsAttacker : Bool;
-        hitResults : [HitResult];
-    };
-
     public func run(
         prng : Prng,
         character : CombatStats,
         creature : CombatStats,
         maxTurns : Nat,
-    ) : CombatResult {
+    ) : Outcome.CombatResult {
 
         // Determine initiative
         let characterInitiative : Int = character.speed + prng.nextNat(1, 20);
@@ -59,29 +45,28 @@ module {
         var characterIsAttacker : Bool = isCharacterFirst;
         var characterHealth = character.health;
         var creatureHealth = creature.health;
-        let turns = Buffer.Buffer<Turn>(5);
+        let turns = Buffer.Buffer<Outcome.CombatTurn>(5);
         loop {
             let (attacker, defender) = if (characterIsAttacker) {
                 (character, creature);
             } else {
                 (creature, character);
             };
-            let hitResults = calculateHitResults(prng, attacker, defender);
+            let attackResults = calculateAttackResults(prng, attacker, defender);
             turns.add({
-                characterIsAttacker = characterIsAttacker;
-                hitResults = hitResults;
+                attacker = if (characterIsAttacker) #character else #creature;
+                attacks = attackResults;
             });
-            for (hitResult in hitResults.vals()) {
-                switch (hitResult) {
+            for (attackResult in attackResults.vals()) {
+                switch (attackResult) {
                     case (#hit({ damage })) {
                         let defenderHealth = if (characterIsAttacker) creatureHealth else characterHealth;
                         let newDefenderHealth : Int = defenderHealth - damage;
                         if (newDefenderHealth <= 0) {
-                            let (kind, newCharacterHealth) = if (characterIsAttacker) (#victory, characterHealth) else (#defeat, 0);
                             return {
                                 turns = Buffer.toArray(turns);
-                                newCharacterHealth = newCharacterHealth;
-                                kind = kind;
+                                healthDelta = characterHealth - character.health;
+                                kind = if (characterIsAttacker) #victory else #defeat;
                             };
                         };
                         let natHealth = Int.abs(newDefenderHealth);
@@ -99,7 +84,7 @@ module {
             if (turn > maxTurns) {
                 return {
                     turns = Buffer.toArray(turns);
-                    newCharacterHealth = characterHealth;
+                    healthDelta = characterHealth - character.health;
                     kind = #maxTurnsReached;
                 };
             };
@@ -108,24 +93,17 @@ module {
         };
     };
 
-    type HitResult = {
-        #hit : {
-            damage : Nat;
-        };
-        #miss;
-    };
-
-    func calculateHitResults(
+    func calculateAttackResults(
         prng : Prng,
         attacker : CombatStats,
         defender : CombatStats,
-    ) : [HitResult] {
+    ) : [Outcome.AttackResult] {
         let weaponStats = calculateWeaponStats(attacker);
         let hitChance = calculateHitChance(weaponStats, defender);
         Iter.range(0, weaponStats.attacks - 1)
         |> Iter.map(
             _,
-            func(_ : Nat) : HitResult {
+            func(_ : Nat) : Outcome.AttackResult {
                 if (prng.nextNat(1, 100) <= hitChance) {
                     var damage = calculateWeaponDamage(prng, weaponStats);
                     // TODO better defense

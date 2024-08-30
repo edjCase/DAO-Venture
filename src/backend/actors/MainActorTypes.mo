@@ -20,7 +20,7 @@ import Weapon "../models/entities/Weapon";
 
 module {
     public type Actor = actor {
-        register : () -> async JoinResult;
+        register : () -> async RegisterResult;
 
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
         getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
@@ -42,8 +42,10 @@ module {
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
         createGame : () -> async CreateGameResult;
+        abandonGame : (gameId : Nat) -> async AbandonGameResult;
         joinGame : (request : JoinGameRequest) -> async JoinGameResult;
         kickPlayer : (request : KickPlayerRequest) -> async KickPlayerResult;
+        changeGameDifficulty : (difficulty : GameHandler.Difficulty) -> async ChangeGameDifficultyResult;
         startGameVote : (request : StartGameVoteRequest) -> async StartGameVoteResult;
         voteOnNewGame : (request : VoteOnNewGameRequest) -> async VoteOnNewGameResult;
 
@@ -60,18 +62,22 @@ module {
         getItems : query () -> async [Item.Item];
     };
 
+    public type AbandonGameResult = Result.Result<(), { #gameNotFound; #notAuthorized; #gameComplete }>;
+
+    public type ChangeGameDifficultyResult = Result.Result<(), { #gameNotFound; #notAuthorized; #gameStarted }>;
+
     public type KickPlayerRequest = {
         gameId : Nat;
         playerId : Principal;
     };
 
-    public type KickPlayerResult = Result.Result<(), { #gameNotFound; #gameNotActive; #notAuthorized; #playerNotInGame }>;
+    public type KickPlayerResult = Result.Result<(), { #gameNotFound; #notAuthorized; #playerNotInGame; #kickHostForbidden }>;
 
     public type JoinGameRequest = {
         gameId : Nat;
     };
 
-    public type JoinGameResult = Result.Result<(), { #gameNotFound; #lobbyClosed; #alreadyJoined }>;
+    public type JoinGameResult = Result.Result<(), { #gameNotFound; #lobbyClosed; #alreadyJoined; #notRegistered }>;
 
     public type StartGameVoteRequest = {
         gameId : Nat;
@@ -106,8 +112,7 @@ module {
 
     public type VoteOnNewGameRequest = {
         gameId : Nat;
-        characterId : Nat;
-        difficulty : GameHandler.Difficulty;
+        characterId : Text;
     };
 
     public type VoteOnNewGameError = ExtendedProposal.VoteError or {
@@ -119,7 +124,7 @@ module {
 
     public type VoteOnNewGameResult = Result.Result<(), VoteOnNewGameError>;
 
-    public type JoinResult = Result.Result<(), JoinError>;
+    public type RegisterResult = Result.Result<UserHandler.User, RegisterError>;
 
     public type GetScenariosRequest = {
         gameId : Nat;
@@ -162,7 +167,7 @@ module {
 
     public type CreateWorldProposalResult = Result.Result<Nat, CreateWorldProposalError>;
 
-    public type JoinError = {
+    public type RegisterError = {
         #alreadyMember;
     };
 

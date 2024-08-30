@@ -84,7 +84,7 @@ module {
 
         public func add(
             userId : Principal
-        ) : Result.Result<(), { #alreadyMember }> {
+        ) : Result.Result<User, { #alreadyMember }> {
             switch (users.get(userId)) {
                 case (?_) #err(#alreadyMember);
                 case (null) {
@@ -95,7 +95,7 @@ module {
                         points = 0;
                     };
                     users.put(userId, newUser);
-                    #ok;
+                    #ok(newUser);
                 };
             };
         };

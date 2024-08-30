@@ -92,12 +92,6 @@ module {
                         magic = character.magic + amount;
                     };
                 };
-                case (#health) {
-                    {
-                        character with
-                        health = character.health + amount;
-                    };
-                };
                 case (#maxHealth) {
                     {
                         character with

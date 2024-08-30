@@ -10,9 +10,9 @@
   $: if ("easy" in value) {
     color = "green";
     text = "Easy";
-  } else if ("medium" in value) {
+  } else if ("normal" in value) {
     color = "yellow";
-    text = "Medium";
+    text = "Normal";
   } else if ("hard" in value) {
     color = "red";
     text = "Hard";

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ChoiceRequirement } from "../../ic-agent/declarations/main";
   import { toJsonString } from "../../utils/StringUtil";
-  import Icon from "../character/Icon.svelte";
+  import CharacterStatIcon from "../character/CharacterStatIcon.svelte";
 
   export let value: ChoiceRequirement;
 </script>
@@ -12,7 +12,7 @@
     {@const [statKind, v] = value.stat}
     <div class="text-sm">
       {v >= 0 ? "+" : ""}{v}
-      <Icon kind={statKind} />
+      <CharacterStatIcon kind={statKind} />
     </div>
   {:else if "race" in value}
     <div class="text-sm">
@@ -25,7 +25,7 @@
   {:else if "gold" in value}
     <div class="text-sm">
       +{value.gold}
-      <Icon kind={{ gold: null }} />
+      <CharacterStatIcon kind={{ gold: null }} />
     </div>
   {:else if "item" in value}
     <div class="text-sm">

@@ -16,11 +16,13 @@ import TrieSet "mo:base/TrieSet";
 import Prelude "mo:base/Prelude";
 import Order "mo:base/Order";
 import Int "mo:base/Int";
+import Buffer "mo:base/Buffer";
 import Location "../models/Location";
 import Scenario "../models/entities/Scenario";
 import Character "../models/Character";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import IterTools "mo:itertools/Iter";
+import NatX "mo:xtended-numbers/NatX";
 import CharacterGenerator "../CharacterGenerator";
 import ScenarioSimulator "../ScenarioSimulator";
 import Trait "../models/entities/Trait";
@@ -58,6 +60,7 @@ module {
         hostUserId : Principal;
         guestUserIds : [Principal];
         createdTime : Time.Time;
+        difficulty : Difficulty;
         state : GameInstanceState;
     };
 
@@ -70,14 +73,11 @@ module {
 
     public type VotingData = {
         startTime : Time.Time;
-        // Two proposals because i dont want the combo of character and difficulty, but rather the individual votes
-        characterProposal : ExtendedProposal.Proposal<[Character.Character], Nat>;
-        difficultyProposal : ExtendedProposal.Proposal<{}, Difficulty>;
+        characterProposal : ExtendedProposal.Proposal<[Character.Character], Text>;
     };
 
     public type InProgressData = {
         startTime : Time.Time;
-        difficulty : Difficulty;
         scenarios : ScenarioHandler.StableData;
         character : CharacterHandler.StableData;
         turn : Nat;
@@ -88,14 +88,13 @@ module {
         startTime : Time.Time;
         endTime : Time.Time;
         turns : Nat;
-        difficulty : Difficulty;
         character : Character.Character;
         victory : Bool;
     };
 
     public type Difficulty = {
         #easy;
-        #medium;
+        #normal;
         #hard;
     };
 
@@ -104,6 +103,7 @@ module {
         hostUserId : Principal;
         guestUserIds : [Principal];
         createdTime : Time.Time;
+        difficulty : Difficulty;
         state : GameStateWithMetaData;
     };
 
@@ -117,8 +117,7 @@ module {
     public type VotingGameStateWithMetaData = {
         startTime : Time.Time;
         characterOptions : [CharacterWithMetaData];
-        characterVotes : ExtendedProposal.VotingSummary<Nat>;
-        difficultyVotes : ExtendedProposal.VotingSummary<Difficulty>;
+        characterVotes : ExtendedProposal.VotingSummary<Text>;
     };
 
     public type InProgressGameStateWithMetaData = {
@@ -131,7 +130,6 @@ module {
     public type CompletedGameStateWithMetaData = {
         startTime : Time.Time;
         turns : Nat;
-        difficulty : Difficulty;
         character : CharacterWithMetaData;
         endTime : Time.Time;
         victory : Bool;
@@ -142,6 +140,7 @@ module {
         hostUserId : Principal;
         guestUserIds : [Principal];
         createdTime : Time.Time;
+        difficulty : Difficulty;
     };
 
     public type CharacterWithMetaData = {
@@ -184,6 +183,7 @@ module {
         hostUserId : Principal;
         guestUserIds : [Principal];
         createdTime : Time.Time;
+        difficulty : Difficulty;
         state : {
             #notStarted;
             #voting : MutableVotingData;
@@ -194,13 +194,11 @@ module {
 
     type MutableVotingData = {
         startTime : Time.Time;
-        var characterProposal : ExtendedProposal.Proposal<[Character.Character], Nat>;
-        var difficultyProposal : ExtendedProposal.Proposal<{}, Difficulty>;
+        var characterProposal : ExtendedProposal.Proposal<[Character.Character], Text>;
     };
 
     type MutableInProgressData = {
         startTime : Time.Time;
-        difficulty : Difficulty;
         scenarioHandler : ScenarioHandler.Handler;
         characterHandler : CharacterHandler.Handler;
         var turn : Nat;
@@ -334,6 +332,7 @@ module {
                     guestUserIds = [];
                     createdTime = Time.now();
                     state = #notStarted;
+                    difficulty = #normal;
                 },
             );
 
@@ -363,11 +362,13 @@ module {
             gameId : Nat,
             playerId : Principal,
             kickerId : Principal,
-        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #notAuthorized; #playerNotInGame }> {
+        ) : Result.Result<(), { #gameNotFound; #notAuthorized; #playerNotInGame; #kickHostForbidden }> {
             let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #notStarted = instance.state else return #err(#gameNotActive);
-            if (instance.hostUserId != kickerId) {
+            if (instance.hostUserId != kickerId and kickerId != playerId) {
                 return #err(#notAuthorized);
+            };
+            if (instance.hostUserId == playerId) {
+                return #err(#kickHostForbidden);
             };
             if (Array.indexOf(playerId, instance.guestUserIds, Principal.equal) == null) {
                 return #err(#playerNotInGame);
@@ -380,6 +381,59 @@ module {
                 },
             );
             #ok;
+        };
+
+        public func changeDifficulty(
+            gameId : Nat,
+            difficulty : Difficulty,
+            caller : Principal,
+        ) : Result.Result<(), { #gameNotFound; #notAuthorized; #gameStarted }> {
+            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
+            let #notStarted = instance.state else return #err(#gameStarted);
+            if (instance.hostUserId != caller) {
+                return #err(#notAuthorized);
+            };
+            instances.put(
+                gameId,
+                {
+                    instance with
+                    difficulty = difficulty;
+                },
+            );
+            #ok;
+        };
+
+        public func abandon(
+            gameId : Nat,
+            userId : Principal,
+        ) : Result.Result<(), { #gameNotFound; #notAuthorized; #gameComplete }> {
+            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
+            if (instance.hostUserId != userId) {
+                return #err(#notAuthorized);
+            };
+            switch (instance.state) {
+                case (#notStarted or #voting(_)) {
+                    ignore instances.remove(gameId);
+                    #ok;
+                };
+                case (#inProgress(inProgress)) {
+                    instances.put(
+                        gameId,
+                        {
+                            instance with
+                            state = #completed({
+                                startTime = inProgress.startTime;
+                                endTime = Time.now();
+                                turns = inProgress.turn;
+                                character = inProgress.characterHandler.get();
+                                victory = false;
+                            });
+                        },
+                    );
+                    #ok;
+                };
+                case (#completed(_)) return #err(#gameComplete);
+            };
         };
 
         public func startVote(
@@ -424,7 +478,6 @@ module {
                         {
                             startTime = timeStart;
                             var characterProposal = ExtendedProposal.create(0, instance.hostUserId, characterOptions, members, timeStart, timeEnd);
-                            var difficultyProposal = ExtendedProposal.create(0, instance.hostUserId, {}, members, timeStart, timeEnd);
                         } : MutableVotingData
                     );
                 },
@@ -499,70 +552,47 @@ module {
         public func voteOnNewGame(
             gameId : Nat,
             voterId : Principal,
-            characterId : Nat,
-            difficulty : Difficulty,
-        ) : Result.Result<?{ characterId : Nat; difficulty : Difficulty }, ExtendedProposal.VoteError or { #gameNotFound; #gameNotActive; #invalidCharacterId }> {
+            characterId : Text,
+        ) : Result.Result<?{ characterId : Text }, ExtendedProposal.VoteError or { #gameNotFound; #gameNotActive; #invalidCharacterId }> {
             let ?instance = instances.get(gameId) else return #err(#gameNotFound);
 
             let #voting(voting) = instance.state else return #err(#gameNotActive);
 
-            if (characterId >= voting.characterProposal.content.size()) {
+            let ?characterIndex = NatX.fromText(characterId) else return #err(#invalidCharacterId);
+            if (characterIndex >= voting.characterProposal.content.size()) {
                 return #err(#invalidCharacterId);
             };
             let updatedCharacterProposal = switch (ExtendedProposal.vote(voting.characterProposal, voterId, characterId, true)) {
                 case (#ok(ok)) ok.updatedProposal;
                 case (#err(error)) return #err(error);
             };
-            let updatedDifficultyProposal = switch (ExtendedProposal.vote(voting.difficultyProposal, voterId, difficulty, true)) {
-                case (#ok(ok)) ok.updatedProposal;
-                case (#err(error)) return #err(error);
-            };
             // Dont set unless both votes are successful
             voting.characterProposal := updatedCharacterProposal;
-            voting.difficultyProposal := updatedDifficultyProposal;
 
             let votingThreshold : ExtendedProposal.VotingThreshold = #percent({
                 percent = 50;
                 quorum = null;
             });
-            let characterIdOrNull : ?Nat = switch (
+            let characterIdOrNull : ?Text = switch (
                 ExtendedProposal.calculateVoteStatus(
                     voting.characterProposal,
                     votingThreshold,
-                    equalNat,
-                    Nat32.fromNat,
+                    Text.equal,
+                    Text.hash,
                     false,
                 )
             ) {
                 case (#determined(characterIdOrNull)) characterIdOrNull;
                 case (#undetermined) null;
             };
-            let chosenCharacterId : Nat = switch (characterIdOrNull) {
+            let chosenCharacterId : Text = switch (characterIdOrNull) {
                 case (?id) id;
                 case (null) return #ok(null); // Vote still in progress
             };
 
-            let difficultyOrNull : ?Difficulty = switch (
-                ExtendedProposal.calculateVoteStatus(
-                    voting.difficultyProposal,
-                    votingThreshold,
-                    difficultyEqual,
-                    difficultyHash,
-                    false,
-                )
-            ) {
-                case (#determined(difficultyOrNull)) difficultyOrNull;
-                case (#undetermined) null;
-            };
-
-            let chosenDifficulty : Difficulty = switch (difficultyOrNull) {
-                case (?d) d;
-                case (null) return #ok(null); // Vote still in progress
-            };
             #ok(
                 ?{
                     characterId = chosenCharacterId;
-                    difficulty = chosenDifficulty;
                 }
             );
         };
@@ -570,14 +600,12 @@ module {
         public func startGame<system>(
             prng : Prng,
             gameId : Nat,
-            characterId : Nat,
-            proposerId : Principal,
-            difficulty : Difficulty,
-            members : [ScenarioHandler.Member],
-        ) : Result.Result<(), { #gameNotFound; #alreadyStarted }> {
+            characterId : Text,
+        ) : Result.Result<(), { #gameNotFound; #alreadyStarted; #invalidCharacterId }> {
             let ?instance = instances.get(gameId) else return #err(#gameNotFound);
             let #voting(voting) = instance.state else return #err(#alreadyStarted);
-            let character = voting.characterProposal.content[characterId];
+            let ?characterIndex = NatX.fromText(characterId) else return #err(#invalidCharacterId);
+            let character = voting.characterProposal.content[characterIndex];
 
             let characterHandler = CharacterHandler.Handler({
                 character = character;
@@ -588,7 +616,8 @@ module {
             });
             let zoneId = prng.nextArrayElement(zones.vals() |> Iter.toArray(_)).id;
             let scenario = generateScenario(prng, zoneId);
-            let scenarioId = scenarioHandler.start(scenario, proposerId, members);
+            let members = buildMemberList(instance);
+            let scenarioId = scenarioHandler.start(scenario, instance.hostUserId, members);
             let location : Location.Location = {
                 id = 0;
                 coordinate = { q = 0; r = 0 };
@@ -601,7 +630,6 @@ module {
                     instance with
                     state = #inProgress({
                         startTime = voting.startTime;
-                        difficulty;
                         scenarioHandler = scenarioHandler;
                         characterHandler = characterHandler;
                         var turn = 0;
@@ -615,8 +643,6 @@ module {
         public func endTurn(
             prng : Prng,
             gameId : Nat,
-            proposerId : Principal,
-            members : [ScenarioHandler.Member],
             userHandler : UserHandler.Handler,
             choiceOrUndecided : ?Text,
         ) : Result.Result<(), { #gameNotFound; #gameNotActive }> {
@@ -627,7 +653,7 @@ module {
 
             let ?scenario = inProgressInstance.scenarioHandler.get(currentLocation.scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(currentLocation.scenarioId));
             let ?scenarioMetaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
-
+            let members = buildMemberList(instance);
             let result = ScenarioSimulator.run(
                 prng,
                 members,
@@ -641,7 +667,7 @@ module {
             );
             let outcome : Outcome.Outcome = {
                 choiceOrUndecided;
-                messages = result.messages;
+                log = result.log;
             };
             switch (inProgressInstance.scenarioHandler.end(currentLocation.scenarioId, outcome)) {
                 case (#ok) ();
@@ -650,7 +676,7 @@ module {
             switch (result.kind) {
                 case (#inProgress) {
                     inProgressInstance.turn += 1;
-                    switch (nextLocation(prng, proposerId, members, inProgressInstance)) {
+                    switch (nextLocation(prng, instance.hostUserId, members, inProgressInstance)) {
                         case (?_) ();
                         case (null) {
                             instances.put(
@@ -661,7 +687,6 @@ module {
                                         startTime = inProgressInstance.startTime;
                                         endTime = Time.now();
                                         turns = inProgressInstance.turn;
-                                        difficulty = inProgressInstance.difficulty;
                                         character = inProgressInstance.characterHandler.get();
                                         victory = true;
                                     });
@@ -679,7 +704,6 @@ module {
                                 startTime = inProgressInstance.startTime;
                                 endTime = Time.now();
                                 turns = inProgressInstance.turn;
-                                difficulty = inProgressInstance.difficulty;
                                 character = inProgressInstance.characterHandler.get();
                                 victory = false;
                             });
@@ -737,7 +761,6 @@ module {
                         startTime = state.startTime;
                         endTime = state.endTime;
                         character = state.character;
-                        difficulty = state.difficulty;
                         turns = state.turns;
                         victory = state.victory;
                     };
@@ -1003,13 +1026,11 @@ module {
             let state : GameStateWithMetaData = switch (instance.state) {
                 case (#notStarted) #notStarted;
                 case (#voting(voting)) {
-                    let characterVotes = ExtendedProposal.buildVotingSummary(voting.characterProposal, equalNat, Nat32.fromNat);
-                    let difficultyVotes = ExtendedProposal.buildVotingSummary(voting.difficultyProposal, difficultyEqual, difficultyHash);
+                    let characterVotes = ExtendedProposal.buildVotingSummary(voting.characterProposal, Text.equal, Text.hash);
                     #voting({
                         startTime = voting.startTime;
                         characterOptions = voting.characterProposal.content.vals() |> Iter.map(_, toCharacterWithMetaData) |> Iter.toArray(_);
                         characterVotes;
-                        difficultyVotes;
                     });
                 };
                 case (#inProgress(inProgress)) {
@@ -1023,12 +1044,10 @@ module {
                 };
                 case (#completed(completed)) {
                     let turns = completed.turns;
-                    let difficulty = completed.difficulty;
                     let character = toCharacterWithMetaData(completed.character);
                     #completed({
                         startTime = completed.startTime;
                         turns;
-                        difficulty;
                         character;
                         endTime = completed.endTime;
                         victory = completed.victory;
@@ -1040,6 +1059,7 @@ module {
                 hostUserId = instance.hostUserId;
                 guestUserIds = instance.guestUserIds;
                 createdTime = instance.createdTime;
+                difficulty = instance.difficulty;
                 state = state;
             };
         };
@@ -1093,7 +1113,6 @@ module {
                     {
                         startTime = voting.startTime;
                         var characterProposal = voting.characterProposal;
-                        var difficultyProposal = voting.difficultyProposal;
                     } : MutableVotingData
                 );
             };
@@ -1101,7 +1120,6 @@ module {
                 #inProgress(
                     {
                         startTime = inProgress.startTime;
-                        difficulty = inProgress.difficulty;
                         scenarioHandler = ScenarioHandler.Handler(inProgress.scenarios);
                         characterHandler = CharacterHandler.Handler(inProgress.character);
                         var turn = inProgress.turn;
@@ -1116,6 +1134,7 @@ module {
             hostUserId = instance.hostUserId;
             guestUserIds = instance.guestUserIds;
             createdTime = instance.createdTime;
+            difficulty = instance.difficulty;
             state = state;
         };
     };
@@ -1127,13 +1146,11 @@ module {
                 #voting({
                     startTime = voting.startTime;
                     characterProposal = voting.characterProposal;
-                    difficultyProposal = voting.difficultyProposal;
                 });
             };
             case (#inProgress(inProgress)) {
                 #inProgress({
                     startTime = inProgress.startTime;
-                    difficulty = inProgress.difficulty;
                     scenarios = inProgress.scenarioHandler.toStableData();
                     character = inProgress.characterHandler.toStableData();
                     turn = inProgress.turn;
@@ -1147,8 +1164,24 @@ module {
             hostUserId = instance.hostUserId;
             guestUserIds = instance.guestUserIds;
             createdTime = instance.createdTime;
+            difficulty = instance.difficulty;
             state = state;
         };
+    };
+
+    private func buildMemberList(instance : MutableGameInstance) : [ScenarioHandler.Member] {
+        let members = Buffer.Buffer<ScenarioHandler.Member>(instance.guestUserIds.size() + 1);
+        members.add({
+            id = instance.hostUserId;
+            votingPower = 1;
+        });
+        for (guestUserId in instance.guestUserIds.vals()) {
+            members.add({
+                id = guestUserId;
+                votingPower = 1;
+            });
+        };
+        Buffer.toArray(members);
     };
 
     private func toHashMap<T, K, V>(
@@ -1163,21 +1196,5 @@ module {
             func_,
         )
         |> HashMap.fromIter<K, V>(_, array.size(), equal, hash);
-    };
-
-    private func equalNat(a : Nat, b : Nat) : Bool {
-        a == b;
-    };
-
-    private func difficultyEqual(a : Difficulty, b : Difficulty) : Bool {
-        a == b;
-    };
-
-    private func difficultyHash(difficulty : Difficulty) : Nat32 {
-        switch (difficulty) {
-            case (#easy) 0;
-            case (#medium) 1;
-            case (#hard) 2;
-        };
     };
 };

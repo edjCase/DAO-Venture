@@ -10,15 +10,6 @@
   $: currentGame = $currentGameStore;
   $: user = $userStore;
 
-  let register = async () => {
-    let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.register();
-    if ("ok" in result) {
-      userStore.refetchCurrentUser();
-    } else {
-      console.error("Failed to join game", result);
-    }
-  };
   let createGame = async () => {
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.createGame();
@@ -33,8 +24,6 @@
 <div class="bg-gray-800 rounded p-2 py-8 text-center">
   {#if user === undefined}
     <LoginPage />
-  {:else if user.data === undefined}
-    <LoadingButton onClick={register}>Register</LoadingButton>
   {:else}
     {#if currentGame === undefined}
       <InitialDataLoad />

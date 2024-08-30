@@ -114,11 +114,23 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func joinGame(request : Types.JoinGameRequest) : async Types.JoinGameResult {
+        if (userHandler.get(caller) == null) {
+            return #err(#notRegistered);
+        };
         gameHandler.addPlayer(request.gameId, caller);
     };
 
     public shared ({ caller }) func kickPlayer(request : Types.KickPlayerRequest) : async Types.KickPlayerResult {
         gameHandler.kickPlayer(request.gameId, request.playerId, caller);
+    };
+
+    public shared ({ caller }) func changeGameDifficulty(difficulty : GameHandler.Difficulty) : async Types.ChangeGameDifficultyResult {
+        let ?game = gameHandler.getCurrentInstance(caller) else return #err(#gameNotFound);
+        gameHandler.changeDifficulty(game.id, difficulty, caller);
+    };
+
+    public shared ({ caller }) func abandonGame(gameId : Nat) : async Types.AbandonGameResult {
+        gameHandler.abandon(gameId, caller);
     };
 
     public shared ({ caller }) func startGameVote(request : Types.StartGameVoteRequest) : async Types.StartGameVoteResult {
@@ -143,12 +155,11 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func voteOnNewGame(request : Types.VoteOnNewGameRequest) : async Types.VoteOnNewGameResult {
-        let { characterId; difficulty } = switch (
+        let { characterId } = switch (
             gameHandler.voteOnNewGame(
                 request.gameId,
                 caller,
                 request.characterId,
-                request.difficulty,
             )
         ) {
             case (#ok(null)) return #ok; // no consensus yet
@@ -157,16 +168,11 @@ actor MainActor : Types.Actor {
         };
         // Start the game if consensus reached
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-        let members = buildVotingMembersList();
-        let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the first scenario
         switch (
             gameHandler.startGame<system>(
                 prng,
                 request.gameId,
                 characterId,
-                proposerId,
-                difficulty,
-                members,
             )
         ) {
             case (#ok) #ok;
@@ -174,7 +180,7 @@ actor MainActor : Types.Actor {
         };
     };
 
-    public shared ({ caller }) func register() : async Result.Result<(), Types.JoinError> {
+    public shared ({ caller }) func register() : async Types.RegisterResult {
         // TODO restrict to NFT?/TOken holders
         userHandler.add(caller);
     };
@@ -241,9 +247,7 @@ actor MainActor : Types.Actor {
             case (#ok(null)) ();
             case (#ok(?choice)) {
                 let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-                let members = buildVotingMembersList();
-                let proposerId = Principal.fromActor(MainActor); // Canister will be proposer for the next scenario
-                switch (gameHandler.endTurn(prng, request.gameId, proposerId, members, userHandler, ?choice)) {
+                switch (gameHandler.endTurn(prng, request.gameId, userHandler, ?choice)) {
                     case (#ok) ();
                     case (#err(#gameNotFound)) Prelude.unreachable();
                     case (#err(#gameNotActive)) Prelude.unreachable();

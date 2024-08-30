@@ -9,6 +9,7 @@ import Principal "mo:base/Principal";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Float "mo:base/Float";
+import Int "mo:base/Int";
 import CharacterHandler "handlers/CharacterHandler";
 import Scenario "models/entities/Scenario";
 import Character "models/Character";
@@ -16,12 +17,13 @@ import UserHandler "handlers/UserHandler";
 import Creature "models/entities/Creature";
 import Weapon "models/entities/Weapon";
 import CombatSimulator "CombatSimulator";
+import Outcome "models/Outcome";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type ScenarioResult = {
-        messages : [Text];
+        log : [Outcome.OutcomeLogEntry];
         kind : { #defeat; #inProgress };
     };
 
@@ -40,7 +42,7 @@ module {
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         choiceOrUndecided : ?Text,
     ) : ScenarioResult {
-        let messages = Buffer.Buffer<Text>(5);
+        let logEntries = Buffer.Buffer<Outcome.OutcomeLogEntry>(5);
         let helper = Helper(
             prng,
             players,
@@ -49,7 +51,7 @@ module {
             scenario,
             creatures,
             weapons,
-            messages,
+            logEntries,
         );
 
         let initialPathId = switch (choiceOrUndecided) {
@@ -78,20 +80,13 @@ module {
                     var creature = helper.getRandomCreature(combat.creature);
                     let maxTurns = 10;
                     let combatResult = CombatSimulator.run(prng, character, creature, maxTurns);
-                    for (turn in combatResult.turns.vals()) {
-                        for (hitResult in turn.hitResults.vals()) {
-                            let message = switch (hitResult) {
-                                case (#hit({ damage })) {
-                                    (if (turn.characterIsAttacker) "You hit for " else "The creature hits you for ") # Nat.toText(damage) # " damage.";
-                                };
-                                case (#miss) {
-                                    if (turn.characterIsAttacker) "Your attack misses." else "The creature's attack misses.";
-                                };
-                            };
-                            helper.log(message);
-                        };
+                    logEntries.add(#combat(combatResult));
+                    if (combatResult.healthDelta < 0) {
+                        // TODO ignore??
+                        ignore helper.damageCharacter(Int.abs(combatResult.healthDelta));
+                    } else {
+                        helper.heal(Int.abs(combatResult.healthDelta));
                     };
-                    helper.setCharacterHealth(combatResult.newCharacterHealth);
                     switch (combatResult.kind) {
                         case (#victory) {
                             helper.log("You defeat the creature!");
@@ -99,7 +94,7 @@ module {
                         case (#defeat) {
                             helper.log("You were defeated!");
                             return {
-                                messages = helper.getMessages();
+                                log = helper.getLog();
                                 kind = #defeat;
                             };
                         };
@@ -115,7 +110,7 @@ module {
                             case (#alive) (); // Continue
                             case (#dead) {
                                 return {
-                                    messages = helper.getMessages();
+                                    log = helper.getLog();
                                     kind = #defeat;
                                 };
                             };
@@ -151,7 +146,7 @@ module {
             currentPathId := nextPathId;
         };
         {
-            messages = helper.getMessages();
+            log = helper.getLog();
             kind = #inProgress;
         };
     };
@@ -201,7 +196,7 @@ module {
         scenario : Scenario.Scenario,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
-        messages : Buffer.Buffer<Text>,
+        logEntries : Buffer.Buffer<Outcome.OutcomeLogEntry>,
     ) {
 
         public func getCharacterStats() : CombatSimulator.CombatStats {
@@ -324,7 +319,7 @@ module {
         };
 
         public func log(message : Text) {
-            messages.add(message);
+            logEntries.add(#text(message));
         };
 
         public func setCharacterHealth(newHealth : Nat) {
@@ -332,7 +327,7 @@ module {
         };
 
         public func damageCharacter(amount : Nat) : { #alive; #dead } {
-            log("You take " # Nat.toText(amount) # " damage.");
+            logEntries.add(#healthDelta(-amount));
             if (characterHandler.takeDamage(amount)) {
                 #alive;
             } else {
@@ -341,17 +336,17 @@ module {
         };
 
         public func heal(amount : Nat) {
-            log("You heal " # Nat.toText(amount) # " health.");
+            logEntries.add(#healthDelta(amount));
             characterHandler.heal(amount);
         };
 
         public func addItem(item : Text) : Bool {
-            log("You get " # item);
+            logEntries.add(#addItem(item));
             characterHandler.addItem(item);
         };
 
         public func removeItem(item : Text) : Bool {
-            log("You lose " # item);
+            logEntries.add(#removeItem(item));
             characterHandler.removeItem(item);
         };
 
@@ -363,12 +358,19 @@ module {
         };
 
         public func addGold(amount : Nat) {
-            log("You get " # Nat.toText(amount) # " gold");
+            logEntries.add(#goldDelta(amount));
             characterHandler.addGold(amount);
         };
 
         public func upgradeStat(kind : Character.CharacterStatKind, amount : Nat) {
-            log("You upgrade your " # Character.toTextStatKind(kind) # " stat by " # Nat.toText(amount));
+            let logEntry = switch (kind) {
+                case (#attack) #attackDelta(amount);
+                case (#defense) #defenseDelta(amount);
+                case (#speed) #speedDelta(amount);
+                case (#magic) #magicDelta(amount);
+                case (#maxHealth) #maxHealthDelta(amount);
+            };
+            logEntries.add(logEntry);
             characterHandler.upgradeStat(kind, amount);
         };
 
@@ -392,26 +394,26 @@ module {
 
         public func removeGold(amount : Nat) : Bool {
             if (characterHandler.removeGold(amount)) {
-                log("You lose " # Nat.toText(amount) # " gold");
+                logEntries.add(#goldDelta(-amount));
                 return true;
             } else {
-                log("You don't have enough gold to lose " # Nat.toText(amount));
+                log("You don't have " # Nat.toText(amount) # " gold");
                 return false;
             };
         };
 
         public func addTrait(trait : Text) : Bool {
-            log("You gain the trait " # trait);
+            logEntries.add(#addTrait(trait));
             characterHandler.addTrait(trait);
         };
 
         public func removeTrait(trait : Text) : Bool {
-            log("You lose the trait " # trait);
+            logEntries.add(#removeTrait(trait));
             characterHandler.removeTrait(trait);
         };
 
-        public func getMessages() : [Text] {
-            Buffer.toArray(messages);
+        public func getLog() : [Outcome.OutcomeLogEntry] {
+            Buffer.toArray(logEntries);
         };
     };
 };

@@ -26,7 +26,6 @@ module {
         #defense;
         #speed;
         #magic;
-        #health;
         #maxHealth;
     };
 
@@ -36,7 +35,6 @@ module {
             case (#defense) "defense";
             case (#speed) "speed";
             case (#magic) "magic";
-            case (#health) "health";
             case (#maxHealth) "maxHealth";
         };
     };

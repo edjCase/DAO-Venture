@@ -8,7 +8,6 @@
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import Dao from "./routes/Dao.svelte";
   import Navbar from "./components/common/Navbar.svelte";
-  import Character from "./routes/Character.svelte";
   import JoinGame from "./routes/JoinGame.svelte";
 </script>
 
@@ -17,7 +16,6 @@
     <Navbar />
     <div class="pb-20">
       <Route path="/" component={Home} />
-      <Route path="/character" component={Character} />
       <Route path="/dao" component={Dao} />
       <Route path="/profile" component={UserProfile} />
       <Route path="/join/:gameIdString" component={JoinGame} />

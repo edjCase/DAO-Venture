@@ -11,6 +11,8 @@
   userStore.subscribeStats((stats) => {
     userStats = stats;
   });
+
+  $: user = $userStore;
 </script>
 
 <div class="text-3xl text-center my-5">World</div>
@@ -23,6 +25,8 @@
 <Tabs>
   <TabItem title="Proposals" open>
     <ProposalList />
-    <ProposalForm />
+    {#if user !== undefined}
+      <ProposalForm />
+    {/if}
   </TabItem>
 </Tabs>

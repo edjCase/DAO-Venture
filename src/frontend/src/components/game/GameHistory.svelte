@@ -2,7 +2,7 @@
   import { completedGameStore } from "../../stores/CompletedGameStore";
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
-  import Difficulty from "../common/Difficulty.svelte";
+  import DifficultyBadge from "../common/DifficultyBadge.svelte";
   import UserAvatar from "../user/UserAvatar.svelte";
 
   $: completedGames = $completedGameStore;
@@ -26,7 +26,7 @@
             {/each}
           {/if}
         </div>
-        <p><Difficulty value={game.difficulty} /></p>
+        <p><DifficultyBadge value={game.difficulty} /></p>
         <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
         <div class="flex justify-center">
           <CharacterAvatarWithStats size="lg" character={game.character} />

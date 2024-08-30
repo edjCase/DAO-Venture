@@ -61,5 +61,5 @@
   <p class="mb-4">
     Ready to start your adventure? Login now and become part of the legend!
   </p>
-  <Button on:click={login}>Play Now</Button>
+  <Button on:click={login}>Join</Button>
 </section>

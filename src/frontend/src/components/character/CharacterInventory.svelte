@@ -1,13 +1,21 @@
 <script lang="ts">
+  import { Tooltip } from "flowbite-svelte";
   import { Item } from "../../ic-agent/declarations/main";
 
   export let items: Item[];
 </script>
 
-<div class="border p-6">
-  <ul class="text-md">
-    {#each items as item}
-      <li>{item.name} - {item.description}</li>
-    {/each}
-  </ul>
-</div>
+<ul class="text-md flex">
+  {#each items as item}
+    <li>
+      <div class="text-xl">📦</div>
+      <Tooltip>
+        <div class="text-sm">
+          {item.name}
+          <br />
+          {item.description}
+        </div>
+      </Tooltip>
+    </li>
+  {/each}
+</ul>
