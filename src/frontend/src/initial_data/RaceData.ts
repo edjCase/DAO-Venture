@@ -1,7 +1,7 @@
 import { Race } from "../ic-agent/declarations/main";
 
 
-export const races : Race[] = [
+export const races: Race[] = [
     {
         id: "human",
         name: "Human",
@@ -11,6 +11,7 @@ export const races : Race[] = [
             { defense: 1n },
             { trait: "clever" },
         ],
+        unlockRequirement: []
     },
     {
         id: "elf",
@@ -21,6 +22,7 @@ export const races : Race[] = [
             { speed: 1n },
             { trait: "naturalist" },
         ],
+        unlockRequirement: []
     },
     {
         id: "dwarf",
@@ -31,6 +33,7 @@ export const races : Race[] = [
             { health: 10n },
             { trait: "tough" },
         ],
+        unlockRequirement: []
     },
     {
         id: "halfling",
@@ -41,6 +44,7 @@ export const races : Race[] = [
             { defense: 1n },
             { trait: "stealthy" },
         ],
+        unlockRequirement: []
     },
     {
         id: "faerie",
@@ -51,5 +55,6 @@ export const races : Race[] = [
             { speed: 1n },
             { trait: "charismatic" },
         ],
+        unlockRequirement: []
     },
 ];

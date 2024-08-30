@@ -144,7 +144,8 @@ export type CreateGameResult = { 'ok' : bigint } |
   { 'err' : CreateGameError };
 export type CreateWorldProposalError = { 'invalid' : Array<string> } |
   { 'notEligible' : null };
-export type CreateWorldProposalRequest = { 'motion' : MotionContent };
+export type CreateWorldProposalRequest = { 'motion' : MotionContent } |
+  { 'modifyGameContent' : ModifyGameContent };
 export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
 export interface Creature {
@@ -157,6 +158,7 @@ export interface Creature {
   'speed' : bigint,
   'weaponId' : string,
   'defense' : bigint,
+  'unlockRequirement' : [] | [UnlockRequirement],
   'attack' : bigint,
   'location' : CreatureLocationKind,
   'health' : bigint,
@@ -280,6 +282,7 @@ export interface Item {
   'id' : string,
   'name' : string,
   'description' : string,
+  'unlockRequirement' : [] | [UnlockRequirement],
   'image' : PixelImage,
 }
 export interface JoinGameRequest { 'gameId' : bigint }
@@ -385,6 +388,7 @@ export interface Race {
   'id' : string,
   'name' : string,
   'description' : string,
+  'unlockRequirement' : [] | [UnlockRequirement],
   'modifiers' : Array<CharacterModifier>,
 }
 export type RandomOrSpecificTextValue = { 'specific' : TextValue } |
@@ -409,6 +413,7 @@ export interface ScenarioMetaData {
   'data' : Array<GeneratedDataField>,
   'name' : string,
   'description' : string,
+  'unlockRequirement' : [] | [UnlockRequirement],
   'category' : ScenarioCategory,
   'paths' : Array<OutcomePath>,
   'imageId' : string,
@@ -452,6 +457,7 @@ export interface Trait {
   'id' : string,
   'name' : string,
   'description' : string,
+  'unlockRequirement' : [] | [UnlockRequirement],
   'image' : PixelImage,
 }
 export type UnlockRequirement = { 'acheivementId' : string };
@@ -516,6 +522,7 @@ export interface Weapon {
   'name' : string,
   'description' : string,
   'baseStats' : WeaponStats,
+  'unlockRequirement' : [] | [UnlockRequirement],
   'requirements' : Array<WeaponRequirement>,
 }
 export type WeaponAttribute = { 'damage' : null } |
@@ -553,7 +560,12 @@ export interface WorldProposal {
   'timeEnd' : [] | [bigint],
   'proposerId' : Principal,
 }
-export interface Zone { 'id' : string, 'name' : string, 'description' : string }
+export interface Zone {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+  'unlockRequirement' : [] | [UnlockRequirement],
+}
 export interface _SERVICE {
   'abandonGame' : ActorMethod<[bigint], AbandonGameResult>,
   'changeGameDifficulty' : ActorMethod<

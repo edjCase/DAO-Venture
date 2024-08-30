@@ -262,8 +262,6 @@ module {
             switch (effect) {
                 case (#reward) reward();
                 case (#damage(amount)) {
-                    Debug.print("Amount: " # debug_show (amount));
-                    Debug.print("Data: " # debug_show (scenario.data));
                     let damageAmount = getNatValue(prng, amount, scenario.data);
                     switch (damageCharacter(damageAmount)) {
                         case (#alive) ();

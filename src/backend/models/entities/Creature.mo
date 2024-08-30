@@ -4,6 +4,8 @@ import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
 import Entity "Entity";
 import Weapon "Weapon";
+import UnlockRequirement "../UnlockRequirement";
+import Achievement "Achievement";
 
 module {
     public type Creature = Entity.Entity and {
@@ -16,6 +18,7 @@ module {
         magic : Int;
         speed : Int;
         kind : CreatureKind;
+        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
     public type CreatureKind = {
@@ -32,9 +35,19 @@ module {
     public func validate(
         creature : Creature,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
+        achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         Entity.validate("Creature", creature, errors);
+        switch (creature.unlockRequirement) {
+            case (null) ();
+            case (?unlockRequirement) {
+                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
+                    case (#err(err)) errors.append(Buffer.fromArray(err));
+                    case (#ok) ();
+                };
+            };
+        };
         // check health is above 0
         if (creature.health < 1) {
             errors.add("Health must be above 0");

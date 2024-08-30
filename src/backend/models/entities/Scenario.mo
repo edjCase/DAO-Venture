@@ -15,6 +15,7 @@ import Entity "Entity";
 import Outcome "../Outcome";
 import Character "../Character";
 import Image "../Image";
+import UnlockRequirement "../UnlockRequirement";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -34,6 +35,7 @@ module {
         paths : [OutcomePath];
         undecidedPathId : Text;
         category : ScenarioCategory;
+        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
     public type ScenarioCategory = {
@@ -170,6 +172,15 @@ module {
 
         let dataFieldIdMap = HashMap.HashMap<Text, GeneratedDataField>(metaData.data.size(), Text.equal, Text.hash);
         Entity.validate("Scenario", metaData, errors);
+        switch (metaData.unlockRequirement) {
+            case (null) ();
+            case (?unlockRequirement) {
+                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
+                    case (#err(err)) errors.append(Buffer.fromArray(err));
+                    case (#ok) ();
+                };
+            };
+        };
         if (images.get(metaData.imageId) == null) {
             errors.add("Image id not found: " # metaData.imageId);
         };

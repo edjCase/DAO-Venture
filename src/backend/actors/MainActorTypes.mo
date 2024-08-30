@@ -136,6 +136,7 @@ module {
 
     public type CreateWorldProposalRequest = {
         #motion : WorldDao.MotionContent;
+        #modifyGameContent : WorldDao.ModifyGameContent;
     };
 
     public type CreateWorldProposalError = {

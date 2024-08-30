@@ -1,13 +1,17 @@
 import Text "mo:base/Text";
 import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
+import HashMap "mo:base/HashMap";
 import Entity "Entity";
+import UnlockRequirement "../UnlockRequirement";
+import Achievement "Achievement";
 
 module Weapon {
 
     public type Weapon = Entity.Entity and {
         baseStats : WeaponStats;
         requirements : [WeaponRequirement];
+        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
         // TODO weapon effects like bleed/stun
     };
 
@@ -57,10 +61,20 @@ module Weapon {
     };
 
     public func validate(
-        weapon : Weapon
+        weapon : Weapon,
+        achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         Entity.validate("Weapon", weapon, errors);
+        switch (weapon.unlockRequirement) {
+            case (null) ();
+            case (?unlockRequirement) {
+                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
+                    case (#err(err)) errors.append(Buffer.fromArray(err));
+                    case (#ok) ();
+                };
+            };
+        };
         if (errors.size() < 1) {
             return #ok;
         };

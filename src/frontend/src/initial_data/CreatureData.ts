@@ -13,7 +13,8 @@ export const creatures: Creature[] = [
         speed: 1n,
         magic: 1n,
         weaponId: "corrupted_branch",
-        kind: { elite: null }
+        kind: { elite: null },
+        unlockRequirement: []
     },
     {
         id: "goblins",
@@ -27,7 +28,8 @@ export const creatures: Creature[] = [
         speed: 3n,
         magic: 0n,
         weaponId: "crude_daggers",
-        kind: { normal: null }
+        kind: { normal: null },
+        unlockRequirement: []
     },
     {
         id: "dark_elves",
@@ -41,6 +43,7 @@ export const creatures: Creature[] = [
         speed: 2n,
         magic: 2n,
         weaponId: "shadow_bow",
-        kind: { normal: null }
+        kind: { normal: null },
+        unlockRequirement: []
     },
 ];

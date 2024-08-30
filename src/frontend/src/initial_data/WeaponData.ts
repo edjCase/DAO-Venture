@@ -16,7 +16,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             attack: 3n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "iron_sword",
@@ -33,7 +34,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             attack: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "apprentice_wand",
@@ -50,7 +52,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             magic: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "iron_dagger",
@@ -67,7 +70,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             speed: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "short_bow",
@@ -84,7 +88,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             attack: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "oaken_staff",
@@ -101,7 +106,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             magic: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "iron_mace",
@@ -118,7 +124,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             attack: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "basic_lute",
@@ -133,7 +140,8 @@ export let weapons: Weapon[] = [
             criticalMultiplier: 2n,
             statModifiers: []
         },
-        requirements: []
+        requirements: [],
+        unlockRequirement: []
     },
     {
         id: "wooden_staff",
@@ -150,7 +158,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             speed: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "mechanic_wrench",
@@ -165,7 +174,8 @@ export let weapons: Weapon[] = [
             criticalMultiplier: 2n,
             statModifiers: []
         },
-        requirements: []
+        requirements: [],
+        unlockRequirement: []
     },
     {
         id: "bone_staff",
@@ -182,7 +192,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             magic: 1n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "crude_daggers",
@@ -199,7 +210,8 @@ export let weapons: Weapon[] = [
         },
         requirements: [{
             speed: 2n,
-        }]
+        }],
+        unlockRequirement: []
     },
     {
         id: "shadow_bow",
@@ -221,6 +233,7 @@ export let weapons: Weapon[] = [
             {
                 magic: 1n,
             }
-        ]
+        ],
+        unlockRequirement: []
     },
 ];

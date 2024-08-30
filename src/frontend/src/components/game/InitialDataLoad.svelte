@@ -1,10 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
-  import {
-    AddGameContentRequest,
-    Trait,
-  } from "../../ic-agent/declarations/main";
+  import { ModifyGameContent, Trait } from "../../ic-agent/declarations/main";
   import LoadingButton from "../common/LoadingButton.svelte";
 
   interface ImageModule {
@@ -13,10 +10,21 @@
   let initialize = async () => {
     let mainAgent = await mainAgentFactory();
 
-    let addGameContent = async (content: AddGameContentRequest) => {
-      let result = await mainAgent.addGameContent(content);
+    let addGameContent = async (content: ModifyGameContent) => {
+      let result = await mainAgent.createWorldProposal({
+        modifyGameContent: content,
+      });
       if ("ok" in result) {
         console.log("Added content", content);
+        let voteResult = await mainAgent.voteOnWorldProposal({
+          proposalId: result.ok,
+          vote: true,
+        });
+        if ("ok" in voteResult) {
+          console.log("Voted on proposal", result.ok);
+        } else {
+          console.error("Failed to vote on proposal", result.ok, voteResult);
+        }
       } else {
         console.error("Failed to add content", content, result);
       }

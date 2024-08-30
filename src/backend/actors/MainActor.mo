@@ -241,7 +241,7 @@ actor MainActor : Types.Actor {
         if (not isAMember) {
             return #err(#notEligible);
         };
-        Debug.print("Creating proposal for world with content: " # debug_show (request));
+        Debug.print("Creating proposal");
         await* worldDao.createProposal<system>(caller, request, members);
     };
 

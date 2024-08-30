@@ -177,6 +177,7 @@ export const scenarios: ScenarioMetaData[] = [
         }],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "dark_elf_ambush",
@@ -362,6 +363,7 @@ export const scenarios: ScenarioMetaData[] = [
         }],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "druidic_sanctuary",
@@ -572,6 +574,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "dwarven_weaponsmith",
@@ -725,6 +728,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "enchanted_grove",
@@ -929,6 +933,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "faerie_market",
@@ -1090,6 +1095,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "goblin_raiding_party",
@@ -1308,6 +1314,7 @@ export const scenarios: ScenarioMetaData[] = [
         ],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "knowledge_nexus",
@@ -1518,6 +1525,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "lost_elfling",
@@ -1679,6 +1687,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "mysterious_structure",
@@ -1903,6 +1912,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "mystic_forge",
@@ -2122,6 +2132,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "sinking_boat",
@@ -2281,6 +2292,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "trapped_druid",
@@ -2458,6 +2470,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "travelling_bard",
@@ -2674,6 +2687,7 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
   {
     id: "wandering_alchemist",
@@ -2793,5 +2807,6 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
     ],
+    unlockRequirement: []
   },
 ];

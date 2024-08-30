@@ -780,7 +780,7 @@ module {
         };
 
         public func validateItem(item : Item.Item) : Result.Result<(), [Text]> {
-            Item.validate(item);
+            Item.validate(item, achievements);
         };
 
         public func addOrUpdateTrait(trait : Trait.Trait) : Result.Result<(), { #invalid : [Text] }> {
@@ -794,7 +794,7 @@ module {
         };
 
         public func validateTrait(trait : Trait.Trait) : Result.Result<(), [Text]> {
-            Trait.validate(trait);
+            Trait.validate(trait, achievements);
         };
 
         public func addOrUpdateRace(race : Race.Race) : Result.Result<(), { #invalid : [Text] }> {
@@ -808,7 +808,7 @@ module {
         };
 
         public func validateRace(race : Race.Race) : Result.Result<(), [Text]> {
-            Race.validate(race, items, traits);
+            Race.validate(race, items, traits, achievements);
         };
 
         public func addOrUpdateClass(class_ : Class.Class) : Result.Result<(), { #invalid : [Text] }> {
@@ -850,7 +850,7 @@ module {
         };
 
         public func validateZone(zone : Zone.Zone) : Result.Result<(), [Text]> {
-            Zone.validate(zone);
+            Zone.validate(zone, achievements);
         };
 
         public func addOrUpdateAchievement(achievement : Achievement.Achievement) : Result.Result<(), { #invalid : [Text] }> {
@@ -878,7 +878,7 @@ module {
         };
 
         public func validateCreature(creature : Creature.Creature) : Result.Result<(), [Text]> {
-            Creature.validate(creature, weapons);
+            Creature.validate(creature, weapons, achievements);
         };
 
         public func addOrUpdateWeapon(weapon : Weapon.Weapon) : Result.Result<(), { #invalid : [Text] }> {
@@ -892,7 +892,7 @@ module {
         };
 
         public func validateWeapon(weapon : Weapon.Weapon) : Result.Result<(), [Text]> {
-            Weapon.validate(weapon);
+            Weapon.validate(weapon, achievements);
         };
 
         public func addOrUpdateImage(image : Image.Image) : Result.Result<(), { #invalid : [Text] }> {

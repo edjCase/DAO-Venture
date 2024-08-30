@@ -1,9 +1,11 @@
+import { Zone } from "../ic-agent/declarations/main";
 
-export const zones = [
+export const zones: Zone[] = [
     {
         id: "enchanted_forest",
         name: "Enchanted Forest",
-        description: "A mystical woodland teeming with magical creatures and ancient secrets."
+        description: "A mystical woodland teeming with magical creatures and ancient secrets.",
+        unlockRequirement: []
     },
     // {
     //     id: "ancient_ruins",
