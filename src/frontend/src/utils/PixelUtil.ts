@@ -115,7 +115,12 @@ export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
 }
 
 export function decodeImageToPixels(data: PixelImage, width: number, height: number): PixelGrid {
-    const pixels: PixelColor[] = data.pixelData.map(i => i.paletteIndex[0] === undefined ? undefined : data.palette[i.paletteIndex[0]]);
+    const pixels: PixelColor[] = data.pixelData.flatMap(i => {
+        // Get the color from the palette
+        let color = i.paletteIndex[0] === undefined ? undefined : data.palette[i.paletteIndex[0]];
+        // Expand the Run Length encoding of the pixel data
+        return Array.from({ length: Number(i.count) }, () => color);
+    });
 
     const grid: PixelColor[][] = [];
     for (let y = 0; y < height; y++) {
