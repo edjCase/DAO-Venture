@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
   import RgbColor from "./RgbColor.svelte";
-  import { encodePixelsToBase64, PixelGrid, Rgb } from "../../utils/PixelUtil";
+  import { PixelGrid, PixelColor } from "../../utils/PixelUtil";
 
   export let pixelSize = 20;
   export let pixels: PixelGrid;
@@ -9,7 +9,7 @@
   let height = pixels.length;
   let width = pixels[0].length;
 
-  let selectedColor: Rgb | undefined = [0, 0, 0];
+  let selectedColor: PixelColor = [0, 0, 0];
 
   function updatePixel(x: number, y: number): void {
     pixels[y][x] = selectedColor;
@@ -18,13 +18,11 @@
   let selectTransparent = () => {
     selectedColor = undefined;
   };
-
-  $: base64 = encodePixelsToBase64(pixels);
 </script>
 
 <div class="flex space-x-4">
   <div
-    class="grid rounded-lg"
+    class="grid rounded-lg border"
     style:grid-template-columns="repeat({width}, {pixelSize}px)"
   >
     {#each pixels as row, y}
@@ -53,4 +51,3 @@
     <Button on:click={selectTransparent}>Transparent Pixel</Button>
   </div>
 </div>
-<div>{base64}</div>

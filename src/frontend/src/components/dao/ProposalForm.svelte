@@ -1,12 +1,18 @@
 <script lang="ts">
   import { Select } from "flowbite-svelte";
   import MotionForm from "./proposal_forms/MotionForm.svelte";
+  import ModifyGameContentForm from "./proposal_forms/ModifyGameContentForm.svelte";
 
   let proposalTypes = [
     {
       value: "motion",
       name: "Motion",
       component: MotionForm,
+    },
+    {
+      value: "modifyGameContent",
+      name: "Modify Game Content",
+      component: ModifyGameContentForm,
     },
   ];
   let selectedProposalType: string = proposalTypes[0].value;

@@ -1,0 +1,44 @@
+<script lang="ts">
+  import { Select } from "flowbite-svelte";
+  import ItemForm from "./modify_game_content/ItemForm.svelte";
+  let gameContentTypes = [
+    { value: "item", name: "Item" },
+    { value: "trait", name: "Trait" },
+    { value: "image", name: "Image" },
+    { value: "creature", name: "Creature" },
+    { value: "class", name: "Class" },
+    { value: "race", name: "Race" },
+    { value: "zone", name: "Zone" },
+    { value: "weapon", name: "Weapon" },
+    { value: "achievement", name: "Achievement" },
+    { value: "scenario", name: "Scenario" },
+  ];
+  let selectedGameContentType: string = gameContentTypes[0].value;
+</script>
+
+<Select items={gameContentTypes} bind:value={selectedGameContentType} />
+<div>
+  {#if selectedGameContentType === "item"}
+    <ItemForm />
+    <!-- {:else if selectedGameContentType === "trait"}
+    <TraitForm />
+  {:else if selectedGameContentType === "image"}
+    <ImageForm />
+  {:else if selectedGameContentType === "creature"}
+    <CreatureForm />
+  {:else if selectedGameContentType === "class"}
+    <ClassForm />
+  {:else if selectedGameContentType === "race"}
+    <RaceForm />
+  {:else if selectedGameContentType === "zone"}
+    <ZoneForm />
+  {:else if selectedGameContentType === "weapon"}
+    <WeaponForm />
+  {:else if selectedGameContentType === "achievement"}
+    <AchievementForm />
+  {:else if selectedGameContentType === "scenario"}
+    <ScenarioForm /> -->
+  {:else}
+    NOT IMPLEMENTED GAME CONTENT FORM: <pre>{selectedGameContentType}</pre>
+  {/if}
+</div>
