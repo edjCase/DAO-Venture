@@ -8,10 +8,15 @@ export const idlFactory = ({ IDL }) => {
       'gameNotFound' : IDL.Null,
     }),
   });
+  const PixelImage = IDL.Record({
+    'palette' : IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)),
+    'indices' : IDL.Vec(IDL.Opt(IDL.Nat8)),
+  });
   const Trait = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'image' : PixelImage,
   });
   const CreatureKind = IDL.Variant({
     'normal' : IDL.Null,
@@ -40,6 +45,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'image' : PixelImage,
   });
   const UnlockRequirement = IDL.Variant({ 'acheivementId' : IDL.Text });
   const CharacterModifier = IDL.Variant({

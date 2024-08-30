@@ -59,7 +59,7 @@
   $: user = $userStore;
 </script>
 
-<BottomNav {activeUrl} position="fixed" classInner="grid-cols-5 z-50">
+<BottomNav {activeUrl} position="fixed" classInner="grid-cols-4 z-50">
   <BottomNavItem btnName="World" href="/" on:click={navOnClick("/")}>
     <GlobeSolid class={iconClass} />
   </BottomNavItem>

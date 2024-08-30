@@ -1,9 +1,7 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
   import RgbColor from "./RgbColor.svelte";
-  import { encodeRLEBase64 } from "../../utils/PixelUtil";
-  type Rgb = { red: number; green: number; blue: number };
-  type PixelGrid = Rgb[][];
+  import { encodePixelsToBase64, PixelGrid, Rgb } from "../../utils/PixelUtil";
 
   export let pixelSize = 20;
   export let pixels: PixelGrid;
@@ -11,17 +9,17 @@
   let height = pixels.length;
   let width = pixels[0].length;
 
-  let selectedColor: Rgb = { red: 0, green: 0, blue: 0 };
+  let selectedColor: Rgb | undefined = [0, 0, 0];
 
   function updatePixel(x: number, y: number): void {
-    pixels![y][x] = { ...selectedColor };
+    pixels[y][x] = selectedColor;
   }
 
-  let fillWithColor = () => {
-    pixels = pixels.map((row) => row.map(() => ({ ...selectedColor })));
+  let selectTransparent = () => {
+    selectedColor = undefined;
   };
 
-  $: rleEncoding = encodeRLEBase64(pixels);
+  $: base64 = encodePixelsToBase64(pixels);
 </script>
 
 <div class="flex space-x-4">
@@ -43,14 +41,16 @@
           class="cursor-pointer hover:opacity-75 transition-opacity"
           style:width="{pixelSize}px"
           style:height="{pixelSize}px"
-          style:background-color="rgb({pixel.red}, {pixel.green}, {pixel.blue})"
+          style:background-color={pixel === undefined
+            ? undefined
+            : `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`}
         />
       {/each}
     {/each}
   </div>
   <div class="flex flex-col justify-center">
     <RgbColor bind:value={selectedColor} type="vertical" />
-    <Button on:click={fillWithColor}>Fill w/color</Button>
+    <Button on:click={selectTransparent}>Transparent Pixel</Button>
   </div>
 </div>
-<div>{rleEncoding}</div>
+<div>{base64}</div>

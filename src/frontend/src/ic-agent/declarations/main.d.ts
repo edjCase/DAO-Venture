@@ -288,7 +288,12 @@ export interface InProgressGameStateWithMetaData {
   'turn' : bigint,
   'locations' : Array<Location>,
 }
-export interface Item { 'id' : string, 'name' : string, 'description' : string }
+export interface Item {
+  'id' : string,
+  'name' : string,
+  'description' : string,
+  'image' : PixelImage,
+}
 export interface JoinGameRequest { 'gameId' : bigint }
 export type JoinGameResult = { 'ok' : null } |
   {
@@ -353,6 +358,10 @@ export interface PagedResult_1 {
   'count' : bigint,
   'totalCount' : bigint,
   'offset' : bigint,
+}
+export interface PixelImage {
+  'palette' : Array<[number, number, number]>,
+  'indices' : Array<[] | [number]>,
 }
 export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalStatus = {
@@ -443,6 +452,7 @@ export interface Trait {
   'id' : string,
   'name' : string,
   'description' : string,
+  'image' : PixelImage,
 }
 export type UnlockRequirement = { 'acheivementId' : string };
 export interface User {

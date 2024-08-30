@@ -1,14 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import { PixelGrid } from "../../utils/PixelUtil";
 
-  type RGBColor = {
-    red: number;
-    green: number;
-    blue: number;
-  };
-
-  export let pixels: RGBColor[][];
-  export let pixelSize: number = 20;
+  export let pixels: PixelGrid;
+  export let pixelSize: number = 2;
   export let border: boolean = false;
   let canvas: HTMLCanvasElement;
   let width = pixels[0].length;
@@ -20,8 +15,16 @@
 
     pixels.forEach((row, y) => {
       row.forEach((color, x) => {
-        ctx.fillStyle = `rgb(${color.red}, ${color.green}, ${color.blue})`;
-        ctx.fillRect(x * pixelSize, y * pixelSize, pixelSize, pixelSize);
+        let rectX = x * pixelSize;
+        let rectY = y * pixelSize;
+        let rectWidth = pixelSize;
+        let rectHeight = pixelSize;
+        if (color === undefined) {
+          ctx.clearRect(rectX, rectY, rectWidth, rectHeight);
+        } else {
+          ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
+          ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+        }
       });
     });
   });

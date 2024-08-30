@@ -3,11 +3,12 @@ import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
 import Entity "Entity";
+import PixelImage "../PixelImage";
 
 module {
 
     public type Item = Entity.Entity and {
-        // image : PixelImage;
+        image : PixelImage.PixelImage;
     };
 
     public func validate(
