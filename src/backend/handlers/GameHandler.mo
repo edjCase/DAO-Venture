@@ -769,8 +769,8 @@ module {
             |> Iter.toArray(_);
         };
 
-        public func addItem(item : Item.Item) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Item.validate(item, items)) {
+        public func addOrUpdateItem(item : Item.Item) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateItem(item)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -779,8 +779,12 @@ module {
             #ok;
         };
 
-        public func addTrait(trait : Trait.Trait) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Trait.validate(trait, traits)) {
+        public func validateItem(item : Item.Item) : Result.Result<(), [Text]> {
+            Item.validate(item);
+        };
+
+        public func addOrUpdateTrait(trait : Trait.Trait) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateTrait(trait)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -789,8 +793,12 @@ module {
             #ok;
         };
 
-        public func addRace(race : Race.Race) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Race.validate(race, races, items, traits)) {
+        public func validateTrait(trait : Trait.Trait) : Result.Result<(), [Text]> {
+            Trait.validate(trait);
+        };
+
+        public func addOrUpdateRace(race : Race.Race) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateRace(race)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -799,8 +807,12 @@ module {
             #ok;
         };
 
-        public func addClass(class_ : Class.Class) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Class.validate(class_, classes, items, traits, achievements)) {
+        public func validateRace(race : Race.Race) : Result.Result<(), [Text]> {
+            Race.validate(race, items, traits);
+        };
+
+        public func addOrUpdateClass(class_ : Class.Class) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateClass(class_)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -809,19 +821,12 @@ module {
             #ok;
         };
 
-        public func addScenarioMetaData(scenario : Scenario.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
-            switch (
-                Scenario.validateMetaData(
-                    scenario,
-                    scenarios,
-                    items,
-                    traits,
-                    images,
-                    zones,
-                    achievements,
-                    creatures,
-                )
-            ) {
+        public func validateClass(class_ : Class.Class) : Result.Result<(), [Text]> {
+            Class.validate(class_, items, traits, achievements);
+        };
+
+        public func addOrUpdateScenarioMetaData(scenario : Scenario.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateScenarioMetaData(scenario)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -830,8 +835,12 @@ module {
             #ok;
         };
 
-        public func addZone(zone : Zone.Zone) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Zone.validate(zone, zones)) {
+        public func validateScenarioMetaData(scenario : Scenario.ScenarioMetaData) : Result.Result<(), [Text]> {
+            Scenario.validateMetaData(scenario, items, traits, images, zones, achievements, creatures);
+        };
+
+        public func addOrUpdateZone(zone : Zone.Zone) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateZone(zone)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -840,8 +849,12 @@ module {
             #ok;
         };
 
-        public func addAchievement(achievement : Achievement.Achievement) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Achievement.validate(achievement, achievements)) {
+        public func validateZone(zone : Zone.Zone) : Result.Result<(), [Text]> {
+            Zone.validate(zone);
+        };
+
+        public func addOrUpdateAchievement(achievement : Achievement.Achievement) : Result.Result<(), { #invalid : [Text] }> {
+            switch (Achievement.validate(achievement)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -850,8 +863,12 @@ module {
             #ok;
         };
 
-        public func addCreature(creature : Creature.Creature) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Creature.validate(creature, creatures, weapons)) {
+        public func validateAchievement(achievement : Achievement.Achievement) : Result.Result<(), [Text]> {
+            Achievement.validate(achievement);
+        };
+
+        public func addOrUpdateCreature(creature : Creature.Creature) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateCreature(creature)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -860,8 +877,12 @@ module {
             #ok;
         };
 
-        public func addWeapon(weapon : Weapon.Weapon) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Weapon.validate(weapon, weapons)) {
+        public func validateCreature(creature : Creature.Creature) : Result.Result<(), [Text]> {
+            Creature.validate(creature, weapons);
+        };
+
+        public func addOrUpdateWeapon(weapon : Weapon.Weapon) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateWeapon(weapon)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -870,8 +891,12 @@ module {
             #ok;
         };
 
-        public func addImage(image : Image.Image) : Result.Result<(), { #invalid : [Text] }> {
-            switch (Image.validate(image, images)) {
+        public func validateWeapon(weapon : Weapon.Weapon) : Result.Result<(), [Text]> {
+            Weapon.validate(weapon);
+        };
+
+        public func addOrUpdateImage(image : Image.Image) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateImage(image)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
             };
@@ -879,6 +904,10 @@ module {
             Debug.print("Adding image: " # image.id);
             images.put(image.id, image);
             #ok;
+        };
+
+        public func validateImage(image : Image.Image) : Result.Result<(), [Text]> {
+            Image.validate(image);
         };
 
         public func getImage(imageId : Text) : ?Image.Image {

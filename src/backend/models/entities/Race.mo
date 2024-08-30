@@ -15,12 +15,11 @@ module {
 
     public func validate(
         race : Race,
-        existingRaces : HashMap.HashMap<Text, Race>,
         items : HashMap.HashMap<Text, Item.Item>,
         traits : HashMap.HashMap<Text, Trait.Trait>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        Entity.validate("Race", race, existingRaces, errors);
+        Entity.validate("Race", race, errors);
         for (modifier in race.modifiers.vals()) {
             switch (CharacterModifier.validate(modifier, items, traits)) {
                 case (#err(err)) errors.append(Buffer.fromArray(err));

@@ -31,11 +31,10 @@ module {
 
     public func validate(
         creature : Creature,
-        existingCreatures : HashMap.HashMap<Text, Creature>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        Entity.validate("Creature", creature, existingCreatures, errors);
+        Entity.validate("Creature", creature, errors);
         // check health is above 0
         if (creature.health < 1) {
             errors.add("Health must be above 0");

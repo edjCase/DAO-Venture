@@ -159,7 +159,6 @@ module {
 
     public func validateMetaData(
         metaData : ScenarioMetaData,
-        existingMetaData : HashMap.HashMap<Text, ScenarioMetaData>,
         items : HashMap.HashMap<Text, Item.Item>,
         traits : HashMap.HashMap<Text, Trait.Trait>,
         images : HashMap.HashMap<Text, Image.Image>,
@@ -170,7 +169,7 @@ module {
         var errors = Buffer.Buffer<Text>(0);
 
         let dataFieldIdMap = HashMap.HashMap<Text, GeneratedDataField>(metaData.data.size(), Text.equal, Text.hash);
-        Entity.validate("Scenario", metaData, existingMetaData, errors);
+        Entity.validate("Scenario", metaData, errors);
         if (images.get(metaData.imageId) == null) {
             errors.add("Image id not found: " # metaData.imageId);
         };

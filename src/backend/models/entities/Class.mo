@@ -19,13 +19,12 @@ module {
 
     public func validate(
         class_ : Class,
-        existingClasses : HashMap.HashMap<Text, Class>,
         items : HashMap.HashMap<Text, Item.Item>,
         traits : HashMap.HashMap<Text, Trait.Trait>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        Entity.validate("Class", class_, existingClasses, errors);
+        Entity.validate("Class", class_, errors);
         switch (class_.unlockRequirement) {
             case (null) ();
             case (?unlockRequirement) {

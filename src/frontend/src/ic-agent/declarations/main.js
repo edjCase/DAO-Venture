@@ -8,48 +8,49 @@ export const idlFactory = ({ IDL }) => {
       'gameNotFound' : IDL.Null,
     }),
   });
-  const PixelData = IDL.Record({
-    'count' : IDL.Nat,
-    'paletteIndex' : IDL.Opt(IDL.Nat8),
-  });
-  const PixelImage = IDL.Record({
-    'palette' : IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)),
-    'pixelData' : IDL.Vec(PixelData),
-  });
-  const Trait = IDL.Record({
-    'id' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'image' : PixelImage,
-  });
-  const CreatureKind = IDL.Variant({
+  const Difficulty = IDL.Variant({
     'normal' : IDL.Null,
-    'boss' : IDL.Null,
-    'elite' : IDL.Null,
+    'easy' : IDL.Null,
+    'hard' : IDL.Null,
   });
-  const CreatureLocationKind = IDL.Variant({
-    'common' : IDL.Null,
-    'zoneIds' : IDL.Vec(IDL.Text),
+  const ChangeGameDifficultyResult = IDL.Variant({
+    'ok' : IDL.Null,
+    'err' : IDL.Variant({
+      'gameStarted' : IDL.Null,
+      'notAuthorized' : IDL.Null,
+      'gameNotFound' : IDL.Null,
+    }),
   });
-  const Creature = IDL.Record({
-    'id' : IDL.Text,
-    'magic' : IDL.Int,
-    'maxHealth' : IDL.Nat,
-    'kind' : CreatureKind,
-    'name' : IDL.Text,
+  const CreateGameError = IDL.Variant({
+    'noTraits' : IDL.Null,
+    'noWeapons' : IDL.Null,
+    'noCreaturesForZone' : IDL.Text,
+    'noZones' : IDL.Null,
+    'noItems' : IDL.Null,
+    'noScenariosForZone' : IDL.Text,
+    'noClasses' : IDL.Null,
+    'noCreatures' : IDL.Null,
+    'noRaces' : IDL.Null,
+    'noScenarios' : IDL.Null,
+    'noImages' : IDL.Null,
+    'alreadyInitialized' : IDL.Null,
+  });
+  const CreateGameResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'err' : CreateGameError,
+  });
+  const MotionContent = IDL.Record({
+    'title' : IDL.Text,
     'description' : IDL.Text,
-    'speed' : IDL.Int,
-    'weaponId' : IDL.Text,
-    'defense' : IDL.Int,
-    'attack' : IDL.Int,
-    'location' : CreatureLocationKind,
-    'health' : IDL.Nat,
   });
-  const Item = IDL.Record({
-    'id' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'image' : PixelImage,
+  const CreateWorldProposalRequest = IDL.Variant({ 'motion' : MotionContent });
+  const CreateWorldProposalError = IDL.Variant({
+    'invalid' : IDL.Vec(IDL.Text),
+    'notEligible' : IDL.Null,
+  });
+  const CreateWorldProposalResult = IDL.Variant({
+    'ok' : IDL.Nat,
+    'err' : CreateWorldProposalError,
   });
   const UnlockRequirement = IDL.Variant({ 'acheivementId' : IDL.Text });
   const CharacterModifier = IDL.Variant({
@@ -71,27 +72,174 @@ export const idlFactory = ({ IDL }) => {
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
     'modifiers' : IDL.Vec(CharacterModifier),
   });
+  const Time = IDL.Int;
+  const PixelData = IDL.Record({
+    'count' : IDL.Nat,
+    'paletteIndex' : IDL.Opt(IDL.Nat8),
+  });
+  const PixelImage = IDL.Record({
+    'palette' : IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)),
+    'pixelData' : IDL.Vec(PixelData),
+  });
+  const Trait = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'image' : PixelImage,
+  });
   const Race = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
     'modifiers' : IDL.Vec(CharacterModifier),
   });
-  const Zone = IDL.Record({
+  const Item = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'image' : PixelImage,
   });
-  const Achievement = IDL.Record({
+  const CharacterStatKind__1 = IDL.Variant({
+    'magic' : IDL.Null,
+    'gold' : IDL.Null,
+    'speed' : IDL.Null,
+    'defense' : IDL.Null,
+    'attack' : IDL.Null,
+    'health' : IDL.Record({ 'inverse' : IDL.Bool }),
+  });
+  const WeaponAttribute = IDL.Variant({
+    'damage' : IDL.Null,
+    'attacks' : IDL.Null,
+    'criticalChance' : IDL.Null,
+    'maxDamage' : IDL.Null,
+    'minDamage' : IDL.Null,
+    'criticalMultiplier' : IDL.Null,
+    'accuracy' : IDL.Null,
+  });
+  const StatModifier = IDL.Record({
+    'characterStat' : CharacterStatKind__1,
+    'factor' : IDL.Float64,
+    'attribute' : WeaponAttribute,
+  });
+  const WeaponStats = IDL.Record({
+    'attacks' : IDL.Nat,
+    'criticalChance' : IDL.Nat,
+    'maxDamage' : IDL.Nat,
+    'minDamage' : IDL.Nat,
+    'statModifiers' : IDL.Vec(StatModifier),
+    'criticalMultiplier' : IDL.Nat,
+    'accuracy' : IDL.Int,
+  });
+  const WeaponRequirement = IDL.Variant({
+    'magic' : IDL.Int,
+    'maxHealth' : IDL.Nat,
+    'speed' : IDL.Int,
+    'defense' : IDL.Int,
+    'attack' : IDL.Int,
+  });
+  const Weapon = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'baseStats' : WeaponStats,
+    'requirements' : IDL.Vec(WeaponRequirement),
   });
-  const ImageKind = IDL.Variant({ 'png' : IDL.Null });
-  const Image = IDL.Record({
-    'id' : IDL.Text,
-    'data' : IDL.Vec(IDL.Nat8),
-    'kind' : ImageKind,
+  const CharacterWithMetaData = IDL.Record({
+    'magic' : IDL.Int,
+    'maxHealth' : IDL.Nat,
+    'gold' : IDL.Nat,
+    'traits' : IDL.Vec(Trait),
+    'class' : Class,
+    'race' : Race,
+    'speed' : IDL.Int,
+    'defense' : IDL.Int,
+    'items' : IDL.Vec(Item),
+    'attack' : IDL.Int,
+    'weapon' : Weapon,
+    'health' : IDL.Nat,
+  });
+  const CompletedGameWithMetaData = IDL.Record({
+    'id' : IDL.Nat,
+    'startTime' : Time,
+    'turns' : IDL.Nat,
+    'guestUserIds' : IDL.Vec(IDL.Principal),
+    'endTime' : Time,
+    'character' : CharacterWithMetaData,
+    'difficulty' : Difficulty,
+    'createdTime' : Time,
+    'victory' : IDL.Bool,
+    'hostUserId' : IDL.Principal,
+  });
+  const CompletedGameStateWithMetaData = IDL.Record({
+    'startTime' : Time,
+    'turns' : IDL.Nat,
+    'endTime' : Time,
+    'character' : CharacterWithMetaData,
+    'victory' : IDL.Bool,
+  });
+  const ChoiceVotingPower = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : IDL.Text,
+  });
+  const VotingSummary = IDL.Record({
+    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower),
+    'undecidedVotingPower' : IDL.Nat,
+    'totalVotingPower' : IDL.Nat,
+  });
+  const VotingGameStateWithMetaData = IDL.Record({
+    'startTime' : Time,
+    'characterVotes' : VotingSummary,
+    'characterOptions' : IDL.Vec(CharacterWithMetaData),
+  });
+  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
+  const Location = IDL.Record({
+    'id' : IDL.Nat,
+    'scenarioId' : IDL.Nat,
+    'coordinate' : AxialCoordinate,
+    'zoneId' : IDL.Text,
+  });
+  const InProgressGameStateWithMetaData = IDL.Record({
+    'startTime' : Time,
+    'character' : CharacterWithMetaData,
+    'turn' : IDL.Nat,
+    'locations' : IDL.Vec(Location),
+  });
+  const GameStateWithMetaData = IDL.Variant({
+    'notStarted' : IDL.Null,
+    'completed' : CompletedGameStateWithMetaData,
+    'voting' : VotingGameStateWithMetaData,
+    'inProgress' : InProgressGameStateWithMetaData,
+  });
+  const GameWithMetaData = IDL.Record({
+    'id' : IDL.Nat,
+    'guestUserIds' : IDL.Vec(IDL.Principal),
+    'difficulty' : Difficulty,
+    'createdTime' : Time,
+    'state' : GameStateWithMetaData,
+    'hostUserId' : IDL.Principal,
+  });
+  const GetCurrentGameResult = IDL.Variant({
+    'ok' : IDL.Opt(GameWithMetaData),
+    'err' : IDL.Variant({ 'notAuthenticated' : IDL.Null }),
+  });
+  const GetGameRequest = IDL.Record({ 'gameId' : IDL.Nat });
+  const GetGameResult = IDL.Variant({
+    'ok' : GameWithMetaData,
+    'err' : IDL.Variant({ 'gameNotFound' : IDL.Null }),
+  });
+  const GetScenarioRequest = IDL.Record({
+    'scenarioId' : IDL.Nat,
+    'gameId' : IDL.Nat,
+  });
+  const ScenarioVoteChoice = IDL.Record({
+    'votingPower' : IDL.Nat,
+    'choice' : IDL.Opt(IDL.Text),
+  });
+  const ScenarioVote = IDL.Record({
+    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower),
+    'undecidedVotingPower' : IDL.Nat,
+    'totalVotingPower' : IDL.Nat,
+    'yourVote' : IDL.Opt(ScenarioVoteChoice),
   });
   const GeneratedDataFieldNat = IDL.Record({
     'max' : IDL.Nat,
@@ -213,212 +361,6 @@ export const idlFactory = ({ IDL }) => {
     'choices' : IDL.Vec(Choice),
     'location' : LocationKind,
     'undecidedPathId' : IDL.Text,
-  });
-  const CharacterStatKind__1 = IDL.Variant({
-    'magic' : IDL.Null,
-    'gold' : IDL.Null,
-    'speed' : IDL.Null,
-    'defense' : IDL.Null,
-    'attack' : IDL.Null,
-    'health' : IDL.Record({ 'inverse' : IDL.Bool }),
-  });
-  const WeaponAttribute = IDL.Variant({
-    'damage' : IDL.Null,
-    'attacks' : IDL.Null,
-    'criticalChance' : IDL.Null,
-    'maxDamage' : IDL.Null,
-    'minDamage' : IDL.Null,
-    'criticalMultiplier' : IDL.Null,
-    'accuracy' : IDL.Null,
-  });
-  const StatModifier = IDL.Record({
-    'characterStat' : CharacterStatKind__1,
-    'factor' : IDL.Float64,
-    'attribute' : WeaponAttribute,
-  });
-  const WeaponStats = IDL.Record({
-    'attacks' : IDL.Nat,
-    'criticalChance' : IDL.Nat,
-    'maxDamage' : IDL.Nat,
-    'minDamage' : IDL.Nat,
-    'statModifiers' : IDL.Vec(StatModifier),
-    'criticalMultiplier' : IDL.Nat,
-    'accuracy' : IDL.Int,
-  });
-  const WeaponRequirement = IDL.Variant({
-    'magic' : IDL.Int,
-    'maxHealth' : IDL.Nat,
-    'speed' : IDL.Int,
-    'defense' : IDL.Int,
-    'attack' : IDL.Int,
-  });
-  const Weapon = IDL.Record({
-    'id' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'baseStats' : WeaponStats,
-    'requirements' : IDL.Vec(WeaponRequirement),
-  });
-  const AddGameContentRequest = IDL.Variant({
-    'trait' : Trait,
-    'creature' : Creature,
-    'item' : Item,
-    'class' : Class,
-    'race' : Race,
-    'zone' : Zone,
-    'achievement' : Achievement,
-    'image' : Image,
-    'scenario' : ScenarioMetaData,
-    'weapon' : Weapon,
-  });
-  const AddGameContentResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({
-      'notAuthorized' : IDL.Null,
-      'invalid' : IDL.Vec(IDL.Text),
-    }),
-  });
-  const Difficulty = IDL.Variant({
-    'normal' : IDL.Null,
-    'easy' : IDL.Null,
-    'hard' : IDL.Null,
-  });
-  const ChangeGameDifficultyResult = IDL.Variant({
-    'ok' : IDL.Null,
-    'err' : IDL.Variant({
-      'gameStarted' : IDL.Null,
-      'notAuthorized' : IDL.Null,
-      'gameNotFound' : IDL.Null,
-    }),
-  });
-  const CreateGameError = IDL.Variant({
-    'noTraits' : IDL.Null,
-    'noWeapons' : IDL.Null,
-    'noCreaturesForZone' : IDL.Text,
-    'noZones' : IDL.Null,
-    'noItems' : IDL.Null,
-    'noScenariosForZone' : IDL.Text,
-    'noClasses' : IDL.Null,
-    'noCreatures' : IDL.Null,
-    'noRaces' : IDL.Null,
-    'noScenarios' : IDL.Null,
-    'noImages' : IDL.Null,
-    'alreadyInitialized' : IDL.Null,
-  });
-  const CreateGameResult = IDL.Variant({
-    'ok' : IDL.Nat,
-    'err' : CreateGameError,
-  });
-  const MotionContent = IDL.Record({
-    'title' : IDL.Text,
-    'description' : IDL.Text,
-  });
-  const CreateWorldProposalRequest = IDL.Variant({ 'motion' : MotionContent });
-  const CreateWorldProposalError = IDL.Variant({
-    'invalid' : IDL.Vec(IDL.Text),
-    'notEligible' : IDL.Null,
-  });
-  const CreateWorldProposalResult = IDL.Variant({
-    'ok' : IDL.Nat,
-    'err' : CreateWorldProposalError,
-  });
-  const Time = IDL.Int;
-  const CharacterWithMetaData = IDL.Record({
-    'magic' : IDL.Int,
-    'maxHealth' : IDL.Nat,
-    'gold' : IDL.Nat,
-    'traits' : IDL.Vec(Trait),
-    'class' : Class,
-    'race' : Race,
-    'speed' : IDL.Int,
-    'defense' : IDL.Int,
-    'items' : IDL.Vec(Item),
-    'attack' : IDL.Int,
-    'weapon' : Weapon,
-    'health' : IDL.Nat,
-  });
-  const CompletedGameWithMetaData = IDL.Record({
-    'id' : IDL.Nat,
-    'startTime' : Time,
-    'turns' : IDL.Nat,
-    'guestUserIds' : IDL.Vec(IDL.Principal),
-    'endTime' : Time,
-    'character' : CharacterWithMetaData,
-    'difficulty' : Difficulty,
-    'createdTime' : Time,
-    'victory' : IDL.Bool,
-    'hostUserId' : IDL.Principal,
-  });
-  const CompletedGameStateWithMetaData = IDL.Record({
-    'startTime' : Time,
-    'turns' : IDL.Nat,
-    'endTime' : Time,
-    'character' : CharacterWithMetaData,
-    'victory' : IDL.Bool,
-  });
-  const ChoiceVotingPower = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'choice' : IDL.Text,
-  });
-  const VotingSummary = IDL.Record({
-    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower),
-    'undecidedVotingPower' : IDL.Nat,
-    'totalVotingPower' : IDL.Nat,
-  });
-  const VotingGameStateWithMetaData = IDL.Record({
-    'startTime' : Time,
-    'characterVotes' : VotingSummary,
-    'characterOptions' : IDL.Vec(CharacterWithMetaData),
-  });
-  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
-  const Location = IDL.Record({
-    'id' : IDL.Nat,
-    'scenarioId' : IDL.Nat,
-    'coordinate' : AxialCoordinate,
-    'zoneId' : IDL.Text,
-  });
-  const InProgressGameStateWithMetaData = IDL.Record({
-    'startTime' : Time,
-    'character' : CharacterWithMetaData,
-    'turn' : IDL.Nat,
-    'locations' : IDL.Vec(Location),
-  });
-  const GameStateWithMetaData = IDL.Variant({
-    'notStarted' : IDL.Null,
-    'completed' : CompletedGameStateWithMetaData,
-    'voting' : VotingGameStateWithMetaData,
-    'inProgress' : InProgressGameStateWithMetaData,
-  });
-  const GameWithMetaData = IDL.Record({
-    'id' : IDL.Nat,
-    'guestUserIds' : IDL.Vec(IDL.Principal),
-    'difficulty' : Difficulty,
-    'createdTime' : Time,
-    'state' : GameStateWithMetaData,
-    'hostUserId' : IDL.Principal,
-  });
-  const GetCurrentGameResult = IDL.Variant({
-    'ok' : IDL.Opt(GameWithMetaData),
-    'err' : IDL.Variant({ 'notAuthenticated' : IDL.Null }),
-  });
-  const GetGameRequest = IDL.Record({ 'gameId' : IDL.Nat });
-  const GetGameResult = IDL.Variant({
-    'ok' : GameWithMetaData,
-    'err' : IDL.Variant({ 'gameNotFound' : IDL.Null }),
-  });
-  const GetScenarioRequest = IDL.Record({
-    'scenarioId' : IDL.Nat,
-    'gameId' : IDL.Nat,
-  });
-  const ScenarioVoteChoice = IDL.Record({
-    'votingPower' : IDL.Nat,
-    'choice' : IDL.Opt(IDL.Text),
-  });
-  const ScenarioVote = IDL.Record({
-    'votingPowerByChoice' : IDL.Vec(ChoiceVotingPower),
-    'undecidedVotingPower' : IDL.Nat,
-    'totalVotingPower' : IDL.Nat,
-    'yourVote' : IDL.Opt(ScenarioVoteChoice),
   });
   const GeneratedDataFieldInstanceValue = IDL.Variant({
     'nat' : IDL.Nat,
@@ -551,7 +493,61 @@ export const idlFactory = ({ IDL }) => {
       'executedTime' : Time,
     }),
   });
-  const ProposalContent = IDL.Variant({ 'motion' : MotionContent });
+  const CreatureKind = IDL.Variant({
+    'normal' : IDL.Null,
+    'boss' : IDL.Null,
+    'elite' : IDL.Null,
+  });
+  const CreatureLocationKind = IDL.Variant({
+    'common' : IDL.Null,
+    'zoneIds' : IDL.Vec(IDL.Text),
+  });
+  const Creature = IDL.Record({
+    'id' : IDL.Text,
+    'magic' : IDL.Int,
+    'maxHealth' : IDL.Nat,
+    'kind' : CreatureKind,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'speed' : IDL.Int,
+    'weaponId' : IDL.Text,
+    'defense' : IDL.Int,
+    'attack' : IDL.Int,
+    'location' : CreatureLocationKind,
+    'health' : IDL.Nat,
+  });
+  const Zone = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const Achievement = IDL.Record({
+    'id' : IDL.Text,
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
+  const ImageKind = IDL.Variant({ 'png' : IDL.Null });
+  const Image = IDL.Record({
+    'id' : IDL.Text,
+    'data' : IDL.Vec(IDL.Nat8),
+    'kind' : ImageKind,
+  });
+  const ModifyGameContent = IDL.Variant({
+    'trait' : Trait,
+    'creature' : Creature,
+    'item' : Item,
+    'class' : Class,
+    'race' : Race,
+    'zone' : Zone,
+    'achievement' : Achievement,
+    'image' : Image,
+    'scenario' : ScenarioMetaData,
+    'weapon' : Weapon,
+  });
+  const ProposalContent = IDL.Variant({
+    'motion' : MotionContent,
+    'modifyGameContent' : ModifyGameContent,
+  });
   const Vote = IDL.Record({
     'votingPower' : IDL.Nat,
     'choice' : IDL.Opt(IDL.Bool),
@@ -692,11 +688,6 @@ export const idlFactory = ({ IDL }) => {
   });
   return IDL.Service({
     'abandonGame' : IDL.Func([IDL.Nat], [AbandonGameResult], []),
-    'addGameContent' : IDL.Func(
-        [AddGameContentRequest],
-        [AddGameContentResult],
-        [],
-      ),
     'changeGameDifficulty' : IDL.Func(
         [Difficulty],
         [ChangeGameDifficultyResult],

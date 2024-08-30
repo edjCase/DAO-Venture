@@ -13,18 +13,6 @@ export interface Achievement {
   'name' : string,
   'description' : string,
 }
-export type AddGameContentRequest = { 'trait' : Trait } |
-  { 'creature' : Creature } |
-  { 'item' : Item } |
-  { 'class' : Class } |
-  { 'race' : Race } |
-  { 'zone' : Zone } |
-  { 'achievement' : Achievement } |
-  { 'image' : Image } |
-  { 'scenario' : ScenarioMetaData } |
-  { 'weapon' : Weapon };
-export type AddGameContentResult = { 'ok' : null } |
-  { 'err' : { 'notAuthorized' : null } | { 'invalid' : Array<string> } };
 export type AttackResult = { 'hit' : HitResult } |
   { 'miss' : null };
 export type AttackerKind = { 'creature' : null } |
@@ -318,6 +306,16 @@ export interface Location {
 }
 export type LocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
+export type ModifyGameContent = { 'trait' : Trait } |
+  { 'creature' : Creature } |
+  { 'item' : Item } |
+  { 'class' : Class } |
+  { 'race' : Race } |
+  { 'zone' : Zone } |
+  { 'achievement' : Achievement } |
+  { 'image' : Image } |
+  { 'scenario' : ScenarioMetaData } |
+  { 'weapon' : Weapon };
 export interface MotionContent { 'title' : string, 'description' : string }
 export type NatValue = { 'raw' : bigint } |
   { 'dataField' : string } |
@@ -364,7 +362,8 @@ export interface PixelImage {
   'palette' : Array<[number, number, number]>,
   'pixelData' : Array<PixelData>,
 }
-export type ProposalContent = { 'motion' : MotionContent };
+export type ProposalContent = { 'motion' : MotionContent } |
+  { 'modifyGameContent' : ModifyGameContent };
 export type ProposalStatus = {
     'failedToExecute' : {
       'executingTime' : Time,
@@ -557,7 +556,6 @@ export interface WorldProposal {
 export interface Zone { 'id' : string, 'name' : string, 'description' : string }
 export interface _SERVICE {
   'abandonGame' : ActorMethod<[bigint], AbandonGameResult>,
-  'addGameContent' : ActorMethod<[AddGameContentRequest], AddGameContentResult>,
   'changeGameDifficulty' : ActorMethod<
     [Difficulty],
     ChangeGameDifficultyResult

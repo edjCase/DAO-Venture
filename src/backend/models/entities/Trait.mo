@@ -1,7 +1,6 @@
 import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
-import HashMap "mo:base/HashMap";
 import Entity "Entity";
 import PixelImage "../PixelImage";
 
@@ -12,11 +11,10 @@ module {
     };
 
     public func validate(
-        trait : Trait,
-        existingTraits : HashMap.HashMap<Text, Trait>,
+        trait : Trait
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        Entity.validate("Trait", trait, existingTraits, errors);
+        Entity.validate("Trait", trait, errors);
         if (errors.size() < 1) {
             return #ok;
         };

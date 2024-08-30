@@ -1,4 +1,3 @@
-import HashMap "mo:base/HashMap";
 import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
 import Entity "Entity";
@@ -9,11 +8,10 @@ module {
     };
 
     public func validate(
-        zone : Zone,
-        exisingZones : HashMap.HashMap<Text, Zone>,
+        zone : Zone
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        Entity.validate("Zone", zone, exisingZones, errors);
+        Entity.validate("Zone", zone, errors);
         if (errors.size() < 1) {
             return #ok;
         };

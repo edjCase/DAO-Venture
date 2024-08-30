@@ -1,5 +1,4 @@
 import Text "mo:base/Text";
-import HashMap "mo:base/HashMap";
 import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
 import Entity "Entity";
@@ -58,11 +57,10 @@ module Weapon {
     };
 
     public func validate(
-        weapon : Weapon,
-        existingWeapons : HashMap.HashMap<Text, Weapon>,
+        weapon : Weapon
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        Entity.validate("Weapon", weapon, existingWeapons, errors);
+        Entity.validate("Weapon", weapon, errors);
         if (errors.size() < 1) {
             return #ok;
         };

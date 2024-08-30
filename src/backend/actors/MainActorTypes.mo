@@ -10,13 +10,8 @@ import WorldDao "../models/WorldDao";
 import GameHandler "../handlers/GameHandler";
 import Item "../models/entities/Item";
 import Trait "../models/entities/Trait";
-import Image "../models/Image";
 import Race "../models/entities/Race";
 import Class "../models/entities/Class";
-import Zone "../models/entities/Zone";
-import Achievement "../models/entities/Achievement";
-import Creature "../models/entities/Creature";
-import Weapon "../models/entities/Weapon";
 
 module {
     public type Actor = actor {
@@ -48,8 +43,6 @@ module {
         changeGameDifficulty : (difficulty : GameHandler.Difficulty) -> async ChangeGameDifficultyResult;
         startGameVote : (request : StartGameVoteRequest) -> async StartGameVoteResult;
         voteOnNewGame : (request : VoteOnNewGameRequest) -> async VoteOnNewGameResult;
-
-        addGameContent : (request : AddGameContentRequest) -> async AddGameContentResult;
 
         getScenarioMetaDataList : query () -> async [Scenario.ScenarioMetaData];
 
@@ -92,21 +85,6 @@ module {
     public type GetCurrentGameResult = Result.Result<?GameHandler.GameWithMetaData, { #notAuthenticated }>;
 
     public type GetGameResult = Result.Result<GameHandler.GameWithMetaData, { #gameNotFound }>;
-
-    public type AddGameContentRequest = {
-        #item : Item.Item;
-        #trait : Trait.Trait;
-        #image : Image.Image;
-        #scenario : Scenario.ScenarioMetaData;
-        #race : Race.Race;
-        #class_ : Class.Class;
-        #zone : Zone.Zone;
-        #achievement : Achievement.Achievement;
-        #creature : Creature.Creature;
-        #weapon : Weapon.Weapon;
-    };
-
-    public type AddGameContentResult = Result.Result<(), { #invalid : [Text]; #notAuthorized }>;
 
     public type CreateGameResult = Result.Result<Nat, GameHandler.CreateGameError>;
 

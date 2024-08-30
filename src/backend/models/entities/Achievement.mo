@@ -1,4 +1,3 @@
-import HashMap "mo:base/HashMap";
 import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
 import Entity "Entity";
@@ -9,11 +8,10 @@ module {
     };
 
     public func validate(
-        achievement : Achievement,
-        exisingAchievements : HashMap.HashMap<Text, Achievement>,
+        achievement : Achievement
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
-        Entity.validate("Achievement", achievement, exisingAchievements, errors);
+        Entity.validate("Achievement", achievement, errors);
         if (errors.size() < 1) {
             return #ok;
         };

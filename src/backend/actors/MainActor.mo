@@ -12,6 +12,8 @@ import Proposal "mo:dao-proposal-engine/Proposal";
 import Result "mo:base/Result";
 import Prelude "mo:base/Prelude";
 import Random "mo:base/Random";
+import Buffer "mo:base/Buffer";
+import TextX "mo:xtended-text/TextX";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
@@ -69,17 +71,64 @@ actor MainActor : Types.Actor {
     var userHandler = UserHandler.Handler(userStableData);
 
     func onWorldProposalExecute(proposal : ProposalEngine.Proposal<WorldDao.ProposalContent>) : async* Result.Result<(), Text> {
-        // TODO change world proposal for town data to be a simple approve w/ callback. Dont need to expose all the update routes
         switch (proposal.content) {
             case (#motion(_)) {
                 // Do nothing
                 #ok;
             };
+            case (#modifyGameContent(modifyGameContent)) {
+                let result = switch (modifyGameContent) {
+                    case (#item(item)) gameHandler.addOrUpdateItem(item);
+                    case (#trait(trait)) gameHandler.addOrUpdateTrait(trait);
+                    case (#image(image)) gameHandler.addOrUpdateImage(image);
+                    case (#scenario(scenario)) gameHandler.addOrUpdateScenarioMetaData(scenario);
+                    case (#race(race)) gameHandler.addOrUpdateRace(race);
+                    case (#class_(class_)) gameHandler.addOrUpdateClass(class_);
+                    case (#zone(zone)) gameHandler.addOrUpdateZone(zone);
+                    case (#achievement(achievement)) gameHandler.addOrUpdateAchievement(achievement);
+                    case (#creature(creature)) gameHandler.addOrUpdateCreature(creature);
+                    case (#weapon(weapon)) gameHandler.addOrUpdateWeapon(weapon);
+                };
+                switch (result) {
+                    case (#ok) #ok;
+                    case (#err(err)) #err("Failed to modify game content: " # debug_show (err));
+                };
+            };
         };
     };
+
     func onWorldProposalReject(_ : ProposalEngine.Proposal<WorldDao.ProposalContent>) : async* () {}; // TODO
-    func onWorldProposalValidate(_ : WorldDao.ProposalContent) : async* Result.Result<(), [Text]> {
-        #ok; // TODO
+    func onWorldProposalValidate(content : WorldDao.ProposalContent) : async* Result.Result<(), [Text]> {
+        switch (content) {
+            case (#motion(motion)) {
+                let errors = Buffer.Buffer<Text>(0);
+                if (TextX.isEmpty(motion.title)) {
+                    errors.add("Title cannot be empty");
+                };
+                if (TextX.isEmpty(motion.description)) {
+                    errors.add("Description cannot be empty");
+                };
+                if (errors.size() > 0) {
+                    #err(Buffer.toArray(errors));
+                } else {
+                    #ok;
+                };
+            };
+            case (#modifyGameContent(modifyGameContent)) {
+                switch (modifyGameContent) {
+                    case (#item(item)) gameHandler.validateItem(item);
+                    case (#trait(trait)) gameHandler.validateTrait(trait);
+                    case (#image(image)) gameHandler.validateImage(image);
+                    case (#scenario(scenario)) gameHandler.validateScenarioMetaData(scenario);
+                    case (#race(race)) gameHandler.validateRace(race);
+                    case (#class_(class_)) gameHandler.validateClass(class_);
+                    case (#zone(zone)) gameHandler.validateZone(zone);
+                    case (#achievement(achievement)) gameHandler.validateAchievement(achievement);
+                    case (#creature(creature)) gameHandler.validateCreature(creature);
+                    case (#weapon(weapon)) gameHandler.validateWeapon(weapon);
+                };
+            };
+        };
     };
     var worldDao = ProposalEngine.ProposalEngine<system, WorldDao.ProposalContent>(
         worldDaoStableData,
@@ -136,22 +185,6 @@ actor MainActor : Types.Actor {
     public shared ({ caller }) func startGameVote(request : Types.StartGameVoteRequest) : async Types.StartGameVoteResult {
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
         gameHandler.startVote(prng, request.gameId, caller);
-    };
-
-    public shared func addGameContent(request : Types.AddGameContentRequest) : async Types.AddGameContentResult {
-        // TODO authorization check
-        switch (request) {
-            case (#item(item)) gameHandler.addItem(item);
-            case (#trait(trait)) gameHandler.addTrait(trait);
-            case (#image(image)) gameHandler.addImage(image);
-            case (#scenario(scenario)) gameHandler.addScenarioMetaData(scenario);
-            case (#race(race)) gameHandler.addRace(race);
-            case (#class_(class_)) gameHandler.addClass(class_);
-            case (#zone(zone)) gameHandler.addZone(zone);
-            case (#achievement(achievement)) gameHandler.addAchievement(achievement);
-            case (#creature(creature)) gameHandler.addCreature(creature);
-            case (#weapon(weapon)) gameHandler.addWeapon(weapon);
-        };
     };
 
     public shared ({ caller }) func voteOnNewGame(request : Types.VoteOnNewGameRequest) : async Types.VoteOnNewGameResult {
