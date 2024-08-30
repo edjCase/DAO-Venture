@@ -93,20 +93,35 @@ export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
     const palette: Rgb[] = [];
     const pixelData: PixelData[] = [];
 
+    let currentColor: PixelColor = undefined;
+    let currentCount = 0;
+
     pixels.flat().forEach(pixel => {
-        let index: [] | [number] = [];
-        if (pixel !== undefined) {
-            let i = palette.findIndex(color => colorsEqual(color, pixel));
-            if (i === -1) {
-                index = [palette.length];
+        if (!colorsEqual(currentColor, pixel)) {
+            if (currentCount > 0) {
+                pixelData.push({
+                    count: BigInt(currentCount),
+                    paletteIndex: currentColor === undefined ? [] : [palette.indexOf(currentColor)]
+                });
+            }
+            currentColor = pixel;
+            currentCount = 1;
+            if (pixel !== undefined && !palette.some(color => colorsEqual(color, pixel))) {
                 palette.push(pixel);
             }
+        } else {
+            currentCount++;
         }
-        pixelData.push({
-            count: 1n,
-            paletteIndex: index
-        });
     });
+
+    // Add the last run
+    if (currentCount > 0) {
+        pixelData.push({
+            count: BigInt(currentCount),
+            paletteIndex: currentColor === undefined ? [] : [palette.indexOf(currentColor)]
+        });
+    }
+
     if (palette.length >= 255) {
         throw new Error('Too many colors in palette. Max is 254.');
     }
@@ -129,6 +144,12 @@ export function decodeImageToPixels(data: PixelImage, width: number, height: num
     return grid;
 }
 
-function colorsEqual(a: Rgb, b: Rgb): boolean {
+function colorsEqual(a: PixelColor, b: PixelColor): boolean {
+    if (a === undefined && b === undefined) {
+        return true;
+    }
+    if (a === undefined || b === undefined) {
+        return false;
+    }
     return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
 }
