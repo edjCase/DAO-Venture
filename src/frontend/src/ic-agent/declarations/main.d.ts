@@ -359,9 +359,10 @@ export interface PagedResult_1 {
   'totalCount' : bigint,
   'offset' : bigint,
 }
+export interface PixelData { 'count' : bigint, 'paletteIndex' : [] | [number] }
 export interface PixelImage {
   'palette' : Array<[number, number, number]>,
-  'indices' : Array<[] | [number]>,
+  'pixelData' : Array<PixelData>,
 }
 export type ProposalContent = { 'motion' : MotionContent };
 export type ProposalStatus = {

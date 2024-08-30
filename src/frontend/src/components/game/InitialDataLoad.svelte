@@ -119,7 +119,6 @@
 
   let initialized: boolean | undefined;
   onMount(async () => {
-    console.log("Checking for existing data");
     let mainAgent = await mainAgentFactory();
     let scenarios = await mainAgent.getScenarioMetaDataList();
     initialized = scenarios.length > 0;

@@ -8,9 +8,13 @@ export const idlFactory = ({ IDL }) => {
       'gameNotFound' : IDL.Null,
     }),
   });
+  const PixelData = IDL.Record({
+    'count' : IDL.Nat,
+    'paletteIndex' : IDL.Opt(IDL.Nat8),
+  });
   const PixelImage = IDL.Record({
     'palette' : IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)),
-    'indices' : IDL.Vec(IDL.Opt(IDL.Nat8)),
+    'pixelData' : IDL.Vec(PixelData),
   });
   const Trait = IDL.Record({
     'id' : IDL.Text,

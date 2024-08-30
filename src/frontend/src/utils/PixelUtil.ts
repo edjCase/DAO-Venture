@@ -1,10 +1,9 @@
-import { PixelImage } from "../ic-agent/declarations/main";
+import { PixelData, PixelImage } from "../ic-agent/declarations/main";
 
 export type PixelGrid = PixelColor[][];
 
 export type Rgb = [number, number, number];
 
-type IndexOrTransparent = [number] | [];
 
 export type PixelColor = Rgb | undefined;
 
@@ -20,7 +19,7 @@ export function encodeImageToBase64(image: PixelImage): string {
     const buffer = new ArrayBuffer(
         1 + // Palette size
         image.palette.length * 3 + // Palette colors
-        image.indices.length // Indices
+        image.pixelData.length // Indices
     );
     const view = new DataView(buffer);
     let offset = 0;
@@ -38,9 +37,11 @@ export function encodeImageToBase64(image: PixelImage): string {
     });
 
     // Write indices
-    image.indices.forEach(index => {
-        view.setUint8(offset, index[0] === undefined ? 255 : index[0]);
-        offset += 1;
+    image.pixelData.forEach(data => {
+        for (let i = 0; i < data.count; i++) {
+            view.setUint8(offset, data.paletteIndex[i] === undefined ? 255 : Number(data.paletteIndex[i]));
+            offset += 1;
+        }
     });
 
     // Convert to Base64
@@ -75,22 +76,25 @@ export function decodeBase64ToImage(base64: string): PixelImage {
     }
 
     // Read indices
-    const indices: IndexOrTransparent[] = [];
+    const pixelData: PixelData[] = [];
     while (offset < buffer.byteLength) {
         const index = view.getUint8(offset);
-        indices.push(index === 255 ? [] : [index]);
+        pixelData.push({
+            count: 1n,
+            paletteIndex: index === 255 ? [] : [index]
+        });
         offset += 1;
     }
 
-    return { palette, indices };
+    return { palette, pixelData };
 }
 
 export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
     const palette: Rgb[] = [];
-    const indices: IndexOrTransparent[] = [];
+    const pixelData: PixelData[] = [];
 
     pixels.flat().forEach(pixel => {
-        let index: IndexOrTransparent = [];
+        let index: [] | [number] = [];
         if (pixel !== undefined) {
             let i = palette.findIndex(color => colorsEqual(color, pixel));
             if (i === -1) {
@@ -98,17 +102,20 @@ export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
                 palette.push(pixel);
             }
         }
-        indices.push(index);
+        pixelData.push({
+            count: 1n,
+            paletteIndex: index
+        });
     });
     if (palette.length >= 255) {
         throw new Error('Too many colors in palette. Max is 254.');
     }
 
-    return { palette, indices };
+    return { palette, pixelData };
 }
 
 export function decodeImageToPixels(data: PixelImage, width: number, height: number): PixelGrid {
-    const pixels: PixelColor[] = data.indices.map(i => i[0] === undefined ? undefined : data.palette[i[0]]);
+    const pixels: PixelColor[] = data.pixelData.map(i => i.paletteIndex[0] === undefined ? undefined : data.palette[i.paletteIndex[0]]);
 
     const grid: PixelColor[][] = [];
     for (let y = 0; y < height; y++) {
