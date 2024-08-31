@@ -11,10 +11,10 @@
   import JoinGame from "./routes/JoinGame.svelte";
 </script>
 
-<main class="p-5 max-w-xl mx-auto h-screen">
-  <Router>
+<Router>
+  <main class="p-4 max-w-xl mx-auto custom-scrollbar">
     <Navbar />
-    <div class="pb-20">
+    <div>
       <Route path="/" component={Home} />
       <Route path="/dao" component={Dao} />
       <Route path="/profile" component={UserProfile} />
@@ -23,6 +23,19 @@
       <Route path="/about" component={About} />
       <Route path="*" component={NotFound} />
     </div>
-    <BottomNavigation />
-  </Router>
-</main>
+  </main>
+
+  <BottomNavigation />
+</Router>
+
+<style lang="postcss">
+  main {
+    height: calc(100vh - 4rem);
+    overflow-y: auto;
+  }
+
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #4ade80 #1f2937;
+  }
+</style>

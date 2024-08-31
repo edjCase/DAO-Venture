@@ -19,6 +19,10 @@ module {
                 if (TextX.isEmptyOrWhitespace(acheivementId)) {
                     errors.add("Unlock requirement achievement id cannot be empty.");
                 };
+                // Limit size of id to 32 characters
+                if (acheivementId.size() > 32) {
+                    errors.add("Unlock requirement achievement id cannot be longer than 32 characters.");
+                };
                 if (acheivementIds.get(acheivementId) == null) {
                     errors.add("Unlock requirement achievement id " # acheivementId # " does not exist.");
                 };

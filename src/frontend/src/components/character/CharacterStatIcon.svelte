@@ -1,7 +1,5 @@
-<script lang="ts">
-  import { toJsonString } from "../../utils/StringUtil";
-
-  export let kind:
+<script lang="ts" context="module">
+  export type CharacterStatIconKind =
     | { attack: null }
     | { defense: null }
     | { speed: null }
@@ -9,6 +7,12 @@
     | { health: null }
     | { maxHealth: null }
     | { gold: null };
+</script>
+
+<script lang="ts">
+  import { toJsonString } from "../../utils/StringUtil";
+
+  export let kind: CharacterStatIconKind;
 </script>
 
 {#if "attack" in kind}
