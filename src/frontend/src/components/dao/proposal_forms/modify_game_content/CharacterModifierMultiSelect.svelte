@@ -12,9 +12,12 @@
   import CharacterStatIcon, {
     getIconKind,
   } from "../../../character/CharacterStatIcon.svelte";
+  import { onMount } from "svelte";
+  import { mainAgentFactory } from "../../../../ic-agent/Main";
 
   export let modifiers: CharacterModifier[];
 
+  let numericModifiers: CharacterModifier[] = [];
   let numericModifierTypes: SelectOptionType<string>[] = [
     { value: "magic", name: "Magic" },
     { value: "maxHealth", name: "Max Health" },
@@ -27,45 +30,67 @@
   let selectedNumericModifierType: string = numericModifierTypes[0].value;
   let numericModifierValue: string = "";
 
-  let traitOptions: SelectOptionType<string>[] = [
-    { value: "trait1", name: "Trait 1" },
-    { value: "trait2", name: "Trait 2" },
-    { value: "trait3", name: "Trait 3" },
-  ];
+  let traitOptions: SelectOptionType<string>[] = [];
   let selectedTraits: string[] = [];
 
-  let itemOptions: SelectOptionType<string>[] = [
-    { value: "item1", name: "Item 1" },
-    { value: "item2", name: "Item 2" },
-    { value: "item3", name: "Item 3" },
-  ];
+  let itemOptions: SelectOptionType<string>[] = [];
   let selectedItems: string[] = [];
+
+  onMount(async () => {
+    let mainAgent = await mainAgentFactory();
+
+    try {
+      const [traits, items] = await Promise.all([
+        mainAgent.getTraits(),
+        mainAgent.getItems(),
+      ]);
+
+      traitOptions = traits.map((trait) => ({
+        value: trait.id,
+        name: trait.name,
+      }));
+
+      itemOptions = items.map((item) => ({
+        value: item.id,
+        name: item.name,
+      }));
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      // Handle the error appropriately
+    }
+  });
 
   const addNumericModifier = () => {
     if (numericModifierValue) {
       const newValue = BigInt(numericModifierValue);
-      const existingIndex = modifiers.findIndex(
+      const existingIndex = numericModifiers.findIndex(
         (m) => selectedNumericModifierType in m
       );
       if (existingIndex !== -1) {
-        const existingModifier = modifiers[existingIndex] as any;
-        modifiers[existingIndex] = {
+        const existingModifier = numericModifiers[existingIndex] as any;
+        numericModifiers[existingIndex] = {
           [selectedNumericModifierType]:
             existingModifier[selectedNumericModifierType] + newValue,
         } as CharacterModifier;
       } else {
-        modifiers = [
-          ...modifiers,
+        numericModifiers = [
+          ...numericModifiers,
           { [selectedNumericModifierType]: newValue } as CharacterModifier,
         ];
       }
       numericModifierValue = "";
+      updateModifiers();
     }
+  };
+
+  const removeNumericModifier = (index: number) => {
+    numericModifiers = numericModifiers.filter((_, i) => i !== index);
+    updateModifiers();
   };
 
   const updateModifiers = () => {
     modifiers = [
-      ...modifiers.filter((m) => !("trait" in m) && !("item" in m)),
+      ...numericModifiers,
       ...selectedTraits.map((trait) => ({ trait }) as CharacterModifier),
       ...selectedItems.map((item) => ({ item }) as CharacterModifier),
     ];
@@ -74,10 +99,6 @@
   $: {
     updateModifiers();
   }
-
-  const removeModifier = (index: number) => {
-    modifiers = modifiers.filter((_, i) => i !== index);
-  };
 
   const getModifierName = (key: string): string => {
     const modifierType = numericModifierTypes.find(
@@ -107,9 +128,9 @@
   </div>
 </div>
 
-{#if modifiers.length > 0}
+{#if numericModifiers.length > 0}
   <div class="flex flex-wrap text-xl gap-4">
-    {#each modifiers as modifier}
+    {#each numericModifiers as modifier, index}
       {@const key = Object.keys(modifier)[0]}
       {@const iconKind = getIconKind(key)}
       <div class="flex items-center">
@@ -122,7 +143,7 @@
           : {Object.values(modifier)[0]}
         </div>
         <Badge color="red" class="ml-2 p-2">
-          <button on:click={() => removeModifier(modifiers.indexOf(modifier))}>
+          <button on:click={() => removeNumericModifier(index)}>
             <TrashBinOutline size="sm" />
           </button>
         </Badge>
@@ -131,26 +152,26 @@
   </div>
 {/if}
 
-<div class="flex gap-4">
-  <div class="flex-1">
-    <Label>Traits</Label>
-    <MultiSelect
-      items={traitOptions}
-      bind:value={selectedTraits}
-      placeholder="Select traits"
-      size="sm"
-      dropdownClass="z-50"
-    />
-  </div>
+<div>
+  <Label>Traits</Label>
+  <MultiSelect
+    items={traitOptions}
+    bind:value={selectedTraits}
+    placeholder="Select traits"
+    size="lg"
+    dropdownClass="z-50"
+    on:change={updateModifiers}
+  />
+</div>
 
-  <div class="flex-1">
-    <Label>Items</Label>
-    <MultiSelect
-      items={itemOptions}
-      bind:value={selectedItems}
-      placeholder="Select items"
-      size="sm"
-      dropdownClass=""
-    />
-  </div>
+<div>
+  <Label>Items</Label>
+  <MultiSelect
+    items={itemOptions}
+    bind:value={selectedItems}
+    placeholder="Select items"
+    size="lg"
+    dropdownClass=""
+    on:change={updateModifiers}
+  />
 </div>
