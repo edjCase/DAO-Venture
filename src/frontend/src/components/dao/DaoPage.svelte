@@ -25,8 +25,8 @@
 <Tabs>
   <TabItem title="Proposals" open>
     <ProposalList />
-    {#if user !== undefined}
-      <ProposalForm />
-    {/if}
+  </TabItem>
+  <TabItem title="Create Proposal" disabled={user === undefined}>
+    <ProposalForm />
   </TabItem>
 </Tabs>

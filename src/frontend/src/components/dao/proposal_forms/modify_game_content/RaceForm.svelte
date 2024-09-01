@@ -12,26 +12,19 @@
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
-  let weaponId: string | undefined;
   let unlockRequirement: UnlockRequirement | undefined;
   let modifiers: CharacterModifier[] = [];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
-    if (
-      id === undefined ||
-      name === undefined ||
-      description === undefined ||
-      weaponId === undefined
-    ) {
+    if (id === undefined || name === undefined || description === undefined) {
       return "All fields except unlock requirement must be filled";
     }
     return {
       modifyGameContent: {
-        class: {
+        race: {
           id,
           name,
           description,
-          weaponId,
           unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
           modifiers,
         },
@@ -49,13 +42,13 @@
           id="id"
           type="text"
           bind:value={id}
-          placeholder="unique_class_id"
+          placeholder="unique_race_id"
         />
       </div>
 
       <div class="flex-1">
         <Label for="name">Name</Label>
-        <Input id="name" type="text" bind:value={name} placeholder="Warrior" />
+        <Input id="name" type="text" bind:value={name} placeholder="Human" />
       </div>
     </div>
 
@@ -64,17 +57,7 @@
       <Textarea
         id="description"
         bind:value={description}
-        placeholder="A skilled fighter proficient in various weapons and armor..."
-      />
-    </div>
-
-    <div>
-      <Label for="weaponId">Weapon Id</Label>
-      <Input
-        id="weaponId"
-        type="text"
-        bind:value={weaponId}
-        placeholder="longsword"
+        placeholder="Humans are versatile and adaptable..."
       />
     </div>
 

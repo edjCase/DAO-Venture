@@ -7,6 +7,29 @@
     | { health: null }
     | { maxHealth: null }
     | { gold: null };
+
+  export const getIconKind = (
+    key: string
+  ): CharacterStatIconKind | undefined => {
+    switch (key) {
+      case "attack":
+        return { attack: null };
+      case "defense":
+        return { defense: null };
+      case "speed":
+        return { speed: null };
+      case "magic":
+        return { magic: null };
+      case "health":
+        return { health: null };
+      case "maxHealth":
+        return { maxHealth: null };
+      case "gold":
+        return { gold: null };
+      default:
+        return undefined;
+    }
+  };
 </script>
 
 <script lang="ts">

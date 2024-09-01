@@ -5,6 +5,11 @@
   import ImageForm from "./modify_game_content/ImageForm.svelte";
   import TraitForm from "./modify_game_content/TraitForm.svelte";
   import ClassForm from "./modify_game_content/ClassForm.svelte";
+  import RaceForm from "./modify_game_content/RaceForm.svelte";
+  import ZoneForm from "./modify_game_content/ZoneForm.svelte";
+  import WeaponForm from "./modify_game_content/WeaponForm.svelte";
+  import AchievementForm from "./modify_game_content/AchievementForm.svelte";
+  import ScenarioForm from "./modify_game_content/ScenarioForm.svelte";
   let gameContentTypes = [
     { value: "item", name: "Item" },
     { value: "trait", name: "Trait" },
@@ -32,7 +37,7 @@
     <CreatureForm />
   {:else if selectedGameContentType === "class"}
     <ClassForm />
-    <!-- {:else if selectedGameContentType === "race"}
+  {:else if selectedGameContentType === "race"}
     <RaceForm />
   {:else if selectedGameContentType === "zone"}
     <ZoneForm />
@@ -41,7 +46,7 @@
   {:else if selectedGameContentType === "achievement"}
     <AchievementForm />
   {:else if selectedGameContentType === "scenario"}
-    <ScenarioForm /> -->
+    <ScenarioForm />
   {:else}
     NOT IMPLEMENTED GAME CONTENT FORM: <pre>{selectedGameContentType}</pre>
   {/if}
