@@ -61,11 +61,11 @@
       />
     </div>
 
+    <CharacterModifierMultiSelect bind:modifiers />
+
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>
       <UnlockRequirementEditor bind:unlockRequirement />
     </div>
-
-    <CharacterModifierMultiSelect bind:modifiers />
   </div>
 </FormTemplate>

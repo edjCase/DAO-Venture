@@ -109,6 +109,29 @@
 </script>
 
 <div>
+  <Label>Traits</Label>
+  <MultiSelect
+    items={traitOptions}
+    bind:value={selectedTraits}
+    placeholder="Select traits"
+    size="lg"
+    dropdownClass="z-50"
+    on:change={updateModifiers}
+  />
+</div>
+
+<div>
+  <Label>Items</Label>
+  <MultiSelect
+    items={itemOptions}
+    bind:value={selectedItems}
+    placeholder="Select items"
+    size="lg"
+    dropdownClass=""
+    on:change={updateModifiers}
+  />
+</div>
+<div>
   <Label>Numeric Modifiers</Label>
   <div class="flex gap-2 mb-2">
     <Select
@@ -151,27 +174,3 @@
     {/each}
   </div>
 {/if}
-
-<div>
-  <Label>Traits</Label>
-  <MultiSelect
-    items={traitOptions}
-    bind:value={selectedTraits}
-    placeholder="Select traits"
-    size="lg"
-    dropdownClass="z-50"
-    on:change={updateModifiers}
-  />
-</div>
-
-<div>
-  <Label>Items</Label>
-  <MultiSelect
-    items={itemOptions}
-    bind:value={selectedItems}
-    placeholder="Select items"
-    size="lg"
-    dropdownClass=""
-    on:change={updateModifiers}
-  />
-</div>
