@@ -28,10 +28,6 @@ actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    type Duration = {
-        #days : Nat;
-    };
-
     // Stables ---------------------------------------------------------
 
     stable var gameStableData : GameHandler.StableData = {
@@ -158,59 +154,16 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
-    public shared ({ caller }) func createGame() : async Types.CreateGameResult {
-        gameHandler.createInstance(caller);
-    };
-
-    public shared ({ caller }) func joinGame(request : Types.JoinGameRequest) : async Types.JoinGameResult {
-        if (userHandler.get(caller) == null) {
-            return #err(#notRegistered);
+    public shared ({ caller }) func createGame(request : Types.CreateGameRequest) : async Types.CreateGameResult {
+        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
+        if (Principal.isAnonymous(caller)) {
+            return #err(#notAuthenticated);
         };
-        gameHandler.addPlayer(request.gameId, caller);
-    };
-
-    public shared ({ caller }) func kickPlayer(request : Types.KickPlayerRequest) : async Types.KickPlayerResult {
-        gameHandler.kickPlayer(request.gameId, request.playerId, caller);
-    };
-
-    public shared ({ caller }) func changeGameDifficulty(difficulty : GameHandler.Difficulty) : async Types.ChangeGameDifficultyResult {
-        let ?game = gameHandler.getCurrentInstance(caller) else return #err(#gameNotFound);
-        gameHandler.changeDifficulty(game.id, difficulty, caller);
+        gameHandler.createInstance(prng, caller, request.difficulty);
     };
 
     public shared ({ caller }) func abandonGame(gameId : Nat) : async Types.AbandonGameResult {
         gameHandler.abandon(gameId, caller);
-    };
-
-    public shared ({ caller }) func startGameVote(request : Types.StartGameVoteRequest) : async Types.StartGameVoteResult {
-        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-        gameHandler.startVote(prng, request.gameId, caller);
-    };
-
-    public shared ({ caller }) func voteOnNewGame(request : Types.VoteOnNewGameRequest) : async Types.VoteOnNewGameResult {
-        let { characterId } = switch (
-            gameHandler.voteOnNewGame(
-                request.gameId,
-                caller,
-                request.characterId,
-            )
-        ) {
-            case (#ok(null)) return #ok; // no consensus yet
-            case (#ok(?newGameChoice)) newGameChoice; // Concensus reached
-            case (#err(err)) return #err(err);
-        };
-        // Start the game if consensus reached
-        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-        switch (
-            gameHandler.startGame<system>(
-                prng,
-                request.gameId,
-                characterId,
-            )
-        ) {
-            case (#ok) #ok;
-            case (#err(err)) #err(err);
-        };
     };
 
     public shared ({ caller }) func register() : async Types.RegisterResult {
@@ -271,12 +224,8 @@ actor MainActor : Types.Actor {
         };
     };
 
-    public shared query ({ caller }) func getScenarioVote(request : Types.GetScenarioVoteRequest) : async Types.GetScenarioVoteResult {
-        getScenarioVoteInternal(request.gameId, caller, request.scenarioId);
-    };
-
-    public shared ({ caller }) func voteOnScenario(request : Types.VoteOnScenarioRequest) : async Types.VoteOnScenarioResult {
-        switch (gameHandler.voteOnScenario(request.gameId, request.scenarioId, caller, request.value)) {
+    public shared ({ caller }) func selectScenarioChoice(request : Types.SelectScenarioChoiceRequest) : async Types.SelectScenarioChoiceResult {
+        switch (gameHandler.selectScenarioChoice(request.gameId, request.scenarioId, caller, request.value)) {
             case (#ok(null)) ();
             case (#ok(?choice)) {
                 let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
@@ -292,7 +241,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared query func getGame(request : Types.GetGameRequest) : async Types.GetGameResult {
-        switch (gameHandler.getInstance(request.gameId)) {
+        switch (gameHandler.getInstance(caller, request.gameId)) {
             case (?game) #ok(game);
             case (null) return #err(#gameNotFound);
         };
@@ -390,28 +339,6 @@ actor MainActor : Types.Actor {
             },
         )
         |> Iter.toArray(_);
-    };
-
-    private func getScenarioVoteInternal(gameId : Nat, voterId : Principal, scenarioId : Nat) : Types.GetScenarioVoteResult {
-        let vote = switch (gameHandler.getScenarioVote(gameId, scenarioId, voterId)) {
-            case (#ok(vote)) ?vote;
-            case (#err(#notEligible)) null;
-            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
-            case (#err(#gameNotFound)) return #err(#gameNotFound);
-            case (#err(#gameNotActive)) return #err(#gameNotActive);
-        };
-        let { totalVotingPower; undecidedVotingPower; votingPowerByChoice } = switch (gameHandler.getScenarioVoteSummary(gameId, scenarioId)) {
-            case (#err(#scenarioNotFound)) return #err(#scenarioNotFound);
-            case (#err(#gameNotFound)) Prelude.unreachable();
-            case (#err(#gameNotActive)) Prelude.unreachable();
-            case (#ok(summary)) summary;
-        };
-        #ok({
-            yourVote = vote;
-            totalVotingPower = totalVotingPower;
-            undecidedVotingPower = undecidedVotingPower;
-            votingPowerByChoice = votingPowerByChoice;
-        });
     };
 
     private func calculateVotingPower(_ : UserHandler.User) : Nat {

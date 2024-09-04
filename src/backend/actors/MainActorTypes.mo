@@ -20,76 +20,44 @@ module {
         getWorldProposal : query (Nat) -> async GetWorldProposalResult;
         getWorldProposals : query (count : Nat, offset : Nat) -> async CommonTypes.PagedResult<WorldProposal>;
         createWorldProposal : (request : CreateWorldProposalRequest) -> async CreateWorldProposalResult;
-        getScenario : query (request : GetScenarioRequest) -> async GetScenarioResult;
-        getScenarios : query (request : GetScenariosRequest) -> async GetScenariosResult;
         voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
 
-        getScenarioVote : query (request : GetScenarioVoteRequest) -> async GetScenarioVoteResult;
-        voteOnScenario : (request : VoteOnScenarioRequest) -> async VoteOnScenarioResult;
-
+        createGame : (request : CreateGameRequest) -> async CreateGameResult;
+        selectScenarioChoice : (request : SelectScenarioChoiceRequest) -> async SelectScenarioChoiceResult;
+        abandonGame : () -> async AbandonGameResult;
         getGame : query (request : GetGameRequest) -> async GetGameResult;
         getCurrentGame : query () -> async GetCurrentGameResult;
         getCompletedGames : query () -> async [GameHandler.CompletedGameWithMetaData];
+        getScenario : query (request : GetScenarioRequest) -> async GetScenarioResult;
+        getScenarios : query (request : GetScenariosRequest) -> async GetScenariosResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
-        createGame : () -> async CreateGameResult;
-        abandonGame : (gameId : Nat) -> async AbandonGameResult;
-        joinGame : (request : JoinGameRequest) -> async JoinGameResult;
-        kickPlayer : (request : KickPlayerRequest) -> async KickPlayerResult;
-        changeGameDifficulty : (difficulty : GameHandler.Difficulty) -> async ChangeGameDifficultyResult;
-        startGameVote : (request : StartGameVoteRequest) -> async StartGameVoteResult;
-        voteOnNewGame : (request : VoteOnNewGameRequest) -> async VoteOnNewGameResult;
-
-        getScenarioMetaDataList : query () -> async [Scenario.ScenarioMetaData];
-
         getTraits : query () -> async [Trait.Trait];
-
+        getScenarioMetaDataList : query () -> async [Scenario.ScenarioMetaData];
         getClasses : query () -> async [Class.Class];
-
         getRaces : query () -> async [Race.Race];
-
         getItems : query () -> async [Item.Item];
     };
 
     public type AbandonGameResult = Result.Result<(), { #gameNotFound; #notAuthorized; #gameComplete }>;
-
-    public type ChangeGameDifficultyResult = Result.Result<(), { #gameNotFound; #notAuthorized; #gameStarted }>;
-
-    public type KickPlayerRequest = {
-        gameId : Nat;
-        playerId : Principal;
-    };
-
-    public type KickPlayerResult = Result.Result<(), { #gameNotFound; #notAuthorized; #playerNotInGame; #kickHostForbidden }>;
-
-    public type JoinGameRequest = {
-        gameId : Nat;
-    };
-
-    public type JoinGameResult = Result.Result<(), { #gameNotFound; #lobbyClosed; #alreadyJoined; #notRegistered }>;
-
-    public type StartGameVoteRequest = {
-        gameId : Nat;
-    };
-
-    public type StartGameVoteResult = Result.Result<(), { #gameNotFound; #gameAlreadyStarted; #notAuthorized }>;
-
     public type GetGameRequest = {
         gameId : Nat;
     };
-
     public type GetCurrentGameResult = Result.Result<?GameHandler.GameWithMetaData, { #notAuthenticated }>;
 
     public type GetGameResult = Result.Result<GameHandler.GameWithMetaData, { #gameNotFound }>;
 
+    public type CreateGameRequest = {
+        difficulty : GameHandler.Difficulty;
+    };
     public type CreateGameResult = Result.Result<Nat, GameHandler.CreateGameError>;
 
     public type VoteOnNewGameRequest = {
-        gameId : Nat;
+        playerId : Principal;
         characterId : Text;
     };
 
@@ -100,13 +68,9 @@ module {
         #alreadyStarted;
     };
 
-    public type VoteOnNewGameResult = Result.Result<(), VoteOnNewGameError>;
-
     public type RegisterResult = Result.Result<UserHandler.User, RegisterError>;
 
-    public type GetScenariosRequest = {
-        gameId : Nat;
-    };
+    public type GetScenariosRequest = {};
 
     public type GetScenariosResult = Result.Result<[Scenario], GetScenariosError>;
 
@@ -116,7 +80,6 @@ module {
     };
 
     public type GetScenarioRequest = {
-        gameId : Nat;
         scenarioId : Nat;
     };
 
@@ -130,7 +93,6 @@ module {
 
     public type Scenario = Scenario.Scenario and {
         metaData : Scenario.ScenarioMetaData;
-        voteData : ScenarioVote;
         availableChoiceIds : [Text];
     };
 
@@ -152,38 +114,11 @@ module {
 
     public type GetPositionError = {};
 
-    public type GetScenarioVoteRequest = {
-        gameId : Nat;
-        scenarioId : Nat;
+    public type SelectScenarioChoiceRequest = {
+        choiceId : Text;
     };
 
-    public type GetScenarioVoteError = {
-        #scenarioNotFound;
-        #gameNotFound;
-        #gameNotActive;
-    };
-
-    public type ScenarioVote = {
-        yourVote : ?ScenarioVoteChoice;
-        totalVotingPower : Nat;
-        undecidedVotingPower : Nat;
-        votingPowerByChoice : [ExtendedProposal.ChoiceVotingPower<Text>];
-    };
-
-    public type ScenarioVoteChoice = {
-        choice : ?Text;
-        votingPower : Nat;
-    };
-
-    public type GetScenarioVoteResult = Result.Result<ScenarioVote, GetScenarioVoteError>;
-
-    public type VoteOnScenarioRequest = {
-        gameId : Nat;
-        scenarioId : Nat;
-        value : Text;
-    };
-
-    public type VoteOnScenarioError = ExtendedProposal.VoteError or {
+    public type SelectScenarioChoiceError = {
         #scenarioNotFound;
         #invalidChoice;
         #gameNotFound;
@@ -191,7 +126,7 @@ module {
         #choiceRequirementNotMet;
     };
 
-    public type VoteOnScenarioResult = Result.Result<(), VoteOnScenarioError>;
+    public type SelectScenarioChoiceResult = Result.Result<(), SelectScenarioChoiceError>;
 
     public type GetWorldProposalError = {
         #proposalNotFound;

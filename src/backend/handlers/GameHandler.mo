@@ -1,4 +1,3 @@
-import ScenarioHandler "ScenarioHandler";
 import CharacterHandler "CharacterHandler";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Debug "mo:base/Debug";
@@ -13,16 +12,11 @@ import Trie "mo:base/Trie";
 import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
-import Prelude "mo:base/Prelude";
-import Order "mo:base/Order";
 import Int "mo:base/Int";
-import Buffer "mo:base/Buffer";
 import Location "../models/Location";
 import Scenario "../models/entities/Scenario";
 import Character "../models/Character";
-import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import IterTools "mo:itertools/Iter";
-import NatX "mo:xtended-numbers/NatX";
 import CharacterGenerator "../CharacterGenerator";
 import ScenarioSimulator "../ScenarioSimulator";
 import Trait "../models/entities/Trait";
@@ -42,10 +36,10 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type StableData = {
-        instances : [GameInstance]; // TODO archive completed games
+        playerDataList : [PlayerData];
         classes : [Class.Class];
         races : [Race.Race];
-        scenarios : [Scenario.ScenarioMetaData];
+        scenarioMetaDataList : [Scenario.ScenarioMetaData];
         items : [Item.Item];
         traits : [Trait.Trait];
         images : [Image.Image];
@@ -55,37 +49,37 @@ module {
         weapons : [Weapon.Weapon];
     };
 
+    public type PlayerData = {
+        id : Principal;
+        activeGame : ?GameInstance;
+        completedGames : [CompletedGameWithMetaData];
+    };
+
     public type GameInstance = {
         id : Nat;
-        hostUserId : Principal;
-        guestUserIds : [Principal];
-        createdTime : Time.Time;
+        startTime : Time.Time;
         difficulty : Difficulty;
         state : GameInstanceState;
     };
 
     public type GameInstanceState = {
-        #notStarted;
-        #voting : VotingData;
+        #starting : StartingData;
         #inProgress : InProgressData;
         #completed : CompletedData;
     };
 
-    public type VotingData = {
-        startTime : Time.Time;
-        characterProposal : ExtendedProposal.Proposal<[Character.Character], Text>;
+    public type StartingData = {
+        characterOptions : [Character.Character];
     };
 
     public type InProgressData = {
-        startTime : Time.Time;
-        scenarios : ScenarioHandler.StableData;
-        character : CharacterHandler.StableData;
+        scenarios : [Scenario.Scenario];
+        character : Character.Character;
         turn : Nat;
         locations : [Location.Location];
     };
 
     public type CompletedData = {
-        startTime : Time.Time;
         endTime : Time.Time;
         turns : Nat;
         character : Character.Character;
@@ -100,35 +94,29 @@ module {
 
     public type GameWithMetaData = {
         id : Nat;
-        hostUserId : Principal;
-        guestUserIds : [Principal];
-        createdTime : Time.Time;
+        playerId : Principal;
+        startTime : Time.Time;
         difficulty : Difficulty;
         state : GameStateWithMetaData;
     };
 
     public type GameStateWithMetaData = {
-        #notStarted;
-        #voting : VotingGameStateWithMetaData;
+        #starting : StartingGameStateWithMetaData;
         #inProgress : InProgressGameStateWithMetaData;
         #completed : CompletedGameStateWithMetaData;
     };
 
-    public type VotingGameStateWithMetaData = {
-        startTime : Time.Time;
+    public type StartingGameStateWithMetaData = {
         characterOptions : [CharacterWithMetaData];
-        characterVotes : ExtendedProposal.VotingSummary<Text>;
     };
 
     public type InProgressGameStateWithMetaData = {
-        startTime : Time.Time;
         turn : Nat;
         locations : [Location.Location];
         character : CharacterWithMetaData;
     };
 
     public type CompletedGameStateWithMetaData = {
-        startTime : Time.Time;
         turns : Nat;
         character : CharacterWithMetaData;
         endTime : Time.Time;
@@ -137,9 +125,8 @@ module {
 
     public type CompletedGameWithMetaData = CompletedGameStateWithMetaData and {
         id : Nat;
-        hostUserId : Principal;
-        guestUserIds : [Principal];
-        createdTime : Time.Time;
+        playerId : Principal;
+        startTime : Time.Time;
         difficulty : Difficulty;
     };
 
@@ -176,33 +163,7 @@ module {
         #noCreatures;
         #noCreaturesForZone : Text;
         #noWeapons;
-    };
-
-    type MutableGameInstance = {
-        id : Nat;
-        hostUserId : Principal;
-        guestUserIds : [Principal];
-        createdTime : Time.Time;
-        difficulty : Difficulty;
-        state : {
-            #notStarted;
-            #voting : MutableVotingData;
-            #inProgress : MutableInProgressData;
-            #completed : CompletedData;
-        };
-    };
-
-    type MutableVotingData = {
-        startTime : Time.Time;
-        var characterProposal : ExtendedProposal.Proposal<[Character.Character], Text>;
-    };
-
-    type MutableInProgressData = {
-        startTime : Time.Time;
-        scenarioHandler : ScenarioHandler.Handler;
-        characterHandler : CharacterHandler.Handler;
-        var turn : Nat;
-        var locations : [Location.Location];
+        #notAuthenticated;
     };
 
     public class Handler(data : StableData) {
@@ -220,7 +181,7 @@ module {
 
         let races = toTextHashMap<Race.Race>(data.races);
 
-        let scenarios = toTextHashMap<Scenario.ScenarioMetaData>(data.scenarios);
+        let scenarioMetaDataList = toTextHashMap<Scenario.ScenarioMetaData>(data.scenarioMetaDataList);
 
         let items = toTextHashMap<Item.Item>(data.items);
 
@@ -236,19 +197,19 @@ module {
 
         let weapons = toTextHashMap<Weapon.Weapon>(data.weapons);
 
-        var instances : HashMap.HashMap<Nat, MutableGameInstance> = toHashMap<GameInstance, Nat, MutableGameInstance>(
-            data.instances,
-            func(instance : GameInstance) : (Nat, MutableGameInstance) = (instance.id, toMutableInstance(instance)),
-            Nat32.fromNat,
-            Nat.equal,
+        var playerDataList : HashMap.HashMap<Principal, PlayerData> = toHashMap<Principal, PlayerData>(
+            data.playerDataList,
+            func(d : PlayerData) : (Principal, PlayerData) = (d.id, d),
+            Principal.hash,
+            Principal.equal,
         );
 
         public func toStableData() : StableData {
             {
-                instances = instances.vals() |> Iter.map(_, fromMutableInstance) |> Iter.toArray(_);
+                playerDataList = playerDataList.vals() |> Iter.toArray(_);
                 classes = Iter.toArray(classes.vals());
                 races = Iter.toArray(races.vals());
-                scenarios = Iter.toArray(scenarios.vals());
+                scenarioMetaDataList = Iter.toArray(scenarioMetaDataList.vals());
                 items = Iter.toArray(items.vals());
                 traits = Iter.toArray(traits.vals());
                 images = Iter.toArray(images.vals());
@@ -260,15 +221,17 @@ module {
         };
 
         public func createInstance(
-            hostUserId : Principal
-        ) : Result.Result<Nat, CreateGameError> {
+            prng : Prng,
+            playerId : Principal,
+            difficulty : Difficulty,
+        ) : Result.Result<(), CreateGameError> {
             if (classes.size() == 0) {
                 return #err(#noClasses);
             };
             if (races.size() == 0) {
                 return #err(#noRaces);
             };
-            if (scenarios.size() == 0) {
+            if (scenarioMetaDataList.size() == 0) {
                 return #err(#noScenarios);
             };
             if (items.size() == 0) {
@@ -292,7 +255,7 @@ module {
             for (zone in zones.vals()) {
                 if (
                     not IterTools.any(
-                        scenarios.vals(),
+                        scenarioMetaDataList.vals(),
                         func(scenario : Scenario.ScenarioMetaData) : Bool = switch (scenario.location) {
                             case (#common) false;
                             case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == zone.id) != null;
@@ -313,138 +276,24 @@ module {
                     return #err(#noCreaturesForZone(zone.id));
                 };
             };
-            switch (getCurrentInstance(hostUserId)) {
-                case (?instance) {
-                    switch (instance.state) {
-                        case (#completed(_)) (); // Ok to create a new game
-                        case (_) return #err(#alreadyInitialized);
+
+            let playerDataInstance : PlayerData = switch (playerDataList.get(playerId)) {
+                case (null) {
+                    // Create new
+                    {
+                        id = playerId;
+                        activeGame = null;
+                        completedGames = [];
                     };
                 };
-                case (null) ();
-            };
-
-            let instanceId = instances.size(); // TODO
-            instances.put(
-                instanceId,
-                {
-                    id = instanceId;
-                    hostUserId = hostUserId;
-                    guestUserIds = [];
-                    createdTime = Time.now();
-                    state = #notStarted;
-                    difficulty = #normal;
-                },
-            );
-
-            #ok(instanceId);
-        };
-
-        public func addPlayer(
-            gameId : Nat,
-            playerId : Principal,
-        ) : Result.Result<(), { #gameNotFound; #alreadyJoined; #lobbyClosed }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #notStarted = instance.state else return #err(#lobbyClosed);
-            if (instance.hostUserId == playerId or Array.indexOf(playerId, instance.guestUserIds, Principal.equal) != null) {
-                return #err(#alreadyJoined);
-            };
-            instances.put(
-                gameId,
-                {
-                    instance with
-                    guestUserIds = Array.append(instance.guestUserIds, [playerId]);
-                },
-            );
-            #ok;
-        };
-
-        public func kickPlayer(
-            gameId : Nat,
-            playerId : Principal,
-            kickerId : Principal,
-        ) : Result.Result<(), { #gameNotFound; #notAuthorized; #playerNotInGame; #kickHostForbidden }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            if (instance.hostUserId != kickerId and kickerId != playerId) {
-                return #err(#notAuthorized);
-            };
-            if (instance.hostUserId == playerId) {
-                return #err(#kickHostForbidden);
-            };
-            if (Array.indexOf(playerId, instance.guestUserIds, Principal.equal) == null) {
-                return #err(#playerNotInGame);
-            };
-            instances.put(
-                gameId,
-                {
-                    instance with
-                    guestUserIds = Array.filter(instance.guestUserIds, func(id : Principal) : Bool = id != playerId);
-                },
-            );
-            #ok;
-        };
-
-        public func changeDifficulty(
-            gameId : Nat,
-            difficulty : Difficulty,
-            caller : Principal,
-        ) : Result.Result<(), { #gameNotFound; #notAuthorized; #gameStarted }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #notStarted = instance.state else return #err(#gameStarted);
-            if (instance.hostUserId != caller) {
-                return #err(#notAuthorized);
-            };
-            instances.put(
-                gameId,
-                {
-                    instance with
-                    difficulty = difficulty;
-                },
-            );
-            #ok;
-        };
-
-        public func abandon(
-            gameId : Nat,
-            userId : Principal,
-        ) : Result.Result<(), { #gameNotFound; #notAuthorized; #gameComplete }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            if (instance.hostUserId != userId) {
-                return #err(#notAuthorized);
-            };
-            switch (instance.state) {
-                case (#notStarted or #voting(_)) {
-                    ignore instances.remove(gameId);
-                    #ok;
+                case (?data) {
+                    // End current game if exists
+                    // TODO make this more explicit to end current game?
+                    switch (abandonAndArchiveInternal(data)) {
+                        case (#ok(updatedData)) updatedData;
+                        case (#err(#noActiveGame)) data; // No active game, no changes
+                    };
                 };
-                case (#inProgress(inProgress)) {
-                    instances.put(
-                        gameId,
-                        {
-                            instance with
-                            state = #completed({
-                                startTime = inProgress.startTime;
-                                endTime = Time.now();
-                                turns = inProgress.turn;
-                                character = inProgress.characterHandler.get();
-                                victory = false;
-                            });
-                        },
-                    );
-                    #ok;
-                };
-                case (#completed(_)) return #err(#gameComplete);
-            };
-        };
-
-        public func startVote(
-            prng : Prng,
-            gameId : Nat,
-            initiatingUserId : Principal,
-        ) : Result.Result<(), { #gameNotFound; #gameAlreadyStarted; #notAuthorized }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #notStarted = instance.state else return #err(#gameAlreadyStarted);
-            if (instance.hostUserId != initiatingUserId) {
-                return #err(#notAuthorized);
             };
 
             let classArray = Iter.toArray(classes.vals());
@@ -460,181 +309,145 @@ module {
             )
             |> Iter.toArray(_);
 
-            let timeStart = Time.now();
-            let timeEnd : ?Time.Time = null;
-
-            let members : [ExtendedProposal.Member] = [
+            playerDataList.put(
+                playerId,
                 {
-                    id = instance.hostUserId;
-                    votingPower = 1;
-                },
-            ];
-
-            instances.put(
-                gameId,
-                {
-                    instance with
-                    state = #voting(
-                        {
-                            startTime = timeStart;
-                            var characterProposal = ExtendedProposal.create(0, instance.hostUserId, characterOptions, members, timeStart, timeEnd);
-                        } : MutableVotingData
-                    );
+                    playerDataInstance with
+                    activeGame = ?{
+                        id = playerDataInstance.completedGames.size(); // TODO?
+                        playerId = playerId;
+                        startTime = Time.now();
+                        difficulty = difficulty;
+                        state = #starting({
+                            characterOptions = characterOptions;
+                        });
+                    } : ?GameInstance;
                 },
             );
+
             #ok;
         };
 
-        public func getScenario(gameId : Nat, scenarioId : Nat) : Result.Result<ScenarioWithMetaData, { #gameNotFound; #gameNotActive; #notFound }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #inProgress({ scenarioHandler; characterHandler }) = instance.state else return #err(#gameNotActive);
-            let ?scenario = scenarioHandler.get(scenarioId) else return #err(#notFound);
-            let character = characterHandler.get();
+        public func abandon(
+            playerId : Principal
+        ) : Result.Result<(), { #noActiveGame }> {
+            let ?playerData = playerDataList.get(playerId) else return #err(#noActiveGame);
+            switch (abandonAndArchiveInternal(playerData)) {
+                case (#ok(_)) #ok;
+                case (#err(#noActiveGame)) return #err(#noActiveGame);
+            };
+        };
+
+        private func abandonAndArchiveInternal(playerData : PlayerData) : Result.Result<PlayerData, { #noActiveGame }> {
+            let ?activeGame = playerData.activeGame else return #err(#noActiveGame);
+            let completedGameState : CompletedGameStateWithMetaData = switch (activeGame.state) {
+                case (#starting(starting)) {
+                    {
+                        turns = 0;
+                        character = toCharacterWithMetaData(starting.characterOptions[0]); // TODO is it ok to just take the first one?
+                        endTime = Time.now();
+                        victory = false;
+                    };
+                };
+                case (#inProgress(inProgress)) {
+                    {
+                        turns = inProgress.turn;
+                        character = toCharacterWithMetaData(inProgress.character);
+                        endTime = Time.now();
+                        victory = false;
+                    };
+                };
+                case (#completed(completed)) {
+                    {
+                        turns = completed.turns;
+                        character = toCharacterWithMetaData(completed.character);
+                        endTime = completed.endTime;
+                        victory = completed.victory;
+                    };
+                };
+            };
+
+            let completedGames : [CompletedGameWithMetaData] = Array.append(
+                playerData.completedGames,
+                [
+                    {
+                        completedGameState with
+                        id = activeGame.id;
+                        difficulty = activeGame.difficulty;
+                        playerId = playerData.id;
+                        startTime = activeGame.startTime;
+                    } : CompletedGameWithMetaData
+                ],
+            );
+            let updatedPlayerData = {
+                id = playerData.id;
+                activeGame = null;
+                completedGames = completedGames;
+            };
+            playerDataList.put(playerData.id, updatedPlayerData);
+            #ok(updatedPlayerData);
+        };
+
+        public func getScenario(playerId : Principal, scenarioId : Nat) : Result.Result<ScenarioWithMetaData, { #gameNotFound; #gameNotActive; #notFound }> {
+            let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
+            let ?instance = playerData.activeGame else return #err(#gameNotActive);
+            let #inProgress({ scenarios; character }) = instance.state else return #err(#gameNotActive);
+            let ?scenario = Array.find(scenarios, func(s : Scenario.Scenario) : Bool = s.id == scenarioId) else return #err(#notFound);
             #ok(mapScenario(scenario, character));
         };
 
-        public func getScenarios(gameId : Nat) : Result.Result<[ScenarioWithMetaData], { #gameNotFound; #gameNotActive }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #inProgress({ scenarioHandler; characterHandler }) = instance.state else return #err(#gameNotActive);
-            let character = characterHandler.get();
-            let scenariosWithMetaData = scenarioHandler.getAll().vals()
-            |> Iter.map<ScenarioHandler.ScenarioInstance, ScenarioWithMetaData>(
+        public func getScenarios(playerId : Principal) : Result.Result<[ScenarioWithMetaData], { #gameNotFound; #gameNotActive }> {
+            let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
+            let ?instance = playerData.activeGame else return #err(#gameNotActive);
+            let #inProgress({ scenarios; character }) = instance.state else return #err(#gameNotActive);
+            let scenariosWithMetaData = scenarios.vals()
+            |> Iter.map<Scenario.Scenario, ScenarioWithMetaData>(
                 _,
-                func(scenario : ScenarioHandler.ScenarioInstance) : ScenarioWithMetaData = mapScenario(scenario, character),
+                func(scenario : Scenario.Scenario) : ScenarioWithMetaData = mapScenario(scenario, character),
             )
             |> Iter.toArray(_);
             #ok(scenariosWithMetaData);
         };
 
-        public func voteOnScenario(
-            gameId : Nat,
-            scenarioId : Nat,
-            voterId : Principal,
-            choiceId : Text,
-        ) : Result.Result<?Text, ScenarioHandler.VoteError or { #gameNotFound; #gameNotActive; #choiceRequirementNotMet }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #inProgress({ scenarioHandler; characterHandler }) = instance.state else return #err(#gameNotActive);
-            let ?scenario = scenarioHandler.get(scenarioId) else return #err(#scenarioNotFound);
-            let ?scenarioMetaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
-            let ?choice = Array.find(
-                scenarioMetaData.choices,
-                func(choice : Scenario.Choice) : Bool = choiceId == choice.id,
-            ) else return #err(#invalidChoice);
-            switch (choice.requirement) {
-                case (null) ();
-                case (?requirement) {
-                    let character = characterHandler.get();
-                    if (not Outcome.validateRequirement(requirement, character)) {
-                        return #err(#choiceRequirementNotMet);
-                    };
-                };
-            };
-
-            scenarioHandler.vote(scenarioId, voterId, choiceId);
-        };
-
-        public func getScenarioVote(
-            gameId : Nat,
-            scenarioId : Nat,
-            voterId : Principal,
-        ) : Result.Result<ExtendedProposal.Vote<Text>, { #gameNotFound; #gameNotActive; #scenarioNotFound; #notEligible }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #inProgress({ scenarioHandler }) = instance.state else return #err(#gameNotActive);
-            scenarioHandler.getVote(scenarioId, voterId);
-        };
-
-        public func getScenarioVoteSummary(gameId : Nat, scenarioId : Nat) : Result.Result<ExtendedProposal.VotingSummary<Text>, { #scenarioNotFound; #gameNotFound; #gameNotActive }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #inProgress({ scenarioHandler }) = instance.state else return #err(#gameNotActive);
-            scenarioHandler.getVoteSummary(scenarioId);
-        };
-
-        public func voteOnNewGame(
-            gameId : Nat,
-            voterId : Principal,
-            characterId : Text,
-        ) : Result.Result<?{ characterId : Text }, ExtendedProposal.VoteError or { #gameNotFound; #gameNotActive; #invalidCharacterId }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-
-            let #voting(voting) = instance.state else return #err(#gameNotActive);
-
-            let ?characterIndex = NatX.fromText(characterId) else return #err(#invalidCharacterId);
-            if (characterIndex >= voting.characterProposal.content.size()) {
-                return #err(#invalidCharacterId);
-            };
-            let updatedCharacterProposal = switch (ExtendedProposal.vote(voting.characterProposal, voterId, characterId, true)) {
-                case (#ok(ok)) ok.updatedProposal;
-                case (#err(error)) return #err(error);
-            };
-            // Dont set unless both votes are successful
-            voting.characterProposal := updatedCharacterProposal;
-
-            let votingThreshold : ExtendedProposal.VotingThreshold = #percent({
-                percent = 50;
-                quorum = null;
-            });
-            let characterIdOrNull : ?Text = switch (
-                ExtendedProposal.calculateVoteStatus(
-                    voting.characterProposal,
-                    votingThreshold,
-                    Text.equal,
-                    Text.hash,
-                    false,
-                )
-            ) {
-                case (#determined(characterIdOrNull)) characterIdOrNull;
-                case (#undetermined) null;
-            };
-            let chosenCharacterId : Text = switch (characterIdOrNull) {
-                case (?id) id;
-                case (null) return #ok(null); // Vote still in progress
-            };
-
-            #ok(
-                ?{
-                    characterId = chosenCharacterId;
-                }
-            );
-        };
-
         public func startGame<system>(
             prng : Prng,
-            gameId : Nat,
-            characterId : Text,
+            playerId : Principal,
+            characterIndex : Nat,
         ) : Result.Result<(), { #gameNotFound; #alreadyStarted; #invalidCharacterId }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
-            let #voting(voting) = instance.state else return #err(#alreadyStarted);
-            let ?characterIndex = NatX.fromText(characterId) else return #err(#invalidCharacterId);
-            let character = voting.characterProposal.content[characterIndex];
+            let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
+            let ?instance = playerData.activeGame else return #err(#gameNotFound);
+            let #starting(starting) = instance.state else return #err(#alreadyStarted);
+            if (characterIndex >= starting.characterOptions.size()) return #err(#invalidCharacterId);
+            let character = starting.characterOptions[characterIndex];
 
-            let characterHandler = CharacterHandler.Handler({
-                character = character;
-            });
-            let scenarioHandler = ScenarioHandler.Handler({
-                instances = [];
-                metaDataList = [];
-            });
             let zoneId = prng.nextArrayElement(zones.vals() |> Iter.toArray(_)).id;
-            let scenario = generateScenario(prng, zoneId);
-            let members = buildMemberList(instance);
-            let scenarioId = scenarioHandler.start(scenario, instance.hostUserId, members);
+            let scenarioId = 0; // TODO?
+            let scenario : Scenario.Scenario = {
+                generateScenario(prng, zoneId) with
+                id = scenarioId;
+                outcome = null;
+            };
             let location : Location.Location = {
                 id = 0;
                 coordinate = { q = 0; r = 0 };
                 scenarioId = scenarioId;
                 zoneId = zoneId;
             };
-            instances.put(
-                gameId,
+            playerDataList.put(
+                playerId,
                 {
-                    instance with
-                    state = #inProgress({
-                        startTime = voting.startTime;
-                        scenarioHandler = scenarioHandler;
-                        characterHandler = characterHandler;
-                        var turn = 0;
-                        var locations = [location];
-                    });
+                    playerData with
+                    activeGame = ?{
+                        instance with
+                        state = #inProgress(
+                            {
+                                character = character;
+                                scenarios = [scenario];
+                                turn = 0;
+                                locations = [location];
+                            } : InProgressData
+                        );
+                    } : ?GameInstance
                 },
             );
             #ok;
@@ -642,131 +455,119 @@ module {
 
         public func endTurn(
             prng : Prng,
-            gameId : Nat,
+            playerId : Principal,
             userHandler : UserHandler.Handler,
-            choiceOrUndecided : ?Text,
-        ) : Result.Result<(), { #gameNotFound; #gameNotActive }> {
-            let ?instance = instances.get(gameId) else return #err(#gameNotFound);
+            choiceId : Text,
+        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice; #choiceRequirementNotMet }> {
+            let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
+            let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
 
             let currentLocation = getCharacterLocation(inProgressInstance);
 
-            let ?scenario = inProgressInstance.scenarioHandler.get(currentLocation.scenarioId) else Debug.trap("Scenario not found: " # Nat.toText(currentLocation.scenarioId));
-            let ?scenarioMetaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
-            let members = buildMemberList(instance);
+            let ?scenario = Array.find(
+                inProgressInstance.scenarios,
+                func(s : Scenario.Scenario) : Bool = s.id == currentLocation.scenarioId,
+            ) else Debug.trap("Scenario not found: " # Nat.toText(currentLocation.scenarioId));
+            let ?scenarioMetaData = scenarioMetaDataList.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
+
+            let characterHandler = CharacterHandler.Handler(inProgressInstance.character);
+
+            let ?choice = Array.find(
+                scenarioMetaData.choices,
+                func(choice : Scenario.Choice) : Bool = choiceId == choice.id,
+            ) else return #err(#invalidChoice);
+            switch (choice.requirement) {
+                case (null) ();
+                case (?requirement) {
+                    if (not Outcome.validateRequirement(requirement, inProgressInstance.character)) {
+                        return #err(#choiceRequirementNotMet);
+                    };
+                };
+            };
             let result = ScenarioSimulator.run(
                 prng,
-                members,
+                playerId,
                 userHandler,
-                inProgressInstance.characterHandler,
+                characterHandler,
                 scenario,
                 scenarioMetaData,
                 creatures,
                 weapons,
-                choiceOrUndecided,
+                choiceId,
             );
             let outcome : Outcome.Outcome = {
-                choiceOrUndecided;
+                choiceId;
                 log = result.log;
             };
-            switch (inProgressInstance.scenarioHandler.end(currentLocation.scenarioId, outcome)) {
-                case (#ok) ();
-                case (#err(error)) Debug.trap("Unable to end scenario: " # debug_show (error));
+            let updatedScenario : Scenario.Scenario = {
+                scenario with
+                outcome = ?outcome;
             };
-            switch (result.kind) {
+            let thawedScenarios = Array.thaw<Scenario.Scenario>(inProgressInstance.scenarios);
+            thawedScenarios[inProgressInstance.scenarios.size() - 1] := updatedScenario;
+            let updatedScenarios = Array.freeze(thawedScenarios);
+
+            let updatedInProgressState : InProgressData = {
+                inProgressInstance with
+                character = characterHandler.get();
+                scenarios = updatedScenarios;
+            };
+            let updatedInstance = {
+                instance with
+                state = #inProgress(updatedInProgressState);
+            };
+            let updatedGame : GameInstance = switch (result.kind) {
                 case (#inProgress) {
-                    inProgressInstance.turn += 1;
-                    switch (nextLocation(prng, instance.hostUserId, members, inProgressInstance)) {
-                        case (?_) ();
+                    switch (nextLocation(prng, updatedInProgressState)) {
+                        case (?updatedInProgressState) {
+                            {
+                                updatedInstance with
+                                state = #inProgress({
+                                    updatedInProgressState with
+                                    turn = inProgressInstance.turn + 1;
+                                });
+                            };
+                        };
                         case (null) {
-                            instances.put(
-                                gameId,
-                                {
-                                    instance with
-                                    state = #completed({
-                                        startTime = inProgressInstance.startTime;
-                                        endTime = Time.now();
-                                        turns = inProgressInstance.turn;
-                                        character = inProgressInstance.characterHandler.get();
-                                        victory = true;
-                                    });
-                                },
-                            );
+                            {
+                                updatedInstance with
+                                state = #completed({
+                                    endTime = Time.now();
+                                    turns = updatedInProgressState.turn;
+                                    character = updatedInProgressState.character;
+                                    victory = true;
+                                });
+                            };
                         };
                     };
                 };
                 case (#defeat) {
-                    instances.put(
-                        gameId,
-                        {
-                            instance with
-                            state = #completed({
-                                startTime = inProgressInstance.startTime;
-                                endTime = Time.now();
-                                turns = inProgressInstance.turn;
-                                character = inProgressInstance.characterHandler.get();
-                                victory = false;
-                            });
-                        },
-                    );
+                    {
+                        updatedInstance with
+                        state = #completed({
+                            endTime = Time.now();
+                            turns = updatedInProgressState.turn;
+                            character = updatedInProgressState.character;
+                            victory = false;
+                        });
+                    };
                 };
             };
+            playerDataList.put(
+                playerId,
+                {
+                    playerData with
+                    activeGame = ?updatedGame;
+                },
+            );
             #ok;
         };
 
-        public func getInstance(gameId : Nat) : ?GameWithMetaData {
-            let ?instance = instances.get(gameId) else return null;
-            ?toInstanceWithMetaData(instance);
-        };
-
-        public func getCurrentInstance(userId : Principal) : ?GameWithMetaData {
-
-            let instanceOrNull = instances.vals()
-            |> Iter.filter<MutableGameInstance>(
-                _,
-                func(instance : MutableGameInstance) : Bool {
-                    instance.hostUserId == userId or Array.indexOf(userId, instance.guestUserIds, Principal.equal) != null;
-                },
-            )
-            |> Iter.sort(
-                _,
-                func(a : MutableGameInstance, b : MutableGameInstance) : Order.Order = Int.compare(b.createdTime, a.createdTime),
-            )
-            |> _.next();
-
-            switch (instanceOrNull) {
-                case (?instance) ?toInstanceWithMetaData(instance);
-                case (null) null;
-            };
-        };
-
-        public func getCompletedInstances(userId : Principal) : [CompletedGameWithMetaData] {
-            instances.vals()
-            |> Iter.filter<MutableGameInstance>(
-                _,
-                func(instance : MutableGameInstance) : Bool {
-                    switch (instance.state) {
-                        case (#completed(_)) instance.hostUserId == userId or Array.indexOf(userId, instance.guestUserIds, Principal.equal) != null;
-                        case (_) false;
-                    };
-                },
-            )
-            |> Iter.map(_, toInstanceWithMetaData)
-            |> Iter.map(
-                _,
-                func(instance : GameWithMetaData) : CompletedGameWithMetaData {
-                    let #completed(state) = instance.state else Prelude.unreachable();
-                    {
-                        instance with
-                        startTime = state.startTime;
-                        endTime = state.endTime;
-                        character = state.character;
-                        turns = state.turns;
-                        victory = state.victory;
-                    };
-                },
-            )
-            |> Iter.toArray(_);
+        public func getInstance(playerId : Principal) : ?GameWithMetaData {
+            let ?playerData = playerDataList.get(playerId) else return null;
+            let ?instance = playerData.activeGame else return null;
+            ?toInstanceWithMetaData(playerId, instance);
         };
 
         public func addOrUpdateItem(item : Item.Item) : Result.Result<(), { #invalid : [Text] }> {
@@ -831,7 +632,7 @@ module {
                 case (#ok) ();
             };
             Debug.print("Adding scenario meta data: " # scenario.id);
-            scenarios.put(scenario.id, scenario);
+            scenarioMetaDataList.put(scenario.id, scenario);
             #ok;
         };
 
@@ -915,7 +716,7 @@ module {
         };
 
         public func getScenarioMetaDataList() : [Scenario.ScenarioMetaData] {
-            scenarios.vals() |> Iter.toArray(_);
+            scenarioMetaDataList.vals() |> Iter.toArray(_);
         };
 
         public func getTraits() : [Trait.Trait] {
@@ -936,16 +737,14 @@ module {
 
         // ------------------ Private ------------------
 
-        private func getCharacterLocation(inProgressInstance : MutableInProgressData) : Location.Location {
+        private func getCharacterLocation(inProgressInstance : InProgressData) : Location.Location {
             inProgressInstance.locations.get(inProgressInstance.locations.size() - 1);
         };
 
         private func nextLocation(
             prng : Prng,
-            proposerId : Principal,
-            members : [ScenarioHandler.Member],
-            inProgressInstance : MutableInProgressData,
-        ) : ?Location.Location {
+            inProgressInstance : InProgressData,
+        ) : ?InProgressData {
             let currentLocation = getCharacterLocation(inProgressInstance);
 
             let nextCoordinate = {
@@ -970,23 +769,31 @@ module {
             } else {
                 currentLocation.zoneId;
             };
-            let newScenario = generateScenario(prng, zoneId);
-            let newScenarioId = inProgressInstance.scenarioHandler.start(newScenario, proposerId, members);
+            let newScenarioId = inProgressInstance.scenarios.size(); // TODO?
+            let newScenario = {
+                generateScenario(prng, zoneId) with
+                id = newScenarioId;
+                outcome = null;
+            };
+
             let nextLocation = {
                 id = HexGrid.axialCoordinateToIndex(nextCoordinate);
                 coordinate = nextCoordinate;
                 scenarioId = newScenarioId;
                 zoneId = zoneId;
             };
-            inProgressInstance.locations := Array.append(inProgressInstance.locations, [nextLocation]);
-            ?nextLocation;
+            ?{
+                inProgressInstance with
+                scenarios = Array.append(inProgressInstance.scenarios, [newScenario]);
+                locations = Array.append(inProgressInstance.locations, [nextLocation]);
+            };
         };
 
         private func mapScenario(
-            scenario : ScenarioHandler.ScenarioInstance,
+            scenario : Scenario.Scenario,
             character : Character.Character,
         ) : ScenarioWithMetaData {
-            let ?metaData = scenarios.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
+            let ?metaData = scenarioMetaDataList.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
             {
                 scenario with
                 metaData = metaData;
@@ -1014,7 +821,7 @@ module {
                 (#other, 3.),
                 (#store, 1.),
             ]);
-            let filteredScenarios = scenarios.vals()
+            let filteredScenarios = scenarioMetaDataList.vals()
             // Only scenarios that are common or have the zoneId
             |> Iter.filter(
                 _,
@@ -1051,21 +858,18 @@ module {
             };
         };
 
-        private func toInstanceWithMetaData(instance : MutableGameInstance) : GameWithMetaData {
+        private func toInstanceWithMetaData(playerId : Principal, instance : GameInstance) : GameWithMetaData {
             let state : GameStateWithMetaData = switch (instance.state) {
-                case (#notStarted) #notStarted;
-                case (#voting(voting)) {
-                    let characterVotes = ExtendedProposal.buildVotingSummary(voting.characterProposal, Text.equal, Text.hash);
-                    #voting({
-                        startTime = voting.startTime;
-                        characterOptions = voting.characterProposal.content.vals() |> Iter.map(_, toCharacterWithMetaData) |> Iter.toArray(_);
-                        characterVotes;
+                case (#starting(starting)) {
+                    #starting({
+                        characterOptions = starting.characterOptions.vals()
+                        |> Iter.map(_, toCharacterWithMetaData)
+                        |> Iter.toArray(_);
                     });
                 };
                 case (#inProgress(inProgress)) {
-                    let character = toCharacterWithMetaData(inProgress.characterHandler.get());
+                    let character = toCharacterWithMetaData(inProgress.character);
                     #inProgress({
-                        startTime = inProgress.startTime;
                         turn = inProgress.turn;
                         locations = inProgress.locations;
                         character;
@@ -1075,7 +879,6 @@ module {
                     let turns = completed.turns;
                     let character = toCharacterWithMetaData(completed.character);
                     #completed({
-                        startTime = completed.startTime;
                         turns;
                         character;
                         endTime = completed.endTime;
@@ -1085,9 +888,8 @@ module {
             };
             {
                 id = instance.id;
-                hostUserId = instance.hostUserId;
-                guestUserIds = instance.guestUserIds;
-                createdTime = instance.createdTime;
+                playerId = playerId;
+                startTime = instance.startTime;
                 difficulty = instance.difficulty;
                 state = state;
             };
@@ -1134,96 +936,17 @@ module {
 
     };
 
-    private func toMutableInstance(instance : GameInstance) : MutableGameInstance {
-        let state = switch (instance.state) {
-            case (#notStarted) #notStarted;
-            case (#voting(voting)) {
-                #voting(
-                    {
-                        startTime = voting.startTime;
-                        var characterProposal = voting.characterProposal;
-                    } : MutableVotingData
-                );
-            };
-            case (#inProgress(inProgress)) {
-                #inProgress(
-                    {
-                        startTime = inProgress.startTime;
-                        scenarioHandler = ScenarioHandler.Handler(inProgress.scenarios);
-                        characterHandler = CharacterHandler.Handler(inProgress.character);
-                        var turn = inProgress.turn;
-                        var locations = inProgress.locations;
-                    } : MutableInProgressData
-                );
-            };
-            case (#completed(completed)) #completed(completed);
-        };
-        {
-            id = instance.id;
-            hostUserId = instance.hostUserId;
-            guestUserIds = instance.guestUserIds;
-            createdTime = instance.createdTime;
-            difficulty = instance.difficulty;
-            state = state;
-        };
-    };
-
-    private func fromMutableInstance(instance : MutableGameInstance) : GameInstance {
-        let state : GameInstanceState = switch (instance.state) {
-            case (#notStarted) #notStarted;
-            case (#voting(voting)) {
-                #voting({
-                    startTime = voting.startTime;
-                    characterProposal = voting.characterProposal;
-                });
-            };
-            case (#inProgress(inProgress)) {
-                #inProgress({
-                    startTime = inProgress.startTime;
-                    scenarios = inProgress.scenarioHandler.toStableData();
-                    character = inProgress.characterHandler.toStableData();
-                    turn = inProgress.turn;
-                    locations = inProgress.locations;
-                });
-            };
-            case (#completed(completed)) #completed(completed);
-        };
-        {
-            id = instance.id;
-            hostUserId = instance.hostUserId;
-            guestUserIds = instance.guestUserIds;
-            createdTime = instance.createdTime;
-            difficulty = instance.difficulty;
-            state = state;
-        };
-    };
-
-    private func buildMemberList(instance : MutableGameInstance) : [ScenarioHandler.Member] {
-        let members = Buffer.Buffer<ScenarioHandler.Member>(instance.guestUserIds.size() + 1);
-        members.add({
-            id = instance.hostUserId;
-            votingPower = 1;
-        });
-        for (guestUserId in instance.guestUserIds.vals()) {
-            members.add({
-                id = guestUserId;
-                votingPower = 1;
-            });
-        };
-        Buffer.toArray(members);
-    };
-
-    private func toHashMap<T, K, V>(
-        array : [T],
-        func_ : (T) -> ((K, V)),
-        hash : (K) -> Nat32,
-        equal : (K, K) -> Bool,
-    ) : HashMap.HashMap<K, V> {
+    private func toHashMap<TKey, TValue>(
+        array : [TValue],
+        func_ : (TValue) -> ((TKey, TValue)),
+        hash : (TKey) -> Nat32,
+        equal : (TKey, TKey) -> Bool,
+    ) : HashMap.HashMap<TKey, TValue> {
         array.vals()
-        |> Iter.map<T, (K, V)>(
+        |> Iter.map<TValue, (TKey, TValue)>(
             _,
             func_,
         )
-        |> HashMap.fromIter<K, V>(_, array.size(), equal, hash);
+        |> HashMap.fromIter<TKey, TValue>(_, array.size(), equal, hash);
     };
 };

@@ -4,17 +4,8 @@ import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
 module {
-    public type StableData = {
-        character : Character.Character;
-    };
-    public class Handler(stableData : StableData) {
-        var character = stableData.character;
-
-        public func toStableData() : StableData {
-            {
-                character = character;
-            };
-        };
+    public class Handler(data : Character.Character) {
+        var character = data;
 
         public func get() : Character.Character {
             character;

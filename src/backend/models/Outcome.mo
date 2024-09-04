@@ -5,7 +5,7 @@ import Character "Character";
 module {
 
     public type Outcome = {
-        choiceOrUndecided : ?Text;
+        choiceId : Text;
         log : [OutcomeLogEntry];
     };
 

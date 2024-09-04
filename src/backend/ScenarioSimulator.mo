@@ -27,25 +27,21 @@ module {
         kind : { #defeat; #inProgress };
     };
 
-    public type Player = {
-        id : Principal;
-    };
-
     public func run(
         prng : Prng,
-        players : [Player],
+        playerId : Principal,
         userHandler : UserHandler.Handler,
         characterHandler : CharacterHandler.Handler,
         scenario : Scenario.Scenario,
         scenarioMetaData : Scenario.ScenarioMetaData,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
-        choiceOrUndecided : ?Text,
+        choiceId : Text,
     ) : ScenarioResult {
         let logEntries = Buffer.Buffer<Outcome.OutcomeLogEntry>(5);
         let helper = Helper(
             prng,
-            players,
+            playerId,
             characterHandler,
             userHandler,
             scenario,
@@ -54,16 +50,11 @@ module {
             logEntries,
         );
 
-        let initialPathId = switch (choiceOrUndecided) {
-            case (null) { scenarioMetaData.undecidedPathId };
-            case (?choice) {
-                let ?choiceData = Array.find(
-                    scenarioMetaData.choices,
-                    func(c : Scenario.Choice) : Bool { c.id == choice },
-                ) else Debug.trap("Invalid choice: " # choice);
-                choiceData.pathId;
-            };
-        };
+        let ?choiceData = Array.find(
+            scenarioMetaData.choices,
+            func(c : Scenario.Choice) : Bool { c.id == choiceId },
+        ) else Debug.trap("Invalid choice: " # choiceId);
+        let initialPathId = choiceData.pathId;
 
         var currentPathId = initialPathId;
 
@@ -190,7 +181,7 @@ module {
 
     private class Helper(
         prng : Prng,
-        players : [Player],
+        playerId : Principal,
         characterHandler : CharacterHandler.Handler,
         userHandler : UserHandler.Handler,
         scenario : Scenario.Scenario,
@@ -304,12 +295,10 @@ module {
                     };
                 };
                 case (#achievement(achievementId)) {
-                    for (player in players.vals()) {
-                        switch (userHandler.unlockAchievement(player.id, achievementId)) {
-                            case (#ok or #err(#achievementAlreadyUnlocked)) ();
-                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(player.id));
-                            case (#err(#achievementNotFound)) Debug.trap("Achievement not found: " # achievementId);
-                        };
+                    switch (userHandler.unlockAchievement(playerId, achievementId)) {
+                        case (#ok or #err(#achievementAlreadyUnlocked)) ();
+                        case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(playerId));
+                        case (#err(#achievementNotFound)) Debug.trap("Achievement not found: " # achievementId);
                     };
                 };
             };

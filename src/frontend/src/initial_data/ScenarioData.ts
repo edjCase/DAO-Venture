@@ -37,7 +37,6 @@ export const scenarios: ScenarioMetaData[] = [
         pathId: "communicate_treant",
       },
     ],
-    undecidedPathId: "frozen",
     paths: [
       {
         id: "attack_treant",
@@ -164,18 +163,6 @@ export const scenarios: ScenarioMetaData[] = [
           pathId: "attack_treant",
         }],
       },
-      {
-        id: "frozen",
-        description: "You stand frozen, unable to decide. The treant attacks.",
-        kind: {
-          effects: []
-        },
-        paths: [{
-          weight: 1,
-          condition: [],
-          pathId: "attack_treant",
-        }],
-      },
     ],
     unlockRequirement: []
   },
@@ -215,7 +202,6 @@ export const scenarios: ScenarioMetaData[] = [
         pathId: "stealth_past_elves",
       },
     ],
-    undecidedPathId: "frozen",
     paths: [
       {
         id: "successful_fight",
@@ -350,18 +336,6 @@ export const scenarios: ScenarioMetaData[] = [
         },
         paths: [],
       },
-      {
-        id: "frozen",
-        description: "You stand frozen, unable to decide. The elves attack.",
-        kind: {
-          effects: []
-        },
-        paths: [{
-          weight: 1,
-          condition: [],
-          pathId: "elf_attack",
-        }],
-      },
     ],
     unlockRequirement: []
   },
@@ -417,7 +391,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "seek_healing_path",
@@ -628,7 +601,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [{ race: "dwarf" }],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "upgrade_attack_path",
@@ -719,14 +691,6 @@ export const scenarios: ScenarioMetaData[] = [
         },
         paths: [],
       },
-      {
-        id: "undecided_path",
-        description: "You stand frozen, unable to decide. The dwarf pushes you out of his shop.",
-        kind: {
-          effects: []
-        },
-        paths: [],
-      },
     ],
     unlockRequirement: []
   },
@@ -782,7 +746,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "meditate_path",
@@ -989,7 +952,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [{ item: "crystal" }],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "buy_trinket_path",
@@ -1086,14 +1048,6 @@ export const scenarios: ScenarioMetaData[] = [
         },
         paths: [],
       },
-      {
-        id: "undecided_path",
-        description: "You stand frozen, unable to decide. The faeries escort you out of the market.",
-        kind: {
-          effects: []
-        },
-        paths: [],
-      },
     ],
     unlockRequirement: []
   },
@@ -1139,7 +1093,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [{ trait: "clever" }],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "fight_path",
@@ -1299,20 +1252,6 @@ export const scenarios: ScenarioMetaData[] = [
           },
         ],
       },
-      {
-        id: "undecided_path",
-        description: "You stand frozen, unable to decide. The goblins attack!",
-        kind: {
-          effects: []
-        },
-        paths: [
-          {
-            weight: 1,
-            condition: [],
-            pathId: "fight_path",
-          },
-        ],
-      },
     ],
     unlockRequirement: []
   },
@@ -1368,7 +1307,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "study_path",
@@ -1563,7 +1501,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [{ stat: [{ magic: null }, 2n] }],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "help_path",
@@ -1678,14 +1615,6 @@ export const scenarios: ScenarioMetaData[] = [
         },
         paths: [],
       },
-      {
-        id: "undecided_path",
-        description: "You stand frozen, unable to decide what to do about the lost elfling.",
-        kind: {
-          effects: []
-        },
-        paths: [],
-      },
     ],
     unlockRequirement: []
   },
@@ -1736,7 +1665,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [{ trait: "perceptive" }],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "secret_entrance_path",
@@ -1966,7 +1894,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "upgrade_path",
@@ -2123,14 +2050,6 @@ export const scenarios: ScenarioMetaData[] = [
         },
         paths: [],
       },
-      {
-        id: "undecided_path",
-        description: "You stand frozen, mesmerized by the dancing flames and floating hammers.",
-        kind: {
-          effects: []
-        },
-        paths: [],
-      },
     ],
     unlockRequirement: []
   },
@@ -2175,7 +2094,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "rescue_swimming_path",
@@ -2346,7 +2264,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "free_directly_path",
@@ -2524,7 +2441,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "seek_inspiration_path",
@@ -2731,7 +2647,6 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
     ],
-    undecidedPathId: "undecided_path",
     paths: [
       {
         id: "trade_herbs_path",
