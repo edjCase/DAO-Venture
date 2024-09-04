@@ -336,7 +336,6 @@ export const idlFactory = ({ IDL }) => {
   const CompletedGameWithMetaData = IDL.Record({
     'id' : IDL.Nat,
     'startTime' : Time,
-    'turns' : IDL.Nat,
     'endTime' : Time,
     'character' : CharacterWithMetaData,
     'difficulty' : Difficulty,
@@ -353,22 +352,19 @@ export const idlFactory = ({ IDL }) => {
     'characterOptions' : IDL.Vec(CharacterWithMetaData),
   });
   const CompletedGameStateWithMetaData = IDL.Record({
-    'turns' : IDL.Nat,
     'endTime' : Time,
     'character' : CharacterWithMetaData,
     'victory' : IDL.Bool,
   });
-  const AxialCoordinate = IDL.Record({ 'q' : IDL.Int, 'r' : IDL.Int });
-  const Location = IDL.Record({
-    'id' : IDL.Nat,
-    'scenarioId' : IDL.Nat,
-    'coordinate' : AxialCoordinate,
-    'zoneId' : IDL.Text,
+  const ScenarioTurn = IDL.Record({ 'scenarioId' : IDL.Nat });
+  const CombatTurn__1 = IDL.Record({});
+  const TurnKind = IDL.Variant({
+    'scenario' : ScenarioTurn,
+    'combat' : CombatTurn__1,
   });
   const InProgressGameStateWithMetaData = IDL.Record({
+    'turnKind' : TurnKind,
     'character' : CharacterWithMetaData,
-    'turn' : IDL.Nat,
-    'locations' : IDL.Vec(Location),
   });
   const GameStateWithMetaData = IDL.Variant({
     'starting' : StartingGameStateWithMetaData,
@@ -568,8 +564,8 @@ export const idlFactory = ({ IDL }) => {
     'invalidChoice' : IDL.Null,
     'gameNotFound' : IDL.Null,
     'gameNotActive' : IDL.Null,
-    'scenarioNotFound' : IDL.Null,
     'choiceRequirementNotMet' : IDL.Null,
+    'notScenarioTurn' : IDL.Null,
   });
   const SelectScenarioChoiceResult = IDL.Variant({
     'ok' : IDL.Null,

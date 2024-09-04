@@ -128,7 +128,7 @@ module {
     };
 
     public type SelectScenarioChoiceError = {
-        #scenarioNotFound;
+        #notScenarioTurn;
         #invalidChoice;
         #gameNotFound;
         #gameNotActive;

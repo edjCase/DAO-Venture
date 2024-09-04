@@ -3,14 +3,13 @@
     q: number; // left -> right
     r: number; // top-left -> bottom-right
   }
-  export type HexTileKind =
-    | { unexplored: null }
-    | {
-        explored: {
-          icon: string;
-        };
-      };
 
+  export function coordinateEquals(
+    a: AxialCoordinate,
+    b: AxialCoordinate
+  ): boolean {
+    return a.q === b.q && a.r === b.r;
+  }
   const scaleFactor = 1; // This will make the hexes half their original size
 
   export function hexToPixel(
@@ -46,9 +45,7 @@
 </script>
 
 <script lang="ts">
-  export let kind: HexTileKind;
   export let coordinate: AxialCoordinate;
-  export let id: number;
   export let hexSize: number;
   export let selected: boolean;
   export let onClick: (coord: AxialCoordinate) => void = () => {};
@@ -59,7 +56,7 @@
     onClick(coord);
   }
 
-  $: fillOpacity = "unexplored" in kind ? 0.1 : 1;
+  let id = coordinate.q + "-" + coordinate.r;
 </script>
 
 <g
@@ -68,7 +65,7 @@
   on:click={() => handleClick(coordinate)}
   on:keypress={() => handleClick(coordinate)}
   role="button"
-  tabindex={id}
+  tabindex={0}
   class="cursor-pointer transition-opacity focus:outline-none {selected
     ? ''
     : 'hover:opacity-80'}"
@@ -81,8 +78,6 @@
     points={getHexPolygonPoints(hexSize, undefined)}
     stroke-width={selected ? 2 : 0}
     stroke="rgb(156, 163, 175)"
-    fill="black"
-    fill-opacity={fillOpacity}
   />
 
   <g clip-path={`url(#hex-clip-${id})`}>

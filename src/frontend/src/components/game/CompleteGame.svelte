@@ -28,7 +28,6 @@
 </script>
 
 <div>Game over</div>
-<div>Total Turns: {state.turns}</div>
 
 <DifficultyChooser bind:value={difficulty} />
 <LoadingButton onClick={createGame}>Create New Game</LoadingButton>

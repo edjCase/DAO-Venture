@@ -2,7 +2,6 @@ import Http "mo:certified-cache/Http";
 import Text "mo:base/Text";
 import Int "mo:base/Int";
 import Time "mo:base/Time";
-import Debug "mo:base/Debug";
 import Blob "mo:base/Blob";
 import CertifiedCache "mo:certified-cache";
 import GameHandler "GameHandler";
@@ -112,7 +111,6 @@ module {
             // etagResponseCache.put(req.url, eTagBlob, ?two_days_in_nanos);
 
             if (hasEtagCacheHeader(req, etag)) {
-                Debug.print("ETag cache hit and request has ETag header");
                 return {
                     status_code = 304;
                     headers = [

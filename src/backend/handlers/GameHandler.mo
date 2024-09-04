@@ -14,7 +14,6 @@ import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
 import Int "mo:base/Int";
 import Order "mo:base/Order";
-import Location "../models/Location";
 import Scenario "../models/entities/Scenario";
 import Character "../models/Character";
 import IterTools "mo:itertools/Iter";
@@ -27,7 +26,6 @@ import Race "../models/entities/Race";
 import Outcome "../models/Outcome";
 import Image "../models/Image";
 import Zone "../models/entities/Zone";
-import HexGrid "../models/HexGrid";
 import Achievement "../models/entities/Achievement";
 import UserHandler "UserHandler";
 import Creature "../models/entities/Creature";
@@ -77,13 +75,25 @@ module {
     public type InProgressData = {
         scenarios : [Scenario.Scenario];
         character : Character.Character;
-        turn : Nat;
-        locations : [Location.Location];
+        zoneIds : [Text]; // Last is current zone
+        turnKind : TurnKind;
+    };
+
+    public type TurnKind = {
+        #scenario : ScenarioTurn;
+        #combat : CombatTurn;
+    };
+
+    public type ScenarioTurn = {
+        scenarioId : Nat;
+    };
+
+    public type CombatTurn = {
+
     };
 
     public type CompletedData = {
         endTime : Time.Time;
-        turns : Nat;
         character : Character.Character;
         victory : Bool;
     };
@@ -113,13 +123,11 @@ module {
     };
 
     public type InProgressGameStateWithMetaData = {
-        turn : Nat;
-        locations : [Location.Location];
         character : CharacterWithMetaData;
+        turnKind : TurnKind;
     };
 
     public type CompletedGameStateWithMetaData = {
-        turns : Nat;
         character : CharacterWithMetaData;
         endTime : Time.Time;
         victory : Bool;
@@ -353,7 +361,6 @@ module {
                 };
                 case (#inProgress(inProgress)) {
                     {
-                        turns = inProgress.turn;
                         character = toCharacterWithMetaData(inProgress.character);
                         endTime = Time.now();
                         victory = false;
@@ -361,7 +368,6 @@ module {
                 };
                 case (#completed(completed)) {
                     {
-                        turns = completed.turns;
                         character = toCharacterWithMetaData(completed.character);
                         endTime = completed.endTime;
                         victory = completed.victory;
@@ -429,12 +435,7 @@ module {
                 id = scenarioId;
                 outcome = null;
             };
-            let location : Location.Location = {
-                id = 0;
-                coordinate = { q = 0; r = 0 };
-                scenarioId = scenarioId;
-                zoneId = zoneId;
-            };
+            let turnKind = #scenario({ scenarioId });
             playerDataList.put(
                 playerId,
                 {
@@ -443,10 +444,10 @@ module {
                         instance with
                         state = #inProgress(
                             {
+                                zoneIds = [zoneId];
                                 character = character;
                                 scenarios = [scenario];
-                                turn = 0;
-                                locations = [location];
+                                turnKind = turnKind;
                             } : InProgressData
                         );
                     } : ?GameInstance
@@ -460,17 +461,16 @@ module {
             playerId : Principal,
             userHandler : UserHandler.Handler,
             choiceId : Text,
-        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice; #choiceRequirementNotMet }> {
+        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice; #choiceRequirementNotMet; #notScenarioTurn }> {
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
 
-            let currentLocation = getCharacterLocation(inProgressInstance);
-
+            let #scenario({ scenarioId }) = inProgressInstance.turnKind else return #err(#notScenarioTurn);
             let ?scenario = Array.find(
                 inProgressInstance.scenarios,
-                func(s : Scenario.Scenario) : Bool = s.id == currentLocation.scenarioId,
-            ) else Debug.trap("Scenario not found: " # Nat.toText(currentLocation.scenarioId));
+                func(s : Scenario.Scenario) : Bool = s.id == scenarioId,
+            ) else Debug.trap("Scenario not found: " # Nat.toText(scenarioId));
             let ?scenarioMetaData = scenarioMetaDataList.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
 
             let characterHandler = CharacterHandler.Handler(inProgressInstance.character);
@@ -521,14 +521,11 @@ module {
             };
             let updatedGame : GameInstance = switch (result.kind) {
                 case (#inProgress) {
-                    switch (nextLocation(prng, updatedInProgressState)) {
+                    switch (nextScenarioOrEnd(prng, updatedInProgressState)) {
                         case (?updatedInProgressState) {
                             {
                                 updatedInstance with
-                                state = #inProgress({
-                                    updatedInProgressState with
-                                    turn = inProgressInstance.turn + 1;
-                                });
+                                state = #inProgress(updatedInProgressState);
                             };
                         };
                         case (null) {
@@ -536,7 +533,6 @@ module {
                                 updatedInstance with
                                 state = #completed({
                                     endTime = Time.now();
-                                    turns = updatedInProgressState.turn;
                                     character = updatedInProgressState.character;
                                     victory = true;
                                 });
@@ -549,7 +545,6 @@ module {
                         updatedInstance with
                         state = #completed({
                             endTime = Time.now();
-                            turns = updatedInProgressState.turn;
                             character = updatedInProgressState.character;
                             victory = false;
                         });
@@ -768,26 +763,15 @@ module {
 
         // ------------------ Private ------------------
 
-        private func getCharacterLocation(inProgressInstance : InProgressData) : Location.Location {
-            inProgressInstance.locations.get(inProgressInstance.locations.size() - 1);
-        };
-
-        private func nextLocation(
+        private func nextScenarioOrEnd(
             prng : Prng,
             inProgressInstance : InProgressData,
         ) : ?InProgressData {
-            let currentLocation = getCharacterLocation(inProgressInstance);
 
-            let nextCoordinate = {
-                q = currentLocation.coordinate.q + 1; // Move right
-                r = currentLocation.coordinate.r;
-            };
             // TOOD how to change zones
             let scenariosPerZone = 10;
-            let zoneId = if (inProgressInstance.locations.size() % scenariosPerZone == 0) {
-                let exploredZoneIds = inProgressInstance.locations.vals()
-                |> Iter.map<Location.Location, Text>(_, func(location : Location.Location) = location.zoneId)
-                |> Iter.toArray(_)
+            let zoneId = if (inProgressInstance.scenarios.size() % scenariosPerZone == 0) {
+                let exploredZoneIds = inProgressInstance.zoneIds
                 |> TrieSet.fromArray<Text>(_, Text.hash, Text.equal);
 
                 let unexploredZones = zones.vals()
@@ -798,7 +782,7 @@ module {
                 };
                 prng.nextArrayElement(unexploredZones).id;
             } else {
-                currentLocation.zoneId;
+                inProgressInstance.zoneIds[inProgressInstance.zoneIds.size() - 1]; // Last zone is 'current'
             };
             let newScenarioId = inProgressInstance.scenarios.size(); // TODO?
             let newScenario = {
@@ -807,16 +791,9 @@ module {
                 outcome = null;
             };
 
-            let nextLocation = {
-                id = HexGrid.axialCoordinateToIndex(nextCoordinate);
-                coordinate = nextCoordinate;
-                scenarioId = newScenarioId;
-                zoneId = zoneId;
-            };
             ?{
                 inProgressInstance with
                 scenarios = Array.append(inProgressInstance.scenarios, [newScenario]);
-                locations = Array.append(inProgressInstance.locations, [nextLocation]);
             };
         };
 
@@ -901,16 +878,13 @@ module {
                 case (#inProgress(inProgress)) {
                     let character = toCharacterWithMetaData(inProgress.character);
                     #inProgress({
-                        turn = inProgress.turn;
-                        locations = inProgress.locations;
                         character;
+                        turnKind = inProgress.turnKind;
                     });
                 };
                 case (#completed(completed)) {
-                    let turns = completed.turns;
                     let character = toCharacterWithMetaData(completed.character);
                     #completed({
-                        turns;
                         character;
                         endTime = completed.endTime;
                         victory = completed.victory;

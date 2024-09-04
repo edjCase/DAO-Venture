@@ -13,7 +13,6 @@ export type AttackResult = { 'hit' : HitResult } |
   { 'miss' : null };
 export type AttackerKind = { 'creature' : null } |
   { 'character' : null };
-export interface AxialCoordinate { 'q' : bigint, 'r' : bigint }
 export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
@@ -95,8 +94,8 @@ export interface CombatTurn {
   'attacker' : AttackerKind,
   'attacks' : Array<AttackResult>,
 }
+export type CombatTurn__1 = {};
 export interface CompletedGameStateWithMetaData {
-  'turns' : bigint,
   'endTime' : Time,
   'character' : CharacterWithMetaData,
   'victory' : boolean,
@@ -104,7 +103,6 @@ export interface CompletedGameStateWithMetaData {
 export interface CompletedGameWithMetaData {
   'id' : bigint,
   'startTime' : Time,
-  'turns' : bigint,
   'endTime' : Time,
   'character' : CharacterWithMetaData,
   'difficulty' : Difficulty,
@@ -252,9 +250,8 @@ export interface Image {
 }
 export type ImageKind = { 'png' : null };
 export interface InProgressGameStateWithMetaData {
+  'turnKind' : TurnKind,
   'character' : CharacterWithMetaData,
-  'turn' : bigint,
-  'locations' : Array<Location>,
 }
 export interface Item {
   'id' : string,
@@ -262,12 +259,6 @@ export interface Item {
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
   'image' : PixelImage,
-}
-export interface Location {
-  'id' : bigint,
-  'scenarioId' : bigint,
-  'coordinate' : AxialCoordinate,
-  'zoneId' : string,
 }
 export type LocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
@@ -384,11 +375,12 @@ export interface ScenarioMetaData {
   'choices' : Array<Choice>,
   'location' : LocationKind,
 }
+export interface ScenarioTurn { 'scenarioId' : bigint }
 export type SelectScenarioChoiceError = { 'invalidChoice' : null } |
   { 'gameNotFound' : null } |
   { 'gameNotActive' : null } |
-  { 'scenarioNotFound' : null } |
-  { 'choiceRequirementNotMet' : null };
+  { 'choiceRequirementNotMet' : null } |
+  { 'notScenarioTurn' : null };
 export interface SelectScenarioChoiceRequest { 'choiceId' : string }
 export type SelectScenarioChoiceResult = { 'ok' : null } |
   { 'err' : SelectScenarioChoiceError };
@@ -424,6 +416,8 @@ export interface Trait {
   'unlockRequirement' : [] | [UnlockRequirement],
   'image' : PixelImage,
 }
+export type TurnKind = { 'scenario' : ScenarioTurn } |
+  { 'combat' : CombatTurn__1 };
 export type UnlockRequirement = { 'acheivementId' : string };
 export interface User {
   'id' : Principal,

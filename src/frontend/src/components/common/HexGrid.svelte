@@ -1,7 +1,5 @@
 <script lang="ts" context="module">
   export interface HexTileData {
-    id: number;
-    kind: HexTileKind;
     coordinate: AxialCoordinate;
   }
 </script>
@@ -12,13 +10,13 @@
   import { cubicOut } from "svelte/easing";
   import HexTile, {
     AxialCoordinate,
-    HexTileKind,
+    coordinateEquals,
     getHexPolygonPoints,
   } from "./HexTile.svelte";
 
   export let gridData: HexTileData[];
   export let hexSize: number = 20;
-  export let selectedTileId: number | undefined;
+  export let selectedTile: AxialCoordinate | undefined;
   export let onClick: (coord: AxialCoordinate) => void = () => {};
 
   let svg: SVGSVGElement;
@@ -50,7 +48,6 @@
   function centerOnHex(hexData: HexTileData) {
     const hexX = hexToPixelX(hexData.coordinate.q, hexData.coordinate.r);
     panX.set(hexX); // This will trigger a smooth animation
-    selectedTileId = hexData.id;
   }
 
   onMount(() => {
@@ -95,21 +92,26 @@
     // Snap to nearest hex with animation
     const nearestHex = findNearestHex($panX);
     centerOnHex(nearestHex);
+    selectedTile = nearestHex.coordinate;
   }
 
-  let handleOnClickTile = (tileId: number) => (coord: AxialCoordinate) => {
-    selectedTileId = tileId;
+  let handleOnClickTile = (coord: AxialCoordinate) => {
+    selectedTile = coord;
     onClick(coord);
 
-    const selectedHex = gridData.find((tile) => tile.id === tileId);
+    const selectedHex = gridData.find((tile) =>
+      coordinateEquals(tile.coordinate, selectedTile!)
+    );
     if (selectedHex) {
       centerOnHex(selectedHex);
     }
   };
 
   // Watch for changes in selectedTileId
-  $: if (selectedTileId !== undefined) {
-    const selectedHex = gridData.find((tile) => tile.id === selectedTileId);
+  $: if (selectedTile !== undefined) {
+    const selectedHex = gridData.find((tile) =>
+      coordinateEquals(tile.coordinate, selectedTile!)
+    );
     if (selectedHex) {
       centerOnHex(selectedHex);
     }
@@ -122,33 +124,29 @@
       {#each gridData as tile}
         <HexTile
           coordinate={tile.coordinate}
-          kind={tile.kind}
-          id={tile.id}
           {hexSize}
-          onClick={handleOnClickTile(tile.id)}
-          selected={selectedTileId == tile.id}
+          onClick={handleOnClickTile}
+          selected={coordinateEquals(
+            tile.coordinate,
+            selectedTile || { q: 0, r: 0 }
+          )}
         >
-          <slot id={tile.id} />
+          <slot coordinate={tile.coordinate} />
         </HexTile>
       {/each}
       <!-- Draw a white border around the selected tile LAST -->
-      {#if selectedTileId !== undefined}
-        {@const selectedTile = gridData.find(
-          (tile) => tile.id === selectedTileId
-        )}
-        {#if selectedTile !== undefined}
-          <polygon
-            points={getHexPolygonPoints(hexSize, selectedTile.coordinate)}
-            fill="none"
-            stroke="white"
-            stroke-width="3"
-            pointer-events="none"
-          />
-        {/if}
+      {#if selectedTile !== undefined}
+        <polygon
+          points={getHexPolygonPoints(hexSize, selectedTile)}
+          fill="none"
+          stroke="white"
+          stroke-width="3"
+          pointer-events="none"
+        />
       {/if}
     </g>
   </svg>
-  {#if selectedTileId !== undefined}
-    <slot name="tileInfo" selectedTile={selectedTileId} />
+  {#if selectedTile !== undefined}
+    <slot name="tileInfo" />
   {/if}
 </div>
