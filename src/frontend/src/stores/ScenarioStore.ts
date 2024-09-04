@@ -12,7 +12,7 @@ export const scenarioStore = (() => {
         ($currentGame, set) => {
             if ($currentGame) {
                 mainAgentFactory().then(mainAgent => {
-                    mainAgent.getScenarios({ gameId: $currentGame.id })
+                    mainAgent.getScenarios()
                         .then(result => {
                             if ('ok' in result) {
                                 set(result.ok);
@@ -31,10 +31,9 @@ export const scenarioStore = (() => {
 
     return {
         subscribe: derivedScenarioStore.subscribe,
-        refetchById: async (gameId: bigint, id: bigint) => {
+        refetchById: async (id: bigint) => {
             const mainAgent = await mainAgentFactory();
             const result = await mainAgent.getScenario({
-                gameId: gameId,
                 scenarioId: id
             });
             if ('ok' in result) {
@@ -49,11 +48,9 @@ export const scenarioStore = (() => {
                 console.error("Failed to get scenario " + id, result.err)
             }
         },
-        refetchByGameId: async (gameId: bigint) => {
+        refetch: async () => {
             const mainAgent = await mainAgentFactory();
-            const result = await mainAgent.getScenarios({
-                gameId
-            });
+            const result = await mainAgent.getScenarios();
             if ('ok' in result) {
                 set(result.ok);
             } else {

@@ -8,7 +8,6 @@
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import Dao from "./routes/Dao.svelte";
   import Navbar from "./components/common/Navbar.svelte";
-  import JoinGame from "./routes/JoinGame.svelte";
 </script>
 
 <Router>
@@ -18,7 +17,6 @@
       <Route path="/" component={Home} />
       <Route path="/dao" component={Dao} />
       <Route path="/profile" component={UserProfile} />
-      <Route path="/join/:gameIdString" component={JoinGame} />
       <Route path="/how-to-play" component={HowToPlay} />
       <Route path="/about" component={About} />
       <Route path="*" component={NotFound} />

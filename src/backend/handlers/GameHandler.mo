@@ -13,6 +13,7 @@ import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
 import Int "mo:base/Int";
+import Order "mo:base/Order";
 import Location "../models/Location";
 import Scenario "../models/entities/Scenario";
 import Character "../models/Character";
@@ -31,6 +32,7 @@ import Achievement "../models/entities/Achievement";
 import UserHandler "UserHandler";
 import Creature "../models/entities/Creature";
 import Weapon "../models/entities/Weapon";
+import CommonTypes "../CommonTypes";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -453,7 +455,7 @@ module {
             #ok;
         };
 
-        public func endTurn(
+        public func selectScenarioChoice(
             prng : Prng,
             playerId : Principal,
             userHandler : UserHandler.Handler,
@@ -564,10 +566,39 @@ module {
             #ok;
         };
 
-        public func getInstance(playerId : Principal) : ?GameWithMetaData {
+        public func getActiveInstance(playerId : Principal) : ?GameWithMetaData {
             let ?playerData = playerDataList.get(playerId) else return null;
             let ?instance = playerData.activeGame else return null;
             ?toInstanceWithMetaData(playerId, instance);
+        };
+
+        public func getCompletedGames(
+            playerId : Principal,
+            offset : Nat,
+            count : Nat,
+        ) : CommonTypes.PagedResult<CompletedGameWithMetaData> {
+
+            let ?playerData = playerDataList.get(playerId) else return {
+                data = [];
+                offset = 0;
+                count = 0;
+                totalCount = 0;
+            };
+            let totalSize = playerData.completedGames.size();
+            let data = playerData.completedGames.vals()
+            |> IterTools.sort(
+                _,
+                func(a : CompletedGameWithMetaData, b : CompletedGameWithMetaData) : Order.Order = Int.compare(b.startTime, a.startTime),
+            )
+            |> IterTools.skip(_, offset)
+            |> IterTools.take(_, count)
+            |> Iter.toArray(_);
+            {
+                data = data;
+                offset = offset;
+                count = count;
+                totalCount = totalSize;
+            };
         };
 
         public func addOrUpdateItem(item : Item.Item) : Result.Result<(), { #invalid : [Text] }> {

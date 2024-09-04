@@ -1,19 +1,24 @@
 <script lang="ts">
   import {
     CompletedGameStateWithMetaData,
+    Difficulty,
     GameWithMetaData,
   } from "../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
-  import DifficultyBadge from "../common/DifficultyBadge.svelte";
   import LoadingButton from "../common/LoadingButton.svelte";
+  import DifficultyChooser from "./DifficultyChooser.svelte";
 
   export let game: GameWithMetaData;
   export let state: CompletedGameStateWithMetaData;
 
+  let difficulty: Difficulty = game.difficulty;
+
   let createGame = async () => {
     let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.createGame();
+    let result = await mainAgent.createGame({
+      difficulty: difficulty,
+    });
     if ("ok" in result) {
       currentGameStore.refetch();
     } else {
@@ -24,8 +29,6 @@
 
 <div>Game over</div>
 <div>Total Turns: {state.turns}</div>
-<div>
-  Difficulty: <DifficultyBadge value={game.difficulty} />
-</div>
 
+<DifficultyChooser bind:value={difficulty} />
 <LoadingButton onClick={createGame}>Create New Game</LoadingButton>

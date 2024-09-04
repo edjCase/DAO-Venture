@@ -23,13 +23,13 @@ module {
         voteOnWorldProposal : VoteOnWorldProposalRequest -> async VoteOnWorldProposalResult;
 
         createGame : (request : CreateGameRequest) -> async CreateGameResult;
+        startGame : (request : StartGameRequest) -> async StartGameResult;
         selectScenarioChoice : (request : SelectScenarioChoiceRequest) -> async SelectScenarioChoiceResult;
         abandonGame : () -> async AbandonGameResult;
-        getGame : query (request : GetGameRequest) -> async GetGameResult;
         getCurrentGame : query () -> async GetCurrentGameResult;
-        getCompletedGames : query () -> async [GameHandler.CompletedGameWithMetaData];
+        getCompletedGames : query (request : GetCompletedGamesRequest) -> async CommonTypes.PagedResult<GameHandler.CompletedGameWithMetaData>;
         getScenario : query (request : GetScenarioRequest) -> async GetScenarioResult;
-        getScenarios : query (request : GetScenariosRequest) -> async GetScenariosResult;
+        getScenarios : query () -> async GetScenariosResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
@@ -43,7 +43,18 @@ module {
         getItems : query () -> async [Item.Item];
     };
 
-    public type AbandonGameResult = Result.Result<(), { #gameNotFound; #notAuthorized; #gameComplete }>;
+    public type StartGameRequest = {
+        characterId : Nat;
+    };
+
+    public type StartGameResult = Result.Result<(), { #alreadyStarted; #gameNotFound; #invalidCharacterId }>;
+
+    public type GetCompletedGamesRequest = {
+        count : Nat;
+        offset : Nat;
+    };
+
+    public type AbandonGameResult = Result.Result<(), { #noActiveGame }>;
     public type GetGameRequest = {
         gameId : Nat;
     };
@@ -54,7 +65,7 @@ module {
     public type CreateGameRequest = {
         difficulty : GameHandler.Difficulty;
     };
-    public type CreateGameResult = Result.Result<Nat, GameHandler.CreateGameError>;
+    public type CreateGameResult = Result.Result<(), GameHandler.CreateGameError>;
 
     public type VoteOnNewGameRequest = {
         playerId : Principal;
@@ -69,8 +80,6 @@ module {
     };
 
     public type RegisterResult = Result.Result<UserHandler.User, RegisterError>;
-
-    public type GetScenariosRequest = {};
 
     public type GetScenariosResult = Result.Result<[Scenario], GetScenariosError>;
 

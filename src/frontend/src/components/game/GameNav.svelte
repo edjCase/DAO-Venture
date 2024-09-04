@@ -1,9 +1,7 @@
 <script lang="ts">
-  import { Principal } from "@dfinity/principal";
   import {
     CharacterWithMetaData,
     GameWithMetaData,
-    User,
   } from "../../ic-agent/declarations/main";
   import LoadingButton from "../common/LoadingButton.svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
@@ -13,13 +11,10 @@
   import CharacterInventory from "../character/CharacterInventory.svelte";
   import CharacterTraits from "../character/CharacterTraits.svelte";
   export let game: GameWithMetaData;
-  export let user: User;
-
-  $: isHost = game.hostUserId.toString() === user.id.toString();
 
   let cancelGame = async () => {
     let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.abandonGame(game.id);
+    let result = await mainAgent.abandonGame();
     if ("ok" in result) {
       currentGameStore.refetch();
     } else {
@@ -27,18 +22,6 @@
     }
   };
 
-  let kick = (guestUserId: Principal) => async () => {
-    let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.kickPlayer({
-      gameId: game.id,
-      playerId: guestUserId,
-    });
-    if ("ok" in result) {
-      currentGameStore.refetch();
-    } else {
-      console.error("Failed to kick user", result);
-    }
-  };
   let character: CharacterWithMetaData | undefined;
   $: {
     if ("inProgress" in game.state) {
@@ -59,13 +42,9 @@
   <DotsVerticalOutline class="dots-menu dark:text-white float-right " />
   <Dropdown triggeredBy=".dots-menu">
     <DropdownItem>
-      {#if isHost}
-        <LoadingButton color="red" onClick={cancelGame}>
-          Cancel Game
-        </LoadingButton>
-      {:else}
-        <LoadingButton color="red" onClick={kick(user.id)}>Leave</LoadingButton>
-      {/if}
+      <LoadingButton color="red" onClick={cancelGame}>
+        Cancel Game
+      </LoadingButton>
     </DropdownItem>
   </Dropdown>
 </div>

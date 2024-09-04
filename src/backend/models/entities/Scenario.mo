@@ -33,7 +33,6 @@ module {
         data : [GeneratedDataField];
         choices : [Choice];
         paths : [OutcomePath];
-        undecidedPathId : Text;
         category : ScenarioCategory;
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
@@ -424,10 +423,6 @@ module {
             if (pathIdMap.get(choice.pathId) == null) {
                 errors.add("Invalid pathId in choice: " # choice.pathId);
             };
-        };
-
-        if (pathIdMap.get(metaData.undecidedPathId) == null) {
-            errors.add("Invalid undecidedPathId: " # metaData.undecidedPathId);
         };
 
         for (path in metaData.paths.vals()) {

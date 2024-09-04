@@ -10,7 +10,6 @@ import UserHandler "../handlers/UserHandler";
 import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
 import Proposal "mo:dao-proposal-engine/Proposal";
 import Result "mo:base/Result";
-import Prelude "mo:base/Prelude";
 import Random "mo:base/Random";
 import Buffer "mo:base/Buffer";
 import TextX "mo:xtended-text/TextX";
@@ -31,10 +30,10 @@ actor MainActor : Types.Actor {
     // Stables ---------------------------------------------------------
 
     stable var gameStableData : GameHandler.StableData = {
-        instances = [];
+        playerDataList = [];
         classes = [];
         races = [];
-        scenarios = [];
+        scenarioMetaDataList = [];
         items = [];
         traits = [];
         images = [];
@@ -162,8 +161,13 @@ actor MainActor : Types.Actor {
         gameHandler.createInstance(prng, caller, request.difficulty);
     };
 
-    public shared ({ caller }) func abandonGame(gameId : Nat) : async Types.AbandonGameResult {
-        gameHandler.abandon(gameId, caller);
+    public shared ({ caller }) func startGame(request : Types.StartGameRequest) : async Types.StartGameResult {
+        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
+        gameHandler.startGame<system>(prng, caller, request.characterId);
+    };
+
+    public shared ({ caller }) func abandonGame() : async Types.AbandonGameResult {
+        gameHandler.abandon(caller);
     };
 
     public shared ({ caller }) func register() : async Types.RegisterResult {
@@ -203,47 +207,25 @@ actor MainActor : Types.Actor {
     };
 
     public query ({ caller }) func getScenario(request : Types.GetScenarioRequest) : async Types.GetScenarioResult {
-        switch (gameHandler.getScenario(request.gameId, request.scenarioId)) {
-            case (#ok(scenario)) #ok(mapScenario(request.gameId, caller, scenario));
-            case (#err(err)) return #err(err);
-        };
+        gameHandler.getScenario(caller, request.scenarioId);
     };
 
-    public query ({ caller }) func getScenarios(request : Types.GetScenariosRequest) : async Types.GetScenariosResult {
-        switch (gameHandler.getScenarios(request.gameId)) {
-            case (#err(err)) return #err(err);
-            case (#ok(scenarios)) {
-                let mappedScenarios = scenarios.vals()
-                |> Iter.map(
-                    _,
-                    func(scenario : GameHandler.ScenarioWithMetaData) : Types.Scenario = mapScenario(request.gameId, caller, scenario),
-                )
-                |> Iter.toArray(_);
-                #ok(mappedScenarios);
-            };
-        };
+    public query ({ caller }) func getScenarios() : async Types.GetScenariosResult {
+        gameHandler.getScenarios(caller);
     };
 
     public shared ({ caller }) func selectScenarioChoice(request : Types.SelectScenarioChoiceRequest) : async Types.SelectScenarioChoiceResult {
-        switch (gameHandler.selectScenarioChoice(request.gameId, request.scenarioId, caller, request.value)) {
-            case (#ok(null)) ();
-            case (#ok(?choice)) {
-                let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
-                switch (gameHandler.endTurn(prng, request.gameId, userHandler, ?choice)) {
-                    case (#ok) ();
-                    case (#err(#gameNotFound)) Prelude.unreachable();
-                    case (#err(#gameNotActive)) Prelude.unreachable();
-                };
-            };
-            case (#err(error)) return #err(error);
-        };
-        #ok;
-    };
-
-    public shared query func getGame(request : Types.GetGameRequest) : async Types.GetGameResult {
-        switch (gameHandler.getInstance(caller, request.gameId)) {
-            case (?game) #ok(game);
-            case (null) return #err(#gameNotFound);
+        let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
+        switch (
+            gameHandler.selectScenarioChoice(
+                prng,
+                caller,
+                userHandler,
+                request.choiceId,
+            )
+        ) {
+            case (#ok) #ok;
+            case (#err(err)) #err(err);
         };
     };
 
@@ -252,11 +234,12 @@ actor MainActor : Types.Actor {
             return #err(#notAuthenticated);
         };
 
-        #ok(gameHandler.getCurrentInstance(caller));
+        let game = gameHandler.getActiveInstance(caller);
+        #ok(game);
     };
 
-    public shared query ({ caller }) func getCompletedGames() : async [GameHandler.CompletedGameWithMetaData] {
-        gameHandler.getCompletedInstances(caller);
+    public shared query ({ caller }) func getCompletedGames(request : Types.GetCompletedGamesRequest) : async CommonTypes.PagedResult<GameHandler.CompletedGameWithMetaData> {
+        gameHandler.getCompletedGames(caller, request.offset, request.count);
     };
 
     public shared query func getUser(userId : Principal) : async Types.GetUserResult {
@@ -310,24 +293,6 @@ actor MainActor : Types.Actor {
     };
 
     // Private Methods ---------------------------------------------------------
-
-    private func mapScenario(
-        gameId : Nat,
-        voterId : Principal,
-        scenario : GameHandler.ScenarioWithMetaData,
-    ) : Types.Scenario {
-
-        let voteData = switch (getScenarioVoteInternal(gameId, voterId, scenario.id)) {
-            case (#ok(voteData)) voteData;
-            case (#err(#gameNotFound)) Prelude.unreachable();
-            case (#err(#gameNotActive)) Prelude.unreachable();
-            case (#err(#scenarioNotFound)) Prelude.unreachable();
-        };
-        {
-            scenario with
-            voteData = voteData;
-        };
-    };
 
     private func buildVotingMembersList() : [Proposal.Member] {
         userHandler.getAll().vals()

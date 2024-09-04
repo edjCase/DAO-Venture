@@ -24,14 +24,12 @@
       return;
     }
     let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.voteOnScenario({
-      gameId: currentGame.id,
-      scenarioId: scenarioId,
-      value: optionId,
+    let result = await mainAgent.selectScenarioChoice({
+      choiceId: optionId,
     });
     if ("ok" in result) {
       console.log("Voted successfully");
-      scenarioStore.refetchByGameId(currentGame.id);
+      scenarioStore.refetch();
       currentGameStore.refetch();
     } else {
       console.error("Failed to vote:", result);
@@ -44,7 +42,7 @@
       if (currentGame === undefined) {
         return;
       }
-      scenarioStore.refetchByGameId(currentGame.id);
+      scenarioStore.refetch();
     }, 3000);
   });
 
@@ -74,11 +72,7 @@
             {#each scenario.metaData.choices as option}
               {#if scenario.availableChoiceIds.includes(option.id)}
                 <li>
-                  <ScenarioOption
-                    {option}
-                    vote={scenario.voteData}
-                    onSelect={vote}
-                  />
+                  <ScenarioOption {option} selected={false} onSelect={vote} />
                 </li>
               {/if}
             {/each}
@@ -86,20 +80,14 @@
         </div>
       </div>
     {:else}
-      {@const choiceOrUndecided = scenario.outcome[0]?.choiceOrUndecided[0]}
+      {@const choiceId = scenario.outcome[0].choiceId}
+      {@const option = scenario.metaData.choices.find((c) => c.id == choiceId)}
       <div class="text-3xl text-primary-500">Choice</div>
       <div class="text-xl">
-        {#if choiceOrUndecided !== undefined}
-          {@const option = scenario.metaData.choices.find(
-            (c) => c.id == choiceOrUndecided
-          )}
-          {#if option !== undefined}
-            {option.description}
-          {:else}
-            COULD NOT FIND OPTION {choiceOrUndecided}
-          {/if}
+        {#if option !== undefined}
+          {option.description}
         {:else}
-          Undecided...
+          COULD NOT FIND OPTION {choiceId}
         {/if}
       </div>
       <div class="text-3xl text-primary-500">Outcome</div>

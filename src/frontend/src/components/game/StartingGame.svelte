@@ -1,8 +1,7 @@
 <script lang="ts">
   import {
     GameWithMetaData,
-    User,
-    VotingGameStateWithMetaData,
+    StartingGameStateWithMetaData,
   } from "../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
@@ -11,16 +10,14 @@
   import GenericOption from "../common/GenericOption.svelte";
 
   export let game: GameWithMetaData;
-  export let user: User;
-  export let state: VotingGameStateWithMetaData;
+  export let state: StartingGameStateWithMetaData;
 
-  let characterId: string | undefined = undefined;
-  let vote = (optionId: string) => async () => {
-    characterId = optionId;
+  let characterId: number | undefined = undefined;
+  let selectCharacter = (id: number) => async () => {
+    characterId = id;
     let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.voteOnNewGame({
-      gameId: game.id,
-      characterId: characterId,
+    let result = await mainAgent.startGame({
+      characterId: BigInt(characterId),
     });
     if ("ok" in result) {
       currentGameStore.refetch();
@@ -30,15 +27,15 @@
   };
 </script>
 
-<GameNav {game} {user}>
+<GameNav {game}>
   <div class="text-3xl">Pick character</div>
   <div class="flex flex-col p-8">
     {#each state.characterOptions as character, id}
+      {@const selected = characterId === id}
       <GenericOption
-        optionId={id.toString()}
-        choice={characterId?.toString()}
-        vote={state.characterVotes}
-        onSelect={vote(id.toString())}
+        choiceId={id.toString()}
+        {selected}
+        onSelect={selectCharacter(id)}
       >
         <CharacterAvatar size="lg" {character} />
         <div class="flex-grow">

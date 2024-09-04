@@ -171,7 +171,6 @@
     <div>Category: {toJsonString(content.scenario.category)}</div>
     <div>Image Id: {content.scenario.imageId}</div>
     <div>Location: {toJsonString(content.scenario.location)}</div>
-    <div>Undecided Path Id: {content.scenario.undecidedPathId}</div>
     <div>
       Paths:
       {#each content.scenario.paths as path}

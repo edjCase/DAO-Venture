@@ -11,9 +11,7 @@
   let character: CharacterWithMetaData | undefined;
   $: {
     if (currentGame !== undefined) {
-      if ("notStarted" in currentGame.state) {
-        character = undefined;
-      } else if ("voting" in currentGame.state) {
+      if ("starting" in currentGame.state) {
         character = undefined;
       } else if ("inProgress" in currentGame.state) {
         character = currentGame.state.inProgress.character;
