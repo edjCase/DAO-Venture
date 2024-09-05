@@ -13,11 +13,10 @@ module {
         var health : Nat;
         var maxHealth : Nat;
         var shield : Nat;
-        var gold : Nat;
         var statusEffects : Buffer.Buffer<ActionResult.StatusEffectResult>;
     };
 
-    public func calculateAction(
+    public func calculateActionResult(
         prng : Prng,
         actionSource : ActionResult.ActionTargetResult,
         action : Action.Action,
@@ -55,8 +54,16 @@ module {
                 };
                 case (#chosen) {
                     switch (chosenTarget) {
-                        case (null) return #err(#targetRequired);
                         case (?target) [target];
+                        case (null) {
+                            switch (actionSource) {
+                                case (#character) return #err(#targetRequired);
+                                case (#creature(_)) {
+                                    // Creatures select randomly from all valid targets
+                                    [prng.nextBufferElement(allValidTargets)];
+                                };
+                            };
+                        };
                     };
                 };
             };
@@ -72,21 +79,36 @@ module {
         });
     };
 
-    public func tickEffects(stats : [CombatStats]) : () {
+    public func triggerEffects(stats : [CombatStats], phase : Action.TurnPhase) : () {
         for (combatStats in stats.vals()) {
-            let currentEffects = combatStats.statusEffects;
-            let newEffects = Buffer.Buffer<ActionResult.StatusEffectResult>(currentEffects.size());
-
-            for (effect in currentEffects.vals()) {
-                switch (effect.remainingTurns) {
-                    case (0) (); // Remove (not add) the effect
-                    case (remainingTurns) {
-                        // Decrement the remaining turns and keep the effect
-                        newEffects.add({
-                            kind = effect.kind;
-                            remainingTurns = remainingTurns - 1;
-                        });
+            for (effect in combatStats.statusEffects.vals()) {
+                switch (effect.kind) {
+                    case (#vulnerable or #weak or #stunned or #retaliating(_)) (); // No direct effect to trigger
+                    case (#periodic(periodic)) {
+                        if (periodic.phase == phase) {
+                            switch (periodic.kind) {
+                                case (#damage) applyDamage(combatStats, periodic.amount);
+                                case (#heal) applyHeal(combatStats, periodic.amount);
+                                case (#block) applyBlock(combatStats, periodic.amount);
+                            };
+                        };
                     };
+                };
+            };
+        };
+    };
+
+    public func decrementEffectTurns(stats : [CombatStats]) : () {
+        for (combatStats in stats.vals()) {
+            let newEffects = Buffer.Buffer<ActionResult.StatusEffectResult>(combatStats.statusEffects.size());
+
+            for (effect in combatStats.statusEffects.vals()) {
+                if (effect.remainingTurns > 0) {
+                    // Decrement the remaining turns and keep the effect
+                    newEffects.add({
+                        kind = effect.kind;
+                        remainingTurns = effect.remainingTurns - 1;
+                    });
                 };
             };
 
@@ -94,7 +116,7 @@ module {
         };
     };
 
-    public func applyAction(
+    public func applyActionResult(
         character : CombatStats,
         creatures : [CombatStats],
         action : ActionResult.ActionResult,
@@ -106,25 +128,28 @@ module {
                     case (#character) character;
                 };
                 switch (effect.kind) {
-                    case (#damage(damageResult)) applyDamage(stats, damageResult);
-                    case (#block(blockResult)) applyBlock(stats, blockResult);
-                    case (#heal(healResult)) applyHeal(stats, healResult);
+                    case (#damage(damage)) {
+
+                        applyDamage(stats, damage);
+                    };
+                    case (#block(block)) applyBlock(stats, block);
+                    case (#heal(heal)) applyHeal(stats, heal);
                     case (#addStatusEffect(statusEffectResult)) applyStatusEffect(stats, statusEffectResult);
                 };
             };
         };
     };
 
-    private func applyDamage(stats : CombatStats, damageResult : ActionResult.DamageResult) : () {
-        stats.health := subtractNatSafe(stats.health, damageResult.amount);
+    private func applyDamage(stats : CombatStats, amount : Nat) : () {
+        stats.health := subtractNatSafe(stats.health, amount);
     };
 
-    private func applyBlock(stats : CombatStats, blockResult : ActionResult.BlockResult) : () {
-        stats.shield += blockResult.amount;
+    private func applyBlock(stats : CombatStats, amount : Nat) : () {
+        stats.shield += amount;
     };
 
-    private func applyHeal(stats : CombatStats, healResult : ActionResult.HealResult) : () {
-        stats.health := Nat.min(stats.health + healResult.amount, stats.maxHealth);
+    private func applyHeal(stats : CombatStats, amount : Nat) : () {
+        stats.health := Nat.min(stats.health + amount, stats.maxHealth);
     };
 
     private func applyStatusEffect(stats : CombatStats, statusEffectResult : ActionResult.StatusEffectResult) : () {
@@ -139,18 +164,22 @@ module {
     };
 
     private func calculateDamage(prng : Prng, damage : Action.Damage) : ActionResult.ActionEffectKindResult {
-        let amount = prng.nextNat(damage.min, damage.max);
-        #damage({ amount = amount; delay = calculateDelay(damage.timing) });
+        #damage(calculateMinMaxAmount(prng, damage));
     };
 
     private func calculateBlock(prng : Prng, block : Action.Block) : ActionResult.ActionEffectKindResult {
-        let amount = prng.nextNat(block.min, block.max);
-        #block({ amount = amount; delay = calculateDelay(block.timing) });
+        #block(calculateMinMaxAmount(prng, block));
     };
 
     private func calculateHeal(prng : Prng, heal : Action.Heal) : ActionResult.ActionEffectKindResult {
-        let amount = prng.nextNat(heal.min, heal.max);
-        #heal({ amount = amount; delay = calculateDelay(heal.timing) });
+        #heal(calculateMinMaxAmount(prng, heal));
+    };
+
+    private func calculateMinMaxAmount(prng : Prng, amount : { min : Nat; max : Nat }) : Nat {
+        if (amount.min >= amount.max) {
+            return amount.min; // No need for random, just the raw value if no variance
+        };
+        prng.nextNat(amount.min, amount.max);
     };
 
     private func calculateStatusEffect(statusEffect : Action.StatusEffect) : ActionResult.ActionEffectKindResult {
@@ -161,16 +190,6 @@ module {
                 case (?duration) duration;
             };
         });
-    };
-
-    private func calculateDelay(timing : Action.ActionTimingKind) : ?ActionResult.CastDelay {
-        switch (timing) {
-            case (#immediate) null;
-            case (#periodic(periodicTiming)) ?{
-                turns = periodicTiming.remainingTurns;
-                kind = periodicTiming;
-            };
-        };
     };
 
     private func calculateAllValidTargets(

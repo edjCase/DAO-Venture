@@ -24,7 +24,7 @@ module {
         #item : Item.Item;
         #trait : Trait.Trait;
         #image : Image.Image;
-        #scenario : Scenario.ScenarioMetaData;
+        #scenario : ScenarioMetaData.ScenarioMetaData;
         #race : Race.Race;
         #class_ : Class.Class;
         #zone : Zone.Zone;

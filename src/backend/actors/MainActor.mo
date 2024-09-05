@@ -259,7 +259,7 @@ actor MainActor : Types.Actor {
         #ok(stats);
     };
 
-    public query func getScenarioMetaDataList() : async [Scenario.ScenarioMetaData] {
+    public query func getScenarioMetaDataList() : async [ScenarioMetaData.ScenarioMetaData] {
         gameHandler.getScenarioMetaDataList();
     };
 

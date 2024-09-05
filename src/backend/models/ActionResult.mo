@@ -11,9 +11,9 @@ module {
     };
 
     public type ActionEffectKindResult = {
-        #damage : DamageResult;
-        #block : BlockResult;
-        #heal : HealResult;
+        #damage : Nat;
+        #block : Nat;
+        #heal : Nat;
         #addStatusEffect : StatusEffectResult;
     };
 
@@ -22,24 +22,24 @@ module {
         #character;
     };
 
-    type GenericCastResult = {
+    public type StatusEffectKind = Action.StatusEffectKind or {
+        #periodic : PeriodicEffectResult;
+    };
+
+    public type PeriodicEffectResult = {
+        kind : PeriodicEffectKind;
         amount : Nat;
-        delay : ?CastDelay;
+        phase : Action.TurnPhase;
     };
 
-    public type CastDelay = {
-        turns : Nat;
-        kind : Action.PeriodicTiming;
+    public type PeriodicEffectKind = {
+        #damage;
+        #heal;
+        #block;
     };
-
-    public type DamageResult = GenericCastResult;
-
-    public type BlockResult = GenericCastResult;
-
-    public type HealResult = GenericCastResult;
 
     public type StatusEffectResult = {
-        kind : Action.StatusEffectKind;
+        kind : StatusEffectKind;
         remainingTurns : Nat;
     };
 };

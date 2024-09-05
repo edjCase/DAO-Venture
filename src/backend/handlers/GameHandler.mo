@@ -23,7 +23,6 @@ import Trait "../models/entities/Trait";
 import Item "../models/entities/Item";
 import Class "../models/entities/Class";
 import Race "../models/entities/Race";
-import Outcome "../models/Outcome";
 import Image "../models/Image";
 import Zone "../models/entities/Zone";
 import Achievement "../models/entities/Achievement";
@@ -31,6 +30,7 @@ import UserHandler "UserHandler";
 import Creature "../models/entities/Creature";
 import Weapon "../models/entities/Weapon";
 import CommonTypes "../CommonTypes";
+import ScenarioMetaData "../models/entities/ScenarioMetaData";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -39,7 +39,7 @@ module {
         playerDataList : [PlayerData];
         classes : [Class.Class];
         races : [Race.Race];
-        scenarioMetaDataList : [Scenario.ScenarioMetaData];
+        scenarioMetaDataList : [ScenarioMetaData.ScenarioMetaData];
         items : [Item.Item];
         traits : [Trait.Trait];
         images : [Image.Image];
@@ -156,7 +156,7 @@ module {
     };
 
     public type ScenarioWithMetaData = Scenario.Scenario and {
-        metaData : Scenario.ScenarioMetaData;
+        metaData : ScenarioMetaData.ScenarioMetaData;
         availableChoiceIds : [Text];
     };
 
@@ -191,7 +191,7 @@ module {
 
         let races = toTextHashMap<Race.Race>(data.races);
 
-        let scenarioMetaDataList = toTextHashMap<Scenario.ScenarioMetaData>(data.scenarioMetaDataList);
+        let scenarioMetaDataList = toTextHashMap<ScenarioMetaData.ScenarioMetaData>(data.scenarioMetaDataList);
 
         let items = toTextHashMap<Item.Item>(data.items);
 
@@ -266,7 +266,7 @@ module {
                 if (
                     not IterTools.any(
                         scenarioMetaDataList.vals(),
-                        func(scenario : Scenario.ScenarioMetaData) : Bool = switch (scenario.location) {
+                        func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool = switch (scenario.location) {
                             case (#common) false;
                             case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == zone.id) != null;
                         },
@@ -652,7 +652,7 @@ module {
             Class.validate(class_, items, traits, achievements);
         };
 
-        public func addOrUpdateScenarioMetaData(scenario : Scenario.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
+        public func addOrUpdateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
             switch (validateScenarioMetaData(scenario)) {
                 case (#err(errors)) return #err(#invalid(errors));
                 case (#ok) ();
@@ -662,7 +662,7 @@ module {
             #ok;
         };
 
-        public func validateScenarioMetaData(scenario : Scenario.ScenarioMetaData) : Result.Result<(), [Text]> {
+        public func validateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), [Text]> {
             Scenario.validateMetaData(scenario, items, traits, images, zones, achievements, creatures);
         };
 
@@ -741,7 +741,7 @@ module {
             images.get(imageId);
         };
 
-        public func getScenarioMetaDataList() : [Scenario.ScenarioMetaData] {
+        public func getScenarioMetaDataList() : [ScenarioMetaData.ScenarioMetaData] {
             scenarioMetaDataList.vals() |> Iter.toArray(_);
         };
 
@@ -834,7 +834,7 @@ module {
             // Only scenarios that are common or have the zoneId
             |> Iter.filter(
                 _,
-                func(scenario : Scenario.ScenarioMetaData) : Bool {
+                func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool {
                     if (scenario.category != category) {
                         return false;
                     };

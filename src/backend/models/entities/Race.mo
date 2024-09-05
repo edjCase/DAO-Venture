@@ -6,18 +6,20 @@ import Trait "Trait";
 import Entity "Entity";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
+import Action "Action";
 
 module {
 
     public type Race = Entity.Entity and {
         startingTraitIds : [Text];
-        cardIds : [Text];
+        actionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
         race : Race,
         traits : HashMap.HashMap<Text, Trait.Trait>,
+        actions : HashMap.HashMap<Text, Action.Action>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
@@ -34,6 +36,11 @@ module {
         for (startingTraitId in race.startingTraitIds.vals()) {
             if (traits.get(startingTraitId) == null) {
                 errors.add("Trait not found: " # startingTraitId);
+            };
+        };
+        for (actionId in race.actionIds.vals()) {
+            if (actions.get(actionId) == null) {
+                errors.add("Action not found: " # actionId);
             };
         };
         if (errors.size() < 1) {

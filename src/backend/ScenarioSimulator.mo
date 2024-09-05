@@ -9,7 +9,8 @@ import Principal "mo:base/Principal";
 import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Float "mo:base/Float";
-import Int "mo:base/Int";
+import Result "mo:base/Result";
+import Prelude "mo:base/Prelude";
 import CharacterHandler "handlers/CharacterHandler";
 import Scenario "models/entities/Scenario";
 import Character "models/Character";
@@ -17,134 +18,298 @@ import UserHandler "handlers/UserHandler";
 import Creature "models/entities/Creature";
 import Weapon "models/entities/Weapon";
 import CombatSimulator "CombatSimulator";
-import Outcome "models/Outcome";
+import ActionResult "models/ActionResult";
+import ScenarioMetaData "models/entities/ScenarioMetaData";
+import Action "models/entities/Action";
+import IterTools "mo:itertools/Iter";
+import Class "models/entities/Class";
+import Race "models/entities/Race";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
-    public type ScenarioResult = {
-        log : [Outcome.OutcomeLogEntry];
-        kind : { #defeat; #inProgress };
+    public type RunStageError = {
+        #scenarioComplete;
+        #invalidChoice;
+        #invalidTarget;
+        #targetRequired;
     };
 
-    public func run(
+    public type StageChoiceKind = {
+        #choice : Text;
+        #combat : CombatChoice;
+    };
+
+    public type CombatChoice = {
+        actionId : Text;
+        target : ?ActionResult.ActionTargetResult;
+    };
+
+    public func runStage(
         prng : Prng,
         playerId : Principal,
         userHandler : UserHandler.Handler,
         characterHandler : CharacterHandler.Handler,
         scenario : Scenario.Scenario,
-        scenarioMetaData : Scenario.ScenarioMetaData,
+        scenarioMetaData : ScenarioMetaData.ScenarioMetaData,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
+        classes : HashMap.HashMap<Text, Class.Class>,
+        races : HashMap.HashMap<Text, Race.Race>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
-        choiceId : Text,
-    ) : ScenarioResult {
-        let logEntries = Buffer.Buffer<Outcome.OutcomeLogEntry>(5);
+        actions : HashMap.HashMap<Text, Action.Action>,
+        choice : StageChoiceKind,
+    ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
+        let logEntries = Buffer.Buffer<Scenario.OutcomeEffect>(5);
         let helper = Helper(
             prng,
             playerId,
             characterHandler,
             userHandler,
             scenario,
+            scenarioMetaData,
             creatures,
+            classes,
+            races,
             weapons,
+            actions,
             logEntries,
         );
+        switch (scenario.state) {
+            case (#choice(choiceState)) processChoice(choiceState, helper, choice);
+            case (#combat(combatState)) processCombat(combatState, helper, choice);
+            case (#complete) return #err(#scenarioComplete);
+        };
 
+    };
+
+    func processChoice(
+        state : Scenario.ChoiceScenarioState,
+        helper : Helper,
+        choice : StageChoiceKind,
+    ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
+        let #choice(choiceId) = choice else return #err(#invalidChoice);
+        if (Array.indexOf(choiceId, state.choiceIds, Text.equal) == null) {
+            return #err(#invalidChoice);
+        };
         let ?choiceData = Array.find(
-            scenarioMetaData.choices,
-            func(c : Scenario.Choice) : Bool { c.id == choiceId },
+            helper.scenarioMetaData.choices,
+            func(c : ScenarioMetaData.Choice) : Bool {
+                c.id == choiceId;
+            },
         ) else Debug.trap("Invalid choice: " # choiceId);
-        let initialPathId = choiceData.pathId;
 
-        var currentPathId = initialPathId;
+        let ?currentPath = Array.find(
+            helper.scenarioMetaData.paths,
+            func(p : ScenarioMetaData.OutcomePath) : Bool {
+                p.id == choiceData.pathId;
+            },
+        ) else Debug.trap("Invalid path ID: " # choiceData.pathId);
+        helper.log(currentPath.description);
 
-        label l loop {
-            let ?currentPath = Array.find(
-                scenarioMetaData.paths,
-                func(p : Scenario.OutcomePath) : Bool { p.id == currentPathId },
-            ) else Debug.trap("Invalid path ID: " # currentPathId);
-            helper.log(currentPath.description);
-
-            switch (currentPath.kind) {
-                case (#combat(combat)) {
-                    let character = helper.getCharacterStats();
-                    var creature = helper.getRandomCreature(combat.creature);
-                    let maxTurns = 10;
-                    let combatResult = CombatSimulator.run(prng, character, creature, maxTurns);
-                    logEntries.add(#combat(combatResult));
-                    if (combatResult.healthDelta < 0) {
-                        // TODO ignore??
-                        ignore helper.damageCharacter(Int.abs(combatResult.healthDelta));
-                    } else {
-                        helper.heal(Int.abs(combatResult.healthDelta));
-                    };
-                    switch (combatResult.kind) {
-                        case (#victory) {
-                            helper.log("You defeat the creature!");
-                        };
-                        case (#defeat) {
-                            helper.log("You were defeated!");
-                            return {
-                                log = helper.getLog();
-                                kind = #defeat;
-                            };
-                        };
-                        case (#maxTurnsReached) {
-                            helper.log("The battle ends in a draw.");
-                            // TODO?
-                        };
-                    };
-                };
-                case (#effects(effects)) {
-                    for (effect in effects.vals()) {
-                        switch (helper.applyEffect(effect)) {
-                            case (#alive) (); // Continue
-                            case (#dead) {
-                                return {
-                                    log = helper.getLog();
-                                    kind = #defeat;
-                                };
-                            };
-                        };
-                    };
-                };
-            };
-
-            if (currentPath.paths.size() == 0) {
-                break l;
-            };
-
-            let validPaths = Array.filter(
-                currentPath.paths,
-                func(p : Scenario.WeightedOutcomePath) : Bool {
-                    switch (p.condition) {
-                        case (null) true;
-                        case (?condition) helper.meetsCondition(condition);
-                    };
-                },
-            );
-
-            if (validPaths.size() == 0) {
-                break l;
-            };
-            let pathsWithWeights = Array.map<Scenario.WeightedOutcomePath, (Text, Float)>(
-                validPaths,
-                func(p : Scenario.WeightedOutcomePath) : (Text, Float) {
-                    (p.pathId, p.weight);
-                },
-            );
-            let nextPathId = prng.nextArrayElementWeighted(pathsWithWeights);
-            currentPathId := nextPathId;
+        let kind = switch (currentPath.kind) {
+            case (#combat(combat)) startCombat(combat, helper);
+            case (#effects(effects)) processPathEffects(currentPath, effects, helper);
         };
-        {
-            log = helper.getLog();
-            kind = #inProgress;
+        #ok({
+            effects = helper.getEffects();
+            kind = #choice({
+                choiceId = choiceData.id;
+                kind = kind;
+            });
+        });
+
+    };
+
+    func startCombat(
+        combat : ScenarioMetaData.CombatPath,
+        helper : Helper,
+    ) : Scenario.ScenarioChoiceResultKind {
+        let creatureCombatStats = Buffer.Buffer<Scenario.CreatureCombatState>(combat.creatures.size());
+        for (creature in combat.creatures.vals()) {
+            creatureCombatStats.add(helper.getRandomCreature(creature));
         };
+        let newActionIds = helper.getRandomCharacterActionIds();
+        #startCombat({
+            character = {
+                shield = 0;
+                statusEffects = [];
+                availableActionIds = newActionIds;
+            };
+            creatures = Buffer.toArray(creatureCombatStats);
+        });
+    };
+
+    func processPathEffects(
+        currentPath : ScenarioMetaData.OutcomePath,
+        effects : [ScenarioMetaData.Effect],
+        helper : Helper,
+    ) : Scenario.ScenarioChoiceResultKind {
+
+        label f for (effect in effects.vals()) {
+            switch (helper.applyEffect(effect)) {
+                case (#alive) (); // Continue
+                case (#dead) {
+                    return #death;
+                };
+            };
+        };
+
+        if (currentPath.paths.size() == 0) {
+            return #complete; // No more paths
+        };
+
+        let validPaths = Array.filter(
+            currentPath.paths,
+            func(p : ScenarioMetaData.WeightedOutcomePath) : Bool {
+                switch (p.condition) {
+                    case (null) true;
+                    case (?condition) helper.meetsCondition(condition);
+                };
+            },
+        );
+
+        if (validPaths.size() == 0) {
+            return #complete; // No valid paths
+        };
+        let pathsWithWeights = Array.map<ScenarioMetaData.WeightedOutcomePath, (Text, Float)>(
+            validPaths,
+            func(p : ScenarioMetaData.WeightedOutcomePath) : (Text, Float) {
+                (p.pathId, p.weight);
+            },
+        );
+        let nextPathId = helper.prng.nextArrayElementWeighted(pathsWithWeights);
+        #path(nextPathId);
+    };
+
+    func processCombat(
+        state : Scenario.CombatScenarioState,
+        helper : Helper,
+        choice : StageChoiceKind,
+    ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
+        let #combat(combatChoice) = choice else return #err(#invalidChoice);
+        // Character turn first
+        let action = switch (helper.getAction(combatChoice.actionId, state.character.availableActionIds)) {
+            case (#ok(action)) action;
+            case (#err(#notAvailable)) return #err(#invalidChoice);
+        };
+        let creatureCount = state.creatures.size();
+        let actionResult = switch (
+            CombatSimulator.calculateActionResult(
+                helper.prng,
+                #character,
+                action,
+                creatureCount,
+                combatChoice.target,
+            )
+        ) {
+            case (#ok(result)) result;
+            case (#err(#invalidTarget)) return #err(#invalidTarget);
+            case (#err(#targetRequired)) return #err(#targetRequired);
+        };
+
+        let initialCharacterState = helper.getCharacter();
+        let characterCombatStats : CombatSimulator.CombatStats = {
+            var health = initialCharacterState.health;
+            var maxHealth = initialCharacterState.maxHealth;
+            var shield = state.character.shield;
+            var statusEffects = Buffer.fromArray(state.character.statusEffects);
+        };
+        let creatureCombatStats = state.creatures.vals()
+        |> Iter.map(
+            _,
+            func(c : Scenario.CreatureCombatState) : CombatSimulator.CombatStats {
+                {
+                    var health = c.health;
+                    var maxHealth = c.maxHealth;
+                    var shield = c.shield;
+                    var statusEffects = Buffer.fromArray(c.statusEffects);
+                };
+            },
+        )
+        |> Iter.toArray(_);
+
+        CombatSimulator.applyActionResult(characterCombatStats, creatureCombatStats, actionResult);
+
+        func getLivingCreatures() : [Scenario.CreatureCombatState] {
+            state.creatures.vals()
+            |> Iter.filter(
+                _,
+                func(c : Scenario.CreatureCombatState) : Bool {
+                    c.health > 0;
+                },
+            )
+            |> Iter.toArray(_);
+        };
+
+        func checkForDefeat() : ?Scenario.ScenarioStageResult {
+            if (characterCombatStats.health <= 0) {
+                let livingCreatures = getLivingCreatures();
+                return ?{
+                    effects = helper.getEffects();
+                    kind = #combat(#defeat({ creatures = livingCreatures }));
+                };
+            };
+            null;
+        };
+        switch (checkForDefeat()) {
+            case (?result) return #ok(result);
+            case (null) ();
+        };
+
+        // Creature turns
+        label f for ((i, creature) in IterTools.enumerate(state.creatures.vals())) {
+            if (creature.health <= 0) continue f;
+            let randomActionId = helper.prng.nextArrayElement(creature.availableActionIds);
+            let creatureAction = switch (helper.getAction(randomActionId, creature.availableActionIds)) {
+                case (#ok(action)) action;
+                case (#err(#notAvailable)) Prelude.unreachable();
+            };
+            let actionResult = switch (
+                CombatSimulator.calculateActionResult(
+                    helper.prng,
+                    #creature(i),
+                    creatureAction,
+                    creatureCount,
+                    null,
+                )
+            ) {
+                case (#ok(result)) result;
+                case (#err(#invalidTarget)) Prelude.unreachable();
+                case (#err(#targetRequired)) Prelude.unreachable();
+            };
+            CombatSimulator.applyActionResult(characterCombatStats, creatureCombatStats, actionResult);
+
+            switch (checkForDefeat()) {
+                case (?result) return #ok(result);
+                case (null) ();
+            };
+        };
+        helper.setCharacterHealth(characterCombatStats.health);
+        let livingCreatures = getLivingCreatures();
+        let combatKind : Scenario.ScenarioCombatResult = if (livingCreatures.size() == 0) {
+            #victory;
+        } else {
+            let newActionIds = helper.getRandomCharacterActionIds();
+            #inProgress({
+                character = {
+                    shield = characterCombatStats.shield;
+                    statusEffects = Buffer.toArray(characterCombatStats.statusEffects);
+                    availableActionIds = newActionIds;
+                };
+                creatures = livingCreatures;
+            });
+        };
+
+        #ok({
+            effects = helper.getEffects();
+            kind = #combat(combatKind);
+        });
+
     };
 
     func getNatValue(
         prng : Prng,
-        value : Scenario.NatValue,
+        value : ScenarioMetaData.NatValue,
         data : [Scenario.GeneratedDataFieldInstance],
     ) : Nat {
         switch (value) {
@@ -165,7 +330,7 @@ module {
 
     func getTextValue(
         prng : Prng,
-        value : Scenario.TextValue,
+        value : ScenarioMetaData.TextValue,
         data : [Scenario.GeneratedDataFieldInstance],
     ) : Text {
         switch (value) {
@@ -180,21 +345,70 @@ module {
     };
 
     private class Helper(
-        prng : Prng,
+        prng_ : Prng,
         playerId : Principal,
         characterHandler : CharacterHandler.Handler,
         userHandler : UserHandler.Handler,
         scenario : Scenario.Scenario,
+        scenarioMetaData_ : ScenarioMetaData.ScenarioMetaData,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
+        classes : HashMap.HashMap<Text, Class.Class>,
+        races : HashMap.HashMap<Text, Race.Race>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
-        logEntries : Buffer.Buffer<Outcome.OutcomeLogEntry>,
+        actions : HashMap.HashMap<Text, Action.Action>,
+        logEntries : Buffer.Buffer<Scenario.OutcomeEffect>,
     ) {
 
-        public func getCharacterStats() : CombatSimulator.CombatStats {
+        public let prng = prng_;
+        public let scenarioMetaData = scenarioMetaData_;
+
+        public func getAction(actionId : Text, avaiableActionIds : [Text]) : Result.Result<Action.Action, { #notAvailable }> {
+            let ?action = actions.get(actionId) else Debug.trap("Action not found: " # actionId);
+            if (Array.indexOf(actionId, avaiableActionIds, Text.equal) == null) {
+                return #err(#notAvailable);
+            };
+            #ok(action);
+        };
+
+        public func getRandomCharacterActionIds() : [Text] {
+            let count = 3; // TODO
+            let character = characterHandler.get();
+
+            let allActionIds = Buffer.Buffer<Text>(10);
+
+            let ?class_ = classes.get(character.classId) else Debug.trap("Class not found: " # character.classId);
+            allActionIds.append(Buffer.fromArray(class_.actionIds));
+
+            let ?race = races.get(character.raceId) else Debug.trap("Race not found: " # character.raceId);
+            allActionIds.append(Buffer.fromArray(race.actionIds));
+
+            let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
+            allActionIds.append(Buffer.fromArray(weapon.actionIds));
+
+            // TODO?
+            // let traitActionIds = Trie.iter(character.traitIds)
+            // |> Iter.map<(Text, ()), Iter.Iter<Text>>(
+            //     _,
+            //     func((traitId, _) : (Text, ())) : Iter.Iter<Text> {
+            //         let ?trait = traits.get(traitId) else Debug.trap("Trait not found: " # traitId);
+            //         trait.actionIds.vals();
+            //     },
+            // )
+            // |> IterTools.flatten(_);
+            // allActionIds.append(Buffer.fromArray(traitActionIds));
+
+            prng.shuffleBuffer(allActionIds);
+
+            allActionIds.vals()
+            |> IterTools.take(_, count)
+            |> Iter.toArray(_);
+        };
+
+        public func getCharacter() : Character.Character {
             characterHandler.get();
         };
 
-        public func getRandomCreature(kind : Scenario.CombatCreatureKind) : CombatSimulator.CombatStats {
+        public func getRandomCreature(kind : ScenarioMetaData.CombatCreatureKind) : Scenario.CreatureCombatState {
             let creatureIds = switch (kind) {
                 case (#id(id)) [id];
                 case (#filter(filter)) {
@@ -213,25 +427,18 @@ module {
                 };
             };
             let selectedCreatureId = prng.nextArrayElement(creatureIds);
-            getCreatureStats(selectedCreatureId);
-        };
-
-        private func getCreatureStats(creatureId : Text) : CombatSimulator.CombatStats {
-            let ?creature = creatures.get(creatureId) else Debug.trap("Creature not found: " # creatureId);
-            let ?weapon = weapons.get(creature.weaponId) else Debug.trap("Weapon not found: " # creature.weaponId);
+            let ?creature = creatures.get(selectedCreatureId) else Debug.trap("Creature not found: " # selectedCreatureId);
             {
+                creatureId = selectedCreatureId;
                 health = creature.health;
                 maxHealth = creature.maxHealth;
-                attack = creature.attack;
-                defense = creature.defense;
-                speed = creature.speed;
-                magic = creature.magic;
-                weapon = weapon;
-                gold = 0; // TODO
+                shield = 0;
+                statusEffects = [];
+                availableActionIds = creature.actionIds;
             };
         };
 
-        public func meetsCondition(condition : Scenario.Condition) : Bool {
+        public func meetsCondition(condition : ScenarioMetaData.Condition) : Bool {
             let character = characterHandler.get();
             switch (condition) {
                 case (#hasGold(amountValue)) {
@@ -249,7 +456,10 @@ module {
             };
         };
 
-        public func applyEffect(effect : Scenario.Effect) : { #alive; #dead } {
+        public func applyEffect(effect : ScenarioMetaData.Effect) : {
+            #alive;
+            #dead;
+        } {
             switch (effect) {
                 case (#reward) reward();
                 case (#damage(amount)) {
@@ -261,9 +471,6 @@ module {
                 };
                 case (#heal(amount)) {
                     heal(getNatValue(prng, amount, scenario.data));
-                };
-                case (#upgradeStat((stat, amount))) {
-                    upgradeStat(stat, getNatValue(prng, amount, scenario.data));
                 };
                 case (#removeGold(amount)) {
                     ignore removeGold(getNatValue(prng, amount, scenario.data));
@@ -349,18 +556,6 @@ module {
             characterHandler.addGold(amount);
         };
 
-        public func upgradeStat(kind : Character.CharacterStatKind, amount : Nat) {
-            let logEntry = switch (kind) {
-                case (#attack) #attackDelta(amount);
-                case (#defense) #defenseDelta(amount);
-                case (#speed) #speedDelta(amount);
-                case (#magic) #magicDelta(amount);
-                case (#maxHealth) #maxHealthDelta(amount);
-            };
-            logEntries.add(logEntry);
-            characterHandler.upgradeStat(kind, amount);
-        };
-
         type Reward = {
             #item : Text;
             #money : Nat;
@@ -399,7 +594,7 @@ module {
             characterHandler.removeTrait(trait);
         };
 
-        public func getLog() : [Outcome.OutcomeLogEntry] {
+        public func getEffects() : [Scenario.OutcomeEffect] {
             Buffer.toArray(logEntries);
         };
     };

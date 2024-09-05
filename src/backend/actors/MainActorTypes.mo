@@ -37,7 +37,7 @@ module {
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
         getTraits : query () -> async [Trait.Trait];
-        getScenarioMetaDataList : query () -> async [Scenario.ScenarioMetaData];
+        getScenarioMetaDataList : query () -> async [ScenarioMetaData.ScenarioMetaData];
         getClasses : query () -> async [Class.Class];
         getRaces : query () -> async [Race.Race];
         getItems : query () -> async [Item.Item];
@@ -101,7 +101,7 @@ module {
     };
 
     public type Scenario = Scenario.Scenario and {
-        metaData : Scenario.ScenarioMetaData;
+        metaData : ScenarioMetaData.ScenarioMetaData;
         availableChoiceIds : [Text];
     };
 

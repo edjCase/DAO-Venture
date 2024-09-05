@@ -6,6 +6,7 @@ import Entity "Entity";
 import Weapon "Weapon";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
+import Action "Action";
 
 module {
     public type Creature = Entity.Entity and {
@@ -13,10 +14,7 @@ module {
         weaponId : Text;
         health : Nat;
         maxHealth : Nat;
-        attack : Int;
-        defense : Int;
-        magic : Int;
-        speed : Int;
+        actionIds : [Text];
         kind : CreatureKind;
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
@@ -34,11 +32,18 @@ module {
 
     public func validate(
         creature : Creature,
+        actions : HashMap.HashMap<Text, Action.Action>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         Entity.validate("Creature", creature, errors);
+
+        for (actionId in creature.actionIds.vals()) {
+            if (actions.get(actionId) == null) {
+                errors.add("Action does not exist: " # actionId);
+            };
+        };
         switch (creature.unlockRequirement) {
             case (null) ();
             case (?unlockRequirement) {
