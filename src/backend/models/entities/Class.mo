@@ -2,8 +2,6 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
-import CharacterModifier "../CharacterModifier";
-import Item "Item";
 import Trait "Trait";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
@@ -13,13 +11,13 @@ module {
 
     public type Class = Entity.Entity and {
         weaponId : Text;
-        modifiers : [CharacterModifier.CharacterModifier];
+        startingTraitIds : [Text];
+        cardIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
         class_ : Class,
-        items : HashMap.HashMap<Text, Item.Item>,
         traits : HashMap.HashMap<Text, Trait.Trait>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
@@ -34,10 +32,9 @@ module {
                 };
             };
         };
-        for (modifier in class_.modifiers.vals()) {
-            switch (CharacterModifier.validate(modifier, items, traits)) {
-                case (#err(err)) errors.append(Buffer.fromArray(err));
-                case (#ok) ();
+        for (startingTraitId in class_.startingTraitIds.vals()) {
+            if (traits.get(startingTraitId) == null) {
+                errors.add("Trait not found: " # startingTraitId);
             };
         };
         if (errors.size() < 1) {

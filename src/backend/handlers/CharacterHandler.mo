@@ -57,41 +57,6 @@ module {
             true;
         };
 
-        public func upgradeStat(kind : Character.CharacterStatKind, amount : Nat) {
-            character := switch (kind) {
-                case (#attack) {
-                    {
-                        character with
-                        attack = character.attack + amount;
-                    };
-                };
-                case (#defense) {
-                    {
-                        character with
-                        defense = character.defense + amount;
-                    };
-                };
-                case (#speed) {
-                    {
-                        character with
-                        speed = character.speed + amount;
-                    };
-                };
-                case (#magic) {
-                    {
-                        character with
-                        magic = character.magic + amount;
-                    };
-                };
-                case (#maxHealth) {
-                    {
-                        character with
-                        maxHealth = character.maxHealth + amount;
-                    };
-                };
-            };
-        };
-
         public func addItem(itemId : Text) : Bool {
             let newItemIds = TrieSet.put<Text>(character.itemIds, itemId, Text.hash(itemId), Text.equal);
             if (TrieSet.size(newItemIds) == TrieSet.size(character.itemIds)) return false;

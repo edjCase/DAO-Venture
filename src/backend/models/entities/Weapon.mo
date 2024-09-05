@@ -5,67 +5,27 @@ import HashMap "mo:base/HashMap";
 import Entity "Entity";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
+import Action "Action";
 
 module Weapon {
 
     public type Weapon = Entity.Entity and {
-        baseStats : WeaponStats;
-        requirements : [WeaponRequirement];
+        actionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
-        // TODO weapon effects like bleed/stun
-    };
-
-    public type WeaponStats = {
-        attacks : Nat;
-        minDamage : Nat;
-        maxDamage : Nat;
-        accuracy : Int;
-        criticalChance : Nat;
-        criticalMultiplier : Nat;
-        statModifiers : [StatModifier];
-    };
-
-    public type WeaponRequirement = {
-        #attack : Int;
-        #magic : Int;
-        #speed : Int;
-        #defense : Int;
-        #maxHealth : Nat;
-    };
-
-    public type StatModifier = {
-        characterStat : CharacterStatKind;
-        attribute : WeaponAttribute;
-        factor : Float;
-    };
-
-    public type CharacterStatKind = {
-        #attack;
-        #magic;
-        #speed;
-        #defense;
-        #health : {
-            inverse : Bool;
-        };
-        #gold;
-    };
-
-    public type WeaponAttribute = {
-        #attacks;
-        #damage;
-        #minDamage;
-        #maxDamage;
-        #accuracy;
-        #criticalChance;
-        #criticalMultiplier;
     };
 
     public func validate(
         weapon : Weapon,
+        actions : HashMap.HashMap<Text, Action.Action>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         Entity.validate("Weapon", weapon, errors);
+        for (actionId in weapon.actionIds.vals()) {
+            if (actions.get(actionId) == null) {
+                errors.add("Action not found: " # actionId);
+            };
+        };
         switch (weapon.unlockRequirement) {
             case (null) ();
             case (?unlockRequirement) {

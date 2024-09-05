@@ -3,48 +3,40 @@ import Entity "Entity";
 
 module {
 
-    public type Card = Entity.Entity and {
-        effects : [Effect];
+    public type Action = Entity.Entity and {
+        effects : [ActionEffect];
     };
 
-    public type Effect = {
-        target : Target;
-        kind : EffectKind;
+    public type ActionEffect = {
+        target : ActionTarget;
+        kind : ActionEffectKind;
     };
 
-    public type EffectKind = {
+    public type ActionEffectKind = {
         #damage : Damage;
         #block : Block;
         #heal : Heal;
         #addStatusEffect : StatusEffect;
     };
 
-    public type Target = {
-        scope : TargetScope;
-        selection : TargetSelection;
+    public type ActionTarget = {
+        scope : ActionTargetScope;
+        selection : ActionTargetSelection;
     };
 
-    public type TargetScope = {
+    public type ActionTargetScope = {
         #ally;
         #enemy;
         #any;
     };
 
-    public type TargetSelection = {
+    public type ActionTargetSelection = {
         #random : {
             count : Nat;
         };
-        #chosen : {
-            count : Nat;
-        };
-        #positions : [Position];
+        #chosen;
+        // #positions : [Position]; // TODO
         #all;
-    };
-
-    public type Position = {
-        #top;
-        #center;
-        #bottom;
     };
 
     public type Damage = {
@@ -67,10 +59,17 @@ module {
 
     public type ActionTimingKind = {
         #immediate;
-        #overTime : {
-            kind : { #startOfTurn; #endOfTurn };
-            turns : Nat;
-        };
+        #periodic : PeriodicTiming;
+    };
+
+    public type PeriodicTiming = {
+        phase : TurnPhase;
+        remainingTurns : Nat;
+    };
+
+    public type TurnPhase = {
+        #start;
+        #end;
     };
 
     public type StatusEffect = {

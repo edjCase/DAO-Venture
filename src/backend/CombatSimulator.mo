@@ -1,207 +1,249 @@
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Iter "mo:base/Iter";
-import Int "mo:base/Int";
-import Float "mo:base/Float";
-import Bool "mo:base/Bool";
 import Buffer "mo:base/Buffer";
-import Weapon "models/entities/Weapon";
-import Outcome "models/Outcome";
+import ActionResult "models/ActionResult";
+import Nat "mo:base/Nat";
+import Array "mo:base/Array";
+import Result "mo:base/Result";
+import Action "models/entities/Action";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type CombatStats = {
-        health : Nat;
-        maxHealth : Nat;
-        attack : Int;
-        defense : Int;
-        magic : Int;
-        speed : Int;
-        gold : Nat;
-        weapon : Weapon.Weapon;
+        var health : Nat;
+        var maxHealth : Nat;
+        var shield : Nat;
+        var gold : Nat;
+        var statusEffects : Buffer.Buffer<ActionResult.StatusEffectResult>;
     };
 
-    public func run(
+    public func calculateAction(
         prng : Prng,
-        character : CombatStats,
-        creature : CombatStats,
-        maxTurns : Nat,
-    ) : Outcome.CombatResult {
+        actionSource : ActionResult.ActionTargetResult,
+        action : Action.Action,
+        creatureCount : Nat,
+        chosenTarget : ?ActionResult.ActionTargetResult,
+    ) : Result.Result<ActionResult.ActionResult, { #invalidTarget; #targetRequired }> {
+        let effectResults = Buffer.Buffer<ActionResult.ActionEffectResult>(0);
 
-        // Determine initiative
-        let characterInitiative : Int = character.speed + prng.nextNat(1, 20);
-        let creatureInitiative : Int = creature.speed + prng.nextNat(1, 20);
+        for (effect in action.effects.vals()) {
+            let effectResult = switch (effect.kind) {
+                case (#damage(damage)) calculateDamage(prng, damage);
+                case (#block(block)) calculateBlock(prng, block);
+                case (#heal(heal)) calculateHeal(prng, heal);
+                case (#addStatusEffect(statusEffect)) calculateStatusEffect(statusEffect);
+            };
 
-        var turn = 0;
-        let isCharacterFirst : Bool = if (characterInitiative > creatureInitiative) {
-            true;
-        } else if (creatureInitiative > characterInitiative) {
-            false;
-        } else {
-            // Tiebreaker
-            prng.nextCoin();
+            let allValidTargets = switch (
+                calculateAllValidTargets(
+                    actionSource,
+                    effect.target.scope,
+                    creatureCount,
+                    chosenTarget,
+                )
+            ) {
+                case (#err(err)) return #err(err);
+                case (#ok(targets)) targets;
+            };
+
+            let targets = switch (effect.target.selection) {
+                case (#all) Buffer.toArray(allValidTargets);
+                case (#random({ count })) {
+                    let trueCount = Nat.min(count, creatureCount);
+                    prng.shuffleBuffer(allValidTargets);
+                    Buffer.toArray(Buffer.subBuffer(allValidTargets, 0, trueCount));
+                };
+                case (#chosen) {
+                    switch (chosenTarget) {
+                        case (null) return #err(#targetRequired);
+                        case (?target) [target];
+                    };
+                };
+            };
+
+            effectResults.add({
+                targets = targets;
+                kind = effectResult;
+            });
         };
 
-        var characterIsAttacker : Bool = isCharacterFirst;
-        var characterHealth = character.health;
-        var creatureHealth = creature.health;
-        let turns = Buffer.Buffer<Outcome.CombatTurn>(5);
-        loop {
-            let (attacker, defender) = if (characterIsAttacker) {
-                (character, creature);
-            } else {
-                (creature, character);
+        #ok({
+            effects = Buffer.toArray(effectResults);
+        });
+    };
+
+    public func tickEffects(stats : [CombatStats]) : () {
+        for (combatStats in stats.vals()) {
+            let currentEffects = combatStats.statusEffects;
+            let newEffects = Buffer.Buffer<ActionResult.StatusEffectResult>(currentEffects.size());
+
+            for (effect in currentEffects.vals()) {
+                switch (effect.remainingTurns) {
+                    case (0) (); // Remove (not add) the effect
+                    case (remainingTurns) {
+                        // Decrement the remaining turns and keep the effect
+                        newEffects.add({
+                            kind = effect.kind;
+                            remainingTurns = remainingTurns - 1;
+                        });
+                    };
+                };
             };
-            let attackResults = calculateAttackResults(prng, attacker, defender);
-            turns.add({
-                attacker = if (characterIsAttacker) #character else #creature;
-                attacks = attackResults;
-            });
-            for (attackResult in attackResults.vals()) {
-                switch (attackResult) {
-                    case (#hit({ damage })) {
-                        let defenderHealth = if (characterIsAttacker) creatureHealth else characterHealth;
-                        let newDefenderHealth : Int = defenderHealth - damage;
-                        if (newDefenderHealth <= 0) {
-                            return {
-                                turns = Buffer.toArray(turns);
-                                healthDelta = characterHealth - character.health;
-                                kind = if (characterIsAttacker) #victory else #defeat;
+
+            combatStats.statusEffects := newEffects;
+        };
+    };
+
+    public func applyAction(
+        character : CombatStats,
+        creatures : [CombatStats],
+        action : ActionResult.ActionResult,
+    ) : () {
+        for (effect in action.effects.vals()) {
+            for (target in effect.targets.vals()) {
+                let stats = switch (target) {
+                    case (#creature(creatureIndex)) creatures[creatureIndex];
+                    case (#character) character;
+                };
+                switch (effect.kind) {
+                    case (#damage(damageResult)) applyDamage(stats, damageResult);
+                    case (#block(blockResult)) applyBlock(stats, blockResult);
+                    case (#heal(healResult)) applyHeal(stats, healResult);
+                    case (#addStatusEffect(statusEffectResult)) applyStatusEffect(stats, statusEffectResult);
+                };
+            };
+        };
+    };
+
+    private func applyDamage(stats : CombatStats, damageResult : ActionResult.DamageResult) : () {
+        stats.health := subtractNatSafe(stats.health, damageResult.amount);
+    };
+
+    private func applyBlock(stats : CombatStats, blockResult : ActionResult.BlockResult) : () {
+        stats.shield += blockResult.amount;
+    };
+
+    private func applyHeal(stats : CombatStats, healResult : ActionResult.HealResult) : () {
+        stats.health := Nat.min(stats.health + healResult.amount, stats.maxHealth);
+    };
+
+    private func applyStatusEffect(stats : CombatStats, statusEffectResult : ActionResult.StatusEffectResult) : () {
+        stats.statusEffects.add(statusEffectResult);
+    };
+
+    private func subtractNatSafe(a : Nat, b : Nat) : Nat {
+        if (a < b) {
+            return 0;
+        };
+        return a - b;
+    };
+
+    private func calculateDamage(prng : Prng, damage : Action.Damage) : ActionResult.ActionEffectKindResult {
+        let amount = prng.nextNat(damage.min, damage.max);
+        #damage({ amount = amount; delay = calculateDelay(damage.timing) });
+    };
+
+    private func calculateBlock(prng : Prng, block : Action.Block) : ActionResult.ActionEffectKindResult {
+        let amount = prng.nextNat(block.min, block.max);
+        #block({ amount = amount; delay = calculateDelay(block.timing) });
+    };
+
+    private func calculateHeal(prng : Prng, heal : Action.Heal) : ActionResult.ActionEffectKindResult {
+        let amount = prng.nextNat(heal.min, heal.max);
+        #heal({ amount = amount; delay = calculateDelay(heal.timing) });
+    };
+
+    private func calculateStatusEffect(statusEffect : Action.StatusEffect) : ActionResult.ActionEffectKindResult {
+        #addStatusEffect({
+            kind = statusEffect.kind;
+            remainingTurns = switch (statusEffect.duration) {
+                case (null) 0;
+                case (?duration) duration;
+            };
+        });
+    };
+
+    private func calculateDelay(timing : Action.ActionTimingKind) : ?ActionResult.CastDelay {
+        switch (timing) {
+            case (#immediate) null;
+            case (#periodic(periodicTiming)) ?{
+                turns = periodicTiming.remainingTurns;
+                kind = periodicTiming;
+            };
+        };
+    };
+
+    private func calculateAllValidTargets(
+        actionSource : ActionResult.ActionTargetResult,
+        scope : Action.ActionTargetScope,
+        creatureCount : Nat,
+        chosenTarget : ?ActionResult.ActionTargetResult,
+    ) : Result.Result<Buffer.Buffer<ActionResult.ActionTargetResult>, { #invalidTarget }> {
+        let allCreatures = Array.tabulate<ActionResult.ActionTargetResult>(creatureCount, func(i) { #creature(i) });
+        let allTargets = Buffer.Buffer<ActionResult.ActionTargetResult>(creatureCount + 1);
+
+        switch (scope) {
+            case (#any) {
+                allTargets.append(Buffer.fromArray(allCreatures));
+                allTargets.add(#character);
+            };
+            case (#ally) {
+                switch (actionSource) {
+                    case (#creature(_)) {
+                        allTargets.append(Buffer.fromArray(allCreatures));
+                        switch (chosenTarget) {
+                            case (null) ();
+                            case (?target) {
+                                switch (target) {
+                                    case (#creature(_)) ();
+                                    case (#character) return #err(#invalidTarget);
+                                };
                             };
                         };
-                        let natHealth = Int.abs(newDefenderHealth);
-                        if (characterIsAttacker) {
-                            creatureHealth := natHealth;
-                        } else {
-                            characterHealth := natHealth;
+                    };
+                    case (#character) {
+                        allTargets.add(#character);
+                        switch (chosenTarget) {
+                            case (null) ();
+                            case (?target) {
+                                switch (target) {
+                                    case (#creature(_)) return #err(#invalidTarget);
+                                    case (#character) ();
+                                };
+                            };
                         };
                     };
-                    case (#miss) ();
                 };
             };
-
-            turn += 1;
-            if (turn > maxTurns) {
-                return {
-                    turns = Buffer.toArray(turns);
-                    healthDelta = characterHealth - character.health;
-                    kind = #maxTurnsReached;
-                };
-            };
-            characterIsAttacker := not characterIsAttacker;
-
-        };
-    };
-
-    func calculateAttackResults(
-        prng : Prng,
-        attacker : CombatStats,
-        defender : CombatStats,
-    ) : [Outcome.AttackResult] {
-        let weaponStats = calculateWeaponStats(attacker);
-        let hitChance = calculateHitChance(weaponStats, defender);
-        Iter.range(0, weaponStats.attacks - 1)
-        |> Iter.map(
-            _,
-            func(_ : Nat) : Outcome.AttackResult {
-                if (prng.nextNat(1, 100) <= hitChance) {
-                    var damage = calculateWeaponDamage(prng, weaponStats);
-                    // TODO better defense
-                    // TODO do damage type/resistances
-                    let finalDamage = Int.abs(Int.max(0, damage - defender.defense));
-                    #hit({ damage = finalDamage });
-                } else {
-                    #miss;
-                };
-            },
-        )
-        |> Iter.toArray(_);
-    };
-
-    func calculateWeaponDamage(
-        prng : Prng,
-        weaponStats : Weapon.WeaponStats,
-    ) : Nat {
-        var damage = prng.nextNat(weaponStats.minDamage, weaponStats.maxDamage) + 5;
-
-        if (prng.nextNat(1, 100) <= weaponStats.criticalChance) {
-            // Crit
-            let damagePlusCrit = damage
-            |> percentMultiply(damage, weaponStats.criticalMultiplier)
-            |> Int.max(1, _)
-            |> Int.abs(_);
-            damage := damagePlusCrit;
-        };
-        damage;
-    };
-
-    func calculateHitChance(attacker : { accuracy : Int }, defender : { speed : Int }) : Nat {
-        let hitChance : Int = attacker.accuracy - defender.speed + 50;
-        // Clamp to 5-100%
-        hitChance |> Int.min(100, _) |> Int.max(5, _) |> Int.abs(_);
-    };
-
-    func percentMultiply(value : Nat, percent : Nat) : Nat {
-        Int.abs(Float.toInt(Float.floor(Float.fromInt(value) * (Float.fromInt(percent) / 100.0))));
-    };
-
-    func calculateWeaponStats(attacker : CombatStats) : Weapon.WeaponStats {
-        var attacks = attacker.weapon.baseStats.attacks;
-        var minDamage = attacker.weapon.baseStats.minDamage;
-        var maxDamage = attacker.weapon.baseStats.maxDamage;
-        var accuracy = attacker.weapon.baseStats.accuracy;
-        var criticalChance = attacker.weapon.baseStats.criticalChance;
-        var criticalMultiplier = attacker.weapon.baseStats.criticalMultiplier;
-        for (modifier in attacker.weapon.baseStats.statModifiers.vals()) {
-
-            let value : Int = switch (modifier.characterStat) {
-                case (#attack) attacker.attack;
-                case (#magic) attacker.magic;
-                case (#speed) attacker.speed;
-                case (#defense) attacker.defense;
-                case (#health(health)) {
-                    if (health.inverse) {
-                        attacker.maxHealth - attacker.health;
-                    } else {
-                        attacker.health;
+            case (#enemy) {
+                switch (actionSource) {
+                    case (#creature(_)) {
+                        allTargets.add(#character);
+                        switch (chosenTarget) {
+                            case (null) ();
+                            case (?target) {
+                                switch (target) {
+                                    case (#creature(_)) return #err(#invalidTarget);
+                                    case (#character) ();
+                                };
+                            };
+                        };
+                    };
+                    case (#character) {
+                        allTargets.append(Buffer.fromArray(allCreatures));
+                        switch (chosenTarget) {
+                            case (null) ();
+                            case (?target) {
+                                switch (target) {
+                                    case (#creature(_)) ();
+                                    case (#character) return #err(#invalidTarget);
+                                };
+                            };
+                        };
                     };
                 };
-                case (#gold) attacker.gold;
-            };
-            let minValue : Nat = switch (modifier.attribute) {
-                case (#attacks) 1;
-                case (#damage) 1;
-                case (#minDamage) 1;
-                case (#maxDamage) 1;
-                case (#accuracy) 1;
-                case (#criticalChance) 0;
-                case (#criticalMultiplier) 1;
-            };
-
-            let scaledValue : Nat = Int.abs(Int.max(minValue, Int.abs(Float.toInt(Float.fromInt(value) * modifier.factor))));
-
-            switch (modifier.attribute) {
-                case (#attacks) attacks += scaledValue;
-                case (#damage) {
-                    minDamage += scaledValue;
-                    maxDamage += scaledValue;
-                };
-                case (#minDamage) minDamage += scaledValue;
-                case (#maxDamage) maxDamage += scaledValue;
-                case (#accuracy) accuracy += scaledValue;
-                case (#criticalChance) criticalChance += scaledValue;
-                case (#criticalMultiplier) criticalMultiplier += scaledValue;
             };
         };
-
-        {
-            attacks = attacker.weapon.baseStats.attacks;
-            minDamage = attacker.weapon.baseStats.minDamage;
-            maxDamage = attacker.weapon.baseStats.maxDamage;
-            accuracy = attacker.weapon.baseStats.accuracy;
-            criticalChance = attacker.weapon.baseStats.criticalChance;
-            criticalMultiplier = attacker.weapon.baseStats.criticalMultiplier;
-            statModifiers = attacker.weapon.baseStats.statModifiers;
-        };
+        #ok(allTargets);
     };
 };

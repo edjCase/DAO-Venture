@@ -28,18 +28,12 @@ module {
     public type CombatResult = {
         turns : [CombatTurn];
         healthDelta : Int;
-        kind : CombatResultKind;
-    };
-
-    public type CombatResultKind = {
-        #victory;
-        #defeat;
-        #maxTurnsReached;
+        victory : Bool;
     };
 
     public type CombatTurn = {
-        attacker : AttackerKind;
-        attacks : [AttackResult];
+        #action : Text;
+        #nothing;
     };
 
     public type AttackerKind = {
@@ -59,7 +53,6 @@ module {
     public type ChoiceRequirement = {
         #all : [ChoiceRequirement];
         #any : [ChoiceRequirement];
-        #stat : (Character.CharacterStatKind, Nat);
         #item : Text;
         #trait : Text;
         #race : Text;
@@ -83,15 +76,6 @@ module {
                     if (validateRequirement(req, character)) return true;
                 };
                 false;
-            };
-            case (#stat(statKind, value)) {
-                switch (statKind) {
-                    case (#attack) character.attack >= value;
-                    case (#defense) character.defense >= value;
-                    case (#speed) character.speed >= value;
-                    case (#magic) character.magic >= value;
-                    case (#maxHealth) character.maxHealth >= value;
-                };
             };
             case (#item(itemId)) TrieSet.mem(character.itemIds, itemId, Text.hash(itemId), Text.equal);
             case (#trait(traitId)) TrieSet.mem(character.traitIds, traitId, Text.hash(traitId), Text.equal);
