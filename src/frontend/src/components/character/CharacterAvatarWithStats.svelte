@@ -12,10 +12,6 @@
   $: goldStat = getValue(character?.gold);
   $: healthStat = getValue(character?.health);
   $: maxHealthStat = getValue(character?.maxHealth);
-  $: attackStat = getValue(character?.attack);
-  $: defenseStat = getValue(character?.defense);
-  $: speedStat = getValue(character?.speed);
-  $: magicStat = getValue(character?.magic);
 </script>
 
 <div>
@@ -28,11 +24,5 @@
   </div>
   <div class="flex justify-center m-2 border border-gray-300 rounded">
     <CharacterAvatar {size} {character} />
-  </div>
-  <div class="flex justify-around">
-    <div><CharacterStatIcon kind={{ attack: null }} /> {attackStat}</div>
-    <div><CharacterStatIcon kind={{ defense: null }} /> {defenseStat}</div>
-    <div><CharacterStatIcon kind={{ speed: null }} /> {speedStat}</div>
-    <div><CharacterStatIcon kind={{ magic: null }} /> {magicStat}</div>
   </div>
 </div>

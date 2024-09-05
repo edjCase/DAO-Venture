@@ -1,6 +1,13 @@
 <script lang="ts">
   import FormTemplate from "../FormTemplate.svelte";
-  import { Input, Label, Textarea, Select } from "flowbite-svelte";
+  import {
+    Input,
+    Label,
+    Textarea,
+    Select,
+    SelectOptionType,
+    MultiSelect,
+  } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
     UnlockRequirement,
@@ -9,17 +16,16 @@
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import CharacterStatIcon from "../../../character/CharacterStatIcon.svelte";
+  import { actionStore } from "../../../../stores/ActionStore";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
-  let magic: bigint = 0n;
   let maxHealth: bigint = 100n;
-  let speed: bigint = 0n;
-  let defense: bigint = 0n;
-  let attack: bigint = 0n;
   let health: bigint = 100n;
   let weaponId: string | undefined;
+  let actionOptions: SelectOptionType<string>[] = [];
+  let selectedActions: string[] = [];
 
   let creatureKinds = [
     { value: "normal", name: "Normal", kind: { normal: null } },
@@ -58,19 +64,23 @@
   }
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
-    if (
-      id === undefined ||
-      name === undefined ||
-      description === undefined ||
-      magic === undefined ||
-      maxHealth === undefined ||
-      speed === undefined ||
-      defense === undefined ||
-      attack === undefined ||
-      health === undefined ||
-      weaponId === undefined
-    ) {
-      return "All fields except unlock requirement must be filled";
+    if (id === undefined) {
+      return "Id must be filled";
+    }
+    if (name === undefined) {
+      return "Name must be filled";
+    }
+    if (description === undefined) {
+      return "Description must be filled";
+    }
+    if (maxHealth === undefined) {
+      return "Max health must be filled";
+    }
+    if (health === undefined) {
+      return "Health must be filled";
+    }
+    if (weaponId === undefined) {
+      return "Weapon Id must be filled";
     }
     return {
       modifyGameContent: {
@@ -78,21 +88,27 @@
           id,
           name,
           description,
-          magic,
           maxHealth,
-          speed,
-          defense,
-          attack,
           health,
           weaponId,
           kind,
           location: location,
+          actionIds: selectedActions,
           unlockRequirement:
             unlockRequirement !== undefined ? [unlockRequirement] : [],
         },
       },
     };
   };
+
+  $: actions = $actionStore;
+  $: {
+    actionOptions =
+      actions?.map((action) => ({
+        value: action.id,
+        name: action.name,
+      })) || [];
+  }
 </script>
 
 <FormTemplate {generateProposal}>
@@ -147,30 +163,6 @@
           class="w-16"
         />
       </div>
-      <div class="flex flex-col items-center">
-        <Label for="attack">
-          <CharacterStatIcon kind={{ attack: null }} />
-        </Label>
-        <Input id="attack" type="number" bind:value={attack} class="w-16" />
-      </div>
-      <div class="flex flex-col items-center">
-        <Label for="defense">
-          <CharacterStatIcon kind={{ defense: null }} />
-        </Label>
-        <Input id="defense" type="number" bind:value={defense} class="w-16" />
-      </div>
-      <div class="flex flex-col items-center">
-        <Label for="speed">
-          <CharacterStatIcon kind={{ speed: null }} />
-        </Label>
-        <Input id="speed" type="number" bind:value={speed} class="w-16" />
-      </div>
-      <div class="flex flex-col items-center">
-        <Label for="magic">
-          <CharacterStatIcon kind={{ magic: null }} />
-        </Label>
-        <Input id="magic" type="number" bind:value={magic} class="w-16" />
-      </div>
     </div>
 
     <div>
@@ -213,6 +205,15 @@
         />
       </div>
     {/if}
+    <div>
+      <Label>Actions</Label>
+      <MultiSelect
+        items={actionOptions}
+        bind:value={selectedActions}
+        placeholder="Select actions"
+        size="lg"
+      />
+    </div>
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>

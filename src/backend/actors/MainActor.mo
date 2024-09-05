@@ -22,6 +22,8 @@ import Class "../models/entities/Class";
 import Race "../models/entities/Race";
 import Item "../models/entities/Item";
 import ScenarioMetaData "../models/entities/ScenarioMetaData";
+import Action "../models/entities/Action";
+import Weapon "../models/entities/Weapon";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -278,6 +280,14 @@ actor MainActor : Types.Actor {
 
     public query func getItems() : async [Item.Item] {
         gameHandler.getItems();
+    };
+
+    public query func getActions() : async [Action.Action] {
+        gameHandler.getActions();
+    };
+
+    public query func getWeapons() : async [Weapon.Weapon] {
+        gameHandler.getWeapons();
     };
 
     public shared query func getTopUsers(request : Types.GetTopUsersRequest) : async Types.GetTopUsersResult {

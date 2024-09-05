@@ -14,6 +14,8 @@ import Race "../models/entities/Race";
 import Class "../models/entities/Class";
 import ScenarioMetaData "../models/entities/ScenarioMetaData";
 import ScenarioSimulator "../ScenarioSimulator";
+import Action "../models/entities/Action";
+import Weapon "../models/entities/Weapon";
 
 module {
     public type Actor = actor {
@@ -43,6 +45,8 @@ module {
         getClasses : query () -> async [Class.Class];
         getRaces : query () -> async [Race.Race];
         getItems : query () -> async [Item.Item];
+        getActions : query () -> async [Action.Action];
+        getWeapons : query () -> async [Weapon.Weapon];
     };
 
     public type StartGameRequest = {

@@ -764,12 +764,20 @@ module {
             items.vals() |> Iter.toArray(_);
         };
 
+        public func getActions() : [Action.Action] {
+            actions.vals() |> Iter.toArray(_);
+        };
+
         public func getRaces() : [Race.Race] {
             races.vals() |> Iter.toArray(_);
         };
 
         public func getClasses() : [Class.Class] {
             classes.vals() |> Iter.toArray(_);
+        };
+
+        public func getWeapons() : [Weapon.Weapon] {
+            weapons.vals() |> Iter.toArray(_);
         };
 
         // ------------------ Private ------------------

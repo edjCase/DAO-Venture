@@ -1,29 +1,43 @@
 <script lang="ts">
   import FormTemplate from "../FormTemplate.svelte";
-  import { Input, Label, Textarea } from "flowbite-svelte";
+  import {
+    Input,
+    Label,
+    MultiSelect,
+    SelectOptionType,
+    Textarea,
+  } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
     UnlockRequirement,
-    CharacterModifier,
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
-  import CharacterModifierMultiSelect from "./CharacterModifierMultiSelect.svelte";
+  import { actionStore } from "../../../../stores/ActionStore";
+  import { traitStore } from "../../../../stores/TraitStore";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
   let weaponId: string | undefined;
   let unlockRequirement: UnlockRequirement | undefined;
-  let modifiers: CharacterModifier[] = [];
+
+  let actionOptions: SelectOptionType<string>[] = [];
+  let selectedActions: string[] = [];
+  let traitOptions: SelectOptionType<string>[] = [];
+  let selectedTraits: string[] = [];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
-    if (
-      id === undefined ||
-      name === undefined ||
-      description === undefined ||
-      weaponId === undefined
-    ) {
-      return "All fields except unlock requirement must be filled";
+    if (id === undefined) {
+      return "Id must be filled";
+    }
+    if (name === undefined) {
+      return "Name must be filled";
+    }
+    if (description === undefined) {
+      return "Description must be filled";
+    }
+    if (weaponId === undefined) {
+      return "Weapon Id must be filled";
     }
     return {
       modifyGameContent: {
@@ -32,12 +46,30 @@
           name,
           description,
           weaponId,
+          startingTraitIds: selectedTraits,
+          actionIds: selectedActions,
           unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
-          modifiers,
         },
       },
     };
   };
+
+  $: actions = $actionStore;
+  $: traits = $traitStore;
+  $: {
+    actionOptions =
+      actions?.map((action) => ({
+        value: action.id,
+        name: action.name,
+      })) || [];
+  }
+  $: {
+    traitOptions =
+      traits?.map((action) => ({
+        value: action.id,
+        name: action.name,
+      })) || [];
+  }
 </script>
 
 <FormTemplate {generateProposal}>
@@ -78,7 +110,24 @@
       />
     </div>
 
-    <CharacterModifierMultiSelect bind:modifiers />
+    <div>
+      <Label>Actions</Label>
+      <MultiSelect
+        items={actionOptions}
+        bind:value={selectedActions}
+        placeholder="Select actions"
+        size="lg"
+      />
+    </div>
+    <div>
+      <Label>Traits</Label>
+      <MultiSelect
+        items={traitOptions}
+        bind:value={selectedTraits}
+        placeholder="Select traits"
+        size="lg"
+      />
+    </div>
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>

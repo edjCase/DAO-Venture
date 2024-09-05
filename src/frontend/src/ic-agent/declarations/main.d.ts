@@ -546,6 +546,7 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
+  'getActions' : ActorMethod<[], Array<Action>>,
   'getClasses' : ActorMethod<[], Array<Class>>,
   'getCompletedGames' : ActorMethod<[GetCompletedGamesRequest], PagedResult_2>,
   'getCurrentGame' : ActorMethod<[], GetCurrentGameResult>,
@@ -559,6 +560,7 @@ export interface _SERVICE {
   'getUser' : ActorMethod<[Principal], GetUserResult>,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
   'getUsers' : ActorMethod<[GetUsersRequest], GetUsersResult>,
+  'getWeapons' : ActorMethod<[], Array<Weapon>>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,

@@ -254,11 +254,6 @@ export const idlFactory = ({ IDL }) => {
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
   });
-  const GetCompletedGamesRequest = IDL.Record({
-    'count' : IDL.Nat,
-    'offset' : IDL.Nat,
-  });
-  const Time = IDL.Int;
   const TurnPhase = IDL.Variant({ 'end' : IDL.Null, 'start' : IDL.Null });
   const PeriodicTiming = IDL.Record({
     'remainingTurns' : IDL.Nat,
@@ -324,6 +319,11 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
+  const GetCompletedGamesRequest = IDL.Record({
+    'count' : IDL.Nat,
+    'offset' : IDL.Nat,
+  });
+  const Time = IDL.Int;
   const CharacterWithMetaData = IDL.Record({
     'maxHealth' : IDL.Nat,
     'gold' : IDL.Nat,
@@ -667,6 +667,7 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
+    'getActions' : IDL.Func([], [IDL.Vec(Action)], ['query']),
     'getClasses' : IDL.Func([], [IDL.Vec(Class)], ['query']),
     'getCompletedGames' : IDL.Func(
         [GetCompletedGamesRequest],
@@ -696,6 +697,7 @@ export const idlFactory = ({ IDL }) => {
     'getUser' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
     'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
     'getUsers' : IDL.Func([GetUsersRequest], [GetUsersResult], ['query']),
+    'getWeapons' : IDL.Func([], [IDL.Vec(Weapon)], ['query']),
     'getWorldProposal' : IDL.Func(
         [IDL.Nat],
         [GetWorldProposalResult],
