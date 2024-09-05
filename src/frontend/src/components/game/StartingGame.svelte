@@ -22,7 +22,7 @@
     if ("ok" in result) {
       currentGameStore.refetch();
     } else {
-      console.error("Failed to vote", result);
+      console.error("Failed start game", result, characterId);
     }
   };
 </script>

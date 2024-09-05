@@ -30,7 +30,7 @@
       scenarioStore.refetch();
       currentGameStore.refetch();
     } else {
-      console.error("Failed to vote:", result);
+      console.error("Failed select choice:", result, optionId);
     }
   };
   let intervalId: NodeJS.Timeout | undefined;

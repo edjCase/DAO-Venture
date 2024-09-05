@@ -794,6 +794,7 @@ module {
             ?{
                 inProgressInstance with
                 scenarios = Array.append(inProgressInstance.scenarios, [newScenario]);
+                turnKind = #scenario({ scenarioId = newScenarioId });
             };
         };
 
