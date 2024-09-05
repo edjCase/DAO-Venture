@@ -1,13 +1,13 @@
 import Item "entities/Item";
 import Trait "entities/Trait";
 import Image "Image";
-import Scenario "entities/Scenario";
 import Race "entities/Race";
 import Class "entities/Class";
 import Zone "entities/Zone";
 import Achievement "entities/Achievement";
 import Creature "entities/Creature";
 import Weapon "entities/Weapon";
+import ScenarioMetaData "entities/ScenarioMetaData";
 module {
 
     public type ProposalContent = {

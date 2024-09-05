@@ -98,17 +98,26 @@ module {
             },
         ) else Debug.trap("Invalid choice: " # choiceId);
 
-        let ?currentPath = Array.find(
-            helper.scenarioMetaData.paths,
-            func(p : ScenarioMetaData.OutcomePath) : Bool {
-                p.id == choiceData.pathId;
-            },
-        ) else Debug.trap("Invalid path ID: " # choiceData.pathId);
-        helper.log(currentPath.description);
+        var currentPathId = choiceData.pathId;
 
-        let kind = switch (currentPath.kind) {
-            case (#combat(combat)) startCombat(combat, helper);
-            case (#effects(effects)) processPathEffects(currentPath, effects, helper);
+        let kind = label l : Scenario.ScenarioChoiceResultKind loop {
+
+            let ?currentPath = Array.find(
+                helper.scenarioMetaData.paths,
+                func(p : ScenarioMetaData.OutcomePath) : Bool {
+                    p.id == choiceData.pathId;
+                },
+            ) else Debug.trap("Invalid path ID: " # choiceData.pathId);
+            helper.log(currentPath.description);
+
+            switch (currentPath.kind) {
+                case (#combat(combat)) break l(startCombat(combat, helper));
+                case (#effects(effects)) switch (processPathEffects(currentPath, effects, helper)) {
+                    case (#complete) break l(#complete);
+                    case (#death) break l(#death);
+                    case (#nextPath(nextPathId)) currentPathId := nextPathId;
+                };
+            };
         };
         #ok({
             effects = helper.getEffects();
@@ -143,7 +152,7 @@ module {
         currentPath : ScenarioMetaData.OutcomePath,
         effects : [ScenarioMetaData.Effect],
         helper : Helper,
-    ) : Scenario.ScenarioChoiceResultKind {
+    ) : { #complete; #death; #nextPath : Text } {
 
         label f for (effect in effects.vals()) {
             switch (helper.applyEffect(effect)) {
@@ -178,7 +187,7 @@ module {
             },
         );
         let nextPathId = helper.prng.nextArrayElementWeighted(pathsWithWeights);
-        #path(nextPathId);
+        #nextPath(nextPathId);
     };
 
     func processCombat(
@@ -374,28 +383,7 @@ module {
             let count = 3; // TODO
             let character = characterHandler.get();
 
-            let allActionIds = Buffer.Buffer<Text>(10);
-
-            let ?class_ = classes.get(character.classId) else Debug.trap("Class not found: " # character.classId);
-            allActionIds.append(Buffer.fromArray(class_.actionIds));
-
-            let ?race = races.get(character.raceId) else Debug.trap("Race not found: " # character.raceId);
-            allActionIds.append(Buffer.fromArray(race.actionIds));
-
-            let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
-            allActionIds.append(Buffer.fromArray(weapon.actionIds));
-
-            // TODO?
-            // let traitActionIds = Trie.iter(character.traitIds)
-            // |> Iter.map<(Text, ()), Iter.Iter<Text>>(
-            //     _,
-            //     func((traitId, _) : (Text, ())) : Iter.Iter<Text> {
-            //         let ?trait = traits.get(traitId) else Debug.trap("Trait not found: " # traitId);
-            //         trait.actionIds.vals();
-            //     },
-            // )
-            // |> IterTools.flatten(_);
-            // allActionIds.append(Buffer.fromArray(traitActionIds));
+            let allActionIds = Character.getActionIds(character, classes, races, weapons);
 
             prng.shuffleBuffer(allActionIds);
 

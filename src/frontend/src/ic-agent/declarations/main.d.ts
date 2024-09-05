@@ -9,45 +9,56 @@ export interface Achievement {
   'name' : string,
   'description' : string,
 }
-export type AttackResult = { 'hit' : HitResult } |
-  { 'miss' : null };
-export type AttackerKind = { 'creature' : null } |
+export interface Action {
+  'id' : string,
+  'effects' : Array<ActionEffect>,
+  'name' : string,
+  'description' : string,
+}
+export interface ActionEffect {
+  'kind' : ActionEffectKind,
+  'target' : ActionTarget,
+}
+export type ActionEffectKind = { 'damage' : Damage } |
+  { 'heal' : Heal } |
+  { 'addStatusEffect' : StatusEffect } |
+  { 'block' : Block };
+export interface ActionTarget {
+  'scope' : ActionTargetScope,
+  'selection' : ActionTargetSelection,
+}
+export type ActionTargetResult = { 'creature' : bigint } |
   { 'character' : null };
+export type ActionTargetScope = { 'any' : null } |
+  { 'ally' : null } |
+  { 'enemy' : null };
+export type ActionTargetSelection = { 'all' : null } |
+  { 'random' : { 'count' : bigint } } |
+  { 'chosen' : null };
+export type ActionTimingKind = { 'periodic' : PeriodicTiming } |
+  { 'immediate' : null };
+export interface Block {
+  'max' : bigint,
+  'min' : bigint,
+  'timing' : ActionTimingKind,
+}
 export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
 }
-export type CharacterModifier = { 'magic' : bigint } |
-  { 'trait' : string } |
-  { 'maxHealth' : bigint } |
-  { 'gold' : bigint } |
-  { 'item' : string } |
-  { 'speed' : bigint } |
-  { 'defense' : bigint } |
-  { 'attack' : bigint } |
-  { 'health' : bigint };
-export type CharacterStatKind = { 'magic' : null } |
-  { 'maxHealth' : null } |
-  { 'speed' : null } |
-  { 'defense' : null } |
-  { 'attack' : null };
-export type CharacterStatKind__1 = { 'magic' : null } |
-  { 'gold' : null } |
-  { 'speed' : null } |
-  { 'defense' : null } |
-  { 'attack' : null } |
-  { 'health' : { 'inverse' : boolean } };
+export interface CharacterCombatState {
+  'shield' : bigint,
+  'statusEffects' : Array<StatusEffectResult>,
+  'availableActionIds' : Array<string>,
+}
 export interface CharacterWithMetaData {
-  'magic' : bigint,
   'maxHealth' : bigint,
   'gold' : bigint,
   'traits' : Array<Trait>,
   'class' : Class,
   'race' : Race,
-  'speed' : bigint,
-  'defense' : bigint,
+  'actions' : Array<Action>,
   'items' : Array<Item>,
-  'attack' : bigint,
   'weapon' : Weapon,
   'health' : bigint,
 }
@@ -63,15 +74,20 @@ export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
   { 'gold' : bigint } |
   { 'item' : string } |
   { 'class' : string } |
-  { 'race' : string } |
-  { 'stat' : [CharacterStatKind, bigint] };
+  { 'race' : string };
+export interface ChoiceScenarioState { 'choiceIds' : Array<string> }
 export interface Class {
   'id' : string,
+  'actionIds' : Array<string>,
   'name' : string,
   'description' : string,
   'weaponId' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
-  'modifiers' : Array<CharacterModifier>,
+  'startingTraitIds' : Array<string>,
+}
+export interface CombatChoice {
+  'target' : [] | [ActionTargetResult],
+  'actionId' : string,
 }
 export interface CombatCreatureFilter {
   'location' : CombatCreatureLocationFilter,
@@ -81,19 +97,19 @@ export type CombatCreatureKind = { 'id' : string } |
 export type CombatCreatureLocationFilter = { 'any' : null } |
   { 'zone' : string } |
   { 'common' : null };
-export interface CombatPath { 'creature' : CombatCreatureKind }
+export interface CombatDefeatResult { 'creatures' : Array<CreatureCombatState> }
+export interface CombatPath { 'creatures' : Array<CombatCreatureKind> }
 export interface CombatResult {
   'turns' : Array<CombatTurn>,
   'healthDelta' : bigint,
-  'kind' : CombatResultKind,
+  'victory' : boolean,
 }
-export type CombatResultKind = { 'maxTurnsReached' : null } |
-  { 'defeat' : null } |
-  { 'victory' : null };
-export interface CombatTurn {
-  'attacker' : AttackerKind,
-  'attacks' : Array<AttackResult>,
+export interface CombatScenarioState {
+  'character' : CharacterCombatState,
+  'creatures' : Array<CreatureCombatState>,
 }
+export type CombatTurn = { 'action' : string } |
+  { 'nothing' : null };
 export type CombatTurn__1 = {};
 export interface CompletedGameStateWithMetaData {
   'endTime' : Time,
@@ -136,17 +152,22 @@ export type CreateWorldProposalResult = { 'ok' : bigint } |
   { 'err' : CreateWorldProposalError };
 export interface Creature {
   'id' : string,
-  'magic' : bigint,
+  'actionIds' : Array<string>,
   'maxHealth' : bigint,
   'kind' : CreatureKind,
   'name' : string,
   'description' : string,
-  'speed' : bigint,
   'weaponId' : string,
-  'defense' : bigint,
   'unlockRequirement' : [] | [UnlockRequirement],
-  'attack' : bigint,
   'location' : CreatureLocationKind,
+  'health' : bigint,
+}
+export interface CreatureCombatState {
+  'shield' : bigint,
+  'statusEffects' : Array<StatusEffectResult>,
+  'maxHealth' : bigint,
+  'availableActionIds' : Array<string>,
+  'creatureId' : string,
   'health' : bigint,
 }
 export type CreatureKind = { 'normal' : null } |
@@ -154,6 +175,11 @@ export type CreatureKind = { 'normal' : null } |
   { 'elite' : null };
 export type CreatureLocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
+export interface Damage {
+  'max' : bigint,
+  'min' : bigint,
+  'timing' : ActionTimingKind,
+}
 export type Difficulty = { 'normal' : null } |
   { 'easy' : null } |
   { 'hard' : null };
@@ -162,7 +188,6 @@ export type Effect = { 'reward' : null } |
   { 'damage' : NatValue } |
   { 'heal' : NatValue } |
   { 'achievement' : string } |
-  { 'upgradeStat' : [CharacterStatKind, NatValue] } |
   { 'addItem' : TextValue } |
   { 'addTrait' : TextValue } |
   { 'removeGold' : NatValue } |
@@ -223,7 +248,11 @@ export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
 export type HeaderField = [string, string];
-export interface HitResult { 'damage' : bigint }
+export interface Heal {
+  'max' : bigint,
+  'min' : bigint,
+  'timing' : ActionTimingKind,
+}
 export interface HttpRequest {
   'url' : string,
   'method' : string,
@@ -276,20 +305,15 @@ export interface MotionContent { 'title' : string, 'description' : string }
 export type NatValue = { 'raw' : bigint } |
   { 'dataField' : string } |
   { 'random' : [bigint, bigint] };
-export interface Outcome { 'log' : Array<OutcomeLogEntry>, 'choiceId' : string }
-export type OutcomeLogEntry = { 'speedDelta' : bigint } |
-  { 'removeTrait' : string } |
+export type OutcomeEffect = { 'removeTrait' : string } |
   { 'healthDelta' : bigint } |
   { 'maxHealthDelta' : bigint } |
   { 'text' : string } |
-  { 'defenseDelta' : bigint } |
-  { 'attackDelta' : bigint } |
   { 'addItem' : string } |
   { 'addTrait' : string } |
   { 'goldDelta' : bigint } |
   { 'removeItem' : string } |
-  { 'combat' : CombatResult } |
-  { 'magicDelta' : bigint };
+  { 'combat' : CombatResult };
 export interface OutcomePath {
   'id' : string,
   'kind' : OutcomePathKind,
@@ -315,6 +339,18 @@ export interface PagedResult_2 {
   'count' : bigint,
   'totalCount' : bigint,
   'offset' : bigint,
+}
+export type PeriodicEffectKind = { 'damage' : null } |
+  { 'heal' : null } |
+  { 'block' : null };
+export interface PeriodicEffectResult {
+  'kind' : PeriodicEffectKind,
+  'phase' : TurnPhase,
+  'amount' : bigint,
+}
+export interface PeriodicTiming {
+  'remainingTurns' : bigint,
+  'phase' : TurnPhase,
 }
 export interface PixelData { 'count' : bigint, 'paletteIndex' : [] | [number] }
 export interface PixelImage {
@@ -342,27 +378,40 @@ export type ProposalStatus = {
   };
 export interface Race {
   'id' : string,
+  'actionIds' : Array<string>,
   'name' : string,
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
-  'modifiers' : Array<CharacterModifier>,
+  'startingTraitIds' : Array<string>,
 }
 export type RandomOrSpecificTextValue = { 'specific' : TextValue } |
   { 'random' : null };
 export type RegisterError = { 'alreadyMember' : null };
 export type RegisterResult = { 'ok' : User } |
   { 'err' : RegisterError };
+export type Retaliating = { 'flat' : bigint };
 export interface Scenario {
   'id' : bigint,
   'metaDataId' : string,
   'metaData' : ScenarioMetaData,
   'data' : Array<GeneratedDataFieldInstance>,
-  'availableChoiceIds' : Array<string>,
-  'outcome' : [] | [Outcome],
+  'state' : ScenarioStateKind,
+  'previousStages' : Array<ScenarioStageResult>,
 }
 export type ScenarioCategory = { 'other' : null } |
   { 'store' : null } |
   { 'combat' : null };
+export interface ScenarioChoiceResult {
+  'choiceId' : string,
+  'kind' : ScenarioChoiceResultKind,
+}
+export type ScenarioChoiceResultKind = { 'startCombat' : CombatScenarioState } |
+  { 'complete' : null } |
+  { 'choice' : ChoiceScenarioState } |
+  { 'death' : null };
+export type ScenarioCombatResult = { 'defeat' : CombatDefeatResult } |
+  { 'victory' : null } |
+  { 'inProgress' : CombatScenarioState };
 export interface ScenarioMetaData {
   'id' : string,
   'data' : Array<GeneratedDataField>,
@@ -375,15 +424,27 @@ export interface ScenarioMetaData {
   'choices' : Array<Choice>,
   'location' : LocationKind,
 }
+export interface ScenarioStageResult {
+  'effects' : Array<OutcomeEffect>,
+  'kind' : ScenarioStageResultKind,
+}
+export type ScenarioStageResultKind = { 'choice' : ScenarioChoiceResult } |
+  { 'combat' : ScenarioCombatResult };
+export type ScenarioStateKind = { 'complete' : null } |
+  { 'choice' : ChoiceScenarioState } |
+  { 'combat' : CombatScenarioState };
 export interface ScenarioTurn { 'scenarioId' : bigint }
-export type SelectScenarioChoiceError = { 'invalidChoice' : null } |
+export type SelectScenarioChoiceError = { 'invalidTarget' : null } |
+  { 'targetRequired' : null } |
+  { 'invalidChoice' : null } |
   { 'gameNotFound' : null } |
   { 'gameNotActive' : null } |
-  { 'choiceRequirementNotMet' : null } |
   { 'notScenarioTurn' : null };
-export interface SelectScenarioChoiceRequest { 'choiceId' : string }
+export interface SelectScenarioChoiceRequest { 'choice' : StageChoiceKind }
 export type SelectScenarioChoiceResult = { 'ok' : null } |
   { 'err' : SelectScenarioChoiceError };
+export type StageChoiceKind = { 'choice' : string } |
+  { 'combat' : CombatChoice };
 export interface StartGameRequest { 'characterId' : bigint }
 export type StartGameResult = { 'ok' : null } |
   {
@@ -394,10 +455,22 @@ export type StartGameResult = { 'ok' : null } |
 export interface StartingGameStateWithMetaData {
   'characterOptions' : Array<CharacterWithMetaData>,
 }
-export interface StatModifier {
-  'characterStat' : CharacterStatKind__1,
-  'factor' : number,
-  'attribute' : WeaponAttribute,
+export interface StatusEffect {
+  'duration' : [] | [bigint],
+  'kind' : StatusEffectKind__1,
+}
+export type StatusEffectKind = { 'retaliating' : Retaliating } |
+  { 'weak' : null } |
+  { 'vulnerable' : null } |
+  { 'stunned' : null } |
+  { 'periodic' : PeriodicEffectResult };
+export type StatusEffectKind__1 = { 'retaliating' : Retaliating } |
+  { 'weak' : null } |
+  { 'vulnerable' : null } |
+  { 'stunned' : null };
+export interface StatusEffectResult {
+  'kind' : StatusEffectKind,
+  'remainingTurns' : bigint,
 }
 export interface StreamingCallbackHttpResponse {
   'token' : [] | [Token],
@@ -418,6 +491,8 @@ export interface Trait {
 }
 export type TurnKind = { 'scenario' : ScenarioTurn } |
   { 'combat' : CombatTurn__1 };
+export type TurnPhase = { 'end' : null } |
+  { 'start' : null };
 export type UnlockRequirement = { 'acheivementId' : string };
 export interface User {
   'id' : Principal,
@@ -439,32 +514,10 @@ export type VoteOnWorldProposalResult = { 'ok' : null } |
   { 'err' : VoteOnWorldProposalError };
 export interface Weapon {
   'id' : string,
+  'actionIds' : Array<string>,
   'name' : string,
   'description' : string,
-  'baseStats' : WeaponStats,
   'unlockRequirement' : [] | [UnlockRequirement],
-  'requirements' : Array<WeaponRequirement>,
-}
-export type WeaponAttribute = { 'damage' : null } |
-  { 'attacks' : null } |
-  { 'criticalChance' : null } |
-  { 'maxDamage' : null } |
-  { 'minDamage' : null } |
-  { 'criticalMultiplier' : null } |
-  { 'accuracy' : null };
-export type WeaponRequirement = { 'magic' : bigint } |
-  { 'maxHealth' : bigint } |
-  { 'speed' : bigint } |
-  { 'defense' : bigint } |
-  { 'attack' : bigint };
-export interface WeaponStats {
-  'attacks' : bigint,
-  'criticalChance' : bigint,
-  'maxDamage' : bigint,
-  'minDamage' : bigint,
-  'statModifiers' : Array<StatModifier>,
-  'criticalMultiplier' : bigint,
-  'accuracy' : bigint,
 }
 export interface WeightedOutcomePath {
   'weight' : number,

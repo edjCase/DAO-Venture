@@ -17,11 +17,11 @@ import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
 import HttpHandler "../handlers/HttpHandler";
-import Scenario "../models/entities/Scenario";
 import Trait "../models/entities/Trait";
 import Class "../models/entities/Class";
 import Race "../models/entities/Race";
 import Item "../models/entities/Item";
+import ScenarioMetaData "../models/entities/ScenarioMetaData";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -41,6 +41,7 @@ actor MainActor : Types.Actor {
         achievements = [];
         creatures = [];
         weapons = [];
+        actions = [];
     };
 
     stable var worldDaoStableData : ProposalEngine.StableData<WorldDao.ProposalContent> = {
@@ -221,7 +222,7 @@ actor MainActor : Types.Actor {
                 prng,
                 caller,
                 userHandler,
-                request.choiceId,
+                request.choice,
             )
         ) {
             case (#ok) #ok;

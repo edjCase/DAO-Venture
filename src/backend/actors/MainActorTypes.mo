@@ -12,6 +12,8 @@ import Item "../models/entities/Item";
 import Trait "../models/entities/Trait";
 import Race "../models/entities/Race";
 import Class "../models/entities/Class";
+import ScenarioMetaData "../models/entities/ScenarioMetaData";
+import ScenarioSimulator "../ScenarioSimulator";
 
 module {
     public type Actor = actor {
@@ -102,7 +104,6 @@ module {
 
     public type Scenario = Scenario.Scenario and {
         metaData : ScenarioMetaData.ScenarioMetaData;
-        availableChoiceIds : [Text];
     };
 
     public type CreateWorldProposalRequest = {
@@ -124,15 +125,16 @@ module {
     public type GetPositionError = {};
 
     public type SelectScenarioChoiceRequest = {
-        choiceId : Text;
+        choice : ScenarioSimulator.StageChoiceKind;
     };
 
     public type SelectScenarioChoiceError = {
-        #notScenarioTurn;
-        #invalidChoice;
         #gameNotFound;
         #gameNotActive;
-        #choiceRequirementNotMet;
+        #invalidChoice;
+        #notScenarioTurn;
+        #invalidTarget;
+        #targetRequired;
     };
 
     public type SelectScenarioChoiceResult = Result.Result<(), SelectScenarioChoiceError>;

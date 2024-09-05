@@ -429,20 +429,20 @@ module {
         };
     };
 
-    private func validateRequirement(
+    public func characterMeetsRequirement(
         requirement : ChoiceRequirement,
         character : Character.Character,
     ) : Bool {
         switch (requirement) {
             case (#all(reqs)) {
                 for (req in reqs.vals()) {
-                    if (not validateRequirement(req, character)) return false;
+                    if (not characterMeetsRequirement(req, character)) return false;
                 };
                 true;
             };
             case (#any(reqs)) {
                 for (req in reqs.vals()) {
-                    if (validateRequirement(req, character)) return true;
+                    if (characterMeetsRequirement(req, character)) return true;
                 };
                 false;
             };

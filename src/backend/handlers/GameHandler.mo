@@ -31,6 +31,7 @@ import Creature "../models/entities/Creature";
 import Weapon "../models/entities/Weapon";
 import CommonTypes "../CommonTypes";
 import ScenarioMetaData "../models/entities/ScenarioMetaData";
+import Action "../models/entities/Action";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -47,6 +48,7 @@ module {
         achievements : [Achievement.Achievement];
         creatures : [Creature.Creature];
         weapons : [Weapon.Weapon];
+        actions : [Action.Action];
     };
 
     public type PlayerData = {
@@ -146,10 +148,7 @@ module {
         gold : Nat;
         class_ : Class.Class;
         race : Race.Race;
-        attack : Int;
-        defense : Int;
-        speed : Int;
-        magic : Int;
+        actions : [Action.Action];
         items : [Item.Item];
         traits : [Trait.Trait];
         weapon : Weapon.Weapon;
@@ -157,7 +156,6 @@ module {
 
     public type ScenarioWithMetaData = Scenario.Scenario and {
         metaData : ScenarioMetaData.ScenarioMetaData;
-        availableChoiceIds : [Text];
     };
 
     public type CreateGameError = {
@@ -207,6 +205,8 @@ module {
 
         let weapons = toTextHashMap<Weapon.Weapon>(data.weapons);
 
+        let actions = toTextHashMap<Action.Action>(data.actions);
+
         var playerDataList : HashMap.HashMap<Principal, PlayerData> = toHashMap<Principal, PlayerData>(
             data.playerDataList,
             func(d : PlayerData) : (Principal, PlayerData) = (d.id, d),
@@ -227,6 +227,7 @@ module {
                 achievements = Iter.toArray(achievements.vals());
                 creatures = Iter.toArray(creatures.vals());
                 weapons = Iter.toArray(weapons.vals());
+                actions = Iter.toArray(actions.vals());
             };
         };
 
@@ -314,7 +315,7 @@ module {
                 func(_ : Nat) : Character.Character {
                     let class_ = prng.nextArrayElement(classArray);
                     let race = prng.nextArrayElement(raceArray);
-                    CharacterGenerator.generate(class_, race, weapons);
+                    CharacterGenerator.generate(class_, race);
                 },
             )
             |> Iter.toArray(_);
@@ -399,19 +400,19 @@ module {
         public func getScenario(playerId : Principal, scenarioId : Nat) : Result.Result<ScenarioWithMetaData, { #gameNotFound; #gameNotActive; #notFound }> {
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
-            let #inProgress({ scenarios; character }) = instance.state else return #err(#gameNotActive);
+            let #inProgress({ scenarios }) = instance.state else return #err(#gameNotActive);
             let ?scenario = Array.find(scenarios, func(s : Scenario.Scenario) : Bool = s.id == scenarioId) else return #err(#notFound);
-            #ok(mapScenario(scenario, character));
+            #ok(mapScenario(scenario));
         };
 
         public func getScenarios(playerId : Principal) : Result.Result<[ScenarioWithMetaData], { #gameNotFound; #gameNotActive }> {
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
-            let #inProgress({ scenarios; character }) = instance.state else return #err(#gameNotActive);
+            let #inProgress({ scenarios }) = instance.state else return #err(#gameNotActive);
             let scenariosWithMetaData = scenarios.vals()
             |> Iter.map<Scenario.Scenario, ScenarioWithMetaData>(
                 _,
-                func(scenario : Scenario.Scenario) : ScenarioWithMetaData = mapScenario(scenario, character),
+                mapScenario,
             )
             |> Iter.toArray(_);
             #ok(scenariosWithMetaData);
@@ -430,10 +431,10 @@ module {
 
             let zoneId = prng.nextArrayElement(zones.vals() |> Iter.toArray(_)).id;
             let scenarioId = 0; // TODO?
+
             let scenario : Scenario.Scenario = {
-                generateScenario(prng, zoneId) with
+                generateScenario(prng, zoneId, character) with
                 id = scenarioId;
-                outcome = null;
             };
             let turnKind = #scenario({ scenarioId });
             playerDataList.put(
@@ -460,8 +461,8 @@ module {
             prng : Prng,
             playerId : Principal,
             userHandler : UserHandler.Handler,
-            choiceId : Text,
-        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice; #choiceRequirementNotMet; #notScenarioTurn }> {
+            choice : ScenarioSimulator.StageChoiceKind,
+        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice; #notScenarioTurn; #invalidTarget; #targetRequired }> {
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
@@ -475,36 +476,49 @@ module {
 
             let characterHandler = CharacterHandler.Handler(inProgressInstance.character);
 
-            let ?choice = Array.find(
-                scenarioMetaData.choices,
-                func(choice : Scenario.Choice) : Bool = choiceId == choice.id,
-            ) else return #err(#invalidChoice);
-            switch (choice.requirement) {
-                case (null) ();
-                case (?requirement) {
-                    if (not Outcome.validateRequirement(requirement, inProgressInstance.character)) {
-                        return #err(#choiceRequirementNotMet);
+            let stageResult : Scenario.ScenarioStageResult = switch (
+                ScenarioSimulator.runStage(
+                    prng,
+                    playerId,
+                    userHandler,
+                    characterHandler,
+                    scenario,
+                    scenarioMetaData,
+                    creatures,
+                    classes,
+                    races,
+                    weapons,
+                    actions,
+                    choice,
+                )
+            ) {
+                case (#err(#scenarioComplete)) Debug.trap("Failed to process choice: Scenario complete");
+                case (#err(#invalidChoice)) return #err(#invalidChoice);
+                case (#err(#invalidTarget)) return #err(#invalidTarget);
+                case (#err(#targetRequired)) return #err(#targetRequired);
+                case (#ok(result)) result;
+            };
+            let (newState, isDead) : (Scenario.ScenarioStateKind, Bool) = switch (stageResult.kind) {
+                case (#choice(choice)) {
+                    switch (choice.kind) {
+                        case (#complete) (#complete, false);
+                        case (#death) (#complete, true);
+                        case (#choice(choice)) (#choice(choice), false);
+                        case (#startCombat(combat)) (#combat(combat), false);
+                    };
+                };
+                case (#combat(combat)) {
+                    switch (combat) {
+                        case (#victory) (#complete, false);
+                        case (#defeat(_)) (#complete, true);
+                        case (#inProgress(inProgress)) (#combat(inProgress), false);
                     };
                 };
             };
-            let result = ScenarioSimulator.run(
-                prng,
-                playerId,
-                userHandler,
-                characterHandler,
-                scenario,
-                scenarioMetaData,
-                creatures,
-                weapons,
-                choiceId,
-            );
-            let outcome : Outcome.Outcome = {
-                choiceId;
-                log = result.log;
-            };
             let updatedScenario : Scenario.Scenario = {
                 scenario with
-                outcome = ?outcome;
+                previousStages = Array.append(scenario.previousStages, [stageResult]);
+                state = newState;
             };
             let thawedScenarios = Array.thaw<Scenario.Scenario>(inProgressInstance.scenarios);
             thawedScenarios[inProgressInstance.scenarios.size() - 1] := updatedScenario;
@@ -519,35 +533,32 @@ module {
                 instance with
                 state = #inProgress(updatedInProgressState);
             };
-            let updatedGame : GameInstance = switch (result.kind) {
-                case (#inProgress) {
-                    switch (nextScenarioOrEnd(prng, updatedInProgressState)) {
-                        case (?updatedInProgressState) {
-                            {
-                                updatedInstance with
-                                state = #inProgress(updatedInProgressState);
-                            };
-                        };
-                        case (null) {
-                            {
-                                updatedInstance with
-                                state = #completed({
-                                    endTime = Time.now();
-                                    character = updatedInProgressState.character;
-                                    victory = true;
-                                });
-                            };
+            let updatedGame : GameInstance = if (isDead) {
+                {
+                    updatedInstance with
+                    state = #completed({
+                        endTime = Time.now();
+                        character = updatedInProgressState.character;
+                        victory = false;
+                    });
+                };
+            } else {
+                switch (nextScenarioOrEnd(prng, updatedInProgressState)) {
+                    case (?updatedInProgressState) {
+                        {
+                            updatedInstance with
+                            state = #inProgress(updatedInProgressState);
                         };
                     };
-                };
-                case (#defeat) {
-                    {
-                        updatedInstance with
-                        state = #completed({
-                            endTime = Time.now();
-                            character = updatedInProgressState.character;
-                            victory = false;
-                        });
+                    case (null) {
+                        {
+                            updatedInstance with
+                            state = #completed({
+                                endTime = Time.now();
+                                character = updatedInProgressState.character;
+                                victory = true;
+                            });
+                        };
                     };
                 };
             };
@@ -635,7 +646,7 @@ module {
         };
 
         public func validateRace(race : Race.Race) : Result.Result<(), [Text]> {
-            Race.validate(race, items, traits, achievements);
+            Race.validate(race, traits, actions, achievements);
         };
 
         public func addOrUpdateClass(class_ : Class.Class) : Result.Result<(), { #invalid : [Text] }> {
@@ -649,7 +660,7 @@ module {
         };
 
         public func validateClass(class_ : Class.Class) : Result.Result<(), [Text]> {
-            Class.validate(class_, items, traits, achievements);
+            Class.validate(class_, traits, actions, achievements);
         };
 
         public func addOrUpdateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
@@ -663,7 +674,7 @@ module {
         };
 
         public func validateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), [Text]> {
-            Scenario.validateMetaData(scenario, items, traits, images, zones, achievements, creatures);
+            ScenarioMetaData.validate(scenario, items, traits, images, zones, achievements, creatures);
         };
 
         public func addOrUpdateZone(zone : Zone.Zone) : Result.Result<(), { #invalid : [Text] }> {
@@ -705,7 +716,7 @@ module {
         };
 
         public func validateCreature(creature : Creature.Creature) : Result.Result<(), [Text]> {
-            Creature.validate(creature, weapons, achievements);
+            Creature.validate(creature, actions, weapons, achievements);
         };
 
         public func addOrUpdateWeapon(weapon : Weapon.Weapon) : Result.Result<(), { #invalid : [Text] }> {
@@ -719,7 +730,7 @@ module {
         };
 
         public func validateWeapon(weapon : Weapon.Weapon) : Result.Result<(), [Text]> {
-            Weapon.validate(weapon, achievements);
+            Weapon.validate(weapon, actions, achievements);
         };
 
         public func addOrUpdateImage(image : Image.Image) : Result.Result<(), { #invalid : [Text] }> {
@@ -785,10 +796,9 @@ module {
                 inProgressInstance.zoneIds[inProgressInstance.zoneIds.size() - 1]; // Last zone is 'current'
             };
             let newScenarioId = inProgressInstance.scenarios.size(); // TODO?
-            let newScenario = {
-                generateScenario(prng, zoneId) with
+            let newScenario : Scenario.Scenario = {
+                generateScenario(prng, zoneId, inProgressInstance.character) with
                 id = newScenarioId;
-                outcome = null;
             };
 
             ?{
@@ -799,31 +809,20 @@ module {
         };
 
         private func mapScenario(
-            scenario : Scenario.Scenario,
-            character : Character.Character,
+            scenario : Scenario.Scenario
         ) : ScenarioWithMetaData {
             let ?metaData = scenarioMetaDataList.get(scenario.metaDataId) else Debug.trap("Scenario meta data not found: " # scenario.metaDataId);
             {
                 scenario with
                 metaData = metaData;
-                availableChoiceIds = metaData.choices.vals()
-                |> Iter.filter(
-                    _,
-                    func(choice : Scenario.Choice) : Bool {
-                        switch (choice.requirement) {
-                            case (null) true;
-                            case (?requirement) Outcome.validateRequirement(requirement, character);
-                        };
-                    },
-                )
-                |> Iter.map(_, func(choice : Scenario.Choice) : Text = choice.id)
-                |> Iter.toArray(_);
             };
         };
 
-        private func generateScenario(prng : Prng, zoneId : Text) : {
+        private func generateScenario(prng : Prng, zoneId : Text, character : Character.Character) : {
             metaDataId : Text;
             data : [Scenario.GeneratedDataFieldInstance];
+            previousStages : [Scenario.ScenarioStageResult];
+            state : Scenario.ScenarioStateKind;
         } {
             let category = prng.nextArrayElementWeighted([
                 (#combat, 6.),
@@ -847,9 +846,9 @@ module {
             |> Iter.toArray(_);
             let scenarioMetaData = prng.nextArrayElement(filteredScenarios);
             let scenarioData = scenarioMetaData.data.vals()
-            |> Iter.map<Scenario.GeneratedDataField, Scenario.GeneratedDataFieldInstance>(
+            |> Iter.map<ScenarioMetaData.GeneratedDataField, Scenario.GeneratedDataFieldInstance>(
                 _,
-                func(field : Scenario.GeneratedDataField) : Scenario.GeneratedDataFieldInstance {
+                func(field : ScenarioMetaData.GeneratedDataField) : Scenario.GeneratedDataFieldInstance {
                     let value = switch (field.value) {
                         case (#nat({ min; max })) #nat(prng.nextNat(min, max));
                         case (#text(text)) #text(prng.nextArrayElementWeighted(text.options));
@@ -861,9 +860,24 @@ module {
                 },
             )
             |> Iter.toArray(_);
+            let availableChoiceIds = scenarioMetaData.choices.vals()
+            // Filter to ones where the character meets the requirement
+            |> Iter.filter(
+                _,
+                func(c : ScenarioMetaData.Choice) : Bool = switch (c.requirement) {
+                    case (null) true;
+                    case (?requirement) ScenarioMetaData.characterMeetsRequirement(requirement, character);
+                },
+            )
+            |> Iter.map(_, func(c : ScenarioMetaData.Choice) : Text = c.id)
+            |> Iter.toArray(_);
             {
                 metaDataId = scenarioMetaData.id;
                 data = scenarioData;
+                previousStages = [];
+                state = #choice({
+                    choiceIds = availableChoiceIds;
+                });
             };
         };
 
@@ -924,19 +938,28 @@ module {
                 },
             )
             |> Iter.toArray(_);
+
+            let actionsWithMetaData = Character.getActionIds(character, classes, races, weapons).vals()
+            |> Iter.map(
+                _,
+                func(actionId : Text) : Action.Action {
+                    let ?action = actions.get(actionId) else Debug.trap("Action not found: " # actionId);
+                    action;
+                },
+            )
+            |> Iter.toArray(_);
+
+            let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
             {
                 health = character.health;
                 maxHealth = character.maxHealth;
                 gold = character.gold;
                 class_ = class_;
                 race = race;
-                attack = character.attack;
-                defense = character.defense;
-                speed = character.speed;
-                magic = character.magic;
                 items = itemsWithMetaData;
                 traits = traitsWithMetaData;
-                weapon = character.weapon;
+                weapon = weapon;
+                actions = actionsWithMetaData;
             };
         };
 

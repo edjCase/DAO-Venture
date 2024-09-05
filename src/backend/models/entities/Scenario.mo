@@ -30,7 +30,7 @@ module {
 
     public type ScenarioChoiceResultKind = {
         #startCombat : CombatScenarioState;
-        #path : Text;
+        #choice : ChoiceScenarioState;
         #complete;
         #death;
     };

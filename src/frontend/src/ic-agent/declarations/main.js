@@ -60,16 +60,13 @@ export const idlFactory = ({ IDL }) => {
   });
   const Creature = IDL.Record({
     'id' : IDL.Text,
-    'magic' : IDL.Int,
+    'actionIds' : IDL.Vec(IDL.Text),
     'maxHealth' : IDL.Nat,
     'kind' : CreatureKind,
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'speed' : IDL.Int,
     'weaponId' : IDL.Text,
-    'defense' : IDL.Int,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
-    'attack' : IDL.Int,
     'location' : CreatureLocationKind,
     'health' : IDL.Nat,
   });
@@ -80,31 +77,22 @@ export const idlFactory = ({ IDL }) => {
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
     'image' : PixelImage,
   });
-  const CharacterModifier = IDL.Variant({
-    'magic' : IDL.Int,
-    'trait' : IDL.Text,
-    'maxHealth' : IDL.Int,
-    'gold' : IDL.Nat,
-    'item' : IDL.Text,
-    'speed' : IDL.Int,
-    'defense' : IDL.Int,
-    'attack' : IDL.Int,
-    'health' : IDL.Int,
-  });
   const Class = IDL.Record({
     'id' : IDL.Text,
+    'actionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'weaponId' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
-    'modifiers' : IDL.Vec(CharacterModifier),
+    'startingTraitIds' : IDL.Vec(IDL.Text),
   });
   const Race = IDL.Record({
     'id' : IDL.Text,
+    'actionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
-    'modifiers' : IDL.Vec(CharacterModifier),
+    'startingTraitIds' : IDL.Vec(IDL.Text),
   });
   const Zone = IDL.Record({
     'id' : IDL.Text,
@@ -158,20 +146,12 @@ export const idlFactory = ({ IDL }) => {
     'dataField' : IDL.Text,
     'random' : IDL.Tuple(IDL.Nat, IDL.Nat),
   });
-  const CharacterStatKind = IDL.Variant({
-    'magic' : IDL.Null,
-    'maxHealth' : IDL.Null,
-    'speed' : IDL.Null,
-    'defense' : IDL.Null,
-    'attack' : IDL.Null,
-  });
   const Effect = IDL.Variant({
     'reward' : IDL.Null,
     'removeTrait' : RandomOrSpecificTextValue,
     'damage' : NatValue,
     'heal' : NatValue,
     'achievement' : IDL.Text,
-    'upgradeStat' : IDL.Tuple(CharacterStatKind, NatValue),
     'addItem' : TextValue,
     'addTrait' : TextValue,
     'removeGold' : NatValue,
@@ -189,7 +169,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'filter' : CombatCreatureFilter,
   });
-  const CombatPath = IDL.Record({ 'creature' : CombatCreatureKind });
+  const CombatPath = IDL.Record({ 'creatures' : IDL.Vec(CombatCreatureKind) });
   const OutcomePathKind = IDL.Variant({
     'effects' : IDL.Vec(Effect),
     'combat' : CombatPath,
@@ -219,7 +199,6 @@ export const idlFactory = ({ IDL }) => {
       'item' : IDL.Text,
       'class' : IDL.Text,
       'race' : IDL.Text,
-      'stat' : IDL.Tuple(CharacterStatKind, IDL.Nat),
     })
   );
   const Choice = IDL.Record({
@@ -244,51 +223,12 @@ export const idlFactory = ({ IDL }) => {
     'choices' : IDL.Vec(Choice),
     'location' : LocationKind,
   });
-  const CharacterStatKind__1 = IDL.Variant({
-    'magic' : IDL.Null,
-    'gold' : IDL.Null,
-    'speed' : IDL.Null,
-    'defense' : IDL.Null,
-    'attack' : IDL.Null,
-    'health' : IDL.Record({ 'inverse' : IDL.Bool }),
-  });
-  const WeaponAttribute = IDL.Variant({
-    'damage' : IDL.Null,
-    'attacks' : IDL.Null,
-    'criticalChance' : IDL.Null,
-    'maxDamage' : IDL.Null,
-    'minDamage' : IDL.Null,
-    'criticalMultiplier' : IDL.Null,
-    'accuracy' : IDL.Null,
-  });
-  const StatModifier = IDL.Record({
-    'characterStat' : CharacterStatKind__1,
-    'factor' : IDL.Float64,
-    'attribute' : WeaponAttribute,
-  });
-  const WeaponStats = IDL.Record({
-    'attacks' : IDL.Nat,
-    'criticalChance' : IDL.Nat,
-    'maxDamage' : IDL.Nat,
-    'minDamage' : IDL.Nat,
-    'statModifiers' : IDL.Vec(StatModifier),
-    'criticalMultiplier' : IDL.Nat,
-    'accuracy' : IDL.Int,
-  });
-  const WeaponRequirement = IDL.Variant({
-    'magic' : IDL.Int,
-    'maxHealth' : IDL.Nat,
-    'speed' : IDL.Int,
-    'defense' : IDL.Int,
-    'attack' : IDL.Int,
-  });
   const Weapon = IDL.Record({
     'id' : IDL.Text,
+    'actionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'baseStats' : WeaponStats,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
-    'requirements' : IDL.Vec(WeaponRequirement),
   });
   const ModifyGameContent = IDL.Variant({
     'trait' : Trait,
@@ -319,17 +259,79 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const Time = IDL.Int;
+  const TurnPhase = IDL.Variant({ 'end' : IDL.Null, 'start' : IDL.Null });
+  const PeriodicTiming = IDL.Record({
+    'remainingTurns' : IDL.Nat,
+    'phase' : TurnPhase,
+  });
+  const ActionTimingKind = IDL.Variant({
+    'periodic' : PeriodicTiming,
+    'immediate' : IDL.Null,
+  });
+  const Damage = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
+    'timing' : ActionTimingKind,
+  });
+  const Heal = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
+    'timing' : ActionTimingKind,
+  });
+  const Retaliating = IDL.Variant({ 'flat' : IDL.Nat });
+  const StatusEffectKind__1 = IDL.Variant({
+    'retaliating' : Retaliating,
+    'weak' : IDL.Null,
+    'vulnerable' : IDL.Null,
+    'stunned' : IDL.Null,
+  });
+  const StatusEffect = IDL.Record({
+    'duration' : IDL.Opt(IDL.Nat),
+    'kind' : StatusEffectKind__1,
+  });
+  const Block = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
+    'timing' : ActionTimingKind,
+  });
+  const ActionEffectKind = IDL.Variant({
+    'damage' : Damage,
+    'heal' : Heal,
+    'addStatusEffect' : StatusEffect,
+    'block' : Block,
+  });
+  const ActionTargetScope = IDL.Variant({
+    'any' : IDL.Null,
+    'ally' : IDL.Null,
+    'enemy' : IDL.Null,
+  });
+  const ActionTargetSelection = IDL.Variant({
+    'all' : IDL.Null,
+    'random' : IDL.Record({ 'count' : IDL.Nat }),
+    'chosen' : IDL.Null,
+  });
+  const ActionTarget = IDL.Record({
+    'scope' : ActionTargetScope,
+    'selection' : ActionTargetSelection,
+  });
+  const ActionEffect = IDL.Record({
+    'kind' : ActionEffectKind,
+    'target' : ActionTarget,
+  });
+  const Action = IDL.Record({
+    'id' : IDL.Text,
+    'effects' : IDL.Vec(ActionEffect),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+  });
   const CharacterWithMetaData = IDL.Record({
-    'magic' : IDL.Int,
     'maxHealth' : IDL.Nat,
     'gold' : IDL.Nat,
     'traits' : IDL.Vec(Trait),
     'class' : Class,
     'race' : Race,
-    'speed' : IDL.Int,
-    'defense' : IDL.Int,
+    'actions' : IDL.Vec(Action),
     'items' : IDL.Vec(Item),
-    'attack' : IDL.Int,
     'weapon' : Weapon,
     'health' : IDL.Nat,
   });
@@ -391,52 +393,100 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'value' : GeneratedDataFieldInstanceValue,
   });
-  const AttackerKind = IDL.Variant({
-    'creature' : IDL.Null,
-    'character' : IDL.Null,
+  const ChoiceScenarioState = IDL.Record({ 'choiceIds' : IDL.Vec(IDL.Text) });
+  const PeriodicEffectKind = IDL.Variant({
+    'damage' : IDL.Null,
+    'heal' : IDL.Null,
+    'block' : IDL.Null,
   });
-  const HitResult = IDL.Record({ 'damage' : IDL.Nat });
-  const AttackResult = IDL.Variant({ 'hit' : HitResult, 'miss' : IDL.Null });
-  const CombatTurn = IDL.Record({
-    'attacker' : AttackerKind,
-    'attacks' : IDL.Vec(AttackResult),
+  const PeriodicEffectResult = IDL.Record({
+    'kind' : PeriodicEffectKind,
+    'phase' : TurnPhase,
+    'amount' : IDL.Nat,
   });
-  const CombatResultKind = IDL.Variant({
-    'maxTurnsReached' : IDL.Null,
-    'defeat' : IDL.Null,
-    'victory' : IDL.Null,
+  const StatusEffectKind = IDL.Variant({
+    'retaliating' : Retaliating,
+    'weak' : IDL.Null,
+    'vulnerable' : IDL.Null,
+    'stunned' : IDL.Null,
+    'periodic' : PeriodicEffectResult,
   });
+  const StatusEffectResult = IDL.Record({
+    'kind' : StatusEffectKind,
+    'remainingTurns' : IDL.Nat,
+  });
+  const CharacterCombatState = IDL.Record({
+    'shield' : IDL.Nat,
+    'statusEffects' : IDL.Vec(StatusEffectResult),
+    'availableActionIds' : IDL.Vec(IDL.Text),
+  });
+  const CreatureCombatState = IDL.Record({
+    'shield' : IDL.Nat,
+    'statusEffects' : IDL.Vec(StatusEffectResult),
+    'maxHealth' : IDL.Nat,
+    'availableActionIds' : IDL.Vec(IDL.Text),
+    'creatureId' : IDL.Text,
+    'health' : IDL.Nat,
+  });
+  const CombatScenarioState = IDL.Record({
+    'character' : CharacterCombatState,
+    'creatures' : IDL.Vec(CreatureCombatState),
+  });
+  const ScenarioStateKind = IDL.Variant({
+    'complete' : IDL.Null,
+    'choice' : ChoiceScenarioState,
+    'combat' : CombatScenarioState,
+  });
+  const CombatTurn = IDL.Variant({ 'action' : IDL.Text, 'nothing' : IDL.Null });
   const CombatResult = IDL.Record({
     'turns' : IDL.Vec(CombatTurn),
     'healthDelta' : IDL.Int,
-    'kind' : CombatResultKind,
+    'victory' : IDL.Bool,
   });
-  const OutcomeLogEntry = IDL.Variant({
-    'speedDelta' : IDL.Int,
+  const OutcomeEffect = IDL.Variant({
     'removeTrait' : IDL.Text,
     'healthDelta' : IDL.Int,
     'maxHealthDelta' : IDL.Int,
     'text' : IDL.Text,
-    'defenseDelta' : IDL.Int,
-    'attackDelta' : IDL.Int,
     'addItem' : IDL.Text,
     'addTrait' : IDL.Text,
     'goldDelta' : IDL.Int,
     'removeItem' : IDL.Text,
     'combat' : CombatResult,
-    'magicDelta' : IDL.Int,
   });
-  const Outcome = IDL.Record({
-    'log' : IDL.Vec(OutcomeLogEntry),
+  const ScenarioChoiceResultKind = IDL.Variant({
+    'startCombat' : CombatScenarioState,
+    'complete' : IDL.Null,
+    'choice' : ChoiceScenarioState,
+    'death' : IDL.Null,
+  });
+  const ScenarioChoiceResult = IDL.Record({
     'choiceId' : IDL.Text,
+    'kind' : ScenarioChoiceResultKind,
+  });
+  const CombatDefeatResult = IDL.Record({
+    'creatures' : IDL.Vec(CreatureCombatState),
+  });
+  const ScenarioCombatResult = IDL.Variant({
+    'defeat' : CombatDefeatResult,
+    'victory' : IDL.Null,
+    'inProgress' : CombatScenarioState,
+  });
+  const ScenarioStageResultKind = IDL.Variant({
+    'choice' : ScenarioChoiceResult,
+    'combat' : ScenarioCombatResult,
+  });
+  const ScenarioStageResult = IDL.Record({
+    'effects' : IDL.Vec(OutcomeEffect),
+    'kind' : ScenarioStageResultKind,
   });
   const Scenario = IDL.Record({
     'id' : IDL.Nat,
     'metaDataId' : IDL.Text,
     'metaData' : ScenarioMetaData,
     'data' : IDL.Vec(GeneratedDataFieldInstance),
-    'availableChoiceIds' : IDL.Vec(IDL.Text),
-    'outcome' : IDL.Opt(Outcome),
+    'state' : ScenarioStateKind,
+    'previousStages' : IDL.Vec(ScenarioStageResult),
   });
   const GetScenarioError = IDL.Variant({
     'notFound' : IDL.Null,
@@ -559,12 +609,27 @@ export const idlFactory = ({ IDL }) => {
   });
   const RegisterError = IDL.Variant({ 'alreadyMember' : IDL.Null });
   const RegisterResult = IDL.Variant({ 'ok' : User, 'err' : RegisterError });
-  const SelectScenarioChoiceRequest = IDL.Record({ 'choiceId' : IDL.Text });
+  const ActionTargetResult = IDL.Variant({
+    'creature' : IDL.Nat,
+    'character' : IDL.Null,
+  });
+  const CombatChoice = IDL.Record({
+    'target' : IDL.Opt(ActionTargetResult),
+    'actionId' : IDL.Text,
+  });
+  const StageChoiceKind = IDL.Variant({
+    'choice' : IDL.Text,
+    'combat' : CombatChoice,
+  });
+  const SelectScenarioChoiceRequest = IDL.Record({
+    'choice' : StageChoiceKind,
+  });
   const SelectScenarioChoiceError = IDL.Variant({
+    'invalidTarget' : IDL.Null,
+    'targetRequired' : IDL.Null,
     'invalidChoice' : IDL.Null,
     'gameNotFound' : IDL.Null,
     'gameNotActive' : IDL.Null,
-    'choiceRequirementNotMet' : IDL.Null,
     'notScenarioTurn' : IDL.Null,
   });
   const SelectScenarioChoiceResult = IDL.Variant({
