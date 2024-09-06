@@ -18,6 +18,7 @@
 
   let selectedActionId: string | undefined;
   let selectedTargetIndex: number | undefined;
+  let isCharacterSelected: boolean = false;
 
   $: actions = $actionStore;
   $: creatures = $creatureStore;
@@ -41,12 +42,39 @@
     (action) => action.id === selectedActionId
   );
 
-  let selectTarget = (index: number) => () => {
+  $: canSelectTarget = (isEnemy: boolean) => {
+    if (!selectedAction) return false;
+    const { scope } = selectedAction.target;
+    return (
+      "any" in scope ||
+      (isEnemy && "enemy" in scope) ||
+      (!isEnemy && "ally" in scope)
+    );
+  };
+
+  $: isAutoSelected = (isEnemy: boolean) => {
+    if (!selectedAction) return false;
+    const { selection } = selectedAction.target;
+    return (
+      ("all" in selection ||
+        ("random" in selection && selection.random.count > 0)) &&
+      canSelectTarget(isEnemy)
+    );
+  };
+
+  let selectTarget = (creaturIndexOrCharacter: number | "character") => () => {
     if (
-      selectedAction !== undefined &&
-      "chosen" in selectedAction?.target.selection
+      selectedAction &&
+      "chosen" in selectedAction.target.selection &&
+      canSelectTarget(creaturIndexOrCharacter !== "character")
     ) {
-      selectedTargetIndex = index;
+      if (creaturIndexOrCharacter === "character") {
+        selectedTargetIndex = undefined;
+        isCharacterSelected = true;
+      } else {
+        selectedTargetIndex = creaturIndexOrCharacter;
+        isCharacterSelected = false;
+      }
     }
   };
 
@@ -54,6 +82,7 @@
     selectedActionId = id;
     if (selectedAction && "chosen" in selectedAction.target.selection) {
       selectedTargetIndex = undefined;
+      isCharacterSelected = false;
     }
   };
 
@@ -64,7 +93,9 @@
     }
 
     let target: ActionTargetResult | undefined;
-    if (selectedTargetIndex !== undefined) {
+    if (isCharacterSelected) {
+      target = { character: null };
+    } else if (selectedTargetIndex !== undefined) {
       target = { creature: BigInt(selectedTargetIndex) };
     }
 
@@ -86,6 +117,7 @@
       currentGameStore.refetch();
       selectedActionId = undefined;
       selectedTargetIndex = undefined;
+      isCharacterSelected = false;
     } else {
       console.error("Failed to perform combat action:", result);
     }
@@ -98,10 +130,14 @@
   <div class="flex flex-wrap justify-around">
     {#each availableCreatures as creature, i}
       <div
-        class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
+        class="border p-4 rounded-lg cursor-pointer max-w-36 bg-gray-800
         {selectedTargetIndex === creature.index
-          ? 'bg-gray-700 border-green-500'
-          : 'bg-gray-800 hover:bg-gray-700'}"
+          ? 'border-green-500'
+          : isAutoSelected(true)
+            ? 'border-yellow-500'
+            : canSelectTarget(true)
+              ? 'border-blue-500 hover:border-blue-400'
+              : 'border-gray-600'}"
         on:click={selectTarget(creature.index)}
         on:keypress={selectTarget(creature.index)}
         role="button"
@@ -113,7 +149,20 @@
     {/each}
   </div>
 
-  <div class="p-4 rounded-lg bg-gray-800 border">
+  <div
+    class="p-4 rounded-lg border cursor-pointer bg-gray-800
+    {isCharacterSelected
+      ? 'border-green-500'
+      : isAutoSelected(false)
+        ? 'border-yellow-500'
+        : canSelectTarget(false)
+          ? 'border-blue-500 hover:border-blue-400'
+          : 'border-gray-600'}"
+    on:click={selectTarget("character")}
+    on:keypress={selectTarget("character")}
+    role="button"
+    tabindex="0"
+  >
     <h3 class="text-xl font-semibold mb-2">Your Character</h3>
     <ScenarioCombatStats value={combatState.character} />
   </div>
@@ -160,7 +209,7 @@
     {/each}
   </div>
 
-  {#if selectedAction && "chosen" in selectedAction.target.selection && selectedTargetIndex === undefined}
+  {#if selectedAction && "chosen" in selectedAction.target.selection && !isCharacterSelected && selectedTargetIndex === undefined}
     <p class="text-yellow-400 mt-2">Please select a target for this action.</p>
   {/if}
 
@@ -170,6 +219,7 @@
     disabled={!selectedActionId ||
       (selectedAction &&
         "chosen" in selectedAction.target.selection &&
+        !isCharacterSelected &&
         selectedTargetIndex === undefined)}
   >
     Perform Action
