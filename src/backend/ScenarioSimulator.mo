@@ -138,8 +138,11 @@ module {
             creatureCombatStats.add(helper.getRandomCreature(creature));
         };
         let newActionIds = helper.getRandomCharacterActionIds();
+        let character = helper.getCharacter();
         #startCombat({
             character = {
+                health = character.health;
+                maxHealth = character.maxHealth;
                 shield = 0;
                 statusEffects = [];
                 availableActionIds = newActionIds;
@@ -216,10 +219,9 @@ module {
             case (#err(#targetRequired)) return #err(#targetRequired);
         };
 
-        let initialCharacterState = helper.getCharacter();
         let characterCombatStats : CombatSimulator.CombatStats = {
-            var health = initialCharacterState.health;
-            var maxHealth = initialCharacterState.maxHealth;
+            var health = state.character.health;
+            var maxHealth = state.character.maxHealth;
             var shield = state.character.shield;
             var statusEffects = Buffer.fromArray(state.character.statusEffects);
         };
@@ -301,6 +303,8 @@ module {
             let newActionIds = helper.getRandomCharacterActionIds();
             #inProgress({
                 character = {
+                    health = characterCombatStats.health;
+                    maxHealth = characterCombatStats.maxHealth;
                     shield = characterCombatStats.shield;
                     statusEffects = Buffer.toArray(characterCombatStats.statusEffects);
                     availableActionIds = newActionIds;

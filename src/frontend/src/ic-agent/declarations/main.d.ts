@@ -52,7 +52,9 @@ export interface CallbackStrategy {
 export interface CharacterCombatState {
   'shield' : bigint,
   'statusEffects' : Array<StatusEffectResult>,
+  'maxHealth' : bigint,
   'availableActionIds' : Array<string>,
+  'health' : bigint,
 }
 export interface CharacterWithMetaData {
   'maxHealth' : bigint,
@@ -542,9 +544,11 @@ export interface _SERVICE {
     [CreateWorldProposalRequest],
     CreateWorldProposalResult
   >,
+  'getAchievements' : ActorMethod<[], Array<Achievement>>,
   'getActions' : ActorMethod<[], Array<Action>>,
   'getClasses' : ActorMethod<[], Array<Class>>,
   'getCompletedGames' : ActorMethod<[GetCompletedGamesRequest], PagedResult_2>,
+  'getCreatures' : ActorMethod<[], Array<Creature>>,
   'getCurrentGame' : ActorMethod<[], GetCurrentGameResult>,
   'getItems' : ActorMethod<[], Array<Item>>,
   'getRaces' : ActorMethod<[], Array<Race>>,
@@ -559,6 +563,7 @@ export interface _SERVICE {
   'getWeapons' : ActorMethod<[], Array<Weapon>>,
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
+  'getZones' : ActorMethod<[], Array<Zone>>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'http_request_update' : ActorMethod<[HttpUpdateRequest], HttpResponse>,
   'register' : ActorMethod<[], RegisterResult>,

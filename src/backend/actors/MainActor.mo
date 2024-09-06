@@ -24,6 +24,9 @@ import Item "../models/entities/Item";
 import ScenarioMetaData "../models/entities/ScenarioMetaData";
 import Action "../models/entities/Action";
 import Weapon "../models/entities/Weapon";
+import Zone "../models/entities/Zone";
+import Achievement "../models/entities/Achievement";
+import Creature "../models/entities/Creature";
 
 actor MainActor : Types.Actor {
     // Types  ---------------------------------------------------------
@@ -290,6 +293,18 @@ actor MainActor : Types.Actor {
 
     public query func getWeapons() : async [Weapon.Weapon] {
         gameHandler.getWeapons();
+    };
+
+    public query func getZones() : async [Zone.Zone] {
+        gameHandler.getZones();
+    };
+
+    public query func getAchievements() : async [Achievement.Achievement] {
+        gameHandler.getAchievements();
+    };
+
+    public query func getCreatures() : async [Creature.Creature] {
+        gameHandler.getCreatures();
     };
 
     public shared query func getTopUsers(request : Types.GetTopUsersRequest) : async Types.GetTopUsersResult {

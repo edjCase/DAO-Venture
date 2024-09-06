@@ -61,6 +61,8 @@ module {
     };
 
     public type CharacterCombatState = {
+        health : Nat;
+        maxHealth : Nat;
         shield : Nat;
         statusEffects : [ActionResult.StatusEffectResult];
         availableActionIds : [Text];

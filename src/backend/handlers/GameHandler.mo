@@ -794,6 +794,18 @@ module {
             weapons.vals() |> Iter.toArray(_);
         };
 
+        public func getZones() : [Zone.Zone] {
+            zones.vals() |> Iter.toArray(_);
+        };
+
+        public func getAchievements() : [Achievement.Achievement] {
+            achievements.vals() |> Iter.toArray(_);
+        };
+
+        public func getCreatures() : [Creature.Creature] {
+            creatures.vals() |> Iter.toArray(_);
+        };
+
         // ------------------ Private ------------------
 
         private func nextScenarioOrEnd(

@@ -16,6 +16,9 @@ import ScenarioMetaData "../models/entities/ScenarioMetaData";
 import ScenarioSimulator "../ScenarioSimulator";
 import Action "../models/entities/Action";
 import Weapon "../models/entities/Weapon";
+import Zone "../models/entities/Zone";
+import Achievement "../models/entities/Achievement";
+import Creature "../models/entities/Creature";
 
 module {
     public type Actor = actor {
@@ -47,6 +50,9 @@ module {
         getItems : query () -> async [Item.Item];
         getActions : query () -> async [Action.Action];
         getWeapons : query () -> async [Weapon.Weapon];
+        getZones : query () -> async [Zone.Zone];
+        getAchievements : query () -> async [Achievement.Achievement];
+        getCreatures : query () -> async [Creature.Creature];
     };
 
     public type StartGameRequest = {

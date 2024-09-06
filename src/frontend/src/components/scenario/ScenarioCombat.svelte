@@ -3,26 +3,59 @@
     CombatScenarioState,
     CombatChoice,
     ActionTargetResult,
+    Action,
   } from "../../ic-agent/declarations/main";
-  import { Button, Select } from "flowbite-svelte";
+  import { Button } from "flowbite-svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { currentGameStore } from "../../stores/CurrentGameStore";
+  import { actionStore } from "../../stores/ActionStore";
+  import { creatureStore } from "../../stores/CreatureStore";
+  import ScenarioCombatStats from "./ScenarioCombatStats.svelte";
+  import { toJsonString } from "../../utils/StringUtil";
 
   export let combatState: CombatScenarioState;
 
   let selectedActionId: string | undefined;
-  let selectedTargeIndexString: string = "0";
+  let selectedTargetIndex: number | undefined;
 
-  $: availableActions = combatState.character.availableActionIds;
-  $: availableTargets = combatState.creatures.map((creature, i) => ({
-    value: i.toString(),
-    name: creature.creatureId,
-  }));
+  $: actions = $actionStore;
+  $: creatures = $creatureStore;
 
-  $: if (availableActions.length > 0 && selectedActionId === undefined) {
-    selectedActionId = availableActions[0];
-  }
+  $: availableActions = combatState.character.availableActionIds
+    .map((id) => actions?.find((action) => action.id === id))
+    .filter((action): action is Action => action !== undefined);
+
+  $: availableCreatures = combatState.creatures.map((combatCreature, index) => {
+    const creatureData = creatures?.find(
+      (c) => c.id === combatCreature.creatureId
+    );
+    return {
+      ...combatCreature,
+      ...creatureData,
+      index,
+    };
+  });
+
+  $: selectedAction = availableActions.find(
+    (action) => action.id === selectedActionId
+  );
+
+  let selectTarget = (index: number) => () => {
+    if (
+      selectedAction !== undefined &&
+      "chosen" in selectedAction?.target.selection
+    ) {
+      selectedTargetIndex = index;
+    }
+  };
+
+  let selectAction = (id: string) => () => {
+    selectedActionId = id;
+    if (selectedAction && "chosen" in selectedAction.target.selection) {
+      selectedTargetIndex = undefined;
+    }
+  };
 
   async function performAction() {
     if (!selectedActionId) {
@@ -31,8 +64,8 @@
     }
 
     let target: ActionTargetResult | undefined;
-    if (selectedTargeIndexString !== undefined) {
-      target = { creature: BigInt(selectedTargeIndexString) };
+    if (selectedTargetIndex !== undefined) {
+      target = { creature: BigInt(selectedTargetIndex) };
     }
 
     const action: CombatChoice = {
@@ -51,6 +84,8 @@
       console.log("Combat action successful");
       scenarioStore.refetch();
       currentGameStore.refetch();
+      selectedActionId = undefined;
+      selectedTargetIndex = undefined;
     } else {
       console.error("Failed to perform combat action:", result);
     }
@@ -60,43 +95,83 @@
 <div class="flex flex-col gap-4">
   <h2 class="text-2xl font-bold">Combat</h2>
 
-  <div class="p-4 rounded-lg">
-    <h3 class="text-xl font-semibold mb-2">Your Character</h3>
-    <p>Shield: {combatState.character.shield}</p>
-    <p>
-      Status Effects: {combatState.character.statusEffects
-        .map((effect) => effect.kind)
-        .join(", ")}
-    </p>
+  <div class="flex flex-wrap justify-around">
+    {#each availableCreatures as creature, i}
+      <div
+        class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
+        {selectedTargetIndex === creature.index
+          ? 'bg-gray-700 border-green-500'
+          : 'bg-gray-800 hover:bg-gray-700'}"
+        on:click={selectTarget(creature.index)}
+        on:keypress={selectTarget(creature.index)}
+        role="button"
+        tabindex={i}
+      >
+        <h4 class="font-semibold mb-2">{creature.name || creature.id}</h4>
+        <ScenarioCombatStats value={creature} />
+      </div>
+    {/each}
   </div>
 
-  <div class="p-4 rounded-lg">
-    <h3 class="text-xl font-semibold mb-2">Creatures</h3>
-    {#each combatState.creatures as creature}
-      <div class="border border-gray-300 p-2 rounded mb-2">
-        <p>ID: {creature.creatureId}</p>
-        <p>Health: {creature.health}/{creature.maxHealth}</p>
-        <p>Shield: {creature.shield}</p>
-        <p>
-          Status Effects: {creature.statusEffects
-            .map((effect) => effect.kind)
-            .join(", ")}
+  <div class="p-4 rounded-lg bg-gray-800 border">
+    <h3 class="text-xl font-semibold mb-2">Your Character</h3>
+    <ScenarioCombatStats value={combatState.character} />
+  </div>
+
+  <h3 class="text-xl font-semibold mt-4 mb-2">Available Actions</h3>
+  <div class="flex flex-wrap justify-around">
+    {#each availableActions as action, i}
+      <div
+        class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
+        {selectedActionId === action.id
+          ? 'bg-gray-700 border-blue-500'
+          : 'bg-gray-800 hover:bg-gray-700'}"
+        on:click={selectAction(action.id)}
+        on:keypress={selectAction(action.id)}
+        role="button"
+        tabindex={i}
+      >
+        <h4 class="font-semibold mb-2">{action.name}</h4>
+        <p class="text-sm">{action.description}</p>
+        <p class="text-xs mt-2">
+          Target: {#if "any" in action.target.scope}
+            Any
+          {:else if "ally" in action.target.scope}
+            Self
+          {:else if "enemy" in action.target.scope}
+            Enemy
+          {:else}
+            NOT IMPLEMENTED TARGET SCOPE {toJsonString(action.target.scope)}
+          {/if}
+          -
+          {#if "chosen" in action.target.selection}
+            Chosen
+          {:else if "all" in action.target.selection}
+            All
+          {:else if "random" in action.target.selection}
+            Random
+          {:else}
+            NOT IMPLEMENTED TARGET SELECTION {toJsonString(
+              action.target.selection
+            )}
+          {/if}
         </p>
       </div>
     {/each}
   </div>
 
-  <div class="flex gap-2 items-center">
-    <Select
-      bind:value={selectedActionId}
-      items={availableActions.map((id) => ({ value: id, name: id }))}
-      class="flex-grow"
-    />
-    <Select
-      bind:value={selectedTargeIndexString}
-      items={availableTargets}
-      class="flex-grow"
-    />
-    <Button on:click={performAction}>Perform Action</Button>
-  </div>
+  {#if selectedAction && "chosen" in selectedAction.target.selection && selectedTargetIndex === undefined}
+    <p class="text-yellow-400 mt-2">Please select a target for this action.</p>
+  {/if}
+
+  <Button
+    on:click={performAction}
+    class="mt-4"
+    disabled={!selectedActionId ||
+      (selectedAction &&
+        "chosen" in selectedAction.target.selection &&
+        selectedTargetIndex === undefined)}
+  >
+    Perform Action
+  </Button>
 </div>

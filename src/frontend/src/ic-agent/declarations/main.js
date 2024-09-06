@@ -424,7 +424,9 @@ export const idlFactory = ({ IDL }) => {
   const CharacterCombatState = IDL.Record({
     'shield' : IDL.Nat,
     'statusEffects' : IDL.Vec(StatusEffectResult),
+    'maxHealth' : IDL.Nat,
     'availableActionIds' : IDL.Vec(IDL.Text),
+    'health' : IDL.Nat,
   });
   const CreatureCombatState = IDL.Record({
     'shield' : IDL.Nat,
@@ -666,6 +668,7 @@ export const idlFactory = ({ IDL }) => {
         [CreateWorldProposalResult],
         [],
       ),
+    'getAchievements' : IDL.Func([], [IDL.Vec(Achievement)], ['query']),
     'getActions' : IDL.Func([], [IDL.Vec(Action)], ['query']),
     'getClasses' : IDL.Func([], [IDL.Vec(Class)], ['query']),
     'getCompletedGames' : IDL.Func(
@@ -673,6 +676,7 @@ export const idlFactory = ({ IDL }) => {
         [PagedResult_2],
         ['query'],
       ),
+    'getCreatures' : IDL.Func([], [IDL.Vec(Creature)], ['query']),
     'getCurrentGame' : IDL.Func([], [GetCurrentGameResult], ['query']),
     'getItems' : IDL.Func([], [IDL.Vec(Item)], ['query']),
     'getRaces' : IDL.Func([], [IDL.Vec(Race)], ['query']),
@@ -707,6 +711,7 @@ export const idlFactory = ({ IDL }) => {
         [PagedResult],
         ['query'],
       ),
+    'getZones' : IDL.Func([], [IDL.Vec(Zone)], ['query']),
     'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
     'http_request_update' : IDL.Func([HttpUpdateRequest], [HttpResponse], []),
     'register' : IDL.Func([], [RegisterResult], []),
