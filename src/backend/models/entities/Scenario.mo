@@ -74,7 +74,6 @@ module {
 
     public type OutcomeEffect = {
         #text : Text;
-        #combat : CombatResult;
         #healthDelta : Int;
         #maxHealthDelta : Int;
         #goldDelta : Int;
@@ -82,12 +81,6 @@ module {
         #removeItem : Text;
         #addTrait : Text;
         #removeTrait : Text;
-    };
-
-    public type CombatResult = {
-        turns : [CombatTurn];
-        healthDelta : Int;
-        victory : Bool;
     };
 
     public type CombatTurn = {

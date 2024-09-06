@@ -364,10 +364,10 @@ export const idlFactory = ({ IDL }) => {
     'victory' : IDL.Bool,
   });
   const ScenarioTurn = IDL.Record({ 'scenarioId' : IDL.Nat });
-  const CombatTurn__1 = IDL.Record({});
+  const CombatTurn = IDL.Record({});
   const TurnKind = IDL.Variant({
     'scenario' : ScenarioTurn,
-    'combat' : CombatTurn__1,
+    'combat' : CombatTurn,
   });
   const InProgressGameStateWithMetaData = IDL.Record({
     'turnKind' : TurnKind,
@@ -442,12 +442,6 @@ export const idlFactory = ({ IDL }) => {
     'choice' : ChoiceScenarioState,
     'combat' : CombatScenarioState,
   });
-  const CombatTurn = IDL.Variant({ 'action' : IDL.Text, 'nothing' : IDL.Null });
-  const CombatResult = IDL.Record({
-    'turns' : IDL.Vec(CombatTurn),
-    'healthDelta' : IDL.Int,
-    'victory' : IDL.Bool,
-  });
   const OutcomeEffect = IDL.Variant({
     'removeTrait' : IDL.Text,
     'healthDelta' : IDL.Int,
@@ -457,7 +451,6 @@ export const idlFactory = ({ IDL }) => {
     'addTrait' : IDL.Text,
     'goldDelta' : IDL.Int,
     'removeItem' : IDL.Text,
-    'combat' : CombatResult,
   });
   const ScenarioChoiceResultKind = IDL.Variant({
     'startCombat' : CombatScenarioState,

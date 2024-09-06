@@ -8,13 +8,7 @@
 
 <div>
   Requirements:
-  {#if "stat" in value}
-    {@const [statKind, v] = value.stat}
-    <div class="text-sm">
-      {v >= 0 ? "+" : ""}{v}
-      <CharacterStatIcon kind={statKind} />
-    </div>
-  {:else if "race" in value}
+  {#if "race" in value}
     <div class="text-sm">
       {value.race}
     </div>

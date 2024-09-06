@@ -42,7 +42,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "attack_treant",
         description: "You attack the treant.",
         kind: {
-          combat: { creature: { id: "corrupted_treant" } }
+          combat: { creatures: [{ id: "corrupted_treant" }] }
         },
         paths: [],
       },
@@ -69,7 +69,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "successful_purification",
         description: "Your magic cleanses the corruption. The treant returns to its peaceful state.",
         kind: {
-          effects: [{ reward: null }, { addTrait: { raw: "naturalist" } }]
+          effects: [{ reward: null }, { addTrait: { specific: { raw: "naturalist" } } }]
         },
         paths: [],
       },
@@ -460,7 +460,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "blessing_success",
         description: "The druids bless you with the 'strength of oak'. You feel sturdier, and vaguely like you want to grow leaves.",
         kind: {
-          effects: [{ addTrait: { raw: "tough" } }]
+          effects: [{ addTrait: { specific: { raw: "tough" } } }]
         },
         paths: [],
       },
@@ -510,7 +510,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "commune_success",
         description: "You successfully commune with nature. A squirrel imparts ancient wisdom, and hands you a nut... er, herb.",
         kind: {
-          effects: [{ addItem: { raw: "herbs" } }]
+          effects: [{ addItem: { specific: { raw: "herbs" } } }]
         },
         paths: [],
       },
@@ -608,7 +608,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "upgrade_cost" } },
-            { addTrait: { raw: "strong" } },
+            { addTrait: { specific: { raw: "strong" } } },
           ]
         },
         paths: [
@@ -753,7 +753,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "meditation_cost" } },
-            { addTrait: { raw: "magical" } },
+            { addTrait: { specific: { raw: "magical" } } },
           ]
         },
         paths: [
@@ -791,7 +791,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { damage: { dataField: "harvest_cost" } },
-            { addItem: { raw: "herbs" } },
+            { addItem: { specific: { raw: "herbs" } } },
           ]
         },
         paths: [
@@ -856,7 +856,7 @@ export const scenarios: ScenarioMetaData[] = [
         description: "You commune with nature spirits and receive a unique item.",
         kind: {
           effects: [
-            { addItem: { raw: "crystal" } },
+            { addItem: { specific: { raw: "crystal" } } },
           ]
         },
         paths: [],
@@ -959,7 +959,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "trinket_cost" } },
-            { addItem: { dataField: "trinket_item" } },
+            { addItem: { specific: { dataField: "trinket_item" } } },
           ]
         },
         paths: [
@@ -997,7 +997,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeItem: { random: null } },
-            { addTrait: { raw: "magical" } },
+            { addTrait: { specific: { raw: "magical" } } },
           ]
         },
         paths: [
@@ -1035,7 +1035,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeItem: { specific: { raw: "crystal" } } },
-            { addTrait: { raw: "magical" } },
+            { addTrait: { specific: { raw: "magical" } } },
           ]
         },
         paths: [],
@@ -1314,7 +1314,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "study_cost" } },
-            { addTrait: { raw: "magical" } },
+            { addTrait: { specific: { raw: "magical" } } },
           ]
         },
         paths: [
@@ -1429,7 +1429,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "map_success",
         description: "You successfully decipher an ancient map, revealing a hidden location.",
         kind: {
-          effects: [{ addItem: { raw: "treasure_map" } }]
+          effects: [{ addItem: { specific: { raw: "treasure_map" } } }]
         },
         paths: [],
       },
@@ -1789,7 +1789,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "structure_ambush",
         description: "You are ambushed by a group of hostile creatures!",
         kind: {
-          combat: { creature: { filter: { location: { any: null } } } }
+          combat: { creatures: [{ filter: { location: { any: null } } }] }
         },
         paths: [],
       },
@@ -1928,10 +1928,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "upgrade_success",
         description: "The forge bellows with approval. Your equipment feels more... equipment-y.",
         kind: {
-          effects: [
-            { upgradeStat: [{ attack: null }, { raw: 1n }] },
-            { upgradeStat: [{ defense: null }, { raw: 1n }] },
-          ]
+          effects: [{ addTrait: { specific: { raw: "strong" } } }]
         },
         paths: [],
       },
@@ -1979,7 +1976,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "reforge_attack",
         description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
         kind: {
-          effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }]
+          effects: [{ addTrait: { specific: { raw: "strong" } } }]
         },
         paths: [],
       },
@@ -1987,7 +1984,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "reforge_defense",
         description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
         kind: {
-          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+          effects: [{ addTrait: { specific: { raw: "tough" } } }]
         },
         paths: [],
       },
@@ -2027,7 +2024,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "craft_success",
         description: "The forge erupts in a shower of sparks. You've created something... interesting.",
         kind: {
-          effects: [{ addItem: { raw: "crystal" } }]
+          effects: [{ addItem: { specific: { raw: "crystal" } } }]
         },
         paths: [],
       },
@@ -2090,7 +2087,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "cast_spell",
         description: "Cast a water-walking spell to rescue the passengers.",
         pathId: "cast_spell_path",
-        requirement: [{ stat: [{ magic: null }, 2n] }],
+        requirement: [{ trait: "magical" }],
       },
       {
         id: "disregard",
@@ -2475,7 +2472,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "inspiration_success",
         description: "The bard's words stir your soul. You feel more... magical. Or was that just indigestion?",
         kind: {
-          effects: [{ upgradeStat: [{ magic: null }, { raw: 1n }] }]
+          effects: [{ addTrait: { specific: { raw: "magical" } } }]
         },
         paths: [],
       },
@@ -2523,7 +2520,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "tales_attack",
         description: "The bard's tales of heroic deeds fill you with courage. You feel stronger, or at least less likely to run from a fight.",
         kind: {
-          effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }]
+          effects: [{ addTrait: { specific: { raw: "strong" } } }]
         },
         paths: [],
       },
@@ -2531,7 +2528,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "tales_defense",
         description: "The bard's stories of cunning heroes sharpen your wits. You're now 30% more likely to spot a bad deal... like this one.",
         kind: {
-          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+          effects: [{ addTrait: { specific: { raw: "intelligent" } } }]
         },
         paths: [],
       },
@@ -2571,7 +2568,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "song_success",
         description: "The bard plays your request with surprising skill. You receive a magical token of appreciation from the universe.",
         kind: {
-          effects: [{ addItem: { raw: "crystal" } }]
+          effects: [{ addItem: { specific: { raw: "crystal" } } }]
         },
         paths: [],
       },
@@ -2659,7 +2656,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeItem: { specific: { raw: "herbs" } } },
-            { addItem: { raw: "vial_of_acid" } },
+            { addItem: { specific: { raw: "vial_of_acid" } } },
           ]
         },
         paths: [],
@@ -2670,7 +2667,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "vial_of_acid_cost" } },
-            { addItem: { raw: "vial_of_acid" } },
+            { addItem: { specific: { raw: "vial_of_acid" } } },
           ]
         },
         paths: [],
@@ -2698,7 +2695,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_success",
         description: "You successfully learn from the alchemist!",
         kind: {
-          effects: [{ addTrait: { raw: "alchemist" } }]
+          effects: [{ addTrait: { specific: { raw: "alchemist" } } }]
         },
         paths: [],
       },

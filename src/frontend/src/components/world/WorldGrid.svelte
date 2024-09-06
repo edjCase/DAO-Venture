@@ -1,5 +1,6 @@
 <script lang="ts">
   import { currentGameStore } from "../../stores/CurrentGameStore";
+  import { scenarioMetaDataStore } from "../../stores/ScenarioMetaDataStore";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import GameImage from "../common/GameImage.svelte";
   import HexGrid, { HexTileData } from "../common/HexGrid.svelte";
@@ -10,6 +11,7 @@
   let gridData: HexTileData[] | undefined;
 
   $: scenarios = $scenarioStore;
+  $: scenarioMetaDataList = $scenarioMetaDataStore;
   $: currentGame = $currentGameStore;
 
   $: {
@@ -57,6 +59,10 @@
     selectedTile !== undefined
       ? scenarios?.find((s) => Number(s.id) === selectedTile!.q) // TODO this is a hack
       : undefined;
+
+  $: scenarioMetaData = scenarioMetaDataList?.find(
+    (s) => s.id === scenario?.metaDataId
+  );
 </script>
 
 {#if gridData !== undefined}
@@ -71,8 +77,8 @@
       </svg>
     </g>
     <div slot="tileInfo">
-      {#if scenario !== undefined}
-        <Scenario {scenario} {nextScenario} />
+      {#if scenario !== undefined && scenarioMetaData !== undefined}
+        <Scenario {scenario} {scenarioMetaData} {nextScenario} />
       {/if}
     </div>
   </HexGrid>

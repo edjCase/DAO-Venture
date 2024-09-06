@@ -52,18 +52,9 @@
             {#if character.gold > 0}
               <div>+{character.gold} 🪙</div>
             {/if}
-            {#if character.attack > 0}
-              <div>+{character.attack} ⚔️</div>
-            {/if}
-            {#if character.defense > 0}
-              <div>+{character.defense} 🛡️</div>
-            {/if}
-            {#if character.speed > 0}
-              <div>+{character.speed} 🏃</div>
-            {/if}
-            {#if character.magic > 0}
-              <div>+{character.magic} 🔮</div>
-            {/if}
+            {#each character.actions as action}
+              <div>+{action.name}</div>
+            {/each}
             {#each character.traits as trait}
               <div>+{trait.name}</div>
             {/each}

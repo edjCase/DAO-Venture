@@ -18,29 +18,41 @@
           {:else if "heal" in effect.kind}
             Heal: {effect.kind.heal.min}-{effect.kind.heal.max}
           {:else if "addStatusEffect" in effect.kind}
-            Add Status Effect: {effect.kind.addStatusEffect.kind}
+            Add Status Effect: {JSON.stringify(effect.kind.addStatusEffect)}
           {:else if "block" in effect.kind}
             Block: {effect.kind.block.min}-{effect.kind.block.max}
           {:else}
             Unknown effect
           {/if}
           (Target:
-          {#if "any" in effect.target.scope}
-            Any
-          {:else if "ally" in effect.target.scope}
-            Ally
-          {:else if "enemy" in effect.target.scope}
-            Enemy
-          {/if}
-          {#if "all" in effect.target.selection}
-            All
-          {:else if "random" in effect.target.selection}
-            Random {effect.target.selection.random.count}
-          {:else if "chosen" in effect.target.selection}
-            Chosen
+          {#if "self" in effect.target}
+            Self
+          {:else if "targets" in effect.target}
+            Targets
           {/if})
         </li>
       {/each}
     </ul>
+  </div>
+  <div>
+    <h3>Target:</h3>
+    <p>
+      Scope:
+      {#if "any" in action.target.scope}
+        Any
+      {:else if "ally" in action.target.scope}
+        Ally
+      {:else if "enemy" in action.target.scope}
+        Enemy
+      {/if}
+      Selection:
+      {#if "all" in action.target.selection}
+        All
+      {:else if "random" in action.target.selection}
+        Random {action.target.selection.random.count}
+      {:else if "chosen" in action.target.selection}
+        Chosen
+      {/if}
+    </p>
   </div>
 </div>

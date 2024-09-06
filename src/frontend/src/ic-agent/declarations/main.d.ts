@@ -102,18 +102,11 @@ export type CombatCreatureLocationFilter = { 'any' : null } |
   { 'common' : null };
 export interface CombatDefeatResult { 'creatures' : Array<CreatureCombatState> }
 export interface CombatPath { 'creatures' : Array<CombatCreatureKind> }
-export interface CombatResult {
-  'turns' : Array<CombatTurn>,
-  'healthDelta' : bigint,
-  'victory' : boolean,
-}
 export interface CombatScenarioState {
   'character' : CharacterCombatState,
   'creatures' : Array<CreatureCombatState>,
 }
-export type CombatTurn = { 'action' : string } |
-  { 'nothing' : null };
-export type CombatTurn__1 = {};
+export type CombatTurn = {};
 export interface CompletedGameStateWithMetaData {
   'endTime' : Time,
   'character' : CharacterWithMetaData,
@@ -315,8 +308,7 @@ export type OutcomeEffect = { 'removeTrait' : string } |
   { 'addItem' : string } |
   { 'addTrait' : string } |
   { 'goldDelta' : bigint } |
-  { 'removeItem' : string } |
-  { 'combat' : CombatResult };
+  { 'removeItem' : string };
 export interface OutcomePath {
   'id' : string,
   'kind' : OutcomePathKind,
@@ -493,7 +485,7 @@ export interface Trait {
   'image' : PixelImage,
 }
 export type TurnKind = { 'scenario' : ScenarioTurn } |
-  { 'combat' : CombatTurn__1 };
+  { 'combat' : CombatTurn };
 export type TurnPhase = { 'end' : null } |
   { 'start' : null };
 export type UnlockRequirement = { 'acheivementId' : string };
