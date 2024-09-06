@@ -11,31 +11,33 @@
 
 <p>❤️ {value.health}/{value.maxHealth}</p>
 <p>🛡️ {value.shield}</p>
-{#if value.statusEffects.length > 0}
-  {#each value.statusEffects as effect}
-    <p>
-      {#if "weak" in effect.kind}
-        🐁
-      {:else if "vulnerable" in effect.kind}
-        🎯
-      {:else if "retaliating" in effect.kind}
-        🦔
-      {:else if "stunned" in effect.kind}
-        💫
-      {:else if "periodic" in effect.kind}
-        🔃
-        {#if "damage" in effect.kind.periodic.kind}
-          💥
-        {:else if "heal" in effect.kind.periodic.kind}
-          💖
-        {:else if "shield" in effect.kind.periodic.kind}
-          🛡️
+<div class="flex justify-center">
+  {#if value.statusEffects.length > 0}
+    {#each value.statusEffects as effect}
+      <div>
+        {#if "weak" in effect.kind}
+          🐁
+        {:else if "vulnerable" in effect.kind}
+          🎯
+        {:else if "retaliating" in effect.kind}
+          🦔
+        {:else if "stunned" in effect.kind}
+          💫
+        {:else if "periodic" in effect.kind}
+          🔃
+          {#if "damage" in effect.kind.periodic.kind}
+            💥
+          {:else if "heal" in effect.kind.periodic.kind}
+            💖
+          {:else if "shield" in effect.kind.periodic.kind}
+            🛡️
+          {:else}
+            ❓ (NOT IMPLEMENTED)
+          {/if}
         {:else}
           ❓ (NOT IMPLEMENTED)
         {/if}
-      {:else}
-        ❓ (NOT IMPLEMENTED)
-      {/if}
-    </p>
-  {/each}
-{/if}
+      </div>
+    {/each}
+  {/if}
+</div>

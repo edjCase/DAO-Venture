@@ -54,10 +54,11 @@
 
   $: isAutoSelected = (isEnemy: boolean) => {
     if (!selectedAction) return false;
-    const { selection } = selectedAction.target;
+    const { scope, selection } = selectedAction.target;
     return (
       ("all" in selection ||
-        ("random" in selection && selection.random.count > 0)) &&
+        ("random" in selection && selection.random.count > 0) ||
+        ("chosen" in selection && "ally" in scope)) &&
       canSelectTarget(isEnemy)
     );
   };
@@ -80,9 +81,16 @@
 
   let selectAction = (id: string) => () => {
     selectedActionId = id;
-    if (selectedAction && "chosen" in selectedAction.target.selection) {
-      selectedTargetIndex = undefined;
-      isCharacterSelected = false;
+    const action = availableActions.find((a) => a.id === id);
+    if (action && "chosen" in action.target.selection) {
+      if ("ally" in action.target.scope) {
+        // Auto-select character for self-targeting abilities
+        selectedTargetIndex = undefined;
+        isCharacterSelected = true;
+      } else {
+        selectedTargetIndex = undefined;
+        isCharacterSelected = false;
+      }
     }
   };
 
@@ -112,7 +120,6 @@
     });
 
     if ("ok" in result) {
-      console.log("Combat action successful");
       scenarioStore.refetch();
       currentGameStore.refetch();
       selectedActionId = undefined;
@@ -209,7 +216,7 @@
     {/each}
   </div>
 
-  {#if selectedAction && "chosen" in selectedAction.target.selection && !isCharacterSelected && selectedTargetIndex === undefined}
+  {#if selectedAction && "chosen" in selectedAction.target.selection && !isCharacterSelected && selectedTargetIndex === undefined && !("ally" in selectedAction.target.scope)}
     <p class="text-yellow-400 mt-2">Please select a target for this action.</p>
   {/if}
 
@@ -220,7 +227,8 @@
       (selectedAction &&
         "chosen" in selectedAction.target.selection &&
         !isCharacterSelected &&
-        selectedTargetIndex === undefined)}
+        selectedTargetIndex === undefined &&
+        !("ally" in selectedAction.target.scope))}
   >
     Perform Action
   </Button>
