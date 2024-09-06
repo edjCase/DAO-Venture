@@ -119,6 +119,16 @@
     <div class="flex gap-2 mt-2">
       <Input type="number" bind:value={path.weight} placeholder="Weight" />
       <Input type="text" bind:value={path.pathId} placeholder="Path ID" />
+
+      <Select
+        items={[
+          { value: "none", name: "No Condition" },
+          { value: "hasGold", name: "Has Gold" },
+          { value: "hasItem", name: "Has Item" },
+          { value: "hasTrait", name: "Has Trait" },
+        ]}
+        on:change={(e) => (path.condition = [e.target.value])}
+      />
       <ConditionEditor bind:value={path.condition} />
       <button
         class="bg-red-500 text-white px-2 py-1 rounded"
