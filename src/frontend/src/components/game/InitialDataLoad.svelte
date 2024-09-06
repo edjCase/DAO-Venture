@@ -44,6 +44,17 @@
       })
     );
 
+    let actions = await import("../../initial_data/ActionData").then(
+      (module) => {
+        return module.actions;
+      }
+    );
+    await Promise.all(
+      actions.map(async (action) => {
+        await addGameContent({ action: action });
+      })
+    );
+
     let traits = await import("../../initial_data/TraitData").then((module) => {
       return module.traits;
     });

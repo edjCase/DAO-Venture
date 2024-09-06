@@ -1,4 +1,6 @@
 import Nat "mo:base/Nat";
+import Result "mo:base/Result";
+import Buffer "mo:base/Buffer";
 import Entity "Entity";
 
 module {
@@ -92,6 +94,71 @@ module {
 
     public type Retaliating = {
         #flat : Nat;
+    };
+
+    public func validate(action : Action) : Result.Result<(), [Text]> {
+        var errors = Buffer.Buffer<Text>(0);
+
+        Entity.validate("action", action, errors);
+
+        // Validate effects
+        for (effect in action.effects.vals()) {
+            switch (effect.kind) {
+                case (#damage(damage)) {
+                    if (damage.max < damage.min) {
+                        errors.add("Damage max must be greater than or equal to min");
+                    };
+                };
+                case (#heal(heal)) {
+                    if (heal.max < heal.min) {
+                        errors.add("Heal max must be greater than or equal to min");
+                    };
+                };
+                case (#block(block)) {
+                    if (block.max < block.min) {
+                        errors.add("Block max must be greater than or equal to min");
+                    };
+                };
+                case (#addStatusEffect(statusEffect)) {
+                    switch (statusEffect.duration) {
+                        case (null) ();
+                        case (?duration) {
+                            if (duration == 0) {
+                                errors.add("Status effect duration cannot be zero");
+                            };
+                        };
+                    };
+                    switch (statusEffect.kind) {
+                        case (#vulnerable or #stunned or #weak) {};
+                        case (#retaliating(retaliating)) {
+                            switch (retaliating) {
+                                case (#flat(flat)) {
+                                    if (flat == 0) {
+                                        errors.add("Retaliating effect cannot be zero");
+                                    };
+                                };
+                            };
+                        };
+                    };
+                };
+            };
+        };
+
+        // Validate target
+        switch (action.target.selection) {
+            case (#chosen or #all) ();
+            case (#random(random)) {
+                if (random.count == 0) {
+                    errors.add("Random target count cannot be zero");
+                };
+            };
+        };
+
+        if (errors.size() > 0) {
+            #err(Buffer.toArray(errors));
+        } else {
+            #ok();
+        };
     };
 
 };

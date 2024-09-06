@@ -288,6 +288,7 @@ export interface Item {
 export type LocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
 export type ModifyGameContent = { 'trait' : Trait } |
+  { 'action' : Action } |
   { 'creature' : Creature } |
   { 'item' : Item } |
   { 'class' : Class } |
@@ -452,19 +453,19 @@ export interface StartingGameStateWithMetaData {
 }
 export interface StatusEffect {
   'duration' : [] | [bigint],
-  'kind' : StatusEffectKind__1,
+  'kind' : StatusEffectKind,
 }
 export type StatusEffectKind = { 'retaliating' : Retaliating } |
   { 'weak' : null } |
   { 'vulnerable' : null } |
-  { 'stunned' : null } |
-  { 'periodic' : PeriodicEffectResult };
+  { 'stunned' : null };
 export type StatusEffectKind__1 = { 'retaliating' : Retaliating } |
   { 'weak' : null } |
   { 'vulnerable' : null } |
-  { 'stunned' : null };
+  { 'stunned' : null } |
+  { 'periodic' : PeriodicEffectResult };
 export interface StatusEffectResult {
-  'kind' : StatusEffectKind,
+  'kind' : StatusEffectKind__1,
   'remainingTurns' : bigint,
 }
 export interface StreamingCallbackHttpResponse {

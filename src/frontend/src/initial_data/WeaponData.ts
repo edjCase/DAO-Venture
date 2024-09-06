@@ -40,7 +40,7 @@ export const weapons: Weapon[] = [
         id: "oaken_staff",
         name: "Oaken Staff",
         description: "A staff carved from ancient oak, resonating with nature's power.",
-        actionIds: ["wild_growth", "nature_s_wrath"],
+        actionIds: ["wild_growth", "natures_wrath"],
         unlockRequirement: []
     },
     {

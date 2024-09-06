@@ -9,6 +9,7 @@
   import { toJsonString } from "../../utils/StringUtil";
   import { Scenario, ScenarioMetaData } from "../../ic-agent/declarations/main";
   import ScenarioStages from "./ScenarioStages.svelte";
+  import ScenarioCombat from "./ScenarioCombat.svelte";
 
   export let scenario: Scenario;
   export let scenarioMetaData: ScenarioMetaData;
@@ -79,7 +80,8 @@
       </div>
     </div>
   {:else if "combat" in scenario.state}
-    <div>Combat</div>
+    <div class="text-3xl text-center mb-4">Combat</div>
+    <ScenarioCombat combatState={scenario.state.combat} />
   {:else if "complete" in scenario.state}
     <Button on:click={nextScenario}>Continue</Button>
   {:else}

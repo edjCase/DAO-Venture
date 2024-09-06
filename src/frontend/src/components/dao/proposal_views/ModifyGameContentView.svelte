@@ -10,6 +10,8 @@
   import WeaponView from "./modify_game_content/WeaponView.svelte";
   import AchievementView from "./modify_game_content/AchievementView.svelte";
   import ScenarioView from "./modify_game_content/ScenarioView.svelte";
+  import { toJsonString } from "../../../utils/StringUtil";
+  import ActionView from "./modify_game_content/ActionView.svelte";
 
   export let content: ModifyGameContent;
 </script>
@@ -35,7 +37,9 @@
     <AchievementView achievement={content.achievement} />
   {:else if "scenario" in content}
     <ScenarioView scenario={content.scenario} />
+  {:else if "action" in content}
+    <ActionView action={content.action} />
   {:else}
-    <div>NOT IMPLEMENTED GAME CONTENT VIEW: {JSON.stringify(content)}</div>
+    <div>NOT IMPLEMENTED GAME CONTENT VIEW: {toJsonString(content)}</div>
   {/if}
 </div>

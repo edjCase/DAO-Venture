@@ -10,6 +10,8 @@
   import WeaponForm from "./modify_game_content/WeaponForm.svelte";
   import AchievementForm from "./modify_game_content/AchievementForm.svelte";
   import ScenarioForm from "./modify_game_content/ScenarioForm.svelte";
+  import ActionForm from "./modify_game_content/ActionForm.svelte";
+
   let gameContentTypes = [
     { value: "item", name: "Item" },
     { value: "trait", name: "Trait" },
@@ -21,6 +23,7 @@
     { value: "weapon", name: "Weapon" },
     { value: "achievement", name: "Achievement" },
     { value: "scenario", name: "Scenario" },
+    { value: "action", name: "Action" },
   ];
   let selectedGameContentType: string = gameContentTypes[0].value;
 </script>
@@ -47,6 +50,8 @@
     <AchievementForm />
   {:else if selectedGameContentType === "scenario"}
     <ScenarioForm />
+  {:else if selectedGameContentType === "action"}
+    <ActionForm />
   {:else}
     NOT IMPLEMENTED GAME CONTENT FORM: <pre>{selectedGameContentType}</pre>
   {/if}

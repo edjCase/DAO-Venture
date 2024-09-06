@@ -531,7 +531,7 @@ export const actions: Action[] = [
         ]
     },
     {
-        id: "nature_s_wrath",
+        id: "natures_wrath",
         name: "Nature's Wrath",
         description: "Summon nature's fury to damage all enemies and poison them",
         target: {

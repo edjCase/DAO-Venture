@@ -49,6 +49,76 @@ export const idlFactory = ({ IDL }) => {
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
     'image' : PixelImage,
   });
+  const TurnPhase = IDL.Variant({ 'end' : IDL.Null, 'start' : IDL.Null });
+  const PeriodicTiming = IDL.Record({
+    'remainingTurns' : IDL.Nat,
+    'phase' : TurnPhase,
+  });
+  const ActionTimingKind = IDL.Variant({
+    'periodic' : PeriodicTiming,
+    'immediate' : IDL.Null,
+  });
+  const Damage = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
+    'timing' : ActionTimingKind,
+  });
+  const Heal = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
+    'timing' : ActionTimingKind,
+  });
+  const Retaliating = IDL.Variant({ 'flat' : IDL.Nat });
+  const StatusEffectKind = IDL.Variant({
+    'retaliating' : Retaliating,
+    'weak' : IDL.Null,
+    'vulnerable' : IDL.Null,
+    'stunned' : IDL.Null,
+  });
+  const StatusEffect = IDL.Record({
+    'duration' : IDL.Opt(IDL.Nat),
+    'kind' : StatusEffectKind,
+  });
+  const Block = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
+    'timing' : ActionTimingKind,
+  });
+  const ActionEffectKind = IDL.Variant({
+    'damage' : Damage,
+    'heal' : Heal,
+    'addStatusEffect' : StatusEffect,
+    'block' : Block,
+  });
+  const ActionEffectTarget = IDL.Variant({
+    'self' : IDL.Null,
+    'targets' : IDL.Null,
+  });
+  const ActionEffect = IDL.Record({
+    'kind' : ActionEffectKind,
+    'target' : ActionEffectTarget,
+  });
+  const ActionTargetScope = IDL.Variant({
+    'any' : IDL.Null,
+    'ally' : IDL.Null,
+    'enemy' : IDL.Null,
+  });
+  const ActionTargetSelection = IDL.Variant({
+    'all' : IDL.Null,
+    'random' : IDL.Record({ 'count' : IDL.Nat }),
+    'chosen' : IDL.Null,
+  });
+  const ActionTarget = IDL.Record({
+    'scope' : ActionTargetScope,
+    'selection' : ActionTargetSelection,
+  });
+  const Action = IDL.Record({
+    'id' : IDL.Text,
+    'effects' : IDL.Vec(ActionEffect),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'target' : ActionTarget,
+  });
   const CreatureKind = IDL.Variant({
     'normal' : IDL.Null,
     'boss' : IDL.Null,
@@ -232,6 +302,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ModifyGameContent = IDL.Variant({
     'trait' : Trait,
+    'action' : Action,
     'creature' : Creature,
     'item' : Item,
     'class' : Class,
@@ -253,76 +324,6 @@ export const idlFactory = ({ IDL }) => {
   const CreateWorldProposalResult = IDL.Variant({
     'ok' : IDL.Nat,
     'err' : CreateWorldProposalError,
-  });
-  const TurnPhase = IDL.Variant({ 'end' : IDL.Null, 'start' : IDL.Null });
-  const PeriodicTiming = IDL.Record({
-    'remainingTurns' : IDL.Nat,
-    'phase' : TurnPhase,
-  });
-  const ActionTimingKind = IDL.Variant({
-    'periodic' : PeriodicTiming,
-    'immediate' : IDL.Null,
-  });
-  const Damage = IDL.Record({
-    'max' : IDL.Nat,
-    'min' : IDL.Nat,
-    'timing' : ActionTimingKind,
-  });
-  const Heal = IDL.Record({
-    'max' : IDL.Nat,
-    'min' : IDL.Nat,
-    'timing' : ActionTimingKind,
-  });
-  const Retaliating = IDL.Variant({ 'flat' : IDL.Nat });
-  const StatusEffectKind__1 = IDL.Variant({
-    'retaliating' : Retaliating,
-    'weak' : IDL.Null,
-    'vulnerable' : IDL.Null,
-    'stunned' : IDL.Null,
-  });
-  const StatusEffect = IDL.Record({
-    'duration' : IDL.Opt(IDL.Nat),
-    'kind' : StatusEffectKind__1,
-  });
-  const Block = IDL.Record({
-    'max' : IDL.Nat,
-    'min' : IDL.Nat,
-    'timing' : ActionTimingKind,
-  });
-  const ActionEffectKind = IDL.Variant({
-    'damage' : Damage,
-    'heal' : Heal,
-    'addStatusEffect' : StatusEffect,
-    'block' : Block,
-  });
-  const ActionEffectTarget = IDL.Variant({
-    'self' : IDL.Null,
-    'targets' : IDL.Null,
-  });
-  const ActionEffect = IDL.Record({
-    'kind' : ActionEffectKind,
-    'target' : ActionEffectTarget,
-  });
-  const ActionTargetScope = IDL.Variant({
-    'any' : IDL.Null,
-    'ally' : IDL.Null,
-    'enemy' : IDL.Null,
-  });
-  const ActionTargetSelection = IDL.Variant({
-    'all' : IDL.Null,
-    'random' : IDL.Record({ 'count' : IDL.Nat }),
-    'chosen' : IDL.Null,
-  });
-  const ActionTarget = IDL.Record({
-    'scope' : ActionTargetScope,
-    'selection' : ActionTargetSelection,
-  });
-  const Action = IDL.Record({
-    'id' : IDL.Text,
-    'effects' : IDL.Vec(ActionEffect),
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'target' : ActionTarget,
   });
   const GetCompletedGamesRequest = IDL.Record({
     'count' : IDL.Nat,
@@ -409,7 +410,7 @@ export const idlFactory = ({ IDL }) => {
     'phase' : TurnPhase,
     'amount' : IDL.Nat,
   });
-  const StatusEffectKind = IDL.Variant({
+  const StatusEffectKind__1 = IDL.Variant({
     'retaliating' : Retaliating,
     'weak' : IDL.Null,
     'vulnerable' : IDL.Null,
@@ -417,7 +418,7 @@ export const idlFactory = ({ IDL }) => {
     'periodic' : PeriodicEffectResult,
   });
   const StatusEffectResult = IDL.Record({
-    'kind' : StatusEffectKind,
+    'kind' : StatusEffectKind__1,
     'remainingTurns' : IDL.Nat,
   });
   const CharacterCombatState = IDL.Record({

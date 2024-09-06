@@ -86,6 +86,7 @@ actor MainActor : Types.Actor {
                     case (#achievement(achievement)) gameHandler.addOrUpdateAchievement(achievement);
                     case (#creature(creature)) gameHandler.addOrUpdateCreature(creature);
                     case (#weapon(weapon)) gameHandler.addOrUpdateWeapon(weapon);
+                    case (#action(action)) gameHandler.addOrUpdateAction(action);
                 };
                 switch (result) {
                     case (#ok) #ok;
@@ -124,6 +125,7 @@ actor MainActor : Types.Actor {
                     case (#achievement(achievement)) gameHandler.validateAchievement(achievement);
                     case (#creature(creature)) gameHandler.validateCreature(creature);
                     case (#weapon(weapon)) gameHandler.validateWeapon(weapon);
+                    case (#action(action)) gameHandler.validateAction(action);
                 };
             };
         };

@@ -733,6 +733,20 @@ module {
             Weapon.validate(weapon, actions, achievements);
         };
 
+        public func addOrUpdateAction(action : Action.Action) : Result.Result<(), { #invalid : [Text] }> {
+            switch (validateAction(action)) {
+                case (#err(errors)) return #err(#invalid(errors));
+                case (#ok) ();
+            };
+            Debug.print("Adding action: " # action.id);
+            actions.put(action.id, action);
+            #ok;
+        };
+
+        public func validateAction(action : Action.Action) : Result.Result<(), [Text]> {
+            Action.validate(action);
+        };
+
         public func addOrUpdateImage(image : Image.Image) : Result.Result<(), { #invalid : [Text] }> {
             switch (validateImage(image)) {
                 case (#err(errors)) return #err(#invalid(errors));

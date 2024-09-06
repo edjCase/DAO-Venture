@@ -7,6 +7,7 @@ import Zone "entities/Zone";
 import Achievement "entities/Achievement";
 import Creature "entities/Creature";
 import Weapon "entities/Weapon";
+import Action "entities/Action";
 import ScenarioMetaData "entities/ScenarioMetaData";
 module {
 
@@ -31,5 +32,6 @@ module {
         #achievement : Achievement.Achievement;
         #creature : Creature.Creature;
         #weapon : Weapon.Weapon;
+        #action : Action.Action;
     };
 };
