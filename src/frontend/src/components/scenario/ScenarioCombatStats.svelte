@@ -36,7 +36,6 @@
       {:else}
         ❓ (NOT IMPLEMENTED)
       {/if}
-      ✨ {value.statusEffects.map((effect) => effect.kind).join(", ")}
     </p>
   {/each}
 {/if}

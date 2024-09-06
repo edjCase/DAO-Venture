@@ -543,21 +543,26 @@ module {
                     });
                 };
             } else {
-                switch (nextScenarioOrEnd(prng, updatedInProgressState)) {
-                    case (?updatedInProgressState) {
-                        {
-                            updatedInstance with
-                            state = #inProgress(updatedInProgressState);
-                        };
-                    };
-                    case (null) {
-                        {
-                            updatedInstance with
-                            state = #completed({
-                                endTime = Time.now();
-                                character = updatedInProgressState.character;
-                                victory = true;
-                            });
+                switch (newState) {
+                    case (#choice(_) or #combat(_)) updatedInstance; // Continue
+                    case (#complete) {
+                        switch (nextScenarioOrEnd(prng, updatedInProgressState)) {
+                            case (?updatedInProgressState) {
+                                {
+                                    updatedInstance with
+                                    state = #inProgress(updatedInProgressState);
+                                };
+                            };
+                            case (null) {
+                                {
+                                    updatedInstance with
+                                    state = #completed({
+                                        endTime = Time.now();
+                                        character = updatedInProgressState.character;
+                                        victory = true;
+                                    });
+                                };
+                            };
                         };
                     };
                 };

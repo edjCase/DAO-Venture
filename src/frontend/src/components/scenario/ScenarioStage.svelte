@@ -22,10 +22,11 @@
     {/if}
   </div>
 {:else if "combat" in stage.kind}
-  <div class="text-3xl text-primary-500">Combat</div>
   {#if "inProgress" in stage.kind.combat}
-    <div>InProgress</div>
-    <div>Character Health: {stage.kind.combat.inProgress.character.shield}</div>
+    <div>
+      Character Health: {stage.kind.combat.inProgress.character.health}/{stage
+        .kind.combat.inProgress.character.maxHealth}
+    </div>
     <div>Creatures:</div>
     {#each stage.kind.combat.inProgress.creatures as creature}
       <div>
@@ -45,7 +46,6 @@
   {/if}
 {/if}
 
-<div class="text-3xl text-primary-500">Outcome Log</div>
 <ul class="text-sm">
   {#each stage.effects as effect}
     <li>
