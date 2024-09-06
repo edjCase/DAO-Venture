@@ -13,7 +13,7 @@
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
-  import { traitStore } from "../../../../stores/TraitStore";
+  import { itemStore } from "../../../../stores/ItemStore";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -22,8 +22,8 @@
 
   let actionOptions: SelectOptionType<string>[] = [];
   let selectedActions: string[] = [];
-  let traitOptions: SelectOptionType<string>[] = [];
-  let selectedTraits: string[] = [];
+  let itemOptions: SelectOptionType<string>[] = [];
+  let selectedItems: string[] = [];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined || name === undefined || description === undefined) {
@@ -36,7 +36,7 @@
           name,
           description,
           actionIds: selectedActions,
-          startingTraitIds: selectedTraits,
+          startingItemIds: selectedItems,
           unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
         },
       },
@@ -44,7 +44,7 @@
   };
 
   $: actions = $actionStore;
-  $: traits = $traitStore;
+  $: items = $itemStore;
   $: {
     actionOptions =
       actions?.map((action) => ({
@@ -53,10 +53,10 @@
       })) || [];
   }
   $: {
-    traitOptions =
-      traits?.map((action) => ({
-        value: action.id,
-        name: action.name,
+    itemOptions =
+      items?.map((item) => ({
+        value: item.id,
+        name: item.name,
       })) || [];
   }
 </script>
@@ -99,11 +99,11 @@
       />
     </div>
     <div>
-      <Label>Traits</Label>
+      <Label>Items</Label>
       <MultiSelect
-        items={traitOptions}
-        bind:value={selectedTraits}
-        placeholder="Select traits"
+        items={itemOptions}
+        bind:value={selectedItems}
+        placeholder="Select Items"
         size="lg"
       />
     </div>

@@ -9,7 +9,6 @@
   import { DotsVerticalOutline } from "flowbite-svelte-icons";
   import { Dropdown, DropdownItem } from "flowbite-svelte";
   import CharacterInventory from "../character/CharacterInventory.svelte";
-  import CharacterTraits from "../character/CharacterTraits.svelte";
   export let game: GameWithMetaData;
 
   let cancelGame = async () => {
@@ -37,7 +36,6 @@
 <div>
   {#if character !== undefined}
     <CharacterInventory items={character.items} />
-    <CharacterTraits traits={character.traits} />
   {/if}
   <DotsVerticalOutline class="dots-menu dark:text-white float-right " />
   <Dropdown triggeredBy=".dots-menu">

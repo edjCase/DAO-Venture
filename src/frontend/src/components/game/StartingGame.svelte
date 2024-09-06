@@ -8,6 +8,7 @@
   import CharacterAvatar from "../character/CharacterAvatar.svelte";
   import GameNav from "./GameNav.svelte";
   import GenericOption from "../common/GenericOption.svelte";
+  import CharacterItem from "../character/CharacterItem.svelte";
 
   export let game: GameWithMetaData;
   export let state: StartingGameStateWithMetaData;
@@ -55,11 +56,8 @@
             {#each character.actions as action}
               <div>+{action.name}</div>
             {/each}
-            {#each character.traits as trait}
-              <div>+{trait.name}</div>
-            {/each}
             {#each character.items as item}
-              <div>+{item.name}</div>
+              <div>+<CharacterItem {item} /></div>
             {/each}
           </div>
         </div>

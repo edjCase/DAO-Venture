@@ -17,7 +17,6 @@ import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
 import HttpHandler "../handlers/HttpHandler";
-import Trait "../models/entities/Trait";
 import Class "../models/entities/Class";
 import Race "../models/entities/Race";
 import Item "../models/entities/Item";
@@ -40,7 +39,6 @@ actor MainActor : Types.Actor {
         races = [];
         scenarioMetaDataList = [];
         items = [];
-        traits = [];
         images = [];
         zones = [];
         achievements = [];
@@ -80,7 +78,6 @@ actor MainActor : Types.Actor {
             case (#modifyGameContent(modifyGameContent)) {
                 let result = switch (modifyGameContent) {
                     case (#item(item)) gameHandler.addOrUpdateItem(item);
-                    case (#trait(trait)) gameHandler.addOrUpdateTrait(trait);
                     case (#image(image)) gameHandler.addOrUpdateImage(image);
                     case (#scenario(scenario)) gameHandler.addOrUpdateScenarioMetaData(scenario);
                     case (#race(race)) gameHandler.addOrUpdateRace(race);
@@ -119,7 +116,6 @@ actor MainActor : Types.Actor {
             case (#modifyGameContent(modifyGameContent)) {
                 switch (modifyGameContent) {
                     case (#item(item)) gameHandler.validateItem(item);
-                    case (#trait(trait)) gameHandler.validateTrait(trait);
                     case (#image(image)) gameHandler.validateImage(image);
                     case (#scenario(scenario)) gameHandler.validateScenarioMetaData(scenario);
                     case (#race(race)) gameHandler.validateRace(race);
@@ -269,10 +265,6 @@ actor MainActor : Types.Actor {
 
     public query func getScenarioMetaDataList() : async [ScenarioMetaData.ScenarioMetaData] {
         gameHandler.getScenarioMetaDataList();
-    };
-
-    public query func getTraits() : async [Trait.Trait] {
-        gameHandler.getTraits();
     };
 
     public query func getClasses() : async [Class.Class] {

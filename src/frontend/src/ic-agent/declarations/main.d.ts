@@ -59,7 +59,6 @@ export interface CharacterCombatState {
 export interface CharacterWithMetaData {
   'maxHealth' : bigint,
   'gold' : bigint,
-  'traits' : Array<Trait>,
   'class' : Class,
   'race' : Race,
   'actions' : Array<Action>,
@@ -75,7 +74,6 @@ export interface Choice {
 }
 export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
   { 'any' : Array<ChoiceRequirement> } |
-  { 'trait' : string } |
   { 'gold' : bigint } |
   { 'item' : string } |
   { 'class' : string } |
@@ -86,9 +84,9 @@ export interface Class {
   'actionIds' : Array<string>,
   'name' : string,
   'description' : string,
+  'startingItemIds' : Array<string>,
   'weaponId' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
-  'startingTraitIds' : Array<string>,
 }
 export interface CombatChoice {
   'target' : [] | [ActionTargetResult],
@@ -124,10 +122,8 @@ export interface CompletedGameWithMetaData {
   'victory' : boolean,
 }
 export type Condition = { 'hasGold' : NatValue } |
-  { 'hasItem' : TextValue } |
-  { 'hasTrait' : TextValue };
-export type CreateGameError = { 'noTraits' : null } |
-  { 'noWeapons' : null } |
+  { 'hasItem' : TextValue };
+export type CreateGameError = { 'noWeapons' : null } |
   { 'noCreaturesForZone' : string } |
   { 'noZones' : null } |
   { 'notAuthenticated' : null } |
@@ -182,12 +178,10 @@ export type Difficulty = { 'normal' : null } |
   { 'easy' : null } |
   { 'hard' : null };
 export type Effect = { 'reward' : null } |
-  { 'removeTrait' : RandomOrSpecificTextValue } |
   { 'damage' : NatValue } |
   { 'heal' : NatValue } |
   { 'achievement' : string } |
   { 'addItem' : RandomOrSpecificTextValue } |
-  { 'addTrait' : RandomOrSpecificTextValue } |
   { 'removeGold' : NatValue } |
   { 'removeItem' : RandomOrSpecificTextValue };
 export type GameStateWithMetaData = {
@@ -289,8 +283,7 @@ export interface Item {
 }
 export type LocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
-export type ModifyGameContent = { 'trait' : Trait } |
-  { 'action' : Action } |
+export type ModifyGameContent = { 'action' : Action } |
   { 'creature' : Creature } |
   { 'item' : Item } |
   { 'class' : Class } |
@@ -304,12 +297,10 @@ export interface MotionContent { 'title' : string, 'description' : string }
 export type NatValue = { 'raw' : bigint } |
   { 'dataField' : string } |
   { 'random' : [bigint, bigint] };
-export type OutcomeEffect = { 'removeTrait' : string } |
-  { 'healthDelta' : bigint } |
+export type OutcomeEffect = { 'healthDelta' : bigint } |
   { 'maxHealthDelta' : bigint } |
   { 'text' : string } |
   { 'addItem' : string } |
-  { 'addTrait' : string } |
   { 'goldDelta' : bigint } |
   { 'removeItem' : string };
 export interface OutcomePath {
@@ -379,8 +370,8 @@ export interface Race {
   'actionIds' : Array<string>,
   'name' : string,
   'description' : string,
+  'startingItemIds' : Array<string>,
   'unlockRequirement' : [] | [UnlockRequirement],
-  'startingTraitIds' : Array<string>,
 }
 export type RandomOrSpecificTextValue = { 'specific' : TextValue } |
   { 'random' : null };
@@ -480,13 +471,6 @@ export type TextValue = { 'raw' : string } |
   { 'weighted' : Array<[string, number]> };
 export type Time = bigint;
 export interface Token { 'arbitrary_data' : string }
-export interface Trait {
-  'id' : string,
-  'name' : string,
-  'description' : string,
-  'unlockRequirement' : [] | [UnlockRequirement],
-  'image' : PixelImage,
-}
 export type TurnKind = { 'scenario' : ScenarioTurn } |
   { 'combat' : CombatTurn };
 export type TurnPhase = { 'end' : null } |
@@ -556,7 +540,6 @@ export interface _SERVICE {
   'getScenarioMetaDataList' : ActorMethod<[], Array<ScenarioMetaData>>,
   'getScenarios' : ActorMethod<[], GetScenariosResult>,
   'getTopUsers' : ActorMethod<[GetTopUsersRequest], GetTopUsersResult>,
-  'getTraits' : ActorMethod<[], Array<Trait>>,
   'getUser' : ActorMethod<[Principal], GetUserResult>,
   'getUserStats' : ActorMethod<[], GetUserStatsResult>,
   'getUsers' : ActorMethod<[GetUsersRequest], GetUsersResult>,

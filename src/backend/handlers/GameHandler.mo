@@ -19,7 +19,6 @@ import Character "../models/Character";
 import IterTools "mo:itertools/Iter";
 import CharacterGenerator "../CharacterGenerator";
 import ScenarioSimulator "../ScenarioSimulator";
-import Trait "../models/entities/Trait";
 import Item "../models/entities/Item";
 import Class "../models/entities/Class";
 import Race "../models/entities/Race";
@@ -42,7 +41,6 @@ module {
         races : [Race.Race];
         scenarioMetaDataList : [ScenarioMetaData.ScenarioMetaData];
         items : [Item.Item];
-        traits : [Trait.Trait];
         images : [Image.Image];
         zones : [Zone.Zone];
         achievements : [Achievement.Achievement];
@@ -150,7 +148,6 @@ module {
         race : Race.Race;
         actions : [Action.Action];
         items : [Item.Item];
-        traits : [Trait.Trait];
         weapon : Weapon.Weapon;
     };
 
@@ -164,7 +161,6 @@ module {
         #noRaces;
         #noScenarios;
         #noItems;
-        #noTraits;
         #noImages;
         #noZones;
         #noScenariosForZone : Text;
@@ -193,8 +189,6 @@ module {
 
         let items = toTextHashMap<Item.Item>(data.items);
 
-        let traits = toTextHashMap<Trait.Trait>(data.traits);
-
         let images = toTextHashMap<Image.Image>(data.images);
 
         let zones = toTextHashMap<Zone.Zone>(data.zones);
@@ -221,7 +215,6 @@ module {
                 races = Iter.toArray(races.vals());
                 scenarioMetaDataList = Iter.toArray(scenarioMetaDataList.vals());
                 items = Iter.toArray(items.vals());
-                traits = Iter.toArray(traits.vals());
                 images = Iter.toArray(images.vals());
                 zones = Iter.toArray(zones.vals());
                 achievements = Iter.toArray(achievements.vals());
@@ -247,9 +240,6 @@ module {
             };
             if (items.size() == 0) {
                 return #err(#noItems);
-            };
-            if (traits.size() == 0) {
-                return #err(#noTraits);
             };
             if (images.size() == 0) {
                 return #err(#noImages);
@@ -626,20 +616,6 @@ module {
             Item.validate(item, achievements);
         };
 
-        public func addOrUpdateTrait(trait : Trait.Trait) : Result.Result<(), { #invalid : [Text] }> {
-            switch (validateTrait(trait)) {
-                case (#err(errors)) return #err(#invalid(errors));
-                case (#ok) ();
-            };
-            Debug.print("Adding trait: " # trait.id);
-            traits.put(trait.id, trait);
-            #ok;
-        };
-
-        public func validateTrait(trait : Trait.Trait) : Result.Result<(), [Text]> {
-            Trait.validate(trait, achievements);
-        };
-
         public func addOrUpdateRace(race : Race.Race) : Result.Result<(), { #invalid : [Text] }> {
             switch (validateRace(race)) {
                 case (#err(errors)) return #err(#invalid(errors));
@@ -651,7 +627,7 @@ module {
         };
 
         public func validateRace(race : Race.Race) : Result.Result<(), [Text]> {
-            Race.validate(race, traits, actions, achievements);
+            Race.validate(race, items, actions, achievements);
         };
 
         public func addOrUpdateClass(class_ : Class.Class) : Result.Result<(), { #invalid : [Text] }> {
@@ -665,7 +641,7 @@ module {
         };
 
         public func validateClass(class_ : Class.Class) : Result.Result<(), [Text]> {
-            Class.validate(class_, traits, actions, achievements);
+            Class.validate(class_, items, actions, achievements);
         };
 
         public func addOrUpdateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), { #invalid : [Text] }> {
@@ -679,7 +655,7 @@ module {
         };
 
         public func validateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), [Text]> {
-            ScenarioMetaData.validate(scenario, items, traits, images, zones, achievements, creatures);
+            ScenarioMetaData.validate(scenario, items, images, zones, achievements, creatures);
         };
 
         public func addOrUpdateZone(zone : Zone.Zone) : Result.Result<(), { #invalid : [Text] }> {
@@ -773,10 +749,6 @@ module {
 
         public func getScenarioMetaDataList() : [ScenarioMetaData.ScenarioMetaData] {
             scenarioMetaDataList.vals() |> Iter.toArray(_);
-        };
-
-        public func getTraits() : [Trait.Trait] {
-            traits.vals() |> Iter.toArray(_);
         };
 
         public func getItems() : [Item.Item] {
@@ -968,16 +940,6 @@ module {
             )
             |> Iter.toArray(_);
 
-            let traitsWithMetaData = Trie.iter(character.traitIds)
-            |> Iter.map(
-                _,
-                func((traitId, _) : (Text, ())) : Trait.Trait {
-                    let ?trait = traits.get(traitId) else Debug.trap("Trait not found: " # traitId);
-                    trait;
-                },
-            )
-            |> Iter.toArray(_);
-
             let actionsWithMetaData = Character.getActionIds(character, classes, races, weapons).vals()
             |> Iter.map(
                 _,
@@ -996,7 +958,6 @@ module {
                 class_ = class_;
                 race = race;
                 items = itemsWithMetaData;
-                traits = traitsWithMetaData;
                 weapon = weapon;
                 actions = actionsWithMetaData;
             };

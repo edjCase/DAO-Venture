@@ -18,22 +18,17 @@ module {
         var maxHealth : Nat = 100;
         var health : Nat = maxHealth;
         var itemIds = TrieSet.empty<Text>();
-        var traitIds = TrieSet.empty<Text>();
         var attack : Int = 0;
         var defense : Int = 0;
         var speed : Int = 0;
         var magic : Int = 0;
 
-        func addTrait(trait : Text) {
-            traitIds := TrieSet.put(traitIds, trait, Text.hash(trait), Text.equal);
+        func addItem(itemId : Text) {
+            itemIds := TrieSet.put(itemIds, itemId, Text.hash(itemId), Text.equal);
         };
 
-        for (startingTraitId in class_.startingTraitIds.vals()) {
-            addTrait(startingTraitId);
-        };
-
-        for (startingTraitId in race.startingTraitIds.vals()) {
-            addTrait(startingTraitId);
+        for (startingItemId in class_.startingItemIds.vals()) {
+            addItem(startingItemId);
         };
 
         {
@@ -47,7 +42,6 @@ module {
             speed = speed;
             magic = magic;
             itemIds = itemIds;
-            traitIds = traitIds;
             weaponId = class_.weaponId;
         };
     };

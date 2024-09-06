@@ -441,10 +441,6 @@ module {
                     let itemId = getTextValue(prng, itemValue, scenario.data);
                     TrieSet.mem(character.itemIds, itemId, Text.hash(itemId), Text.equal);
                 };
-                case (#hasTrait(traitValue)) {
-                    let traitId = getTextValue(prng, traitValue, scenario.data);
-                    TrieSet.mem(character.traitIds, traitId, Text.hash(traitId), Text.equal);
-                };
             };
         };
 
@@ -484,26 +480,6 @@ module {
                         };
                         case (#specific(itemId)) {
                             ignore removeItem(getTextValue(prng, itemId, scenario.data));
-                        };
-                    };
-                };
-                case (#addTrait(trait)) {
-                    switch (trait) {
-                        case (#random) {
-                            // TODO
-                        };
-                        case (#specific(traitId)) {
-                            ignore addTrait(getTextValue(prng, traitId, scenario.data));
-                        };
-                    };
-                };
-                case (#removeTrait(trait)) {
-                    switch (trait) {
-                        case (#random) {
-                            // TODO
-                        };
-                        case (#specific(traitId)) {
-                            ignore removeTrait(getTextValue(prng, traitId, scenario.data));
                         };
                     };
                 };
@@ -588,16 +564,6 @@ module {
                 log("You don't have " # Nat.toText(amount) # " gold");
                 return false;
             };
-        };
-
-        public func addTrait(trait : Text) : Bool {
-            logEntries.add(#addTrait(trait));
-            characterHandler.addTrait(trait);
-        };
-
-        public func removeTrait(trait : Text) : Bool {
-            logEntries.add(#removeTrait(trait));
-            characterHandler.removeTrait(trait);
         };
 
         public func getEffects() : [Scenario.OutcomeEffect] {

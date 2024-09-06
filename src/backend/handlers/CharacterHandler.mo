@@ -76,25 +76,5 @@ module {
             };
             true;
         };
-
-        public func addTrait(traitId : Text) : Bool {
-            let newTraitIds = TrieSet.put<Text>(character.traitIds, traitId, Text.hash(traitId), Text.equal);
-            if (TrieSet.size(newTraitIds) == TrieSet.size(character.traitIds)) return false;
-            character := {
-                character with
-                traitIds = newTraitIds;
-            };
-            true;
-        };
-
-        public func removeTrait(traitId : Text) : Bool {
-            let newTraitIds = TrieSet.delete<Text>(character.traitIds, traitId, Text.hash(traitId), Text.equal);
-            if (TrieSet.size(newTraitIds) == TrieSet.size(character.traitIds)) return false;
-            character := {
-                character with
-                traitIds = newTraitIds;
-            };
-            true;
-        };
     };
 };

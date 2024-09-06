@@ -9,7 +9,6 @@ import UserHandler "../handlers/UserHandler";
 import WorldDao "../models/WorldDao";
 import GameHandler "../handlers/GameHandler";
 import Item "../models/entities/Item";
-import Trait "../models/entities/Trait";
 import Race "../models/entities/Race";
 import Class "../models/entities/Class";
 import ScenarioMetaData "../models/entities/ScenarioMetaData";
@@ -43,7 +42,6 @@ module {
         getTopUsers : query (request : GetTopUsersRequest) -> async GetTopUsersResult;
         getUsers : query (request : GetUsersRequest) -> async GetUsersResult;
 
-        getTraits : query () -> async [Trait.Trait];
         getScenarioMetaDataList : query () -> async [ScenarioMetaData.ScenarioMetaData];
         getClasses : query () -> async [Class.Class];
         getRaces : query () -> async [Race.Race];

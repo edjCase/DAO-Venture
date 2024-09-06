@@ -1,7 +1,6 @@
 <script lang="ts">
   import { ModifyGameContent } from "../../../ic-agent/declarations/main";
   import ItemView from "./modify_game_content/ItemView.svelte";
-  import TraitView from "./modify_game_content/TraitView.svelte";
   import ImageView from "./modify_game_content/ImageView.svelte";
   import CreatureView from "./modify_game_content/CreatureView.svelte";
   import ClassView from "./modify_game_content/ClassView.svelte";
@@ -19,8 +18,6 @@
 <div>
   {#if "item" in content}
     <ItemView item={content.item} />
-  {:else if "trait" in content}
-    <TraitView trait={content.trait} />
   {:else if "image" in content}
     <ImageView image={content.image} />
   {:else if "creature" in content}

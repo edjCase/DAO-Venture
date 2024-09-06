@@ -11,7 +11,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const CreateGameRequest = IDL.Record({ 'difficulty' : Difficulty });
   const CreateGameError = IDL.Variant({
-    'noTraits' : IDL.Null,
     'noWeapons' : IDL.Null,
     'noCreaturesForZone' : IDL.Text,
     'noZones' : IDL.Null,
@@ -32,22 +31,6 @@ export const idlFactory = ({ IDL }) => {
   const MotionContent = IDL.Record({
     'title' : IDL.Text,
     'description' : IDL.Text,
-  });
-  const UnlockRequirement = IDL.Variant({ 'acheivementId' : IDL.Text });
-  const PixelData = IDL.Record({
-    'count' : IDL.Nat,
-    'paletteIndex' : IDL.Opt(IDL.Nat8),
-  });
-  const PixelImage = IDL.Record({
-    'palette' : IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)),
-    'pixelData' : IDL.Vec(PixelData),
-  });
-  const Trait = IDL.Record({
-    'id' : IDL.Text,
-    'name' : IDL.Text,
-    'description' : IDL.Text,
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
-    'image' : PixelImage,
   });
   const TurnPhase = IDL.Variant({ 'end' : IDL.Null, 'start' : IDL.Null });
   const PeriodicTiming = IDL.Record({
@@ -124,6 +107,7 @@ export const idlFactory = ({ IDL }) => {
     'boss' : IDL.Null,
     'elite' : IDL.Null,
   });
+  const UnlockRequirement = IDL.Variant({ 'acheivementId' : IDL.Text });
   const CreatureLocationKind = IDL.Variant({
     'common' : IDL.Null,
     'zoneIds' : IDL.Vec(IDL.Text),
@@ -140,6 +124,14 @@ export const idlFactory = ({ IDL }) => {
     'location' : CreatureLocationKind,
     'health' : IDL.Nat,
   });
+  const PixelData = IDL.Record({
+    'count' : IDL.Nat,
+    'paletteIndex' : IDL.Opt(IDL.Nat8),
+  });
+  const PixelImage = IDL.Record({
+    'palette' : IDL.Vec(IDL.Tuple(IDL.Nat8, IDL.Nat8, IDL.Nat8)),
+    'pixelData' : IDL.Vec(PixelData),
+  });
   const Item = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
@@ -152,17 +144,17 @@ export const idlFactory = ({ IDL }) => {
     'actionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'startingItemIds' : IDL.Vec(IDL.Text),
     'weaponId' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
-    'startingTraitIds' : IDL.Vec(IDL.Text),
   });
   const Race = IDL.Record({
     'id' : IDL.Text,
     'actionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'startingItemIds' : IDL.Vec(IDL.Text),
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
-    'startingTraitIds' : IDL.Vec(IDL.Text),
   });
   const Zone = IDL.Record({
     'id' : IDL.Text,
@@ -202,6 +194,11 @@ export const idlFactory = ({ IDL }) => {
     'store' : IDL.Null,
     'combat' : IDL.Null,
   });
+  const NatValue = IDL.Variant({
+    'raw' : IDL.Nat,
+    'dataField' : IDL.Text,
+    'random' : IDL.Tuple(IDL.Nat, IDL.Nat),
+  });
   const TextValue = IDL.Variant({
     'raw' : IDL.Text,
     'dataField' : IDL.Text,
@@ -211,19 +208,12 @@ export const idlFactory = ({ IDL }) => {
     'specific' : TextValue,
     'random' : IDL.Null,
   });
-  const NatValue = IDL.Variant({
-    'raw' : IDL.Nat,
-    'dataField' : IDL.Text,
-    'random' : IDL.Tuple(IDL.Nat, IDL.Nat),
-  });
   const Effect = IDL.Variant({
     'reward' : IDL.Null,
-    'removeTrait' : RandomOrSpecificTextValue,
     'damage' : NatValue,
     'heal' : NatValue,
     'achievement' : IDL.Text,
     'addItem' : RandomOrSpecificTextValue,
-    'addTrait' : RandomOrSpecificTextValue,
     'removeGold' : NatValue,
     'removeItem' : RandomOrSpecificTextValue,
   });
@@ -247,7 +237,6 @@ export const idlFactory = ({ IDL }) => {
   const Condition = IDL.Variant({
     'hasGold' : NatValue,
     'hasItem' : TextValue,
-    'hasTrait' : TextValue,
   });
   const WeightedOutcomePath = IDL.Record({
     'weight' : IDL.Float64,
@@ -264,7 +253,6 @@ export const idlFactory = ({ IDL }) => {
     IDL.Variant({
       'all' : IDL.Vec(ChoiceRequirement),
       'any' : IDL.Vec(ChoiceRequirement),
-      'trait' : IDL.Text,
       'gold' : IDL.Nat,
       'item' : IDL.Text,
       'class' : IDL.Text,
@@ -301,7 +289,6 @@ export const idlFactory = ({ IDL }) => {
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
   });
   const ModifyGameContent = IDL.Variant({
-    'trait' : Trait,
     'action' : Action,
     'creature' : Creature,
     'item' : Item,
@@ -333,7 +320,6 @@ export const idlFactory = ({ IDL }) => {
   const CharacterWithMetaData = IDL.Record({
     'maxHealth' : IDL.Nat,
     'gold' : IDL.Nat,
-    'traits' : IDL.Vec(Trait),
     'class' : Class,
     'race' : Race,
     'actions' : IDL.Vec(Action),
@@ -446,12 +432,10 @@ export const idlFactory = ({ IDL }) => {
     'combat' : CombatScenarioState,
   });
   const OutcomeEffect = IDL.Variant({
-    'removeTrait' : IDL.Text,
     'healthDelta' : IDL.Int,
     'maxHealthDelta' : IDL.Int,
     'text' : IDL.Text,
     'addItem' : IDL.Text,
-    'addTrait' : IDL.Text,
     'goldDelta' : IDL.Int,
     'removeItem' : IDL.Text,
   });
@@ -696,7 +680,6 @@ export const idlFactory = ({ IDL }) => {
         [GetTopUsersResult],
         ['query'],
       ),
-    'getTraits' : IDL.Func([], [IDL.Vec(Trait)], ['query']),
     'getUser' : IDL.Func([IDL.Principal], [GetUserResult], ['query']),
     'getUserStats' : IDL.Func([], [GetUserStatsResult], ['query']),
     'getUsers' : IDL.Func([GetUsersRequest], [GetUsersResult], ['query']),

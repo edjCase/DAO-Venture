@@ -3,7 +3,6 @@
   import ItemForm from "./modify_game_content/ItemForm.svelte";
   import CreatureForm from "./modify_game_content/CreatureForm.svelte";
   import ImageForm from "./modify_game_content/ImageForm.svelte";
-  import TraitForm from "./modify_game_content/TraitForm.svelte";
   import ClassForm from "./modify_game_content/ClassForm.svelte";
   import RaceForm from "./modify_game_content/RaceForm.svelte";
   import ZoneForm from "./modify_game_content/ZoneForm.svelte";
@@ -14,7 +13,6 @@
 
   let gameContentTypes = [
     { value: "item", name: "Item" },
-    { value: "trait", name: "Trait" },
     { value: "image", name: "Image" },
     { value: "creature", name: "Creature" },
     { value: "class", name: "Class" },
@@ -32,8 +30,6 @@
 <div>
   {#if selectedGameContentType === "item"}
     <ItemForm />
-  {:else if selectedGameContentType === "trait"}
-    <TraitForm />
   {:else if selectedGameContentType === "image"}
     <ImageForm />
   {:else if selectedGameContentType === "creature"}

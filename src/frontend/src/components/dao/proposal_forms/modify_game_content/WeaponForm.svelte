@@ -23,8 +23,6 @@
 
   let actionOptions: SelectOptionType<string>[] = [];
   let selectedActions: string[] = [];
-  let traitOptions: SelectOptionType<string>[] = [];
-  let selectedTraits: string[] = [];
 
   const generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined || name === undefined || description === undefined) {
@@ -94,15 +92,6 @@
         items={actionOptions}
         bind:value={selectedActions}
         placeholder="Select actions"
-        size="lg"
-      />
-    </div>
-    <div>
-      <Label>Traits</Label>
-      <MultiSelect
-        items={traitOptions}
-        bind:value={selectedTraits}
-        placeholder="Select traits"
         size="lg"
       />
     </div>

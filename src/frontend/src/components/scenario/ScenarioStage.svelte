@@ -4,6 +4,7 @@
     ScenarioStageResult,
   } from "../../ic-agent/declarations/main";
   import { toJsonString } from "../../utils/StringUtil";
+  import CharacterItem from "../character/CharacterItem.svelte";
   import CharacterStatIcon from "../character/CharacterStatIcon.svelte";
 
   export let stage: ScenarioStageResult;
@@ -63,13 +64,9 @@
         {effect.goldDelta >= 0 ? "+" : ""}{effect.goldDelta}
         <CharacterStatIcon kind={{ gold: null }} />
       {:else if "addItem" in effect}
-        +{effect.addItem}
+        +<CharacterItem item={effect.addItem} />
       {:else if "removeItem" in effect}
-        -{effect.removeItem}
-      {:else if "addTrait" in effect}
-        +{effect.addTrait}
-      {:else if "removeTrait" in effect}
-        -{effect.removeTrait}
+        -<CharacterItem item={effect.removeItem} />
       {:else}
         NOT IMPLEMENTED LOG ENTRY TYPE {toJsonString(effect)}
       {/if}

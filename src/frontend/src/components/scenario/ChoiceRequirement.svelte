@@ -25,10 +25,6 @@
     <div class="text-sm">
       Item: {value.item}
     </div>
-  {:else if "trait" in value}
-    <div class="text-sm">
-      Trait: {value.trait}
-    </div>
   {:else if "all" in value}
     <div class="text-sm">All TODO</div>
   {:else if "any" in value}

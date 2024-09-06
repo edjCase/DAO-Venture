@@ -9,7 +9,6 @@ import Float "mo:base/Float";
 import Nat "mo:base/Nat";
 import TextX "mo:xtended-text/TextX";
 import Item "Item";
-import Trait "Trait";
 import Image "../Image";
 import Zone "Zone";
 import Achievement "Achievement";
@@ -109,8 +108,6 @@ module {
         #removeGold : NatValue;
         #addItem : RandomOrSpecificTextValue;
         #removeItem : RandomOrSpecificTextValue;
-        #addTrait : RandomOrSpecificTextValue;
-        #removeTrait : RandomOrSpecificTextValue;
         #achievement : Text;
     };
 
@@ -134,14 +131,12 @@ module {
     public type Condition = {
         #hasGold : NatValue;
         #hasItem : TextValue;
-        #hasTrait : TextValue;
     };
 
     public type ChoiceRequirement = {
         #all : [ChoiceRequirement];
         #any : [ChoiceRequirement];
         #item : Text;
-        #trait : Text;
         #race : Text;
         #class_ : Text;
         #gold : Nat;
@@ -150,7 +145,6 @@ module {
     public func validate(
         metaData : ScenarioMetaData,
         items : HashMap.HashMap<Text, Item.Item>,
-        traits : HashMap.HashMap<Text, Trait.Trait>,
         images : HashMap.HashMap<Text, Image.Image>,
         zones : HashMap.HashMap<Text, Zone.Zone>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
@@ -197,11 +191,6 @@ module {
 
         func validateRequirement(requirement : ChoiceRequirement) {
             switch (requirement) {
-                case (#trait(traitId)) {
-                    if (traits.get(traitId) == null) {
-                        errors.add("Invalid trait id in choice requirement: " # traitId);
-                    };
-                };
                 case (#item(itemId)) {
                     if (items.get(itemId) == null) {
                         errors.add("Invalid item id in choice requirement: " # itemId);
@@ -353,23 +342,11 @@ module {
                                     case (#specific(specific)) validateTextValue(specific, items, "item");
                                 };
                             };
-                            case (#addTrait(addTrait)) {
-                                switch (addTrait) {
-                                    case (#random) {};
-                                    case (#specific(specific)) validateTextValue(specific, traits, "trait");
-                                };
-                            };
                             case (#removeGold(removeGold)) validateNatValue(removeGold, "gold");
                             case (#removeItem(removeItem)) {
                                 switch (removeItem) {
                                     case (#random) {};
                                     case (#specific(specific)) validateTextValue(specific, items, "item");
-                                };
-                            };
-                            case (#removeTrait(removeTrait)) {
-                                switch (removeTrait) {
-                                    case (#random) {};
-                                    case (#specific(specific)) validateTextValue(specific, traits, "trait");
                                 };
                             };
                             case (#damage(damage)) validateNatValue(damage, "damage");
@@ -457,7 +434,6 @@ module {
                 false;
             };
             case (#item(itemId)) TrieSet.mem(character.itemIds, itemId, Text.hash(itemId), Text.equal);
-            case (#trait(traitId)) TrieSet.mem(character.traitIds, traitId, Text.hash(traitId), Text.equal);
             case (#race(raceId)) character.raceId == raceId;
             case (#class_(classId)) character.classId == classId;
             case (#gold(amount)) character.gold >= amount;

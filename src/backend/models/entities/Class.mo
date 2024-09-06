@@ -2,24 +2,24 @@ import Result "mo:base/Result";
 import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
-import Trait "Trait";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
 import Entity "Entity";
 import Action "Action";
+import Item "Item";
 
 module {
 
     public type Class = Entity.Entity and {
         weaponId : Text;
-        startingTraitIds : [Text];
+        startingItemIds : [Text];
         actionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
         class_ : Class,
-        traits : HashMap.HashMap<Text, Trait.Trait>,
+        items : HashMap.HashMap<Text, Item.Item>,
         actions : HashMap.HashMap<Text, Action.Action>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
@@ -34,9 +34,9 @@ module {
                 };
             };
         };
-        for (startingTraitId in class_.startingTraitIds.vals()) {
-            if (traits.get(startingTraitId) == null) {
-                errors.add("Trait not found: " # startingTraitId);
+        for (startingItemId in class_.startingItemIds.vals()) {
+            if (items.get(startingItemId) == null) {
+                errors.add("Item not found: " # startingItemId);
             };
         };
         for (actionId in class_.actionIds.vals()) {

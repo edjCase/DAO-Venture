@@ -81,8 +81,6 @@ module {
         #goldDelta : Int;
         #addItem : Text;
         #removeItem : Text;
-        #addTrait : Text;
-        #removeTrait : Text;
     };
 
     public type CombatTurn = {

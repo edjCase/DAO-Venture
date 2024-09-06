@@ -2,7 +2,7 @@
   import EntityView from "./EntityView.svelte";
   import WeaponView from "./WeaponView.svelte";
   import ActionsView from "./ActionsView.svelte";
-  import TraitsView from "./TraitsView.svelte";
+  import ItemsView from "./ItemsView.svelte";
   import UnlockRequirementView from "./UnlockRequirementView.svelte";
   import { Class } from "../../../../ic-agent/declarations/main";
   import { weaponStore } from "../../../../stores/WeaponStore";
@@ -18,7 +18,7 @@
     <EntityView entity={class_} />
     <WeaponView {weapon} />
     <ActionsView actionIds={class_.actionIds} />
-    <TraitsView traitIds={class_.startingTraitIds} />
+    <ItemsView itemIds={class_.startingItemIds} />
     <UnlockRequirementView value={class_.unlockRequirement} />
   {/if}
 </div>

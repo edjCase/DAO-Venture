@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
-  import { ModifyGameContent, Trait } from "../../ic-agent/declarations/main";
+  import { ModifyGameContent } from "../../ic-agent/declarations/main";
   import LoadingButton from "../common/LoadingButton.svelte";
 
   interface ImageModule {
@@ -52,15 +52,6 @@
     await Promise.all(
       actions.map(async (action) => {
         await addGameContent({ action: action });
-      })
-    );
-
-    let traits = await import("../../initial_data/TraitData").then((module) => {
-      return module.traits;
-    });
-    await Promise.all(
-      traits.map(async (trait: Trait) => {
-        await addGameContent({ trait: trait });
       })
     );
 

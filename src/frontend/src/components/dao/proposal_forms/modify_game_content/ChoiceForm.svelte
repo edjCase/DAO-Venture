@@ -10,7 +10,6 @@
 
   let requirementTypes = [
     { value: "none", name: "None" },
-    { value: "trait", name: "Trait" },
     { value: "item", name: "Item" },
     { value: "gold", name: "Gold" },
     { value: "class", name: "Class" },

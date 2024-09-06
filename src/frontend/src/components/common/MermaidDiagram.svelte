@@ -13,7 +13,6 @@
   // function generateMermaidDiagram(
   //   scenarios: ScenarioMetaData[],
   //   items: Item[],
-  //   traits: Trait[],
   //   races: Race[],
   //   classes: Class[]
   // ): string {
@@ -25,7 +24,6 @@
   //     scenarios.map((s) => ({ id: s.id, name: s.title }))
   //   );
   //   diagramCode += addSubgraph("Items", items);
-  //   diagramCode += addSubgraph("Traits", traits);
   //   diagramCode += addSubgraph("Races", races);
   //   diagramCode += addSubgraph("Classes", classes);
 
@@ -62,15 +60,10 @@
   //       });
   //     });
 
-  //     // Connect traits and other requirements
+  //     // Connect other requirements
   //     scenario.choices.forEach((choice) => {
   //       if (choice.requirement[0]) {
-  //         if ("trait" in choice.requirement[0]) {
-  //           requiringConnections.push({
-  //             from: scenarioId,
-  //             to: choice.requirement[0].trait,
-  //           });
-  //         } else if ("race" in choice.requirement[0]) {
+  //         if ("race" in choice.requirement[0]) {
   //           requiringConnections.push({
   //             from: scenarioId,
   //             to: choice.requirement[0].race,
@@ -120,15 +113,14 @@
   // onMount(async () => {
   //   let mainAgent = await mainAgentFactory();
 
-  //   const [scenarios, items, traits, races, classes] = await Promise.all([
+  //   const [scenarios, items, races, classes] = await Promise.all([
   //     mainAgent.getScenarioMetaDataList(),
   //     mainAgent.getItems(),
-  //     mainAgent.getTraits(),
   //     mainAgent.getRaces(),
   //     mainAgent.getClasses(),
   //   ]);
 
-  //   diagram = generateMermaidDiagram(scenarios, items, traits, races, classes);
+  //   diagram = generateMermaidDiagram(scenarios, items, races, classes);
   //   setTimeout(() => {
   //     mermaid.init();
   //   }, 0);

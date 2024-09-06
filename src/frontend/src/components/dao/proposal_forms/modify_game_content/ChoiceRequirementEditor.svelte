@@ -8,7 +8,7 @@
   //     value.requirement &&
   //     ("all" in value.requirement || "any" in value.requirement)
   //   ) {
-  //     value.requirement[selectedRequirementType].push({ trait: "" });
+  //     value.requirement[selectedRequirementType].push({ item: "" });
   //   }
   // }
 
@@ -25,10 +25,10 @@
 </script>
 
 <!-- 
-{#if selectedRequirementType === "trait" || selectedRequirementType === "item" || selectedRequirementType === "class" || selectedRequirementType === "race"}
+{#if selectedRequirementType === "item" || selectedRequirementType === "class" || selectedRequirementType === "race"}
   <Input
     type="text"
-    bind:value={value.requirement[0].trait}
+    bind:value={value.requirement[0].item}
     placeholder={`Enter ${selectedRequirementType}`}
   />
 {:else if selectedRequirementType === "gold"}

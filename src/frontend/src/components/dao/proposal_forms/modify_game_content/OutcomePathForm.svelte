@@ -12,8 +12,6 @@
     { value: "removeGold", name: "Remove Gold" },
     { value: "addItem", name: "Add Item" },
     { value: "removeItem", name: "Remove Item" },
-    { value: "addTrait", name: "Add Trait" },
-    { value: "removeTrait", name: "Remove Trait" },
     { value: "achievement", name: "Achievement" },
   ];
 
@@ -46,12 +44,7 @@
         newType === "removeGold"
       ) {
         newEffect[newType] = { raw: 0n };
-      } else if (
-        newType === "addItem" ||
-        newType === "removeItem" ||
-        newType === "addTrait" ||
-        newType === "removeTrait"
-      ) {
+      } else if (newType === "addItem" || newType === "removeItem") {
         newEffect[newType] = { specific: { raw: "" } };
       } else if (newType === "achievement") {
         newEffect[newType] = null;
@@ -87,11 +80,11 @@
             bind:value={effect[Object.keys(effect)[0]].raw}
             placeholder="Value"
           />
-        {:else if "addItem" in effect || "removeItem" in effect || "addTrait" in effect || "removeTrait" in effect}
+        {:else if "addItem" in effect || "removeItem" in effect}
           <Input
             type="text"
             bind:value={effect[Object.keys(effect)[0]].specific.raw}
-            placeholder="Item/Trait"
+            placeholder="Item"
           />
         {:else if "achievement" in effect}
           <Input
@@ -125,7 +118,6 @@
           { value: "none", name: "No Condition" },
           { value: "hasGold", name: "Has Gold" },
           { value: "hasItem", name: "Has Item" },
-          { value: "hasTrait", name: "Has Trait" },
         ]}
         on:change={(e) => (path.condition = [e.target.value])}
       />

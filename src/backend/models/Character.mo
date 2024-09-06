@@ -19,7 +19,6 @@ module {
         raceId : Text;
         weaponId : Text;
         itemIds : TrieSet.Set<Text>;
-        traitIds : TrieSet.Set<Text>;
     };
 
     public func getActionIds(
