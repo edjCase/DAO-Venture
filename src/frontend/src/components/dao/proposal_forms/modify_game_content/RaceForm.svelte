@@ -1,12 +1,6 @@
 <script lang="ts">
   import FormTemplate from "../FormTemplate.svelte";
-  import {
-    Input,
-    Label,
-    MultiSelect,
-    SelectOptionType,
-    Textarea,
-  } from "flowbite-svelte";
+  import { Input, Label, Textarea } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
     UnlockRequirement,
@@ -14,15 +8,14 @@
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import { itemStore } from "../../../../stores/ItemStore";
+  import EntityMultiSelector from "./EntityMultiSelector.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
   let unlockRequirement: UnlockRequirement | undefined;
 
-  let actionOptions: SelectOptionType<string>[] = [];
   let selectedActions: string[] = [];
-  let itemOptions: SelectOptionType<string>[] = [];
   let selectedItems: string[] = [];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
@@ -42,23 +35,6 @@
       },
     };
   };
-
-  $: actions = $actionStore;
-  $: items = $itemStore;
-  $: {
-    actionOptions =
-      actions?.map((action) => ({
-        value: action.id,
-        name: action.name,
-      })) || [];
-  }
-  $: {
-    itemOptions =
-      items?.map((item) => ({
-        value: item.id,
-        name: item.name,
-      })) || [];
-  }
 </script>
 
 <FormTemplate {generateProposal}>
@@ -91,20 +67,18 @@
 
     <div>
       <Label>Actions</Label>
-      <MultiSelect
-        items={actionOptions}
-        bind:value={selectedActions}
-        placeholder="Select actions"
-        size="lg"
+      <EntityMultiSelector
+        bind:ids={selectedActions}
+        store={actionStore}
+        label="Actions"
       />
     </div>
     <div>
       <Label>Items</Label>
-      <MultiSelect
-        items={itemOptions}
-        bind:value={selectedItems}
-        placeholder="Select Items"
-        size="lg"
+      <EntityMultiSelector
+        bind:ids={selectedItems}
+        store={itemStore}
+        label="Items"
       />
     </div>
 

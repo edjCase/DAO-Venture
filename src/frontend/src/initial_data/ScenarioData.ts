@@ -21,7 +21,7 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "purify",
         description: "Attempt to cleanse the corruption using magic.",
-        requirement: [{ trait: "magical" }],
+        requirement: [{ item: "wisdom_tome" }],
         pathId: "purify_treant",
       },
       {
@@ -33,7 +33,7 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "communicate",
         description: "Use your ability to speak with nature to reason with the treant.",
-        requirement: [{ trait: "naturalist" }],
+        requirement: [{ item: "nature_pendant" }],
         pathId: "communicate_treant",
       },
     ],
@@ -69,7 +69,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "successful_purification",
         description: "Your magic cleanses the corruption. The treant returns to its peaceful state.",
         kind: {
-          effects: [{ reward: null }, { addTrait: { specific: { raw: "naturalist" } } }]
+          effects: [{ reward: null }, { addItem: { random: null } }]
         },
         paths: [],
       },
@@ -198,7 +198,7 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "stealth",
         description: "Use your agility to sneak past the dark elves without being detected.",
-        requirement: [{ trait: "agile" }],
+        requirement: [{ item: "boots_of_quickness" }],
         pathId: "stealth_past_elves",
       },
     ],
@@ -382,7 +382,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "commune_with_nature",
         description: "Commune with nature. Hope you speak fluent squirrel.",
         pathId: "commune_with_nature_path",
-        requirement: [{ trait: "naturalist" }],
+        requirement: [{ item: "nature_pendant" }],
       },
       {
         id: "leave",
@@ -460,7 +460,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "blessing_success",
         description: "The druids bless you with the 'strength of oak'. You feel sturdier, and vaguely like you want to grow leaves.",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "tough" } } }]
+          effects: [{ addItem: { specific: { raw: "endurance_belt" } } }]
         },
         paths: [],
       },
@@ -577,9 +577,9 @@ export const scenarios: ScenarioMetaData[] = [
     ],
     choices: [
       {
-        id: "upgrade_attack",
-        description: "Upgrade your attack (+1).",
-        pathId: "upgrade_attack_path",
+        id: "upgrade_strength",
+        description: "Upgrade your strength.",
+        pathId: "upgrade_strength_path",
         requirement: [],
       },
       {
@@ -603,12 +603,12 @@ export const scenarios: ScenarioMetaData[] = [
     ],
     paths: [
       {
-        id: "upgrade_attack_path",
-        description: "You attempt to upgrade your attack.",
+        id: "upgrade_strength_path",
+        description: "You attempt to upgrade your strength.",
         kind: {
           effects: [
             { removeGold: { dataField: "upgrade_cost" } },
-            { addTrait: { specific: { raw: "strong" } } },
+            { addItem: { specific: { raw: "power_gauntlets" } } },
           ]
         },
         paths: [
@@ -731,7 +731,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "harvest",
         description: "Harvest rare herbs (costs health).",
         pathId: "harvest_path",
-        requirement: [{ trait: "naturalist" }],
+        requirement: [{ item: "nature_pendant" }],
       },
       {
         id: "commune",
@@ -753,7 +753,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "meditation_cost" } },
-            { addTrait: { specific: { raw: "magical" } } },
+            { addItem: { random: null } },
           ]
         },
         paths: [
@@ -993,11 +993,11 @@ export const scenarios: ScenarioMetaData[] = [
       },
       {
         id: "trade_path",
-        description: "You offer to trade an item for faerie magic.",
+        description: "You offer to trade an item for faerie goods.",
         kind: {
           effects: [
             { removeItem: { random: null } },
-            { addTrait: { specific: { raw: "magical" } } },
+            { addItem: { random: null } },
           ]
         },
         paths: [
@@ -1035,7 +1035,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeItem: { specific: { raw: "crystal" } } },
-            { addTrait: { specific: { raw: "magical" } } },
+            { addItem: { random: null } },
           ]
         },
         paths: [],
@@ -1084,13 +1084,13 @@ export const scenarios: ScenarioMetaData[] = [
         id: "intimidate",
         description: "Use your strength to scare off the goblins.",
         pathId: "intimidate_path",
-        requirement: [{ trait: "strong" }],
+        requirement: [{ item: "power_gauntlets" }],
       },
       {
         id: "distract",
         description: "Create a clever diversion to escape the goblins.",
         pathId: "distract_path",
-        requirement: [{ trait: "clever" }],
+        requirement: [{ item: "adaptable_charm" }],
       },
     ],
     paths: [
@@ -1292,7 +1292,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_skill",
         description: "Learn a new skill to increase your attack or defense.",
         pathId: "learn_skill_path",
-        requirement: [{ trait: "clever" }],
+        requirement: [{ item: "adaptable_charm" }],
       },
       {
         id: "decipher_map",
@@ -1314,7 +1314,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "study_cost" } },
-            { addTrait: { specific: { raw: "magical" } } },
+            { addItem: { specific: { raw: "wisdom_tome" } } },
           ]
         },
         paths: [
@@ -1376,8 +1376,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_attack",
         description: "You learn combat techniques from ancient scrolls.",
         kind: {
-          effects: [
-            { addTrait: { random: null } },]
+          effects: [{ addItem: { random: null } }]
         },
         paths: [],
       },
@@ -1385,9 +1384,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_defense",
         description: "You study defensive strategies from old tomes.",
         kind: {
-          effects: [
-            { addTrait: { specific: { raw: "tough" } } },
-          ]
+          effects: [{ addItem: { specific: { raw: "endurance_belt" } } }]
         },
         paths: [],
       },
@@ -1498,11 +1495,11 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
       {
-        id: "use_magic",
-        description: "Use magic to locate the elfling's clan or create a safe path.",
-        pathId: "use_magic_path",
+        id: "use_perception",
+        description: "Use advanced perception to locate the elfling's clan or create a safe path.",
+        pathId: "use_perception_path",
         requirement: [
-          { trait: "magical" },
+          { item: "eagle_eye_amulet" },
         ],
       },
     ],
@@ -1586,8 +1583,8 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
       {
-        id: "use_magic_path",
-        description: "You attempt to use magic to help the elfling.",
+        id: "use_perception_path",
+        description: "You attempt to use your advanced perception to help the elfling.",
         kind: {
           effects: []
         },
@@ -1595,26 +1592,26 @@ export const scenarios: ScenarioMetaData[] = [
           {
             weight: 9,
             condition: [],
-            pathId: "magic_success",
+            pathId: "perception_success",
           },
           {
             weight: 1,
             condition: [],
-            pathId: "magic_danger",
+            pathId: "perception_danger",
           },
         ],
       },
       {
-        id: "magic_success",
-        description: "Your magic successfully guides the elfling back to their clan.",
+        id: "perception_success",
+        description: "Your advanced perception successfully guides the elfling back to their clan.",
         kind: {
           effects: [{ reward: null }]
         },
         paths: [],
       },
       {
-        id: "magic_danger",
-        description: "Your magic attracts unwanted attention from forest spirits.",
+        id: "perception_danger",
+        description: "You attract unwanted attention from forest spirits.",
         kind: {
           effects: [{ damage: { random: [1n, 2n] } }]
         },
@@ -1667,7 +1664,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "secret_entrance",
         description: "Use the secret side entrance that was found from being so perceptive.",
         pathId: "secret_entrance_path",
-        requirement: [{ trait: "perceptive" }],
+        requirement: [{ item: "eagle_eye_amulet" }],
       },
     ],
     paths: [
@@ -1928,7 +1925,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "upgrade_success",
         description: "The forge bellows with approval. Your equipment feels more... equipment-y.",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "strong" } } }]
+          effects: [{ addItem: { specific: { raw: "power_gauntlets" } } }]
         },
         paths: [],
       },
@@ -1976,7 +1973,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "reforge_attack",
         description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "strong" } } }]
+          effects: [{ addItem: { specific: { raw: "power_gauntlets" } } }]
         },
         paths: [],
       },
@@ -1984,7 +1981,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "reforge_defense",
         description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "tough" } } }]
+          effects: [{ addItem: { specific: { raw: "endurance_belt" } } }]
         },
         paths: [],
       },
@@ -2071,8 +2068,8 @@ export const scenarios: ScenarioMetaData[] = [
         value: { nat: { min: 1n, max: 3n } },
       },
       {
-        id: "spell_damage",
-        name: "Spell Damage",
+        id: "fall_in_damage",
+        name: "Falling In Damage",
         value: { nat: { min: 1n, max: 2n } },
       },
     ],
@@ -2084,10 +2081,10 @@ export const scenarios: ScenarioMetaData[] = [
         requirement: [],
       },
       {
-        id: "cast_spell",
-        description: "Cast a water-walking spell to rescue the passengers.",
-        pathId: "cast_spell_path",
-        requirement: [{ trait: "magical" }],
+        id: "walk_on_water",
+        description: "Walk on water",
+        pathId: "walk_on_water_path",
+        requirement: [{ item: "buoyant_sandals" }],
       },
       {
         id: "disregard",
@@ -2147,8 +2144,8 @@ export const scenarios: ScenarioMetaData[] = [
         paths: [],
       },
       {
-        id: "cast_spell_path",
-        description: "You attempt to cast a water-walking spell to rescue the passengers.",
+        id: "walk_on_water_path",
+        description: "You walk on water to reach the sinking boat.",
         kind: {
           effects: []
         },
@@ -2156,39 +2153,39 @@ export const scenarios: ScenarioMetaData[] = [
           {
             weight: 4,
             condition: [],
-            pathId: "spell_success",
+            pathId: "walk_on_water_success",
           },
           {
             weight: 1,
             condition: [],
-            pathId: "spell_difficulty",
+            pathId: "walk_on_water_difficulty",
           },
         ],
       },
       {
-        id: "spell_success",
-        description: "Your water-walking spell allows you to easily rescue all passengers.",
+        id: "walk_on_water_success",
+        description: "Your water-walking allows you to easily rescue all passengers.",
         kind: {
           effects: [{ reward: null }]
         },
         paths: [],
       },
       {
-        id: "spell_difficulty",
-        description: "Your spell falters midway through the rescue.",
+        id: "walk_on_water_difficulty",
+        description: "You somehow still manage to fall in.",
         kind: {
-          effects: [{ damage: { dataField: "spell_damage" } }]
+          effects: [{ damage: { dataField: "fall_in_damage" } }]
         },
         paths: [
           {
             weight: 1,
             condition: [],
-            pathId: "spell_rescue",
+            pathId: "rescue",
           },
         ],
       },
       {
-        id: "spell_rescue",
+        id: "rescue",
         description: "Despite the setback, you manage to complete the rescue.",
         kind: {
           effects: [{ reward: null }]
@@ -2251,7 +2248,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "use_nature_skills",
         description: "Use your nature-speaking abilities to communicate with the forest and find a safe way to free the druid.",
         pathId: "use_nature_skills_path",
-        requirement: [{ trait: "naturalist" }],
+        requirement: [{ item: "nature_pendant" }],
       },
       {
         id: "find_alternative_solution",
@@ -2434,7 +2431,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "request_song",
         description: "Request a specific song. Hope you like 'Wonderwall'.",
         pathId: "request_song_path",
-        requirement: [{ trait: "clever" }],
+        requirement: [{ item: "adaptable_charm" }],
       },
       {
         id: "leave",
@@ -2472,7 +2469,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "inspiration_success",
         description: "The bard's words stir your soul. You feel more... magical. Or was that just indigestion?",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "magical" } } }]
+          effects: [{ addItem: { random: null } }]
         },
         paths: [],
       },
@@ -2520,7 +2517,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "tales_attack",
         description: "The bard's tales of heroic deeds fill you with courage. You feel stronger, or at least less likely to run from a fight.",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "strong" } } }]
+          effects: [{ addItem: { specific: { raw: "power_gauntlets" } } }]
         },
         paths: [],
       },
@@ -2528,7 +2525,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "tales_defense",
         description: "The bard's stories of cunning heroes sharpen your wits. You're now 30% more likely to spot a bad deal... like this one.",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "intelligent" } } }]
+          effects: [{ addItem: { specific: { raw: "wisdom_tome" } } }]
         },
         paths: [],
       },
@@ -2640,7 +2637,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn",
         description: "Try to learn from the alchemist.",
         pathId: "learn_path",
-        requirement: [{ trait: "intelligent" }],
+        requirement: [{ item: "wisdom_tome" }],
       },
       {
         id: "decline",
@@ -2695,7 +2692,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_success",
         description: "You successfully learn from the alchemist!",
         kind: {
-          effects: [{ addTrait: { specific: { raw: "alchemist" } } }]
+          effects: [{ addItem: { specific: { raw: "portable_alchemy_kit" } } }]
         },
         paths: [],
       },

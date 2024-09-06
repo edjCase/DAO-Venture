@@ -8,7 +8,7 @@ export const classes: Class[] = [
         actionIds: ["slash", "defensive_stance"],
         weaponId: "iron_sword",
         unlockRequirement: [],
-        startingTraitIds: ["strong"]
+        startingItemIds: ["power_gauntlets"]
     },
     {
         id: "mage",
@@ -17,7 +17,7 @@ export const classes: Class[] = [
         actionIds: ["fireball", "frost_bolt"],
         weaponId: "apprentice_wand",
         unlockRequirement: [],
-        startingTraitIds: ["intelligent"]
+        startingItemIds: ["wisdom_tome"]
     },
     {
         id: "rogue",
@@ -26,7 +26,7 @@ export const classes: Class[] = [
         actionIds: ["stab", "venom_strike"],
         weaponId: "iron_dagger",
         unlockRequirement: [],
-        startingTraitIds: ["agile"]
+        startingItemIds: ["boots_of_quickness"]
     },
     {
         id: "archer",
@@ -35,7 +35,7 @@ export const classes: Class[] = [
         actionIds: ["piercing_shot", "rapid_shot"],
         weaponId: "short_bow",
         unlockRequirement: [],
-        startingTraitIds: ["perceptive"]
+        startingItemIds: ["eagle_eye_amulet"]
     },
     {
         id: "druid",
@@ -44,7 +44,7 @@ export const classes: Class[] = [
         actionIds: ["heal", "entangle"],
         weaponId: "oaken_staff",
         unlockRequirement: [],
-        startingTraitIds: ["naturalist"]
+        startingItemIds: ["nature_pendant"]
     },
     {
         id: "paladin",
@@ -53,7 +53,7 @@ export const classes: Class[] = [
         actionIds: ["smite", "shield"],
         weaponId: "iron_mace",
         unlockRequirement: [],
-        startingTraitIds: ["holy"]
+        startingItemIds: ["divine_emblem"]
     },
     {
         id: "bard",
@@ -62,7 +62,7 @@ export const classes: Class[] = [
         actionIds: ["war_cry", "regenerate"],
         weaponId: "basic_lute",
         unlockRequirement: [],
-        startingTraitIds: ["charismatic"]
+        startingItemIds: ["charm_amulet"]
     },
     {
         id: "monk",
@@ -71,7 +71,7 @@ export const classes: Class[] = [
         actionIds: ["fury_swipes", "wild_growth"],
         weaponId: "wooden_staff",
         unlockRequirement: [],
-        startingTraitIds: ["tough"]
+        startingItemIds: ["endurance_belt"]
     },
     {
         id: "artificer",
@@ -80,7 +80,7 @@ export const classes: Class[] = [
         actionIds: ["thunder_strike", "fortify"],
         weaponId: "mechanic_wrench",
         unlockRequirement: [],
-        startingTraitIds: ["crafty"]
+        startingItemIds: ["inventor's_toolkit"]
     },
     {
         id: "necromancer",
@@ -89,6 +89,6 @@ export const classes: Class[] = [
         actionIds: ["life_drain", "shadow_bolt"],
         weaponId: "bone_staff",
         unlockRequirement: [],
-        startingTraitIds: ["cursed"]
+        startingItemIds: ["dark_essence_vial"]
     },
 ];

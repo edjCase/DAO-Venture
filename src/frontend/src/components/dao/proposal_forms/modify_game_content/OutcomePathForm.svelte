@@ -2,8 +2,20 @@
   import { OutcomePath, Effect } from "../../../../ic-agent/declarations/main";
   import { Input, Label, Textarea, Select } from "flowbite-svelte";
   import ConditionEditor from "./ConditionEditor.svelte";
+  import NatValueEditor from "./NatValueEditor.svelte";
+  import TextValueEditor from "./TextValueEditor.svelte";
+  import { achievementStore } from "../../../../stores/AchievementStore";
+  import EntitySelector from "./EntitySelector.svelte";
 
   export let value: OutcomePath;
+
+  let conditionOptions = [
+    { value: "none", name: "No Condition" },
+    { value: "hasGold", name: "Has Gold" },
+    { value: "hasItem", name: "Has Item" },
+  ];
+
+  let selectedCondition: string = conditionOptions[0].value;
 
   let effectTypes = [
     { value: "reward", name: "Reward" },
@@ -52,6 +64,16 @@
       value.kind.effects[index] = newEffect as Effect;
     }
   }
+
+  let changeCondition = (pathIndex: number) => () => {
+    if (selectedCondition === "none") {
+      value.paths[pathIndex].condition = [];
+    } else if (selectedCondition === "hasGold") {
+      value.paths[pathIndex].condition = [{ hasGold: { raw: 1n } }];
+    } else if (selectedCondition === "hasItem") {
+      value.paths[pathIndex].condition = [{ hasItem: { raw: "" } }];
+    }
+  };
 </script>
 
 <div class="border p-4 mb-4 rounded">
@@ -74,23 +96,19 @@
           value={Object.keys(effect)[0]}
           on:change={(e) => updateEffectType(index, e.target.value)}
         />
-        {#if "damage" in effect || "heal" in effect || "removeGold" in effect}
-          <Input
-            type="number"
-            bind:value={effect[Object.keys(effect)[0]].raw}
-            placeholder="Value"
-          />
-        {:else if "addItem" in effect || "removeItem" in effect}
-          <Input
-            type="text"
-            bind:value={effect[Object.keys(effect)[0]].specific.raw}
-            placeholder="Item"
-          />
+        {#if "damage" in effect}
+          <NatValueEditor bind:value={effect.damage} />
+        {:else if "heal" in effect}
+          <NatValueEditor bind:value={effect.heal} />
+        {:else if "addItem" in effect}
+          <TextValueEditor bind:value={effect.addItem} />
+        {:else if "removeItem" in effect}
+          <TextValueEditor bind:value={effect.removeItem} />
         {:else if "achievement" in effect}
-          <Input
-            type="text"
-            bind:value={effect.achievement}
-            placeholder="Achievement ID"
+          <EntitySelector
+            bind:id={effect.achievement}
+            store={achievementStore}
+            label="Achievement"
           />
         {/if}
         <button
@@ -104,7 +122,7 @@
       on:click={addEffect}>Add Effect</button
     >
   {:else if "combat" in value.kind}
-    TODO
+    TODO Combat
   {/if}
 
   <Label class="mt-4">Weighted Paths</Label>
@@ -114,14 +132,13 @@
       <Input type="text" bind:value={path.pathId} placeholder="Path ID" />
 
       <Select
-        items={[
-          { value: "none", name: "No Condition" },
-          { value: "hasGold", name: "Has Gold" },
-          { value: "hasItem", name: "Has Item" },
-        ]}
-        on:change={(e) => (path.condition = [e.target.value])}
+        items={conditionOptions}
+        bind:value={selectedCondition}
+        on:change={changeCondition(index)}
       />
-      <ConditionEditor bind:value={path.condition} />
+      {#if path.condition[0] !== undefined}
+        <ConditionEditor bind:value={path.condition[0]} />
+      {/if}
       <button
         class="bg-red-500 text-white px-2 py-1 rounded"
         on:click={() => removePath(index)}>Remove</button

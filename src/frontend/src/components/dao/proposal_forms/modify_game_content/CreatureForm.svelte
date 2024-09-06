@@ -1,13 +1,6 @@
 <script lang="ts">
   import FormTemplate from "../FormTemplate.svelte";
-  import {
-    Input,
-    Label,
-    Textarea,
-    Select,
-    SelectOptionType,
-    MultiSelect,
-  } from "flowbite-svelte";
+  import { Input, Label, Textarea, Select } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
     UnlockRequirement,
@@ -17,6 +10,7 @@
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import CharacterStatIcon from "../../../character/CharacterStatIcon.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
+  import EntityMultiSelector from "./EntityMultiSelector.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -24,7 +18,6 @@
   let maxHealth: bigint = 100n;
   let health: bigint = 100n;
   let weaponId: string | undefined;
-  let actionOptions: SelectOptionType<string>[] = [];
   let selectedActions: string[] = [];
 
   let creatureKinds = [
@@ -100,15 +93,6 @@
       },
     };
   };
-
-  $: actions = $actionStore;
-  $: {
-    actionOptions =
-      actions?.map((action) => ({
-        value: action.id,
-        name: action.name,
-      })) || [];
-  }
 </script>
 
 <FormTemplate {generateProposal}>
@@ -207,11 +191,10 @@
     {/if}
     <div>
       <Label>Actions</Label>
-      <MultiSelect
-        items={actionOptions}
-        bind:value={selectedActions}
-        placeholder="Select actions"
-        size="lg"
+      <EntityMultiSelector
+        bind:ids={selectedActions}
+        store={actionStore}
+        label="Actions"
       />
     </div>
 

@@ -1,0 +1,33 @@
+<script lang="ts">
+  import { Label, Select, SelectOptionType } from "flowbite-svelte";
+  import { Readable } from "svelte/store";
+
+  type Entity = {
+    id: string;
+    name: string;
+  };
+
+  export let id: string;
+  export let store: Readable<Entity[]>;
+  export let label: string;
+
+  let options: SelectOptionType<string>[] = [];
+
+  $: entities = $store;
+
+  $: {
+    options =
+      entities?.map((e) => ({
+        value: e.id,
+        name: e.name,
+      })) || [];
+  }
+</script>
+
+<Label>{label}</Label>
+<Select
+  items={options}
+  bind:value={id}
+  placeholder={"Select " + label}
+  size="lg"
+/>

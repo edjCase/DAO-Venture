@@ -6,7 +6,6 @@
     Textarea,
     Select,
     SelectOptionType,
-    MultiSelect,
   } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,

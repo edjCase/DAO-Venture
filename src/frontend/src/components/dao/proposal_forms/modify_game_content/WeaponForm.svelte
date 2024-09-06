@@ -1,12 +1,6 @@
 <script lang="ts">
   import FormTemplate from "../FormTemplate.svelte";
-  import {
-    Input,
-    Label,
-    Textarea,
-    MultiSelect,
-    SelectOptionType,
-  } from "flowbite-svelte";
+  import { Input, Label, Textarea } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
     Weapon,
@@ -14,6 +8,7 @@
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
+  import EntityMultiSelector from "./EntityMultiSelector.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -21,7 +16,6 @@
   let actionIds: string[] = [];
   let unlockRequirement: UnlockRequirement | undefined;
 
-  let actionOptions: SelectOptionType<string>[] = [];
   let selectedActions: string[] = [];
 
   const generateProposal = (): CreateWorldProposalRequest | string => {
@@ -43,15 +37,6 @@
       },
     };
   };
-
-  $: actions = $actionStore;
-  $: {
-    actionOptions =
-      actions?.map((action) => ({
-        value: action.id,
-        name: action.name,
-      })) || [];
-  }
 </script>
 
 <FormTemplate {generateProposal}>
@@ -88,11 +73,10 @@
 
     <div>
       <Label>Actions</Label>
-      <MultiSelect
-        items={actionOptions}
-        bind:value={selectedActions}
-        placeholder="Select actions"
-        size="lg"
+      <EntityMultiSelector
+        bind:ids={selectedActions}
+        store={actionStore}
+        label="Actions"
       />
     </div>
 
