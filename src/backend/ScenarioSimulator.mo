@@ -464,7 +464,14 @@ module {
                     ignore removeGold(getNatValue(prng, amount, scenario.data));
                 };
                 case (#addItem(item)) {
-                    ignore addItem(getTextValue(prng, item, scenario.data));
+                    switch (item) {
+                        case (#random) {
+                            // TODO
+                        };
+                        case (#specific(itemId)) {
+                            ignore addItem(getTextValue(prng, itemId, scenario.data));
+                        };
+                    };
                 };
                 case (#removeItem(item)) {
                     switch (item) {
@@ -477,12 +484,19 @@ module {
                     };
                 };
                 case (#addTrait(trait)) {
-                    ignore addTrait(getTextValue(prng, trait, scenario.data));
+                    switch (trait) {
+                        case (#random) {
+                            // TODO
+                        };
+                        case (#specific(traitId)) {
+                            ignore addTrait(getTextValue(prng, traitId, scenario.data));
+                        };
+                    };
                 };
                 case (#removeTrait(trait)) {
                     switch (trait) {
                         case (#random) {
-                            /* TODO: Implement random trait removal */
+                            // TODO
                         };
                         case (#specific(traitId)) {
                             ignore removeTrait(getTextValue(prng, traitId, scenario.data));

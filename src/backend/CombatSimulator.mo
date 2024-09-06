@@ -25,6 +25,41 @@ module {
     ) : Result.Result<ActionResult.ActionResult, { #invalidTarget; #targetRequired }> {
         let effectResults = Buffer.Buffer<ActionResult.ActionEffectResult>(0);
 
+        let allValidTargets = switch (
+            calculateAllValidTargets(
+                actionSource,
+                action.target.scope,
+                creatureCount,
+                chosenTarget,
+            )
+        ) {
+            case (#err(err)) return #err(err);
+            case (#ok(targets)) targets;
+        };
+
+        let actionTargets = switch (action.target.selection) {
+            case (#all) Buffer.toArray(allValidTargets);
+            case (#random({ count })) {
+                let trueCount = Nat.min(count, creatureCount);
+                prng.shuffleBuffer(allValidTargets);
+                Buffer.toArray(Buffer.subBuffer(allValidTargets, 0, trueCount));
+            };
+            case (#chosen) {
+                switch (chosenTarget) {
+                    case (?target) [target];
+                    case (null) {
+                        switch (actionSource) {
+                            case (#character) return #err(#targetRequired);
+                            case (#creature(_)) {
+                                // Creatures select randomly from all valid targets
+                                [prng.nextBufferElement(allValidTargets)];
+                            };
+                        };
+                    };
+                };
+            };
+        };
+
         for (effect in action.effects.vals()) {
             let effectResult = switch (effect.kind) {
                 case (#damage(damage)) calculateDamage(prng, damage);
@@ -33,43 +68,13 @@ module {
                 case (#addStatusEffect(statusEffect)) calculateStatusEffect(statusEffect);
             };
 
-            let allValidTargets = switch (
-                calculateAllValidTargets(
-                    actionSource,
-                    effect.target.scope,
-                    creatureCount,
-                    chosenTarget,
-                )
-            ) {
-                case (#err(err)) return #err(err);
-                case (#ok(targets)) targets;
-            };
-
-            let targets = switch (effect.target.selection) {
-                case (#all) Buffer.toArray(allValidTargets);
-                case (#random({ count })) {
-                    let trueCount = Nat.min(count, creatureCount);
-                    prng.shuffleBuffer(allValidTargets);
-                    Buffer.toArray(Buffer.subBuffer(allValidTargets, 0, trueCount));
-                };
-                case (#chosen) {
-                    switch (chosenTarget) {
-                        case (?target) [target];
-                        case (null) {
-                            switch (actionSource) {
-                                case (#character) return #err(#targetRequired);
-                                case (#creature(_)) {
-                                    // Creatures select randomly from all valid targets
-                                    [prng.nextBufferElement(allValidTargets)];
-                                };
-                            };
-                        };
-                    };
-                };
+            let effectTargets = switch (effect.target) {
+                case (#self) [actionSource];
+                case (#targets) actionTargets;
             };
 
             effectResults.add({
-                targets = targets;
+                targets = effectTargets;
                 kind = effectResult;
             });
         };

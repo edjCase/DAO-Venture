@@ -14,15 +14,18 @@ export interface Action {
   'effects' : Array<ActionEffect>,
   'name' : string,
   'description' : string,
+  'target' : ActionTarget,
 }
 export interface ActionEffect {
   'kind' : ActionEffectKind,
-  'target' : ActionTarget,
+  'target' : ActionEffectTarget,
 }
 export type ActionEffectKind = { 'damage' : Damage } |
   { 'heal' : Heal } |
   { 'addStatusEffect' : StatusEffect } |
   { 'block' : Block };
+export type ActionEffectTarget = { 'self' : null } |
+  { 'targets' : null };
 export interface ActionTarget {
   'scope' : ActionTargetScope,
   'selection' : ActionTargetSelection,
@@ -188,8 +191,8 @@ export type Effect = { 'reward' : null } |
   { 'damage' : NatValue } |
   { 'heal' : NatValue } |
   { 'achievement' : string } |
-  { 'addItem' : TextValue } |
-  { 'addTrait' : TextValue } |
+  { 'addItem' : RandomOrSpecificTextValue } |
+  { 'addTrait' : RandomOrSpecificTextValue } |
   { 'removeGold' : NatValue } |
   { 'removeItem' : RandomOrSpecificTextValue };
 export type GameStateWithMetaData = {

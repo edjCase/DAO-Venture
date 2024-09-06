@@ -5,119 +5,90 @@ export const classes: Class[] = [
         id: "warrior",
         name: "Warrior",
         description: "A warrior is a master of combat, using their strength and skill to defeat their foes.",
-        modifiers: [
-            { attack: 1n },
-            { health: 10n },
-            { trait: "strong" },
-        ],
+        actionIds: ["slash", "defensive_stance"],
+        weaponId: "iron_sword",
         unlockRequirement: [],
-        weaponId: "iron_sword"
+        startingTraitIds: ["strong"]
     },
     {
         id: "mage",
         name: "Mage",
         description: "A mage is a master of magic, using their knowledge of the arcane to cast powerful spells.",
-        modifiers: [
-            { magic: 1n },
-            { trait: "alchemist" },
-            { trait: "intelligent" },
-        ],
+        actionIds: ["fireball", "frost_bolt"],
+        weaponId: "apprentice_wand",
         unlockRequirement: [],
-        weaponId: "apprentice_wand"
+        startingTraitIds: ["intelligent"]
     },
     {
         id: "rogue",
         name: "Rogue",
         description: "A rogue is a master of stealth, using their cunning and agility to outmaneuver their foes.",
-        modifiers: [
-            { speed: 1n },
-            { gold: 10n },
-            { trait: "agile" },
-        ],
+        actionIds: ["stab", "venom_strike"],
+        weaponId: "iron_dagger",
         unlockRequirement: [],
-        weaponId: "iron_dagger"
+        startingTraitIds: ["agile"]
     },
     {
         id: "archer",
         name: "Archer",
         description: "An archer is a master of ranged combat, using their precision and skill to strike from a distance.",
-        modifiers: [
-            { attack: 1n },
-            { speed: 1n },
-            { trait: "perceptive" },
-        ],
+        actionIds: ["piercing_shot", "rapid_shot"],
+        weaponId: "short_bow",
         unlockRequirement: [],
-        weaponId: "short_bow"
+        startingTraitIds: ["perceptive"]
     },
     {
         id: "druid",
         name: "Druid",
         description: "A druid is a guardian of nature, wielding its power to protect and heal.",
-        modifiers: [
-            { magic: 1n },
-            { health: 5n },
-            { trait: "naturalist" },
-        ],
+        actionIds: ["heal", "entangle"],
+        weaponId: "oaken_staff",
         unlockRequirement: [],
-        weaponId: "oaken_staff"
+        startingTraitIds: ["naturalist"]
     },
     {
         id: "paladin",
         name: "Paladin",
         description: "A paladin is a holy warrior, combining martial prowess with divine magic.",
-        modifiers: [
-            { attack: 1n },
-            { defense: 1n },
-            { trait: "holy" },
-        ],
+        actionIds: ["smite", "shield"],
+        weaponId: "iron_mace",
         unlockRequirement: [],
-        weaponId: "iron_mace"
+        startingTraitIds: ["holy"]
     },
     {
         id: "bard",
         name: "Bard",
         description: "A bard is a jack-of-all-trades, using music and charm to inspire allies and confound enemies.",
-        modifiers: [
-            { magic: 1n },
-            { speed: 1n },
-            { trait: "charismatic" },
-        ],
+        actionIds: ["war_cry", "regenerate"],
+        weaponId: "basic_lute",
         unlockRequirement: [],
-        weaponId: "basic_lute"
+        startingTraitIds: ["charismatic"]
     },
     {
         id: "monk",
         name: "Monk",
         description: "A monk is a martial artist, harnessing inner energy to perform incredible feats.",
-        modifiers: [
-            { speed: 2n },
-            { trait: "tough" },
-        ],
+        actionIds: ["fury_swipes", "wild_growth"],
+        weaponId: "wooden_staff",
         unlockRequirement: [],
-        weaponId: "wooden_staff"
+        startingTraitIds: ["tough"]
     },
     {
         id: "artificer",
         name: "Artificer",
         description: "An artificer is an inventor, combining magic with technology to create powerful gadgets.",
-        modifiers: [
-            { defense: 1n },
-            { attack: 1n },
-            { trait: "crafty" },
-        ],
+        actionIds: ["thunder_strike", "fortify"],
+        weaponId: "mechanic_wrench",
         unlockRequirement: [],
-        weaponId: "mechanic_wrench"
+        startingTraitIds: ["crafty"]
     },
     {
         id: "necromancer",
         name: "Necromancer",
         description: "A necromancer is a master of death magic, commanding undead and draining life force.",
-        modifiers: [
-            { magic: 2n },
-            { health: -5n },
-            { trait: "cursed" },
-        ],
+        actionIds: ["life_drain", "shadow_bolt"],
+        weaponId: "bone_staff",
         unlockRequirement: [],
-        weaponId: "bone_staff"
+        startingTraitIds: ["cursed"]
     },
 ];

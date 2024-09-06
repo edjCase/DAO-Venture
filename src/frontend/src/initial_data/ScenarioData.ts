@@ -21,7 +21,7 @@ export const scenarios: ScenarioMetaData[] = [
       {
         id: "purify",
         description: "Attempt to cleanse the corruption using magic.",
-        requirement: [{ stat: [{ magic: null }, 2n] }],
+        requirement: [{ trait: "magical" }],
         pathId: "purify_treant",
       },
       {
@@ -332,7 +332,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "elf_attack",
         description: "The dark elves attack!",
         kind: {
-          combat: { creature: { id: "dark_elves" } }
+          combat: { creatures: [{ id: "dark_elf" }, { id: "dark_elf" }] }
         },
         paths: [],
       },
@@ -460,7 +460,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "blessing_success",
         description: "The druids bless you with the 'strength of oak'. You feel sturdier, and vaguely like you want to grow leaves.",
         kind: {
-          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+          effects: [{ addTrait: { raw: "tough" } }]
         },
         paths: [],
       },
@@ -608,7 +608,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "upgrade_cost" } },
-            { upgradeStat: [{ attack: null }, { raw: 1n }] },
+            { addTrait: { raw: "strong" } },
           ]
         },
         paths: [
@@ -753,7 +753,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "meditation_cost" } },
-            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+            { addTrait: { raw: "magical" } },
           ]
         },
         paths: [
@@ -997,7 +997,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeItem: { random: null } },
-            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+            { addTrait: { raw: "magical" } },
           ]
         },
         paths: [
@@ -1035,7 +1035,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeItem: { specific: { raw: "crystal" } } },
-            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+            { addTrait: { raw: "magical" } },
           ]
         },
         paths: [],
@@ -1098,7 +1098,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "fight_path",
         description: "You engage the goblin raiding party in combat.",
         kind: {
-          combat: { creature: { id: "goblins" } }
+          combat: { creatures: [{ id: "goblin" }, { id: "goblin" }, { id: "goblin" }] }
         },
         paths: [
           {
@@ -1314,7 +1314,7 @@ export const scenarios: ScenarioMetaData[] = [
         kind: {
           effects: [
             { removeGold: { dataField: "study_cost" } },
-            { upgradeStat: [{ magic: null }, { raw: 1n }] },
+            { addTrait: { raw: "magical" } },
           ]
         },
         paths: [
@@ -1376,7 +1376,8 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_attack",
         description: "You learn combat techniques from ancient scrolls.",
         kind: {
-          effects: [{ upgradeStat: [{ attack: null }, { raw: 1n }] }]
+          effects: [
+            { addTrait: { random: null } },]
         },
         paths: [],
       },
@@ -1384,7 +1385,9 @@ export const scenarios: ScenarioMetaData[] = [
         id: "learn_defense",
         description: "You study defensive strategies from old tomes.",
         kind: {
-          effects: [{ upgradeStat: [{ defense: null }, { raw: 1n }] }]
+          effects: [
+            { addTrait: { specific: { raw: "tough" } } },
+          ]
         },
         paths: [],
       },
@@ -1498,7 +1501,9 @@ export const scenarios: ScenarioMetaData[] = [
         id: "use_magic",
         description: "Use magic to locate the elfling's clan or create a safe path.",
         pathId: "use_magic_path",
-        requirement: [{ stat: [{ magic: null }, 2n] }],
+        requirement: [
+          { trait: "magical" },
+        ],
       },
     ],
     paths: [

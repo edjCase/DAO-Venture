@@ -23,7 +23,7 @@
     }
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.selectScenarioChoice({
-      choiceId: optionId,
+      choice: optionId,
     });
     if ("ok" in result) {
       console.log("Voted successfully");

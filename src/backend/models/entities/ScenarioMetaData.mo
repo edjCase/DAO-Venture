@@ -107,9 +107,9 @@ module {
         #damage : NatValue;
         #heal : NatValue;
         #removeGold : NatValue;
-        #addItem : TextValue;
+        #addItem : RandomOrSpecificTextValue;
         #removeItem : RandomOrSpecificTextValue;
-        #addTrait : TextValue;
+        #addTrait : RandomOrSpecificTextValue;
         #removeTrait : RandomOrSpecificTextValue;
         #achievement : Text;
     };
@@ -347,8 +347,18 @@ module {
                 case (#effects(effects)) {
                     for (effect in effects.vals()) {
                         switch (effect) {
-                            case (#addItem(addItem)) validateTextValue(addItem, items, "item");
-                            case (#addTrait(addTrait)) validateTextValue(addTrait, traits, "trait");
+                            case (#addItem(addItem)) {
+                                switch (addItem) {
+                                    case (#random) {};
+                                    case (#specific(specific)) validateTextValue(specific, items, "item");
+                                };
+                            };
+                            case (#addTrait(addTrait)) {
+                                switch (addTrait) {
+                                    case (#random) {};
+                                    case (#specific(specific)) validateTextValue(specific, traits, "trait");
+                                };
+                            };
                             case (#removeGold(removeGold)) validateNatValue(removeGold, "gold");
                             case (#removeItem(removeItem)) {
                                 switch (removeItem) {

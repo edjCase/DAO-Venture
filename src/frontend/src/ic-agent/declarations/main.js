@@ -152,8 +152,8 @@ export const idlFactory = ({ IDL }) => {
     'damage' : NatValue,
     'heal' : NatValue,
     'achievement' : IDL.Text,
-    'addItem' : TextValue,
-    'addTrait' : TextValue,
+    'addItem' : RandomOrSpecificTextValue,
+    'addTrait' : RandomOrSpecificTextValue,
     'removeGold' : NatValue,
     'removeItem' : RandomOrSpecificTextValue,
   });
@@ -295,6 +295,14 @@ export const idlFactory = ({ IDL }) => {
     'addStatusEffect' : StatusEffect,
     'block' : Block,
   });
+  const ActionEffectTarget = IDL.Variant({
+    'self' : IDL.Null,
+    'targets' : IDL.Null,
+  });
+  const ActionEffect = IDL.Record({
+    'kind' : ActionEffectKind,
+    'target' : ActionEffectTarget,
+  });
   const ActionTargetScope = IDL.Variant({
     'any' : IDL.Null,
     'ally' : IDL.Null,
@@ -309,15 +317,12 @@ export const idlFactory = ({ IDL }) => {
     'scope' : ActionTargetScope,
     'selection' : ActionTargetSelection,
   });
-  const ActionEffect = IDL.Record({
-    'kind' : ActionEffectKind,
-    'target' : ActionTarget,
-  });
   const Action = IDL.Record({
     'id' : IDL.Text,
     'effects' : IDL.Vec(ActionEffect),
     'name' : IDL.Text,
     'description' : IDL.Text,
+    'target' : ActionTarget,
   });
   const GetCompletedGamesRequest = IDL.Record({
     'count' : IDL.Nat,

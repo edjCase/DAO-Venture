@@ -4,12 +4,18 @@ import Entity "Entity";
 module {
 
     public type Action = Entity.Entity and {
+        target : ActionTarget;
         effects : [ActionEffect];
     };
 
     public type ActionEffect = {
-        target : ActionTarget;
+        target : ActionEffectTarget;
         kind : ActionEffectKind;
+    };
+
+    public type ActionEffectTarget = {
+        #self;
+        #targets;
     };
 
     public type ActionEffectKind = {
