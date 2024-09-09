@@ -16,6 +16,8 @@
     ActionTarget,
   } from "../../../../ic-agent/declarations/main";
   import MinMaxTimingForm from "./MinMaxTimingForm.svelte";
+  import { actionStore } from "../../../../stores/ActionStore";
+  import EntitySelector from "./EntitySelector.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -25,6 +27,7 @@
     scope: { any: null },
     selection: { all: null },
   };
+  let upgradedActionId: string;
 
   const effectKinds: SelectOptionType<string>[] = [
     { value: "damage", name: "Damage" },
@@ -129,6 +132,7 @@
       description,
       effects,
       target,
+      upgradedActionId: !upgradedActionId ? [] : [upgradedActionId],
     };
 
     return {
@@ -249,6 +253,14 @@
           />
         </div>
       {/if}
+    </div>
+    <div>
+      <Label for="upgradedActionId">Upgraded Action Id</Label>
+      <EntitySelector
+        bind:id={upgradedActionId}
+        store={actionStore}
+        label="Upgraded Action"
+      />
     </div>
   </div>
 </FormTemplate>

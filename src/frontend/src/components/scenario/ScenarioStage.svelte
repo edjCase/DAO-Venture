@@ -64,9 +64,15 @@
         {effect.goldDelta >= 0 ? "+" : ""}{effect.goldDelta}
         <CharacterStatIcon kind={{ gold: null }} />
       {:else if "addItem" in effect}
-        +<CharacterItem item={effect.addItem} />
+        +<CharacterItem item={effect.addItem.itemId} />
+        {#if effect.addItem.removedItemId[0] !== undefined}
+          -<CharacterItem item={effect.addItem.removedItemId[0]} />
+        {/if}
       {:else if "removeItem" in effect}
         -<CharacterItem item={effect.removeItem} />
+      {:else if "swapWeapon" in effect}
+        +{effect.swapWeapon.weaponId}
+        -{effect.swapWeapon.removedWeaponId}
       {:else}
         NOT IMPLEMENTED LOG ENTRY TYPE {toJsonString(effect)}
       {/if}

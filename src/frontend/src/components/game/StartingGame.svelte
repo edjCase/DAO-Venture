@@ -56,8 +56,10 @@
             {#each character.actions as action}
               <div>+{action.name}</div>
             {/each}
-            {#each character.items as item}
-              <div>+<CharacterItem {item} /></div>
+            {#each character.inventorySlots as slot}
+              {#if slot.item[0] !== undefined}
+                <div>+<CharacterItem item={slot.item[0]} /></div>
+              {/if}
             {/each}
           </div>
         </div>
