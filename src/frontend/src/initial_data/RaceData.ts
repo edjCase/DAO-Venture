@@ -5,7 +5,7 @@ export const races: Race[] = [
         id: "human",
         name: "Human",
         description: "Humans are versatile and adaptable.",
-        actionIds: ["slash", "shield"],
+        startingActionIds: ["slash", "shield"],
         unlockRequirement: [],
         startingItemIds: ["adaptable_charm"]
     },
@@ -13,7 +13,7 @@ export const races: Race[] = [
         id: "elf",
         name: "Elf",
         description: "Elves are graceful and attuned to nature.",
-        actionIds: ["piercing_shot", "entangle"],
+        startingActionIds: ["piercing_shot", "entangle"],
         unlockRequirement: [],
         startingItemIds: ["nature_pendant"]
     },
@@ -21,7 +21,7 @@ export const races: Race[] = [
         id: "dwarf",
         name: "Dwarf",
         description: "Dwarves are sturdy and resilient.",
-        actionIds: ["defensive_stance", "double_slash"],
+        startingActionIds: ["defensive_stance", "double_slash"],
         unlockRequirement: [],
         startingItemIds: ["endurance_belt"]
     },
@@ -29,7 +29,7 @@ export const races: Race[] = [
         id: "halfling",
         name: "Halfling",
         description: "Halflings are small and nimble.",
-        actionIds: ["stab", "rapid_shot"],
+        startingActionIds: ["stab", "rapid_shot"],
         unlockRequirement: [],
         startingItemIds: ["stealth_cloak"]
     },
@@ -37,7 +37,7 @@ export const races: Race[] = [
         id: "faerie",
         name: "Faerie",
         description: "Faeries are mysterious and enchanting.",
-        actionIds: ["arcane_missiles", "regenerate"],
+        startingActionIds: ["arcane_missiles", "regenerate"],
         unlockRequirement: [],
         startingItemIds: ["charm_amulet"]
     }

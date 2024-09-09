@@ -5,7 +5,7 @@ export const classes: Class[] = [
         id: "warrior",
         name: "Warrior",
         description: "A warrior is a master of combat, using their strength and skill to defeat their foes.",
-        actionIds: ["slash", "defensive_stance"],
+        startingActionIds: ["slash", "defensive_stance"],
         weaponId: "iron_sword",
         unlockRequirement: [],
         startingItemIds: ["power_gauntlets"]
@@ -14,7 +14,7 @@ export const classes: Class[] = [
         id: "mage",
         name: "Mage",
         description: "A mage is a master of magic, using their knowledge of the arcane to cast powerful spells.",
-        actionIds: ["fireball", "frost_bolt"],
+        startingActionIds: ["fireball", "frost_bolt"],
         weaponId: "apprentice_wand",
         unlockRequirement: [],
         startingItemIds: ["wisdom_tome"]
@@ -23,7 +23,7 @@ export const classes: Class[] = [
         id: "rogue",
         name: "Rogue",
         description: "A rogue is a master of stealth, using their cunning and agility to outmaneuver their foes.",
-        actionIds: ["stab", "venom_strike"],
+        startingActionIds: ["stab", "venom_strike"],
         weaponId: "iron_dagger",
         unlockRequirement: [],
         startingItemIds: ["boots_of_quickness"]
@@ -32,7 +32,7 @@ export const classes: Class[] = [
         id: "archer",
         name: "Archer",
         description: "An archer is a master of ranged combat, using their precision and skill to strike from a distance.",
-        actionIds: ["piercing_shot", "rapid_shot"],
+        startingActionIds: ["piercing_shot", "rapid_shot"],
         weaponId: "short_bow",
         unlockRequirement: [],
         startingItemIds: ["eagle_eye_amulet"]
@@ -41,7 +41,7 @@ export const classes: Class[] = [
         id: "druid",
         name: "Druid",
         description: "A druid is a guardian of nature, wielding its power to protect and heal.",
-        actionIds: ["heal", "entangle"],
+        startingActionIds: ["heal", "entangle"],
         weaponId: "oaken_staff",
         unlockRequirement: [],
         startingItemIds: ["nature_pendant"]
@@ -50,7 +50,7 @@ export const classes: Class[] = [
         id: "paladin",
         name: "Paladin",
         description: "A paladin is a holy warrior, combining martial prowess with divine magic.",
-        actionIds: ["smite", "shield"],
+        startingActionIds: ["smite", "shield"],
         weaponId: "iron_mace",
         unlockRequirement: [],
         startingItemIds: ["divine_emblem"]
@@ -59,7 +59,7 @@ export const classes: Class[] = [
         id: "bard",
         name: "Bard",
         description: "A bard is a jack-of-all-trades, using music and charm to inspire allies and confound enemies.",
-        actionIds: ["war_cry", "regenerate"],
+        startingActionIds: ["war_cry", "regenerate"],
         weaponId: "basic_lute",
         unlockRequirement: [],
         startingItemIds: ["charm_amulet"]
@@ -68,7 +68,7 @@ export const classes: Class[] = [
         id: "monk",
         name: "Monk",
         description: "A monk is a martial artist, harnessing inner energy to perform incredible feats.",
-        actionIds: ["fury_swipes", "wild_growth"],
+        startingActionIds: ["fury_swipes", "wild_growth"],
         weaponId: "wooden_staff",
         unlockRequirement: [],
         startingItemIds: ["endurance_belt"]
@@ -77,7 +77,7 @@ export const classes: Class[] = [
         id: "artificer",
         name: "Artificer",
         description: "An artificer is an inventor, combining magic with technology to create powerful gadgets.",
-        actionIds: ["thunder_strike", "fortify"],
+        startingActionIds: ["thunder_strike", "fortify"],
         weaponId: "mechanic_wrench",
         unlockRequirement: [],
         startingItemIds: ["inventor's_toolkit"]
@@ -86,7 +86,7 @@ export const classes: Class[] = [
         id: "necromancer",
         name: "Necromancer",
         description: "A necromancer is a master of death magic, commanding undead and draining life force.",
-        actionIds: ["life_drain", "shadow_bolt"],
+        startingActionIds: ["life_drain", "shadow_bolt"],
         weaponId: "bone_staff",
         unlockRequirement: [],
         startingItemIds: ["dark_essence_vial"]
