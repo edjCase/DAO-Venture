@@ -139,7 +139,7 @@ module {
     public type SelectScenarioChoiceError = {
         #gameNotFound;
         #gameNotActive;
-        #invalidChoice;
+        #invalidChoice : Text;
         #notScenarioTurn;
         #invalidTarget;
         #targetRequired;

@@ -6,20 +6,29 @@ import Entity "Entity";
 import PixelImage "../PixelImage";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
+import Action "Action";
 
 module {
 
     public type Item = Entity.Entity and {
         image : PixelImage.PixelImage;
+        actionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
         item : Item,
+        actions : HashMap.HashMap<Text, Action.Action>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         Entity.validate("Item", item, errors);
+
+        for (actionId in item.actionIds.vals()) {
+            if (actions.get(actionId) == null) {
+                errors.add("Action not found: " # actionId);
+            };
+        };
         switch (item.unlockRequirement) {
             case (null) ();
             case (?unlockRequirement) {

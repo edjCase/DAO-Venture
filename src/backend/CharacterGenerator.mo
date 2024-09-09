@@ -1,8 +1,9 @@
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
-import Int "mo:base/Int";
+import Buffer "mo:base/Buffer";
+import Array "mo:base/Array";
+import Debug "mo:base/Debug";
 import Character "models/Character";
 import Class "models/entities/Class";
 import Race "models/entities/Race";
@@ -17,18 +18,38 @@ module {
         var gold : Nat = 0;
         var maxHealth : Nat = 100;
         var health : Nat = maxHealth;
-        var itemIds = TrieSet.empty<Text>();
-        var attack : Int = 0;
-        var defense : Int = 0;
-        var speed : Int = 0;
-        var magic : Int = 0;
+        let inventorySize = 5; // TODO slot count?
+        let inventorySlots : [var Character.InventorySlot] = Array.tabulateVar(inventorySize, func(_ : Nat) : Character.InventorySlot = { itemId = null });
+        let actions = Buffer.Buffer<Character.CharacterAction>(5);
 
-        func addItem(itemId : Text) {
-            itemIds := TrieSet.put(itemIds, itemId, Text.hash(itemId), Text.equal);
+        var i : Nat = 0;
+        func addItemId(itemId : Text) {
+            if (i >= inventorySlots.size()) {
+                Debug.print("Inventory slot limit reached, " # itemId # " not added when generating character");
+                return;
+            };
+            inventorySlots[i] := { itemId = ?itemId };
+            i += 1;
         };
 
         for (startingItemId in class_.startingItemIds.vals()) {
-            addItem(startingItemId);
+            addItemId(startingItemId);
+        };
+        for (startingItemId in race.startingItemIds.vals()) {
+            addItemId(startingItemId);
+        };
+
+        for (startingActionId in class_.startingActionIds.vals()) {
+            actions.add({
+                id = startingActionId;
+                upgradeCount = 0;
+            });
+        };
+        for (startingActionId in race.startingActionIds.vals()) {
+            actions.add({
+                id = startingActionId;
+                upgradeCount = 0;
+            });
         };
 
         {
@@ -37,12 +58,9 @@ module {
             gold = gold;
             classId = class_.id;
             raceId = race.id;
-            attack = attack;
-            defense = defense;
-            speed = speed;
-            magic = magic;
-            itemIds = itemIds;
+            inventorySlots = Array.freeze(inventorySlots);
             weaponId = class_.weaponId;
+            actions = Buffer.toArray(actions);
         };
     };
 

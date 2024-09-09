@@ -21,6 +21,11 @@ module {
     public type ScenarioStageResultKind = {
         #choice : ScenarioChoiceResult;
         #combat : ScenarioCombatResult;
+        #reward : ScenarioRewardResult;
+    };
+
+    public type ScenarioRewardResult = {
+        kind : RewardKind;
     };
 
     public type ScenarioChoiceResult = {
@@ -30,6 +35,7 @@ module {
 
     public type ScenarioChoiceResultKind = {
         #startCombat : CombatScenarioState;
+        #reward : RewardScenarioState;
         #choice : ChoiceScenarioState;
         #complete;
         #death;
@@ -48,6 +54,7 @@ module {
     public type ScenarioStateKind = {
         #choice : ChoiceScenarioState;
         #combat : CombatScenarioState;
+        #reward : RewardScenarioState;
         #complete;
     };
 
@@ -58,6 +65,17 @@ module {
     public type CombatScenarioState = {
         character : CharacterCombatState;
         creatures : [CreatureCombatState];
+    };
+
+    public type RewardScenarioState = {
+        options : [RewardKind];
+    };
+
+    public type RewardKind = {
+        #item : Text;
+        #gold : Nat;
+        #weapon : Text;
+        #health : Nat;
     };
 
     public type CharacterCombatState = {
@@ -79,8 +97,19 @@ module {
         #healthDelta : Int;
         #maxHealthDelta : Int;
         #goldDelta : Int;
-        #addItem : Text;
+        #addItem : AddItemOutcomeEffect;
         #removeItem : Text;
+        #swapWeapon : SwapWeaponOutcomeEffect;
+    };
+
+    public type AddItemOutcomeEffect = {
+        itemId : Text;
+        removedItemId : ?Text;
+    };
+
+    public type SwapWeaponOutcomeEffect = {
+        weaponId : Text;
+        removedWeaponId : Text;
     };
 
     public type CombatTurn = {

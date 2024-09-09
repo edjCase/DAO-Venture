@@ -12,7 +12,7 @@ module {
 
     public type Race = Entity.Entity and {
         startingItemIds : [Text];
-        actionIds : [Text];
+        startingActionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
@@ -38,9 +38,9 @@ module {
                 errors.add("Item not found: " # startingItemId);
             };
         };
-        for (actionId in race.actionIds.vals()) {
-            if (actions.get(actionId) == null) {
-                errors.add("Action not found: " # actionId);
+        for (startingActionId in race.startingActionIds.vals()) {
+            if (actions.get(startingActionId) == null) {
+                errors.add("Action not found: " # startingActionId);
             };
         };
         if (errors.size() < 1) {

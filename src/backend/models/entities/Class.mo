@@ -13,7 +13,7 @@ module {
     public type Class = Entity.Entity and {
         weaponId : Text;
         startingItemIds : [Text];
-        actionIds : [Text];
+        startingActionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 
@@ -39,9 +39,9 @@ module {
                 errors.add("Item not found: " # startingItemId);
             };
         };
-        for (actionId in class_.actionIds.vals()) {
-            if (actions.get(actionId) == null) {
-                errors.add("Action not found: " # actionId);
+        for (startingActionId in class_.startingActionIds.vals()) {
+            if (actions.get(startingActionId) == null) {
+                errors.add("Action not found: " # startingActionId);
             };
         };
         if (errors.size() < 1) {

@@ -15,6 +15,7 @@ export interface Action {
   'name' : string,
   'description' : string,
   'target' : ActionTarget,
+  'upgradedActionId' : [] | [string],
 }
 export interface ActionEffect {
   'kind' : ActionEffectKind,
@@ -40,6 +41,10 @@ export type ActionTargetSelection = { 'all' : null } |
   { 'chosen' : null };
 export type ActionTimingKind = { 'periodic' : PeriodicTiming } |
   { 'immediate' : null };
+export interface AddItemOutcomeEffect {
+  'itemId' : string,
+  'removedItemId' : [] | [string],
+}
 export interface Block {
   'max' : bigint,
   'min' : bigint,
@@ -62,7 +67,7 @@ export interface CharacterWithMetaData {
   'class' : Class,
   'race' : Race,
   'actions' : Array<Action>,
-  'items' : Array<Item>,
+  'inventorySlots' : Array<InventorySlotWithMetaData>,
   'weapon' : Weapon,
   'health' : bigint,
 }
@@ -81,7 +86,7 @@ export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
 export interface ChoiceScenarioState { 'choiceIds' : Array<string> }
 export interface Class {
   'id' : string,
-  'actionIds' : Array<string>,
+  'startingActionIds' : Array<string>,
   'name' : string,
   'description' : string,
   'startingItemIds' : Array<string>,
@@ -177,8 +182,7 @@ export interface Damage {
 export type Difficulty = { 'normal' : null } |
   { 'easy' : null } |
   { 'hard' : null };
-export type Effect = { 'reward' : null } |
-  { 'damage' : NatValue } |
+export type Effect = { 'damage' : NatValue } |
   { 'heal' : NatValue } |
   { 'achievement' : string } |
   { 'addItem' : RandomOrSpecificTextValue } |
@@ -274,13 +278,16 @@ export interface InProgressGameStateWithMetaData {
   'turnKind' : TurnKind,
   'character' : CharacterWithMetaData,
 }
+export interface InventorySlotWithMetaData { 'item' : [] | [Item] }
 export interface Item {
   'id' : string,
+  'actionIds' : Array<string>,
   'name' : string,
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
   'image' : PixelImage,
 }
+export interface ItemRewardChoice { 'id' : string, 'inventorySlot' : bigint }
 export type LocationKind = { 'common' : null } |
   { 'zoneIds' : Array<string> };
 export type ModifyGameContent = { 'action' : Action } |
@@ -300,7 +307,8 @@ export type NatValue = { 'raw' : bigint } |
 export type OutcomeEffect = { 'healthDelta' : bigint } |
   { 'maxHealthDelta' : bigint } |
   { 'text' : string } |
-  { 'addItem' : string } |
+  { 'swapWeapon' : SwapWeaponOutcomeEffect } |
+  { 'addItem' : AddItemOutcomeEffect } |
   { 'goldDelta' : bigint } |
   { 'removeItem' : string };
 export interface OutcomePath {
@@ -309,7 +317,8 @@ export interface OutcomePath {
   'description' : string,
   'paths' : Array<WeightedOutcomePath>,
 }
-export type OutcomePathKind = { 'effects' : Array<Effect> } |
+export type OutcomePathKind = { 'reward' : RewardPath } |
+  { 'effects' : Array<Effect> } |
   { 'combat' : CombatPath };
 export interface PagedResult {
   'data' : Array<WorldProposal>,
@@ -337,10 +346,7 @@ export interface PeriodicEffectResult {
   'phase' : TurnPhase,
   'amount' : bigint,
 }
-export interface PeriodicTiming {
-  'remainingTurns' : bigint,
-  'phase' : TurnPhase,
-}
+export interface PeriodicTiming { 'phase' : TurnPhase, 'turnDuration' : bigint }
 export interface PixelData { 'count' : bigint, 'paletteIndex' : [] | [number] }
 export interface PixelImage {
   'palette' : Array<[number, number, number]>,
@@ -367,7 +373,7 @@ export type ProposalStatus = {
   };
 export interface Race {
   'id' : string,
-  'actionIds' : Array<string>,
+  'startingActionIds' : Array<string>,
   'name' : string,
   'description' : string,
   'startingItemIds' : Array<string>,
@@ -379,6 +385,17 @@ export type RegisterError = { 'alreadyMember' : null };
 export type RegisterResult = { 'ok' : User } |
   { 'err' : RegisterError };
 export type Retaliating = { 'flat' : bigint };
+export type RewardChoice = { 'gold' : bigint } |
+  { 'item' : ItemRewardChoice } |
+  { 'weapon' : string } |
+  { 'health' : bigint };
+export type RewardKind = { 'gold' : bigint } |
+  { 'item' : string } |
+  { 'weapon' : string } |
+  { 'health' : bigint };
+export type RewardPath = { 'random' : null } |
+  { 'specificItemIds' : Array<string> };
+export interface RewardScenarioState { 'options' : Array<RewardKind> }
 export interface Scenario {
   'id' : bigint,
   'metaDataId' : string,
@@ -394,7 +411,8 @@ export interface ScenarioChoiceResult {
   'choiceId' : string,
   'kind' : ScenarioChoiceResultKind,
 }
-export type ScenarioChoiceResultKind = { 'startCombat' : CombatScenarioState } |
+export type ScenarioChoiceResultKind = { 'reward' : RewardScenarioState } |
+  { 'startCombat' : CombatScenarioState } |
   { 'complete' : null } |
   { 'choice' : ChoiceScenarioState } |
   { 'death' : null };
@@ -413,26 +431,30 @@ export interface ScenarioMetaData {
   'choices' : Array<Choice>,
   'location' : LocationKind,
 }
+export interface ScenarioRewardResult { 'kind' : RewardKind }
 export interface ScenarioStageResult {
   'effects' : Array<OutcomeEffect>,
   'kind' : ScenarioStageResultKind,
 }
-export type ScenarioStageResultKind = { 'choice' : ScenarioChoiceResult } |
+export type ScenarioStageResultKind = { 'reward' : ScenarioRewardResult } |
+  { 'choice' : ScenarioChoiceResult } |
   { 'combat' : ScenarioCombatResult };
-export type ScenarioStateKind = { 'complete' : null } |
+export type ScenarioStateKind = { 'reward' : RewardScenarioState } |
+  { 'complete' : null } |
   { 'choice' : ChoiceScenarioState } |
   { 'combat' : CombatScenarioState };
 export interface ScenarioTurn { 'scenarioId' : bigint }
 export type SelectScenarioChoiceError = { 'invalidTarget' : null } |
   { 'targetRequired' : null } |
-  { 'invalidChoice' : null } |
+  { 'invalidChoice' : string } |
   { 'gameNotFound' : null } |
   { 'gameNotActive' : null } |
   { 'notScenarioTurn' : null };
 export interface SelectScenarioChoiceRequest { 'choice' : StageChoiceKind }
 export type SelectScenarioChoiceResult = { 'ok' : null } |
   { 'err' : SelectScenarioChoiceError };
-export type StageChoiceKind = { 'choice' : string } |
+export type StageChoiceKind = { 'reward' : RewardChoice } |
+  { 'choice' : string } |
   { 'combat' : CombatChoice };
 export interface StartGameRequest { 'characterId' : bigint }
 export type StartGameResult = { 'ok' : null } |
@@ -466,6 +488,10 @@ export interface StreamingCallbackHttpResponse {
   'body' : Uint8Array | number[],
 }
 export type StreamingStrategy = { 'Callback' : CallbackStrategy };
+export interface SwapWeaponOutcomeEffect {
+  'removedWeaponId' : string,
+  'weaponId' : string,
+}
 export type TextValue = { 'raw' : string } |
   { 'dataField' : string } |
   { 'weighted' : Array<[string, number]> };

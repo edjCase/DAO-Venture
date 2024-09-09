@@ -1,6 +1,7 @@
 import Nat "mo:base/Nat";
 import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
+import Text "mo:base/Text";
 import Entity "Entity";
 
 module {
@@ -8,6 +9,7 @@ module {
     public type Action = Entity.Entity and {
         target : ActionTarget;
         effects : [ActionEffect];
+        upgradedActionId : ?Text;
     };
 
     public type ActionEffect = {
@@ -47,23 +49,20 @@ module {
         #all;
     };
 
-    public type Damage = {
+    type MinMax = {
         min : Nat;
         max : Nat;
+    };
+
+    type DBN = MinMax and {
         timing : ActionTimingKind;
     };
 
-    public type Block = {
-        min : Nat;
-        max : Nat;
-        timing : ActionTimingKind;
-    };
+    public type Damage = DBN;
 
-    public type Heal = {
-        min : Nat;
-        max : Nat;
-        timing : ActionTimingKind;
-    };
+    public type Block = DBN;
+
+    public type Heal = DBN;
 
     public type ActionTimingKind = {
         #immediate;
@@ -72,7 +71,7 @@ module {
 
     public type PeriodicTiming = {
         phase : TurnPhase;
-        remainingTurns : Nat;
+        turnDuration : Nat;
     };
 
     public type TurnPhase = {

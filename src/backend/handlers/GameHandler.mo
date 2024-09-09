@@ -8,7 +8,6 @@ import Iter "mo:base/Iter";
 import Time "mo:base/Time";
 import HashMap "mo:base/HashMap";
 import Text "mo:base/Text";
-import Trie "mo:base/Trie";
 import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
@@ -147,8 +146,12 @@ module {
         class_ : Class.Class;
         race : Race.Race;
         actions : [Action.Action];
-        items : [Item.Item];
+        inventorySlots : [InventorySlotWithMetaData];
         weapon : Weapon.Weapon;
+    };
+
+    public type InventorySlotWithMetaData = {
+        item : ?Item.Item;
     };
 
     public type ScenarioWithMetaData = Scenario.Scenario and {
@@ -452,7 +455,7 @@ module {
             playerId : Principal,
             userHandler : UserHandler.Handler,
             choice : ScenarioSimulator.StageChoiceKind,
-        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice; #notScenarioTurn; #invalidTarget; #targetRequired }> {
+        ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice : Text; #notScenarioTurn; #invalidTarget; #targetRequired }> {
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
@@ -477,13 +480,14 @@ module {
                     creatures,
                     classes,
                     races,
+                    items,
                     weapons,
                     actions,
                     choice,
                 )
             ) {
                 case (#err(#scenarioComplete)) Debug.trap("Failed to process choice: Scenario complete");
-                case (#err(#invalidChoice)) return #err(#invalidChoice);
+                case (#err(#invalidChoice(invalidChoice))) return #err(#invalidChoice(invalidChoice));
                 case (#err(#invalidTarget)) return #err(#invalidTarget);
                 case (#err(#targetRequired)) return #err(#targetRequired);
                 case (#ok(result)) result;
@@ -495,15 +499,17 @@ module {
                         case (#death) (#complete, true);
                         case (#choice(choice)) (#choice(choice), false);
                         case (#startCombat(combat)) (#combat(combat), false);
+                        case (#reward(reward)) (#reward(reward), false);
                     };
                 };
                 case (#combat(combat)) {
                     switch (combat) {
-                        case (#victory) (#complete, false);
+                        case (#victory) (#complete, false); // TODO continue if there are more paths?
                         case (#defeat(_)) (#complete, true);
                         case (#inProgress(inProgress)) (#combat(inProgress), false);
                     };
                 };
+                case (#reward(_)) (#complete, false); // TODO continue if there are more paths?
             };
             let updatedScenario : Scenario.Scenario = {
                 scenario with
@@ -534,7 +540,7 @@ module {
                 };
             } else {
                 switch (newState) {
-                    case (#choice(_) or #combat(_)) updatedInstance; // Continue
+                    case (#choice(_) or #combat(_) or #reward(_)) updatedInstance; // Continue
                     case (#complete) {
                         switch (nextScenarioOrEnd(prng, updatedInProgressState)) {
                             case (?updatedInProgressState) {
@@ -613,7 +619,7 @@ module {
         };
 
         public func validateItem(item : Item.Item) : Result.Result<(), [Text]> {
-            Item.validate(item, achievements);
+            Item.validate(item, actions, achievements);
         };
 
         public func addOrUpdateRace(race : Race.Race) : Result.Result<(), { #invalid : [Text] }> {
@@ -930,17 +936,22 @@ module {
         ) : CharacterWithMetaData {
             let ?class_ = classes.get(character.classId) else Debug.trap("Class not found: " # character.classId);
             let ?race = races.get(character.raceId) else Debug.trap("Race not found: " # character.raceId);
-            let itemsWithMetaData = Trie.iter(character.itemIds)
+            let inventorySlots = character.inventorySlots.vals()
             |> Iter.map(
                 _,
-                func((itemId, _) : (Text, ())) : Item.Item {
-                    let ?item = items.get(itemId) else Debug.trap("Item not found: " # itemId);
-                    item;
+                func({ itemId } : Character.InventorySlot) : InventorySlotWithMetaData {
+                    switch (itemId) {
+                        case (null) ({ item = null });
+                        case (?itemId) {
+                            let ?item = items.get(itemId) else Debug.trap("Item not found: " # itemId);
+                            { item = ?item };
+                        };
+                    };
                 },
             )
             |> Iter.toArray(_);
 
-            let actionsWithMetaData = Character.getActionIds(character, classes, races, weapons).vals()
+            let actionsList = Character.getActionIds(character, classes, races, items, weapons).vals()
             |> Iter.map(
                 _,
                 func(actionId : Text) : Action.Action {
@@ -957,9 +968,9 @@ module {
                 gold = character.gold;
                 class_ = class_;
                 race = race;
-                items = itemsWithMetaData;
+                inventorySlots = inventorySlots;
                 weapon = weapon;
-                actions = actionsWithMetaData;
+                actions = actionsList;
             };
         };
 

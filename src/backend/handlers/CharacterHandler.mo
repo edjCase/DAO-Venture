@@ -1,18 +1,19 @@
 import Character "../models/Character";
 import Int "mo:base/Int";
-import TrieSet "mo:base/TrieSet";
 import Text "mo:base/Text";
 import Nat "mo:base/Nat";
+import Array "mo:base/Array";
+import Iter "mo:base/Iter";
+import Result "mo:base/Result";
+import Debug "mo:base/Debug";
+import IterTools "mo:itertools/Iter";
+
 module {
     public class Handler(data : Character.Character) {
         var character = data;
 
         public func get() : Character.Character {
             character;
-        };
-
-        public func getItems() : TrieSet.Set<Text> {
-            character.itemIds;
         };
 
         public func setHealth(health : Nat) {
@@ -57,24 +58,98 @@ module {
             true;
         };
 
-        public func addItem(itemId : Text) : Bool {
-            let newItemIds = TrieSet.put<Text>(character.itemIds, itemId, Text.hash(itemId), Text.equal);
-            if (TrieSet.size(newItemIds) == TrieSet.size(character.itemIds)) return false;
-            character := {
-                character with
-                itemIds = newItemIds;
+        public func addItemToSlot(itemId : Text, slotIndex : Nat) : Result.Result<{ removedItemId : ?Text }, { #invalidSlot }> {
+            if (slotIndex >= character.inventorySlots.size()) {
+                return #err(#invalidSlot);
             };
-            true;
+            let removedItemId = addItemInternal(itemId, slotIndex);
+            #ok({ removedItemId });
         };
 
-        public func removeItem(itemId : Text) : Bool {
-            let newItemIds = TrieSet.delete<Text>(character.itemIds, itemId, Text.hash(itemId), Text.equal);
-            if (TrieSet.size(newItemIds) == TrieSet.size(character.itemIds)) return false;
+        public func addItem(itemId : Text) : Result.Result<(), { #inventoryFull }> {
+            let nextEmptySlot = IterTools.findIndex(
+                character.inventorySlots.vals(),
+                func(slot : Character.InventorySlot) : Bool {
+                    slot.itemId == null;
+                },
+            );
+            switch (nextEmptySlot) {
+                case (null) #err(#inventoryFull);
+                case (?slotIndex) {
+                    let null = addItemInternal(itemId, slotIndex) else Debug.trap("Tried to add item to empty slot '" # Nat.toText(slotIndex) # "' but failed");
+                    #ok;
+                };
+            };
+        };
+
+        private func addItemInternal(itemId : Text, slotIndex : Nat) : ?Text {
+            let thawedSlots = Array.thaw<Character.InventorySlot>(character.inventorySlots);
+            let removedItemId = thawedSlots[slotIndex].itemId;
+            thawedSlots[slotIndex] := { itemId = ?itemId };
+            let newSlots = Array.freeze(thawedSlots);
             character := {
                 character with
-                itemIds = newItemIds;
+                inventorySlots = newSlots;
             };
-            true;
+            removedItemId;
+        };
+
+        public func removeItem(itemId : Text, removeAll : Bool) : Nat {
+            var removedCount = 0;
+            let newSlots = character.inventorySlots.vals()
+            |> Iter.map(
+                _,
+                func(slot : Character.InventorySlot) : Character.InventorySlot {
+                    if (slot.itemId == ?itemId) {
+                        if (removeAll and removedCount >= 1) {
+                            removedCount += 1;
+                            { itemId = null };
+                        } else {
+                            slot;
+                        };
+                    } else {
+                        slot;
+                    };
+                },
+            )
+            |> Iter.toArray(_);
+            if (removedCount == 0) {
+                return 0; // No item was removed
+            };
+            character := {
+                character with
+                inventorySlots = newSlots;
+            };
+            removedCount;
+        };
+
+        public func removeItemBySlot(slotIndex : Nat) : Result.Result<{ removedItemId : ?Text }, { #invalidSlot }> {
+            if (slotIndex >= character.inventorySlots.size()) {
+                return #err(#invalidSlot);
+            };
+            let thawedSlots = Array.thaw<Character.InventorySlot>(character.inventorySlots);
+            let removedItemId = thawedSlots[slotIndex].itemId;
+            switch (removedItemId) {
+                case (null) ();
+                case (?_) {
+                    thawedSlots[slotIndex] := { itemId = null };
+                    let newSlots = Array.freeze(thawedSlots);
+                    character := {
+                        character with
+                        inventorySlots = newSlots;
+                    };
+                };
+            };
+            #ok({ removedItemId = removedItemId });
+        };
+
+        public func swapWeapon(weaponId : Text) : Text {
+            let oldWeaponId = character.weaponId;
+            character := {
+                character with
+                weaponId = weaponId;
+            };
+            oldWeaponId;
         };
     };
 };

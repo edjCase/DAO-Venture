@@ -1,7 +1,6 @@
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import Buffer "mo:base/Buffer";
 import Nat "mo:base/Nat";
-import TrieSet "mo:base/TrieSet";
 import Array "mo:base/Array";
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
@@ -24,13 +23,14 @@ import Action "models/entities/Action";
 import IterTools "mo:itertools/Iter";
 import Class "models/entities/Class";
 import Race "models/entities/Race";
+import Item "models/entities/Item";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type RunStageError = {
         #scenarioComplete;
-        #invalidChoice;
+        #invalidChoice : Text;
         #invalidTarget;
         #targetRequired;
     };
@@ -38,6 +38,18 @@ module {
     public type StageChoiceKind = {
         #choice : Text;
         #combat : CombatChoice;
+        #reward : RewardChoice;
+    };
+    public type RewardChoice = {
+        #item : ItemRewardChoice;
+        #gold : Nat;
+        #weapon : Text;
+        #health : Nat;
+    };
+
+    public type ItemRewardChoice = {
+        id : Text;
+        inventorySlot : Nat;
     };
 
     public type CombatChoice = {
@@ -55,6 +67,7 @@ module {
         creatures : HashMap.HashMap<Text, Creature.Creature>,
         classes : HashMap.HashMap<Text, Class.Class>,
         races : HashMap.HashMap<Text, Race.Race>,
+        items : HashMap.HashMap<Text, Item.Item>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         actions : HashMap.HashMap<Text, Action.Action>,
         choice : StageChoiceKind,
@@ -70,6 +83,7 @@ module {
             creatures,
             classes,
             races,
+            items,
             weapons,
             actions,
             logEntries,
@@ -77,9 +91,48 @@ module {
         switch (scenario.state) {
             case (#choice(choiceState)) processChoice(choiceState, helper, choice);
             case (#combat(combatState)) processCombat(combatState, helper, choice);
+            case (#reward(rewardState)) processReward(rewardState, helper, choice);
             case (#complete) return #err(#scenarioComplete);
         };
 
+    };
+
+    func processReward(
+        state : Scenario.RewardScenarioState,
+        helper : Helper,
+        choice : StageChoiceKind,
+    ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
+        let #reward(reward) = choice else return #err(#invalidChoice("Expected reward choice"));
+        func validateRewardExists(reward : Scenario.RewardKind) : Bool {
+            IterTools.any(
+                state.options.vals(),
+                func(r : Scenario.RewardKind) : Bool = r == reward,
+            );
+        };
+        let kind = switch (reward) {
+            case (#item(item)) #item(item.id);
+            case (#gold(gold)) #gold(gold);
+            case (#weapon(weaponId)) #weapon(weaponId);
+            case (#health(health)) #health(health);
+        };
+        let true = validateRewardExists(kind) else return #err(#invalidChoice("Reward does not exist"));
+
+        switch (reward) {
+            case (#item(item)) {
+                let result = helper.addItemToSlot(item.id, item.inventorySlot);
+                switch (result) {
+                    case (#ok(_)) {};
+                    case (#err(#invalidSlot)) Debug.trap("Invalid slot: " # Nat.toText(item.inventorySlot));
+                };
+            };
+            case (#gold(gold)) helper.addGold(gold);
+            case (#weapon(weaponId)) helper.swapWeapon(weaponId);
+            case (#health(health)) helper.heal(health);
+        };
+        #ok({
+            effects = helper.getEffects();
+            kind = #reward({ kind = kind });
+        });
     };
 
     func processChoice(
@@ -87,9 +140,9 @@ module {
         helper : Helper,
         choice : StageChoiceKind,
     ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
-        let #choice(choiceId) = choice else return #err(#invalidChoice);
+        let #choice(choiceId) = choice else return #err(#invalidChoice("Expected scenario choice"));
         if (Array.indexOf(choiceId, state.choiceIds, Text.equal) == null) {
-            return #err(#invalidChoice);
+            return #err(#invalidChoice("Choice not available: " # choiceId));
         };
         let ?choiceData = Array.find(
             helper.scenarioMetaData.choices,
@@ -117,6 +170,7 @@ module {
                     case (#death) break l(#death);
                     case (#nextPath(nextPathId)) currentPathId := nextPathId;
                 };
+                case (#reward(reward)) break l(startReward(reward, helper));
             };
         };
         #ok({
@@ -149,6 +203,34 @@ module {
             };
             creatures = Buffer.toArray(creatureCombatStats);
         });
+    };
+
+    func startReward(
+        reward : ScenarioMetaData.RewardPath,
+        helper : Helper,
+    ) : Scenario.ScenarioChoiceResultKind {
+        let options = switch (reward) {
+            case (#random) {
+                let itemId = helper.getRandomItemId();
+                let gold = helper.prng.nextNat(1, 100); // TODO amount
+                // TODO ratio
+                let reward = if (helper.prng.nextRatio(1, 2)) {
+                    #weapon(helper.getRandomWeaponId());
+                } else {
+                    #health(helper.prng.nextNat(1, 20)); // TODO amount
+                };
+                [#item(itemId), #gold(gold), reward];
+            };
+            case (#specificItemIds(itemIds)) {
+                itemIds.vals()
+                |> Iter.map(
+                    _,
+                    func(id : Text) : Scenario.RewardKind = #item(id),
+                )
+                |> Iter.toArray(_);
+            };
+        };
+        #reward({ options });
     };
 
     func processPathEffects(
@@ -198,11 +280,11 @@ module {
         helper : Helper,
         choice : StageChoiceKind,
     ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
-        let #combat(combatChoice) = choice else return #err(#invalidChoice);
+        let #combat(combatChoice) = choice else return #err(#invalidChoice("Expected combat choice"));
         // Character turn first
         let action = switch (helper.getAction(combatChoice.actionId, state.character.availableActionIds)) {
             case (#ok(action)) action;
-            case (#err(#notAvailable)) return #err(#invalidChoice);
+            case (#err(#notAvailable)) return #err(#invalidChoice("Action not available: " # combatChoice.actionId));
         };
         let creatureCount = state.creatures.size();
         let actionResult = switch (
@@ -367,6 +449,7 @@ module {
         creatures : HashMap.HashMap<Text, Creature.Creature>,
         classes : HashMap.HashMap<Text, Class.Class>,
         races : HashMap.HashMap<Text, Race.Race>,
+        items : HashMap.HashMap<Text, Item.Item>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         actions : HashMap.HashMap<Text, Action.Action>,
         logEntries : Buffer.Buffer<Scenario.OutcomeEffect>,
@@ -374,6 +457,16 @@ module {
 
         public let prng = prng_;
         public let scenarioMetaData = scenarioMetaData_;
+
+        public func getRandomItemId() : Text {
+            let itemIds = items.keys() |> Iter.toArray(_);
+            prng.nextArrayElement(itemIds);
+        };
+
+        public func getRandomWeaponId() : Text {
+            let weaponIds = weapons.keys() |> Iter.toArray(_);
+            prng.nextArrayElement(weaponIds);
+        };
 
         public func getAction(actionId : Text, avaiableActionIds : [Text]) : Result.Result<Action.Action, { #notAvailable }> {
             let ?action = actions.get(actionId) else Debug.trap("Action not found: " # actionId);
@@ -387,7 +480,7 @@ module {
             let count = 3; // TODO
             let character = characterHandler.get();
 
-            let allActionIds = Character.getActionIds(character, classes, races, weapons);
+            let allActionIds = Character.getActionIds(character, classes, races, items, weapons);
 
             prng.shuffleBuffer(allActionIds);
 
@@ -439,7 +532,8 @@ module {
                 };
                 case (#hasItem(itemValue)) {
                     let itemId = getTextValue(prng, itemValue, scenario.data);
-                    TrieSet.mem(character.itemIds, itemId, Text.hash(itemId), Text.equal);
+                    character.inventorySlots.vals()
+                    |> IterTools.any(_, func(slot : { itemId : ?Text }) : Bool = slot.itemId == ?itemId);
                 };
             };
         };
@@ -449,7 +543,6 @@ module {
             #dead;
         } {
             switch (effect) {
-                case (#reward) reward();
                 case (#damage(amount)) {
                     let damageAmount = getNatValue(prng, amount, scenario.data);
                     switch (damageCharacter(damageAmount)) {
@@ -476,10 +569,15 @@ module {
                 case (#removeItem(item)) {
                     switch (item) {
                         case (#random) {
-                            ignore loseRandomItem();
+                            let itemIdOrEmptyInventory = loseRandomItem();
+                            switch (itemIdOrEmptyInventory) {
+                                case (null) (); // TODO handle inventory empty messaging?
+                                case (?itemId) logEntries.add(#removeItem(itemId));
+                            };
                         };
-                        case (#specific(itemId)) {
-                            ignore removeItem(getTextValue(prng, itemId, scenario.data));
+                        case (#specific(specific)) {
+                            let itemId = getTextValue(prng, specific, scenario.data);
+                            ignore removeItem(itemId, false);
                         };
                     };
                 };
@@ -516,44 +614,70 @@ module {
             characterHandler.heal(amount);
         };
 
-        public func addItem(item : Text) : Bool {
-            logEntries.add(#addItem(item));
-            characterHandler.addItem(item);
+        public func addItem(itemId : Text) : Result.Result<(), { #inventoryFull }> {
+            switch (characterHandler.addItem(itemId)) {
+                case (#ok) {
+                    logEntries.add(#addItem({ itemId = itemId; removedItemId = null }));
+                    #ok();
+                };
+                case (#err(#inventoryFull)) #err(#inventoryFull);
+            };
         };
 
-        public func removeItem(item : Text) : Bool {
-            logEntries.add(#removeItem(item));
-            characterHandler.removeItem(item);
+        public func addItemToSlot(itemId : Text, slot : Nat) : Result.Result<{ removedItemId : ?Text }, { #invalidSlot }> {
+            switch (characterHandler.addItemToSlot(itemId, slot)) {
+                case (#ok({ removedItemId })) {
+                    logEntries.add(#addItem({ itemId = itemId; removedItemId }));
+                    #ok({ removedItemId });
+                };
+                case (#err(#invalidSlot)) #err(#invalidSlot);
+            };
         };
 
-        public func loseRandomItem() : Bool {
-            let items = characterHandler.getItems();
-            if (TrieSet.size(items) < 1) return false;
-            let randomItem = prng.nextArrayElement(TrieSet.toArray(items));
-            removeItem(randomItem);
+        public func removeItem(itemId : Text, removeAll : Bool) : Nat {
+            let removedCount = characterHandler.removeItem(itemId, removeAll);
+            for (i in Iter.range(0, removedCount - 1)) {
+                logEntries.add(#removeItem(itemId));
+            };
+            removedCount;
+        };
+
+        public func removeItemBySlot(index : Nat) : Result.Result<{ removedItemId : ?Text }, { #invalidSlot }> {
+            switch (characterHandler.removeItemBySlot(index)) {
+                case (#ok({ removedItemId = null })) #ok({
+                    removedItemId = null;
+                });
+                case (#ok({ removedItemId = ?itemId })) {
+                    logEntries.add(#removeItem(itemId));
+                    #ok({ removedItemId = ?itemId });
+                };
+                case (#err(#invalidSlot)) #err(#invalidSlot);
+            };
+        };
+
+        public func loseRandomItem() : ?Text {
+            let character = characterHandler.get();
+            let items = character.inventorySlots.vals()
+            |> IterTools.enumerate(_)
+            // Only keep the indices of the slots that have an item
+            |> IterTools.mapFilter(
+                _,
+                func((i, slot) : (Nat, Character.InventorySlot)) : ?Nat {
+                    if (slot.itemId == null) null else ?i;
+                },
+            )
+            |> Iter.toArray(_);
+            if (items.size() < 1) return null;
+            let randomItemIndex = prng.nextNat(0, items.size() - 1);
+            switch (removeItemBySlot(randomItemIndex)) {
+                case (#ok({ removedItemId })) return removedItemId;
+                case (#err(#invalidSlot)) Debug.trap("Invalid slot: " # Nat.toText(randomItemIndex));
+            };
         };
 
         public func addGold(amount : Nat) {
             logEntries.add(#goldDelta(amount));
             characterHandler.addGold(amount);
-        };
-
-        type Reward = {
-            #item : Text;
-            #money : Nat;
-        };
-        // TODO reward table
-        let weightedRewardTable : [(Reward, Float)] = [
-            (#money(1), 20.0),
-            (#money(10), 15.0),
-            (#item("crystal"), 1.0),
-        ];
-        public func reward() {
-            log("You find a reward!");
-            switch (prng.nextArrayElementWeighted(weightedRewardTable)) {
-                case (#money(amount)) addGold(amount);
-                case (#item(item)) ignore addItem(item); // TODO already have item?
-            };
         };
 
         public func removeGold(amount : Nat) : Bool {
@@ -564,6 +688,11 @@ module {
                 log("You don't have " # Nat.toText(amount) # " gold");
                 return false;
             };
+        };
+
+        public func swapWeapon(weaponId : Text) {
+            let oldWeaponId = characterHandler.swapWeapon(weaponId);
+            logEntries.add(#swapWeapon({ weaponId = weaponId; removedWeaponId = oldWeaponId }));
         };
 
         public func getEffects() : [Scenario.OutcomeEffect] {

@@ -2,7 +2,6 @@ import Entity "Entity";
 import UnlockRequirement "../UnlockRequirement";
 import HashMap "mo:base/HashMap";
 import Result "mo:base/Result";
-import TrieSet "mo:base/TrieSet";
 import Buffer "mo:base/Buffer";
 import Text "mo:base/Text";
 import Float "mo:base/Float";
@@ -14,6 +13,8 @@ import Zone "Zone";
 import Achievement "Achievement";
 import Creature "Creature";
 import Character "../Character";
+import IterTools "mo:itertools/Iter";
+
 module {
 
     public type ScenarioMetaData = Entity.Entity and {
@@ -74,10 +75,16 @@ module {
     public type OutcomePathKind = {
         #effects : [Effect];
         #combat : CombatPath;
+        #reward : RewardPath;
     };
 
     public type CombatPath = {
         creatures : [CombatCreatureKind];
+    };
+
+    public type RewardPath = {
+        #random;
+        #specificItemIds : [Text];
     };
 
     public type CombatCreatureKind = {
@@ -102,7 +109,6 @@ module {
     };
 
     public type Effect = {
-        #reward;
         #damage : NatValue;
         #heal : NatValue;
         #removeGold : NatValue;
@@ -351,13 +357,24 @@ module {
                             };
                             case (#damage(damage)) validateNatValue(damage, "damage");
                             case (#heal(heal)) validateNatValue(heal, "heal");
-                            case (#reward) {};
                             case (#achievement(achievementId)) {
                                 if (TextX.isEmpty(achievementId)) {
                                     errors.add("Achievement id cannot be empty");
                                 };
                                 if (achievements.get(achievementId) == null) {
                                     errors.add("Invalid achievement id: " # achievementId);
+                                };
+                            };
+                        };
+                    };
+                };
+                case (#reward(reward)) {
+                    switch (reward) {
+                        case (#random) {};
+                        case (#specificItemIds(itemIds)) {
+                            for (itemId in itemIds.vals()) {
+                                if (items.get(itemId) == null) {
+                                    errors.add("Invalid item id: " # itemId);
                                 };
                             };
                         };
@@ -433,7 +450,7 @@ module {
                 };
                 false;
             };
-            case (#item(itemId)) TrieSet.mem(character.itemIds, itemId, Text.hash(itemId), Text.equal);
+            case (#item(itemId)) IterTools.any(character.inventorySlots.vals(), func(slot : { itemId : ?Text }) : Bool = slot.itemId == ?itemId);
             case (#race(raceId)) character.raceId == raceId;
             case (#class_(classId)) character.classId == classId;
             case (#gold(amount)) character.gold >= amount;
