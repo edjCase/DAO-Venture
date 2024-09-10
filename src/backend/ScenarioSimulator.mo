@@ -323,12 +323,20 @@ module {
 
         CombatSimulator.applyActionResult(characterCombatStats, creatureCombatStats, actionResult);
 
-        func getLivingCreatures() : [Scenario.CreatureCombatState] {
-            state.creatures.vals()
-            |> Iter.filter(
+        func buildNewCreatureStates() : [Scenario.CreatureCombatState] {
+            creatureCombatStats.vals()
+            |> IterTools.enumerate(_)
+            |> Iter.map(
                 _,
-                func(c : Scenario.CreatureCombatState) : Bool {
-                    c.health > 0;
+                func((i, c) : (Nat, CombatSimulator.CombatStats)) : Scenario.CreatureCombatState {
+                    let creatureState = state.creatures[i];
+                    {
+                        creatureState with
+                        health = c.health;
+                        maxHealth = c.maxHealth;
+                        shield = c.shield;
+                        statusEffects = Buffer.toArray(c.statusEffects);
+                    };
                 },
             )
             |> Iter.toArray(_);
@@ -336,10 +344,10 @@ module {
 
         func checkForDefeat() : ?Scenario.ScenarioStageResult {
             if (characterCombatStats.health <= 0) {
-                let livingCreatures = getLivingCreatures();
+                let newCreatureStates = buildNewCreatureStates();
                 return ?{
                     effects = helper.getEffects();
-                    kind = #combat(#defeat({ creatures = livingCreatures }));
+                    kind = #combat(#defeat({ creatures = newCreatureStates }));
                 };
             };
             null;
@@ -350,10 +358,11 @@ module {
         };
 
         // Creature turns
-        label f for ((i, creature) in IterTools.enumerate(state.creatures.vals())) {
+        label f for ((i, creature) in IterTools.enumerate(creatureCombatStats.vals())) {
             if (creature.health <= 0) continue f;
-            let randomActionId = helper.prng.nextArrayElement(creature.availableActionIds);
-            let creatureAction = switch (helper.getAction(randomActionId, creature.availableActionIds)) {
+            let creatureInfo = state.creatures[i];
+            let randomActionId = helper.prng.nextArrayElement(creatureInfo.availableActionIds);
+            let creatureAction = switch (helper.getAction(randomActionId, creatureInfo.availableActionIds)) {
                 case (#ok(action)) action;
                 case (#err(#notAvailable)) Prelude.unreachable();
             };
@@ -378,8 +387,9 @@ module {
             };
         };
         helper.setCharacterHealth(characterCombatStats.health);
-        let livingCreatures = getLivingCreatures();
-        let combatKind : Scenario.ScenarioCombatResult = if (livingCreatures.size() == 0) {
+        let newCreatureStates = buildNewCreatureStates();
+        let allCreaturesDead = IterTools.all(newCreatureStates.vals(), func(c : Scenario.CreatureCombatState) : Bool = c.health <= 0);
+        let combatKind : Scenario.ScenarioCombatResult = if (allCreaturesDead) {
             #victory;
         } else {
             let newActionIds = helper.getRandomCharacterActionIds();
@@ -391,7 +401,7 @@ module {
                     statusEffects = Buffer.toArray(characterCombatStats.statusEffects);
                     availableActionIds = newActionIds;
                 };
-                creatures = livingCreatures;
+                creatures = newCreatureStates;
             });
         };
 

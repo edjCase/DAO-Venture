@@ -7,22 +7,21 @@
   import { Button } from "flowbite-svelte";
   import { onDestroy, onMount } from "svelte";
   import { toJsonString } from "../../utils/StringUtil";
-  import { Scenario, ScenarioMetaData } from "../../ic-agent/declarations/main";
+  import {
+    CharacterWithMetaData,
+    Scenario,
+    ScenarioMetaData,
+  } from "../../ic-agent/declarations/main";
   import ScenarioStages from "./ScenarioStages.svelte";
   import ScenarioCombat from "./ScenarioCombat.svelte";
   import ScenarioReward from "./ScenarioReward.svelte";
 
   export let scenario: Scenario;
   export let scenarioMetaData: ScenarioMetaData;
+  export let character: CharacterWithMetaData;
   export let nextScenario: () => void;
 
-  $: currentGame = $currentGameStore;
-
   let vote = async (optionId: string) => {
-    if (currentGame === undefined) {
-      console.error("Game not found");
-      return;
-    }
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.selectScenarioChoice({
       choice: {
@@ -41,9 +40,6 @@
   onMount(() => {
     intervalId = setInterval(() => {
       // Get the updated vote
-      if (currentGame === undefined) {
-        return;
-      }
       scenarioStore.refetch();
     }, 3000);
   });
@@ -84,7 +80,7 @@
     <div class="text-3xl text-center mb-4">Combat</div>
     <ScenarioCombat combatState={scenario.state.combat} />
   {:else if "reward" in scenario.state}
-    <ScenarioReward rewardState={scenario.state.reward} />
+    <ScenarioReward rewardState={scenario.state.reward} {character} />
   {:else if "complete" in scenario.state}
     <Button on:click={nextScenario}>Continue</Button>
   {:else}

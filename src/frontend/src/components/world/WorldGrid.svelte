@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
   import { scenarioMetaDataStore } from "../../stores/ScenarioMetaDataStore";
   import { scenarioStore } from "../../stores/ScenarioStore";
@@ -9,6 +10,7 @@
 
   let selectedTile: AxialCoordinate | undefined;
   let gridData: HexTileData[] | undefined;
+  let character: CharacterWithMetaData | undefined;
 
   $: scenarios = $scenarioStore;
   $: scenarioMetaDataList = $scenarioMetaDataStore;
@@ -39,6 +41,17 @@
         });
       } else {
         gridData = undefined;
+      }
+    }
+  }
+
+  $: {
+    character = undefined;
+    if (currentGame !== undefined) {
+      if ("inProgress" in currentGame.state) {
+        character = currentGame.state.inProgress.character;
+      } else if ("completed" in currentGame.state) {
+        character = currentGame.state.completed.character;
       }
     }
   }
@@ -77,8 +90,8 @@
       </svg>
     </g>
     <div slot="tileInfo">
-      {#if scenario !== undefined && scenarioMetaData !== undefined}
-        <Scenario {scenario} {scenarioMetaData} {nextScenario} />
+      {#if scenario !== undefined && scenarioMetaData !== undefined && character !== undefined}
+        <Scenario {scenario} {scenarioMetaData} {nextScenario} {character} />
       {/if}
     </div>
   </HexGrid>

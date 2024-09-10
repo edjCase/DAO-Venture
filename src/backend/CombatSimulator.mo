@@ -133,10 +133,7 @@ module {
                     case (#character) character;
                 };
                 switch (effect.kind) {
-                    case (#damage(damage)) {
-
-                        applyDamage(stats, damage);
-                    };
+                    case (#damage(damage)) applyDamage(stats, damage);
                     case (#block(block)) applyBlock(stats, block);
                     case (#heal(heal)) applyHeal(stats, heal);
                     case (#addStatusEffect(statusEffectResult)) applyStatusEffect(stats, statusEffectResult);

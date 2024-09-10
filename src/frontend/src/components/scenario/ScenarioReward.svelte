@@ -8,7 +8,7 @@
   import { currentGameStore } from "../../stores/CurrentGameStore";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { toJsonString } from "../../utils/StringUtil";
-  import CharacterItem from "../character/CharacterItem.svelte";
+  import CharacterInventorySlot from "../character/CharacterInventorySlot.svelte";
 
   export let rewardState: RewardScenarioState;
   export let character: CharacterWithMetaData;
@@ -140,7 +140,7 @@
             tabindex={i}
             on:keypress={selectInventorySlot(i)}
           >
-            <CharacterItem value={slot.item} />
+            <CharacterInventorySlot value={slot} />
           </div>
         {/each}
       </div>

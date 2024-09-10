@@ -5,8 +5,8 @@
   export let value: InventorySlotWithMetaData;
 </script>
 
-{#if slot.item[0] !== undefined}
-  <CharacterItem item={slot.item[0]} />
-{:else}
-  <div>-</div>
-{/if}
+<div class="border rounded p-2">
+  {#if value.item[0] !== undefined}
+    <CharacterItem item={value.item[0]} />
+  {/if}
+</div>

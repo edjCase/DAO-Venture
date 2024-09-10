@@ -1,6 +1,6 @@
 <script lang="ts">
   import { InventorySlotWithMetaData } from "../../ic-agent/declarations/main";
-  import CharacterItem from "./CharacterItem.svelte";
+  import CharacterInventorySlot from "./CharacterInventorySlot.svelte";
 
   export let value: InventorySlotWithMetaData[];
 </script>

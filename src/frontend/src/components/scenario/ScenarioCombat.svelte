@@ -32,8 +32,8 @@
       (c) => c.id === combatCreature.creatureId
     );
     return {
-      ...combatCreature,
       ...creatureData,
+      ...combatCreature,
       index,
     };
   });
