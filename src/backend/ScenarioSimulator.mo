@@ -158,10 +158,11 @@ module {
             let ?currentPath = Array.find(
                 helper.scenarioMetaData.paths,
                 func(p : ScenarioMetaData.OutcomePath) : Bool {
-                    p.id == choiceData.pathId;
+                    p.id == currentPathId;
                 },
             ) else Debug.trap("Invalid path ID: " # choiceData.pathId);
             helper.log(currentPath.description);
+            Debug.print("Current path: " # debug_show (currentPath));
 
             switch (currentPath.kind) {
                 case (#combat(combat)) break l(startCombat(combat, helper));

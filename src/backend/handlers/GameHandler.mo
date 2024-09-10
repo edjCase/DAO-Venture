@@ -456,6 +456,7 @@ module {
             userHandler : UserHandler.Handler,
             choice : ScenarioSimulator.StageChoiceKind,
         ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice : Text; #notScenarioTurn; #invalidTarget; #targetRequired }> {
+            Debug.print("Selecting scenario choice: " # debug_show (choice));
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
@@ -492,12 +493,16 @@ module {
                 case (#err(#targetRequired)) return #err(#targetRequired);
                 case (#ok(result)) result;
             };
+            Debug.print("Stage result: " # debug_show (stageResult));
             let (newState, isDead) : (Scenario.ScenarioStateKind, Bool) = switch (stageResult.kind) {
                 case (#choice(choice)) {
                     switch (choice.kind) {
                         case (#complete) (#complete, false);
                         case (#death) (#complete, true);
-                        case (#choice(choice)) (#choice(choice), false);
+                        case (#choice(choice)) {
+                            Debug.print("Choice: " # debug_show (choice));
+                            (#choice(choice), false);
+                        };
                         case (#startCombat(combat)) (#combat(combat), false);
                         case (#reward(reward)) (#reward(reward), false);
                     };
