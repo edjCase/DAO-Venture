@@ -17,7 +17,7 @@
     <div>Class</div>
     <EntityView entity={class_} />
     <WeaponView {weapon} />
-    <ActionsView actionIds={class_.actionIds} />
+    <ActionsView actionIds={class_.startingActionIds} />
     <ItemsView itemIds={class_.startingItemIds} />
     <UnlockRequirementView value={class_.unlockRequirement} />
   {/if}

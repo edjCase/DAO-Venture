@@ -28,7 +28,7 @@
           id,
           name,
           description,
-          actionIds: selectedActions,
+          startingActionIds: selectedActions,
           startingItemIds: selectedItems,
           unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
         },

@@ -1,14 +1,14 @@
 <script lang="ts">
-  import { Item } from "../../ic-agent/declarations/main";
+  import { InventorySlotWithMetaData } from "../../ic-agent/declarations/main";
   import CharacterItem from "./CharacterItem.svelte";
 
-  export let items: Item[];
+  export let value: InventorySlotWithMetaData[];
 </script>
 
 <ul class="text-md flex">
-  {#each items as item}
+  {#each value as slot}
     <li>
-      <CharacterItem {item} />
+      <CharacterInventorySlot value={slot} />
     </li>
   {/each}
 </ul>

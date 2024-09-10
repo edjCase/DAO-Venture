@@ -69,7 +69,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "successful_purification",
         description: "Your magic cleanses the corruption. The treant returns to its peaceful state.",
         kind: {
-          effects: [{ reward: null }, { addItem: { random: null } }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -108,7 +108,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "successful_evasion",
         description: "You successfully navigate around the treant without incident.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -147,7 +147,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "successful_communication",
         description: "You reach the treant's consciousness. It calms and allows you to pass.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -207,7 +207,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "successful_fight",
         description: "You successfully fend off the dark elves!",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -1112,7 +1112,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "fight_success",
         description: "You successfully fend off the goblin raiding party!",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -1527,7 +1527,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "help_success",
         description: "You successfully help the elfling and reunite them with their clan.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -1570,7 +1570,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "investigate_success",
         description: "Your careful investigation reveals a safe path to the elfling.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -1605,7 +1605,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "perception_success",
         description: "Your advanced perception successfully guides the elfling back to their clan.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -1821,7 +1821,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "treasure_found",
         description: "You discover a hidden chamber containing a small amount of treasure.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -2117,7 +2117,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "swimming_success",
         description: "You successfully swim out and rescue the passengers.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -2139,7 +2139,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "swimming_rescue",
         description: "You manage to rescue the passengers, but at a cost to your health.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -2166,7 +2166,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "walk_on_water_success",
         description: "Your water-walking allows you to easily rescue all passengers.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -2188,7 +2188,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "rescue",
         description: "Despite the setback, you manage to complete the rescue.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -2287,7 +2287,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "direct_success",
         description: "You successfully free the druid from the magical snare.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -2322,7 +2322,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "nature_success",
         description: "Your nature skills allow you to safely disarm the snare and free the druid.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },
@@ -2357,7 +2357,7 @@ export const scenarios: ScenarioMetaData[] = [
         id: "search_success",
         description: "You find a magical artifact nearby that helps neutralize the snare.",
         kind: {
-          effects: [{ reward: null }]
+          reward: { random: null }
         },
         paths: [],
       },

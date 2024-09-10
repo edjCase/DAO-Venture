@@ -35,7 +35,7 @@
 
 <div>
   {#if character !== undefined}
-    <CharacterInventory items={character.items} />
+    <CharacterInventory value={character.inventorySlots} />
   {/if}
   <DotsVerticalOutline class="dots-menu dark:text-white float-right " />
   <Dropdown triggeredBy=".dots-menu">

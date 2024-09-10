@@ -8,6 +8,8 @@
   import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
   import { encodePixelsToImage, PixelGrid } from "../../../../utils/PixelUtil";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import EntityMultiSelector from "./EntityMultiSelector.svelte";
+  import { actionStore } from "../../../../stores/ActionStore";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -15,6 +17,7 @@
   let pixels: PixelGrid = Array.from({ length: 16 }, () =>
     Array.from({ length: 16 }, () => undefined)
   );
+  let actionIds: string[] = [];
   let unlockRequirement: UnlockRequirement | undefined;
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
@@ -37,6 +40,7 @@
           name: name,
           description: description,
           image: encodePixelsToImage(pixels),
+          actionIds: actionIds,
           unlockRequirement:
             unlockRequirement === undefined ? [] : [unlockRequirement],
         },
@@ -77,8 +81,16 @@
     </div>
 
     <div>
-      <Label for="unlockRequirement">Unlock Requirement</Label>
-      <UnlockRequirementEditor bind:unlockRequirement />
+      <Label for="actionIds">Action Ids</Label>
+      <EntityMultiSelector
+        bind:ids={actionIds}
+        store={actionStore}
+        label="Action"
+      />
+      <div>
+        <Label for="unlockRequirement">Unlock Requirement</Label>
+        <UnlockRequirementEditor bind:unlockRequirement />
+      </div>
     </div>
-  </div>
-</FormTemplate>
+  </div></FormTemplate
+>

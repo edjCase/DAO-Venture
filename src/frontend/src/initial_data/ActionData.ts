@@ -14,7 +14,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "slash",
@@ -29,7 +30,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "fireball",
@@ -46,9 +48,10 @@ export const actions: Action[] = [
             },
             {
                 target: { targets: null },
-                kind: { damage: { timing: { periodic: { phase: { start: null }, remainingTurns: 2n } }, min: 1n, max: 1n } }
+                kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 2n } }, min: 1n, max: 1n } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "heal",
@@ -63,7 +66,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { heal: { min: 3n, max: 5n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "shield",
@@ -78,7 +82,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { block: { min: 3n, max: 5n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "poison_dart",
@@ -95,9 +100,10 @@ export const actions: Action[] = [
             },
             {
                 target: { targets: null },
-                kind: { damage: { timing: { periodic: { phase: { start: null }, remainingTurns: 3n } }, min: 2n, max: 2n } }
+                kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 3n } }, min: 2n, max: 2n } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "whirlwind",
@@ -112,7 +118,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 3n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "thorns_aura",
@@ -127,7 +134,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { retaliating: { flat: 1n } }, duration: [3n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "life_drain",
@@ -146,7 +154,8 @@ export const actions: Action[] = [
                 target: { self: null },
                 kind: { heal: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "smite",
@@ -165,7 +174,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "entangle",
@@ -180,7 +190,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { vulnerable: null }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "fury_swipes",
@@ -203,7 +214,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 1n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "frost_bolt",
@@ -222,7 +234,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { stunned: null }, duration: [1n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "earthquake",
@@ -237,7 +250,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "rapid_shot",
@@ -252,7 +266,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 3n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "defensive_stance",
@@ -271,7 +286,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { retaliating: { flat: 1n } }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "venom_strike",
@@ -288,9 +304,10 @@ export const actions: Action[] = [
             },
             {
                 target: { targets: null },
-                kind: { damage: { timing: { periodic: { phase: { start: null }, remainingTurns: 3n } }, min: 1n, max: 1n } }
+                kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 3n } }, min: 1n, max: 1n } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "thunder_strike",
@@ -309,7 +326,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { stunned: null }, duration: [1n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "regenerate",
@@ -322,9 +340,10 @@ export const actions: Action[] = [
         effects: [
             {
                 target: { targets: null },
-                kind: { heal: { timing: { periodic: { phase: { start: null }, remainingTurns: 3n } }, min: 2n, max: 2n } }
+                kind: { heal: { timing: { periodic: { phase: { start: null }, turnDuration: 3n } }, min: 2n, max: 2n } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "double_slash",
@@ -343,7 +362,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 3n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "war_cry",
@@ -358,7 +378,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "piercing_shot",
@@ -377,7 +398,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { vulnerable: null }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "wild_growth",
@@ -392,7 +414,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { block: { min: 4n, max: 6n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "weaken",
@@ -407,7 +430,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "arcane_missiles",
@@ -422,7 +446,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "berserk",
@@ -441,7 +466,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { vulnerable: null }, duration: [3n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "shadow_bolt",
@@ -460,7 +486,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "chain_lightning",
@@ -475,7 +502,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 3n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "fortify",
@@ -494,7 +522,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { retaliating: { flat: 1n } }, duration: [2n] } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "precision_strike",
@@ -509,7 +538,8 @@ export const actions: Action[] = [
                 target: { targets: null },
                 kind: { damage: { min: 4n, max: 4n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "vampiric_touch",
@@ -528,7 +558,8 @@ export const actions: Action[] = [
                 target: { self: null },
                 kind: { heal: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
-        ]
+        ],
+        upgradedActionId: []
     },
     {
         id: "natures_wrath",
@@ -545,8 +576,9 @@ export const actions: Action[] = [
             },
             {
                 target: { targets: null },
-                kind: { damage: { timing: { periodic: { phase: { start: null }, remainingTurns: 2n } }, min: 1n, max: 2n } }
+                kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 2n } }, min: 1n, max: 2n } }
             }
-        ]
+        ],
+        upgradedActionId: []
     }
 ];

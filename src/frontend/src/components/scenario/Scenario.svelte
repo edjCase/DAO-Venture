@@ -10,6 +10,7 @@
   import { Scenario, ScenarioMetaData } from "../../ic-agent/declarations/main";
   import ScenarioStages from "./ScenarioStages.svelte";
   import ScenarioCombat from "./ScenarioCombat.svelte";
+  import ScenarioReward from "./ScenarioReward.svelte";
 
   export let scenario: Scenario;
   export let scenarioMetaData: ScenarioMetaData;
@@ -82,6 +83,8 @@
   {:else if "combat" in scenario.state}
     <div class="text-3xl text-center mb-4">Combat</div>
     <ScenarioCombat combatState={scenario.state.combat} />
+  {:else if "reward" in scenario.state}
+    <ScenarioReward rewardState={scenario.state.reward} />
   {:else if "complete" in scenario.state}
     <Button on:click={nextScenario}>Continue</Button>
   {:else}

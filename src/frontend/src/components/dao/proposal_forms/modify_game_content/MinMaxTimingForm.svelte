@@ -26,14 +26,14 @@
       value.timing = { immediate: null };
     } else {
       value.timing = {
-        periodic: { phase: { start: null }, remainingTurns: periodicTurns },
+        periodic: { phase: { start: null }, turnDuration: periodicTurns },
       };
     }
   };
 
   let updatePeriodicTurns = () => {
     if ("periodic" in value.timing) {
-      value.timing.periodic.remainingTurns = BigInt(periodicTurns);
+      value.timing.periodic.turnDuration = BigInt(periodicTurns);
     }
   };
 
