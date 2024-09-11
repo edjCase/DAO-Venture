@@ -42,9 +42,55 @@ module {
     };
 
     public type ScenarioCombatResult = {
-        #victory;
+        log : [CombatLogEntry];
+        kind : CombatResultKind;
+    };
+
+    public type CombatLogEntry = {
+        #damage : DamageLogEntry;
+        #heal : HealLogEntry;
+        #block : BlockLogEntry;
+        #statusEffect : StatusEffectLogEntry;
+    };
+
+    public type DamageLogEntry = {
+        source : TargetKind;
+        target : TargetKind;
+        damage : Nat;
+    };
+
+    public type HealLogEntry = {
+        source : TargetKind;
+        target : TargetKind;
+        heal : Nat;
+    };
+
+    public type BlockLogEntry = {
+        source : TargetKind;
+        target : TargetKind;
+        shield : Nat;
+    };
+
+    public type StatusEffectLogEntry = {
+        source : TargetKind;
+        target : TargetKind;
+        statusEffect : ActionResult.StatusEffectResult;
+    };
+
+    public type TargetKind = {
+        #character;
+        #creature : Nat;
+        #periodicEffect;
+    };
+
+    public type CombatResultKind = {
+        #victory : CombatVictoryResult;
         #defeat : CombatDefeatResult;
         #inProgress : CombatScenarioState;
+    };
+
+    public type CombatVictoryResult = {
+        characterHealth : Nat;
     };
 
     public type CombatDefeatResult = {

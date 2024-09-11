@@ -89,6 +89,8 @@ module {
         #weak;
         #stunned;
         #retaliating : Retaliating;
+        #brittle;
+        #necrotic;
     };
 
     public type Retaliating = {
@@ -128,7 +130,7 @@ module {
                         };
                     };
                     switch (statusEffect.kind) {
-                        case (#vulnerable or #stunned or #weak) {};
+                        case (#vulnerable or #stunned or #weak or #brittle or #necrotic) {};
                         case (#retaliating(retaliating)) {
                             switch (retaliating) {
                                 case (#flat(flat)) {

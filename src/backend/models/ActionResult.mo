@@ -6,7 +6,7 @@ module {
     };
 
     public type ActionEffectResult = {
-        targets : [ActionTargetResult];
+        target : ActionTargetResult;
         kind : ActionEffectKindResult;
     };
 

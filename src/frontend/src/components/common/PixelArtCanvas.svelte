@@ -35,5 +35,5 @@
   width={width * pixelSize}
   height={height * pixelSize}
   style="image-rendering: crisp-edges;"
-  class={border ? "border border-gray-300 shadow-md" : ""}
+  class={"inline-block" + (border ? "border border-gray-300 shadow-md" : "")}
 />

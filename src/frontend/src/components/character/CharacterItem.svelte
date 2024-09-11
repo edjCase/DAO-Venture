@@ -17,11 +17,11 @@
   }
 </script>
 
-<div>
+<span>
   {#if typeof item !== "string"}
-    <div class="text-xl">
+    <span class="text-xl">
       <PixelArtCanvas pixels={decodeImageToPixels(item.image, 16, 16)} />
-    </div>
+    </span>
     <Tooltip>
       <div class="text-sm">
         {item.name}
@@ -30,4 +30,4 @@
       </div>
     </Tooltip>
   {/if}
-</div>
+</span>

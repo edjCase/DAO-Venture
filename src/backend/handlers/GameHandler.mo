@@ -456,7 +456,6 @@ module {
             userHandler : UserHandler.Handler,
             choice : ScenarioSimulator.StageChoiceKind,
         ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice : Text; #notScenarioTurn; #invalidTarget; #targetRequired }> {
-            Debug.print("Selecting scenario choice: " # debug_show (choice));
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
@@ -470,20 +469,24 @@ module {
 
             let characterHandler = CharacterHandler.Handler(inProgressInstance.character);
 
+            let gameContent : ScenarioSimulator.GameContent = {
+                scenario = scenario;
+                scenarioMetaData = scenarioMetaData;
+                creatures = creatures;
+                classes = classes;
+                races = races;
+                items = items;
+                weapons = weapons;
+                actions = actions;
+            };
+
             let stageResult : Scenario.ScenarioStageResult = switch (
                 ScenarioSimulator.runStage(
                     prng,
                     playerId,
                     userHandler,
                     characterHandler,
-                    scenario,
-                    scenarioMetaData,
-                    creatures,
-                    classes,
-                    races,
-                    items,
-                    weapons,
-                    actions,
+                    gameContent,
                     choice,
                 )
             ) {
@@ -493,23 +496,19 @@ module {
                 case (#err(#targetRequired)) return #err(#targetRequired);
                 case (#ok(result)) result;
             };
-            Debug.print("Stage result: " # debug_show (stageResult));
             let (newState, isDead) : (Scenario.ScenarioStateKind, Bool) = switch (stageResult.kind) {
                 case (#choice(choice)) {
                     switch (choice.kind) {
                         case (#complete) (#complete, false);
                         case (#death) (#complete, true);
-                        case (#choice(choice)) {
-                            Debug.print("Choice: " # debug_show (choice));
-                            (#choice(choice), false);
-                        };
+                        case (#choice(choice)) (#choice(choice), false);
                         case (#startCombat(combat)) (#combat(combat), false);
                         case (#reward(reward)) (#reward(reward), false);
                     };
                 };
                 case (#combat(combat)) {
-                    switch (combat) {
-                        case (#victory) (#complete, false); // TODO continue if there are more paths?
+                    switch (combat.kind) {
+                        case (#victory(_)) (#complete, false); // TODO continue if there are more paths?
                         case (#defeat(_)) (#complete, true);
                         case (#inProgress(inProgress)) (#combat(inProgress), false);
                     };

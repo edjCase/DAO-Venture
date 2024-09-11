@@ -54,8 +54,10 @@ export const idlFactory = ({ IDL }) => {
   const Retaliating = IDL.Variant({ 'flat' : IDL.Nat });
   const StatusEffectKind = IDL.Variant({
     'retaliating' : Retaliating,
+    'brittle' : IDL.Null,
     'weak' : IDL.Null,
     'vulnerable' : IDL.Null,
+    'necrotic' : IDL.Null,
     'stunned' : IDL.Null,
   });
   const StatusEffect = IDL.Record({
@@ -412,8 +414,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const StatusEffectKind__1 = IDL.Variant({
     'retaliating' : Retaliating,
+    'brittle' : IDL.Null,
     'weak' : IDL.Null,
     'vulnerable' : IDL.Null,
+    'necrotic' : IDL.Null,
     'stunned' : IDL.Null,
     'periodic' : PeriodicEffectResult,
   });
@@ -475,13 +479,49 @@ export const idlFactory = ({ IDL }) => {
     'choiceId' : IDL.Text,
     'kind' : ScenarioChoiceResultKind,
   });
+  const TargetKind = IDL.Variant({
+    'creature' : IDL.Nat,
+    'character' : IDL.Null,
+    'periodicEffect' : IDL.Null,
+  });
+  const DamageLogEntry = IDL.Record({
+    'damage' : IDL.Nat,
+    'source' : TargetKind,
+    'target' : TargetKind,
+  });
+  const HealLogEntry = IDL.Record({
+    'source' : TargetKind,
+    'heal' : IDL.Nat,
+    'target' : TargetKind,
+  });
+  const BlockLogEntry = IDL.Record({
+    'shield' : IDL.Nat,
+    'source' : TargetKind,
+    'target' : TargetKind,
+  });
+  const StatusEffectLogEntry = IDL.Record({
+    'source' : TargetKind,
+    'target' : TargetKind,
+    'statusEffect' : StatusEffectResult,
+  });
+  const CombatLogEntry = IDL.Variant({
+    'damage' : DamageLogEntry,
+    'heal' : HealLogEntry,
+    'block' : BlockLogEntry,
+    'statusEffect' : StatusEffectLogEntry,
+  });
   const CombatDefeatResult = IDL.Record({
     'creatures' : IDL.Vec(CreatureCombatState),
   });
-  const ScenarioCombatResult = IDL.Variant({
+  const CombatVictoryResult = IDL.Record({ 'characterHealth' : IDL.Nat });
+  const CombatResultKind = IDL.Variant({
     'defeat' : CombatDefeatResult,
-    'victory' : IDL.Null,
+    'victory' : CombatVictoryResult,
     'inProgress' : CombatScenarioState,
+  });
+  const ScenarioCombatResult = IDL.Record({
+    'log' : IDL.Vec(CombatLogEntry),
+    'kind' : CombatResultKind,
   });
   const ScenarioStageResultKind = IDL.Variant({
     'reward' : ScenarioRewardResult,

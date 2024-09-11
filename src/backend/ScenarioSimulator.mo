@@ -9,7 +9,6 @@ import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Float "mo:base/Float";
 import Result "mo:base/Result";
-import Prelude "mo:base/Prelude";
 import CharacterHandler "handlers/CharacterHandler";
 import Scenario "models/entities/Scenario";
 import Character "models/Character";
@@ -17,7 +16,6 @@ import UserHandler "handlers/UserHandler";
 import Creature "models/entities/Creature";
 import Weapon "models/entities/Weapon";
 import CombatSimulator "CombatSimulator";
-import ActionResult "models/ActionResult";
 import ScenarioMetaData "models/entities/ScenarioMetaData";
 import Action "models/entities/Action";
 import IterTools "mo:itertools/Iter";
@@ -37,7 +35,7 @@ module {
 
     public type StageChoiceKind = {
         #choice : Text;
-        #combat : CombatChoice;
+        #combat : CombatSimulator.CombatChoice;
         #reward : RewardChoice;
     };
     public type RewardChoice = {
@@ -52,9 +50,15 @@ module {
         inventorySlot : Nat;
     };
 
-    public type CombatChoice = {
-        actionId : Text;
-        target : ?ActionResult.ActionTargetResult;
+    public type GameContent = {
+        scenario : Scenario.Scenario;
+        scenarioMetaData : ScenarioMetaData.ScenarioMetaData;
+        creatures : HashMap.HashMap<Text, Creature.Creature>;
+        classes : HashMap.HashMap<Text, Class.Class>;
+        races : HashMap.HashMap<Text, Race.Race>;
+        items : HashMap.HashMap<Text, Item.Item>;
+        weapons : HashMap.HashMap<Text, Weapon.Weapon>;
+        actions : HashMap.HashMap<Text, Action.Action>;
     };
 
     public func runStage(
@@ -62,14 +66,7 @@ module {
         playerId : Principal,
         userHandler : UserHandler.Handler,
         characterHandler : CharacterHandler.Handler,
-        scenario : Scenario.Scenario,
-        scenarioMetaData : ScenarioMetaData.ScenarioMetaData,
-        creatures : HashMap.HashMap<Text, Creature.Creature>,
-        classes : HashMap.HashMap<Text, Class.Class>,
-        races : HashMap.HashMap<Text, Race.Race>,
-        items : HashMap.HashMap<Text, Item.Item>,
-        weapons : HashMap.HashMap<Text, Weapon.Weapon>,
-        actions : HashMap.HashMap<Text, Action.Action>,
+        gameContent : GameContent,
         choice : StageChoiceKind,
     ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
         let logEntries = Buffer.Buffer<Scenario.OutcomeEffect>(5);
@@ -78,17 +75,10 @@ module {
             playerId,
             characterHandler,
             userHandler,
-            scenario,
-            scenarioMetaData,
-            creatures,
-            classes,
-            races,
-            items,
-            weapons,
-            actions,
+            gameContent,
             logEntries,
         );
-        switch (scenario.state) {
+        switch (gameContent.scenario.state) {
             case (#choice(choiceState)) processChoice(choiceState, helper, choice);
             case (#combat(combatState)) processCombat(combatState, helper, choice);
             case (#reward(rewardState)) processReward(rewardState, helper, choice);
@@ -145,7 +135,7 @@ module {
             return #err(#invalidChoice("Choice not available: " # choiceId));
         };
         let ?choiceData = Array.find(
-            helper.scenarioMetaData.choices,
+            helper.gameContent.scenarioMetaData.choices,
             func(c : ScenarioMetaData.Choice) : Bool {
                 c.id == choiceId;
             },
@@ -156,16 +146,23 @@ module {
         let kind = label l : Scenario.ScenarioChoiceResultKind loop {
 
             let ?currentPath = Array.find(
-                helper.scenarioMetaData.paths,
+                helper.gameContent.scenarioMetaData.paths,
                 func(p : ScenarioMetaData.OutcomePath) : Bool {
                     p.id == currentPathId;
                 },
             ) else Debug.trap("Invalid path ID: " # choiceData.pathId);
             helper.log(currentPath.description);
-            Debug.print("Current path: " # debug_show (currentPath));
 
             switch (currentPath.kind) {
-                case (#combat(combat)) break l(startCombat(combat, helper));
+                case (#combat(combat)) {
+                    let startCombatResult = CombatSimulator.startCombat(
+                        helper.prng,
+                        combat,
+                        helper.getCharacter(),
+                        helper.gameContent,
+                    );
+                    break l(startCombatResult);
+                };
                 case (#effects(effects)) switch (processPathEffects(currentPath, effects, helper)) {
                     case (#complete) break l(#complete);
                     case (#death) break l(#death);
@@ -182,28 +179,6 @@ module {
             });
         });
 
-    };
-
-    func startCombat(
-        combat : ScenarioMetaData.CombatPath,
-        helper : Helper,
-    ) : Scenario.ScenarioChoiceResultKind {
-        let creatureCombatStats = Buffer.Buffer<Scenario.CreatureCombatState>(combat.creatures.size());
-        for (creature in combat.creatures.vals()) {
-            creatureCombatStats.add(helper.getRandomCreature(creature));
-        };
-        let newActionIds = helper.getRandomCharacterActionIds();
-        let character = helper.getCharacter();
-        #startCombat({
-            character = {
-                health = character.health;
-                maxHealth = character.maxHealth;
-                shield = 0;
-                statusEffects = [];
-                availableActionIds = newActionIds;
-            };
-            creatures = Buffer.toArray(creatureCombatStats);
-        });
     };
 
     func startReward(
@@ -282,134 +257,28 @@ module {
         choice : StageChoiceKind,
     ) : Result.Result<Scenario.ScenarioStageResult, RunStageError> {
         let #combat(combatChoice) = choice else return #err(#invalidChoice("Expected combat choice"));
-        // Character turn first
-        let action = switch (helper.getAction(combatChoice.actionId, state.character.availableActionIds)) {
-            case (#ok(action)) action;
-            case (#err(#notAvailable)) return #err(#invalidChoice("Action not available: " # combatChoice.actionId));
-        };
-        let creatureCount = state.creatures.size();
-        let actionResult = switch (
-            CombatSimulator.calculateActionResult(
-                helper.prng,
-                #character,
-                action,
-                creatureCount,
-                combatChoice.target,
-            )
-        ) {
-            case (#ok(result)) result;
-            case (#err(#invalidTarget)) return #err(#invalidTarget);
-            case (#err(#targetRequired)) return #err(#targetRequired);
-        };
-
-        let characterCombatStats : CombatSimulator.CombatStats = {
-            var health = state.character.health;
-            var maxHealth = state.character.maxHealth;
-            var shield = state.character.shield;
-            var statusEffects = Buffer.fromArray(state.character.statusEffects);
-        };
-        let creatureCombatStats = state.creatures.vals()
-        |> Iter.map(
-            _,
-            func(c : Scenario.CreatureCombatState) : CombatSimulator.CombatStats {
-                {
-                    var health = c.health;
-                    var maxHealth = c.maxHealth;
-                    var shield = c.shield;
-                    var statusEffects = Buffer.fromArray(c.statusEffects);
+        let combatResult = CombatSimulator.run(
+            state,
+            combatChoice,
+            helper.prng,
+            helper.getCharacter(),
+            helper.gameContent,
+        );
+        switch (combatResult) {
+            case (#ok(combatKind)) {
+                let newHealth = switch (combatKind.kind) {
+                    case (#victory(victory)) victory.characterHealth;
+                    case (#defeat(_)) 0;
+                    case (#inProgress(combatState)) combatState.character.health;
                 };
-            },
-        )
-        |> Iter.toArray(_);
-
-        CombatSimulator.applyActionResult(characterCombatStats, creatureCombatStats, actionResult);
-
-        func buildNewCreatureStates() : [Scenario.CreatureCombatState] {
-            creatureCombatStats.vals()
-            |> IterTools.enumerate(_)
-            |> Iter.map(
-                _,
-                func((i, c) : (Nat, CombatSimulator.CombatStats)) : Scenario.CreatureCombatState {
-                    let creatureState = state.creatures[i];
-                    {
-                        creatureState with
-                        health = c.health;
-                        maxHealth = c.maxHealth;
-                        shield = c.shield;
-                        statusEffects = Buffer.toArray(c.statusEffects);
-                    };
-                },
-            )
-            |> Iter.toArray(_);
-        };
-
-        func checkForDefeat() : ?Scenario.ScenarioStageResult {
-            if (characterCombatStats.health <= 0) {
-                let newCreatureStates = buildNewCreatureStates();
-                return ?{
+                helper.setCharacterHealth(newHealth);
+                #ok({
                     effects = helper.getEffects();
-                    kind = #combat(#defeat({ creatures = newCreatureStates }));
-                };
+                    kind = #combat(combatKind);
+                });
             };
-            null;
+            case (#err(error)) return #err(error);
         };
-        switch (checkForDefeat()) {
-            case (?result) return #ok(result);
-            case (null) ();
-        };
-
-        // Creature turns
-        label f for ((i, creature) in IterTools.enumerate(creatureCombatStats.vals())) {
-            if (creature.health <= 0) continue f;
-            let creatureInfo = state.creatures[i];
-            let randomActionId = helper.prng.nextArrayElement(creatureInfo.availableActionIds);
-            let creatureAction = switch (helper.getAction(randomActionId, creatureInfo.availableActionIds)) {
-                case (#ok(action)) action;
-                case (#err(#notAvailable)) Prelude.unreachable();
-            };
-            let actionResult = switch (
-                CombatSimulator.calculateActionResult(
-                    helper.prng,
-                    #creature(i),
-                    creatureAction,
-                    creatureCount,
-                    null,
-                )
-            ) {
-                case (#ok(result)) result;
-                case (#err(#invalidTarget)) Prelude.unreachable();
-                case (#err(#targetRequired)) Prelude.unreachable();
-            };
-            CombatSimulator.applyActionResult(characterCombatStats, creatureCombatStats, actionResult);
-
-            switch (checkForDefeat()) {
-                case (?result) return #ok(result);
-                case (null) ();
-            };
-        };
-        helper.setCharacterHealth(characterCombatStats.health);
-        let newCreatureStates = buildNewCreatureStates();
-        let allCreaturesDead = IterTools.all(newCreatureStates.vals(), func(c : Scenario.CreatureCombatState) : Bool = c.health <= 0);
-        let combatKind : Scenario.ScenarioCombatResult = if (allCreaturesDead) {
-            #victory;
-        } else {
-            let newActionIds = helper.getRandomCharacterActionIds();
-            #inProgress({
-                character = {
-                    health = characterCombatStats.health;
-                    maxHealth = characterCombatStats.maxHealth;
-                    shield = characterCombatStats.shield;
-                    statusEffects = Buffer.toArray(characterCombatStats.statusEffects);
-                    availableActionIds = newActionIds;
-                };
-                creatures = newCreatureStates;
-            });
-        };
-
-        #ok({
-            effects = helper.getEffects();
-            kind = #combat(combatKind);
-        });
 
     };
 
@@ -455,94 +324,36 @@ module {
         playerId : Principal,
         characterHandler : CharacterHandler.Handler,
         userHandler : UserHandler.Handler,
-        scenario : Scenario.Scenario,
-        scenarioMetaData_ : ScenarioMetaData.ScenarioMetaData,
-        creatures : HashMap.HashMap<Text, Creature.Creature>,
-        classes : HashMap.HashMap<Text, Class.Class>,
-        races : HashMap.HashMap<Text, Race.Race>,
-        items : HashMap.HashMap<Text, Item.Item>,
-        weapons : HashMap.HashMap<Text, Weapon.Weapon>,
-        actions : HashMap.HashMap<Text, Action.Action>,
+        gameContent_ : GameContent,
         logEntries : Buffer.Buffer<Scenario.OutcomeEffect>,
     ) {
 
         public let prng = prng_;
-        public let scenarioMetaData = scenarioMetaData_;
+        public let gameContent = gameContent_;
 
         public func getRandomItemId() : Text {
-            let itemIds = items.keys() |> Iter.toArray(_);
+            let itemIds = gameContent.items.keys() |> Iter.toArray(_);
             prng.nextArrayElement(itemIds);
         };
 
         public func getRandomWeaponId() : Text {
-            let weaponIds = weapons.keys() |> Iter.toArray(_);
+            let weaponIds = gameContent.weapons.keys() |> Iter.toArray(_);
             prng.nextArrayElement(weaponIds);
-        };
-
-        public func getAction(actionId : Text, avaiableActionIds : [Text]) : Result.Result<Action.Action, { #notAvailable }> {
-            let ?action = actions.get(actionId) else Debug.trap("Action not found: " # actionId);
-            if (Array.indexOf(actionId, avaiableActionIds, Text.equal) == null) {
-                return #err(#notAvailable);
-            };
-            #ok(action);
-        };
-
-        public func getRandomCharacterActionIds() : [Text] {
-            let count = 3; // TODO
-            let character = characterHandler.get();
-
-            let allActionIds = Character.getActionIds(character, classes, races, items, weapons);
-
-            prng.shuffleBuffer(allActionIds);
-
-            allActionIds.vals()
-            |> IterTools.take(_, count)
-            |> Iter.toArray(_);
         };
 
         public func getCharacter() : Character.Character {
             characterHandler.get();
         };
 
-        public func getRandomCreature(kind : ScenarioMetaData.CombatCreatureKind) : Scenario.CreatureCombatState {
-            let creatureIds = switch (kind) {
-                case (#id(id)) [id];
-                case (#filter(filter)) {
-                    let creatureFilter = switch (filter.location) {
-                        case (#any) func(_ : Creature.Creature) : Bool = true;
-                        case (#common) func(c : Creature.Creature) : Bool = c.location == #common;
-                        case (#zone(zoneId)) func(c : Creature.Creature) : Bool = switch (c.location) {
-                            case (#zoneIds(zoneIds)) Array.indexOf(zoneId, zoneIds, Text.equal) != null;
-                            case (_) false;
-                        };
-                    };
-                    creatures.vals()
-                    |> Iter.filter(_, creatureFilter)
-                    |> Iter.map(_, func(c : Creature.Creature) : Text = c.id)
-                    |> Iter.toArray(_);
-                };
-            };
-            let selectedCreatureId = prng.nextArrayElement(creatureIds);
-            let ?creature = creatures.get(selectedCreatureId) else Debug.trap("Creature not found: " # selectedCreatureId);
-            {
-                creatureId = selectedCreatureId;
-                health = creature.health;
-                maxHealth = creature.maxHealth;
-                shield = 0;
-                statusEffects = [];
-                availableActionIds = creature.actionIds;
-            };
-        };
-
         public func meetsCondition(condition : ScenarioMetaData.Condition) : Bool {
             let character = characterHandler.get();
             switch (condition) {
                 case (#hasGold(amountValue)) {
-                    let amount = getNatValue(prng, amountValue, scenario.data);
+                    let amount = getNatValue(prng, amountValue, gameContent.scenario.data);
                     character.gold >= amount;
                 };
                 case (#hasItem(itemValue)) {
-                    let itemId = getTextValue(prng, itemValue, scenario.data);
+                    let itemId = getTextValue(prng, itemValue, gameContent.scenario.data);
                     character.inventorySlots.vals()
                     |> IterTools.any(_, func(slot : { itemId : ?Text }) : Bool = slot.itemId == ?itemId);
                 };
@@ -555,17 +366,17 @@ module {
         } {
             switch (effect) {
                 case (#damage(amount)) {
-                    let damageAmount = getNatValue(prng, amount, scenario.data);
+                    let damageAmount = getNatValue(prng, amount, gameContent.scenario.data);
                     switch (damageCharacter(damageAmount)) {
                         case (#alive) ();
                         case (#dead) return #dead;
                     };
                 };
                 case (#heal(amount)) {
-                    heal(getNatValue(prng, amount, scenario.data));
+                    heal(getNatValue(prng, amount, gameContent.scenario.data));
                 };
                 case (#removeGold(amount)) {
-                    ignore removeGold(getNatValue(prng, amount, scenario.data));
+                    ignore removeGold(getNatValue(prng, amount, gameContent.scenario.data));
                 };
                 case (#addItem(item)) {
                     switch (item) {
@@ -573,7 +384,7 @@ module {
                             // TODO
                         };
                         case (#specific(itemId)) {
-                            ignore addItem(getTextValue(prng, itemId, scenario.data));
+                            ignore addItem(getTextValue(prng, itemId, gameContent.scenario.data));
                         };
                     };
                 };
@@ -587,7 +398,7 @@ module {
                             };
                         };
                         case (#specific(specific)) {
-                            let itemId = getTextValue(prng, specific, scenario.data);
+                            let itemId = getTextValue(prng, specific, gameContent.scenario.data);
                             ignore removeItem(itemId, false);
                         };
                     };

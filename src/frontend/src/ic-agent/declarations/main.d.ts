@@ -50,6 +50,11 @@ export interface Block {
   'min' : bigint,
   'timing' : ActionTimingKind,
 }
+export interface BlockLogEntry {
+  'shield' : bigint,
+  'source' : TargetKind,
+  'target' : TargetKind,
+}
 export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
@@ -106,12 +111,20 @@ export type CombatCreatureLocationFilter = { 'any' : null } |
   { 'zone' : string } |
   { 'common' : null };
 export interface CombatDefeatResult { 'creatures' : Array<CreatureCombatState> }
+export type CombatLogEntry = { 'damage' : DamageLogEntry } |
+  { 'heal' : HealLogEntry } |
+  { 'block' : BlockLogEntry } |
+  { 'statusEffect' : StatusEffectLogEntry };
 export interface CombatPath { 'creatures' : Array<CombatCreatureKind> }
+export type CombatResultKind = { 'defeat' : CombatDefeatResult } |
+  { 'victory' : CombatVictoryResult } |
+  { 'inProgress' : CombatScenarioState };
 export interface CombatScenarioState {
   'character' : CharacterCombatState,
   'creatures' : Array<CreatureCombatState>,
 }
 export type CombatTurn = {};
+export interface CombatVictoryResult { 'characterHealth' : bigint }
 export interface CompletedGameStateWithMetaData {
   'endTime' : Time,
   'character' : CharacterWithMetaData,
@@ -178,6 +191,11 @@ export interface Damage {
   'max' : bigint,
   'min' : bigint,
   'timing' : ActionTimingKind,
+}
+export interface DamageLogEntry {
+  'damage' : bigint,
+  'source' : TargetKind,
+  'target' : TargetKind,
 }
 export type Difficulty = { 'normal' : null } |
   { 'easy' : null } |
@@ -248,6 +266,11 @@ export interface Heal {
   'max' : bigint,
   'min' : bigint,
   'timing' : ActionTimingKind,
+}
+export interface HealLogEntry {
+  'source' : TargetKind,
+  'heal' : bigint,
+  'target' : TargetKind,
 }
 export interface HttpRequest {
   'url' : string,
@@ -416,9 +439,10 @@ export type ScenarioChoiceResultKind = { 'reward' : RewardScenarioState } |
   { 'complete' : null } |
   { 'choice' : ChoiceScenarioState } |
   { 'death' : null };
-export type ScenarioCombatResult = { 'defeat' : CombatDefeatResult } |
-  { 'victory' : null } |
-  { 'inProgress' : CombatScenarioState };
+export interface ScenarioCombatResult {
+  'log' : Array<CombatLogEntry>,
+  'kind' : CombatResultKind,
+}
 export interface ScenarioMetaData {
   'id' : string,
   'data' : Array<GeneratedDataField>,
@@ -471,14 +495,23 @@ export interface StatusEffect {
   'kind' : StatusEffectKind,
 }
 export type StatusEffectKind = { 'retaliating' : Retaliating } |
+  { 'brittle' : null } |
   { 'weak' : null } |
   { 'vulnerable' : null } |
+  { 'necrotic' : null } |
   { 'stunned' : null };
 export type StatusEffectKind__1 = { 'retaliating' : Retaliating } |
+  { 'brittle' : null } |
   { 'weak' : null } |
   { 'vulnerable' : null } |
+  { 'necrotic' : null } |
   { 'stunned' : null } |
   { 'periodic' : PeriodicEffectResult };
+export interface StatusEffectLogEntry {
+  'source' : TargetKind,
+  'target' : TargetKind,
+  'statusEffect' : StatusEffectResult,
+}
 export interface StatusEffectResult {
   'kind' : StatusEffectKind__1,
   'remainingTurns' : bigint,
@@ -492,6 +525,9 @@ export interface SwapWeaponOutcomeEffect {
   'removedWeaponId' : string,
   'weaponId' : string,
 }
+export type TargetKind = { 'creature' : bigint } |
+  { 'character' : null } |
+  { 'periodicEffect' : null };
 export type TextValue = { 'raw' : string } |
   { 'dataField' : string } |
   { 'weighted' : Array<[string, number]> };

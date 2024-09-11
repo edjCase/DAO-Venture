@@ -19,6 +19,10 @@
           🐁
         {:else if "vulnerable" in effect.kind}
           🎯
+        {:else if "brittle" in effect.kind}
+          🔨
+        {:else if "necrotic" in effect.kind}
+          💉
         {:else if "retaliating" in effect.kind}
           🦔
         {:else if "stunned" in effect.kind}

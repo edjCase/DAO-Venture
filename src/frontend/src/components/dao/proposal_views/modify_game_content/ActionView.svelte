@@ -29,6 +29,10 @@
               Vulnerable
             {:else if "stunned" in effect.kind.addStatusEffect.kind}
               Stunned
+            {:else if "brittle" in effect.kind.addStatusEffect.kind}
+              Brittle
+            {:else if "necrotic" in effect.kind.addStatusEffect.kind}
+              Necrotic
             {:else}
               NOT IMPLEMENTED ADD STATUS EFFECT KIND: {toJsonString(
                 effect.kind.addStatusEffect.kind
