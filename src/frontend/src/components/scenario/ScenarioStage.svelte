@@ -15,7 +15,7 @@
     if ("text" in effect) {
       acc.push([effect]);
     } else {
-      let currentIsText = "text" in acc[acc.length - 1][0];
+      let currentIsText = acc.length == 0 || "text" in acc[acc.length - 1][0];
       if (!currentIsText) {
         // current is not text, so add to the current row
         acc[acc.length - 1].push(effect);
