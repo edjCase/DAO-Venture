@@ -22,7 +22,7 @@ module {
         #character;
     };
 
-    public type StatusEffectKind = Action.StatusEffectKind or {
+    public type StatusEffectResultKind = Action.StatusEffectKind or {
         #periodic : PeriodicEffectResult;
     };
 
@@ -39,7 +39,7 @@ module {
     };
 
     public type StatusEffectResult = {
-        kind : StatusEffectKind;
+        kind : StatusEffectResultKind;
         remainingTurns : Nat;
     };
 };

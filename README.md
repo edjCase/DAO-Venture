@@ -1,38 +1,41 @@
-# DAOtowns
+# DAO-Venture
 
 ## Introduction
-TODO
 
-## Logic
-- If town health is 0, the population will decrease
-- If town health is 100+, the population will increase
-- Population is capped based on the city size and the total level of users in the town
-- All events trigger every 24 hours after genesis, refered to as a 'tick'
-- Regenerative resources (wood, food) regenerate after every tick based on their current amount, with a cap on resources. Low regen with low amounts, high regen at med-high amounts, and low at high amounts
-- Non regenerative resources (stone, gold) will NOT regenerate after ticks, but rather have a difficulty that will go up (linearly) which will reduce that resource haul that tick, with a minimum of 1 on high difficulty
-- Towns can assign to jobs their population by setting worker quota (1 worker = 1 population), the max amount of workers to go there. Will proportionally divide the workers between the quota sizes
-- Citizens/population not assigned a job will do nothing
-- Every tick each town will consume food equal to its population count
-- City size can increase with an upgrade to the city, costing resources
-- City sizes larger than 0 require maintenance costs per tick of wood and stone, the larger the more costs
+DAO-Venture is an innovative, community-driven roguelite adventure game built and maintained by a Decentralized Autonomous Organization (DAO). Set in an ancient fantasy world filled with mysterious ruins, magical creatures, and forgotten lore, DAO-Venture offers a unique gaming experience that combines elements of text-based adventures, simple pixel art visuals, and strategic decision-making.
+
+Key Features:
+
+- Text-based adventure with simple pixel art visuals for each scenario
+- Linear progression through randomized scenarios specific to each section
+- FTL-inspired decision-making and progression system
+- Simple combat with a randomized subset of abilities to choose each turn
+- Multiple themed sections (e.g., Enchanted Forest, Ancient Ruins, Mystic Caves)
+- Character development through unlockable races, classes, traits, and items
+- DAO-managed game development and token distribution
+- NFT integration for achievements and milestones
+
+Players navigate through diverse areas, overcoming challenges and making critical decisions to reach the Forgotten Citadel. In this final area, they face ultimate trials and make choices that reshape the game world.
 
 ## Development Status
-DAOtowns is currently in its early development stages. We encourage the community to follow our progress, provide feedback, and contribute to this unique project.
+
+DAO-Venture is currently in its early development stages. We encourage the community to follow our progress, provide feedback, and contribute to this unique project.
 
 ## Follow Us
-- **Website**: [daoball.xyz](https://daoball.xyz)
-- **Twitter**: [@daoballxyz](https://twitter.com/daoballxyz)
 
-We welcome your ideas, feedback, and contributions to make DAOball an inclusive, transparent, and community-driven endeavor.
+- **Twitter**: [@daoventure_game](https://twitter.com/daoventure_game)
+
+We welcome your ideas, feedback, and contributions to make DAO-Venture an inclusive, transparent, and community-driven endeavor.
 
 ---
 
-# Basic Usage (** marks first run only)
+# Basic Usage (\*\* marks first run only)
+
 - Run dfx `dfx start --background`
-- ** Install [mops](https://mops.one) `npm i -g ic-mops` 
-- ** Install mops packages `mops install`
+- \*\* Install [mops](https://mops.one) `npm i -g ic-mops`
+- \*\* Install mops packages `mops install`
 - Deploy canisters `npm run deploy`
 - Change to frontend directory `src/frontend`
-- ** Install npm packages `npm install`
+- \*\* Install npm packages `npm install`
 - Run `npm run dev`
-- https://localhost:8080 in the browswer
+- https://localhost:8080 in the browser

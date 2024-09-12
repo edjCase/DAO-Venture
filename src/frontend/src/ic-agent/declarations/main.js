@@ -412,7 +412,7 @@ export const idlFactory = ({ IDL }) => {
     'phase' : TurnPhase,
     'amount' : IDL.Nat,
   });
-  const StatusEffectKind__1 = IDL.Variant({
+  const StatusEffectResultKind = IDL.Variant({
     'retaliating' : Retaliating,
     'brittle' : IDL.Null,
     'weak' : IDL.Null,
@@ -422,22 +422,22 @@ export const idlFactory = ({ IDL }) => {
     'periodic' : PeriodicEffectResult,
   });
   const StatusEffectResult = IDL.Record({
-    'kind' : StatusEffectKind__1,
+    'kind' : StatusEffectResultKind,
     'remainingTurns' : IDL.Nat,
   });
   const CharacterCombatState = IDL.Record({
-    'shield' : IDL.Nat,
     'statusEffects' : IDL.Vec(StatusEffectResult),
     'maxHealth' : IDL.Nat,
     'availableActionIds' : IDL.Vec(IDL.Text),
+    'block' : IDL.Nat,
     'health' : IDL.Nat,
   });
   const CreatureCombatState = IDL.Record({
-    'shield' : IDL.Nat,
     'statusEffects' : IDL.Vec(StatusEffectResult),
     'maxHealth' : IDL.Nat,
     'availableActionIds' : IDL.Vec(IDL.Text),
     'creatureId' : IDL.Text,
+    'block' : IDL.Nat,
     'health' : IDL.Nat,
   });
   const CombatScenarioState = IDL.Record({
@@ -485,19 +485,19 @@ export const idlFactory = ({ IDL }) => {
     'periodicEffect' : IDL.Null,
   });
   const DamageLogEntry = IDL.Record({
-    'damage' : IDL.Nat,
     'source' : TargetKind,
     'target' : TargetKind,
+    'amount' : IDL.Nat,
   });
   const HealLogEntry = IDL.Record({
     'source' : TargetKind,
-    'heal' : IDL.Nat,
     'target' : TargetKind,
+    'amount' : IDL.Nat,
   });
   const BlockLogEntry = IDL.Record({
-    'shield' : IDL.Nat,
     'source' : TargetKind,
     'target' : TargetKind,
+    'amount' : IDL.Nat,
   });
   const StatusEffectLogEntry = IDL.Record({
     'source' : TargetKind,

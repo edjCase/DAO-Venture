@@ -56,19 +56,19 @@ module {
     public type DamageLogEntry = {
         source : TargetKind;
         target : TargetKind;
-        damage : Nat;
+        amount : Nat;
     };
 
     public type HealLogEntry = {
         source : TargetKind;
         target : TargetKind;
-        heal : Nat;
+        amount : Nat;
     };
 
     public type BlockLogEntry = {
         source : TargetKind;
         target : TargetKind;
-        shield : Nat;
+        amount : Nat;
     };
 
     public type StatusEffectLogEntry = {
@@ -127,7 +127,7 @@ module {
     public type CharacterCombatState = {
         health : Nat;
         maxHealth : Nat;
-        shield : Nat;
+        block : Nat;
         statusEffects : [ActionResult.StatusEffectResult];
         availableActionIds : [Text];
     };

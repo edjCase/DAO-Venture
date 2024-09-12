@@ -40,9 +40,7 @@
   <DotsVerticalOutline class="dots-menu dark:text-white float-right " />
   <Dropdown triggeredBy=".dots-menu">
     <DropdownItem>
-      <LoadingButton color="red" onClick={cancelGame}>
-        Cancel Game
-      </LoadingButton>
+      <LoadingButton color="red" onClick={cancelGame}>Forfeit</LoadingButton>
     </DropdownItem>
   </Dropdown>
 </div>

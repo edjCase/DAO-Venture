@@ -5,7 +5,10 @@
     ScenarioStageResult,
   } from "../../ic-agent/declarations/main";
   import { toJsonString } from "../../utils/StringUtil";
+  import GameIcon from "../game/GameIcon.svelte";
+  import CombatTarget from "./CombatTarget.svelte";
   import ScenarioOutcomeEffect from "./ScenarioOutcomeEffect.svelte";
+  import StatusEffect from "./StatusEffect.svelte";
 
   export let stage: ScenarioStageResult;
   export let scenarioMetaData: ScenarioMetaData;
@@ -44,22 +47,21 @@
     {#each stage.kind.combat.log as logEntry}
       <div>
         {#if "damage" in logEntry}
-          DAMAGE {logEntry.damage.damage} to {toJsonString(
-            logEntry.damage.target
-          )} by
-          {toJsonString(logEntry.damage.source)}
+          {logEntry.damage.amount}<GameIcon value="damage" /> to
+          <CombatTarget value={logEntry.damage.target} /> by
+          <CombatTarget value={logEntry.damage.source} />
         {:else if "heal" in logEntry}
-          HEAL {logEntry.heal.heal} to {toJsonString(logEntry.heal.target)} by {toJsonString(
-            logEntry.heal.source
-          )}
+          {logEntry.heal.amount}<GameIcon value="heal" /> to
+          <CombatTarget value={logEntry.heal.target} /> by
+          <CombatTarget value={logEntry.heal.source} />
         {:else if "block" in logEntry}
-          BLOCK {logEntry.block.shield} to {toJsonString(logEntry.block.target)}
-          by
-          {toJsonString(logEntry.block.source)}
+          {logEntry.block.amount}<GameIcon value="block" /> to
+          <CombatTarget value={logEntry.block.target} /> by
+          <CombatTarget value={logEntry.block.source} />
         {:else if "statusEffect" in logEntry}
-          STATUS EFFECT {toJsonString(logEntry.statusEffect.statusEffect)} to {toJsonString(
-            logEntry.statusEffect.target
-          )} by {toJsonString(logEntry.statusEffect.source)}
+          <StatusEffect value={logEntry.statusEffect.statusEffect} /> to
+          <CombatTarget value={logEntry.statusEffect.target} /> by
+          <CombatTarget value={logEntry.statusEffect.source} />
         {:else}
           NOT IMPLEMENTED LOG ENTRY TYPE {toJsonString(logEntry)}
         {/if}

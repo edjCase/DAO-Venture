@@ -26,7 +26,7 @@ module {
     public type CombatStats = {
         var health : Nat;
         var maxHealth : Nat;
-        var shield : Nat;
+        var block : Nat;
         var statusEffects : Buffer.Buffer<ActionResult.StatusEffectResult>;
     };
     public type CombatChoice = {
@@ -58,7 +58,7 @@ module {
             character = {
                 health = character.health;
                 maxHealth = character.maxHealth;
-                shield = 0;
+                block = 0;
                 statusEffects = [];
                 availableActionIds = newActionIds;
             };
@@ -78,7 +78,7 @@ module {
         let characterCombatStats : CombatStats = {
             var health = state.character.health;
             var maxHealth = state.character.maxHealth;
-            var shield = state.character.shield;
+            var block = state.character.block;
             var statusEffects = Buffer.fromArray(state.character.statusEffects);
         };
         let creatureCombatStats = state.creatures.vals()
@@ -88,7 +88,7 @@ module {
                 {
                     var health = c.health;
                     var maxHealth = c.maxHealth;
-                    var shield = c.shield;
+                    var block = c.block;
                     var statusEffects = Buffer.fromArray(c.statusEffects);
                 };
             },
@@ -133,7 +133,7 @@ module {
                         creatureState with
                         health = c.health;
                         maxHealth = c.maxHealth;
-                        shield = c.shield;
+                        block = c.block;
                         statusEffects = Buffer.toArray(c.statusEffects);
                     };
                 },
@@ -212,7 +212,7 @@ module {
                 character = {
                     health = characterCombatStats.health;
                     maxHealth = characterCombatStats.maxHealth;
-                    shield = characterCombatStats.shield;
+                    block = characterCombatStats.block;
                     statusEffects = Buffer.toArray(characterCombatStats.statusEffects);
                     availableActionIds = newActionIds;
                 };
@@ -254,7 +254,7 @@ module {
             creatureId = selectedCreatureId;
             health = creature.health;
             maxHealth = creature.maxHealth;
-            shield = 0;
+            block = 0;
             statusEffects = [];
             availableActionIds = creature.actionIds;
         };
@@ -380,7 +380,7 @@ module {
                                 #damage({
                                     source = source;
                                     target = target;
-                                    damage = periodic.amount;
+                                    amount = periodic.amount;
                                 });
                             };
                             case (#heal) {
@@ -388,7 +388,7 @@ module {
                                 #heal({
                                     source = source;
                                     target = target;
-                                    heal = periodic.amount;
+                                    amount = periodic.amount;
                                 });
                             };
                             case (#block) {
@@ -396,7 +396,7 @@ module {
                                 #block({
                                     source = source;
                                     target = target;
-                                    shield = periodic.amount;
+                                    amount = periodic.amount;
                                 });
                             };
                         };
@@ -411,7 +411,7 @@ module {
         let newEffects = Buffer.Buffer<ActionResult.StatusEffectResult>(combatStats.statusEffects.size());
 
         for (effect in combatStats.statusEffects.vals()) {
-            if (effect.remainingTurns > 0) {
+            if (effect.remainingTurns > 1) {
                 // Decrement the remaining turns and keep the effect
                 newEffects.add({
                     kind = effect.kind;
@@ -431,7 +431,6 @@ module {
         combatLog : Buffer.Buffer<Scenario.CombatLogEntry>,
     ) : () {
         for (effect in action.effects.vals()) {
-            Debug.print("Applying effect: " # debug_show (effect));
             let stats = switch (effect.target) {
                 case (#creature(creatureIndex)) creatures[creatureIndex];
                 case (#character) character;
@@ -442,7 +441,7 @@ module {
                     #damage({
                         source = source;
                         target = effect.target;
-                        damage = damage;
+                        amount = damage;
                     });
                 };
                 case (#block(block)) {
@@ -450,7 +449,7 @@ module {
                     #block({
                         source = source;
                         target = effect.target;
-                        shield = block;
+                        amount = block;
                     });
                 };
                 case (#heal(heal)) {
@@ -458,7 +457,7 @@ module {
                     #heal({
                         source = source;
                         target = effect.target;
-                        heal = heal;
+                        amount = heal;
                     });
                 };
                 case (#addStatusEffect(statusEffectResult)) {
@@ -475,18 +474,18 @@ module {
     };
 
     private func applyDamage(stats : CombatStats, amount : Nat) : () {
-        if (stats.shield >= amount) {
-            // Only damage shield
-            stats.shield := stats.shield - amount;
+        if (stats.block >= amount) {
+            // Only damage block
+            stats.block := stats.block - amount;
         } else {
-            // Destroy shield and damage health
-            stats.shield := 0;
-            stats.health := subtractNatSafe(stats.health, amount - stats.shield);
+            // Destroy block and damage health
+            stats.block := 0;
+            stats.health := subtractNatSafe(stats.health, amount - stats.block);
         };
     };
 
     private func applyBlock(stats : CombatStats, amount : Nat) : () {
-        stats.shield += amount;
+        stats.block += amount;
     };
 
     private func applyHeal(stats : CombatStats, amount : Nat) : () {
@@ -494,7 +493,26 @@ module {
     };
 
     private func applyStatusEffect(stats : CombatStats, statusEffectResult : ActionResult.StatusEffectResult) : () {
-        stats.statusEffects.add(statusEffectResult);
+        let existingEffectIndex = Buffer.indexOf(
+            statusEffectResult,
+            stats.statusEffects,
+            func(a : ActionResult.StatusEffectResult, b : ActionResult.StatusEffectResult) : Bool = a.kind == b.kind,
+        );
+        switch (existingEffectIndex) {
+            case (null) stats.statusEffects.add(statusEffectResult);
+            case (?index) {
+                // Add the remaining turns of the new effect to the existing one
+                let currentTurns = stats.statusEffects.get(index).remainingTurns;
+                let newTurns = currentTurns + statusEffectResult.remainingTurns;
+                stats.statusEffects.put(
+                    index,
+                    {
+                        stats.statusEffects.get(index) with
+                        remainingTurns = newTurns;
+                    },
+                );
+            };
+        };
     };
 
     private func subtractNatSafe(a : Nat, b : Nat) : Nat {
@@ -551,7 +569,7 @@ module {
         prng.nextNat(amount.min, amount.max);
     };
 
-    private func hasEffect(stats : CombatStats, effect : ActionResult.StatusEffectKind) : Bool {
+    private func hasEffect(stats : CombatStats, effect : ActionResult.StatusEffectResultKind) : Bool {
         stats.statusEffects.vals()
         |> IterTools.any(
             _,

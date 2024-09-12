@@ -13,6 +13,7 @@
   import { creatureStore } from "../../stores/CreatureStore";
   import ScenarioCombatStats from "./ScenarioCombatStats.svelte";
   import { toJsonString } from "../../utils/StringUtil";
+  import ActionEffect from "./ActionEffect.svelte";
 
   export let combatState: CombatScenarioState;
 
@@ -212,6 +213,15 @@
             )}
           {/if}
         </p>
+        <div class="flex flex-col justify-center">
+          {#if action.effects.length > 0}
+            {#each action.effects as effect}
+              <div>
+                <ActionEffect value={effect} />
+              </div>
+            {/each}
+          {/if}
+        </div>
       </div>
     {/each}
   </div>

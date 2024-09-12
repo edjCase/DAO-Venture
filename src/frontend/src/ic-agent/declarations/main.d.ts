@@ -51,19 +51,19 @@ export interface Block {
   'timing' : ActionTimingKind,
 }
 export interface BlockLogEntry {
-  'shield' : bigint,
   'source' : TargetKind,
   'target' : TargetKind,
+  'amount' : bigint,
 }
 export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
 }
 export interface CharacterCombatState {
-  'shield' : bigint,
   'statusEffects' : Array<StatusEffectResult>,
   'maxHealth' : bigint,
   'availableActionIds' : Array<string>,
+  'block' : bigint,
   'health' : bigint,
 }
 export interface CharacterWithMetaData {
@@ -175,11 +175,11 @@ export interface Creature {
   'health' : bigint,
 }
 export interface CreatureCombatState {
-  'shield' : bigint,
   'statusEffects' : Array<StatusEffectResult>,
   'maxHealth' : bigint,
   'availableActionIds' : Array<string>,
   'creatureId' : string,
+  'block' : bigint,
   'health' : bigint,
 }
 export type CreatureKind = { 'normal' : null } |
@@ -193,9 +193,9 @@ export interface Damage {
   'timing' : ActionTimingKind,
 }
 export interface DamageLogEntry {
-  'damage' : bigint,
   'source' : TargetKind,
   'target' : TargetKind,
+  'amount' : bigint,
 }
 export type Difficulty = { 'normal' : null } |
   { 'easy' : null } |
@@ -269,8 +269,8 @@ export interface Heal {
 }
 export interface HealLogEntry {
   'source' : TargetKind,
-  'heal' : bigint,
   'target' : TargetKind,
+  'amount' : bigint,
 }
 export interface HttpRequest {
   'url' : string,
@@ -500,22 +500,22 @@ export type StatusEffectKind = { 'retaliating' : Retaliating } |
   { 'vulnerable' : null } |
   { 'necrotic' : null } |
   { 'stunned' : null };
-export type StatusEffectKind__1 = { 'retaliating' : Retaliating } |
-  { 'brittle' : null } |
-  { 'weak' : null } |
-  { 'vulnerable' : null } |
-  { 'necrotic' : null } |
-  { 'stunned' : null } |
-  { 'periodic' : PeriodicEffectResult };
 export interface StatusEffectLogEntry {
   'source' : TargetKind,
   'target' : TargetKind,
   'statusEffect' : StatusEffectResult,
 }
 export interface StatusEffectResult {
-  'kind' : StatusEffectKind__1,
+  'kind' : StatusEffectResultKind,
   'remainingTurns' : bigint,
 }
+export type StatusEffectResultKind = { 'retaliating' : Retaliating } |
+  { 'brittle' : null } |
+  { 'weak' : null } |
+  { 'vulnerable' : null } |
+  { 'necrotic' : null } |
+  { 'stunned' : null } |
+  { 'periodic' : PeriodicEffectResult };
 export interface StreamingCallbackHttpResponse {
   'token' : [] | [Token],
   'body' : Uint8Array | number[],
