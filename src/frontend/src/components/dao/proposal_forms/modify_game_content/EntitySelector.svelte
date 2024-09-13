@@ -7,7 +7,7 @@
     name: string;
   };
 
-  export let id: string;
+  export let value: string;
   export let store: Readable<Entity[]>;
   export let label: string;
 
@@ -25,9 +25,4 @@
 </script>
 
 <Label>{label}</Label>
-<Select
-  items={options}
-  bind:value={id}
-  placeholder={"Select " + label}
-  size="lg"
-/>
+<Select items={options} bind:value placeholder={"Select " + label} size="lg" />

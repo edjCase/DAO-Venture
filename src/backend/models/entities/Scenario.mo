@@ -96,13 +96,8 @@ module {
     };
 
     public type ScenarioStateKind = {
-        #inProgress : InProgressScenarioState;
+        #inProgress : InProgressScenarioStateKind;
         #completed;
-    };
-
-    public type InProgressScenarioState = {
-        kind : InProgressScenarioStateKind;
-        nextPathOptions : [ScenarioMetaData.WeightedScenarioPathOption];
     };
 
     public type InProgressScenarioStateKind = {
@@ -118,17 +113,19 @@ module {
     public type Choice = {
         id : Text;
         description : Text;
-        data : [GeneratedDataFieldInstance];
         effects : [ScenarioMetaData.Effect];
+        nextPath : ScenarioMetaData.NextPathKind;
     };
 
     public type CombatScenarioState = {
         character : CharacterCombatState;
         creatures : [CreatureCombatState];
+        nextPath : ScenarioMetaData.NextPathKind;
     };
 
     public type RewardScenarioState = {
         options : [RewardKind];
+        nextPath : ScenarioMetaData.NextPathKind;
     };
 
     public type RewardKind = {
@@ -189,16 +186,6 @@ module {
 
     public type HitResult = {
         damage : Nat;
-    };
-
-    public type GeneratedDataFieldInstance = {
-        id : Text;
-        value : GeneratedDataFieldInstanceValue;
-    };
-
-    public type GeneratedDataFieldInstanceValue = {
-        #nat : Nat;
-        #text : Text;
     };
 
 };

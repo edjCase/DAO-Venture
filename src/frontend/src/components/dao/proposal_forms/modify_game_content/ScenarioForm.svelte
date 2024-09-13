@@ -10,24 +10,18 @@
   import {
     CreateWorldProposalRequest,
     ScenarioMetaData,
-    GeneratedDataField,
-    Choice,
     ScenarioPath,
     LocationKind,
     ScenarioCategory,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
-  import ChoiceForm from "./ChoiceForm.svelte";
   import ScenarioPathForm from "./ScenarioPathForm.svelte";
-  import GeneratedDataFieldForm from "./GeneratedDataFieldForm.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
   let imageId: string | undefined;
-  let data: GeneratedDataField[] = [];
-  let choices: Choice[] = [];
   let paths: ScenarioPath[] = [];
   let location: LocationKind = { common: null };
   let category: ScenarioCategory = { other: null };
@@ -47,32 +41,15 @@
 
   let zoneIds: string[] = [];
 
-  function addDataField() {
-    data = [
-      ...data,
-      { id: "", name: "", value: { nat: { min: 0n, max: 0n } } },
-    ];
-  }
-
-  function removeDataField(index: number) {
-    data = data.filter((_, i) => i !== index);
-  }
-
-  function addChoice() {
-    choices = [
-      ...choices,
-      { id: "", description: "", pathId: "", requirement: [] },
-    ];
-  }
-
-  function removeChoice(index: number) {
-    choices = choices.filter((_, i) => i !== index);
-  }
-
   function addPath() {
     paths = [
       ...paths,
-      { id: "", kind: { effects: [] }, description: "", paths: [] },
+      {
+        id: "",
+        kind: { choice: { choices: [] } },
+        description: "",
+        nextPathOptions: [],
+      },
     ];
   }
 
@@ -98,8 +75,6 @@
       name,
       description,
       imageId,
-      data,
-      choices,
       paths,
       location,
       category,
@@ -154,44 +129,6 @@
         bind:value={imageId}
         placeholder="epic_battle_image"
       />
-    </div>
-
-    <div>
-      <Label>Generated Data Fields</Label>
-      {#each data as field, index}
-        <GeneratedDataFieldForm bind:value={field} />
-        <button
-          class="mt-2 bg-red-500 text-white px-2 py-1 rounded"
-          on:click={() => removeDataField(index)}
-        >
-          Remove Data Field
-        </button>
-      {/each}
-      <button
-        class="bg-blue-500 text-white px-4 py-2 rounded"
-        on:click={addDataField}
-      >
-        Add Data Field
-      </button>
-    </div>
-
-    <div>
-      <Label>Choices</Label>
-      {#each choices as choice, index}
-        <ChoiceForm bind:value={choice} />
-        <button
-          class="mt-2 bg-red-500 text-white px-2 py-1 rounded"
-          on:click={() => removeChoice(index)}
-        >
-          Remove Choice
-        </button>
-      {/each}
-      <button
-        class="bg-blue-500 text-white px-4 py-2 rounded"
-        on:click={addChoice}
-      >
-        Add Choice
-      </button>
     </div>
 
     <div>

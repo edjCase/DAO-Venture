@@ -257,7 +257,7 @@
     <div>
       <Label for="upgradedActionId">Upgraded Action Id</Label>
       <EntitySelector
-        bind:id={upgradedActionId}
+        bind:value={upgradedActionId}
         store={actionStore}
         label="Upgraded Action"
       />

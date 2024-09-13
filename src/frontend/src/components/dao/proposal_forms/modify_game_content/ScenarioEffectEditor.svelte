@@ -21,7 +21,7 @@
   <RandomOrSpecificTextValueChooser bind:value={value.removeItem} />
 {:else if "achievement" in value}
   <EntitySelector
-    bind:id={value.achievement}
+    bind:value={value.achievement}
     store={achievementStore}
     label="Achievement"
   />

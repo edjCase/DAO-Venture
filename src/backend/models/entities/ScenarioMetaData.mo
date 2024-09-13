@@ -40,7 +40,6 @@ module {
         id : Text;
         description : Text;
         kind : ScenarioPathKind;
-        nextPathOptions : [WeightedScenarioPathOption];
     };
 
     public type ScenarioPathKind = {
@@ -56,18 +55,29 @@ module {
     public type Choice = {
         id : Text;
         description : Text;
-        data : [GeneratedDataField];
         effects : [Effect];
         requirement : ?ChoiceRequirement;
+        nextPath : NextPathKind;
     };
 
     public type CombatPath = {
         creatures : [CombatCreatureKind];
+        nextPath : NextPathKind;
     };
 
     public type RewardPath = {
+        kind : RewardPathKind;
+        nextPath : NextPathKind;
+    };
+    public type RewardPathKind = {
         #random;
         #specificItemIds : [Text];
+    };
+
+    public type NextPathKind = {
+        #single : Text;
+        #random : [WeightedScenarioPathOption];
+        #none;
     };
 
     public type CombatCreatureKind = {
@@ -87,28 +97,7 @@ module {
 
     public type WeightedScenarioPathOption = {
         weight : Float;
-        condition : ?Condition;
         pathId : Text;
-    };
-
-    public type GeneratedDataField = {
-        id : Text;
-        name : Text;
-        value : GeneratedDataFieldValue;
-    };
-
-    public type GeneratedDataFieldValue = {
-        #nat : GeneratedDataFieldNat;
-        #text : GeneratedDataFieldText;
-    };
-
-    public type GeneratedDataFieldNat = {
-        min : Nat;
-        max : Nat;
-    };
-
-    public type GeneratedDataFieldText = {
-        options : [(Text, Float)];
     };
 
     public type Effect = {
@@ -128,18 +117,11 @@ module {
     public type NatValue = {
         #raw : Nat;
         #random : (Nat, Nat);
-        #dataField : Text;
     };
 
     public type TextValue = {
         #raw : Text;
         #weighted : [(Text, Float)];
-        #dataField : Text;
-    };
-
-    public type Condition = {
-        #hasGold : Nat;
-        #hasItem : Text;
     };
 
     public type ChoiceRequirement = {
@@ -204,6 +186,7 @@ module {
 
             switch (path.kind) {
                 case (#combat(combat)) {
+                    validateNextPath(combat.nextPath, pathIdMap, errors);
                     for (creature in combat.creatures.vals()) {
                         switch (creature) {
                             case (#id(id)) {
@@ -233,25 +216,20 @@ module {
                         if (choiceIdMap.replace(choice.id, ()) == ?()) {
                             errors.add("Duplicate choice id: " # choice.id);
                         };
+                        validateNextPath(choice.nextPath, pathIdMap, errors);
                         switch (choice.requirement) {
                             case (?requirement) validateRequirement(requirement, items, errors);
                             case (null) {};
                         };
-                        // Check data fields
-                        let dataFieldIdMap = HashMap.HashMap<Text, GeneratedDataField>(choice.data.size(), Text.equal, Text.hash);
-                        for (field in choice.data.vals()) {
-                            if (dataFieldIdMap.replace(field.id, field) != null) {
-                                errors.add("Duplicate data field id: " # field.id);
-                            };
-                        };
                         for (effect in choice.effects.vals()) {
-                            validateEffect(effect, items, achievements, dataFieldIdMap, errors);
+                            validateEffect(effect, items, achievements, errors);
                         };
 
                     };
                 };
                 case (#reward(reward)) {
-                    switch (reward) {
+                    validateNextPath(reward.nextPath, pathIdMap, errors);
+                    switch (reward.kind) {
                         case (#random) {};
                         case (#specificItemIds(itemIds)) {
                             for (itemId in itemIds.vals()) {
@@ -265,18 +243,32 @@ module {
             };
         };
 
-        for (path in metaData.paths.vals()) {
-            for (nextPath in path.nextPathOptions.vals()) {
-                if (pathIdMap.get(nextPath.pathId) == null) {
-                    errors.add("Invalid pathId in path: " # nextPath.pathId);
-                };
-            };
-        };
-
         if (errors.size() > 0) {
             #err(Buffer.toArray(errors));
         } else {
             #ok();
+        };
+    };
+
+    func validateNextPath(
+        nextPath : NextPathKind,
+        pathIdMap : HashMap.HashMap<Text, ScenarioPath>,
+        errors : Buffer.Buffer<Text>,
+    ) {
+        switch (nextPath) {
+            case (#single(pathId)) {
+                if (pathIdMap.get(pathId) == null) {
+                    errors.add("Invalid path id: " # pathId);
+                };
+            };
+            case (#random(weightedPaths)) {
+                for (weightedPath in weightedPaths.vals()) {
+                    if (pathIdMap.get(weightedPath.pathId) == null) {
+                        errors.add("Invalid path id: " # weightedPath.pathId);
+                    };
+                };
+            };
+            case (#none) ();
         };
     };
 
@@ -296,14 +288,53 @@ module {
                     errors.add("Invalid path id: " # pathId);
                     return false;
                 };
-                for (nextPath in path.nextPathOptions.vals()) {
-                    if (depthFirstSearch(nextPath.pathId, visitedPaths, pathIdMap, errors)) {
-                        return true;
+                switch (path.kind) {
+                    case (#choice(choicePath)) {
+                        for (choice in choicePath.choices.vals()) {
+                            if (depthFirstSearchPathKind(choice.nextPath, visitedPaths, pathIdMap, errors)) {
+                                return true;
+                            };
+                        };
+                    };
+                    case (#combat(combat)) {
+                        if (depthFirstSearchPathKind(combat.nextPath, visitedPaths, pathIdMap, errors)) {
+                            return true;
+                        };
+                    };
+                    case (#reward(reward)) {
+                        if (depthFirstSearchPathKind(reward.nextPath, visitedPaths, pathIdMap, errors)) {
+                            return true;
+                        };
                     };
                 };
                 visitedPaths.put(pathId, true);
                 return false;
             };
+        };
+    };
+
+    func depthFirstSearchPathKind(
+        pathKind : NextPathKind,
+        visitedPaths : HashMap.HashMap<Text, Bool>,
+        pathIdMap : HashMap.HashMap<Text, ScenarioPath>,
+        errors : Buffer.Buffer<Text>,
+    ) : Bool {
+        switch (pathKind) {
+            case (#single(pathId)) {
+                if (visitedPaths.get(pathId) == ?true) {
+                    return true;
+                };
+                depthFirstSearch(pathId, visitedPaths, pathIdMap, errors);
+            };
+            case (#random(weightedPaths)) {
+                for (weightedPath in weightedPaths.vals()) {
+                    if (depthFirstSearch(weightedPath.pathId, visitedPaths, pathIdMap, errors)) {
+                        return true;
+                    };
+                };
+                false;
+            };
+            case (#none) false;
         };
     };
 
@@ -342,7 +373,6 @@ module {
         value : TextValue,
         map : HashMap.HashMap<Text, T>,
         kind : Text,
-        dataFieldIdMap : HashMap.HashMap<Text, GeneratedDataField>,
         errors : Buffer.Buffer<Text>,
     ) {
         switch (value) {
@@ -367,32 +397,12 @@ module {
                     };
                 };
             };
-            case (#dataField(fieldId)) {
-                let ?field = dataFieldIdMap.get(fieldId) else {
-                    errors.add("Invalid data field id: " # fieldId);
-                    return;
-                };
-                let #text(text) = field.value else {
-                    errors.add("Data field " # fieldId # " is not a text field");
-                    return;
-                };
-                validateTextDataField(text, errors);
-            };
-        };
-    };
-
-    func validateTextDataField(text : GeneratedDataFieldText, errors : Buffer.Buffer<Text>) {
-        for ((v, weight) in text.options.vals()) {
-            if (weight <= 0.0) {
-                errors.add("Weights must be greater than 0: " # Float.toText(weight));
-            };
         };
     };
 
     func validateNatValue(
         value : NatValue,
         kind : Text,
-        dataFieldIdMap : HashMap.HashMap<Text, GeneratedDataField>,
         errors : Buffer.Buffer<Text>,
     ) {
         switch (value) {
@@ -402,23 +412,6 @@ module {
                     errors.add("Random " # kind # " min must be less than max: " # Nat.toText(min) # " >= " # Nat.toText(max));
                 };
             };
-            case (#dataField(fieldId)) {
-                let ?field = dataFieldIdMap.get(fieldId) else {
-                    errors.add("Invalid data field id: " # fieldId);
-                    return;
-                };
-                let #nat(nat) = field.value else {
-                    errors.add("Data field " # fieldId # " is not a nat field");
-                    return;
-                };
-                validateNatDataField(nat, errors);
-            };
-        };
-    };
-
-    func validateNatDataField(nat : GeneratedDataFieldNat, errors : Buffer.Buffer<Text>) {
-        if (nat.min >= nat.max) {
-            errors.add("Generated data field min must be less than max: " # Nat.toText(nat.min) # " >= " # Nat.toText(nat.max));
         };
     };
 
@@ -426,25 +419,24 @@ module {
         effect : Effect,
         items : HashMap.HashMap<Text, Item.Item>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
-        dataFieldIdMap : HashMap.HashMap<Text, GeneratedDataField>,
         errors : Buffer.Buffer<Text>,
     ) {
         switch (effect) {
             case (#addItem(addItem)) {
                 switch (addItem) {
                     case (#random) {};
-                    case (#specific(specific)) validateTextValue(specific, items, "item", dataFieldIdMap, errors);
+                    case (#specific(specific)) validateTextValue(specific, items, "item", errors);
                 };
             };
-            case (#removeGold(removeGold)) validateNatValue(removeGold, "gold", dataFieldIdMap, errors);
+            case (#removeGold(removeGold)) validateNatValue(removeGold, "gold", errors);
             case (#removeItem(removeItem)) {
                 switch (removeItem) {
                     case (#random) {};
-                    case (#specific(specific)) validateTextValue(specific, items, "item", dataFieldIdMap, errors);
+                    case (#specific(specific)) validateTextValue(specific, items, "item", errors);
                 };
             };
-            case (#damage(damage)) validateNatValue(damage, "damage", dataFieldIdMap, errors);
-            case (#heal(heal)) validateNatValue(heal, "heal", dataFieldIdMap, errors);
+            case (#damage(damage)) validateNatValue(damage, "damage", errors);
+            case (#heal(heal)) validateNatValue(heal, "heal", errors);
             case (#achievement(achievementId)) {
                 if (TextX.isEmpty(achievementId)) {
                     errors.add("Achievement id cannot be empty");

@@ -45,7 +45,6 @@ module {
 
     public func startCombat(
         prng : Prng,
-        pathId : Text,
         combat : ScenarioMetaData.CombatPath,
         character : Character.Character,
         gameContent : GameContent,
@@ -56,7 +55,6 @@ module {
         };
         let newActionIds = getRandomCharacterActionIds(prng, character, gameContent);
         {
-            pathId = pathId;
             character = {
                 health = character.health;
                 maxHealth = character.maxHealth;
@@ -65,6 +63,7 @@ module {
                 availableActionIds = newActionIds;
             };
             creatures = Buffer.toArray(creatureCombatStats);
+            nextPath = combat.nextPath;
         };
     };
 
@@ -219,6 +218,7 @@ module {
                     availableActionIds = newActionIds;
                 };
                 creatures = newCreatureStates;
+                nextPath = state.nextPath;
             });
 
         };

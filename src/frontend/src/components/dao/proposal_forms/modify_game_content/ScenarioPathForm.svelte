@@ -2,6 +2,7 @@
   import { ScenarioPath } from "../../../../ic-agent/declarations/main";
   import { Input, Label, Textarea, Select } from "flowbite-svelte";
   import ConditionEditor from "./ConditionEditor.svelte";
+  import ChoiceScenarioPathEditor from "./ChoiceScenarioPathEditor.svelte";
 
   export let value: ScenarioPath;
 
@@ -14,20 +15,25 @@
   let selectedCondition: string = conditionOptions[0].value;
 
   function addPath() {
-    value.paths = [...value.paths, { weight: 1, pathId: "", condition: [] }];
+    value.nextPathOptions = [
+      ...value.nextPathOptions,
+      { weight: 1, pathId: "", condition: [] },
+    ];
   }
 
   function removePath(index: number) {
-    value.paths = value.paths.filter((_, i) => i !== index);
+    value.nextPathOptions = value.nextPathOptions.filter((_, i) => i !== index);
   }
 
   let changeCondition = (pathIndex: number) => () => {
     if (selectedCondition === "none") {
-      value.paths[pathIndex].condition = [];
+      value.nextPathOptions[pathIndex].condition = [];
     } else if (selectedCondition === "hasGold") {
-      value.paths[pathIndex].condition = [{ hasGold: { raw: 1n } }];
+      value.nextPathOptions[pathIndex].condition = [{ hasGold: 1n }];
     } else if (selectedCondition === "hasItem") {
-      value.paths[pathIndex].condition = [{ hasItem: { raw: "" } }];
+      value.nextPathOptions[pathIndex].condition = [{ hasItem: "" }];
+    } else if (selectedCondition === "madeChoice") {
+      value.nextPathOptions[pathIndex].condition = [{ madeChoice: "" }];
     }
   };
 </script>
@@ -43,14 +49,14 @@
     placeholder="Describe the outcome..."
   />
 
-  {#if "effects" in value.kind}
-    <Label>Effects</Label>
+  {#if "choice" in value.kind}
+    <ChoiceScenarioPathEditor bind:value={value.kind.choice} />
   {:else if "combat" in value.kind}
     TODO Combat
   {/if}
 
   <Label class="mt-4">Weighted Paths</Label>
-  {#each value.paths as path, index}
+  {#each value.nextPathOptions as path, index}
     <div class="flex gap-2 mt-2">
       <Input type="number" bind:value={path.weight} placeholder="Weight" />
       <Input type="text" bind:value={path.pathId} placeholder="Path ID" />
