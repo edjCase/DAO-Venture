@@ -20,9 +20,7 @@ module {
     public type ScenarioMetaData = Entity.Entity and {
         location : LocationKind;
         imageId : Text;
-        data : [GeneratedDataField];
-        choices : [Choice];
-        paths : [OutcomePath];
+        paths : [ScenarioPath];
         category : ScenarioCategory;
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
@@ -38,44 +36,29 @@ module {
         #zoneIds : [Text];
     };
 
-    public type GeneratedDataField = {
+    public type ScenarioPath = {
         id : Text;
-        name : Text;
-        value : GeneratedDataFieldValue;
+        description : Text;
+        kind : ScenarioPathKind;
+        nextPathOptions : [WeightedScenarioPathOption];
     };
 
-    public type GeneratedDataFieldValue = {
-        #nat : GeneratedDataFieldNat;
-        #text : GeneratedDataFieldText;
+    public type ScenarioPathKind = {
+        #choice : ChoicePath;
+        #combat : CombatPath;
+        #reward : RewardPath;
     };
 
-    public type GeneratedDataFieldNat = {
-        min : Nat;
-        max : Nat;
-    };
-
-    public type GeneratedDataFieldText = {
-        options : [(Text, Float)];
+    public type ChoicePath = {
+        choices : [Choice];
     };
 
     public type Choice = {
         id : Text;
         description : Text;
-        pathId : Text;
+        data : [GeneratedDataField];
+        effects : [Effect];
         requirement : ?ChoiceRequirement;
-    };
-
-    public type OutcomePath = {
-        id : Text;
-        description : Text;
-        kind : OutcomePathKind;
-        paths : [WeightedOutcomePath];
-    };
-
-    public type OutcomePathKind = {
-        #effects : [Effect];
-        #combat : CombatPath;
-        #reward : RewardPath;
     };
 
     public type CombatPath = {
@@ -102,10 +85,30 @@ module {
         #any;
     };
 
-    public type WeightedOutcomePath = {
+    public type WeightedScenarioPathOption = {
         weight : Float;
         condition : ?Condition;
         pathId : Text;
+    };
+
+    public type GeneratedDataField = {
+        id : Text;
+        name : Text;
+        value : GeneratedDataFieldValue;
+    };
+
+    public type GeneratedDataFieldValue = {
+        #nat : GeneratedDataFieldNat;
+        #text : GeneratedDataFieldText;
+    };
+
+    public type GeneratedDataFieldNat = {
+        min : Nat;
+        max : Nat;
+    };
+
+    public type GeneratedDataFieldText = {
+        options : [(Text, Float)];
     };
 
     public type Effect = {
@@ -135,8 +138,8 @@ module {
     };
 
     public type Condition = {
-        #hasGold : NatValue;
-        #hasItem : TextValue;
+        #hasGold : Nat;
+        #hasItem : Text;
     };
 
     public type ChoiceRequirement = {
@@ -158,7 +161,6 @@ module {
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
 
-        let dataFieldIdMap = HashMap.HashMap<Text, GeneratedDataField>(metaData.data.size(), Text.equal, Text.hash);
         Entity.validate("Scenario", metaData, errors);
         switch (metaData.unlockRequirement) {
             case (null) ();
@@ -188,54 +190,7 @@ module {
             };
         };
 
-        // Check data fields
-        for (field in metaData.data.vals()) {
-            if (dataFieldIdMap.replace(field.id, field) != null) {
-                errors.add("Duplicate data field id: " # field.id);
-            };
-        };
-
-        func validateRequirement(requirement : ChoiceRequirement) {
-            switch (requirement) {
-                case (#item(itemId)) {
-                    if (items.get(itemId) == null) {
-                        errors.add("Invalid item id in choice requirement: " # itemId);
-                    };
-                };
-                case (#race(_)) {};
-                case (#class_(_)) {};
-                case (#gold(gold)) {
-                    if (gold == 0) {
-                        errors.add("Gold requirement must be greater than 0");
-                    };
-                };
-                case (#all(all)) {
-                    for (requirement in all.vals()) {
-                        validateRequirement(requirement);
-                    };
-                };
-                case (#any(any)) {
-                    for (requirement in any.vals()) {
-                        validateRequirement(requirement);
-                    };
-                };
-            };
-        };
-
-        let choiceIdMap = HashMap.HashMap<Text, ()>(metaData.choices.size(), Text.equal, Text.hash);
-
-        // Check choices
-        for (choice in metaData.choices.vals()) {
-            if (choiceIdMap.replace(choice.id, ()) == ?()) {
-                errors.add("Duplicate choice id: " # choice.id);
-            };
-            switch (choice.requirement) {
-                case (?requirement) validateRequirement(requirement);
-                case (null) {};
-            };
-        };
-
-        let pathIdMap = HashMap.HashMap<Text, OutcomePath>(metaData.paths.size(), Text.equal, Text.hash);
+        let pathIdMap = HashMap.HashMap<Text, ScenarioPath>(metaData.paths.size(), Text.equal, Text.hash);
         // Check paths
         var visitedPaths = HashMap.HashMap<Text, Bool>(0, Text.equal, Text.hash);
         for (path in metaData.paths.vals()) {
@@ -243,77 +198,8 @@ module {
                 errors.add("Duplicate path id: " # path.id);
             };
 
-            func validateTextValue<T>(value : TextValue, map : HashMap.HashMap<Text, T>, kind : Text) {
-                switch (value) {
-                    case (#raw(raw)) {
-                        switch (map.get(raw)) {
-                            case (?_) ();
-                            case (null) {
-                                errors.add("Invalid " # kind # ": " # raw);
-                            };
-                        };
-                    };
-                    case (#weighted(weighted)) {
-                        for ((v, weight) in weighted.vals()) {
-                            switch (map.get(v)) {
-                                case (?_) ();
-                                case (null) {
-                                    errors.add("Invalid " # kind # ": " # v);
-                                };
-                            };
-                            if (weight <= 0.0) {
-                                errors.add("Weights must be greater than 0: " # Float.toText(weight));
-                            };
-                        };
-                    };
-                    case (#dataField(fieldId)) {
-                        let ?field = dataFieldIdMap.get(fieldId) else {
-                            errors.add("Invalid data field id: " # fieldId);
-                            return;
-                        };
-                        let #text(text) = field.value else {
-                            errors.add("Data field " # fieldId # " is not a text field");
-                            return;
-                        };
-                        validateTextDataField(text);
-                    };
-                };
-            };
-
-            func validateTextDataField(text : GeneratedDataFieldText) {
-                for ((v, weight) in text.options.vals()) {
-                    if (weight <= 0.0) {
-                        errors.add("Weights must be greater than 0: " # Float.toText(weight));
-                    };
-                };
-            };
-
-            func validateNatValue(value : NatValue, kind : Text) {
-                switch (value) {
-                    case (#raw(_)) {};
-                    case (#random(min, max)) {
-                        if (min >= max) {
-                            errors.add("Random " # kind # " min must be less than max: " # Nat.toText(min) # " >= " # Nat.toText(max));
-                        };
-                    };
-                    case (#dataField(fieldId)) {
-                        let ?field = dataFieldIdMap.get(fieldId) else {
-                            errors.add("Invalid data field id: " # fieldId);
-                            return;
-                        };
-                        let #nat(nat) = field.value else {
-                            errors.add("Data field " # fieldId # " is not a nat field");
-                            return;
-                        };
-                        validateNatDataField(nat);
-                    };
-                };
-            };
-
-            func validateNatDataField(nat : GeneratedDataFieldNat) {
-                if (nat.min >= nat.max) {
-                    errors.add("Generated data field min must be less than max: " # Nat.toText(nat.min) # " >= " # Nat.toText(nat.max));
-                };
+            if (depthFirstSearch(path.id, visitedPaths, pathIdMap, errors)) {
+                errors.add("Cycle detected in paths starting from: " # path.id);
             };
 
             switch (path.kind) {
@@ -339,33 +225,29 @@ module {
                         };
                     };
                 };
-                case (#effects(effects)) {
-                    for (effect in effects.vals()) {
-                        switch (effect) {
-                            case (#addItem(addItem)) {
-                                switch (addItem) {
-                                    case (#random) {};
-                                    case (#specific(specific)) validateTextValue(specific, items, "item");
-                                };
-                            };
-                            case (#removeGold(removeGold)) validateNatValue(removeGold, "gold");
-                            case (#removeItem(removeItem)) {
-                                switch (removeItem) {
-                                    case (#random) {};
-                                    case (#specific(specific)) validateTextValue(specific, items, "item");
-                                };
-                            };
-                            case (#damage(damage)) validateNatValue(damage, "damage");
-                            case (#heal(heal)) validateNatValue(heal, "heal");
-                            case (#achievement(achievementId)) {
-                                if (TextX.isEmpty(achievementId)) {
-                                    errors.add("Achievement id cannot be empty");
-                                };
-                                if (achievements.get(achievementId) == null) {
-                                    errors.add("Invalid achievement id: " # achievementId);
-                                };
+                case (#choice(choicePath)) {
+                    let choiceIdMap = HashMap.HashMap<Text, ()>(choicePath.choices.size(), Text.equal, Text.hash);
+
+                    // Check choices
+                    for (choice in choicePath.choices.vals()) {
+                        if (choiceIdMap.replace(choice.id, ()) == ?()) {
+                            errors.add("Duplicate choice id: " # choice.id);
+                        };
+                        switch (choice.requirement) {
+                            case (?requirement) validateRequirement(requirement, items, errors);
+                            case (null) {};
+                        };
+                        // Check data fields
+                        let dataFieldIdMap = HashMap.HashMap<Text, GeneratedDataField>(choice.data.size(), Text.equal, Text.hash);
+                        for (field in choice.data.vals()) {
+                            if (dataFieldIdMap.replace(field.id, field) != null) {
+                                errors.add("Duplicate data field id: " # field.id);
                             };
                         };
+                        for (effect in choice.effects.vals()) {
+                            validateEffect(effect, items, achievements, dataFieldIdMap, errors);
+                        };
+
                     };
                 };
                 case (#reward(reward)) {
@@ -383,43 +265,8 @@ module {
             };
         };
 
-        // Check for path cycles
-        func dfs(pathId : Text) : Bool {
-            switch (visitedPaths.get(pathId)) {
-                case (?true) { return false };
-                case (?false) { return true };
-                case (null) {
-                    visitedPaths.put(pathId, false);
-                    let ?path = pathIdMap.get(pathId) else {
-                        errors.add("Invalid path id: " # pathId);
-                        return false;
-                    };
-                    for (nextPath in path.paths.vals()) {
-                        if (dfs(nextPath.pathId)) {
-                            return true;
-                        };
-                    };
-                    visitedPaths.put(pathId, true);
-                    return false;
-                };
-            };
-        };
-
         for (path in metaData.paths.vals()) {
-            if (dfs(path.id)) {
-                errors.add("Cycle detected in paths starting from: " # path.id);
-            };
-        };
-
-        // Check if all referenced pathIdMap exist
-        for (choice in metaData.choices.vals()) {
-            if (pathIdMap.get(choice.pathId) == null) {
-                errors.add("Invalid pathId in choice: " # choice.pathId);
-            };
-        };
-
-        for (path in metaData.paths.vals()) {
-            for (nextPath in path.paths.vals()) {
+            for (nextPath in path.nextPathOptions.vals()) {
                 if (pathIdMap.get(nextPath.pathId) == null) {
                     errors.add("Invalid pathId in path: " # nextPath.pathId);
                 };
@@ -430,6 +277,182 @@ module {
             #err(Buffer.toArray(errors));
         } else {
             #ok();
+        };
+    };
+
+    // Check for path cycles
+    func depthFirstSearch(
+        pathId : Text,
+        visitedPaths : HashMap.HashMap<Text, Bool>,
+        pathIdMap : HashMap.HashMap<Text, ScenarioPath>,
+        errors : Buffer.Buffer<Text>,
+    ) : Bool {
+        switch (visitedPaths.get(pathId)) {
+            case (?true) { return false };
+            case (?false) { return true };
+            case (null) {
+                visitedPaths.put(pathId, false);
+                let ?path = pathIdMap.get(pathId) else {
+                    errors.add("Invalid path id: " # pathId);
+                    return false;
+                };
+                for (nextPath in path.nextPathOptions.vals()) {
+                    if (depthFirstSearch(nextPath.pathId, visitedPaths, pathIdMap, errors)) {
+                        return true;
+                    };
+                };
+                visitedPaths.put(pathId, true);
+                return false;
+            };
+        };
+    };
+
+    func validateRequirement(
+        requirement : ChoiceRequirement,
+        items : HashMap.HashMap<Text, Item.Item>,
+        errors : Buffer.Buffer<Text>,
+    ) {
+        switch (requirement) {
+            case (#item(itemId)) {
+                if (items.get(itemId) == null) {
+                    errors.add("Invalid item id in choice requirement: " # itemId);
+                };
+            };
+            case (#race(_)) {};
+            case (#class_(_)) {};
+            case (#gold(gold)) {
+                if (gold == 0) {
+                    errors.add("Gold requirement must be greater than 0");
+                };
+            };
+            case (#all(all)) {
+                for (requirement in all.vals()) {
+                    validateRequirement(requirement, items, errors);
+                };
+            };
+            case (#any(any)) {
+                for (requirement in any.vals()) {
+                    validateRequirement(requirement, items, errors);
+                };
+            };
+        };
+    };
+
+    func validateTextValue<T>(
+        value : TextValue,
+        map : HashMap.HashMap<Text, T>,
+        kind : Text,
+        dataFieldIdMap : HashMap.HashMap<Text, GeneratedDataField>,
+        errors : Buffer.Buffer<Text>,
+    ) {
+        switch (value) {
+            case (#raw(raw)) {
+                switch (map.get(raw)) {
+                    case (?_) ();
+                    case (null) {
+                        errors.add("Invalid " # kind # ": " # raw);
+                    };
+                };
+            };
+            case (#weighted(weighted)) {
+                for ((v, weight) in weighted.vals()) {
+                    switch (map.get(v)) {
+                        case (?_) ();
+                        case (null) {
+                            errors.add("Invalid " # kind # ": " # v);
+                        };
+                    };
+                    if (weight <= 0.0) {
+                        errors.add("Weights must be greater than 0: " # Float.toText(weight));
+                    };
+                };
+            };
+            case (#dataField(fieldId)) {
+                let ?field = dataFieldIdMap.get(fieldId) else {
+                    errors.add("Invalid data field id: " # fieldId);
+                    return;
+                };
+                let #text(text) = field.value else {
+                    errors.add("Data field " # fieldId # " is not a text field");
+                    return;
+                };
+                validateTextDataField(text, errors);
+            };
+        };
+    };
+
+    func validateTextDataField(text : GeneratedDataFieldText, errors : Buffer.Buffer<Text>) {
+        for ((v, weight) in text.options.vals()) {
+            if (weight <= 0.0) {
+                errors.add("Weights must be greater than 0: " # Float.toText(weight));
+            };
+        };
+    };
+
+    func validateNatValue(
+        value : NatValue,
+        kind : Text,
+        dataFieldIdMap : HashMap.HashMap<Text, GeneratedDataField>,
+        errors : Buffer.Buffer<Text>,
+    ) {
+        switch (value) {
+            case (#raw(_)) {};
+            case (#random(min, max)) {
+                if (min >= max) {
+                    errors.add("Random " # kind # " min must be less than max: " # Nat.toText(min) # " >= " # Nat.toText(max));
+                };
+            };
+            case (#dataField(fieldId)) {
+                let ?field = dataFieldIdMap.get(fieldId) else {
+                    errors.add("Invalid data field id: " # fieldId);
+                    return;
+                };
+                let #nat(nat) = field.value else {
+                    errors.add("Data field " # fieldId # " is not a nat field");
+                    return;
+                };
+                validateNatDataField(nat, errors);
+            };
+        };
+    };
+
+    func validateNatDataField(nat : GeneratedDataFieldNat, errors : Buffer.Buffer<Text>) {
+        if (nat.min >= nat.max) {
+            errors.add("Generated data field min must be less than max: " # Nat.toText(nat.min) # " >= " # Nat.toText(nat.max));
+        };
+    };
+
+    private func validateEffect(
+        effect : Effect,
+        items : HashMap.HashMap<Text, Item.Item>,
+        achievements : HashMap.HashMap<Text, Achievement.Achievement>,
+        dataFieldIdMap : HashMap.HashMap<Text, GeneratedDataField>,
+        errors : Buffer.Buffer<Text>,
+    ) {
+        switch (effect) {
+            case (#addItem(addItem)) {
+                switch (addItem) {
+                    case (#random) {};
+                    case (#specific(specific)) validateTextValue(specific, items, "item", dataFieldIdMap, errors);
+                };
+            };
+            case (#removeGold(removeGold)) validateNatValue(removeGold, "gold", dataFieldIdMap, errors);
+            case (#removeItem(removeItem)) {
+                switch (removeItem) {
+                    case (#random) {};
+                    case (#specific(specific)) validateTextValue(specific, items, "item", dataFieldIdMap, errors);
+                };
+            };
+            case (#damage(damage)) validateNatValue(damage, "damage", dataFieldIdMap, errors);
+            case (#heal(heal)) validateNatValue(heal, "heal", dataFieldIdMap, errors);
+            case (#achievement(achievementId)) {
+                if (TextX.isEmpty(achievementId)) {
+                    errors.add("Achievement id cannot be empty");
+                };
+                if (achievements.get(achievementId) == null) {
+                    errors.add("Invalid achievement id: " # achievementId);
+                };
+            };
         };
     };
 

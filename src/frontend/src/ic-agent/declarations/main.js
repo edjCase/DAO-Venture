@@ -177,22 +177,6 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(IDL.Nat8),
     'kind' : ImageKind,
   });
-  const GeneratedDataFieldNat = IDL.Record({
-    'max' : IDL.Nat,
-    'min' : IDL.Nat,
-  });
-  const GeneratedDataFieldText = IDL.Record({
-    'options' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64)),
-  });
-  const GeneratedDataFieldValue = IDL.Variant({
-    'nat' : GeneratedDataFieldNat,
-    'text' : GeneratedDataFieldText,
-  });
-  const GeneratedDataField = IDL.Record({
-    'id' : IDL.Text,
-    'value' : GeneratedDataFieldValue,
-    'name' : IDL.Text,
-  });
   const ScenarioCategory = IDL.Variant({
     'other' : IDL.Null,
     'store' : IDL.Null,
@@ -224,38 +208,21 @@ export const idlFactory = ({ IDL }) => {
     'removeGold' : NatValue,
     'removeItem' : RandomOrSpecificTextValue,
   });
-  const CombatCreatureLocationFilter = IDL.Variant({
-    'any' : IDL.Null,
-    'zone' : IDL.Text,
-    'common' : IDL.Null,
+  const GeneratedDataFieldNat = IDL.Record({
+    'max' : IDL.Nat,
+    'min' : IDL.Nat,
   });
-  const CombatCreatureFilter = IDL.Record({
-    'location' : CombatCreatureLocationFilter,
+  const GeneratedDataFieldText = IDL.Record({
+    'options' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64)),
   });
-  const CombatCreatureKind = IDL.Variant({
+  const GeneratedDataFieldValue = IDL.Variant({
+    'nat' : GeneratedDataFieldNat,
+    'text' : GeneratedDataFieldText,
+  });
+  const GeneratedDataField = IDL.Record({
     'id' : IDL.Text,
-    'filter' : CombatCreatureFilter,
-  });
-  const CombatPath = IDL.Record({ 'creatures' : IDL.Vec(CombatCreatureKind) });
-  const OutcomePathKind = IDL.Variant({
-    'reward' : RewardPath,
-    'effects' : IDL.Vec(Effect),
-    'combat' : CombatPath,
-  });
-  const Condition = IDL.Variant({
-    'hasGold' : NatValue,
-    'hasItem' : TextValue,
-  });
-  const WeightedOutcomePath = IDL.Record({
-    'weight' : IDL.Float64,
-    'pathId' : IDL.Text,
-    'condition' : IDL.Opt(Condition),
-  });
-  const OutcomePath = IDL.Record({
-    'id' : IDL.Text,
-    'kind' : OutcomePathKind,
-    'description' : IDL.Text,
-    'paths' : IDL.Vec(WeightedOutcomePath),
+    'value' : GeneratedDataFieldValue,
+    'name' : IDL.Text,
   });
   ChoiceRequirement.fill(
     IDL.Variant({
@@ -269,9 +236,41 @@ export const idlFactory = ({ IDL }) => {
   );
   const Choice = IDL.Record({
     'id' : IDL.Text,
+    'effects' : IDL.Vec(Effect),
+    'data' : IDL.Vec(GeneratedDataField),
     'description' : IDL.Text,
     'requirement' : IDL.Opt(ChoiceRequirement),
+  });
+  const ChoicePath = IDL.Record({ 'choices' : IDL.Vec(Choice) });
+  const CombatCreatureLocationFilter = IDL.Variant({
+    'any' : IDL.Null,
+    'zone' : IDL.Text,
+    'common' : IDL.Null,
+  });
+  const CombatCreatureFilter = IDL.Record({
+    'location' : CombatCreatureLocationFilter,
+  });
+  const CombatCreatureKind = IDL.Variant({
+    'id' : IDL.Text,
+    'filter' : CombatCreatureFilter,
+  });
+  const CombatPath = IDL.Record({ 'creatures' : IDL.Vec(CombatCreatureKind) });
+  const ScenarioPathKind = IDL.Variant({
+    'reward' : RewardPath,
+    'choice' : ChoicePath,
+    'combat' : CombatPath,
+  });
+  const Condition = IDL.Variant({ 'hasGold' : IDL.Nat, 'hasItem' : IDL.Text });
+  const WeightedScenarioPathOption = IDL.Record({
+    'weight' : IDL.Float64,
     'pathId' : IDL.Text,
+    'condition' : IDL.Opt(Condition),
+  });
+  const ScenarioPath = IDL.Record({
+    'id' : IDL.Text,
+    'kind' : ScenarioPathKind,
+    'description' : IDL.Text,
+    'nextPathOptions' : IDL.Vec(WeightedScenarioPathOption),
   });
   const LocationKind = IDL.Variant({
     'common' : IDL.Null,
@@ -279,14 +278,12 @@ export const idlFactory = ({ IDL }) => {
   });
   const ScenarioMetaData = IDL.Record({
     'id' : IDL.Text,
-    'data' : IDL.Vec(GeneratedDataField),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
     'category' : ScenarioCategory,
-    'paths' : IDL.Vec(OutcomePath),
+    'paths' : IDL.Vec(ScenarioPath),
     'imageId' : IDL.Text,
-    'choices' : IDL.Vec(Choice),
     'location' : LocationKind,
   });
   const Weapon = IDL.Record({
@@ -386,6 +383,13 @@ export const idlFactory = ({ IDL }) => {
     'err' : IDL.Variant({ 'notAuthenticated' : IDL.Null }),
   });
   const GetScenarioRequest = IDL.Record({ 'scenarioId' : IDL.Nat });
+  const RewardKind = IDL.Variant({
+    'gold' : IDL.Nat,
+    'item' : IDL.Text,
+    'weapon' : IDL.Text,
+    'health' : IDL.Nat,
+  });
+  const RewardScenarioState = IDL.Record({ 'options' : IDL.Vec(RewardKind) });
   const GeneratedDataFieldInstanceValue = IDL.Variant({
     'nat' : IDL.Nat,
     'text' : IDL.Text,
@@ -394,14 +398,13 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'value' : GeneratedDataFieldInstanceValue,
   });
-  const RewardKind = IDL.Variant({
-    'gold' : IDL.Nat,
-    'item' : IDL.Text,
-    'weapon' : IDL.Text,
-    'health' : IDL.Nat,
+  const Choice__1 = IDL.Record({
+    'id' : IDL.Text,
+    'effects' : IDL.Vec(Effect),
+    'data' : IDL.Vec(GeneratedDataFieldInstance),
+    'description' : IDL.Text,
   });
-  const RewardScenarioState = IDL.Record({ 'options' : IDL.Vec(RewardKind) });
-  const ChoiceScenarioState = IDL.Record({ 'choiceIds' : IDL.Vec(IDL.Text) });
+  const ChoiceScenarioState = IDL.Record({ 'choices' : IDL.Vec(Choice__1) });
   const PeriodicEffectKind = IDL.Variant({
     'damage' : IDL.Null,
     'heal' : IDL.Null,
@@ -444,11 +447,18 @@ export const idlFactory = ({ IDL }) => {
     'character' : CharacterCombatState,
     'creatures' : IDL.Vec(CreatureCombatState),
   });
-  const ScenarioStateKind = IDL.Variant({
+  const InProgressScenarioStateKind = IDL.Variant({
     'reward' : RewardScenarioState,
-    'complete' : IDL.Null,
     'choice' : ChoiceScenarioState,
     'combat' : CombatScenarioState,
+  });
+  const InProgressScenarioState = IDL.Record({
+    'kind' : InProgressScenarioStateKind,
+    'nextPathOptions' : IDL.Vec(WeightedScenarioPathOption),
+  });
+  const ScenarioStateKind = IDL.Variant({
+    'completed' : IDL.Null,
+    'inProgress' : InProgressScenarioState,
   });
   const SwapWeaponOutcomeEffect = IDL.Record({
     'removedWeaponId' : IDL.Text,
@@ -468,16 +478,13 @@ export const idlFactory = ({ IDL }) => {
     'removeItem' : IDL.Text,
   });
   const ScenarioRewardResult = IDL.Record({ 'kind' : RewardKind });
-  const ScenarioChoiceResultKind = IDL.Variant({
-    'reward' : RewardScenarioState,
-    'startCombat' : CombatScenarioState,
+  const ChoiceResultKind = IDL.Variant({
     'complete' : IDL.Null,
-    'choice' : ChoiceScenarioState,
     'death' : IDL.Null,
   });
   const ScenarioChoiceResult = IDL.Record({
     'choiceId' : IDL.Text,
-    'kind' : ScenarioChoiceResultKind,
+    'kind' : ChoiceResultKind,
   });
   const TargetKind = IDL.Variant({
     'creature' : IDL.Nat,
@@ -536,7 +543,6 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'metaDataId' : IDL.Text,
     'metaData' : ScenarioMetaData,
-    'data' : IDL.Vec(GeneratedDataFieldInstance),
     'state' : ScenarioStateKind,
     'previousStages' : IDL.Vec(ScenarioStageResult),
   });

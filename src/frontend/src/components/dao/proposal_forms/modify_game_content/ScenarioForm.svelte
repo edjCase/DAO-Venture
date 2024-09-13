@@ -12,14 +12,14 @@
     ScenarioMetaData,
     GeneratedDataField,
     Choice,
-    OutcomePath,
+    ScenarioPath,
     LocationKind,
     ScenarioCategory,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import ChoiceForm from "./ChoiceForm.svelte";
-  import OutcomePathForm from "./OutcomePathForm.svelte";
+  import ScenarioPathForm from "./ScenarioPathForm.svelte";
   import GeneratedDataFieldForm from "./GeneratedDataFieldForm.svelte";
 
   let id: string | undefined;
@@ -28,7 +28,7 @@
   let imageId: string | undefined;
   let data: GeneratedDataField[] = [];
   let choices: Choice[] = [];
-  let paths: OutcomePath[] = [];
+  let paths: ScenarioPath[] = [];
   let location: LocationKind = { common: null };
   let category: ScenarioCategory = { other: null };
   let unlockRequirement: UnlockRequirement | undefined;
@@ -197,7 +197,7 @@
     <div>
       <Label>Outcome Paths</Label>
       {#each paths as path, index}
-        <OutcomePathForm bind:value={path} />
+        <ScenarioPathForm bind:value={path} />
         <button
           class="mt-2 bg-red-500 text-white px-2 py-1 rounded"
           on:click={() => removePath(index)}

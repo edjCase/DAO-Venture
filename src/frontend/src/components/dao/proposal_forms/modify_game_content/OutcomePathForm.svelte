@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { OutcomePath } from "../../../../ic-agent/declarations/main";
+  import { ScenarioPath } from "../../../../ic-agent/declarations/main";
   import { Input, Label, Textarea, Select } from "flowbite-svelte";
   import ConditionEditor from "./ConditionEditor.svelte";
 
-  export let value: OutcomePath;
+  export let value: ScenarioPath;
 
   let conditionOptions = [
     { value: "none", name: "No Condition" },

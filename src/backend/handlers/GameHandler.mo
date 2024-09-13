@@ -470,7 +470,6 @@ module {
             let characterHandler = CharacterHandler.Handler(inProgressInstance.character);
 
             let gameContent : ScenarioSimulator.GameContent = {
-                scenario = scenario;
                 scenarioMetaData = scenarioMetaData;
                 creatures = creatures;
                 classes = classes;
@@ -480,12 +479,13 @@ module {
                 actions = actions;
             };
 
-            let stageResult : Scenario.ScenarioStageResult = switch (
+            let runStageData : ScenarioSimulator.RunStageData = switch (
                 ScenarioSimulator.runStage(
                     prng,
                     playerId,
                     userHandler,
                     characterHandler,
+                    scenario,
                     gameContent,
                     choice,
                 )
@@ -496,29 +496,10 @@ module {
                 case (#err(#targetRequired)) return #err(#targetRequired);
                 case (#ok(result)) result;
             };
-            let (newState, isDead) : (Scenario.ScenarioStateKind, Bool) = switch (stageResult.kind) {
-                case (#choice(choice)) {
-                    switch (choice.kind) {
-                        case (#complete) (#complete, false);
-                        case (#death) (#complete, true);
-                        case (#choice(choice)) (#choice(choice), false);
-                        case (#startCombat(combat)) (#combat(combat), false);
-                        case (#reward(reward)) (#reward(reward), false);
-                    };
-                };
-                case (#combat(combat)) {
-                    switch (combat.kind) {
-                        case (#victory(_)) (#complete, false); // TODO continue if there are more paths?
-                        case (#defeat(_)) (#complete, true);
-                        case (#inProgress(inProgress)) (#combat(inProgress), false);
-                    };
-                };
-                case (#reward(_)) (#complete, false); // TODO continue if there are more paths?
-            };
             let updatedScenario : Scenario.Scenario = {
                 scenario with
-                previousStages = Array.append(scenario.previousStages, [stageResult]);
-                state = newState;
+                previousStages = Array.append(scenario.previousStages, [runStageData.stageResult]);
+                state = runStageData.nextState;
             };
             let thawedScenarios = Array.thaw<Scenario.Scenario>(inProgressInstance.scenarios);
             thawedScenarios[inProgressInstance.scenarios.size() - 1] := updatedScenario;
@@ -533,6 +514,7 @@ module {
                 instance with
                 state = #inProgress(updatedInProgressState);
             };
+            let isDead = characterHandler.get().health <= 0;
             let updatedGame : GameInstance = if (isDead) {
                 {
                     updatedInstance with
@@ -543,9 +525,9 @@ module {
                     });
                 };
             } else {
-                switch (newState) {
-                    case (#choice(_) or #combat(_) or #reward(_)) updatedInstance; // Continue
-                    case (#complete) {
+                switch (updatedScenario.state) {
+                    case (#inProgress(_)) updatedInstance; // Continue
+                    case (#completed) {
                         switch (nextScenarioOrEnd(prng, updatedInProgressState)) {
                             case (?updatedInProgressState) {
                                 {
@@ -841,14 +823,13 @@ module {
 
         private func generateScenario(prng : Prng, zoneId : Text, character : Character.Character) : {
             metaDataId : Text;
-            data : [Scenario.GeneratedDataFieldInstance];
             previousStages : [Scenario.ScenarioStageResult];
             state : Scenario.ScenarioStateKind;
         } {
             let category = prng.nextArrayElementWeighted([
-                (#combat, 6.),
+                (#combat, 4.),
                 (#other, 3.),
-                (#store, 1.),
+                (#store, 3.),
             ]);
             let filteredScenarios = scenarioMetaDataList.vals()
             // Only scenarios that are common or have the zoneId
@@ -866,39 +847,21 @@ module {
             )
             |> Iter.toArray(_);
             let scenarioMetaData = prng.nextArrayElement(filteredScenarios);
-            let scenarioData = scenarioMetaData.data.vals()
-            |> Iter.map<ScenarioMetaData.GeneratedDataField, Scenario.GeneratedDataFieldInstance>(
-                _,
-                func(field : ScenarioMetaData.GeneratedDataField) : Scenario.GeneratedDataFieldInstance {
-                    let value = switch (field.value) {
-                        case (#nat({ min; max })) #nat(prng.nextNat(min, max));
-                        case (#text(text)) #text(prng.nextArrayElementWeighted(text.options));
-                    };
-                    {
-                        id = field.id;
-                        value = value;
-                    };
-                },
-            )
-            |> Iter.toArray(_);
-            let availableChoiceIds = scenarioMetaData.choices.vals()
-            // Filter to ones where the character meets the requirement
-            |> Iter.filter(
-                _,
-                func(c : ScenarioMetaData.Choice) : Bool = switch (c.requirement) {
-                    case (null) true;
-                    case (?requirement) ScenarioMetaData.characterMeetsRequirement(requirement, character);
-                },
-            )
-            |> Iter.map(_, func(c : ScenarioMetaData.Choice) : Text = c.id)
-            |> Iter.toArray(_);
+            let path = scenarioMetaData.paths[0]; // Use first path for initial path
+            let gameContent : ScenarioSimulator.GameContent = {
+                actions = actions;
+                creatures = creatures;
+                classes = classes;
+                races = races;
+                items = items;
+                weapons = weapons;
+                scenarioMetaData = scenarioMetaData;
+            };
+            let stateKind = ScenarioSimulator.buildNextState(prng, gameContent, character, path);
             {
                 metaDataId = scenarioMetaData.id;
-                data = scenarioData;
                 previousStages = [];
-                state = #choice({
-                    choiceIds = availableChoiceIds;
-                });
+                state = #inProgress(stateKind);
             };
         };
 

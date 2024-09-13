@@ -78,17 +78,27 @@ export interface CharacterWithMetaData {
 }
 export interface Choice {
   'id' : string,
+  'effects' : Array<Effect>,
+  'data' : Array<GeneratedDataField>,
   'description' : string,
   'requirement' : [] | [ChoiceRequirement],
-  'pathId' : string,
 }
+export interface ChoicePath { 'choices' : Array<Choice> }
 export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
   { 'any' : Array<ChoiceRequirement> } |
   { 'gold' : bigint } |
   { 'item' : string } |
   { 'class' : string } |
   { 'race' : string };
-export interface ChoiceScenarioState { 'choiceIds' : Array<string> }
+export type ChoiceResultKind = { 'complete' : null } |
+  { 'death' : null };
+export interface ChoiceScenarioState { 'choices' : Array<Choice__1> }
+export interface Choice__1 {
+  'id' : string,
+  'effects' : Array<Effect>,
+  'data' : Array<GeneratedDataFieldInstance>,
+  'description' : string,
+}
 export interface Class {
   'id' : string,
   'startingActionIds' : Array<string>,
@@ -139,8 +149,8 @@ export interface CompletedGameWithMetaData {
   'playerId' : Principal,
   'victory' : boolean,
 }
-export type Condition = { 'hasGold' : NatValue } |
-  { 'hasItem' : TextValue };
+export type Condition = { 'hasGold' : bigint } |
+  { 'hasItem' : string };
 export type CreateGameError = { 'noWeapons' : null } |
   { 'noCreaturesForZone' : string } |
   { 'noZones' : null } |
@@ -301,6 +311,13 @@ export interface InProgressGameStateWithMetaData {
   'turnKind' : TurnKind,
   'character' : CharacterWithMetaData,
 }
+export interface InProgressScenarioState {
+  'kind' : InProgressScenarioStateKind,
+  'nextPathOptions' : Array<WeightedScenarioPathOption>,
+}
+export type InProgressScenarioStateKind = { 'reward' : RewardScenarioState } |
+  { 'choice' : ChoiceScenarioState } |
+  { 'combat' : CombatScenarioState };
 export interface InventorySlotWithMetaData { 'item' : [] | [Item] }
 export interface Item {
   'id' : string,
@@ -334,15 +351,6 @@ export type OutcomeEffect = { 'healthDelta' : bigint } |
   { 'addItem' : AddItemOutcomeEffect } |
   { 'goldDelta' : bigint } |
   { 'removeItem' : string };
-export interface OutcomePath {
-  'id' : string,
-  'kind' : OutcomePathKind,
-  'description' : string,
-  'paths' : Array<WeightedOutcomePath>,
-}
-export type OutcomePathKind = { 'reward' : RewardPath } |
-  { 'effects' : Array<Effect> } |
-  { 'combat' : CombatPath };
 export interface PagedResult {
   'data' : Array<WorldProposal>,
   'count' : bigint,
@@ -423,7 +431,6 @@ export interface Scenario {
   'id' : bigint,
   'metaDataId' : string,
   'metaData' : ScenarioMetaData,
-  'data' : Array<GeneratedDataFieldInstance>,
   'state' : ScenarioStateKind,
   'previousStages' : Array<ScenarioStageResult>,
 }
@@ -432,29 +439,31 @@ export type ScenarioCategory = { 'other' : null } |
   { 'combat' : null };
 export interface ScenarioChoiceResult {
   'choiceId' : string,
-  'kind' : ScenarioChoiceResultKind,
+  'kind' : ChoiceResultKind,
 }
-export type ScenarioChoiceResultKind = { 'reward' : RewardScenarioState } |
-  { 'startCombat' : CombatScenarioState } |
-  { 'complete' : null } |
-  { 'choice' : ChoiceScenarioState } |
-  { 'death' : null };
 export interface ScenarioCombatResult {
   'log' : Array<CombatLogEntry>,
   'kind' : CombatResultKind,
 }
 export interface ScenarioMetaData {
   'id' : string,
-  'data' : Array<GeneratedDataField>,
   'name' : string,
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
   'category' : ScenarioCategory,
-  'paths' : Array<OutcomePath>,
+  'paths' : Array<ScenarioPath>,
   'imageId' : string,
-  'choices' : Array<Choice>,
   'location' : LocationKind,
 }
+export interface ScenarioPath {
+  'id' : string,
+  'kind' : ScenarioPathKind,
+  'description' : string,
+  'nextPathOptions' : Array<WeightedScenarioPathOption>,
+}
+export type ScenarioPathKind = { 'reward' : RewardPath } |
+  { 'choice' : ChoicePath } |
+  { 'combat' : CombatPath };
 export interface ScenarioRewardResult { 'kind' : RewardKind }
 export interface ScenarioStageResult {
   'effects' : Array<OutcomeEffect>,
@@ -463,10 +472,8 @@ export interface ScenarioStageResult {
 export type ScenarioStageResultKind = { 'reward' : ScenarioRewardResult } |
   { 'choice' : ScenarioChoiceResult } |
   { 'combat' : ScenarioCombatResult };
-export type ScenarioStateKind = { 'reward' : RewardScenarioState } |
-  { 'complete' : null } |
-  { 'choice' : ChoiceScenarioState } |
-  { 'combat' : CombatScenarioState };
+export type ScenarioStateKind = { 'completed' : null } |
+  { 'inProgress' : InProgressScenarioState };
 export interface ScenarioTurn { 'scenarioId' : bigint }
 export type SelectScenarioChoiceError = { 'invalidTarget' : null } |
   { 'targetRequired' : null } |
@@ -563,7 +570,7 @@ export interface Weapon {
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
 }
-export interface WeightedOutcomePath {
+export interface WeightedScenarioPathOption {
   'weight' : number,
   'pathId' : string,
   'condition' : [] | [Condition],

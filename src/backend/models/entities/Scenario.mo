@@ -2,6 +2,7 @@ import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
 import ActionResult "../ActionResult";
+import ScenarioMetaData "ScenarioMetaData";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -9,7 +10,6 @@ module {
     public type Scenario = {
         id : Nat;
         metaDataId : Text;
-        data : [GeneratedDataFieldInstance];
         previousStages : [ScenarioStageResult];
         state : ScenarioStateKind;
     };
@@ -18,6 +18,7 @@ module {
         effects : [OutcomeEffect];
         kind : ScenarioStageResultKind;
     };
+
     public type ScenarioStageResultKind = {
         #choice : ScenarioChoiceResult;
         #combat : ScenarioCombatResult;
@@ -30,13 +31,10 @@ module {
 
     public type ScenarioChoiceResult = {
         choiceId : Text;
-        kind : ScenarioChoiceResultKind;
+        kind : ChoiceResultKind;
     };
 
-    public type ScenarioChoiceResultKind = {
-        #startCombat : CombatScenarioState;
-        #reward : RewardScenarioState;
-        #choice : ChoiceScenarioState;
+    public type ChoiceResultKind = {
         #complete;
         #death;
     };
@@ -98,14 +96,30 @@ module {
     };
 
     public type ScenarioStateKind = {
+        #inProgress : InProgressScenarioState;
+        #completed;
+    };
+
+    public type InProgressScenarioState = {
+        kind : InProgressScenarioStateKind;
+        nextPathOptions : [ScenarioMetaData.WeightedScenarioPathOption];
+    };
+
+    public type InProgressScenarioStateKind = {
         #choice : ChoiceScenarioState;
         #combat : CombatScenarioState;
         #reward : RewardScenarioState;
-        #complete;
     };
 
     public type ChoiceScenarioState = {
-        choiceIds : [Text];
+        choices : [Choice];
+    };
+
+    public type Choice = {
+        id : Text;
+        description : Text;
+        data : [GeneratedDataFieldInstance];
+        effects : [ScenarioMetaData.Effect];
     };
 
     public type CombatScenarioState = {
