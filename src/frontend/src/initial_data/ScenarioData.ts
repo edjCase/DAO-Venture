@@ -4,164 +4,113 @@ export const scenarios: ScenarioMetaData[] = [
   {
     id: "corrupted_treant",
     name: "Corrupted Treant",
-    description: "A massive, twisted tree creature blocks your path. Dark energy pulses through its bark.",
-    data: [],
+    description: "A massive, twisted tree creature blocks your path. Dark energy pulses through its bark, its once-peaceful nature warped by an unknown force. The air crackles with malevolent energy, presenting a formidable challenge.",
     location: {
       zoneIds: ["enchanted_forest"],
     },
     category: { "combat": null },
     imageId: "corrupted_treant",
-    choices: [
-      {
-        id: "attack",
-        description: "Engage the corrupted treant in combat.",
-        requirement: [],
-        pathId: "attack_treant",
-      },
-      {
-        id: "purify",
-        description: "Attempt to cleanse the corruption using magic.",
-        requirement: [{ item: "wisdom_tome" }],
-        pathId: "purify_treant",
-      },
-      {
-        id: "evade",
-        description: "Try to find a way around the treant without confrontation.",
-        requirement: [],
-        pathId: "evade_treant",
-      },
-      {
-        id: "communicate",
-        description: "Use your ability to speak with nature to reason with the treant.",
-        requirement: [{ item: "nature_pendant" }],
-        pathId: "communicate_treant",
-      },
-    ],
     paths: [
+      {
+        id: "start",
+        description: "The corrupted treant looms before you, its branches creaking ominously.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "attack",
+                description: "Engage the corrupted treant in combat.",
+                requirement: [],
+                effects: [],
+                nextPath: { single: "attack_treant" },
+              },
+              {
+                id: "purify",
+                description: "Attempt to cleanse the corruption using magic.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    { weight: 0.25, pathId: "purification_success" },
+                    { weight: 0.75, pathId: "purification_failure" },
+                  ]
+                },
+              },
+              {
+                id: "consume_item",
+                description: "Use a nature pendant to purify the treant.",
+                requirement: [{ item: "nature_pendant" }],
+                effects: [],
+                nextPath: { single: "guaranteed_purification" },
+              },
+              {
+                id: "retreat",
+                description: "Retreat from the treant, sacrificing resources for safety.",
+                requirement: [],
+                effects: [{
+                  removeItem: {
+                    random: null
+                  }
+                }],
+                nextPath: { single: "retreat_path" },
+              },
+            ],
+          }
+        }
+      },
+      {
+        id: "purification_success",
+        description: "Your efforts succeed in cleansing the corruption from the treant.",
+        kind: {
+          reward: {
+            kind: { random: null },
+            nextPath: { none: null }
+          }
+        },
+      },
+      {
+        id: "purification_failure",
+        description: "Your attempt fails, and the corruption lashes out at you, dealing damage.",
+        kind: {
+
+          // New custom effect type for percentage-based health loss
+          // comment: This would need to be implemented in the backend
+          percentageHealthLoss: {
+            percentage: 10,
+            nextPath: { single: "start" }
+          }
+        },
+      },
+      {
+        id: "retreat_path",
+        description: "You decide to retreat from the treant.",
+        kind: {
+          // New custom effect type for retreat consequences
+          // comment: This would need to be implemented in the backend
+          retreatConsequence: {
+            goldPercentage: 20,
+            nextPath: { none: null }
+          }
+        },
+      },
+      {
+        id: "guaranteed_purification",
+        description: "You use the nature pendant to purify the treant.",
+        kind: {
+          message: {
+            nextPath: { single: "purification_success" }
+          }
+        },
+      },
       {
         id: "attack_treant",
         description: "You attack the treant.",
         kind: {
-          combat: { creatures: [{ id: "corrupted_treant" }] }
+          combat: {
+            creatures: [{ id: "corrupted_treant" }],
+            nextPath: { none: null }
+          }
         },
-        paths: [],
-      },
-      {
-        id: "purify_treant",
-        description: "You channel magical energy to purify the treant.",
-        kind: {
-          effects: []
-        },
-        paths: [
-          {
-            weight: 0.8,
-            condition: [],
-            pathId: "successful_purification",
-          },
-          {
-            weight: 0.2,
-            condition: [],
-            pathId: "failed_purification",
-          },
-        ],
-      },
-      {
-        id: "successful_purification",
-        description: "Your magic cleanses the corruption. The treant returns to its peaceful state.",
-        kind: {
-          reward: { random: null }
-        },
-        paths: [],
-      },
-      {
-        id: "failed_purification",
-        description: "The corruption resists your magic and lashes out!",
-        kind: {
-          effects: [{ damage: { random: [1n, 3n] } }]
-        },
-        paths: [{
-          weight: 1,
-          condition: [],
-          pathId: "attack_treant",
-        }],
-      },
-      {
-        id: "evade_treant",
-        description: "You attempt to sneak past the treant.",
-        kind: {
-          effects: []
-        },
-        paths: [
-          {
-            weight: 0.7,
-            condition: [],
-            pathId: "successful_evasion",
-          },
-          {
-            weight: 0.3,
-            condition: [],
-            pathId: "failed_evasion",
-          },
-        ],
-      },
-      {
-        id: "successful_evasion",
-        description: "You successfully navigate around the treant without incident.",
-        kind: {
-          reward: { random: null }
-        },
-        paths: [],
-      },
-      {
-        id: "failed_evasion",
-        description: "The treant notices your attempt to sneak by and attacks!",
-        kind: {
-          effects: []
-        },
-        paths: [{
-          weight: 1,
-          condition: [],
-          pathId: "attack_treant",
-        }],
-      },
-      {
-        id: "communicate_treant",
-        description: "You attempt to communicate with the treant using your nature-speaking abilities.",
-        kind: {
-          effects: []
-        },
-        paths: [
-          {
-            weight: 0.9,
-            condition: [],
-            pathId: "successful_communication",
-          },
-          {
-            weight: 0.1,
-            condition: [],
-            pathId: "failed_communication",
-          },
-        ],
-      },
-      {
-        id: "successful_communication",
-        description: "You reach the treant's consciousness. It calms and allows you to pass.",
-        kind: {
-          reward: { random: null }
-        },
-        paths: [],
-      },
-      {
-        id: "failed_communication",
-        description: "The corruption is too strong. The treant attacks despite your efforts.",
-        kind: {
-          effects: []
-        },
-        paths: [{
-          weight: 1,
-          condition: [],
-          pathId: "attack_treant",
-        }],
       },
     ],
     unlockRequirement: []

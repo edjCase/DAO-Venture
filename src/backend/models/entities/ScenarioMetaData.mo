@@ -69,6 +69,7 @@ module {
         kind : RewardPathKind;
         nextPath : NextPathKind;
     };
+
     public type RewardPathKind = {
         #random;
         #specificItemIds : [Text];
@@ -76,7 +77,7 @@ module {
 
     public type NextPathKind = {
         #single : Text;
-        #random : [WeightedScenarioPathOption];
+        #multi : [WeightedScenarioPathOption];
         #none;
     };
 
@@ -261,7 +262,7 @@ module {
                     errors.add("Invalid path id: " # pathId);
                 };
             };
-            case (#random(weightedPaths)) {
+            case (#multi(weightedPaths)) {
                 for (weightedPath in weightedPaths.vals()) {
                     if (pathIdMap.get(weightedPath.pathId) == null) {
                         errors.add("Invalid path id: " # weightedPath.pathId);
@@ -326,7 +327,7 @@ module {
                 };
                 depthFirstSearch(pathId, visitedPaths, pathIdMap, errors);
             };
-            case (#random(weightedPaths)) {
+            case (#multi(weightedPaths)) {
                 for (weightedPath in weightedPaths.vals()) {
                     if (depthFirstSearch(weightedPath.pathId, visitedPaths, pathIdMap, errors)) {
                         return true;

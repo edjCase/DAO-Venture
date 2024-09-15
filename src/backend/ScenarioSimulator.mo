@@ -64,6 +64,7 @@ module {
         stageResult : Scenario.ScenarioStageResult;
         nextState : Scenario.ScenarioStateKind;
     };
+
     public func runStage(
         prng : Prng,
         playerId : Principal,
@@ -138,7 +139,7 @@ module {
                     case (#nextPath(nextPathKind)) {
                         let nextPathId : ?Text = switch (nextPathKind) {
                             case (#single(pathId)) ?pathId;
-                            case (#random(options)) {
+                            case (#multi(options)) {
                                 let pathsWithWeights = Array.map<ScenarioMetaData.WeightedScenarioPathOption, (Text, Float)>(
                                     options,
                                     func(p : ScenarioMetaData.WeightedScenarioPathOption) : (Text, Float) {
@@ -154,9 +155,7 @@ module {
                             case (?nextPathId) {
                                 let ?nextPath = Array.find(
                                     gameContent.scenarioMetaData.paths,
-                                    func(p : ScenarioMetaData.ScenarioPath) : Bool {
-                                        p.id == nextPathId;
-                                    },
+                                    func(p : ScenarioMetaData.ScenarioPath) : Bool = p.id == nextPathId,
                                 ) else Debug.trap("Path not found: " # nextPathId);
                                 let character = helper.getCharacter();
                                 let nextState = buildNextState(prng, gameContent, character, nextPath);
@@ -164,9 +163,7 @@ module {
                             };
                         };
                     };
-                    case (#pathInProgress) {
-                        #inProgress(inProgress);
-                    };
+                    case (#pathInProgress) #inProgress(inProgress);
                     case (#dead) #completed; // TODO handle death
                 };
                 #ok({
@@ -197,20 +194,8 @@ module {
                     gameContent,
                 )
             );
-            case (#choice(choice)) #choice(startChoice(prng, choice, character, gameContent));
+            case (#choice(choice)) #choice(startChoice(choice, character));
             case (#reward(reward)) #reward(startReward(prng, reward, gameContent));
-        };
-    };
-
-    func buildScenarioChoice(
-        choice : ScenarioMetaData.Choice,
-        prng : Prng,
-    ) : Scenario.Choice {
-        {
-            id = choice.id;
-            description = choice.description;
-            effects = choice.effects;
-            nextPath = choice.nextPath;
         };
     };
 
@@ -311,10 +296,8 @@ module {
     };
 
     func startChoice(
-        prng : Prng,
         choice : ScenarioMetaData.ChoicePath,
         character : Character.Character,
-        gameContent : GameContent,
     ) : Scenario.ChoiceScenarioState {
         let availableChoices = choice.choices.vals()
         // Filter to ones where the character meets the requirement
@@ -324,10 +307,6 @@ module {
                 case (null) true;
                 case (?requirement) ScenarioMetaData.characterMeetsRequirement(requirement, character);
             },
-        )
-        |> Iter.map(
-            _,
-            func(c : ScenarioMetaData.Choice) : Scenario.Choice = buildScenarioChoice(c, prng),
         )
         |> Iter.toArray(_);
         { choices = availableChoices };
