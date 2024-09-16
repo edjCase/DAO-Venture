@@ -99,7 +99,7 @@ module {
 
     public type WeightedScenarioPathOption = {
         weight : OptionWeight;
-        pathId : Text;
+        pathId : ?Text;
         description : Text;
         effects : [Effect];
     };
@@ -278,8 +278,13 @@ module {
             };
             case (#multi(weightedPaths)) {
                 for (weightedPath in weightedPaths.vals()) {
-                    if (pathIdMap.get(weightedPath.pathId) == null) {
-                        errors.add("Invalid path id: " # weightedPath.pathId);
+                    switch (weightedPath.pathId) {
+                        case (?pathId) {
+                            if (pathIdMap.get(pathId) == null) {
+                                errors.add("Invalid path id: " # pathId);
+                            };
+                        };
+                        case (null) {};
                     };
                 };
             };
@@ -338,7 +343,10 @@ module {
             };
             case (#multi(weightedPaths)) {
                 for (weightedPath in weightedPaths.vals()) {
-                    validateAcyclical(weightedPath.pathId, visitedPaths, pathIdMap, errors, true);
+                    switch (weightedPath.pathId) {
+                        case (?pathId) validateAcyclical(pathId, visitedPaths, pathIdMap, errors, true);
+                        case (null) ();
+                    };
                 };
             };
             case (#none) ();

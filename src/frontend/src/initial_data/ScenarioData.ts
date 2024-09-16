@@ -35,7 +35,7 @@ export const scenarios: ScenarioMetaData[] = [
                       weight: { value: 0.25, kind: { attributeScaled: { wisdom: null } } },
                       description: "Your efforts succeed in cleansing the corruption from the treant.",
                       effects: [],
-                      pathId: "purification_success"
+                      pathId: ["purification_success"]
                     },
                     {
                       weight: { value: 0.75, kind: { raw: null } },
@@ -45,7 +45,7 @@ export const scenarios: ScenarioMetaData[] = [
                           damage: { raw: 10n }
                         }
                       ],
-                      pathId: "start"
+                      pathId: ["start"]
                     },
                   ]
                 },
@@ -99,2561 +99,2112 @@ export const scenarios: ScenarioMetaData[] = [
     ],
     unlockRequirement: []
   },
-  // {
-  //   id: "dark_elf_ambush",
-  //   name: "Dark Elf Ambush",
-  //   description: "A group of dark elves emerges from the shadows, weapons drawn. Their eyes gleam with malicious intent.",
-  //   imageId: "dark_elf_ambush",
-  //   data: [],
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "combat": null },
-  //   choices: [
-  //     {
-  //       id: "fight",
-  //       description: "Stand your ground and engage the dark elves in combat.",
-  //       requirement: [],
-  //       pathId: "elf_attack",
-  //     },
-  //     {
-  //       id: "negotiate",
-  //       description: "Attempt to parley with the dark elves, offering something in exchange for safe passage.",
-  //       requirement: [],
-  //       pathId: "negotiate_elves",
-  //     },
-  //     {
-  //       id: "retreat",
-  //       description: "Try to escape from the ambush, potentially leaving behind some resources.",
-  //       requirement: [],
-  //       pathId: "retreat_from_elves",
-  //     },
-  //     {
-  //       id: "stealth",
-  //       description: "Use your agility to sneak past the dark elves without being detected.",
-  //       requirement: [{ item: "boots_of_quickness" }],
-  //       pathId: "stealth_past_elves",
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "successful_fight",
-  //       description: "You successfully fend off the dark elves!",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "negotiate_elves",
-  //       description: "You attempt to negotiate with the dark elves.",
-  //       kind: {
-  //         effects: [{ removeItem: { random: null } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 0.5,
-  //           condition: [],
-  //           pathId: "successful_negotiation",
-  //         },
-  //         {
-  //           weight: 0.5,
-  //           condition: [],
-  //           pathId: "failed_negotiation",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "successful_negotiation",
-  //       description: "The dark elves accept your offer and let you pass.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "failed_negotiation",
-  //       description: "Negotiations fail, and the dark elves attack!",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [{
-  //         weight: 1,
-  //         condition: [],
-  //         pathId: "elf_attack",
-  //       }],
-  //     },
-  //     {
-  //       id: "retreat_from_elves",
-  //       description: "You attempt to retreat from the dark elves.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 0.67,
-  //           condition: [],
-  //           pathId: "successful_retreat",
-  //         },
-  //         {
-  //           weight: 0.33,
-  //           condition: [],
-  //           pathId: "failed_retreat",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "successful_retreat",
-  //       description: "You manage to escape.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "failed_retreat",
-  //       description: "Your retreat fails, and the dark elves catch up to you.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [{
-  //         weight: 1,
-  //         condition: [],
-  //         pathId: "elf_attack",
-  //       }],
-  //     },
-  //     {
-  //       id: "stealth_past_elves",
-  //       description: "You attempt to sneak past the dark elves.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 0.8,
-  //           condition: [],
-  //           pathId: "successful_stealth",
-  //         },
-  //         {
-  //           weight: 0.2,
-  //           condition: [],
-  //           pathId: "failed_stealth",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "successful_stealth",
-  //       description: "You successfully sneak past the dark elves without being detected.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "failed_stealth",
-  //       description: "Despite your agility, the dark elves spot you.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [{
-  //         weight: 1,
-  //         condition: [],
-  //         pathId: "elf_attack",
-  //       }],
-  //     },
-  //     {
-  //       id: "elf_attack",
-  //       description: "The dark elves attack!",
-  //       kind: {
-  //         combat: { creatures: [{ id: "dark_elf" }, { id: "dark_elf" }] }
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "druidic_sanctuary",
-  //   name: "Druidic Sanctuary",
-  //   description: "You enter a serene grove where druids commune with nature. The trees seem to be whispering gossip.",
-  //   imageId: "druidic_sanctuary",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "other": null },
-  //   data: [
-  //     {
-  //       id: "healing_cost",
-  //       name: "Healing Cost",
-  //       value: { nat: { min: 15n, max: 25n } },
-  //     },
-  //     {
-  //       id: "blessing_cost",
-  //       name: "Blessing Cost",
-  //       value: { nat: { min: 20n, max: 30n } },
-  //     },
-  //     {
-  //       id: "commune_cost",
-  //       name: "Commune Cost",
-  //       value: { nat: { min: 10n, max: 20n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "seek_healing",
-  //       description: "Seek healing from the druids. Side effects may include turning into a tree.",
-  //       pathId: "seek_healing_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "request_blessing",
-  //       description: "Request a druidic blessing. Warning: May attract squirrels.",
-  //       pathId: "request_blessing_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "commune_with_nature",
-  //       description: "Commune with nature. Hope you speak fluent squirrel.",
-  //       pathId: "commune_with_nature_path",
-  //       requirement: [{ item: "nature_pendant" }],
-  //     },
-  //     {
-  //       id: "leave",
-  //       description: "Leave the sanctuary. The pollen was getting to you anyway.",
-  //       pathId: "leave_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "seek_healing_path",
-  //       description: "The druids surround you, chanting in what sounds suspiciously like plant-ese.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "healing_cost" } },
-  //           { heal: { random: [3n, 7n] } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "healing_cost" } }],
-  //           pathId: "healing_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "healing_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "healing_success",
-  //       description: "You feel rejuvenated, and slightly more photosynthetic.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "healing_failure",
-  //       description: "The druids frown at your empty pockets. Seems Mother Nature doesn't work pro bono.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "request_blessing_path",
-  //       description: "The druids prepare to bestow a blessing upon you.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "blessing_cost" } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 2,
-  //           condition: [{ hasGold: { dataField: "blessing_cost" } }],
-  //           pathId: "blessing_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "blessing_cost" } }],
-  //           pathId: "blessing_partial",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "blessing_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "blessing_success",
-  //       description: "The druids bless you with the 'strength of oak'. You feel sturdier, and vaguely like you want to grow leaves.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "endurance_belt" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "blessing_partial",
-  //       description: "The blessing goes slightly awry. You now have an inexplicable craving for sunlight and water.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "blessing_failure",
-  //       description: "The druids shake their heads. Apparently, 'the blessing of poverty' isn't a thing.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "commune_with_nature_path",
-  //       description: "You attempt to commune with nature.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "commune_cost" } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "commune_cost" } }],
-  //           pathId: "commune_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "commune_cost" } }],
-  //           pathId: "commune_partial",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "commune_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "commune_success",
-  //       description: "You successfully commune with nature. A squirrel imparts ancient wisdom, and hands you a nut... er, herb.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "herbs" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "commune_partial",
-  //       description: "Your attempt at communing results in a lengthy conversation with a sassy fern. You're not sure, but you think it just insulted your haircut.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "commune_failure",
-  //       description: "Nature, it seems, doesn't accept I.O.U.s. The trees rustle disapprovingly at your lack of funds.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_path",
-  //       description: "You leave the sanctuary, shaking off a few clingy vines. You could swear that oak just waved goodbye.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You stand motionless, unsure if that bush just winked at you.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "dwarven_weaponsmith",
-  //   name: "Dwarven Weaponsmith",
-  //   description: "You encounter a surly dwarven weaponsmith, offering attack upgrades at steep prices.",
-  //   imageId: "dwarven_weaponsmith",
-  //   location: {
-  //     zoneIds: ["mystic_caves"],
-  //   },
-  //   category: { "store": null },
-  //   data: [
-  //     {
-  //       id: "upgrade_cost",
-  //       name: "Upgrade Cost",
-  //       value: { nat: { min: 20n, max: 40n } },
-  //     },
-  //     {
-  //       id: "discounted_cost",
-  //       name: "Discounted Cost",
-  //       value: { nat: { min: 30n, max: 50n } },
-  //     },
-  //     {
-  //       id: "special_deal",
-  //       name: "Special Deal Cost",
-  //       value: { nat: { min: 25n, max: 40n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "upgrade_strength",
-  //       description: "Upgrade your strength.",
-  //       pathId: "upgrade_strength_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "haggle",
-  //       description: "Attempt to haggle for a better price.",
-  //       pathId: "haggle_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "leave",
-  //       description: "Leave without upgrading.",
-  //       pathId: "leave_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "dwarf_negotiate",
-  //       description: "Have your dwarf crew member negotiate.",
-  //       pathId: "dwarf_negotiate_path",
-  //       requirement: [{ race: "dwarf" }],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "upgrade_strength_path",
-  //       description: "You attempt to upgrade your strength.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "upgrade_cost" } },
-  //           { addItem: { specific: { raw: "power_gauntlets" } } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "upgrade_cost" } }],
-  //           pathId: "upgrade_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "upgrade_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "upgrade_success",
-  //       description: "You upgrade your attack by 1 for {upgrade_cost} gold.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "upgrade_failure",
-  //       description: "You don't have enough gold to upgrade your attack.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "haggle_path",
-  //       description: "You attempt to haggle with the dwarf.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [],
-  //           pathId: "haggle_success",
-  //         },
-  //         {
-  //           weight: 7,
-  //           condition: [],
-  //           pathId: "haggle_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "haggle_success",
-  //       description: "The dwarf grudgingly offers a discounted upgrade price of {discounted_cost} gold.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "haggle_failure",
-  //       description: "The dwarf is offended by your haggling and refuses to upgrade your attack.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "dwarf_negotiate_path",
-  //       description: "Your dwarf crew member negotiates a special deal: {special_deal} gold for a weapon upgrade.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_path",
-  //       description: "You leave the weaponsmith's shop without upgrading your attack.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "enchanted_grove",
-  //   name: "Enchanted Grove",
-  //   description: "You enter a serene grove with magical properties.",
-  //   imageId: "enchanted_grove",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "other": null },
-  //   data: [
-  //     {
-  //       id: "meditation_cost",
-  //       name: "Meditation Cost",
-  //       value: { nat: { min: 5n, max: 10n } },
-  //     },
-  //     {
-  //       id: "harvest_cost",
-  //       name: "Harvest Cost",
-  //       value: { nat: { min: 1n, max: 3n } },
-  //     },
-  //     {
-  //       id: "commune_cost",
-  //       name: "Commune Cost",
-  //       value: { nat: { min: 10n, max: 20n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "meditate",
-  //       description: "Meditate to increase your magic stat.",
-  //       pathId: "meditate_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "harvest",
-  //       description: "Harvest rare herbs (costs health).",
-  //       pathId: "harvest_path",
-  //       requirement: [{ item: "nature_pendant" }],
-  //     },
-  //     {
-  //       id: "commune",
-  //       description: "Commune with nature spirits for a chance at a unique item.",
-  //       pathId: "commune_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "leave",
-  //       description: "Leave the grove.",
-  //       pathId: "leave_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "meditate_path",
-  //       description: "You attempt to meditate in the grove.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "meditation_cost" } },
-  //           { addItem: { random: null } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "meditation_cost" } }],
-  //           pathId: "meditate_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "meditate_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "meditate_success",
-  //       description: "You meditate and feel your magical abilities grow stronger.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "meditate_failure",
-  //       description: "You don't have enough gold to perform the meditation ritual.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "harvest_path",
-  //       description: "You attempt to harvest rare herbs from the grove.",
-  //       kind: {
-  //         effects: [
-  //           { damage: { dataField: "harvest_cost" } },
-  //           { addItem: { specific: { raw: "herbs" } } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "harvest_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "harvest_rejuvenation",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "harvest_success",
-  //       description: "You harvest rare herbs from the grove, expending some energy in the process.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "harvest_rejuvenation",
-  //       description: "The grove's magic rejuvenates you slightly.",
-  //       kind: {
-  //         effects: [
-  //           { heal: { raw: 1n } },
-  //         ]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "commune_path",
-  //       description: "You attempt to commune with nature spirits.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "commune_cost" } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "commune_cost" } }],
-  //           pathId: "commune_success",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [{ hasGold: { dataField: "commune_cost" } }],
-  //           pathId: "commune_failure",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "commune_no_gold",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "commune_success",
-  //       description: "You commune with nature spirits and receive a unique item.",
-  //       kind: {
-  //         effects: [
-  //           { addItem: { specific: { raw: "crystal" } } },
-  //         ]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "commune_failure",
-  //       description: "You commune with nature spirits but receive no tangible reward.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "commune_no_gold",
-  //       description: "You don't have enough gold to commune with nature spirits.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_path",
-  //       description: "You leave the enchanted grove, feeling refreshed.",
-  //       kind: {
-  //         effects: [
-  //           { heal: { raw: 1n } },
-  //         ]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You stand in awe of the grove's beauty, unable to decide what to do.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "faerie_market",
-  //   name: "Faerie Market",
-  //   description: "You stumble upon a hidden faerie market, offering magical trinkets and mysterious trades.",
-  //   imageId: "faerie_market",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "store": null },
-  //   data: [
-  //     {
-  //       id: "trinket_cost",
-  //       name: "Trinket Cost",
-  //       value: { nat: { min: 20n, max: 40n } },
-  //     },
-  //     {
-  //       id: "trinket_item",
-  //       name: "Trinket Item",
-  //       value: {
-  //         text: {
-  //           options: [
-  //             ["herbs", 0.9],
-  //             ["echo_crystal", 0.1],
-  //           ],
-  //         }
-  //       },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "buy_trinket",
-  //       description: "Purchase a magical trinket.",
-  //       pathId: "buy_trinket_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "trade",
-  //       description: "Trade an item for faerie magic.",
-  //       pathId: "trade_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "leave",
-  //       description: "Leave the market.",
-  //       pathId: "leave_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "use_crystal",
-  //       description: "Use a crystal to get better deals.",
-  //       pathId: "use_crystal_path",
-  //       requirement: [{ item: "crystal" }],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "buy_trinket_path",
-  //       description: "You attempt to purchase a magical trinket.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "trinket_cost" } },
-  //           { addItem: { specific: { dataField: "trinket_item" } } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "trinket_cost" } }],
-  //           pathId: "trinket_purchase_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "trinket_purchase_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "trinket_purchase_success",
-  //       description: "You purchase a mysterious trinket for {trinket_cost} gold.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "trinket_purchase_failure",
-  //       description: "You don't have enough gold to buy a trinket.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "trade_path",
-  //       description: "You offer to trade an item for faerie goods.",
-  //       kind: {
-  //         effects: [
-  //           { removeItem: { random: null } },
-  //           { addItem: { random: null } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [],
-  //           pathId: "trade_success",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [],
-  //           pathId: "trade_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "trade_success",
-  //       description: "The faeries accept your trade, granting you a magical boon.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "trade_failure",
-  //       description: "The faeries reject your offer, seeming offended.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "use_crystal_path",
-  //       description: "Your faerie charm glows, granting you favor in the market.",
-  //       kind: {
-  //         effects: [
-  //           { removeItem: { specific: { raw: "crystal" } } },
-  //           { addItem: { random: null } },
-  //         ]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_path",
-  //       description: "You leave the faerie market, the magical stalls fading behind you.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "goblin_raiding_party",
-  //   name: "Goblin Raiding Party",
-  //   description: "A band of goblins emerges from the underbrush, brandishing crude weapons and eyeing your possessions.",
-  //   imageId: "goblin_raiding_party",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "combat": null },
-  //   data: [
-  //     {
-  //       id: "bribe_cost",
-  //       name: "Bribe Cost",
-  //       value: { nat: { min: 20n, max: 30n } },
-  //     }
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "fight",
-  //       description: "Engage the goblin raiding party in combat.",
-  //       pathId: "fight_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "bribe",
-  //       description: "Offer some of your resources to appease the goblins.",
-  //       pathId: "bribe_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "intimidate",
-  //       description: "Use your strength to scare off the goblins.",
-  //       pathId: "intimidate_path",
-  //       requirement: [{ item: "power_gauntlets" }],
-  //     },
-  //     {
-  //       id: "distract",
-  //       description: "Create a clever diversion to escape the goblins.",
-  //       pathId: "distract_path",
-  //       requirement: [{ item: "adaptable_charm" }],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "fight_path",
-  //       description: "You engage the goblin raiding party in combat.",
-  //       kind: {
-  //         combat: { creatures: [{ id: "goblin" }, { id: "goblin" }, { id: "goblin" }] }
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [],
-  //           pathId: "fight_success",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "fight_success",
-  //       description: "You successfully fend off the goblin raiding party!",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "bribe_path",
-  //       description: "You attempt to bribe the goblins.",
-  //       kind: {
-  //         effects: [{ removeGold: { dataField: "bribe_cost" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 4,
-  //           condition: [{ hasGold: { dataField: "bribe_cost" } }],
-  //           pathId: "bribe_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "bribe_cost" } }],
-  //           pathId: "bribe_failure",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "bribe_no_gold",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "bribe_success",
-  //       description: "The goblins accept your offering and leave you alone.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "bribe_failure",
-  //       description: "The goblins take your bribe but attack anyway!",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [{
-  //         pathId: "fight_path",
-  //         weight: 1,
-  //         condition: [],
-  //       }],
-  //     },
-  //     {
-  //       id: "bribe_no_gold",
-  //       description: "The goblins see you don't have any gold and attack!",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [{
-  //         pathId: "fight_path",
-  //         weight: 1,
-  //         condition: [],
-  //       }],
-  //     },
-  //     {
-  //       id: "intimidate_path",
-  //       description: "You attempt to intimidate the goblins.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 4,
-  //           condition: [],
-  //           pathId: "intimidate_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "intimidate_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "intimidate_success",
-  //       description: "Your show of strength scares off the goblins.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "intimidate_failure",
-  //       description: "The goblins are not impressed and attack!",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [{
-  //         pathId: "fight_path",
-  //         weight: 1,
-  //         condition: [],
-  //       }],
-  //     },
-  //     {
-  //       id: "distract_path",
-  //       description: "You attempt to create a clever diversion.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 4,
-  //           condition: [],
-  //           pathId: "distract_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "distract_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "distract_success",
-  //       description: "Your clever diversion allows you to slip away unnoticed.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "distract_failure",
-  //       description: "The goblins see through your trick and attack!",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "fight_path",
-  //         },
-  //       ],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "knowledge_nexus",
-  //   name: "Knowledge Nexus",
-  //   description: "You enter a floating library of ancient wisdom.",
-  //   imageId: "knowledge_nexus",
-  //   location: {
-  //     zoneIds: ["ancient_ruins"],
-  //   },
-  //   category: { "store": null },
-  //   data: [
-  //     {
-  //       id: "study_cost",
-  //       name: "Study Cost",
-  //       value: { nat: { min: 10n, max: 20n } },
-  //     },
-  //     {
-  //       id: "skill_cost",
-  //       name: "Skill Cost",
-  //       value: { nat: { min: 15n, max: 25n } },
-  //     },
-  //     {
-  //       id: "map_cost",
-  //       name: "Map Cost",
-  //       value: { nat: { min: 20n, max: 30n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "study",
-  //       description: "Study ancient texts to increase your magic stat.",
-  //       pathId: "study_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "learn_skill",
-  //       description: "Learn a new skill to increase your attack or defense.",
-  //       pathId: "learn_skill_path",
-  //       requirement: [{ item: "adaptable_charm" }],
-  //     },
-  //     {
-  //       id: "decipher_map",
-  //       description: "Decipher an old map for a chance to discover a hidden location.",
-  //       pathId: "decipher_map_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "leave",
-  //       description: "Leave the Knowledge Nexus.",
-  //       pathId: "leave_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "study_path",
-  //       description: "You attempt to study ancient texts.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "study_cost" } },
-  //           { addItem: { specific: { raw: "wisdom_tome" } } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "study_cost" } }],
-  //           pathId: "study_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "study_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "study_success",
-  //       description: "You study ancient texts and feel your magical knowledge expand.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "study_failure",
-  //       description: "You don't have enough gold to access the rare texts.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "learn_skill_path",
-  //       description: "You attempt to learn a new skill.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "skill_cost" } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "skill_cost" } }],
-  //           pathId: "learn_attack",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "skill_cost" } }],
-  //           pathId: "learn_defense",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "learn_skill_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "learn_attack",
-  //       description: "You learn combat techniques from ancient scrolls.",
-  //       kind: {
-  //         effects: [{ addItem: { random: null } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "learn_defense",
-  //       description: "You study defensive strategies from old tomes.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "endurance_belt" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "learn_skill_failure",
-  //       description: "You don't have enough gold to learn a new skill.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "decipher_map_path",
-  //       description: "You attempt to decipher an ancient map.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "map_cost" } },
-  //         ]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "map_cost" } }],
-  //           pathId: "map_success",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [{ hasGold: { dataField: "map_cost" } }],
-  //           pathId: "map_failure",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "map_no_gold",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "map_success",
-  //       description: "You successfully decipher an ancient map, revealing a hidden location.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "treasure_map" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "map_failure",
-  //       description: "Despite your efforts, you fail to decipher the map completely.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "map_no_gold",
-  //       description: "You don't have enough gold to access the map archives.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_path",
-  //       description: "You leave the Knowledge Nexus, your mind brimming with new information.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You're overwhelmed by the vast knowledge surrounding you, unable to decide what to do.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "lost_elfling",
-  //   name: "Lost Elfling",
-  //   description: "You hear the faint cries of a young elf, seemingly lost and separated from their clan.",
-  //   imageId: "lost_elfling",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "other": null },
-  //   data: [],
-  //   choices: [
-  //     {
-  //       id: "help",
-  //       description: "Offer assistance to the lost elfling.",
-  //       pathId: "help_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "abandon",
-  //       description: "Continue on your way, leaving the elfling to its fate.",
-  //       pathId: "abandon_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "investigate",
-  //       description: "Carefully investigate the area before approaching the elfling.",
-  //       pathId: "investigate_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "use_perception",
-  //       description: "Use advanced perception to locate the elfling's clan or create a safe path.",
-  //       pathId: "use_perception_path",
-  //       requirement: [
-  //         { item: "eagle_eye_amulet" },
-  //       ],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "help_path",
-  //       description: "You attempt to help the lost elfling.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 4,
-  //           condition: [],
-  //           pathId: "help_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "help_danger",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "help_success",
-  //       description: "You successfully help the elfling and reunite them with their clan.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "help_danger",
-  //       description: "Your attempt to help leads you into a dangerous situation.",
-  //       kind: {
-  //         effects: [{ damage: { random: [1n, 3n] } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "abandon_path",
-  //       description: "You ignore the elfling's cries and continue on your way.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "investigate_path",
-  //       description: "You carefully investigate the area.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [],
-  //           pathId: "investigate_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "investigate_danger",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "investigate_success",
-  //       description: "Your careful investigation reveals a safe path to the elfling.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "investigate_danger",
-  //       description: "While investigating, you stumble into a hidden danger.",
-  //       kind: {
-  //         effects: [{ damage: { random: [1n, 2n] } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "use_perception_path",
-  //       description: "You attempt to use your advanced perception to help the elfling.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 9,
-  //           condition: [],
-  //           pathId: "perception_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "perception_danger",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "perception_success",
-  //       description: "Your advanced perception successfully guides the elfling back to their clan.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "perception_danger",
-  //       description: "You attract unwanted attention from forest spirits.",
-  //       kind: {
-  //         effects: [{ damage: { random: [1n, 2n] } }]
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "mysterious_structure",
-  //   name: "Mysterious Structure",
-  //   description: "You encounter a pyramid-like structure with glowing runes, overgrown by vines. A sealed entrance beckons.",
-  //   imageId: "mysterious_structure",
-  //   location: {
-  //     zoneIds: ["ancient_ruins"],
-  //   },
-  //   category: { "other": null },
-  //   data: [
-  //     {
-  //       id: "trap_damage",
-  //       name: "Trap Damage",
-  //       value: { nat: { min: 1n, max: 3n } },
-  //     },
-  //     {
-  //       id: "forceful_entry_damage",
-  //       name: "Forceful Entry Damage",
-  //       value: { nat: { min: 1n, max: 5n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "skip",
-  //       description: "Ignore the structure and continue exploring elsewhere.",
-  //       pathId: "skip_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "forceful_entry",
-  //       description: "Attempt to create an opening using brute force or basic tools. Could be dangerous.",
-  //       pathId: "forceful_entry_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "sacrifice",
-  //       description: "Offer a random resource or item to the structure, hoping to gain entry or unlock its secrets.",
-  //       pathId: "sacrifice_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "secret_entrance",
-  //       description: "Use the secret side entrance that was found from being so perceptive.",
-  //       pathId: "secret_entrance_path",
-  //       requirement: [{ item: "eagle_eye_amulet" }],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "secret_entrance_path",
-  //       description: "You find a hidden entrance and carefully make your way inside.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "explore_treasure_room",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "forceful_entry_path",
-  //       description: "You attempt to force your way into the structure.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "forceful_entry_damage",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "forceful_entry_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "forceful_entry_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "forceful_entry_damage",
-  //       description: "You hurt yourself trying to force into the entrance.",
-  //       kind: {
-  //         effects: [{ damage: { dataField: "forceful_entry_damage" } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "forceful_entry_success",
-  //       description: "You manage to create an opening and enter the structure.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "explore_structure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "forceful_entry_failure",
-  //       description: "Your attempts to force your way inside are unsuccessful.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "sacrifice_path",
-  //       description: "You make an offering to the structure and it allows you to enter safely.",
-  //       kind: {
-  //         effects: [{ removeItem: { random: null } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "explore_treasure_room",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "skip_path",
-  //       description: "You decide to leave the structure alone and continue exploring elsewhere.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "explore_structure",
-  //       description: "You explore the mysterious structure.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "structure_ambush",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "structure_trap",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [],
-  //           pathId: "explore_treasure_room",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "structure_ambush",
-  //       description: "You are ambushed by a group of hostile creatures!",
-  //       kind: {
-  //         combat: { creatures: [{ filter: { location: { any: null } } }] }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "structure_trap",
-  //       description: "You trigger a trap!",
-  //       kind: {
-  //         effects: [{ damage: { dataField: "trap_damage" } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "explore_treasure_room",
-  //       description: "You explore a hidden chamber within the structure.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "treasure_found",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "no_treasure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "treasure_found",
-  //       description: "You discover a hidden chamber containing a small amount of treasure.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "no_treasure",
-  //       description: "You find nothing of interest inside.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You don't seem to find the structure interesting and move on.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "mystic_forge",
-  //   name: "Mystic Forge",
-  //   description: "You enter a magical smithy where the hammers swing themselves and the anvils occasionally burp fire.",
-  //   imageId: "mystic_forge",
-  //   location: {
-  //     zoneIds: ["mystic_caves"],
-  //   },
-  //   category: { "store": null },
-  //   data: [
-  //     {
-  //       id: "upgrade_cost",
-  //       name: "Upgrade Cost",
-  //       value: { nat: { min: 20n, max: 30n } },
-  //     },
-  //     {
-  //       id: "reforge_cost",
-  //       name: "Reforge Cost",
-  //       value: { nat: { min: 15n, max: 25n } },
-  //     },
-  //     {
-  //       id: "craft_cost",
-  //       name: "Craft Cost",
-  //       value: { nat: { min: 25n, max: 35n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "upgrade",
-  //       description: "Upgrade your equipment. 60% of the time, it works every time.",
-  //       pathId: "upgrade_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "reforge",
-  //       description: "Reforge an item. It's like a makeover, but for swords!",
-  //       pathId: "reforge_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "craft",
-  //       description: "Craft a special item. Warning: May result in unexpected chicken statues.",
-  //       pathId: "craft_path",
-  //       requirement: [{ class: "artificer" }],
-  //     },
-  //     {
-  //       id: "leave",
-  //       description: "Leave the Mystic Forge. The heat was getting unbearable anyway.",
-  //       pathId: "leave_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "upgrade_path",
-  //       description: "You attempt to upgrade your equipment.",
-  //       kind: {
-  //         effects: [{ removeGold: { dataField: "upgrade_cost" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [{ hasGold: { dataField: "upgrade_cost" } }],
-  //           pathId: "upgrade_success",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [{ hasGold: { dataField: "upgrade_cost" } }],
-  //           pathId: "upgrade_failure",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "upgrade_no_gold",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "upgrade_success",
-  //       description: "The forge bellows with approval. Your equipment feels more... equipment-y.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "power_gauntlets" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "upgrade_failure",
-  //       description: "The forge hiccups. Your gold vanishes, leaving behind a faint smell of burnt toast.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "upgrade_no_gold",
-  //       description: "The forge eyes your empty pockets and sighs dramatically.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "reforge_path",
-  //       description: "You attempt to reforge an item.",
-  //       kind: {
-  //         effects: [{ removeGold: { dataField: "reforge_cost" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "reforge_cost" } }],
-  //           pathId: "reforge_attack",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "reforge_cost" } }],
-  //           pathId: "reforge_defense",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "reforge_no_gold",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "reforge_attack",
-  //       description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "power_gauntlets" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "reforge_defense",
-  //       description: "Your item emerges from the forge, looking suspiciously similar but feeling somehow different.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "endurance_belt" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "reforge_no_gold",
-  //       description: "The forge snorts derisively at your lack of funds. Even magical anvils have bills to pay.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "craft_path",
-  //       description: "You attempt to craft a special item.",
-  //       kind: {
-  //         effects: [{ removeGold: { dataField: "craft_cost" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 2,
-  //           condition: [{ hasGold: { dataField: "craft_cost" } }],
-  //           pathId: "craft_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "craft_cost" } }],
-  //           pathId: "craft_failure",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "craft_no_gold",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "craft_success",
-  //       description: "The forge erupts in a shower of sparks. You've created something... interesting.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "crystal" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "craft_failure",
-  //       description: "The forge burps loudly. Your gold is gone, and you're left holding... is that a rubber chicken?",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "craft_no_gold",
-  //       description: "The forge grumbles about 'in this economy' and 'the cost of phoenix feathers these days'.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_path",
-  //       description: "You leave the Mystic Forge, your eyebrows slightly singed but your spirit unquenched.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "sinking_boat",
-  //   name: "Sinking Boat",
-  //   description: "You come across a small boat sinking in a nearby river. The passengers are calling for help.",
-  //   imageId: "sinking_boat",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "other": null },
-  //   data: [
-  //     {
-  //       id: "swimming_damage",
-  //       name: "Swimming Damage",
-  //       value: { nat: { min: 1n, max: 3n } },
-  //     },
-  //     {
-  //       id: "fall_in_damage",
-  //       name: "Falling In Damage",
-  //       value: { nat: { min: 1n, max: 2n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "rescue_swimming",
-  //       description: "Swim out to rescue the passengers.",
-  //       pathId: "rescue_swimming_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "walk_on_water",
-  //       description: "Walk on water",
-  //       pathId: "walk_on_water_path",
-  //       requirement: [{ item: "buoyant_sandals" }],
-  //     },
-  //     {
-  //       id: "disregard",
-  //       description: "Disregard the sinking boat and continue on your way.",
-  //       pathId: "disregard_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "rescue_swimming_path",
-  //       description: "You attempt to swim out and rescue the passengers.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [],
-  //           pathId: "swimming_success",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [],
-  //           pathId: "swimming_difficulty",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "swimming_success",
-  //       description: "You successfully swim out and rescue the passengers.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "swimming_difficulty",
-  //       description: "The current is stronger than you anticipated.",
-  //       kind: {
-  //         effects: [{ damage: { dataField: "swimming_damage" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "swimming_rescue",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "swimming_rescue",
-  //       description: "You manage to rescue the passengers, but at a cost to your health.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "walk_on_water_path",
-  //       description: "You walk on water to reach the sinking boat.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 4,
-  //           condition: [],
-  //           pathId: "walk_on_water_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "walk_on_water_difficulty",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "walk_on_water_success",
-  //       description: "Your water-walking allows you to easily rescue all passengers.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "walk_on_water_difficulty",
-  //       description: "You somehow still manage to fall in.",
-  //       kind: {
-  //         effects: [{ damage: { dataField: "fall_in_damage" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "rescue",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "rescue",
-  //       description: "Despite the setback, you manage to complete the rescue.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "disregard_path",
-  //       description: "You disregard the calls for help and continue on your way, leaving the passengers to their fate.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You don't seem to notice and carry on.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "trapped_druid",
-  //   name: "Trapped Druid",
-  //   description: "You come across a druid entangled in a strange, pulsating magical snare. They call out for help.",
-  //   imageId: "trapped_druid",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "other": null },
-  //   data: [
-  //     {
-  //       id: "direct_damage",
-  //       name: "Direct Attempt Damage",
-  //       value: { nat: { min: 2n, max: 4n } },
-  //     },
-  //     {
-  //       id: "nature_damage",
-  //       name: "Nature Skills Damage",
-  //       value: { nat: { min: 1n, max: 2n } },
-  //     },
-  //     {
-  //       id: "search_damage",
-  //       name: "Search Damage",
-  //       value: { nat: { min: 1n, max: 3n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "free_directly",
-  //       description: "Attempt to free the druid directly from the magical snare.",
-  //       pathId: "free_directly_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "use_nature_skills",
-  //       description: "Use your nature-speaking abilities to communicate with the forest and find a safe way to free the druid.",
-  //       pathId: "use_nature_skills_path",
-  //       requirement: [{ item: "nature_pendant" }],
-  //     },
-  //     {
-  //       id: "find_alternative_solution",
-  //       description: "Search the area for clues or tools that might help free the druid.",
-  //       pathId: "find_alternative_solution_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "leave_alone",
-  //       description: "Decide the situation is too risky and leave the druid to their fate.",
-  //       pathId: "leave_alone_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "free_directly_path",
-  //       description: "You attempt to free the druid directly from the magical snare.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "direct_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "direct_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "direct_success",
-  //       description: "You successfully free the druid from the magical snare.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "direct_failure",
-  //       description: "The magical snare reacts violently to your attempt.",
-  //       kind: {
-  //         effects: [{ damage: { dataField: "direct_damage" } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "use_nature_skills_path",
-  //       description: "You use your nature skills to attempt to disarm the snare.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 4,
-  //           condition: [],
-  //           pathId: "nature_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "nature_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "nature_success",
-  //       description: "Your nature skills allow you to safely disarm the snare and free the druid.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "nature_failure",
-  //       description: "Despite your skills, the snare proves too complex to disarm safely.",
-  //       kind: {
-  //         effects: [{ damage: { dataField: "nature_damage" } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "find_alternative_solution_path",
-  //       description: "You search the area for an alternative solution.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 2,
-  //           condition: [],
-  //           pathId: "search_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "search_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "search_success",
-  //       description: "You find a magical artifact nearby that helps neutralize the snare.",
-  //       kind: {
-  //         reward: { random: null }
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "search_failure",
-  //       description: "Your search attracts unwanted attention from forest creatures.",
-  //       kind: {
-  //         effects: [{ damage: { dataField: "search_damage" } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_alone_path",
-  //       description: "You decide the risk is too great and leave the druid to their fate.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You don't seem to hear them and continue walking.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "travelling_bard",
-  //   name: "Travelling Bard",
-  //   description: "You encounter a bard whose lute is suspiciously in tune for someone who's been on the road.",
-  //   imageId: "travelling_bard",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "store": null },
-  //   data: [
-  //     {
-  //       id: "inspiration_cost",
-  //       name: "Inspiration Cost",
-  //       value: { nat: { min: 10n, max: 20n } },
-  //     },
-  //     {
-  //       id: "tales_cost",
-  //       name: "Tales Cost",
-  //       value: { nat: { min: 15n, max: 25n } },
-  //     },
-  //     {
-  //       id: "request_cost",
-  //       name: "Request Cost",
-  //       value: { nat: { min: 20n, max: 30n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "seek_inspiration",
-  //       description: "Seek inspiration from the bard. Warning: May cause spontaneous poetry.",
-  //       pathId: "seek_inspiration_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "listen_tales",
-  //       description: "Listen to the bard's tales. 50% history, 50% gossip, 100% embellished.",
-  //       pathId: "listen_tales_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "request_song",
-  //       description: "Request a specific song. Hope you like 'Wonderwall'.",
-  //       pathId: "request_song_path",
-  //       requirement: [{ item: "adaptable_charm" }],
-  //     },
-  //     {
-  //       id: "leave",
-  //       description: "Leave the bard. Your ears could use a break anyway.",
-  //       pathId: "leave_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "seek_inspiration_path",
-  //       description: "You seek inspiration from the bard.",
-  //       kind: {
-  //         effects: [{ removeGold: { dataField: "inspiration_cost" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [{ hasGold: { dataField: "inspiration_cost" } }],
-  //           pathId: "inspiration_success",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [{ hasGold: { dataField: "inspiration_cost" } }],
-  //           pathId: "inspiration_failure",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "no_gold_inspiration",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "inspiration_success",
-  //       description: "The bard's words stir your soul. You feel more... magical. Or was that just indigestion?",
-  //       kind: {
-  //         effects: [{ addItem: { random: null } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "inspiration_failure",
-  //       description: "The bard's inspiration misses the mark. You now know way too much about the mating habits of geese.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "no_gold_inspiration",
-  //       description: "The bard raises an eyebrow at your empty pockets. Inspiration doesn't pay for itself, you know.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "listen_tales_path",
-  //       description: "You listen to the bard's tales.",
-  //       kind: {
-  //         effects: [{ removeGold: { dataField: "tales_cost" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "tales_cost" } }],
-  //           pathId: "tales_attack",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "tales_cost" } }],
-  //           pathId: "tales_defense",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "no_gold_tales",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "tales_attack",
-  //       description: "The bard's tales of heroic deeds fill you with courage. You feel stronger, or at least less likely to run from a fight.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "power_gauntlets" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "tales_defense",
-  //       description: "The bard's stories of cunning heroes sharpen your wits. You're now 30% more likely to spot a bad deal... like this one.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "wisdom_tome" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "no_gold_tales",
-  //       description: "The bard stops mid-sentence, looking expectantly at your coin purse. Seems this tale has a cover charge.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "request_song_path",
-  //       description: "You request a specific song from the bard.",
-  //       kind: {
-  //         effects: [{ removeGold: { dataField: "request_cost" } }]
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 2,
-  //           condition: [{ hasGold: { dataField: "request_cost" } }],
-  //           pathId: "song_success",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [{ hasGold: { dataField: "request_cost" } }],
-  //           pathId: "song_failure",
-  //         },
-  //         {
-  //           weight: 1,
-  //           condition: [],
-  //           pathId: "no_gold_song",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "song_success",
-  //       description: "The bard plays your request with surprising skill. You receive a magical token of appreciation from the universe.",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "crystal" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "song_failure",
-  //       description: "The bard butchers your request so badly, nearby plants wilt. You're pretty sure you've just lost brain cells.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "no_gold_song",
-  //       description: "The bard strums a chord that sounds suspiciously like a cash register. No gold, no song.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "leave_path",
-  //       description: "You leave the bard, humming a tune that will be stuck in your head for days. Thanks a lot.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You stand there, caught between fight or flight as the bard clears his throat.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
-  // {
-  //   id: "wandering_alchemist",
-  //   name: "Wandering Alchemist",
-  //   description: "You encounter a wandering alchemist, their pack filled with bubbling vials and aromatic herbs.",
-  //   imageId: "wandering_alchemist",
-  //   location: {
-  //     zoneIds: ["enchanted_forest"],
-  //   },
-  //   category: { "store": null },
-  //   data: [
-  //     {
-  //       id: "vial_of_acid_cost",
-  //       name: "Vial of Acid Cost",
-  //       value: { nat: { min: 30n, max: 35n } },
-  //     },
-  //   ],
-  //   choices: [
-  //     {
-  //       id: "trade_herbs",
-  //       description: "Trade your herbs for a vial of acid.",
-  //       pathId: "trade_herbs_path",
-  //       requirement: [{ item: "herbs" }],
-  //     },
-  //     {
-  //       id: "buy_vial_of_acid",
-  //       description: "Buy a vial of acid for some gold.",
-  //       pathId: "buy_vial_of_acid_path",
-  //       requirement: [],
-  //     },
-  //     {
-  //       id: "learn",
-  //       description: "Try to learn from the alchemist.",
-  //       pathId: "learn_path",
-  //       requirement: [{ item: "wisdom_tome" }],
-  //     },
-  //     {
-  //       id: "decline",
-  //       description: "Politely decline and continue on your way.",
-  //       pathId: "decline_path",
-  //       requirement: [],
-  //     },
-  //   ],
-  //   paths: [
-  //     {
-  //       id: "trade_herbs_path",
-  //       description: "You trade your herbs for a vial of acid.",
-  //       kind: {
-  //         effects: [
-  //           { removeItem: { specific: { raw: "herbs" } } },
-  //           { addItem: { specific: { raw: "vial_of_acid" } } },
-  //         ]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "buy_vial_of_acid_path",
-  //       description: "You purchase a vial of acid from the alchemist.",
-  //       kind: {
-  //         effects: [
-  //           { removeGold: { dataField: "vial_of_acid_cost" } },
-  //           { addItem: { specific: { raw: "vial_of_acid" } } },
-  //         ]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "learn_path",
-  //       description: "You try to learn from the alchemist.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [
-  //         {
-  //           weight: 3,
-  //           condition: [],
-  //           pathId: "learn_success",
-  //         },
-  //         {
-  //           weight: 2,
-  //           condition: [],
-  //           pathId: "learn_failure",
-  //         },
-  //       ],
-  //     },
-  //     {
-  //       id: "learn_success",
-  //       description: "You successfully learn from the alchemist!",
-  //       kind: {
-  //         effects: [{ addItem: { specific: { raw: "portable_alchemy_kit" } } }]
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "learn_failure",
-  //       description: "The alchemist's instructions are too complex. You fail to learn anything.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "decline_path",
-  //       description: "You politely decline the alchemist's offers and continue on your journey.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //     {
-  //       id: "undecided_path",
-  //       description: "You ignore them and continue walking down the path.",
-  //       kind: {
-  //         effects: []
-  //       },
-  //       paths: [],
-  //     },
-  //   ],
-  //   unlockRequirement: []
-  // },
+  {
+    "id": "dark_elf_ambush",
+    "name": "Dark Elf Ambush",
+    "description": "A group of dark elves emerges from the shadows, weapons drawn. Their eyes gleam with malicious intent.",
+    "location": {
+      "zoneIds": ["enchanted_forest"]
+    },
+    "category": { "combat": null },
+    "imageId": "dark_elf_ambush",
+    "paths": [
+      {
+        "id": "start",
+        "description": "The dark elves have you surrounded. You must act quickly.",
+        "kind": {
+          "choice": {
+            "choices": [
+              {
+                "id": "fight",
+                "description": "Stand your ground and engage the dark elves in combat.",
+                "requirement": [],
+                "effects": [],
+                "nextPath": { "single": "combat" }
+              },
+              {
+                "id": "negotiate",
+                "description": "Attempt to parley with the dark elves, offering something in exchange for safe passage.",
+                "requirement": [],
+                "effects": [],
+                "nextPath": {
+                  "multi": [
+                    {
+                      "weight": { "value": 0.3, "kind": { "attributeScaled": { "charisma": null } } },
+                      "description": "Your silver tongue convinces the dark elves to let you pass.",
+                      "effects": [],
+                      "pathId": ["negotiate_success"]
+                    },
+                    {
+                      "weight": { "value": 0.7, "kind": { "raw": null } },
+                      "description": "The dark elves are not swayed by your words and attack!",
+                      "effects": [],
+                      "pathId": ["combat"]
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "stealth",
+                "description": "Use your agility to sneak past the dark elves without being detected.",
+                "requirement": [{ "item": "boots_of_quickness" }],
+                "effects": [],
+                "nextPath": {
+                  "multi": [
+                    {
+                      "weight": { "value": 0.4, "kind": { "attributeScaled": { "dexterity": null } } },
+                      "description": "You successfully sneak past the dark elves without being detected.",
+                      "effects": [],
+                      "pathId": ["stealth_success"]
+                    },
+                    {
+                      "weight": { "value": 0.6, "kind": { "raw": null } },
+                      "description": "Despite your efforts, the dark elves spot you and attack!",
+                      "effects": [],
+                      "pathId": ["combat"]
+                    }
+                  ]
+                }
+              },
+              {
+                "id": "retreat",
+                "description": "Try to escape from the ambush, potentially leaving behind some resources.",
+                "requirement": [],
+                "effects": [
+                  {
+                    "removeGold": {
+                      "random": [5n, 15n]
+                    }
+                  }
+                ],
+                "nextPath": {
+                  "multi": [
+                    {
+                      "weight": { "value": 0.5, "kind": { "raw": null } },
+                      "description": "You manage to escape, but at a cost.",
+                      "effects": [],
+                      "pathId": ["retreat_success"]
+                    },
+                    {
+                      "weight": { "value": 0.5, "kind": { "raw": null } },
+                      "description": "Your retreat fails, and the dark elves catch up to you!",
+                      "effects": [
+                        {
+                          "damage": { "raw": 5n }
+                        }
+                      ],
+                      "pathId": ["combat"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "combat",
+        "description": "The dark elves attack!",
+        "kind": {
+          "combat": {
+            "creatures": [{ "id": "dark_elf" }, { "id": "dark_elf" }],
+            "nextPath": { "single": "post_combat" }
+          }
+        }
+      },
+      {
+        "id": "negotiate_success",
+        "description": "The dark elves accept your offer and let you pass.",
+        "kind": {
+          "reward": {
+            "kind": { "random": null },
+            "nextPath": { "none": null }
+          }
+        }
+      },
+      {
+        "id": "stealth_success",
+        "description": "You successfully sneak past the dark elves, finding a hidden cache they were guarding.",
+        "kind": {
+          "reward": {
+            "kind": { "random": null },
+            "nextPath": { "none": null }
+          }
+        }
+      },
+      {
+        "id": "retreat_success",
+        "description": "You successfully escape the dark elf ambush, but at a cost.",
+        "kind": {
+          "reward": {
+            "kind": { "random": null },
+            "nextPath": { "none": null }
+          }
+        }
+      },
+      {
+        "id": "post_combat",
+        "description": "With the dark elves defeated, you search their belongings.",
+        "kind": {
+          "reward": {
+            "kind": { "random": null },
+            "nextPath": { "none": null }
+          }
+        }
+      }
+    ],
+    "unlockRequirement": []
+  },
+  {
+    id: "druidic_sanctuary",
+    name: "Druidic Sanctuary",
+    description: "You enter a serene grove where druids commune with nature. The trees seem to be whispering gossip.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "other": null },
+    imageId: "druidic_sanctuary",
+    paths: [
+      {
+        id: "start",
+        description: "The air is thick with magic and the scent of herbs. What do you do?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "seek_healing",
+                description: "Seek healing from the druids. Side effects may include turning into a tree.",
+                requirement: [{ gold: 20n }],
+                effects: [{ removeGold: { raw: 20n } }],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "The druids' magic flows through you, mending your wounds.",
+                      effects: [{ heal: { raw: 15n } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The healing magic fizzles, leaving you with a mild case of leaf-itis.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "request_blessing",
+                description: "Request a druidic blessing. Warning: May attract squirrels.",
+                requirement: [{ gold: 25n }],
+                effects: [{ removeGold: { raw: 25n } }],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
+                      description: "The druids bless you with the 'strength of oak'. You feel sturdier, and vaguely like you want to grow leaves.",
+                      effects: [{ addItem: { specific: { raw: "endurance_belt" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The blessing goes slightly awry. You now have an inexplicable craving for sunlight and water.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "commune_with_nature",
+                description: "Commune with nature. Hope you speak fluent squirrel.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
+                      description: "You successfully commune with nature. A squirrel imparts ancient wisdom, and hands you a nut... er, herb.",
+                      effects: [{ addItem: { specific: { raw: "herbs" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "Your attempt at communing results in a lengthy conversation with a sassy fern. You're not sure, but you think it just insulted your haircut.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "leave",
+                description: "Leave the sanctuary. The pollen was getting to you anyway.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "dwarven_weaponsmith",
+    name: "Dwarven Weaponsmith",
+    description: "You encounter a surly dwarven weaponsmith, his beard singed and eyebrows smoking. He offers weapon upgrades at prices that could make a dragon weep.",
+    location: {
+      zoneIds: ["mystic_caves"],
+    },
+    category: { "store": null },
+    imageId: "dwarven_weaponsmith",
+    paths: [
+      {
+        id: "start",
+        description: "The dwarf eyes you suspiciously, his gaze alternating between your weapon and your coin purse. What do you do?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "upgrade_weapon",
+                description: "Request a weapon upgrade. Hope you're not too attached to your gold.",
+                requirement: [{ gold: 30n }],
+                effects: [{ removeGold: { raw: 30n } }],
+                nextPath: {
+                  single: "weapon_reward"
+                }
+              },
+              {
+                id: "haggle",
+                description: "Attempt to haggle. The dwarf's eye twitches dangerously.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
+                      description: "The dwarf grumbles but offers a discount. You're pretty sure you heard him mutter 'smooth-talker' under his breath.",
+                      effects: [],
+                      pathId: ["discounted_upgrade"]
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The dwarf's face turns as red as his forge. Haggling failed spectacularly.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "impress_smith",
+                description: "Flex your muscles and offer to help around the forge.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { strength: null } } },
+                      description: "The weaponsmith's eyes light up. You spend an hour moving heavy anvils before he offers a discounted upgrade.",
+                      effects: [],
+                      pathId: ["discounted_upgrade"]
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The dwarf looks unimpressed. 'Nice try, but I've seen stronger beards.'",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "leave",
+                description: "Leave the shop. You didn't need two kidneys anyway.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "discounted_upgrade",
+        description: "The dwarf offers a discounted upgrade. It's still expensive, but at least you'll have enough left for a single ale.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "accept_discount",
+                description: "Accept the discounted upgrade.",
+                requirement: [{ gold: 20n }],
+                effects: [{ removeGold: { raw: 20n } }],
+                nextPath: { single: "weapon_reward" }
+              },
+              {
+                id: "refuse_discount",
+                description: "Refuse the discount. The ale was more tempting anyway.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "weapon_reward",
+        description: "The dwarf hands you your upgraded weapon, muttering something about 'finest craftsmanship' and 'ungrateful adventurers'.",
+        kind: {
+          reward: {
+            kind: { random: null },
+            nextPath: { none: null }
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "enchanted_grove",
+    name: "Enchanted Grove",
+    description: "You enter a serene grove where the trees whisper secrets and the flowers giggle. It's either very magical or you've eaten some questionable mushrooms.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "other": null },
+    imageId: "enchanted_grove",
+    paths: [
+      {
+        id: "start",
+        description: "The air shimmer with magic, and you swear a squirrel just winked at you. What do you do?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "meditate",
+                description: "Meditate to increase your magical attunement. Try not to think about acorns.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
+                      description: "You achieve a state of perfect harmony with the grove. You can hear colors and see sounds.",
+                      effects: [{ addItem: { specific: { raw: "magical_insight" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "Your meditation is interrupted by a chatty bluejay. You learn a lot about forest gossip, but not much magic.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "harvest",
+                description: "Harvest rare herbs. The plants look eager... suspiciously eager.",
+                requirement: [],
+                effects: [{ damage: { raw: 2n } }],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "You successfully harvest rare herbs, though a fern slaps your hand for picking its cousin.",
+                      effects: [{ addItem: { specific: { raw: "rare_herbs" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "You grab what you think are herbs. Turns out it's just fancy crabgrass with a good publicist.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "commune",
+                description: "Commune with nature spirits. Hope you're fluent in squirrel.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
+                      description: "The spirits grant you mystic knowledge. Unfortunately, it's mostly tree puns.",
+                      effects: [{ addItem: { specific: { raw: "nature_crystal" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "You have a long conversation with what you thought was a spirit. Turns out it was just a very philosophical mushroom.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "leave",
+                description: "Leave the grove. The talking trees are getting a bit too judgy about your life choices.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "faerie_market",
+    name: "Faerie Market",
+    description: "You stumble upon a hidden faerie market, where glittering stalls float mid-air and the shopkeepers have an unsettling number of teeth in their smiles.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "store": null },
+    imageId: "faerie_market",
+    paths: [
+      {
+        id: "start",
+        description: "Mischievous faeries flit about, eyeing your possessions with keen interest. What do you do?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "acquire_trinket",
+                description: "Try to acquire a magical trinket. Hope you're good at riddles and have a spare firstborn child.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your charm wins over a faerie shopkeeper. They hand you a trinket that's either a powerful artifact or a very shiny pebble.",
+                      effects: [{ addItem: { random: null } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The faerie shopkeeper gets distracted by a passing butterfly. You leave empty-handed but at least you still have both your shoes.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "trade",
+                description: "Offer to trade an item for faerie magic. What could possibly go wrong?",
+                requirement: [],
+                effects: [{ removeItem: { random: null } }],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
+                      description: "The faeries accept your trade with glee. You receive a magical item that thankfully isn't cursed. Probably.",
+                      effects: [{ addItem: { specific: { raw: "faerie_charm" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The faeries accept your trade but seem to have a different idea of 'magical' than you do. You now own a very sassy toadstool.",
+                      effects: [{ addItem: { specific: { raw: "talking_toadstool" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "The faeries reject your offer with a huff. At least they didn't turn you into a newt.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "use_crystal",
+                description: "Use a crystal to curry favor with the faeries. It's like magical bribery, but sparklier.",
+                requirement: [{ item: "crystal" }],
+                effects: [{ removeItem: { specific: { raw: "crystal" } } }],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.8, kind: { raw: null } },
+                      description: "The faeries are dazzled by your crystal. They offer you a choice of their finest wares.",
+                      effects: [],
+                      pathId: ["crystal_success"]
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "The faeries appreciate the crystal but seem more interested in using it as a disco ball for their impromptu dance party.",
+                      effects: [{ addItem: { specific: { raw: "faerie_dance_shoes" } } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "leave",
+                description: "Leave the market before you trade away your shadow or your sense of direction.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "crystal_success",
+        description: "The faeries present you with a choice of their most prized possessions.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "choose_weapon",
+                description: "Select a whimsical but deadly weapon.",
+                requirement: [],
+                effects: [{ addItem: { specific: { raw: "faerie_blade" } } }],
+                nextPath: { none: null }
+              },
+              {
+                id: "choose_armor",
+                description: "Choose a piece of armor that's more glitter than metal.",
+                requirement: [],
+                effects: [{ addItem: { specific: { raw: "gossamer_mail" } } }],
+                nextPath: { none: null }
+              },
+              {
+                id: "choose_trinket",
+                description: "Pick a mysterious trinket of questionable usefulness.",
+                requirement: [],
+                effects: [{ addItem: { specific: { raw: "enigmatic_bauble" } } }],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "goblin_raiding_party",
+    name: "Goblin Raiding Party",
+    description: "A band of goblins emerges from the underbrush, brandishing crude weapons and eyeing your possessions. Their leader sports a 'World's Best Raider' hat that's clearly homemade.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "combat": null },
+    imageId: "goblin_raiding_party",
+    paths: [
+      {
+        id: "start",
+        description: "The goblins are closing in, their grins revealing a concerning lack of dental hygiene. What do you do?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "fight",
+                description: "Engage the goblin raiding party in combat. Time to show them why 'adventurer' isn't just a fancy word for 'walking loot piñata'.",
+                requirement: [],
+                effects: [],
+                nextPath: { single: "combat" }
+              },
+              {
+                id: "bribe",
+                description: "Offer some of your resources to appease the goblins. Maybe they accept credit cards?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your silver tongue (and shiny trinkets) convince the goblins to leave you alone. They even throw in a free 'I got robbed by goblins' t-shirt.",
+                      effects: [{ removeItem: { random: null } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The goblins take your offering, then decide they want seconds. It's all-you-can-loot night, apparently.",
+                      effects: [{ removeItem: { random: null } }],
+                      pathId: ["combat"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "intimidate",
+                description: "Use your strength to scare off the goblins. Flex those muscles you've been working on at the Adventurers' Gym.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { strength: null } } },
+                      description: "Your impressive display of strength sends the goblins running. One drops his 'World's Best Raider' hat in his haste.",
+                      effects: [{ addItem: { specific: { raw: "goblin_leader_hat" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The goblins seem more amused than intimidated. One of them even offers you workout tips.",
+                      effects: [],
+                      pathId: ["combat"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "distract",
+                description: "Create a clever diversion to escape the goblins. Time to put those improv classes to use!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your brilliant diversion works! The goblins are now arguing over the finer points of your impromptu puppet show.",
+                      effects: [],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "Your diversion fails spectacularly. The goblins give you a 2-star review and then ready their weapons.",
+                      effects: [],
+                      pathId: ["combat"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "combat",
+        description: "The goblins attack! Their battle cry sounds suspiciously like 'Loot! Loot! Loot!'",
+        kind: {
+          combat: {
+            creatures: [{ id: "goblin" }, { id: "goblin" }, { id: "goblin" }],
+            nextPath: { single: "post_combat" }
+          }
+        }
+      },
+      {
+        id: "post_combat",
+        description: "With the goblin threat neutralized, you take a moment to catch your breath and check for loot.",
+        kind: {
+          reward: {
+            kind: { random: null },
+            nextPath: { none: null }
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "knowledge_nexus",
+    name: "Knowledge Nexus",
+    description: "You enter a floating library of ancient wisdom. Books zip through the air, occasionally bonking distracted readers on the head.",
+    location: {
+      zoneIds: ["ancient_ruins"],
+    },
+    category: { "other": null },
+    imageId: "knowledge_nexus",
+    paths: [
+      {
+        id: "start",
+        description: "The air hums with arcane energy, and you swear you can hear the books whispering secrets. What do you do?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "study_magic",
+                description: "Study ancient texts to expand your magical knowledge. Hope you brought your reading glasses!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "You successfully decipher an ancient tome. Your brain feels bigger, but your hat size remains the same.",
+                      effects: [{ addItem: { specific: { raw: "wisdom_tome" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The text is too complex. You end up reading 'Ancient Runes for Dummies' instead.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "learn_combat",
+                description: "Learn new combat techniques from old battle manuals. Hopefully, they're not just elaborate dance instructions.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { strength: null } } },
+                      description: "You master an ancient fighting technique. Your muscles now ripple with knowledge.",
+                      effects: [{ addItem: { specific: { raw: "battle_manual" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
+                      description: "You learn a set of defensive maneuvers. You can now dodge responsibility AND attacks!",
+                      effects: [{ addItem: { specific: { raw: "evasion_scroll" } } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "decipher_map",
+                description: "Attempt to decipher an old map. It's either a treasure map or yesterday's lunch menu.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
+                      description: "You successfully decipher the map, revealing the location of a hidden treasure. X marks the spot... or is that a ketchup stain?",
+                      effects: [{ addItem: { specific: { raw: "treasure_map" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The map remains a mystery. You're pretty sure you're holding it upside down, but it doesn't help.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "leave",
+                description: "Leave the Knowledge Nexus. Your brain is full, and you can't remember where you parked your horse anyway.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "lost_elfling",
+    name: "Lost Elfling",
+    description: "You hear the faint cries of a young elf, seemingly lost and separated from their clan. The sobs are punctuated by occasional hiccups that sound suspiciously like 'tree cookies'.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "other": null },
+    imageId: "lost_elfling",
+    paths: [
+      {
+        id: "start",
+        description: "A tiny elf with leaves in their hair and a runny nose looks up at you with big, watery eyes. What do you do?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "help",
+                description: "Offer assistance to the lost elfling. Hope you're good with kids and have some tree cookies handy.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your charming demeanor calms the elfling. You successfully reunite them with their clan, earning eternal gratitude and a sticky hug.",
+                      effects: [],
+                      pathId: ["help_success"]
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "Your attempt to help turns into an impromptu game of hide-and-seek. Unfortunately, the elfling is winning.",
+                      effects: [{ damage: { raw: 2n } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "investigate",
+                description: "Carefully investigate the area before approaching. Time to put on your detective hat and look for tiny footprints.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your careful investigation reveals a trail of breadcrumbs... er, acorns. You safely guide the elfling back to their clan.",
+                      effects: [],
+                      pathId: ["help_success"]
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "While investigating, you accidentally disturb a nest of angry pixies. They're small, but their pinches hurt!",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "use_perception",
+                description: "Use your keen perception to locate the elfling's clan. Time to channel your inner bloodhound!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.8, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your sharp senses lead you straight to the elfling's clan. They're impressed by your tracking skills and pointy ear envy.",
+                      effects: [],
+                      pathId: ["help_success"]
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "Your keen perception leads you right into a patch of giggling mushrooms. Their spores make you see double... of everything.",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "abandon",
+                description: "Continue on your way, leaving the elfling to its fate. You're an adventurer, not a babysitter, right?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 1, kind: { raw: null } },
+                      description: "You walk away, trying to ignore the sniffles behind you. Suddenly, you feel a tug at your heartstrings... or is that just indigestion?",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "help_success",
+        description: "The elfling's clan showers you with gratitude and rewards. You're now an honorary elf, pointy ears pending.",
+        kind: {
+          reward: {
+            kind: { random: null },
+            nextPath: { none: null }
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "mysterious_structure",
+    name: "Mysterious Structure",
+    description: "You encounter a pyramid-like structure with glowing runes, overgrown by vines. A sealed entrance beckons. It's either an ancient temple or the world's most elaborate garden shed.",
+    location: {
+      zoneIds: ["ancient_ruins"],
+    },
+    category: { "other": null },
+    imageId: "mysterious_structure",
+    paths: [
+      {
+        id: "start",
+        description: "The structure looms before you, its runes pulsing with an eerie light. What's your move, Indiana Pains?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "forceful_entry",
+                description: "Attempt to create an opening using brute force. Who needs finesse when you have muscles?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { strength: null } } },
+                      description: "Your mighty muscles prevail! The entrance crumbles before you. Let's hope the rest of the structure doesn't follow suit.",
+                      effects: [],
+                      pathId: ["explore_structure"]
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "Your forceful attempt backfires spectacularly. The structure remains intact, but your pride (and a few bones) might be bruised.",
+                      effects: [{ damage: { raw: 3n } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "decipher_runes",
+                description: "Try to decipher the glowing runes. Time to put those ancient language classes to use!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your wisdom pays off! The runes reveal a secret entrance. Turns out it was just a really complicated 'Push to Open' sign.",
+                      effects: [],
+                      pathId: ["explore_treasure_room"]
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "Your translation seems off. Instead of opening, the structure starts telling bad jokes in an ancient dialect.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "sacrifice",
+                description: "Offer a random item to the structure. Maybe it just wants a snack?",
+                requirement: [],
+                effects: [{ removeItem: { random: null } }],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { raw: null } },
+                      description: "The structure accepts your offering! A secret entrance opens. Apparently, ancient temples take bribes.",
+                      effects: [],
+                      pathId: ["explore_treasure_room"]
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The structure gobbles up your item but remains closed. Looks like it's more of a picky eater.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "skip",
+                description: "Ignore the structure and continue exploring. Not every mysterious ruin needs poking, right?",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "explore_structure",
+        description: "You venture into the mysterious structure. The air is thick with dust, mystery, and the faint smell of old socks.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "cautious_explore",
+                description: "Explore cautiously, keeping an eye out for traps. Channel your inner cat burglar!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your nimble feet and keen eyes help you navigate the structure safely. You feel like a graceful gazelle... in a dusty, ancient gazelle obstacle course.",
+                      effects: [],
+                      pathId: ["explore_treasure_room"]
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "Despite your caution, you trigger a trap. A cascade of pebbles falls on you. Not very dangerous, but very, very annoying.",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: ["explore_treasure_room"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "reckless_dash",
+                description: "Make a mad dash for the central chamber. Fortune favors the bold (and the impatient)!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.4, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your reckless sprint pays off! You reach the central chamber in record time, leaving traps and cobwebs in your dust.",
+                      effects: [],
+                      pathId: ["explore_treasure_room"]
+                    },
+                    {
+                      weight: { value: 0.6, kind: { raw: null } },
+                      description: "Your haste gets the better of you. You trip over your own feet and face-plant into a conveniently placed pile of ancient cushions.",
+                      effects: [{ damage: { raw: 2n } }],
+                      pathId: ["explore_treasure_room"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "explore_treasure_room",
+        description: "You reach the heart of the structure. Surely untold riches await! Or at least some really old knick-knacks.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "search_thoroughly",
+                description: "Search the room thoroughly. Leave no ancient vase unturned!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.8, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your diligence pays off! You uncover a hidden cache of treasure. The 'X' on the floor wasn't subtle, but hey, a win's a win.",
+                      effects: [],
+                      pathId: ["treasure_found"]
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "Despite your thorough search, you find nothing of value. Unless you count the priceless lesson about disappointment.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "grab_and_run",
+                description: "Quickly grab whatever looks valuable and make a run for it. The 'Indiana Jones boulder' is probably already rolling.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your quick hands snag a valuable artifact! You make it out just as the temple starts to crumble. Cliché, but effective.",
+                      effects: [],
+                      pathId: ["treasure_found"]
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "In your haste, you grab what turns out to be an ancient chamber pot. Valuable to someone, sure, but not exactly treasure.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "treasure_found",
+        description: "Against all odds, you've successfully plundered... er, 'archaeologically recovered' treasure from the mysterious structure!",
+        kind: {
+          reward: {
+            kind: { random: null },
+            nextPath: { none: null }
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "mystic_forge",
+    name: "Mystic Forge",
+    description: "You enter a magical smithy where the hammers swing themselves and the anvils occasionally burp fire. It's either a blacksmith's dream or a safety inspector's nightmare.",
+    location: {
+      zoneIds: ["mystic_caves"],
+    },
+    category: { "store": null },
+    imageId: "mystic_forge",
+    paths: [
+      {
+        id: "start",
+        description: "The forge crackles with arcane energy, and you swear the bellows just winked at you. What's your move, brave adventurer?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "upgrade",
+                description: "Attempt to upgrade your equipment. 60% of the time, it works every time!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { strength: null } } },
+                      description: "The forge bellows with approval. Your equipment feels more... equipment-y. It's practically glowing with power (and maybe a bit of residual heat).",
+                      effects: [{ addItem: { specific: { raw: "enhanced_equipment" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The forge hiccups. Your equipment remains unchanged, but now it smells vaguely of burnt toast. Progress?",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "reforge",
+                description: "Reforge an item. It's like a makeover, but for swords! What could possibly go wrong?",
+                requirement: [],
+                effects: [{ removeItem: { random: null } }],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your deft handling results in a successfully reforged item. It looks suspiciously similar but feels somehow cooler.",
+                      effects: [{ addItem: { random: null } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your wisdom guides the reforging process. The result is an item of surprising utility, if questionable aesthetics.",
+                      effects: [{ addItem: { random: null } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "craft",
+                description: "Attempt to craft a special item. Warning: May result in unexpected chicken statues.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "The forge erupts in a shower of sparks. You've created something... interesting. It's either a powerful artifact or a very shiny paperweight.",
+                      effects: [{ addItem: { specific: { raw: "mysterious_artifact" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The forge burps loudly. You're left holding... is that a rubber chicken? Well, it's certainly special.",
+                      effects: [{ addItem: { specific: { raw: "rubber_chicken" } } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "leave",
+                description: "Leave the Mystic Forge. The heat was getting unbearable anyway, and you're pretty sure that hammer was eyeing your kneecaps.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "sinking_boat",
+    name: "Sinking Boat",
+    description: "You come across a small boat sinking in a nearby river. The passengers are calling for help, their cries punctuated by the occasional glub-glub of the boat.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "other": null },
+    imageId: "sinking_boat",
+    paths: [
+      {
+        id: "start",
+        description: "The boat is taking on water faster than a sponge in a rainstorm. What's your heroic (or not so heroic) move?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "heroic_swim",
+                description: "Channel your inner fish and swim out to the rescue. Hope you remembered your floaties!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { strength: null } } },
+                      description: "Your powerful strokes cut through the water like a majestic dolphin... if dolphins had arms and legs. You reach the boat in record time!",
+                      effects: [],
+                      pathId: ["rescue_success"]
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "Turns out, you swim like a rock. A very determined rock. You manage to reach the boat, but not before swallowing half the river.",
+                      effects: [{ damage: { raw: 2n } }],
+                      pathId: ["rescue_success"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "clever_rescue",
+                description: "Use your wit to devise a clever rescue plan. Time to put those 'MacGyver' skills to the test!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your brilliant mind conjures up a plan involving a long vine, three acorns, and a surprisingly cooperative squirrel. Against all odds, it works!",
+                      effects: [],
+                      pathId: ["rescue_success"]
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "Your 'foolproof' plan involves a makeshift catapult. Unfortunately, you miscalculated and launched yourself into the river instead of a rescue rope.",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: ["rescue_success"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "charm_river",
+                description: "Try to charm the river into calming down. Who says you can't negotiate with nature?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { charisma: null } } },
+                      description: "Miraculously, the river seems to listen! The waters calm, allowing for an easy rescue. You're either a smooth talker or the river spirit was in a good mood.",
+                      effects: [],
+                      pathId: ["rescue_success"]
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "The river is unimpressed by your sweet talk. In fact, it seems to get a bit rougher. Did you just trash-talk a body of water?",
+                      effects: [],
+                      pathId: ["rescue_challenge"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "ignore_situation",
+                description: "Pretend you don't see anything. Those swimming lessons are finally paying off... for someone else.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 1, kind: { raw: null } },
+                      description: "You walk away, whistling innocently. Suddenly, you feel a tug at your conscience... or maybe it's just indigestion from that questionable tavern food.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "rescue_success",
+        description: "Against all odds (and possibly the laws of physics), you manage to rescue everyone from the sinking boat!",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "accept_reward",
+                description: "Accept the passengers' gratitude and any reward they might offer. Hero's gotta eat!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { raw: null } },
+                      description: "The grateful passengers reward you with a mysterious artifact they fished out of the river just before the boat started sinking. It's either a powerful magical item or a very wet piece of driftwood.",
+                      effects: [{ addItem: { random: null } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The passengers thank you profusely and offer you... a slightly damp sandwich. It's the thought that counts, right?",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "humble_departure",
+                description: "Refuse any rewards and dramatically disappear into the forest. Legends say they still tell tales of the mysterious river savior.",
+                requirement: [],
+                effects: [],
+                nextPath: { none: null }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "rescue_challenge",
+        description: "The rescue just got more challenging. Time to get creative or get wet!",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "daring_dive",
+                description: "Take a deep breath and make a daring dive into the turbulent waters. It's hero time!",
+                requirement: [],
+                effects: [{ damage: { raw: 2n } }],
+                nextPath: { single: "rescue_success" }
+              },
+              {
+                id: "improvise_raft",
+                description: "Quickly improvise a raft from nearby debris. Your arts and crafts skills are about to be put to the ultimate test.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your hastily constructed raft holds together just long enough to reach the sinking boat. MacGyver would be proud!",
+                      effects: [],
+                      pathId: ["rescue_success"]
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "Your 'raft' falls apart faster than a sandcastle in a tsunami. At least you now have a new appreciation for shipwrights.",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: ["rescue_success"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "trapped_druid",
+    name: "Druid in a Pickle",
+    description: "You stumble upon a druid entangled in a pulsating magical snare. The vines seem to be... singing? This is either a very strange trap or the world's worst botanical boy band.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "other": null },
+    imageId: "trapped_druid",
+    paths: [
+      {
+        id: "start",
+        description: "The druid looks at you pleadingly, while the magical vines continue their off-key serenade. What's your plan, oh brave adventurer?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "brute_force",
+                description: "Channel your inner lumberjack and try to muscle through the magical vines. Who needs finesse when you have biceps?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { strength: null } } },
+                      description: "Your impressive display of strength intimidates the vines into submission. They release the druid and slink away, looking thoroughly embarrassed.",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The vines take offense to your rough handling and decide to give you a tight hug too. Congratulations, you're now part of the world's strangest group hug.",
+                      effects: [{ damage: { raw: 2n } }],
+                      pathId: ["both_trapped"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "nature_whisperer",
+                description: "Attempt to communicate with the vines. Maybe they just need a friend... or a good therapist.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your soothing words calm the vines. They release the druid and curl up for a nap. You've just become a magical plant whisperer!",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The vines misinterpret your attempt at communication as an audition. You're now the lead singer of 'The Tangled Tendrils'. The druid looks unimpressed.",
+                      effects: [],
+                      pathId: ["singing_contest"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "clever_solution",
+                description: "Look around for a clever solution. Time to put those escape room skills to use!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { dexterity: null } } },
+                      description: "You notice a conveniently placed pair of magical pruning shears. With a few snips, you free the druid. The vines applaud your gardening skills.",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "Your 'clever' solution involves using a nearby beehive as a distraction. Now you have angry bees AND clingy vines. Great job, Einstein.",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: ["chaotic_situation"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "leave_alone",
+                description: "Decide this is above your pay grade and walk away. You're an adventurer, not a botanist!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 1, kind: { raw: null } },
+                      description: "You start to leave, but your conscience nags at you. Or maybe it's the druid's disappointed sighs. Either way, you feel guilty... and slightly less heroic.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "both_trapped",
+        description: "Great, now you're both trapped. At least you have company for this impromptu botanical cuddle session.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "combined_effort",
+                description: "Work together with the druid to escape. Two heads are better than one, especially when they're both wrapped in vines!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.8, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your teamwork is impressive! You and the druid manage to outsmart the vines, freeing yourselves with minimal embarrassment.",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "Your combined efforts only seem to entangle you further. On the bright side, you've just invented a new form of extreme yoga.",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: ["rescued_by_squirrels"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "singing_contest",
+        description: "The vines challenge you to a singing contest. Winner gets to keep the druid... wait, what?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "accept_challenge",
+                description: "Accept the challenge. It's time to show these vines who's the real star of this forest!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your rendition of 'Leaf Me Alone' brings tears to the vines' nonexistent eyes. They release the druid and offer you a record deal.",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "Your singing is so bad, it actually works! The vines release the druid and flee in terror. Music critics everywhere feel a disturbance in the force.",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "chaotic_situation",
+        description: "Congratulations, you've turned a simple rescue into utter chaos. The druid looks both impressed and concerned.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "embrace_chaos",
+                description: "Embrace the chaos! If you can't beat 'em, join 'em. Time to dance with bees and sing with vines!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your chaotic dance moves confuse the bees and entertain the vines. In the commotion, the druid manages to slip free. You're either a genius or incredibly lucky.",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "Your 'embrace the chaos' strategy backfires spectacularly. Now you're starring in a very weird nature documentary.",
+                      effects: [{ damage: { raw: 2n } }],
+                      pathId: ["rescued_by_squirrels"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "rescued_by_squirrels",
+        description: "Just when all hope seems lost, a team of highly trained rescue squirrels appears! They quickly free you and the druid, then demand payment in nuts.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "pay_squirrels",
+                description: "Thank the squirrels and offer them some nuts from your pack. It's a small price to pay for freedom!",
+                requirement: [],
+                effects: [],
+                nextPath: { single: "druid_freed" }
+              },
+              {
+                id: "negotiate_with_squirrels",
+                description: "Try to negotiate with the squirrels. Surely they accept acorns on credit?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your smooth talking impresses the squirrels. They agree to a payment plan of one nut per week. You've just entered the exciting world of rodent finance!",
+                      effects: [],
+                      pathId: ["druid_freed"]
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "The squirrels are unimpressed by your negotiation skills. They leave in a huff, but not before pelting you with acorn shells. Talk about tough creditors!",
+                      effects: [{ damage: { raw: 1n } }],
+                      pathId: ["druid_freed"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "druid_freed",
+        description: "Against all odds (and possibly logic), the druid is finally free! They look at you with a mixture of gratitude and bewilderment.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "accept_reward",
+                description: "Accept the druid's thanks and any reward they might offer. Saving people from musical vines isn't a cheap business!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { raw: null } },
+                      description: "The druid rewards you with a mysterious seed. They claim it will grow into a mighty artifact, or possibly just a very talkative houseplant.",
+                      effects: [{ addItem: { specific: { raw: "mysterious_seed" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The druid thanks you profusely and offers you... a coupon for a free hug from a tree of your choice. It's not much, but it's honest work.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "request_lesson",
+                description: "Ask the druid for a quick lesson in dealing with magical plants. Knowledge is power, after all!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 1, kind: { raw: null } },
+                      description: "The druid gives you a crash course in magical botany. You now know how to properly address a venus flytrap and the best fertilizer for moon flowers. This information will surely come in handy... someday.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "travelling_bard",
+    name: "The Bard's Bizarre Ballads",
+    description: "You encounter a bard whose lute is suspiciously in tune for someone who's been on the road. His hair is perfectly windswept, and you swear you can hear a faint background orchestra.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "other": null },
+    imageId: "travelling_bard",
+    paths: [
+      {
+        id: "start",
+        description: "The bard strikes a dramatic pose and announces, 'Greetings, weary traveler! Care to partake in the melodious adventures of Filburt the Fantastic?' What's your move?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "duet_challenge",
+                description: "Challenge the bard to a duet. Two can play at this game... literally.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your impromptu duet with the bard creates magic... literally. Small sparkles appear in the air, and nearby trees start swaying to the rhythm.",
+                      effects: [{ addItem: { specific: { raw: "harmonic_charm" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "Your attempt at harmonizing causes nearby wildlife to flee in terror. The bard looks impressed, but not in a good way.",
+                      effects: [],
+                      pathId: ["music_lessons"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "request_epic",
+                description: "Ask the bard to compose an epic ballad about your adventures. Time to become a legend... or at least a decent limerick.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "The bard weaves a tale so captivating that reality itself seems to bend. You feel more heroic already, and is that a new skill you've suddenly mastered?",
+                      effects: [{ addItem: { random: null } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The bard's epic ballad about your adventures is... less than flattering. Apparently, your heroic dragon slaying was more like 'mildly inconveniencing a large lizard'.",
+                      effects: [],
+                      pathId: ["reputation_management"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "dance_off",
+                description: "Challenge the bard to a dance-off. If you can't beat the music, become the music!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your sick moves impress even the trees. The bard declares you the winner and rewards you with a pair of magical dancing shoes.",
+                      effects: [{ addItem: { specific: { raw: "rhythmic_boots" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "Your dancing is so bad, it's good. The bard can't stop laughing and offers you a job as a comedy act.",
+                      effects: [],
+                      pathId: ["comedy_career"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "ignore_bard",
+                description: "Attempt to ignore the bard and continue on your way. Good luck with that!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 1, kind: { raw: null } },
+                      description: "As you try to leave, you find yourself inexplicably moonwalking back towards the bard. Seems like the power of music is strong with this one.",
+                      effects: [],
+                      pathId: ["musical_curse"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "music_lessons",
+        description: "The bard, both amused and concerned, offers to give you a quick music lesson.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "accept_lessons",
+                description: "Swallow your pride and accept the lessons. It's time to face the music!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.8, kind: { attributeScaled: { wisdom: null } } },
+                      description: "The bard's lessons work wonders. You may not be a virtuoso, but at least you no longer sound like a cat in a blender.",
+                      effects: [{ addItem: { specific: { raw: "novice_whistle" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "Despite the bard's best efforts, your music remains a threat to public safety. He gives you a 'participation trophy' and some earplugs.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "reputation_management",
+        description: "Your less-than-heroic ballad is starting to spread. Time for some damage control!",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "embellish_truth",
+                description: "Try to convince the bard to embellish your tales. A little creative license never hurt anyone, right?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your silver tongue works its magic. The bard crafts a new ballad that paints you as a misunderstood hero. Your reputation is saved, and possibly improved!",
+                      effects: [],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "Your attempt at embellishment backfires. Now you're known as both a bumbling adventurer AND a shameless self-promoter. At least you're famous?",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "comedy_career",
+        description: "The bard suggests you could have a bright future in comedy. Are you ready for the spotlight?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "embrace_comedy",
+                description: "Embrace your newfound comedic talent. If you can't beat 'em, make 'em laugh!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { charisma: null } } },
+                      description: "Your first comedy show is a smashing success! You're now the proud owner of a 'Laughing Lute', which adds a chuckle to every adventure.",
+                      effects: [{ addItem: { specific: { raw: "laughing_lute" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "Your jokes fall flatter than a pancake in a black hole. The bard consoles you and suggests sticking to your day job... whatever that is.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "musical_curse",
+        description: "Congratulations! You're now cursed to spontaneously burst into song at inappropriate moments. The bard looks both apologetic and amused.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "embrace_curse",
+                description: "Embrace the musical curse. If life's going to be a musical, you might as well be the star!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.8, kind: { attributeScaled: { charisma: null } } },
+                      description: "You lean into the curse with gusto. Your spontaneous musical numbers become the stuff of legend, and you gain a magical microphone that amplifies your voice in battle.",
+                      effects: [{ addItem: { specific: { raw: "bardic_microphone" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "Your enthusiasm for the curse is... not shared by others. You're now known as 'that weird singing adventurer'. On the bright side, you always have a backup career as a town crier!",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
+  {
+    id: "wandering_alchemist",
+    name: "The Mad Mixologist",
+    description: "You stumble upon a wild-eyed alchemist, their hair frazzled and eyebrows slightly singed. Their pack bubbles and fizzes ominously, occasionally letting out small puffs of rainbow-colored smoke.",
+    location: {
+      zoneIds: ["enchanted_forest"],
+    },
+    category: { "other": null },
+    imageId: "wandering_alchemist",
+    paths: [
+      {
+        id: "start",
+        description: "The alchemist spots you and grins maniacally. 'Ah, a test subject... er, valued customer! Care to dabble in the delightful dangers of alchemy?' What's your move?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "taste_test",
+                description: "Volunteer as a taste tester for the alchemist's latest concoction. What could possibly go wrong?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { strength: null } } },
+                      description: "You down the bubbling liquid and feel a surge of power! Your muscles bulge, and you can suddenly hear colors. Side effects may include occasional sparkly burps.",
+                      effects: [{ addItem: { specific: { raw: "potion_of_unpredictable_might" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "The potion turns you into a small, confused chicken. The alchemist assures you it's temporary... probably.",
+                      effects: [],
+                      pathId: ["chicken_adventure"]
+                    }
+                  ]
+                }
+              },
+              {
+                id: "assist_experiment",
+                description: "Offer to assist the alchemist with their next experiment. Science needs brave volunteers!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your insightful suggestions lead to a breakthrough! The alchemist creates a revolutionary potion and shares it with you.",
+                      effects: [{ addItem: { specific: { raw: "essence_of_serendipity" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.3, kind: { raw: null } },
+                      description: "The experiment goes haywire, covering you both in a sticky, glowing goo. On the bright side, you'll never need a nightlight again!",
+                      effects: [{ addItem: { specific: { raw: "glow_in_the_dark_skin" } } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "challenge_alchemist",
+                description: "Challenge the alchemist to an alchemy-off. It's time to see if you can out-brew the pro!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
+                      description: "Your quick hands and creative mixing impress the alchemist. They declare you a natural and gift you a special brew.",
+                      effects: [{ addItem: { specific: { raw: "potion_of_liquid_luck" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.5, kind: { raw: null } },
+                      description: "Your attempt at alchemy creates a small, harmless explosion. The alchemist gives you an 'A' for effort and a fire-resistant apron.",
+                      effects: [{ addItem: { specific: { raw: "fireproof_apron" } } }],
+                      pathId: []
+                    }
+                  ]
+                }
+              },
+              {
+                id: "polite_decline",
+                description: "Politely decline and try to leave. Emphasis on 'try'.",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 1, kind: { raw: null } },
+                      description: "As you turn to leave, you trip over a stray root and fall face-first into a patch of strange mushrooms. Things are about to get... interesting.",
+                      effects: [],
+                      pathId: ["accidental_trip"]
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "chicken_adventure",
+        description: "Congratulations! You're now a small, confused chicken. But every cloud has a silver lining, right?",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "embrace_chicken",
+                description: "Embrace your new chicken life. It's time to rule the roost!",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.8, kind: { attributeScaled: { charisma: null } } },
+                      description: "You become the most charismatic chicken in history. The alchemist, impressed by your adaptability, turns you back and rewards you with a special egg.",
+                      effects: [{ addItem: { specific: { raw: "egg_of_transformation" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.2, kind: { raw: null } },
+                      description: "You spend an hour as a chicken before turning back. The experience was... enlightening. You now have an odd craving for seeds and a newfound respect for poultry.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      },
+      {
+        id: "accidental_trip",
+        description: "Those weren't ordinary mushrooms. The world around you starts to swirl with impossible colors and talking flowers.",
+        kind: {
+          choice: {
+            choices: [
+              {
+                id: "go_with_flow",
+                description: "Embrace the hallucinogenic journey. When in Rome, right?",
+                requirement: [],
+                effects: [],
+                nextPath: {
+                  multi: [
+                    {
+                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
+                      description: "Your mushroom-induced vision quest leads to profound insights. You come back with knowledge of a rare alchemical recipe.",
+                      effects: [{ addItem: { specific: { raw: "recipe_of_enlightenment" } } }],
+                      pathId: []
+                    },
+                    {
+                      weight: { value: 0.4, kind: { raw: null } },
+                      description: "You have a delightful conversation with a talking tree, only to 'wake up' and realize you've been hugging the alchemist for the past hour. How embarrassing.",
+                      effects: [],
+                      pathId: []
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        }
+      }
+    ],
+    unlockRequirement: []
+  },
 ];

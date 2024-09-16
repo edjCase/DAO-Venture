@@ -157,7 +157,7 @@ actor MainActor : Types.Actor {
 
     // Public Methods ---------------------------------------------------------
 
-    public shared ({ caller }) func createGame(request : Types.CreateGameRequest) : async Types.CreateGameResult {
+    public shared ({ caller }) func createGame(_ : Types.CreateGameRequest) : async Types.CreateGameResult {
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
         if (Principal.isAnonymous(caller)) {
             return #err(#notAuthenticated);

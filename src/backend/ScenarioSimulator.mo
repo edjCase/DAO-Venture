@@ -178,7 +178,7 @@ module {
                                 case (#dead) return #completed;
                             };
                         };
-                        ?nexPath.pathId;
+                        nexPath.pathId;
                     };
                     case (#none) null;
                 };

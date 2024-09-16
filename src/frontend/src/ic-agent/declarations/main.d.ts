@@ -575,7 +575,7 @@ export interface WeightedScenarioPathOption {
   'weight' : OptionWeight,
   'effects' : Array<Effect>,
   'description' : string,
-  'pathId' : string,
+  'pathId' : [] | [string],
 }
 export interface WorldProposal {
   'id' : bigint,

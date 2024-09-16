@@ -223,7 +223,7 @@ export const idlFactory = ({ IDL }) => {
     'weight' : OptionWeight,
     'effects' : IDL.Vec(Effect),
     'description' : IDL.Text,
-    'pathId' : IDL.Text,
+    'pathId' : IDL.Opt(IDL.Text),
   });
   const NextPathKind = IDL.Variant({
     'multi' : IDL.Vec(WeightedScenarioPathOption),
