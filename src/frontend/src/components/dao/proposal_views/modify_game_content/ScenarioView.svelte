@@ -56,8 +56,8 @@
     {#each scenario.paths as path}
       <div class="p-2 rounded mb-2">
         {path.id}:
-        {#if "effects" in path.kind}
-          Effects: {path.kind.effects.length}
+        {#if "choice" in path.kind}
+          Effects: {path.kind.choice.length}
         {:else}
           Combat
         {/if}

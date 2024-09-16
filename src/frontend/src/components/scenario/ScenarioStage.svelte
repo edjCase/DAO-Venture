@@ -33,7 +33,9 @@
 
 {#if "choice" in stage.kind}
   {@const choiceId = stage.kind.choice.choiceId}
-  {@const option = scenarioMetaData.choices.find((c) => c.id === choiceId)}
+  {@const option = scenarioMetaData.paths[0].kind.find(
+    (c) => c.id === choiceId
+  )}
   <div class="text-3xl text-primary-500">Choice</div>
   <div class="text-xl">
     {#if option !== undefined}

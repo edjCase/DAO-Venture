@@ -3,7 +3,7 @@
     CombatScenarioState,
     CombatChoice,
     ActionTargetResult,
-    Action,
+    CharacterActionKind,
   } from "../../ic-agent/declarations/main";
   import { Button } from "flowbite-svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
@@ -17,16 +17,28 @@
 
   export let combatState: CombatScenarioState;
 
-  let selectedActionId: string | undefined;
+  let selectedActionKind: CharacterActionKind | undefined;
   let selectedTargetIndex: number | undefined;
   let isCharacterSelected: boolean = false;
 
   $: actions = $actionStore;
   $: creatures = $creatureStore;
 
-  $: availableActions = combatState.character.availableActionIds
-    .map((id) => actions?.find((action) => action.id === id))
-    .filter((action): action is Action => action !== undefined);
+  $: skillAction = combatState.character.skillActionId[0]
+    ? actions?.find(
+        (action) => action.id === combatState.character.skillActionId[0]
+      )
+    : undefined;
+  $: itemAction = combatState.character.itemActionId[0]
+    ? actions?.find(
+        (action) => action.id === combatState.character.itemActionId[0]
+      )
+    : undefined;
+  $: weaponAction = combatState.character.weaponActionId[0]
+    ? actions?.find(
+        (action) => action.id === combatState.character.weaponActionId[0]
+      )
+    : undefined;
 
   $: availableCreatures = combatState.creatures.map((combatCreature, index) => {
     const creatureData = creatures?.find(
@@ -39,9 +51,14 @@
     };
   });
 
-  $: selectedAction = availableActions.find(
-    (action) => action.id === selectedActionId
-  );
+  $: selectedAction =
+    selectedActionKind === undefined
+      ? undefined
+      : "skill" in selectedActionKind
+        ? skillAction
+        : "item" in selectedActionKind
+          ? itemAction
+          : weaponAction;
 
   $: canSelectTarget = (isEnemy: boolean) => {
     if (!selectedAction) return false;
@@ -80,9 +97,14 @@
     }
   };
 
-  let selectAction = (id: string) => () => {
-    selectedActionId = id;
-    const action = availableActions.find((a) => a.id === id);
+  let selectAction = (kind: CharacterActionKind) => () => {
+    selectedActionKind = kind;
+    const action =
+      "skill" in kind
+        ? skillAction
+        : "item" in kind
+          ? itemAction
+          : weaponAction;
     if (action && "chosen" in action.target.selection) {
       if ("ally" in action.target.scope) {
         // Auto-select character for self-targeting abilities
@@ -96,7 +118,7 @@
   };
 
   async function performAction() {
-    if (!selectedActionId) {
+    if (!selectedActionKind) {
       console.error("No action selected");
       return;
     }
@@ -109,7 +131,7 @@
     }
 
     const action: CombatChoice = {
-      actionId: selectedActionId,
+      kind: selectedActionKind,
       target: target ? [target] : [],
     };
 
@@ -123,7 +145,7 @@
     if ("ok" in result) {
       scenarioStore.refetch();
       currentGameStore.refetch();
-      selectedActionId = undefined;
+      selectedActionKind = undefined;
       selectedTargetIndex = undefined;
       isCharacterSelected = false;
     } else {
@@ -177,52 +199,61 @@
 
   <h3 class="text-xl font-semibold mt-4 mb-2">Available Actions</h3>
   <div class="flex flex-wrap justify-around">
-    {#each availableActions as action, i}
-      <div
-        class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
-        {selectedActionId === action.id
-          ? 'bg-gray-700 border-blue-500'
-          : 'bg-gray-800 hover:bg-gray-700'}"
-        on:click={selectAction(action.id)}
-        on:keypress={selectAction(action.id)}
-        role="button"
-        tabindex={i}
-      >
-        <h4 class="font-semibold mb-2">{action.name}</h4>
-        <p class="text-sm">{action.description}</p>
-        <p class="text-xs mt-2">
-          Target: {#if "any" in action.target.scope}
-            Any
-          {:else if "ally" in action.target.scope}
-            Self
-          {:else if "enemy" in action.target.scope}
-            Enemy
-          {:else}
-            NOT IMPLEMENTED TARGET SCOPE {toJsonString(action.target.scope)}
-          {/if}
-          -
-          {#if "chosen" in action.target.selection}
-            Chosen
-          {:else if "all" in action.target.selection}
-            All
-          {:else if "random" in action.target.selection}
-            Random
-          {:else}
-            NOT IMPLEMENTED TARGET SELECTION {toJsonString(
-              action.target.selection
-            )}
-          {/if}
-        </p>
-        <div class="flex flex-col justify-center">
-          {#if action.effects.length > 0}
-            {#each action.effects as effect}
-              <div>
-                <CombatEffect value={effect} />
-              </div>
-            {/each}
-          {/if}
+    {#each [{ action: skillAction, kind: { skill: null }, label: "Skill" }, { action: itemAction, kind: { item: null }, label: "Item" }, { action: weaponAction, kind: { weapon: null }, label: "Weapon" }] as { action, kind, label }}
+      {#if action}
+        <div
+          class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
+          {JSON.stringify(selectedActionKind) === JSON.stringify(kind)
+            ? 'bg-gray-700 border-blue-500'
+            : 'bg-gray-800 hover:bg-gray-700'}"
+          on:click={selectAction(kind)}
+          on:keypress={selectAction(kind)}
+          role="button"
+          tabindex="0"
+        >
+          <h4 class="font-semibold mb-2">{action.name}</h4>
+          <p class="text-sm">{action.description}</p>
+          <p class="text-xs mt-2">
+            Target: {#if "any" in action.target.scope}
+              Any
+            {:else if "ally" in action.target.scope}
+              Self
+            {:else if "enemy" in action.target.scope}
+              Enemy
+            {:else}
+              NOT IMPLEMENTED TARGET SCOPE {toJsonString(action.target.scope)}
+            {/if}
+            -
+            {#if "chosen" in action.target.selection}
+              Chosen
+            {:else if "all" in action.target.selection}
+              All
+            {:else if "random" in action.target.selection}
+              Random
+            {:else}
+              NOT IMPLEMENTED TARGET SELECTION {toJsonString(
+                action.target.selection
+              )}
+            {/if}
+          </p>
+          <div class="flex flex-col justify-center">
+            {#if action.combatEffects.length > 0}
+              {#each action.combatEffects as effect}
+                <div>
+                  <CombatEffect value={effect} />
+                </div>
+              {/each}
+            {/if}
+          </div>
+          <p class="text-xs mt-2 font-semibold">{label}</p>
         </div>
-      </div>
+      {:else}
+        <div
+          class="border border-gray-600 p-4 rounded-lg max-w-36 bg-gray-800 opacity-50"
+        >
+          <h4 class="font-semibold mb-2">No {label} Action Available</h4>
+        </div>
+      {/if}
     {/each}
   </div>
 
@@ -233,7 +264,7 @@
   <Button
     on:click={performAction}
     class="mt-4"
-    disabled={!selectedActionId ||
+    disabled={!selectedActionKind ||
       (selectedAction &&
         "chosen" in selectedAction.target.selection &&
         !isCharacterSelected &&
