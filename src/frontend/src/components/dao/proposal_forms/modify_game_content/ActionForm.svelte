@@ -10,9 +10,9 @@
   import {
     CreateWorldProposalRequest,
     Action,
-    ActionEffect,
-    ActionEffectKind,
-    ActionEffectTarget,
+    CombatEffect,
+    CombatEffectKind,
+    CombatEffectTarget,
     ActionTarget,
   } from "../../../../ic-agent/declarations/main";
   import MinMaxTimingForm from "./MinMaxTimingForm.svelte";
@@ -22,7 +22,7 @@
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
-  let effects: ActionEffect[] = [];
+  let effects: CombatEffect[] = [];
   let target: ActionTarget = {
     scope: { any: null },
     selection: { all: null },
@@ -66,7 +66,7 @@
     effects = effects.filter((_, i) => i !== index);
   }
 
-  function createDefaultEffect(): ActionEffect {
+  function createDefaultEffect(): CombatEffect {
     return {
       kind: { damage: { min: 1n, max: 1n, timing: { immediate: null } } },
       target: { self: null },
@@ -77,7 +77,7 @@
     let kindValue = (event.target as HTMLSelectElement).value;
     effects = effects.map((effect, i) => {
       if (i === index) {
-        let newKind: ActionEffectKind;
+        let newKind: CombatEffectKind;
         switch (kindValue) {
           case "damage":
             newKind = {
@@ -112,7 +112,7 @@
     let targetValue = (event.target as HTMLSelectElement).value;
     effects = effects.map((effect, i) => {
       if (i === index) {
-        const newTarget: ActionEffectTarget =
+        const newTarget: CombatEffectTarget =
           targetValue === "self" ? { self: null } : { targets: null };
         return { ...effect, target: newTarget };
       }

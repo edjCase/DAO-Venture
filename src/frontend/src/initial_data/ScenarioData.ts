@@ -72,7 +72,6 @@ export const scenarios: ScenarioMetaData[] = [
         id: "purification_failure",
         description: "Your attempt fails, and the corruption lashes out at you, dealing damage.",
         kind: {
-
           // New custom effect type for percentage-based health loss
           // comment: This would need to be implemented in the backend
           percentageHealthLoss: {

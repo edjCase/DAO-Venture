@@ -8,21 +8,37 @@ module {
 
     public type Action = Entity.Entity and {
         target : ActionTarget;
-        effects : [ActionEffect];
-        upgradedActionId : ?Text;
+        combatEffects : [CombatEffect];
+        scenarioEffects : [ScenarioEffect];
     };
 
-    public type ActionEffect = {
-        target : ActionEffectTarget;
-        kind : ActionEffectKind;
+    public type ScenarioEffect = {
+        #attribute : AttributeScenarioEffect;
     };
 
-    public type ActionEffectTarget = {
+    public type Attribute = {
+        #wisdom;
+        #strength;
+        #dexterity;
+        #charisma;
+    };
+
+    public type AttributeScenarioEffect = {
+        attribute : Attribute;
+        value : Int;
+    };
+
+    public type CombatEffect = {
+        target : CombatEffectTarget;
+        kind : CombatEffectKind;
+    };
+
+    public type CombatEffectTarget = {
         #self;
         #targets;
     };
 
-    public type ActionEffectKind = {
+    public type CombatEffectKind = {
         #damage : Damage;
         #block : Block;
         #heal : Heal;
@@ -102,8 +118,8 @@ module {
 
         Entity.validate("action", action, errors);
 
-        // Validate effects
-        for (effect in action.effects.vals()) {
+        // Validate combat effects
+        for (effect in action.combatEffects.vals()) {
             switch (effect.kind) {
                 case (#damage(damage)) {
                     if (damage.max < damage.min) {
@@ -140,6 +156,17 @@ module {
                                 };
                             };
                         };
+                    };
+                };
+            };
+        };
+
+        // Validate scenario effects
+        for (effect in action.scenarioEffects.vals()) {
+            switch (effect) {
+                case (#attribute(attribute)) {
+                    if (attribute.value == 0) {
+                        errors.add("Attribute effect value cannot be zero");
                     };
                 };
             };

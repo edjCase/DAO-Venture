@@ -2,15 +2,15 @@ import Nat "mo:base/Nat";
 import Action "entities/Action";
 module {
     public type ActionResult = {
-        effects : [ActionEffectResult];
+        effects : [CombatEffectResult];
     };
 
-    public type ActionEffectResult = {
+    public type CombatEffectResult = {
         target : ActionTargetResult;
-        kind : ActionEffectKindResult;
+        kind : CombatEffectKindResult;
     };
 
-    public type ActionEffectKindResult = {
+    public type CombatEffectKindResult = {
         #damage : Nat;
         #block : Nat;
         #heal : Nat;

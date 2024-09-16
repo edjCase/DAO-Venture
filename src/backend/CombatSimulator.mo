@@ -292,7 +292,7 @@ module {
         creatureStatList : [CombatStats],
         chosenTarget : ?ActionResult.ActionTargetResult,
     ) : Result.Result<ActionResult.ActionResult, { #invalidTarget; #targetRequired }> {
-        let effectResults = Buffer.Buffer<ActionResult.ActionEffectResult>(0);
+        let effectResults = Buffer.Buffer<ActionResult.CombatEffectResult>(0);
         let creatureCount = creatureStatList.size();
         let allValidTargets = switch (
             calculateAllValidTargets(
@@ -329,7 +329,7 @@ module {
             };
         };
 
-        for (effect in action.effects.vals()) {
+        for (effect in action.combatEffects.vals()) {
 
             let effectTargets = switch (effect.target) {
                 case (#self) [actionSource];
@@ -529,7 +529,7 @@ module {
         damage : Action.Damage,
         attackerStats : CombatStats,
         defenderStats : CombatStats,
-    ) : ActionResult.ActionEffectKindResult {
+    ) : ActionResult.CombatEffectKindResult {
         var damageAmount = calculateMinMaxAmount(prng, damage);
         if (hasEffect(defenderStats, #vulnerable)) {
             damageAmount := damageAmount + 1;
@@ -544,7 +544,7 @@ module {
         prng : Prng,
         block : Action.Block,
         blockerStats : CombatStats,
-    ) : ActionResult.ActionEffectKindResult {
+    ) : ActionResult.CombatEffectKindResult {
         var blockAmount = calculateMinMaxAmount(prng, block);
         if (hasEffect(blockerStats, #brittle)) {
             blockAmount := blockAmount - 1;
@@ -556,7 +556,7 @@ module {
         prng : Prng,
         heal : Action.Heal,
         casterStats : CombatStats,
-    ) : ActionResult.ActionEffectKindResult {
+    ) : ActionResult.CombatEffectKindResult {
         var healAmount = calculateMinMaxAmount(prng, heal);
         if (hasEffect(casterStats, #necrotic)) {
             healAmount := healAmount - 1;
@@ -581,7 +581,7 @@ module {
         );
     };
 
-    private func calculateStatusEffect(statusEffect : Action.StatusEffect) : ActionResult.ActionEffectKindResult {
+    private func calculateStatusEffect(statusEffect : Action.StatusEffect) : ActionResult.CombatEffectKindResult {
         #addStatusEffect({
             kind = statusEffect.kind;
             remainingTurns = switch (statusEffect.duration) {

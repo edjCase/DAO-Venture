@@ -32,6 +32,31 @@ export const idlFactory = ({ IDL }) => {
     'title' : IDL.Text,
     'description' : IDL.Text,
   });
+  const ActionTargetScope = IDL.Variant({
+    'any' : IDL.Null,
+    'ally' : IDL.Null,
+    'enemy' : IDL.Null,
+  });
+  const ActionTargetSelection = IDL.Variant({
+    'all' : IDL.Null,
+    'random' : IDL.Record({ 'count' : IDL.Nat }),
+    'chosen' : IDL.Null,
+  });
+  const ActionTarget = IDL.Record({
+    'scope' : ActionTargetScope,
+    'selection' : ActionTargetSelection,
+  });
+  const Attribute = IDL.Variant({
+    'dexterity' : IDL.Null,
+    'wisdom' : IDL.Null,
+    'strength' : IDL.Null,
+    'charisma' : IDL.Null,
+  });
+  const AttributeScenarioEffect = IDL.Record({
+    'value' : IDL.Int,
+    'attribute' : Attribute,
+  });
+  const ScenarioEffect = IDL.Variant({ 'attribute' : AttributeScenarioEffect });
   const TurnPhase = IDL.Variant({ 'end' : IDL.Null, 'start' : IDL.Null });
   const PeriodicTiming = IDL.Record({
     'phase' : TurnPhase,
@@ -69,41 +94,27 @@ export const idlFactory = ({ IDL }) => {
     'min' : IDL.Nat,
     'timing' : ActionTimingKind,
   });
-  const ActionEffectKind = IDL.Variant({
+  const CombatEffectKind = IDL.Variant({
     'damage' : Damage,
     'heal' : Heal,
     'addStatusEffect' : StatusEffect,
     'block' : Block,
   });
-  const ActionEffectTarget = IDL.Variant({
+  const CombatEffectTarget = IDL.Variant({
     'self' : IDL.Null,
     'targets' : IDL.Null,
   });
-  const ActionEffect = IDL.Record({
-    'kind' : ActionEffectKind,
-    'target' : ActionEffectTarget,
-  });
-  const ActionTargetScope = IDL.Variant({
-    'any' : IDL.Null,
-    'ally' : IDL.Null,
-    'enemy' : IDL.Null,
-  });
-  const ActionTargetSelection = IDL.Variant({
-    'all' : IDL.Null,
-    'random' : IDL.Record({ 'count' : IDL.Nat }),
-    'chosen' : IDL.Null,
-  });
-  const ActionTarget = IDL.Record({
-    'scope' : ActionTargetScope,
-    'selection' : ActionTargetSelection,
+  const CombatEffect = IDL.Record({
+    'kind' : CombatEffectKind,
+    'target' : CombatEffectTarget,
   });
   const Action = IDL.Record({
     'id' : IDL.Text,
-    'effects' : IDL.Vec(ActionEffect),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'target' : ActionTarget,
-    'upgradedActionId' : IDL.Opt(IDL.Text),
+    'scenarioEffects' : IDL.Vec(ScenarioEffect),
+    'combatEffects' : IDL.Vec(CombatEffect),
   });
   const CreatureKind = IDL.Variant({
     'normal' : IDL.Null,

@@ -1,10 +1,10 @@
 <script lang="ts">
-  import { ActionEffect } from "../../ic-agent/declarations/main";
+  import { CombatEffect } from "../../ic-agent/declarations/main";
   import { toJsonString } from "../../utils/StringUtil";
   import GameIcon from "../game/GameIcon.svelte";
   import StatusEffect from "./StatusEffect.svelte";
   import TimingIcon from "./TimingIcon.svelte";
-  export let value: ActionEffect;
+  export let value: CombatEffect;
 </script>
 
 {#if "addStatusEffect" in value.kind}

@@ -11,22 +11,12 @@ export interface Achievement {
 }
 export interface Action {
   'id' : string,
-  'effects' : Array<ActionEffect>,
   'name' : string,
   'description' : string,
   'target' : ActionTarget,
-  'upgradedActionId' : [] | [string],
+  'scenarioEffects' : Array<ScenarioEffect>,
+  'combatEffects' : Array<CombatEffect>,
 }
-export interface ActionEffect {
-  'kind' : ActionEffectKind,
-  'target' : ActionEffectTarget,
-}
-export type ActionEffectKind = { 'damage' : Damage } |
-  { 'heal' : Heal } |
-  { 'addStatusEffect' : StatusEffect } |
-  { 'block' : Block };
-export type ActionEffectTarget = { 'self' : null } |
-  { 'targets' : null };
 export interface ActionTarget {
   'scope' : ActionTargetScope,
   'selection' : ActionTargetSelection,
@@ -44,6 +34,14 @@ export type ActionTimingKind = { 'periodic' : PeriodicTiming } |
 export interface AddItemOutcomeEffect {
   'itemId' : string,
   'removedItemId' : [] | [string],
+}
+export type Attribute = { 'dexterity' : null } |
+  { 'wisdom' : null } |
+  { 'strength' : null } |
+  { 'charisma' : null };
+export interface AttributeScenarioEffect {
+  'value' : bigint,
+  'attribute' : Attribute,
 }
 export interface Block {
   'max' : bigint,
@@ -121,6 +119,16 @@ export type CombatCreatureLocationFilter = { 'any' : null } |
   { 'zone' : string } |
   { 'common' : null };
 export interface CombatDefeatResult { 'creatures' : Array<CreatureCombatState> }
+export interface CombatEffect {
+  'kind' : CombatEffectKind,
+  'target' : CombatEffectTarget,
+}
+export type CombatEffectKind = { 'damage' : Damage } |
+  { 'heal' : Heal } |
+  { 'addStatusEffect' : StatusEffect } |
+  { 'block' : Block };
+export type CombatEffectTarget = { 'self' : null } |
+  { 'targets' : null };
 export type CombatLogEntry = { 'damage' : DamageLogEntry } |
   { 'heal' : HealLogEntry } |
   { 'block' : BlockLogEntry } |
@@ -437,6 +445,7 @@ export interface ScenarioCombatResult {
   'log' : Array<CombatLogEntry>,
   'kind' : CombatResultKind,
 }
+export type ScenarioEffect = { 'attribute' : AttributeScenarioEffect };
 export interface ScenarioMetaData {
   'id' : string,
   'name' : string,
