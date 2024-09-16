@@ -9,13 +9,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 1n } }]
     },
     {
         id: "slash",
@@ -25,13 +25,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: []
     },
     {
         id: "fireball",
@@ -41,7 +41,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { all: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 3n, timing: { immediate: null } } }
@@ -51,7 +51,7 @@ export const actions: Action[] = [
                 kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 2n } }, min: 1n, max: 1n } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "heal",
@@ -61,13 +61,13 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { heal: { min: 3n, max: 5n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "shield",
@@ -77,13 +77,13 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { block: { min: 3n, max: 5n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { strength: null }, value: 1n } }]
     },
     {
         id: "poison_dart",
@@ -93,7 +93,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 2n, timing: { immediate: null } } }
@@ -103,7 +103,7 @@ export const actions: Action[] = [
                 kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 3n } }, min: 2n, max: 2n } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 1n } }]
     },
     {
         id: "whirlwind",
@@ -113,13 +113,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { all: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 3n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { strength: null }, value: 1n } }, { attribute: { attribute: { dexterity: null }, value: -1n } }]
     },
     {
         id: "thorns_aura",
@@ -129,13 +129,13 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { retaliating: { flat: 1n } }, duration: [3n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "life_drain",
@@ -145,7 +145,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
@@ -155,7 +155,7 @@ export const actions: Action[] = [
                 kind: { heal: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }, { attribute: { attribute: { charisma: null }, value: -1n } }]
     },
     {
         id: "smite",
@@ -165,7 +165,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 3n, max: 5n, timing: { immediate: null } } }
@@ -175,7 +175,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "entangle",
@@ -185,13 +185,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { vulnerable: null }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "fury_swipes",
@@ -201,7 +201,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 1n, timing: { immediate: null } } }
@@ -215,7 +215,7 @@ export const actions: Action[] = [
                 kind: { damage: { min: 1n, max: 1n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 2n } }, { attribute: { attribute: { wisdom: null }, value: -1n } }]
     },
     {
         id: "frost_bolt",
@@ -225,7 +225,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 3n, timing: { immediate: null } } }
@@ -235,7 +235,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { stunned: null }, duration: [1n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "earthquake",
@@ -245,13 +245,13 @@ export const actions: Action[] = [
             scope: { any: null },
             selection: { all: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { strength: null }, value: 2n } }, { attribute: { attribute: { dexterity: null }, value: -1n } }]
     },
     {
         id: "rapid_shot",
@@ -261,13 +261,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { random: { count: 2n } }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 3n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 2n } }]
     },
     {
         id: "defensive_stance",
@@ -277,7 +277,7 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { block: { min: 3n, max: 5n, timing: { immediate: null } } }
@@ -287,7 +287,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { retaliating: { flat: 1n } }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { strength: null }, value: 1n } }, { attribute: { attribute: { dexterity: null }, value: -1n } }]
     },
     {
         id: "venom_strike",
@@ -297,7 +297,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 2n, timing: { immediate: null } } }
@@ -307,7 +307,7 @@ export const actions: Action[] = [
                 kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 3n } }, min: 1n, max: 1n } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 1n } }]
     },
     {
         id: "thunder_strike",
@@ -317,7 +317,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 3n, max: 5n, timing: { immediate: null } } }
@@ -327,7 +327,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { stunned: null }, duration: [1n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "regenerate",
@@ -337,13 +337,13 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { heal: { timing: { periodic: { phase: { start: null }, turnDuration: 3n } }, min: 2n, max: 2n } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "double_slash",
@@ -353,7 +353,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 3n, timing: { immediate: null } } }
@@ -363,7 +363,7 @@ export const actions: Action[] = [
                 kind: { damage: { min: 1n, max: 3n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 1n } }]
     },
     {
         id: "war_cry",
@@ -373,13 +373,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { all: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { charisma: null }, value: 2n } }, { attribute: { attribute: { wisdom: null }, value: -1n } }]
     },
     {
         id: "piercing_shot",
@@ -389,7 +389,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
@@ -399,7 +399,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { vulnerable: null }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 1n } }]
     },
     {
         id: "wild_growth",
@@ -409,13 +409,13 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { block: { min: 4n, max: 6n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "weaken",
@@ -425,13 +425,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }]
     },
     {
         id: "arcane_missiles",
@@ -441,13 +441,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { random: { count: 3n } }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 2n } }, { attribute: { attribute: { strength: null }, value: -1n } }]
     },
     {
         id: "berserk",
@@ -457,7 +457,7 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { addStatusEffect: { kind: { retaliating: { flat: 2n } }, duration: [3n] } }
@@ -467,7 +467,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { vulnerable: null }, duration: [3n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { strength: null }, value: 2n } }, { attribute: { attribute: { wisdom: null }, value: -1n } }]
     },
     {
         id: "shadow_bolt",
@@ -477,7 +477,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
@@ -487,7 +487,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { weak: null }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }, { attribute: { attribute: { charisma: null }, value: -1n } }]
     },
     {
         id: "chain_lightning",
@@ -497,13 +497,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { random: { count: 3n } }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 3n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 2n } }]
     },
     {
         id: "fortify",
@@ -513,7 +513,7 @@ export const actions: Action[] = [
             scope: { ally: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { block: { min: 3n, max: 5n, timing: { immediate: null } } }
@@ -523,7 +523,7 @@ export const actions: Action[] = [
                 kind: { addStatusEffect: { kind: { retaliating: { flat: 1n } }, duration: [2n] } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { strength: null }, value: 1n } }]
     },
     {
         id: "precision_strike",
@@ -533,13 +533,13 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 4n, max: 4n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { dexterity: null }, value: 2n } }]
     },
     {
         id: "vampiric_touch",
@@ -549,7 +549,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { chosen: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 2n, max: 4n, timing: { immediate: null } } }
@@ -559,7 +559,7 @@ export const actions: Action[] = [
                 kind: { heal: { min: 1n, max: 2n, timing: { immediate: null } } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 1n } }, { attribute: { attribute: { charisma: null }, value: -1n } }]
     },
     {
         id: "natures_wrath",
@@ -569,7 +569,7 @@ export const actions: Action[] = [
             scope: { enemy: null },
             selection: { all: null }
         },
-        effects: [
+        combatEffects: [
             {
                 target: { targets: null },
                 kind: { damage: { min: 1n, max: 2n, timing: { immediate: null } } }
@@ -579,6 +579,6 @@ export const actions: Action[] = [
                 kind: { damage: { timing: { periodic: { phase: { start: null }, turnDuration: 2n } }, min: 1n, max: 2n } }
             }
         ],
-        upgradedActionId: []
+        scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 2n } }]
     }
 ];

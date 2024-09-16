@@ -87,11 +87,6 @@ module {
         switch (scenario.state) {
             case (#completed(_)) return #err(#scenarioComplete);
             case (#inProgress(inProgress)) {
-                type NextKind = {
-                    #nextPath : ScenarioMetaData.NextPathKind;
-                    #pathInProgress;
-                    #dead;
-                };
                 let (result, nextKind) : (Scenario.ScenarioStageResultKind, NextKind) = switch (inProgress) {
                     case (#choice(choiceState)) {
                         switch (processChoice(choiceState, helper, choice)) {
@@ -102,11 +97,11 @@ module {
                                         let ?chosenChoice = choiceState.choices.vals()
                                         |> Iter.filter(
                                             _,
-                                            func(c : Scenario.Choice) : Bool {
-                                                c.id == result.choiceId;
+                                            func(c : ScenarioMetaData.Choice) : Bool {
+                                                c.id == result.choice.id;
                                             },
                                         )
-                                        |> _.next() else Debug.trap("Choice not found: " # result.choiceId);
+                                        |> _.next() else Debug.trap("Choice not found: " # result.choice.id);
                                         #nextPath(chosenChoice.nextPath);
                                     };
                                 };
@@ -136,40 +131,7 @@ module {
                     };
                 };
 
-                let nextState : Scenario.ScenarioStateKind = switch (nextKind) {
-                    case (#nextPath(nextPathKind)) {
-                        let nextPathId : ?Text = switch (nextPathKind) {
-                            case (#single(pathId)) ?pathId;
-                            case (#multi(options)) {
-                                let pathsWithWeights = Array.map<ScenarioMetaData.WeightedScenarioPathOption, (Text, Float)>(
-                                    options,
-                                    func(p : ScenarioMetaData.WeightedScenarioPathOption) : (Text, Float) {
-                                        let attributes = helper.calculateAttributes();
-                                        let weight = calculateWeight(p.weight, attributes);
-                                        (p.pathId, weight);
-                                    },
-                                );
-                                ?prng.nextArrayElementWeighted(pathsWithWeights);
-                            };
-                            case (#none) null;
-                        };
-                        switch (nextPathId) {
-                            case (null) #completed;
-                            case (?nextPathId) {
-                                let ?nextPath = Array.find(
-                                    gameContent.scenarioMetaData.paths,
-                                    func(p : ScenarioMetaData.ScenarioPath) : Bool = p.id == nextPathId,
-                                ) else Debug.trap("Path not found: " # nextPathId);
-                                let character = helper.getCharacter();
-                                let attributes = helper.calculateAttributes();
-                                let nextState = buildNextState(prng, gameContent, character, attributes, nextPath);
-                                #inProgress(nextState);
-                            };
-                        };
-                    };
-                    case (#pathInProgress) #inProgress(inProgress);
-                    case (#dead) #completed; // TODO handle death
-                };
+                let nextState : Scenario.ScenarioStateKind = buildNextState(prng, gameContent, nextKind, helper, inProgress);
                 #ok({
                     stageResult = {
                         effects = helper.getEffects();
@@ -179,18 +141,76 @@ module {
                 });
             };
         };
+    };
 
+    type NextKind = {
+        #nextPath : ScenarioMetaData.NextPathKind;
+        #pathInProgress;
+        #dead;
+    };
+
+    func buildNextState(
+        prng : Prng,
+        gameContent : GameContent,
+        nextKind : NextKind,
+        helper : Helper,
+        currentState : Scenario.InProgressScenarioStateKind,
+    ) : Scenario.ScenarioStateKind {
+        switch (nextKind) {
+            case (#nextPath(nextPathKind)) {
+                let nextPathId : ?Text = switch (nextPathKind) {
+                    case (#single(pathId)) ?pathId;
+                    case (#multi(options)) {
+                        let pathsWithWeights = Array.map<ScenarioMetaData.WeightedScenarioPathOption, (ScenarioMetaData.WeightedScenarioPathOption, Float)>(
+                            options,
+                            func(p : ScenarioMetaData.WeightedScenarioPathOption) : (ScenarioMetaData.WeightedScenarioPathOption, Float) {
+                                let attributes = helper.calculateAttributes();
+                                let weight = calculateWeight(p.weight, attributes);
+                                (p, weight);
+                            },
+                        );
+                        let nexPath = prng.nextArrayElementWeighted(pathsWithWeights);
+
+                        helper.log(nexPath.description);
+                        for (effect in nexPath.effects.vals()) {
+                            switch (helper.applyEffect(effect)) {
+                                case (#alive) ();
+                                case (#dead) return #completed;
+                            };
+                        };
+                        ?nexPath.pathId;
+                    };
+                    case (#none) null;
+                };
+                switch (nextPathId) {
+                    case (null) #completed;
+                    case (?nextPathId) {
+                        let ?nextPath = Array.find(
+                            gameContent.scenarioMetaData.paths,
+                            func(p : ScenarioMetaData.ScenarioPath) : Bool = p.id == nextPathId,
+                        ) else Debug.trap("Path not found: " # nextPathId);
+                        let character = helper.getCharacter();
+                        let attributes = helper.calculateAttributes();
+                        let nextState = buildNextInProgressState(prng, gameContent, character, attributes, nextPath);
+                        #inProgress(nextState);
+                    };
+                };
+            };
+            case (#pathInProgress) #inProgress(currentState);
+            case (#dead) #completed; // TODO handle death
+        };
     };
 
     func calculateWeight(
-        weight : ScenarioMetaData.WeightKind,
+        weight : ScenarioMetaData.OptionWeight,
         attributes : Character.CharacterAttributes,
     ) : Float {
-        switch (weight) {
-            case (#raw(raw)) raw;
-            case (#attributeScaled(attributeScaled)) {
+        let baseWeight = weight.value;
+        switch (weight.kind) {
+            case (#raw) baseWeight;
+            case (#attributeScaled(attribute)) {
                 let k = 1.5; // Adjust this for desired steepness
-                let attributeValue : Int = switch (attributeScaled.attribute) {
+                let attributeValue : Int = switch (attribute) {
                     case (#strength) attributes.strength;
                     case (#dexterity) attributes.dexterity;
                     case (#wisdom) attributes.wisdom;
@@ -198,13 +218,13 @@ module {
                 };
                 // Scale the base weight by the attribute value
                 // using a sigmoid curve
-                let weight = attributeScaled.baseWeight * (1 / (1 + Float.exp(-k * Float.fromInt(attributeValue))));
+                let weight = baseWeight * (1 / (1 + Float.exp(-k * Float.fromInt(attributeValue))));
                 Float.max(0, weight); // Ensure the weight is not negative
             };
         };
     };
 
-    public func buildNextState(
+    public func buildNextInProgressState(
         prng : Prng,
         gameContent : GameContent,
         character : Character.Character,
@@ -270,7 +290,7 @@ module {
 
         let ?choiceData = Array.find(
             state.choices,
-            func(c : Scenario.Choice) : Bool {
+            func(c : ScenarioMetaData.Choice) : Bool {
                 c.id == choiceId;
             },
         ) else return #err(#invalidChoice("Choice not found: " # choiceId));
@@ -280,7 +300,7 @@ module {
                 case (#alive) (); // Continue
                 case (#dead) {
                     return #ok({
-                        choiceId = choiceData.id;
+                        choice = choiceData;
                         kind = #death;
                     });
                 };
@@ -288,7 +308,7 @@ module {
         };
 
         #ok({
-            choiceId = choiceData.id;
+            choice = choiceData;
             kind = #complete;
         });
 

@@ -2,7 +2,6 @@
   import { onMount } from "svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
-  import DifficultyBadge from "../common/DifficultyBadge.svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { CompletedGameWithMetaData } from "../../ic-agent/declarations/main";
 
@@ -31,7 +30,6 @@
   {#each completedGames as game}
     <div>
       <div>Result: {game.victory ? "Victory" : "Defeat"}</div>
-      <p><DifficultyBadge value={game.difficulty} /></p>
       <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
       <div class="flex justify-center">
         <CharacterAvatarWithStats size="lg" character={game.character} />

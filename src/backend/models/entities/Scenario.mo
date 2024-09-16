@@ -30,7 +30,7 @@ module {
     };
 
     public type ScenarioChoiceResult = {
-        choiceId : Text;
+        choice : ScenarioMetaData.Choice;
         kind : ChoiceResultKind;
     };
 
@@ -107,14 +107,7 @@ module {
     };
 
     public type ChoiceScenarioState = {
-        choices : [Choice];
-    };
-
-    public type Choice = {
-        id : Text;
-        description : Text;
-        effects : [ScenarioMetaData.Effect];
-        nextPath : ScenarioMetaData.NextPathKind;
+        choices : [ScenarioMetaData.Choice];
     };
 
     public type CombatScenarioState = {

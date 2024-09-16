@@ -1,15 +1,9 @@
 export const idlFactory = ({ IDL }) => {
-  const ChoiceRequirement = IDL.Rec();
   const AbandonGameResult = IDL.Variant({
     'ok' : IDL.Null,
     'err' : IDL.Variant({ 'noActiveGame' : IDL.Null }),
   });
-  const Difficulty = IDL.Variant({
-    'normal' : IDL.Null,
-    'easy' : IDL.Null,
-    'hard' : IDL.Null,
-  });
-  const CreateGameRequest = IDL.Record({ 'difficulty' : Difficulty });
+  const CreateGameRequest = IDL.Record({});
   const CreateGameError = IDL.Variant({
     'noWeapons' : IDL.Null,
     'noCreaturesForZone' : IDL.Text,
@@ -197,26 +191,13 @@ export const idlFactory = ({ IDL }) => {
     'random' : IDL.Null,
     'specificItemIds' : IDL.Vec(IDL.Text),
   });
-  const AttributeScaledWeight = IDL.Record({
-    'baseWeight' : IDL.Float64,
-    'attribute' : Attribute,
-  });
   const WeightKind = IDL.Variant({
-    'raw' : IDL.Float64,
-    'attributeScaled' : AttributeScaledWeight,
+    'raw' : IDL.Null,
+    'attributeScaled' : Attribute,
   });
-  const WeightedScenarioPathOption = IDL.Record({
-    'weight' : WeightKind,
-    'pathId' : IDL.Text,
-  });
-  const NextPathKind = IDL.Variant({
-    'multi' : IDL.Vec(WeightedScenarioPathOption),
-    'none' : IDL.Null,
-    'single' : IDL.Text,
-  });
-  const RewardPath = IDL.Record({
-    'kind' : RewardPathKind,
-    'nextPath' : NextPathKind,
+  const OptionWeight = IDL.Record({
+    'value' : IDL.Float64,
+    'kind' : WeightKind,
   });
   const NatValue = IDL.Variant({
     'raw' : IDL.Nat,
@@ -238,19 +219,30 @@ export const idlFactory = ({ IDL }) => {
     'removeGold' : NatValue,
     'removeItem' : RandomOrSpecificTextValue,
   });
+  const WeightedScenarioPathOption = IDL.Record({
+    'weight' : OptionWeight,
+    'effects' : IDL.Vec(Effect),
+    'description' : IDL.Text,
+    'pathId' : IDL.Text,
+  });
+  const NextPathKind = IDL.Variant({
+    'multi' : IDL.Vec(WeightedScenarioPathOption),
+    'none' : IDL.Null,
+    'single' : IDL.Text,
+  });
+  const RewardPath = IDL.Record({
+    'kind' : RewardPathKind,
+    'nextPath' : NextPathKind,
+  });
   const AttributeChoiceRequirement = IDL.Record({
     'value' : IDL.Int,
     'attribute' : Attribute,
   });
-  ChoiceRequirement.fill(
-    IDL.Variant({
-      'all' : IDL.Vec(ChoiceRequirement),
-      'any' : IDL.Vec(ChoiceRequirement),
-      'gold' : IDL.Nat,
-      'item' : IDL.Text,
-      'attribute' : AttributeChoiceRequirement,
-    })
-  );
+  const ChoiceRequirement = IDL.Variant({
+    'gold' : IDL.Nat,
+    'item' : IDL.Text,
+    'attribute' : AttributeChoiceRequirement,
+  });
   const Choice = IDL.Record({
     'id' : IDL.Text,
     'effects' : IDL.Vec(Effect),
@@ -360,7 +352,6 @@ export const idlFactory = ({ IDL }) => {
     'startTime' : Time,
     'endTime' : Time,
     'character' : CharacterWithMetaData,
-    'difficulty' : Difficulty,
     'playerId' : IDL.Principal,
     'victory' : IDL.Bool,
   });
@@ -396,7 +387,6 @@ export const idlFactory = ({ IDL }) => {
   const GameWithMetaData = IDL.Record({
     'id' : IDL.Nat,
     'startTime' : Time,
-    'difficulty' : Difficulty,
     'playerId' : IDL.Principal,
     'state' : GameStateWithMetaData,
   });
@@ -415,13 +405,7 @@ export const idlFactory = ({ IDL }) => {
     'options' : IDL.Vec(RewardKind),
     'nextPath' : NextPathKind,
   });
-  const Choice__1 = IDL.Record({
-    'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect),
-    'description' : IDL.Text,
-    'nextPath' : NextPathKind,
-  });
-  const ChoiceScenarioState = IDL.Record({ 'choices' : IDL.Vec(Choice__1) });
+  const ChoiceScenarioState = IDL.Record({ 'choices' : IDL.Vec(Choice) });
   const PeriodicEffectKind = IDL.Variant({
     'damage' : IDL.Null,
     'heal' : IDL.Null,
@@ -499,8 +483,8 @@ export const idlFactory = ({ IDL }) => {
     'death' : IDL.Null,
   });
   const ScenarioChoiceResult = IDL.Record({
-    'choiceId' : IDL.Text,
     'kind' : ChoiceResultKind,
+    'choice' : Choice,
   });
   const TargetKind = IDL.Variant({
     'creature' : IDL.Nat,

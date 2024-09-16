@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { ScenarioMetaData } from "../../../../ic-agent/declarations/main";
+  import { toJsonString } from "../../../../utils/StringUtil";
   import EntityView from "./EntityView.svelte";
   import UnlockRequirementView from "./UnlockRequirementView.svelte";
 
@@ -11,28 +12,15 @@
   <EntityView entity={scenario} />
 
   <div class="mt-4">
-    <h3 class="text-lg font-semibold mb-2">Data:</h3>
-    {#each scenario.data as data}
-      <div class=" p-2 rounded mb-2">
-        {data.id} ({data.name}):
-        {#if "nat" in data.value}
-          Nat ({data.value.nat.min}-{data.value.nat.max})
-        {:else}
-          Text ({#each data.value.text.options as [text, weight], i}{text}: {weight}{i <
-            data.value.text.options.length - 1
-              ? ", "
-              : ""}{/each})
-        {/if}
-      </div>
-    {/each}
-  </div>
-
-  <div class="mt-4">
     <span class="font-semibold">Category:</span>
-    {#if "other" in scenario.category}Other
-    {:else if "store" in scenario.category}Store
-    {:else if "combat" in scenario.category}Combat
-    {:else}Unknown
+    {#if "other" in scenario.category}
+      Other
+    {:else if "store" in scenario.category}
+      Store
+    {:else if "combat" in scenario.category}
+      Combat
+    {:else}
+      NOT IMPLEMENTED CATEGORY {toJsonString(scenario.category)}
     {/if}
   </div>
 
@@ -43,11 +31,12 @@
 
   <div class="mt-2">
     <span class="font-semibold">Location:</span>
-    {#if "common" in scenario.location}Common
-    {:else if "zoneIds" in scenario.location}Zones: {scenario.location.zoneIds.join(
-        ", "
-      )}
-    {:else}Unknown
+    {#if "common" in scenario.location}
+      Common
+    {:else if "zoneIds" in scenario.location}
+      Zones: {scenario.location.zoneIds.join(", ")}
+    {:else}
+      NOT IMPLEMENTED LOCATION {toJsonString(scenario.location)}
     {/if}
   </div>
 
@@ -56,12 +45,16 @@
     {#each scenario.paths as path}
       <div class="p-2 rounded mb-2">
         {path.id}:
+        <!-- TODO -->
         {#if "choice" in path.kind}
-          Effects: {path.kind.choice.length}
-        {:else}
+          Choices: {path.kind.choice.choices.length}
+        {:else if "combat" in path.kind}
           Combat
+        {:else if "reward" in path.kind}
+          Reward
+        {:else}
+          NOT IMPLEMENTED PATH KIND {toJsonString(path.kind)}
         {/if}
-        ({path.paths.length} sub-paths)
       </div>
     {/each}
   </div>

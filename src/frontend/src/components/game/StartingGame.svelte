@@ -54,7 +54,7 @@
               <div>+{character.gold} 🪙</div>
             {/if}
             {#each character.actions as action}
-              <div>+{action.name}</div>
+              <div>+{action.action.name}</div>
             {/each}
             {#each character.inventorySlots as slot}
               {#if slot.item[0] !== undefined}

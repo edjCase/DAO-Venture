@@ -14,27 +14,36 @@
     CombatEffectKind,
     CombatEffectTarget,
     ActionTarget,
+    ScenarioEffect,
   } from "../../../../ic-agent/declarations/main";
   import MinMaxTimingForm from "./MinMaxTimingForm.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import EntitySelector from "./EntitySelector.svelte";
+  import CombatEffectEditor from "./CombatEffectEditor.svelte";
+  import CombatEffectChooser from "./CombatEffectChooser.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
-  let effects: CombatEffect[] = [];
+  let combatEffects: CombatEffect[] = [];
+  let scenarioEffects: ScenarioEffect[] = [];
   let target: ActionTarget = {
     scope: { any: null },
     selection: { all: null },
   };
-  let upgradedActionId: string;
 
-  const effectKinds: SelectOptionType<string>[] = [
+  const combatEffectKinds: SelectOptionType<string>[] = [
     { value: "damage", name: "Damage" },
     { value: "heal", name: "Heal" },
     { value: "block", name: "Block" },
     { value: "addStatusEffect", name: "Add Status Effect" },
   ];
+  let selectedCombatEffectKind: string = combatEffectKinds[0].value;
+
+  const scenarioEffectKinds: SelectOptionType<string>[] = [
+    { value: "attribute", name: "Attribute" },
+  ];
+  let selectedScenarioEffectKind: string = scenarioEffectKinds[0].value;
 
   const targetScopes: SelectOptionType<string>[] = [
     { value: "any", name: "Any" },
@@ -51,34 +60,26 @@
 
   let selectedSelection: string = targetSelections[0].value;
 
-  const statusEffectKinds: SelectOptionType<string>[] = [
-    { value: "weak", name: "Weak" },
-    { value: "vulnerable", name: "Vulnerable" },
-    { value: "stunned", name: "Stunned" },
-    { value: "retaliating", name: "Retaliating" },
-  ];
-
-  function addEffect() {
-    effects = [...effects, createDefaultEffect()];
+  function addCombatEffect() {
+    combatEffects = [...combatEffects, createDefaultCombatEffect()];
   }
 
-  function removeEffect(index: number) {
-    effects = effects.filter((_, i) => i !== index);
+  function removeCombatEffect(index: number) {
+    combatEffects = combatEffects.filter((_, i) => i !== index);
   }
 
-  function createDefaultEffect(): CombatEffect {
+  function createDefaultCombatEffect(): CombatEffect {
     return {
       kind: { damage: { min: 1n, max: 1n, timing: { immediate: null } } },
       target: { self: null },
     };
   }
 
-  let updateEffectKind = (index: number) => (event: Event) => {
-    let kindValue = (event.target as HTMLSelectElement).value;
-    effects = effects.map((effect, i) => {
+  let updateCombatEffectKind = (index: number) => () => {
+    combatEffects = combatEffects.map((effect, i) => {
       if (i === index) {
         let newKind: CombatEffectKind;
-        switch (kindValue) {
+        switch (selectedCombatEffectKind) {
           case "damage":
             newKind = {
               damage: { min: 1n, max: 1n, timing: { immediate: null } },
@@ -108,9 +109,8 @@
     });
   };
 
-  let updateEffectTarget = (index: number) => (event: Event) => {
-    let targetValue = (event.target as HTMLSelectElement).value;
-    effects = effects.map((effect, i) => {
+  let updateCombatEffectTarget = (index: number) => () => {
+    combatEffects = combatEffects.map((effect, i) => {
       if (i === index) {
         const newTarget: CombatEffectTarget =
           targetValue === "self" ? { self: null } : { targets: null };
@@ -124,15 +124,14 @@
     if (!id) return "Id must be filled";
     if (!name) return "Name must be filled";
     if (!description) return "Description must be filled";
-    if (effects.length === 0) return "At least one effect is required";
 
     const action: Action = {
       id,
       name,
       description,
-      effects,
+      scenarioEffects,
+      combatEffects,
       target,
-      upgradedActionId: !upgradedActionId ? [] : [upgradedActionId],
     };
 
     return {
@@ -171,45 +170,29 @@
     </div>
 
     <div>
-      <Label>Effects</Label>
-      {#each effects as effect, index}
+      <div>Scenario Effects</div>
+      {#each scenarioEffects as effect, index}
         <div class="border p-4 mb-4 rounded">
           <Select
-            items={effectKinds}
-            on:change={updateEffectKind(index)}
-            value={Object.keys(effect.kind)[0]}
+            items={scenarioEffectKinds}
+            on:change={updateScenarioEffectKind(index)}
+            bind:value={selectedScenarioEffectKind}
           />
-          {#if "damage" in effect.kind}
-            <MinMaxTimingForm bind:value={effect.kind.damage} />
-          {:else if "heal" in effect.kind}
-            <MinMaxTimingForm bind:value={effect.kind.heal} />
-          {:else if "block" in effect.kind}
-            <MinMaxTimingForm bind:value={effect.kind.block} />
-          {:else if "addStatusEffect" in effect.kind}
-            <div class="flex gap-2 mt-2">
-              <Select
-                items={statusEffectKinds}
-                bind:value={effect.kind.addStatusEffect.kind}
-              />
-              <Input
-                type="number"
-                bind:value={effect.kind.addStatusEffect.duration[0]}
-                placeholder="Duration"
-              />
-            </div>
+          {#if "attribute" in effect}
+            {a}
           {/if}
-          <div>Target</div>
-          <Select
-            items={[
-              { value: "targets", name: "Targets" },
-              { value: "self", name: "Self" },
-            ]}
-            on:change={updateEffectTarget(index)}
-            value={Object.keys(effect.target)[0]}
-          />
+        </div>
+      {/each}
+    </div>
+
+    <div>
+      <Label>Combat Effects</Label>
+      {#each combatEffects as effect, index}
+        <div class="border p-4 mb-4 rounded">
+          <CombatEffectChooser {effect} />
           <button
             class="mt-2 bg-red-500 text-white px-2 py-1 rounded"
-            on:click={() => removeEffect(index)}
+            on:click={() => removeCombatEffect(index)}
           >
             Remove Effect
           </button>
@@ -217,7 +200,7 @@
       {/each}
       <button
         class="bg-blue-500 text-white px-4 py-2 rounded"
-        on:click={addEffect}
+        on:click={addCombatEffect}
       >
         Add Effect
       </button>
@@ -253,14 +236,6 @@
           />
         </div>
       {/if}
-    </div>
-    <div>
-      <Label for="upgradedActionId">Upgraded Action Id</Label>
-      <EntitySelector
-        bind:value={upgradedActionId}
-        store={actionStore}
-        label="Upgraded Action"
-      />
     </div>
   </div>
 </FormTemplate>

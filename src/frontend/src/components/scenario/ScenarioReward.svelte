@@ -9,6 +9,10 @@
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { toJsonString } from "../../utils/StringUtil";
   import CharacterInventorySlot from "../character/CharacterInventorySlot.svelte";
+  import CharacterItem from "../character/CharacterItem.svelte";
+  import CharacterStatIcon from "../character/CharacterStatIcon.svelte";
+  import CharacterWeapon from "../character/CharacterWeapon.svelte";
+  import LoadingButton from "../common/LoadingButton.svelte";
 
   export let rewardState: RewardScenarioState;
   export let character: CharacterWithMetaData;
@@ -20,7 +24,7 @@
     (item) => !item.item[0]
   );
 
-  $: {
+  $: if (inventorySlot === undefined) {
     if (
       selectedOptionIndex !== undefined &&
       "item" in rewardState.options[selectedOptionIndex]
@@ -32,7 +36,7 @@
   }
 
   let selectReward = async () => {
-    if (!selectedOptionIndex) {
+    if (selectedOptionIndex === undefined) {
       console.error("No option selected");
       return;
     }
@@ -45,7 +49,7 @@
         gold: selectedOption.gold,
       };
     } else if ("item" in selectedOption) {
-      if (!inventorySlot) {
+      if (inventorySlot === undefined) {
         console.error("No inventory slot selected");
         return;
       }
@@ -96,26 +100,24 @@
 
 <div class="p-4">
   <h2 class="text-2xl font-bold mb-4">Select Your Reward</h2>
-  <div
-    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-  >
+  <div class="grid grid-cols-3 gap-4">
     {#each rewardState.options as option, index}
       <div
         class="border rounded-lg p-4 cursor-pointer transition-colors duration-200 {selectedOptionIndex ===
         index
-          ? 'bg-blue-100 border-blue-500'
-          : 'hover:bg-gray-100'}"
+          ? 'bg-gray-700 border-blue-500'
+          : 'hover:bg-gray-900'}"
         on:click={selectOption(index)}
         on:keypress={selectOption(index)}
         tabindex={index}
         role="button"
       >
         {#if "gold" in option}
-          <div class="text-xl font-semibold">{option.gold} Gold</div>
+          {option.gold} <CharacterStatIcon kind={{ gold: null }} />
         {:else if "item" in option}
-          <div class="text-xl font-semibold">Item: {option.item}</div>
+          <CharacterItem item={option.item} />
         {:else if "weapon" in option}
-          <div class="text-xl font-semibold">Weapon: {option.weapon}</div>
+          <CharacterWeapon value={option.weapon} />
         {:else if "health" in option}
           <div class="text-xl font-semibold">{option.health} Health</div>
         {:else}
@@ -133,8 +135,8 @@
           <div
             class="w-16 h-16 border rounded flex items-center justify-center cursor-pointer {inventorySlot ===
             i
-              ? 'border-blue-500 bg-blue-100'
-              : 'hover:bg-gray-100'}"
+              ? 'border-blue-500 bg-gray-700'
+              : 'hover:bg-gray-900'}"
             on:click={selectInventorySlot(i)}
             role="button"
             tabindex={i}
@@ -147,13 +149,5 @@
     </div>
   {/if}
 
-  <button
-    class="mt-6 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
-    on:click={selectReward}
-    disabled={selectedOptionIndex === undefined ||
-      ("item" in rewardState.options[selectedOptionIndex] &&
-        inventorySlot === undefined)}
-  >
-    Claim Reward
-  </button>
+  <LoadingButton onClick={selectReward}>Claim Reward</LoadingButton>
 </div>

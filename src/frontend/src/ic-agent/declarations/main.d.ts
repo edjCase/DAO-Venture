@@ -43,10 +43,6 @@ export interface AttributeChoiceRequirement {
   'value' : bigint,
   'attribute' : Attribute,
 }
-export interface AttributeScaledWeight {
-  'baseWeight' : number,
-  'attribute' : Attribute,
-}
 export interface AttributeScenarioEffect {
   'value' : bigint,
   'attribute' : Attribute,
@@ -99,20 +95,12 @@ export interface Choice {
   'nextPath' : NextPathKind,
 }
 export interface ChoicePath { 'choices' : Array<Choice> }
-export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
-  { 'any' : Array<ChoiceRequirement> } |
-  { 'gold' : bigint } |
+export type ChoiceRequirement = { 'gold' : bigint } |
   { 'item' : string } |
   { 'attribute' : AttributeChoiceRequirement };
 export type ChoiceResultKind = { 'complete' : null } |
   { 'death' : null };
-export interface ChoiceScenarioState { 'choices' : Array<Choice__1> }
-export interface Choice__1 {
-  'id' : string,
-  'effects' : Array<Effect>,
-  'description' : string,
-  'nextPath' : NextPathKind,
-}
+export interface ChoiceScenarioState { 'choices' : Array<Choice> }
 export interface Class {
   'id' : string,
   'startingSkillActionIds' : Array<string>,
@@ -173,7 +161,6 @@ export interface CompletedGameWithMetaData {
   'startTime' : Time,
   'endTime' : Time,
   'character' : CharacterWithMetaData,
-  'difficulty' : Difficulty,
   'playerId' : Principal,
   'victory' : boolean,
 }
@@ -189,7 +176,7 @@ export type CreateGameError = { 'noWeapons' : null } |
   { 'noScenarios' : null } |
   { 'noImages' : null } |
   { 'alreadyInitialized' : null };
-export interface CreateGameRequest { 'difficulty' : Difficulty }
+export type CreateGameRequest = {};
 export type CreateGameResult = { 'ok' : null } |
   { 'err' : CreateGameError };
 export type CreateWorldProposalError = { 'invalid' : Array<string> } |
@@ -233,9 +220,6 @@ export interface DamageLogEntry {
   'target' : TargetKind,
   'amount' : bigint,
 }
-export type Difficulty = { 'normal' : null } |
-  { 'easy' : null } |
-  { 'hard' : null };
 export type Effect = { 'damage' : NatValue } |
   { 'heal' : NatValue } |
   { 'achievement' : string } |
@@ -250,7 +234,6 @@ export type GameStateWithMetaData = {
 export interface GameWithMetaData {
   'id' : bigint,
   'startTime' : Time,
-  'difficulty' : Difficulty,
   'playerId' : Principal,
   'state' : GameStateWithMetaData,
 }
@@ -353,6 +336,7 @@ export type NatValue = { 'raw' : bigint } |
 export type NextPathKind = { 'multi' : Array<WeightedScenarioPathOption> } |
   { 'none' : null } |
   { 'single' : string };
+export interface OptionWeight { 'value' : number, 'kind' : WeightKind }
 export type OutcomeEffect = { 'healthDelta' : bigint } |
   { 'maxHealthDelta' : bigint } |
   { 'text' : string } |
@@ -454,8 +438,8 @@ export type ScenarioCategory = { 'other' : null } |
   { 'store' : null } |
   { 'combat' : null };
 export interface ScenarioChoiceResult {
-  'choiceId' : string,
   'kind' : ChoiceResultKind,
+  'choice' : Choice,
 }
 export interface ScenarioCombatResult {
   'log' : Array<CombatLogEntry>,
@@ -585,10 +569,12 @@ export interface Weapon {
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
 }
-export type WeightKind = { 'raw' : number } |
-  { 'attributeScaled' : AttributeScaledWeight };
+export type WeightKind = { 'raw' : null } |
+  { 'attributeScaled' : Attribute };
 export interface WeightedScenarioPathOption {
-  'weight' : WeightKind,
+  'weight' : OptionWeight,
+  'effects' : Array<Effect>,
+  'description' : string,
   'pathId' : string,
 }
 export interface WorldProposal {

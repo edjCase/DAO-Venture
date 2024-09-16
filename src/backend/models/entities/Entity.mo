@@ -30,9 +30,9 @@ module {
         if (TextX.isEmptyOrWhitespace(entity.description)) {
             errors.add(entityName # " description cannot be empty.");
         };
-        // Limit size of description to 128 characters
-        if (entity.description.size() > 128) {
-            errors.add(entityName # " description cannot be longer than 128 characters.");
+        // Limit size of description to 256 characters
+        if (entity.description.size() > 256) {
+            errors.add(entityName # " description cannot be longer than 256 characters.");
         };
     };
 };

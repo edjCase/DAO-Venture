@@ -12,30 +12,6 @@ export const items: Item[] = [
         actionIds: []
     },
     {
-        id: "lockpick",
-        name: "Lockpick",
-        description: "For when knocking politely just won't do.",
-        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
-        unlockRequirement: [],
-        actionIds: []
-    },
-    {
-        id: "rune_stone",
-        name: "Rune Stone",
-        description: "Ancient stone imbued with magical power. Also makes a great paperweight.",
-        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
-        unlockRequirement: [],
-        actionIds: []
-    },
-    {
-        id: "fishing_tackle",
-        name: "Fishing Tackle",
-        description: "For catching fish or snagging secrets from the depths.",
-        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
-        unlockRequirement: [],
-        actionIds: []
-    },
-    {
         id: "vial_of_acid",
         name: "Vial of Acid",
         description: "Highly corrosive. Handle with care, or don't handle at all.",
@@ -44,33 +20,9 @@ export const items: Item[] = [
         actionIds: []
     },
     {
-        id: "disguise_kit",
-        name: "Disguise Kit",
-        description: "Be anyone you want to be, except yourself.",
-        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
-        unlockRequirement: [],
-        actionIds: []
-    },
-    {
-        id: "hourglass",
-        name: "Hourglass",
-        description: "Measures time, or your patience, whichever runs out first.",
-        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
-        unlockRequirement: [],
-        actionIds: []
-    },
-    {
         id: "crystal",
         name: "Crystal",
         description: "Clear and multifaceted. Refracts light and possibly reality.",
-        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
-        unlockRequirement: [],
-        actionIds: []
-    },
-    {
-        id: "compass",
-        name: "Compass",
-        description: "Always points north, unless you're lost. Then it points to adventure.",
         image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
         unlockRequirement: [],
         actionIds: []
@@ -191,7 +143,7 @@ export const items: Item[] = [
     {
         id: "portable_alchemy_kit",
         name: "Portable Alchemy Kit",
-        description: "A compact set of alchemical tools, including a miniature distiller, various vials, and a reference guide. Allows for basic potion-making and ingredient analysis on the go.",
+        description: "A compact set of alchemical tools, including a miniature distiller, various vials, and a reference guide.",
         image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
         unlockRequirement: [],
         actionIds: []

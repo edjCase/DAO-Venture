@@ -72,9 +72,7 @@ module {
 
     public type GetGameResult = Result.Result<GameHandler.GameWithMetaData, { #gameNotFound }>;
 
-    public type CreateGameRequest = {
-        difficulty : GameHandler.Difficulty;
-    };
+    public type CreateGameRequest = {};
     public type CreateGameResult = Result.Result<(), GameHandler.CreateGameError>;
 
     public type VoteOnNewGameRequest = {

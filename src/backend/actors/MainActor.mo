@@ -162,7 +162,7 @@ actor MainActor : Types.Actor {
         if (Principal.isAnonymous(caller)) {
             return #err(#notAuthenticated);
         };
-        gameHandler.createInstance(prng, caller, request.difficulty);
+        gameHandler.createInstance(prng, caller);
     };
 
     public shared ({ caller }) func startGame(request : Types.StartGameRequest) : async Types.StartGameResult {

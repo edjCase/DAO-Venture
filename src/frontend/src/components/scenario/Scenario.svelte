@@ -52,39 +52,42 @@
 </script>
 
 <div class="">
-  {#if "choice" in scenario.state}
-    <div class="text-3xl text-center mb-4">
-      {scenario.metaData.name}
-    </div>
-    <div class="flex justify-center">
-      <GameImage id={scenario.metaData.imageId} />
-    </div>
-    <div class="text-xl my-6">
-      {scenario.metaData.description}
-    </div>
-    <div class="flex flex-col items-center gap-2">
-      <div>
-        <div>Options</div>
-        <ul class="text-lg p-6">
-          {#each scenario.metaData.choices as option}
-            {#if scenario.state.choice.choiceIds.includes(option.id)}
+  {#if "inProgress" in scenario.state}
+    {#if "choice" in scenario.state.inProgress}
+      <div class="text-3xl text-center mb-4">
+        {scenario.metaData.name}
+      </div>
+      <div class="flex justify-center">
+        <GameImage id={scenario.metaData.imageId} />
+      </div>
+      <div class="text-xl my-6">
+        {scenario.metaData.description}
+      </div>
+      <div class="flex flex-col items-center gap-2">
+        <div>
+          <div>Options</div>
+          <ul class="text-lg p-6">
+            {#each scenario.state.inProgress.choice.choices as option}
               <li>
                 <ScenarioOption {option} selected={false} onSelect={vote} />
               </li>
-            {/if}
-          {/each}
-        </ul>
+            {/each}
+          </ul>
+        </div>
       </div>
-    </div>
-  {:else if "combat" in scenario.state}
-    <div class="text-3xl text-center mb-4">Combat</div>
-    <ScenarioCombat combatState={scenario.state.combat} />
-  {:else if "reward" in scenario.state}
-    <ScenarioReward rewardState={scenario.state.reward} {character} />
-  {:else if "complete" in scenario.state}
+    {:else if "combat" in scenario.state.inProgress}
+      <div class="text-3xl text-center mb-4">Combat</div>
+      <ScenarioCombat combatState={scenario.state.inProgress.combat} />
+    {:else if "reward" in scenario.state.inProgress}
+      <ScenarioReward
+        rewardState={scenario.state.inProgress.reward}
+        {character}
+      />
+    {:else}
+      NOT IMPLEMENTED SCENARIO STATE {toJsonString(scenario.state)}
+    {/if}
+  {:else if "completed" in scenario.state}
     <Button on:click={nextScenario}>Continue</Button>
-  {:else}
-    NOT IMPLEMENTED SCENARIO STATE {toJsonString(scenario.state)}
   {/if}
   <ScenarioStages stages={scenario.previousStages} {scenarioMetaData} />
 </div>

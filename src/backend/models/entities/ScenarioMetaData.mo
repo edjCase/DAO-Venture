@@ -98,18 +98,20 @@ module {
     };
 
     public type WeightedScenarioPathOption = {
-        weight : WeightKind;
+        weight : OptionWeight;
         pathId : Text;
+        description : Text;
+        effects : [Effect];
+    };
+
+    public type OptionWeight = {
+        value : Float;
+        kind : WeightKind;
     };
 
     public type WeightKind = {
-        #raw : Float;
-        #attributeScaled : AttributeScaledWeight;
-    };
-
-    public type AttributeScaledWeight = {
-        attribute : Action.Attribute;
-        baseWeight : Float;
+        #raw;
+        #attributeScaled : Action.Attribute;
     };
 
     public type Effect = {
@@ -137,8 +139,6 @@ module {
     };
 
     public type ChoiceRequirement = {
-        #all : [ChoiceRequirement];
-        #any : [ChoiceRequirement];
         #item : Text;
         #gold : Nat;
         #attribute : AttributeChoiceRequirement;
@@ -189,16 +189,15 @@ module {
         };
 
         let pathIdMap = HashMap.HashMap<Text, ScenarioPath>(metaData.paths.size(), Text.equal, Text.hash);
-        // Check paths
-        var visitedPaths = HashMap.HashMap<Text, Bool>(0, Text.equal, Text.hash);
         for (path in metaData.paths.vals()) {
             if (pathIdMap.replace(path.id, path) != null) {
                 errors.add("Duplicate path id: " # path.id);
             };
-
-            if (depthFirstSearch(path.id, visitedPaths, pathIdMap, errors)) {
-                errors.add("Cycle detected in paths starting from: " # path.id);
-            };
+        };
+        // Check paths
+        for (path in metaData.paths.vals()) {
+            let visitedPaths = HashMap.HashMap<Text, Bool>(0, Text.equal, Text.hash);
+            validateAcyclical(path.id, visitedPaths, pathIdMap, errors, false);
 
             switch (path.kind) {
                 case (#combat(combat)) {
@@ -289,68 +288,60 @@ module {
     };
 
     // Check for path cycles
-    func depthFirstSearch(
+    func validateAcyclical(
         pathId : Text,
         visitedPaths : HashMap.HashMap<Text, Bool>,
         pathIdMap : HashMap.HashMap<Text, ScenarioPath>,
         errors : Buffer.Buffer<Text>,
-    ) : Bool {
+        branchingPath : Bool,
+    ) {
         switch (visitedPaths.get(pathId)) {
-            case (?true) { return false };
-            case (?false) { return true };
+            case (?true) return; // Already visited, skip
+            case (?false) {
+                if (not branchingPath) {
+                    errors.add("Cycle detected at path: " # pathId);
+                };
+                return;
+            };
             case (null) {
                 visitedPaths.put(pathId, false);
                 let ?path = pathIdMap.get(pathId) else {
                     errors.add("Invalid path id: " # pathId);
-                    return false;
+                    return;
                 };
+
                 switch (path.kind) {
                     case (#choice(choicePath)) {
                         for (choice in choicePath.choices.vals()) {
-                            if (depthFirstSearchPathKind(choice.nextPath, visitedPaths, pathIdMap, errors)) {
-                                return true;
-                            };
+                            validateAcyclicalPathKind(choice.nextPath, visitedPaths, pathIdMap, errors);
                         };
                     };
-                    case (#combat(combat)) {
-                        if (depthFirstSearchPathKind(combat.nextPath, visitedPaths, pathIdMap, errors)) {
-                            return true;
-                        };
-                    };
-                    case (#reward(reward)) {
-                        if (depthFirstSearchPathKind(reward.nextPath, visitedPaths, pathIdMap, errors)) {
-                            return true;
-                        };
-                    };
+                    case (#combat(combat)) validateAcyclicalPathKind(combat.nextPath, visitedPaths, pathIdMap, errors);
+                    case (#reward(reward)) validateAcyclicalPathKind(reward.nextPath, visitedPaths, pathIdMap, errors);
                 };
+
                 visitedPaths.put(pathId, true);
-                return false;
+
             };
         };
     };
 
-    func depthFirstSearchPathKind(
+    func validateAcyclicalPathKind(
         pathKind : NextPathKind,
         visitedPaths : HashMap.HashMap<Text, Bool>,
         pathIdMap : HashMap.HashMap<Text, ScenarioPath>,
         errors : Buffer.Buffer<Text>,
-    ) : Bool {
+    ) {
         switch (pathKind) {
             case (#single(pathId)) {
-                if (visitedPaths.get(pathId) == ?true) {
-                    return true;
-                };
-                depthFirstSearch(pathId, visitedPaths, pathIdMap, errors);
+                validateAcyclical(pathId, visitedPaths, pathIdMap, errors, false);
             };
             case (#multi(weightedPaths)) {
                 for (weightedPath in weightedPaths.vals()) {
-                    if (depthFirstSearch(weightedPath.pathId, visitedPaths, pathIdMap, errors)) {
-                        return true;
-                    };
+                    validateAcyclical(weightedPath.pathId, visitedPaths, pathIdMap, errors, true);
                 };
-                false;
             };
-            case (#none) false;
+            case (#none) ();
         };
     };
 
@@ -373,16 +364,6 @@ module {
             case (#gold(gold)) {
                 if (gold == 0) {
                     errors.add("Gold requirement must be greater than 0");
-                };
-            };
-            case (#all(all)) {
-                for (requirement in all.vals()) {
-                    validateRequirement(requirement, items, errors);
-                };
-            };
-            case (#any(any)) {
-                for (requirement in any.vals()) {
-                    validateRequirement(requirement, items, errors);
                 };
             };
         };
@@ -473,18 +454,6 @@ module {
         attributes : Character.CharacterAttributes,
     ) : Bool {
         switch (requirement) {
-            case (#all(reqs)) {
-                for (req in reqs.vals()) {
-                    if (not characterMeetsRequirement(req, character, attributes)) return false;
-                };
-                true;
-            };
-            case (#any(reqs)) {
-                for (req in reqs.vals()) {
-                    if (characterMeetsRequirement(req, character, attributes)) return true;
-                };
-                false;
-            };
             case (#item(itemId)) IterTools.any(character.inventorySlots.vals(), func(slot : { itemId : ?Text }) : Bool = slot.itemId == ?itemId);
             case (#gold(amount)) character.gold >= amount;
             case (#attribute(attribute)) {

@@ -57,7 +57,6 @@ module {
     public type GameInstance = {
         id : Nat;
         startTime : Time.Time;
-        difficulty : Difficulty;
         state : GameInstanceState;
     };
 
@@ -97,17 +96,10 @@ module {
         victory : Bool;
     };
 
-    public type Difficulty = {
-        #easy;
-        #normal;
-        #hard;
-    };
-
     public type GameWithMetaData = {
         id : Nat;
         playerId : Principal;
         startTime : Time.Time;
-        difficulty : Difficulty;
         state : GameStateWithMetaData;
     };
 
@@ -136,7 +128,6 @@ module {
         id : Nat;
         playerId : Principal;
         startTime : Time.Time;
-        difficulty : Difficulty;
     };
 
     public type CharacterWithMetaData = {
@@ -235,7 +226,6 @@ module {
         public func createInstance(
             prng : Prng,
             playerId : Principal,
-            difficulty : Difficulty,
         ) : Result.Result<(), CreateGameError> {
             if (classes.size() == 0) {
                 return #err(#noClasses);
@@ -326,7 +316,6 @@ module {
                         id = playerDataInstance.completedGames.size(); // TODO?
                         playerId = playerId;
                         startTime = Time.now();
-                        difficulty = difficulty;
                         state = #starting({
                             characterOptions = characterOptions;
                         });
@@ -380,7 +369,6 @@ module {
                     {
                         completedGameState with
                         id = activeGame.id;
-                        difficulty = activeGame.difficulty;
                         playerId = playerData.id;
                         startTime = activeGame.startTime;
                     } : CompletedGameWithMetaData
@@ -867,7 +855,7 @@ module {
                 scenarioMetaData = scenarioMetaData;
             };
             let attributes = CharacterHandler.calculateAttributes(character, weapons, items, actions);
-            let stateKind = ScenarioSimulator.buildNextState(prng, gameContent, character, attributes, path);
+            let stateKind = ScenarioSimulator.buildNextInProgressState(prng, gameContent, character, attributes, path);
             {
                 metaDataId = scenarioMetaData.id;
                 previousStages = [];
@@ -904,7 +892,6 @@ module {
                 id = instance.id;
                 playerId = playerId;
                 startTime = instance.startTime;
-                difficulty = instance.difficulty;
                 state = state;
             };
         };

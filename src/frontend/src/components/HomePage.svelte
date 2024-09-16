@@ -6,19 +6,13 @@
   import InitialDataLoad from "./game/InitialDataLoad.svelte";
   import GamePlayer from "./game/GamePlayer.svelte";
   import LoginPage from "./LoginPage.svelte";
-  import DifficultyChooser from "./game/DifficultyChooser.svelte";
-  import { Difficulty } from "../ic-agent/declarations/main";
 
   $: currentGame = $currentGameStore;
   $: user = $userStore;
 
-  let difficulty: Difficulty = { normal: null };
-
   let createGame = async () => {
     let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.createGame({
-      difficulty: difficulty,
-    });
+    let result = await mainAgent.createGame({});
     if ("ok" in result) {
       currentGameStore.refetch();
     } else {
@@ -35,7 +29,6 @@
       <InitialDataLoad />
       <div class="text-3xl">OMG SO EXCITING, ITS YOUR FIRST GAME</div>
       <div class="text-3xl mb-4">Good luck...</div>
-      <DifficultyChooser bind:value={difficulty} />
       <LoadingButton onClick={createGame}>Play First Game</LoadingButton>
     {:else}
       <GamePlayer game={currentGame} />
