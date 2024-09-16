@@ -40,7 +40,7 @@
           description,
           weaponId,
           startingItemIds: selectedItems,
-          startingActionIds: selectedActions,
+          startingSkillActionIds: selectedActions,
           unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
         },
       },

@@ -821,7 +821,11 @@ module {
             };
         };
 
-        private func generateScenario(prng : Prng, zoneId : Text, character : Character.Character) : {
+        private func generateScenario(
+            prng : Prng,
+            zoneId : Text,
+            character : Character.Character,
+        ) : {
             metaDataId : Text;
             previousStages : [Scenario.ScenarioStageResult];
             state : Scenario.ScenarioStateKind;
@@ -857,7 +861,8 @@ module {
                 weapons = weapons;
                 scenarioMetaData = scenarioMetaData;
             };
-            let stateKind = ScenarioSimulator.buildNextState(prng, gameContent, character, path);
+            let attributes = CharacterHandler.calculateAttributes(character, weapons, items, actions);
+            let stateKind = ScenarioSimulator.buildNextState(prng, gameContent, character, attributes, path);
             {
                 metaDataId = scenarioMetaData.id;
                 previousStages = [];

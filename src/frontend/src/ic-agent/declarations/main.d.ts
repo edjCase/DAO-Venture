@@ -39,6 +39,14 @@ export type Attribute = { 'dexterity' : null } |
   { 'wisdom' : null } |
   { 'strength' : null } |
   { 'charisma' : null };
+export interface AttributeChoiceRequirement {
+  'value' : bigint,
+  'attribute' : Attribute,
+}
+export interface AttributeScaledWeight {
+  'baseWeight' : number,
+  'attribute' : Attribute,
+}
 export interface AttributeScenarioEffect {
   'value' : bigint,
   'attribute' : Attribute,
@@ -86,8 +94,7 @@ export type ChoiceRequirement = { 'all' : Array<ChoiceRequirement> } |
   { 'any' : Array<ChoiceRequirement> } |
   { 'gold' : bigint } |
   { 'item' : string } |
-  { 'class' : string } |
-  { 'race' : string };
+  { 'attribute' : AttributeChoiceRequirement };
 export type ChoiceResultKind = { 'complete' : null } |
   { 'death' : null };
 export interface ChoiceScenarioState { 'choices' : Array<Choice__1> }
@@ -99,7 +106,7 @@ export interface Choice__1 {
 }
 export interface Class {
   'id' : string,
-  'startingActionIds' : Array<string>,
+  'startingSkillActionIds' : Array<string>,
   'name' : string,
   'description' : string,
   'startingItemIds' : Array<string>,
@@ -397,7 +404,7 @@ export type ProposalStatus = {
   };
 export interface Race {
   'id' : string,
-  'startingActionIds' : Array<string>,
+  'startingSkillActionIds' : Array<string>,
   'name' : string,
   'description' : string,
   'startingItemIds' : Array<string>,
@@ -569,8 +576,10 @@ export interface Weapon {
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
 }
+export type WeightKind = { 'raw' : number } |
+  { 'attributeScaled' : AttributeScaledWeight };
 export interface WeightedScenarioPathOption {
-  'weight' : number,
+  'weight' : WeightKind,
   'pathId' : string,
 }
 export interface WorldProposal {

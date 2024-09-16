@@ -21,16 +21,18 @@ module {
         raceId : Text;
         weaponId : Text;
         inventorySlots : [InventorySlot];
-        actions : [CharacterAction];
+        skillActionIds : [Text];
+    };
+
+    public type CharacterAttributes = {
+        strength : Int;
+        dexterity : Int;
+        wisdom : Int;
+        charisma : Int;
     };
 
     public type InventorySlot = {
         itemId : ?Text;
-    };
-
-    public type CharacterAction = {
-        id : Text;
-        upgradeCount : Nat;
     };
 
     public func getActionIds(
@@ -43,10 +45,10 @@ module {
         let allActionIds = Buffer.Buffer<Text>(10);
 
         let ?class_ = classes.get(character.classId) else Debug.trap("Class not found: " # character.classId);
-        allActionIds.append(Buffer.fromArray(class_.startingActionIds));
+        allActionIds.append(Buffer.fromArray(class_.startingSkillActionIds));
 
         let ?race = races.get(character.raceId) else Debug.trap("Race not found: " # character.raceId);
-        allActionIds.append(Buffer.fromArray(race.startingActionIds));
+        allActionIds.append(Buffer.fromArray(race.startingSkillActionIds));
 
         let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
         allActionIds.append(Buffer.fromArray(weapon.actionIds));

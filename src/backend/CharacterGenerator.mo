@@ -20,7 +20,7 @@ module {
         var health : Nat = maxHealth;
         let inventorySize = 5; // TODO slot count?
         let inventorySlots : [var Character.InventorySlot] = Array.tabulateVar(inventorySize, func(_ : Nat) : Character.InventorySlot = { itemId = null });
-        let actions = Buffer.Buffer<Character.CharacterAction>(5);
+        let skillActionIds = Buffer.Buffer<Text>(5);
 
         var i : Nat = 0;
         func addItemId(itemId : Text) {
@@ -39,17 +39,11 @@ module {
             addItemId(startingItemId);
         };
 
-        for (startingActionId in class_.startingActionIds.vals()) {
-            actions.add({
-                id = startingActionId;
-                upgradeCount = 0;
-            });
+        for (actionId in class_.startingSkillActionIds.vals()) {
+            skillActionIds.add(actionId);
         };
-        for (startingActionId in race.startingActionIds.vals()) {
-            actions.add({
-                id = startingActionId;
-                upgradeCount = 0;
-            });
+        for (actionId in race.startingSkillActionIds.vals()) {
+            skillActionIds.add(actionId);
         };
 
         {
@@ -60,7 +54,7 @@ module {
             raceId = race.id;
             inventorySlots = Array.freeze(inventorySlots);
             weaponId = class_.weaponId;
-            actions = Buffer.toArray(actions);
+            skillActionIds = Buffer.toArray(skillActionIds);
         };
     };
 

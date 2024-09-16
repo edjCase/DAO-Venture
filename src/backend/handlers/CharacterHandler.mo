@@ -6,14 +6,26 @@ import Array "mo:base/Array";
 import Iter "mo:base/Iter";
 import Result "mo:base/Result";
 import Debug "mo:base/Debug";
+import HashMap "mo:base/HashMap";
 import IterTools "mo:itertools/Iter";
+import Action "../models/entities/Action";
+import Weapon "../models/entities/Weapon";
+import Item "../models/entities/Item";
 
-module {
+module Module {
     public class Handler(data : Character.Character) {
         var character = data;
 
         public func get() : Character.Character {
             character;
+        };
+
+        public func calculateAttributes(
+            weapons : HashMap.HashMap<Text, Weapon.Weapon>,
+            items : HashMap.HashMap<Text, Item.Item>,
+            actions : HashMap.HashMap<Text, Action.Action>,
+        ) : Character.CharacterAttributes {
+            Module.calculateAttributes(character, weapons, items, actions);
         };
 
         public func setHealth(health : Nat) {
@@ -150,6 +162,60 @@ module {
                 weaponId = weaponId;
             };
             oldWeaponId;
+        };
+    };
+
+    public func calculateAttributes(
+        character : Character.Character,
+        weapons : HashMap.HashMap<Text, Weapon.Weapon>,
+        items : HashMap.HashMap<Text, Item.Item>,
+        actions : HashMap.HashMap<Text, Action.Action>,
+    ) : Character.CharacterAttributes {
+        var strength : Int = 0;
+        var dexterity : Int = 0;
+        var wisdom : Int = 0;
+        var charisma : Int = 0;
+
+        func processActions(actionIds : [Text]) {
+            for (actionId in actionIds.vals()) {
+                let ?action = actions.get(actionId) else Debug.trap("Action not found: " # actionId);
+                for (effect in action.scenarioEffects.vals()) {
+                    switch (effect) {
+                        case (#attribute(attribute)) {
+                            switch (attribute.attribute) {
+                                case (#strength) strength += attribute.value;
+                                case (#dexterity) dexterity += attribute.value;
+                                case (#wisdom) wisdom += attribute.value;
+                                case (#charisma) charisma += attribute.value;
+                            };
+                        };
+                    };
+                };
+            };
+        };
+
+        processActions(character.skillActionIds);
+
+        // Get from weapon
+        let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
+        processActions(weapon.actionIds);
+
+        for (inventorySlot in character.inventorySlots.vals()) {
+            switch (inventorySlot.itemId) {
+                case (null) {};
+                case (?itemId) {
+                    let ?item = items.get(itemId) else Debug.trap("Item not found: " # itemId);
+                    processActions(item.actionIds);
+                };
+            };
+        };
+
+        {
+            character with
+            strength = strength;
+            dexterity = dexterity;
+            wisdom = wisdom;
+            charisma = charisma;
         };
     };
 };

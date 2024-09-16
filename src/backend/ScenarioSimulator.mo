@@ -9,6 +9,7 @@ import HashMap "mo:base/HashMap";
 import Iter "mo:base/Iter";
 import Float "mo:base/Float";
 import Result "mo:base/Result";
+import Int "mo:base/Int";
 import CharacterHandler "handlers/CharacterHandler";
 import Scenario "models/entities/Scenario";
 import Character "models/Character";
@@ -143,7 +144,9 @@ module {
                                 let pathsWithWeights = Array.map<ScenarioMetaData.WeightedScenarioPathOption, (Text, Float)>(
                                     options,
                                     func(p : ScenarioMetaData.WeightedScenarioPathOption) : (Text, Float) {
-                                        (p.pathId, p.weight);
+                                        let attributes = helper.calculateAttributes();
+                                        let weight = calculateWeight(p.weight, attributes);
+                                        (p.pathId, weight);
                                     },
                                 );
                                 ?prng.nextArrayElementWeighted(pathsWithWeights);
@@ -158,7 +161,8 @@ module {
                                     func(p : ScenarioMetaData.ScenarioPath) : Bool = p.id == nextPathId,
                                 ) else Debug.trap("Path not found: " # nextPathId);
                                 let character = helper.getCharacter();
-                                let nextState = buildNextState(prng, gameContent, character, nextPath);
+                                let attributes = helper.calculateAttributes();
+                                let nextState = buildNextState(prng, gameContent, character, attributes, nextPath);
                                 #inProgress(nextState);
                             };
                         };
@@ -178,10 +182,33 @@ module {
 
     };
 
+    func calculateWeight(
+        weight : ScenarioMetaData.WeightKind,
+        attributes : Character.CharacterAttributes,
+    ) : Float {
+        switch (weight) {
+            case (#raw(raw)) raw;
+            case (#attributeScaled(attributeScaled)) {
+                let k = 1.5; // Adjust this for desired steepness
+                let attributeValue : Int = switch (attributeScaled.attribute) {
+                    case (#strength) attributes.strength;
+                    case (#dexterity) attributes.dexterity;
+                    case (#wisdom) attributes.wisdom;
+                    case (#charisma) attributes.charisma;
+                };
+                // Scale the base weight by the attribute value
+                // using a sigmoid curve
+                let weight = attributeScaled.baseWeight * (1 / (1 + Float.exp(-k * Float.fromInt(attributeValue))));
+                Float.max(0, weight); // Ensure the weight is not negative
+            };
+        };
+    };
+
     public func buildNextState(
         prng : Prng,
         gameContent : GameContent,
         character : Character.Character,
+        attributes : Character.CharacterAttributes,
         path : ScenarioMetaData.ScenarioPath,
     ) : Scenario.InProgressScenarioStateKind {
 
@@ -194,7 +221,7 @@ module {
                     gameContent,
                 )
             );
-            case (#choice(choice)) #choice(startChoice(choice, character));
+            case (#choice(choice)) #choice(startChoice(choice, character, attributes));
             case (#reward(reward)) #reward(startReward(prng, reward, gameContent));
         };
     };
@@ -298,6 +325,7 @@ module {
     func startChoice(
         choice : ScenarioMetaData.ChoicePath,
         character : Character.Character,
+        attributes : Character.CharacterAttributes,
     ) : Scenario.ChoiceScenarioState {
         let availableChoices = choice.choices.vals()
         // Filter to ones where the character meets the requirement
@@ -305,7 +333,7 @@ module {
             _,
             func(c : ScenarioMetaData.Choice) : Bool = switch (c.requirement) {
                 case (null) true;
-                case (?requirement) ScenarioMetaData.characterMeetsRequirement(requirement, character);
+                case (?requirement) ScenarioMetaData.characterMeetsRequirement(requirement, character, attributes);
             },
         )
         |> Iter.toArray(_);
@@ -381,6 +409,10 @@ module {
 
         public func getCharacter() : Character.Character {
             characterHandler.get();
+        };
+
+        public func calculateAttributes() : Character.CharacterAttributes {
+            characterHandler.calculateAttributes(gameContent.weapons, gameContent.items, gameContent.actions);
         };
 
         public func applyEffect(effect : ScenarioMetaData.Effect) : {

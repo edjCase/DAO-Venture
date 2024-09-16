@@ -156,7 +156,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Class = IDL.Record({
     'id' : IDL.Text,
-    'startingActionIds' : IDL.Vec(IDL.Text),
+    'startingSkillActionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'startingItemIds' : IDL.Vec(IDL.Text),
@@ -165,7 +165,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Race = IDL.Record({
     'id' : IDL.Text,
-    'startingActionIds' : IDL.Vec(IDL.Text),
+    'startingSkillActionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'startingItemIds' : IDL.Vec(IDL.Text),
@@ -197,8 +197,16 @@ export const idlFactory = ({ IDL }) => {
     'random' : IDL.Null,
     'specificItemIds' : IDL.Vec(IDL.Text),
   });
+  const AttributeScaledWeight = IDL.Record({
+    'baseWeight' : IDL.Float64,
+    'attribute' : Attribute,
+  });
+  const WeightKind = IDL.Variant({
+    'raw' : IDL.Float64,
+    'attributeScaled' : AttributeScaledWeight,
+  });
   const WeightedScenarioPathOption = IDL.Record({
-    'weight' : IDL.Float64,
+    'weight' : WeightKind,
     'pathId' : IDL.Text,
   });
   const NextPathKind = IDL.Variant({
@@ -230,14 +238,17 @@ export const idlFactory = ({ IDL }) => {
     'removeGold' : NatValue,
     'removeItem' : RandomOrSpecificTextValue,
   });
+  const AttributeChoiceRequirement = IDL.Record({
+    'value' : IDL.Int,
+    'attribute' : Attribute,
+  });
   ChoiceRequirement.fill(
     IDL.Variant({
       'all' : IDL.Vec(ChoiceRequirement),
       'any' : IDL.Vec(ChoiceRequirement),
       'gold' : IDL.Nat,
       'item' : IDL.Text,
-      'class' : IDL.Text,
-      'race' : IDL.Text,
+      'attribute' : AttributeChoiceRequirement,
     })
   );
   const Choice = IDL.Record({

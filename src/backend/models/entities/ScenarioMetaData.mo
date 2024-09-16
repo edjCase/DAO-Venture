@@ -14,6 +14,7 @@ import Achievement "Achievement";
 import Creature "Creature";
 import Character "../Character";
 import IterTools "mo:itertools/Iter";
+import Action "Action";
 
 module {
 
@@ -97,8 +98,18 @@ module {
     };
 
     public type WeightedScenarioPathOption = {
-        weight : Float;
+        weight : WeightKind;
         pathId : Text;
+    };
+
+    public type WeightKind = {
+        #raw : Float;
+        #attributeScaled : AttributeScaledWeight;
+    };
+
+    public type AttributeScaledWeight = {
+        attribute : Action.Attribute;
+        baseWeight : Float;
     };
 
     public type Effect = {
@@ -129,9 +140,13 @@ module {
         #all : [ChoiceRequirement];
         #any : [ChoiceRequirement];
         #item : Text;
-        #race : Text;
-        #class_ : Text;
         #gold : Nat;
+        #attribute : AttributeChoiceRequirement;
+    };
+
+    public type AttributeChoiceRequirement = {
+        attribute : Action.Attribute;
+        value : Int;
     };
 
     public func validate(
@@ -350,8 +365,11 @@ module {
                     errors.add("Invalid item id in choice requirement: " # itemId);
                 };
             };
-            case (#race(_)) {};
-            case (#class_(_)) {};
+            case (#attribute(attribute)) {
+                if (attribute.value == 0) {
+                    errors.add("Attribute requirement value cannot be 0");
+                };
+            };
             case (#gold(gold)) {
                 if (gold == 0) {
                     errors.add("Gold requirement must be greater than 0");
@@ -452,24 +470,31 @@ module {
     public func characterMeetsRequirement(
         requirement : ChoiceRequirement,
         character : Character.Character,
+        attributes : Character.CharacterAttributes,
     ) : Bool {
         switch (requirement) {
             case (#all(reqs)) {
                 for (req in reqs.vals()) {
-                    if (not characterMeetsRequirement(req, character)) return false;
+                    if (not characterMeetsRequirement(req, character, attributes)) return false;
                 };
                 true;
             };
             case (#any(reqs)) {
                 for (req in reqs.vals()) {
-                    if (characterMeetsRequirement(req, character)) return true;
+                    if (characterMeetsRequirement(req, character, attributes)) return true;
                 };
                 false;
             };
             case (#item(itemId)) IterTools.any(character.inventorySlots.vals(), func(slot : { itemId : ?Text }) : Bool = slot.itemId == ?itemId);
-            case (#race(raceId)) character.raceId == raceId;
-            case (#class_(classId)) character.classId == classId;
             case (#gold(amount)) character.gold >= amount;
+            case (#attribute(attribute)) {
+                switch (attribute.attribute) {
+                    case (#strength) attributes.strength >= attribute.value;
+                    case (#dexterity) attributes.dexterity >= attribute.value;
+                    case (#wisdom) attributes.wisdom >= attribute.value;
+                    case (#charisma) attributes.charisma >= attribute.value;
+                };
+            };
         };
     };
 };
