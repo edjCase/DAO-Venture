@@ -176,36 +176,19 @@ module Module {
         var wisdom : Int = 0;
         var charisma : Int = 0;
 
-        func processActions(actionIds : [Text]) {
-            for (actionId in actionIds.vals()) {
-                let ?action = actions.get(actionId) else Debug.trap("Action not found: " # actionId);
-                for (effect in action.scenarioEffects.vals()) {
-                    switch (effect) {
-                        case (#attribute(attribute)) {
-                            switch (attribute.attribute) {
-                                case (#strength) strength += attribute.value;
-                                case (#dexterity) dexterity += attribute.value;
-                                case (#wisdom) wisdom += attribute.value;
-                                case (#charisma) charisma += attribute.value;
-                            };
+        let allCharacterActions = Character.getActions(character, items, weapons);
+        for (characterAction in allCharacterActions.vals()) {
+            let ?action = actions.get(characterAction.actionId) else Debug.trap("Action not found: " # characterAction.actionId);
+            for (effect in action.scenarioEffects.vals()) {
+                switch (effect) {
+                    case (#attribute(attribute)) {
+                        switch (attribute.attribute) {
+                            case (#strength) strength += attribute.value;
+                            case (#dexterity) dexterity += attribute.value;
+                            case (#wisdom) wisdom += attribute.value;
+                            case (#charisma) charisma += attribute.value;
                         };
                     };
-                };
-            };
-        };
-
-        processActions(character.skillActionIds);
-
-        // Get from weapon
-        let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
-        processActions(weapon.actionIds);
-
-        for (inventorySlot in character.inventorySlots.vals()) {
-            switch (inventorySlot.itemId) {
-                case (null) {};
-                case (?itemId) {
-                    let ?item = items.get(itemId) else Debug.trap("Item not found: " # itemId);
-                    processActions(item.actionIds);
                 };
             };
         };

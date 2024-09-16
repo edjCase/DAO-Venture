@@ -145,9 +145,14 @@ module {
         gold : Nat;
         class_ : Class.Class;
         race : Race.Race;
-        actions : [Action.Action];
+        actions : [CharacterActionWithMetaData];
         inventorySlots : [InventorySlotWithMetaData];
         weapon : Weapon.Weapon;
+    };
+
+    public type CharacterActionWithMetaData = {
+        action : Action.Action;
+        kind : Character.CharacterActionKind;
     };
 
     public type InventorySlotWithMetaData = {
@@ -923,12 +928,15 @@ module {
             )
             |> Iter.toArray(_);
 
-            let actionsList = Character.getActionIds(character, classes, races, items, weapons).vals()
+            let actionsList = Character.getActions(character, items, weapons).vals()
             |> Iter.map(
                 _,
-                func(actionId : Text) : Action.Action {
-                    let ?action = actions.get(actionId) else Debug.trap("Action not found: " # actionId);
-                    action;
+                func(c : Character.CharacterAction) : CharacterActionWithMetaData {
+                    let ?action = actions.get(c.actionId) else Debug.trap("Action not found: " # c.actionId);
+                    {
+                        action;
+                        kind = c.kind;
+                    };
                 },
             )
             |> Iter.toArray(_);

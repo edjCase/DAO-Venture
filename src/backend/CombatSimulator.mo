@@ -29,8 +29,9 @@ module {
         var block : Nat;
         var statusEffects : Buffer.Buffer<ActionResult.StatusEffectResult>;
     };
+
     public type CombatChoice = {
-        actionId : Text;
+        kind : Character.CharacterActionKind;
         target : ?ActionResult.ActionTargetResult;
     };
 
@@ -60,7 +61,9 @@ module {
                 maxHealth = character.maxHealth;
                 block = 0;
                 statusEffects = [];
-                availableActionIds = newActionIds;
+                skillActionId = newActionIds.skill;
+                itemActionId = newActionIds.item;
+                weaponActionId = newActionIds.weapon;
             };
             creatures = Buffer.toArray(creatureCombatStats);
             nextPath = combat.nextPath;
@@ -96,10 +99,18 @@ module {
         )
         |> Iter.toArray(_);
         // Character turn first
-        if (Array.indexOf(combatChoice.actionId, state.character.availableActionIds, Text.equal) == null) {
-            return #err(#invalidChoice("Action not available: " # combatChoice.actionId));
+        let (actionId, kindText) = switch (combatChoice.kind) {
+            case (#skill) (state.character.skillActionId, "skill");
+            case (#item) (state.character.itemActionId, "item");
+            case (#weapon) (state.character.weaponActionId, "weapon");
         };
-        let ?action = gameContent.actions.get(combatChoice.actionId) else Debug.trap("Action not found: " # combatChoice.actionId);
+        let action = switch (actionId) {
+            case (null) return #err(#invalidChoice("Action for " # kindText # " not available"));
+            case (?actionId) {
+                let ?action = gameContent.actions.get(actionId) else Debug.trap("Action not found: " # actionId);
+                action;
+            };
+        };
 
         // Character turn
         triggerEffect(characterCombatStats, #character, #start, combatLog);
@@ -164,7 +175,7 @@ module {
         label f for ((i, creature) in IterTools.enumerate(creatureCombatStats.vals())) {
             if (creature.health <= 0) continue f;
             let creatureInfo = state.creatures[i];
-            let randomActionId = prng.nextArrayElement(creatureInfo.availableActionIds);
+            let randomActionId = prng.nextArrayElement(creatureInfo.actionIds);
 
             let ?creatureAction = gameContent.actions.get(randomActionId) else Debug.trap("Action not found: " # randomActionId);
 
@@ -215,7 +226,9 @@ module {
                     maxHealth = characterCombatStats.maxHealth;
                     block = characterCombatStats.block;
                     statusEffects = Buffer.toArray(characterCombatStats.statusEffects);
-                    availableActionIds = newActionIds;
+                    skillActionId = newActionIds.skill;
+                    itemActionId = newActionIds.item;
+                    weaponActionId = newActionIds.weapon;
                 };
                 creatures = newCreatureStates;
                 nextPath = state.nextPath;
@@ -258,7 +271,7 @@ module {
             maxHealth = creature.maxHealth;
             block = 0;
             statusEffects = [];
-            availableActionIds = creature.actionIds;
+            actionIds = creature.actionIds;
         };
     };
 
@@ -266,22 +279,35 @@ module {
         prng : Prng,
         character : Character.Character,
         gameContent : GameContent,
-    ) : [Text] {
-        let count = 3; // TODO
+    ) : {
+        skill : ?Text;
+        item : ?Text;
+        weapon : ?Text;
+    } {
 
-        let allActionIds = Character.getActionIds(
+        let allActions = Character.getActions(
             character,
-            gameContent.classes,
-            gameContent.races,
             gameContent.items,
             gameContent.weapons,
         );
 
-        prng.shuffleBuffer(allActionIds);
+        func getRandomActionKind(actionKind : Character.CharacterActionKind) : ?Text {
+            let actionIds = allActions.vals()
+            |> Iter.filter(_, func(a : Character.CharacterAction) : Bool = a.kind == actionKind)
+            |> Iter.map(_, func(a : Character.CharacterAction) : Text = a.actionId)
+            |> Iter.toArray(_);
+            if (actionIds.size() == 0) {
+                return null;
+            };
+            let actionId = prng.nextArrayElement(actionIds);
+            ?actionId;
+        };
 
-        allActionIds.vals()
-        |> IterTools.take(_, count)
-        |> Iter.toArray(_);
+        {
+            skill = getRandomActionKind(#skill);
+            item = getRandomActionKind(#item);
+            weapon = getRandomActionKind(#weapon);
+        };
     };
 
     func calculateActionResult(

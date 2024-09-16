@@ -135,18 +135,24 @@ module {
         #health : Nat;
     };
 
-    public type CharacterCombatState = {
+    public type CommonCombatState = {
         health : Nat;
         maxHealth : Nat;
         block : Nat;
         statusEffects : [ActionResult.StatusEffectResult];
-        availableActionIds : [Text];
     };
 
-    public type CreatureCombatState = CharacterCombatState and {
+    public type CharacterCombatState = CommonCombatState and {
+        skillActionId : ?Text;
+        itemActionId : ?Text;
+        weaponActionId : ?Text;
+    };
+
+    public type CreatureCombatState = CommonCombatState and {
         health : Nat;
         maxHealth : Nat;
         creatureId : Text;
+        actionIds : [Text];
     };
 
     public type OutcomeEffect = {

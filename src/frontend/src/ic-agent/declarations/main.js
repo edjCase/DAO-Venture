@@ -335,13 +335,22 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const Time = IDL.Int;
+  const CharacterActionKind = IDL.Variant({
+    'item' : IDL.Null,
+    'skill' : IDL.Null,
+    'weapon' : IDL.Null,
+  });
+  const CharacterActionWithMetaData = IDL.Record({
+    'action' : Action,
+    'kind' : CharacterActionKind,
+  });
   const InventorySlotWithMetaData = IDL.Record({ 'item' : IDL.Opt(Item) });
   const CharacterWithMetaData = IDL.Record({
     'maxHealth' : IDL.Nat,
     'gold' : IDL.Nat,
     'class' : Class,
     'race' : Race,
-    'actions' : IDL.Vec(Action),
+    'actions' : IDL.Vec(CharacterActionWithMetaData),
     'inventorySlots' : IDL.Vec(InventorySlotWithMetaData),
     'weapon' : Weapon,
     'health' : IDL.Nat,
@@ -437,16 +446,18 @@ export const idlFactory = ({ IDL }) => {
     'remainingTurns' : IDL.Nat,
   });
   const CharacterCombatState = IDL.Record({
+    'weaponActionId' : IDL.Opt(IDL.Text),
     'statusEffects' : IDL.Vec(StatusEffectResult),
     'maxHealth' : IDL.Nat,
-    'availableActionIds' : IDL.Vec(IDL.Text),
+    'skillActionId' : IDL.Opt(IDL.Text),
     'block' : IDL.Nat,
+    'itemActionId' : IDL.Opt(IDL.Text),
     'health' : IDL.Nat,
   });
   const CreatureCombatState = IDL.Record({
+    'actionIds' : IDL.Vec(IDL.Text),
     'statusEffects' : IDL.Vec(StatusEffectResult),
     'maxHealth' : IDL.Nat,
-    'availableActionIds' : IDL.Vec(IDL.Text),
     'creatureId' : IDL.Text,
     'block' : IDL.Nat,
     'health' : IDL.Nat,
@@ -687,8 +698,8 @@ export const idlFactory = ({ IDL }) => {
     'character' : IDL.Null,
   });
   const CombatChoice = IDL.Record({
+    'kind' : CharacterActionKind,
     'target' : IDL.Opt(ActionTargetResult),
-    'actionId' : IDL.Text,
   });
   const StageChoiceKind = IDL.Variant({
     'reward' : RewardChoice,

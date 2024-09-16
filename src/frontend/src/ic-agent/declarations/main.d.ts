@@ -65,11 +65,20 @@ export interface CallbackStrategy {
   'token' : Token,
   'callback' : [Principal, string],
 }
+export type CharacterActionKind = { 'item' : null } |
+  { 'skill' : null } |
+  { 'weapon' : null };
+export interface CharacterActionWithMetaData {
+  'action' : Action,
+  'kind' : CharacterActionKind,
+}
 export interface CharacterCombatState {
+  'weaponActionId' : [] | [string],
   'statusEffects' : Array<StatusEffectResult>,
   'maxHealth' : bigint,
-  'availableActionIds' : Array<string>,
+  'skillActionId' : [] | [string],
   'block' : bigint,
+  'itemActionId' : [] | [string],
   'health' : bigint,
 }
 export interface CharacterWithMetaData {
@@ -77,7 +86,7 @@ export interface CharacterWithMetaData {
   'gold' : bigint,
   'class' : Class,
   'race' : Race,
-  'actions' : Array<Action>,
+  'actions' : Array<CharacterActionWithMetaData>,
   'inventorySlots' : Array<InventorySlotWithMetaData>,
   'weapon' : Weapon,
   'health' : bigint,
@@ -114,8 +123,8 @@ export interface Class {
   'unlockRequirement' : [] | [UnlockRequirement],
 }
 export interface CombatChoice {
+  'kind' : CharacterActionKind,
   'target' : [] | [ActionTargetResult],
-  'actionId' : string,
 }
 export interface CombatCreatureFilter {
   'location' : CombatCreatureLocationFilter,
@@ -202,9 +211,9 @@ export interface Creature {
   'health' : bigint,
 }
 export interface CreatureCombatState {
+  'actionIds' : Array<string>,
   'statusEffects' : Array<StatusEffectResult>,
   'maxHealth' : bigint,
-  'availableActionIds' : Array<string>,
   'creatureId' : string,
   'block' : bigint,
   'health' : bigint,

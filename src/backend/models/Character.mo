@@ -4,8 +4,6 @@ import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
 import Iter "mo:base/Iter";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import Class "entities/Class";
-import Race "entities/Race";
 import Weapon "entities/Weapon";
 import IterTools "mo:itertools/Iter";
 import Item "entities/Item";
@@ -35,23 +33,34 @@ module {
         itemId : ?Text;
     };
 
-    public func getActionIds(
+    public type CharacterAction = {
+        actionId : Text;
+        kind : CharacterActionKind;
+    };
+
+    public type CharacterActionKind = {
+        #skill;
+        #item;
+        #weapon;
+    };
+
+    public func getActions(
         character : Character,
-        classes : HashMap.HashMap<Text, Class.Class>,
-        races : HashMap.HashMap<Text, Race.Race>,
         items : HashMap.HashMap<Text, Item.Item>,
         weapons : HashMap.HashMap<Text, Weapon.Weapon>,
-    ) : Buffer.Buffer<Text> {
-        let allActionIds = Buffer.Buffer<Text>(10);
+    ) : Buffer.Buffer<CharacterAction> {
+        let allActions = Buffer.Buffer<CharacterAction>(10);
 
-        let ?class_ = classes.get(character.classId) else Debug.trap("Class not found: " # character.classId);
-        allActionIds.append(Buffer.fromArray(class_.startingSkillActionIds));
+        func addActionIds(actionIds : Iter.Iter<Text>, kind : CharacterActionKind) {
+            for (actionId in actionIds) {
+                allActions.add({ actionId = actionId; kind = kind });
+            };
+        };
 
-        let ?race = races.get(character.raceId) else Debug.trap("Race not found: " # character.raceId);
-        allActionIds.append(Buffer.fromArray(race.startingSkillActionIds));
+        addActionIds(character.skillActionIds.vals(), #skill);
 
         let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
-        allActionIds.append(Buffer.fromArray(weapon.actionIds));
+        addActionIds(weapon.actionIds.vals(), #weapon);
 
         let itemActionIds = character.inventorySlots.vals()
         |> IterTools.mapFilter<InventorySlot, Iter.Iter<Text>>(
@@ -67,8 +76,8 @@ module {
             },
         )
         |> IterTools.flatten(_);
-        allActionIds.append(Buffer.fromIter(itemActionIds));
+        addActionIds(itemActionIds, #item);
 
-        allActionIds;
+        allActions;
     };
 };
