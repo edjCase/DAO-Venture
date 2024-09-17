@@ -12,6 +12,7 @@ module {
 
     public type Item = Entity.Entity and {
         image : PixelImage.PixelImage;
+        tags : [Text];
         actionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };

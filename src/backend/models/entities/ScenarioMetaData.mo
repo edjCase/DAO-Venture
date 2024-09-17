@@ -6,6 +6,8 @@ import Buffer "mo:base/Buffer";
 import Text "mo:base/Text";
 import Float "mo:base/Float";
 import Nat "mo:base/Nat";
+import Iter "mo:base/Iter";
+import Array "mo:base/Array";
 import TextX "mo:xtended-text/TextX";
 import Item "Item";
 import Image "../Image";
@@ -118,14 +120,9 @@ module {
         #damage : NatValue;
         #heal : NatValue;
         #removeGold : NatValue;
-        #addItem : RandomOrSpecificTextValue;
-        #removeItem : RandomOrSpecificTextValue;
+        #addItemWithTags : [Text];
+        #removeItemWithTags : [Text];
         #achievement : Text;
-    };
-
-    public type RandomOrSpecificTextValue = {
-        #random;
-        #specific : TextValue;
     };
 
     public type NatValue = {
@@ -133,13 +130,8 @@ module {
         #random : (Nat, Nat);
     };
 
-    public type TextValue = {
-        #raw : Text;
-        #weighted : [(Text, Float)];
-    };
-
     public type ChoiceRequirement = {
-        #item : Text;
+        #itemWithTags : [Text];
         #gold : Nat;
         #attribute : AttributeChoiceRequirement;
     };
@@ -158,6 +150,12 @@ module {
         creatures : HashMap.HashMap<Text, Creature.Creature>,
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
+
+        let allItemTags = items.vals()
+        |> Iter.map(_, func(item : Item.Item) : Iter.Iter<Text> = item.tags.vals())
+        |> IterTools.flatten(_)
+        |> Iter.map<Text, (Text, ())>(_, func(tag : Text) : (Text, ()) = (tag, ()))
+        |> HashMap.fromIter<Text, ()>(_, 0, Text.equal, Text.hash);
 
         Entity.validate("Scenario", metaData, errors);
         switch (metaData.unlockRequirement) {
@@ -233,11 +231,11 @@ module {
                         };
                         validateNextPath(choice.nextPath, pathIdMap, errors);
                         switch (choice.requirement) {
-                            case (?requirement) validateRequirement(requirement, items, errors);
+                            case (?requirement) validateRequirement(requirement, allItemTags, errors);
                             case (null) {};
                         };
                         for (effect in choice.effects.vals()) {
-                            validateEffect(effect, items, achievements, errors);
+                            validateEffect(effect, allItemTags, achievements, errors);
                         };
 
                     };
@@ -355,13 +353,15 @@ module {
 
     func validateRequirement(
         requirement : ChoiceRequirement,
-        items : HashMap.HashMap<Text, Item.Item>,
+        allItemTags : HashMap.HashMap<Text, ()>,
         errors : Buffer.Buffer<Text>,
     ) {
         switch (requirement) {
-            case (#item(itemId)) {
-                if (items.get(itemId) == null) {
-                    errors.add("Invalid item id in choice requirement: " # itemId);
+            case (#itemWithTags(itemTags)) {
+                for (itemTag in itemTags.vals()) {
+                    if (allItemTags.get(itemTag) == null) {
+                        errors.add("Invalid item tag in choice requirement: " # itemTag);
+                    };
                 };
             };
             case (#attribute(attribute)) {
@@ -372,37 +372,6 @@ module {
             case (#gold(gold)) {
                 if (gold == 0) {
                     errors.add("Gold requirement must be greater than 0");
-                };
-            };
-        };
-    };
-
-    func validateTextValue<T>(
-        value : TextValue,
-        map : HashMap.HashMap<Text, T>,
-        kind : Text,
-        errors : Buffer.Buffer<Text>,
-    ) {
-        switch (value) {
-            case (#raw(raw)) {
-                switch (map.get(raw)) {
-                    case (?_) ();
-                    case (null) {
-                        errors.add("Invalid " # kind # ": " # raw);
-                    };
-                };
-            };
-            case (#weighted(weighted)) {
-                for ((v, weight) in weighted.vals()) {
-                    switch (map.get(v)) {
-                        case (?_) ();
-                        case (null) {
-                            errors.add("Invalid " # kind # ": " # v);
-                        };
-                    };
-                    if (weight <= 0.0) {
-                        errors.add("Weights must be greater than 0: " # Float.toText(weight));
-                    };
                 };
             };
         };
@@ -425,24 +394,26 @@ module {
 
     private func validateEffect(
         effect : Effect,
-        items : HashMap.HashMap<Text, Item.Item>,
+        allItemTags : HashMap.HashMap<Text, ()>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
         errors : Buffer.Buffer<Text>,
     ) {
         switch (effect) {
-            case (#addItem(addItem)) {
-                switch (addItem) {
-                    case (#random) {};
-                    case (#specific(specific)) validateTextValue(specific, items, "item", errors);
+            case (#addItemWithTags(itemTags)) {
+                for (itemTag in itemTags.vals()) {
+                    if (allItemTags.get(itemTag) == null) {
+                        errors.add("Invalid item tag: " # itemTag);
+                    };
+                };
+            };
+            case (#removeItemWithTags(itemTags)) {
+                for (itemTag in itemTags.vals()) {
+                    if (allItemTags.get(itemTag) == null) {
+                        errors.add("Invalid item tag: " # itemTag);
+                    };
                 };
             };
             case (#removeGold(removeGold)) validateNatValue(removeGold, "gold", errors);
-            case (#removeItem(removeItem)) {
-                switch (removeItem) {
-                    case (#random) {};
-                    case (#specific(specific)) validateTextValue(specific, items, "item", errors);
-                };
-            };
             case (#damage(damage)) validateNatValue(damage, "damage", errors);
             case (#heal(heal)) validateNatValue(heal, "heal", errors);
             case (#achievement(achievementId)) {
@@ -459,10 +430,26 @@ module {
     public func characterMeetsRequirement(
         requirement : ChoiceRequirement,
         character : Character.Character,
+        items : HashMap.HashMap<Text, Item.Item>,
         attributes : Character.CharacterAttributes,
     ) : Bool {
         switch (requirement) {
-            case (#item(itemId)) IterTools.any(character.inventorySlots.vals(), func(slot : { itemId : ?Text }) : Bool = slot.itemId == ?itemId);
+            case (#itemWithTags(itemTags)) {
+                IterTools.any(
+                    character.inventorySlots.vals(),
+                    func(slot : { itemId : ?Text }) : Bool = switch (slot.itemId) {
+                        case (null) false;
+                        case (?itemId) {
+                            let ?item = items.get(itemId) else return false;
+                            // Check if all tags are in the item
+                            IterTools.all(
+                                itemTags.vals(),
+                                func(tag : Text) : Bool = Array.find(item.tags, func(t : Text) : Bool = t == tag) != null,
+                            );
+                        };
+                    },
+                );
+            };
             case (#gold(amount)) character.gold >= amount;
             case (#attribute(attribute)) {
                 switch (attribute.attribute) {

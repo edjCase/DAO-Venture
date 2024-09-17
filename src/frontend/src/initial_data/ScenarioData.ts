@@ -53,11 +53,9 @@ export const scenarios: ScenarioMetaData[] = [
               {
                 id: "consume_item",
                 description: "Use a nature pendant to purify the treant.",
-                requirement: [{ item: "nature_pendant" }],
+                requirement: [{ itemWithTags: ["cleansing"] }],
                 effects: [{
-                  removeItem: {
-                    specific: { raw: "nature_pendant" }
-                  }
+                  removeItemWithTags: ["cleansing"]
                 }],
                 nextPath: { single: "purification_success" },
               },
@@ -146,8 +144,8 @@ export const scenarios: ScenarioMetaData[] = [
               },
               {
                 "id": "stealth",
-                "description": "Use your agility to sneak past the dark elves without being detected.",
-                "requirement": [{ "item": "boots_of_quickness" }],
+                "description": "Use stealth to sneak past the dark elves without being detected.",
+                "requirement": [{ itemWithTags: ["stealth"] }],
                 "effects": [],
                 "nextPath": {
                   "multi": [
@@ -633,8 +631,8 @@ export const scenarios: ScenarioMetaData[] = [
               {
                 id: "use_crystal",
                 description: "Use a crystal to curry favor with the faeries. It's like magical bribery, but sparklier.",
-                requirement: [{ item: "crystal" }],
-                effects: [{ removeItem: { specific: { raw: "crystal" } } }],
+                requirement: [{ itemWithTags: ["crystal"] }],
+                effects: [{ removeItemWithTags: ["crystal"] }],
                 nextPath: {
                   multi: [
                     {
@@ -646,7 +644,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.2, kind: { raw: null } },
                       description: "The faeries appreciate the crystal but seem more interested in using it as a disco ball for their impromptu dance party.",
-                      effects: [{ addItem: { specific: { raw: "faerie_dance_shoes" } } }],
+                      effects: [{ addItemWithTags: ["footwear", "enchanted"] }],
                       pathId: []
                     }
                   ]
@@ -839,7 +837,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
                       description: "You successfully decipher an ancient tome. Your brain feels bigger, but your hat size remains the same.",
-                      effects: [{ addItem: { specific: { raw: "wisdom_tome" } } }],
+                      effects: [{ addItemWithTags: ["book"] }],
                       pathId: []
                     },
                     {

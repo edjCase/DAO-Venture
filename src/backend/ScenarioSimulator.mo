@@ -241,7 +241,7 @@ module {
                     gameContent,
                 )
             );
-            case (#choice(choice)) #choice(startChoice(choice, character, attributes));
+            case (#choice(choice)) #choice(startChoice(choice, character, attributes, gameContent));
             case (#reward(reward)) #reward(startReward(prng, reward, gameContent));
         };
     };
@@ -346,6 +346,7 @@ module {
         choice : ScenarioMetaData.ChoicePath,
         character : Character.Character,
         attributes : Character.CharacterAttributes,
+        gameContent : GameContent,
     ) : Scenario.ChoiceScenarioState {
         let availableChoices = choice.choices.vals()
         // Filter to ones where the character meets the requirement
@@ -353,7 +354,7 @@ module {
             _,
             func(c : ScenarioMetaData.Choice) : Bool = switch (c.requirement) {
                 case (null) true;
-                case (?requirement) ScenarioMetaData.characterMeetsRequirement(requirement, character, attributes);
+                case (?requirement) ScenarioMetaData.characterMeetsRequirement(requirement, character, gameContent.items, attributes);
             },
         )
         |> Iter.toArray(_);
@@ -405,16 +406,6 @@ module {
         };
     };
 
-    func getTextValue(
-        prng : Prng,
-        value : ScenarioMetaData.TextValue,
-    ) : Text {
-        switch (value) {
-            case (#raw(t)) t;
-            case (#weighted(options)) prng.nextArrayElementWeighted(options);
-        };
-    };
-
     private class Helper(
         prng_ : Prng,
         playerId : Principal,
@@ -439,6 +430,9 @@ module {
             #alive;
             #dead;
         } {
+            func hasAllTags(item : Item.Item, tags : [Text]) : Bool {
+                IterTools.all(tags.vals(), func(tag : Text) : Bool = Array.find(item.tags, func(t : Text) : Bool = t == tag) != null);
+            };
             switch (effect) {
                 case (#damage(amount)) {
                     let damageAmount = getNatValue(prng, amount);
@@ -453,29 +447,43 @@ module {
                 case (#removeGold(amount)) {
                     ignore removeGold(getNatValue(prng, amount));
                 };
-                case (#addItem(item)) {
-                    switch (item) {
-                        case (#random) {
-                            // TODO
-                        };
-                        case (#specific(itemId)) {
-                            ignore addItem(getTextValue(prng, itemId));
-                        };
+                case (#addItemWithTags(itemTags)) {
+                    let potentialItemIds : [Text] = gameContent.items.vals()
+                    |> Iter.filter(
+                        _,
+                        func(item : Item.Item) : Bool = hasAllTags(item, itemTags),
+                    )
+                    |> Iter.map(_, func(item : Item.Item) : Text = item.id)
+                    |> Iter.toArray(_);
+                    if (potentialItemIds.size() < 1) {
+                        Debug.trap("No item found with all tags: " # debug_show (itemTags));
                     };
+                    let itemId = prng.nextArrayElement(potentialItemIds);
+                    ignore addItem(itemId);
                 };
-                case (#removeItem(item)) {
-                    switch (item) {
-                        case (#random) {
-                            let itemIdOrEmptyInventory = loseRandomItem();
-                            switch (itemIdOrEmptyInventory) {
-                                case (null) (); // TODO handle inventory empty messaging?
-                                case (?itemId) logEntries.add(#removeItem(itemId));
+                case (#removeItemWithTags(itemTags)) {
+                    let itemIds = characterHandler.get().inventorySlots.vals()
+                    |> Iter.map(_, func(slot : Character.InventorySlot) : ?Text = slot.itemId)
+                    |> IterTools.mapFilter(
+                        _,
+                        func(itemId : ?Text) : ?Text {
+                            switch (itemId) {
+                                case (null) null;
+                                case (?itemId) {
+                                    let ?item = gameContent.items.get(itemId) else Debug.trap("Item not found: " # itemId);
+                                    if (hasAllTags(item, itemTags)) {
+                                        ?itemId;
+                                    } else {
+                                        null;
+                                    };
+                                };
                             };
-                        };
-                        case (#specific(specific)) {
-                            let itemId = getTextValue(prng, specific);
-                            ignore removeItem(itemId, false);
-                        };
+                        },
+                    )
+                    |> Iter.toArray(_);
+                    if (itemIds.size() > 0) {
+                        let itemId = prng.nextArrayElement(itemIds);
+                        ignore removeItem(itemId, true);
                     };
                 };
                 case (#achievement(achievementId)) {

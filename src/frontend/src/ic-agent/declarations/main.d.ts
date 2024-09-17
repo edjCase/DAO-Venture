@@ -95,8 +95,8 @@ export interface Choice {
   'nextPath' : NextPathKind,
 }
 export interface ChoicePath { 'choices' : Array<Choice> }
-export type ChoiceRequirement = { 'gold' : bigint } |
-  { 'item' : string } |
+export type ChoiceRequirement = { 'itemWithTags' : Array<string> } |
+  { 'gold' : bigint } |
   { 'attribute' : AttributeChoiceRequirement };
 export type ChoiceResultKind = { 'complete' : null } |
   { 'death' : null };
@@ -222,10 +222,10 @@ export interface DamageLogEntry {
 }
 export type Effect = { 'damage' : NatValue } |
   { 'heal' : NatValue } |
+  { 'removeItemWithTags' : Array<string> } |
   { 'achievement' : string } |
-  { 'addItem' : RandomOrSpecificTextValue } |
-  { 'removeGold' : NatValue } |
-  { 'removeItem' : RandomOrSpecificTextValue };
+  { 'addItemWithTags' : Array<string> } |
+  { 'removeGold' : NatValue };
 export type GameStateWithMetaData = {
     'starting' : StartingGameStateWithMetaData
   } |
@@ -313,6 +313,7 @@ export interface Item {
   'id' : string,
   'actionIds' : Array<string>,
   'name' : string,
+  'tags' : Array<string>,
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
   'image' : PixelImage,
@@ -403,8 +404,6 @@ export interface Race {
   'startingItemIds' : Array<string>,
   'unlockRequirement' : [] | [UnlockRequirement],
 }
-export type RandomOrSpecificTextValue = { 'specific' : TextValue } |
-  { 'random' : null };
 export type RegisterError = { 'alreadyMember' : null };
 export type RegisterResult = { 'ok' : User } |
   { 'err' : RegisterError };
@@ -535,8 +534,6 @@ export interface SwapWeaponOutcomeEffect {
 export type TargetKind = { 'creature' : bigint } |
   { 'character' : null } |
   { 'periodicEffect' : null };
-export type TextValue = { 'raw' : string } |
-  { 'weighted' : Array<[string, number]> };
 export type Time = bigint;
 export interface Token { 'arbitrary_data' : string }
 export type TurnKind = { 'scenario' : ScenarioTurn } |

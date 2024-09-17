@@ -144,6 +144,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'actionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
+    'tags' : IDL.Vec(IDL.Text),
     'description' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
     'image' : PixelImage,
@@ -203,21 +204,13 @@ export const idlFactory = ({ IDL }) => {
     'raw' : IDL.Nat,
     'random' : IDL.Tuple(IDL.Nat, IDL.Nat),
   });
-  const TextValue = IDL.Variant({
-    'raw' : IDL.Text,
-    'weighted' : IDL.Vec(IDL.Tuple(IDL.Text, IDL.Float64)),
-  });
-  const RandomOrSpecificTextValue = IDL.Variant({
-    'specific' : TextValue,
-    'random' : IDL.Null,
-  });
   const Effect = IDL.Variant({
     'damage' : NatValue,
     'heal' : NatValue,
+    'removeItemWithTags' : IDL.Vec(IDL.Text),
     'achievement' : IDL.Text,
-    'addItem' : RandomOrSpecificTextValue,
+    'addItemWithTags' : IDL.Vec(IDL.Text),
     'removeGold' : NatValue,
-    'removeItem' : RandomOrSpecificTextValue,
   });
   const WeightedScenarioPathOption = IDL.Record({
     'weight' : OptionWeight,
@@ -239,8 +232,8 @@ export const idlFactory = ({ IDL }) => {
     'attribute' : Attribute,
   });
   const ChoiceRequirement = IDL.Variant({
+    'itemWithTags' : IDL.Vec(IDL.Text),
     'gold' : IDL.Nat,
-    'item' : IDL.Text,
     'attribute' : AttributeChoiceRequirement,
   });
   const Choice = IDL.Record({
