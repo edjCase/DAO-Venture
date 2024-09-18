@@ -4,6 +4,60 @@ import { decodeBase64ToImage } from "../utils/PixelUtil";
 
 export const items: Item[] = [
     {
+        id: "power_gauntlets",
+        name: "Power Gauntlets",
+        description: "A pair of gauntlets that grant the wearer immense strength.",
+        tags: ["armor", "enchanted"],
+        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
+        unlockRequirement: [],
+        actionIds: []
+    },
+    {
+        id: "eagle_eye_amulet",
+        name: "Eagle Eye Amulet",
+        description: "An amulet that enhances the wearer's vision, perfect for spotting enemies from a distance.",
+        tags: ["jewelry", "enchanted"],
+        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
+        unlockRequirement: [],
+        actionIds: []
+    },
+    {
+        id: "divine_emblem",
+        name: "Divine Emblem",
+        description: "An emblem imbued with divine magic, perfect for cleansing corrupted energies.",
+        tags: ["jewelry", "enchanted", "cleansing"],
+        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
+        unlockRequirement: [],
+        actionIds: []
+    },
+    {
+        id: "artificer_toolbox",
+        name: "Artificer Toolbox",
+        description: "A toolbox imbued with magical properties, perfect for repairing and creating gadgets.",
+        tags: ["accessory", "enchanted"],
+        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
+        unlockRequirement: [],
+        actionIds: []
+    },
+    {
+        id: "dark_essence_vial",
+        name: "Dark Essence Vial",
+        description: "A vial imbued with the essence of darkness.",
+        tags: ["jewelry", "enchanted"],
+        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
+        unlockRequirement: [],
+        actionIds: []
+    },
+    {
+        id: "boots_of_sneaking",
+        name: "Boots of Sneaking",
+        description: "Enchanted boots that make you move like the wind.",
+        tags: ["footwear", "enchanted", "stealth"],
+        image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
+        unlockRequirement: [],
+        actionIds: []
+    },
+    {
         id: "nature_pendant",
         name: "Nature Pendant",
         description: "A pendant imbued with the essence of nature, perfect for cleansing corrupted energies.",
@@ -34,7 +88,7 @@ export const items: Item[] = [
         id: "endurance_belt",
         name: "Endurance Belt",
         description: "A belt that magically enhances your stamina. Just don't ask where the energy comes from.",
-        tags: ["accessory", "enchanted", "stamina"],
+        tags: ["accessory", "enchanted"],
         image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
         unlockRequirement: [],
         actionIds: []
@@ -61,7 +115,7 @@ export const items: Item[] = [
         id: "nature_crystal",
         name: "Nature Crystal",
         description: "A crystal infused with pure natural energy. It hums with the song of the forest.",
-        tags: ["nature", "enchanted"],
+        tags: ["crystal", "nature", "enchanted"],
         image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
         unlockRequirement: [],
         actionIds: []
@@ -79,7 +133,7 @@ export const items: Item[] = [
         id: "crystal",
         name: "Crystal",
         description: "A simple crystal with latent magical properties.",
-        tags: ["enchanted"],
+        tags: ["crystal", "enchanted"],
         image: decodeBase64ToImage("BA88Dx9vHy+fLz/PPxf/AgAN/wEAAgEBAAv/AQABAQICAQEBAAn/AQABAQECAgMBAgEBAQAH/wEAAQEBAgQDAQIBAQEABf8BAAEBAQIGAwECAQEBAAP/AQABAQECAwMCAgMDAQIBAQEAAv8BAAEBAQICAwECAgEBAgIDAQIBAQEAAv8BAAEBAQIBAwECAQECAAEBAQIBAwECAQEBAAL/AQABAQICAQEBAAL/AQABAQICAQEBAAP/AQACAQEABP8BAAIBAQAF/wIABv8CADP/"),
         unlockRequirement: [],
         actionIds: []

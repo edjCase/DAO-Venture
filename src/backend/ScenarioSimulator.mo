@@ -116,7 +116,7 @@ module {
                                 let nextKind = switch (result.kind) {
                                     case (#victory(_)) #nextPath(combatState.nextPath);
                                     case (#defeat(_)) #dead;
-                                    case (#inProgress(_)) #pathInProgress;
+                                    case (#inProgress(inProgress)) #pathInProgress(#combat(inProgress));
                                 };
                                 (#combat(result), nextKind);
                             };
@@ -131,7 +131,7 @@ module {
                     };
                 };
 
-                let nextState : Scenario.ScenarioStateKind = buildNextState(prng, gameContent, nextKind, helper, inProgress);
+                let nextState : Scenario.ScenarioStateKind = buildNextState(prng, gameContent, nextKind, helper);
                 #ok({
                     stageResult = {
                         effects = helper.getEffects();
@@ -145,7 +145,7 @@ module {
 
     type NextKind = {
         #nextPath : ScenarioMetaData.NextPathKind;
-        #pathInProgress;
+        #pathInProgress : Scenario.InProgressScenarioStateKind;
         #dead;
     };
 
@@ -154,7 +154,6 @@ module {
         gameContent : GameContent,
         nextKind : NextKind,
         helper : Helper,
-        currentState : Scenario.InProgressScenarioStateKind,
     ) : Scenario.ScenarioStateKind {
         switch (nextKind) {
             case (#nextPath(nextPathKind)) {
@@ -196,7 +195,7 @@ module {
                     };
                 };
             };
-            case (#pathInProgress) #inProgress(currentState);
+            case (#pathInProgress(inProgress)) #inProgress(inProgress);
             case (#dead) #completed; // TODO handle death
         };
     };
@@ -446,6 +445,9 @@ module {
                 };
                 case (#removeGold(amount)) {
                     ignore removeGold(getNatValue(prng, amount));
+                };
+                case (#addItem(itemId)) {
+                    ignore addItem(itemId);
                 };
                 case (#addItemWithTags(itemTags)) {
                     let potentialItemIds : [Text] = gameContent.items.vals()

@@ -1,7 +1,6 @@
 import Principal "mo:base/Principal";
 import Iter "mo:base/Iter";
 import Nat "mo:base/Nat";
-import Debug "mo:base/Debug";
 import Text "mo:base/Text";
 import Bool "mo:base/Bool";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
@@ -202,7 +201,6 @@ actor MainActor : Types.Actor {
         if (not isAMember) {
             return #err(#notEligible);
         };
-        Debug.print("Creating proposal");
         await* worldDao.createProposal<system>(caller, request, members);
     };
 

@@ -292,28 +292,6 @@ export const scenarios: ScenarioMetaData[] = [
                 }
               },
               {
-                id: "request_blessing",
-                description: "Request a druidic blessing. Warning: May attract squirrels.",
-                requirement: [{ gold: 25n }],
-                effects: [{ removeGold: { raw: 25n } }],
-                nextPath: {
-                  multi: [
-                    {
-                      weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
-                      description: "The druids bless you with the 'strength of oak'. You feel sturdier, and vaguely like you want to grow leaves.",
-                      effects: [{ addItem: { specific: { raw: "endurance_belt" } } }],
-                      pathId: []
-                    },
-                    {
-                      weight: { value: 0.4, kind: { raw: null } },
-                      description: "The blessing goes slightly awry. You now have an inexplicable craving for sunlight and water.",
-                      effects: [],
-                      pathId: []
-                    }
-                  ]
-                }
-              },
-              {
                 id: "commune_with_nature",
                 description: "Commune with nature. Hope you speak fluent squirrel.",
                 requirement: [],
@@ -323,7 +301,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
                       description: "You successfully commune with nature. A squirrel imparts ancient wisdom, and hands you a nut... er, herb.",
-                      effects: [{ addItem: { specific: { raw: "herbs" } } }],
+                      effects: [{ addItem: "herbs" }],
                       pathId: []
                     },
                     {
@@ -354,7 +332,8 @@ export const scenarios: ScenarioMetaData[] = [
     name: "Dwarven Weaponsmith",
     description: "You encounter a surly dwarven weaponsmith, his beard singed and eyebrows smoking. He offers weapon upgrades at prices that could make a dragon weep.",
     location: {
-      zoneIds: ["mystic_caves"],
+      // zoneIds: ["mystic_caves"], TODO
+      common: null
     },
     category: { "store": null },
     imageId: "dwarven_weaponsmith",
@@ -492,7 +471,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
                       description: "You achieve a state of perfect harmony with the grove. You can hear colors and see sounds.",
-                      effects: [{ addItem: { specific: { raw: "magical_insight" } } }],
+                      effects: [{ heal: { raw: 10n } }],
                       pathId: []
                     },
                     {
@@ -514,7 +493,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
                       description: "You successfully harvest rare herbs, though a fern slaps your hand for picking its cousin.",
-                      effects: [{ addItem: { specific: { raw: "rare_herbs" } } }],
+                      effects: [{ addItem: "herbs" }],
                       pathId: []
                     },
                     {
@@ -536,7 +515,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
                       description: "The spirits grant you mystic knowledge. Unfortunately, it's mostly tree puns.",
-                      effects: [{ addItem: { specific: { raw: "nature_crystal" } } }],
+                      effects: [{ addItemWithTags: ["crystal"] }],
                       pathId: []
                     },
                     {
@@ -588,7 +567,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
                       description: "Your charm wins over a faerie shopkeeper. They hand you a trinket that's either a powerful artifact or a very shiny pebble.",
-                      effects: [{ addItem: { random: null } }],
+                      effects: [{ addItemWithTags: ["trinket"] }],
                       pathId: []
                     },
                     {
@@ -603,20 +582,20 @@ export const scenarios: ScenarioMetaData[] = [
               {
                 id: "trade",
                 description: "Offer to trade an item for faerie magic. What could possibly go wrong?",
-                requirement: [],
-                effects: [{ removeItem: { random: null } }],
+                requirement: [{ itemWithTags: [] }],
+                effects: [{ removeItemWithTags: [] }],
                 nextPath: {
                   multi: [
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
                       description: "The faeries accept your trade with glee. You receive a magical item that thankfully isn't cursed. Probably.",
-                      effects: [{ addItem: { specific: { raw: "faerie_charm" } } }],
+                      effects: [{ addItemWithTags: ["enchanted"] }],
                       pathId: []
                     },
                     {
                       weight: { value: 0.3, kind: { raw: null } },
                       description: "The faeries accept your trade but seem to have a different idea of 'magical' than you do. You now own a very sassy toadstool.",
-                      effects: [{ addItem: { specific: { raw: "talking_toadstool" } } }],
+                      effects: [{ addItemWithTags: ["fungus", "enchanted"] }],
                       pathId: []
                     },
                     {
@@ -668,24 +647,17 @@ export const scenarios: ScenarioMetaData[] = [
           choice: {
             choices: [
               {
-                id: "choose_weapon",
-                description: "Select a whimsical but deadly weapon.",
-                requirement: [],
-                effects: [{ addItem: { specific: { raw: "faerie_blade" } } }],
-                nextPath: { none: null }
-              },
-              {
                 id: "choose_armor",
                 description: "Choose a piece of armor that's more glitter than metal.",
                 requirement: [],
-                effects: [{ addItem: { specific: { raw: "gossamer_mail" } } }],
+                effects: [{ addItemWithTags: ["armor", "enchanted"] }],
                 nextPath: { none: null }
               },
               {
                 id: "choose_trinket",
                 description: "Pick a mysterious trinket of questionable usefulness.",
                 requirement: [],
-                effects: [{ addItem: { specific: { raw: "enigmatic_bauble" } } }],
+                effects: [{ addItemWithTags: ["trinket", "enchanted"] }],
                 nextPath: { none: null }
               }
             ]
@@ -728,13 +700,13 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
                       description: "Your silver tongue (and shiny trinkets) convince the goblins to leave you alone. They even throw in a free 'I got robbed by goblins' t-shirt.",
-                      effects: [{ removeItem: { random: null } }],
+                      effects: [{ removeItemWithTags: [] }],
                       pathId: []
                     },
                     {
                       weight: { value: 0.4, kind: { raw: null } },
                       description: "The goblins take your offering, then decide they want seconds. It's all-you-can-loot night, apparently.",
-                      effects: [{ removeItem: { random: null } }],
+                      effects: [{ removeItemWithTags: [] }],
                       pathId: ["combat"]
                     }
                   ]
@@ -750,7 +722,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { attributeScaled: { strength: null } } },
                       description: "Your impressive display of strength sends the goblins running. One drops his 'World's Best Raider' hat in his haste.",
-                      effects: [{ addItem: { specific: { raw: "goblin_leader_hat" } } }],
+                      effects: [{ addItemWithTags: ["headwear"] }],
                       pathId: []
                     },
                     {
@@ -816,7 +788,8 @@ export const scenarios: ScenarioMetaData[] = [
     name: "Knowledge Nexus",
     description: "You enter a floating library of ancient wisdom. Books zip through the air, occasionally bonking distracted readers on the head.",
     location: {
-      zoneIds: ["ancient_ruins"],
+      // zoneIds: ["ancient_ruins"], TODO
+      common: null
     },
     category: { "other": null },
     imageId: "knowledge_nexus",
@@ -859,13 +832,13 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { strength: null } } },
                       description: "You master an ancient fighting technique. Your muscles now ripple with knowledge.",
-                      effects: [{ addItem: { specific: { raw: "battle_manual" } } }],
+                      effects: [{ addItem: "battle_manual" }],
                       pathId: []
                     },
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
                       description: "You learn a set of defensive maneuvers. You can now dodge responsibility AND attacks!",
-                      effects: [{ addItem: { specific: { raw: "evasion_scroll" } } }],
+                      effects: [{ addItem: "evasion_scroll" }],
                       pathId: []
                     }
                   ]
@@ -881,7 +854,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
                       description: "You successfully decipher the map, revealing the location of a hidden treasure. X marks the spot... or is that a ketchup stain?",
-                      effects: [{ addItem: { specific: { raw: "treasure_map" } } }],
+                      effects: [{ addItem: "treasure_map" }],
                       pathId: []
                     },
                     {
@@ -1027,7 +1000,8 @@ export const scenarios: ScenarioMetaData[] = [
     name: "Mysterious Structure",
     description: "You encounter a pyramid-like structure with glowing runes, overgrown by vines. A sealed entrance beckons. It's either an ancient temple or the world's most elaborate garden shed.",
     location: {
-      zoneIds: ["ancient_ruins"],
+      // zoneIds: ["ancient_ruins"], TODO
+      common: null
     },
     category: { "other": null },
     imageId: "mysterious_structure",
@@ -1086,7 +1060,7 @@ export const scenarios: ScenarioMetaData[] = [
                 id: "sacrifice",
                 description: "Offer a random item to the structure. Maybe it just wants a snack?",
                 requirement: [],
-                effects: [{ removeItem: { random: null } }],
+                effects: [{ removeItemWithTags: [] }],
                 nextPath: {
                   multi: [
                     {
@@ -1241,7 +1215,8 @@ export const scenarios: ScenarioMetaData[] = [
     name: "Mystic Forge",
     description: "You enter a magical smithy where the hammers swing themselves and the anvils occasionally burp fire. It's either a blacksmith's dream or a safety inspector's nightmare.",
     location: {
-      zoneIds: ["mystic_caves"],
+      // zoneIds: ["mystic_caves"], TODO
+      common: null
     },
     category: { "store": null },
     imageId: "mystic_forge",
@@ -1261,8 +1236,8 @@ export const scenarios: ScenarioMetaData[] = [
                   multi: [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { strength: null } } },
-                      description: "The forge bellows with approval. Your equipment feels more... equipment-y. It's practically glowing with power (and maybe a bit of residual heat).",
-                      effects: [{ addItem: { specific: { raw: "enhanced_equipment" } } }],
+                      description: "The forge bellows with approval.",
+                      effects: [{ addItemWithTags: ["enchanted", "armor"] }],
                       pathId: []
                     },
                     {
@@ -1277,20 +1252,20 @@ export const scenarios: ScenarioMetaData[] = [
               {
                 id: "reforge",
                 description: "Reforge an item. It's like a makeover, but for swords! What could possibly go wrong?",
-                requirement: [],
-                effects: [{ removeItem: { random: null } }],
+                requirement: [{ itemWithTags: ["armor"] }],
+                effects: [{ removeItemWithTags: ["armor"] }],
                 nextPath: {
                   multi: [
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
                       description: "Your deft handling results in a successfully reforged item. It looks suspiciously similar but feels somehow cooler.",
-                      effects: [{ addItem: { random: null } }],
+                      effects: [{ addItemWithTags: ["enchanted", "armor"] }],
                       pathId: []
                     },
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { wisdom: null } } },
                       description: "Your wisdom guides the reforging process. The result is an item of surprising utility, if questionable aesthetics.",
-                      effects: [{ addItem: { random: null } }],
+                      effects: [{ addItemWithTags: ["trinket"] }],
                       pathId: []
                     }
                   ]
@@ -1306,13 +1281,13 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
                       description: "The forge erupts in a shower of sparks. You've created something... interesting. It's either a powerful artifact or a very shiny paperweight.",
-                      effects: [{ addItem: { specific: { raw: "mysterious_artifact" } } }],
+                      effects: [{ addItem: "mysterious_artifact" }],
                       pathId: []
                     },
                     {
                       weight: { value: 0.3, kind: { raw: null } },
                       description: "The forge burps loudly. You're left holding... is that a rubber chicken? Well, it's certainly special.",
-                      effects: [{ addItem: { specific: { raw: "rubber_chicken" } } }],
+                      effects: [{ addItem: "rubber_chicken" }],
                       pathId: []
                     }
                   ]
@@ -1450,7 +1425,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { raw: null } },
                       description: "The grateful passengers reward you with a mysterious artifact they fished out of the river just before the boat started sinking. It's either a powerful magical item or a very wet piece of driftwood.",
-                      effects: [{ addItem: { random: null } }],
+                      effects: [{ addItem: "mysterious_artifact" }],
                       pathId: []
                     },
                     {
@@ -1768,7 +1743,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { raw: null } },
                       description: "The druid rewards you with a mysterious seed. They claim it will grow into a mighty artifact, or possibly just a very talkative houseplant.",
-                      effects: [{ addItem: { specific: { raw: "mysterious_seed" } } }],
+                      effects: [{ addItem: "mysterious_seed" }],
                       pathId: []
                     },
                     {
@@ -1829,7 +1804,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
                       description: "Your impromptu duet with the bard creates magic... literally. Small sparkles appear in the air, and nearby trees start swaying to the rhythm.",
-                      effects: [{ addItem: { specific: { raw: "harmonic_charm" } } }],
+                      effects: [{ addItem: "harmonic_charm" }],
                       pathId: []
                     },
                     {
@@ -1851,7 +1826,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
                       description: "The bard weaves a tale so captivating that reality itself seems to bend. You feel more heroic already, and is that a new skill you've suddenly mastered?",
-                      effects: [{ addItem: { random: null } }],
+                      effects: [{ heal: { raw: 10n } }],
                       pathId: []
                     },
                     {
@@ -1873,7 +1848,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
                       description: "Your sick moves impress even the trees. The bard declares you the winner and rewards you with a pair of magical dancing shoes.",
-                      effects: [{ addItem: { specific: { raw: "rhythmic_boots" } } }],
+                      effects: [{ addItemWithTags: ["footwear", "enchanted"] }],
                       pathId: []
                     },
                     {
@@ -1921,7 +1896,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.8, kind: { attributeScaled: { wisdom: null } } },
                       description: "The bard's lessons work wonders. You may not be a virtuoso, but at least you no longer sound like a cat in a blender.",
-                      effects: [{ addItem: { specific: { raw: "novice_whistle" } } }],
+                      effects: [{ addItemWithTags: ["instrument"] }],
                       pathId: []
                     },
                     {
@@ -1985,7 +1960,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { attributeScaled: { charisma: null } } },
                       description: "Your first comedy show is a smashing success! You're now the proud owner of a 'Laughing Lute', which adds a chuckle to every adventure.",
-                      effects: [{ addItem: { specific: { raw: "laughing_lute" } } }],
+                      effects: [{ addItem: "laughing_lute" }],
                       pathId: []
                     },
                     {
@@ -2017,7 +1992,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.8, kind: { attributeScaled: { charisma: null } } },
                       description: "You lean into the curse with gusto. Your spontaneous musical numbers become the stuff of legend, and you gain a magical microphone that amplifies your voice in battle.",
-                      effects: [{ addItem: { specific: { raw: "bardic_microphone" } } }],
+                      effects: [{ addItem: "bardic_microphone" }],
                       pathId: []
                     },
                     {
@@ -2062,7 +2037,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { strength: null } } },
                       description: "You down the bubbling liquid and feel a surge of power! Your muscles bulge, and you can suddenly hear colors. Side effects may include occasional sparkly burps.",
-                      effects: [{ addItem: { specific: { raw: "potion_of_unpredictable_might" } } }],
+                      effects: [{ addItemWithTags: ["potion"] }],
                       pathId: []
                     },
                     {
@@ -2084,13 +2059,13 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.7, kind: { attributeScaled: { wisdom: null } } },
                       description: "Your insightful suggestions lead to a breakthrough! The alchemist creates a revolutionary potion and shares it with you.",
-                      effects: [{ addItem: { specific: { raw: "essence_of_serendipity" } } }],
+                      effects: [{ addItemWithTags: ["potion"] }],
                       pathId: []
                     },
                     {
                       weight: { value: 0.3, kind: { raw: null } },
                       description: "The experiment goes haywire, covering you both in a sticky, glowing goo. On the bright side, you'll never need a nightlight again!",
-                      effects: [{ addItem: { specific: { raw: "glow_in_the_dark_skin" } } }],
+                      effects: [{ addItemWithTags: ["potion"] }],
                       pathId: []
                     }
                   ]
@@ -2106,13 +2081,13 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.5, kind: { attributeScaled: { dexterity: null } } },
                       description: "Your quick hands and creative mixing impress the alchemist. They declare you a natural and gift you a special brew.",
-                      effects: [{ addItem: { specific: { raw: "potion_of_liquid_luck" } } }],
+                      effects: [{ addItemWithTags: ["potion"] }],
                       pathId: []
                     },
                     {
                       weight: { value: 0.5, kind: { raw: null } },
                       description: "Your attempt at alchemy creates a small, harmless explosion. The alchemist gives you an 'A' for effort and a fire-resistant apron.",
-                      effects: [{ addItem: { specific: { raw: "fireproof_apron" } } }],
+                      effects: [{ addItem: "fireproof_apron" }],
                       pathId: []
                     }
                   ]
@@ -2154,7 +2129,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.8, kind: { attributeScaled: { charisma: null } } },
                       description: "You become the most charismatic chicken in history. The alchemist, impressed by your adaptability, turns you back and rewards you with a special egg.",
-                      effects: [{ addItem: { specific: { raw: "egg_of_transformation" } } }],
+                      effects: [{ addItem: "egg_of_transformation" }],
                       pathId: []
                     },
                     {
@@ -2186,7 +2161,7 @@ export const scenarios: ScenarioMetaData[] = [
                     {
                       weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
                       description: "Your mushroom-induced vision quest leads to profound insights. You come back with knowledge of a rare alchemical recipe.",
-                      effects: [{ addItem: { specific: { raw: "recipe_of_enlightenment" } } }],
+                      effects: [{ addItem: "recipe_of_enlightenment" }],
                       pathId: []
                     },
                     {

@@ -21,7 +21,6 @@
           vote: true,
         });
         if ("ok" in voteResult) {
-          console.log("Voted on proposal", result.ok);
         } else {
           console.error("Failed to vote on proposal", result.ok, voteResult);
         }

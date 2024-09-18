@@ -3,7 +3,7 @@
   import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
 
   export let size: "xs" | "sm" | "md" | "lg" | "xl";
-  export let character: CharacterWithMetaData;
+  export let character: CharacterWithMetaData | undefined = undefined;
 
   $: sizeClass = {
     xs: "w-12 h-12",

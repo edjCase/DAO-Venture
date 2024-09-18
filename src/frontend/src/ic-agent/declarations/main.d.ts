@@ -224,6 +224,7 @@ export type Effect = { 'damage' : NatValue } |
   { 'heal' : NatValue } |
   { 'removeItemWithTags' : Array<string> } |
   { 'achievement' : string } |
+  { 'addItem' : string } |
   { 'addItemWithTags' : Array<string> } |
   { 'removeGold' : NatValue };
 export type GameStateWithMetaData = {

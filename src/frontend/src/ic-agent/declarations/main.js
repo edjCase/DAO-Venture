@@ -209,6 +209,7 @@ export const idlFactory = ({ IDL }) => {
     'heal' : NatValue,
     'removeItemWithTags' : IDL.Vec(IDL.Text),
     'achievement' : IDL.Text,
+    'addItem' : IDL.Text,
     'addItemWithTags' : IDL.Vec(IDL.Text),
     'removeGold' : NatValue,
   });

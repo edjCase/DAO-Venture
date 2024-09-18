@@ -1,12 +1,3 @@
-<script lang="ts">
-  import { Button } from "flowbite-svelte";
-  import { userStore } from "../stores/UserStore";
-
-  let login = async () => {
-    await userStore.login();
-  };
-</script>
-
 <section class="py-8">
   <h2 class="text-xl font-bold mb-4">Welcome, Adventurer!</h2>
   <p class="mb-4">
@@ -54,12 +45,4 @@
     <li>Community-driven storylines and quests</li>
     <li>Earn tokens and NFTs as you play</li>
   </ul>
-</section>
-
-<section class="py-8">
-  <h2 class="text-xl font-bold mb-4">Join the Quest</h2>
-  <p class="mb-4">
-    Ready to start your adventure? Login now and become part of the legend!
-  </p>
-  <Button on:click={login}>Join</Button>
 </section>

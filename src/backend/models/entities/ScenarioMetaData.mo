@@ -6,7 +6,6 @@ import Buffer "mo:base/Buffer";
 import Text "mo:base/Text";
 import Float "mo:base/Float";
 import Nat "mo:base/Nat";
-import Iter "mo:base/Iter";
 import Array "mo:base/Array";
 import TextX "mo:xtended-text/TextX";
 import Item "Item";
@@ -120,6 +119,7 @@ module {
         #damage : NatValue;
         #heal : NatValue;
         #removeGold : NatValue;
+        #addItem : Text;
         #addItemWithTags : [Text];
         #removeItemWithTags : [Text];
         #achievement : Text;
@@ -151,11 +151,12 @@ module {
     ) : Result.Result<(), [Text]> {
         var errors = Buffer.Buffer<Text>(0);
 
-        let allItemTags = items.vals()
-        |> Iter.map(_, func(item : Item.Item) : Iter.Iter<Text> = item.tags.vals())
-        |> IterTools.flatten(_)
-        |> Iter.map<Text, (Text, ())>(_, func(tag : Text) : (Text, ()) = (tag, ()))
-        |> HashMap.fromIter<Text, ()>(_, 0, Text.equal, Text.hash);
+        let allItemTags = HashMap.HashMap<Text, ()>(0, Text.equal, Text.hash);
+        for (item in items.vals()) {
+            for (tag in item.tags.vals()) {
+                allItemTags.put(tag, ());
+            };
+        };
 
         Entity.validate("Scenario", metaData, errors);
         switch (metaData.unlockRequirement) {
@@ -235,7 +236,7 @@ module {
                             case (null) {};
                         };
                         for (effect in choice.effects.vals()) {
-                            validateEffect(effect, allItemTags, achievements, errors);
+                            validateEffect(effect, items, allItemTags, achievements, errors);
                         };
 
                     };
@@ -394,11 +395,17 @@ module {
 
     private func validateEffect(
         effect : Effect,
+        items : HashMap.HashMap<Text, Item.Item>,
         allItemTags : HashMap.HashMap<Text, ()>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
         errors : Buffer.Buffer<Text>,
     ) {
         switch (effect) {
+            case (#addItem(itemId)) {
+                if (items.get(itemId) == null) {
+                    errors.add("Invalid item id: " # itemId);
+                };
+            };
             case (#addItemWithTags(itemTags)) {
                 for (itemTag in itemTags.vals()) {
                     if (allItemTags.get(itemTag) == null) {

@@ -1,7 +1,5 @@
 <script lang="ts">
   import { Tooltip } from "flowbite-svelte";
-  import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
-  import { decodeImageToPixels } from "../../utils/PixelUtil";
   import { Weapon } from "../../ic-agent/declarations/main";
   import { weaponStore } from "../../stores/WeaponStore";
 

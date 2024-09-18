@@ -17,7 +17,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["fireball", "frost_bolt"],
         weaponId: "apprentice_wand",
         unlockRequirement: [],
-        startingItemIds: ["wisdom_tome"]
+        startingItemIds: ["arcane_tome"]
     },
     {
         id: "rogue",
@@ -26,7 +26,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["stab", "venom_strike"],
         weaponId: "iron_dagger",
         unlockRequirement: [],
-        startingItemIds: ["boots_of_quickness"]
+        startingItemIds: ["boots_of_sneaking"]
     },
     {
         id: "archer",
@@ -62,7 +62,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["war_cry", "regenerate"],
         weaponId: "basic_lute",
         unlockRequirement: [],
-        startingItemIds: ["charm_amulet"]
+        startingItemIds: ["harmonic_charm"]
     },
     {
         id: "monk",
@@ -80,7 +80,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["thunder_strike", "fortify"],
         weaponId: "mechanic_wrench",
         unlockRequirement: [],
-        startingItemIds: ["inventor's_toolkit"]
+        startingItemIds: ["artificer_toolbox"]
     },
     {
         id: "necromancer",

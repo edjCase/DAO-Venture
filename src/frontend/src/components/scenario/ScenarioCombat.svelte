@@ -5,7 +5,6 @@
     ActionTargetResult,
     CharacterActionKind,
   } from "../../ic-agent/declarations/main";
-  import { Button } from "flowbite-svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { currentGameStore } from "../../stores/CurrentGameStore";
@@ -14,6 +13,8 @@
   import ScenarioCombatStats from "./ScenarioCombatStats.svelte";
   import { toJsonString } from "../../utils/StringUtil";
   import CombatEffect from "./CombatEffect.svelte";
+  import CharacterAvatar from "../character/CharacterAvatar.svelte";
+  import LoadingButton from "../common/LoadingButton.svelte";
 
   export let combatState: CombatScenarioState;
 
@@ -40,7 +41,7 @@
       )
     : undefined;
 
-  $: availableCreatures = combatState.creatures.map((combatCreature, index) => {
+  $: enemyCreatures = combatState.creatures.map((combatCreature, index) => {
     const creatureData = creatures?.find(
       (c) => c.id === combatCreature.creatureId
     );
@@ -152,108 +153,114 @@
       console.error("Failed to perform combat action:", result);
     }
   }
+
+  $: actionGroups = [
+    { action: skillAction, kind: { skill: null }, label: "Skill" },
+    { action: itemAction, kind: { item: null }, label: "Item" },
+    { action: weaponAction, kind: { weapon: null }, label: "Weapon" },
+  ];
 </script>
 
 <div class="flex flex-col gap-4">
-  <h2 class="text-2xl font-bold">Combat</h2>
-
-  <div class="flex flex-wrap justify-around">
-    {#each availableCreatures as creature, i}
-      <div
-        class="border p-4 rounded-lg cursor-pointer max-w-36 bg-gray-800
-        {selectedTargetIndex === creature.index
-          ? 'border-green-500'
-          : isAutoSelected(true)
-            ? 'border-yellow-500'
-            : canSelectTarget(true)
-              ? 'border-blue-500 hover:border-blue-400'
-              : 'border-gray-600'}"
-        on:click={selectTarget(creature.index)}
-        on:keypress={selectTarget(creature.index)}
-        role="button"
-        tabindex={i}
-      >
-        <h4 class="font-semibold mb-2">{creature.name || creature.id}</h4>
-        <ScenarioCombatStats value={creature} />
-      </div>
-    {/each}
-  </div>
-
-  <div
-    class="p-4 rounded-lg border cursor-pointer bg-gray-800
+  <div class="flex flex-row gap-4 justify-around items-center">
+    <div
+      class="p-4 rounded-lg border cursor-pointer bg-gray-800
     {isCharacterSelected
-      ? 'border-green-500'
-      : isAutoSelected(false)
-        ? 'border-yellow-500'
-        : canSelectTarget(false)
-          ? 'border-blue-500 hover:border-blue-400'
-          : 'border-gray-600'}"
-    on:click={selectTarget("character")}
-    on:keypress={selectTarget("character")}
-    role="button"
-    tabindex="0"
-  >
-    <h3 class="text-xl font-semibold mb-2">Your Character</h3>
-    <ScenarioCombatStats value={combatState.character} />
+        ? 'border-green-500'
+        : isAutoSelected(false)
+          ? 'border-yellow-500'
+          : canSelectTarget(false)
+            ? 'border-blue-500 hover:border-blue-400'
+            : 'border-gray-600'}"
+      on:click={selectTarget("character")}
+      on:keypress={selectTarget("character")}
+      role="button"
+      tabindex="0"
+    >
+      <ScenarioCombatStats value={combatState.character} />
+      <CharacterAvatar size="xl" />
+    </div>
+    <div class="flex flex-col gap-4 justify-around">
+      {#each enemyCreatures as creature, i}
+        <div
+          class="border p-4 rounded-lg cursor-pointer max-w-36 bg-gray-800
+        {selectedTargetIndex === creature.index
+            ? 'border-green-500'
+            : isAutoSelected(true)
+              ? 'border-yellow-500'
+              : canSelectTarget(true)
+                ? 'border-blue-500 hover:border-blue-400'
+                : 'border-gray-600'}"
+          on:click={selectTarget(creature.index)}
+          on:keypress={selectTarget(creature.index)}
+          role="button"
+          tabindex={i}
+        >
+          <h4 class="font-semibold mb-2">{creature.name || creature.id}</h4>
+          <ScenarioCombatStats value={creature} />
+        </div>
+      {/each}
+    </div>
   </div>
-
   <h3 class="text-xl font-semibold mt-4 mb-2">Available Actions</h3>
   <div class="flex flex-wrap justify-around">
-    {#each [{ action: skillAction, kind: { skill: null }, label: "Skill" }, { action: itemAction, kind: { item: null }, label: "Item" }, { action: weaponAction, kind: { weapon: null }, label: "Weapon" }] as { action, kind, label }}
-      {#if action}
-        <div
-          class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
+    {#each actionGroups as { action, kind, label }}
+      <div>
+        <p class="text-sm mt-2 font-semibold">{label}</p>
+        {#if action}
+          <div
+            class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
           {JSON.stringify(selectedActionKind) === JSON.stringify(kind)
-            ? 'bg-gray-700 border-blue-500'
-            : 'bg-gray-800 hover:bg-gray-700'}"
-          on:click={selectAction(kind)}
-          on:keypress={selectAction(kind)}
-          role="button"
-          tabindex="0"
-        >
-          <h4 class="font-semibold mb-2">{action.name}</h4>
-          <p class="text-sm">{action.description}</p>
-          <p class="text-xs mt-2">
-            Target: {#if "any" in action.target.scope}
-              Any
-            {:else if "ally" in action.target.scope}
-              Self
-            {:else if "enemy" in action.target.scope}
-              Enemy
-            {:else}
-              NOT IMPLEMENTED TARGET SCOPE {toJsonString(action.target.scope)}
-            {/if}
-            -
-            {#if "chosen" in action.target.selection}
-              Chosen
-            {:else if "all" in action.target.selection}
-              All
-            {:else if "random" in action.target.selection}
-              Random
-            {:else}
-              NOT IMPLEMENTED TARGET SELECTION {toJsonString(
-                action.target.selection
-              )}
-            {/if}
-          </p>
-          <div class="flex flex-col justify-center">
-            {#if action.combatEffects.length > 0}
-              {#each action.combatEffects as effect}
-                <div>
-                  <CombatEffect value={effect} />
-                </div>
-              {/each}
-            {/if}
+              ? 'bg-gray-700 border-blue-500'
+              : 'bg-gray-800 hover:bg-gray-700'}"
+            on:click={selectAction(kind)}
+            on:keypress={selectAction(kind)}
+            role="button"
+            tabindex="0"
+          >
+            <h4 class="font-semibold mb-2">{action.name}</h4>
+            <p class="text-sm">{action.description}</p>
+            <p class="text-xs mt-2">
+              Target: {#if "any" in action.target.scope}
+                Any
+              {:else if "ally" in action.target.scope}
+                Self
+              {:else if "enemy" in action.target.scope}
+                Enemy
+              {:else}
+                NOT IMPLEMENTED TARGET SCOPE {toJsonString(action.target.scope)}
+              {/if}
+              -
+              {#if "chosen" in action.target.selection}
+                Chosen
+              {:else if "all" in action.target.selection}
+                All
+              {:else if "random" in action.target.selection}
+                Random
+              {:else}
+                NOT IMPLEMENTED TARGET SELECTION {toJsonString(
+                  action.target.selection
+                )}
+              {/if}
+            </p>
+            <div class="flex flex-col justify-center">
+              {#if action.combatEffects.length > 0}
+                {#each action.combatEffects as effect}
+                  <div>
+                    <CombatEffect value={effect} />
+                  </div>
+                {/each}
+              {/if}
+            </div>
           </div>
-          <p class="text-xs mt-2 font-semibold">{label}</p>
-        </div>
-      {:else}
-        <div
-          class="border border-gray-600 p-4 rounded-lg max-w-36 bg-gray-800 opacity-50"
-        >
-          <h4 class="font-semibold mb-2">No {label} Action Available</h4>
-        </div>
-      {/if}
+        {:else}
+          <div
+            class="border border-gray-600 p-4 rounded-lg max-w-36 bg-gray-800 opacity-50"
+          >
+            <h4 class="font-semibold mb-2">No {label} Action Available</h4>
+          </div>
+        {/if}
+      </div>
     {/each}
   </div>
 
@@ -261,8 +268,8 @@
     <p class="text-yellow-400 mt-2">Please select a target for this action.</p>
   {/if}
 
-  <Button
-    on:click={performAction}
+  <LoadingButton
+    onClick={performAction}
     class="mt-4"
     disabled={!selectedActionKind ||
       (selectedAction &&
@@ -272,5 +279,5 @@
         !("ally" in selectedAction.target.scope))}
   >
     Perform Action
-  </Button>
+  </LoadingButton>
 </div>

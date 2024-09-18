@@ -5,7 +5,8 @@
   import { userStore } from "../stores/UserStore";
   import InitialDataLoad from "./game/InitialDataLoad.svelte";
   import GamePlayer from "./game/GamePlayer.svelte";
-  import LoginPage from "./LoginPage.svelte";
+  import OverviewPage from "./OverviewPage.svelte";
+  import ImageToPixelArt from "./common/ImageToPixelArt.svelte";
 
   $: currentGame = $currentGameStore;
   $: user = $userStore;
@@ -19,20 +20,29 @@
       console.error("Failed to create game", result);
     }
   };
+  let login = async () => {
+    await userStore.login();
+  };
 </script>
 
 <div class="bg-gray-800 rounded p-2 py-8 text-center">
-  {#if user === undefined}
-    <LoginPage />
-  {:else}
-    {#if currentGame === undefined}
-      <InitialDataLoad />
-      <div class="text-3xl">OMG SO EXCITING, ITS YOUR FIRST GAME</div>
-      <div class="text-3xl mb-4">Good luck...</div>
+  <ImageToPixelArt width={32} height={32} />
+  {#if currentGame === undefined}
+    <InitialDataLoad />
+    <OverviewPage />
+    {#if user !== undefined}
       <LoadingButton onClick={createGame}>Play First Game</LoadingButton>
     {:else}
-      <GamePlayer game={currentGame} />
+      <section class="py-8">
+        <h2 class="text-xl font-bold mb-4">Join the Quest</h2>
+        <p class="mb-4">
+          Ready to start your adventure? Login now and become part of the
+          legend!
+        </p>
+        <LoadingButton onClick={login}>Join</LoadingButton>
+      </section>
     {/if}
-    <!-- <MermaidDiagram /> -->
+  {:else}
+    <GamePlayer game={currentGame} />
   {/if}
 </div>

@@ -10,14 +10,12 @@
   import {
     CharacterWithMetaData,
     Scenario,
-    ScenarioMetaData,
   } from "../../ic-agent/declarations/main";
   import ScenarioStages from "./ScenarioStages.svelte";
   import ScenarioCombat from "./ScenarioCombat.svelte";
   import ScenarioReward from "./ScenarioReward.svelte";
 
   export let scenario: Scenario;
-  export let scenarioMetaData: ScenarioMetaData;
   export let character: CharacterWithMetaData;
   export let nextScenario: () => void;
 
@@ -89,5 +87,5 @@
   {:else if "completed" in scenario.state}
     <Button on:click={nextScenario}>Continue</Button>
   {/if}
-  <ScenarioStages stages={scenario.previousStages} {scenarioMetaData} />
+  <ScenarioStages stages={scenario.previousStages} />
 </div>

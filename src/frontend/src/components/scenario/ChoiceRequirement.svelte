@@ -21,14 +21,14 @@
       +{value.gold}
       <CharacterStatIcon kind={{ gold: null }} />
     </div>
-  {:else if "item" in value}
+  {:else if "itemWithTags" in value}
     <div class="text-sm">
-      Item: {value.item}
+      {#if value.itemWithTags.length == 0}
+        Any item
+      {:else}
+        Item with: {value.itemWithTags.join(", ")}
+      {/if}
     </div>
-  {:else if "all" in value}
-    <div class="text-sm">All TODO</div>
-  {:else if "any" in value}
-    <div class="text-sm">Any TODO</div>
   {:else}
     NOT IMPLEMENTED REQUIREMENT {toJsonString(value)}
   {/if}

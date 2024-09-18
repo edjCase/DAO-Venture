@@ -7,7 +7,7 @@ export const races: Race[] = [
         description: "Humans are versatile and adaptable.",
         startingSkillActionIds: ["slash", "shield"],
         unlockRequirement: [],
-        startingItemIds: ["adaptable_charm"]
+        startingItemIds: []
     },
     {
         id: "elf",
@@ -15,7 +15,7 @@ export const races: Race[] = [
         description: "Elves are graceful and attuned to nature.",
         startingSkillActionIds: ["piercing_shot", "entangle"],
         unlockRequirement: [],
-        startingItemIds: ["nature_pendant"]
+        startingItemIds: []
     },
     {
         id: "dwarf",
@@ -23,7 +23,7 @@ export const races: Race[] = [
         description: "Dwarves are sturdy and resilient.",
         startingSkillActionIds: ["defensive_stance", "double_slash"],
         unlockRequirement: [],
-        startingItemIds: ["endurance_belt"]
+        startingItemIds: []
     },
     {
         id: "halfling",
@@ -31,7 +31,7 @@ export const races: Race[] = [
         description: "Halflings are small and nimble.",
         startingSkillActionIds: ["stab", "rapid_shot"],
         unlockRequirement: [],
-        startingItemIds: ["stealth_cloak"]
+        startingItemIds: []
     },
     {
         id: "faerie",
@@ -39,6 +39,6 @@ export const races: Race[] = [
         description: "Faeries are mysterious and enchanting.",
         startingSkillActionIds: ["arcane_missiles", "regenerate"],
         unlockRequirement: [],
-        startingItemIds: ["charm_amulet"]
+        startingItemIds: []
     }
 ];
