@@ -449,6 +449,9 @@ module {
                 case (#addItem(itemId)) {
                     ignore addItem(itemId);
                 };
+                case (#removeItem(itemId)) {
+                    ignore removeItem(itemId, false);
+                };
                 case (#addItemWithTags(itemTags)) {
                     let potentialItemIds : [Text] = gameContent.items.vals()
                     |> Iter.filter(

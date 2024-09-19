@@ -11,16 +11,11 @@
     CreateWorldProposalRequest,
     Action,
     CombatEffect,
-    CombatEffectKind,
-    CombatEffectTarget,
     ActionTarget,
     ScenarioEffect,
   } from "../../../../ic-agent/declarations/main";
-  import MinMaxTimingForm from "./MinMaxTimingForm.svelte";
-  import { actionStore } from "../../../../stores/ActionStore";
-  import EntitySelector from "./EntitySelector.svelte";
-  import CombatEffectEditor from "./CombatEffectEditor.svelte";
   import CombatEffectChooser from "./CombatEffectChooser.svelte";
+  import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -31,19 +26,6 @@
     scope: { any: null },
     selection: { all: null },
   };
-
-  const combatEffectKinds: SelectOptionType<string>[] = [
-    { value: "damage", name: "Damage" },
-    { value: "heal", name: "Heal" },
-    { value: "block", name: "Block" },
-    { value: "addStatusEffect", name: "Add Status Effect" },
-  ];
-  let selectedCombatEffectKind: string = combatEffectKinds[0].value;
-
-  const scenarioEffectKinds: SelectOptionType<string>[] = [
-    { value: "attribute", name: "Attribute" },
-  ];
-  let selectedScenarioEffectKind: string = scenarioEffectKinds[0].value;
 
   const targetScopes: SelectOptionType<string>[] = [
     { value: "any", name: "Any" },
@@ -74,51 +56,6 @@
       target: { self: null },
     };
   }
-
-  let updateCombatEffectKind = (index: number) => () => {
-    combatEffects = combatEffects.map((effect, i) => {
-      if (i === index) {
-        let newKind: CombatEffectKind;
-        switch (selectedCombatEffectKind) {
-          case "damage":
-            newKind = {
-              damage: { min: 1n, max: 1n, timing: { immediate: null } },
-            };
-            break;
-          case "heal":
-            newKind = {
-              heal: { min: 1n, max: 1n, timing: { immediate: null } },
-            };
-            break;
-          case "addStatusEffect":
-            newKind = {
-              addStatusEffect: { kind: { weak: null }, duration: [] },
-            };
-            break;
-          case "block":
-            newKind = {
-              block: { min: 1n, max: 1n, timing: { immediate: null } },
-            };
-            break;
-          default:
-            newKind = effect.kind;
-        }
-        return { ...effect, kind: newKind };
-      }
-      return effect;
-    });
-  };
-
-  let updateCombatEffectTarget = (index: number) => () => {
-    combatEffects = combatEffects.map((effect, i) => {
-      if (i === index) {
-        const newTarget: CombatEffectTarget =
-          targetValue === "self" ? { self: null } : { targets: null };
-        return { ...effect, target: newTarget };
-      }
-      return effect;
-    });
-  };
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (!id) return "Id must be filled";
@@ -171,16 +108,9 @@
 
     <div>
       <div>Scenario Effects</div>
-      {#each scenarioEffects as effect, index}
+      {#each scenarioEffects as effect}
         <div class="border p-4 mb-4 rounded">
-          <Select
-            items={scenarioEffectKinds}
-            on:change={updateScenarioEffectKind(index)}
-            bind:value={selectedScenarioEffectKind}
-          />
-          {#if "attribute" in effect}
-            {a}
-          {/if}
+          <ScenarioEffectChooser value={effect} />
         </div>
       {/each}
     </div>
@@ -189,7 +119,7 @@
       <Label>Combat Effects</Label>
       {#each combatEffects as effect, index}
         <div class="border p-4 mb-4 rounded">
-          <CombatEffectChooser {effect} />
+          <CombatEffectChooser value={effect} />
           <button
             class="mt-2 bg-red-500 text-white px-2 py-1 rounded"
             on:click={() => removeCombatEffect(index)}

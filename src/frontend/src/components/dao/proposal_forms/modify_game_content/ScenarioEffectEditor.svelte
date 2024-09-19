@@ -1,30 +1,14 @@
 <script lang="ts">
-  import { achievementStore } from "../../../../stores/AchievementStore";
-  import EntitySelector from "./EntitySelector.svelte";
-  import NatValueEditor from "./NatValueEditor.svelte";
-  import { Effect } from "../../../../ic-agent/declarations/main";
+  import { ScenarioEffect } from "../../../../ic-agent/declarations/main";
   import { toJsonString } from "../../../../utils/StringUtil";
-  import RandomOrSpecificTextValueChooser from "./RandomOrSpecificTextValueChooser.svelte";
-
-  export let value: Effect;
+  import BigIntInput from "../../../common/BigIntInput.svelte";
+  import CharacterAttributeChooser from "./CharacterAttributeChooser.svelte";
+  export let value: ScenarioEffect;
 </script>
 
-{#if "damage" in value}
-  <NatValueEditor bind:value={value.damage} />
-{:else if "heal" in value}
-  <NatValueEditor bind:value={value.heal} />
-{:else if "removeGold" in value}
-  <NatValueEditor bind:value={value.removeGold} />
-{:else if "addItem" in value}
-  <RandomOrSpecificTextValueChooser bind:value={value.addItem} />
-{:else if "removeItem" in value}
-  <RandomOrSpecificTextValueChooser bind:value={value.removeItem} />
-{:else if "achievement" in value}
-  <EntitySelector
-    bind:value={value.achievement}
-    store={achievementStore}
-    label="Achievement"
-  />
+{#if "attribute" in value}
+  <BigIntInput bind:value={value.attribute.value} />
+  <CharacterAttributeChooser bind:value={value.attribute.attribute} />
 {:else}
   NOT IMPLEMENETED SCENARIO EFFECT : {toJsonString(value)}
 {/if}

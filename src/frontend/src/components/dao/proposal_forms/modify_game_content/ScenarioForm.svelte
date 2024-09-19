@@ -48,7 +48,6 @@
         id: "",
         kind: { choice: { choices: [] } },
         description: "",
-        nextPathOptions: [],
       },
     ];
   }

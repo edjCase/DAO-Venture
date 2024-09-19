@@ -49,14 +49,6 @@
     placeholder="Describe the choice..."
   />
 
-  <Label for="pathId">Path Id</Label>
-  <Input
-    id="pathId"
-    type="text"
-    bind:value={value.pathId}
-    placeholder="path_id"
-  />
-
   <Label for="requirement">Requirement</Label>
   <Select
     id="requirement"
@@ -66,4 +58,19 @@
   {#if value.requirement[0] !== undefined}
     <ChoiceRequirementEditor bind:value={value.requirement[0]} />
   {/if}
+
+  <Label class="mt-4">Weighted Paths</Label>
+  {#each value.nextPathOptions as path, index}
+    <div class="flex gap-2 mt-2">
+      <NextPathChooser value={value.nextPath} />
+      <button
+        class="bg-red-500 text-white px-2 py-1 rounded"
+        on:click={() => removePath(index)}>Remove</button
+      >
+    </div>
+  {/each}
+  <button
+    class="bg-blue-500 text-white px-2 py-1 rounded mt-2"
+    on:click={addPath}>Add Path</button
+  >
 </div>

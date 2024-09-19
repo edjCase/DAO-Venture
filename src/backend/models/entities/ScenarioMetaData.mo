@@ -120,6 +120,7 @@ module {
         #heal : NatValue;
         #removeGold : NatValue;
         #addItem : Text;
+        #removeItem : Text;
         #addItemWithTags : [Text];
         #removeItemWithTags : [Text];
         #achievement : Text;
@@ -402,6 +403,11 @@ module {
     ) {
         switch (effect) {
             case (#addItem(itemId)) {
+                if (items.get(itemId) == null) {
+                    errors.add("Invalid item id: " # itemId);
+                };
+            };
+            case (#removeItem(itemId)) {
                 if (items.get(itemId) == null) {
                     errors.add("Invalid item id: " # itemId);
                 };

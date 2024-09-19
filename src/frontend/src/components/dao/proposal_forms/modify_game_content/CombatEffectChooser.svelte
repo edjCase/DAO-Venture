@@ -1,6 +1,13 @@
 <script lang="ts">
   import { SelectOptionType, Select } from "flowbite-svelte";
   import CombatEffectEditor from "./CombatEffectEditor.svelte";
+  import {
+    CombatEffect,
+    CombatEffectKind,
+    CombatEffectTarget,
+  } from "../../../../ic-agent/declarations/main";
+
+  export let value: CombatEffect;
 
   const combatEffectKinds: SelectOptionType<string>[] = [
     { value: "damage", name: "Damage" },
@@ -10,64 +17,69 @@
   ];
   let selectedCombatEffectKind: string = combatEffectKinds[0].value;
 
-  let updateCombatEffectKind = (index: number) => () => {
-    combatEffects = combatEffects.map((effect, i) => {
-      if (i === index) {
-        let newKind: CombatEffectKind;
-        switch (selectedCombatEffectKind) {
-          case "damage":
-            newKind = {
-              damage: { min: 1n, max: 1n, timing: { immediate: null } },
-            };
-            break;
-          case "heal":
-            newKind = {
-              heal: { min: 1n, max: 1n, timing: { immediate: null } },
-            };
-            break;
-          case "addStatusEffect":
-            newKind = {
-              addStatusEffect: { kind: { weak: null }, duration: [] },
-            };
-            break;
-          case "block":
-            newKind = {
-              block: { min: 1n, max: 1n, timing: { immediate: null } },
-            };
-            break;
-          default:
-            newKind = effect.kind;
-        }
-        return { ...effect, kind: newKind };
-      }
-      return effect;
-    });
+  const targetItems: SelectOptionType<string>[] = [
+    { value: "targets", name: "Targets" },
+    { value: "self", name: "Self" },
+  ];
+
+  let selectedTarget: string = targetItems[0].value;
+
+  let updateCombatEffectKind = () => () => {
+    let newKind: CombatEffectKind;
+    switch (selectedCombatEffectKind) {
+      case "damage":
+        newKind = {
+          damage: { min: 1n, max: 1n, timing: { immediate: null } },
+        };
+        break;
+      case "heal":
+        newKind = {
+          heal: { min: 1n, max: 1n, timing: { immediate: null } },
+        };
+        break;
+      case "addStatusEffect":
+        newKind = {
+          addStatusEffect: { kind: { weak: null }, duration: [] },
+        };
+        break;
+      case "block":
+        newKind = {
+          block: { min: 1n, max: 1n, timing: { immediate: null } },
+        };
+        break;
+      default:
+        throw new Error(
+          "Invalid combat effect kind: " + selectedCombatEffectKind
+        );
+    }
+    value = { ...value, kind: newKind };
   };
 
-  let updateCombatEffectTarget = (index: number) => {
-    combatEffects = combatEffects.map((effect, i) => {
-      if (i === index) {
-        const newTarget: CombatEffectTarget =
-          targetValue === "self" ? { self: null } : { targets: null };
-        return { ...effect, target: newTarget };
-      }
-      return effect;
-    });
+  let updateCombatEffectTarget = () => () => {
+    let newTarget: CombatEffectTarget;
+    switch (selectedTarget) {
+      case "self":
+        newTarget = { self: null };
+        break;
+      case "targets":
+        newTarget = { targets: null };
+        break;
+      default:
+        throw new Error("Invalid combat effect target: " + selectedTarget);
+    }
+    value = { ...value, target: newTarget };
   };
 </script>
 
 <Select
   items={combatEffectKinds}
-  on:change={updateCombatEffectKind(index)}
+  on:change={updateCombatEffectKind}
   bind:value={selectedCombatEffectKind}
 />
-<CombatEffectEditor {effect} />
+<CombatEffectEditor effect={value} />
 <div>Target</div>
 <Select
-  items={[
-    { value: "targets", name: "Targets" },
-    { value: "self", name: "Self" },
-  ]}
-  on:change={updateCombatEffectTarget(index)}
-  value={Object.keys(effect.target)[0]}
+  items={targetItems}
+  on:change={updateCombatEffectTarget}
+  bind:value={selectedTarget}
 />

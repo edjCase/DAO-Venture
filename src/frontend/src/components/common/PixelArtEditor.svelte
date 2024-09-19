@@ -16,9 +16,26 @@
   let width = pixels[0].length;
 
   let selectedColor: PixelColor = [0, 0, 0];
+  let isDrawing = false;
 
   function updatePixel(x: number, y: number): void {
     pixels[y][x] = selectedColor;
+    pixels = pixels; // Trigger reactivity
+  }
+
+  function handleMouseDown(x: number, y: number): void {
+    isDrawing = true;
+    updatePixel(x, y);
+  }
+
+  function handleMouseUp(): void {
+    isDrawing = false;
+  }
+
+  function handleMouseMove(x: number, y: number): void {
+    if (isDrawing) {
+      updatePixel(x, y);
+    }
   }
 
   let selectTransparent = () => {
@@ -34,11 +51,16 @@
   <div
     class="grid border"
     style:grid-template-columns="repeat({width}, {pixelSize}px)"
+    on:mouseup={handleMouseUp}
+    on:mouseleave={handleMouseUp}
+    role="button"
+    tabindex={0}
   >
     {#each pixels as row, y}
       {#each row as pixel, x}
         <div
-          on:click={() => updatePixel(x, y)}
+          on:mousedown={() => handleMouseDown(x, y)}
+          on:mousemove={() => handleMouseMove(x, y)}
           on:keydown={(event) => {
             if (event.key === "Enter") {
               updatePixel(x, y);
@@ -59,7 +81,7 @@
   <div class="flex flex-col justify-center">
     <RgbColor bind:value={selectedColor} type="vertical" />
     <Button on:click={selectTransparent}>Transparent Pixel</Button>
-    <Button on:click={copyToClipboard}>Copy Bas64 to Clipboard</Button>
+    <Button on:click={copyToClipboard}>Copy Base64 to Clipboard</Button>
   </div>
 </div>
 {#if previewPixelSize !== undefined}
