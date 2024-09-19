@@ -3,13 +3,20 @@
   import { PixelGrid } from "../../utils/PixelUtil";
 
   export let pixels: PixelGrid;
-  export let pixelSize: number = 2;
+  export let pixelSize: number = 1;
   export let border: boolean = false;
   let canvas: HTMLCanvasElement;
   let width = pixels[0].length;
   let height = pixels.length;
 
   onMount(() => {
+    redraw();
+  });
+
+  $: pixels && redraw();
+
+  function redraw() {
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -27,7 +34,7 @@
         }
       });
     });
-  });
+  }
 </script>
 
 <canvas

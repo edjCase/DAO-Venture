@@ -1,10 +1,16 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
   import RgbColor from "./RgbColor.svelte";
-  import { PixelGrid, PixelColor } from "../../utils/PixelUtil";
+  import {
+    PixelGrid,
+    PixelColor,
+    encodePixelsToBase64,
+  } from "../../utils/PixelUtil";
+  import PixelArtCanvas from "./PixelArtCanvas.svelte";
 
   export let pixelSize = 20;
   export let pixels: PixelGrid;
+  export let previewPixelSize: number | undefined;
 
   let height = pixels.length;
   let width = pixels[0].length;
@@ -18,11 +24,15 @@
   let selectTransparent = () => {
     selectedColor = undefined;
   };
+
+  let copyToClipboard = () => {
+    navigator.clipboard.writeText(encodePixelsToBase64(pixels));
+  };
 </script>
 
 <div class="flex space-x-4">
   <div
-    class="grid rounded-lg border"
+    class="grid border"
     style:grid-template-columns="repeat({width}, {pixelSize}px)"
   >
     {#each pixels as row, y}
@@ -49,5 +59,9 @@
   <div class="flex flex-col justify-center">
     <RgbColor bind:value={selectedColor} type="vertical" />
     <Button on:click={selectTransparent}>Transparent Pixel</Button>
+    <Button on:click={copyToClipboard}>Copy Bas64 to Clipboard</Button>
   </div>
 </div>
+{#if previewPixelSize !== undefined}
+  <PixelArtCanvas {pixels} pixelSize={previewPixelSize} />
+{/if}

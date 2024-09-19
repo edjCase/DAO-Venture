@@ -11,7 +11,10 @@
   <div>Item</div>
   <EntityView entity={item} />
   <div>
-    <PixelArtCanvas pixels={decodeImageToPixels(item.image, 16, 16)} />
+    <PixelArtCanvas
+      pixels={decodeImageToPixels(item.image, 32, 32)}
+      pixelSize={1}
+    />
   </div>
   <UnlockRequirementView value={item.unlockRequirement} />
 </div>

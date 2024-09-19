@@ -19,7 +19,7 @@
   {#if typeof value !== "string"}
     <span class="text-xl">
       WEAPON: TODO IMAGE
-      <!-- <PixelArtCanvas pixels={decodeImageToPixels(value.image, 16, 16)} /> -->
+      <!-- <PixelArtCanvas pixels={decodeImageToPixels(value.image, 32, 32)} /> -->
     </span>
     <Tooltip>
       <div class="text-sm">
