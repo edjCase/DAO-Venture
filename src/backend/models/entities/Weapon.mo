@@ -6,11 +6,13 @@ import Entity "Entity";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
 import Action "Action";
+import PixelImage "../PixelImage";
 
 module Weapon {
 
     public type Weapon = Entity.Entity and {
         actionIds : [Text];
+        image : PixelImage.PixelImage;
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 

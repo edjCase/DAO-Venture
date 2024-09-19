@@ -291,6 +291,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'image' : PixelImage,
   });
   const ModifyGameContent = IDL.Variant({
     'action' : Action,
@@ -330,6 +331,12 @@ export const idlFactory = ({ IDL }) => {
     'action' : Action,
     'kind' : CharacterActionKind,
   });
+  const CharacterAttributes = IDL.Record({
+    'dexterity' : IDL.Int,
+    'wisdom' : IDL.Int,
+    'strength' : IDL.Int,
+    'charisma' : IDL.Int,
+  });
   const InventorySlotWithMetaData = IDL.Record({ 'item' : IDL.Opt(Item) });
   const CharacterWithMetaData = IDL.Record({
     'maxHealth' : IDL.Nat,
@@ -337,6 +344,7 @@ export const idlFactory = ({ IDL }) => {
     'class' : Class,
     'race' : Race,
     'actions' : IDL.Vec(CharacterActionWithMetaData),
+    'attributes' : CharacterAttributes,
     'inventorySlots' : IDL.Vec(InventorySlotWithMetaData),
     'weapon' : Weapon,
     'health' : IDL.Nat,

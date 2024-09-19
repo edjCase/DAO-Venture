@@ -139,6 +139,7 @@ module {
         actions : [CharacterActionWithMetaData];
         inventorySlots : [InventorySlotWithMetaData];
         weapon : Weapon.Weapon;
+        attributes : Character.CharacterAttributes;
     };
 
     public type CharacterActionWithMetaData = {
@@ -929,6 +930,8 @@ module {
             |> Iter.toArray(_);
 
             let ?weapon = weapons.get(character.weaponId) else Debug.trap("Weapon not found: " # character.weaponId);
+
+            let attributes = CharacterHandler.calculateAttributes(character, weapons, items, actions);
             {
                 health = character.health;
                 maxHealth = character.maxHealth;
@@ -938,6 +941,7 @@ module {
                 inventorySlots = inventorySlots;
                 weapon = weapon;
                 actions = actionsList;
+                attributes = attributes;
             };
         };
 

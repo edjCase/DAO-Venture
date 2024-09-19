@@ -68,6 +68,12 @@ export interface CharacterActionWithMetaData {
   'action' : Action,
   'kind' : CharacterActionKind,
 }
+export interface CharacterAttributes {
+  'dexterity' : bigint,
+  'wisdom' : bigint,
+  'strength' : bigint,
+  'charisma' : bigint,
+}
 export interface CharacterCombatState {
   'weaponActionId' : [] | [string],
   'statusEffects' : Array<StatusEffectResult>,
@@ -83,6 +89,7 @@ export interface CharacterWithMetaData {
   'class' : Class,
   'race' : Race,
   'actions' : Array<CharacterActionWithMetaData>,
+  'attributes' : CharacterAttributes,
   'inventorySlots' : Array<InventorySlotWithMetaData>,
   'weapon' : Weapon,
   'health' : bigint,
@@ -566,6 +573,7 @@ export interface Weapon {
   'name' : string,
   'description' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
+  'image' : PixelImage,
 }
 export type WeightKind = { 'raw' : null } |
   { 'attributeScaled' : Attribute };

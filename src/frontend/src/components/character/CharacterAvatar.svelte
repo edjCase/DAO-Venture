@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
+  import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
+  import { decodeImageToPixels } from "../../utils/PixelUtil";
 
   export let size: "xs" | "sm" | "md" | "lg" | "xl";
-  export let character: CharacterWithMetaData | undefined = undefined;
+  export let character: CharacterWithMetaData;
 
   $: sizeClass = {
     xs: "w-12 h-12",
@@ -71,6 +73,8 @@
   onMount(() => {
     handleGenerate();
   });
+
+  $: weaponPixels = decodeImageToPixels(character.weapon.image, 32, 32);
 </script>
 
 <img
@@ -79,3 +83,4 @@
   class={sizeClass}
   style="image-rendering: pixelated;"
 />
+<PixelArtCanvas pixels={weaponPixels} />
