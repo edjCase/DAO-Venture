@@ -116,6 +116,7 @@ export interface Class {
   'startingItemIds' : Array<string>,
   'weaponId' : string,
   'unlockRequirement' : [] | [UnlockRequirement],
+  'image' : PixelImage,
 }
 export interface CombatChoice {
   'kind' : CharacterActionKind,
@@ -411,6 +412,7 @@ export interface Race {
   'description' : string,
   'startingItemIds' : Array<string>,
   'unlockRequirement' : [] | [UnlockRequirement],
+  'image' : PixelImage,
 }
 export type RegisterError = { 'alreadyMember' : null };
 export type RegisterResult = { 'ok' : User } |

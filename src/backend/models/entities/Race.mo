@@ -7,12 +7,14 @@ import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
 import Action "Action";
 import Item "Item";
+import PixelImage "../PixelImage";
 
 module {
 
     public type Race = Entity.Entity and {
         startingItemIds : [Text];
         startingSkillActionIds : [Text];
+        image : PixelImage.PixelImage;
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
     };
 

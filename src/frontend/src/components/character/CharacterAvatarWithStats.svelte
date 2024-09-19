@@ -26,22 +26,22 @@
   <div class="flex justify-center m-2 border border-gray-300 rounded">
     <CharacterAvatar {size} {character} />
   </div>
-  <div class="flex justify-center m-2 border border-gray-300 rounded">
-    <div>
-      {character.attributes.strength}
+  <div class="flex justify-center m-2 gap-2">
+    <div class="flex flex-col items-center border border-gray-300 rounded">
       <CharacterAttributeIcon value={{ strength: null }} />
+      <span class="text-sm">{character.attributes.strength}</span>
     </div>
-    <div>
-      {character.attributes.dexterity}
+    <div class="flex flex-col items-center border border-gray-300 rounded">
       <CharacterAttributeIcon value={{ dexterity: null }} />
+      <span class="text-sm">{character.attributes.dexterity}</span>
     </div>
-    <div>
-      {character.attributes.wisdom}
+    <div class="flex flex-col items-center border border-gray-300 rounded">
       <CharacterAttributeIcon value={{ wisdom: null }} />
+      <span class="text-sm">{character.attributes.wisdom}</span>
     </div>
-    <div>
-      {character.attributes.charisma}
+    <div class="flex flex-col items-center border border-gray-300 rounded">
       <CharacterAttributeIcon value={{ charisma: null }} />
+      <span class="text-sm">{character.attributes.charisma}</span>
     </div>
   </div>
 </div>

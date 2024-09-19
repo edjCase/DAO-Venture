@@ -2,38 +2,43 @@
   import { onMount } from "svelte";
   import { PixelGrid } from "../../utils/PixelUtil";
 
-  export let pixels: PixelGrid;
+  export let layers: PixelGrid[];
   export let pixelSize: number = 1;
   export let border: boolean = false;
+
   let canvas: HTMLCanvasElement;
-  let width = pixels[0].length;
-  let height = pixels.length;
+  let width = layers[0][0].length;
+  let height = layers[0].length;
 
   onMount(() => {
     redraw();
   });
 
-  $: pixels && redraw();
+  $: layers && redraw();
 
-  function redraw() {
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    pixels.forEach((row, y) => {
+  let drawLayer = (ctx: CanvasRenderingContext2D, layerPixels: PixelGrid) => {
+    layerPixels.forEach((row, y) => {
       row.forEach((color, x) => {
         let rectX = x * pixelSize;
         let rectY = y * pixelSize;
         let rectWidth = pixelSize;
         let rectHeight = pixelSize;
         if (color === undefined) {
-          ctx.clearRect(rectX, rectY, rectWidth, rectHeight);
+          // ctx.clearRect(rectX, rectY, rectWidth, rectHeight);
         } else {
           ctx.fillStyle = `rgb(${color[0]}, ${color[1]}, ${color[2]})`;
           ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
         }
       });
     });
+  };
+
+  function redraw() {
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    layers.forEach((pixelLayer) => drawLayer(ctx, pixelLayer));
   }
 </script>
 

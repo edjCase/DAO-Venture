@@ -63,5 +63,5 @@
   </div>
 </div>
 {#if previewPixelSize !== undefined}
-  <PixelArtCanvas {pixels} pixelSize={previewPixelSize} />
+  <PixelArtCanvas layers={[pixels]} pixelSize={previewPixelSize} />
 {/if}

@@ -119,7 +119,10 @@
         {:else if "weapon" in option}
           <CharacterWeapon value={option.weapon} />
         {:else if "health" in option}
-          <div class="text-xl font-semibold">{option.health} Health</div>
+          <div class="text-xl font-semibold">
+            {option.health}
+            <CharacterStatIcon kind={{ health: null }} />
+          </div>
         {:else}
           NOT IMPLEMENTED REWARD OPTION {toJsonString(option)}
         {/if}

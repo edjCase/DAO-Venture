@@ -12,7 +12,7 @@
   <EntityView entity={item} />
   <div>
     <PixelArtCanvas
-      pixels={decodeImageToPixels(item.image, 32, 32)}
+      layers={[decodeImageToPixels(item.image, 32, 32)]}
       pixelSize={1}
     />
   </div>

@@ -20,7 +20,7 @@
 <span>
   {#if typeof value !== "string"}
     <span class="text-xl">
-      <PixelArtCanvas pixels={decodeImageToPixels(value.image, 32, 32)} />
+      <PixelArtCanvas layers={[decodeImageToPixels(value.image, 32, 32)]} />
     </span>
     <Tooltip>
       <div class="text-sm">

@@ -21,7 +21,7 @@
   {#if typeof item !== "string"}
     <span class="text-xl">
       <PixelArtCanvas
-        pixels={decodeImageToPixels(item.image, 32, 32)}
+        layers={[decodeImageToPixels(item.image, 32, 32)]}
         pixelSize={1}
       />
     </span>

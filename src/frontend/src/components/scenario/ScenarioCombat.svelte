@@ -4,6 +4,7 @@
     CombatChoice,
     ActionTargetResult,
     CharacterActionKind,
+    CharacterWithMetaData,
   } from "../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { scenarioStore } from "../../stores/ScenarioStore";
@@ -81,6 +82,21 @@
       canSelectTarget(isEnemy)
     );
   };
+
+  $: currentGame = $currentGameStore;
+
+  let character: CharacterWithMetaData | undefined;
+  $: {
+    if (currentGame !== undefined) {
+      if ("starting" in currentGame.state) {
+        character = undefined;
+      } else if ("inProgress" in currentGame.state) {
+        character = currentGame.state.inProgress.character;
+      } else {
+        character = currentGame.state.completed.character;
+      }
+    }
+  }
 
   let selectTarget = (creaturIndexOrCharacter: number | "character") => () => {
     if (
@@ -178,7 +194,9 @@
       tabindex="0"
     >
       <ScenarioCombatStats value={combatState.character} />
-      <CharacterAvatar size="xl" />
+      {#if character !== undefined}
+        <CharacterAvatar size="xl" {character} />
+      {/if}
     </div>
     <div class="flex flex-col gap-4 justify-around">
       {#each enemyCreatures as creature, i}

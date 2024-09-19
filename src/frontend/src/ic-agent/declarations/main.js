@@ -157,6 +157,7 @@ export const idlFactory = ({ IDL }) => {
     'startingItemIds' : IDL.Vec(IDL.Text),
     'weaponId' : IDL.Text,
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'image' : PixelImage,
   });
   const Race = IDL.Record({
     'id' : IDL.Text,
@@ -165,6 +166,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'startingItemIds' : IDL.Vec(IDL.Text),
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'image' : PixelImage,
   });
   const Zone = IDL.Record({
     'id' : IDL.Text,

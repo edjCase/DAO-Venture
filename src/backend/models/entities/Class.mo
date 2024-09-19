@@ -7,6 +7,7 @@ import Achievement "Achievement";
 import Entity "Entity";
 import Action "Action";
 import Item "Item";
+import PixelImage "../PixelImage";
 
 module {
 
@@ -15,6 +16,7 @@ module {
         startingItemIds : [Text];
         startingSkillActionIds : [Text];
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
+        image : PixelImage.PixelImage;
     };
 
     public func validate(
