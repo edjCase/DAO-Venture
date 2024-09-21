@@ -1,7 +1,7 @@
 <script lang="ts">
   import { OutcomeEffect } from "../../ic-agent/declarations/main";
   import { toJsonString } from "../../utils/StringUtil";
-  import CharacterItem from "../character/CharacterItem.svelte";
+  import CharacterItem from "../content/Item.svelte";
   import CharacterStatIcon from "../character/CharacterStatIcon.svelte";
 
   export let value: OutcomeEffect;

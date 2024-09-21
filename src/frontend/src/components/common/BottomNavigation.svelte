@@ -59,11 +59,18 @@
   $: user = $userStore;
 </script>
 
-<BottomNav {activeUrl} position="fixed" classInner="grid-cols-4 z-50">
+<BottomNav {activeUrl} position="fixed" classInner="grid-cols-5">
   <BottomNavItem btnName="World" href="/" on:click={navOnClick("/")}>
     <GlobeSolid class={iconClass} />
   </BottomNavItem>
   <BottomNavItem btnName="DAO" href="/dao" on:click={navOnClick("/dao")}>
+    <ClipboardListSolid class={iconClass} />
+  </BottomNavItem>
+  <BottomNavItem
+    btnName="Content"
+    href="/content"
+    on:click={navOnClick("/content")}
+  >
     <ClipboardListSolid class={iconClass} />
   </BottomNavItem>
   <BottomNavItem

@@ -9,7 +9,7 @@
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { toJsonString } from "../../utils/StringUtil";
   import CharacterInventorySlot from "../character/CharacterInventorySlot.svelte";
-  import CharacterItem from "../character/CharacterItem.svelte";
+  import CharacterItem from "../content/Item.svelte";
   import CharacterStatIcon from "../character/CharacterStatIcon.svelte";
   import CharacterWeapon from "../character/CharacterWeapon.svelte";
   import LoadingButton from "../common/LoadingButton.svelte";

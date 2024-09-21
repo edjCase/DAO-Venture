@@ -8,7 +8,7 @@
   import CharacterAvatar from "../character/CharacterAvatar.svelte";
   import GameNav from "./GameNav.svelte";
   import GenericOption from "../common/GenericOption.svelte";
-  import CharacterItem from "../character/CharacterItem.svelte";
+  import CharacterItem from "../content/Item.svelte";
 
   export let game: GameWithMetaData;
   export let state: StartingGameStateWithMetaData;
