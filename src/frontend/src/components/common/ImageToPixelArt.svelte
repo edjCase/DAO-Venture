@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { Button, Label, Range } from "flowbite-svelte";
   import { convertToDynamicPalette, PixelGrid } from "../../utils/PixelUtil";
   import PixelArtEditor from "./PixelArtEditor.svelte";
 
@@ -8,6 +9,7 @@
   export let previewPixelSize: number | undefined;
 
   let pixels: PixelGrid | undefined;
+  let maxColors = 50;
 
   let pixelate = (sourceImage: HTMLImageElement, canvas: HTMLCanvasElement) => {
     // Derived from https://github.com/giventofly/pixelit/blob/master/src/pixelit.js
@@ -31,7 +33,7 @@
     ctx.drawImage(sourceImage, 0, 0, scaledW, scaledH);
 
     const imageData = ctx.getImageData(0, 0, width, height);
-    pixels = convertToDynamicPalette(imageData, 254);
+    pixels = convertToDynamicPalette(imageData, maxColors);
     console.log(pixels);
   };
 
@@ -52,13 +54,17 @@
   }
 </script>
 
-<input
-  type="file"
-  accept="image/*"
-  bind:this={fileInput}
-  on:change={handleFileSelect}
-/>
-<img bind:this={sourceImage} style="display: none;" alt="source" />
+<div class="flex justify-around">
+  <div class="">
+    <Label>Max Color Count: {maxColors}</Label>
+    <Range bind:value={maxColors} min={0} max={254} />
+  </div>
+  <div class="">
+    <input type="file" accept="image/*" bind:this={fileInput} />
+    <img bind:this={sourceImage} style="display: none;" alt="source" />
+  </div>
+</div>
+<Button on:click={handleFileSelect}>Pixelate Image</Button>
 <canvas bind:this={pixelCanvas} style="display: none;" />
 {#if pixels}
   <PixelArtEditor {pixels} {pixelSize} {previewPixelSize} />
