@@ -45,6 +45,8 @@
   let copyToClipboard = () => {
     navigator.clipboard.writeText(encodePixelsToBase64(pixels));
   };
+
+  $: previewLayers = [pixels];
 </script>
 
 <div class="flex space-x-4">
@@ -85,5 +87,5 @@
   </div>
 </div>
 {#if previewPixelSize !== undefined}
-  <PixelArtCanvas layers={[pixels]} pixelSize={previewPixelSize} />
+  <PixelArtCanvas layers={previewLayers} pixelSize={previewPixelSize} />
 {/if}

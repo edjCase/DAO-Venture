@@ -106,6 +106,15 @@
           <BookOutline class={iconClass} />
         </svelte:fragment>
       </SidebarItem>
+      <SidebarItem
+        label="Image Editor"
+        href="/image-editor"
+        on:click={navOnClick("/image-editor")}
+      >
+        <svelte:fragment slot="icon">
+          <BookOutline class={iconClass} />
+        </svelte:fragment>
+      </SidebarItem>
       <SidebarItem label="About" href="/about" on:click={navOnClick("/about")}>
         <svelte:fragment slot="icon">
           <QuestionCircleOutline class={iconClass} />

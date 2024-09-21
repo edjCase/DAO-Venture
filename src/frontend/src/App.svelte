@@ -7,6 +7,7 @@
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import Dao from "./routes/Dao.svelte";
+  import ImageEditor from "./routes/ImageEditor.svelte";
   import Navbar from "./components/common/Navbar.svelte";
 </script>
 
@@ -18,6 +19,7 @@
       <Route path="/dao" component={Dao} />
       <Route path="/profile" component={UserProfile} />
       <Route path="/how-to-play" component={HowToPlay} />
+      <Route path="image-editor" component={ImageEditor} />
       <Route path="/about" component={About} />
       <Route path="*" component={NotFound} />
     </div>

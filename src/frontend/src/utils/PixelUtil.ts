@@ -14,6 +14,7 @@ export function encodePixelsToBase64(pixels: PixelGrid): string {
 export function decodeBase64ToPixels(base64: string, width: number, height: number): PixelGrid {
     return decodeImageToPixels(decodeBase64ToImage(base64), width, height);
 };
+
 function encodeLEB128(value: number): number[] {
     const result: number[] = [];
     while (true) {
@@ -192,4 +193,126 @@ function colorsEqual(a: PixelColor, b: PixelColor): boolean {
         return false;
     }
     return a[0] === b[0] && a[1] === b[1] && a[2] === b[2];
+}
+
+
+interface ColorCount {
+    color: Rgb;
+    count: number;
+}
+
+function rgbToHex(r: number, g: number, b: number): string {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
+
+
+function colorDistance(color1: Rgb, color2: Rgb): number {
+    return Math.sqrt(
+        Math.pow(color1[0] - color2[0], 2) +
+        Math.pow(color1[1] - color2[1], 2) +
+        Math.pow(color1[2] - color2[2], 2)
+    );
+}
+
+function findClosestColor(color: Rgb, palette: Rgb[]): Rgb {
+    let closestColor = palette[0];
+    let minDistance = colorDistance(color, closestColor);
+
+    for (let i = 1; i < palette.length; i++) {
+        const distance = colorDistance(color, palette[i]);
+        if (distance < minDistance) {
+            minDistance = distance;
+            closestColor = palette[i];
+        }
+    }
+
+    return closestColor;
+}
+
+function mergeSimilarColors(colorCounts: ColorCount[], maxColors: number): Rgb[] {
+    while (colorCounts.length > maxColors) {
+        let minDistance = Infinity;
+        let mergeIndex = -1;
+
+        for (let i = 0; i < colorCounts.length; i++) {
+            for (let j = i + 1; j < colorCounts.length; j++) {
+                const distance = colorDistance(colorCounts[i].color, colorCounts[j].color);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    mergeIndex = i;
+                }
+            }
+        }
+
+        if (mergeIndex !== -1) {
+            const color1 = colorCounts[mergeIndex];
+            const color2 = colorCounts[mergeIndex + 1];
+            const totalCount = color1.count + color2.count;
+            const mergedColor: Rgb = [
+                Math.round((color1.color[0] * color1.count + color2.color[0] * color2.count) / totalCount),
+                Math.round((color1.color[1] * color1.count + color2.color[1] * color2.count) / totalCount),
+                Math.round((color1.color[2] * color1.count + color2.color[2] * color2.count) / totalCount)
+            ];
+            colorCounts[mergeIndex] = { color: mergedColor, count: totalCount };
+            colorCounts.splice(mergeIndex + 1, 1);
+        }
+    }
+
+    return colorCounts.map(cc => cc.color);
+}
+
+export function convertToDynamicPalette(imageData: ImageData, maxColors: number = 254): PixelGrid {
+    const data = imageData.data;
+
+    const colorMap = new Map<string, ColorCount>();
+
+    // Count color occurrences
+    for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+
+        if (a === 0) continue; // Skip transparent pixels
+
+        const hex = rgbToHex(r, g, b);
+        const colorCount = colorMap.get(hex);
+        if (colorCount) {
+            colorCount.count++;
+        } else {
+            colorMap.set(hex, { color: [r, g, b], count: 1 });
+        }
+    }
+
+    let colorCounts = Array.from(colorMap.values());
+    let palette: Rgb[];
+
+    if (colorCounts.length > maxColors) {
+        palette = mergeSimilarColors(colorCounts, maxColors);
+    } else {
+        palette = colorCounts.map(cc => cc.color);
+    }
+
+    // Convert image to new palette
+    const pixelGrid: PixelGrid = [];
+    for (let y = 0; y < imageData.height; y++) {
+        const row: (Rgb | undefined)[] = [];
+        for (let x = 0; x < imageData.width; x++) {
+            const i = (y * imageData.width + x) * 4;
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const a = data[i + 3];
+
+            if (a === 0) {
+                row.push(undefined);
+            } else {
+                const closestColor = findClosestColor([r, g, b], palette);
+                row.push(closestColor);
+            }
+        }
+        pixelGrid.push(row);
+    }
+
+    return pixelGrid;
 }
