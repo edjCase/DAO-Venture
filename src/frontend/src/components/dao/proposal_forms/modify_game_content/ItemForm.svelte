@@ -6,17 +6,21 @@
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
   import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
-  import { encodePixelsToImage, PixelGrid } from "../../../../utils/PixelUtil";
+  import {
+    encodePixelsToImage,
+    generatePixelGrid,
+    PixelGrid,
+  } from "../../../../utils/PixelUtil";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
+  import TagsEditor from "./TagsEditor.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
-  let pixels: PixelGrid = Array.from({ length: 16 }, () =>
-    Array.from({ length: 16 }, () => undefined)
-  );
+  let tags: string[] = [];
+  let pixels: PixelGrid = generatePixelGrid(32, 32);
   let actionIds: string[] = [];
   let unlockRequirement: UnlockRequirement | undefined;
 
@@ -40,6 +44,7 @@
           name: name,
           description: description,
           image: encodePixelsToImage(pixels),
+          tags: tags,
           actionIds: actionIds,
           unlockRequirement:
             unlockRequirement === undefined ? [] : [unlockRequirement],
@@ -76,8 +81,13 @@
     </div>
 
     <div>
+      <Label for="tags">Tags</Label>
+      <TagsEditor bind:value={tags} />
+    </div>
+
+    <div>
       <Label for="image">Image</Label>
-      <PixelArtEditor bind:pixels />
+      <PixelArtEditor bind:pixels previewPixelSize={2} pixelSize={8} />
     </div>
 
     <div>

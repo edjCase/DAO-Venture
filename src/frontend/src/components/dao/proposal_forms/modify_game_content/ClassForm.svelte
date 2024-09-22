@@ -9,13 +9,19 @@
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import { itemStore } from "../../../../stores/ItemStore";
+  import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
+  import {
+    encodePixelsToImage,
+    generatePixelGrid,
+    PixelGrid,
+  } from "../../../../utils/PixelUtil";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
   let weaponId: string | undefined;
   let unlockRequirement: UnlockRequirement | undefined;
-
+  let pixels: PixelGrid = generatePixelGrid(32, 32);
   let selectedActions: string[] = [];
   let selectedItems: string[] = [];
 
@@ -41,6 +47,7 @@
           weaponId,
           startingItemIds: selectedItems,
           startingSkillActionIds: selectedActions,
+          image: encodePixelsToImage(pixels),
           unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
         },
       },
@@ -101,6 +108,11 @@
         store={itemStore}
         label="Items"
       />
+    </div>
+
+    <div>
+      <Label for="image">Image</Label>
+      <PixelArtEditor bind:pixels previewPixelSize={2} pixelSize={8} />
     </div>
 
     <div>

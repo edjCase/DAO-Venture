@@ -195,7 +195,7 @@
     >
       <ScenarioCombatStats value={combatState.character} />
       {#if character !== undefined}
-        <CharacterAvatar size="xl" {character} />
+        <CharacterAvatar pixelSize={2} {character} />
       {/if}
     </div>
     <div class="flex flex-col gap-4 justify-around">

@@ -35,7 +35,7 @@
     {#if character === undefined}
       <div></div>
     {:else}
-      <CharacterAvatarWithStats size="sm" {character} />
+      <CharacterAvatarWithStats pixelSize={1} {character} />
     {/if}
   </div>
 </Navbar>

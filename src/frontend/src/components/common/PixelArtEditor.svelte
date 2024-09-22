@@ -47,12 +47,16 @@
   };
 
   $: previewLayers = [pixels];
+  $: gridHeight = height * pixelSize;
 </script>
 
 <div class="flex space-x-4">
   <div
     class="grid border"
     style:grid-template-columns="repeat({width}, {pixelSize}px)"
+    style:grid-template-rows="repeat({height}, {pixelSize}px)"
+    style:height="{gridHeight}px"
+    style:overflow="hidden"
     on:mouseup={handleMouseUp}
     on:mouseleave={handleMouseUp}
     role="button"
@@ -69,7 +73,7 @@
             }
           }}
           role="button"
-          tabindex={x + y * height}
+          tabindex={x + y * pixelSize}
           class="cursor-pointer hover:opacity-75 transition-opacity"
           style:width="{pixelSize}px"
           style:height="{pixelSize}px"
@@ -80,12 +84,15 @@
       {/each}
     {/each}
   </div>
-  <div class="flex flex-col justify-center">
+  <div class="flex flex-col justify-center items-center">
     <RgbColor bind:value={selectedColor} type="vertical" />
     <Button on:click={selectTransparent}>Transparent Pixel</Button>
     <Button on:click={copyToClipboard}>Copy Base64 to Clipboard</Button>
+    {#if previewPixelSize !== undefined}
+      <div class="flex flex-col items-center">
+        <div>Preview:</div>
+        <PixelArtCanvas layers={previewLayers} pixelSize={previewPixelSize} />
+      </div>
+    {/if}
   </div>
 </div>
-{#if previewPixelSize !== undefined}
-  <PixelArtCanvas layers={previewLayers} pixelSize={previewPixelSize} />
-{/if}

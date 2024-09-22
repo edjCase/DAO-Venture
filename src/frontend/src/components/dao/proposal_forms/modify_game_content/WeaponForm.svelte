@@ -9,13 +9,19 @@
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
+  import {
+    encodePixelsToImage,
+    generatePixelGrid,
+    PixelGrid,
+  } from "../../../../utils/PixelUtil";
+  import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
   let actionIds: string[] = [];
   let unlockRequirement: UnlockRequirement | undefined;
-
+  let pixels: PixelGrid = generatePixelGrid(32, 32);
   let selectedActions: string[] = [];
 
   const generateProposal = (): CreateWorldProposalRequest | string => {
@@ -28,6 +34,7 @@
       name,
       description,
       actionIds,
+      image: encodePixelsToImage(pixels),
       unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
     };
 
@@ -78,6 +85,11 @@
         store={actionStore}
         label="Actions"
       />
+    </div>
+
+    <div>
+      <Label>Image</Label>
+      <PixelArtEditor bind:pixels previewPixelSize={2} pixelSize={8} />
     </div>
 
     <div>

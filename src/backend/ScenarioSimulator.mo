@@ -425,7 +425,7 @@ module {
             characterHandler.calculateAttributes(gameContent.weapons, gameContent.items, gameContent.actions);
         };
 
-        public func applyEffect(effect : ScenarioMetaData.Effect) : {
+        public func applyEffect(effect : ScenarioMetaData.PathEffect) : {
             #alive;
             #dead;
         } {

@@ -32,7 +32,7 @@
       <div>Result: {game.victory ? "Victory" : "Defeat"}</div>
       <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
       <div class="flex justify-center">
-        <CharacterAvatarWithStats size="lg" character={game.character} />
+        <CharacterAvatarWithStats pixelSize={2} character={game.character} />
       </div>
     </div>
   {/each}

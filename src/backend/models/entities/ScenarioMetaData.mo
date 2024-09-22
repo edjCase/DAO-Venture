@@ -57,7 +57,7 @@ module {
     public type Choice = {
         id : Text;
         description : Text;
-        effects : [Effect];
+        effects : [PathEffect];
         requirement : ?ChoiceRequirement;
         nextPath : NextPathKind;
     };
@@ -102,7 +102,7 @@ module {
         weight : OptionWeight;
         pathId : ?Text;
         description : Text;
-        effects : [Effect];
+        effects : [PathEffect];
     };
 
     public type OptionWeight = {
@@ -115,7 +115,7 @@ module {
         #attributeScaled : Action.Attribute;
     };
 
-    public type Effect = {
+    public type PathEffect = {
         #damage : NatValue;
         #heal : NatValue;
         #removeGold : NatValue;
@@ -237,7 +237,7 @@ module {
                             case (null) {};
                         };
                         for (effect in choice.effects.vals()) {
-                            validateEffect(effect, items, allItemTags, achievements, errors);
+                            validatePathEffect(effect, items, allItemTags, achievements, errors);
                         };
 
                     };
@@ -394,8 +394,8 @@ module {
         };
     };
 
-    private func validateEffect(
-        effect : Effect,
+    private func validatePathEffect(
+        effect : PathEffect,
         items : HashMap.HashMap<Text, Item.Item>,
         allItemTags : HashMap.HashMap<Text, ()>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,

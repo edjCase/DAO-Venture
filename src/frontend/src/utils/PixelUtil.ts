@@ -7,6 +7,10 @@ export type Rgb = [number, number, number];
 
 export type PixelColor = Rgb | undefined;
 
+export function generatePixelGrid(width: number, height: number): PixelGrid {
+    return Array.from({ length: height }, () => Array.from({ length: width }, () => undefined));
+}
+
 export function encodePixelsToBase64(pixels: PixelGrid): string {
     return encodeImageToBase64(encodePixelsToImage(pixels));
 };

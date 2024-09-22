@@ -11,6 +11,8 @@
   import CharacterStatIcon from "../../../character/CharacterStatIcon.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
+  import BigIntInput from "../../../common/BigIntInput.svelte";
+  import TagsEditor from "./TagsEditor.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -35,7 +37,6 @@
   let selectedLocationType: string = locationTypes[0].value;
   let location: CreatureLocationKind = locationTypes[0].location;
 
-  let zoneIds: string[] = [];
   let unlockRequirement: UnlockRequirement | undefined;
 
   $: {
@@ -130,22 +131,17 @@
 
     <div class="flex flex-wrap gap-4">
       <div class="flex flex-col items-center">
-        <Label for="health">
+        <Label>
           <CharacterStatIcon kind={{ health: null }} />
         </Label>
-        <Input id="health" type="number" bind:value={health} class="w-16" />
+        <BigIntInput bind:value={health} />
       </div>
       <div class="flex flex-col items-center">
-        <Label for="maxHealth">
+        <Label>
           Max
           <CharacterStatIcon kind={{ health: null }} />
         </Label>
-        <Input
-          id="maxHealth"
-          type="number"
-          bind:value={maxHealth}
-          class="w-16"
-        />
+        <BigIntInput bind:value={maxHealth} />
       </div>
     </div>
 
@@ -181,12 +177,7 @@
     {#if "zoneIds" in location}
       <div>
         <Label for="zoneIds">Zone Ids (comma-separated)</Label>
-        <Input
-          id="zoneIds"
-          type="text"
-          bind:value={zoneIds}
-          placeholder="zone1,zone2,zone3"
-        />
+        <TagsEditor bind:value={location.zoneIds} />
       </div>
     {/if}
     <div>

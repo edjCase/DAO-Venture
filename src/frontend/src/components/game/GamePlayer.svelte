@@ -13,7 +13,6 @@
   {:else if "inProgress" in game.state}
     <InProgressGame {game} />
   {:else}
-    <CompleteGame {game} state={game.state.completed} />
+    <CompleteGame state={game.state.completed} />
   {/if}
-  <!-- <MermaidDiagram /> -->
 </div>

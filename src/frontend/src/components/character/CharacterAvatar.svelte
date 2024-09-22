@@ -3,8 +3,8 @@
   import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
   import { decodeImageToPixels } from "../../utils/PixelUtil";
 
-  export let size: "xs" | "sm" | "md" | "lg" | "xl";
   export let character: CharacterWithMetaData;
+  export let pixelSize: number;
 
   $: weaponPixels = decodeImageToPixels(character.weapon.image, 32, 32);
 
@@ -14,5 +14,5 @@
   ];
 </script>
 
-<PixelArtCanvas layers={pixelLayers} />
-<PixelArtCanvas layers={[weaponPixels]} />
+<PixelArtCanvas layers={pixelLayers} {pixelSize} />
+<PixelArtCanvas layers={[weaponPixels]} {pixelSize} />

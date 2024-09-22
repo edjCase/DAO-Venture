@@ -4,8 +4,8 @@
   import CharacterAttributeIcon from "./CharacterAttributeIcon.svelte";
   import CharacterStatIcon from "./CharacterStatIcon.svelte";
 
-  export let size: "xs" | "sm" | "md" | "lg" | "xl";
   export let character: CharacterWithMetaData;
+  export let pixelSize: number;
 
   const getValue = (value: bigint | undefined): string =>
     value === undefined ? "" : value.toString();
@@ -24,7 +24,7 @@
     </div>
   </div>
   <div class="flex justify-center m-2 border border-gray-300 rounded">
-    <CharacterAvatar {size} {character} />
+    <CharacterAvatar {pixelSize} {character} />
   </div>
   <div class="flex justify-center m-2 gap-2">
     <div class="flex flex-col items-center border border-gray-300 rounded">

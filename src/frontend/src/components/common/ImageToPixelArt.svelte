@@ -34,7 +34,6 @@
 
     const imageData = ctx.getImageData(0, 0, width, height);
     pixels = convertToDynamicPalette(imageData, maxColors);
-    console.log(pixels);
   };
 
   let pixelCanvas: HTMLCanvasElement;

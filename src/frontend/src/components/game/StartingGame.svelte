@@ -38,7 +38,7 @@
         {selected}
         onSelect={selectCharacter(id)}
       >
-        <CharacterAvatar size="lg" {character} />
+        <CharacterAvatar pixelSize={2} {character} />
         <div class="flex-grow">
           <div class="text-2xl">
             {character.race.name}

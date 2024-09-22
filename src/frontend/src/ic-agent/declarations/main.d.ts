@@ -96,7 +96,7 @@ export interface CharacterWithMetaData {
 }
 export interface Choice {
   'id' : string,
-  'effects' : Array<Effect>,
+  'effects' : Array<PathEffect>,
   'description' : string,
   'requirement' : [] | [ChoiceRequirement],
   'nextPath' : NextPathKind,
@@ -228,13 +228,6 @@ export interface DamageLogEntry {
   'target' : TargetKind,
   'amount' : bigint,
 }
-export type Effect = { 'damage' : NatValue } |
-  { 'heal' : NatValue } |
-  { 'removeItemWithTags' : Array<string> } |
-  { 'achievement' : string } |
-  { 'addItem' : string } |
-  { 'addItemWithTags' : Array<string> } |
-  { 'removeGold' : NatValue };
 export type GameStateWithMetaData = {
     'starting' : StartingGameStateWithMetaData
   } |
@@ -372,6 +365,14 @@ export interface PagedResult_2 {
   'totalCount' : bigint,
   'offset' : bigint,
 }
+export type PathEffect = { 'damage' : NatValue } |
+  { 'heal' : NatValue } |
+  { 'removeItemWithTags' : Array<string> } |
+  { 'achievement' : string } |
+  { 'addItem' : string } |
+  { 'addItemWithTags' : Array<string> } |
+  { 'removeGold' : NatValue } |
+  { 'removeItem' : string };
 export type PeriodicEffectKind = { 'damage' : null } |
   { 'heal' : null } |
   { 'block' : null };
@@ -581,7 +582,7 @@ export type WeightKind = { 'raw' : null } |
   { 'attributeScaled' : Attribute };
 export interface WeightedScenarioPathOption {
   'weight' : OptionWeight,
-  'effects' : Array<Effect>,
+  'effects' : Array<PathEffect>,
   'description' : string,
   'pathId' : [] | [string],
 }

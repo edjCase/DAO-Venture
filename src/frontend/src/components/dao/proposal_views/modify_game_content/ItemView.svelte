@@ -2,6 +2,7 @@
   import { decodeImageToPixels } from "../../../../utils/PixelUtil";
   import PixelArtCanvas from "../../../common/PixelArtCanvas.svelte";
   import EntityView from "./EntityView.svelte";
+  import TagsView from "./TagsView.svelte";
   import UnlockRequirementView from "./UnlockRequirementView.svelte";
 
   export let item;
@@ -16,5 +17,6 @@
       pixelSize={1}
     />
   </div>
+  <TagsView tags={item.tags} />
   <UnlockRequirementView value={item.unlockRequirement} />
 </div>

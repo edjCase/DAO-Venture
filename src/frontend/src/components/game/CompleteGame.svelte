@@ -1,13 +1,9 @@
 <script lang="ts">
-  import {
-    CompletedGameStateWithMetaData,
-    GameWithMetaData,
-  } from "../../ic-agent/declarations/main";
+  import { CompletedGameStateWithMetaData } from "../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
   import LoadingButton from "../common/LoadingButton.svelte";
 
-  export let game: GameWithMetaData;
   export let state: CompletedGameStateWithMetaData;
 
   let createGame = async () => {

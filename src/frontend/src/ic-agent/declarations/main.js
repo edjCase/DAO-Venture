@@ -206,7 +206,7 @@ export const idlFactory = ({ IDL }) => {
     'raw' : IDL.Nat,
     'random' : IDL.Tuple(IDL.Nat, IDL.Nat),
   });
-  const Effect = IDL.Variant({
+  const PathEffect = IDL.Variant({
     'damage' : NatValue,
     'heal' : NatValue,
     'removeItemWithTags' : IDL.Vec(IDL.Text),
@@ -214,10 +214,11 @@ export const idlFactory = ({ IDL }) => {
     'addItem' : IDL.Text,
     'addItemWithTags' : IDL.Vec(IDL.Text),
     'removeGold' : NatValue,
+    'removeItem' : IDL.Text,
   });
   const WeightedScenarioPathOption = IDL.Record({
     'weight' : OptionWeight,
-    'effects' : IDL.Vec(Effect),
+    'effects' : IDL.Vec(PathEffect),
     'description' : IDL.Text,
     'pathId' : IDL.Opt(IDL.Text),
   });
@@ -241,7 +242,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Choice = IDL.Record({
     'id' : IDL.Text,
-    'effects' : IDL.Vec(Effect),
+    'effects' : IDL.Vec(PathEffect),
     'description' : IDL.Text,
     'requirement' : IDL.Opt(ChoiceRequirement),
     'nextPath' : NextPathKind,
