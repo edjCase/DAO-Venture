@@ -60,7 +60,7 @@
 </script>
 
 <BottomNav {activeUrl} position="fixed" classInner="grid-cols-5">
-  <BottomNavItem btnName="World" href="/" on:click={navOnClick("/")}>
+  <BottomNavItem btnName="Game" href="/" on:click={navOnClick("/")}>
     <GlobeSolid class={iconClass} />
   </BottomNavItem>
   <BottomNavItem btnName="DAO" href="/dao" on:click={navOnClick("/dao")}>

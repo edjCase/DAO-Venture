@@ -1,8 +1,8 @@
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
 import PseudoRandomX "mo:xtended-random/PseudoRandomX";
-import ActionResult "../ActionResult";
-import ScenarioMetaData "ScenarioMetaData";
+import ActionResult "./ActionResult";
+import ScenarioMetaData "./entities/ScenarioMetaData";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;

@@ -1,48 +1,43 @@
-<section class="py-8">
-  <h2 class="text-xl font-bold mb-4">Welcome, Adventurer!</h2>
-  <p class="mb-4">
-    Embark on a DAO-controlled journey through pixelated realms of fantasy and
-    peril.
-  </p>
-</section>
+<script lang="ts">
+  import { Button, Card } from "flowbite-svelte";
+  import { ChevronRightOutline } from "flowbite-svelte-icons";
+</script>
 
-<section class="py-8">
-  <h2 class="text-xl font-bold mb-4">Game Overview</h2>
-  <div class="flex flex-col items-center mb-8">
-    <img
-      src="/api/placeholder/300/200"
-      alt="Retro game screenshot"
-      class="mb-4 rounded"
-    />
-    <p>
-      Experience a unique blend of community-driven gameplay and classic RPG
-      elements.
-    </p>
-  </div>
-  <div class="flex flex-col items-center mb-8">
-    <p class="mb-4">Explore treacherous dungeons and mystical forests.</p>
-    <img
-      src="/api/placeholder/300/200"
-      alt="Pixel art dungeon"
-      class="rounded"
-    />
-  </div>
-  <div class="flex flex-col items-center">
-    <img
-      src="/api/placeholder/300/200"
-      alt="Pixel art character"
-      class="mb-4 rounded"
-    />
-    <p>Customize your hero and forge your legend in the crypto realm.</p>
-  </div>
-</section>
+<div class="text-primary-500">
+  <header class="mb-8 text-center">
+    <p class="text-2xl mt-2">A DAO-Powered Roguelite Adventure</p>
+  </header>
 
-<section class="py-8">
-  <h2 class="text-xl font-bold mb-4">Key Features</h2>
-  <ul class="list-disc list-inside">
-    <li>DAO-controlled gameplay decisions</li>
-    <li>Retro-style graphics with modern blockchain technology</li>
-    <li>Community-driven storylines and quests</li>
-    <li>Earn tokens and NFTs as you play</li>
-  </ul>
-</section>
+  <main>
+    <section class="mb-8">
+      <h2 class="text-2xl font-semibold mb-4">How It Works</h2>
+      <div class="space-y-4 flex flex-col items-center">
+        <Card class="bg-gray-800 border-green-400">
+          <h3 class="text-xl font-semibold mb-2">Play</h3>
+          <p class="text-sm">
+            Choose your character, navigate through scenarios, and battle
+            creatures and see if you can make it to the end.
+          </p>
+        </Card>
+        <Card class="bg-gray-800 border-green-400">
+          <h3 class="text-xl font-semibold mb-2">Contribute</h3>
+          <p class="text-sm">
+            Submit new content like characters, items, or scenarios to have it
+            approved by the DAO and added into the game
+          </p>
+        </Card>
+        <Card class="bg-gray-800 border-green-400">
+          <h3 class="text-xl font-semibold mb-2">Govern</h3>
+          <p class="text-sm">
+            Participate in DAO voting to decide on new features, content, and
+            the future direction of DAOventure.
+          </p>
+        </Card>
+      </div>
+      <Button class="mt-4">
+        Learn More
+        <ChevronRightOutline class="w-5 h-5 ml-2" />
+      </Button>
+    </section>
+  </main>
+</div>

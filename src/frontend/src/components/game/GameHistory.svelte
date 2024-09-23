@@ -27,6 +27,9 @@
 <div>
   <div class="text-3xl">Game History</div>
   <hr />
+  {#if completedGames.length === 0}
+    <div class="text-center text-xl mt-4">No games found</div>
+  {/if}
   {#each completedGames as game}
     <div>
       <div>Result: {game.victory ? "Victory" : "Defeat"}</div>

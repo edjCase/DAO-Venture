@@ -15,18 +15,17 @@
   $: user = $userStore;
 </script>
 
-<div class="text-3xl text-center my-5">World</div>
-<div class="text-center">
-  <div class="flex items-center justify-center">
-    <span class="mr-2">Users:</span>
-    <LoadingValue value={userStats?.userCount} />
-  </div>
-</div>
 <Tabs>
   <TabItem title="Proposals" open>
     <ProposalList />
   </TabItem>
   <TabItem title="Create Proposal" disabled={user === undefined}>
     <ProposalForm />
+  </TabItem>
+  <TabItem title="DAO Info" open>
+    <div class="flex items-center justify-center">
+      <span class="mr-2">Users:</span>
+      <LoadingValue value={userStats?.userCount} />
+    </div>
   </TabItem>
 </Tabs>

@@ -13,7 +13,7 @@ import Array "mo:base/Array";
 import TrieSet "mo:base/TrieSet";
 import Int "mo:base/Int";
 import Order "mo:base/Order";
-import Scenario "../models/entities/Scenario";
+import Scenario "../models/Scenario";
 import Character "../models/Character";
 import IterTools "mo:itertools/Iter";
 import CharacterGenerator "../CharacterGenerator";

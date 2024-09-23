@@ -11,7 +11,7 @@ import Float "mo:base/Float";
 import Result "mo:base/Result";
 import Int "mo:base/Int";
 import CharacterHandler "handlers/CharacterHandler";
-import Scenario "models/entities/Scenario";
+import Scenario "models/Scenario";
 import Character "models/Character";
 import UserHandler "handlers/UserHandler";
 import Creature "models/entities/Creature";

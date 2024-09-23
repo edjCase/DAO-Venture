@@ -14,9 +14,6 @@
       <div>
         <UserPseudonym userId={user.id} />
       </div>
-      <div class="text-center text-md font-bold">
-        Points: {user.data.points}
-      </div>
     </div>
   {:else}
     <LoginButton />

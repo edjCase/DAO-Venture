@@ -1,7 +1,6 @@
 <script lang="ts">
   import LoginButton from "../../components/common/LoginButton.svelte";
   import { userStore } from "../../stores/UserStore";
-  import UserPseudonym from "./UserPseudonym.svelte";
   import CopyTextButton from "../common/CopyTextButton.svelte";
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import GameHistory from "../game/GameHistory.svelte";
@@ -11,41 +10,25 @@
 
 <div class="bg-gray-800 p-4">
   {#if user}
-    <div class="bg-gray-900 rounded-lg shadow-md p-6 w-full max-w-md">
-      <div class="text-2xl font-bold mb-4">User Profile</div>
-      <div class="mb-4">
-        <div class="font-bold text-xl mb-2">Name</div>
-        <div>
-          <UserPseudonym userId={user.id} />
-        </div>
-      </div>
-      <div class="mb-4">
-        <div class="font-bold text-xl mb-2">Id</div>
-        <div class="flex items-center mt-2">
-          <div class="text-sm text-center mr-2">
-            {user.id.toString()}
-          </div>
-
-          <CopyTextButton value={user.id.toString()} />
-        </div>
-      </div>
-      {#if user.data !== undefined}
-        <div class="mb-4">
-          <div>
-            Joined World: {nanosecondsToDate(user.data.createTime)}
-          </div>
-        </div>
-        <div class="mb-4">
-          <div class="font-bold text-xl mb-2">
-            Points - {user.data.points}
-          </div>
-        </div>
-      {/if}
+    <div class="mb-4">
+      <span>
+        Id:
+        {user.id.toString().substring(0, 6)}...{user.id
+          .toString()
+          .substring(user.id.toString().length - 6)}
+      </span>
+      <CopyTextButton value={user.id.toString()} />
     </div>
-    <GameHistory />
+    {#if user.data !== undefined}
+      <div class="mb-4">
+        <div>
+          Joined: {nanosecondsToDate(user.data.createTime).toLocaleDateString()}
+        </div>
+      </div>
+      <div class="mt-4 flex justify-center">
+        <LoginButton />
+      </div>
+      <GameHistory />
+    {/if}
   {/if}
-
-  <div class="mt-4">
-    <LoginButton />
-  </div>
 </div>

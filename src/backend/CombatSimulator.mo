@@ -10,7 +10,7 @@ import HashMap "mo:base/HashMap";
 import Debug "mo:base/Debug";
 import Text "mo:base/Text";
 import Action "models/entities/Action";
-import Scenario "models/entities/Scenario";
+import Scenario "models/Scenario";
 import IterTools "mo:itertools/Iter";
 import ScenarioMetaData "models/entities/ScenarioMetaData";
 import Character "models/Character";

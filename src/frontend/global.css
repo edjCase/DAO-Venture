@@ -30,4 +30,5 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: 'Pixelify Sans', sans-serif;
+  text-shadow: 2px 2px 0px #000000;
 }

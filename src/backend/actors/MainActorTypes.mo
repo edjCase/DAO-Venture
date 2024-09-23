@@ -1,5 +1,5 @@
 import Nat "mo:base/Nat";
-import Scenario "../models/entities/Scenario";
+import Scenario "../models/Scenario";
 import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import CommonTypes "../CommonTypes";
