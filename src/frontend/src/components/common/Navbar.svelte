@@ -5,6 +5,9 @@
   import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
   import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
+  import LoadingButton from "./LoadingButton.svelte";
+  import { userStore } from "../../stores/UserStore";
+  import { mainAgentFactory } from "../../ic-agent/Main";
 
   $: currentGame = $currentGameStore;
 
@@ -20,6 +23,21 @@
       }
     }
   }
+
+  $: user = $userStore;
+
+  let createGame = async () => {
+    let mainAgent = await mainAgentFactory();
+    let result = await mainAgent.createGame({});
+    if ("ok" in result) {
+      currentGameStore.refetch();
+    } else {
+      console.error("Failed to create game", result);
+    }
+  };
+  let login = async () => {
+    await userStore.login();
+  };
 </script>
 
 <Navbar rounded color="form" class="mb-2">
@@ -31,11 +49,15 @@
       <div class="text-center text-4xl text-primary-500">DAO Venture</div>
     </Link>
   </div>
-  <div class="flex-1 justify-center">
-    {#if character === undefined}
-      <div></div>
+  <div class="flex-1 flex justify-center">
+    {#if user !== undefined}
+      {#if currentGame === undefined}
+        <LoadingButton onClick={createGame}>Play</LoadingButton>
+      {:else if character !== undefined}
+        <CharacterAvatarWithStats pixelSize={1} {character} />
+      {/if}
     {:else}
-      <CharacterAvatarWithStats pixelSize={1} {character} />
+      <LoadingButton onClick={login}>Login</LoadingButton>
     {/if}
   </div>
 </Navbar>

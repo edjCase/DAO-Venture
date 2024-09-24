@@ -3,7 +3,7 @@
   import Home from "./routes/Home.svelte";
   import NotFound from "./routes/NotFound.svelte";
   import About from "./routes/About.svelte";
-  import HowToPlay from "./routes/HowToPlay.svelte";
+  import GameInfo from "./routes/GameInfo.svelte";
   import UserProfile from "./routes/UserProfile.svelte";
   import BottomNavigation from "./components/common/BottomNavigation.svelte";
   import Dao from "./routes/Dao.svelte";
@@ -19,7 +19,7 @@
       <Route path="/" component={Home} />
       <Route path="/dao" component={Dao} />
       <Route path="/profile" component={UserProfile} />
-      <Route path="/how-to-play" component={HowToPlay} />
+      <Route path="/game-info" component={GameInfo} />
       <Route path="/image-editor" component={ImageEditor} />
       <Route path="/content" component={Content} />
       <Route path="/about" component={About} />

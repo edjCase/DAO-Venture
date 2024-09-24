@@ -22,7 +22,7 @@
   <TabItem title="Create Proposal" disabled={user === undefined}>
     <ProposalForm />
   </TabItem>
-  <TabItem title="DAO Info" open>
+  <TabItem title="DAO Info">
     <div class="flex items-center justify-center">
       <span class="mr-2">Users:</span>
       <LoadingValue value={userStats?.userCount} />

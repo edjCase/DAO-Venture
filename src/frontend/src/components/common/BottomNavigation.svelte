@@ -16,6 +16,7 @@
     TwitterSolid,
     ClipboardListSolid,
     UserCircleSolid,
+    UserGroupSolid,
   } from "flowbite-svelte-icons";
   import { onMount } from "svelte";
   import { navigate, useLocation } from "svelte-routing";
@@ -64,7 +65,7 @@
     <GlobeSolid class={iconClass} />
   </BottomNavItem>
   <BottomNavItem btnName="DAO" href="/dao" on:click={navOnClick("/dao")}>
-    <ClipboardListSolid class={iconClass} />
+    <UserGroupSolid class={iconClass} />
   </BottomNavItem>
   <BottomNavItem
     btnName="Content"
@@ -105,9 +106,9 @@
   <Sidebar asideClass="w-32" {activeUrl}>
     <SidebarGroup>
       <SidebarItem
-        label="How To Play"
-        href="/how-to-play"
-        on:click={navOnClick("/how-to-play")}
+        label="Game Info"
+        href="/game-info"
+        on:click={navOnClick("/game-info")}
       >
         <svelte:fragment slot="icon">
           <BookOutline class={iconClass} />
