@@ -22,7 +22,7 @@
     {
       title: "Treasury",
       value: "? ICP", // TODO
-      icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4",
+      icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4",
     },
     {
       title: "DAO Members",
@@ -40,9 +40,9 @@
 <h1 class="text-3xl font-bold my-2 text-center text-primary-500">
   DAO Governance
 </h1>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6 justify-items-center">
   {#each metricCards as card}
-    <Card padding="none">
+    <Card padding="none" class="w-full max-w-sm">
       <div class="flex items-center">
         <div
           class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-primary-500 mr-2"

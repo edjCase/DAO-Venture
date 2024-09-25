@@ -43,7 +43,7 @@
       width={selectedSize}
       height={selectedSize}
       pixelSize={editorWidth / selectedSize}
-      previewPixelSize={2}
+      previewPixelSize={10}
     />
   </TabItem>
 </Tabs>

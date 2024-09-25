@@ -641,7 +641,7 @@ module {
         };
 
         public func validateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), [Text]> {
-            ScenarioMetaData.validate(scenario, items, images, zones, achievements, creatures);
+            ScenarioMetaData.validate(scenario, items, zones, achievements, creatures);
         };
 
         public func addOrUpdateZone(zone : Zone.Zone) : Result.Result<(), { #invalid : [Text] }> {

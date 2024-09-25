@@ -134,6 +134,6 @@
   });
 </script>
 
-{#if initialized !== true}
+{#if initialized === false}
   <LoadingButton onClick={initialize}>Initialize Data</LoadingButton>
 {/if}

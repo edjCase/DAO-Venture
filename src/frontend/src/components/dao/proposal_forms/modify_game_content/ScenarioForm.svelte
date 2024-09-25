@@ -135,16 +135,13 @@
       {#each paths as path, index}
         <ScenarioPathForm bind:value={path} />
         <button
-          class="mt-2 bg-red-500 text-white px-2 py-1 rounded"
+          class="mt-2 bg-red-500 text-white px-2 py-1"
           on:click={() => removePath(index)}
         >
           Remove Path
         </button>
       {/each}
-      <button
-        class="bg-blue-500 text-white px-4 py-2 rounded"
-        on:click={addPath}
-      >
+      <button class="bg-blue-500 text-white px-4 py-2" on:click={addPath}>
         Add Path
       </button>
     </div>

@@ -29,7 +29,7 @@
 
 <div class="flex-grow">
   <div class="text-3xl text-center">Top Users</div>
-  <div class="border-2 rounded border-gray-700 p-4 h-[154px]">
+  <div class="border-2 border-gray-700 p-4 h-[154px]">
     <div>
       {#each users as user}
         <div class="grid grid-cols-[3ch,20px,auto] gap-x-1 items-center">
@@ -44,7 +44,7 @@
     <div class="flex justify-center">
       <Link to="/top-predictors">
         <div
-          class="text-center border rounded border-2 border-gray-700 p-2 flex items-center justify-between gap-2"
+          class="text-center border-2 border-gray-700 p-2 flex items-center justify-between gap-2"
         >
           See All
           <ArrowUpRightFromSquareOutline size="xs" />

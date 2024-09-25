@@ -103,7 +103,7 @@
   <div class="grid grid-cols-3 gap-4">
     {#each rewardState.options as option, index}
       <div
-        class="border rounded-lg p-4 cursor-pointer transition-colors duration-200 {selectedOptionIndex ===
+        class="border p-4 cursor-pointer transition-colors duration-200 {selectedOptionIndex ===
         index
           ? 'bg-gray-700 border-blue-500'
           : 'hover:bg-gray-900'}"
@@ -136,7 +136,7 @@
       <div class="grid grid-cols-5 gap-2">
         {#each character.inventorySlots as slot, i}
           <div
-            class="w-16 h-16 border rounded flex items-center justify-center cursor-pointer {inventorySlot ===
+            class="w-16 h-16 border flex items-center justify-center cursor-pointer {inventorySlot ===
             i
               ? 'border-blue-500 bg-gray-700'
               : 'hover:bg-gray-900'}"

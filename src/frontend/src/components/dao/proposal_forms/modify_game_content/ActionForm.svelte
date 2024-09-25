@@ -109,7 +109,7 @@
     <div>
       <div>Scenario Effects</div>
       {#each scenarioEffects as effect}
-        <div class="border p-4 mb-4 rounded">
+        <div class="border p-4 mb-4">
           <ScenarioEffectChooser value={effect} />
         </div>
       {/each}
@@ -118,10 +118,10 @@
     <div>
       <Label>Combat Effects</Label>
       {#each combatEffects as effect, index}
-        <div class="border p-4 mb-4 rounded">
+        <div class="border p-4 mb-4">
           <CombatEffectChooser value={effect} />
           <button
-            class="mt-2 bg-red-500 text-white px-2 py-1 rounded"
+            class="mt-2 bg-red-500 text-white px-2 py-1"
             on:click={() => removeCombatEffect(index)}
           >
             Remove Effect
@@ -129,7 +129,7 @@
         </div>
       {/each}
       <button
-        class="bg-blue-500 text-white px-4 py-2 rounded"
+        class="bg-blue-500 text-white px-4 py-2"
         on:click={addCombatEffect}
       >
         Add Effect

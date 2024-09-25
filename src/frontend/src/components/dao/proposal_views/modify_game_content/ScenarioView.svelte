@@ -7,7 +7,7 @@
   export let scenario: ScenarioMetaData;
 </script>
 
-<div class="p-4 rounded-lg shadow">
+<div class="p-4 shadow">
   <h2 class="text-xl font-bold mb-4">Scenario</h2>
   <EntityView entity={scenario} />
 
@@ -43,7 +43,7 @@
   <div class="mt-4">
     <h3 class="text-lg font-semibold mb-2">Paths:</h3>
     {#each scenario.paths as path}
-      <div class="p-2 rounded mb-2">
+      <div class="p-2 mb-2">
         {path.id}:
         <!-- TODO -->
         {#if "choice" in path.kind}

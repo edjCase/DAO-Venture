@@ -34,20 +34,22 @@
 </script>
 
 <GameNav {game}>
-  <div class="text-3xl">Pick Character</div>
-  <div class="flex items-center">
+  <div class="p-4 text-4xl font-semibold text-primary-500">
+    Pick A Character
+  </div>
+  <div class="flex items-center justify-around">
     <div class="flex flex-col gap-2 justify-left box-border">
       {#each state.characterOptions as character, id}
         <button on:click={selectCharacter(id)}>
           <div class={characterIndex === id ? "bg-gray-600" : ""}>
-            <CharacterAvatar {character} pixelSize={4} />
+            <CharacterAvatar {character} pixelSize={2} />
           </div>
         </button>
       {/each}
     </div>
-    <div>
-      {#if characterIndex !== undefined}
-        {@const character = state.characterOptions[characterIndex]}
+    {#if characterIndex !== undefined}
+      {@const character = state.characterOptions[characterIndex]}
+      <div>
         <div class="text-3xl text-primary-500">
           {character.race.name}
           {character.class.name}
@@ -71,7 +73,7 @@
           </div>
         </div>
         <LoadingButton onClick={confirm}>Confirm</LoadingButton>
-      {/if}
-    </div>
+      </div>
+    {/if}
   </div>
 </GameNav>

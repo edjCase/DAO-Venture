@@ -21,7 +21,11 @@
     hasMore = completedGames.length < Number(pagedItems.totalCount);
   };
 
-  onMount(loadMoreGames);
+  onMount(() => {
+    if (completedGames.length === 0) {
+      loadMoreGames();
+    }
+  });
 </script>
 
 <div>
@@ -43,7 +47,7 @@
   {#if hasMore}
     <button
       on:click={loadMoreGames}
-      class="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+      class="mt-4 px-4 py-2 bg-blue-500 text-white"
     >
       Load More
     </button>

@@ -36,6 +36,7 @@
   </div>
 {:else if "combat" in stage.kind}
   <div>
+    <div class="text-3xl text-primary-500">Combat Turn</div>
     {#each stage.kind.combat.log as logEntry}
       <div>
         {#if "damage" in logEntry}
@@ -59,32 +60,14 @@
         {/if}
       </div>
     {/each}
+    {#if "inProgress" in stage.kind.combat.kind}
+      <div></div>
+    {:else if "victory" in stage.kind.combat.kind}
+      <div>Victory</div>
+    {:else if "defeat" in stage.kind.combat.kind}
+      <div>DEFEAT</div>
+    {/if}
   </div>
-  {#if "inProgress" in stage.kind.combat.kind}
-    <div>
-      Character Health: {stage.kind.combat.kind.inProgress.character
-        .health}/{stage.kind.combat.kind.inProgress.character.maxHealth}
-    </div>
-    <div>Creatures:</div>
-    {#each stage.kind.combat.kind.inProgress.creatures as creature}
-      <div>
-        {creature.creatureId}: Health {creature.health}/{creature.maxHealth}
-      </div>
-    {/each}
-  {:else if "victory" in stage.kind.combat.kind}
-    <div>Victory</div>
-    <div>
-      Character Health: {stage.kind.combat.kind.victory.characterHealth}
-    </div>
-  {:else if "defeat" in stage.kind.combat.kind}
-    <div>DEFEAT</div>
-    <div>Remaining Creatures:</div>
-    {#each stage.kind.combat.kind.defeat.creatures as creature}
-      <div>
-        {creature.creatureId}: Health {creature.health}/{creature.maxHealth}
-      </div>
-    {/each}
-  {/if}
 {/if}
 
 <div class="flex flex-col max-w-96 justify-center items-center mx-auto mt-6">

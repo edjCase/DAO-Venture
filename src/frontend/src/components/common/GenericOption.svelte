@@ -15,7 +15,7 @@
       selecting = false;
     }
   };
-  $: classes = `p-4 border rounded w-full`;
+  $: classes = `p-4 border w-full`;
 </script>
 
 <div class="flex items-center mb-2">

@@ -23,23 +23,23 @@
       {healthStat}/{maxHealthStat}
     </div>
   </div>
-  <div class="flex justify-center m-2 border border-gray-300 rounded">
+  <div class="flex justify-center m-2 border border-gray-300">
     <CharacterAvatar {pixelSize} {character} />
   </div>
   <div class="flex justify-center m-2 gap-2">
-    <div class="flex flex-col items-center border border-gray-300 rounded">
+    <div class="flex flex-col items-center border border-gray-300">
       <CharacterAttributeIcon value={{ strength: null }} />
       <span class="text-sm">{character.attributes.strength}</span>
     </div>
-    <div class="flex flex-col items-center border border-gray-300 rounded">
+    <div class="flex flex-col items-center border border-gray-300">
       <CharacterAttributeIcon value={{ dexterity: null }} />
       <span class="text-sm">{character.attributes.dexterity}</span>
     </div>
-    <div class="flex flex-col items-center border border-gray-300 rounded">
+    <div class="flex flex-col items-center border border-gray-300">
       <CharacterAttributeIcon value={{ wisdom: null }} />
       <span class="text-sm">{character.attributes.wisdom}</span>
     </div>
-    <div class="flex flex-col items-center border border-gray-300 rounded">
+    <div class="flex flex-col items-center border border-gray-300">
       <CharacterAttributeIcon value={{ charisma: null }} />
       <span class="text-sm">{character.attributes.charisma}</span>
     </div>

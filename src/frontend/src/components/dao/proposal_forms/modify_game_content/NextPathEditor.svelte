@@ -43,7 +43,7 @@
   <Input type="text" bind:value={value.single} placeholder="Path ID" />
 {:else if "multi" in value}
   {#each value.multi as path, pathIndex}
-    <div class="border p-4 mb-4 rounded">
+    <div class="border p-4 mb-4">
       <Input type="number" bind:value={path.weight} placeholder="Weight" />
       <Input
         type="text"

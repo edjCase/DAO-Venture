@@ -14,5 +14,7 @@
   ];
 </script>
 
-<PixelArtCanvas layers={pixelLayers} {pixelSize} />
-<PixelArtCanvas layers={[weaponPixels]} {pixelSize} />
+<div>
+  <PixelArtCanvas layers={pixelLayers} {pixelSize} />
+  <PixelArtCanvas layers={[weaponPixels]} {pixelSize} />
+</div>

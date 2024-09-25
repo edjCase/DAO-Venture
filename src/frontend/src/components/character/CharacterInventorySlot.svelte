@@ -5,7 +5,7 @@
   export let value: InventorySlotWithMetaData;
 </script>
 
-<div class="border rounded w-12 h-12 flex items-center justify-center">
+<div class="border w-12 h-12 flex items-center justify-center">
   {#if value.item[0] !== undefined}
     <CharacterItem item={value.item[0]} />
   {/if}

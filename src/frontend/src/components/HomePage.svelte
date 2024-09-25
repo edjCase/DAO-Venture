@@ -7,7 +7,7 @@
   $: currentGame = $currentGameStore;
 </script>
 
-<div class="bg-gray-800 rounded p-2 py-8 text-center">
+<div class="bg-gray-800 p-2 pb-6 text-center">
   {#if currentGame === undefined}
     <InitialDataLoad />
     <OverviewPage />

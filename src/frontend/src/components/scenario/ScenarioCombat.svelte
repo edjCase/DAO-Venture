@@ -175,12 +175,19 @@
     { action: itemAction, kind: { item: null }, label: "Item" },
     { action: weaponAction, kind: { weapon: null }, label: "Weapon" },
   ];
+
+  $: needToSelectTarget =
+    selectedAction &&
+    "chosen" in selectedAction.target.selection &&
+    !isCharacterSelected &&
+    selectedTargetIndex === undefined &&
+    !("ally" in selectedAction.target.scope);
 </script>
 
 <div class="flex flex-col gap-4">
   <div class="flex flex-row gap-4 justify-around items-center">
     <div
-      class="p-4 rounded-lg border cursor-pointer bg-gray-800
+      class="p-4 cursor-pointer border-2 drop-shadow-xl bg-gray-700 border-gray-500
     {isCharacterSelected
         ? 'border-green-500'
         : isAutoSelected(false)
@@ -201,7 +208,7 @@
     <div class="flex flex-col gap-4 justify-around">
       {#each enemyCreatures as creature, i}
         <div
-          class="border p-4 rounded-lg cursor-pointer max-w-36 bg-gray-800
+          class="p-4 cursor-pointer max-w-48 border-2 drop-shadow-xl bg-gray-700 border-gray-500
         {selectedTargetIndex === creature.index
             ? 'border-green-500'
             : isAutoSelected(true)
@@ -220,82 +227,79 @@
       {/each}
     </div>
   </div>
-  <h3 class="text-xl font-semibold mt-4 mb-2">Available Actions</h3>
-  <div class="flex flex-wrap justify-around">
-    {#each actionGroups as { action, kind, label }}
-      <div>
-        <p class="text-sm mt-2 font-semibold">{label}</p>
-        {#if action}
-          <div
-            class="border border-gray-600 p-4 rounded-lg cursor-pointer max-w-36
-          {JSON.stringify(selectedActionKind) === JSON.stringify(kind)
-              ? 'bg-gray-700 border-blue-500'
-              : 'bg-gray-800 hover:bg-gray-700'}"
-            on:click={selectAction(kind)}
-            on:keypress={selectAction(kind)}
-            role="button"
-            tabindex="0"
-          >
-            <h4 class="font-semibold mb-2">{action.name}</h4>
-            <p class="text-sm">{action.description}</p>
-            <p class="text-xs mt-2">
-              Target: {#if "any" in action.target.scope}
-                Any
-              {:else if "ally" in action.target.scope}
-                Self
-              {:else if "enemy" in action.target.scope}
-                Enemy
-              {:else}
-                NOT IMPLEMENTED TARGET SCOPE {toJsonString(action.target.scope)}
-              {/if}
-              -
-              {#if "chosen" in action.target.selection}
-                Chosen
-              {:else if "all" in action.target.selection}
-                All
-              {:else if "random" in action.target.selection}
-                Random
-              {:else}
-                NOT IMPLEMENTED TARGET SELECTION {toJsonString(
-                  action.target.selection
-                )}
-              {/if}
-            </p>
-            <div class="flex flex-col justify-center">
-              {#if action.combatEffects.length > 0}
-                {#each action.combatEffects as effect}
-                  <div>
-                    <CombatEffect value={effect} />
-                  </div>
-                {/each}
-              {/if}
+  <div>
+    <h3 class="text-xl font-semibold text-right w-1/4">Actions</h3>
+    <div class="flex flex-col flex-wrap justify-around gap-1">
+      {#each actionGroups as { action, kind, label }}
+        <div class="flex justify-around items-center">
+          <div class="text-xl mt-2 font-semibold text-right pr-2 w-36">
+            <div class="text-primary-500">{action?.name || "None"}</div>
+            <span class="text-sm">{label}</span>
+          </div>
+          {#if !action}
+            <div
+              class=" p-4 bg-gray-800 opacity-50 flex-grow border-2 drop-shadow-xl border-gray-500"
+            >
+              <h4 class="font-semibold mb-2">No {label} Action Available</h4>
             </div>
-          </div>
-        {:else}
-          <div
-            class="border border-gray-600 p-4 rounded-lg max-w-36 bg-gray-800 opacity-50"
-          >
-            <h4 class="font-semibold mb-2">No {label} Action Available</h4>
-          </div>
-        {/if}
-      </div>
-    {/each}
+          {:else}
+            <div
+              class="p-2 cursor-pointer flex-grow border-2 drop-shadow-xl border-gray-500
+        {JSON.stringify(selectedActionKind) === JSON.stringify(kind)
+                ? 'bg-gray-600 border-blue-500'
+                : 'bg-gray-800 hover:bg-gray-600'}"
+              on:click={selectAction(kind)}
+              on:keypress={selectAction(kind)}
+              role="button"
+              tabindex="0"
+            >
+              <p class="text-xs mt-2">
+                Target: {#if "any" in action.target.scope}
+                  Any
+                {:else if "ally" in action.target.scope}
+                  Self
+                {:else if "enemy" in action.target.scope}
+                  Enemy
+                {:else}
+                  NOT IMPLEMENTED TARGET SCOPE {toJsonString(
+                    action.target.scope
+                  )}
+                {/if}
+                -
+                {#if "chosen" in action.target.selection}
+                  Chosen
+                {:else if "all" in action.target.selection}
+                  All
+                {:else if "random" in action.target.selection}
+                  Random
+                {:else}
+                  NOT IMPLEMENTED TARGET SELECTION {toJsonString(
+                    action.target.selection
+                  )}
+                {/if}
+              </p>
+              <div class="flex flex-col justify-center">
+                {#if action.combatEffects.length > 0}
+                  {#each action.combatEffects as effect}
+                    <div>
+                      <CombatEffect value={effect} />
+                    </div>
+                  {/each}
+                {/if}
+              </div>
+            </div>
+          {/if}
+        </div>
+      {/each}
+    </div>
   </div>
-
-  {#if selectedAction && "chosen" in selectedAction.target.selection && !isCharacterSelected && selectedTargetIndex === undefined && !("ally" in selectedAction.target.scope)}
-    <p class="text-yellow-400 mt-2">Please select a target for this action.</p>
-  {/if}
 
   <LoadingButton
     onClick={performAction}
     class="mt-4"
-    disabled={!selectedActionKind ||
-      (selectedAction &&
-        "chosen" in selectedAction.target.selection &&
-        !isCharacterSelected &&
-        selectedTargetIndex === undefined &&
-        !("ally" in selectedAction.target.scope))}
+    disabled={!selectedActionKind || needToSelectTarget}
+    color={needToSelectTarget ? "yellow" : "primary"}
   >
-    Perform Action
+    {needToSelectTarget ? "Select Target" : "Perform Action"}
   </LoadingButton>
 </div>
