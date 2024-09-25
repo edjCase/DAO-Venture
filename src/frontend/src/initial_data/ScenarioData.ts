@@ -2013,7 +2013,7 @@ export const scenarios: ScenarioMetaData[] = [
   },
   {
     id: "wandering_alchemist",
-    name: "The Mad Mixologist",
+    name: "The Wandering Alchemist",
     description: "You stumble upon a wild-eyed alchemist, their hair frazzled and eyebrows slightly singed. Their pack bubbles and fizzes ominously, occasionally letting out small puffs of rainbow-colored smoke.",
     location: {
       zoneIds: ["enchanted_forest"],
