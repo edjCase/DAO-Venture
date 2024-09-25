@@ -1,10 +1,10 @@
 <script lang="ts">
   import { Input } from "flowbite-svelte";
   import { Rgb } from "../../utils/PixelUtil";
+  import { PenSolid } from "flowbite-svelte-icons";
 
   export let value: Rgb = [0, 0, 0];
   export let disabled: boolean = false;
-  export let type: "horizontal" | "vertical" = "horizontal";
   let stringRgb: string = `#${value[0].toString(16).padStart(2, "0")}${value[1].toString(16).padStart(2, "0")}${value[2].toString(16).padStart(2, "0")}`;
 
   $: {
@@ -13,21 +13,10 @@
     let blue = parseInt(stringRgb.slice(5, 7), 16);
     value = [red, green, blue];
   }
-
-  let typeClasses: string = "";
-  $: {
-    switch (type) {
-      case "horizontal":
-        typeClasses = `items-center`;
-        break;
-      case "vertical":
-        typeClasses = `flex-col items-center`;
-        break;
-    }
-  }
 </script>
 
-<div class="flex {typeClasses} gap-4">
+<div class="flex items-center">
+  <PenSolid />
   <Input
     {disabled}
     type="color"

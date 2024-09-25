@@ -5,65 +5,73 @@
   } from "../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
-  import CharacterAvatar from "../character/CharacterAvatar.svelte";
   import GameNav from "./GameNav.svelte";
-  import GenericOption from "../common/GenericOption.svelte";
-  import CharacterItem from "../content/Item.svelte";
+  import CharacterInventory from "../character/CharacterInventory.svelte";
+  import CharacterAvatar from "../character/CharacterAvatar.svelte";
+  import LoadingButton from "../common/LoadingButton.svelte";
 
   export let game: GameWithMetaData;
   export let state: StartingGameStateWithMetaData;
 
-  let characterId: number | undefined = undefined;
-  let selectCharacter = (id: number) => async () => {
-    characterId = id;
+  let characterIndex: number | undefined = undefined;
+  let selectCharacter = (id: number) => () => {
+    characterIndex = id;
+  };
+  let confirm = async () => {
+    if (characterIndex === undefined) {
+      return;
+    }
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.startGame({
-      characterId: BigInt(characterId),
+      characterId: BigInt(characterIndex),
     });
     if ("ok" in result) {
       currentGameStore.refetch();
     } else {
-      console.error("Failed start game", result, characterId);
+      console.error("Failed start game", result, characterIndex);
     }
   };
 </script>
 
 <GameNav {game}>
-  <div class="text-3xl">Pick character</div>
-  <div class="flex flex-col p-8">
-    {#each state.characterOptions as character, id}
-      {@const selected = characterId === id}
-      <GenericOption
-        choiceId={id.toString()}
-        {selected}
-        onSelect={selectCharacter(id)}
-      >
-        <CharacterAvatar pixelSize={2} {character} />
-        <div class="flex-grow">
-          <div class="text-2xl">
-            {character.race.name}
-            {character.class.name}
+  <div class="text-3xl">Pick Character</div>
+  <div class="flex items-center">
+    <div class="flex flex-col gap-2 justify-left box-border">
+      {#each state.characterOptions as character, id}
+        <button on:click={selectCharacter(id)}>
+          <div class={characterIndex === id ? "bg-gray-600" : ""}>
+            <CharacterAvatar {character} pixelSize={4} />
           </div>
-          <div>
-            {#if character.health > 100}
-              <div>+{character.health - 100n} 🫀</div>
-            {:else if character.health < 100}
-              <div>-{100n - character.health} 🫀</div>
-            {/if}
-            {#if character.gold > 0}
-              <div>+{character.gold} 🪙</div>
-            {/if}
-            {#each character.actions as action}
-              <div>+{action.action.name}</div>
-            {/each}
-            {#each character.inventorySlots as slot}
-              {#if slot.item[0] !== undefined}
-                <div>+<CharacterItem item={slot.item[0]} /></div>
-              {/if}
-            {/each}
+        </button>
+      {/each}
+    </div>
+    <div>
+      {#if characterIndex !== undefined}
+        {@const character = state.characterOptions[characterIndex]}
+        <div class="text-3xl text-primary-500">
+          {character.race.name}
+          {character.class.name}
+        </div>
+        <div class="mb-4">
+          {#if character.health > 100}
+            <div>+{character.health - 100n} 🫀</div>
+          {:else if character.health < 100}
+            <div>-{100n - character.health} 🫀</div>
+          {/if}
+          {#if character.gold > 0}
+            <div>+{character.gold} 🪙</div>
+          {/if}
+          <div class="text-xl text-primary-500">Actions</div>
+          {#each character.actions as action}
+            <div>+{action.action.name}</div>
+          {/each}
+          <div class="text-xl text-primary-500">Items</div>
+          <div class="flex justify-center">
+            <CharacterInventory value={character.inventorySlots} />
           </div>
         </div>
-      </GenericOption>
-    {/each}
+        <LoadingButton onClick={confirm}>Confirm</LoadingButton>
+      {/if}
+    </div>
   </div>
 </GameNav>

@@ -17,20 +17,15 @@
     if (!ctx) throw new Error("Could not get canvas context");
     canvas.width = width * pixelSize;
     canvas.height = height * pixelSize;
-    let scaledW = width;
-    let scaledH = height;
 
     //make temporary canvas to make new scaled copy
     // const tempCanvas = document.createElement("canvas");
 
-    // Set temp canvas width/height & hide (fixes higher scaled cutting off image bottom)
-    canvas.width = canvas.width;
-    canvas.height = canvas.height;
     canvas.style.position = "fixed";
     canvas.style.top = "0";
     canvas.style.left = "0";
 
-    ctx.drawImage(sourceImage, 0, 0, scaledW, scaledH);
+    ctx.drawImage(sourceImage, 0, 0, width, height);
 
     const imageData = ctx.getImageData(0, 0, width, height);
     pixels = convertToDynamicPalette(imageData, maxColors);

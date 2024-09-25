@@ -7,7 +7,32 @@ export type Rgb = [number, number, number];
 
 export type PixelColor = Rgb | undefined;
 
-export function generatePixelGrid(width: number, height: number): PixelGrid {
+export type PixelGridSize = 16 | 32 | 64;
+
+export function resizePixelGrid(grid: PixelGrid, size: PixelGridSize): PixelGrid {
+    let currentSize = grid.length;
+    if (grid[0].length != currentSize) {
+        throw new Error("Height and width must be the same for pixel art");
+    }
+
+    const newGrid: PixelGrid = Array.from({ length: size }, () =>
+        Array.from({ length: size }, () => undefined)
+    );
+
+    const ratio = currentSize / size;
+
+    for (let y = 0; y < size; y++) {
+        for (let x = 0; x < size; x++) {
+            const srcX = Math.floor(x * ratio);
+            const srcY = Math.floor(y * ratio);
+            newGrid[y][x] = grid[srcY][srcX];
+        }
+    }
+
+    return newGrid;
+}
+
+export function generatePixelGrid(height: number, width: number): PixelGrid {
     return Array.from({ length: height }, () => Array.from({ length: width }, () => undefined));
 }
 
@@ -15,8 +40,8 @@ export function encodePixelsToBase64(pixels: PixelGrid): string {
     return encodeImageToBase64(encodePixelsToImage(pixels));
 };
 
-export function decodeBase64ToPixels(base64: string, width: number, height: number): PixelGrid {
-    return decodeImageToPixels(decodeBase64ToImage(base64), width, height);
+export function decodeBase64ToPixels(base64: string, height: number, width: number): PixelGrid {
+    return decodeImageToPixels(decodeBase64ToImage(base64), height, width);
 };
 
 function encodeLEB128(value: number): number[] {
@@ -174,7 +199,7 @@ export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
     return { palette, pixelData };
 }
 
-export function decodeImageToPixels(data: PixelImage, width: number, height: number): PixelGrid {
+export function decodeImageToPixels(data: PixelImage, height: number, width: number): PixelGrid {
     const pixels: PixelColor[] = data.pixelData.flatMap(i => {
         // Get the color from the palette
         let color = i.paletteIndex[0] === undefined ? undefined : data.palette[i.paletteIndex[0]];

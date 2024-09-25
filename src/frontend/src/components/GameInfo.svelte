@@ -44,7 +44,7 @@
         Items and Equipment
       </h2>
       <p>
-        DAOventure features a variety of items and equipment to aid your
+        DAOVenture features a variety of items and equipment to aid your
         journey:
       </p>
       <ul class="list-disc list-inside mt-2 space-y-2">
@@ -64,7 +64,7 @@
         Scenarios and Events
       </h2>
       <p>
-        Scenarios are the core of DAOventure's gameplay, offering diverse
+        Scenarios are the core of DAOVenture's gameplay, offering diverse
         experiences:
       </p>
       <ul class="list-disc list-inside mt-2 space-y-2">
@@ -84,7 +84,7 @@
       <h2 class="text-2xl font-semibold mb-4 text-primary-500">
         Game Vision and Goals
       </h2>
-      <p>DAOventure aims to:</p>
+      <p>DAOVenture aims to:</p>
       <ul class="list-disc list-inside mt-2 space-y-2">
         <li>
           Create an engaging roguelite experience with community-driven content
@@ -104,7 +104,7 @@
       <h2 class="text-2xl font-semibold mb-4 text-primary-500">
         Player Contributions
       </h2>
-      <p>Players can contribute to DAOventure in various ways:</p>
+      <p>Players can contribute to DAOVenture in various ways:</p>
       <ul class="list-disc list-inside mt-2 space-y-2">
         <li>Submitting new content (items, scenarios, creatures, etc.)</li>
         <li>Proposing game mechanic changes or improvements</li>
@@ -122,7 +122,7 @@
       <h2 class="text-2xl font-semibold mb-4 text-primary-500">
         DAO Mechanics
       </h2>
-      <p>The Decentralized Autonomous Organization (DAO) governs DAOventure:</p>
+      <p>The Decentralized Autonomous Organization (DAO) governs DAOVenture:</p>
       <ul class="list-disc list-inside mt-2 space-y-2">
         <li>
           Players earn governance tokens through gameplay and contributions
@@ -133,7 +133,7 @@
         <li>The DAO treasury funds ongoing development and player rewards</li>
       </ul>
       <p class="mt-4">
-        This system ensures that DAOventure evolves according to the wishes of
+        This system ensures that DAOVenture evolves according to the wishes of
         its most active and invested players.
       </p>
     </section>

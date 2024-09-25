@@ -7,14 +7,14 @@
   export let border: boolean = false;
 
   let canvas: HTMLCanvasElement;
-  let width = layers[0][0].length;
-  let height = layers[0].length;
+  $: width = layers[0][0].length;
+  $: height = layers[0].length;
 
   onMount(() => {
     redraw();
   });
 
-  $: layers && redraw();
+  $: layers && width && height && redraw();
 
   let drawLayer = (ctx: CanvasRenderingContext2D, layerPixels: PixelGrid) => {
     layerPixels.forEach((row, y) => {

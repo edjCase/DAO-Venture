@@ -13,7 +13,7 @@
 </script>
 
 <Router>
-  <main class="p-4 max-w-xl mx-auto custom-scrollbar">
+  <main class="p-4 max-w-xl mx-auto">
     <Navbar />
     <div>
       <Route path="/" component={Home} />
@@ -34,9 +34,8 @@
   main {
     height: calc(100vh - 4rem);
     overflow-y: auto;
-  }
 
-  .custom-scrollbar {
+    /* Custom scrollbar */
     scrollbar-width: thin;
     scrollbar-color: #4ade80 #1f2937;
   }
