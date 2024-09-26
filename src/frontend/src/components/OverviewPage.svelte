@@ -1,10 +1,16 @@
 <script lang="ts">
   import { Button } from "flowbite-svelte";
-  import { ChevronRightOutline } from "flowbite-svelte-icons";
+  import {
+    ChevronRightOutline,
+    GithubSolid,
+    TwitterSolid,
+  } from "flowbite-svelte-icons";
   import { navigate } from "svelte-routing";
   import { currentGameStore } from "../stores/CurrentGameStore";
   import { mainAgentFactory } from "../ic-agent/Main";
   import LoadingButton from "./common/LoadingButton.svelte";
+  import LoginButton from "./common/LoginButton.svelte";
+  import { userStore } from "../stores/UserStore";
 
   let createGame = async () => {
     let mainAgent = await mainAgentFactory();
@@ -15,6 +21,7 @@
       console.error("Failed to create game", result);
     }
   };
+  $: user = $userStore;
 </script>
 
 <div>
@@ -36,13 +43,21 @@
             Choose your character, navigate through scenarios, and battle
             creatures to see if you can make it to the end.
           </h2>
-          <LoadingButton onClick={createGame}
-            >Play
+          {#if user}
+            <LoadingButton onClick={createGame}>
+              Play
+              <ChevronRightOutline class="w-3 h-3 ml-1" />
+            </LoadingButton>
+          {:else}
+            <LoginButton />
+          {/if}
+          <Button class="mt-4" on:click={() => navigate("/game-overview")}>
+            Learn More
             <ChevronRightOutline class="w-3 h-3 ml-1" />
-          </LoadingButton>
+          </Button>
         </div>
       </div>
-      <div class="relative h-[400px] overflow-hidden">
+      <div class="relative h-[400px] overflow-hidden mt-2">
         <img
           src="/images/nodes.png"
           alt="The DAO"
@@ -60,11 +75,52 @@
           <div class="w-72 text-pretty">
             Vote on the best content, features, and game direction
           </div>
-          <Button class="mt-4" on:click={() => navigate("/game-info")}>
+          <Button class="mt-4" on:click={() => navigate("/dao")}>
+            View
+            <ChevronRightOutline class="w-3 h-3 ml-1" />
+          </Button>
+          <Button class="mt-4" on:click={() => navigate("/dao-overview")}>
             Learn More
             <ChevronRightOutline class="w-3 h-3 ml-1" />
           </Button>
         </div>
+      </div>
+      <div class="text-white p-4 max-w-96 mx-auto">
+        <h1 class="text-4xl font-semibold text-primary-500 mb-2">Roadmap</h1>
+        <h2 class="text-xl max-w-96 text-center text-primary-500">
+          Phase 1 - Foundation
+        </h2>
+        <div>Build game framework</div>
+        <div>Add basic game content</div>
+        <div>App is owned by creator</div>
+        <h2 class="text-xl max-w-96 text-center text-primary-500 mt-4">
+          Phase 2 - DAO
+        </h2>
+        <div>
+          Game is DAO controlled, but creator has majority of voting power
+        </div>
+        <div>Accept proposals from the community</div>
+        <div>Add more game content and polish from feedback</div>
+        <h2 class="text-xl max-w-96 text-center text-primary-500 mt-4">
+          Phase 3 - Decentralization
+        </h2>
+        <div>Creator is contributor, not controller</div>
+        <div>Tokenomics to incentivize contributions and good behavior</div>
+      </div>
+      <div class="text-white p-4 max-w-96 mx-auto">
+        <h1 class="text-4xl font-semibold text-primary-500 mb-2">Links</h1>
+        <ul class="text-center text-2xl">
+          <li class="mb-2">
+            <a href="https://github.com/edjcase/daoball" target="_blank">
+              <GithubSolid class="inline-block" /> Github
+            </a>
+          </li>
+          <li class="mb-2">
+            <a href="https://twitter.com/daoventure_game" target="_blank">
+              <TwitterSolid class="inline-block" /> Twitter
+            </a>
+          </li>
+        </ul>
       </div>
     </section>
   </main>

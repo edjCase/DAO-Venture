@@ -31,7 +31,7 @@
 <Label>Size</Label>
 <Select items={sizeItems} bind:value={selectedSize} on:change={resizeGrid} />
 <Label>Preview Pixel Size</Label>
-<Tabs>
+<Tabs style="underline">
   <TabItem title="Canvas" open>
     <PixelArtEditor
       pixels={canvasGrid}

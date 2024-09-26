@@ -2,9 +2,10 @@
   import { CharacterWithMetaData } from "../../ic-agent/declarations/main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
   import { scenarioStore } from "../../stores/ScenarioStore";
-  import GameImage from "../common/GameImage.svelte";
+  import { decodeImageToPixels } from "../../utils/PixelUtil";
   import HexGrid, { HexTileData } from "../common/HexGrid.svelte";
   import { AxialCoordinate } from "../common/HexTile.svelte";
+  import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
   import Scenario from "../scenario/Scenario.svelte";
 
   let selectedTile: AxialCoordinate | undefined;
@@ -64,7 +65,7 @@
       r: 0,
     };
   };
-  let size = 40;
+  let size = 32;
 
   $: scenario =
     selectedTile !== undefined
@@ -78,7 +79,16 @@
       <svg x={-size / 2} y={-size / 2} width={size} height={size}>
         <foreignObject width={size} height={size}>
           {#if scenarios[coordinate.q] !== undefined}
-            <GameImage id={scenarios[coordinate.q].metaData.imageId} />
+            <PixelArtCanvas
+              layers={[
+                decodeImageToPixels(
+                  scenarios[coordinate.q].metaData.image,
+                  64,
+                  64
+                ),
+              ]}
+              pixelSize={0.5}
+            />
           {/if}
         </foreignObject>
       </svg>

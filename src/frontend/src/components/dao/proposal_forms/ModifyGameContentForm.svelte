@@ -2,18 +2,13 @@
   import { Select } from "flowbite-svelte";
   import ItemForm from "./modify_game_content/ItemForm.svelte";
   import CreatureForm from "./modify_game_content/CreatureForm.svelte";
-  import ImageForm from "./modify_game_content/ImageForm.svelte";
   import ClassForm from "./modify_game_content/ClassForm.svelte";
   import RaceForm from "./modify_game_content/RaceForm.svelte";
   import ZoneForm from "./modify_game_content/ZoneForm.svelte";
   import WeaponForm from "./modify_game_content/WeaponForm.svelte";
   import AchievementForm from "./modify_game_content/AchievementForm.svelte";
-  import ScenarioForm from "./modify_game_content/ScenarioForm.svelte";
-  import ActionForm from "./modify_game_content/ActionForm.svelte";
-
   let gameContentTypes = [
     { value: "item", name: "Item" },
-    { value: "image", name: "Image" },
     { value: "creature", name: "Creature" },
     { value: "class", name: "Class" },
     { value: "race", name: "Race" },
@@ -30,8 +25,6 @@
 <div>
   {#if selectedGameContentType === "item"}
     <ItemForm />
-  {:else if selectedGameContentType === "image"}
-    <ImageForm />
   {:else if selectedGameContentType === "creature"}
     <CreatureForm />
   {:else if selectedGameContentType === "class"}
@@ -45,9 +38,11 @@
   {:else if selectedGameContentType === "achievement"}
     <AchievementForm />
   {:else if selectedGameContentType === "scenario"}
-    <ScenarioForm />
+    <!-- <ScenarioForm /> -->
+    TEMPORARILY DISABLED
   {:else if selectedGameContentType === "action"}
-    <ActionForm />
+    <!-- <ActionForm /> -->
+    TEMPORARILY DISABLED
   {:else}
     NOT IMPLEMENTED GAME CONTENT FORM: <pre>{selectedGameContentType}</pre>
   {/if}

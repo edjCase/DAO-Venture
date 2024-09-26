@@ -4,9 +4,6 @@
   import { ModifyGameContent } from "../../ic-agent/declarations/main";
   import LoadingButton from "../common/LoadingButton.svelte";
 
-  interface ImageModule {
-    default: string;
-  }
   let initialize = async () => {
     let mainAgent = await mainAgentFactory();
 
@@ -28,20 +25,6 @@
         console.error("Failed to add content", content, result);
       }
     };
-
-    let imageModules = import.meta.glob("../../initial_data/images/*.png");
-
-    await Promise.all(
-      Object.keys(imageModules).map(async (path) => {
-        const module = (await imageModules[path]()) as ImageModule;
-        const response = await fetch(module.default);
-        const data = await response.arrayBuffer();
-        const id = path.split("/").pop()?.split(".").shift() || "";
-        await addGameContent({
-          image: { id: id, data: new Uint8Array(data), kind: { png: null } },
-        });
-      })
-    );
 
     let actions = await import("../../initial_data/ActionData").then(
       (module) => {

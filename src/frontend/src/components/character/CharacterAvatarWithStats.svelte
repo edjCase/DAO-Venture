@@ -6,6 +6,7 @@
 
   export let character: CharacterWithMetaData;
   export let pixelSize: number;
+  export let tooltips: boolean = false;
 
   const getValue = (value: bigint | undefined): string =>
     value === undefined ? "" : value.toString();
@@ -25,7 +26,7 @@
   </div>
   <div class="flex items-center text-lg">
     <div class="flex flex-col justify-center">
-      <CharacterAvatar {pixelSize} {character} />
+      <CharacterAvatar {pixelSize} {character} {tooltips} />
     </div>
     <div class="flex flex-col justify-center text-xl mr-2">
       <div class="flex items-center">

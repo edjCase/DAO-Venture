@@ -26,7 +26,7 @@
   Game Content
 </h1>
 
-<Tabs>
+<Tabs style="underline">
   <TabItem open title="Items">
     <ContentGrid {items} Component={Item} propName="item" />
   </TabItem>

@@ -89,7 +89,7 @@
 
     <div>
       <Label>Image</Label>
-      <PixelArtEditor bind:pixels previewPixelSize={2} pixelSize={8} />
+      <PixelArtEditor bind:pixels pixelSize={8} />
     </div>
 
     <div>

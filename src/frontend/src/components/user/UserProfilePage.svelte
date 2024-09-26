@@ -5,6 +5,7 @@
   import { nanosecondsToDate } from "../../utils/DateUtils";
   import GameHistory from "../game/GameHistory.svelte";
   import UserPseudonym from "./UserPseudonym.svelte";
+  import UserAvatar from "./UserAvatar.svelte";
 
   $: user = $userStore;
 </script>
@@ -12,7 +13,7 @@
 <h1 class="text-5xl font-semibold text-primary-500 my-4 text-center">
   User Profile
 </h1>
-<div class="bg-gray-800 p-4 mb-4 flex justify-between">
+<div class="p-4 mb-4 flex justify-between">
   {#if user}
     <div>
       <div>
@@ -23,6 +24,9 @@
             .substring(user.id.toString().length - 6)}
         </span>
         <CopyTextButton value={user.id.toString()} />
+      </div>
+      <div class="flex items-center gap-2">
+        Avatar: <UserAvatar userId={user.id} />
       </div>
       <div class="font-medium">
         <span class="font-semibold">Name</span>:
@@ -36,6 +40,12 @@
     <div class="mt-4">
       <LoginButton />
     </div>
+  {:else}
+    <div class="flex justify-center w-full">
+      <LoginButton />
+    </div>
   {/if}
 </div>
-<GameHistory />
+{#if user}
+  <GameHistory />
+{/if}

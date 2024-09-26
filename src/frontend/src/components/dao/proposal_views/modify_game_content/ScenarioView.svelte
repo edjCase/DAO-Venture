@@ -1,6 +1,8 @@
 <script lang="ts">
   import type { ScenarioMetaData } from "../../../../ic-agent/declarations/main";
+  import { decodeImageToPixels } from "../../../../utils/PixelUtil";
   import { toJsonString } from "../../../../utils/StringUtil";
+  import PixelArtCanvas from "../../../common/PixelArtCanvas.svelte";
   import EntityView from "./EntityView.svelte";
   import UnlockRequirementView from "./UnlockRequirementView.svelte";
 
@@ -25,8 +27,10 @@
   </div>
 
   <div class="mt-2">
-    <span class="font-semibold">Image Id:</span>
-    {scenario.imageId}
+    <PixelArtCanvas
+      layers={[decodeImageToPixels(scenario.image, 64, 64)]}
+      pixelSize={4}
+    />
   </div>
 
   <div class="mt-2">

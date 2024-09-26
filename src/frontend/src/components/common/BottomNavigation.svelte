@@ -105,10 +105,24 @@
 >
   <Sidebar asideClass="w-32" {activeUrl}>
     <SidebarGroup>
+      <SidebarItem label="About" href="/about" on:click={navOnClick("/about")}>
+        <svelte:fragment slot="icon">
+          <QuestionCircleOutline class={iconClass} />
+        </svelte:fragment>
+      </SidebarItem>
       <SidebarItem
-        label="Game Info"
-        href="/game-info"
-        on:click={navOnClick("/game-info")}
+        label="Game Overview"
+        href="/game-overview"
+        on:click={navOnClick("/game-overview")}
+      >
+        <svelte:fragment slot="icon">
+          <BookOutline class={iconClass} />
+        </svelte:fragment>
+      </SidebarItem>
+      <SidebarItem
+        label="DAO Overview"
+        href="/dao-overview"
+        on:click={navOnClick("/dao-overview")}
       >
         <svelte:fragment slot="icon">
           <BookOutline class={iconClass} />
@@ -123,13 +137,8 @@
           <BookOutline class={iconClass} />
         </svelte:fragment>
       </SidebarItem>
-      <SidebarItem label="About" href="/about" on:click={navOnClick("/about")}>
-        <svelte:fragment slot="icon">
-          <QuestionCircleOutline class={iconClass} />
-        </svelte:fragment>
-      </SidebarItem>
       <SidebarGroup border={true}>
-        <SidebarItem
+        <!-- <SidebarItem
           label="Taggr &nearr;"
           target="_blank"
           href="https://github.com/edjcase/daoball"
@@ -137,7 +146,7 @@
           <svelte:fragment slot="icon">
             <GithubSolid class={iconClass} />
           </svelte:fragment>
-        </SidebarItem>
+        </SidebarItem> -->
         <SidebarItem
           label="Github &nearr;"
           target="_blank"
@@ -150,13 +159,13 @@
         <SidebarItem
           label="Twitter &nearr;"
           target="_blank"
-          href="https://twitter.com/daoballxyz"
+          href="https://twitter.com/daoventure_game"
         >
           <svelte:fragment slot="icon">
             <TwitterSolid class={iconClass} />
           </svelte:fragment>
         </SidebarItem>
-        <SidebarItem
+        <!-- <SidebarItem
           label="Blog &nearr;"
           target="_blank"
           href="https://mora.app/planet/a46fs-ryaaa-aaaan-qdcyq-cai"
@@ -164,7 +173,7 @@
           <svelte:fragment slot="icon">
             <TwitterSolid class={iconClass} />
           </svelte:fragment>
-        </SidebarItem>
+        </SidebarItem> -->
       </SidebarGroup>
     </SidebarGroup>
   </Sidebar>

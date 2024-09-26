@@ -10,9 +10,9 @@
 
   export let state: CompletedGameStateWithMetaData;
 
-  let createGame = async () => {
+  let endGame = async () => {
     let mainAgent = await mainAgentFactory();
-    let result = await mainAgent.createGame({});
+    let result = await mainAgent.abandonGame();
     if ("ok" in result) {
       currentGameStore.refetch();
     } else {
@@ -40,4 +40,4 @@
   {/if}
 </div>
 
-<LoadingButton onClick={createGame}>Create New Game</LoadingButton>
+<LoadingButton onClick={endGame}>End Game</LoadingButton>

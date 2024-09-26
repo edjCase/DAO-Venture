@@ -3,6 +3,7 @@
   import { toJsonString } from "../../utils/StringUtil";
   import CharacterItem from "../content/Item.svelte";
   import CharacterStatIcon from "../character/CharacterStatIcon.svelte";
+  import Weapon from "../content/Weapon.svelte";
 
   export let value: OutcomeEffect;
 </script>
@@ -29,8 +30,12 @@
   {:else if "removeItem" in value}
     -<CharacterItem item={value.removeItem} />
   {:else if "swapWeapon" in value}
-    +{value.swapWeapon.weaponId}
-    -{value.swapWeapon.removedWeaponId}
+    <div>
+      +<Weapon weapon={value.swapWeapon.weaponId} pixelSize={2} />
+    </div>
+    <div>
+      -<Weapon weapon={value.swapWeapon.removedWeaponId} pixelSize={2} />
+    </div>
   {:else}
     NOT IMPLEMENTED LOG ENTRY TYPE {toJsonString(value)}
   {/if}

@@ -29,8 +29,7 @@
 </script>
 
 <div>
-  <div class="text-3xl">Game History</div>
-  <hr />
+  <div class="text-3xl text-primary-500 text-center">Game History</div>
   {#if completedGames.length === 0}
     <div class="text-center text-xl mt-4">No games found</div>
   {/if}

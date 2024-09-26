@@ -42,14 +42,11 @@
   }
 
   function redraw() {
-    console.log("redraw");
     if (!canvas) {
-      console.log("no canvas");
       return;
     }
     const ctx = canvas.getContext("2d");
     if (!ctx) {
-      console.log("no ctx");
       return;
     }
 

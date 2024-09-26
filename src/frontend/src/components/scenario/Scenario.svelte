@@ -2,9 +2,8 @@
   import { scenarioStore } from "../../stores/ScenarioStore";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
-  import GameImage from "../common/GameImage.svelte";
   import ScenarioOption from "./ScenarioOption.svelte";
-  import { Button } from "flowbite-svelte";
+  import { Button, Hr } from "flowbite-svelte";
   import { onDestroy, onMount } from "svelte";
   import { toJsonString } from "../../utils/StringUtil";
   import {
@@ -13,6 +12,9 @@
   } from "../../ic-agent/declarations/main";
   import ScenarioCombat from "./ScenarioCombat.svelte";
   import ScenarioReward from "./ScenarioReward.svelte";
+  import { decodeImageToPixels } from "../../utils/PixelUtil";
+  import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
+  import ScenarioStages from "./ScenarioStages.svelte";
 
   export let scenario: Scenario;
   export let character: CharacterWithMetaData;
@@ -51,11 +53,14 @@
 <div class="">
   {#if "inProgress" in scenario.state}
     {#if "choice" in scenario.state.inProgress}
-      <div class="text-3xl text-center mb-4">
+      <div class="text-4xl font-semibold text-center mb-4 text-primary-500">
         {scenario.metaData.name}
       </div>
       <div class="flex justify-center">
-        <GameImage id={scenario.metaData.imageId} />
+        <PixelArtCanvas
+          layers={[decodeImageToPixels(scenario.metaData.image, 64, 64)]}
+          pixelSize={4}
+        />
       </div>
       <div class="text-xl my-6">
         {scenario.metaData.description}
@@ -84,6 +89,22 @@
       NOT IMPLEMENTED SCENARIO STATE {toJsonString(scenario.state)}
     {/if}
   {:else if "completed" in scenario.state}
-    <Button on:click={nextScenario}>Continue</Button>
+    <div class="text-3xl text-center mb-4">
+      {scenario.metaData.name}
+    </div>
+    <div class="flex justify-center">
+      <PixelArtCanvas
+        layers={[decodeImageToPixels(scenario.metaData.image, 64, 64)]}
+        pixelSize={4}
+      />
+    </div>
+    <div class="text-3xl my-2 text-primary-500">Scenario Complete</div>
+    <Button on:click={nextScenario} class="mb-4">Continue</Button>
   {/if}
 </div>
+{#if scenario.previousStages.length > 0}
+  <Hr />
+  <div class="text-4xl text-primary-500 mb-2">Scenario Log</div>
+  <ScenarioStages stages={scenario.previousStages} />
+  {scenario.metaData.description}
+{/if}

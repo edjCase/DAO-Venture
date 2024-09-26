@@ -17,11 +17,17 @@
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import ScenarioPathForm from "./ScenarioPathForm.svelte";
+  import {
+    encodePixelsToImage,
+    generatePixelGrid,
+    PixelGrid,
+  } from "../../../../utils/PixelUtil";
+  import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
-  let image: string | undefined;
+  let pixels: PixelGrid = generatePixelGrid(64, 64);
   let paths: ScenarioPath[] = [];
   let location: LocationKind = { common: null };
   let category: ScenarioCategory = { other: null };
@@ -67,13 +73,12 @@
     if (!id) return "Id must be filled";
     if (!name) return "Name must be filled";
     if (!description) return "Description must be filled";
-    if (!image) return "Image Id must be filled";
 
     const scenario: ScenarioMetaData = {
       id,
       name,
       description,
-      imageId: image,
+      image: encodePixelsToImage(pixels),
       paths,
       location,
       category,
@@ -121,13 +126,8 @@
     </div>
 
     <div>
-      <Label for="imageId">Image Id</Label>
-      <Input
-        id="imageId"
-        type="text"
-        bind:value={image}
-        placeholder="epic_battle_image"
-      />
+      <Label>Image</Label>
+      <PixelArtEditor bind:pixels pixelSize={2} />
     </div>
 
     <div>

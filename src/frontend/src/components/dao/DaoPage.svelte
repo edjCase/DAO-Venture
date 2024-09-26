@@ -4,6 +4,7 @@
   import ProposalForm from "./ProposalForm.svelte";
   import { userStore } from "../../stores/UserStore";
   import { UserStats } from "../../ic-agent/declarations/main";
+  import LoginButton from "../common/LoginButton.svelte";
 
   let userStats: UserStats | undefined;
 
@@ -71,13 +72,20 @@
       </Card>
     {/each}
   </div>
+  {#if !user}
+    <div class="flex justify-center">
+      <LoginButton />
+    </div>
+  {/if}
 
-  <Tabs>
+  <Tabs style="underline">
     <TabItem title="Proposals" open>
       <ProposalList />
     </TabItem>
-    <TabItem title="Create Proposal" disabled={user === undefined}>
-      <ProposalForm />
-    </TabItem>
+    {#if user}
+      <TabItem title="Create Proposal">
+        <ProposalForm />
+      </TabItem>
+    {/if}
   </Tabs>
 </div>
