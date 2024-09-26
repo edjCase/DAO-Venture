@@ -6,10 +6,11 @@
   import LoadingButton from "../common/LoadingButton.svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
-  import { GearSolid } from "flowbite-svelte-icons";
-  import { Dropdown, DropdownItem } from "flowbite-svelte";
+  import { GearSolid, ChevronRightSolid } from "flowbite-svelte-icons";
+  import { Dropdown, DropdownItem, Button } from "flowbite-svelte";
   import CharacterInventory from "../character/CharacterInventory.svelte";
   import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
+  import { navigate } from "svelte-routing";
   export let game: GameWithMetaData;
 
   let cancelGame = async () => {
@@ -50,7 +51,16 @@
     <GearSolid />
     <Dropdown>
       <DropdownItem>
-        <LoadingButton color="red" onClick={cancelGame}>Forfeit</LoadingButton>
+        <Button on:click={() => navigate("/game-overview")}>
+          Game Help <ChevronRightSolid size="xs" class="ml-2" />
+        </Button>
+      </DropdownItem>
+      <DropdownItem>
+        <div class="flex justify-center">
+          <LoadingButton color="red" onClick={cancelGame}>
+            Forfeit
+          </LoadingButton>
+        </div>
       </DropdownItem>
     </Dropdown>
   </div>

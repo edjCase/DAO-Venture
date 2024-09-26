@@ -20,7 +20,7 @@
   export let character: CharacterWithMetaData;
   export let nextScenario: () => void;
 
-  let vote = async (optionId: string) => {
+  let selectChoice = async (optionId: string) => {
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.selectScenarioChoice({
       choice: {
@@ -71,7 +71,11 @@
           <ul class="text-lg p-6">
             {#each scenario.state.inProgress.choice.choices as option}
               <li>
-                <ScenarioOption {option} selected={false} onSelect={vote} />
+                <ScenarioOption
+                  {option}
+                  selected={false}
+                  onSelect={selectChoice}
+                />
               </li>
             {/each}
           </ul>
@@ -89,7 +93,7 @@
       NOT IMPLEMENTED SCENARIO STATE {toJsonString(scenario.state)}
     {/if}
   {:else if "completed" in scenario.state}
-    <div class="text-3xl text-center mb-4">
+    <div class="text-4xl font-semibold text-center mb-4 text-primary-500">
       {scenario.metaData.name}
     </div>
     <div class="flex justify-center">
@@ -98,7 +102,7 @@
         pixelSize={4}
       />
     </div>
-    <div class="text-3xl my-2 text-primary-500">Scenario Complete</div>
+    <div class="text-3xl my-2">Scenario Complete</div>
     <Button on:click={nextScenario} class="mb-4">Continue</Button>
   {/if}
 </div>

@@ -319,12 +319,11 @@ module {
         chosenTarget : ?ActionResult.ActionTargetResult,
     ) : Result.Result<ActionResult.ActionResult, { #invalidTarget; #targetRequired }> {
         let effectResults = Buffer.Buffer<ActionResult.CombatEffectResult>(0);
-        let creatureCount = creatureStatList.size();
         let allValidTargets = switch (
             calculateAllValidTargets(
                 actionSource,
                 action.target.scope,
-                creatureCount,
+                creatureStatList,
                 chosenTarget,
             )
         ) {
@@ -335,7 +334,7 @@ module {
         let actionTargets = switch (action.target.selection) {
             case (#all) Buffer.toArray(allValidTargets);
             case (#random({ count })) {
-                let trueCount = Nat.min(count, creatureCount);
+                let trueCount = Nat.min(count, allValidTargets.size());
                 prng.shuffleBuffer(allValidTargets);
                 Buffer.toArray(Buffer.subBuffer(allValidTargets, 0, trueCount));
             };
@@ -620,21 +619,33 @@ module {
     private func calculateAllValidTargets(
         actionSource : ActionResult.ActionTargetResult,
         scope : Action.ActionTargetScope,
-        creatureCount : Nat,
+        creatures : [CombatStats],
         chosenTarget : ?ActionResult.ActionTargetResult,
     ) : Result.Result<Buffer.Buffer<ActionResult.ActionTargetResult>, { #invalidTarget }> {
-        let allCreatures = Array.tabulate<ActionResult.ActionTargetResult>(creatureCount, func(i) { #creature(i) });
-        let allTargets = Buffer.Buffer<ActionResult.ActionTargetResult>(creatureCount + 1);
+        let aliveCreatures = creatures.vals()
+        |> IterTools.enumerate(_)
+        |> IterTools.mapFilter(
+            _,
+            func(c : (Nat, CombatStats)) : ?ActionResult.ActionTargetResult {
+                if (c.1.health > 0) {
+                    return ? #creature(c.0);
+                };
+
+                return null;
+            },
+        )
+        |> Iter.toArray(_);
+        let allTargets = Buffer.Buffer<ActionResult.ActionTargetResult>(aliveCreatures.size() + 1);
 
         switch (scope) {
             case (#any) {
-                allTargets.append(Buffer.fromArray(allCreatures));
+                allTargets.append(Buffer.fromArray(aliveCreatures));
                 allTargets.add(#character);
             };
             case (#ally) {
                 switch (actionSource) {
                     case (#creature(_)) {
-                        allTargets.append(Buffer.fromArray(allCreatures));
+                        allTargets.append(Buffer.fromArray(aliveCreatures));
                         switch (chosenTarget) {
                             case (null) ();
                             case (?target) {
@@ -674,7 +685,7 @@ module {
                         };
                     };
                     case (#character) {
-                        allTargets.append(Buffer.fromArray(allCreatures));
+                        allTargets.append(Buffer.fromArray(aliveCreatures));
                         switch (chosenTarget) {
                             case (null) ();
                             case (?target) {

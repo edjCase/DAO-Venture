@@ -28,17 +28,26 @@
   let editorWidth = 512;
 </script>
 
-<Label>Size</Label>
-<Select items={sizeItems} bind:value={selectedSize} on:change={resizeGrid} />
-<Label>Preview Pixel Size</Label>
+<h1 class="text-5xl font-semibold text-primary-500 mb-4 text-center">
+  Image Editor
+</h1>
 <Tabs style="underline">
   <TabItem title="Canvas" open>
+    <Label>Size</Label>
+    <Select
+      items={sizeItems}
+      bind:value={selectedSize}
+      on:change={resizeGrid}
+    />
+    <Label>Canvas</Label>
     <PixelArtEditor
       pixels={canvasGrid}
       pixelSize={editorWidth / selectedSize}
     />
   </TabItem>
   <TabItem title="Pixelate Image">
+    <Label>Size</Label>
+    <Select items={sizeItems} bind:value={selectedSize} />
     <ImageToPixelArt
       width={selectedSize}
       height={selectedSize}

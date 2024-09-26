@@ -11,12 +11,16 @@
   };
 </script>
 
-<p><GameIcon value="health" /> {value.health}/{value.maxHealth}</p>
-<p><GameIcon value="block" /> {value.block}</p>
-<div class="flex justify-center">
-  {#if value.statusEffects.length > 0}
-    {#each value.statusEffects as effect}
-      <StatusEffect value={effect} />
-    {/each}
-  {/if}
-</div>
+{#if value.health > 0}
+  <p><GameIcon value="health" /> {value.health}/{value.maxHealth}</p>
+  <p><GameIcon value="block" /> {value.block}</p>
+  <div class="flex justify-center">
+    {#if value.statusEffects.length > 0}
+      {#each value.statusEffects as effect}
+        <StatusEffect value={effect} />
+      {/each}
+    {/if}
+  </div>
+{:else}
+  💀
+{/if}

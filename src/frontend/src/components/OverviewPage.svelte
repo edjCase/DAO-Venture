@@ -4,6 +4,7 @@
     ChevronRightOutline,
     GithubSolid,
     TwitterSolid,
+    ReplySolid,
   } from "flowbite-svelte-icons";
   import { navigate } from "svelte-routing";
   import { currentGameStore } from "../stores/CurrentGameStore";
@@ -110,6 +111,14 @@
       <div class="text-white p-4 max-w-96 mx-auto">
         <h1 class="text-4xl font-semibold text-primary-500 mb-2">Links</h1>
         <ul class="text-center text-2xl">
+          <li class="mb-2">
+            <a
+              href="https://oc.app/community/cghnf-2qaaa-aaaar-baa6a-cai/?ref=nlzgz-paaaa-aaaaf-acwna-cai"
+              target="_blank"
+            >
+              <ReplySolid class="inline-block" /> Open Chat
+            </a>
+          </li>
           <li class="mb-2">
             <a href="https://github.com/edjcase/daoball" target="_blank">
               <GithubSolid class="inline-block" /> Github
