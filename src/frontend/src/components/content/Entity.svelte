@@ -39,11 +39,10 @@
       {/if}
     </span>
     <Tooltip>
-      <div class="text-sm">
-        {entity.name}
-        <br />
-        {entity.description}
+      <div class="text-xl">
+        <span class="text-primary-500">{entity.name}</span> - Item
       </div>
+      <div class="text-md">{entity.description}</div>
     </Tooltip>
   {/if}
 </span>

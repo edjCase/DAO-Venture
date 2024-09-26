@@ -16,32 +16,36 @@
 </script>
 
 <div>
-  <div class="flex justify-around">
-    <div><CharacterStatIcon kind={{ gold: null }} /> {goldStat}</div>
+  <div class="flex justify-around mb-2">
     <div>
       <CharacterStatIcon kind={{ health: null }} />
       {healthStat}/{maxHealthStat}
     </div>
+    <div><CharacterStatIcon kind={{ gold: null }} /> {goldStat}</div>
   </div>
-  <div class="flex justify-center m-2 border border-gray-300">
-    <CharacterAvatar {pixelSize} {character} />
-  </div>
-  <div class="flex justify-center m-2 gap-2">
-    <div class="flex flex-col items-center border border-gray-300">
-      <CharacterAttributeIcon value={{ strength: null }} />
-      <span class="text-sm">{character.attributes.strength}</span>
+  <div class="flex items-center text-lg">
+    <div class="flex flex-col justify-center">
+      <CharacterAvatar {pixelSize} {character} />
     </div>
-    <div class="flex flex-col items-center border border-gray-300">
-      <CharacterAttributeIcon value={{ dexterity: null }} />
-      <span class="text-sm">{character.attributes.dexterity}</span>
+    <div class="flex flex-col justify-center text-xl mr-2">
+      <div class="flex items-center">
+        <CharacterAttributeIcon value={{ strength: null }} />
+        <span>{character.attributes.strength}</span>
+      </div>
+      <div class="flex items-center">
+        <CharacterAttributeIcon value={{ dexterity: null }} />
+        <span>{character.attributes.dexterity}</span>
+      </div>
     </div>
-    <div class="flex flex-col items-center border border-gray-300">
-      <CharacterAttributeIcon value={{ wisdom: null }} />
-      <span class="text-sm">{character.attributes.wisdom}</span>
-    </div>
-    <div class="flex flex-col items-center border border-gray-300">
-      <CharacterAttributeIcon value={{ charisma: null }} />
-      <span class="text-sm">{character.attributes.charisma}</span>
+    <div class="flex flex-col justify-center text-xl">
+      <div class="flexl items-center">
+        <CharacterAttributeIcon value={{ wisdom: null }} />
+        <span>{character.attributes.wisdom}</span>
+      </div>
+      <div class="flex items-center">
+        <CharacterAttributeIcon value={{ charisma: null }} />
+        <span>{character.attributes.charisma}</span>
+      </div>
     </div>
   </div>
 </div>

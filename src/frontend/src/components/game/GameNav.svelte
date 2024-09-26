@@ -7,10 +7,11 @@
   import LoadingButton from "../common/LoadingButton.svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
-  import { DotsVerticalOutline } from "flowbite-svelte-icons";
+  import { GearSolid } from "flowbite-svelte-icons";
   import { Dropdown, DropdownItem, Toggle, Label } from "flowbite-svelte";
   import CharacterInventory from "../character/CharacterInventory.svelte";
   import ScenarioStages from "../scenario/ScenarioStages.svelte";
+  import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
   export let game: GameWithMetaData;
 
   let cancelGame = async () => {
@@ -41,11 +42,21 @@
   let showStages = false;
 </script>
 
-<div>
-  {#if character !== undefined}
-    <CharacterInventory value={character.inventorySlots} />
-  {/if}
-  <DotsVerticalOutline class="dots-menu dark:text-white float-right " />
+<div class="flex justify-between">
+  <div class="flex justify-around flex-grow">
+    {#if character !== undefined}
+      <div>
+        <CharacterAvatarWithStats {character} pixelSize={2} />
+      </div>
+      <div class="flex flex-col items-center justify-center">
+        Items
+        <CharacterInventory value={character.inventorySlots} />
+      </div>
+    {/if}
+  </div>
+  <div class="mr-4">
+    <GearSolid />
+  </div>
   <Dropdown triggeredBy=".dots-menu">
     <DropdownItem>
       <LoadingButton color="red" onClick={cancelGame}>Forfeit</LoadingButton>

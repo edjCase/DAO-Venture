@@ -21,17 +21,28 @@
 </script>
 
 <script lang="ts">
+  import { Tooltip } from "flowbite-svelte";
+
   import { toJsonString } from "../../utils/StringUtil";
 
   export let kind: CharacterStatIconKind;
 </script>
 
 {#if "health" in kind}
-  🫀
+  <span>🫀</span>
+  <Tooltip>
+    <div class="text-xl text-primary-500">Health</div>
+  </Tooltip>
 {:else if "maxHealth" in kind}
-  🫀
+  <span>🫀</span>
+  <Tooltip>
+    <div class="text-xl text-primary-500">Max Health</div>
+  </Tooltip>
 {:else if "gold" in kind}
-  🪙
+  <span>🪙</span>
+  <Tooltip>
+    <div class="text-xl text-primary-500">Gold</div>
+  </Tooltip>
 {:else}
   NOT IMPLEMENTED ICON {toJsonString(kind)}
 {/if}
