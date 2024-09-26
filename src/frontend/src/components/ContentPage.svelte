@@ -22,6 +22,10 @@
   $: zones = $zoneStore;
 </script>
 
+<h1 class="text-5xl font-semibold text-primary-500 my-4 text-center">
+  Game Content
+</h1>
+
 <Tabs>
   <TabItem open title="Items">
     <ContentGrid {items} Component={Item} propName="item" />

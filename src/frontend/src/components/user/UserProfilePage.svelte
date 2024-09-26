@@ -9,30 +9,33 @@
   $: user = $userStore;
 </script>
 
-<div class="bg-gray-800 p-4">
+<h1 class="text-5xl font-semibold text-primary-500 my-4 text-center">
+  User Profile
+</h1>
+<div class="bg-gray-800 p-4 mb-4 flex justify-between">
   {#if user}
     <div>
-      <span>
-        <span class="font-semibold">Id:</span>
-        {user.id.toString().substring(0, 6)}...{user.id
-          .toString()
-          .substring(user.id.toString().length - 6)}
-      </span>
-      <CopyTextButton value={user.id.toString()} />
-    </div>
-    <div class="font-medium">
-      <span class="font-semibold">Name</span>:
-      <UserPseudonym userId={user.id} />
-    </div>
-    {#if user.data !== undefined}
-      <div class="mb-4">
+      <div>
+        <span>
+          <span class="font-semibold">Id:</span>
+          {user.id.toString().substring(0, 6)}...{user.id
+            .toString()
+            .substring(user.id.toString().length - 6)}
+        </span>
+        <CopyTextButton value={user.id.toString()} />
+      </div>
+      <div class="font-medium">
+        <span class="font-semibold">Name</span>:
+        <UserPseudonym userId={user.id} />
+      </div>
+      <div>
         <span class="font-semibold">Joined</span>:
         {nanosecondsToDate(user.data.createTime).toLocaleDateString()}
       </div>
-      <div class="my-4">
-        <LoginButton />
-      </div>
-      <GameHistory />
-    {/if}
+    </div>
+    <div class="mt-4">
+      <LoginButton />
+    </div>
   {/if}
 </div>
+<GameHistory />

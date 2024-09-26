@@ -15,7 +15,6 @@ import TextX "mo:xtended-text/TextX";
 import WorldDao "../models/WorldDao";
 import CommonTypes "../CommonTypes";
 import GameHandler "../handlers/GameHandler";
-import HttpHandler "../handlers/HttpHandler";
 import Class "../models/entities/Class";
 import Race "../models/entities/Race";
 import Item "../models/entities/Item";
@@ -38,7 +37,6 @@ actor MainActor : Types.Actor {
         races = [];
         scenarioMetaDataList = [];
         items = [];
-        images = [];
         zones = [];
         achievements = [];
         creatures = [];
@@ -64,8 +62,6 @@ actor MainActor : Types.Actor {
 
     var gameHandler = GameHandler.Handler(gameStableData);
 
-    var httpHandler = HttpHandler.Handler(gameHandler);
-
     var userHandler = UserHandler.Handler(userStableData);
 
     func onWorldProposalExecute(proposal : ProposalEngine.Proposal<WorldDao.ProposalContent>) : async* Result.Result<(), Text> {
@@ -77,7 +73,6 @@ actor MainActor : Types.Actor {
             case (#modifyGameContent(modifyGameContent)) {
                 let result = switch (modifyGameContent) {
                     case (#item(item)) gameHandler.addOrUpdateItem(item);
-                    case (#image(image)) gameHandler.addOrUpdateImage(image);
                     case (#scenario(scenario)) gameHandler.addOrUpdateScenarioMetaData(scenario);
                     case (#race(race)) gameHandler.addOrUpdateRace(race);
                     case (#class_(class_)) gameHandler.addOrUpdateClass(class_);
@@ -115,7 +110,6 @@ actor MainActor : Types.Actor {
             case (#modifyGameContent(modifyGameContent)) {
                 switch (modifyGameContent) {
                     case (#item(item)) gameHandler.validateItem(item);
-                    case (#image(image)) gameHandler.validateImage(image);
                     case (#scenario(scenario)) gameHandler.validateScenarioMetaData(scenario);
                     case (#race(race)) gameHandler.validateRace(race);
                     case (#class_(class_)) gameHandler.validateClass(class_);
@@ -300,14 +294,6 @@ actor MainActor : Types.Actor {
     public shared query func getTopUsers(request : Types.GetTopUsersRequest) : async Types.GetTopUsersResult {
         let result = userHandler.getTopUsers(request.count, request.offset);
         #ok(result);
-    };
-
-    public query func http_request(req : HttpHandler.HttpRequest) : async HttpHandler.HttpResponse {
-        httpHandler.http_request(req);
-    };
-
-    public func http_request_update(req : HttpHandler.HttpUpdateRequest) : async HttpHandler.HttpResponse {
-        httpHandler.http_request_update(req);
     };
 
     // Private Methods ---------------------------------------------------------

@@ -21,7 +21,6 @@ import ScenarioSimulator "../ScenarioSimulator";
 import Item "../models/entities/Item";
 import Class "../models/entities/Class";
 import Race "../models/entities/Race";
-import Image "../models/Image";
 import Zone "../models/entities/Zone";
 import Achievement "../models/entities/Achievement";
 import UserHandler "UserHandler";
@@ -40,7 +39,6 @@ module {
         races : [Race.Race];
         scenarioMetaDataList : [ScenarioMetaData.ScenarioMetaData];
         items : [Item.Item];
-        images : [Image.Image];
         zones : [Zone.Zone];
         achievements : [Achievement.Achievement];
         creatures : [Creature.Creature];
@@ -161,7 +159,6 @@ module {
         #noRaces;
         #noScenarios;
         #noItems;
-        #noImages;
         #noZones;
         #noScenariosForZone : Text;
         #noCreatures;
@@ -189,8 +186,6 @@ module {
 
         let items = toTextHashMap<Item.Item>(data.items);
 
-        let images = toTextHashMap<Image.Image>(data.images);
-
         let zones = toTextHashMap<Zone.Zone>(data.zones);
 
         let achievements = toTextHashMap<Achievement.Achievement>(data.achievements);
@@ -215,7 +210,6 @@ module {
                 races = Iter.toArray(races.vals());
                 scenarioMetaDataList = Iter.toArray(scenarioMetaDataList.vals());
                 items = Iter.toArray(items.vals());
-                images = Iter.toArray(images.vals());
                 zones = Iter.toArray(zones.vals());
                 achievements = Iter.toArray(achievements.vals());
                 creatures = Iter.toArray(creatures.vals());
@@ -239,9 +233,6 @@ module {
             };
             if (items.size() == 0) {
                 return #err(#noItems);
-            };
-            if (images.size() == 0) {
-                return #err(#noImages);
             };
             if (zones.size() == 0) {
                 return #err(#noZones);
@@ -712,25 +703,6 @@ module {
 
         public func validateAction(action : Action.Action) : Result.Result<(), [Text]> {
             Action.validate(action);
-        };
-
-        public func addOrUpdateImage(image : Image.Image) : Result.Result<(), { #invalid : [Text] }> {
-            switch (validateImage(image)) {
-                case (#err(errors)) return #err(#invalid(errors));
-                case (#ok) ();
-            };
-
-            Debug.print("Adding image: " # image.id);
-            images.put(image.id, image);
-            #ok;
-        };
-
-        public func validateImage(image : Image.Image) : Result.Result<(), [Text]> {
-            Image.validate(image);
-        };
-
-        public func getImage(imageId : Text) : ?Image.Image {
-            images.get(imageId);
         };
 
         public func getScenarioMetaDataList() : [ScenarioMetaData.ScenarioMetaData] {

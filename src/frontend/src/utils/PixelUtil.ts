@@ -1,4 +1,5 @@
 import { PixelData, PixelImage } from "../ic-agent/declarations/main";
+import { PriorityQueue } from '@datastructures-js/priority-queue';
 
 export type PixelGrid = PixelColor[][];
 
@@ -259,36 +260,48 @@ function findClosestColor(color: Rgb, palette: Rgb[]): Rgb {
 }
 
 function mergeSimilarColors(colorCounts: ColorCount[], maxColors: number): Rgb[] {
-    while (colorCounts.length > maxColors) {
-        let minDistance = Infinity;
-        let mergeIndex = -1;
+    const pq = new PriorityQueue<[number, number, number]>((a, b) => a[0] - b[0]);
 
-        for (let i = 0; i < colorCounts.length; i++) {
-            for (let j = i + 1; j < colorCounts.length; j++) {
-                const distance = colorDistance(colorCounts[i].color, colorCounts[j].color);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    mergeIndex = i;
-                }
-            }
+    // Initialize priority queue with all color pairs
+    for (let i = 0; i < colorCounts.length; i++) {
+        for (let j = i + 1; j < colorCounts.length; j++) {
+            const distance = colorDistance(colorCounts[i].color, colorCounts[j].color);
+            pq.enqueue([distance, i, j]);
         }
+    }
 
-        if (mergeIndex !== -1) {
-            const color1 = colorCounts[mergeIndex];
-            const color2 = colorCounts[mergeIndex + 1];
+    while (colorCounts.length > maxColors && !pq.isEmpty()) {
+        const [_, i, j] = pq.dequeue();
+
+        // Check if these colors still exist (haven't been merged yet)
+        if (colorCounts[i] && colorCounts[j]) {
+            const color1 = colorCounts[i];
+            const color2 = colorCounts[j];
             const totalCount = color1.count + color2.count;
             const mergedColor: Rgb = [
                 Math.round((color1.color[0] * color1.count + color2.color[0] * color2.count) / totalCount),
                 Math.round((color1.color[1] * color1.count + color2.color[1] * color2.count) / totalCount),
                 Math.round((color1.color[2] * color1.count + color2.color[2] * color2.count) / totalCount)
             ];
-            colorCounts[mergeIndex] = { color: mergedColor, count: totalCount };
-            colorCounts.splice(mergeIndex + 1, 1);
+
+            // Replace color at index i with merged color
+            colorCounts[i] = { color: mergedColor, count: totalCount };
+            // Remove color at index j
+            colorCounts.splice(j, 1);
+
+            // Add new color distances to priority queue
+            for (let k = 0; k < colorCounts.length; k++) {
+                if (k !== i) {
+                    const distance = colorDistance(mergedColor, colorCounts[k].color);
+                    pq.enqueue([distance, Math.min(i, k), Math.max(i, k)]);
+                }
+            }
         }
     }
 
     return colorCounts.map(cc => cc.color);
 }
+
 
 export function convertToDynamicPalette(imageData: ImageData, maxColors: number = 254): PixelGrid {
     const data = imageData.data;

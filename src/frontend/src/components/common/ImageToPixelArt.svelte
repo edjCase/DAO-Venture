@@ -6,10 +6,10 @@
   export let width: number;
   export let height: number;
   export let pixelSize: number = 16;
-  export let previewPixelSize: number | undefined;
 
   let pixels: PixelGrid | undefined;
   let maxColors = 50;
+  let pixelating = false;
 
   let pixelate = (sourceImage: HTMLImageElement, canvas: HTMLCanvasElement) => {
     // Derived from https://github.com/giventofly/pixelit/blob/master/src/pixelit.js
@@ -24,9 +24,10 @@
     canvas.style.position = "fixed";
     canvas.style.top = "0";
     canvas.style.left = "0";
-
+    // Draw the image onto the canvas
     ctx.drawImage(sourceImage, 0, 0, width, height);
 
+    // Get the lower resolution image data from the canvas
     const imageData = ctx.getImageData(0, 0, width, height);
     pixels = convertToDynamicPalette(imageData, maxColors);
   };
@@ -38,17 +39,25 @@
   function handleFileSelect() {
     const file = fileInput.files?.[0];
     if (file) {
+      pixelating = true;
       const reader = new FileReader();
       reader.onload = (e) => {
         sourceImage.src = e.target?.result as string;
-        sourceImage.onload = () => pixelate(sourceImage, pixelCanvas);
+        sourceImage.onload = () => {
+          try {
+            pixelate(sourceImage, pixelCanvas);
+          } catch (e) {
+            console.error("Error pixelating image", e);
+          }
+          pixelating = false;
+        };
       };
       reader.readAsDataURL(file);
     }
   }
 </script>
 
-<div class="flex justify-around">
+<div class="flex flex-col justify-around" hidden={pixelating}>
   <div class="">
     <Label>Max Color Count: {maxColors}</Label>
     <Range bind:value={maxColors} min={0} max={254} />
@@ -58,8 +67,10 @@
     <img bind:this={sourceImage} style="display: none;" alt="source" />
   </div>
 </div>
-<Button on:click={handleFileSelect}>Pixelate Image</Button>
+<Button on:click={handleFileSelect}>
+  {pixelating ? "Pixelating..." : "Pixelate Image"}
+</Button>
 <canvas bind:this={pixelCanvas} style="display: none;" />
 {#if pixels}
-  <PixelArtEditor {pixels} {pixelSize} {previewPixelSize} />
+  <PixelArtEditor {pixels} {pixelSize} />
 {/if}

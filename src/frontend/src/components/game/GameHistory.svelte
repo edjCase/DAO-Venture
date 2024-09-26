@@ -34,15 +34,17 @@
   {#if completedGames.length === 0}
     <div class="text-center text-xl mt-4">No games found</div>
   {/if}
-  {#each completedGames as game}
-    <div>
-      <div>Result: {game.victory ? "Victory" : "Defeat"}</div>
-      <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
-      <div class="flex justify-center">
-        <CharacterAvatarWithStats pixelSize={2} character={game.character} />
+  <div class="space-y-4 mt-4">
+    {#each completedGames as game}
+      <div class="bg-gray-800 p-4">
+        <div>Result: {game.victory ? "Victory" : "Defeat"}</div>
+        <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
+        <div class="flex justify-center">
+          <CharacterAvatarWithStats pixelSize={2} character={game.character} />
+        </div>
       </div>
-    </div>
-  {/each}
+    {/each}
+  </div>
 
   {#if hasMore}
     <button

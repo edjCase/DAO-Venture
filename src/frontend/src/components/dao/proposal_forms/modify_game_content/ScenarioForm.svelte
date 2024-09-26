@@ -21,7 +21,7 @@
   let id: string | undefined;
   let name: string | undefined;
   let description: string | undefined;
-  let imageId: string | undefined;
+  let image: string | undefined;
   let paths: ScenarioPath[] = [];
   let location: LocationKind = { common: null };
   let category: ScenarioCategory = { other: null };
@@ -67,13 +67,13 @@
     if (!id) return "Id must be filled";
     if (!name) return "Name must be filled";
     if (!description) return "Description must be filled";
-    if (!imageId) return "Image Id must be filled";
+    if (!image) return "Image Id must be filled";
 
     const scenario: ScenarioMetaData = {
       id,
       name,
       description,
-      imageId,
+      imageId: image,
       paths,
       location,
       category,
@@ -125,7 +125,7 @@
       <Input
         id="imageId"
         type="text"
-        bind:value={imageId}
+        bind:value={image}
         placeholder="epic_battle_image"
       />
     </div>

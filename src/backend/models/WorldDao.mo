@@ -1,5 +1,4 @@
 import Item "entities/Item";
-import Image "Image";
 import Race "entities/Race";
 import Class "entities/Class";
 import Zone "entities/Zone";
@@ -22,7 +21,6 @@ module {
 
     public type ModifyGameContent = {
         #item : Item.Item;
-        #image : Image.Image;
         #scenario : ScenarioMetaData.ScenarioMetaData;
         #race : Race.Race;
         #class_ : Class.Class;

@@ -57,10 +57,6 @@ export interface BlockLogEntry {
   'target' : TargetKind,
   'amount' : bigint,
 }
-export interface CallbackStrategy {
-  'token' : Token,
-  'callback' : [Principal, string],
-}
 export type CharacterActionKind = { 'item' : null } |
   { 'skill' : null } |
   { 'weapon' : null };
@@ -182,7 +178,6 @@ export type CreateGameError = { 'noWeapons' : null } |
   { 'noCreatures' : null } |
   { 'noRaces' : null } |
   { 'noScenarios' : null } |
-  { 'noImages' : null } |
   { 'alreadyInitialized' : null };
 export type CreateGameRequest = {};
 export type CreateGameResult = { 'ok' : null } |
@@ -267,7 +262,6 @@ export type GetUsersResult = { 'ok' : Array<User> };
 export type GetWorldProposalError = { 'proposalNotFound' : null };
 export type GetWorldProposalResult = { 'ok' : WorldProposal } |
   { 'err' : GetWorldProposalError };
-export type HeaderField = [string, string];
 export interface Heal {
   'max' : bigint,
   'min' : bigint,
@@ -278,31 +272,6 @@ export interface HealLogEntry {
   'target' : TargetKind,
   'amount' : bigint,
 }
-export interface HttpRequest {
-  'url' : string,
-  'method' : string,
-  'body' : Uint8Array | number[],
-  'headers' : Array<HeaderField>,
-}
-export interface HttpResponse {
-  'body' : Uint8Array | number[],
-  'headers' : Array<HeaderField>,
-  'upgrade' : [] | [boolean],
-  'streaming_strategy' : [] | [StreamingStrategy],
-  'status_code' : number,
-}
-export interface HttpUpdateRequest {
-  'url' : string,
-  'method' : string,
-  'body' : Uint8Array | number[],
-  'headers' : Array<HeaderField>,
-}
-export interface Image {
-  'id' : string,
-  'data' : Uint8Array | number[],
-  'kind' : ImageKind,
-}
-export type ImageKind = { 'png' : null };
 export interface InProgressGameStateWithMetaData {
   'turnKind' : TurnKind,
   'character' : CharacterWithMetaData,
@@ -330,7 +299,6 @@ export type ModifyGameContent = { 'action' : Action } |
   { 'race' : Race } |
   { 'zone' : Zone } |
   { 'achievement' : Achievement } |
-  { 'image' : Image } |
   { 'scenario' : ScenarioMetaData } |
   { 'weapon' : Weapon };
 export interface MotionContent { 'title' : string, 'description' : string }
@@ -463,7 +431,7 @@ export interface ScenarioMetaData {
   'unlockRequirement' : [] | [UnlockRequirement],
   'category' : ScenarioCategory,
   'paths' : Array<ScenarioPath>,
-  'imageId' : string,
+  'image' : PixelImage,
   'location' : LocationKind,
 }
 export interface ScenarioPath {
@@ -533,11 +501,6 @@ export type StatusEffectResultKind = { 'retaliating' : Retaliating } |
   { 'necrotic' : null } |
   { 'stunned' : null } |
   { 'periodic' : PeriodicEffectResult };
-export interface StreamingCallbackHttpResponse {
-  'token' : [] | [Token],
-  'body' : Uint8Array | number[],
-}
-export type StreamingStrategy = { 'Callback' : CallbackStrategy };
 export interface SwapWeaponOutcomeEffect {
   'removedWeaponId' : string,
   'weaponId' : string,
@@ -546,7 +509,6 @@ export type TargetKind = { 'creature' : bigint } |
   { 'character' : null } |
   { 'periodicEffect' : null };
 export type Time = bigint;
-export interface Token { 'arbitrary_data' : string }
 export type TurnKind = { 'scenario' : ScenarioTurn } |
   { 'combat' : CombatTurn };
 export type TurnPhase = { 'end' : null } |
@@ -627,8 +589,6 @@ export interface _SERVICE {
   'getWorldProposal' : ActorMethod<[bigint], GetWorldProposalResult>,
   'getWorldProposals' : ActorMethod<[bigint, bigint], PagedResult>,
   'getZones' : ActorMethod<[], Array<Zone>>,
-  'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
-  'http_request_update' : ActorMethod<[HttpUpdateRequest], HttpResponse>,
   'register' : ActorMethod<[], RegisterResult>,
   'selectScenarioChoice' : ActorMethod<
     [SelectScenarioChoiceRequest],

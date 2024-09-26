@@ -37,45 +37,47 @@
   ];
 </script>
 
-<h1 class="text-3xl font-bold my-2 text-center text-primary-500">
-  DAO Governance
-</h1>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6 justify-items-center">
-  {#each metricCards as card}
-    <Card padding="none" class="w-full max-w-sm">
-      <div class="flex items-center">
-        <div
-          class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-primary-500 mr-2"
-        >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
+<div>
+  <h1 class="text-5xl font-semibold text-primary-500 my-4 text-center">
+    DAO Governance
+  </h1>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6 justify-items-center">
+    {#each metricCards as card}
+      <Card padding="none" class="w-full max-w-sm">
+        <div class="flex items-center">
+          <div
+            class="inline-flex flex-shrink-0 justify-center items-center w-12 h-12 text-primary-500 mr-2"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d={card.icon}
-            ></path>
-          </svg>
+            <svg
+              class="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d={card.icon}
+              ></path>
+            </svg>
+          </div>
+          <div class="w-full">
+            <div class="text-xl">{card.title}</div>
+            <div class="font-bold text-2xl">{card.value}</div>
+          </div>
         </div>
-        <div class="w-full">
-          <div class="text-xl">{card.title}</div>
-          <div class="font-bold text-2xl">{card.value}</div>
-        </div>
-      </div>
-    </Card>
-  {/each}
-</div>
+      </Card>
+    {/each}
+  </div>
 
-<Tabs>
-  <TabItem title="Proposals" open>
-    <ProposalList />
-  </TabItem>
-  <TabItem title="Create Proposal" disabled={user === undefined}>
-    <ProposalForm />
-  </TabItem>
-</Tabs>
+  <Tabs>
+    <TabItem title="Proposals" open>
+      <ProposalList />
+    </TabItem>
+    <TabItem title="Create Proposal" disabled={user === undefined}>
+      <ProposalForm />
+    </TabItem>
+  </Tabs>
+</div>

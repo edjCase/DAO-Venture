@@ -15,7 +15,6 @@ export const idlFactory = ({ IDL }) => {
     'noCreatures' : IDL.Null,
     'noRaces' : IDL.Null,
     'noScenarios' : IDL.Null,
-    'noImages' : IDL.Null,
     'alreadyInitialized' : IDL.Null,
   });
   const CreateGameResult = IDL.Variant({
@@ -179,12 +178,6 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
   });
-  const ImageKind = IDL.Variant({ 'png' : IDL.Null });
-  const Image = IDL.Record({
-    'id' : IDL.Text,
-    'data' : IDL.Vec(IDL.Nat8),
-    'kind' : ImageKind,
-  });
   const ScenarioCategory = IDL.Variant({
     'other' : IDL.Null,
     'store' : IDL.Null,
@@ -285,7 +278,7 @@ export const idlFactory = ({ IDL }) => {
     'unlockRequirement' : IDL.Opt(UnlockRequirement),
     'category' : ScenarioCategory,
     'paths' : IDL.Vec(ScenarioPath),
-    'imageId' : IDL.Text,
+    'image' : PixelImage,
     'location' : LocationKind,
   });
   const Weapon = IDL.Record({
@@ -304,7 +297,6 @@ export const idlFactory = ({ IDL }) => {
     'race' : Race,
     'zone' : Zone,
     'achievement' : Achievement,
-    'image' : Image,
     'scenario' : ScenarioMetaData,
     'weapon' : Weapon,
   });
@@ -640,36 +632,6 @@ export const idlFactory = ({ IDL }) => {
     'totalCount' : IDL.Nat,
     'offset' : IDL.Nat,
   });
-  const HeaderField = IDL.Tuple(IDL.Text, IDL.Text);
-  const HttpRequest = IDL.Record({
-    'url' : IDL.Text,
-    'method' : IDL.Text,
-    'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(HeaderField),
-  });
-  const Token = IDL.Record({ 'arbitrary_data' : IDL.Text });
-  const StreamingCallbackHttpResponse = IDL.Record({
-    'token' : IDL.Opt(Token),
-    'body' : IDL.Vec(IDL.Nat8),
-  });
-  const CallbackStrategy = IDL.Record({
-    'token' : Token,
-    'callback' : IDL.Func([Token], [StreamingCallbackHttpResponse], ['query']),
-  });
-  const StreamingStrategy = IDL.Variant({ 'Callback' : CallbackStrategy });
-  const HttpResponse = IDL.Record({
-    'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(HeaderField),
-    'upgrade' : IDL.Opt(IDL.Bool),
-    'streaming_strategy' : IDL.Opt(StreamingStrategy),
-    'status_code' : IDL.Nat16,
-  });
-  const HttpUpdateRequest = IDL.Record({
-    'url' : IDL.Text,
-    'method' : IDL.Text,
-    'body' : IDL.Vec(IDL.Nat8),
-    'headers' : IDL.Vec(HeaderField),
-  });
   const RegisterError = IDL.Variant({ 'alreadyMember' : IDL.Null });
   const RegisterResult = IDL.Variant({ 'ok' : User, 'err' : RegisterError });
   const ItemRewardChoice = IDL.Record({
@@ -784,8 +746,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'getZones' : IDL.Func([], [IDL.Vec(Zone)], ['query']),
-    'http_request' : IDL.Func([HttpRequest], [HttpResponse], ['query']),
-    'http_request_update' : IDL.Func([HttpUpdateRequest], [HttpResponse], []),
     'register' : IDL.Func([], [RegisterResult], []),
     'selectScenarioChoice' : IDL.Func(
         [SelectScenarioChoiceRequest],

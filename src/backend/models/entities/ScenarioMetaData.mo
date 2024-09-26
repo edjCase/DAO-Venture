@@ -9,19 +9,19 @@ import Nat "mo:base/Nat";
 import Array "mo:base/Array";
 import TextX "mo:xtended-text/TextX";
 import Item "Item";
-import Image "../Image";
 import Zone "Zone";
 import Achievement "Achievement";
 import Creature "Creature";
 import Character "../Character";
 import IterTools "mo:itertools/Iter";
 import Action "Action";
+import PixelImage "../PixelImage";
 
 module {
 
     public type ScenarioMetaData = Entity.Entity and {
         location : LocationKind;
-        imageId : Text;
+        image : PixelImage.PixelImage;
         paths : [ScenarioPath];
         category : ScenarioCategory;
         unlockRequirement : ?UnlockRequirement.UnlockRequirement;
@@ -145,7 +145,6 @@ module {
     public func validate(
         metaData : ScenarioMetaData,
         items : HashMap.HashMap<Text, Item.Item>,
-        images : HashMap.HashMap<Text, Image.Image>,
         zones : HashMap.HashMap<Text, Zone.Zone>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
@@ -168,9 +167,6 @@ module {
                     case (#ok) ();
                 };
             };
-        };
-        if (images.get(metaData.imageId) == null) {
-            errors.add("Image id not found: " # metaData.imageId);
         };
 
         switch (metaData.location) {

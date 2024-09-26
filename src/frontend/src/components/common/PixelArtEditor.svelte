@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Button, Toggle, Label } from "flowbite-svelte";
+  import { Button, Toggle, Label, Range } from "flowbite-svelte";
   import RgbColor from "./RgbColor.svelte";
   import {
     PixelGrid,
@@ -12,7 +12,7 @@
 
   export let pixelSize = 20;
   export let pixels: PixelGrid;
-  export let previewPixelSize: number | undefined;
+  let previewPixelSize: number = 2;
 
   let backgroundLayers: PixelGrid[] = [];
 
@@ -120,11 +120,14 @@
       {/each}
     {/each}
   </div>
-  <div class="flex flex-col justify-center items-center space-y-4">
+  <div class="flex flex-col justify-center items-center space-y-4 w-full">
     {#if previewPixelSize !== undefined}
-      <div class="flex flex-col items-center">
-        <div>Preview:</div>
-        <PixelArtCanvas layers={previewLayers} pixelSize={previewPixelSize} />
+      <div class=" w-full">
+        <div class="text-center">Preview</div>
+        <Range bind:value={previewPixelSize} min={1} max={12} />
+        <div class="flex justify-center">
+          <PixelArtCanvas layers={previewLayers} pixelSize={previewPixelSize} />
+        </div>
       </div>
     {/if}
     <Label>Show Background Layers</Label>
