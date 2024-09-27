@@ -60,7 +60,7 @@
 <div class="flex flex-col justify-around" hidden={pixelating}>
   <div class="">
     <Label>Max Color Count: {maxColors}</Label>
-    <Range bind:value={maxColors} min={0} max={254} />
+    <Range bind:value={maxColors} min={2} max={254} />
   </div>
   <div class="">
     <input type="file" accept="image/*" bind:this={fileInput} />

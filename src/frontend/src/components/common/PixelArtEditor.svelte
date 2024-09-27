@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { Button, Toggle, Label, Range } from "flowbite-svelte";
+  import { Button, Toggle, Label, Range, Textarea } from "flowbite-svelte";
   import RgbColor from "./RgbColor.svelte";
   import {
     PixelGrid,
     PixelColor,
     encodePixelsToBase64,
-    decodeBase64ToPixels,
     generatePixelGrid,
+    decodeBase64ToPixels,
   } from "../../utils/PixelUtil";
   import PixelArtCanvas from "./PixelArtCanvas.svelte";
 
@@ -23,10 +23,12 @@
   let isDrawing = false;
   let isErasing = false;
   let showBackgroundLayers = true;
+  let base64Bytes: string | undefined;
 
   function updatePixel(x: number, y: number): void {
     pixels[y][x] = isErasing ? undefined : selectedColor;
     pixels = [...pixels]; // Trigger reactivity by creating a new array reference
+    base64Bytes = undefined;
   }
 
   function handleMouseDown(x: number, y: number): void {
@@ -47,15 +49,6 @@
   function toggleEraser(): void {
     isErasing = !isErasing;
   }
-
-  let copyToClipboard = () => {
-    navigator.clipboard.writeText(encodePixelsToBase64(pixels));
-  };
-  let pasteFromClipboard = () => {
-    navigator.clipboard.readText().then((text) => {
-      pixels = decodeBase64ToPixels(text, height, width);
-    });
-  };
 
   $: previewLayers = showBackgroundLayers
     ? [...backgroundLayers, pixels]
@@ -84,6 +77,21 @@
 
   function eraseAll(): void {
     pixels = generatePixelGrid(height, width);
+  }
+
+  function generateBase64Bytes(): void {
+    base64Bytes = encodePixelsToBase64(pixels);
+  }
+
+  function copyToClipboard(): void {
+    if (base64Bytes) {
+      navigator.clipboard.writeText(base64Bytes);
+    }
+  }
+
+  async function pasteFromClipboard(): Promise<void> {
+    base64Bytes = await navigator.clipboard.readText();
+    pixels = decodeBase64ToPixels(base64Bytes, height, width);
   }
 </script>
 
@@ -148,9 +156,14 @@
     {:else}
       <Button on:click={eraseAll}>Erase All</Button>
     {/if}
-    <Button on:click={copyToClipboard}>Copy to Clipboard</Button>
-    <Button on:click={pasteFromClipboard}>Paste From Clipboard</Button>
     <Button on:click={setAsBackgroundLayer}>Set as Background Layer</Button>
+    <Label class="text-xl">Encoded Value</Label>
+    <Button on:click={generateBase64Bytes}>Generate</Button>
+    {#if base64Bytes}
+      <Button on:click={copyToClipboard}>Copy Encoded Value</Button>
+    {/if}
+    <Button on:click={pasteFromClipboard}>Paste Encoded Value</Button>
+    <Textarea bind:value={base64Bytes} />
   </div>
 </div>
 

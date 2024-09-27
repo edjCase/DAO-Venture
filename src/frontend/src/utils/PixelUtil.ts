@@ -178,6 +178,8 @@ export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
         if (!colorsEqual(currentColor, pixel)) {
             if (currentCount > 0) {
                 pushAndReset();
+            } else {
+                currentCount = 1;
             }
             currentColor = pixel;
             if (pixel !== undefined && !palette.some(color => colorsEqual(color, pixel))) {
@@ -195,6 +197,11 @@ export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
 
     if (palette.length >= 255) {
         throw new Error('Too many colors in palette. Max is 254.');
+    }
+
+    let pixelCount = pixelData.reduce((acc, data) => acc + Number(data.count), 0);
+    if (pixelCount !== 4096) {
+        throw new Error('Total pixel count must be 4096 but was ' + pixelCount);
     }
 
     return { palette, pixelData };

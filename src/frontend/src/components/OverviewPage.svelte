@@ -4,7 +4,8 @@
     ChevronRightOutline,
     GithubSolid,
     TwitterSolid,
-    ReplySolid,
+    MessagesSolid,
+    ArrowUpRightFromSquareOutline,
   } from "flowbite-svelte-icons";
   import { navigate } from "svelte-routing";
   import { currentGameStore } from "../stores/CurrentGameStore";
@@ -30,6 +31,17 @@
     <section class="relative">
       <h1 class="text-5xl font-semibold text-primary-500 mb-4">DAO-Venture</h1>
       <div class="text-xl mb-4">An experiment with a DAO run game</div>
+      <div class="text-2xl text-red-500 font-semibold mb-4 max-w-96 mx-auto">
+        Game is in ALPHA state and is not yet fully functional. Game state will
+        be wiped periodically. Report any issues on
+        <Button
+          href="https://oc.app/community/cghnf-2qaaa-aaaar-baa6a-cai/channel/96392963121583024737943677773512869402/?ref=nlzgz-paaaa-aaaaf-acwna-cai"
+          target="_blank"
+          style="text-shadow: none;"
+        >
+          Open Chat <ArrowUpRightFromSquareOutline size="xs" class="ml-1" />
+        </Button>
+      </div>
       <div class="relative h-[400px] overflow-hidden">
         <img
           src="/images/landscape.png"
@@ -116,7 +128,7 @@
               href="https://oc.app/community/cghnf-2qaaa-aaaar-baa6a-cai/?ref=nlzgz-paaaa-aaaaf-acwna-cai"
               target="_blank"
             >
-              <ReplySolid class="inline-block" /> Open Chat
+              <MessagesSolid class="inline-block" /> Open Chat
             </a>
           </li>
           <li class="mb-2">
