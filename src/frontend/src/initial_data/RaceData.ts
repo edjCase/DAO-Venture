@@ -44,7 +44,7 @@ export const races: Race[] = [
         description: "Faeries are mysterious and enchanting.",
         startingSkillActionIds: ["arcane_missiles", "regenerate"],
         image: decodeBase64ToImage("Bkmbnde1lP///wAAALRLY/msuqoB/wsAFP8NABP/DQAS/w8AEf8FAAMBAgABAQQAEf8DAAoBAgAR/wIAAwECAgMBAgIBAQIAEP8BAwEABAEBAgEDAwEBAgEDAgEBAAn/AgQE/wEDDwEBAwb/AgQB/wMEA/8BAw8BAQMF/wMEAf8BBAEFAgQD/wEDCAECAwQBAQME/wIEAQUBBAH/BQQC/wIDDQEBAwP/BQQC/wIEAQUCBAL/AQMNAQEDAv8CBAEFAgQD/wYEAf8BAwYBBAMDAQEDAf8GBAP/BAQBBQIEAf8BAwsBAQMB/wIEAQUEBAT/BwQBAwsBAQMHBAX/BQQBBQIEAQMJAQEDAgQBBQUEBf8JBAEDBwEBAwkEBv8GBAEFAQQBAwcBAQMBBAEFBgQH/wgEAQMHAQEDCAQH/wUEAwMJAQMDBQQI/wMEAQMPAQEDAwQJ/wIEAQMRAQEDAgQJ/wEEAQMTAQEDAQQJ/wEDFQEBAwn/AQMVAQEDCf8BAxUBAQMF/w=="),
-        unlockRequirement: [],
+        unlockRequirement: [{ acheivementId: "race_faerie" }],
         startingItemIds: []
     }
 ];

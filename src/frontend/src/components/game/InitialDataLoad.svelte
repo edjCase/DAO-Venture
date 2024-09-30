@@ -97,10 +97,12 @@
       })
     );
 
-    let scenarios = await import("../../initial_data/ScenarioData").then(
-      (module) => {
-        return module.scenarios;
-      }
+    let scenarioPaths = import.meta.glob("../../initial_data/scenarios/*.ts");
+    let scenarios = await Promise.all(
+      Object.keys(scenarioPaths).map(async (path) => {
+        const module = await import(/* @vite-ignore */ path);
+        return module.scenario;
+      })
     );
     await Promise.all(
       scenarios.map(async (scenario) => {
