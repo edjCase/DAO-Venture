@@ -1,12 +1,6 @@
 <script lang="ts">
   import FormTemplate from "../FormTemplate.svelte";
-  import {
-    Input,
-    Label,
-    Textarea,
-    Select,
-    SelectOptionType,
-  } from "flowbite-svelte";
+  import { Input, Label, Textarea, Button } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
     Action,
@@ -16,6 +10,8 @@
   } from "../../../../ic-agent/declarations/main";
   import CombatEffectChooser from "./CombatEffectChooser.svelte";
   import ScenarioEffectChooser from "./ScenarioEffectChooser.svelte";
+  import { PlusSolid, TrashBinSolid } from "flowbite-svelte-icons";
+  import ActionTargetEditor from "./ActionTargetEditor.svelte";
 
   let id: string | undefined;
   let name: string | undefined;
@@ -26,21 +22,6 @@
     scope: { any: null },
     selection: { all: null },
   };
-
-  const targetScopes: SelectOptionType<string>[] = [
-    { value: "any", name: "Any" },
-    { value: "ally", name: "Ally" },
-    { value: "enemy", name: "Enemy" },
-  ];
-  let selectedScope: string = targetScopes[0].value;
-
-  const targetSelections: SelectOptionType<string>[] = [
-    { value: "all", name: "All" },
-    { value: "random", name: "Random" },
-    { value: "chosen", name: "Chosen" },
-  ];
-
-  let selectedSelection: string = targetSelections[0].value;
 
   function addScenarioEffect() {
     scenarioEffects = [...scenarioEffects, createDefaultScenarioEffect()];
@@ -120,77 +101,45 @@
     </div>
 
     <div>
-      <Label>Scenario Effects</Label>
+      <div class="flex gap-4 items-center">
+        <Label>Scenario Effects</Label>
+        <Button on:click={addScenarioEffect}>
+          <PlusSolid size="xs" />
+        </Button>
+      </div>
       {#each scenarioEffects as effect, index}
-        <div class="border p-4 mb-4">
+        <div class="p-4 mb-4">
+          <div class="flex gap-4 items-center">
+            <Label>Effect {index + 1}</Label>
+            <Button on:click={() => removeScenarioEffect(index)} color="red">
+              <TrashBinSolid size="xs" />
+            </Button>
+          </div>
           <ScenarioEffectChooser value={effect} />
-          <button
-            class="mt-2 bg-red-500 text-white px-2 py-1"
-            on:click={() => removeScenarioEffect(index)}
-          >
-            Remove Effect
-          </button>
         </div>
       {/each}
-      <button
-        class="bg-blue-500 text-white px-4 py-2"
-        on:click={addScenarioEffect}
-      >
-        Add Effect
-      </button>
     </div>
 
     <div>
-      <Label>Combat Effects</Label>
+      <div class="flex gap-4 items-center">
+        <Label>Combat Effects</Label>
+        <Button on:click={addCombatEffect}>
+          <PlusSolid size="xs" />
+        </Button>
+      </div>
       {#each combatEffects as effect, index}
         <div class="border p-4 mb-4">
+          <div class="flex gap-4 items-center">
+            <Label>Effect {index + 1}</Label>
+            <Button on:click={() => removeCombatEffect(index)} color="red">
+              <TrashBinSolid size="xs" />
+            </Button>
+          </div>
           <CombatEffectChooser bind:value={effect} />
-          <button
-            class="mt-2 bg-red-500 text-white px-2 py-1"
-            on:click={() => removeCombatEffect(index)}
-          >
-            Remove Effect
-          </button>
         </div>
       {/each}
-      <button
-        class="bg-blue-500 text-white px-4 py-2"
-        on:click={addCombatEffect}
-      >
-        Add Effect
-      </button>
     </div>
 
-    <div>
-      <Label>Target</Label>
-      <div class="flex gap-4">
-        <div class="flex-1">
-          <Label for="targetScope">Scope</Label>
-          <Select
-            id="targetScope"
-            items={targetScopes}
-            bind:value={selectedScope}
-          />
-        </div>
-        <div class="flex-1">
-          <Label for="targetSelection">Selection</Label>
-          <Select
-            id="targetSelection"
-            items={targetSelections}
-            bind:value={selectedSelection}
-          />
-        </div>
-      </div>
-      {#if "random" in target.selection}
-        <div class="mt-2">
-          <Label for="randomCount">Random Count</Label>
-          <Input
-            id="randomCount"
-            type="number"
-            bind:value={target.selection.random.count}
-          />
-        </div>
-      {/if}
-    </div>
+    <ActionTargetEditor bind:value={target} />
   </div>
 </FormTemplate>

@@ -7,8 +7,10 @@
 </script>
 
 {#if "attribute" in value}
-  <BigIntInput bind:value={value.attribute.value} />
-  <CharacterAttributeChooser bind:value={value.attribute.attribute} />
+  <div class="flex">
+    <BigIntInput bind:value={value.attribute.value} />
+    <CharacterAttributeChooser bind:value={value.attribute.attribute} />
+  </div>
 {:else}
   NOT IMPLEMENETED SCENARIO EFFECT : {toJsonString(value)}
 {/if}

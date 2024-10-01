@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Input, Label } from "flowbite-svelte";
+  import { Label } from "flowbite-svelte";
   import { CombatEffect } from "../../../../ic-agent/declarations/main";
   import MinMaxTimingForm from "./MinMaxTimingForm.svelte";
   import StatusEffectChooser from "./StatusEffectChooser.svelte";

@@ -2,6 +2,7 @@
   import { CombatEffect } from "../../../../ic-agent/declarations/main";
   import { toJsonString } from "../../../../utils/StringUtil";
   import GameIcon from "../../../game/GameIcon.svelte";
+  import MinMaxTimingView from "./MinMaxTimingView.svelte";
 
   export let effect: CombatEffect;
 </script>
@@ -9,10 +10,13 @@
 <div>
   {#if "damage" in effect.kind}
     <div class="text-primary-500">Damage</div>
-    {effect.kind.damage.min}-{effect.kind.damage.max}
+    <MinMaxTimingView value={effect.kind.damage} />
   {:else if "heal" in effect.kind}
     <div class="text-primary-500">Heal</div>
-    {effect.kind.heal.min}-{effect.kind.heal.max}
+    <MinMaxTimingView value={effect.kind.heal} />
+  {:else if "block" in effect.kind}
+    <div class="text-primary-500">Block</div>
+    <MinMaxTimingView value={effect.kind.block} />
   {:else if "addStatusEffect" in effect.kind}
     <div class="text-primary-500">Add Status Effect</div>
     {#if "retaliating" in effect.kind.addStatusEffect.kind}
@@ -36,9 +40,6 @@
     {#if effect.kind.addStatusEffect.duration}
       for {effect.kind.addStatusEffect.duration[0]} turns
     {/if}
-  {:else if "block" in effect.kind}
-    <div class="text-primary-500">Block</div>
-    {effect.kind.block.min}-{effect.kind.block.max}
   {:else}
     NOT IMPLEMENTED EFFECT Kind: {toJsonString(effect.kind)}
   {/if}

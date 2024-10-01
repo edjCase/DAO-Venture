@@ -1,9 +1,10 @@
 <script lang="ts">
-  import { SelectOptionType, Input, Select, Label } from "flowbite-svelte";
+  import { SelectOptionType, Select, Label } from "flowbite-svelte";
   import {
     ActionTimingKind,
     TurnPhase,
   } from "../../../../ic-agent/declarations/main";
+  import BigIntInput from "../../../common/BigIntInput.svelte";
 
   export let value: { min: bigint; max: bigint; timing: ActionTimingKind };
 
@@ -17,9 +18,16 @@
     { value: "end", name: "End" },
   ];
 
-  let selectedTimingKind: string = timingKinds[0].value;
-  let selectedPhaseKind: string = phaseKinds[0].value;
-  let periodicTurns: bigint = 1n;
+  let selectedTimingKind: string = Object.keys(value.timing)[0];
+  let selectedPhaseKind: string;
+  let periodicTurns: bigint;
+  if ("periodic" in value.timing) {
+    selectedPhaseKind = Object.keys(value.timing.periodic.phase)[0];
+    periodicTurns = value.timing.periodic.turnDuration;
+  } else {
+    selectedPhaseKind = phaseKinds[0].value;
+    periodicTurns = 1n;
+  }
 
   let updateTiming = () => {
     if (selectedTimingKind === "immediate") {
@@ -33,7 +41,7 @@
 
   let updatePeriodicTurns = () => {
     if ("periodic" in value.timing) {
-      value.timing.periodic.turnDuration = BigInt(periodicTurns);
+      value.timing.periodic.turnDuration = periodicTurns;
     }
   };
 
@@ -47,9 +55,9 @@
 <div class="mt-2">
   <div class="flex gap-2">
     <Label>Min</Label>
-    <Input type="number" bind:value={value.min} placeholder="Min" />
+    <BigIntInput bind:value={value.min} />
     <Label>Max</Label>
-    <Input type="number" bind:value={value.max} placeholder="Max" />
+    <BigIntInput bind:value={value.max} />
   </div>
   <Label>Timing</Label>
   <Select
@@ -66,11 +74,7 @@
         on:change={updatePhaseKind}
       />
       <Label>Turns</Label>
-      <Input
-        type="number"
-        bind:value={periodicTurns}
-        on:change={updatePeriodicTurns}
-      />
+      <BigIntInput bind:value={periodicTurns} on:change={updatePeriodicTurns} />
     </div>
   {/if}
 </div>

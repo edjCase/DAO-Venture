@@ -15,16 +15,16 @@
   $: user = $userStore;
 
   $: metricCards = [
-    {
-      title: "Active Proposals",
-      value: "?", // TODO
-      icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
-    },
-    {
-      title: "Treasury",
-      value: "? ICP", // TODO
-      icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4",
-    },
+    // {
+    //   title: "Active Proposals",
+    //   value: "?", // TODO
+    //   icon: "M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4",
+    // },
+    // {
+    //   title: "Treasury",
+    //   value: "? ICP", // TODO
+    //   icon: "M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4",
+    // },
     {
       title: "DAO Members",
       value: userStats?.userCount || 0, // TODO
