@@ -65,7 +65,7 @@
         bind:value={selectedPhaseKind}
         on:change={updatePhaseKind}
       />
-      <Label>Period</Label>
+      <Label>Turns</Label>
       <Input
         type="number"
         bind:value={periodicTurns}

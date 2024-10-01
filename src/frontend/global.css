@@ -34,5 +34,11 @@ body {
   
 
   background-color: #0b0b0b;
+  
+  overflow-y: auto;
+
+  /* Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #4ade80 #1f2937;
  
 }

@@ -24,7 +24,7 @@
 
   let selectedTarget: string = targetItems[0].value;
 
-  let updateCombatEffectKind = () => () => {
+  let updateCombatEffectKind = () => {
     let newKind: CombatEffectKind;
     switch (selectedCombatEffectKind) {
       case "damage":
@@ -76,7 +76,7 @@
   on:change={updateCombatEffectKind}
   bind:value={selectedCombatEffectKind}
 />
-<CombatEffectEditor effect={value} />
+<CombatEffectEditor bind:effect={value} />
 <div>Target</div>
 <Select
   items={targetItems}

@@ -7,6 +7,7 @@
   import ZoneForm from "./modify_game_content/ZoneForm.svelte";
   import WeaponForm from "./modify_game_content/WeaponForm.svelte";
   import AchievementForm from "./modify_game_content/AchievementForm.svelte";
+  import ActionForm from "./modify_game_content/ActionForm.svelte";
   let gameContentTypes = [
     { value: "item", name: "Item" },
     { value: "creature", name: "Creature" },
@@ -41,8 +42,7 @@
     <!-- <ScenarioForm /> -->
     TEMPORARILY DISABLED
   {:else if selectedGameContentType === "action"}
-    <!-- <ActionForm /> -->
-    TEMPORARILY DISABLED
+    <ActionForm />
   {:else}
     NOT IMPLEMENTED GAME CONTENT FORM: <pre>{selectedGameContentType}</pre>
   {/if}

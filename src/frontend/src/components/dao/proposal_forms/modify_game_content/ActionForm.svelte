@@ -42,6 +42,19 @@
 
   let selectedSelection: string = targetSelections[0].value;
 
+  function addScenarioEffect() {
+    scenarioEffects = [...scenarioEffects, createDefaultScenarioEffect()];
+  }
+
+  function removeScenarioEffect(index: number) {
+    scenarioEffects = scenarioEffects.filter((_, i) => i !== index);
+  }
+
+  function createDefaultScenarioEffect(): ScenarioEffect {
+    return {
+      attribute: { value: 1n, attribute: { strength: null } },
+    };
+  }
   function addCombatEffect() {
     combatEffects = [...combatEffects, createDefaultCombatEffect()];
   }
@@ -107,19 +120,31 @@
     </div>
 
     <div>
-      <div>Scenario Effects</div>
-      {#each scenarioEffects as effect}
+      <Label>Scenario Effects</Label>
+      {#each scenarioEffects as effect, index}
         <div class="border p-4 mb-4">
           <ScenarioEffectChooser value={effect} />
+          <button
+            class="mt-2 bg-red-500 text-white px-2 py-1"
+            on:click={() => removeScenarioEffect(index)}
+          >
+            Remove Effect
+          </button>
         </div>
       {/each}
+      <button
+        class="bg-blue-500 text-white px-4 py-2"
+        on:click={addScenarioEffect}
+      >
+        Add Effect
+      </button>
     </div>
 
     <div>
       <Label>Combat Effects</Label>
       {#each combatEffects as effect, index}
         <div class="border p-4 mb-4">
-          <CombatEffectChooser value={effect} />
+          <CombatEffectChooser bind:value={effect} />
           <button
             class="mt-2 bg-red-500 text-white px-2 py-1"
             on:click={() => removeCombatEffect(index)}
