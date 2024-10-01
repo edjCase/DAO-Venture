@@ -6,7 +6,8 @@
 </script>
 
 <div>
-  <div>Zone</div>
+  <div class="text-primary-500 font-bold text-xl">Zone</div>
   <EntityView entity={zone} />
+  <div class="text-primary-500">Unlock Requirement</div>
   <UnlockRequirementView value={zone.unlockRequirement} />
 </div>

@@ -11,9 +11,9 @@
     modifyGameContent: ModifyGameContentView,
   };
 
-  const type = Object.keys(proposal.content as any)[0];
-  const SelectedComponent = components[type];
-  const content = (proposal.content as any)[type];
+  $: type = Object.keys(proposal.content as any)[0];
+  $: SelectedComponent = components[type];
+  $: content = (proposal.content as any)[type];
 </script>
 
 {#if !SelectedComponent}

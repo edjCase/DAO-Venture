@@ -23,7 +23,10 @@
     }
   };
 
-  let onRefresh = () => proposalStore.fetchPage(currentPage);
+  let onRefresh = async () => {
+    currentPage = 1;
+    await proposalStore.fetchPage(1);
+  };
 
   $: if (currentPage === 1 && proposals.length === 0) {
     proposalStore.fetchPage(1);

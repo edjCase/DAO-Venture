@@ -6,6 +6,6 @@
 </script>
 
 <div>
-  <div>Achievement</div>
+  <div class="text-xl text-primary-500 font-bold">Achievement</div>
   <EntityView entity={achievement} />
 </div>

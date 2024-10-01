@@ -6,9 +6,8 @@
 </script>
 
 <div>
-  Unlock Requirement:
   {#if value[0] === undefined}
-    None
+    -
   {:else}
     {@const unlockRequirement = value[0]}
     {#if "acheivementId" in unlockRequirement}

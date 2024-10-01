@@ -9,11 +9,11 @@
 </script>
 
 <div>
-  <div>Action</div>
+  <div class="text-xl text-primary-500 font-bold">Action</div>
   <EntityView entity={action} />
 
-  <div>
-    <h3>Scenario Effects:</h3>
+  <div class="text-primary-500">Scenario Effects</div>
+  <div class="pl-8">
     <ul>
       {#each action.scenarioEffects as effect}
         <li>
@@ -23,8 +23,8 @@
     </ul>
   </div>
 
-  <div>
-    <h3>Combat Effects:</h3>
+  <div class="text-primary-500">Combat Effects</div>
+  <div class="pl-8">
     <ul>
       {#each action.combatEffects as effect}
         <li>
@@ -33,10 +33,10 @@
       {/each}
     </ul>
   </div>
-  <div>
-    <h3>Target:</h3>
-    <p>
-      Scope:
+  <div class="text-primary-500">Target</div>
+  <div class="pl-8">
+    <div class="text-primary-500">Scope</div>
+    <div>
       {#if "any" in action.target.scope}
         Any
       {:else if "ally" in action.target.scope}
@@ -46,18 +46,20 @@
       {:else}
         NOT IMPLEMENTED TARGET SCOPE: {toJsonString(action.target.scope)}
       {/if}
-      Selection:
+    </div>
+    <div class="text-primary-500">Selection</div>
+    <div>
       {#if "all" in action.target.selection}
         All
       {:else if "random" in action.target.selection}
         Random {action.target.selection.random.count}
       {:else if "chosen" in action.target.selection}
-        Chosen
+        Choose Target
       {:else}
         NOT IMPLEMENTED TARGET SELECTION: {toJsonString(
           action.target.selection
         )}
       {/if}
-    </p>
+    </div>
   </div>
 </div>

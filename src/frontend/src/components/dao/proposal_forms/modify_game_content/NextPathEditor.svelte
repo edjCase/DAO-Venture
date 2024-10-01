@@ -38,7 +38,7 @@
 </script>
 
 {#if "none" in value}
-  <div>None</div>
+  <div>-</div>
 {:else if "single" in value}
   <Input type="text" bind:value={value.single} placeholder="Path ID" />
 {:else if "multi" in value}

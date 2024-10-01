@@ -85,19 +85,10 @@ export const scenario: ScenarioMetaData = {
                         },
                         {
                             id: "polite_decline",
-                            description: "Politely decline and try to leave. Emphasis on 'try'.",
+                            description: "Politely decline and leave the alchemist to their experiments.",
                             requirement: [],
                             effects: [],
-                            nextPath: {
-                                multi: [
-                                    {
-                                        weight: { value: 1, kind: { raw: null } },
-                                        description: "As you turn to leave, you trip over a stray root and fall face-first into a patch of strange mushrooms. Things are about to get... interesting.",
-                                        effects: [],
-                                        pathId: ["accidental_trip"]
-                                    }
-                                ]
-                            }
+                            nextPath: { none: null }
                         }
                     ]
                 }

@@ -72,7 +72,7 @@ function createUserStore() {
             identityProvider:
                 process.env.DFX_NETWORK === "ic"
                     ? `https://identity.ic0.app`
-                    : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:` + process.env.LOCAL_NETWORK_PORT,
+                    : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
             onSuccess: async () => {
                 console.log("Logged in");
                 currentUserId = authClient.getIdentity().getPrincipal();

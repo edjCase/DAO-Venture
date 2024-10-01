@@ -5,7 +5,6 @@
 </script>
 
 <div>
-  <div>Tags:</div>
   {#each tags as tag}
     <Badge>{tag}</Badge>
   {/each}

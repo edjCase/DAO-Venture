@@ -5,6 +5,7 @@
   import { userStore } from "../../stores/UserStore";
   import { WorldProposal } from "../../ic-agent/declarations/main";
   import ProposalView from "./ProposalView.svelte";
+  import { Hr } from "flowbite-svelte";
 
   export let proposal: WorldProposal;
   export let onVote: (proposalId: bigint, vote: boolean) => Promise<void>;
@@ -42,9 +43,10 @@
 
 <div class="">
   <div class="text-3xl text-center">#{proposal.id}</div>
-  <div class="">
+  <div>
     <ProposalView {proposal} />
   </div>
+  <Hr />
   <div class="w-64 mx-auto h-5 flex justify-between bg-gray-300 bg-opacity-25">
     <div
       class="h-full bg-green-500"

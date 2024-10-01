@@ -1,29 +1,25 @@
 <script lang="ts">
   import EntityView from "./EntityView.svelte";
-  import WeaponView from "./WeaponView.svelte";
-  import ActionsView from "./ActionsView.svelte";
-  import ItemsView from "./ItemsView.svelte";
   import UnlockRequirementView from "./UnlockRequirementView.svelte";
   import { Class } from "../../../../ic-agent/declarations/main";
-  import { weaponStore } from "../../../../stores/WeaponStore";
   import PixelArtCanvas from "../../../common/PixelArtCanvas.svelte";
   import { decodeImageToPixels } from "../../../../utils/PixelUtil";
 
   export let class_: Class;
-  $: weapons = $weaponStore;
-  $: weapon = weapons?.find((weapon) => weapon.id === class_.weaponId);
 
   $: layers = [decodeImageToPixels(class_.image, 32, 32)];
 </script>
 
 <div>
-  <div>Class</div>
+  <div class="text-xl text-primary-500 font-bold">Class</div>
   <EntityView entity={class_} />
-  {#if weapon}
-    <WeaponView {weapon} />
-  {/if}
+  <div class="text-primary-500">Weapon</div>
+  <div>{class_.weaponId}</div>
+  <div class="text-primary-500">Image</div>
   <PixelArtCanvas {layers} pixelSize={2} />
-  <ActionsView actionIds={class_.startingSkillActionIds} />
-  <ItemsView itemIds={class_.startingItemIds} />
+  <div class="text-primary-500">Starting Skill Actions</div>
+  <div>{class_.startingSkillActionIds.join(", ")}</div>
+  <div class="text-primary-500">Starting Items</div>
+  <div>{class_.startingItemIds.join(", ")}</div>
   <UnlockRequirementView value={class_.unlockRequirement} />
 </div>

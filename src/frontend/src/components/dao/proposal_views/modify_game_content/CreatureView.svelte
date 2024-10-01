@@ -1,7 +1,6 @@
 <script lang="ts">
   import { toJsonString } from "../../../../utils/StringUtil";
   import EntityView from "./EntityView.svelte";
-  import ActionsView from "./ActionsView.svelte";
   import UnlockRequirementView from "./UnlockRequirementView.svelte";
   import { Creature } from "../../../../ic-agent/declarations/main";
 
@@ -9,11 +8,12 @@
 </script>
 
 <div>
-  <div>Creature</div>
+  <div class="text-xl text-primary-500 font-bold">Creature</div>
   <EntityView entity={creature} />
-  <ActionsView actionIds={creature.actionIds} />
+  <div class="text-primary-500">Actions</div>
+  <div>{creature.actionIds.join(", ")}</div>
+  <div class="text-primary-500">Kind</div>
   <div>
-    Kind:
     {#if "normal" in creature.kind}
       Normal
     {:else if "elite" in creature.kind}

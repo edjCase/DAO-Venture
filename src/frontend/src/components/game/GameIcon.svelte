@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { Tooltip } from "flowbite-svelte";
+
   export let value:
     | "health"
     | "block"
@@ -41,3 +43,8 @@
     ↩️
   {/if}
 </span>
+<Tooltip>
+  <span class="text-primary-500">
+    {value[0].toUpperCase() + value.slice(1)}
+  </span>
+</Tooltip>
