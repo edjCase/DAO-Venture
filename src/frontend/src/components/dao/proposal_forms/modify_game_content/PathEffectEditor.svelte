@@ -4,19 +4,10 @@
   import NatValueEditor from "./NatValueEditor.svelte";
   import { PathEffect } from "../../../../ic-agent/declarations/main";
   import { toJsonString } from "../../../../utils/StringUtil";
-  import { Input, Button } from "flowbite-svelte";
+  import { itemStore } from "../../../../stores/ItemStore";
+  import TagsEditor from "./CommaDelimitedEditor.svelte";
 
   export let value: PathEffect;
-
-  function addItem(list: string[]) {
-    list.push("");
-    value = { ...value }; // Trigger reactivity
-  }
-
-  function removeItem(list: string[], index: number) {
-    list.splice(index, 1);
-    value = { ...value }; // Trigger reactivity
-  }
 </script>
 
 {#if "damage" in value}
@@ -26,63 +17,17 @@
 {:else if "removeGold" in value}
   <NatValueEditor bind:value={value.removeGold} />
 {:else if "addItem" in value}
-  <Input type="text" bind:value={value.addItem} />
+  <EntitySelector bind:value={value.addItem} store={itemStore} label="Item" />
 {:else if "removeItem" in value}
-  <Input type="text" bind:value={value.removeItem} />
+  <EntitySelector
+    bind:value={value.removeItem}
+    store={itemStore}
+    label="Item"
+  />
 {:else if "addItemWithTags" in value}
-  <div>
-    {#each value.addItemWithTags as _, index}
-      <div class="flex items-center mb-2">
-        <Input type="text" bind:value={value.addItemWithTags[index]} />
-        <Button
-          color="red"
-          size="xs"
-          class="ml-2"
-          on:click={() => {
-            if ("addItemWithTags" in value) {
-              removeItem(value.addItemWithTags, index);
-            }
-          }}>Remove</Button
-        >
-      </div>
-    {/each}
-    <Button
-      color="green"
-      size="sm"
-      on:click={() => {
-        if ("addItemWithTags" in value) {
-          addItem(value.addItemWithTags);
-        }
-      }}>Add Item</Button
-    >
-  </div>
+  <TagsEditor bind:value={value.addItemWithTags} />
 {:else if "removeItemWithTags" in value}
-  <div>
-    {#each value.removeItemWithTags as _, index}
-      <div class="flex items-center mb-2">
-        <Input type="text" bind:value={value.removeItemWithTags[index]} />
-        <Button
-          color="red"
-          size="xs"
-          class="ml-2"
-          on:click={() => {
-            if ("removeItemWithTags" in value) {
-              removeItem(value.removeItemWithTags, index);
-            }
-          }}>Remove</Button
-        >
-      </div>
-    {/each}
-    <Button
-      color="green"
-      size="sm"
-      on:click={() => {
-        if ("removeItemWithTags" in value) {
-          addItem(value.removeItemWithTags);
-        }
-      }}>Add Item</Button
-    >
-  </div>
+  <TagsEditor bind:value={value.removeItemWithTags} />
 {:else if "achievement" in value}
   <EntitySelector
     bind:value={value.achievement}

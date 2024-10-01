@@ -3,6 +3,7 @@
   import { Input, Label, Textarea } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
+    Race,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
@@ -10,20 +11,26 @@
   import { itemStore } from "../../../../stores/ItemStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import {
+    decodeImageToPixels,
     encodePixelsToImage,
     generatePixelGrid,
     PixelGrid,
   } from "../../../../utils/PixelUtil";
   import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let pixels: PixelGrid = generatePixelGrid(32, 32);
-  let unlockRequirement: UnlockRequirement | undefined;
+  export let value: Race | undefined;
 
-  let selectedActions: string[] = [];
-  let selectedItems: string[] = [];
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let pixels: PixelGrid = value?.image
+    ? decodeImageToPixels(value.image, 32, 32)
+    : generatePixelGrid(32, 32);
+  let unlockRequirement: UnlockRequirement | undefined =
+    value?.unlockRequirement[0];
+
+  let selectedActions: string[] = value?.startingSkillActionIds ?? [];
+  let selectedItems: string[] = value?.startingItemIds ?? [];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined || name === undefined || description === undefined) {

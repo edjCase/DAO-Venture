@@ -22,7 +22,22 @@
         value = { single: "" };
         break;
       case "multi":
-        value = { multi: [] };
+        value = {
+          multi: [
+            {
+              weight: { value: 1, kind: { raw: null } },
+              effects: [],
+              description: "",
+              pathId: [],
+            },
+            {
+              weight: { value: 1, kind: { raw: null } },
+              effects: [],
+              description: "",
+              pathId: [],
+            },
+          ],
+        };
         break;
       default:
         throw new Error("Invalid path: " + selectedPath);

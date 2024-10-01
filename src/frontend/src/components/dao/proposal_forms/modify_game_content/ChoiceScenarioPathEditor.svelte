@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { Label } from "flowbite-svelte";
+  import { Label, Accordion, AccordionItem, Button } from "flowbite-svelte";
   import { ChoicePath } from "../../../../ic-agent/declarations/main";
   import ChoiceForm from "./ChoiceForm.svelte";
+  import { PlusSolid, TrashBinSolid } from "flowbite-svelte-icons";
 
   export let value: ChoicePath;
 
@@ -24,17 +25,26 @@
 </script>
 
 <div>
-  <Label>Choices</Label>
-  {#each value.choices as choice, index}
-    <ChoiceForm bind:value={choice} />
-    <button
-      class="mt-2 bg-red-500 text-white px-2 py-1"
-      on:click={() => removeChoice(index)}
-    >
-      Remove Choice
-    </button>
-  {/each}
-  <button class="bg-blue-500 text-white px-4 py-2" on:click={addChoice}>
-    Add Choice
-  </button>
+  <div class="flex items-center gap-2">
+    <Label>Choices</Label>
+    <Button on:click={addChoice}>
+      <PlusSolid size="xs" />
+    </Button>
+  </div>
+  <Accordion>
+    {#each value.choices as choice, index}
+      <AccordionItem>
+        <div
+          slot="header"
+          class="flex justify-between items-center w-full pr-10"
+        >
+          <span>{choice.id}</span>
+          <Button on:click={() => removeChoice(index)} color="red">
+            <TrashBinSolid size="xs" />
+          </Button>
+        </div>
+        <ChoiceForm bind:value={choice} />
+      </AccordionItem>
+    {/each}
+  </Accordion>
 </div>

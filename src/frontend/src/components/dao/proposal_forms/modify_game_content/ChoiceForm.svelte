@@ -6,7 +6,7 @@
   export let value: Choice;
 </script>
 
-<div class="border p-4 mb-4">
+<div>
   <Label for="id">Id</Label>
   <Input id="id" type="text" bind:value={value.id} placeholder="choice_id" />
 
@@ -17,5 +17,6 @@
     placeholder="Describe the choice..."
   />
 
+  <Label>Next Path</Label>
   <NextPathChooser value={value.nextPath} />
 </div>

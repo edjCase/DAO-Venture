@@ -10,19 +10,25 @@
   import { actionStore } from "../../../../stores/ActionStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import {
+    decodeImageToPixels,
     encodePixelsToImage,
     generatePixelGrid,
     PixelGrid,
   } from "../../../../utils/PixelUtil";
   import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let actionIds: string[] = [];
-  let unlockRequirement: UnlockRequirement | undefined;
-  let pixels: PixelGrid = generatePixelGrid(32, 32);
-  let selectedActions: string[] = [];
+  export let value: Weapon | undefined;
+
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let actionIds: string[] = value?.actionIds ?? [];
+  let unlockRequirement: UnlockRequirement | undefined =
+    value?.unlockRequirement[0];
+  let pixels: PixelGrid = value?.image
+    ? decodeImageToPixels(value.image, 32, 32)
+    : generatePixelGrid(32, 32);
+  let selectedActions: string[] = value?.actionIds ?? [];
 
   const generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined || name === undefined || description === undefined) {

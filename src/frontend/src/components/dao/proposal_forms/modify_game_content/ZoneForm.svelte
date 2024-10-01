@@ -4,13 +4,17 @@
   import {
     CreateWorldProposalRequest,
     UnlockRequirement,
+    Zone,
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let unlockRequirement: UnlockRequirement | undefined;
+  export let value: Zone | undefined;
+
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let unlockRequirement: UnlockRequirement | undefined =
+    value?.unlockRequirement[0];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined) {

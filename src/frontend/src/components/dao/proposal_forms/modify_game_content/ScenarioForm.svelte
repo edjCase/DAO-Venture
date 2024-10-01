@@ -4,8 +4,9 @@
     Input,
     Label,
     Textarea,
-    Select,
-    SelectOptionType,
+    Button,
+    Accordion,
+    AccordionItem,
   } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
@@ -18,34 +19,29 @@
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import ScenarioPathForm from "./ScenarioPathForm.svelte";
   import {
+    decodeImageToPixels,
     encodePixelsToImage,
     generatePixelGrid,
     PixelGrid,
   } from "../../../../utils/PixelUtil";
   import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
+  import { PlusSolid, TrashBinSolid } from "flowbite-svelte-icons";
+  import ScenarioCategoryChooser from "./ScenarioCategoryChooser.svelte";
+  import LocationKindChooser from "./LocationKindChooser.svelte";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let pixels: PixelGrid = generatePixelGrid(64, 64);
-  let paths: ScenarioPath[] = [];
-  let location: LocationKind = { common: null };
-  let category: ScenarioCategory = { other: null };
-  let unlockRequirement: UnlockRequirement | undefined;
+  export let value: ScenarioMetaData | undefined;
 
-  const categories: SelectOptionType<string>[] = [
-    { value: "other", name: "Other" },
-    { value: "store", name: "Store" },
-    { value: "combat", name: "Combat" },
-  ];
-
-  const locationTypes: SelectOptionType<string>[] = [
-    { value: "common", name: "Common" },
-    { value: "zoneIds", name: "Specific Zones" },
-  ];
-  let selectedLocationType: string = locationTypes[0].value;
-
-  let zoneIds: string[] = [];
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let pixels: PixelGrid = value?.image
+    ? decodeImageToPixels(value.image, 64, 64)
+    : generatePixelGrid(64, 64);
+  let paths: ScenarioPath[] = value?.paths ?? [];
+  let location: LocationKind = value?.location ?? { common: null };
+  let category: ScenarioCategory = value?.category ?? { other: null };
+  let unlockRequirement: UnlockRequirement | undefined =
+    value?.unlockRequirement[0];
 
   function addPath() {
     paths = [
@@ -60,13 +56,6 @@
 
   function removePath(index: number) {
     paths = paths.filter((_, i) => i !== index);
-  }
-
-  $: {
-    location =
-      selectedLocationType === "common"
-        ? { common: null }
-        : { zoneIds: zoneIds };
   }
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
@@ -127,44 +116,45 @@
 
     <div>
       <Label>Image</Label>
-      <PixelArtEditor bind:pixels pixelSize={2} />
+      <PixelArtEditor bind:pixels pixelSize={8} />
     </div>
 
     <div>
-      <Label>Outcome Paths</Label>
-      {#each paths as path, index}
-        <ScenarioPathForm bind:value={path} />
-        <button
-          class="mt-2 bg-red-500 text-white px-2 py-1"
-          on:click={() => removePath(index)}
-        >
-          Remove Path
-        </button>
-      {/each}
-      <button class="bg-blue-500 text-white px-4 py-2" on:click={addPath}>
-        Add Path
-      </button>
+      <div class="flex items-center gap-2">
+        <Label>Paths</Label>
+        <Button on:click={addPath}><PlusSolid size="xs" /></Button>
+      </div>
+      <Accordion>
+        {#each paths as path, index}
+          <AccordionItem>
+            <div
+              slot="header"
+              class="flex items-center justify-between pr-10 w-full"
+            >
+              <span
+                >{path.id}
+                {#if index === 0}
+                  (Initial Path)
+                {/if}
+              </span>
+              <Button on:click={() => removePath(index)} color="red">
+                <TrashBinSolid size="xs" />
+              </Button>
+            </div>
+            <ScenarioPathForm bind:value={path} />
+          </AccordionItem>
+        {/each}
+      </Accordion>
     </div>
 
     <div>
       <Label for="category">Category</Label>
-      <Select id="category" items={categories} bind:value={category} />
+      <ScenarioCategoryChooser bind:value={category} />
     </div>
 
     <div>
       <Label for="location">Location</Label>
-      <Select
-        id="location"
-        items={locationTypes}
-        bind:value={selectedLocationType}
-      />
-      {#if selectedLocationType === "zoneIds"}
-        <Input
-          type="text"
-          bind:value={zoneIds}
-          placeholder="zone1,zone2,zone3"
-        />
-      {/if}
+      <LocationKindChooser bind:value={location} />
     </div>
 
     <div>

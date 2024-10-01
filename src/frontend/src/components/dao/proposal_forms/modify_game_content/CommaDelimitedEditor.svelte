@@ -11,9 +11,8 @@
 </script>
 
 <Input
-  id="tags"
   type="text"
   bind:value={selectedTags}
   on:change={handleTagsChange}
-  placeholder="tag1,tag2,tag3"
+  placeholder="a, b, c"
 />

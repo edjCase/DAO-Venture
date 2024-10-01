@@ -6,9 +6,11 @@
     Achievement,
   } from "../../../../ic-agent/declarations/main";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
+  export let value: Achievement | undefined;
+
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
 
   const generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined || name === undefined || description === undefined) {

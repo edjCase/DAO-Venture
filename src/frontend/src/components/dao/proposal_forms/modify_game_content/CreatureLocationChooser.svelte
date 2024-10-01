@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Label, Select } from "flowbite-svelte";
   import { CreatureLocationKind } from "../../../../ic-agent/declarations/main";
-  import TagsEditor from "./TagsEditor.svelte";
+  import TagsEditor from "./CommaDelimitedEditor.svelte";
 
   export let value: CreatureLocationKind;
 

@@ -4,7 +4,7 @@
   import Label from "flowbite-svelte/Label.svelte";
   import { toJsonString } from "../../../../utils/StringUtil";
   import AttributeChoiceRequirementChooser from "./AttributeChoiceRequirementChooser.svelte";
-  import TagsEditor from "./TagsEditor.svelte";
+  import TagsEditor from "./CommaDelimitedEditor.svelte";
 
   export let value: ChoiceRequirement;
 </script>

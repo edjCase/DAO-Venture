@@ -17,10 +17,12 @@
 
   $: {
     options =
-      entities?.map((e) => ({
-        value: e.id,
-        name: e.name,
-      })) || [];
+      entities
+        ?.map((e) => ({
+          value: e.id,
+          name: e.name,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)) || [];
   }
 </script>
 

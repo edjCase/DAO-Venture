@@ -16,7 +16,7 @@
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
-  import TagsEditor from "./TagsEditor.svelte";
+  import TagsEditor from "./CommaDelimitedEditor.svelte";
 
   export let value: Item | undefined;
 
