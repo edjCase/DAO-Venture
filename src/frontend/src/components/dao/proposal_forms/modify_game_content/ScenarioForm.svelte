@@ -16,7 +16,7 @@
     ScenarioCategory,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
-  import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
   import ScenarioPathForm from "./ScenarioPathForm.svelte";
   import {
     decodeImageToPixels,
@@ -40,8 +40,9 @@
   let paths: ScenarioPath[] = value?.paths ?? [];
   let location: LocationKind = value?.location ?? { common: null };
   let category: ScenarioCategory = value?.category ?? { other: null };
-  let unlockRequirement: UnlockRequirement | undefined =
-    value?.unlockRequirement[0];
+  let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
+    none: null,
+  };
 
   function addPath() {
     paths = [
@@ -71,7 +72,7 @@
       paths,
       location,
       category,
-      unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
+      unlockRequirement: unlockRequirement,
     };
 
     return {
@@ -159,7 +160,7 @@
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>
-      <UnlockRequirementEditor bind:unlockRequirement />
+      <UnlockRequirementChooser bind:unlockRequirement />
     </div>
   </div>
 </FormTemplate>

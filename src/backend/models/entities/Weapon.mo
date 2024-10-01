@@ -13,7 +13,7 @@ module Weapon {
     public type Weapon = Entity.Entity and {
         actionIds : [Text];
         image : PixelImage.PixelImage;
-        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
+        unlockRequirement : UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
@@ -28,14 +28,9 @@ module Weapon {
                 errors.add("Action not found: " # actionId);
             };
         };
-        switch (weapon.unlockRequirement) {
-            case (null) ();
-            case (?unlockRequirement) {
-                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
-                    case (#err(err)) errors.append(Buffer.fromArray(err));
-                    case (#ok) ();
-                };
-            };
+        switch (UnlockRequirement.validate(weapon.unlockRequirement, achievements)) {
+            case (#err(err)) errors.append(Buffer.fromArray(err));
+            case (#ok) ();
         };
         if (errors.size() < 1) {
             return #ok;

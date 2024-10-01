@@ -24,7 +24,7 @@ module {
         image : PixelImage.PixelImage;
         paths : [ScenarioPath];
         category : ScenarioCategory;
-        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
+        unlockRequirement : UnlockRequirement.UnlockRequirement;
     };
 
     public type ScenarioCategory = {
@@ -159,14 +159,9 @@ module {
         };
 
         Entity.validate("Scenario", metaData, errors);
-        switch (metaData.unlockRequirement) {
-            case (null) ();
-            case (?unlockRequirement) {
-                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
-                    case (#err(err)) errors.append(Buffer.fromArray(err));
-                    case (#ok) ();
-                };
-            };
+        switch (UnlockRequirement.validate(metaData.unlockRequirement, achievements)) {
+            case (#err(err)) errors.append(Buffer.fromArray(err));
+            case (#ok) ();
         };
 
         switch (metaData.location) {

@@ -6,25 +6,27 @@ import Achievement "entities/Achievement";
 
 module {
     public type UnlockRequirement = {
-        #acheivementId : Text;
+        #none;
+        #achievementId : Text;
     };
 
     public func validate(
         unlockRequirement : UnlockRequirement,
-        acheivementIds : HashMap.HashMap<Text, Achievement.Achievement>,
+        achievementIds : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         switch (unlockRequirement) {
-            case (#acheivementId(acheivementId)) {
-                if (TextX.isEmptyOrWhitespace(acheivementId)) {
+            case (#none) ();
+            case (#achievementId(achievementId)) {
+                if (TextX.isEmptyOrWhitespace(achievementId)) {
                     errors.add("Unlock requirement achievement id cannot be empty.");
                 };
                 // Limit size of id to 32 characters
-                if (acheivementId.size() > 32) {
+                if (achievementId.size() > 32) {
                     errors.add("Unlock requirement achievement id cannot be longer than 32 characters.");
                 };
-                if (acheivementIds.get(acheivementId) == null) {
-                    errors.add("Unlock requirement achievement id " # acheivementId # " does not exist.");
+                if (achievementIds.get(achievementId) == null) {
+                    errors.add("Unlock requirement achievement id " # achievementId # " does not exist.");
                 };
             };
         };

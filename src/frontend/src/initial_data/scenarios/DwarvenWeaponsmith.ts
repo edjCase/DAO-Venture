@@ -118,5 +118,5 @@ export const scenario: ScenarioMetaData =
             }
         }
     ],
-    unlockRequirement: []
+    unlockRequirement: { none: null }
 };

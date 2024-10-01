@@ -13,7 +13,7 @@
     generatePixelGrid,
     PixelGrid,
   } from "../../../../utils/PixelUtil";
-  import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import TagsEditor from "./CommaDelimitedEditor.svelte";
@@ -29,8 +29,9 @@
       ? decodeImageToPixels(value.image, 32, 32)
       : generatePixelGrid(32, 32);
   let actionIds: string[] = value?.actionIds ?? [];
-  let unlockRequirement: UnlockRequirement | undefined =
-    value?.unlockRequirement[0];
+  let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
+    none: null,
+  };
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined) {
@@ -54,8 +55,7 @@
           image: encodePixelsToImage(pixels),
           tags: tags,
           actionIds: actionIds,
-          unlockRequirement:
-            unlockRequirement === undefined ? [] : [unlockRequirement],
+          unlockRequirement: unlockRequirement,
         },
       },
     };
@@ -107,7 +107,7 @@
       />
       <div>
         <Label for="unlockRequirement">Unlock Requirement</Label>
-        <UnlockRequirementEditor bind:unlockRequirement />
+        <UnlockRequirementChooser bind:unlockRequirement />
       </div>
     </div>
   </div></FormTemplate

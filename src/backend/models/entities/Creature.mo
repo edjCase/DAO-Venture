@@ -16,7 +16,7 @@ module {
         maxHealth : Nat;
         actionIds : [Text];
         kind : CreatureKind;
-        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
+        unlockRequirement : UnlockRequirement.UnlockRequirement;
     };
 
     public type CreatureKind = {
@@ -44,14 +44,9 @@ module {
                 errors.add("Action does not exist: " # actionId);
             };
         };
-        switch (creature.unlockRequirement) {
-            case (null) ();
-            case (?unlockRequirement) {
-                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
-                    case (#err(err)) errors.append(Buffer.fromArray(err));
-                    case (#ok) ();
-                };
-            };
+        switch (UnlockRequirement.validate(creature.unlockRequirement, achievements)) {
+            case (#err(err)) errors.append(Buffer.fromArray(err));
+            case (#ok) ();
         };
         // check health is above 0
         if (creature.health < 1) {

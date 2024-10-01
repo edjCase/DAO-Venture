@@ -15,7 +15,7 @@ module {
         weaponId : Text;
         startingItemIds : [Text];
         startingSkillActionIds : [Text];
-        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
+        unlockRequirement : UnlockRequirement.UnlockRequirement;
         image : PixelImage.PixelImage;
     };
 
@@ -27,14 +27,9 @@ module {
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         Entity.validate("Class", class_, errors);
-        switch (class_.unlockRequirement) {
-            case (null) ();
-            case (?unlockRequirement) {
-                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
-                    case (#err(err)) errors.append(Buffer.fromArray(err));
-                    case (#ok) ();
-                };
-            };
+        switch (UnlockRequirement.validate(class_.unlockRequirement, achievements)) {
+            case (#err(err)) errors.append(Buffer.fromArray(err));
+            case (#ok) ();
         };
         for (startingItemId in class_.startingItemIds.vals()) {
             if (items.get(startingItemId) == null) {

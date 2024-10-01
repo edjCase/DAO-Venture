@@ -13,12 +13,14 @@
   import { PlusSolid, TrashBinSolid } from "flowbite-svelte-icons";
   import ActionTargetEditor from "./ActionTargetEditor.svelte";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let combatEffects: CombatEffect[] = [];
-  let scenarioEffects: ScenarioEffect[] = [];
-  let target: ActionTarget = {
+  export let value: Action | undefined;
+
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let combatEffects: CombatEffect[] = value?.combatEffects ?? [];
+  let scenarioEffects: ScenarioEffect[] = value?.scenarioEffects ?? [];
+  let target: ActionTarget = value?.target ?? {
     scope: { any: null },
     selection: { all: null },
   };

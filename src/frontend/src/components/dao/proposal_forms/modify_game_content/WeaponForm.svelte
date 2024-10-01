@@ -6,7 +6,7 @@
     Weapon,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
-  import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import {
@@ -23,8 +23,9 @@
   let name: string | undefined = value?.name;
   let description: string | undefined = value?.description;
   let actionIds: string[] = value?.actionIds ?? [];
-  let unlockRequirement: UnlockRequirement | undefined =
-    value?.unlockRequirement[0];
+  let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
+    none: null,
+  };
   let pixels: PixelGrid = value?.image
     ? decodeImageToPixels(value.image, 32, 32)
     : generatePixelGrid(32, 32);
@@ -41,7 +42,7 @@
       description,
       actionIds,
       image: encodePixelsToImage(pixels),
-      unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
+      unlockRequirement: unlockRequirement,
     };
 
     return {
@@ -100,7 +101,7 @@
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>
-      <UnlockRequirementEditor bind:unlockRequirement />
+      <UnlockRequirementChooser bind:unlockRequirement />
     </div>
   </div>
 </FormTemplate>

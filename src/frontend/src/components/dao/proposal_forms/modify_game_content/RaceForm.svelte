@@ -6,7 +6,7 @@
     Race,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
-  import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import { itemStore } from "../../../../stores/ItemStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
@@ -26,8 +26,9 @@
   let pixels: PixelGrid = value?.image
     ? decodeImageToPixels(value.image, 32, 32)
     : generatePixelGrid(32, 32);
-  let unlockRequirement: UnlockRequirement | undefined =
-    value?.unlockRequirement[0];
+  let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
+    none: null,
+  };
 
   let selectedActions: string[] = value?.startingSkillActionIds ?? [];
   let selectedItems: string[] = value?.startingItemIds ?? [];
@@ -45,7 +46,7 @@
           startingSkillActionIds: selectedActions,
           startingItemIds: selectedItems,
           image: encodePixelsToImage(pixels),
-          unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
+          unlockRequirement: unlockRequirement,
         },
       },
     };
@@ -104,7 +105,7 @@
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>
-      <UnlockRequirementEditor bind:unlockRequirement />
+      <UnlockRequirementChooser bind:unlockRequirement />
     </div>
   </div>
 </FormTemplate>

@@ -8,7 +8,7 @@
     CreatureLocationKind,
     Creature,
   } from "../../../../ic-agent/declarations/main";
-  import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
   import CharacterStatIcon from "../../../character/CharacterStatIcon.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
@@ -26,8 +26,9 @@
   let weaponId: string | undefined = value?.weaponId;
   let selectedActions: string[] = value?.actionIds ?? [];
   let location: CreatureLocationKind = value?.location ?? { common: null };
-  let unlockRequirement: UnlockRequirement | undefined =
-    value?.unlockRequirement[0];
+  let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
+    none: null,
+  };
   let kind: CreatureKind = value?.kind ?? { normal: null };
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
@@ -61,8 +62,7 @@
           kind,
           location: location,
           actionIds: selectedActions,
-          unlockRequirement:
-            unlockRequirement !== undefined ? [unlockRequirement] : [],
+          unlockRequirement: unlockRequirement,
         },
       },
     };
@@ -150,7 +150,7 @@
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>
-      <UnlockRequirementEditor bind:unlockRequirement />
+      <UnlockRequirementChooser bind:unlockRequirement />
     </div>
   </div>
 </FormTemplate>

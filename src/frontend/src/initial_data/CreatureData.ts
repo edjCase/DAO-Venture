@@ -11,7 +11,7 @@ export const creatures: Creature[] = [
         actionIds: ["entangle", "venom_strike", "wild_growth"],
         weaponId: "corrupted_branch",
         kind: { elite: null },
-        unlockRequirement: []
+        unlockRequirement: { none: null }
     },
     {
         id: "goblin",
@@ -23,7 +23,7 @@ export const creatures: Creature[] = [
         actionIds: ["stab", "fury_swipes", "venom_strike"],
         weaponId: "crude_daggers",
         kind: { normal: null },
-        unlockRequirement: []
+        unlockRequirement: { none: null }
     },
     {
         id: "dark_elf",
@@ -35,6 +35,6 @@ export const creatures: Creature[] = [
         actionIds: ["shadow_bolt", "piercing_shot", "weaken"],
         weaponId: "shadow_bow",
         kind: { normal: null },
-        unlockRequirement: []
+        unlockRequirement: { none: null }
     },
 ];

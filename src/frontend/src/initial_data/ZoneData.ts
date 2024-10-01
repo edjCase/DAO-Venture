@@ -5,7 +5,7 @@ export const zones: Zone[] = [
         id: "enchanted_forest",
         name: "Enchanted Forest",
         description: "A mystical woodland teeming with magical creatures and ancient secrets.",
-        unlockRequirement: []
+        unlockRequirement: { none: null }
     },
     // {
     //     id: "ancient_ruins",

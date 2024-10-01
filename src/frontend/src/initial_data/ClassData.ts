@@ -9,7 +9,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["slash", "defensive_stance"],
         weaponId: "iron_sword",
         image: decodeBase64ToImage("AmpqagAAAGz/BwAY/wkAFv8LABT/DQAS/w8AEf8PABH/DwAR/w8AEf8CAAX/AwAE/wEAEf8CAAX/AwAE/wEAEf8CAAX/AwAE/wEAEf8CAAX/AwAE/wEAEf8CAAz/AQCJAv8HABH/BwAC/woACQEKAAP/HQAE/xoAB/8ZAAj/FwAJ/xcACf8XAAX/"),
-        unlockRequirement: [],
+        unlockRequirement: { none: null },
         startingItemIds: ["power_gauntlets"]
     },
     {
@@ -19,7 +19,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["fireball", "frost_bolt"],
         weaponId: "apprentice_wand",
         image: decodeBase64ToImage("AjBPmOKqGgn/CQAV/wsAFP8NABL/DgAR/wEBAwAD/wkBEP8CAQT/CwAU/w0AEv8PABD/EQGwA/8CAAv/AgAS/wIAAQEH/wEBAgAU/wIAAQEF/wEBAgAT/wUAAQED/wEBBQAQ/wcAAQEB/wEBBwAO/wkAAQEJAAz/CgABAQoACv8LAAEBCwAJ/wsAAQELAAn/CwABAQsABf8="),
-        unlockRequirement: [],
+        unlockRequirement: { none: null },
         startingItemIds: ["arcane_tome"]
     },
     {
@@ -29,7 +29,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["stab", "venom_strike"],
         weaponId: "iron_dagger",
         image: decodeBase64ToImage("AkpLUnmAiYwB/wcAF/8LABT/DQAT/w4AEf8PABH/BgAF/wQAEf8FAAf/AwAR/wQACf8CABH/BAAJ/wIAEf8DAAr/AgAR/wIAC/8CABH/AgAL/wIAEf8CAAv/AgAR/wIAC/8CABH/AwAK/wIAEv8CAAn/AgAT/wMAB/8DABT/CwAV/wsAFv8JABb/CwAR/wQBCwAEAQz/BQELAAUBC/8FAQsABQEL/xUACv8XAAn/FwAJ/xcABf8="),
-        unlockRequirement: [],
+        unlockRequirement: { none: null },
         startingItemIds: ["boots_of_sneaking"]
     },
     {
@@ -39,7 +39,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["piercing_shot", "rapid_shot"],
         weaponId: "short_bow",
         image: decodeBase64ToImage("A4Z7gG9GLQOuTIMF/wIAHP8EABz/AgAB/wIBBP8DAgb/AgIN/wUBA/8EAgT/AwIN/wYBAv8FAgL/BQIN/wsBAQIC/wECBQEN/wMBAQIGAQECAv8BAgUBAQIN/wEBAgIHAQICBgECAgz/AwIHAQICBgEDAgr/BAIPAQQCCf8EAgcBAgIGAQQCCf8EAg8BBAIF/w=="),
-        unlockRequirement: [],
+        unlockRequirement: { none: null },
         startingItemIds: ["eagle_eye_amulet"]
     },
     {
@@ -49,7 +49,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["heal", "entangle"],
         weaponId: "oaken_staff",
         image: decodeBase64ToImage("BdjQzzBHRHRESfL7mgAAAC//AQAf/wIAHv8DAAb/AQAC/wEAEf8EAAT/AQAC/wQAEv8EAAL/BwAS/wMAA/8FAAH/AQAS/wMAA/8DAJYE/wUBAf8DARL/BgIEAQH/BgEN/wgCAwEDAwYBCf8LAgMBAwMEAQr/AQQKAgQBE/8IAgQBFP8BBAH/AQQBAQEEAQEBBAUBFv8JARP/"),
-        unlockRequirement: [],
+        unlockRequirement: { none: null },
         startingItemIds: ["nature_pendant"]
     },
     {
@@ -59,7 +59,7 @@ export const classes: Class[] = [
         startingSkillActionIds: ["smite", "shield"],
         weaponId: "iron_mace",
         image: decodeBase64ToImage("Au7/AM3X4Wv/CQAX/wEAB/8BABf/CQCzBP8CAAL/CQEC/wIADv8EAAsBBAAM/wQABgECAAUBBAAK/wIAEwECAAj/AwAHAQEAAQECAAEBAQAGAQMAB/8DAAcBAQABAQIAAQEBAAYBAwAI/xcBCf8LAQIACgEJ/xcBBf8="),
-        unlockRequirement: [],
+        unlockRequirement: { none: null },
         startingItemIds: ["divine_emblem"]
     },
     // {
@@ -69,7 +69,7 @@ export const classes: Class[] = [
     //     startingSkillActionIds: ["war_cry", "regenerate"],
     //     weaponId: "basic_lute",
     //     image: decodeBase64ToImage("Dz1cjztcjCpVgCoqVTtfjDxeizdZkE6PuU6PujxejD1fjEuWtE+PuU+Puk6QvIsG/wEAAQEBAgT/AQMBAQEAFv8BBAEFAQYE/wEGAQUBBBL/AQcDCAIFAQkBCgL/AQoBCQIFAwgBBwz/AQsBBwEMAw0EBQIEBAUDDQEMAQcBCwr/AQ4FDQoFBQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4DDQEFBQ0CBQUNAQUDDQEOBf8="),
-    //     unlockRequirement: [{ acheivementId: "bard" }],
+    //     unlockRequirement: [{ achievementId: "bard" }],
     //     startingItemIds: ["harmonic_charm"]
     // },
     // {
@@ -79,7 +79,7 @@ export const classes: Class[] = [
     //     startingSkillActionIds: ["fury_swipes", "wild_growth"],
     //     weaponId: "wooden_staff",
     //     image: decodeBase64ToImage("Dz1cjztcjCpVgCoqVTtfjDxeizdZkE6PuU6PujxejD1fjEuWtE+PuU+Puk6QvIsG/wEAAQEBAgT/AQMBAQEAFv8BBAEFAQYE/wEGAQUBBBL/AQcDCAIFAQkBCgL/AQoBCQIFAwgBBwz/AQsBBwEMAw0EBQIEBAUDDQEMAQcBCwr/AQ4FDQoFBQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4DDQEFBQ0CBQUNAQUDDQEOBf8="),
-    //     unlockRequirement: [{ acheivementId: "monk" }],
+    //     unlockRequirement: [{ achievementId: "monk" }],
     //     startingItemIds: ["endurance_belt"]
     // },
     // {
@@ -89,7 +89,7 @@ export const classes: Class[] = [
     //     startingSkillActionIds: ["thunder_strike", "fortify"],
     //     weaponId: "mechanic_wrench",
     //     image: decodeBase64ToImage("Dz1cjztcjCpVgCoqVTtfjDxeizdZkE6PuU6PujxejD1fjEuWtE+PuU+Puk6QvIsG/wEAAQEBAgT/AQMBAQEAFv8BBAEFAQYE/wEGAQUBBBL/AQcDCAIFAQkBCgL/AQoBCQIFAwgBBwz/AQsBBwEMAw0EBQIEBAUDDQEMAQcBCwr/AQ4FDQoFBQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4DDQEFBQ0CBQUNAQUDDQEOBf8="),
-    //     unlockRequirement: [{ acheivementId: "artificer" }],
+    //     unlockRequirement: [{ achievementId: "artificer" }],
     //     startingItemIds: ["artificer_toolbox"]
     // },
     // {
@@ -99,7 +99,7 @@ export const classes: Class[] = [
     //     startingSkillActionIds: ["life_drain", "shadow_bolt"],
     //     weaponId: "bone_staff",
     //     image: decodeBase64ToImage("Dz1cjztcjCpVgCoqVTtfjDxeizdZkE6PuU6PujxejD1fjEuWtE+PuU+Puk6QvIsG/wEAAQEBAgT/AQMBAQEAFv8BBAEFAQYE/wEGAQUBBBL/AQcDCAIFAQkBCgL/AQoBCQIFAwgBBwz/AQsBBwEMAw0EBQIEBAUDDQEMAQcBCwr/AQ4FDQoFBQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4JDQIFCQ0BDgr/AQ4DDQEFBQ0CBQUNAQUDDQEOBf8="),
-    //     unlockRequirement: [{ acheivementId: "necromancer" }],
+    //     unlockRequirement: [{ achievementId: "necromancer" }],
     //     startingItemIds: ["dark_essence_vial"]
     // },
 ];

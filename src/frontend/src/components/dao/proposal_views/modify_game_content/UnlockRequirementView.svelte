@@ -2,20 +2,15 @@
   import { UnlockRequirement } from "../../../../ic-agent/declarations/main";
   import { toJsonString } from "../../../../utils/StringUtil";
 
-  export let value: [] | [UnlockRequirement];
+  export let value: UnlockRequirement;
 </script>
 
 <div>
-  {#if value[0] === undefined}
+  {#if "achievementId" in value}
+    Acheivement: {value.achievementId}
+  {:else if "none" in value}
     -
   {:else}
-    {@const unlockRequirement = value[0]}
-    {#if "acheivementId" in unlockRequirement}
-      <div>Acheivement: {unlockRequirement.acheivementId}</div>
-    {:else}
-      NOT IMPLEMENTED UNLOCK REQUIREMENT: <pre>{toJsonString(
-          unlockRequirement
-        )}</pre>
-    {/if}
+    NOT IMPLEMENTED UNLOCK REQUIREMENT: {toJsonString(value)}
   {/if}
 </div>

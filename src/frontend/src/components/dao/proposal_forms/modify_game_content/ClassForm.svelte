@@ -6,7 +6,7 @@
     CreateWorldProposalRequest,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
-  import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import { itemStore } from "../../../../stores/ItemStore";
@@ -24,8 +24,9 @@
   let name: string | undefined = value?.name;
   let description: string | undefined = value?.description;
   let weaponId: string | undefined = value?.weaponId;
-  let unlockRequirement: UnlockRequirement | undefined =
-    value?.unlockRequirement[0];
+  let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
+    none: null,
+  };
   let pixels: PixelGrid =
     value !== undefined
       ? decodeImageToPixels(value.image, 32, 32)
@@ -56,7 +57,7 @@
           startingItemIds: selectedItems,
           startingSkillActionIds: selectedActions,
           image: encodePixelsToImage(pixels),
-          unlockRequirement: unlockRequirement ? [unlockRequirement] : [],
+          unlockRequirement: unlockRequirement,
         },
       },
     };
@@ -125,7 +126,7 @@
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>
-      <UnlockRequirementEditor bind:unlockRequirement />
+      <UnlockRequirementChooser bind:unlockRequirement />
     </div>
   </div>
 </FormTemplate>

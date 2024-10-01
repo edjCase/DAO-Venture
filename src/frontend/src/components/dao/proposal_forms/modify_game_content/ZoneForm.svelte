@@ -6,15 +6,16 @@
     UnlockRequirement,
     Zone,
   } from "../../../../ic-agent/declarations/main";
-  import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
+  import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
 
   export let value: Zone | undefined;
 
   let id: string | undefined = value?.id;
   let name: string | undefined = value?.name;
   let description: string | undefined = value?.description;
-  let unlockRequirement: UnlockRequirement | undefined =
-    value?.unlockRequirement[0];
+  let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
+    none: null,
+  };
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined) {
@@ -32,8 +33,7 @@
           id: id,
           name: name,
           description: description,
-          unlockRequirement:
-            unlockRequirement === undefined ? [] : [unlockRequirement],
+          unlockRequirement: unlockRequirement,
         },
       },
     };
@@ -68,7 +68,7 @@
 
     <div>
       <Label for="unlockRequirement">Unlock Requirement</Label>
-      <UnlockRequirementEditor bind:unlockRequirement />
+      <UnlockRequirementChooser bind:unlockRequirement />
     </div>
   </div>
 </FormTemplate>

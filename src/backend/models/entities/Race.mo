@@ -15,7 +15,7 @@ module {
         startingItemIds : [Text];
         startingSkillActionIds : [Text];
         image : PixelImage.PixelImage;
-        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
+        unlockRequirement : UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
@@ -26,14 +26,9 @@ module {
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
         Entity.validate("Race", race, errors);
-        switch (race.unlockRequirement) {
-            case (null) ();
-            case (?unlockRequirement) {
-                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
-                    case (#err(err)) errors.append(Buffer.fromArray(err));
-                    case (#ok) ();
-                };
-            };
+        switch (UnlockRequirement.validate(race.unlockRequirement, achievements)) {
+            case (#err(err)) errors.append(Buffer.fromArray(err));
+            case (#ok) ();
         };
         for (startingItemId in race.startingItemIds.vals()) {
             if (items.get(startingItemId) == null) {

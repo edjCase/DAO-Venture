@@ -114,7 +114,10 @@ export const idlFactory = ({ IDL }) => {
     'boss' : IDL.Null,
     'elite' : IDL.Null,
   });
-  const UnlockRequirement = IDL.Variant({ 'acheivementId' : IDL.Text });
+  const UnlockRequirement = IDL.Variant({
+    'achievementId' : IDL.Text,
+    'none' : IDL.Null,
+  });
   const CreatureLocationKind = IDL.Variant({
     'common' : IDL.Null,
     'zoneIds' : IDL.Vec(IDL.Text),
@@ -127,7 +130,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'weaponId' : IDL.Text,
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'unlockRequirement' : UnlockRequirement,
     'location' : CreatureLocationKind,
     'health' : IDL.Nat,
   });
@@ -145,7 +148,7 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'tags' : IDL.Vec(IDL.Text),
     'description' : IDL.Text,
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'unlockRequirement' : UnlockRequirement,
     'image' : PixelImage,
   });
   const Class = IDL.Record({
@@ -155,7 +158,7 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'startingItemIds' : IDL.Vec(IDL.Text),
     'weaponId' : IDL.Text,
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'unlockRequirement' : UnlockRequirement,
     'image' : PixelImage,
   });
   const Race = IDL.Record({
@@ -164,14 +167,14 @@ export const idlFactory = ({ IDL }) => {
     'name' : IDL.Text,
     'description' : IDL.Text,
     'startingItemIds' : IDL.Vec(IDL.Text),
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'unlockRequirement' : UnlockRequirement,
     'image' : PixelImage,
   });
   const Zone = IDL.Record({
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'unlockRequirement' : UnlockRequirement,
   });
   const Achievement = IDL.Record({
     'id' : IDL.Text,
@@ -275,7 +278,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Text,
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'unlockRequirement' : UnlockRequirement,
     'category' : ScenarioCategory,
     'paths' : IDL.Vec(ScenarioPath),
     'image' : PixelImage,
@@ -286,7 +289,7 @@ export const idlFactory = ({ IDL }) => {
     'actionIds' : IDL.Vec(IDL.Text),
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'unlockRequirement' : IDL.Opt(UnlockRequirement),
+    'unlockRequirement' : UnlockRequirement,
     'image' : PixelImage,
   });
   const ModifyGameContent = IDL.Variant({

@@ -14,7 +14,7 @@ module {
         image : PixelImage.PixelImage;
         tags : [Text];
         actionIds : [Text];
-        unlockRequirement : ?UnlockRequirement.UnlockRequirement;
+        unlockRequirement : UnlockRequirement.UnlockRequirement;
     };
 
     public func validate(
@@ -30,14 +30,9 @@ module {
                 errors.add("Action not found: " # actionId);
             };
         };
-        switch (item.unlockRequirement) {
-            case (null) ();
-            case (?unlockRequirement) {
-                switch (UnlockRequirement.validate(unlockRequirement, achievements)) {
-                    case (#err(err)) errors.append(Buffer.fromArray(err));
-                    case (#ok) ();
-                };
-            };
+        switch (UnlockRequirement.validate(item.unlockRequirement, achievements)) {
+            case (#err(err)) errors.append(Buffer.fromArray(err));
+            case (#ok) ();
         };
         if (errors.size() < 1) {
             return #ok;

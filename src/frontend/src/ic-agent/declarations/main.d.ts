@@ -111,7 +111,7 @@ export interface Class {
   'description' : string,
   'startingItemIds' : Array<string>,
   'weaponId' : string,
-  'unlockRequirement' : [] | [UnlockRequirement],
+  'unlockRequirement' : UnlockRequirement,
   'image' : PixelImage,
 }
 export interface CombatChoice {
@@ -196,7 +196,7 @@ export interface Creature {
   'name' : string,
   'description' : string,
   'weaponId' : string,
-  'unlockRequirement' : [] | [UnlockRequirement],
+  'unlockRequirement' : UnlockRequirement,
   'location' : CreatureLocationKind,
   'health' : bigint,
 }
@@ -286,7 +286,7 @@ export interface Item {
   'name' : string,
   'tags' : Array<string>,
   'description' : string,
-  'unlockRequirement' : [] | [UnlockRequirement],
+  'unlockRequirement' : UnlockRequirement,
   'image' : PixelImage,
 }
 export interface ItemRewardChoice { 'id' : string, 'inventorySlot' : bigint }
@@ -380,7 +380,7 @@ export interface Race {
   'name' : string,
   'description' : string,
   'startingItemIds' : Array<string>,
-  'unlockRequirement' : [] | [UnlockRequirement],
+  'unlockRequirement' : UnlockRequirement,
   'image' : PixelImage,
 }
 export type RegisterError = { 'alreadyMember' : null };
@@ -428,7 +428,7 @@ export interface ScenarioMetaData {
   'id' : string,
   'name' : string,
   'description' : string,
-  'unlockRequirement' : [] | [UnlockRequirement],
+  'unlockRequirement' : UnlockRequirement,
   'category' : ScenarioCategory,
   'paths' : Array<ScenarioPath>,
   'image' : PixelImage,
@@ -513,7 +513,8 @@ export type TurnKind = { 'scenario' : ScenarioTurn } |
   { 'combat' : CombatTurn };
 export type TurnPhase = { 'end' : null } |
   { 'start' : null };
-export type UnlockRequirement = { 'acheivementId' : string };
+export type UnlockRequirement = { 'achievementId' : string } |
+  { 'none' : null };
 export interface User {
   'id' : Principal,
   'createTime' : Time,
@@ -537,7 +538,7 @@ export interface Weapon {
   'actionIds' : Array<string>,
   'name' : string,
   'description' : string,
-  'unlockRequirement' : [] | [UnlockRequirement],
+  'unlockRequirement' : UnlockRequirement,
   'image' : PixelImage,
 }
 export type WeightKind = { 'raw' : null } |
@@ -561,7 +562,7 @@ export interface Zone {
   'id' : string,
   'name' : string,
   'description' : string,
-  'unlockRequirement' : [] | [UnlockRequirement],
+  'unlockRequirement' : UnlockRequirement,
 }
 export interface _SERVICE {
   'abandonGame' : ActorMethod<[], AbandonGameResult>,
