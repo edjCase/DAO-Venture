@@ -3,7 +3,7 @@
 
   export let value: string[];
 
-  let selectedTags = value.join(", ");
+  let selectedTags: string = value.join(", ");
 
   const handleTagsChange = () => {
     value = selectedTags.split(",").map((tag) => tag.trim());

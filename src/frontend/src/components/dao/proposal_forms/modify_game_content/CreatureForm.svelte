@@ -1,61 +1,34 @@
 <script lang="ts">
   import FormTemplate from "../FormTemplate.svelte";
-  import { Input, Label, Textarea, Select } from "flowbite-svelte";
+  import { Input, Label, Textarea } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
     UnlockRequirement,
     CreatureKind,
     CreatureLocationKind,
+    Creature,
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementEditor from "./UnlockRequirementEditor.svelte";
   import CharacterStatIcon from "../../../character/CharacterStatIcon.svelte";
   import { actionStore } from "../../../../stores/ActionStore";
   import EntityMultiSelector from "./EntityMultiSelector.svelte";
   import BigIntInput from "../../../common/BigIntInput.svelte";
-  import TagsEditor from "./TagsEditor.svelte";
+  import CreatureLocationChooser from "./CreatureLocationChooser.svelte";
+  import CreatureKindChooser from "./CreatureKindChooser.svelte";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let maxHealth: bigint = 100n;
-  let health: bigint = 100n;
-  let weaponId: string | undefined;
-  let selectedActions: string[] = [];
+  export let value: Creature | undefined;
 
-  let creatureKinds = [
-    { value: "normal", name: "Normal", kind: { normal: null } },
-    { value: "boss", name: "Boss", kind: { boss: null } },
-    { value: "elite", name: "Elite", kind: { elite: null } },
-  ];
-  let selectedCreatureKind: string = creatureKinds[0].value;
-  let kind: CreatureKind = creatureKinds[0].kind;
-
-  let locationTypes = [
-    { value: "common", name: "Common", location: { common: null } },
-    { value: "zoneIds", name: "Specific Zones", location: { zoneIds: [] } },
-  ];
-  let selectedLocationType: string = locationTypes[0].value;
-  let location: CreatureLocationKind = locationTypes[0].location;
-
-  let unlockRequirement: UnlockRequirement | undefined;
-
-  $: {
-    let selectedKind = creatureKinds.find(
-      (ck) => ck.value === selectedCreatureKind
-    );
-    if (selectedKind) {
-      kind = selectedKind.kind;
-    }
-  }
-
-  $: {
-    let selectedLocation = locationTypes.find(
-      (lt) => lt.value === selectedLocationType
-    );
-    if (selectedLocation) {
-      location = selectedLocation.location;
-    }
-  }
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let maxHealth: bigint = value?.maxHealth ?? 100n;
+  let health: bigint = value?.health ?? 100n;
+  let weaponId: string | undefined = value?.weaponId;
+  let selectedActions: string[] = value?.actionIds ?? [];
+  let location: CreatureLocationKind = value?.location ?? { common: null };
+  let unlockRequirement: UnlockRequirement | undefined =
+    value?.unlockRequirement[0];
+  let kind: CreatureKind = value?.kind ?? { normal: null };
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined) {
@@ -157,29 +130,15 @@
 
     <div class="flex gap-4">
       <div class="flex-1">
-        <Label for="kind">Creature Kind</Label>
-        <Select
-          id="kind"
-          items={creatureKinds}
-          bind:value={selectedCreatureKind}
-        />
+        <Label for="kind">Kind</Label>
+        <CreatureKindChooser bind:value={kind} />
       </div>
 
       <div class="flex-1">
-        <Label for="location">Location</Label>
-        <Select
-          id="location"
-          items={locationTypes}
-          bind:value={selectedLocationType}
-        />
+        <Label for="kind">Location</Label>
+        <CreatureLocationChooser bind:value={location} />
       </div>
     </div>
-    {#if "zoneIds" in location}
-      <div>
-        <Label for="zoneIds">Zone Ids (comma-separated)</Label>
-        <TagsEditor bind:value={location.zoneIds} />
-      </div>
-    {/if}
     <div>
       <Label>Actions</Label>
       <EntityMultiSelector

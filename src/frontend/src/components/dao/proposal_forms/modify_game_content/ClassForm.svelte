@@ -2,6 +2,7 @@
   import FormTemplate from "../FormTemplate.svelte";
   import { Input, Label, Textarea } from "flowbite-svelte";
   import {
+    Class,
     CreateWorldProposalRequest,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
@@ -11,19 +12,26 @@
   import { itemStore } from "../../../../stores/ItemStore";
   import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
   import {
+    decodeImageToPixels,
     encodePixelsToImage,
     generatePixelGrid,
     PixelGrid,
   } from "../../../../utils/PixelUtil";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let weaponId: string | undefined;
-  let unlockRequirement: UnlockRequirement | undefined;
-  let pixels: PixelGrid = generatePixelGrid(32, 32);
-  let selectedActions: string[] = [];
-  let selectedItems: string[] = [];
+  export let value: Class | undefined;
+
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let weaponId: string | undefined = value?.weaponId;
+  let unlockRequirement: UnlockRequirement | undefined =
+    value?.unlockRequirement[0];
+  let pixels: PixelGrid =
+    value !== undefined
+      ? decodeImageToPixels(value.image, 32, 32)
+      : generatePixelGrid(32, 32);
+  let selectedActions: string[] = value?.startingSkillActionIds ?? [];
+  let selectedItems: string[] = value?.startingItemIds ?? [];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined) {

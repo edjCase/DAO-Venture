@@ -200,8 +200,9 @@ export function encodePixelsToImage(pixels: PixelGrid): PixelImage {
     }
 
     let pixelCount = pixelData.reduce((acc, data) => acc + Number(data.count), 0);
-    if (pixelCount !== 4096) {
-        throw new Error('Total pixel count must be 4096 but was ' + pixelCount);
+    let expectedPixelCount = pixels.length * pixels[0].length;
+    if (pixelCount !== expectedPixelCount) {
+        throw new Error(`Total pixel count must be ${expectedPixelCount} but was ` + pixelCount);
     }
 
     return { palette, pixelData };

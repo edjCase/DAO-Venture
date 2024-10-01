@@ -10,6 +10,11 @@
 <div>
   <div class="text-xl text-primary-500 font-bold">Creature</div>
   <EntityView entity={creature} />
+  <div class="text-primary-500">Health</div>
+  <div>Starting - {creature.health}</div>
+  <div>Max - {creature.maxHealth}</div>
+  <div class="text-primary-500">Weapon</div>
+  <div>{creature.weaponId}</div>
   <div class="text-primary-500">Actions</div>
   <div>{creature.actionIds.join(", ")}</div>
   <div class="text-primary-500">Kind</div>
@@ -24,20 +29,19 @@
       NOT IMPLEMENTED CREATURE KIND: <pre>{toJsonString(creature.kind)}</pre>
     {/if}
   </div>
-  <div>
-    Location:
+  <div class="text-primary-500">Location</div>
+  <div class="pl-8">
     {#if "common" in creature.location}
       Everywhere
     {:else if "zoneIds" in creature.location}
-      Zones:
-      {#each creature.location.zoneIds as zoneId}
-        {zoneId}
-      {/each}
+      <div class="text-primary-500">Zones</div>
+      <div>{creature.location.zoneIds.join(", ")}</div>
     {:else}
       NOT IMPLEMENTED CREATURE LOCATION: <pre>{toJsonString(
           creature.location
         )}</pre>
     {/if}
-    <UnlockRequirementView value={creature.unlockRequirement} />
   </div>
+  <div class="text-primary-500">Unlock Requirement</div>
+  <UnlockRequirementView value={creature.unlockRequirement} />
 </div>

@@ -3,10 +3,12 @@
   import { Input, Label, Textarea } from "flowbite-svelte";
   import {
     CreateWorldProposalRequest,
+    Item,
     UnlockRequirement,
   } from "../../../../ic-agent/declarations/main";
   import PixelArtEditor from "../../../common/PixelArtEditor.svelte";
   import {
+    decodeImageToPixels,
     encodePixelsToImage,
     generatePixelGrid,
     PixelGrid,
@@ -16,13 +18,19 @@
   import { actionStore } from "../../../../stores/ActionStore";
   import TagsEditor from "./TagsEditor.svelte";
 
-  let id: string | undefined;
-  let name: string | undefined;
-  let description: string | undefined;
-  let tags: string[] = [];
-  let pixels: PixelGrid = generatePixelGrid(32, 32);
-  let actionIds: string[] = [];
-  let unlockRequirement: UnlockRequirement | undefined;
+  export let value: Item | undefined;
+
+  let id: string | undefined = value?.id;
+  let name: string | undefined = value?.name;
+  let description: string | undefined = value?.description;
+  let tags: string[] = value?.tags ?? [];
+  let pixels: PixelGrid =
+    value !== undefined
+      ? decodeImageToPixels(value.image, 32, 32)
+      : generatePixelGrid(32, 32);
+  let actionIds: string[] = value?.actionIds ?? [];
+  let unlockRequirement: UnlockRequirement | undefined =
+    value?.unlockRequirement[0];
 
   let generateProposal = (): CreateWorldProposalRequest | string => {
     if (id === undefined) {

@@ -1,5 +1,13 @@
 <script lang="ts">
-  import { Button, Toggle, Label, Range, Textarea } from "flowbite-svelte";
+  import {
+    Button,
+    Checkbox,
+    Label,
+    Range,
+    Textarea,
+    Accordion,
+    AccordionItem,
+  } from "flowbite-svelte";
   import RgbColor from "./RgbColor.svelte";
   import {
     PixelGrid,
@@ -133,13 +141,15 @@
       <div class=" w-full">
         <div class="text-center">Preview</div>
         <Range bind:value={previewPixelSize} min={1} max={12} />
-        <div class="flex justify-center">
-          <PixelArtCanvas layers={previewLayers} pixelSize={previewPixelSize} />
+        <div class="flex justify-center mt-2">
+          <PixelArtCanvas
+            layers={previewLayers}
+            pixelSize={previewPixelSize}
+            border={true}
+          />
         </div>
       </div>
     {/if}
-    <Label>Show Background Layers</Label>
-    <Toggle bind:checked={showBackgroundLayers} />
     <div class="flex space-x-2">
       <Button
         color={isErasing ? "light" : "primary"}
@@ -156,14 +166,23 @@
     {:else}
       <Button on:click={eraseAll}>Erase All</Button>
     {/if}
-    <Button on:click={setAsBackgroundLayer}>Set as Background Layer</Button>
-    <Label class="text-xl">Encoded Value</Label>
-    <Button on:click={generateBase64Bytes}>Generate</Button>
-    {#if base64Bytes}
-      <Button on:click={copyToClipboard}>Copy Encoded Value</Button>
-    {/if}
-    <Button on:click={pasteFromClipboard}>Paste Encoded Value</Button>
-    <Textarea bind:value={base64Bytes} />
+    <Accordion>
+      <AccordionItem>
+        <div slot="header" class="text-xl pr-2 w-96">Advanced</div>
+        <div class="flex">
+          <Checkbox bind:checked={showBackgroundLayers} />
+          <span>Show Background Layers</span>
+        </div>
+        <Button on:click={setAsBackgroundLayer}>Set as Background Layer</Button>
+        <Label class="text-xl">Encoded Value</Label>
+        <Button on:click={generateBase64Bytes}>Generate</Button>
+        {#if base64Bytes}
+          <Button on:click={copyToClipboard}>Copy Encoded Value</Button>
+        {/if}
+        <Button on:click={pasteFromClipboard}>Paste Encoded Value</Button>
+        <Textarea bind:value={base64Bytes} />
+      </AccordionItem>
+    </Accordion>
   </div>
 </div>
 

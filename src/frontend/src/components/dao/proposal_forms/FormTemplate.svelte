@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { navigate } from "svelte-routing";
   import { CreateWorldProposalRequest } from "../../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../../ic-agent/Main";
   import { proposalStore } from "../../../stores/ProposalStore";
   import LoadingButton from "../../common/LoadingButton.svelte";
+  import { Button } from "flowbite-svelte";
 
   export let generateProposal: () => CreateWorldProposalRequest | string;
 
@@ -22,14 +22,19 @@
     } else {
       console.error("Error creating proposal: ", result);
     }
-    proposalStore.fetchPage(1);
-    navigate("/dao");
+    resetPage();
+  };
+
+  let resetPage = () => {
+    // TODO how to use routing for reload?
+    window.location.reload();
   };
 </script>
 
 <div>
   <slot />
-  <div class="flex justify-center mt-5">
+  <div class="flex justify-center mt-5 gap-2">
     <LoadingButton onClick={createProposal}>Create</LoadingButton>
+    <Button on:click={resetPage} color="red">Cancel</Button>
   </div>
 </div>
