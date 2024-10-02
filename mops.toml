@@ -1,9 +1,9 @@
 [dependencies]
-base = "0.12.0"
-itertools = "0.2.1"
+base = "0.13.0"
+itertools = "0.2.2"
 datetime = "0.3.0"
 test = "2.0.0"
 xtended-text = "0.3.0"
-xtended-random = "https://github.com/edjCase/motoko_random#24aed41c63fa3091b269faa0353e0a5a86282b4e"
+xtended-random = "1.0.1"
 dao-proposal-engine = "https://github.com/edjCase/motoko_proposal_engine#f99e41c0cf00de00086e3c3c7c61a5fc75a51c91"
 certified-cache = "0.3.0"

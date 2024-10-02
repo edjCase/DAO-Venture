@@ -593,7 +593,7 @@ module {
         if (amount.min >= amount.max) {
             return amount.min; // No need for random, just the raw value if no variance
         };
-        prng.nextNat(amount.min, amount.max);
+        prng.nextNat(amount.min, amount.max + 1);
     };
 
     private func hasEffect(stats : CombatStats, effect : ActionResult.StatusEffectResultKind) : Bool {

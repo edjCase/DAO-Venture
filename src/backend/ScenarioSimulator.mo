@@ -369,14 +369,14 @@ module {
             case (#random) {
                 let itemIds = gameContent.items.keys() |> Iter.toArray(_);
                 let itemId = prng.nextArrayElement(itemIds);
-                let gold = prng.nextNat(1, 100); // TODO amount
+                let gold = prng.nextNat(1, 101); // TODO amount
                 // TODO ratio
                 let reward = if (prng.nextRatio(1, 2)) {
                     let weaponIds = gameContent.weapons.keys() |> Iter.toArray(_);
                     let weaponId = prng.nextArrayElement(weaponIds);
                     #weapon(weaponId);
                 } else {
-                    #health(prng.nextNat(1, 20)); // TODO amount
+                    #health(prng.nextNat(1, 21)); // TODO amount
                 };
                 [#item(itemId), #gold(gold), reward];
             };
@@ -401,7 +401,7 @@ module {
     ) : Nat {
         switch (value) {
             case (#raw(n)) n;
-            case (#random(min, max)) prng.nextNat(min, max);
+            case (#random(min, max)) prng.nextNat(min, max + 1);
         };
     };
 
@@ -578,7 +578,7 @@ module {
             )
             |> Iter.toArray(_);
             if (items.size() < 1) return null;
-            let randomItemIndex = prng.nextNat(0, items.size() - 1);
+            let randomItemIndex = prng.nextNat(0, items.size());
             switch (removeItemBySlot(randomItemIndex)) {
                 case (#ok({ removedItemId })) return removedItemId;
                 case (#err(#invalidSlot)) Debug.trap("Invalid slot: " # Nat.toText(randomItemIndex));
