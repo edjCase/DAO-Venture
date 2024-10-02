@@ -15,6 +15,7 @@ export const idlFactory = ({ IDL }) => {
     'noCreatures' : IDL.Null,
     'noRaces' : IDL.Null,
     'noScenarios' : IDL.Null,
+    'userNotRegistered' : IDL.Null,
     'alreadyInitialized' : IDL.Null,
   });
   const CreateGameResult = IDL.Variant({
@@ -320,6 +321,9 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const Time = IDL.Int;
+  const VictoryGameOutcomeWithMetaData = IDL.Record({
+    'unlockedAchievementIds' : IDL.Vec(IDL.Text),
+  });
   const CharacterActionKind = IDL.Variant({
     'item' : IDL.Null,
     'skill' : IDL.Null,
@@ -347,13 +351,23 @@ export const idlFactory = ({ IDL }) => {
     'weapon' : Weapon,
     'health' : IDL.Nat,
   });
+  const DeathGameOutcomeWithMetaData = IDL.Record({
+    'character' : CharacterWithMetaData,
+  });
+  const ForfeitGameOutcomeWithMetaData = IDL.Record({
+    'character' : IDL.Opt(CharacterWithMetaData),
+  });
+  const CompletedGameOutcomeWithMetaData = IDL.Variant({
+    'victory' : VictoryGameOutcomeWithMetaData,
+    'death' : DeathGameOutcomeWithMetaData,
+    'forfeit' : ForfeitGameOutcomeWithMetaData,
+  });
   const CompletedGameWithMetaData = IDL.Record({
     'id' : IDL.Nat,
     'startTime' : Time,
     'endTime' : Time,
-    'character' : CharacterWithMetaData,
     'playerId' : IDL.Principal,
-    'victory' : IDL.Bool,
+    'outcome' : CompletedGameOutcomeWithMetaData,
   });
   const PagedResult_2 = IDL.Record({
     'data' : IDL.Vec(CompletedGameWithMetaData),
@@ -366,8 +380,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const CompletedGameStateWithMetaData = IDL.Record({
     'endTime' : Time,
-    'character' : CharacterWithMetaData,
-    'victory' : IDL.Bool,
+    'outcome' : CompletedGameOutcomeWithMetaData,
   });
   const ScenarioTurn = IDL.Record({ 'scenarioId' : IDL.Nat });
   const CombatTurn = IDL.Record({});

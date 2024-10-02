@@ -26,6 +26,17 @@
       }
     };
 
+    let achievements = await import("../../initial_data/AchievementData").then(
+      (module) => {
+        return module.achievements;
+      }
+    );
+    await Promise.all(
+      achievements.map(async (achievement) => {
+        await addGameContent({ achievement: achievement });
+      })
+    );
+
     let actions = await import("../../initial_data/ActionData").then(
       (module) => {
         return module.actions;

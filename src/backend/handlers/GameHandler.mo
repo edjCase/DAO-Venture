@@ -23,12 +23,13 @@ import Class "../models/entities/Class";
 import Race "../models/entities/Race";
 import Zone "../models/entities/Zone";
 import Achievement "../models/entities/Achievement";
-import UserHandler "UserHandler";
 import Creature "../models/entities/Creature";
 import Weapon "../models/entities/Weapon";
 import CommonTypes "../CommonTypes";
 import ScenarioMetaData "../models/entities/ScenarioMetaData";
 import Action "../models/entities/Action";
+import UnlockRequirement "../models/UnlockRequirement";
+import UserHandler "UserHandler";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -66,6 +67,7 @@ module {
 
     public type StartingData = {
         characterOptions : [Character.Character];
+        playerAchievementIds : [Text];
     };
 
     public type InProgressData = {
@@ -73,6 +75,7 @@ module {
         character : Character.Character;
         zoneIds : [Text]; // Last is current zone
         turnKind : TurnKind;
+        playerAchievementIds : [Text];
     };
 
     public type TurnKind = {
@@ -90,8 +93,25 @@ module {
 
     public type CompletedData = {
         endTime : Time.Time;
+        outcome : CompletedGameOutcome;
+    };
+
+    public type CompletedGameOutcome = {
+        #victory : VictoryGameOutcome;
+        #forfeit : ForfeitGameOutcome;
+        #death : DeathGameOutcome;
+    };
+
+    public type VictoryGameOutcome = {
+        unlockedAchievementIds : [Text];
+    };
+
+    public type ForfeitGameOutcome = {
+        character : ?Character.Character;
+    };
+
+    public type DeathGameOutcome = {
         character : Character.Character;
-        victory : Bool;
     };
 
     public type GameWithMetaData = {
@@ -117,9 +137,26 @@ module {
     };
 
     public type CompletedGameStateWithMetaData = {
-        character : CharacterWithMetaData;
         endTime : Time.Time;
-        victory : Bool;
+        outcome : CompletedGameOutcomeWithMetaData;
+    };
+
+    public type CompletedGameOutcomeWithMetaData = {
+        #victory : VictoryGameOutcomeWithMetaData;
+        #forfeit : ForfeitGameOutcomeWithMetaData;
+        #death : DeathGameOutcomeWithMetaData;
+    };
+
+    public type VictoryGameOutcomeWithMetaData = {
+        unlockedAchievementIds : [Text];
+    };
+
+    public type ForfeitGameOutcomeWithMetaData = {
+        character : ?CharacterWithMetaData;
+    };
+
+    public type DeathGameOutcomeWithMetaData = {
+        character : CharacterWithMetaData;
     };
 
     public type CompletedGameWithMetaData = CompletedGameStateWithMetaData and {
@@ -165,6 +202,7 @@ module {
         #noCreaturesForZone : Text;
         #noWeapons;
         #notAuthenticated;
+        #userNotRegistered;
     };
 
     public class Handler(data : StableData) {
@@ -221,6 +259,7 @@ module {
         public func createInstance(
             prng : Prng,
             playerId : Principal,
+            playerAchievementIds : [Text],
         ) : Result.Result<(), CreateGameError> {
             if (classes.size() == 0) {
                 return #err(#noClasses);
@@ -287,14 +326,20 @@ module {
                 };
             };
 
-            let classArray = Iter.toArray(classes.vals());
-            let raceArray = Iter.toArray(races.vals());
+            let unlockedClasses = classes.vals()
+            |> UnlockRequirement.filterOutLockedEntities<Class.Class>(_, playerAchievementIds)
+            |> Iter.toArray(_);
+
+            let unlockedRaces = races.vals()
+            |> UnlockRequirement.filterOutLockedEntities<Race.Race>(_, playerAchievementIds)
+            |> Iter.toArray(_);
+
             let characterOptions = IterTools.range(0, 4)
             |> Iter.map(
                 _,
                 func(_ : Nat) : Character.Character {
-                    let class_ = prng.nextArrayElement(classArray);
-                    let race = prng.nextArrayElement(raceArray);
+                    let class_ = prng.nextArrayElement(unlockedClasses);
+                    let race = prng.nextArrayElement(unlockedRaces);
                     CharacterGenerator.generate(class_, race);
                 },
             )
@@ -310,6 +355,7 @@ module {
                         startTime = Time.now();
                         state = #starting({
                             characterOptions = characterOptions;
+                            playerAchievementIds = playerAchievementIds;
                         });
                     } : ?GameInstance;
                 },
@@ -331,26 +377,26 @@ module {
         private func abandonAndArchiveInternal(playerData : PlayerData) : Result.Result<PlayerData, { #noActiveGame }> {
             let ?activeGame = playerData.activeGame else return #err(#noActiveGame);
             let completedGameState : CompletedGameStateWithMetaData = switch (activeGame.state) {
-                case (#starting(starting)) {
+                case (#starting(_)) {
                     {
-                        turns = 0;
-                        character = toCharacterWithMetaData(starting.characterOptions[0]); // TODO is it ok to just take the first one?
                         endTime = Time.now();
-                        victory = false;
+                        outcome = #forfeit({
+                            character = null;
+                        });
                     };
                 };
                 case (#inProgress(inProgress)) {
                     {
-                        character = toCharacterWithMetaData(inProgress.character);
                         endTime = Time.now();
-                        victory = false;
+                        outcome = #forfeit({
+                            character = ?toCharacterWithMetaData(inProgress.character);
+                        });
                     };
                 };
                 case (#completed(completed)) {
                     {
-                        character = toCharacterWithMetaData(completed.character);
                         endTime = completed.endTime;
-                        victory = completed.victory;
+                        outcome = toOutcomeWithMetaData(completed.outcome);
                     };
                 };
             };
@@ -407,11 +453,15 @@ module {
             if (characterIndex >= starting.characterOptions.size()) return #err(#invalidCharacterId);
             let character = starting.characterOptions[characterIndex];
 
-            let zoneId = prng.nextArrayElement(zones.vals() |> Iter.toArray(_)).id;
+            let unlockedZones = zones.vals()
+            |> UnlockRequirement.filterOutLockedEntities<Zone.Zone>(_, starting.playerAchievementIds)
+            |> Iter.toArray(_);
+
+            let zoneId = prng.nextArrayElement(unlockedZones).id;
             let scenarioId = 0; // TODO?
 
             let scenario : Scenario.Scenario = {
-                generateScenario(prng, zoneId, character) with
+                generateScenario(prng, zoneId, character, starting.playerAchievementIds) with
                 id = scenarioId;
             };
             let turnKind = #scenario({ scenarioId });
@@ -427,6 +477,7 @@ module {
                                 character = character;
                                 scenarios = [scenario];
                                 turnKind = turnKind;
+                                playerAchievementIds = starting.playerAchievementIds;
                             } : InProgressData
                         );
                     } : ?GameInstance
@@ -438,8 +489,8 @@ module {
         public func selectScenarioChoice(
             prng : Prng,
             playerId : Principal,
-            userHandler : UserHandler.Handler,
             choice : ScenarioSimulator.StageChoiceKind,
+            userHandler : UserHandler.Handler,
         ) : Result.Result<(), { #gameNotFound; #gameNotActive; #invalidChoice : Text; #notScenarioTurn; #invalidTarget; #targetRequired }> {
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
@@ -464,11 +515,15 @@ module {
                 actions = actions;
             };
 
+            let player : ScenarioSimulator.Player = {
+                id = playerId;
+                var achievementIds = inProgressInstance.playerAchievementIds;
+            };
+
             let runStageData : ScenarioSimulator.RunStageData = switch (
                 ScenarioSimulator.runStage(
                     prng,
-                    playerId,
-                    userHandler,
+                    player,
                     characterHandler,
                     scenario,
                     gameContent,
@@ -494,6 +549,7 @@ module {
                 inProgressInstance with
                 character = characterHandler.get();
                 scenarios = updatedScenarios;
+                playerAchievementIds = player.achievementIds;
             };
             let updatedInstance = {
                 instance with
@@ -505,8 +561,9 @@ module {
                     updatedInstance with
                     state = #completed({
                         endTime = Time.now();
-                        character = updatedInProgressState.character;
-                        victory = false;
+                        outcome = #death({
+                            character = updatedInProgressState.character;
+                        });
                     });
                 };
             } else {
@@ -521,12 +578,27 @@ module {
                                 };
                             };
                             case (null) {
+
+                                let unlockedAchievementIds : [Text] = updatedInProgressState.playerAchievementIds.vals()
+                                // Filter out achievements that the user already has
+                                |> Iter.filter(
+                                    _,
+                                    func(id : Text) : Bool = switch (userHandler.unlockAchievement(playerId, id)) {
+                                        case (#ok(_)) true;
+                                        case (#err(#alreadyUnlocked)) false;
+                                        case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(playerId));
+                                        case (#err(#achievementNotFound)) Debug.trap("Achievement not found: " # id);
+                                    },
+                                )
+                                |> Iter.toArray(_);
                                 {
                                     updatedInstance with
                                     state = #completed({
                                         endTime = Time.now();
-                                        character = updatedInProgressState.character;
-                                        victory = true;
+                                        outcome = #victory({
+                                            character = updatedInProgressState.character;
+                                            unlockedAchievementIds = unlockedAchievementIds;
+                                        });
                                     });
                                 };
                             };
@@ -755,6 +827,7 @@ module {
                 |> TrieSet.fromArray<Text>(_, Text.hash, Text.equal);
 
                 let unexploredZones = zones.vals()
+                |> UnlockRequirement.filterOutLockedEntities<Zone.Zone>(_, inProgressInstance.playerAchievementIds)
                 |> Iter.filter<Zone.Zone>(_, func(zone : Zone.Zone) = not TrieSet.mem(exploredZoneIds, zone.id, Text.hash(zone.id), Text.equal))
                 |> Iter.toArray(_);
                 if (unexploredZones.size() == 0) {
@@ -766,7 +839,7 @@ module {
             };
             let newScenarioId = inProgressInstance.scenarios.size(); // TODO?
             let newScenario : Scenario.Scenario = {
-                generateScenario(prng, zoneId, inProgressInstance.character) with
+                generateScenario(prng, zoneId, inProgressInstance.character, inProgressInstance.playerAchievementIds) with
                 id = newScenarioId;
             };
 
@@ -791,6 +864,7 @@ module {
             prng : Prng,
             zoneId : Text,
             character : Character.Character,
+            playerAchievementIds : [Text],
         ) : {
             metaDataId : Text;
             previousStages : [Scenario.ScenarioStageResult];
@@ -802,6 +876,7 @@ module {
                 (#store, 3.),
             ]);
             let filteredScenarios = scenarioMetaDataList.vals()
+            |> UnlockRequirement.filterOutLockedEntities(_, playerAchievementIds)
             // Only scenarios that are common or have the zoneId
             |> Iter.filter(
                 _,
@@ -828,7 +903,7 @@ module {
                 scenarioMetaData = scenarioMetaData;
             };
             let attributes = CharacterHandler.calculateAttributes(character, weapons, items, actions);
-            let stateKind = ScenarioSimulator.buildNextInProgressState(prng, gameContent, character, attributes, path);
+            let stateKind = ScenarioSimulator.buildNextInProgressState(prng, playerAchievementIds, gameContent, character, attributes, path);
             {
                 metaDataId = scenarioMetaData.id;
                 previousStages = [];
@@ -853,11 +928,9 @@ module {
                     });
                 };
                 case (#completed(completed)) {
-                    let character = toCharacterWithMetaData(completed.character);
                     #completed({
-                        character;
                         endTime = completed.endTime;
-                        victory = completed.victory;
+                        outcome = toOutcomeWithMetaData(completed.outcome);
                     });
                 };
             };
@@ -868,6 +941,32 @@ module {
                 state = state;
             };
         };
+
+        private func toOutcomeWithMetaData(
+            outcome : CompletedGameOutcome
+        ) : CompletedGameOutcomeWithMetaData {
+            switch (outcome) {
+                case (#victory(victory)) {
+                    #victory({
+                        unlockedAchievementIds = victory.unlockedAchievementIds;
+                    });
+                };
+                case (#forfeit(forfeit)) {
+                    #forfeit({
+                        character = switch (forfeit.character) {
+                            case (null) null;
+                            case (?character) ?toCharacterWithMetaData(character);
+                        };
+                    });
+                };
+                case (#death(death)) {
+                    #death({
+                        character = toCharacterWithMetaData(death.character);
+                    });
+                };
+            };
+        };
+
         private func toCharacterWithMetaData(
             character : Character.Character
         ) : CharacterWithMetaData {

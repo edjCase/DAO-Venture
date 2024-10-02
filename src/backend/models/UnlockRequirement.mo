@@ -1,6 +1,9 @@
 import Result "mo:base/Result";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
+import Array "mo:base/Array";
+import Text "mo:base/Text";
+import Iter "mo:base/Iter";
 import TextX "mo:xtended-text/TextX";
 import Achievement "entities/Achievement";
 
@@ -8,6 +11,24 @@ module {
     public type UnlockRequirement = {
         #none;
         #achievementId : Text;
+    };
+
+    public func meetsRequirement(
+        unlockRequirement : UnlockRequirement,
+        playerAchievementIds : [Text],
+    ) : Bool {
+        switch (unlockRequirement) {
+            case (#none) true;
+            case (#achievementId(achievementId)) Array.indexOf(achievementId, playerAchievementIds, Text.equal) != null;
+        };
+    };
+
+    public func filterOutLockedEntities<T <: { unlockRequirement : UnlockRequirement }>(
+        entities : Iter.Iter<T>,
+        playerAchievementIds : [Text],
+    ) : Iter.Iter<T> {
+        entities
+        |> Iter.filter(_, func(e : T) : Bool = meetsRequirement(e.unlockRequirement, playerAchievementIds));
     };
 
     public func validate(

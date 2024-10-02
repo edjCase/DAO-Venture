@@ -13,7 +13,6 @@ import Int "mo:base/Int";
 import CharacterHandler "handlers/CharacterHandler";
 import Scenario "models/Scenario";
 import Character "models/Character";
-import UserHandler "handlers/UserHandler";
 import Creature "models/entities/Creature";
 import Weapon "models/entities/Weapon";
 import CombatSimulator "CombatSimulator";
@@ -23,6 +22,7 @@ import IterTools "mo:itertools/Iter";
 import Class "models/entities/Class";
 import Race "models/entities/Race";
 import Item "models/entities/Item";
+import UnlockRequirement "models/UnlockRequirement";
 
 module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
@@ -51,6 +51,11 @@ module {
         inventorySlot : Nat;
     };
 
+    public type Player = {
+        id : Principal;
+        var achievementIds : [Text];
+    };
+
     public type GameContent = {
         scenarioMetaData : ScenarioMetaData.ScenarioMetaData;
         creatures : HashMap.HashMap<Text, Creature.Creature>;
@@ -68,8 +73,7 @@ module {
 
     public func runStage(
         prng : Prng,
-        playerId : Principal,
-        userHandler : UserHandler.Handler,
+        player : Player,
         characterHandler : CharacterHandler.Handler,
         scenario : Scenario.Scenario,
         gameContent : GameContent,
@@ -78,9 +82,8 @@ module {
         let logEntries = Buffer.Buffer<Scenario.OutcomeEffect>(5);
         let helper = Helper(
             prng,
-            playerId,
+            player,
             characterHandler,
-            userHandler,
             gameContent,
             logEntries,
         );
@@ -131,7 +134,7 @@ module {
                     };
                 };
 
-                let nextState : Scenario.ScenarioStateKind = buildNextState(prng, gameContent, nextKind, helper);
+                let nextState : Scenario.ScenarioStateKind = buildNextState(prng, player.achievementIds, gameContent, nextKind, helper);
                 #ok({
                     stageResult = {
                         effects = helper.getEffects();
@@ -151,6 +154,7 @@ module {
 
     func buildNextState(
         prng : Prng,
+        playerAchievementIds : [Text],
         gameContent : GameContent,
         nextKind : NextKind,
         helper : Helper,
@@ -190,7 +194,7 @@ module {
                         ) else Debug.trap("Path not found: " # nextPathId);
                         let character = helper.getCharacter();
                         let attributes = helper.calculateAttributes();
-                        let nextState = buildNextInProgressState(prng, gameContent, character, attributes, nextPath);
+                        let nextState = buildNextInProgressState(prng, playerAchievementIds, gameContent, character, attributes, nextPath);
                         #inProgress(nextState);
                     };
                 };
@@ -225,6 +229,7 @@ module {
 
     public func buildNextInProgressState(
         prng : Prng,
+        playerAchievementIds : [Text],
         gameContent : GameContent,
         character : Character.Character,
         attributes : Character.CharacterAttributes,
@@ -241,7 +246,7 @@ module {
                 )
             );
             case (#choice(choice)) #choice(startChoice(choice, character, attributes, gameContent));
-            case (#reward(reward)) #reward(startReward(prng, reward, gameContent));
+            case (#reward(reward)) #reward(startReward(prng, playerAchievementIds, reward, gameContent));
         };
     };
 
@@ -362,17 +367,24 @@ module {
 
     func startReward(
         prng : Prng,
+        playerAchievementIds : [Text],
         reward : ScenarioMetaData.RewardPath,
         gameContent : GameContent,
     ) : Scenario.RewardScenarioState {
         let options = switch (reward.kind) {
             case (#random) {
-                let itemIds = gameContent.items.keys() |> Iter.toArray(_);
+                let itemIds = gameContent.items.vals()
+                |> UnlockRequirement.filterOutLockedEntities<Item.Item>(_, playerAchievementIds)
+                |> Iter.map(_, func(item : Item.Item) : Text = item.id)
+                |> Iter.toArray(_);
                 let itemId = prng.nextArrayElement(itemIds);
                 let gold = prng.nextNat(1, 101); // TODO amount
                 // TODO ratio
                 let reward = if (prng.nextRatio(1, 2)) {
-                    let weaponIds = gameContent.weapons.keys() |> Iter.toArray(_);
+                    let weaponIds = gameContent.weapons.vals()
+                    |> UnlockRequirement.filterOutLockedEntities<Weapon.Weapon>(_, playerAchievementIds)
+                    |> Iter.map(_, func(weapon : Weapon.Weapon) : Text = weapon.id)
+                    |> Iter.toArray(_);
                     let weaponId = prng.nextArrayElement(weaponIds);
                     #weapon(weaponId);
                 } else {
@@ -407,9 +419,8 @@ module {
 
     private class Helper(
         prng_ : Prng,
-        playerId : Principal,
+        player : Player,
         characterHandler : CharacterHandler.Handler,
-        userHandler : UserHandler.Handler,
         gameContent_ : GameContent,
         logEntries : Buffer.Buffer<Scenario.OutcomeEffect>,
     ) {
@@ -458,6 +469,7 @@ module {
                         _,
                         func(item : Item.Item) : Bool = hasAllTags(item, itemTags),
                     )
+                    |> UnlockRequirement.filterOutLockedEntities<Item.Item>(_, player.achievementIds)
                     |> Iter.map(_, func(item : Item.Item) : Text = item.id)
                     |> Iter.toArray(_);
                     if (potentialItemIds.size() < 1) {
@@ -492,11 +504,7 @@ module {
                     };
                 };
                 case (#achievement(achievementId)) {
-                    switch (userHandler.unlockAchievement(playerId, achievementId)) {
-                        case (#ok or #err(#achievementAlreadyUnlocked)) ();
-                        case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(playerId));
-                        case (#err(#achievementNotFound)) Debug.trap("Achievement not found: " # achievementId);
-                    };
+                    player.achievementIds := Array.append(player.achievementIds, [achievementId]);
                 };
             };
             #alive;

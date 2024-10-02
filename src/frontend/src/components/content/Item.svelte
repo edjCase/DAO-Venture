@@ -7,4 +7,4 @@
   export let pixelSize: number = 1;
 </script>
 
-<Entity entity={item} {pixelSize} store={itemStore} />
+<Entity entity={item} {pixelSize} store={itemStore} entityType="Item" />

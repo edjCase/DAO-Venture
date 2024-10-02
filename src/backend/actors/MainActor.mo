@@ -155,7 +155,8 @@ actor MainActor : Types.Actor {
         if (Principal.isAnonymous(caller)) {
             return #err(#notAuthenticated);
         };
-        gameHandler.createInstance(prng, caller);
+        let ?user = userHandler.get(caller) else return #err(#userNotRegistered);
+        gameHandler.createInstance(prng, caller, user.achievementIds);
     };
 
     public shared ({ caller }) func startGame(request : Types.StartGameRequest) : async Types.StartGameResult {
@@ -216,8 +217,8 @@ actor MainActor : Types.Actor {
             gameHandler.selectScenarioChoice(
                 prng,
                 caller,
-                userHandler,
                 request.choice,
+                userHandler,
             )
         ) {
             case (#ok) #ok;

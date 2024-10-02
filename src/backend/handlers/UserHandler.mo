@@ -96,12 +96,12 @@ module {
         public func unlockAchievement(
             userId : Principal,
             achievementId : Text,
-        ) : Result.Result<(), { #userNotFound; #achievementNotFound; #achievementAlreadyUnlocked }> {
+        ) : Result.Result<(), { #userNotFound; #achievementNotFound; #alreadyUnlocked }> {
             switch (users.get(userId)) {
                 case (null) #err(#userNotFound);
                 case (?user) {
                     if (Array.indexOf(achievementId, user.achievementIds, Text.equal) != null) {
-                        #err(#achievementAlreadyUnlocked);
+                        #err(#alreadyUnlocked);
                     } else {
                         users.put(
                             userId,

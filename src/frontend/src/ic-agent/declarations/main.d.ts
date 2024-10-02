@@ -155,18 +155,21 @@ export interface CombatScenarioState {
 }
 export type CombatTurn = {};
 export interface CombatVictoryResult { 'characterHealth' : bigint }
+export type CompletedGameOutcomeWithMetaData = {
+    'victory' : VictoryGameOutcomeWithMetaData
+  } |
+  { 'death' : DeathGameOutcomeWithMetaData } |
+  { 'forfeit' : ForfeitGameOutcomeWithMetaData };
 export interface CompletedGameStateWithMetaData {
   'endTime' : Time,
-  'character' : CharacterWithMetaData,
-  'victory' : boolean,
+  'outcome' : CompletedGameOutcomeWithMetaData,
 }
 export interface CompletedGameWithMetaData {
   'id' : bigint,
   'startTime' : Time,
   'endTime' : Time,
-  'character' : CharacterWithMetaData,
   'playerId' : Principal,
-  'victory' : boolean,
+  'outcome' : CompletedGameOutcomeWithMetaData,
 }
 export type CreateGameError = { 'noWeapons' : null } |
   { 'noCreaturesForZone' : string } |
@@ -178,6 +181,7 @@ export type CreateGameError = { 'noWeapons' : null } |
   { 'noCreatures' : null } |
   { 'noRaces' : null } |
   { 'noScenarios' : null } |
+  { 'userNotRegistered' : null } |
   { 'alreadyInitialized' : null };
 export type CreateGameRequest = {};
 export type CreateGameResult = { 'ok' : null } |
@@ -222,6 +226,12 @@ export interface DamageLogEntry {
   'source' : TargetKind,
   'target' : TargetKind,
   'amount' : bigint,
+}
+export interface DeathGameOutcomeWithMetaData {
+  'character' : CharacterWithMetaData,
+}
+export interface ForfeitGameOutcomeWithMetaData {
+  'character' : [] | [CharacterWithMetaData],
 }
 export type GameStateWithMetaData = {
     'starting' : StartingGameStateWithMetaData
@@ -522,6 +532,9 @@ export interface User {
   'points' : bigint,
 }
 export interface UserStats { 'userCount' : bigint }
+export interface VictoryGameOutcomeWithMetaData {
+  'unlockedAchievementIds' : Array<string>,
+}
 export interface Vote { 'votingPower' : bigint, 'choice' : [] | [boolean] }
 export type VoteOnWorldProposalError = { 'proposalNotFound' : null } |
   { 'alreadyVoted' : null } |

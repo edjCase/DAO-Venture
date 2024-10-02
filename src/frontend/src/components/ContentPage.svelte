@@ -13,6 +13,8 @@
   import Zone from "./content/Zone.svelte";
   import { zoneStore } from "../stores/ZoneStore";
   import ContentGrid from "./content/ContentGrid.svelte";
+  import { achievementStore } from "../stores/AchievementStore";
+  import Achievement from "./content/Achievement.svelte";
 
   $: items = $itemStore;
   $: weapons = $weaponStore;
@@ -20,6 +22,7 @@
   $: creatures = $creatureStore;
   $: races = $raceStore;
   $: zones = $zoneStore;
+  $: achievements = $achievementStore;
 </script>
 
 <h1 class="text-5xl font-semibold text-primary-500 my-4 text-center">
@@ -44,5 +47,8 @@
   </TabItem>
   <TabItem title="Zones">
     <ContentGrid items={zones} Component={Zone} />
+  </TabItem>
+  <TabItem title="Achievements">
+    <ContentGrid items={achievements} Component={Achievement} />
   </TabItem>
 </Tabs>
