@@ -310,7 +310,7 @@ actor MainActor : Types.Actor {
         |> Iter.toArray(_);
     };
 
-    private func calculateVotingPower(_ : UserHandler.User) : Nat {
+    private func calculateVotingPower(user : UserHandler.User) : Nat {
         // let basePower : Nat = 10;
         // let levelMultiplier : Nat = 5;
         // let timeMultiplier : Nat = 2;
@@ -332,7 +332,7 @@ actor MainActor : Types.Actor {
         // // Combine powers
         // basePower + powerFromLevel + worldTimePower * timeMultiplier;
         // TODO
-        1;
+        1 + user.points;
     };
 
 };

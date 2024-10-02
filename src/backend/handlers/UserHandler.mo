@@ -24,11 +24,6 @@ module {
         userCount : Nat;
     };
 
-    public type UserVotingInfo = {
-        id : Principal;
-        votingPower : Nat;
-    };
-
     public type StableData = {
         users : [User];
     };
@@ -52,16 +47,8 @@ module {
         };
 
         public func getStats() : UserStats {
-            let worldStats = {
-                var totalUserLevel : Int = 0;
-                var userCount = 0;
-            };
-            for (user in users.vals()) {
-                worldStats.userCount += 1;
-            };
             {
-                totalUserLevel = worldStats.totalUserLevel;
-                userCount = worldStats.userCount;
+                userCount = users.size();
             };
         };
 
@@ -88,11 +75,17 @@ module {
             switch (users.get(userId)) {
                 case (?_) #err(#alreadyMember);
                 case (null) {
+                    let firstUser = users.size() == 0;
+                    let points = if (firstUser) {
+                        100; // TODO temp to allow for voting with other testers
+                    } else {
+                        0;
+                    };
                     let newUser : User = {
                         id = userId;
                         createTime = Time.now();
                         achievementIds = [];
-                        points = 0;
+                        points = points;
                     };
                     users.put(userId, newUser);
                     #ok(newUser);
