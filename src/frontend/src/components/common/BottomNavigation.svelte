@@ -11,12 +11,13 @@
     BarsOutline,
     BookOutline,
     GithubSolid,
-    GlobeSolid,
+    HomeSolid,
     QuestionCircleOutline,
     TwitterSolid,
     ClipboardListSolid,
     UserCircleSolid,
     UserGroupSolid,
+    PlaySolid,
   } from "flowbite-svelte-icons";
   import { onMount } from "svelte";
   import { navigate, useLocation } from "svelte-routing";
@@ -61,11 +62,19 @@
 </script>
 
 <BottomNav {activeUrl} position="fixed" classInner="grid-cols-5">
-  <BottomNavItem btnName="Game" href="/" on:click={navOnClick("/")}>
-    <GlobeSolid class={iconClass} />
+  <BottomNavItem btnName="Home" href="/" on:click={navOnClick("/")}>
+    <HomeSolid class={iconClass} />
   </BottomNavItem>
   <BottomNavItem btnName="DAO" href="/dao" on:click={navOnClick("/dao")}>
     <UserGroupSolid class={iconClass} />
+  </BottomNavItem>
+  <BottomNavItem
+    btnName="Play"
+    href="/game"
+    on:click={navOnClick("/game")}
+    btnClass="rounded-full border-2 border-primary-500 bg-black text-primary-500"
+  >
+    <PlaySolid class="w-5 h-5 mb-1 text-primary-500" />
   </BottomNavItem>
   <BottomNavItem
     btnName="Content"
@@ -73,19 +82,6 @@
     on:click={navOnClick("/content")}
   >
     <ClipboardListSolid class={iconClass} />
-  </BottomNavItem>
-  <BottomNavItem
-    btnName="Profile"
-    href="/profile"
-    on:click={navOnClick("/profile")}
-  >
-    {#if user}
-      <div class={iconClass}>
-        <UserAvatar userId={user.id} border={false} size="md" />
-      </div>
-    {:else}
-      <UserCircleSolid class={iconClass} />
-    {/if}
   </BottomNavItem>
   <BottomNavItem id="hamburger" btnName="" on:click={toggleDrawer}>
     <BarsOutline class={iconClass} />
@@ -105,6 +101,21 @@
 >
   <Sidebar asideClass="w-32" {activeUrl}>
     <SidebarGroup>
+      <SidebarItem
+        label="Profile"
+        href="/profile"
+        on:click={navOnClick("/profile")}
+      >
+        <svelte:fragment slot="icon">
+          {#if user}
+            <div class={iconClass}>
+              <UserAvatar userId={user.id} border={false} size="md" />
+            </div>
+          {:else}
+            <UserCircleSolid class={iconClass} />
+          {/if}
+        </svelte:fragment>
+      </SidebarItem>
       <SidebarItem label="About" href="/about" on:click={navOnClick("/about")}>
         <svelte:fragment slot="icon">
           <QuestionCircleOutline class={iconClass} />

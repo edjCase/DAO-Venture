@@ -49,8 +49,6 @@
     if (currentGame !== undefined) {
       if ("inProgress" in currentGame.state) {
         character = currentGame.state.inProgress.character;
-      } else if ("completed" in currentGame.state) {
-        character = currentGame.state.completed.character;
       }
     }
   }

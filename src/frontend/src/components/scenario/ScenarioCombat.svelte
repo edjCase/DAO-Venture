@@ -97,12 +97,10 @@
   let character: CharacterWithMetaData | undefined;
   $: {
     if (currentGame !== undefined) {
-      if ("starting" in currentGame.state) {
-        character = undefined;
-      } else if ("inProgress" in currentGame.state) {
+      if ("inProgress" in currentGame.state) {
         character = currentGame.state.inProgress.character;
       } else {
-        character = currentGame.state.completed.character;
+        character = undefined;
       }
     }
   }

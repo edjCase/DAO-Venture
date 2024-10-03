@@ -3,16 +3,17 @@
   import { GameWithMetaData } from "../../ic-agent/declarations/main";
   import InProgressGame from "./InProgressGame.svelte";
   import CompleteGame from "./CompleteGame.svelte";
+  import GameNav from "./GameNav.svelte";
 
   export let game: GameWithMetaData;
 </script>
 
-<div>
+<GameNav {game}>
   {#if "starting" in game.state}
-    <StartingGame {game} state={game.state.starting} />
+    <StartingGame state={game.state.starting} />
   {:else if "inProgress" in game.state}
-    <InProgressGame {game} />
+    <InProgressGame />
   {:else}
     <CompleteGame state={game.state.completed} />
   {/if}
-</div>
+</GameNav>

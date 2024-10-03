@@ -4,6 +4,7 @@
   import CharacterAvatarWithStats from "../character/CharacterAvatarWithStats.svelte";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { CompletedGameWithMetaData } from "../../ic-agent/declarations/main";
+  import { toJsonString } from "../../utils/StringUtil";
 
   let completedGames: CompletedGameWithMetaData[] = [];
   let offset = 0n;
@@ -36,11 +37,38 @@
   <div class="space-y-4 mt-4">
     {#each completedGames as game}
       <div class="bg-gray-800 p-4">
-        <div>Result: {game.victory ? "Victory" : "Defeat"}</div>
-        <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
-        <div class="flex justify-center">
-          <CharacterAvatarWithStats pixelSize={2} character={game.character} />
+        <div>
+          {#if "victory" in game.outcome}
+            Victory
+            <div class="flex justify-center">
+              <CharacterAvatarWithStats
+                pixelSize={2}
+                character={game.outcome.victory.character}
+              />
+            </div>
+          {:else if "forfeit" in game.outcome}
+            Forfeit
+            {#if game.outcome.forfeit.character[0] !== undefined}
+              <div class="flex justify-center">
+                <CharacterAvatarWithStats
+                  pixelSize={2}
+                  character={game.outcome.forfeit.character[0]}
+                />
+              </div>
+            {/if}
+          {:else if "death" in game.outcome}
+            Death
+            <div class="flex justify-center">
+              <CharacterAvatarWithStats
+                pixelSize={2}
+                character={game.outcome.death.character}
+              />
+            </div>
+          {:else}
+            NOT IMPLEMENTED GAME OUTCOME {toJsonString(game.outcome)}
+          {/if}
         </div>
+        <p>{nanosecondsToDate(game.endTime).toDateString()}</p>
       </div>
     {/each}
   </div>

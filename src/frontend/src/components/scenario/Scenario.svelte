@@ -50,10 +50,10 @@
   });
 </script>
 
-<div class="">
+<div class="text-center">
   {#if "inProgress" in scenario.state}
     {#if "choice" in scenario.state.inProgress}
-      <div class="text-4xl font-semibold text-center mb-4 text-primary-500">
+      <div class="text-4xl font-semibold mb-4 text-primary-500">
         {scenario.metaData.name}
       </div>
       <div class="flex justify-center">

@@ -22,12 +22,27 @@
   let achievements: Achievement[] = [];
 </script>
 
-{#if state.victory}
+{#if "victory" in state.outcome}
   YOU WON
-{:else}
-  YOUR ADVENTURE CAME TO A HORRIBLE END
+  <CharacterAvatarWithStats
+    character={state.outcome.victory.character}
+    pixelSize={4}
+  />
+{:else if "forfeit" in state.outcome}
+  YOU FORFEITED
+  {#if state.outcome.forfeit.character[0] !== undefined}
+    <CharacterAvatarWithStats
+      character={state.outcome.forfeit.character[0]}
+      pixelSize={4}
+    />
+  {/if}
+{:else if "death" in state.outcome}
+  YOU DIED
+  <CharacterAvatarWithStats
+    character={state.outcome.death.character}
+    pixelSize={4}
+  />
 {/if}
-<CharacterAvatarWithStats character={state.character} pixelSize={4} />
 
 <div>
   <div>Achievements</div>

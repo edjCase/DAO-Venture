@@ -103,6 +103,7 @@ module {
     };
 
     public type VictoryGameOutcome = {
+        character : Character.Character;
         unlockedAchievementIds : [Text];
     };
 
@@ -148,6 +149,7 @@ module {
     };
 
     public type VictoryGameOutcomeWithMetaData = {
+        character : CharacterWithMetaData;
         unlockedAchievementIds : [Text];
     };
 
@@ -948,6 +950,7 @@ module {
             switch (outcome) {
                 case (#victory(victory)) {
                     #victory({
+                        character = toCharacterWithMetaData(victory.character);
                         unlockedAchievementIds = victory.unlockedAchievementIds;
                     });
                 };

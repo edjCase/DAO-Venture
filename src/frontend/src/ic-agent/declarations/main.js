@@ -321,9 +321,6 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const Time = IDL.Int;
-  const VictoryGameOutcomeWithMetaData = IDL.Record({
-    'unlockedAchievementIds' : IDL.Vec(IDL.Text),
-  });
   const CharacterActionKind = IDL.Variant({
     'item' : IDL.Null,
     'skill' : IDL.Null,
@@ -350,6 +347,10 @@ export const idlFactory = ({ IDL }) => {
     'inventorySlots' : IDL.Vec(InventorySlotWithMetaData),
     'weapon' : Weapon,
     'health' : IDL.Nat,
+  });
+  const VictoryGameOutcomeWithMetaData = IDL.Record({
+    'character' : CharacterWithMetaData,
+    'unlockedAchievementIds' : IDL.Vec(IDL.Text),
   });
   const DeathGameOutcomeWithMetaData = IDL.Record({
     'character' : CharacterWithMetaData,

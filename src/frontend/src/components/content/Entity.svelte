@@ -36,7 +36,6 @@
 
   let isUnlocked = false;
   $: if (typeof entity !== "string") {
-    console.log(entity.unlockRequirement);
     if (
       entity.unlockRequirement === undefined ||
       "none" in entity.unlockRequirement

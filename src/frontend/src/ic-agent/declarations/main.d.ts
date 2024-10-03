@@ -533,6 +533,7 @@ export interface User {
 }
 export interface UserStats { 'userCount' : bigint }
 export interface VictoryGameOutcomeWithMetaData {
+  'character' : CharacterWithMetaData,
   'unlockedAchievementIds' : Array<string>,
 }
 export interface Vote { 'votingPower' : bigint, 'choice' : [] | [boolean] }
