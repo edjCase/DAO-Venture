@@ -5,7 +5,7 @@
   export let value: InventorySlotWithMetaData[];
 </script>
 
-<ul class="text-md flex flex-wrap justify-center">
+<ul class="text-md flex justify-center">
   {#each value as slot}
     <li>
       <CharacterInventorySlot value={slot} />

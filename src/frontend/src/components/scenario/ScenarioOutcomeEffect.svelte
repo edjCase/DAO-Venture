@@ -23,18 +23,18 @@
     {value.goldDelta >= 0 ? "+" : ""}{value.goldDelta}
     <CharacterStatIcon kind={{ gold: null }} />
   {:else if "addItem" in value}
-    +<CharacterItem item={value.addItem.itemId} />
+    +<CharacterItem value={value.addItem.itemId} />
     {#if value.addItem.removedItemId[0] !== undefined}
-      -<CharacterItem item={value.addItem.removedItemId[0]} />
+      -<CharacterItem value={value.addItem.removedItemId[0]} />
     {/if}
   {:else if "removeItem" in value}
-    -<CharacterItem item={value.removeItem} />
+    -<CharacterItem value={value.removeItem} />
   {:else if "swapWeapon" in value}
     <div>
-      +<Weapon weapon={value.swapWeapon.weaponId} pixelSize={2} />
+      +<Weapon value={value.swapWeapon.weaponId} pixelSize={2} />
     </div>
     <div>
-      -<Weapon weapon={value.swapWeapon.removedWeaponId} pixelSize={2} />
+      -<Weapon value={value.swapWeapon.removedWeaponId} pixelSize={2} />
     </div>
   {:else}
     NOT IMPLEMENTED LOG ENTRY TYPE {toJsonString(value)}

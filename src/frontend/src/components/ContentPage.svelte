@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { TabItem, Tabs } from "flowbite-svelte";
   import { itemStore } from "../stores/ItemStore";
   import Item from "./content/Item.svelte";
   import { weaponStore } from "../stores/WeaponStore";
@@ -15,40 +14,39 @@
   import ContentGrid from "./content/ContentGrid.svelte";
   import { achievementStore } from "../stores/AchievementStore";
   import Achievement from "./content/Achievement.svelte";
+  import { Button } from "flowbite-svelte";
 
-  $: items = $itemStore;
-  $: weapons = $weaponStore;
-  $: classes = $classStore;
-  $: creatures = $creatureStore;
-  $: races = $raceStore;
-  $: zones = $zoneStore;
-  $: achievements = $achievementStore;
+  const contentOptions = [
+    { value: "Items", store: itemStore, Component: Item },
+    { value: "Weapons", store: weaponStore, Component: Weapon },
+    { value: "Classes", store: classStore, Component: Class },
+    { value: "Creatures", store: creatureStore, Component: Creature },
+    { value: "Races", store: raceStore, Component: Race },
+    { value: "Zones", store: zoneStore, Component: Zone },
+    { value: "Achievements", store: achievementStore, Component: Achievement },
+  ];
+  let selectedContent = contentOptions[0];
 </script>
 
 <h1 class="text-5xl font-semibold text-primary-500 my-4 text-center">
   Game Content
 </h1>
 
-<Tabs style="underline">
-  <TabItem open title="Items">
-    <ContentGrid {items} Component={Item} propName="item" />
-  </TabItem>
-  <TabItem title="Weapons">
-    <ContentGrid items={weapons} Component={Weapon} propName="weapon" />
-  </TabItem>
-  <TabItem title="Classes">
-    <ContentGrid items={classes} Component={Class} />
-  </TabItem>
-  <TabItem title="Creatures">
-    <ContentGrid items={creatures} Component={Creature} />
-  </TabItem>
-  <TabItem title="Races">
-    <ContentGrid items={races} Component={Race} />
-  </TabItem>
-  <TabItem title="Zones">
-    <ContentGrid items={zones} Component={Zone} />
-  </TabItem>
-  <TabItem title="Achievements">
-    <ContentGrid items={achievements} Component={Achievement} />
-  </TabItem>
-</Tabs>
+<div class="mb-4 flex justify-center gap-2 flex-wrap">
+  {#each contentOptions as option}
+    <Button
+      class="px-4 py-2 rounded-md transition-colors duration-200 ease-in-out {selectedContent ===
+      option
+        ? 'bg-primary-500 text-white'
+        : 'bg-gray-200'}"
+      on:click={() => (selectedContent = option)}
+    >
+      {option.value}
+    </Button>
+  {/each}
+</div>
+<ContentGrid
+  label={selectedContent.value}
+  store={selectedContent.store}
+  Component={selectedContent.Component}
+/>

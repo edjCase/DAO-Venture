@@ -115,7 +115,7 @@
         {#if "gold" in option}
           {option.gold} <CharacterStatIcon kind={{ gold: null }} />
         {:else if "item" in option}
-          <CharacterItem item={option.item} />
+          <CharacterItem value={option.item} />
         {:else if "weapon" in option}
           <CharacterWeapon value={option.weapon} />
         {:else if "health" in option}

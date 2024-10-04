@@ -7,6 +7,7 @@
     TwitterSolid,
     MessagesSolid,
     ArrowUpRightFromSquareOutline,
+    PlaySolid,
   } from "flowbite-svelte-icons";
   import { navigate } from "svelte-routing";
 </script>
@@ -41,9 +42,12 @@
         Choose your character, navigate through scenarios, and battle creatures
         to see if you can make it to the end.
       </h2>
-      <Button on:click={() => navigate("/game")}>
-        Play
-        <ChevronRightOutline class="w-3 h-3 ml-1" />
+      <Button
+        on:click={() => navigate("/game")}
+        class="rounded-full border-2 border-primary-500 p-6 flex items-center gap-2"
+      >
+        <span class="text-2xl">Play</span>
+        <PlaySolid class="w-5 h-5 mb-1" />
       </Button>
       <Button class="mt-4" on:click={() => navigate("/game-overview")}>
         Learn More

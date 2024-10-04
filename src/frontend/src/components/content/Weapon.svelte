@@ -3,8 +3,8 @@
   import { weaponStore } from "../../stores/WeaponStore";
   import Entity from "./Entity.svelte";
 
-  export let weapon: Weapon | string;
+  export let value: Weapon | string;
   export let pixelSize: number = 1;
 </script>
 
-<Entity entity={weapon} {pixelSize} store={weaponStore} entityType="Weapon" />
+<Entity entity={value} {pixelSize} store={weaponStore} entityType="Weapon" />

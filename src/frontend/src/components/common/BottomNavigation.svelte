@@ -17,7 +17,6 @@
     ClipboardListSolid,
     UserCircleSolid,
     UserGroupSolid,
-    PlaySolid,
   } from "flowbite-svelte-icons";
   import { onMount } from "svelte";
   import { navigate, useLocation } from "svelte-routing";
@@ -61,21 +60,14 @@
   $: user = $userStore;
 </script>
 
-<BottomNav {activeUrl} position="fixed" classInner="grid-cols-5">
+<BottomNav {activeUrl} position="fixed" classInner="grid-cols-4">
   <BottomNavItem btnName="Home" href="/" on:click={navOnClick("/")}>
     <HomeSolid class={iconClass} />
   </BottomNavItem>
   <BottomNavItem btnName="DAO" href="/dao" on:click={navOnClick("/dao")}>
     <UserGroupSolid class={iconClass} />
   </BottomNavItem>
-  <BottomNavItem
-    btnName="Play"
-    href="/game"
-    on:click={navOnClick("/game")}
-    btnClass="rounded-full border-2 border-primary-500 bg-black text-primary-500"
-  >
-    <PlaySolid class="w-5 h-5 mb-1 text-primary-500" />
-  </BottomNavItem>
+
   <BottomNavItem
     btnName="Content"
     href="/content"
