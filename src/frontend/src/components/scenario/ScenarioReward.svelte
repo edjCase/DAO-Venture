@@ -6,7 +6,6 @@
   } from "../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { currentGameStore } from "../../stores/CurrentGameStore";
-  import { scenarioStore } from "../../stores/ScenarioStore";
   import { toJsonString } from "../../utils/StringUtil";
   import CharacterInventorySlot from "../character/CharacterInventorySlot.svelte";
   import CharacterItem from "../content/Item.svelte";
@@ -80,7 +79,6 @@
     });
 
     if ("ok" in result) {
-      scenarioStore.refetch();
       currentGameStore.refetch();
       selectedOptionIndex = undefined;
       inventorySlot = undefined;

@@ -5,14 +5,17 @@
     CreateWorldProposalRequest,
     UnlockRequirement,
     Zone,
+    ZoneDifficulty,
   } from "../../../../ic-agent/declarations/main";
   import UnlockRequirementChooser from "./UnlockRequirementChooser.svelte";
+  import ZoneDifficultyChooser from "./ZoneDifficultyChooser.svelte";
 
   export let value: Zone | undefined;
 
   let id: string | undefined = value?.id;
   let name: string | undefined = value?.name;
   let description: string | undefined = value?.description;
+  let difficulty: ZoneDifficulty = value?.difficulty ?? { medium: null };
   let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
     none: null,
   };
@@ -33,6 +36,7 @@
           id: id,
           name: name,
           description: description,
+          difficulty: difficulty,
           unlockRequirement: unlockRequirement,
         },
       },
@@ -64,6 +68,11 @@
         bind:value={description}
         placeholder="A mystical forest filled with ancient magic and hidden secrets..."
       />
+    </div>
+
+    <div>
+      <Label>Difficulty</Label>
+      <ZoneDifficultyChooser bind:value={difficulty} />
     </div>
 
     <div>

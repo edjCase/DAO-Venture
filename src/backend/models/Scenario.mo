@@ -8,9 +8,6 @@ module {
     type Prng = PseudoRandomX.PseudoRandomGenerator;
 
     public type Scenario = {
-        id : Nat;
-        metaDataId : Text;
-        previousStages : [ScenarioStageResult];
         state : ScenarioStateKind;
     };
 
@@ -23,6 +20,7 @@ module {
         #choice : ScenarioChoiceResult;
         #combat : ScenarioCombatResult;
         #reward : ScenarioRewardResult;
+        #startScenario : ScenarioStartResult;
     };
 
     public type ScenarioRewardResult = {
@@ -95,9 +93,42 @@ module {
         creatures : [CreatureCombatState];
     };
 
+    public type ScenarioStartResult = {
+
+    };
+
     public type ScenarioStateKind = {
+        #notStarted : NotStartedScenarioState;
+        #started : StartedScenarioState;
+    };
+
+    public type NotStartedScenarioState = {
+        options : [ScenarioKind];
+        zoneId : Text;
+    };
+    public type StartedScenarioState = {
+        metaDataId : Text;
+        previousStages : [ScenarioStageResult];
+        kind : StartedScenarioStateKind;
+    };
+
+    public type StartedScenarioStateKind = {
         #inProgress : InProgressScenarioStateKind;
         #completed;
+    };
+
+    public type ScenarioKind = {
+        #combat : CombatScenarioKind;
+        #encounter;
+        #store;
+        #any;
+    };
+
+    public type CombatScenarioKind = {
+        #normal;
+        #elite;
+        #boss;
+        #any;
     };
 
     public type InProgressScenarioStateKind = {

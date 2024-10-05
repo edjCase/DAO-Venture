@@ -203,14 +203,6 @@ actor MainActor : Types.Actor {
         await* worldDao.vote(request.proposalId, caller, request.vote);
     };
 
-    public query ({ caller }) func getScenario(request : Types.GetScenarioRequest) : async Types.GetScenarioResult {
-        gameHandler.getScenario(caller, request.scenarioId);
-    };
-
-    public query ({ caller }) func getScenarios() : async Types.GetScenariosResult {
-        gameHandler.getScenarios(caller);
-    };
-
     public shared ({ caller }) func selectScenarioChoice(request : Types.SelectScenarioChoiceRequest) : async Types.SelectScenarioChoiceResult {
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
         switch (

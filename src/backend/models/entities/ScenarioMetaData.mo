@@ -28,9 +28,15 @@ module {
     };
 
     public type ScenarioCategory = {
-        #other;
-        #combat;
+        #encounter;
+        #combat : CombatScenarioCategory;
         #store;
+    };
+
+    public type CombatScenarioCategory = {
+        #normal;
+        #elite;
+        #boss;
     };
 
     public type LocationKind = {

@@ -38,12 +38,17 @@ module {
         #choice : Text;
         #combat : CombatSimulator.CombatChoice;
         #reward : RewardChoice;
+        #startScenario : StartScenarioChoice;
     };
     public type RewardChoice = {
         #item : ItemRewardChoice;
         #gold : Nat;
         #weapon : Text;
         #health : Nat;
+    };
+
+    public type StartScenarioChoice = {
+        optionId : Nat;
     };
 
     public type ItemRewardChoice = {
@@ -57,18 +62,17 @@ module {
     };
 
     public type GameContent = {
-        scenarioMetaData : ScenarioMetaData.ScenarioMetaData;
         creatures : HashMap.HashMap<Text, Creature.Creature>;
         classes : HashMap.HashMap<Text, Class.Class>;
         races : HashMap.HashMap<Text, Race.Race>;
         items : HashMap.HashMap<Text, Item.Item>;
         weapons : HashMap.HashMap<Text, Weapon.Weapon>;
         actions : HashMap.HashMap<Text, Action.Action>;
+        scenarioMetaData : HashMap.HashMap<Text, ScenarioMetaData.ScenarioMetaData>;
     };
 
     public type RunStageData = {
-        stageResult : Scenario.ScenarioStageResult;
-        nextState : Scenario.ScenarioStateKind;
+        nextState : Scenario.StartedScenarioState;
     };
 
     public func runStage(
@@ -86,63 +90,11 @@ module {
             characterHandler,
             gameContent,
             logEntries,
+            scenario,
         );
         switch (scenario.state) {
-            case (#completed(_)) return #err(#scenarioComplete);
-            case (#inProgress(inProgress)) {
-                let (result, nextKind) : (Scenario.ScenarioStageResultKind, NextKind) = switch (inProgress) {
-                    case (#choice(choiceState)) {
-                        switch (processChoice(choiceState, helper, choice)) {
-                            case (#ok(result)) {
-                                let nextKind = switch (result.kind) {
-                                    case (#death) #dead;
-                                    case (#complete) {
-                                        let ?chosenChoice = choiceState.choices.vals()
-                                        |> Iter.filter(
-                                            _,
-                                            func(c : ScenarioMetaData.Choice) : Bool {
-                                                c.id == result.choice.id;
-                                            },
-                                        )
-                                        |> _.next() else Debug.trap("Choice not found: " # result.choice.id);
-                                        #nextPath(chosenChoice.nextPath);
-                                    };
-                                };
-                                (#choice(result), nextKind);
-                            };
-                            case (#err(error)) return #err(error);
-                        };
-                    };
-                    case (#combat(combatState)) {
-                        switch (processCombat(combatState, helper, choice)) {
-                            case (#ok(result)) {
-                                let nextKind = switch (result.kind) {
-                                    case (#victory(_)) #nextPath(combatState.nextPath);
-                                    case (#defeat(_)) #dead;
-                                    case (#inProgress(inProgress)) #pathInProgress(#combat(inProgress));
-                                };
-                                (#combat(result), nextKind);
-                            };
-                            case (#err(error)) return #err(error);
-                        };
-                    };
-                    case (#reward(rewardState)) {
-                        switch (processReward(rewardState, helper, choice)) {
-                            case (#ok(result)) (#reward(result), #nextPath(rewardState.nextPath));
-                            case (#err(error)) return #err(error);
-                        };
-                    };
-                };
-
-                let nextState : Scenario.ScenarioStateKind = buildNextState(prng, player.achievementIds, gameContent, nextKind, helper);
-                #ok({
-                    stageResult = {
-                        effects = helper.getEffects();
-                        kind = result;
-                    };
-                    nextState = nextState;
-                });
-            };
+            case (#notStarted(notStarted)) processNotStartedScenario(notStarted, helper, choice);
+            case (#started(started)) processStartedScenario(started, helper, choice);
         };
     };
 
@@ -152,13 +104,11 @@ module {
         #dead;
     };
 
-    func buildNextState(
-        prng : Prng,
-        playerAchievementIds : [Text],
-        gameContent : GameContent,
+    func buildNextStateKind(
+        metaDataId : Text,
         nextKind : NextKind,
         helper : Helper,
-    ) : Scenario.ScenarioStateKind {
+    ) : Scenario.StartedScenarioStateKind {
         switch (nextKind) {
             case (#nextPath(nextPathKind)) {
                 let nextPathId : ?Text = switch (nextPathKind) {
@@ -172,7 +122,7 @@ module {
                                 (p, weight);
                             },
                         );
-                        let nexPath = prng.nextArrayElementWeighted(pathsWithWeights);
+                        let nexPath = helper.prng.nextArrayElementWeighted(pathsWithWeights);
 
                         helper.log(nexPath.description);
                         for (effect in nexPath.effects.vals()) {
@@ -186,15 +136,14 @@ module {
                     case (#none) null;
                 };
                 switch (nextPathId) {
-                    case (null) #completed;
+                    case (null) return #completed;
                     case (?nextPathId) {
+                        let ?scenarioMetaData = helper.gameContent.scenarioMetaData.get(metaDataId) else Debug.trap("Scenario meta data not found: " # metaDataId);
                         let ?nextPath = Array.find(
-                            gameContent.scenarioMetaData.paths,
+                            scenarioMetaData.paths,
                             func(p : ScenarioMetaData.ScenarioPath) : Bool = p.id == nextPathId,
                         ) else Debug.trap("Path not found: " # nextPathId);
-                        let character = helper.getCharacter();
-                        let attributes = helper.calculateAttributes();
-                        let nextState = buildNextInProgressState(prng, playerAchievementIds, gameContent, character, attributes, nextPath);
+                        let nextState = buildNextInProgressState(helper, nextPath);
                         #inProgress(nextState);
                     };
                 };
@@ -228,68 +177,119 @@ module {
     };
 
     public func buildNextInProgressState(
-        prng : Prng,
-        playerAchievementIds : [Text],
-        gameContent : GameContent,
-        character : Character.Character,
-        attributes : Character.CharacterAttributes,
+        helper : Helper,
         path : ScenarioMetaData.ScenarioPath,
     ) : Scenario.InProgressScenarioStateKind {
-
+        let character = helper.getCharacter();
         switch (path.kind) {
             case (#combat(combat)) #combat(
                 CombatSimulator.startCombat(
-                    prng,
+                    helper.prng,
                     combat,
                     character,
-                    gameContent,
+                    helper.gameContent,
                 )
             );
-            case (#choice(choice)) #choice(startChoice(choice, character, attributes, gameContent));
-            case (#reward(reward)) #reward(startReward(prng, playerAchievementIds, reward, gameContent));
+            case (#choice(choice)) {
+                let attributes = helper.calculateAttributes();
+                #choice(startChoice(choice, character, attributes, helper.gameContent));
+            };
+            case (#reward(reward)) #reward(startReward(helper, reward));
         };
     };
 
-    func processReward(
-        state : Scenario.RewardScenarioState,
+    func processNotStartedScenario(
+        state : Scenario.NotStartedScenarioState,
         helper : Helper,
         choice : StageChoiceKind,
-    ) : Result.Result<Scenario.ScenarioRewardResult, RunStageError> {
-        let #reward(reward) = choice else return #err(#invalidChoice("Expected reward choice"));
-        func validateRewardExists(reward : Scenario.RewardKind) : Bool {
-            IterTools.any(
-                state.options.vals(),
-                func(r : Scenario.RewardKind) : Bool = r == reward,
-            );
+    ) : Result.Result<RunStageData, RunStageError> {
+        let #startScenario(startScenario) = choice else return #err(#invalidChoice("Expected start scenario choice"));
+        if (startScenario.optionId >= state.options.size()) {
+            return #err(#invalidChoice("Invalid scenario option"));
         };
-        let kind = switch (reward) {
-            case (#item(item)) #item(item.id);
-            case (#gold(gold)) #gold(gold);
-            case (#weapon(weaponId)) #weapon(weaponId);
-            case (#health(health)) #health(health);
-        };
-        let true = validateRewardExists(kind) else return #err(#invalidChoice("Reward does not exist"));
+        let scenarioOption = state.options[startScenario.optionId];
 
-        switch (reward) {
-            case (#item(item)) {
-                let result = helper.addItemToSlot(item.id, item.inventorySlot);
+        let filteredScenarios = helper.gameContent.scenarioMetaData.vals()
+        |> UnlockRequirement.filterOutLockedEntities(_, helper.player.achievementIds)
+        // Only scenarios that are common or have the zoneId
+        |> Iter.filter(
+            _,
+            func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool {
+                let matchesCategory = switch (scenarioOption) {
+                    case (#combat(combatFilter)) switch (combatFilter) {
+                        case (#any) switch (scenario.category) {
+                            case (#combat(_)) true;
+                            case (_) false;
+                        };
+                        case (combatTypeFilter) switch (scenario.category) {
+                            case (#combat(combatType)) combatType == combatTypeFilter;
+                            case (_) false;
+                        };
+                    };
+                    case (#encounter) scenario.category == #encounter;
+                    case (#store) scenario.category == #store;
+                    case (#any) true;
+                };
+                if (not matchesCategory) {
+                    return false;
+                };
+                switch (scenario.location) {
+                    case (#common) true;
+                    case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == state.zoneId) != null;
+                };
+            },
+        )
+        |> Iter.toArray(_);
+        let scenarioMetaData = helper.prng.nextArrayElement(filteredScenarios);
+        let nextPathId = scenarioMetaData.paths[0].id; // Use first path for initial path
+        let nextKind = #nextPath(#single(nextPathId));
+        let nextStateKind = buildNextStateKind(scenarioMetaData.id, nextKind, helper);
+        #ok({
+            nextState = {
+                metaDataId = scenarioMetaData.id;
+                previousStages = [{
+                    effects = helper.getEffects();
+                    kind = #startScenario({ metaDataId = scenarioMetaData.id });
+                }];
+                kind = nextStateKind;
+            };
+        });
+    };
+
+    func processStartedScenario(
+        startedScenarioState : Scenario.StartedScenarioState,
+        helper : Helper,
+        choice : StageChoiceKind,
+    ) : Result.Result<RunStageData, RunStageError> {
+        let (nextKind, stageResultKind) : (NextKind, Scenario.ScenarioStageResultKind) = switch (startedScenarioState.kind) {
+            case (#completed) return #err(#scenarioComplete);
+            case (#inProgress(inProgress)) {
+                let result : Result.Result<(NextKind, Scenario.ScenarioStageResultKind), RunStageError> = switch (inProgress) {
+                    case (#choice(choiceState)) processChoice(choiceState, helper, choice);
+                    case (#combat(combatState)) processCombat(combatState, helper, choice);
+                    case (#reward(rewardState)) processReward(rewardState, helper, choice);
+                };
                 switch (result) {
-                    case (#ok(_)) {};
-                    case (#err(#invalidSlot)) Debug.trap("Invalid slot: " # Nat.toText(item.inventorySlot));
+                    case (#ok((nextKind, stageResultKind))) (nextKind, stageResultKind);
+                    case (#err(error)) return #err(error);
                 };
             };
-            case (#gold(gold)) helper.addGold(gold);
-            case (#weapon(weaponId)) helper.swapWeapon(weaponId);
-            case (#health(health)) helper.heal(health);
         };
-        #ok({ kind = kind });
+        let nextStateKind = buildNextStateKind(startedScenarioState.metaDataId, nextKind, helper);
+        #ok({
+            nextState = {
+                metaDataId = startedScenarioState.metaDataId;
+                previousStages = Array.append(startedScenarioState.previousStages, [{ effects = helper.getEffects(); kind = stageResultKind }]);
+                kind = nextStateKind;
+            };
+        });
     };
 
     func processChoice(
         state : Scenario.ChoiceScenarioState,
         helper : Helper,
         choice : StageChoiceKind,
-    ) : Result.Result<Scenario.ScenarioChoiceResult, RunStageError> {
+    ) : Result.Result<(NextKind, Scenario.ScenarioStageResultKind), RunStageError> {
         let #choice(choiceId) = choice else return #err(#invalidChoice("Expected scenario choice"));
 
         let ?choiceData = Array.find(
@@ -299,22 +299,38 @@ module {
             },
         ) else return #err(#invalidChoice("Choice not found: " # choiceId));
 
-        label f for (effect in choiceData.effects.vals()) {
-            switch (helper.applyEffect(effect)) {
-                case (#alive) (); // Continue
-                case (#dead) {
-                    return #ok({
-                        choice = choiceData;
-                        kind = #death;
-                    });
+        func applyEffects() : { #complete; #death } {
+
+            label f for (effect in choiceData.effects.vals()) {
+                switch (helper.applyEffect(effect)) {
+                    case (#alive) (); // Continue
+                    case (#dead) {
+                        return #death;
+                    };
                 };
+            };
+
+            #complete;
+        };
+
+        let result = applyEffects();
+
+        let nextKind = switch (result) {
+            case (#death) #dead;
+            case (#complete) {
+                let ?chosenChoice = state.choices.vals()
+                |> Iter.filter(
+                    _,
+                    func(c : ScenarioMetaData.Choice) : Bool {
+                        c.id == choiceId;
+                    },
+                )
+                |> _.next() else Debug.trap("Choice not found: " # choiceId);
+                #nextPath(chosenChoice.nextPath);
             };
         };
 
-        #ok({
-            choice = choiceData;
-            kind = #complete;
-        });
+        #ok((nextKind, #choice({ choice = choiceData; kind = result })));
 
     };
 
@@ -322,7 +338,7 @@ module {
         state : Scenario.CombatScenarioState,
         helper : Helper,
         choice : StageChoiceKind,
-    ) : Result.Result<Scenario.ScenarioCombatResult, RunStageError> {
+    ) : Result.Result<(NextKind, Scenario.ScenarioStageResultKind), RunStageError> {
         let #combat(combatChoice) = choice else return #err(#invalidChoice("Expected combat choice"));
         let combatResult = CombatSimulator.run(
             state,
@@ -339,11 +355,51 @@ module {
                     case (#inProgress(combatState)) combatState.character.health;
                 };
                 helper.setCharacterHealth(newHealth);
-                #ok(combatKind);
+                let nextKind = switch (combatKind.kind) {
+                    case (#victory(_)) #nextPath(state.nextPath);
+                    case (#defeat(_)) #dead;
+                    case (#inProgress(inProgress)) #pathInProgress(#combat(inProgress));
+                };
+
+                #ok((nextKind, #combat(combatKind)));
             };
             case (#err(error)) return #err(error);
         };
+    };
 
+    func processReward(
+        state : Scenario.RewardScenarioState,
+        helper : Helper,
+        choice : StageChoiceKind,
+    ) : Result.Result<(NextKind, Scenario.ScenarioStageResultKind), RunStageError> {
+        let #reward(reward) = choice else return #err(#invalidChoice("Expected reward choice"));
+        func validateRewardExists(reward : Scenario.RewardKind) : Bool {
+            IterTools.any(
+                state.options.vals(),
+                func(r : Scenario.RewardKind) : Bool = r == reward,
+            );
+        };
+        let rewardKind = switch (reward) {
+            case (#item(item)) #item(item.id);
+            case (#gold(gold)) #gold(gold);
+            case (#weapon(weaponId)) #weapon(weaponId);
+            case (#health(health)) #health(health);
+        };
+        let true = validateRewardExists(rewardKind) else return #err(#invalidChoice("Reward does not exist"));
+
+        switch (reward) {
+            case (#item(item)) {
+                let result = helper.addItemToSlot(item.id, item.inventorySlot);
+                switch (result) {
+                    case (#ok(_)) {};
+                    case (#err(#invalidSlot)) Debug.trap("Invalid slot: " # Nat.toText(item.inventorySlot));
+                };
+            };
+            case (#gold(gold)) helper.addGold(gold);
+            case (#weapon(weaponId)) helper.swapWeapon(weaponId);
+            case (#health(health)) helper.heal(health);
+        };
+        #ok((#nextPath(state.nextPath), #reward({ kind = rewardKind })));
     };
 
     func startChoice(
@@ -366,29 +422,27 @@ module {
     };
 
     func startReward(
-        prng : Prng,
-        playerAchievementIds : [Text],
+        helper : Helper,
         reward : ScenarioMetaData.RewardPath,
-        gameContent : GameContent,
     ) : Scenario.RewardScenarioState {
         let options = switch (reward.kind) {
             case (#random) {
-                let itemIds = gameContent.items.vals()
-                |> UnlockRequirement.filterOutLockedEntities<Item.Item>(_, playerAchievementIds)
+                let itemIds = helper.gameContent.items.vals()
+                |> UnlockRequirement.filterOutLockedEntities<Item.Item>(_, helper.player.achievementIds)
                 |> Iter.map(_, func(item : Item.Item) : Text = item.id)
                 |> Iter.toArray(_);
-                let itemId = prng.nextArrayElement(itemIds);
-                let gold = prng.nextNat(1, 101); // TODO amount
+                let itemId = helper.prng.nextArrayElement(itemIds);
+                let gold = helper.prng.nextNat(1, 101); // TODO amount
                 // TODO ratio
-                let reward = if (prng.nextRatio(1, 2)) {
-                    let weaponIds = gameContent.weapons.vals()
-                    |> UnlockRequirement.filterOutLockedEntities<Weapon.Weapon>(_, playerAchievementIds)
+                let reward = if (helper.prng.nextRatio(1, 2)) {
+                    let weaponIds = helper.gameContent.weapons.vals()
+                    |> UnlockRequirement.filterOutLockedEntities<Weapon.Weapon>(_, helper.player.achievementIds)
                     |> Iter.map(_, func(weapon : Weapon.Weapon) : Text = weapon.id)
                     |> Iter.toArray(_);
-                    let weaponId = prng.nextArrayElement(weaponIds);
+                    let weaponId = helper.prng.nextArrayElement(weaponIds);
                     #weapon(weaponId);
                 } else {
-                    #health(prng.nextNat(1, 21)); // TODO amount
+                    #health(helper.prng.nextNat(1, 21)); // TODO amount
                 };
                 [#item(itemId), #gold(gold), reward];
             };
@@ -419,14 +473,17 @@ module {
 
     private class Helper(
         prng_ : Prng,
-        player : Player,
+        player_ : Player,
         characterHandler : CharacterHandler.Handler,
         gameContent_ : GameContent,
         logEntries : Buffer.Buffer<Scenario.OutcomeEffect>,
+        scenario_ : Scenario.Scenario,
     ) {
 
         public let prng = prng_;
         public let gameContent = gameContent_;
+        public let scenario = scenario_;
+        public let player = player_;
 
         public func getCharacter() : Character.Character {
             characterHandler.get();

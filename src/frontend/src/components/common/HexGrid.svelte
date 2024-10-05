@@ -17,7 +17,6 @@
   export let gridData: HexTileData[];
   export let hexSize: number = 20;
   export let selectedTile: AxialCoordinate | undefined;
-  export let onClick: (coord: AxialCoordinate) => void = () => {};
 
   let svg: SVGSVGElement;
   let isPanning = false;
@@ -97,7 +96,6 @@
 
   let handleOnClickTile = (coord: AxialCoordinate) => {
     selectedTile = coord;
-    onClick(coord);
 
     const selectedHex = gridData.find((tile) =>
       coordinateEquals(tile.coordinate, selectedTile!)
@@ -131,7 +129,7 @@
             selectedTile || { q: 0, r: 0 }
           )}
         >
-          <slot coordinate={tile.coordinate} />
+          <slot />
         </HexTile>
       {/each}
       <!-- Draw a white border around the selected tile LAST -->
@@ -146,7 +144,4 @@
       {/if}
     </g>
   </svg>
-  {#if selectedTile !== undefined}
-    <slot name="tileInfo" />
-  {/if}
 </div>

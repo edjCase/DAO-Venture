@@ -1,5 +1,4 @@
 import Nat "mo:base/Nat";
-import Scenario "../models/Scenario";
 import ProposalEngine "mo:dao-proposal-engine/ProposalEngine";
 import ExtendedProposal "mo:dao-proposal-engine/ExtendedProposal";
 import CommonTypes "../CommonTypes";
@@ -34,8 +33,6 @@ module {
         abandonGame : () -> async AbandonGameResult;
         getCurrentGame : query () -> async GetCurrentGameResult;
         getCompletedGames : query (request : GetCompletedGamesRequest) -> async CommonTypes.PagedResult<GameHandler.CompletedGameWithMetaData>;
-        getScenario : query (request : GetScenarioRequest) -> async GetScenarioResult;
-        getScenarios : query () -> async GetScenariosResult;
 
         getUser : query (userId : Principal) -> async GetUserResult;
         getUserStats : query () -> async GetUserStatsResult;
@@ -89,7 +86,7 @@ module {
 
     public type RegisterResult = Result.Result<UserHandler.User, RegisterError>;
 
-    public type GetScenariosResult = Result.Result<[Scenario], GetScenariosError>;
+    public type GetScenariosResult = Result.Result<[GameHandler.ScenarioWithMetaData], GetScenariosError>;
 
     public type GetScenariosError = {
         #gameNotFound;
@@ -100,16 +97,12 @@ module {
         scenarioId : Nat;
     };
 
-    public type GetScenarioResult = Result.Result<Scenario, GetScenarioError>;
+    public type GetScenarioResult = Result.Result<GameHandler.ScenarioWithMetaData, GetScenarioError>;
 
     public type GetScenarioError = {
         #notFound;
         #gameNotFound;
         #gameNotActive;
-    };
-
-    public type Scenario = Scenario.Scenario and {
-        metaData : ScenarioMetaData.ScenarioMetaData;
     };
 
     public type CreateWorldProposalRequest = {

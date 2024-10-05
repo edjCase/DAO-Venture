@@ -39,7 +39,7 @@
     : generatePixelGrid(64, 64);
   let paths: ScenarioPath[] = value?.paths ?? [];
   let location: LocationKind = value?.location ?? { common: null };
-  let category: ScenarioCategory = value?.category ?? { other: null };
+  let category: ScenarioCategory = value?.category ?? { encounter: null };
   let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
     none: null,
   };

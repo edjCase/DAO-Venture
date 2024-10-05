@@ -7,7 +7,6 @@
     CharacterWithMetaData,
   } from "../../ic-agent/declarations/main";
   import { mainAgentFactory } from "../../ic-agent/Main";
-  import { scenarioStore } from "../../stores/ScenarioStore";
   import { currentGameStore } from "../../stores/CurrentGameStore";
   import { actionStore } from "../../stores/ActionStore";
   import { creatureStore } from "../../stores/CreatureStore";
@@ -178,7 +177,6 @@
       });
 
       if ("ok" in result) {
-        scenarioStore.refetch();
         currentGameStore.refetch();
         selectedActionKind = undefined;
         selectedTargetIndex = undefined;

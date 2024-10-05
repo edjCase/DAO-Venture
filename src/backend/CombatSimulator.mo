@@ -42,6 +42,7 @@ module {
         races : HashMap.HashMap<Text, Race.Race>;
         items : HashMap.HashMap<Text, Item.Item>;
         weapons : HashMap.HashMap<Text, Weapon.Weapon>;
+        scenarioMetaData : HashMap.HashMap<Text, ScenarioMetaData.ScenarioMetaData>;
     };
 
     public func startCombat(

@@ -12,7 +12,7 @@
   {#if "starting" in game.state}
     <StartingGame state={game.state.starting} />
   {:else if "inProgress" in game.state}
-    <InProgressGame />
+    <InProgressGame {game} state={game.state.inProgress} />
   {:else}
     <CompleteGame state={game.state.completed} />
   {/if}

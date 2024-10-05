@@ -2,9 +2,9 @@
   import { Spinner } from "flowbite-svelte";
   import { BadgeCheckOutline } from "flowbite-svelte-icons";
 
-  export let choiceId: string;
+  export let choiceId: any;
   export let selected: boolean;
-  export let onSelect: (id: string) => Promise<void>;
+  export let onSelect: (id: any) => Promise<void>;
 
   let selecting = false;
   let onOptionSelect = async () => {

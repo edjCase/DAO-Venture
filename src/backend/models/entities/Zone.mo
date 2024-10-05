@@ -7,7 +7,14 @@ import Achievement "Achievement";
 
 module {
     public type Zone = Entity.Entity and {
+        difficulty : ZoneDifficulty;
         unlockRequirement : UnlockRequirement.UnlockRequirement;
+    };
+
+    public type ZoneDifficulty = {
+        #easy;
+        #medium;
+        #hard;
     };
 
     public func validate(
