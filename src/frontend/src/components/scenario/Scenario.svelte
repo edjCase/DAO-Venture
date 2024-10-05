@@ -19,7 +19,7 @@
   export let character: CharacterWithMetaData;
   export let nextScenario: () => void;
 
-  let selectChoice = async (optionId: string) => {
+  let selectChoice = (optionId: string) => async () => {
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.selectScenarioChoice({
       choice: {
@@ -34,7 +34,7 @@
   };
   let selectedOptionId: number | undefined = undefined;
 
-  let startScenario = async (i: number) => {
+  let startScenario = (i: number) => async () => {
     selectedOptionId = i;
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.selectScenarioChoice({
@@ -57,11 +57,7 @@
     <ul class="text-lg p-6">
       {#each scenario.state.notStarted.options as option, i}
         <li>
-          <GenericOption
-            choiceId={i}
-            selected={i === selectedOptionId}
-            onSelect={startScenario}
-          >
+          <GenericOption onSelect={startScenario(i)}>
             {#if "any" in option}
               Unknown
             {:else if "combat" in option}
@@ -115,11 +111,7 @@
             <ul class="text-lg p-6">
               {#each scenario.state.started.kind.inProgress.choice.choices as option}
                 <li>
-                  <ScenarioOption
-                    {option}
-                    selected={false}
-                    onSelect={selectChoice}
-                  />
+                  <ScenarioOption {option} onSelect={selectChoice(option.id)} />
                 </li>
               {/each}
             </ul>

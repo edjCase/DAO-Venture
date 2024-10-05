@@ -6,8 +6,7 @@
   import { Tooltip } from "flowbite-svelte";
 
   export let option: Choice;
-  export let selected: boolean;
-  export let onSelect: (id: string) => Promise<void>;
+  export let onSelect: () => Promise<void>;
 
   let attributeScales: Attribute[] = [];
   $: if ("multi" in option.nextPath) {
@@ -22,7 +21,7 @@
   }
 </script>
 
-<GenericOption choiceId={option.id} {selected} {onSelect}>
+<GenericOption {onSelect}>
   {option.description}
   {#if option.requirement[0] !== undefined}
     <ChoiceRequirement value={option.requirement[0]} />

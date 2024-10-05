@@ -1,16 +1,13 @@
 <script lang="ts">
   import { Spinner } from "flowbite-svelte";
-  import { BadgeCheckOutline } from "flowbite-svelte-icons";
 
-  export let choiceId: any;
-  export let selected: boolean;
-  export let onSelect: (id: any) => Promise<void>;
+  export let onSelect: () => Promise<void>;
 
   let selecting = false;
   let onOptionSelect = async () => {
     selecting = true;
     try {
-      await onSelect(choiceId);
+      await onSelect();
     } finally {
       selecting = false;
     }
@@ -20,9 +17,7 @@
 
 <div class="flex items-center mb-2">
   <div class="w-8">
-    {#if selected}
-      <BadgeCheckOutline size="md" />
-    {:else if selecting}
+    {#if selecting}
       <Spinner size="4" />
     {/if}
   </div>
