@@ -30,7 +30,7 @@ export const createActor = async <T>(
 ): Promise<ActorSubclass<T>> => {
   const host = process.env.DFX_NETWORK === "ic" ? undefined : "http://127.0.0.1:4943";
   const identity = getIdentity();
-  const agent = new HttpAgent({ identity: identity, host });
+  const agent = await HttpAgent.create({ identity: identity, host });
 
   // Fetch root key for certificate validation during development
   if (process.env.DFX_NETWORK !== "ic") {

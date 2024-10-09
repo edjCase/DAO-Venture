@@ -121,14 +121,12 @@ module {
         #combat : CombatScenarioKind;
         #encounter;
         #store;
-        #any;
     };
 
     public type CombatScenarioKind = {
         #normal;
         #elite;
         #boss;
-        #any;
     };
 
     public type InProgressScenarioStateKind = {

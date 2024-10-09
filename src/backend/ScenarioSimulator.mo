@@ -217,10 +217,6 @@ module {
             func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool {
                 let matchesCategory = switch (scenarioOption) {
                     case (#combat(combatFilter)) switch (combatFilter) {
-                        case (#any) switch (scenario.category) {
-                            case (#combat(_)) true;
-                            case (_) false;
-                        };
                         case (combatTypeFilter) switch (scenario.category) {
                             case (#combat(combatType)) combatType == combatTypeFilter;
                             case (_) false;
@@ -228,7 +224,6 @@ module {
                     };
                     case (#encounter) scenario.category == #encounter;
                     case (#store) scenario.category == #store;
-                    case (#any) true;
                 };
                 if (not matchesCategory) {
                     return false;

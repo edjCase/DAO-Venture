@@ -204,6 +204,7 @@ actor MainActor : Types.Actor {
     };
 
     public shared ({ caller }) func selectScenarioChoice(request : Types.SelectScenarioChoiceRequest) : async Types.SelectScenarioChoiceResult {
+
         let prng = PseudoRandomX.fromBlob(await Random.blob(), #xorshift32);
         switch (
             gameHandler.selectScenarioChoice(

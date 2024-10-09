@@ -74,21 +74,7 @@ module {
     public type InProgressData = {
         character : Character.Character;
         zoneIds : [Text]; // Last is current zone
-        turnKind : TurnKind;
         playerAchievementIds : [Text];
-    };
-
-    public type TurnKind = {
-        #scenario : ScenarioTurn;
-        #combat : CombatTurn;
-    };
-
-    public type ScenarioTurn = {
-        scenarioId : Nat;
-    };
-
-    public type CombatTurn = {
-
     };
 
     public type CompletedData = {
@@ -135,7 +121,6 @@ module {
 
     public type InProgressGameStateWithMetaData = {
         character : CharacterWithMetaData;
-        turnKind : TurnKind;
     };
 
     public type CompletedGameStateWithMetaData = {
@@ -376,13 +361,27 @@ module {
             };
 
             func addZoneScenarios(zoneId : Text, count : Nat) {
+                // TODO weight options
+                let allScenarioOptions : [Scenario.ScenarioKind] = [
+                    #encounter,
+                    #combat(#normal),
+                    #combat(#elite),
+                    #store,
+                ];
                 for (i in IterTools.range(0, count)) {
-                    let scenarioOptions : [Scenario.ScenarioKind] = [
-                        #encounter,
-                        #combat(#any),
-                        #store,
-                        #any,
-                    ]; // TODO
+                    let randomScenarioOption = prng.nextArrayElement(allScenarioOptions);
+                    let scenarioOptions = if (prng.nextRatio(1, 2)) {
+                        [randomScenarioOption];
+                    } else {
+                        let otherScenarioOptions = allScenarioOptions.vals()
+                        |> Iter.filter(_, func(option : Scenario.ScenarioKind) : Bool = option != randomScenarioOption)
+                        |> Iter.toArray(_);
+                        let otherScenarioOption = prng.nextArrayElement(otherScenarioOptions);
+                        [
+                            randomScenarioOption,
+                            otherScenarioOption,
+                        ];
+                    };
                     scenarios.add({
                         state = #notStarted({
                             zoneId = zoneId;
@@ -502,7 +501,6 @@ module {
 
             let zoneId = prng.nextArrayElement(unlockedZones).id;
 
-            let turnKind = #scenario({ scenarioId = 0 });
             playerDataList.put(
                 playerId,
                 {
@@ -513,8 +511,8 @@ module {
                             {
                                 zoneIds = [zoneId];
                                 character = character;
-                                turnKind = turnKind;
                                 playerAchievementIds = starting.playerAchievementIds;
+                                scenarioId = 0;
                             } : InProgressData
                         );
                     } : ?GameInstance
@@ -533,8 +531,17 @@ module {
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
 
-            let #scenario({ scenarioId }) = inProgressInstance.turnKind else return #err(#notScenarioTurn);
-            let scenario = instance.scenarios[scenarioId];
+            // Get next scenario (first not completed)
+            let ?currentScenarioId = instance.scenarios.vals()
+            |> IterTools.findIndex(
+                _,
+                func(s : Scenario.Scenario) : Bool = switch (s.state) {
+                    case (#started({ kind = #completed })) false;
+                    case (_) true;
+                },
+            ) else return #err(#gameNotActive);
+
+            let currentScenario = instance.scenarios[currentScenarioId];
 
             let characterHandler = CharacterHandler.Handler(inProgressInstance.character);
 
@@ -558,7 +565,7 @@ module {
                     prng,
                     player,
                     characterHandler,
-                    scenario,
+                    currentScenario,
                     gameContent,
                     choice,
                 )
@@ -570,21 +577,20 @@ module {
                 case (#ok(result)) result;
             };
             let updatedScenario : Scenario.Scenario = {
-                scenario with
+                currentScenario with
                 state = #started(runStageData.nextState);
             };
             let thawedScenarios = Array.thaw<Scenario.Scenario>(instance.scenarios);
-            thawedScenarios[instance.scenarios.size() - 1] := updatedScenario;
+            thawedScenarios[currentScenarioId] := updatedScenario;
             let updatedScenarios = Array.freeze(thawedScenarios);
-
             let updatedInProgressState : InProgressData = {
                 inProgressInstance with
                 character = characterHandler.get();
-                scenarios = updatedScenarios;
                 playerAchievementIds = player.achievementIds;
             };
-            let updatedInstance = {
+            let updatedInstance : GameInstance = {
                 instance with
+                scenarios = updatedScenarios;
                 state = #inProgress(updatedInProgressState);
             };
             let isDead = characterHandler.get().health <= 0;
@@ -875,7 +881,6 @@ module {
                     let character = toCharacterWithMetaData(inProgress.character);
                     #inProgress({
                         character;
-                        turnKind = inProgress.turnKind;
                     });
                 };
                 case (#completed(completed)) {

@@ -388,13 +388,11 @@ export const idlFactory = ({ IDL }) => {
     'offset' : IDL.Nat,
   });
   const CombatScenarioKind = IDL.Variant({
-    'any' : IDL.Null,
     'normal' : IDL.Null,
     'boss' : IDL.Null,
     'elite' : IDL.Null,
   });
   const ScenarioKind = IDL.Variant({
-    'any' : IDL.Null,
     'store' : IDL.Null,
     'combat' : CombatScenarioKind,
     'encounter' : IDL.Null,
@@ -568,14 +566,7 @@ export const idlFactory = ({ IDL }) => {
     'endTime' : Time,
     'outcome' : CompletedGameOutcomeWithMetaData,
   });
-  const ScenarioTurn = IDL.Record({ 'scenarioId' : IDL.Nat });
-  const CombatTurn = IDL.Record({});
-  const TurnKind = IDL.Variant({
-    'scenario' : ScenarioTurn,
-    'combat' : CombatTurn,
-  });
   const InProgressGameStateWithMetaData = IDL.Record({
-    'turnKind' : TurnKind,
     'character' : CharacterWithMetaData,
   });
   const GameStateWithMetaData = IDL.Variant({

@@ -76,7 +76,7 @@
 
   <polygon
     points={getHexPolygonPoints(hexSize, undefined)}
-    stroke-width={selected ? 2 : 0}
+    stroke-width={selected ? 2 : 1}
     stroke="rgb(156, 163, 175)"
   />
 

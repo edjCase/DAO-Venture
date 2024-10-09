@@ -151,8 +151,7 @@ export type CombatResultKind = { 'defeat' : CombatDefeatResult } |
 export type CombatScenarioCategory = { 'normal' : null } |
   { 'boss' : null } |
   { 'elite' : null };
-export type CombatScenarioKind = { 'any' : null } |
-  { 'normal' : null } |
+export type CombatScenarioKind = { 'normal' : null } |
   { 'boss' : null } |
   { 'elite' : null };
 export interface CombatScenarioState {
@@ -160,7 +159,6 @@ export interface CombatScenarioState {
   'creatures' : Array<CreatureCombatState>,
   'nextPath' : NextPathKind,
 }
-export type CombatTurn = {};
 export interface CombatVictoryResult { 'characterHealth' : bigint }
 export type CompletedGameOutcomeWithMetaData = {
     'victory' : VictoryGameOutcomeWithMetaData
@@ -281,7 +279,6 @@ export interface HealLogEntry {
   'amount' : bigint,
 }
 export interface InProgressGameStateWithMetaData {
-  'turnKind' : TurnKind,
   'character' : CharacterWithMetaData,
 }
 export type InProgressScenarioStateKind = { 'reward' : RewardScenarioState } |
@@ -429,8 +426,7 @@ export interface ScenarioCombatResult {
   'kind' : CombatResultKind,
 }
 export type ScenarioEffect = { 'attribute' : AttributeScenarioEffect };
-export type ScenarioKind = { 'any' : null } |
-  { 'store' : null } |
+export type ScenarioKind = { 'store' : null } |
   { 'combat' : CombatScenarioKind } |
   { 'encounter' : null };
 export interface ScenarioMetaData {
@@ -465,7 +461,6 @@ export type ScenarioStateKindWithMetaData = {
     'notStarted' : NotStartedScenarioState
   } |
   { 'started' : StartedScenarioStateWithMetaData };
-export interface ScenarioTurn { 'scenarioId' : bigint }
 export interface ScenarioWithMetaData {
   'state' : ScenarioStateKindWithMetaData,
 }
@@ -534,8 +529,6 @@ export type TargetKind = { 'creature' : bigint } |
   { 'character' : null } |
   { 'periodicEffect' : null };
 export type Time = bigint;
-export type TurnKind = { 'scenario' : ScenarioTurn } |
-  { 'combat' : CombatTurn };
 export type TurnPhase = { 'end' : null } |
   { 'start' : null };
 export type UnlockRequirement = { 'achievementId' : string } |

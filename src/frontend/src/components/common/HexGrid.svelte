@@ -1,6 +1,7 @@
 <script lang="ts" context="module">
   export interface HexTileData {
     coordinate: AxialCoordinate;
+    selectable: boolean;
   }
 </script>
 
@@ -17,6 +18,7 @@
   export let gridData: HexTileData[];
   export let hexSize: number = 20;
   export let selectedTile: AxialCoordinate | undefined;
+  export let onSelect: (c: AxialCoordinate) => void;
 
   let svg: SVGSVGElement;
   let isPanning = false;
@@ -91,15 +93,17 @@
     // Snap to nearest hex with animation
     const nearestHex = findNearestHex($panX);
     centerOnHex(nearestHex);
-    selectedTile = nearestHex.coordinate;
+    onSelect(nearestHex.coordinate);
   }
 
   let handleOnClickTile = (coord: AxialCoordinate) => {
-    selectedTile = coord;
-
     const selectedHex = gridData.find((tile) =>
-      coordinateEquals(tile.coordinate, selectedTile!)
+      coordinateEquals(tile.coordinate, coord)
     );
+    if (selectedHex?.selectable !== true) {
+      return;
+    }
+    onSelect(coord);
     if (selectedHex) {
       centerOnHex(selectedHex);
     }
@@ -129,10 +133,10 @@
             selectedTile || { q: 0, r: 0 }
           )}
         >
-          <slot />
+          <slot coordinate={tile.coordinate} />
         </HexTile>
       {/each}
-      <!-- Draw a white border around the selected tile LAST -->
+      <!-- Draw a white border around the selected tile AFTER rendering all tiles -->
       {#if selectedTile !== undefined}
         <polygon
           points={getHexPolygonPoints(hexSize, selectedTile)}

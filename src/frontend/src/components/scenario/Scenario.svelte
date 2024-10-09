@@ -14,6 +14,8 @@
   import PixelArtCanvas from "../common/PixelArtCanvas.svelte";
   import ScenarioStages from "./ScenarioStages.svelte";
   import GenericOption from "../common/GenericOption.svelte";
+  import ScenarioKindIcon from "./ScenarioKindIcon.svelte";
+  import { onMount } from "svelte";
 
   export let scenario: ScenarioWithMetaData;
   export let character: CharacterWithMetaData;
@@ -32,10 +34,8 @@
       console.error("Failed select choice:", result, optionId);
     }
   };
-  let selectedOptionId: number | undefined = undefined;
 
   let startScenario = (i: number) => async () => {
-    selectedOptionId = i;
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.selectScenarioChoice({
       choice: {
@@ -50,40 +50,39 @@
       console.error("Failed start scenario:", result, i);
     }
   };
+
+  onMount(async () => {
+    // TODO this is kinda a hack, but it works for now
+    if (
+      "notStarted" in scenario.state &&
+      scenario.state.notStarted.options.length == 1
+    ) {
+      await startScenario(0)();
+    }
+  });
 </script>
 
 <div class="text-center">
   {#if "notStarted" in scenario.state}
-    <ul class="text-lg p-6">
-      {#each scenario.state.notStarted.options as option, i}
-        <li>
-          <GenericOption onSelect={startScenario(i)}>
-            {#if "any" in option}
-              Unknown
-            {:else if "combat" in option}
-              {#if "any" in option.combat}
-                Unknown
-              {:else if "normal" in option.combat}
-                Normal
-              {:else if "elite" in option.combat}
-                Elite
-              {:else if "boss" in option.combat}
-                Boss
-              {:else}
-                NOT IMPLEMENTED COMBAT KINDS {toJsonString(option.combat)}
-              {/if}
-              Combat
-            {:else if "encounter" in option}
-              Encounter
-            {:else if "store" in option}
-              Store
-            {:else}
-              NOT IMPLEMENTED SCENARIO KIND {toJsonString(option)}
-            {/if}
-          </GenericOption>
-        </li>
-      {/each}
-    </ul>
+    {#if scenario.state.notStarted.options.length == 1}
+      <div class="text-4xl font-semibold mb-4 text-primary-500">
+        Traveling...
+      </div>
+    {:else}
+      <div class="text-4xl font-semibold mb-4 text-primary-500">
+        Fork in the road
+      </div>
+      <ul class="text-lg p-6">
+        {#each scenario.state.notStarted.options as option, i}
+          <li>
+            <GenericOption onSelect={startScenario(i)}>
+              Path {i + 1}:
+              <ScenarioKindIcon value={option} />
+            </GenericOption>
+          </li>
+        {/each}
+      </ul>
+    {/if}
   {:else if "started" in scenario.state}
     {#if "inProgress" in scenario.state.started.kind}
       {#if "choice" in scenario.state.started.kind.inProgress}
@@ -128,9 +127,9 @@
           {character}
         />
       {:else}
-        NOT IMPLEMENTED SCENARIO STATE {toJsonString(scenario.state)}
+        NOT IMPLEMENTED SCENARIO STATE 2 {toJsonString(scenario.state)}
       {/if}
-    {:else if "completed" in scenario.state}
+    {:else if "completed" in scenario.state.started.kind}
       <div class="text-4xl font-semibold text-center mb-4 text-primary-500">
         {scenario.state.started.metaData.name}
       </div>
@@ -145,7 +144,7 @@
       <div class="text-3xl my-2">Scenario Complete</div>
       <Button on:click={nextScenario} class="mb-4">Continue</Button>
     {:else}
-      NOT IMPLEMENTED SCENARIO STATE {toJsonString(scenario.state)}
+      NOT IMPLEMENTED SCENARIO STATE 3 {toJsonString(scenario.state)}
     {/if}
 
     {#if scenario.state.started.previousStages.length > 0}
