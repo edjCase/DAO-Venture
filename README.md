@@ -2,7 +2,7 @@
 
 ## Introduction
 
-DAO-Venture is an innovative, community-driven roguelite adventure game built and maintained by a Decentralized Autonomous Organization (DAO). Set in an ancient fantasy world filled with mysterious ruins, magical creatures, and forgotten lore, DAO-Venture offers a unique gaming experience that combines elements of text-based adventures, simple pixel art visuals, and strategic decision-making.
+DAO-Venture is an community-driven roguelite adventure game built and maintained by a Decentralized Autonomous Organization (DAO). Set in an ancient fantasy world filled with mysterious ruins, magical creatures, and forgotten lore, DAO-Venture offers a unique gaming experience that combines elements of text-based adventures, simple pixel art visuals, and strategic decision-making.
 
 Key Features:
 
