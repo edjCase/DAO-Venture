@@ -2,10 +2,8 @@
   import GamePlayerPage from "../components/GamePlayerPage.svelte";
 </script>
 
-<main>
-  <div class="max-w-xl mx-auto">
-    <GamePlayerPage />
-  </div>
+<main class="max-w-xl mx-auto">
+  <GamePlayerPage />
 </main>
 
 <style lang="postcss">
