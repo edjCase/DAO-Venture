@@ -11,7 +11,7 @@
   } from "flowbite-svelte-icons";
   import { currentGameStore } from "../../stores/CurrentGameStore";
   import { mainAgentFactory } from "../../ic-agent/Main";
-  import { Button } from "flowbite-svelte";
+  import { Button, Modal } from "flowbite-svelte";
   import LoadingButton from "../common/LoadingButton.svelte";
   import GenericBottomNavigation from "../common/GenericBottomNavigation.svelte";
   export let game: GameWithMetaData;
@@ -35,7 +35,13 @@
     }
   }
 
+  let showConfirmModal = false;
+
   let cancelGame = async () => {
+    showConfirmModal = true;
+  };
+
+  let confirmCancelGame = async () => {
     let mainAgent = await mainAgentFactory();
     let result = await mainAgent.abandonGame();
     if ("ok" in result) {
@@ -43,6 +49,7 @@
     } else {
       console.error("Failed to cancel game", result);
     }
+    showConfirmModal = false;
   };
 </script>
 
@@ -93,3 +100,17 @@
     </GenericBottomNavigation>
   </div>
 </div>
+
+<Modal bind:open={showConfirmModal} size="xs">
+  <div class="text-center">
+    <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">
+      Are you sure you want to forfeit this game?
+    </h3>
+    <div class="flex justify-center gap-4">
+      <Button color="red" on:click={confirmCancelGame}>Yes, I'm sure</Button>
+      <Button color="alternative" on:click={() => (showConfirmModal = false)}>
+        No, cancel
+      </Button>
+    </div>
+  </div>
+</Modal>
