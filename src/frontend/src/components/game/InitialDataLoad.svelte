@@ -3,6 +3,8 @@
   import { mainAgentFactory } from "../../ic-agent/Main";
   import { ModifyGameContent } from "../../ic-agent/declarations/main";
   import LoadingButton from "../common/LoadingButton.svelte";
+  import LoginButton from "../common/LoginButton.svelte";
+  import { userStore } from "../../stores/UserStore";
 
   let initialize = async () => {
     let mainAgent = await mainAgentFactory();
@@ -274,8 +276,16 @@
     let scenarios = await mainAgent.getScenarioMetaDataList();
     initialized = scenarios.length > 0;
   });
+
+  $: user = $userStore;
 </script>
 
 {#if initialized === false}
-  <LoadingButton onClick={initialize}>Initialize Data</LoadingButton>
+  <div class="flex items-center justify-center w-full">
+    {#if user}
+      <LoadingButton onClick={initialize}>Initialize Data</LoadingButton>
+    {:else}
+      <LoginButton />
+    {/if}
+  </div>
 {/if}

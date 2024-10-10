@@ -9,6 +9,7 @@
     UserCircleSolid,
     UserGroupSolid,
     BarsOutline,
+    MessagesSolid,
   } from "flowbite-svelte-icons";
   import { navigate, useLocation } from "svelte-routing";
   import { userStore } from "../../stores/UserStore";
@@ -60,7 +61,7 @@
   drawerLocation="right"
   drawerIcon={BarsOutline}
 >
-  <Sidebar asideClass="w-32" {activeUrl}>
+  <Sidebar asideClass="w-32" {activeUrl} slot="side-content">
     <SidebarGroup>
       <SidebarItem
         label="Profile"
@@ -119,6 +120,15 @@
             <GithubSolid class={iconClass} />
           </svelte:fragment>
         </SidebarItem> -->
+        <SidebarItem
+          label="Open Chat &nearr;"
+          target="_blank"
+          href="https://oc.app/community/cghnf-2qaaa-aaaar-baa6a-cai/channel/96392963121583024737943677773512869402/?ref=nlzgz-paaaa-aaaaf-acwna-cai"
+        >
+          <svelte:fragment slot="icon">
+            <MessagesSolid class={iconClass} />
+          </svelte:fragment>
+        </SidebarItem>
         <SidebarItem
           label="Github &nearr;"
           target="_blank"
