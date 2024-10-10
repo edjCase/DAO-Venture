@@ -83,7 +83,7 @@
             </div>
           </div>
         {/if}
-        <div class="flex items-center justify-end gap-2 mt-8 w-full">
+        <div class="flex items-center justify-center gap-2 mt-8 w-full">
           <Button href="/" target="_blank" color="light">
             Website
             <ArrowUpRightFromSquareOutline size="xs" class="ml-1" />
