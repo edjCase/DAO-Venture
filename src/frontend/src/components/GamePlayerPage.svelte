@@ -26,34 +26,34 @@
 </script>
 
 <div class="text-center h-full">
-  {#if user}
-    <div class="flex flex-col items-center justify-center">
-      <div class="flex items-center gap-2">
-        <UserAvatar userId={user.id} />
-        <UserPseudonym userId={user.id} />
-        <LoginButton />
-      </div>
-    </div>
-  {/if}
   {#if currentGame}
     <GamePlayer game={currentGame} />
   {:else}
+    {#if user}
+      <div class="flex flex-col items-center justify-center">
+        <div class="flex items-center gap-2">
+          <UserAvatar userId={user.id} />
+          <UserPseudonym userId={user.id} />
+          <LoginButton />
+        </div>
+      </div>
+    {/if}
     <div class="flex flex-col items-center justify-center h-full">
       <div class="text-6xl font-semibold mb-4 text-primary-500">DAOVenture</div>
       {#if user}
         <LoadingButton
           onClick={createGame}
-          class="rounded-full border-2 border-primary-500 p-6 flex items-center gap-2 mb-4"
+          class="rounded-full border-2 border-primary-500 p-6 flex items-center gap-2"
         >
           <span class="text-2xl">Play</span>
           <PlaySolid class="w-5 h-5 mb-1" />
         </LoadingButton>
-        <Button on:click={() => navigate("/")} color="red">
-          <span>Exit</span>
-        </Button>
       {:else}
         <LoginButton />
       {/if}
+      <Button on:click={() => navigate("/")} color="red" class="mt-4">
+        <span>Exit</span>
+      </Button>
     </div>
   {/if}
 </div>

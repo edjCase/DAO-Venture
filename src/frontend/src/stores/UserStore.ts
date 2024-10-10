@@ -67,12 +67,13 @@ function createUserStore() {
 
     const login = async () => {
         let authClient = await getOrCreateAuthClient();
+        const identityProvider =
+            process.env.DFX_NETWORK === "ic"
+                ? `https://identity.ic0.app`
+                : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`;
         await authClient.login({
             maxTimeToLive: BigInt(30) * BigInt(24) * BigInt(3_600_000_000_000), // 30 days
-            identityProvider:
-                process.env.DFX_NETWORK === "ic"
-                    ? `https://identity.ic0.app`
-                    : `http://rdmx6-jaaaa-aaaaa-aaadq-cai.localhost:4943`,
+            identityProvider: identityProvider,
             onSuccess: async () => {
                 console.log("Logged in");
                 currentUserId = authClient.getIdentity().getPrincipal();
