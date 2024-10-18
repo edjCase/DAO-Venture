@@ -9,7 +9,6 @@ export const creatures: Creature[] = [
         maxHealth: 10n,
         location: { zoneIds: ["enchanted_forest", "ancient_ruins", "scorching_desert"] },
         actionIds: ["entangle", "venom_strike", "wild_growth"],
-        weaponId: "corrupted_branch",
         kind: { elite: null },
         unlockRequirement: { none: null }
     },
@@ -21,7 +20,6 @@ export const creatures: Creature[] = [
         maxHealth: 8n,
         location: { zoneIds: ["enchanted_forest", "ancient_ruins", "scorching_desert"] },
         actionIds: ["stab", "fury_swipes", "venom_strike"],
-        weaponId: "crude_daggers",
         kind: { normal: null },
         unlockRequirement: { none: null }
     },
@@ -33,8 +31,18 @@ export const creatures: Creature[] = [
         maxHealth: 12n,
         location: { zoneIds: ["enchanted_forest", "ancient_ruins", "scorching_desert"] },
         actionIds: ["shadow_bolt", "piercing_shot", "weaken"],
-        weaponId: "shadow_bow",
         kind: { normal: null },
         unlockRequirement: { none: null }
     },
+    {
+        id: "unicorn",
+        name: "Unicorn",
+        description: "A majestic creature with a single horn and a gentle spirit.",
+        health: 20n,
+        maxHealth: 20n,
+        location: { zoneIds: ["enchanted_forest", "ancient_ruins", "scorching_desert"] },
+        actionIds: ["stomp", "heal", "stab"],
+        kind: { elite: null },
+        unlockRequirement: { none: null }
+    }
 ];

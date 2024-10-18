@@ -580,5 +580,21 @@ export const actions: Action[] = [
             }
         ],
         scenarioEffects: [{ attribute: { attribute: { wisdom: null }, value: 2n } }]
+    },
+    {
+        id: "stomp",
+        name: "Stomp",
+        description: "A powerful stomp that damages all enemies",
+        target: {
+            scope: { enemy: null },
+            selection: { all: null }
+        },
+        combatEffects: [
+            {
+                target: { targets: null },
+                kind: { damage: { min: 3n, max: 5n, timing: { immediate: null } } }
+            }
+        ],
+        scenarioEffects: []
     }
 ];

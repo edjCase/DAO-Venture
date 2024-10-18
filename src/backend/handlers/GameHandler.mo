@@ -521,6 +521,27 @@ module {
             #ok;
         };
 
+        {
+
+            let filteredScenarios = helper.gameContent.scenarioMetaData.vals()
+            |> UnlockRequirement.filterOutLockedEntities(_, helper.player.achievementIds)
+            // Only scenarios that are common or have the zoneId
+            |> Iter.filter(
+                _,
+                func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool {
+                    switch (scenario.location) {
+                        case (#common) true;
+                        case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == state.zoneId) != null;
+                    };
+                },
+            )
+            |> Iter.toArray(_);
+            let scenarioMetaData = helper.prng.nextArrayElement(filteredScenarios);
+            let nextPathId = scenarioMetaData.paths[0].id; // Use first path for initial path
+            let nextKind = #nextPath(#single(nextPathId));
+            let nextStateKind = buildNextStateKind(scenarioMetaData.id, nextKind, helper);
+        };
+
         public func selectScenarioChoice(
             prng : Prng,
             playerId : Principal,
@@ -738,7 +759,7 @@ module {
         };
 
         public func validateScenarioMetaData(scenario : ScenarioMetaData.ScenarioMetaData) : Result.Result<(), [Text]> {
-            ScenarioMetaData.validate(scenario, items, zones, achievements, creatures);
+            ScenarioMetaData.validate(scenario, items, weapons, zones, achievements, creatures);
         };
 
         public func addOrUpdateZone(zone : Zone.Zone) : Result.Result<(), { #invalid : [Text] }> {
@@ -780,7 +801,7 @@ module {
         };
 
         public func validateCreature(creature : Creature.Creature) : Result.Result<(), [Text]> {
-            Creature.validate(creature, actions, weapons, achievements);
+            Creature.validate(creature, actions, achievements);
         };
 
         public func addOrUpdateWeapon(weapon : Weapon.Weapon) : Result.Result<(), { #invalid : [Text] }> {

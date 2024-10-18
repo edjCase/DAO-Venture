@@ -3,7 +3,6 @@ import Text "mo:base/Text";
 import Buffer "mo:base/Buffer";
 import HashMap "mo:base/HashMap";
 import Entity "Entity";
-import Weapon "Weapon";
 import UnlockRequirement "../UnlockRequirement";
 import Achievement "Achievement";
 import Action "Action";
@@ -11,7 +10,6 @@ import Action "Action";
 module {
     public type Creature = Entity.Entity and {
         location : CreatureLocationKind;
-        weaponId : Text;
         health : Nat;
         maxHealth : Nat;
         actionIds : [Text];
@@ -33,7 +31,6 @@ module {
     public func validate(
         creature : Creature,
         actions : HashMap.HashMap<Text, Action.Action>,
-        weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
     ) : Result.Result<(), [Text]> {
         let errors = Buffer.Buffer<Text>(0);
@@ -55,9 +52,6 @@ module {
         // check maxHealth is above 0
         if (creature.maxHealth < 1) {
             errors.add("Max health must be above 0");
-        };
-        if (weapons.get(creature.weaponId) == null) {
-            errors.add("Weapon does not exist: " # creature.weaponId);
         };
         switch (creature.location) {
             case (#common) ();

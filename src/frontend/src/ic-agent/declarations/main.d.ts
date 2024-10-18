@@ -204,7 +204,6 @@ export interface Creature {
   'kind' : CreatureKind,
   'name' : string,
   'description' : string,
-  'weaponId' : string,
   'unlockRequirement' : UnlockRequirement,
   'location' : CreatureLocationKind,
   'health' : bigint,
@@ -408,10 +407,12 @@ export interface RewardPath {
   'kind' : RewardPathKind,
   'nextPath' : NextPathKind,
 }
-export type RewardPathKind = { 'random' : null } |
-  { 'specificItemIds' : Array<string> };
+export type RewardPathKind = {
+    'specific' : [RewardKind, RewardKind, RewardKind]
+  } |
+  { 'random' : null };
 export interface RewardScenarioState {
-  'options' : Array<RewardKind>,
+  'options' : [RewardKind, RewardKind, RewardKind],
   'nextPath' : NextPathKind,
 }
 export type ScenarioCategory = { 'store' : null } |

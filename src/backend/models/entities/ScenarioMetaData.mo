@@ -16,6 +16,7 @@ import Character "../Character";
 import IterTools "mo:itertools/Iter";
 import Action "Action";
 import PixelImage "../PixelImage";
+import Weapon "Weapon";
 
 module {
 
@@ -80,7 +81,14 @@ module {
 
     public type RewardPathKind = {
         #random;
-        #specificItemIds : [Text];
+        #specific : (RewardKind, RewardKind, RewardKind);
+    };
+
+    public type RewardKind = {
+        #item : Text;
+        #gold : Nat;
+        #weapon : Text;
+        #health : Nat;
     };
 
     public type NextPathKind = {
@@ -151,6 +159,7 @@ module {
     public func validate(
         metaData : ScenarioMetaData,
         items : HashMap.HashMap<Text, Item.Item>,
+        weapons : HashMap.HashMap<Text, Weapon.Weapon>,
         zones : HashMap.HashMap<Text, Zone.Zone>,
         achievements : HashMap.HashMap<Text, Achievement.Achievement>,
         creatures : HashMap.HashMap<Text, Creature.Creature>,
@@ -243,12 +252,18 @@ module {
                     validateNextPath(reward.nextPath, pathIdMap, errors);
                     switch (reward.kind) {
                         case (#random) {};
-                        case (#specificItemIds(itemIds)) {
-                            for (itemId in itemIds.vals()) {
-                                if (items.get(itemId) == null) {
-                                    errors.add("Invalid item id: " # itemId);
+                        case (#specific(specific)) {
+                            func validateReward(reward : RewardKind) {
+                                switch (reward) {
+                                    case (#item(itemId)) if (items.get(itemId) == null) errors.add("Invalid item id: " # itemId);
+                                    case (#weapon(weaponId)) if (weapons.get(weaponId) == null) errors.add("Invalid weapon id: " # weaponId);
+                                    case (#gold(gold)) if (gold == 0) errors.add("Gold reward must be greater than 0");
+                                    case (#health(health)) if (health == 0) errors.add("Health reward must be greater than 0");
                                 };
                             };
+                            validateReward(specific.0);
+                            validateReward(specific.1);
+                            validateReward(specific.2);
                         };
                     };
                 };

@@ -14,7 +14,6 @@
   <div>Starting - {creature.health}</div>
   <div>Max - {creature.maxHealth}</div>
   <div class="text-primary-500">Weapon</div>
-  <div>{creature.weaponId}</div>
   <div class="text-primary-500">Actions</div>
   <div>{creature.actionIds.join(", ")}</div>
   <div class="text-primary-500">Kind</div>

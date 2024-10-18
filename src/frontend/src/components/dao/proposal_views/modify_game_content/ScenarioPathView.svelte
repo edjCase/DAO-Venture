@@ -71,10 +71,22 @@
       Random
     {:else if "specificItemIds" in path.kind.reward.kind}
       <div>
-        <div class="text-primary-500">Specific Items</div>
+        <div class="text-primary-500">Specific rewards</div>
         <ul class="list-disc list-inside">
-          {#each path.kind.reward.kind.specificItemIds as itemId}
-            <li>{itemId}</li>
+          {#each path.kind.reward.kind.specific as kind}
+            <li>
+              {#if "item" in kind}
+                Item: {kind.item}
+              {:else if "weapon" in kind}
+                Weapon: {kind.weapon}
+              {:else if "gold" in kind}
+                Gold: {kind.gold}
+              {:else if "health" in kind}
+                Health: {kind.health}
+              {:else}
+                NOT IMPLEMENTED REWARD KIND: {toJsonString(kind)}
+              {/if}
+            </li>
           {/each}
         </ul>
       </div>

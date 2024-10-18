@@ -20,11 +20,10 @@ module {
         #choice : ScenarioChoiceResult;
         #combat : ScenarioCombatResult;
         #reward : ScenarioRewardResult;
-        #startScenario : ScenarioStartResult;
     };
 
     public type ScenarioRewardResult = {
-        kind : RewardKind;
+        kind : ScenarioMetaData.RewardKind;
     };
 
     public type ScenarioChoiceResult = {
@@ -103,7 +102,6 @@ module {
     };
 
     public type NotStartedScenarioState = {
-        options : [ScenarioKind];
         zoneId : Text;
     };
     public type StartedScenarioState = {
@@ -115,12 +113,6 @@ module {
     public type StartedScenarioStateKind = {
         #inProgress : InProgressScenarioStateKind;
         #completed;
-    };
-
-    public type ScenarioKind = {
-        #combat : CombatScenarioKind;
-        #encounter;
-        #store;
     };
 
     public type CombatScenarioKind = {
@@ -146,15 +138,8 @@ module {
     };
 
     public type RewardScenarioState = {
-        options : [RewardKind];
+        options : (ScenarioMetaData.RewardKind, ScenarioMetaData.RewardKind, ScenarioMetaData.RewardKind);
         nextPath : ScenarioMetaData.NextPathKind;
-    };
-
-    public type RewardKind = {
-        #item : Text;
-        #gold : Nat;
-        #weapon : Text;
-        #health : Nat;
     };
 
     public type CommonCombatState = {

@@ -38,17 +38,13 @@ module {
         #choice : Text;
         #combat : CombatSimulator.CombatChoice;
         #reward : RewardChoice;
-        #startScenario : StartScenarioChoice;
     };
+
     public type RewardChoice = {
         #item : ItemRewardChoice;
         #gold : Nat;
         #weapon : Text;
         #health : Nat;
-    };
-
-    public type StartScenarioChoice = {
-        optionId : Nat;
     };
 
     public type ItemRewardChoice = {
@@ -198,59 +194,6 @@ module {
         };
     };
 
-    func processNotStartedScenario(
-        state : Scenario.NotStartedScenarioState,
-        helper : Helper,
-        choice : StageChoiceKind,
-    ) : Result.Result<RunStageData, RunStageError> {
-        let #startScenario(startScenario) = choice else return #err(#invalidChoice("Expected start scenario choice"));
-        if (startScenario.optionId >= state.options.size()) {
-            return #err(#invalidChoice("Invalid scenario option"));
-        };
-        let scenarioOption = state.options[startScenario.optionId];
-
-        let filteredScenarios = helper.gameContent.scenarioMetaData.vals()
-        |> UnlockRequirement.filterOutLockedEntities(_, helper.player.achievementIds)
-        // Only scenarios that are common or have the zoneId
-        |> Iter.filter(
-            _,
-            func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool {
-                let matchesCategory = switch (scenarioOption) {
-                    case (#combat(combatFilter)) switch (combatFilter) {
-                        case (combatTypeFilter) switch (scenario.category) {
-                            case (#combat(combatType)) combatType == combatTypeFilter;
-                            case (_) false;
-                        };
-                    };
-                    case (#encounter) scenario.category == #encounter;
-                    case (#store) scenario.category == #store;
-                };
-                if (not matchesCategory) {
-                    return false;
-                };
-                switch (scenario.location) {
-                    case (#common) true;
-                    case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == state.zoneId) != null;
-                };
-            },
-        )
-        |> Iter.toArray(_);
-        let scenarioMetaData = helper.prng.nextArrayElement(filteredScenarios);
-        let nextPathId = scenarioMetaData.paths[0].id; // Use first path for initial path
-        let nextKind = #nextPath(#single(nextPathId));
-        let nextStateKind = buildNextStateKind(scenarioMetaData.id, nextKind, helper);
-        #ok({
-            nextState = {
-                metaDataId = scenarioMetaData.id;
-                previousStages = [{
-                    effects = helper.getEffects();
-                    kind = #startScenario({ metaDataId = scenarioMetaData.id });
-                }];
-                kind = nextStateKind;
-            };
-        });
-    };
-
     func processStartedScenario(
         startedScenarioState : Scenario.StartedScenarioState,
         helper : Helper,
@@ -368,11 +311,11 @@ module {
         choice : StageChoiceKind,
     ) : Result.Result<(NextKind, Scenario.ScenarioStageResultKind), RunStageError> {
         let #reward(reward) = choice else return #err(#invalidChoice("Expected reward choice"));
-        func validateRewardExists(reward : Scenario.RewardKind) : Bool {
-            IterTools.any(
-                state.options.vals(),
-                func(r : Scenario.RewardKind) : Bool = r == reward,
-            );
+        func validateRewardExists(reward : ScenarioMetaData.RewardKind) : Bool {
+            if (reward == state.options.0) return true;
+            if (reward == state.options.1) return true;
+            if (reward == state.options.2) return true;
+            return false;
         };
         let rewardKind = switch (reward) {
             case (#item(item)) #item(item.id);
@@ -439,16 +382,9 @@ module {
                 } else {
                     #health(helper.prng.nextNat(1, 21)); // TODO amount
                 };
-                [#item(itemId), #gold(gold), reward];
+                (#item(itemId), #gold(gold), reward);
             };
-            case (#specificItemIds(itemIds)) {
-                itemIds.vals()
-                |> Iter.map(
-                    _,
-                    func(id : Text) : Scenario.RewardKind = #item(id),
-                )
-                |> Iter.toArray(_);
-            };
+            case (#specific(specific)) specific;
         };
         {
             options = options;

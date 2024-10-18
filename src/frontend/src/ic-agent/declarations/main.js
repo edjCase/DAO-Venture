@@ -130,7 +130,6 @@ export const idlFactory = ({ IDL }) => {
     'kind' : CreatureKind,
     'name' : IDL.Text,
     'description' : IDL.Text,
-    'weaponId' : IDL.Text,
     'unlockRequirement' : UnlockRequirement,
     'location' : CreatureLocationKind,
     'health' : IDL.Nat,
@@ -198,9 +197,15 @@ export const idlFactory = ({ IDL }) => {
     'combat' : CombatScenarioCategory,
     'encounter' : IDL.Null,
   });
+  const RewardKind = IDL.Variant({
+    'gold' : IDL.Nat,
+    'item' : IDL.Text,
+    'weapon' : IDL.Text,
+    'health' : IDL.Nat,
+  });
   const RewardPathKind = IDL.Variant({
+    'specific' : IDL.Tuple(RewardKind, RewardKind, RewardKind),
     'random' : IDL.Null,
-    'specificItemIds' : IDL.Vec(IDL.Text),
   });
   const WeightKind = IDL.Variant({
     'raw' : IDL.Null,
@@ -401,14 +406,8 @@ export const idlFactory = ({ IDL }) => {
     'options' : IDL.Vec(ScenarioKind),
     'zoneId' : IDL.Text,
   });
-  const RewardKind = IDL.Variant({
-    'gold' : IDL.Nat,
-    'item' : IDL.Text,
-    'weapon' : IDL.Text,
-    'health' : IDL.Nat,
-  });
   const RewardScenarioState = IDL.Record({
-    'options' : IDL.Vec(RewardKind),
+    'options' : IDL.Tuple(RewardKind, RewardKind, RewardKind),
     'nextPath' : NextPathKind,
   });
   const ChoiceScenarioState = IDL.Record({ 'choices' : IDL.Vec(Choice) });

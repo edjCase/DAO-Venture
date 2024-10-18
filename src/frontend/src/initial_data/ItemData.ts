@@ -4,6 +4,15 @@ import { decodeBase64ToImage } from "../utils/PixelUtil";
 
 export const items: Item[] = [
     {
+        id: "unicorn_horn",
+        name: "Unicorn Horn",
+        description: "A rare and valuable horn from a unicorn, said to have healing properties.",
+        tags: ["cleansing"],
+        image: decodeBase64ToImage(""),
+        unlockRequirement: { none: null },
+        actionIds: ["heal"]
+    },
+    {
         id: "power_gauntlets",
         name: "Power Gauntlets",
         description: "A pair of gauntlets that grant the wearer immense strength.",

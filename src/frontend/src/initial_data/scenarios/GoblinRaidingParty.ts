@@ -1,11 +1,10 @@
 import { ScenarioMetaData } from "../../ic-agent/declarations/main";
 import { decodeBase64ToImage } from "../../utils/PixelUtil";
 
-export const scenario: ScenarioMetaData =
-{
+export const scenario: ScenarioMetaData = {
     id: "goblin_raiding_party",
     name: "Goblin Raiding Party",
-    description: "A band of goblins emerges from the underbrush, brandishing crude weapons and eyeing your possessions. Their leader sports a 'World's Best Raider' hat that's clearly homemade.",
+    description: "You stumble upon a group of goblins attacking a majestic unicorn. The air crackles with magic and desperation.",
     location: {
         zoneIds: ["enchanted_forest", "ancient_ruins", "scorching_desert"],
     },
@@ -14,104 +13,213 @@ export const scenario: ScenarioMetaData =
     paths: [
         {
             id: "start",
-            description: "The goblins are closing in, their grins revealing a concerning lack of dental hygiene. What do you do?",
+            description: "The goblins are closing in on the unicorn, their crude weapons raised. What do you do?",
             kind: {
                 choice: {
                     choices: [
                         {
-                            id: "fight",
-                            description: "Engage the goblin raiding party in combat. Time to show them why 'adventurer' isn't just a fancy word for 'walking loot piñata'.",
+                            id: "attack_goblins",
+                            description: "Charge in to defend the unicorn. Time to be a hero!",
                             requirement: [],
                             effects: [],
-                            nextPath: { single: "combat" }
+                            nextPath: { single: "goblin_combat" }
                         },
                         {
-                            id: "bribe",
-                            description: "Offer some of your resources to appease the goblins. Maybe they accept credit cards?",
-                            requirement: [],
+                            id: "intimidate_goblins",
+                            description: "Attempt to scare off the goblins with a show of strength.",
+                            requirement: [{ attribute: { attribute: { strength: null }, value: 4n } }],
                             effects: [],
                             nextPath: {
                                 multi: [
                                     {
-                                        weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
-                                        description: "Your silver tongue (and shiny trinkets) convince the goblins to leave you alone. They even throw in a free 'I got robbed by goblins' t-shirt.",
-                                        effects: [{ removeItemWithTags: [] }],
-                                        pathId: []
+                                        weight: { value: 0.3, kind: { attributeScaled: { strength: null } } },
+                                        description: "Your impressive display sends the goblins fleeing.",
+                                        effects: [],
+                                        pathId: ["unicorn_freed"]
                                     },
                                     {
-                                        weight: { value: 0.4, kind: { raw: null } },
-                                        description: "The goblins take your offering, then decide they want seconds. It's all-you-can-loot night, apparently.",
-                                        effects: [{ removeItemWithTags: [] }],
-                                        pathId: ["combat"]
+                                        weight: { value: 0.7, kind: { raw: null } },
+                                        description: "The goblins are unimpressed by your display. They turn their attention to you, weapons ready.",
+                                        effects: [],
+                                        pathId: ["goblin_combat"]
                                     }
                                 ]
                             }
                         },
                         {
-                            id: "intimidate",
-                            description: "Use your strength to scare off the goblins. Flex those muscles you've been working on at the Adventurers' Gym.",
+                            id: "join_goblins",
+                            description: "Decide to join the goblins in their attack. That unicorn horn could be valuable...",
                             requirement: [],
                             effects: [],
-                            nextPath: {
-                                multi: [
-                                    {
-                                        weight: { value: 0.7, kind: { attributeScaled: { strength: null } } },
-                                        description: "Your impressive display of strength sends the goblins running. One drops his 'World's Best Raider' hat in his haste.",
-                                        effects: [{ addItemWithTags: ["headwear"] }],
-                                        pathId: []
-                                    },
-                                    {
-                                        weight: { value: 0.3, kind: { raw: null } },
-                                        description: "The goblins seem more amused than intimidated. One of them even offers you workout tips.",
-                                        effects: [],
-                                        pathId: ["combat"]
-                                    }
-                                ]
-                            }
+                            nextPath: { single: "unicorn_combat" }
                         },
                         {
-                            id: "distract",
-                            description: "Create a clever diversion to escape the goblins. Time to put those improv classes to use!",
+                            id: "ignore",
+                            description: "Choose not to get involved.",
                             requirement: [],
                             effects: [],
-                            nextPath: {
-                                multi: [
-                                    {
-                                        weight: { value: 0.6, kind: { attributeScaled: { wisdom: null } } },
-                                        description: "Your brilliant diversion works! The goblins are now arguing over the finer points of your impromptu puppet show.",
-                                        effects: [],
-                                        pathId: []
-                                    },
-                                    {
-                                        weight: { value: 0.4, kind: { raw: null } },
-                                        description: "Your diversion fails spectacularly. The goblins give you a 2-star review and then ready their weapons.",
-                                        effects: [],
-                                        pathId: ["combat"]
-                                    }
-                                ]
-                            }
+                            nextPath: { none: null }
                         }
                     ]
                 }
             }
         },
         {
-            id: "combat",
-            description: "The goblins attack! Their battle cry sounds suspiciously like 'Loot! Loot! Loot!'",
+            id: "goblin_combat",
+            description: "You engage the goblins in fierce combat to protect the unicorn!",
             kind: {
                 combat: {
                     creatures: [{ id: "goblin" }, { id: "goblin" }, { id: "goblin" }],
-                    nextPath: { single: "post_combat" }
+                    nextPath: { single: "unicorn_freed" }
                 }
             }
         },
         {
-            id: "post_combat",
-            description: "With the goblin threat neutralized, you take a moment to catch your breath and check for loot.",
+            id: "unicorn_combat",
+            description: "You and the goblins surround the majestic unicorn, weapons drawn.",
             kind: {
-                reward: {
-                    kind: { random: null },
-                    nextPath: { none: null }
+                combat: {
+                    creatures: [{ id: "unicorn" }],
+                    nextPath: { single: "post_unicorn_combat" }
+                }
+            }
+        },
+        {
+            id: "post_unicorn_combat",
+            description: "You've defeated the unicorn, but the goblins are still here, eyeing the fallen creature's horn.",
+            kind: {
+                choice: {
+                    choices: [
+                        {
+                            id: "kill_goblins",
+                            description: "Turn on the goblins and claim the unicorn horn for yourself.",
+                            requirement: [],
+                            effects: [],
+                            nextPath: { single: "goblin_betrayal_combat" }
+                        },
+                        {
+                            id: "buy_horn",
+                            description: "Attempt to purchase the unicorn horn from the goblins.",
+                            requirement: [{ gold: 50n }],
+                            effects: [],
+                            nextPath: {
+                                multi: [
+                                    {
+                                        weight: { value: 0.6, kind: { attributeScaled: { charisma: null } } },
+                                        description: "Your negotiation skills impress the goblins. They agree to sell you the horn.",
+                                        effects: [
+                                            { removeGold: { raw: 50n } },
+                                            { addItemWithTags: ["unicorn_horn"] }
+                                        ],
+                                        pathId: []
+                                    },
+                                    {
+                                        weight: { value: 0.4, kind: { raw: null } },
+                                        description: "The goblins laugh at your offer and refuse to sell. They take the horn and leave.",
+                                        effects: [],
+                                        pathId: []
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            id: "leave_empty_handed",
+                            description: "Walk away from the whole situation, leaving the horn to the goblins.",
+                            requirement: [],
+                            effects: [],
+                            nextPath: { none: null }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            id: "goblin_betrayal_combat",
+            description: "The goblins bare their teeth, ready to fight for the unicorn horn!",
+            kind: {
+                combat: {
+                    creatures: [{ id: "goblin" }, { id: "goblin" }, { id: "goblin" }],
+                    nextPath: { single: "dead_unicorn" }
+                }
+            }
+        },
+        {
+            id: "unicorn_freed",
+            description: "With the goblins gone, the grateful unicorn approaches you.",
+            kind: {
+                choice: {
+                    choices: [
+                        {
+                            id: "accept_gift",
+                            description: "Accept a gift from the unicorn.",
+                            requirement: [],
+                            effects: [],
+                            nextPath: {
+                                multi: [
+                                    {
+                                        weight: { value: 0.5, kind: { raw: null } },
+                                        description: "The unicorn grants you a blessing, filling you with magical energy.",
+                                        effects: [{ heal: { raw: 20n } }],
+                                        pathId: []
+                                    },
+                                    {
+                                        weight: { value: 0.5, kind: { raw: null } },
+                                        description: "The unicorn presents you with an item to cleanse evil along your journey.",
+                                        effects: [{ addItemWithTags: ["cleansing"] }],
+                                        pathId: []
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            id: "attack_unicorn",
+                            description: "Betray the unicorn and attempt to take its horn.",
+                            requirement: [],
+                            effects: [],
+                            nextPath: { single: "betray_unicorn" }
+                        }
+                    ]
+                }
+            }
+        },
+        {
+            id: "betray_unicorn",
+            description: "You've betrayed the unicorn and taken its horn.",
+            kind: {
+                combat: {
+                    creatures: [{ id: "unicorn" }],
+                    nextPath: { single: "dead_unicorn" }
+                }
+            }
+        },
+        {
+            id: "dead_unicorn",
+            description: "The unicorn has fallen, and you've taken its horn.",
+            kind: {
+                choice: {
+                    choices: [
+                        {
+                            id: "take_horn",
+                            description: "Take the unicorn horn.",
+                            requirement: [],
+                            effects: [{ addItem: "unicorn_horn" }],
+                            nextPath: { none: null }
+                        },
+                        {
+                            id: "drink_blood",
+                            description: "Drink the unicorn's blood to rejuvenate yourself.",
+                            requirement: [],
+                            effects: [{ heal: { raw: 20n } }],
+                            nextPath: { none: null }
+                        },
+                        {
+                            id: "leave",
+                            description: "Leave the unicorn to rot.",
+                            requirement: [],
+                            effects: [],
+                            nextPath: { none: null }
+                        }
+                    ]
                 }
             }
         }

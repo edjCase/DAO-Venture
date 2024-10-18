@@ -23,7 +23,6 @@
   let description: string | undefined = value?.description;
   let maxHealth: bigint = value?.maxHealth ?? 100n;
   let health: bigint = value?.health ?? 100n;
-  let weaponId: string | undefined = value?.weaponId;
   let selectedActions: string[] = value?.actionIds ?? [];
   let location: CreatureLocationKind = value?.location ?? { common: null };
   let unlockRequirement: UnlockRequirement = value?.unlockRequirement ?? {
@@ -47,9 +46,6 @@
     if (health === undefined) {
       return "Health must be filled";
     }
-    if (weaponId === undefined) {
-      return "Weapon Id must be filled";
-    }
     return {
       modifyGameContent: {
         creature: {
@@ -58,7 +54,6 @@
           description,
           maxHealth,
           health,
-          weaponId,
           kind,
           location: location,
           actionIds: selectedActions,
@@ -116,16 +111,6 @@
         </Label>
         <BigIntInput bind:value={maxHealth} />
       </div>
-    </div>
-
-    <div>
-      <Label for="weaponId">Weapon Id</Label>
-      <Input
-        id="weaponId"
-        type="text"
-        bind:value={weaponId}
-        placeholder="dragon_claw"
-      />
     </div>
 
     <div class="flex gap-4">
