@@ -1,31 +1,67 @@
-# DAO-Venture
+# DAOventure
 
 ## Introduction
 
-DAO-Venture is an community-driven roguelite adventure game built and maintained by a Decentralized Autonomous Organization (DAO). Set in an ancient fantasy world filled with mysterious ruins, magical creatures, and forgotten lore, DAO-Venture offers a unique gaming experience that combines elements of text-based adventures, simple pixel art visuals, and strategic decision-making.
+DAOventure is an experimental browser-based roguelite game built on the Internet Computer platform. It uniquely combines engaging gameplay with DAO (Decentralized Autonomous Organization) governance, aiming to create a community-driven game development ecosystem.
 
-Key Features:
+## Current Status: Open Alpha
 
-- Text-based adventure with simple pixel art visuals for each scenario
-- Linear progression through randomized scenarios specific to each section
-- FTL-inspired decision-making and progression system
-- Simple combat with a randomized subset of abilities to choose each turn
-- Multiple themed sections (e.g., Enchanted Forest, Ancient Ruins, Mystic Caves)
-- Character development through unlockable races, classes, traits, and items
-- DAO-managed game development and token distribution
-- NFT integration for achievements and milestones
+DAOventure is currently in open alpha, available at:
+https://bpo6s-4qaaa-aaaap-acava-cai.icp0.io/
 
-Players navigate through diverse areas, overcoming challenges and making critical decisions to reach the Forgotten Citadel. In this final area, they face ultimate trials and make choices that reshape the game world.
+Join our open chat community:
+https://oc.app/community/cghnf-2qaaa-aaaar-baa6a-cai/?ref=nlzgz-paaaa-aaaaf-acwna-cai
 
-## Development Status
+Twitter:
+[@daoventure_game](https://twitter.com/daoventure_game)
 
-DAO-Venture is currently in its early development stages. We encourage the community to follow our progress, provide feedback, and contribute to this unique project.
+## Core Concept
 
-## Follow Us
+DAOventure serves as a framework to experiment with bootstrapping a DAO and explore ideas for creating a functional, self-sustaining game ecosystem. The current phase focuses on laying the foundation for the game framework, while the next phase will emphasize DAO-driven game development.
 
-- **Twitter**: [@daoventure_game](https://twitter.com/daoventure_game)
+## Gameplay Overview
 
-We welcome your ideas, feedback, and contributions to make DAO-Venture an inclusive, transparent, and community-driven endeavor.
+- Character Creation: Select a randomly generated race and class combination
+- World Exploration: Progress through multiple themed zones (3 per run)
+- Scenario-based Gameplay: Face various challenges with branching paths
+- Turn-based Combat: Engage in strategic battles
+- Persistent Achievements: Unlock achievements that carry over between runs
+
+## DAO Integration (In Development)
+
+- Content Submission: Players can submit or edit game content through the DAO
+- Governance: Participate in voting for new content and game changes
+- Token Distribution: Earn tokens through gameplay, contributions, and governance
+- Note: The current DAO implementation is centralized and serves as a test for future decentralized governance
+
+## Technical Implementation
+
+- Backend: Motoko programming language
+- Frontend: Svelte with TypeScript
+- Platform: Internet Computer (ICP), fully on-chain in canisters
+- Browser-based game client
+- Smart contracts for DAO governance and token distribution (planned)
+
+## Development Roadmap
+
+1. Current Phase: Establish basic game mechanics and DAO concept
+2. Next Phase: Refine DAO mechanics and transition to community-driven development
+3. Future Plans:
+   - Implement NFT minting for successful character runs
+   - Explore incentive structures for participation
+   - Develop sustainable funding mechanisms
+
+## Challenges and Limitations
+
+- DAO implementation requires significant community engagement
+- Solo development of the game framework presents inherent limitations
+- Basic content available for gameplay, with the bulk intended for DAO creation
+
+## Get Involved
+
+We encourage the community to participate in this unique project that combines roguelite gameplay with decentralized governance. Test the game, provide feedback, and help shape the future of DAOventure!
+
+Join us in this experimental journey of creating a community-driven game development ecosystem!
 
 ---
 
