@@ -1,34 +1,43 @@
 <script lang="ts">
   import {
-    GameWithMetaData,
+    CompletedRouteLocationKind,
     InProgressGameStateWithMetaData,
+    InProgressRouteLocationKind,
   } from "../../ic-agent/declarations/main";
-  import Scenario from "../scenario/Scenario.svelte";
-  import ScenarioHexGrid from "./ScenarioHexGrid.svelte";
+  import RouteHexGrid from "./RouteHexGrid.svelte";
+  import RouteLocation from "./RouteLocation.svelte";
 
-  export let game: GameWithMetaData;
   export let state: InProgressGameStateWithMetaData;
 
-  $: currentScenarioId = game.scenarios.findIndex(
-    (s) => !("started" in s.state && "completed" in s.state.started.kind)
-  ); // First not completed
-
-  let selectedScenarioId: number;
-  $: if (selectedScenarioId === undefined) {
-    selectedScenarioId = currentScenarioId;
+  let selectedLocationIndex: number;
+  $: if (selectedLocationIndex === undefined) {
+    selectedLocationIndex = state.completedLocations.length;
   }
 
-  $: scenario = game.scenarios[selectedScenarioId];
-  let nextScenario = () => {
-    selectedScenarioId += 1;
+  let location:
+    | { inProgress: InProgressRouteLocationKind }
+    | { completed: CompletedRouteLocationKind }
+    | undefined;
+  $: {
+    if (selectedLocationIndex < state.completedLocations.length) {
+      location = { completed: state.completedLocations[selectedLocationIndex] };
+    } else if (selectedLocationIndex === state.completedLocations.length) {
+      location = { inProgress: state.currentLocation };
+    } else {
+      location = undefined;
+    }
+  }
+  let nextLocation = () => {
+    selectedLocationIndex += 1;
   };
 </script>
 
-<ScenarioHexGrid
-  bind:selectedScenarioId
-  scenarios={game.scenarios}
-  {currentScenarioId}
+<RouteHexGrid
+  bind:selectedLocationIndex
+  route={state.route}
+  completedLocations={state.completedLocations}
+  currentLocation={state.currentLocation}
 />
-{#if scenario !== undefined}
-  <Scenario {scenario} character={state.character} {nextScenario} />
+{#if location !== undefined}
+  <RouteLocation {location} character={state.character} {nextLocation} />
 {/if}

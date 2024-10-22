@@ -162,10 +162,18 @@ export type CompletedGameOutcomeWithMetaData = {
   } |
   { 'death' : DeathGameOutcomeWithMetaData } |
   { 'forfeit' : ForfeitGameOutcomeWithMetaData };
+export interface CompletedGameRouteLocation {
+  'kind' : CompletedGameRouteLocationKind,
+  'zoneId' : string,
+}
+export type CompletedGameRouteLocationKind = {
+    'notStarted' : RouteLocationKind
+  } |
+  { 'scenario' : CompletedScenario };
 export interface CompletedGameStateWithMetaData {
   'endTime' : Time,
   'outcome' : CompletedGameOutcomeWithMetaData,
-  'route' : Array<CompletedRouteLocation>,
+  'route' : Array<CompletedGameRouteLocation>,
 }
 export interface CompletedGameWithMetaData {
   'id' : bigint,
@@ -173,14 +181,9 @@ export interface CompletedGameWithMetaData {
   'endTime' : Time,
   'playerId' : Principal,
   'outcome' : CompletedGameOutcomeWithMetaData,
-  'route' : Array<CompletedRouteLocation>,
+  'route' : Array<CompletedGameRouteLocation>,
 }
-export interface CompletedRouteLocation {
-  'kind' : CompletedRouteLocationKind,
-  'zoneId' : string,
-}
-export type CompletedRouteLocationKind = { 'notStarted' : RouteLocationKind } |
-  { 'scenario' : CompletedScenario };
+export type CompletedRouteLocationKind = { 'scenario' : CompletedScenario };
 export interface CompletedScenario {
   'stages' : Array<ScenarioStageResult>,
   'metaDataId' : string,

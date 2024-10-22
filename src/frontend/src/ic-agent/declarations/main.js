@@ -508,12 +508,12 @@ export const idlFactory = ({ IDL }) => {
     'stages' : IDL.Vec(ScenarioStageResult),
     'metaDataId' : IDL.Text,
   });
-  const CompletedRouteLocationKind = IDL.Variant({
+  const CompletedGameRouteLocationKind = IDL.Variant({
     'notStarted' : RouteLocationKind,
     'scenario' : CompletedScenario,
   });
-  const CompletedRouteLocation = IDL.Record({
-    'kind' : CompletedRouteLocationKind,
+  const CompletedGameRouteLocation = IDL.Record({
+    'kind' : CompletedGameRouteLocationKind,
     'zoneId' : IDL.Text,
   });
   const CompletedGameWithMetaData = IDL.Record({
@@ -522,7 +522,7 @@ export const idlFactory = ({ IDL }) => {
     'endTime' : Time,
     'playerId' : IDL.Principal,
     'outcome' : CompletedGameOutcomeWithMetaData,
-    'route' : IDL.Vec(CompletedRouteLocation),
+    'route' : IDL.Vec(CompletedGameRouteLocation),
   });
   const PagedResult_2 = IDL.Record({
     'data' : IDL.Vec(CompletedGameWithMetaData),
@@ -536,7 +536,10 @@ export const idlFactory = ({ IDL }) => {
   const CompletedGameStateWithMetaData = IDL.Record({
     'endTime' : Time,
     'outcome' : CompletedGameOutcomeWithMetaData,
-    'route' : IDL.Vec(CompletedRouteLocation),
+    'route' : IDL.Vec(CompletedGameRouteLocation),
+  });
+  const CompletedRouteLocationKind = IDL.Variant({
+    'scenario' : CompletedScenario,
   });
   const RewardScenarioState = IDL.Record({
     'options' : IDL.Tuple(RewardKind, RewardKind, RewardKind),

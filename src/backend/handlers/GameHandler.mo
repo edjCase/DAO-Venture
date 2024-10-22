@@ -92,19 +92,22 @@ module {
     };
 
     public type CompletedRouteLocationKind = {
-        #notStarted : RouteLocationKind;
         #scenario : Scenario.CompletedScenario;
     };
 
     public type CompletedData = {
         endTime : Time.Time;
         outcome : CompletedGameOutcome;
-        route : [CompletedRouteLocation];
+        route : [CompletedGameRouteLocation];
     };
 
-    public type CompletedRouteLocation = {
+    public type CompletedGameRouteLocation = {
         zoneId : Text;
-        kind : CompletedRouteLocationKind;
+        kind : CompletedGameRouteLocationKind;
+    };
+
+    public type CompletedGameRouteLocationKind = CompletedRouteLocationKind or {
+        #notStarted : RouteLocationKind;
     };
 
     public type CompletedGameOutcome = {
@@ -153,7 +156,7 @@ module {
     public type CompletedGameStateWithMetaData = {
         endTime : Time.Time;
         outcome : CompletedGameOutcomeWithMetaData;
-        route : [CompletedRouteLocation];
+        route : [CompletedGameRouteLocation];
     };
 
     public type CompletedGameOutcomeWithMetaData = {
@@ -446,11 +449,11 @@ module {
         private func getCompletedRoute(
             route : [RouteLocation],
             completedLocations : [CompletedRouteLocationKind],
-        ) : [CompletedRouteLocation] {
+        ) : [CompletedGameRouteLocation] {
             IterTools.zipLongest(route.vals(), completedLocations.vals())
-            |> Iter.map<IterTools.EitherOr<RouteLocation, CompletedRouteLocationKind>, CompletedRouteLocation>(
+            |> Iter.map<IterTools.EitherOr<RouteLocation, CompletedRouteLocationKind>, CompletedGameRouteLocation>(
                 _,
-                func(eo : IterTools.EitherOr<RouteLocation, CompletedRouteLocationKind>) : CompletedRouteLocation {
+                func(eo : IterTools.EitherOr<RouteLocation, CompletedRouteLocationKind>) : CompletedGameRouteLocation {
                     switch (eo) {
                         case (#both(routeLocation, completedLocation)) {
                             {
