@@ -379,92 +379,7 @@ export const idlFactory = ({ IDL }) => {
     'death' : DeathGameOutcomeWithMetaData,
     'forfeit' : ForfeitGameOutcomeWithMetaData,
   });
-  const CompletedGameWithMetaData = IDL.Record({
-    'id' : IDL.Nat,
-    'startTime' : Time,
-    'endTime' : Time,
-    'playerId' : IDL.Principal,
-    'outcome' : CompletedGameOutcomeWithMetaData,
-  });
-  const PagedResult_2 = IDL.Record({
-    'data' : IDL.Vec(CompletedGameWithMetaData),
-    'count' : IDL.Nat,
-    'totalCount' : IDL.Nat,
-    'offset' : IDL.Nat,
-  });
-  const CombatScenarioKind = IDL.Variant({
-    'normal' : IDL.Null,
-    'boss' : IDL.Null,
-    'elite' : IDL.Null,
-  });
-  const ScenarioKind = IDL.Variant({
-    'store' : IDL.Null,
-    'combat' : CombatScenarioKind,
-    'encounter' : IDL.Null,
-  });
-  const NotStartedScenarioState = IDL.Record({
-    'options' : IDL.Vec(ScenarioKind),
-    'zoneId' : IDL.Text,
-  });
-  const RewardScenarioState = IDL.Record({
-    'options' : IDL.Tuple(RewardKind, RewardKind, RewardKind),
-    'nextPath' : NextPathKind,
-  });
-  const ChoiceScenarioState = IDL.Record({ 'choices' : IDL.Vec(Choice) });
-  const PeriodicEffectKind = IDL.Variant({
-    'damage' : IDL.Null,
-    'heal' : IDL.Null,
-    'block' : IDL.Null,
-  });
-  const PeriodicEffectResult = IDL.Record({
-    'kind' : PeriodicEffectKind,
-    'phase' : TurnPhase,
-    'amount' : IDL.Nat,
-  });
-  const StatusEffectResultKind = IDL.Variant({
-    'retaliating' : Retaliating,
-    'brittle' : IDL.Null,
-    'weak' : IDL.Null,
-    'vulnerable' : IDL.Null,
-    'necrotic' : IDL.Null,
-    'stunned' : IDL.Null,
-    'periodic' : PeriodicEffectResult,
-  });
-  const StatusEffectResult = IDL.Record({
-    'kind' : StatusEffectResultKind,
-    'remainingTurns' : IDL.Nat,
-  });
-  const CharacterCombatState = IDL.Record({
-    'weaponActionId' : IDL.Opt(IDL.Text),
-    'statusEffects' : IDL.Vec(StatusEffectResult),
-    'maxHealth' : IDL.Nat,
-    'skillActionId' : IDL.Opt(IDL.Text),
-    'block' : IDL.Nat,
-    'itemActionId' : IDL.Opt(IDL.Text),
-    'health' : IDL.Nat,
-  });
-  const CreatureCombatState = IDL.Record({
-    'actionIds' : IDL.Vec(IDL.Text),
-    'statusEffects' : IDL.Vec(StatusEffectResult),
-    'maxHealth' : IDL.Nat,
-    'creatureId' : IDL.Text,
-    'block' : IDL.Nat,
-    'health' : IDL.Nat,
-  });
-  const CombatScenarioState = IDL.Record({
-    'character' : CharacterCombatState,
-    'creatures' : IDL.Vec(CreatureCombatState),
-    'nextPath' : NextPathKind,
-  });
-  const InProgressScenarioStateKind = IDL.Variant({
-    'reward' : RewardScenarioState,
-    'choice' : ChoiceScenarioState,
-    'combat' : CombatScenarioState,
-  });
-  const StartedScenarioStateKind = IDL.Variant({
-    'completed' : IDL.Null,
-    'inProgress' : InProgressScenarioStateKind,
-  });
+  const RouteLocationKind = IDL.Variant({ 'scenario' : IDL.Null });
   const SwapWeaponOutcomeEffect = IDL.Record({
     'removedWeaponId' : IDL.Text,
     'weaponId' : IDL.Text,
@@ -491,7 +406,6 @@ export const idlFactory = ({ IDL }) => {
     'kind' : ChoiceResultKind,
     'choice' : Choice,
   });
-  const ScenarioStartResult = IDL.Record({});
   const TargetKind = IDL.Variant({
     'creature' : IDL.Nat,
     'character' : IDL.Null,
@@ -512,6 +426,29 @@ export const idlFactory = ({ IDL }) => {
     'target' : TargetKind,
     'amount' : IDL.Nat,
   });
+  const PeriodicEffectKind = IDL.Variant({
+    'damage' : IDL.Null,
+    'heal' : IDL.Null,
+    'block' : IDL.Null,
+  });
+  const PeriodicEffectResult = IDL.Record({
+    'kind' : PeriodicEffectKind,
+    'phase' : TurnPhase,
+    'amount' : IDL.Nat,
+  });
+  const StatusEffectResultKind = IDL.Variant({
+    'retaliating' : Retaliating,
+    'brittle' : IDL.Null,
+    'weak' : IDL.Null,
+    'vulnerable' : IDL.Null,
+    'necrotic' : IDL.Null,
+    'stunned' : IDL.Null,
+    'periodic' : PeriodicEffectResult,
+  });
+  const StatusEffectResult = IDL.Record({
+    'kind' : StatusEffectResultKind,
+    'remainingTurns' : IDL.Nat,
+  });
   const StatusEffectLogEntry = IDL.Record({
     'source' : TargetKind,
     'target' : TargetKind,
@@ -523,10 +460,32 @@ export const idlFactory = ({ IDL }) => {
     'block' : BlockLogEntry,
     'statusEffect' : StatusEffectLogEntry,
   });
+  const CreatureCombatState = IDL.Record({
+    'actionIds' : IDL.Vec(IDL.Text),
+    'statusEffects' : IDL.Vec(StatusEffectResult),
+    'maxHealth' : IDL.Nat,
+    'creatureId' : IDL.Text,
+    'block' : IDL.Nat,
+    'health' : IDL.Nat,
+  });
   const CombatDefeatResult = IDL.Record({
     'creatures' : IDL.Vec(CreatureCombatState),
   });
   const CombatVictoryResult = IDL.Record({ 'characterHealth' : IDL.Nat });
+  const CharacterCombatState = IDL.Record({
+    'weaponActionId' : IDL.Opt(IDL.Text),
+    'statusEffects' : IDL.Vec(StatusEffectResult),
+    'maxHealth' : IDL.Nat,
+    'skillActionId' : IDL.Opt(IDL.Text),
+    'block' : IDL.Nat,
+    'itemActionId' : IDL.Opt(IDL.Text),
+    'health' : IDL.Nat,
+  });
+  const CombatScenarioState = IDL.Record({
+    'character' : CharacterCombatState,
+    'creatures' : IDL.Vec(CreatureCombatState),
+    'nextPath' : NextPathKind,
+  });
   const CombatResultKind = IDL.Variant({
     'defeat' : CombatDefeatResult,
     'victory' : CombatVictoryResult,
@@ -539,24 +498,37 @@ export const idlFactory = ({ IDL }) => {
   const ScenarioStageResultKind = IDL.Variant({
     'reward' : ScenarioRewardResult,
     'choice' : ScenarioChoiceResult,
-    'startScenario' : ScenarioStartResult,
     'combat' : ScenarioCombatResult,
   });
   const ScenarioStageResult = IDL.Record({
     'effects' : IDL.Vec(OutcomeEffect),
     'kind' : ScenarioStageResultKind,
   });
-  const StartedScenarioStateWithMetaData = IDL.Record({
-    'metaData' : ScenarioMetaData,
-    'kind' : StartedScenarioStateKind,
-    'previousStages' : IDL.Vec(ScenarioStageResult),
+  const CompletedScenario = IDL.Record({
+    'stages' : IDL.Vec(ScenarioStageResult),
+    'metaDataId' : IDL.Text,
   });
-  const ScenarioStateKindWithMetaData = IDL.Variant({
-    'notStarted' : NotStartedScenarioState,
-    'started' : StartedScenarioStateWithMetaData,
+  const CompletedRouteLocationKind = IDL.Variant({
+    'notStarted' : RouteLocationKind,
+    'scenario' : CompletedScenario,
   });
-  const ScenarioWithMetaData = IDL.Record({
-    'state' : ScenarioStateKindWithMetaData,
+  const CompletedRouteLocation = IDL.Record({
+    'kind' : CompletedRouteLocationKind,
+    'zoneId' : IDL.Text,
+  });
+  const CompletedGameWithMetaData = IDL.Record({
+    'id' : IDL.Nat,
+    'startTime' : Time,
+    'endTime' : Time,
+    'playerId' : IDL.Principal,
+    'outcome' : CompletedGameOutcomeWithMetaData,
+    'route' : IDL.Vec(CompletedRouteLocation),
+  });
+  const PagedResult_2 = IDL.Record({
+    'data' : IDL.Vec(CompletedGameWithMetaData),
+    'count' : IDL.Nat,
+    'totalCount' : IDL.Nat,
+    'offset' : IDL.Nat,
   });
   const StartingGameStateWithMetaData = IDL.Record({
     'characterOptions' : IDL.Vec(CharacterWithMetaData),
@@ -564,9 +536,33 @@ export const idlFactory = ({ IDL }) => {
   const CompletedGameStateWithMetaData = IDL.Record({
     'endTime' : Time,
     'outcome' : CompletedGameOutcomeWithMetaData,
+    'route' : IDL.Vec(CompletedRouteLocation),
+  });
+  const RewardScenarioState = IDL.Record({
+    'options' : IDL.Tuple(RewardKind, RewardKind, RewardKind),
+    'nextPath' : NextPathKind,
+  });
+  const ChoiceScenarioState = IDL.Record({ 'choices' : IDL.Vec(Choice) });
+  const ScenarioStageKind = IDL.Variant({
+    'reward' : RewardScenarioState,
+    'choice' : ChoiceScenarioState,
+    'combat' : CombatScenarioState,
+  });
+  const Scenario = IDL.Record({
+    'metaDataId' : IDL.Text,
+    'currentStage' : ScenarioStageKind,
+    'previousStages' : IDL.Vec(ScenarioStageResult),
+  });
+  const InProgressRouteLocationKind = IDL.Variant({ 'scenario' : Scenario });
+  const RouteLocation = IDL.Record({
+    'kind' : RouteLocationKind,
+    'zoneId' : IDL.Text,
   });
   const InProgressGameStateWithMetaData = IDL.Record({
     'character' : CharacterWithMetaData,
+    'completedLocations' : IDL.Vec(CompletedRouteLocationKind),
+    'currentLocation' : InProgressRouteLocationKind,
+    'route' : IDL.Vec(RouteLocation),
   });
   const GameStateWithMetaData = IDL.Variant({
     'starting' : StartingGameStateWithMetaData,
@@ -577,7 +573,6 @@ export const idlFactory = ({ IDL }) => {
     'id' : IDL.Nat,
     'startTime' : Time,
     'playerId' : IDL.Principal,
-    'scenarios' : IDL.Vec(ScenarioWithMetaData),
     'state' : GameStateWithMetaData,
   });
   const GetCurrentGameResult = IDL.Variant({
@@ -668,7 +663,6 @@ export const idlFactory = ({ IDL }) => {
     'weapon' : IDL.Text,
     'health' : IDL.Nat,
   });
-  const StartScenarioChoice = IDL.Record({ 'optionId' : IDL.Nat });
   const ActionTargetResult = IDL.Variant({
     'creature' : IDL.Nat,
     'character' : IDL.Null,
@@ -680,7 +674,6 @@ export const idlFactory = ({ IDL }) => {
   const StageChoiceKind = IDL.Variant({
     'reward' : RewardChoice,
     'choice' : IDL.Text,
-    'startScenario' : StartScenarioChoice,
     'combat' : CombatChoice,
   });
   const SelectScenarioChoiceRequest = IDL.Record({

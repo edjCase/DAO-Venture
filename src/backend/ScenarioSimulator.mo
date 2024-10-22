@@ -67,8 +67,34 @@ module {
         scenarioMetaData : HashMap.HashMap<Text, ScenarioMetaData.ScenarioMetaData>;
     };
 
-    public type RunStageData = {
-        nextState : Scenario.StartedScenarioState;
+    public type NextScenarioState = {
+        #updated : Scenario.Scenario;
+        #completed : Scenario.CompletedScenario;
+        #dead;
+    };
+
+    public func initialize(
+        prng : Prng,
+        player : Player,
+        characterHandler : CharacterHandler.Handler,
+        gameContent : GameContent,
+        scenarioMetaData : ScenarioMetaData.ScenarioMetaData,
+    ) : Scenario.Scenario {
+        let logEntries = Buffer.Buffer<Scenario.OutcomeEffect>(5);
+        let helper = Helper(
+            prng,
+            player,
+            characterHandler,
+            gameContent,
+            logEntries,
+        );
+
+        let nextStateKind = buildNextStage(helper, scenarioMetaData.paths[0]); // Use first path for initial path
+        {
+            metaDataId = scenarioMetaData.id;
+            previousStages = [];
+            currentStage = nextStateKind;
+        };
     };
 
     public func runStage(
@@ -78,7 +104,7 @@ module {
         scenario : Scenario.Scenario,
         gameContent : GameContent,
         choice : StageChoiceKind,
-    ) : Result.Result<RunStageData, RunStageError> {
+    ) : Result.Result<NextScenarioState, RunStageError> {
         let logEntries = Buffer.Buffer<Scenario.OutcomeEffect>(5);
         let helper = Helper(
             prng,
@@ -86,25 +112,56 @@ module {
             characterHandler,
             gameContent,
             logEntries,
-            scenario,
         );
-        switch (scenario.state) {
-            case (#notStarted(notStarted)) processNotStartedScenario(notStarted, helper, choice);
-            case (#started(started)) processStartedScenario(started, helper, choice);
+        let result : Result.Result<(NextKind, Scenario.ScenarioStageResultKind), RunStageError> = switch (scenario.currentStage) {
+            case (#choice(choiceState)) processChoice(choiceState, helper, choice);
+            case (#combat(combatState)) processCombat(combatState, helper, choice);
+            case (#reward(rewardState)) processReward(rewardState, helper, choice);
         };
+        let (nextKind, stageResultKind) : (NextKind, Scenario.ScenarioStageResultKind) = switch (result) {
+            case (#ok((nextKind, stageResultKind))) (nextKind, stageResultKind);
+            case (#err(error)) return #err(error);
+        };
+        let newStage = { effects = helper.getEffects(); kind = stageResultKind };
+        let newStages = Array.append(scenario.previousStages, [newStage]);
+        let isDead = helper.getCharacter().health == 0;
+        if (isDead) {
+            return #ok(#dead);
+        };
+        let nextStageOrNull = buildNextStageOrComplete(scenario.metaDataId, nextKind, helper);
+        switch (nextStageOrNull) {
+            case (null) {
+                #ok(
+                    #completed({
+                        metaDataId = scenario.metaDataId;
+                        stages = newStages;
+                    })
+                );
+            };
+            case (?nextStage) {
+                #ok(
+                    #updated({
+                        metaDataId = scenario.metaDataId;
+                        previousStages = newStages;
+                        currentStage = nextStage;
+                    })
+                );
+            };
+        };
+
     };
 
     type NextKind = {
         #nextPath : ScenarioMetaData.NextPathKind;
-        #pathInProgress : Scenario.InProgressScenarioStateKind;
+        #pathInProgress : Scenario.ScenarioStageKind;
         #dead;
     };
 
-    func buildNextStateKind(
+    func buildNextStageOrComplete(
         metaDataId : Text,
         nextKind : NextKind,
         helper : Helper,
-    ) : Scenario.StartedScenarioStateKind {
+    ) : ?Scenario.ScenarioStageKind {
         switch (nextKind) {
             case (#nextPath(nextPathKind)) {
                 let nextPathId : ?Text = switch (nextPathKind) {
@@ -124,7 +181,7 @@ module {
                         for (effect in nexPath.effects.vals()) {
                             switch (helper.applyEffect(effect)) {
                                 case (#alive) ();
-                                case (#dead) return #completed;
+                                case (#dead) return null;
                             };
                         };
                         nexPath.pathId;
@@ -132,20 +189,19 @@ module {
                     case (#none) null;
                 };
                 switch (nextPathId) {
-                    case (null) return #completed;
+                    case (null) return null;
                     case (?nextPathId) {
                         let ?scenarioMetaData = helper.gameContent.scenarioMetaData.get(metaDataId) else Debug.trap("Scenario meta data not found: " # metaDataId);
                         let ?nextPath = Array.find(
                             scenarioMetaData.paths,
                             func(p : ScenarioMetaData.ScenarioPath) : Bool = p.id == nextPathId,
                         ) else Debug.trap("Path not found: " # nextPathId);
-                        let nextState = buildNextInProgressState(helper, nextPath);
-                        #inProgress(nextState);
+                        ?buildNextStage(helper, nextPath);
                     };
                 };
             };
-            case (#pathInProgress(inProgress)) #inProgress(inProgress);
-            case (#dead) #completed; // TODO handle death
+            case (#pathInProgress(inProgress)) ?inProgress;
+            case (#dead) null; // TODO handle death
         };
     };
 
@@ -172,10 +228,10 @@ module {
         };
     };
 
-    public func buildNextInProgressState(
+    public func buildNextStage(
         helper : Helper,
         path : ScenarioMetaData.ScenarioPath,
-    ) : Scenario.InProgressScenarioStateKind {
+    ) : Scenario.ScenarioStageKind {
         let character = helper.getCharacter();
         switch (path.kind) {
             case (#combat(combat)) #combat(
@@ -192,35 +248,6 @@ module {
             };
             case (#reward(reward)) #reward(startReward(helper, reward));
         };
-    };
-
-    func processStartedScenario(
-        startedScenarioState : Scenario.StartedScenarioState,
-        helper : Helper,
-        choice : StageChoiceKind,
-    ) : Result.Result<RunStageData, RunStageError> {
-        let (nextKind, stageResultKind) : (NextKind, Scenario.ScenarioStageResultKind) = switch (startedScenarioState.kind) {
-            case (#completed) return #err(#scenarioComplete);
-            case (#inProgress(inProgress)) {
-                let result : Result.Result<(NextKind, Scenario.ScenarioStageResultKind), RunStageError> = switch (inProgress) {
-                    case (#choice(choiceState)) processChoice(choiceState, helper, choice);
-                    case (#combat(combatState)) processCombat(combatState, helper, choice);
-                    case (#reward(rewardState)) processReward(rewardState, helper, choice);
-                };
-                switch (result) {
-                    case (#ok((nextKind, stageResultKind))) (nextKind, stageResultKind);
-                    case (#err(error)) return #err(error);
-                };
-            };
-        };
-        let nextStateKind = buildNextStateKind(startedScenarioState.metaDataId, nextKind, helper);
-        #ok({
-            nextState = {
-                metaDataId = startedScenarioState.metaDataId;
-                previousStages = Array.append(startedScenarioState.previousStages, [{ effects = helper.getEffects(); kind = stageResultKind }]);
-                kind = nextStateKind;
-            };
-        });
     };
 
     func processChoice(
@@ -408,12 +435,10 @@ module {
         characterHandler : CharacterHandler.Handler,
         gameContent_ : GameContent,
         logEntries : Buffer.Buffer<Scenario.OutcomeEffect>,
-        scenario_ : Scenario.Scenario,
     ) {
 
         public let prng = prng_;
         public let gameContent = gameContent_;
-        public let scenario = scenario_;
         public let player = player_;
 
         public func getCharacter() : Character.Character {

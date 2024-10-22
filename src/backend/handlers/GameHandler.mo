@@ -56,7 +56,6 @@ module {
     public type GameInstance = {
         id : Nat;
         startTime : Time.Time;
-        scenarios : [Scenario.Scenario];
         state : GameInstanceState;
     };
 
@@ -73,13 +72,39 @@ module {
 
     public type InProgressData = {
         character : Character.Character;
-        zoneIds : [Text]; // Last is current zone
         playerAchievementIds : [Text];
+        route : [RouteLocation];
+        currentLocation : InProgressRouteLocationKind;
+        completedLocations : [CompletedRouteLocationKind];
+    };
+
+    public type RouteLocation = {
+        zoneId : Text;
+        kind : RouteLocationKind;
+    };
+
+    public type RouteLocationKind = {
+        #scenario;
+    };
+
+    public type InProgressRouteLocationKind = {
+        #scenario : Scenario.Scenario;
+    };
+
+    public type CompletedRouteLocationKind = {
+        #notStarted : RouteLocationKind;
+        #scenario : Scenario.CompletedScenario;
     };
 
     public type CompletedData = {
         endTime : Time.Time;
         outcome : CompletedGameOutcome;
+        route : [CompletedRouteLocation];
+    };
+
+    public type CompletedRouteLocation = {
+        zoneId : Text;
+        kind : CompletedRouteLocationKind;
     };
 
     public type CompletedGameOutcome = {
@@ -105,7 +130,6 @@ module {
         id : Nat;
         playerId : Principal;
         startTime : Time.Time;
-        scenarios : [ScenarioWithMetaData];
         state : GameStateWithMetaData;
     };
 
@@ -121,11 +145,15 @@ module {
 
     public type InProgressGameStateWithMetaData = {
         character : CharacterWithMetaData;
+        route : [RouteLocation];
+        currentLocation : InProgressRouteLocationKind;
+        completedLocations : [CompletedRouteLocationKind];
     };
 
     public type CompletedGameStateWithMetaData = {
         endTime : Time.Time;
         outcome : CompletedGameOutcomeWithMetaData;
+        route : [CompletedRouteLocation];
     };
 
     public type CompletedGameOutcomeWithMetaData = {
@@ -175,18 +203,9 @@ module {
     };
 
     public type ScenarioWithMetaData = {
-        state : ScenarioStateKindWithMetaData;
-    };
-
-    public type ScenarioStateKindWithMetaData = {
-        #notStarted : Scenario.NotStartedScenarioState;
-        #started : StartedScenarioStateWithMetaData;
-    };
-
-    public type StartedScenarioStateWithMetaData = {
         metaData : ScenarioMetaData.ScenarioMetaData;
         previousStages : [Scenario.ScenarioStageResult];
-        kind : Scenario.StartedScenarioStateKind;
+        currentStage : Scenario.ScenarioStageKind;
     };
 
     public type CreateGameError = {
@@ -344,69 +363,6 @@ module {
             )
             |> Iter.toArray(_);
 
-            let unlockedZones = zones.vals()
-            |> UnlockRequirement.filterOutLockedEntities<Zone.Zone>(_, playerAchievementIds)
-            |> Iter.toArray(_);
-
-            let scenarios = Buffer.Buffer<Scenario.Scenario>(16);
-
-            func getRandomZoneWithDifficulty(difficulty : Zone.ZoneDifficulty) : Zone.Zone {
-                let zonesWithDifficulty = unlockedZones.vals()
-                |> Iter.filter(
-                    _,
-                    func(zone : Zone.Zone) : Bool = zone.difficulty == difficulty,
-                )
-                |> Iter.toArray(_);
-                prng.nextArrayElement(zonesWithDifficulty);
-            };
-
-            func addZoneScenarios(zoneId : Text, count : Nat) {
-                // TODO weight options
-                let allScenarioOptions : [Scenario.ScenarioKind] = [
-                    #encounter,
-                    #combat(#normal),
-                    #combat(#elite),
-                    #store,
-                ];
-                for (i in IterTools.range(0, count)) {
-                    let randomScenarioOption = prng.nextArrayElement(allScenarioOptions);
-                    let scenarioOptions = if (prng.nextRatio(1, 2)) {
-                        [randomScenarioOption];
-                    } else {
-                        let otherScenarioOptions = allScenarioOptions.vals()
-                        |> Iter.filter(_, func(option : Scenario.ScenarioKind) : Bool = option != randomScenarioOption)
-                        |> Iter.toArray(_);
-                        let otherScenarioOption = prng.nextArrayElement(otherScenarioOptions);
-                        [
-                            randomScenarioOption,
-                            otherScenarioOption,
-                        ];
-                    };
-                    scenarios.add({
-                        state = #notStarted({
-                            zoneId = zoneId;
-                            options = scenarioOptions;
-                        });
-                    });
-                };
-            };
-
-            // Zone 1 (Easy), 5 scenarios
-            let zone1 = getRandomZoneWithDifficulty(#easy);
-            addZoneScenarios(zone1.id, 5);
-            // Zone 2 (Medium), 5 scenarios
-            let zone2 = getRandomZoneWithDifficulty(#medium);
-            addZoneScenarios(zone2.id, 5);
-            // Zone 3 (Hard), 5 scenarios + 1 Boss scenario
-            let zone3 = getRandomZoneWithDifficulty(#hard);
-            addZoneScenarios(zone3.id, 5);
-            scenarios.add({
-                state = #notStarted({
-                    zoneId = zone3.id;
-                    options = [#combat(#boss)];
-                });
-            });
-
             playerDataList.put(
                 playerId,
                 {
@@ -415,7 +371,6 @@ module {
                         id = playerDataInstance.completedGames.size(); // TODO?
                         playerId = playerId;
                         startTime = Time.now();
-                        scenarios = Buffer.toArray(scenarios);
                         state = #starting({
                             characterOptions = characterOptions;
                             playerAchievementIds = playerAchievementIds;
@@ -446,20 +401,24 @@ module {
                         outcome = #forfeit({
                             character = null;
                         });
+                        route = [];
                     };
                 };
                 case (#inProgress(inProgress)) {
+                    let completedRoute = getCompletedRoute(inProgress.route, inProgress.completedLocations);
                     {
                         endTime = Time.now();
                         outcome = #forfeit({
                             character = ?toCharacterWithMetaData(inProgress.character);
                         });
+                        route = completedRoute;
                     };
                 };
                 case (#completed(completed)) {
                     {
                         endTime = completed.endTime;
                         outcome = toOutcomeWithMetaData(completed.outcome);
+                        route = completed.route;
                     };
                 };
             };
@@ -484,6 +443,34 @@ module {
             #ok(updatedPlayerData);
         };
 
+        private func getCompletedRoute(
+            route : [RouteLocation],
+            completedLocations : [CompletedRouteLocationKind],
+        ) : [CompletedRouteLocation] {
+            IterTools.zipLongest(route.vals(), completedLocations.vals())
+            |> Iter.map<IterTools.EitherOr<RouteLocation, CompletedRouteLocationKind>, CompletedRouteLocation>(
+                _,
+                func(eo : IterTools.EitherOr<RouteLocation, CompletedRouteLocationKind>) : CompletedRouteLocation {
+                    switch (eo) {
+                        case (#both(routeLocation, completedLocation)) {
+                            {
+                                zoneId = routeLocation.zoneId;
+                                kind = completedLocation;
+                            };
+                        };
+                        case (#left(routeLocation)) {
+                            {
+                                zoneId = routeLocation.zoneId;
+                                kind = #notStarted(routeLocation.kind);
+                            };
+                        };
+                        case (#right(_)) Debug.trap("Unexpected completed location, with no route location");
+                    };
+                },
+            )
+            |> Iter.toArray(_);
+        };
+
         public func startGame<system>(
             prng : Prng,
             playerId : Principal,
@@ -499,8 +486,45 @@ module {
             |> UnlockRequirement.filterOutLockedEntities<Zone.Zone>(_, starting.playerAchievementIds)
             |> Iter.toArray(_);
 
-            let zoneId = prng.nextArrayElement(unlockedZones).id;
+            let route = Buffer.Buffer<RouteLocation>(15);
 
+            func getRandomZoneWithDifficulty(difficulty : Zone.ZoneDifficulty) : Zone.Zone {
+                let zonesWithDifficulty = unlockedZones.vals()
+                |> Iter.filter(
+                    _,
+                    func(zone : Zone.Zone) : Bool = zone.difficulty == difficulty,
+                )
+                |> Iter.toArray(_);
+                prng.nextArrayElement(zonesWithDifficulty);
+            };
+
+            func addZoneScenarios(zoneId : Text, count : Nat) {
+                for (i in IterTools.range(0, count)) {
+                    route.add({
+                        zoneId = zoneId;
+                        kind = #scenario;
+                    });
+                };
+            };
+
+            // Zone 1 (Easy), 5 scenarios
+            let zone1 = getRandomZoneWithDifficulty(#easy);
+            addZoneScenarios(zone1.id, 5);
+            // Zone 2 (Medium), 5 scenarios
+            let zone2 = getRandomZoneWithDifficulty(#medium);
+            addZoneScenarios(zone2.id, 5);
+            // Zone 3 (Hard), 5 scenarios
+            let zone3 = getRandomZoneWithDifficulty(#hard);
+            addZoneScenarios(zone3.id, 5);
+
+            let firstRouteLocation = route.get(0);
+            let currentLocation : InProgressRouteLocationKind = initializeNewLocation(
+                prng,
+                firstRouteLocation,
+                character,
+                playerId,
+                starting.playerAchievementIds,
+            );
             playerDataList.put(
                 playerId,
                 {
@@ -509,10 +533,11 @@ module {
                         instance with
                         state = #inProgress(
                             {
-                                zoneIds = [zoneId];
                                 character = character;
                                 playerAchievementIds = starting.playerAchievementIds;
-                                scenarioId = 0;
+                                route = Buffer.toArray(route);
+                                currentLocation = currentLocation;
+                                completedLocations = [];
                             } : InProgressData
                         );
                     } : ?GameInstance
@@ -521,25 +546,57 @@ module {
             #ok;
         };
 
-        {
+        private func initializeNewLocation(
+            prng : Prng,
+            firstRouteLocation : RouteLocation,
+            character : Character.Character,
+            playerId : Principal,
+            playerAchievementIds : [Text],
+        ) : InProgressRouteLocationKind {
+            switch (firstRouteLocation.kind) {
+                case (#scenario) {
+                    let filteredScenarios = scenarioMetaDataList.vals()
+                    |> UnlockRequirement.filterOutLockedEntities(_, playerAchievementIds)
+                    // Only scenarios that are common or have the zoneId
+                    |> Iter.filter(
+                        _,
+                        func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool {
+                            switch (scenario.location) {
+                                case (#common) true;
+                                case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == firstRouteLocation.zoneId) != null;
+                            };
+                        },
+                    )
+                    |> Iter.toArray(_);
+                    let scenarioMetaData = prng.nextArrayElement(filteredScenarios);
 
-            let filteredScenarios = helper.gameContent.scenarioMetaData.vals()
-            |> UnlockRequirement.filterOutLockedEntities(_, helper.player.achievementIds)
-            // Only scenarios that are common or have the zoneId
-            |> Iter.filter(
-                _,
-                func(scenario : ScenarioMetaData.ScenarioMetaData) : Bool {
-                    switch (scenario.location) {
-                        case (#common) true;
-                        case (#zoneIds(zoneIds)) Array.find(zoneIds, func(id : Text) : Bool = id == state.zoneId) != null;
+                    let characterHandler = CharacterHandler.Handler(character);
+
+                    let gameContent : ScenarioSimulator.GameContent = {
+                        scenarioMetaData = scenarioMetaDataList;
+                        creatures = creatures;
+                        classes = classes;
+                        races = races;
+                        items = items;
+                        weapons = weapons;
+                        actions = actions;
                     };
-                },
-            )
-            |> Iter.toArray(_);
-            let scenarioMetaData = helper.prng.nextArrayElement(filteredScenarios);
-            let nextPathId = scenarioMetaData.paths[0].id; // Use first path for initial path
-            let nextKind = #nextPath(#single(nextPathId));
-            let nextStateKind = buildNextStateKind(scenarioMetaData.id, nextKind, helper);
+
+                    let player : ScenarioSimulator.Player = {
+                        id = playerId;
+                        var achievementIds = playerAchievementIds;
+                    };
+                    // TODO initialize doesnt need most of this stuff, but the internal helper does
+                    let scenario = ScenarioSimulator.initialize(
+                        prng,
+                        player,
+                        characterHandler,
+                        gameContent,
+                        scenarioMetaData,
+                    );
+                    #scenario(scenario);
+                };
+            };
         };
 
         public func selectScenarioChoice(
@@ -551,18 +608,6 @@ module {
             let ?playerData = playerDataList.get(playerId) else return #err(#gameNotFound);
             let ?instance = playerData.activeGame else return #err(#gameNotActive);
             let #inProgress(inProgressInstance) = instance.state else return #err(#gameNotActive);
-
-            // Get next scenario (first not completed)
-            let ?currentScenarioId = instance.scenarios.vals()
-            |> IterTools.findIndex(
-                _,
-                func(s : Scenario.Scenario) : Bool = switch (s.state) {
-                    case (#started({ kind = #completed })) false;
-                    case (_) true;
-                },
-            ) else return #err(#gameNotActive);
-
-            let currentScenario = instance.scenarios[currentScenarioId];
 
             let characterHandler = CharacterHandler.Handler(inProgressInstance.character);
 
@@ -580,92 +625,104 @@ module {
                 id = playerId;
                 var achievementIds = inProgressInstance.playerAchievementIds;
             };
-
-            let runStageData : ScenarioSimulator.RunStageData = switch (
-                ScenarioSimulator.runStage(
-                    prng,
-                    player,
-                    characterHandler,
-                    currentScenario,
-                    gameContent,
-                    choice,
-                )
-            ) {
-                case (#err(#scenarioComplete)) Debug.trap("Failed to process choice: Scenario complete");
-                case (#err(#invalidChoice(invalidChoice))) return #err(#invalidChoice(invalidChoice));
-                case (#err(#invalidTarget)) return #err(#invalidTarget);
-                case (#err(#targetRequired)) return #err(#targetRequired);
-                case (#ok(result)) result;
+            let result = switch (inProgressInstance.currentLocation) {
+                case (#scenario(currentScenario)) {
+                    switch (
+                        ScenarioSimulator.runStage(
+                            prng,
+                            player,
+                            characterHandler,
+                            currentScenario,
+                            gameContent,
+                            choice,
+                        )
+                    ) {
+                        case (#ok(result)) switch (result) {
+                            case (#dead) #dead;
+                            case (#updated(updatedScenario)) #updated(#scenario(updatedScenario));
+                            case (#completed(completedScenario)) #completed(#scenario(completedScenario));
+                        };
+                        case (#err(#scenarioComplete)) Debug.trap("Failed to process choice: Scenario complete");
+                        case (#err(#invalidChoice(invalidChoice))) return #err(#invalidChoice(invalidChoice));
+                        case (#err(#invalidTarget)) return #err(#invalidTarget);
+                        case (#err(#targetRequired)) return #err(#targetRequired);
+                    };
+                };
             };
-            let updatedScenario : Scenario.Scenario = {
-                currentScenario with
-                state = #started(runStageData.nextState);
-            };
-            let thawedScenarios = Array.thaw<Scenario.Scenario>(instance.scenarios);
-            thawedScenarios[currentScenarioId] := updatedScenario;
-            let updatedScenarios = Array.freeze(thawedScenarios);
-            let updatedInProgressState : InProgressData = {
-                inProgressInstance with
-                character = characterHandler.get();
-                playerAchievementIds = player.achievementIds;
-            };
-            let updatedInstance : GameInstance = {
-                instance with
-                scenarios = updatedScenarios;
-                state = #inProgress(updatedInProgressState);
-            };
-            let isDead = characterHandler.get().health <= 0;
-            let updatedGame : GameInstance = if (isDead) {
-                {
-                    updatedInstance with
-                    state = #completed({
+            let updatedState = switch (result) {
+                case (#dead) {
+                    let completedRoute = getCompletedRoute(inProgressInstance.route, inProgressInstance.completedLocations);
+                    #completed({
                         endTime = Time.now();
+                        route = completedRoute;
                         outcome = #death({
-                            character = updatedInProgressState.character;
+                            character = characterHandler.get();
                         });
                     });
                 };
-            } else {
-                let allScenariosCompleted = IterTools.all(
-                    updatedScenarios.vals(),
-                    func(s : Scenario.Scenario) : Bool = switch (s.state) {
-                        case (#started({ kind = #completed })) true;
-                        case (_) false;
-                    },
-                );
-                if (not allScenariosCompleted) {
-                    updatedInstance;
-                } else {
-                    // Victory
-                    let unlockedAchievementIds : [Text] = updatedInProgressState.playerAchievementIds.vals()
-                    // Filter out achievements that the user already has
-                    |> Iter.filter(
-                        _,
-                        func(id : Text) : Bool = switch (userHandler.unlockAchievement(playerId, id)) {
-                            case (#ok(_)) true;
-                            case (#err(#alreadyUnlocked)) false;
-                            case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(playerId));
-                            case (#err(#achievementNotFound)) Debug.trap("Achievement not found: " # id);
-                        },
-                    )
-                    |> Iter.toArray(_);
-                    {
-                        updatedInstance with
-                        state = #completed({
+                case (#updated(updatedLocation)) {
+                    #inProgress({
+                        inProgressInstance with
+                        character = characterHandler.get();
+                        playerAchievementIds = player.achievementIds;
+                        currentLocation = updatedLocation;
+                    });
+                };
+                case (#completed(completedLocation)) {
+                    let completedLocations = Array.append(inProgressInstance.completedLocations, [completedLocation]);
+                    let runComplete = inProgressInstance.route.size() == completedLocations.size();
+
+                    if (not runComplete) {
+                        let nextLocationInfo = inProgressInstance.route.get(completedLocations.size());
+                        let newLocation = initializeNewLocation(
+                            prng,
+                            nextLocationInfo,
+                            characterHandler.get(),
+                            playerId,
+                            inProgressInstance.playerAchievementIds,
+                        );
+                        #inProgress({
+                            inProgressInstance with
+                            character = characterHandler.get();
+                            playerAchievementIds = player.achievementIds;
+                            completedLocations = completedLocations;
+                            currentLocation = newLocation;
+                        });
+                    } else {
+                        // Victory
+                        let unlockedAchievementIds : [Text] = inProgressInstance.playerAchievementIds.vals()
+                        // Filter out achievements that the user already has
+                        |> Iter.filter(
+                            _,
+                            func(id : Text) : Bool = switch (userHandler.unlockAchievement(playerId, id)) {
+                                case (#ok(_)) true;
+                                case (#err(#alreadyUnlocked)) false;
+                                case (#err(#userNotFound)) Debug.trap("User not found: " # Principal.toText(playerId));
+                                case (#err(#achievementNotFound)) Debug.trap("Achievement not found: " # id);
+                            },
+                        )
+                        |> Iter.toArray(_);
+                        let completedRoute = getCompletedRoute(inProgressInstance.route, completedLocations);
+                        #completed({
                             endTime = Time.now();
+                            route = completedRoute;
                             outcome = #victory({
-                                character = updatedInProgressState.character;
+                                character = characterHandler.get();
                                 unlockedAchievementIds = unlockedAchievementIds;
                             });
                         });
                     };
                 };
             };
+
             playerDataList.put(
                 playerId,
                 {
                     playerData with
-                    activeGame = ?updatedGame;
+                    activeGame = ?{
+                        instance with
+                        state = updatedState;
+                    };
                 },
             );
             #ok;
@@ -870,25 +927,6 @@ module {
 
         // ------------------ Private ------------------
 
-        private func mapScenario(
-            scenario : Scenario.Scenario
-        ) : ScenarioWithMetaData {
-            let state = switch (scenario.state) {
-                case (#notStarted(notStarted)) #notStarted(notStarted);
-                case (#started(started)) {
-                    let ?metaData = scenarioMetaDataList.get(started.metaDataId) else Debug.trap("Scenario meta data not found: " # started.metaDataId);
-                    #started({
-                        started with
-                        metaData = metaData;
-                    });
-                };
-            };
-            {
-                scenario with
-                state = state;
-            };
-        };
-
         private func toInstanceWithMetaData(playerId : Principal, instance : GameInstance) : GameWithMetaData {
             let state : GameStateWithMetaData = switch (instance.state) {
                 case (#starting(starting)) {
@@ -902,22 +940,22 @@ module {
                     let character = toCharacterWithMetaData(inProgress.character);
                     #inProgress({
                         character;
+                        route = inProgress.route;
+                        currentLocation = inProgress.currentLocation;
+                        completedLocations = inProgress.completedLocations;
                     });
                 };
                 case (#completed(completed)) {
                     #completed({
                         endTime = completed.endTime;
                         outcome = toOutcomeWithMetaData(completed.outcome);
+                        route = completed.route;
                     });
                 };
             };
-            let scenariosWithMetaData = instance.scenarios.vals()
-            |> Iter.map(_, mapScenario)
-            |> Iter.toArray(_);
             {
                 instance with
                 playerId = playerId;
-                scenarios = scenariosWithMetaData;
                 state = state;
             };
         };

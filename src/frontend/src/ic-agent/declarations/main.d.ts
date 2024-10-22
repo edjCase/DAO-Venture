@@ -151,9 +151,6 @@ export type CombatResultKind = { 'defeat' : CombatDefeatResult } |
 export type CombatScenarioCategory = { 'normal' : null } |
   { 'boss' : null } |
   { 'elite' : null };
-export type CombatScenarioKind = { 'normal' : null } |
-  { 'boss' : null } |
-  { 'elite' : null };
 export interface CombatScenarioState {
   'character' : CharacterCombatState,
   'creatures' : Array<CreatureCombatState>,
@@ -168,6 +165,7 @@ export type CompletedGameOutcomeWithMetaData = {
 export interface CompletedGameStateWithMetaData {
   'endTime' : Time,
   'outcome' : CompletedGameOutcomeWithMetaData,
+  'route' : Array<CompletedRouteLocation>,
 }
 export interface CompletedGameWithMetaData {
   'id' : bigint,
@@ -175,6 +173,17 @@ export interface CompletedGameWithMetaData {
   'endTime' : Time,
   'playerId' : Principal,
   'outcome' : CompletedGameOutcomeWithMetaData,
+  'route' : Array<CompletedRouteLocation>,
+}
+export interface CompletedRouteLocation {
+  'kind' : CompletedRouteLocationKind,
+  'zoneId' : string,
+}
+export type CompletedRouteLocationKind = { 'notStarted' : RouteLocationKind } |
+  { 'scenario' : CompletedScenario };
+export interface CompletedScenario {
+  'stages' : Array<ScenarioStageResult>,
+  'metaDataId' : string,
 }
 export type CreateGameError = { 'noWeapons' : null } |
   { 'noCreaturesForZone' : string } |
@@ -246,7 +255,6 @@ export interface GameWithMetaData {
   'id' : bigint,
   'startTime' : Time,
   'playerId' : Principal,
-  'scenarios' : Array<ScenarioWithMetaData>,
   'state' : GameStateWithMetaData,
 }
 export interface GetCompletedGamesRequest {
@@ -279,10 +287,11 @@ export interface HealLogEntry {
 }
 export interface InProgressGameStateWithMetaData {
   'character' : CharacterWithMetaData,
+  'completedLocations' : Array<CompletedRouteLocationKind>,
+  'currentLocation' : InProgressRouteLocationKind,
+  'route' : Array<RouteLocation>,
 }
-export type InProgressScenarioStateKind = { 'reward' : RewardScenarioState } |
-  { 'choice' : ChoiceScenarioState } |
-  { 'combat' : CombatScenarioState };
+export type InProgressRouteLocationKind = { 'scenario' : Scenario };
 export interface InventorySlotWithMetaData { 'item' : [] | [Item] }
 export interface Item {
   'id' : string,
@@ -311,10 +320,6 @@ export type NatValue = { 'raw' : bigint } |
 export type NextPathKind = { 'multi' : Array<WeightedScenarioPathOption> } |
   { 'none' : null } |
   { 'single' : string };
-export interface NotStartedScenarioState {
-  'options' : Array<ScenarioKind>,
-  'zoneId' : string,
-}
 export interface OptionWeight { 'value' : number, 'kind' : WeightKind }
 export type OutcomeEffect = { 'healthDelta' : bigint } |
   { 'maxHealthDelta' : bigint } |
@@ -415,6 +420,13 @@ export interface RewardScenarioState {
   'options' : [RewardKind, RewardKind, RewardKind],
   'nextPath' : NextPathKind,
 }
+export interface RouteLocation { 'kind' : RouteLocationKind, 'zoneId' : string }
+export type RouteLocationKind = { 'scenario' : null };
+export interface Scenario {
+  'metaDataId' : string,
+  'currentStage' : ScenarioStageKind,
+  'previousStages' : Array<ScenarioStageResult>,
+}
 export type ScenarioCategory = { 'store' : null } |
   { 'combat' : CombatScenarioCategory } |
   { 'encounter' : null };
@@ -427,9 +439,6 @@ export interface ScenarioCombatResult {
   'kind' : CombatResultKind,
 }
 export type ScenarioEffect = { 'attribute' : AttributeScenarioEffect };
-export type ScenarioKind = { 'store' : null } |
-  { 'combat' : CombatScenarioKind } |
-  { 'encounter' : null };
 export interface ScenarioMetaData {
   'id' : string,
   'name' : string,
@@ -449,22 +458,16 @@ export type ScenarioPathKind = { 'reward' : RewardPath } |
   { 'choice' : ChoicePath } |
   { 'combat' : CombatPath };
 export interface ScenarioRewardResult { 'kind' : RewardKind }
+export type ScenarioStageKind = { 'reward' : RewardScenarioState } |
+  { 'choice' : ChoiceScenarioState } |
+  { 'combat' : CombatScenarioState };
 export interface ScenarioStageResult {
   'effects' : Array<OutcomeEffect>,
   'kind' : ScenarioStageResultKind,
 }
 export type ScenarioStageResultKind = { 'reward' : ScenarioRewardResult } |
   { 'choice' : ScenarioChoiceResult } |
-  { 'startScenario' : ScenarioStartResult } |
   { 'combat' : ScenarioCombatResult };
-export type ScenarioStartResult = {};
-export type ScenarioStateKindWithMetaData = {
-    'notStarted' : NotStartedScenarioState
-  } |
-  { 'started' : StartedScenarioStateWithMetaData };
-export interface ScenarioWithMetaData {
-  'state' : ScenarioStateKindWithMetaData,
-}
 export type SelectScenarioChoiceError = { 'invalidTarget' : null } |
   { 'targetRequired' : null } |
   { 'invalidChoice' : string } |
@@ -476,7 +479,6 @@ export type SelectScenarioChoiceResult = { 'ok' : null } |
   { 'err' : SelectScenarioChoiceError };
 export type StageChoiceKind = { 'reward' : RewardChoice } |
   { 'choice' : string } |
-  { 'startScenario' : StartScenarioChoice } |
   { 'combat' : CombatChoice };
 export interface StartGameRequest { 'characterId' : bigint }
 export type StartGameResult = { 'ok' : null } |
@@ -485,14 +487,6 @@ export type StartGameResult = { 'ok' : null } |
       { 'alreadyStarted' : null } |
       { 'gameNotFound' : null }
   };
-export interface StartScenarioChoice { 'optionId' : bigint }
-export type StartedScenarioStateKind = { 'completed' : null } |
-  { 'inProgress' : InProgressScenarioStateKind };
-export interface StartedScenarioStateWithMetaData {
-  'metaData' : ScenarioMetaData,
-  'kind' : StartedScenarioStateKind,
-  'previousStages' : Array<ScenarioStageResult>,
-}
 export interface StartingGameStateWithMetaData {
   'characterOptions' : Array<CharacterWithMetaData>,
 }
